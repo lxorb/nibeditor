@@ -17,7 +17,7 @@ table/keymap.ts. Everything else answers it by revealing, and revealing is what 
 measured here: after the press, the block's widget is gone and the caret is on one
 of the lines it was drawn from.
 
-Serves the built web app and drives it in the machine's own Chrome. The build has
+Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
 are not there.
 
@@ -32,92 +32,31 @@ run-all.py sets. Screenshots go beside this file under `shots/caret-blocks/`.
 from __future__ import annotations
 
 import json
-import os
 import shutil
-import subprocess
-import sys
-import time
 from pathlib import Path
 
-from playwright.sync_api import BrowserContext, Page, sync_playwright
+from playwright.sync_api import BrowserContext, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "caret-blocks"
+import harness
+from harness import Drive
 
-# A port of this run's own, well clear of the dev server's and of every other
-# drive's.
-PORT = 23663
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+problems = DRIVE.failures
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+ROOT = harness.ROOT
+
 
 # How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 60
-
-problems: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(words: str) -> None:
-    problems.append(words)
-    print(f"  WRONG: {words}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") == "1":
-        say("reusing the build already in dist")
-        return
-
-    say("building the web app")
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    """Polls a page until the script answers with something truthy."""
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 def opened(context: BrowserContext) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", "the app to start")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page)
     return page
 
 
@@ -245,10 +184,9 @@ def start_of(page: Page, span: dict, where: str) -> int:
 
 
 def drive(playwright, profile: Path) -> None:
-    context = playwright.chromium.launch_persistent_context(
-        user_data_dir=str(profile),
-        executable_path=chromium(),
-        headless=True,
+    context = DRIVE.persistent(
+        playwright,
+        profile,
         viewport={"width": 1180, "height": 900},
         color_scheme="light",
     )
@@ -317,36 +255,15 @@ def drive(playwright, profile: Path) -> None:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    build()
-
     profile = Path(ROOT / "target" / "caret-blocks-profile")
     if profile.exists():
         shutil.rmtree(profile, ignore_errors=True)
     profile.mkdir(parents=True, exist_ok=True)
 
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    with DRIVE.session(playwright=True) as playwright:
+        drive(playwright, profile)
 
-    try:
-        with sync_playwright() as playwright:
-            drive(playwright, profile)
-    finally:
-        say("stopping the server")
-        server.terminate()
-        server.wait(timeout=10)
-
-    if problems:
-        print("\n".join(f"WRONG: {one}" for one in problems), flush=True)
-        return 1
-
-    print("\nevery block opens to an arrow rather than standing in its way", flush=True)
-    return 0
+    return DRIVE.verdict("every block opens to an arrow rather than standing in its way")
 
 
 if __name__ == "__main__":

@@ -29,31 +29,26 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go under
 
 from __future__ import annotations
 
-import functools
 import http.server
 import json
-import os
 import re
-import shutil
-import socket
-import socketserver
-import subprocess
 import sys
-import threading
 import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "ask-panel"
+from harness import Drive
 
-PORT = 19973
-MODEL_PORT = 19974
-ORIGIN = f"http://127.0.0.1:{PORT}"
-MODEL_ORIGIN = f"http://127.0.0.1:{MODEL_PORT}"
+DRIVE = Drive(__file__)
+say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
+ORIGIN = DRIVE.origin
+
+
+def wait_for(page: Page, expression: str, what: str, patience: float = 45) -> bool:
+    """Whether it came in time; a failure counted, and the drive carries on, if not."""
+    return DRIVE.waited(page, expression, what, patience)
+
+
 MODEL = "fake-small"
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -125,55 +120,6 @@ LINE = """
 }
 """
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.ThreadingTCPServer):
-    # A development build asks for hundreds of modules at once; a backlog of five
-    # refuses some of them and the app never starts.
-    allow_reuse_address = False
-    daemon_threads = True
-    request_queue_size = 256
-
 
 class Model(http.server.BaseHTTPRequestHandler):
     """An OpenAI-compatible provider that streams what the drive tells it to."""
@@ -222,37 +168,8 @@ class Model(http.server.BaseHTTPRequestHandler):
             return
 
 
-def serve(port: int, handler: object, what: str) -> Strict:
-    say(f"serving {what} on http://127.0.0.1:{port}")
-    try:
-        server = Strict(("127.0.0.1", port), handler)  # type: ignore[arg-type]
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {port}: {error}") from error
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", port), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-    raise SystemExit(f"{what} never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 45) -> bool:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return True
-        page.wait_for_timeout(50)
-    wrong(f"gave up waiting for {what}")
-    return False
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
+#: Where the fake provider answers, on a port of this run's own.
+MODEL_ORIGIN = DRIVE.side(Model)
 
 
 def fresh(browser: Browser) -> Page:
@@ -275,7 +192,7 @@ def fresh(browser: Browser) -> Page:
 def the_sides(page: Page) -> None:
     sides = page.evaluate(SIDES)
     say(f"the sides as the window opens: {sides}")
-    if sides["right"] != ["outline", "links", "properties", "footnotes", "ask"] or sides["open"]:
+    if sides["right"] != ["outline", "links", "properties", "footnotes", "ask", "agents"] or sides["open"]:
         wrong(f"the right side does not start homed and shut: {sides}")
     if page.locator("button.toggle.right").count() != 1:
         wrong("the right side's button is not in the bar")
@@ -524,41 +441,20 @@ def on_a_phone(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    files = serve(PORT, functools.partial(Quiet, directory=str(DIST)), DIST.name)
-    model = serve(MODEL_PORT, Model, "a fake OpenAI-compatible provider")
+    with DRIVE.session() as browser:
+        page = fresh(browser)
+        say("--- the sides ---")
+        the_sides(page)
+        say("--- nothing set up ---")
+        nothing_set_up(page)
+        say("--- asked ---")
+        asked(page)
+        say("--- properties ---")
+        properties(page)
+        say("--- on a phone ---")
+        on_a_phone(browser)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                page = fresh(browser)
-                say("--- the sides ---")
-                the_sides(page)
-                say("--- nothing set up ---")
-                nothing_set_up(page)
-                say("--- asked ---")
-                asked(page)
-                say("--- properties ---")
-                properties(page)
-                say("--- on a phone ---")
-                on_a_phone(browser)
-            finally:
-                browser.close()
-    finally:
-        for server in (files, model):
-            server.shutdown()
-            server.server_close()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe right side opens where it should; Ask cites and opens; Properties writes", flush=True)
-    return 0
+    return DRIVE.verdict("the right side opens where it should; Ask cites and opens; Properties writes")
 
 
 if __name__ == "__main__":

@@ -25,49 +25,31 @@ Run it from the repository root:
 
     python apps/desktop/test/e2e/smoke.py
 
-Set NIB_MODE=development to build the way the other drives do, NIB_SKIP_BUILD=1 to
-reuse apps/desktop/dist from a previous run, or NIB_ORIGIN to drive a server
-somebody else is already running - the dev server on 1420, which is what a desktop
-build in development loads from.
+Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run, or NIB_ORIGIN
+to drive a server somebody else is already running - the dev server on 1420, which
+is what a desktop build in development loads from.
 
-By default it builds `--mode drive`, which is a release build with one constant
-flipped: `__DRIVEABLE__` keeps `window.nibApp` and `window.nib`, the handles every
-drive steers the app by. Those used to be behind `import.meta.env.DEV`, so the only
-build anything could drive was the one nobody ships - which is how three reported
-bugs came to be unreproducible in every build a drive could reach. This gate covers
-the shape that ships. The other eighty-nine drives still build in development mode
-and still cannot; a harness they could share is the rest of that job.
+It builds `--mode drive`, which is a release build with one constant flipped:
+`__DRIVEABLE__` keeps `window.nibApp` and `window.nib`, the handles every drive
+steers the app by. Those used to be behind `import.meta.env.DEV`, so the only build
+anything could drive was the one nobody ships - which is how three reported bugs came
+to be unreproducible in every build a drive could reach. Every drive builds that shape
+now, through harness.py; this one is the gate that runs on every change.
 """
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "smoke"
+from harness import Drive
 
-# Not the dev server's 1420, and not another drive's either.
-PORT = 18847
-#: Where to drive. Its own build by default, served here. `NIB_ORIGIN` points it
-#: at a server that is already running instead - the dev server on 1420, or the
-#: address a desktop build is loading from - which is how this answers "is what
-#: is on that screen the same as what is in main" without a build of its own.
-ORIGIN = os.environ.get("NIB_ORIGIN") or f"http://127.0.0.1:{PORT}"
-BORROWED = bool(os.environ.get("NIB_ORIGIN"))
+DRIVE = Drive(__file__)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
 
 #: A note with one of everything this drive asks about, and long enough that it
 #: cannot fit in the window: the filler is what makes the scroll question real.
@@ -103,95 +85,6 @@ async (start) => {
   return tab.note.name
 }
 """
-
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    # `drive` is a release build in every respect but one: minified, tree-shaken,
-    # the real chunks, and `__DRIVEABLE__` on so the handles a drive steers by are
-    # still there. `development` is what the other drives in this folder use.
-    #
-    # The default is the release-shaped one, and that is why this function exists
-    # in this form. A floor that only covers the development build is a floor under
-    # the wrong room.
-    mode = os.environ.get("NIB_MODE") or "drive"
-    say(f"building the web app in {mode}")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", mode],
-        cwd=APP,
-        env={**os.environ, **({"NODE_ENV": "development"} if mode == "development" else {})},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
 
 
 def show(page: Page, start: str) -> None:
@@ -252,10 +145,7 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page)
     # A first visit is given a welcome note and the app opens it after the space
     # is there rather than with it, so seeding before that wins the tab for a
     # moment and loses it again. See `restore` in workspace.svelte.ts.
@@ -489,25 +379,8 @@ def drive(browser: Browser) -> None:
 
 
 def main() -> int:
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    if BORROWED:
-        say(f"driving {ORIGIN}, which somebody else is serving")
-        server = None
-    else:
-        build()
-        server = serve()
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            try:
-                drive(browser)
-            finally:
-                browser.close()
-    finally:
-        if server:
-            server.shutdown()
-            server.server_close()
+    with DRIVE.session() as browser:
+        drive(browser)
 
     if failures:
         say(f"{len(failures)} of the floor's questions came back wrong")

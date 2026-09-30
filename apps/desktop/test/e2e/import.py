@@ -25,21 +25,16 @@ scratch drive rather than a test: it photographs the app and says what it saw.
 from __future__ import annotations
 
 import base64
-import functools
-import http.server
 import tempfile
-import threading
 import zipfile
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+DRIVE = Drive(__file__)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
 
-# Above 1425, and not any other drive's port.
-PORT = 18974
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -135,33 +130,6 @@ def enex(into: Path) -> Path:
     return path
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(APP / "dist"))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
-
-
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -180,9 +148,7 @@ def opened(browser, width, height, agent, finger, scheme, name):
         if one.type == "error"
         else None,
     )
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     # The import sheet's store is fetched after the space opens, not with the app;
     # see the end of the drive handle in App.svelte.
     page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
@@ -366,26 +332,14 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
 
 
 def main() -> int:
-    out = Path(__file__).resolve().parent / "shots" / "import"
+    out = DRIVE.shots
+    with tempfile.TemporaryDirectory(prefix="nib-import-") as held, DRIVE.session() as browser:
+        fixtures = Path(held)
+        for one in DEVICES:
+            say(f"--- {one[0]} ---")
+            drive(browser, out, fixtures, *one)
 
-    pages = Pages()
-    pages.start()
-    try:
-        with tempfile.TemporaryDirectory(prefix="nib-import-") as held:
-            fixtures = Path(held)
-            with sync_playwright() as play:
-                browser = play.chromium.launch(channel="chrome")
-                try:
-                    for one in DEVICES:
-                        say(f"--- {one[0]} ---")
-                        drive(browser, out, fixtures, *one)
-                finally:
-                    browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {out}")
-    return 0
+    return DRIVE.verdict(f"shots in {out}")
 
 
 if __name__ == "__main__":

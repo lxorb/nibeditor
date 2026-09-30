@@ -14,13 +14,13 @@ the same magnitude as the floor is the floor.
 
     python apps/desktop/test/e2e/shell.py before
     python apps/desktop/test/e2e/shell.py before2
-    python apps/desktop/test/e2e/compare.py shell-before shell-before2   # the floor
+    python apps/desktop/test/e2e/compare.py shell/before shell/before2   # the floor
     # make the change, rebuild, then
     python apps/desktop/test/e2e/shell.py after
-    python apps/desktop/test/e2e/compare.py shell-before shell-after
+    python apps/desktop/test/e2e/compare.py shell/before shell/after
 
 The names are folders under `shots/`, which is where every drive writes and which
-is ignored: `shell-<tag>` for shell.py, `access/<label>` for access.py. Exits
+is ignored: `shell/<tag>` for shell.py, `access/<label>` for access.py. Exits
 non-zero when anything differs, so it can gate a loop; read the numbers rather
 than the exit code when a floor is in play.
 

@@ -29,20 +29,16 @@ Screenshots go beside this file under `shots/text-size/`, which is ignored.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import threading
-from pathlib import Path
+import harness
+from harness import Drive
 
-from playwright.sync_api import sync_playwright
+DRIVE = Drive(__file__)
+say, wrong = DRIVE.say, DRIVE.wrong
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = APP / "test" / "e2e" / "shots" / "text-size"
-
-# Its own port, in the range this agent was given.
-PORT = 23302
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -76,39 +72,6 @@ SIZE = """
 """
 
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(words: str) -> None:
-    failures.append(words)
-    print(f"  FAIL {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(APP / "dist"))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
-
-
 def wheel(page, where: str, ctrl: bool, up: bool) -> None:
     """One notch, over whatever `where` names, with or without Ctrl."""
     box = page.locator(where).first.bounding_box()
@@ -136,10 +99,7 @@ def drive(browser) -> None:
     page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED)} files")
     page.wait_for_timeout(600)
 
@@ -322,31 +282,10 @@ LINE = """
 
 
 def main() -> int:
-    if not (APP / "dist" / "index.html").exists():
-        raise SystemExit("build the app first; see the top of this file")
+    with DRIVE.session() as browser:
+        drive(browser)
 
-    pages = Pages()
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                drive(browser)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {SHOTS}")
-
-    if failures:
-        print("\n%d thing(s) wrong:" % len(failures))
-        for one in failures:
-            print(f"  - {one}")
-        return 1
-
-    print("\neverything the drive checked was right")
-    return 0
+    return DRIVE.verdict("everything the drive checked was right")
 
 
 if __name__ == "__main__":

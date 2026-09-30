@@ -1,27 +1,35 @@
 """The three things the reading view has to keep while it skips what is off screen.
 
-Throwaway proof, run against a build in `dist`:
+Throwaway proof, run against the build in `dist` once before a change and once
+after it:
 
     python apps/desktop/test/e2e/reading-proof.py before
     python apps/desktop/test/e2e/reading-proof.py after
 
-Writes the geometry of every top-level block to `shots/reading-<tag>.json`, so the
-two builds can be held against each other block for block, and prints the landing
-errors and the page height.
+Writes the geometry of every top-level block to `shots/reading-proof/<tag>.json`, so
+the two builds can be held against each other block for block, and prints the
+landing errors and the page height.
 """
+
+from __future__ import annotations
 
 import importlib.util
 import json
 import sys
-from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+import harness
+from harness import Drive
 
-spec = importlib.util.spec_from_file_location("speed", "apps/desktop/test/e2e/speed.py")
+# The seeding and the lanes are speed.py's. The file name is a word, but it is
+# loaded by path like the drives with a dash in theirs, so nothing here depends on
+# which folder Python was started in.
+spec = importlib.util.spec_from_file_location("speed", harness.HERE / "speed.py")
+assert spec and spec.loader
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 
-OUT = Path(__file__).resolve().parent / "shots"
+#: Two runs of this drive are compared, so neither clears what the other wrote.
+DRIVE = Drive(__file__, served=False, fresh=False)
 
 PROBE = r"""
 async () => {
@@ -164,20 +172,24 @@ async () => {
 }
 """
 
-tag = sys.argv[1] if len(sys.argv) > 1 else "now"
+def main() -> int:
+    tag = sys.argv[1] if len(sys.argv) > 1 else "now"
+    if harness.OWN_BUILD:
+        harness.build()
 
-with sync_playwright() as play:
-    lane = m.Lane("after", "dist", "big")
+    lane = m.Lane("after", harness.DIST, "big")
     lane.start()
-    browser = play.chromium.launch(channel="chrome", args=["--enable-precise-memory-info"])
-    lane.ready(browser)
-    page = lane.page
-    m.ready(page, lane)
-    m.settled(page)
-    got = page.evaluate(PROBE)
+    try:
+        with DRIVE.session(args=["--enable-precise-memory-info"]) as browser:
+            lane.ready(browser)
+            page = lane.page
+            m.ready(page, lane)
+            m.settled(page)
+            got = page.evaluate(PROBE)
+    finally:
+        lane.stop()
 
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"reading-{tag}.json").write_text(json.dumps(got), encoding="utf-8")
+    (DRIVE.shots / f"{tag}.json").write_text(json.dumps(got), encoding="utf-8")
 
     print(f"bytes {got['bytes']}  blocks {got['blockCount']}  headings in source {got['headings']}")
     print(f"headings on the page {got['headingsOnPage']}  page height {got['pageHeight']}")
@@ -185,5 +197,8 @@ with sync_playwright() as play:
     for one in got["landings"]:
         print(f"  heading {one['index']:>3}: error {one['error']} px, anchor drift {one.get('drift')}")
 
-    browser.close()
-    lane.stop()
+    return DRIVE.verdict()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

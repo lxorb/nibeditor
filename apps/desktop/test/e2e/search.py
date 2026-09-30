@@ -24,20 +24,15 @@ it saw.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import sys
-import threading
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+DRIVE = Drive(__file__)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
 
-# Above 1425, and not any other drive's port.
-PORT = 18972
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -217,10 +212,6 @@ async ({ source, wait }) => {
 """
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
 def searching(page) -> None:
     """The search panel showing, whether it already was or not."""
     page.evaluate("() => window.nibApp.workspace.showPanel('search')")
@@ -231,29 +222,6 @@ def held_text(page) -> str:
     return str(
         page.evaluate("() => document.querySelector('.find')?.getAttribute('data-search')")
     )
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(APP / "dist"))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
 
 
 def opened(browser, width, height, agent, finger, scheme, name):
@@ -274,9 +242,7 @@ def opened(browser, width, height, agent, finger, scheme, name):
         if one.type == "error"
         else None,
     )
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
@@ -640,30 +606,19 @@ def papers(browser, out: Path) -> None:
 
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
-    out = Path(__file__).resolve().parent / "shots" / "search"
+    out = DRIVE.shots
+    with DRIVE.session() as browser:
+        for one in DEVICES:
+            say(f"--- {one[0]} ---")
+            drive(browser, out, *one)
 
-    pages = Pages()
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for one in DEVICES:
-                    say(f"--- {one[0]} ---")
-                    drive(browser, out, *one)
+        say("--- papers ---")
+        papers(browser, out)
 
-                say("--- papers ---")
-                papers(browser, out)
+        say(f"--- {count} notes ---")
+        measure(browser, out, count)
 
-                say(f"--- {count} notes ---")
-                measure(browser, out, count)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {out}")
-    return 0
+    return DRIVE.verdict(f"shots in {out}")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ node_modules
 dist
 dist-before
 dist-even
+dist-worker
 target
 .claude
 .svelte-kit

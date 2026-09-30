@@ -27,22 +27,16 @@ Screenshots go beside this file under `shots/agent-edits/`.
 from __future__ import annotations
 
 import json
-import os
 import re
-import socket
-import subprocess
-import sys
 import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-SHOTS = HERE / "shots" / "agent-edits"
+from harness import Drive
 
-PORT = int(os.environ.get("NIB_DRIVE_PORT", "18971"))
-ORIGIN = f"http://agent-live-docs.localhost:{PORT}"
+DRIVE = Drive(__file__, dev=True)
+say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
+ORIGIN = DRIVE.origin
 
 AROUND = 20
 MINE = 30
@@ -85,61 +79,6 @@ async ([edits, agent]) => {
 
 VIEW = "window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)"
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def serve() -> subprocess.Popen[bytes]:
-    say(f"serving the app on {ORIGIN}")
-    with socket.socket() as probe:
-        if probe.connect_ex(("127.0.0.1", PORT)) == 0:
-            raise SystemExit(f"something is already listening on port {PORT}")
-
-    server = subprocess.Popen(
-        [
-            "node",
-            str(APP / "node_modules" / "vite" / "bin" / "vite.js"),
-            "--port",
-            str(PORT),
-            "--strictPort",
-            "--host",
-            "127.0.0.1",
-        ],
-        cwd=APP,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    until = time.monotonic() + 60
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.3)
-
-    stop(server)
-    raise SystemExit("the dev server never answered")
-
-
-def stop(server: subprocess.Popen[bytes]) -> None:
-    if sys.platform == "win32":
-        subprocess.run(
-            ["taskkill", "/PID", str(server.pid), "/T", "/F"], capture_output=True, check=False
-        )
-    else:
-        server.terminate()
-    server.wait(timeout=10)
-
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> None:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -147,12 +86,6 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> No
             return
         page.wait_for_timeout(50)
     raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
 
 
 def text(page: Page) -> str:
@@ -306,25 +239,11 @@ def drive(page: Page) -> None:
 
 
 def main() -> int:
-    server = serve()
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context(viewport={"width": 1180, "height": 820})
-            page = context.new_page()
-            page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-            try:
-                drive(page)
-            finally:
-                browser.close()
-    finally:
-        stop(server)
+    with DRIVE.session() as browser:
+        page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
+        drive(page)
 
-    if failures:
-        print(f"\n{len(failures)} failed")
-        return 1
-    print("\nall good")
-    return 0
+    return DRIVE.verdict("all good")
 
 
 if __name__ == "__main__":

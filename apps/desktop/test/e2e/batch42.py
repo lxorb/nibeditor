@@ -1,6 +1,6 @@
 """Batch 42, seen: one document at a time, the row along the top, and full screen.
 
-Serves the built web app and drives it in the machine's own Chrome with a phone,
+Serves the built web app and drives it in Chromium with a phone,
 a tablet and a desktop, each with the user agent and the pointer that device
 really has - because the device class is decided from those and not from the
 width; see deviceFor in apps/desktop/src/lib/viewport.svelte.ts.
@@ -15,21 +15,15 @@ rather than a test: it prints what the page says about itself and photographs it
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import threading
-from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "batch42"
+DRIVE = Drive(__file__)
+say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 18942
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -87,39 +81,6 @@ STATE = """
 """
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(
-            http.server.SimpleHTTPRequestHandler, directory=str(APP / "dist")
-        )
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
-
-
-def wait_for(page, expression: str, what: str) -> None:
-    page.wait_for_function(expression, timeout=20000)
-    say(f"{what}: there")
-
-
-def shot(page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
-
-
 def drive(browser, name: str, width: int, height: int, agent: str, finger: bool) -> dict:
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -130,10 +91,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     )
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{name}] the app")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{name}] a space")
+    DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 8; i++) history.pushState({ spare: i }, '') }")
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(400)
@@ -214,24 +172,14 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
 
 
 def main() -> int:
-    pages = Pages()
-    pages.start()
     found: dict = {}
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for name, width, height, agent, finger in DEVICES:
-                    say(f"--- {name} ---")
-                    found[name] = drive(browser, name, width, height, agent, finger)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
+    with DRIVE.session() as browser:
+        for name, width, height, agent, finger in DEVICES:
+            say(f"--- {name} ---")
+            found[name] = drive(browser, name, width, height, agent, finger)
 
-    SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / "found.json").write_text(json.dumps(found, indent=2), encoding="utf8")
-    return 0
+    return DRIVE.verdict()
 
 
 if __name__ == "__main__":

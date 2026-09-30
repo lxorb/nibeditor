@@ -25,23 +25,23 @@ run-all.py sets.
 from __future__ import annotations
 
 import json
-import os
 import shutil
-import subprocess
 import sys
-import time
 from pathlib import Path
 
-from playwright.sync_api import BrowserContext, Page, sync_playwright
+from playwright.sync_api import BrowserContext, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "tree-order"
+import harness
+from harness import Drive
 
-# A port of this run's own, well clear of the dev server's and of every other
-# drive's.
-PORT = 23641
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+problems = DRIVE.failures
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+ROOT = harness.ROOT
+
 
 # How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 60
@@ -58,73 +58,11 @@ ORDERS = [
     ("Manual", "manual"),
 ]
 
-problems: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(words: str) -> None:
-    problems.append(words)
-    print(f"  WRONG: {words}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") == "1":
-        say("reusing the build already in dist")
-        return
-
-    say("building the web app")
-    # A production build hides the app's stores, and the rows below are written
-    # through them.
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    """Polls a page until the script answers with something truthy."""
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
 
 def opened(context: BrowserContext, label: str) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    DRIVE.open(page)
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     return page
 
@@ -177,7 +115,9 @@ async (names) => {
     if (!doc) continue
 
     doc.replace(`${doc.text}\\nwritten in again\\n`, true)
-    await doc.flush()
+    // Written the way the app writes, a moment after the words change: waited for
+    // here, or the tree is read before either file has moved.
+    await ws.writeNow()
     done.push(name)
   }
 
@@ -259,10 +199,9 @@ def rowbox(page: Page, name: str):
 
 def desktop(playwright, profile: Path) -> list[str]:
     """The seven orders photographed, and one row dragged with a mouse."""
-    context = playwright.chromium.launch_persistent_context(
-        user_data_dir=str(profile),
-        executable_path=chromium(),
-        headless=True,
+    context = DRIVE.persistent(
+        playwright,
+        profile,
         viewport={"width": 1180, "height": 820},
         color_scheme="light",
     )
@@ -388,10 +327,9 @@ def desktop(playwright, profile: Path) -> list[str]:
 def relaunched(playwright, profile: Path, want: list[str]) -> None:
     """The same profile again, opened from cold: the order somebody arranged is a
     fact about the space rather than a redraw."""
-    context = playwright.chromium.launch_persistent_context(
-        user_data_dir=str(profile),
-        executable_path=chromium(),
-        headless=True,
+    context = DRIVE.persistent(
+        playwright,
+        profile,
         viewport={"width": 1180, "height": 820},
         color_scheme="light",
     )
@@ -418,10 +356,9 @@ def relaunched(playwright, profile: Path, want: list[str]) -> None:
 def phone(playwright, profile: Path) -> None:
     """The same design at phone width, through the only gesture a touch screen has:
     a press, a short hold, and a move."""
-    context = playwright.chromium.launch_persistent_context(
-        user_data_dir=str(profile),
-        executable_path=chromium(),
-        headless=True,
+    context = DRIVE.persistent(
+        playwright,
+        profile,
         viewport={"width": 390, "height": 844},
         has_touch=True,
         is_mobile=True,
@@ -514,8 +451,6 @@ FOLDERS: list[str] = []
 
 def main() -> int:
     global FOLDERS
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    build()
 
     profiles = Path(ROOT / "target" / "tree-order-profiles")
     if profiles.exists():
@@ -528,42 +463,12 @@ def main() -> int:
     # The five folders the seed makes, which every order has to put first.
     FOLDERS = sorted(["Archive", "Reading", "Work"])
 
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    with DRIVE.session(playwright=True) as playwright:
+        arranged = desktop(playwright, desk)
+        relaunched(playwright, desk, arranged)
+        phone(playwright, hand)
 
-    try:
-        with sync_playwright() as playwright:
-            arranged = desktop(playwright, desk)
-            relaunched(playwright, desk, arranged)
-            phone(playwright, hand)
-    finally:
-        say("stopping the server")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(server.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            server.terminate()
-        try:
-            server.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            server.kill()
-
-    if problems:
-        print("\n%d thing(s) were wrong:" % len(problems), flush=True)
-        for one in problems:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe seven orders read as they should, and Manual held a drag", flush=True)
-    return 0
+    return DRIVE.verdict("the seven orders read as they should, and Manual held a drag")
 
 
 if __name__ == "__main__":

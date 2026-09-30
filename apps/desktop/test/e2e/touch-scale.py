@@ -20,102 +20,21 @@ the second prints both columns side by side. `NIB_SKIP_BUILD=1` reuses
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import subprocess
 import sys
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "touch-scale"
+from harness import Drive
 
-# A port of this run's own. Never 1420, which is the dev server's, and not the
-# ones the other runs here use either.
-PORT = 18893
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, fresh=False)
+say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+
 
 # How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 40
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        local.glob("chromium-*/chrome-win*/chrome.exe"),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit(f"no chromium under {local}")
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (APP / "dist" / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    # A production build hides the app's stores, and the run drives them.
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Pages:
-    """The built page, served. No Worker: nothing here signs in."""
-
-    def __init__(self) -> None:
-        self.server: http.server.ThreadingHTTPServer | None = None
-
-    def start(self) -> None:
-        say(f"serving the build on {ORIGIN}")
-        handler = functools.partial(
-            http.server.SimpleHTTPRequestHandler, directory=str(APP / "dist")
-        )
-        handler.log_message = lambda *args, **kwargs: None  # type: ignore[assignment]
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
-
-    def stop(self) -> None:
-        if not self.server:
-            return
-        say("stopping the server")
-        self.server.shutdown()
-        self.server.server_close()
-        self.server = None
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    """Polls a page until the script answers with something truthy."""
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 # The os plugin's globals, so anything asking which platform this is gets an
@@ -301,11 +220,6 @@ def measure(page: Page, specs) -> dict:
     return dict(page.evaluate(MEASURE, specs))
 
 
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-
-
 def open_drawer(page: Page) -> None:
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(350)
@@ -323,45 +237,33 @@ def shut_drawer(page: Page) -> None:
 
 
 def run(label: str) -> int:
-    build()
-    pages = Pages()
     found: dict[str, dict] = {}
 
-    try:
-        pages.start()
-        with sync_playwright() as play:
-            browser = play.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                for name, width, height, scale, device, portrait, narrow in PROFILES:
-                    # Both schemes, because the run photographs both; the
-                    # measurements are the same either way, so the dark pass is
-                    # the one that is kept.
-                    for scheme in ("dark", "light"):
-                        say(f"[{name}] {width}x{height} at {scale}x, a {device}, {scheme}")
-                        seen = one(
-                            browser,
-                            label,
-                            name,
-                            width,
-                            height,
-                            scale,
-                            device,
-                            portrait,
-                            narrow,
-                            scheme,
-                        )
-                        if scheme == "dark":
-                            found[name] = seen
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
+    with DRIVE.session() as browser:
+        for name, width, height, scale, device, portrait, narrow in PROFILES:
+            # Both schemes, because the run photographs both; the measurements are
+            # the same either way, so the dark pass is the one that is kept.
+            for scheme in ("dark", "light"):
+                say(f"[{name}] {width}x{height} at {scale}x, a {device}, {scheme}")
+                seen = one(
+                    browser,
+                    label,
+                    name,
+                    width,
+                    height,
+                    scale,
+                    device,
+                    portrait,
+                    narrow,
+                    scheme,
+                )
+                if scheme == "dark":
+                    found[name] = seen
 
-    SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / f"{label}.json").write_text(json.dumps(found, indent=2), encoding="utf8")
     say(f"wrote {label}.json")
     report(label)
-    return 0
+    return DRIVE.verdict()
 
 
 def one(
@@ -378,10 +280,7 @@ def one(
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     context.add_init_script(PREPARE)
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{name}] the app")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{name}] a space")
+    DRIVE.open(page)
     # Every layer that opens over the note takes a history entry and gives it
     # back on closing; see backstack.svelte.ts. A tab opened straight onto the
     # app has one entry behind it, so a run that opens and shuts a dozen layers

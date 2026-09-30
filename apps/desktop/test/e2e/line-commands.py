@@ -24,30 +24,26 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
 import sys
 import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+import harness
+from harness import Drive
 
-PORT = 18931
-ORIGIN = f"http://line-commands.localhost:{PORT}"
+DRIVE = Drive(__file__)
+say = DRIVE.say
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+APP = harness.APP
+
+
 PATIENCE = 40
 
-failures: list[str] = []
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
 
 
 def check(fine: bool, what: str, got: object = None) -> None:
@@ -56,37 +52,6 @@ def check(fine: bool, what: str, got: object = None) -> None:
     else:
         failures.append(what)
         say(f"WRONG {what}: {got!r}")
-
-
-def chromium() -> str:
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        local.glob("chromium-*/chrome-win*/chrome.exe"),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit(f"no chromium under {local}")
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") == "1":
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
 
 
 def wait_for(page: Page, script: str, what: str, arg: object = None):
@@ -150,7 +115,10 @@ PASTE = """
   const data = new DataTransfer()
   data.setData('text/plain', text)
   const event = new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
-  document.querySelector('.cm-content').dispatchEvent(event)
+  // The editor the selection was made in, not the first one in the page: a tab keeps
+  // its editor while another is in front, so the first `.cm-content` can be a note
+  // nobody is looking at.
+  window.nib.contentDOM.dispatchEvent(event)
 }
 """
 
@@ -178,13 +146,25 @@ def palette(page: Page, label: str) -> None:
     page.wait_for_timeout(200)
 
 
+def landed(page: Page, address: str) -> None:
+    """Until the pasted address is in the note. What handles a paste is fetched the
+    first time one arrives, so the frame after the event can still be the words as
+    they were - and a drive that moved on then saw the address land in the next note."""
+    wait_for(
+        page,
+        "(address) => window.nib.state.doc.toString().includes(address)",
+        f"the pasted {address} to land",
+        address,
+    )
+
+
 def pasting(page: Page) -> None:
     doc = "# Paste drive\n\nRead the docs first, and run `npm test` too.\n"
     open_note(page, doc)
 
     select(page, doc, "the docs")
     page.evaluate(PASTE, "https://example.com/docs")
-    page.wait_for_timeout(100)
+    landed(page, "https://example.com/docs")
     check(
         "Read [the docs](https://example.com/docs)| first" in marked(page),
         "an address pasted over words links them",
@@ -194,7 +174,7 @@ def pasting(page: Page) -> None:
     now = page.evaluate("() => window.nib.state.doc.toString()")
     select(page, now, "npm test")
     page.evaluate(PASTE, "https://example.com/npm")
-    page.wait_for_timeout(100)
+    landed(page, "https://example.com/npm")
     check(
         "`https://example.com/npm|`" in marked(page),
         "in inline code the address goes in as it stands",
@@ -321,58 +301,23 @@ def hidden_front_matter(page: Page) -> None:
 
 
 def main() -> int:
-    build()
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    with DRIVE.session() as browser:
+        context = browser.new_context(viewport={"width": 1280, "height": 860})
+        page = context.new_page()
+        page.on("pageerror", lambda error: say(f"page error: {error}"))
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        wait_for(page, "() => !!window.nibApp?.workspace?.activeSpace", "a space")
+        wait_for(page, "() => window.nibApp.workspace.tabs.length > 0", "the launch")
 
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(
-                executable_path=chromium(),
-                headless=True,
-                args=["--host-resolver-rules=MAP line-commands.localhost 127.0.0.1"],
-            )
-            try:
-                context = browser.new_context(viewport={"width": 1280, "height": 860})
-                page = context.new_page()
-                page.on("pageerror", lambda error: say(f"page error: {error}"))
-                page.goto(ORIGIN, wait_until="domcontentloaded")
-                wait_for(page, "() => !!window.nibApp?.workspace?.activeSpace", "a space")
-                wait_for(page, "() => window.nibApp.workspace.tabs.length > 0", "the launch")
+        pasting(page)
+        growing(page)
+        tasks_and_lines(page)
+        from_the_palette(page)
+        every_match(page)
+        slash_menu(page)
+        hidden_front_matter(page)
 
-                pasting(page)
-                growing(page)
-                tasks_and_lines(page)
-                from_the_palette(page)
-                every_match(page)
-                slash_menu(page)
-                hidden_front_matter(page)
-            finally:
-                browser.close()
-    finally:
-        say("stopping the server")
-        if os.name == "nt":
-            subprocess.run(["taskkill", "/T", "/F", "/PID", str(server.pid)], capture_output=True, check=False)
-        else:
-            server.terminate()
-        try:
-            server.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            server.kill()
-
-    if failures:
-        print("\nwhat is still wrong:", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe line and text commands answer their keys, the palette and a paste", flush=True)
-    return 0
+    return DRIVE.verdict("the line and text commands answer their keys, the palette and a paste")
 
 
 if __name__ == "__main__":

@@ -26,28 +26,25 @@ which go beside it under `shots/conflict/`.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
-import shutil
-import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
-import uuid
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-SERVICE = ROOT / "services" / "sync"
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "conflict"
+import harness
+from harness import Drive
 
-# A port of this drive's own. Never 1420, which is the dev server's.
-PORT = 21811
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+#: Eighteen cases of a minute or more each: the longest drive in the folder.
+BUDGET = 2400
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+
 
 EMAIL = "two-hands@example.com"
 SPACE = "Two hands"
@@ -65,42 +62,9 @@ WAYS = ("network", "restart", "noroom")
 wrong: list[str] = []
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    executable = shutil.which("npx") or shutil.which("npx.cmd")
-    if not executable:
-        raise SystemExit("npx is not on the path")
-
-    return subprocess.run(
-        [executable, *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit(f"no chromium under {local}")
-
-    return str(found[-1])
 
 
 def request(path: str, token: str | None = None, body: dict | None = None, method: str | None = None):
@@ -125,165 +89,14 @@ def request(path: str, token: str | None = None, body: dict | None = None, metho
         return {"status": refused.code, **(json.loads(said) if said else {})}
 
 
-class Worker:
-    """The Worker under wrangler dev, and the local database behind it."""
+class Worker(harness.Worker):
+    """The real Worker, with this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        # Its output goes to a file rather than to a pipe. A pipe nobody reads
-        # fills up, and a Worker whose output has nowhere to go stops answering.
-        self.log = SHOTS / "worker.log"
-        self.opened = None
+        super().__init__(DRIVE)
 
-    def build(self) -> None:
-        say("building the web app against the local Worker")
-        # `vite build` is a production build whatever mode it is given unless the
-        # environment says otherwise, and a production build is the one with the
-        # app's stores hidden. Both are set, so the built page keeps them.
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        """Everything the last run left: the database, the blobs, and the rooms'
-        own storage. A drive that starts from yesterday's state is a drive of
-        yesterday."""
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-
-    def migrate(self) -> None:
-        say("applying the migrations to the local database")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-    def sql(self, statement: str) -> None:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-    def free(self) -> None:
-        """Waits for the port to be nobody's. A `wrangler dev` that was stopped
-        leaves the runtime behind for a moment, and a run that starts inside that
-        moment is answered by the last run's Worker - which serves the last run's
-        app and knows nothing about this database."""
-        import socket
-
-        until = time.monotonic() + 60
-        while time.monotonic() < until:
-            with socket.socket() as probe:
-                probe.settimeout(1)
-                if probe.connect_ex(("127.0.0.1", PORT)) != 0:
-                    return
-            say(f"port {PORT} is still somebody's; waiting")
-            time.sleep(3)
-
-        raise SystemExit(f"port {PORT} never came free")
-
-    def start(self) -> None:
-        self.free()
-        say(f"starting the Worker on {ORIGIN}")
-        self.log.parent.mkdir(parents=True, exist_ok=True)
-        self.opened = self.log.open("wb")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                # Every binding local, which is the only way it starts without a
-                # Cloudflare token: the account's own Workers AI binding is remote
-                # by nature, and nothing here asks anything of it.
-                "--local",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 120
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            try:
-                if request("/health").get("ok"):
-                    say("the Worker is answering")
-                    return
-            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-                time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        if self.opened:
-            self.opened.flush()
-        if not self.log.exists():
-            return "(nothing)"
-
-        return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-60:])
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        say("stopping the Worker")
-        # The whole tree. `wrangler dev` is a wrapper around the runtime itself,
-        # and stopping only the wrapper leaves the runtime holding the port.
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
-
-    def account(self) -> str:
-        """An account with a live session, put straight into the database.
-
-        Signing in needs an emailed code, and what is under drive is not the
-        sign-in. Everything after this goes through the API the app uses.
-        """
-        token = uuid.uuid4().hex + uuid.uuid4().hex
-        digest = hashlib.sha256(token.encode()).hexdigest()
-        now = int(time.time() * 1000)
-        user = str(uuid.uuid4())
-
-        self.sql(
-            f"insert into users (id, email, created_at) values ('{user}', '{EMAIL}', {now});"
-            f" insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
-        )
-
-        return token
+    def account(self) -> str:  # type: ignore[override]
+        return super().account(EMAIL)
 
 
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
@@ -590,6 +403,10 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
             return
         gone.wait_for_timeout(1500)
     else:
+        # Every chunk of the app into the page first: a desktop that loses its
+        # connection still has its own files, and a question sheet it has never
+        # opened is one of them. See `preload` in harness.py.
+        DRIVE.preload(gone, harness.WORKER_DIST)
         gone.context.set_offline(True)
         gone.wait_for_timeout(600)
 
@@ -742,51 +559,40 @@ def read_words(page: Page) -> str:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
     worker = Worker()
-    worker.clean()
-    worker.migrate()
-    worker.build()
-    worker.start()
-
-    try:
+    with DRIVE.session() as browser:
+        worker.start()
         token = worker.account()
-        with sync_playwright() as play:
-            browser = play.chromium.launch(executable_path=chromium(), headless=True)
 
-            # The space, made once by a machine of its own so that every case below
-            # starts from an account that already holds it.
-            owner = signed_in(browser, token, "owner")
-            wait_for(owner, "() => !!window.nibApp.workspace.activeSpace", "a space")
-            owner.evaluate(
-                "async (name) => { const ws = window.nibApp.workspace; await ws.addSpace(name);"
-                " const space = ws.spaces.find((one) => one.name === name);"
-                " await ws.selectSpace(space.id) }",
-                SPACE,
-            )
-            space_id = wait_for(
-                owner,
-                "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)",
-                "the space to reach the account",
-            )
-            settled(owner, "the first push")
-            say(f"the space is {space_id} on the account")
-            owner.context.close()
+        # The space, made once by a machine of its own so that every case below
+        # starts from an account that already holds it.
+        owner = signed_in(browser, token, "owner")
+        wait_for(owner, "() => !!window.nibApp.workspace.activeSpace", "a space")
+        owner.evaluate(
+            "async (name) => { const ws = window.nibApp.workspace; await ws.addSpace(name);"
+            " const space = ws.spaces.find((one) => one.name === name);"
+            " await ws.selectSpace(space.id) }",
+            SPACE,
+        )
+        space_id = wait_for(
+            owner,
+            "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)",
+            "the space to reach the account",
+        )
+        settled(owner, "the first push")
+        say(f"the space is {space_id} on the account")
+        owner.context.close()
 
-            only = sys.argv[1] if len(sys.argv) > 1 else ""
-            for rule in RULES:
-                for away in SIDES:
-                    for how in WAYS:
-                        if only and only not in f"{rule}/{away}/{how}":
-                            continue
-                        try:
-                            run_case(browser, token, space_id, rule, away, how)
-                        except SystemExit as gave_up:
-                            failed(f"[{rule}/{away}/{how}] gave up: {gave_up}")
-
-            browser.close()
-    finally:
-        worker.stop()
+        only = sys.argv[1] if len(sys.argv) > 1 else ""
+        for rule in RULES:
+            for away in SIDES:
+                for how in WAYS:
+                    if only and only not in f"{rule}/{away}/{how}":
+                        continue
+                    try:
+                        run_case(browser, token, space_id, rule, away, how)
+                    except SystemExit as gave_up:
+                        failed(f"[{rule}/{away}/{how}] gave up: {gave_up}")
 
     if wrong:
         print(f"\n{len(wrong)} thing(s) wrong:", flush=True)

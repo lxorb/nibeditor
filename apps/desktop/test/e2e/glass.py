@@ -35,27 +35,16 @@ beside this file under `shots/glass/`, which is ignored.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "glass"
+from harness import Drive
 
-# Not the dev server's 1420, and not another drive's either.
-PORT = 23811
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+
 
 NOTE = """# A window with a desk behind it
 
@@ -270,12 +259,7 @@ FIRST_FRAME = """
 
 TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
 
-failures: list[str] = []
 finished: set[object] = set()
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
 
 
 def shows(what: str, saw: object, wanted: object) -> None:
@@ -296,84 +280,9 @@ def holds(what: str, ratio: float, floor: float = FLOOR) -> None:
     say(f"NOT  {what}: {ratio}:1, under {floor}")
 
 
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.ThreadingTCPServer):
-    """Threaded, because a context that was closed can leave a keep-alive connection
-    open, and with a backlog deep enough for a whole window's worth of assets."""
-
-    allow_reuse_address = False
-    daemon_threads = True
-    request_queue_size = 128
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
 def done_with(page: Page) -> None:
     finished.add(page)
     page.context.close()
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
 
 
 def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window") -> Page:
@@ -430,30 +339,12 @@ def read_over(page: Page, where: str, unders: list[str]) -> None:
 
 
 def main() -> int:
-    build()
-    server = serve()
+    with DRIVE.session() as browser:
+        for scheme in ("dark", "light"):
+            drive(browser, scheme)
+        scrolling(browser)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for scheme in ("dark", "light"):
-                    drive(browser, scheme)
-                scrolling(browser)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-
-    print()
-    if failures:
-        say(f"{len(failures)} did not hold:")
-        for one in failures:
-            say(f"  - {one}")
-        return 1
-
-    say("every reading held")
-    return 0
+    return DRIVE.verdict("every reading held")
 
 
 def drive(browser: Browser, scheme: str) -> None:
