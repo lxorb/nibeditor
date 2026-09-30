@@ -394,8 +394,11 @@ maximised are written to `window.json` beside the settings as it closes, and put
 into the window's config before it is built, so the first frame is already in the
 right place. A place on a screen that is no longer plugged in is pulled onto one
 that is. A window whose config names a place of its own, or any window of a run with
-`NIB_OFF_SCREEN` set, is a probe's: it is built hidden, sent there, and shown without
-coming forward, so no frame of it is ever in front of anybody; see
+`NIB_OFF_SCREEN` set, is a probe's: it is built hidden, sent there, shown without
+coming forward and kept under every other window, so no frame of it is ever in front of
+anybody and the keyboard is never handed to it - and on Windows it is
+created off the screen in the first place, because tao hands an off-screen starting
+place to the system's cascade; see `created_away` in
 `apps/desktop/src-tauri/src/placement.rs`. `scripts/probe_app.py` starts every probe
 that way and ends one that shows up on a screen. It is on the trace as `window
 placement`.
