@@ -36,6 +36,11 @@ pub struct Found {
     pub size: u64,
     /// When it was last written, in milliseconds since the epoch.
     pub mtime: u64,
+    /// The same moment as finely as the file system keeps it, in nanoseconds: what a
+    /// write is told from the one before by, where two land in the same millisecond.
+    /// NTFS keeps a tenth of a microsecond, APFS and ext4 a nanosecond, though Linux
+    /// stamps a write with a clock that moves every few milliseconds.
+    pub stamp: u128,
     /// What it is apart from where it is; see identity.rs. None where the file system
     /// would not say, which a file that vanished between the listing and the question
     /// also answers.
@@ -74,6 +79,11 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
         dir: meta.is_dir(),
         size: if meta.is_dir() { 0 } else { meta.len() },
         mtime: clock::of(meta.modified().ok()),
+        stamp: meta
+            .modified()
+            .ok()
+            .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
+            .map_or(0, |since| since.as_nanos()),
         id: identity(&path),
     })
 }

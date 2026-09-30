@@ -256,6 +256,7 @@ mod tests {
             dir: false,
             size: 5,
             mtime: 1_700_000_000_000,
+            stamp: 1_700_000_000_000_000_000,
             id: Some("2a:1f".into()),
         };
 

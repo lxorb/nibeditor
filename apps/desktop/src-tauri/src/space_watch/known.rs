@@ -60,7 +60,7 @@ pub enum Seen {
 struct Known {
     dir: bool,
     size: u64,
-    mtime: u64,
+    stamp: u128,
     id: Option<String>,
 }
 
@@ -69,7 +69,7 @@ impl From<&Found> for Known {
         Self {
             dir: one.dir,
             size: one.size,
-            mtime: one.mtime,
+            stamp: one.stamp,
             id: one.id.clone(),
         }
     }
@@ -313,7 +313,7 @@ impl Space {
         }
         // A folder's own time moves whenever anything in it does, which is news about
         // what is in it and not about the folder.
-        if known.dir || (now.size == known.size && now.mtime == known.mtime && now.id == known.id) {
+        if known.dir || (now.size == known.size && now.stamp == known.stamp && now.id == known.id) {
             return;
         }
 
@@ -451,7 +451,13 @@ mod tests {
         );
         assert_eq!(said(&seen), ["renamed Projects Archive"]);
 
-        fs::write(root.join("Archive").join("Deep").join("Two.md"), "later").expect("edited");
+        // Longer, and not only later: Linux stamps a write with a clock that moves every
+        // few milliseconds, and this one lands straight after the space was read.
+        fs::write(
+            root.join("Archive").join("Deep").join("Two.md"),
+            "later, and longer",
+        )
+        .expect("edited");
         assert_eq!(
             said(&settle(&mut space, root, &["Archive/Deep/Two.md"])),
             ["modified Archive/Deep/Two.md"],
