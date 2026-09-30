@@ -1,20 +1,20 @@
 # nib on its own Chromium: the same app, built a second time against the engine.
 #
-# **Why a manifest of its own.** The app that ships is built against Tauri 2, and
-# nib's own Chromium comes as `tauri-runtime-cef`, which only exists for Tauri 3.
-# One package cannot depend on two major versions of `tauri` by a feature, and a
-# `[patch]` cannot turn one into the other, so the engine build is this package: the
-# library's own source, `../src/lib.rs`, compiled here against Tauri 3 and the engine,
-# with the `cef` feature on. Every line of the app is the same file in both builds;
-# only the dependency list is written twice, and `apps/desktop/test/cef.test.ts` holds
-# the two lists to each other. When Tauri 3 is released, the two builds become one
+# **Why a manifest of its own.** The app that ships is built against Tauri 2, and nib's
+# own Chromium comes as `tauri-runtime-cef`, which exists for Tauri 3 only. One package
+# cannot depend on two major versions of `tauri` by a feature, and a `[patch]` cannot
+# turn one into the other, so the engine build is this package: the library's own source,
+# `../src/lib.rs`, compiled against Tauri 3 and the engine, with the `cef` feature on.
+# Every line of the app is the same file in both builds. The dependency list below the
+# marker is the app's own, written by scripts/engine-manifest.ts with the Tauri family
+# moved to the pins in `[package.metadata.engine]`, and apps/desktop/test/cef.test.ts
+# fails when it is out of date. When Tauri 3 is released the two builds become one
 # binary that picks its runtime as it starts (`tauri::DynRuntime`, which is what
 # `lib.rs` already writes this build against), and this file goes. See
-# src/engine.rs and docs/browser.md.
+# ../src/engine.rs and docs/browser.md.
 #
-# Nothing that ships builds this. The installers are the default build; this build
-# is the engine the setting downloads (see engine_switch.rs), made by
-# .github/workflows/cef.yml.
+# The installers are the default build. This one is the engine the Browser setting
+# fetches (see ../src/engine_switch.rs), made by .github/workflows/cef.yml.
 
 [package]
 name = "nib-chromium"
@@ -25,9 +25,8 @@ publish = false
 rust-version = "1.95"
 description = "nib on its own Chromium: the engine the Browser setting switches to."
 
-# Its own workspace, deliberately: the app's manifest next door is one too, and a
-# workspace holding both would unify their dependencies into one lock file with two
-# Tauris in it.
+# Its own workspace, deliberately: a workspace holding both manifests would unify them
+# into one lock file with two Tauris and a Chromium in the app's.
 [workspace]
 
 [lib]
@@ -40,8 +39,7 @@ name = "nib-chromium"
 path = "src/main.rs"
 
 [features]
-# The library's own switch for which engine it is written against; on, always, in
-# this package. See ../Cargo.toml.
+# The library's own switch for the engine it is written against: always on here.
 default = ["cef"]
 cef = []
 
@@ -54,24 +52,37 @@ unsafe_op_in_unsafe_fn = "deny"
 pedantic = { level = "warn", priority = -1 }
 needless_pass_by_value = "allow"
 
+# **The pins**, and the only ones: every Tauri crate the engine build takes, and CEF.
+# Published crates, all of one release of Tauri 3 - `tauri` and the runtime on their
+# alpha.2, the plugins on their alpha.1, which are built against it - so a build gives
+# the same answer twice. .github/workflows/cef-bump.yml moves them.
+[package.metadata.engine]
+tauri = "3.0.0-alpha.2"
+tauri-runtime-cef = "3.0.0-alpha.2"
+tauri-build = "3.0.0-alpha.1"
+plugins = "3.0.0-alpha.1"
+cef = "152.3.0"
+
+# ---- below: the app's own dependencies, as scripts/engine-manifest.ts writes them ----
+
 [build-dependencies]
 tauri-build = "=3.0.0-alpha.1"
 
 [dependencies]
 tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "custom-protocol"] }
-# The engine. Depending on it is what makes this a CEF application: its build script
-# stages the Chromium distribution beside the binary, and its attributes are what
-# `tauri::Builder::runtime` is handed in src/main.rs.
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["unstable"] }
+cef = { version = "=152.3.0", default-features = false }
+dirs = "6"
 tauri-plugin-opener = "=3.0.0-alpha.1"
 tauri-plugin-os = "=3.0.0-alpha.1"
 tauri-plugin-deep-link = "=3.0.0-alpha.1"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["raw_value"] }
 base64 = "0.22"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
-# Where the engine's own profiles go, worked out before the app exists; see src/main.rs.
-dirs = "6"
+rusqlite = { version = "0.32", features = ["bundled"] }
+notify = "8"
+getrandom = "0.3"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["devtools"] }
@@ -85,12 +96,33 @@ keyring = { version = "3", default-features = false, features = [
   "sync-secret-service",
   "crypto-rust",
 ] }
-getrandom = "0.3"
+sha2 = "0.10"
 window-vibrancy = "0.6"
 portable-pty = "0.9"
+x25519-dalek = { version = "2", default-features = false, features = [
+  "static_secrets",
+  "zeroize",
+] }
+chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
+hkdf = "0.12"
+hmac = "0.12"
+zeroize = "1"
+tokio = { version = "1", default-features = false, features = ["time"] }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+keyring = { version = "3", default-features = false, features = ["apple-native"] }
+objc2 = "0.6"
+objc2-ui-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "UIApplication",
+  "UIResponder",
+  "UIScene",
+  "UISceneOptions",
+  "UISceneSession",
+] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
 objc2 = "0.6"
 block2 = "0.6"
@@ -141,10 +173,10 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "objc2-app-kit",
   "block2",
   "WKContentWorld",
+  "WKNavigation",
   "WKDownload",
   "WKFrameInfo",
   "WKHTTPCookieStore",
-  "WKNavigation",
   "WKNavigationAction",
   "WKNavigationDelegate",
   "WKNavigationResponse",
@@ -159,7 +191,12 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebsiteDataStore",
 ] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
+javascriptcore-rs = "=1.1.2"
+
 [target.'cfg(target_os = "windows")'.dependencies]
+file-id = "0.2"
 windows-registry = "0.6"
 windows = { version = "0.58", features = [
   "Win32_UI_Shell",
@@ -169,6 +206,7 @@ windows = { version = "0.58", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Console",
+  "Win32_System_ProcessStatus",
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_SystemInformation",
 ] }
@@ -179,11 +217,9 @@ windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com_StructuredStorage",
 ] }
 
-[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
+[target.'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 
-# The same release profile as the app's, so a size or a launch measured here is
-# comparable with one measured there.
 [profile.release]
 codegen-units = 1
 lto = true
