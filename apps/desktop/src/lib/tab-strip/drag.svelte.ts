@@ -207,3 +207,8 @@ export function arrival(tabId: string): { left: number; top: number } | null {
   arriving = null
   return where
 }
+
+/** Several tabs at once (picking.svelte.ts), once a click with Ctrl or Shift fetched it. */
+export const picks: { loaded: typeof import('./picking.svelte') | null } = $state({
+  loaded: null,
+})

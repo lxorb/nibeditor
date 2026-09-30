@@ -28,7 +28,7 @@ import { settings } from '../settings.svelte'
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
-import { chosen } from '../tab-strip/chosen.svelte'
+import { picks } from '../tab-strip/drag.svelte'
 import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
@@ -335,10 +335,11 @@ const APP_ENTRIES: Shortcut[] = [
     // On a Mac the same key closes the window once nothing is left in it to close,
     // as it does in Safari and VS Code there. A pane put down with Ctrl+D still has
     // its tabs, so there it closes nothing. Several tabs picked go together, as
-    // Chrome's do; see tab-strip/chosen.svelte.ts.
+    // Chrome's do; see tab-strip/picking.svelte.ts.
     run: () => {
-      const many = chosen.of(workspace.panes.focusedId)
-      if (many.length) void import('../tab-strip/picking').then((one) => one.closeChosen(many))
+      const pick = picks.loaded
+      const many = pick?.chosen.of(workspace.panes.focusedId) ?? []
+      if (pick && many.length) void pick.closeChosen(many)
       else if (workspace.activeTabId || workspace.tabs.length || !onMac())
         void workspace.closeActive()
       else void closeWindow()

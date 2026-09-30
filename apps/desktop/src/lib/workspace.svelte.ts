@@ -2622,9 +2622,7 @@ class Workspace {
     await this.closeMany(going.map((one) => one.id))
   }
 
-  /** Several tabs closed by one gesture - a pick of them, or the tabs around one - and
-   *  brought back by one Reopen closed tab; see workspace/closed.svelte.ts. Closed in
-   *  the order the strips hold them, which is what puts each back at its own place. */
+  /** Several tabs closed by one gesture, which one Reopen closed tab brings back. */
   async closeMany(ids: readonly string[]) {
     const going = this.tabs.filter((one) => ids.includes(one.id))
     if (!(await this.mayClose(going))) return
@@ -2733,8 +2731,6 @@ class Workspace {
    *  they asked for a tab back would be a surprise. */
   async reopenClosed() {
     for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
-      // Tabs closed together come back together, newest first so each lands at its
-      // own place, and the first of them to have been closed is the one in front.
       let back: { tab: Tab; paneId: string } | null = null
       for (const closed of batch) {
         const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId

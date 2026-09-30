@@ -35,12 +35,16 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-const { chosen, pickingOf } = await import('./chosen.svelte')
-const { gathered, pick, placeBlock, pinMany, runOf } = await import('./picking')
+const { chosen, gathered, pick, pickingOf, placeBlock, pinMany, runOf } =
+  await import('./picking.svelte')
 const { moved, nearestSlot } = await import('./layout')
 const { tabMenu, tabMenuTitle } = await import('./menu')
 const { workspace } = await import('../workspace.svelte')
 const { runEntry } = await import('../shortcuts/registry')
+const { picks } = await import('./drag.svelte')
+
+// What the first click that picks does in the strip: the pick is fetched and held.
+picks.loaded = await import('./picking.svelte')
 
 const NAMES = ['A', 'B', 'C', 'D']
 

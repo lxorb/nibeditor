@@ -10,7 +10,7 @@ screen:
     and never over a menu (lib/tab-strip/hover-card.svelte.ts);
   - three tabs picked with Ctrl, dragged along the strip together, carried to the
     other pane together, closed together, and brought back by one Reopen closed tab
-    (lib/tab-strip/chosen.svelte.ts and picking.ts).
+    (lib/tab-strip/picking.svelte.ts).
 
 Serves the built web app and drives it headless in the machine's own Chrome. The
 build has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not

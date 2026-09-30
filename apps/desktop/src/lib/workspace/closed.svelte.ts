@@ -24,9 +24,7 @@ export class ClosedTabs {
    *  menu offers the row at all. */
   readonly any = $derived(this.stack.length > 0)
 
-  /** The stamp every tab closed by the gesture under way carries, or null, and the
-   *  last one given: a clock, so a stamp read back out of a session is never given
-   *  again, and never the same twice. */
+  /** The stamp of the gesture closing tabs now, and the last one given. */
   private joining: number | null = null
   private stamped = 0
 
@@ -35,9 +33,7 @@ export class ClosedTabs {
     this.stack = [...this.stack, entry].slice(-MOST_CLOSED)
   }
 
-  /** Everything `close` closes is one entry to take back rather than one each: a pick
-   *  of tabs closed together, or the tabs around one, comes back with one Reopen closed
-   *  tab, as Firefox brings them back. Chrome hands them back one press at a time. */
+  /** Everything `close` closes comes back with one Reopen closed tab, as in Firefox. */
   together(close: () => void) {
     this.stamped = Math.max(Date.now(), this.stamped + 1)
     this.joining = this.stamped
@@ -48,9 +44,8 @@ export class ClosedTabs {
     }
   }
 
-  /** The newest, off the stack, with every tab that was closed along with it, newest
-   *  first - which is the order that puts each back at its own place. Taken rather
-   *  than read, because reopening is the one thing anybody does with it. */
+  /** The newest, off the stack, with the tabs closed along with it, newest first so
+   *  each goes back to its own place. */
   take(): ClosedTab[] {
     const last = this.stack.at(-1)
     if (!last) return []
