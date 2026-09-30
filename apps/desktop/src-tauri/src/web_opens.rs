@@ -139,10 +139,6 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// added. The list is the document's and not a world's, so this holds from nib's own
 /// world as it did from the page's. A page that stops the press on its way up is left
 /// to the engine, whose own find then opens, as a browser's would.
-///
-/// A Ctrl+click or a Shift+click is not this script's: the engine opens those as a
-/// window of its own accord, and which way it goes is read from the keys held when it
-/// asks; see `placed`.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
