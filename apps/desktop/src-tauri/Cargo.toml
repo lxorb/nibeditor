@@ -26,7 +26,9 @@ missing_docs = "warn"
 # lifecycle.rs). And the agents' own reach into WebView2 in src/agents: the
 # DevTools Protocol's calls and events, an agent tab's settings and the events it
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
-# keeping its client's pipes out of the app it starts (src/mcp/app.rs). And on nib's
+# keeping its client's pipes out of the app it starts (src/mcp/app.rs), which the app
+# asks too before it starts Claude Code or Codex, in a job object that ends everything
+# they start (src/ai_cli/family.rs). And on nib's
 # own Chromium, the keyboard hook that hears the browser's chords in a web tab's page
 # (web_keys.rs), which the runtime offers no event for. And asking the system when it
 # last had input and which window is in front, on Windows and a Mac, so a web login is
@@ -359,6 +361,10 @@ windows = { version = "0.58", features = [
   # terminal/session.rs.
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Console",
+  # A job object round Claude Code or Codex and everything it starts, so a stop ends
+  # them all; see ai_cli/family.rs. The job's call names a security descriptor.
+  "Win32_System_JobObjects",
+  "Win32_Security",
   # How much memory the engine's processes hold, before an agent opens another page.
   # See agents/memory.rs.
   "Win32_System_ProcessStatus",

@@ -92,6 +92,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         // And nothing a terminal started is left running once the app has gone.
         RunEvent::Exit => {
             crate::terminal::end_all(app);
+            // Nor any Claude Code or Codex a question started; see ai_cli.rs.
+            crate::ai_cli::end_all(app);
             // And the next launch, where the engine is being switched; see
             // engine_switch.rs.
             crate::engine_switch::on_leaving();
@@ -107,6 +109,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             }
             // Its terminals go with it; see terminal.rs.
             crate::terminal::window_gone(app, &label);
+            crate::ai_cli::window_gone(app, &label);
             // The last window has answered yes. With the presenter's window still
             // open the loop would not end by itself, so it is ended here.
             if state(app).now() == ASKING && launch::document_windows(app).is_empty() {

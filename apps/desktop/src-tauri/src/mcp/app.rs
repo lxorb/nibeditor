@@ -170,13 +170,14 @@ fn launch() -> Result<(), String> {
 /// handed over inheritable, and `start` passes every inheritable handle on to the program
 /// it starts - measured: a pipe cmd was given stayed open until the started program
 /// ended. The app would then hold the client's stdout for as long as nib runs, and a
-/// client waiting for this server's output to end would wait for nib to quit.
+/// client waiting for this server's output to end would wait for nib to quit. The app
+/// asks the same before it starts Claude Code or Codex; see `ai_cli/family.rs`.
 #[allow(
     unsafe_code,
     reason = "whether a handle is inherited is Win32's own flag, with no safe wrapper"
 )]
 #[cfg(windows)]
-fn keep_the_pipes() {
+pub(crate) fn keep_the_pipes() {
     use std::os::windows::io::AsRawHandle as _;
     use windows::Win32::Foundation::{
         SetHandleInformation, HANDLE, HANDLE_FLAGS, HANDLE_FLAG_INHERIT,

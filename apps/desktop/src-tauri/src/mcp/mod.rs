@@ -42,6 +42,11 @@ mod server;
 mod shared;
 mod tools;
 
+/// This process's standard handles kept out of the programs it starts, which the app
+/// needs too; see `keep_the_pipes` in app.rs.
+#[cfg(windows)]
+pub(crate) use app::keep_the_pipes;
+
 /// Serves one client on stdin and stdout until it closes stdin, and answers the exit
 /// code: 0, since a client going away is how every session ends.
 #[must_use]
