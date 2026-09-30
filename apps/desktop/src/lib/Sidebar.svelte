@@ -606,23 +606,56 @@
     <!-- What a panel has to offer goes at the other end of the row its tabs are
          in: whether a panel about one note stays on it, and whether the Links
          panel says what it has to say as a list or as a picture. -->
-    {#if holdable}
+    {#if holdable || showing === 'links'}
       <div class="tools">
-        <!-- A panel about one note usually means the note being worked in. Held,
-             it means the note it was held on, so an outline can be read on the
-             left while another note is written on the right. It lasts for the
-             sitting: a panel held on a note nobody remembers holding it on is
-             worse than one that simply follows. -->
-        <button
-          class="nib-glyph tool"
-          class:active={held}
-          title={held ? t('Follow the open note') : t('Stay on this note')}
-          aria-label={held ? t('Follow the open note') : t('Stay on this note')}
-          aria-pressed={held}
-          onclick={() => workspace.holdPanel(held ? null : (workspace.panelTab?.id ?? null))}
-        >
-          <svg viewBox="0 0 13 13"><path d={HOLD_MARK} /></svg>
-        </button>
+        {#if holdable}
+          <!-- A panel about one note usually means the note being worked in. Held,
+               it means the note it was held on, so an outline can be read on the
+               left while another note is written on the right. It lasts for the
+               sitting: a panel held on a note nobody remembers holding it on is
+               worse than one that simply follows. -->
+          <button
+            class="nib-glyph tool"
+            class:active={held}
+            title={held ? t('Follow the open note') : t('Stay on this note')}
+            aria-label={held ? t('Follow the open note') : t('Stay on this note')}
+            aria-pressed={held}
+            onclick={() => workspace.holdPanel(held ? null : (workspace.panelTab?.id ?? null))}
+          >
+            <svg viewBox="0 0 13 13"><path d={HOLD_MARK} /></svg>
+          </button>
+        {/if}
+        {#if showing === 'links'}
+          {#if graphing}
+            <!-- How far out the picture reaches, one link at a press and round again.
+                 The same setting the slider on the graph's own card writes, so the two
+                 are never out of step; see GraphControls.svelte, which is where the
+                 whole range is. A stepper here rather than a second slider: this is one
+                 glyph in a row of them, and the panel's tools are all presses. -->
+            <button
+              class="nib-glyph depth"
+              title={t('Depth')}
+              aria-label={t('Depth')}
+              onclick={() =>
+                workspace.graphSettings.set({
+                  depth: depth >= DEEPEST ? SHALLOWEST : depth + 1,
+                })}
+              transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
+            >
+              {depth}
+            </button>
+          {/if}
+          <button
+            class="nib-glyph tool"
+            class:active={graphing}
+            title={t('Graph')}
+            aria-label={t('Graph')}
+            aria-pressed={graphing}
+            onclick={() => (graphing = !graphing)}
+          >
+            <svg viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
+          </button>
+        {/if}
       </div>
     {/if}
     <!-- Which order the file list is read in. At the end of the header row, where
@@ -681,39 +714,6 @@
           onclick={() => void import('./ai/asking.svelte').then((one) => one.asking.clear())}
         >
           <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
-        </button>
-      </div>
-    {/if}
-    {#if showing === 'links'}
-      <div class="tools">
-        {#if graphing}
-          <!-- How far out the picture reaches, one link at a press and round again.
-               The same setting the slider on the graph's own card writes, so the two
-               are never out of step; see GraphControls.svelte, which is where the
-               whole range is. A stepper here rather than a second slider: this is one
-               glyph in a row of them, and the panel's tools are all presses. -->
-          <button
-            class="nib-glyph depth"
-            title={t('Depth')}
-            aria-label={t('Depth')}
-            onclick={() =>
-              workspace.graphSettings.set({
-                depth: depth >= DEEPEST ? SHALLOWEST : depth + 1,
-              })}
-            transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
-          >
-            {depth}
-          </button>
-        {/if}
-        <button
-          class="nib-glyph tool"
-          class:active={graphing}
-          title={t('Graph')}
-          aria-label={t('Graph')}
-          aria-pressed={graphing}
-          onclick={() => (graphing = !graphing)}
-        >
-          <svg viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
         </button>
       </div>
     {/if}
@@ -1096,8 +1096,10 @@
     color: var(--muted);
   }
 
+  /* A panel's tools on its tabs' line. */
   .switch {
     display: flex;
+    align-items: center;
     gap: var(--space-1);
     padding: 0 var(--space-1) var(--space-2);
   }

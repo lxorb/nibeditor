@@ -2,10 +2,10 @@
   /** What points at this note, what it points at, and where its name is written
    *  without a link - as three lists, or as a picture.
    *
-   *  Three lists in one column, each headed by one word and a count. The rows are
-   *  the search panel's rows, because they say the same thing: which note, and the
-   *  line it says it on. Nothing is computed until the panel is open - the two
-   *  derived lists are lazy, and the mentions are only looked for while it shows.
+   *  Three lists in one column, each headed by one word and a count, and one row for
+   *  all three: the file list's row for the note, with the line it says it on under
+   *  its name; see HitList.svelte. Nothing is computed until the panel is open - the
+   *  two derived lists are lazy, and the mentions are only looked for while it shows.
    *
    *  The picture is the same thing said the other way round: the note in the
    *  middle, what it is linked to around it, and nothing else. It comes from the
@@ -13,14 +13,12 @@
 
   import { neighbourhood, type NoteGraph, without } from './graph'
   import { graphSurface } from './surfaces.svelte'
-  import { shownName } from './note-name'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
-  import { howFor, middleOpens, type OpenHow, tabAsk } from './new-tab'
-  import { roving } from './roving'
-  import HitList, { HIT_WALK } from './HitList.svelte'
+  import { howFor, type OpenHow, tabAsk } from './new-tab'
+  import HitList from './HitList.svelte'
 
   const {
     ongoto,
@@ -113,9 +111,13 @@
     if (ask !== 'behind') ongoto?.(reference.line)
   }
 
-  async function openTarget(link: Outgoing, press: MouseEvent) {
-    if (!root || !link.to) return
-    await workspace.openEntry(insideSpace(root, link.to), howFor(tabAsk(press)))
+  /** A link out pressed: the note it goes to. One to a note the space has not got goes
+   *  to the line in this note instead, since the link is what is wrong - and only on a
+   *  plain press, because a tab of its own for a line already on screen is nothing. */
+  async function openTarget(link: Reference | Outgoing, press: MouseEvent) {
+    if (!('to' in link) || !root) return
+    if (link.to) await workspace.openEntry(insideSpace(root, link.to), howFor(tabAsk(press)))
+    else if (tabAsk(press) === 'plain') ongoto?.(link.line)
   }
 </script>
 
@@ -144,25 +146,7 @@
 
   {@render heading(t('Links out'), outgoing.length)}
   {#if outgoing.length}
-    <!-- Its own block, and the one that is not the others: a link out is the only
-         row that can point at a note the space has not got, and that row goes to the
-         line in this note instead. The link is what is wrong, so the link is what it
-         shows you. -->
-    <ul use:roving={HIT_WALK}>
-      {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
-        <li>
-          <button
-            class="nib-row hit"
-            class:missing={!link.to}
-            onclick={(event) => (link.to ? openTarget(link, event) : ongoto?.(link.line))}
-            use:middleOpens={(event) => void (link.to && openTarget(link, event))}
-          >
-            <span class="hit-note">{shownName(link.name)}</span>
-            <span class="hit-line">{link.text}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
+    <HitList rows={outgoing} onpick={openTarget} />
   {:else}
     <p class="empty-text">{t('This note links nowhere yet')}</p>
   {/if}
@@ -183,58 +167,21 @@
 {/snippet}
 
 <!-- A list of lines: which note, and what it says on the line the name is written
-     on. What the backlinks and the mentions both are, character for character.
-     A component rather than a snippet because it holds a window of its own now, and
-     there are two of them in one scroller: see HitList.svelte. -->
+     on. What the backlinks and the mentions both are, character for character, and
+     the links out with the note each goes to. A component rather than a snippet
+     because it holds a window of its own, and there are three of them in one
+     scroller: see HitList.svelte. -->
 {#snippet hits(rows: readonly Reference[])}
   <HitList {rows} onpick={openAt} />
 {/snippet}
 
 <style>
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  /* Two lines rather than one, so the row is `.nib-row` stood on its end: the
-     line the link is on, and the note it is in under it. */
-  .hit {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: center;
-    gap: 1px;
-    padding-top: var(--space-1);
-    padding-bottom: var(--space-1);
-  }
-
-  .hit-note {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--accent);
-  }
-
-  /* A link with nowhere to go wears the same muted, dotted mark the link in the
-     text does, so the two read as the same fact. */
-  .missing .hit-note {
-    color: var(--muted);
-    text-decoration: underline dotted;
-    text-underline-offset: 0.16em;
-  }
-
-  .hit-line {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .empty-text {
     margin: var(--space-1) var(--row-pad) 0;
     font-size: var(--text-row);
     color: var(--muted);
   }
 
-  :global([data-touch]) .hit-note,
   :global([data-touch]) .empty-text {
     font-size: var(--text-base);
   }

@@ -1,18 +1,3 @@
-<script lang="ts" module>
-  /** How every list in the Links panel walks: the arrows move, Enter goes to the
-   *  line and hands the note the keyboard, Space goes to it and leaves the keyboard
-   *  here. Stated once and imported by the panel for its third list, whose rows are
-   *  the same rows with one more thing true of them. See roving.ts. */
-  export const HIT_WALK = {
-    rows: '.hit',
-    open: (row: HTMLElement) => row.click(),
-    peek: (row: HTMLElement) => {
-      row.click()
-      row.focus()
-    },
-  }
-</script>
-
 <script lang="ts">
   /** A list of lines from other notes, of which only the ones in view are in the
    *  page.
@@ -40,22 +25,62 @@
    *  row that is taken out of the page is a focus on nothing. */
 
   import { tick } from 'svelte'
-  import type { Reference } from './link-index.svelte'
+  import { fileMark } from './file-mark'
+  import FileMark from './FileMark.svelte'
+  import type { Outgoing, Reference } from './link-index.svelte'
+  import { linkPieces, shownLine } from './link-line'
   import { middleOpens } from './new-tab'
   import { roving } from './roving'
   import { shownName } from './note-name'
   import { offsetOf, type Rows, windowFor } from './row-window'
   import { ListView, measuredRow } from './row-window.svelte'
+  import { folderOf, insideSpace } from './space-paths'
+  import { workspace } from './workspace.svelte'
+
+  type Row = Reference | Outgoing
 
   const {
     rows: all,
     onpick,
   }: {
-    rows: readonly Reference[]
+    /** Lines from other notes, or links out of this one: a row stands for the note
+     *  a link out goes to, and for the note its line is in otherwise. */
+    rows: readonly Row[]
     /** A row pressed, and how: a modifier or the middle button asks for a tab of
      *  its own; see new-tab.ts. */
-    onpick: (reference: Reference, press: MouseEvent) => void
+    onpick: (row: Row, press: MouseEvent) => void
   } = $props()
+
+  /** How the list walks: the arrows move, Enter goes to the line and hands the note
+   *  the keyboard, Space goes to it and leaves the keyboard here. See roving.ts. */
+  const WALK = {
+    rows: '.hit',
+    open: (row: HTMLElement) => row.click(),
+    peek: (row: HTMLElement) => {
+      row.click()
+      row.focus()
+    },
+  }
+
+  const root = $derived(workspace.activeSpace?.root ?? null)
+
+  /** The note a row stands for, relative to the space, or null for a link out to a
+   *  note the space has not got. */
+  function noteOf(row: Row): string | null {
+    return 'to' in row ? row.to : row.path
+  }
+
+  /** What the file list would say about that note: its mark, read off the file itself
+   *  so a chosen icon and a site's own mark come with it (see FileMark.svelte), and
+   *  the folder it is in. A note that is not there yet wears a note's mark. */
+  function placeOf(row: Row) {
+    const note = noteOf(row)
+    return {
+      mark: note === null ? 'note' : fileMark(row.name),
+      path: note === null || root === null ? undefined : insideSpace(root, note),
+      folder: note === null ? '' : folderOf(note),
+    } as const
+  }
 
   /** How many rows are kept beyond either edge of the view, so a wheel click
    *  arrives at rows that are already drawn rather than at an empty box. The file
@@ -162,11 +187,11 @@
   onfocusin={onFocus}
   onfocusout={onBlur}
   use:roving={{
-    ...HIT_WALK,
+    ...WALK,
     long: {
       count: () => all.length,
       indexOf,
-      labels: () => all.map((one) => `${shownName(one.name)} ${one.text}`),
+      labels: () => all.map((one) => `${shownName(one.name)} ${shownLine(one.text)}`),
       reach,
     },
   }}
@@ -174,18 +199,33 @@
   <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
 
   {#each drawn as one (`${one.row.path}:${one.row.line}:${one.at}`)}
+    {@const place = placeOf(one.row)}
     <li
       data-row={one.at}
       class:away={one.away}
       style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}
     >
+      <!-- The file list's row - the note's mark, its name, the folder it is in -
+           with the line it says it on under the name, links read as the reading
+           view reads them. -->
       <button
         class="nib-row hit"
+        class:missing={noteOf(one.row) === null}
         onclick={(event) => onpick(one.row, event)}
         use:middleOpens={(event) => onpick(one.row, event)}
       >
-        <span class="hit-note">{shownName(one.row.name)}</span>
-        <span class="hit-line">{one.row.text}</span>
+        <FileMark mark={place.mark} path={place.path} />
+        <span class="words">
+          <span class="head">
+            <span class="nib-row-label">{shownName(one.row.name)}</span>
+            {#if place.folder}<span class="nib-row-meta">{place.folder}</span>{/if}
+          </span>
+          <span class="hit-line"
+            >{#each linkPieces(one.row.text) as piece, at (at)}{#if piece.link}<span class="link"
+                  >{piece.text}</span
+                >{:else}{piece.text}{/if}{/each}</span
+          >
+        </span>
       </button>
     </li>
   {/each}
@@ -194,6 +234,59 @@
 </ul>
 
 <style>
+  /* Two lines where the file list's row has one, so the mark stays with the name
+     rather than floating between the two. */
+  .hit {
+    align-items: flex-start;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
+  }
+
+  .hit :global(.mark) {
+    margin-top: calc((1lh - var(--icon-md)) / 2);
+  }
+
+  .words {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--row-gap);
+    min-width: 0;
+  }
+
+  /* The line is what the row quotes, so it is quieter than the name above it. */
+  .hit-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+  }
+
+  /* A link in the line wears the link's colour, as it does in the reading view. */
+  .link {
+    color: var(--accent);
+  }
+
+  /* A link out to a note the space has not got wears the dotted mark the link in
+     the text does, so the two read as the same fact. */
+  .missing .nib-row-label {
+    color: var(--muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 0.16em;
+  }
+
+  :global([data-touch]) .hit-line {
+    font-size: var(--text-sm);
+  }
+
   ul {
     list-style: none;
     margin: 0;

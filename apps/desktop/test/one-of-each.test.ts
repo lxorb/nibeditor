@@ -150,7 +150,8 @@ describe('the row a list is made of', () => {
       'lib/AppMenuPanel.svelte',
       'lib/Bookmarks.svelte',
       'lib/ContextMenu.svelte',
-      'lib/Links.svelte',
+      // The Links panel's three lists are this one component; see Links.svelte.
+      'lib/HitList.svelte',
       'lib/Palette.svelte',
       'lib/SearchPanel.svelte',
       'lib/SettingsPanel.svelte',

@@ -85,7 +85,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(900)
     shot(page, "02-backlinks")
     panel = page.evaluate(
-        "() => [...document.querySelectorAll('aside .hit-note')].map((one) => one.textContent)"
+        "() => [...document.querySelectorAll('aside .hit .nib-row-label')].map((one) => one.textContent)"
     )
     say(f"[panel] {json.dumps(panel)}")
     if "Other" not in panel:
