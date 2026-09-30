@@ -374,7 +374,13 @@ def run_command(page: Page, words: str) -> None:
     """Through the palette, which is how a reader with a keyboard reaches any of this.
     The same rows the Paragraph menu and the phone's plus show, out of one list."""
     page.keyboard.press("Control+P")
-    page.wait_for_timeout(250)
+    # Typed once the field is there and has the keyboard, not after a guess at how long
+    # that takes: a `>` pressed before it lands goes into the note behind, and the
+    # palette then answers `Record` with the note called Recordings. Pressed into, the
+    # way a thumb does, because under a thumb a field does not take the keyboard by
+    # itself; see trap.ts.
+    wait_for(page, "document.querySelector('.palette input')", "the palette's field")
+    page.locator(".palette input").click()
     # The palette answers with notes until the words open with `>`, which is what turns
     # it into the command palette; see Palette.svelte.
     page.keyboard.type(f">{words}")
@@ -543,6 +549,9 @@ def byok(browser: Browser) -> None:
     own = Byok()
     page.route("**/v1/audio/transcriptions", own.listen)
 
+    # The providers' store joins the drive's handle a moment after the space opens,
+    # fetched rather than carried; see the end of the handle in App.svelte.
+    wait_for(page, "window.nibApp.ai", "the AI providers")
     made = page.evaluate(OWN_TRANSCRIBER, "http://127.0.0.1:23305/v1")
     say(f"the provider is set up: {json.dumps(made)}")
     if not made["transcriber"]:
@@ -681,9 +690,11 @@ def meeting(browser: Browser) -> None:
 
 
 def phone(browser: Browser) -> None:
-    """The same command from the one plus a thumb can reach, and the same pill on a
-    screen with no hover on it: the numbers in the status bar are a pointer's, the pill
-    is not."""
+    """The same command on a phone, and the same pill on a screen with no hover on it:
+    the numbers in the status bar are a pointer's, the pill is not. Not from the plus:
+    a recording is not a kind of note, and Emil took it off the plus on 2026-09-27
+    (ee9f9005, docs/mobile.md), so the plus offers only what makes a note and the
+    recording goes into the note being written."""
     say("--- a finger ---")
     page, _whisper = fresh(browser, finger=True)
 
@@ -698,65 +709,67 @@ def phone(browser: Browser) -> None:
       plus.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
     }"""
     )
-    page.wait_for_timeout(400)
+    wait_for(page, "document.querySelector('[role=menuitem]')", "the plus's menu")
     rows = page.evaluate(
         "() => [...document.querySelectorAll('[role=menu] button, [role=menuitem]')]"
         ".map((one) => one.textContent.trim())"
     )
     say(f"the plus offers {json.dumps(rows)}")
-    if "Record" not in rows:
-        wrong("no Record row on the phone's plus")
-    shot(page, "phone-plus")
-
     if "Record" in rows:
-        page.get_by_role("menuitem", name="Record").click()
-        wait_for(page, "document.querySelector('.recording')", "the pill on a phone")
-        # The pill arrives from below, so where it *is* is only true once it has
-        # stopped moving; measured mid-animation it reads as sitting on the edge.
-        page.wait_for_timeout(600)
+        wrong("the phone's plus offers Record, which is not a kind of note")
+    shot(page, "phone-plus")
+    page.keyboard.press("Escape")
+    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.wait_for_timeout(450)
 
-        state = page.evaluate(
-            """() => {
-          const box = document.querySelector('.recording')
-          const shown = box ? getComputedStyle(box) : null
-          const seen = box?.getBoundingClientRect()
-          return {
-            display: shown?.display ?? 'none',
-            // How far the bottom edge of the pill is from the bottom of the screen,
-            // which is what says whether it is clear of the gesture bar or sitting on
-            // it, and how tall it is under a thumb.
-            above: Math.round(window.innerHeight - (seen?.bottom ?? 0)),
-            tall: Math.round(seen?.height ?? 0),
-            width: Math.round(seen?.width ?? 0),
-          }
-        }"""
-        )
-        say(f"the pill on a phone: {json.dumps(state)}")
-        if state["display"] == "none":
-            wrong("the pill is hidden on a phone, where it is the only thing that says so")
-        if state["above"] < 8:
-            wrong(f"the pill sits on the bottom edge of the screen: {state}")
-        # A thumb's target, which `.nib-bar` sizes from the touch row scale.
-        if state["tall"] < 40:
-            wrong(f"the pill is only {state['tall']}px tall under a thumb: {state}")
-        shot(page, "phone-pill")
+    run_command(page, "Record")
+    wait_for(page, "document.querySelector('.recording')", "the pill on a phone")
+    # The pill arrives from below, so where it *is* is only true once it has
+    # stopped moving; measured mid-animation it reads as sitting on the edge.
+    page.wait_for_timeout(600)
 
-        page.wait_for_timeout(1500)
-        page.click(".recording button")
-        wait_for(
-            page,
-            "window.nibApp.workspace.active?.doc.includes('![[recording-')",
-            "the embed on a phone",
-        )
-        # A player is a block, and the caret in a note the app has just opened is at
-        # the very top of it: the embed has to take a line of its own rather than
-        # weld itself onto the heading that was there.
-        said = note_says(page)
-        first = said.split("\n")[0]
-        say(f"the recording landed in a note made by the plus, which now opens {first!r}")
-        if "]]#" in said or "]]!" in said:
-            wrong(f"the embed was written into the line that was there: {first!r}")
-        shot(page, "phone-note")
+    state = page.evaluate(
+        """() => {
+      const box = document.querySelector('.recording')
+      const shown = box ? getComputedStyle(box) : null
+      const seen = box?.getBoundingClientRect()
+      return {
+        display: shown?.display ?? 'none',
+        // How far the bottom edge of the pill is from the bottom of the screen,
+        // which is what says whether it is clear of the gesture bar or sitting on
+        // it, and how tall it is under a thumb.
+        above: Math.round(window.innerHeight - (seen?.bottom ?? 0)),
+        tall: Math.round(seen?.height ?? 0),
+        width: Math.round(seen?.width ?? 0),
+      }
+    }"""
+    )
+    say(f"the pill on a phone: {json.dumps(state)}")
+    if state["display"] == "none":
+        wrong("the pill is hidden on a phone, where it is the only thing that says so")
+    if state["above"] < 8:
+        wrong(f"the pill sits on the bottom edge of the screen: {state}")
+    # A thumb's target, which `.nib-bar` sizes from the touch row scale.
+    if state["tall"] < 40:
+        wrong(f"the pill is only {state['tall']}px tall under a thumb: {state}")
+    shot(page, "phone-pill")
+
+    page.wait_for_timeout(1500)
+    page.click(".recording button")
+    wait_for(
+        page,
+        "window.nibApp.workspace.active?.doc.includes('![[recording-')",
+        "the embed on a phone",
+    )
+    # A player is a block, and the caret in a note the app has just opened is at
+    # the very top of it: the embed has to take a line of its own rather than
+    # weld itself onto the heading that was there.
+    said = note_says(page)
+    first = said.split("\n")[0]
+    say(f"the recording landed in the note being written, which now opens {first!r}")
+    if "]]#" in said or "]]!" in said:
+        wrong(f"the embed was written into the line that was there: {first!r}")
+    shot(page, "phone-note")
 
     page.context.close()
 
