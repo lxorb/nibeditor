@@ -305,8 +305,9 @@ A rename rewrites the name in place, so the row keeps where it was arranged to. 
 move takes it out of the list it was in and leaves it at the end of the one it
 arrives in. A folder that moves takes its own list and every list under it along,
 re-keyed, which is the one thing the dotfile would have got for free. A delete takes
-the name out. All four are hooked where `folderIcons.moved` and `folderIcons.gone`
-already were, including the undo of a rename or a move.
+the name out. All four follow the one file-operation event every store keeping a
+path follows, so an undo, an agent's move and anything added later reach them too;
+see `lib/workspace/file-ops.ts`.
 
 ### The drag
 
