@@ -835,12 +835,24 @@ impl Page<'_> {
             )?;
             return Ok(());
         }
-        let (width, height, _, _) = self.viewport()?;
+        let (width, height, x, y) = self.viewport()?;
         self.call(
             "Input.dispatchMouseEvent",
             &json!({ "type": "mouseWheel", "x": width / 2.0, "y": height / 2.0, "deltaX": dx, "deltaY": dy }),
         )?;
-        std::thread::sleep(Duration::from_millis(150));
+        // The wheel is what a person's scroll is, and what a page's own scrolling listens
+        // to; a page it did not move is scrolled as a whole instead.
+        let started = Instant::now();
+        while started.elapsed() < Duration::from_millis(400) {
+            std::thread::sleep(Duration::from_millis(50));
+            let (_, _, now_x, now_y) = self.viewport()?;
+            if (now_x - x).abs() > 0.5 || (now_y - y).abs() > 0.5 {
+                return Ok(());
+            }
+        }
+        self.isolated(&format!(
+            "window.scrollBy({{ left: {dx}, top: {dy}, behavior: 'instant' }})"
+        ))?;
         Ok(())
     }
 
@@ -1299,9 +1311,20 @@ impl Page<'_> {
                 ));
             }
             if started.elapsed() >= most {
+                let waiting = match until {
+                    Until::Moment(Moment::NetworkIdle) => {
+                        let open = self
+                            .heard()
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner)
+                            .in_flight();
+                        format!(": still in flight, {}", open.join(", "))
+                    }
+                    _ => String::new(),
+                };
                 return Err(Answer::error(
                     Code::Timeout,
-                    format!("not in {} ms", most.as_millis()),
+                    format!("not in {} ms{waiting}", most.as_millis()),
                 ));
             }
             std::thread::sleep(Duration::from_millis(100));

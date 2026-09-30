@@ -338,6 +338,21 @@ impl Heard {
         self.in_flight.is_empty() && self.network_moved.is_none_or(|at| at.elapsed() >= quiet)
     }
 
+    /// The addresses of the requests still in flight, for an agent told the page never
+    /// went quiet.
+    pub fn in_flight(&self) -> Vec<String> {
+        let seqs: Vec<u64> = self
+            .in_flight
+            .iter()
+            .filter_map(|key| self.started.get(key).map(|(seq, _)| *seq))
+            .collect();
+        self.requests
+            .iter()
+            .filter(|one| seqs.contains(&one.seq))
+            .map(|one| one.url.clone())
+            .collect()
+    }
+
     /// The frames, by number.
     pub fn frames(&self) -> Vec<(usize, Frame)> {
         self.frames
@@ -595,6 +610,10 @@ pub fn follow(core: &ICoreWebView2, label: &str) {
         );
         if ours && !same {
             held.navigations += 1;
+            // What the page before this one had in flight is not this page's to wait for:
+            // a request that became a download never finishes as a request at all.
+            held.in_flight.clear();
+            held.network_moved = Some(Instant::now());
         }
     });
     on("Page.loadEventFired", |held, session, _| {

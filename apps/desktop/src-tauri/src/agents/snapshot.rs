@@ -160,6 +160,30 @@ fn sealed(role: &str) -> bool {
     )
 }
 
+/// Roles a person presses or types into, which words inside them stand for.
+fn pressable_role(role: &str) -> bool {
+    matches!(
+        role,
+        "button"
+            | "link"
+            | "menuitem"
+            | "menuItem"
+            | "tab"
+            | "checkbox"
+            | "radio"
+            | "switch"
+            | "option"
+            | "textbox"
+            | "combobox"
+            | "treeitem"
+            | "cell"
+            | "row"
+            | "listitem"
+            | "heading"
+            | "label"
+    )
+}
+
 /// Roles whose value is what somebody typed or chose.
 fn has_value(role: &str) -> bool {
     matches!(
@@ -415,7 +439,9 @@ impl Writer<'_> {
                 line.push_str(&quoted(name));
             }
             line.push_str(&states(&node, &role, secret, self.origin));
-            let pressable = role != "text" && !(around.in_list && role == "option");
+            // Words on their own have a ref too: a `<div>` with a listener and no role is
+            // still somewhere a person presses, and its words are how an agent names it.
+            let pressable = !(around.in_list && role == "option");
             if let Some(backend) = node.backend().filter(|_| pressable) {
                 let _ = write!(line, " [ref={prefix}e{backend}]");
             }
@@ -530,10 +556,21 @@ fn search(
     let visible = !node.ignored() && !silent(&role, name) && !furniture(&role);
     if visible {
         if role == "text" {
-            if let (Some(text), Some((element, role, name))) = (wanted.text, holder) {
-                if lower.contains(text) && wanted.role.is_none_or(|one| one == role.to_lowercase())
-                {
-                    push(element, role, name);
+            // Words found: the control they are the words of, or the words themselves when
+            // they belong to nothing an agent would name (a `<div>` with a listener).
+            if wanted.text.is_some_and(|text| lower.contains(text)) {
+                match holder {
+                    Some((element, role, name))
+                        if pressable_role(role)
+                            && wanted.role.is_none_or(|one| one == role.to_lowercase()) =>
+                    {
+                        push(element, role, name);
+                    }
+                    _ => {
+                        if let (Some(element), None) = (&reference, wanted.role) {
+                            push(element, "text", name.trim());
+                        }
+                    }
                 }
             }
         } else if let Some(element) = &reference {
@@ -786,7 +823,7 @@ mod tests {
                 "- main [ref=e9]",
                 "  - heading \"Basket\" [level=1] [ref=e10]",
                 "  - paragraph [ref=e11]",
-                "    - text \"One lamp, 42.00\"",
+                "    - text \"One lamp, 42.00\" [ref=e67]",
                 "  - form [ref=e12]",
                 "    - textbox \"Name\" [ref=e14]",
                 "    - combobox \"Quantity\" [expanded=false] [value=\"One\"] [ref=e17]",
