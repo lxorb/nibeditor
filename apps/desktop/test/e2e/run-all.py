@@ -300,6 +300,11 @@ def main() -> int:
         again = [one for one in running if results[one.stem].status in ("FAIL", "timeout")]
         for one in again:
             print(f"=== {one.name}, again ===", flush=True)
+            # What went wrong the first time is kept beside the second go's log: a drive
+            # called flaky is only worth something with the failure it had.
+            log = LOGS / f"{one.stem}.log"
+            if log.exists():
+                log.replace(LOGS / f"{one.stem}.first.log")
             code, took, why = run(one, budget(sources[one], said.patience), environment, True)
             if code == 0:
                 first = results[one.stem]

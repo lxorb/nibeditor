@@ -379,10 +379,11 @@ on its own at the end, the way Playwright and Chromium's own harness retry, and 
 that holds then is called `flaky` in the table - green, and named, so a drive that
 only passes on a quiet machine is written down rather than hidden. The table says
 what passed, what it cost and where the pictures went; it is also `shots/results.md`
-and `shots/results.json`, each drive's own output is `shots/logs/<drive>.log`, and
-the exit status is the number of drives that failed. The nightly job is exactly this
-with `--jobs 2`: the table on the run's own page, the shots and logs as its
-artifact, red when a drive failed.
+and `shots/results.json`, each drive's own output is `shots/logs/<drive>.log` (a
+retried one's first go beside it as `<drive>.first.log`), and the exit status is the
+number of drives that failed. The nightly job is exactly this with `--jobs 2`: the
+table on the run's own page, the shots and logs as its artifact, red when a drive
+failed.
 
 A run leaves the working tree dirty in one place: `store-shot.py` writes
 `docs/media/screenshot.png`, which is tracked. Keep it when the app's look has
