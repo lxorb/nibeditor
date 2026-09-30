@@ -452,8 +452,8 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 
 | | |
 | --- | --- |
-| Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs | the app's, as everywhere |
-| Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
+| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it |
 | Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
