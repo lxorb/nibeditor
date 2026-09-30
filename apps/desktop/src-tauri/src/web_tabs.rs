@@ -90,7 +90,7 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
         held.get_or_insert_with(HashMap::new)
             .insert(tab.to_string(), label.to_string());
     }
-    listening(app, tab, store);
+    listening(app, tab, store, None);
     // Its loads and its title, said to the window as a built page's are.
     #[cfg(all(windows, not(feature = "cef")))]
     reported(app, tab, label);
