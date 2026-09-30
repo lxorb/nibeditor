@@ -18,6 +18,8 @@
  *  slashes, so the characters that may appear in one are what decides how deep a
  *  tree can go. */
 
+import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
+
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
 export interface TagUse {
@@ -49,7 +51,7 @@ const VALUE = /[^\s,[\]'"]+/g
 /** Every use of every tag in the note, in the order they appear. */
 export function tagUses(body: string): TagUse[] {
   const out: TagUse[] = []
-  const front = frontMatter(body)
+  const front = frontMatterBlock(body)
 
   if (front) readFront(body, front, out)
   readInline(body, front, out)
@@ -145,35 +147,15 @@ function spaces(body: string, at: number, stop: number): number {
   return over
 }
 
-/** Where the front matter block sits, fences included, or null when the note
- *  opens with anything else. */
-function frontMatter(body: string): { from: number; to: number } | null {
-  if (!body.startsWith('---')) return null
-
-  const first = body.indexOf('\n')
-  if (first === -1 || body.slice(0, first).trim() !== '---') return null
-
-  // The block's own closing fence, which is the first `---` on a line of its own.
-  let at = first + 1
-  while (at < body.length) {
-    const end = body.indexOf('\n', at)
-    const stop = end === -1 ? body.length : end
-    if (body.slice(at, stop).trim() === '---') return { from: 0, to: stop }
-    if (end === -1) break
-    at = end + 1
-  }
-
-  return null
-}
-
 /** The tags under a `tags:` key, whether they are on its line or in items
- *  beneath it. */
-function readFront(body: string, front: { from: number; to: number }, out: TagUse[]) {
-  let at = body.indexOf('\n') + 1
+ *  beneath it. Where the block sits is the one reader every other part of the app
+ *  reads it with; see `frontMatterBlock` in @nib/markdown. */
+function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
+  let at = front.body.from
 
-  while (at > 0 && at < front.to) {
+  while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
-    const stop = end === -1 || end > front.to ? front.to : end
+    const stop = end === -1 || end > front.close ? front.close : end
     const line = body.slice(at, stop)
     const found = KEY.exec(line)
 
@@ -192,24 +174,19 @@ function readFront(body: string, front: { from: number; to: number }, out: TagUs
 
 /** The `- item` lines under a key, stopping at the first line that is not one.
  *  Answers where it stopped, so the caller reads on from there. */
-function readItems(
-  body: string,
-  from: number,
-  front: { from: number; to: number },
-  out: TagUse[],
-): number {
+function readItems(body: string, from: number, front: FrontMatterBlock, out: TagUse[]): number {
   let at = from
 
-  while (at > 0 && at < front.to) {
+  while (at > 0 && at < front.close) {
     const end = body.indexOf('\n', at)
-    const stop = end === -1 || end > front.to ? front.to : end
+    const stop = end === -1 || end > front.close ? front.close : end
     const line = body.slice(at, stop)
     const item = ITEM.exec(line)
     if (!item) return at
 
     const [, value = ''] = item
     readValues(at + line.indexOf(value), value, out)
-    if (end === -1) return front.to
+    if (end === -1) return front.close
     at = end + 1
   }
 
@@ -236,7 +213,7 @@ function readValues(from: number, text: string, out: TagUse[]) {
  *  pass: a hash there is a YAML comment, and the tags it holds have been read
  *  already. Fenced code is left out too, where a `#` is a comment or a heading
  *  in some other language. */
-function readInline(body: string, front: { from: number; to: number } | null, out: TagUse[]) {
+function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[]) {
   let at = front ? front.to : 0
   let fenced = false
 
