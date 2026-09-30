@@ -1272,8 +1272,14 @@ fn reporting(
 ) -> WebviewBuilder<crate::Engine> {
     let moved = tab.to_string();
     let sending = app.clone();
+    // Where the page last said it was, for the title to be reported against.
+    let seen = std::sync::Arc::new(Mutex::new(String::new()));
+    let noting = seen.clone();
     let builder = builder.on_page_load(move |view, payload| {
         let loading = matches!(payload.event(), PageLoadEvent::Started);
+        if let Ok(mut last) = noting.lock() {
+            payload.url().as_str().clone_into(&mut last);
+        }
         say(
             &sending,
             &view,
@@ -1312,9 +1318,30 @@ fn reporting(
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {
-        let url = view.url().map(|one| one.to_string()).unwrap_or_default();
+        let url = address_now(&view, &seen);
         say(&naming, &view, &titled, &url, Some(title), false);
     })
+}
+
+/// Where a page is, asked from inside one of its own events.
+///
+/// The system's engine answers `url()` from the webview at once, and does so for a page
+/// that moved without loading (an address a site's own script wrote), so it is asked.
+/// nib's own Chromium runs a page's events on the thread that `url()` would wait on - a
+/// question that never comes back, and a window that never answers again: measured on
+/// Windows as the whole app wedged a second after its first web tab, on a fresh profile
+/// every time. There the page's last load says where it is instead.
+fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
+    #[cfg(not(feature = "cef"))]
+    {
+        let _ = seen;
+        view.url().map(|one| one.to_string()).unwrap_or_default()
+    }
+    #[cfg(feature = "cef")]
+    {
+        let _ = view;
+        seen.lock().map(|last| last.clone()).unwrap_or_default()
+    }
 }
 
 /// Starts listening for what the site in this tab asks to be given, and then sends the

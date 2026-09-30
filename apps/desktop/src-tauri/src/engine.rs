@@ -199,10 +199,10 @@ pub(crate) fn web_store<R: Runtime>(
 )]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
-    _app: &AppHandle,
+    app: &AppHandle,
     _store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
-    Ok(builder)
+    Ok(builder.data_directory(root(app)?))
 }
 
 /// The window the config describes, taken out of it so it is built by our own code
@@ -226,22 +226,34 @@ pub(crate) fn take_ui_window(
     Some(windows.remove(0))
 }
 
-/// Builds the window `take_ui_window` took, in nib's own profile.
-#[cfg(feature = "cef")]
-pub(crate) fn open_ui_window(
-    app: &tauri::App,
+/// The builder of nib's own window, on the engine this build runs on: everything the
+/// window needs from the engine, and nothing about where it goes or when it shows,
+/// which is the same on both and is `ready`'s in lib.rs.
+///
+/// - The system's engine: developer tools in a development build only, as nib's own
+///   window always had, and the switches every page of this app starts with; see
+///   [`BROWSER_ARGS`].
+/// - nib's own Chromium: the interface in a profile of its own, so an extension
+///   installed for the web cannot reach the app's own document; see this file's comment.
+pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
+    manager: &'a M,
     config: &tauri::utils::config::WindowConfig,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let profile = app_profile(app.handle())?;
-    let label = config.label.clone();
-    tauri::WebviewWindowBuilder::from_config(app, config)?
-        .data_directory(profile)
-        // What the interface calls itself, which is how the gate can tell whether
-        // an extension in the browsing profile reached across into it. Nothing but
-        // the gate reads it, and the gate only exists in this build.
-        .on_document_title_changed(move |_window, title| gate::title_seen(&label, &title))
-        .build()?;
-    Ok(())
+) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
+    let building =
+        tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    #[cfg(all(windows, not(feature = "cef")))]
+    let building = building.additional_browser_args(BROWSER_ARGS);
+    #[cfg(feature = "cef")]
+    let building = {
+        let label = config.label.clone();
+        building
+            .data_directory(app_profile(manager.app_handle())?)
+            // What the interface calls itself, which is how the gate can tell whether an
+            // extension in the browsing profile reached across into it. Nothing but the
+            // gate reads it, and the gate only exists in this build.
+            .on_document_title_changed(move |_window, title| gate::title_seen(&label, &title))
+    };
+    Ok(building)
 }
 
 #[cfg(feature = "cef")]
