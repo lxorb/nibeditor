@@ -415,8 +415,18 @@ settings.patch('/', async (context) => {
     return context.json({ error: 'that is more settings than an account holds' }, 413)
   }
 
-  await context.env.DB.prepare('update users set settings = ? where id = ?')
-    .bind(written, user.id)
-    .run()
-  return context.json({ settings: merged })
+  // Written key by key rather than as the whole object read above, so two devices
+  // changing different settings at once both keep theirs (docs/sync-v2.md section
+  // 5.11): the merge is the database's, in the one statement that writes. A value goes
+  // in as JSON, so a setting that may be null is null rather than gone.
+  const keys = Object.keys(body)
+  if (keys.length) {
+    const places = keys.map(() => '?, json(?)').join(', ')
+    await context.env.DB.prepare(
+      `update users set settings = json_set(coalesce(settings, '{}'), ${places}) where id = ?`,
+    )
+      .bind(...keys.flatMap((name) => [`$."${name}"`, JSON.stringify(body[name])]), user.id)
+      .run()
+  }
+  return context.json({ settings: await settingsOf(context.env, user.id) })
 })

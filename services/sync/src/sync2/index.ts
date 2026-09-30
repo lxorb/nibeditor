@@ -15,6 +15,7 @@ import { deviceOf } from './device'
 import { keepDoc, pullDocs, pushDocs, snapshotPage } from './docs'
 import { answer, requestBody } from './envelope'
 import { feedPage } from './feed'
+import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
 
@@ -57,7 +58,11 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
   const device = await deviceOf(context)
   await preparedSpace(context.env, space, device)
   const done = await applyOps(context.env, space, device, request.ops)
-  if (done.changed) await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
+  if (done.changed) {
+    // What a v1 app reads of the folders' icons and order is keyed by path.
+    await reproject(context.env, space.id)
+    await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
+  }
 
   return answer(context, { results: done.value, cursor: done.cursor })
 })

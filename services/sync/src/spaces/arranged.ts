@@ -34,6 +34,8 @@ import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
+import { deviceOf } from '../sync2/device'
+import { v1Wrote } from '../sync2/maps'
 
 /** How many folders of one space may carry an arranged order. Far fewer than the four
  *  hundred that may wear an icon, and the difference is what the two things are: an
@@ -194,6 +196,8 @@ spaceArranged.put('/:id/arranged', atLeast('write'), async (context) => {
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
   await writeColumn(context.env, 'arranged', space.id, written)
+  // And, in a space sync v2 keeps entry by entry, every place as one; see sync2/maps.ts.
+  await v1Wrote(context.env, space, 'order', kept, await deviceOf(context))
 
   return context.json({ arranged: kept })
 })

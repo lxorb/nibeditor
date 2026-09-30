@@ -28,6 +28,8 @@ import { MOST_BYTES } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
+import { deviceOf } from '../sync2/device'
+import { v1Wrote } from '../sync2/maps'
 
 /** How many folders of one space may wear an icon. Far more than the sixty
  *  bookmarks a space holds, because these are not a list anybody reads: a big
@@ -199,6 +201,14 @@ folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   )
     .bind(written, writtenTints, now(), space.id)
     .run()
+  // And, in a space sync v2 keeps entry by entry, every icon as one; see sync2/maps.ts.
+  await v1Wrote(
+    context.env,
+    space,
+    'icon',
+    { icons: kept, tints: tints ?? readTints(space.tints) },
+    await deviceOf(context),
+  )
 
   // What was kept, both maps, so a client can see what a colour it sent was read
   // as. The colours are answered even when none were sent: the reply says what the

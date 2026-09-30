@@ -19,6 +19,8 @@ import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
+import { deviceOf } from '../sync2/device'
+import { v1Wrote } from '../sync2/maps'
 
 /** How many paths one space may leave out. Far more than anybody excludes by
  *  hand, and the same number the app holds itself to, so a list that fits there
@@ -96,6 +98,8 @@ spaceExcluded.put('/:id/excluded', atLeast('write'), async (context) => {
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
   await writeColumn(context.env, 'excluded', space.id, written)
+  // And, in a space sync v2 keeps entry by entry, every path as one; see sync2/maps.ts.
+  await v1Wrote(context.env, space, 'excluded', kept, await deviceOf(context))
 
   return context.json({ excluded: kept })
 })
