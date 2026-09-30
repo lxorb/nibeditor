@@ -423,7 +423,7 @@ def main() -> int:
             secret,
             "(() => { const ws = window.nibApp.workspace;"
             " const tab = ws.tabs.find((o) => o.kind === 'web');"
-            " if (tab) void ws.keepAsWebNote(tab); return true })()",
+            " if (tab) void ws.save(tab); return true })()",
         )
         time.sleep(2.0)
         now = state(port, secret)
