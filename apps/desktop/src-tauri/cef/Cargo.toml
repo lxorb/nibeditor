@@ -72,7 +72,6 @@ tauri-build = "=3.0.0-alpha.1"
 tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "custom-protocol"] }
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["unstable"] }
 cef = { version = "=152.3.0", default-features = false }
-dirs = "6"
 tauri-plugin-opener = "=3.0.0-alpha.1"
 tauri-plugin-os = "=3.0.0-alpha.1"
 tauri-plugin-deep-link = "=3.0.0-alpha.1"
@@ -99,6 +98,11 @@ keyring = { version = "3", default-features = false, features = [
 sha2 = "0.10"
 window-vibrancy = "0.6"
 portable-pty = "0.9"
+dirs = "6"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+minisign-verify = "0.2"
+tar = "0.4"
 x25519-dalek = { version = "2", default-features = false, features = [
   "static_secrets",
   "zeroize",

@@ -1571,6 +1571,10 @@ export const fil: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Default na browser',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'I-relaunch',
+  'Chromium did not start': 'Hindi nagsimula ang Chromium',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

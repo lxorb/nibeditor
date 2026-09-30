@@ -63,6 +63,8 @@ mod downloads;
 mod endpoint;
 #[cfg(desktop)]
 mod engine;
+#[cfg(desktop)]
+mod engine_switch;
 mod front_matter;
 mod fuzzy;
 #[cfg(desktop)]
@@ -259,6 +261,11 @@ macro_rules! desktop_commands {
             launch::new_window,
             default_browser::default_browser,
             default_browser::make_default_browser,
+            engine_switch::engine_state,
+            engine_switch::engine_choose,
+            engine_switch::engine_relaunch,
+            engine_switch::fetch::engine_fetch,
+            engine_switch::fetch::engine_cancel,
             lifecycle::keep_running,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
@@ -385,6 +392,32 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
     trace::begin();
 
+    #[cfg_attr(
+        not(desktop),
+        allow(
+            unused_mut,
+            reason = "a phone has no window in the config to take out of it"
+        )
+    )]
+    #[cfg(not(feature = "cef"))]
+    let mut context = tauri::generate_context!();
+    // The engine build compiles this file from a package of its own one folder down,
+    // and the config it is built from is the app's; see cef/Cargo.toml.
+    #[cfg(feature = "cef")]
+    let mut context = tauri::generate_context!("../tauri.conf.json");
+
+    // Which engine this launch belongs to, before anything of either engine starts: the
+    // other build takes the launch over where it is the one chosen. See engine_switch.rs.
+    #[cfg(desktop)]
+    if engine_switch::handed_over(
+        &context.config().identifier,
+        &context.package_info().version.to_string(),
+    ) {
+        return;
+    }
+    #[cfg(desktop)]
+    trace::mark("engine chosen");
+
     // A second launch belongs to the window that is already open: it raises it
     // and hands over whatever page it was asked to open. A phone launches an app
     // once, has no installer to run and no dialog to pick a file in.
@@ -399,6 +432,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // lifecycle.rs.
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
+    // What fetching nib's own Chromium keeps while it runs; see engine_switch.rs.
+    #[cfg(desktop)]
+    let builder = engine_switch::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
@@ -482,19 +518,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // until the webview runtime has started, which on Windows is between a third and
     // half of a launch with the screen empty for all of it. Built here, the window is up
     // in about twenty milliseconds and the webview starts behind it. See ground.rs.
-    #[cfg_attr(
-        not(desktop),
-        allow(
-            unused_mut,
-            reason = "a phone has no window in the config to take out of it"
-        )
-    )]
-    #[cfg(not(feature = "cef"))]
-    let mut context = tauri::generate_context!();
-    // The engine build compiles this file from a package of its own one folder down,
-    // and the config it is built from is the app's; see cef/Cargo.toml.
-    #[cfg(feature = "cef")]
-    let mut context = tauri::generate_context!("../tauri.conf.json");
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
@@ -674,6 +697,10 @@ fn ready(
     }
 
     trace::mark("window shown");
+    // nib's own Chromium got as far as its window, so the next launch hands over to it
+    // again; see engine_switch.rs.
+    #[cfg(desktop)]
+    engine_switch::shown(handle);
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);

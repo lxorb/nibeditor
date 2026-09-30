@@ -1542,6 +1542,10 @@ export const pa: Dictionary = {
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
   // Nib as the default browser
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
   // The archive: a row put away and taken back, and what refuses to delete it

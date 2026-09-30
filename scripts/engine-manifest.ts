@@ -55,7 +55,6 @@ function moved(line: string, pinned: Pins): string[] {
       `tauri = { version = "=${pinned.tauri}", features = ["protocol-asset", "custom-protocol"] }`,
       `tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["unstable"] }`,
       `cef = { version = "=${pinned.cef}", default-features = false }`,
-      'dirs = "6"',
     ]
   }
   // The desktop's `tauri` asks for developer tools, which Tauri 3 takes from the runtime.

@@ -10,6 +10,8 @@
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
+  import EngineRow from './settings/EngineRow.svelte'
+  import { systemName } from './settings/engine'
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
@@ -35,7 +37,7 @@
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
-  import { isDesktop, openExternal } from './tauri'
+  import { isDesktop, openExternal, platform } from './tauri'
   import { theme } from './theme.svelte'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
@@ -635,6 +637,14 @@
       <span class="name">{t('Default browser')}</span>
       <DefaultBrowser />
     </div>
+    <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
+         there is a choice: the system's engine is the one engine on Linux. -->
+    {#if systemName(platform())}
+      <div class="nib-setting setting">
+        <span class="name">{t('Engine')}</span>
+        <EngineRow />
+      </div>
+    {/if}
   </div>
 {/snippet}
 

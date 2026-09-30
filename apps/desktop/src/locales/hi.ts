@@ -1535,6 +1535,10 @@ export const hi: Dictionary = {
   'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },
   // Nib as the default browser
   'Default browser': 'डिफ़ॉल्ट ब्राउज़र',
+  // The engine web tabs run on
+  Engine: 'इंजन',
+  Relaunch: 'फिर से शुरू करें',
+  'Chromium did not start': 'Chromium शुरू नहीं हुआ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} के संपादन पूर्ववत करें',
   // The archive: a row put away and taken back, and what refuses to delete it

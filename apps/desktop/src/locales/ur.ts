@@ -1534,6 +1534,10 @@ export const ur: Dictionary = {
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Nib as the default browser
   'Default browser': 'طے شدہ براؤزر',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
   // The archive: a row put away and taken back, and what refuses to delete it

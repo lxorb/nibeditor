@@ -1546,6 +1546,10 @@ export const gsw: Dictionary = {
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Nib as the default browser
   'Default browser': 'Standardbrowser',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Neu starte',
+  'Chromium did not start': 'Chromium isch nöd gstartet',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
   // The archive: a row put away and taken back, and what refuses to delete it
