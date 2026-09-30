@@ -15,6 +15,7 @@
 import { syntaxTree } from '@codemirror/language'
 import { Compartment, type EditorState, type Extension } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { door } from '@nib/markdown/door'
 import { fenceCode, fenceLanguage } from '../fence'
 import { enclosingNamed } from '../nodes'
 import { openViews } from '../open-views'
@@ -55,22 +56,19 @@ type Runner = typeof import('./run')
 const runs = new Compartment()
 
 let loaded: Runner | null = null
-let loading: Promise<Runner> | null = null
 
 /** Fetches the runner, once, and puts its panels into every editor that draws
  *  buttons. A view in source mode has no compartment to put them in, and the
  *  reconfiguration passes it by. */
-function loadRunner(): Promise<Runner> {
-  loading ??= import('./run').then((module) => {
+const loadRunner = door(() =>
+  import('./run').then((module) => {
     loaded = module
     const effects = runs.reconfigure(module.runExtension)
     for (const view of openViews()) view.dispatch({ effects })
 
     return module
-  })
-
-  return loading
-}
+  }),
+)
 
 /** What live preview carries in place of the runner: the compartment, empty until
  *  the first press, and the runner itself in an editor built after that. */

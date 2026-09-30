@@ -16,13 +16,13 @@
  *  registry; see vim.ts and open-views.ts. */
 
 import { Compartment, type StateEffect } from '@codemirror/state'
+import { door } from '@nib/markdown/door'
 import { enrolled, openViews } from './open-views'
 
 const completions = new Compartment()
 
 /** The library, once it is here. */
 let loaded: typeof import('./completing') | null = null
-let loading: Promise<void> | null = null
 
 /** Whether brackets close themselves. One answer for the whole app rather than one per
  *  view, because that is what the setting is; read again when the library lands, so a
@@ -34,15 +34,10 @@ let pairs = true
  *  Exported for the tests, which type into an editor and read the popup in the same
  *  breath: in the app the editor has been on screen for a frame by the time anybody's
  *  hands are on the keyboard. */
-export function loadCompletion(): Promise<void> {
-  if (loaded) return Promise.resolve()
-  loading ??= (async () => {
-    loaded = await import('./completing')
-    for (const view of openViews()) view.dispatch({ effects: completionEffect(pairs) })
-  })()
-
-  return loading
-}
+export const loadCompletion: () => Promise<void> = door(async () => {
+  loaded = await import('./completing')
+  for (const view of openViews()) view.dispatch({ effects: completionEffect(pairs) })
+})
 
 /** What every editor carries: the compartment, and its place on the list of views the
  *  fetch above has to reach.

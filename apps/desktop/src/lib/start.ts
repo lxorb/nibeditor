@@ -7,6 +7,7 @@
 
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './account.svelte'
+import { busy } from './busy.svelte'
 import { installAiRunner } from './ai/ask'
 import { guardDrops } from './drops'
 import { i18n } from './i18n.svelte'
@@ -17,6 +18,7 @@ import { modes } from './modes.svelte'
 import { handBack, handingBack, settleUp } from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
+import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { startup } from './startup.svelte'
@@ -137,6 +139,13 @@ export function start(): () => void {
 
   void guardClose()
 
+  // A chunk that did not arrive; see reloading.svelte.ts.
+  const stopReloading = reloading.watch(async () => {
+    settle()
+    await workspace.writesSettled()
+    return !workspace.writing && !busy.active
+  })
+
   // A new version, now and every few hours after: an app somebody leaves open
   // for a month would otherwise only ever hear about one at launch.
   const stopLooking = updates.start()
@@ -149,7 +158,9 @@ export function start(): () => void {
   // that one keystroke can ask for: the find bar, the Search panel, the app menu's
   // rows, the reading view. Nothing waits for this and nothing is on screen for it;
   // it is the last turn of the launch order. See `warmDoors` in surfaces.svelte.ts.
-  void warmDoors()
+  void warmDoors().catch(() => {
+    // Answered by reloading.svelte.ts.
+  })
 
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
@@ -171,6 +182,7 @@ export function start(): () => void {
     stopPointer?.()
     clearInterval(sweeper)
     stopRecovery()
+    stopReloading()
     stopStrayDrops()
     stopLooking()
     stopAutomation?.()

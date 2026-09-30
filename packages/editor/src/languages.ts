@@ -1,4 +1,5 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
+import { door } from '@nib/markdown/door'
 
 /** Every language a fence may name - and nothing of any of them until a fence does.
  *
@@ -27,16 +28,16 @@ import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
  *  fence after the first is answered in the parse that asked. */
 let here: readonly LanguageDescription[] | null = null
 
-/** The one fetch of it, kept: a note of twenty fences is one list. */
-let held: Promise<readonly LanguageDescription[]> | null = null
-
 /** The whole list, fetched once.
+ *
+ *  Kept, so a note of twenty fences is one list, unless it failed; see door.ts in
+ *  @nib/markdown.
  *
  *  Exported for the two callers that want all of it rather than one language: the
  *  export, which colours a document with whatever coloured it on screen, and the
  *  tests that hold the vocabulary and the list to each other. */
-export function fenceLanguages(): Promise<readonly LanguageDescription[]> {
-  return (held ??= Promise.all([
+export const fenceLanguages: () => Promise<readonly LanguageDescription[]> = door(() =>
+  Promise.all([
     import('./language-spellings'),
     import('./language-modes'),
     import('./mermaid'),
@@ -52,8 +53,8 @@ export function fenceLanguages(): Promise<readonly LanguageDescription[]> {
     ]
 
     return here
-  }))
-}
+  }),
+)
 
 /** Which language a fence's info word names, as far as this device knows yet.
  *

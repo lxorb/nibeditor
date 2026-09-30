@@ -8,6 +8,7 @@
  *  The door is the one listener on `nib://agent`: the first event fetches the activity
  *  UI, and every event after it is handed straight on. */
 
+import { door } from '@nib/markdown/door'
 import { isDesktop } from './tauri'
 
 /** An agent's mark on one tab: whose, in its colour, and whether paused there. */
@@ -53,10 +54,9 @@ export async function listenForAgents(): Promise<() => void> {
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
 
   const { listen } = await import('@tauri-apps/api/event')
-  let heard: Promise<(event: unknown) => void> | null = null
+  const heard = door(() => import('./agents/ui/index').then(({ start }) => start()))
 
   return listen<unknown>('nib://agent', ({ payload }) => {
-    heard ??= import('./agents/ui/index').then(({ start }) => start())
-    void heard.then((hear) => hear(payload))
+    void heard().then((hear) => hear(payload))
   })
 }

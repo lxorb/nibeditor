@@ -26,6 +26,8 @@
  *  cards, the clipboard, the exports and the published page, and half of those have
  *  no await to give. */
 
+import { door } from './door'
+
 /** KaTeX, as this package uses it: the engine with the chemistry pack already applied.
  *  See maths.ts, which is the one place the two are put together. */
 type Maths = (typeof import('./maths'))['default']
@@ -37,8 +39,13 @@ type Emoji = typeof import('node-emoji')
 let maths: Maths | null = null
 let emoji: Emoji | null = null
 
-let loadingMaths: Promise<void> | null = null
-let loadingEmoji: Promise<void> | null = null
+/** The two fetches, each kept once it has worked; see door.ts. */
+const fetchMaths = door(async () => {
+  useMaths((await import('./maths')).default)
+})
+const fetchEmoji = door(async () => {
+  useEmoji(await import('node-emoji'))
+})
 
 const listeners = new Set<() => void>()
 
@@ -70,22 +77,12 @@ export function useEmoji(table: Emoji) {
 /** Loads the formula engine. Idempotent, and the same promise for every caller:
  *  a note of thirty equations asks thirty times. */
 export function loadMaths(): Promise<void> {
-  if (maths) return Promise.resolve()
-  loadingMaths ??= (async () => {
-    useMaths((await import('./maths')).default)
-  })()
-
-  return loadingMaths
+  return maths ? Promise.resolve() : fetchMaths()
 }
 
 /** Loads the emoji table. */
 export function loadEmoji(): Promise<void> {
-  if (emoji) return Promise.resolve()
-  loadingEmoji ??= (async () => {
-    useEmoji(await import('node-emoji'))
-  })()
-
-  return loadingEmoji
+  return emoji ? Promise.resolve() : fetchEmoji()
 }
 
 /** A `$…$` or a `$$…$$` somewhere in the source. The dollar is the cheap half of

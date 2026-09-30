@@ -26,6 +26,7 @@ import { storeBeside } from '../assets'
 import { busy } from '../busy.svelte'
 import { i18n, key, message, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { reloading } from '../reloading.svelte'
 import { settings } from '../settings.svelte'
 import { nameOf } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -443,3 +444,7 @@ function replaceLine(path: string, line: string, insert: string) {
 }
 
 export const recorder = new Recorder()
+
+// A page that reloads itself for a newer build waits for the microphone to close and
+// the recording to be written down; see reloading.svelte.ts.
+reloading.holds(() => recorder.on || recorder.saving)

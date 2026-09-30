@@ -557,7 +557,13 @@ function holds(tail: string): boolean {
  *  Not raised when the design pass took the last module under the ceiling (main at
  *  3,200,989 and 380), and four slots given back instead: the rows a query fence
  *  answers with, fetched by the first fence, and what a cover row writes, fetched by
- *  its press. Measured 3,187,262 and 376, which the ceiling is within one per cent of. */
+ *  its press. Measured 3,187,262 and 376, which the ceiling is within one per cent of.
+ *
+ *  Not raised 2026-09-30 for a chunk that did not arrive, from a main at 3,210,448 and
+ *  376 to 3,214,735 and 378: the door every lazy part is fetched through (door.ts in
+ *  @nib/markdown) and the page's ear for a failed fetch (reloading.svelte.ts), both of
+ *  which have to be here before a deploy can take a chunk away. What the page then does
+ *  about it (reload-when.ts) is fetched at the launch's last turn. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
 

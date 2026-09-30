@@ -30,26 +30,45 @@
  *    never from the markup, which would be a write during a render. */
 
 import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
+import { door } from '@nib/markdown/door'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
  *  is what a template can name. */
-function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
-  let asked: Promise<T> | null = null
-  return () => (asked ??= load().then((one) => one.default))
+export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
+  return door(() => load().then((one) => one.default))
 }
 
-/** The same, and it remembers: `asked` is the fetch once something has asked for it
- *  and null until then, so the markup has something to put its `{#if}` on. Only ever
- *  set - nothing here is ever un-asked. */
-function latched<T>(load: () => Promise<{ default: T }>): {
+const never = new Promise<never>(() => undefined)
+
+/** The same, and it remembers: `asked` is the fetch, null before it and after a failure,
+ *  for the markup's `{#if}`. `ask` runs in effects, so it reads only plain fields; what
+ *  it hands out never rejects, since reloading.svelte.ts answers a failure. */
+export function latched<T>(load: () => Promise<{ default: T }>): {
   ask: () => Promise<T>
   readonly asked: Promise<T> | null
 } {
+  const fetch = held(load)
+  let asking: Promise<T> | null = null
+  let answer: Promise<T> = never
   let asked = $state<Promise<T> | null>(null)
 
   return {
-    ask: () => (asked ??= load().then((one) => one.default)),
+    ask: () => {
+      const fetching = fetch()
+      if (fetching === asking) return answer
+
+      asking = fetching
+      answer = fetching.catch(() => never)
+      asked = answer
+      fetching.catch(() => {
+        if (asking !== fetching) return
+        asking = null
+        asked = null
+      })
+
+      return answer
+    },
     get asked() {
       return asked
     },
@@ -393,5 +412,7 @@ export async function warmDoors(): Promise<void> {
     // And what a cover row in a note's menu writes, so the file chooser it opens is
     // opened in the press that asked; see `coverEntries` in menu.svelte.ts.
     import('./note-cover'),
+    // Before a deploy can take it away; see reloading.svelte.ts.
+    import('./reload-when'),
   ])
 }

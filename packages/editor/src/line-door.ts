@@ -13,17 +13,17 @@
  *  to whatever is bound under it. The same shape as find.ts, which is the door the
  *  search engine comes through. */
 
+import { door as fetched } from '@nib/markdown/door'
+
 type Commands = typeof import('./line-commands')
 
 let loaded: Commands | null = null
-let loading: Promise<Commands> | null = null
 
 /** Fetches the commands, once. The promise is kept, so every caller after the first
- *  is answered by the same fetch. */
-export function loadLineCommands(): Promise<Commands> {
-  loading ??= import('./line-commands').then((module) => (loaded = module))
-  return loading
-}
+ *  is answered by the same fetch, unless it failed; see door.ts in @nib/markdown. */
+export const loadLineCommands: () => Promise<Commands> = fetched(() =>
+  import('./line-commands').then((module) => (loaded = module)),
+)
 
 /** One of them, run now if it is here and as it lands if not. Handed the target
  *  itself rather than its state, so a command that runs a moment late reads the

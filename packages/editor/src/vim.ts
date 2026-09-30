@@ -35,6 +35,7 @@
 
 import { Compartment, type StateEffect } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { door } from '@nib/markdown/door'
 import { enrolled, openViews } from './open-views'
 import { flushTableEdits } from './table/widget'
 
@@ -88,7 +89,6 @@ const modal = new Compartment()
 
 /** The library, once it is here. */
 let loaded: typeof import('./vim-mode') | null = null
-let loading: Promise<void> | null = null
 
 /** Whether modal editing is wanted. One answer for the whole app rather than one per
  *  view, because that is what the setting is: the app turns it on and applies it to
@@ -103,17 +103,12 @@ let wanted = false
  *  Exported for the tests, which turn the mode on and then read the state in the same
  *  breath: in the app the reader has pressed a key or opened the settings, and a
  *  keymap that lands in the next frame is a keymap that landed at once. */
-export function loadVim(): Promise<void> {
-  if (loaded) return Promise.resolve()
-  loading ??= (async () => {
-    loaded = await import('./vim-mode')
-    if (!wanted) return
+export const loadVim: () => Promise<void> = door(async () => {
+  loaded = await import('./vim-mode')
+  if (!wanted) return
 
-    for (const view of openViews()) view.dispatch({ effects: vimEffect(true) })
-  })()
-
-  return loading
-}
+  for (const view of openViews()) view.dispatch({ effects: vimEffect(true) })
+})
 
 export function vimExtensions() {
   return [modal.of([]), enrolled]

@@ -22,6 +22,7 @@
  *  until a v2 engine runs, and the v1 app never carries any of it. */
 
 import { mount, untrack } from 'svelte'
+import { door } from '@nib/markdown/door'
 import type { Excerpt } from '@nib/sync-core/diverge'
 import { message, t } from '../i18n.svelte'
 import { howFor } from '../new-tab'
@@ -241,13 +242,15 @@ class Asking {
 /** The sheet, mounted into the page the first time a note is held and kept there, so
  *  its way out can play: the theme picker's door (theme-picker/picking.svelte.ts), which
  *  costs the first paint nothing. Never the plugin's, which stays on v1. */
-let mounted: Promise<void> | null = null
+const mounted = door(() =>
+  import('./Diverged.svelte').then(({ default: Diverged }) => {
+    mount(Diverged, { target: document.body })
+  }),
+)
 
 function sheet(): Promise<void> {
   if (__EVEN_PLUGIN__) return Promise.resolve()
-  return (mounted ??= import('./Diverged.svelte').then(({ default: Diverged }) => {
-    mount(Diverged, { target: document.body })
-  }))
+  return mounted()
 }
 
 /** The toast for a note that came back, fetched with the first one. The toast's own

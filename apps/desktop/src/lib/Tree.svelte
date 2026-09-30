@@ -27,6 +27,7 @@
 
   import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
+  import { door } from '@nib/markdown/door'
   // The kind of file a row is, under a name of its own: `FileMark` here is the
   // component that draws one.
   import { fileMark, type FileMark as Mark } from './file-mark'
@@ -577,12 +578,7 @@
    *  Fetched once per window rather than once per drag. The same seam lib/ai/ask.ts
    *  holds in front of answering.ts. */
   let lift = $state<typeof import('./tree-lift') | null>(null)
-  let fetching: Promise<typeof import('./tree-lift')> | null = null
-
-  function liftCode(): Promise<typeof import('./tree-lift')> {
-    fetching ??= import('./tree-lift').then((code) => (lift = code))
-    return fetching
-  }
+  const liftCode = door(() => import('./tree-lift').then((code) => (lift = code)))
 
   // Warmed by the order rather than by the gesture, so the code is there before the
   // first press rather than a frame into it: choosing Manual is somebody saying they

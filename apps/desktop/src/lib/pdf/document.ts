@@ -14,11 +14,10 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
+import { door } from '@nib/markdown/door'
 import { fileBytes, sha256 } from '../bytes'
 
 type Library = typeof import('pdfjs-dist')
-
-let loading: Promise<Library> | null = null
 
 /** Whether this engine runs the current pdf.js, which calls `Promise.try`,
  *  `Uint8Array.fromBase64` and `Math.sumPrecise` without asking whether they are
@@ -41,22 +40,20 @@ export function current(scope: object = globalThis): boolean {
   return has('Promise', 'try') && has('Uint8Array', 'fromBase64') && has('Math', 'sumPrecise')
 }
 
-/** The library, loaded once per window. */
-export function pdfjs(): Promise<Library> {
-  loading ??= (
-    current()
-      ? import('pdfjs-dist').then((library) => ({ library, worker: workerUrl }))
-      : import('pdfjs-dist/legacy/build/pdf.mjs').then((library) => ({
-          library,
-          worker: legacyWorkerUrl,
-        }))
+/** The library, loaded once per window, or again after a load that failed; see
+ *  door.ts in @nib/markdown. */
+export const pdfjs: () => Promise<Library> = door(() =>
+  (current()
+    ? import('pdfjs-dist').then((library) => ({ library, worker: workerUrl }))
+    : import('pdfjs-dist/legacy/build/pdf.mjs').then((library) => ({
+        library,
+        worker: legacyWorkerUrl,
+      }))
   ).then(({ library, worker }) => {
     library.GlobalWorkerOptions.workerSrc = worker
     return library
-  })
-
-  return loading
-}
+  }),
+)
 
 /** A PDF that is open, and the one way to close it. */
 export interface OpenPdf {

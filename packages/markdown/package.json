@@ -14,6 +14,7 @@
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
     "./diagrams": "./src/diagrams.ts",
+    "./door": "./src/door.ts",
     "./eager": "./src/eager.ts",
     "./engines": "./src/engines.ts",
     "./edits": "./src/edits.ts",

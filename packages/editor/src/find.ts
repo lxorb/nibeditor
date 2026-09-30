@@ -38,6 +38,7 @@ import {
   type StateCommand,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
+import { door } from '@nib/markdown/door'
 import { enrolled, openViews } from './open-views'
 
 /** What the bar is asking of the document. The four the library's query has,
@@ -122,26 +123,24 @@ const engine = new Compartment()
 
 /** The engine, once it is here. */
 let loaded: typeof import('./finding') | null = null
-let loading: Promise<typeof import('./finding')> | null = null
 
 /** Fetches the engine, and puts it into whatever is open when it arrives. Idempotent,
- *  and the promise is kept: a note of twenty words is one fetch.
+ *  and the promise is kept: a note of twenty words is one fetch. One that failed is
+ *  not kept; see door.ts in @nib/markdown.
  *
  *  Exported because two callers wait on it. The launch asks for it at its last turn, so
  *  that the marks under a selected word are there before any hand could have selected
  *  one; and `setFind` awaits it, so the first thing typed into the bar is looked for
  *  even if the bar went up in the first frame. */
-export function loadFind(): Promise<typeof import('./finding')> {
-  loading ??= import('./finding').then((module) => {
+export const loadFind: () => Promise<typeof import('./finding')> = door(() =>
+  import('./finding').then((module) => {
     loaded = module
     for (const view of openViews())
       view.dispatch({ effects: engine.reconfigure(module.searching()) })
 
     return module
-  })
-
-  return loading
-}
+  }),
+)
 
 /** Everything the editor carries in order to be searchable: the field that says the
  *  bar is up, the seam the app hears it through, and the compartment the engine lands

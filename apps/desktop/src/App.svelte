@@ -28,6 +28,7 @@
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
+  import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/showing.svelte'
   import { rooms } from './lib/rooms.svelte'
@@ -115,10 +116,10 @@
    *  way out to play, and the sheet's own `{#if}` is what plays it either way.
    *
    *  Each door remembers being asked, so what is on the page is the door's own
-   *  answer rather than a second list of flags here; see surfaces.svelte.ts. Only
-   *  ever set: `{#await}` on a promise that has already resolved renders in the same
-   *  pass, so the second open costs nothing and only the first ever sees an empty
-   *  frame.
+   *  answer rather than a second list of flags here; see surfaces.svelte.ts. Set once
+   *  and kept unless the fetch failed: `{#await}` on a promise that has already
+   *  resolved renders in the same pass, so the second open costs nothing and only the
+   *  first ever sees an empty frame.
    *
    *  Four of the six are knocked on here, because their stores are ones this
    *  component already holds and none of them has a single way in to say it from. The
@@ -1046,6 +1047,12 @@
     {#if updates.ready}
       <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
     {/if}
+    {#if reloading.offered}
+      <!-- A chunk the network lost; see reloading.svelte.ts. -->
+      <div class="reload" role="alert">
+        <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
+      </div>
+    {/if}
   </div>
 {/snippet}
 
@@ -1225,6 +1232,15 @@
   /* One column on a phone, where the cards stack. */
   :global([data-touch]) .notices {
     grid-template-columns: 1fr;
+  }
+
+  .reload {
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  :global([data-touch]) .reload {
+    grid-column: 1;
   }
 
   /* Above the drawer, which is fixed over the whole height of the window. */

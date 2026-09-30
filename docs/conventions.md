@@ -50,6 +50,7 @@ kind; a second copy is the bug the file's own header describes.
 | Something kept by path, and a file moves or goes? | `apps/desktop/src/lib/workspace/file-ops.ts`. Every operation says `created`, `moved` or `removed` once through `workspace.fileMoved`, `fileGone` and `fileCame`; a store follows (`keeping` for one kept under each space's root) and no operation names it. |
 | What is a row of a menu? | `apps/desktop/src/lib/menu-item.ts`: `MenuItem` and `DIVIDER`, for a row's own menu, the app menu and the palette alike. What a row *draws* stays each list's own - a hint is a `kbd` in one and a word in another. |
 | Dropping a key from a map? | `apps/desktop/src/lib/records.ts`: `without`, `withOrWithout`. |
+| Fetching a part the first time it is asked for? | `packages/markdown/src/door.ts`: `door`, which keeps one fetch, tries twice and forgets a failure; `held` and `latched` in `apps/desktop/src/lib/surfaces.svelte.ts` for a component. A chunk the browser will not fetch again is `apps/desktop/src/lib/reloading.svelte.ts`'s. |
 
 ### The workspace store
 

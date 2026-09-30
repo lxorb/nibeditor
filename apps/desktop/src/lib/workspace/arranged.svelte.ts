@@ -30,6 +30,7 @@
  *  about the notes, so it stays on the machine, in workspace/device.svelte.ts,
  *  beside how far down the list each space was left. */
 
+import { door } from '@nib/markdown/door'
 import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
 import { renamedIn, withoutName } from '../tree-order'
 import { isRecord, isString, keep } from '../stored'
@@ -161,7 +162,7 @@ export class Arranged {
    *  state: nothing on screen is drawn from it. */
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   /** The account's half, once it has been asked for. */
-  private talking: Promise<typeof import('./arranging')> | null = null
+  private readonly talking = door(() => import('./arranging'))
 
   /** Which space the rows on screen belong to. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
@@ -434,7 +435,7 @@ export class Arranged {
 
   /** The account's half, once. */
   private reaching(): Promise<typeof import('./arranging')> {
-    return (this.talking ??= import('./arranging'))
+    return this.talking()
   }
 
   private writeAll() {
