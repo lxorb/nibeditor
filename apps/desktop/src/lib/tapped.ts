@@ -17,6 +17,7 @@ import { DoubleTap, type Modifier, tapOf } from './double-tap'
 import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
 import { type AppContext, SHORTCUTS } from './shortcuts/registry'
+import { fromPage } from './web-tab/keys'
 
 type Hearer = (key: Modifier) => void
 
@@ -41,8 +42,13 @@ export function listenForTaps(target: Window = window): () => void {
   const taps = new DoubleTap()
   const now = () => performance.now()
 
-  const down = (event: KeyboardEvent) => taps.pressed(event, now())
+  // Not a key a web page had, which the crate tells the window about as well: the page
+  // counts its own taps and says so itself.
+  const down = (event: KeyboardEvent) => {
+    if (!fromPage(event)) taps.pressed(event, now())
+  }
   const up = (event: KeyboardEvent) => {
+    if (fromPage(event)) return
     const key = taps.released(event, now())
     if (key) heard(key)
   }

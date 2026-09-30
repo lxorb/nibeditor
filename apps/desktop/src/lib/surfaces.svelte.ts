@@ -406,6 +406,8 @@ export async function warmDoors(): Promise<void> {
     import('./row-menu'),
     import('./editor-menu'),
     import('./tab-cycle.svelte'),
+    // The tabs' numbers while Alt is held, which listen for the hold themselves.
+    __EVEN_PLUGIN__ ? undefined : import('./tab-strip/numbers.svelte'),
     // The editor in the card a pointer resting on a link opens, which a hand can ask
     // for at any moment; see `previewCard` in Editor.svelte.
     import('./preview-card'),

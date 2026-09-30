@@ -33,9 +33,11 @@
 //!
 //! The release of a modifier is told as well, and not taken from the page: Ctrl+T held
 //! is Alt+Tab's shape, and a Ctrl let go of inside the page is the release that
-//! chooses. Nothing else is said, so a site cannot be read through this and cannot
-//! speak through it either: the event is the engine's, raised in this process, and
-//! nothing in the page can raise it.
+//! chooses. So is Alt going down on its own, and whatever key goes down while it is
+//! held, as `Unidentified` and never as the key: the window shows each tab's number
+//! while Alt is held and puts them away at the next key (`told`). Nothing else is said,
+//! so a site cannot be read through this and cannot speak through it either: the event
+//! is the engine's, raised in this process, and nothing in the page can raise it.
 //!
 //! `WebView2`'s alone. `WebKitGTK` has no such event reachable through what wry hands
 //! out, and on nib's own Chromium the webview has no controller to ask; on those a page
@@ -153,6 +155,31 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
     }
 }
 
+/// A key the page keeps that the window is only told of: Alt going down on its own, and
+/// any key going down while it is held, named for nothing but that. The window shows each
+/// tab's number after Alt has been held a moment and puts them away at the next key (see
+/// `lib/tab-strip/numbers.svelte.ts`); the page has both keys, as it always did. `AltGr`
+/// is Ctrl and Alt on Windows and is never said, and Alt with Shift is the system's
+/// switch between keyboards. Asked only of a key `meaning` left to the page.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
+    if !down || repeat || held.ctrl {
+        return None;
+    }
+    let pressed = |key, code| Pressed {
+        key,
+        code,
+        held,
+        repeat,
+        down,
+    };
+
+    if vk == 0x12 {
+        return (!held.shift).then(|| pressed("Alt", "AltLeft"));
+    }
+    held.alt.then(|| pressed("Unidentified", ""))
+}
+
 /// A digit on the top row, which a browser jumps between its tabs with: Ctrl+1 to
 /// Ctrl+9, and here Alt+0 to Alt+9 as well.
 fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
@@ -224,7 +251,12 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
                 shift: held(VK_SHIFT),
                 alt: held(VK_MENU),
             };
-            let Some(pressed) = meaning(vk, now, down, status.WasKeyDown.as_bool()) else {
+            let repeat = status.WasKeyDown.as_bool();
+            let Some(pressed) = meaning(vk, now, down, repeat) else {
+                // Alt held on its own, which the page keeps and the window is told of.
+                if let Some(said) = told(vk, now, down, repeat) {
+                    let _ = app.emit_to(window.as_str(), PRESSED, said);
+                }
                 return Ok(());
             };
 
@@ -286,7 +318,7 @@ pub mod chromium {
         CallNextHookEx, IsChild, SetWindowsHookExW, HC_ACTION, WH_KEYBOARD,
     };
 
-    use super::{meaning, Held, PRESSED};
+    use super::{meaning, told, Held, PRESSED};
 
     /// The app, for the hook to tell the window with.
     static APP: OnceLock<AppHandle> = OnceLock::new();
@@ -383,7 +415,15 @@ pub mod chromium {
             shift: pressed_with(VK_SHIFT),
             alt: pressed_with(VK_MENU),
         };
-        let pressed = meaning(vk, held, down, repeat)?;
+        let Some(pressed) = meaning(vk, held, down, repeat) else {
+            // Alt held on its own: the page keeps it, and the window is told.
+            let said = told(vk, held, down, repeat)?;
+            let (app, window) = (app.clone(), holder);
+            std::thread::spawn(move || {
+                let _ = app.emit_to(window.as_str(), PRESSED, said);
+            });
+            return Some(false);
+        };
 
         // Told from a thread of its own, since the hook runs in the middle of the app's
         // own thread taking a message, where a question to a window waits for itself.
@@ -402,7 +442,7 @@ pub mod chromium {
 
 #[cfg(test)]
 mod tests {
-    use super::{meaning, Held};
+    use super::{meaning, told, Held};
 
     const CTRL: Held = Held {
         ctrl: true,
@@ -511,6 +551,53 @@ mod tests {
         assert_eq!(meaning(0x74, Held::default(), true, false), None);
         // A letter with no Ctrl is typing.
         assert_eq!(meaning(0x54, Held::default(), true, false), None);
+    }
+
+    #[test]
+    fn alt_held_on_its_own_is_told_and_left_to_the_page() {
+        let alt = Held {
+            alt: true,
+            ..Held::default()
+        };
+        let said = |vk, held, repeat| told(vk, held, true, repeat).map(|one| one.key);
+
+        // Alt going down, whether or not the engine has it as held yet.
+        assert_eq!(said(0x12, Held::default(), false), Some("Alt"));
+        assert_eq!(said(0x12, alt, false), Some("Alt"));
+        // Held, it repeats, and a repeat is the same hold.
+        assert_eq!(said(0x12, alt, true), None);
+        // Any other key while it is held puts the numbers away, named for nothing.
+        assert_eq!(said(0x25, alt, false), Some("Unidentified"));
+        assert_eq!(said(0x44, alt, false), Some("Unidentified"));
+        // Nor is a key without Alt said at all.
+        assert_eq!(said(0x44, Held::default(), false), None);
+        // And none of it is taken from the page: `meaning` leaves these alone.
+        assert_eq!(meaning(0x12, alt, true, false), None);
+        // Let go of, Alt is `meaning`'s release as it always was.
+        assert_eq!(told(0x12, alt, false, false), None);
+    }
+
+    #[test]
+    fn altgr_and_alt_with_shift_are_never_a_hold() {
+        // AltGr is Ctrl and Alt on Windows: a Swiss `@` and a German `{`.
+        assert_eq!(told(0x12, Held { alt: true, ..CTRL }, true, false), None);
+        assert_eq!(told(0x32, Held { alt: true, ..CTRL }, true, false), None);
+        // Alt with Shift is the switch between keyboards.
+        let shift = Held {
+            shift: true,
+            ..Held::default()
+        };
+        assert_eq!(told(0x12, shift, true, false), None);
+        // Shift pressed while Alt is held ends the hold like any other key.
+        let held = Held {
+            alt: true,
+            shift: true,
+            ..Held::default()
+        };
+        assert_eq!(
+            told(0x10, held, true, false).map(|one| one.key),
+            Some("Unidentified")
+        );
     }
 
     #[test]
