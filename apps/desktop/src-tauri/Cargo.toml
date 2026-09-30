@@ -62,7 +62,7 @@ cef = []
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 # The identifier and the version, read the way tauri-build reads them, for `nib mcp`;
-# see build.rs. Both are what tauri-build is itself built with, so they add nothing.
+# see identity.rs. Both are what tauri-build is itself built with, so they add nothing.
 tauri-utils = "2"
 serde_json = "1"
 

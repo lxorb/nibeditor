@@ -67,6 +67,9 @@ tauri-runtime-cef = "3.0.0-alpha.2"
 # has off a Mac, and the Mac build stopped there.
 tauri-runtime = "3.0.0-alpha.1"
 tauri-build = "3.0.0-alpha.1"
+# What the build script reads the config with (../identity.rs): the release Cargo takes
+# for `tauri-build` and `tauri` both.
+tauri-utils = "3.0.0-alpha.2"
 plugins = "3.0.0-alpha.1"
 cef = "152.3.0"
 
@@ -74,6 +77,8 @@ cef = "152.3.0"
 
 [build-dependencies]
 tauri-build = "=3.0.0-alpha.1"
+tauri-utils = "=3.0.0-alpha.2"
+serde_json = "1"
 
 [dependencies]
 tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "unstable", "custom-protocol"] }
@@ -97,6 +102,8 @@ tauri-plugin-dialog = "=3.0.0-alpha.1"
 tauri-plugin-process = "=3.0.0-alpha.1"
 tauri-plugin-single-instance = { version = "=3.0.0-alpha.1", features = ["deep-link"] }
 tauri-plugin-updater = "=3.0.0-alpha.1"
+tauri-plugin-global-shortcut = "=3.0.0-alpha.1"
+tauri-plugin-notification = "=3.0.0-alpha.1"
 keyring = { version = "3", default-features = false, features = [
   "apple-native",
   "windows-native",
@@ -120,6 +127,9 @@ hkdf = "0.12"
 hmac = "0.12"
 zeroize = "1"
 tokio = { version = "1", default-features = false, features = ["time"] }
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tauri = { version = "=3.0.0-alpha.2", features = ["tray-icon"] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }
@@ -220,8 +230,10 @@ windows = { version = "0.58", features = [
   "Win32_System_Console",
   "Win32_System_ProcessStatus",
   "Win32_UI_WindowsAndMessaging",
+  "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
 ] }
+png = "0.18"
 webview2-com = "0.38"
 windows-core = "0.61"
 windows_com = { package = "windows", version = "0.61", features = [
@@ -234,6 +246,9 @@ webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 
 [dev-dependencies]
 tempfile = "3"
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+windows = { version = "0.58", features = ["Win32_Graphics_Gdi"] }
 
 [profile.release]
 codegen-units = 1
