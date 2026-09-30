@@ -17,12 +17,12 @@ export interface EngineState {
 }
 
 /** The system's own engine by the name a person knows it by: the browser it is the
- *  engine of. Empty where there is no choice to make - Linux has no Chromium row (see
- *  `OFFERED` in engine_switch.rs), and neither has a phone or a browser tab. */
+ *  engine of. Empty where there is no choice to make, which is everywhere but Windows
+ *  for now (`OFFERED` in engine_switch.rs): Linux cannot run the Chromium build, a Mac's
+ *  freezes at its first web tab, and a phone or a browser tab has neither. A Mac's row,
+ *  once it is there, is `Chromium | Safari`. */
 export function systemName(os: string): string {
-  if (os === 'windows') return 'Edge'
-  if (os === 'macos') return 'Safari'
-  return ''
+  return os === 'windows' ? 'Edge' : ''
 }
 
 /** What sits beside the control: nothing, the Relaunch chip once the chosen engine

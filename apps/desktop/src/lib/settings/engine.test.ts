@@ -13,7 +13,7 @@ const on = (state: Partial<EngineState>): EngineState => ({
 describe('the engine row', () => {
   test('the system engine is named after its browser, and there is no row without one', () => {
     expect(systemName('windows')).toBe('Edge')
-    expect(systemName('macos')).toBe('Safari')
+    expect(systemName('macos')).toBe('')
     expect(systemName('linux')).toBe('')
     expect(systemName('android')).toBe('')
     expect(systemName('')).toBe('')
