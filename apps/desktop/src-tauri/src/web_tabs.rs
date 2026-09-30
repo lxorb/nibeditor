@@ -90,8 +90,6 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
         held.get_or_insert_with(HashMap::new)
             .insert(tab.to_string(), label.to_string());
     }
-    // Already loaded, so there is nothing to send it on to: it keeps what it was built
-    // with rather than being cleared the way a tab's own page is; see web_worlds.rs.
     listening(app, tab, store, None);
     // Its loads and its title, said to the window as a built page's are.
     #[cfg(all(windows, not(feature = "cef")))]
