@@ -1148,8 +1148,9 @@ pub async fn web_open(
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.zoom_hotkeys_enabled(true);
 
-    // The middle button on a link, answered in the page so the tab it opens can be
-    // left behind; see web_opens.rs. In every frame, since a link in a frame is a link.
+    // The middle button, a Ctrl+click and a Shift+click on a link, answered in the page
+    // so the tab each opens goes where the press said; see web_opens.rs. In every frame,
+    // since a link in a frame is a link.
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.initialization_script_for_all_frames(crate::web_opens::SCRIPT);
 

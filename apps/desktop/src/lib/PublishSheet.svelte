@@ -17,7 +17,7 @@
   import Sheet from './Sheet.svelte'
   import { chooseTarget, download, writeFile } from './export/save'
   import { siteIcon } from './site-icon'
-  import { isDesktop } from './tauri'
+  import { isDesktop, openExternal } from './tauri'
   import SpaceMark from './SpaceMark.svelte'
   import { readableSize } from './usage.svelte'
   import { viewport } from './viewport.svelte'
@@ -530,7 +530,16 @@
   {#if published && liveAt}
     <p class="note" transition:slide={{ duration: dur(180) }}>
       {t('Live at')}
-      <a href="https://{liveAt}" target="_blank" rel="noreferrer">{liveAt}</a>
+      <!-- The app talking about itself, so the browser somebody is signed in to, said
+           here rather than left to the engine: a window the app's own page asks for
+           goes nowhere. See open-link.ts. -->
+      <a
+        href="https://{liveAt}"
+        onclick={(event) => {
+          event.preventDefault()
+          void openExternal(`https://${liveAt}`)
+        }}>{liveAt}</a
+      >
     </p>
 
     <!-- What readers have typed into the forms on it. Quiet, because most sites

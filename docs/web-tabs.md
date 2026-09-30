@@ -803,12 +803,19 @@ and Alt picks one row at a time, since Ctrl is the tab's. Ctrl+Enter in the pale
 the keyboard's Ctrl+click. A tab asked for this way is never the preview. The rule is
 `lib/new-tab.ts`.
 
-Inside a page the engine opens every such link as a window it asks the app for, and
-`WebView2` does not say how it was pressed. `src-tauri/src/web_opens.rs` works it out
-at the moment the request is raised: a page script answers the middle button and opens
-the link under a window name that says so, Ctrl and Shift are read off the keyboard,
-and the page's own "open link" menu row is recognised by the link the menu was raised
-on. A plain `target="_blank"` opens in front. A page that asks for a window at a size of
+Inside a page every such link is a window the page asks the app for, and `WebView2`
+does not say how it was pressed. So `src-tauri/src/web_opens.rs` has a page script
+answer the press itself - the middle button, and Ctrl or Shift with the main one - and
+open the link under a window name that says where its tab goes, read off the press
+rather than the keyboard. Ctrl and Shift are read off the keyboard only for a window
+the page's own script asks for, and the page's own "open link" menu row is recognised
+by the link the menu was raised on. A plain `target="_blank"` opens in front. None of
+this was ever reached from a link until 2026-09-30: the opener plugin put a script in
+every webview that took a Ctrl+click, a Shift+click and a `target="_blank"` link away
+from the page to hand to the system browser, which no site is granted, so in a web tab
+those presses opened nothing at all. It is off (`src-tauri/src/lib.rs`), the app's own
+links say where they go in its own code, and `scripts/web-click-probe.py` presses every
+kind of link every way. A page that asks for a window at a size of
 its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
 because that page reports back through `window.opener` and closes itself; on the
 other engines it is a tab, as before.
@@ -1477,6 +1484,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `scripts/web-scroll-probe.py` | the drive for the wheel: one notch at the legacy window and at the page's own, frame by frame, against Chrome headless. See "One notch of the wheel is one notch" |
 | `scripts/web-zoom-probe.py` | the drive for the zoom: Ctrl and the wheel, the same site, another site, a site with its own Ctrl and the wheel, the keys in the app, and Ctrl+0 from inside the page. See "Zoom" under "The page itself" |
+| `scripts/web-click-probe.py` | the drive for a link in a tab of its own: a plain press, Ctrl, Ctrl+Shift and the middle button on a link, a `target="_blank"` link and a script's own link inside a page, and on a website's row in the file list. See "A link in a tab of its own" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
 | `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |
