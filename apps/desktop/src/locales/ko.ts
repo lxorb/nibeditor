@@ -1558,4 +1558,8 @@ export const ko: Dictionary = {
   'Agent tabs closed': '에이전트 탭이 닫힘',
   'nibeditor is still running for your agents': '에이전트를 위해 nibeditor가 계속 실행 중입니다',
   '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
+  // Web logins that travel, and the devices of an account
+  'no such device': '그런 기기가 없습니다',
+  'give the device a name': '기기 이름을 지정하세요',
+  'that computer is no longer waiting': '그 컴퓨터는 더 이상 기다리지 않습니다',
 }

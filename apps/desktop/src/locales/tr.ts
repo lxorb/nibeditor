@@ -1586,4 +1586,8 @@ export const tr: Dictionary = {
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
   'nibeditor is still running for your agents': 'nibeditor ajanlarınız için çalışmaya devam ediyor',
   '{client} wants to connect': '{client} bağlanmak istiyor',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'böyle bir cihaz yok',
+  'give the device a name': 'cihaza bir ad verin',
+  'that computer is no longer waiting': 'o bilgisayar artık beklemiyor',
 }

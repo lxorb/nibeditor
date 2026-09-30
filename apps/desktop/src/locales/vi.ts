@@ -1566,4 +1566,8 @@ export const vi: Dictionary = {
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
   'nibeditor is still running for your agents': 'nibeditor vẫn chạy cho các tác tử của bạn',
   '{client} wants to connect': '{client} muốn kết nối',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'không có thiết bị đó',
+  'give the device a name': 'đặt tên cho thiết bị',
+  'that computer is no longer waiting': 'máy tính đó không còn chờ nữa',
 }

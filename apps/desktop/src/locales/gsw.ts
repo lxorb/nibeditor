@@ -1590,4 +1590,8 @@ export const gsw: Dictionary = {
   'Agent tabs closed': 'Agänte-Tabs zuegmacht',
   'nibeditor is still running for your agents': 'nibeditor lauft für dini Agänte wiiter',
   '{client} wants to connect': '{client} wott sich verbinde',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Das Gerät gits nöd',
+  'give the device a name': 'Gib em Gerät en Name',
+  'that computer is no longer waiting': 'De Computer wartet nüme',
 }

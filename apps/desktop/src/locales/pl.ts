@@ -1655,4 +1655,8 @@ export const pl: Dictionary = {
   'Agent tabs closed': 'Karty agentów zamknięte',
   'nibeditor is still running for your agents': 'nibeditor nadal działa dla twoich agentów',
   '{client} wants to connect': '{client} chce się połączyć',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'nie ma takiego urządzenia',
+  'give the device a name': 'nadaj urządzeniu nazwę',
+  'that computer is no longer waiting': 'ten komputer już nie czeka',
 }

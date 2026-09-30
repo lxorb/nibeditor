@@ -11,6 +11,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { ERASED, eraseAccount } from '../src/erase'
 import { type TestEnv, testEnv } from './harness'
+import { hubs } from './hub-fakes'
 
 /** The tables that hold nothing of any one account, and why. Everything else the
  *  schema has must be in `ERASED`. */
@@ -240,6 +241,33 @@ function seed(database: DatabaseSync, who: Person): void {
   )
   run('insert into mailed (email, sent_at) values (?, 1)', who.email)
   run('insert into mailed_days (day, email) values (1, ?)', who.email)
+  // A computer of the account, the web key wrapped to it, a site's login it wrote
+  // and one of that login's chunks, and the ceilings counted on them.
+  run(
+    `insert into devices (id, user_id, session_id, name, platform, app, created_at)
+     values (?, ?, ?, 'Laptop', 'windows', '1.0.0', 1)`,
+    `device-${who.id}`,
+    who.id,
+    `session-id-${who.id}`,
+  )
+  run(
+    `insert into web_keys (user_id, device_id, wrapped, generation) values (?, ?, 'wrapped', 1)`,
+    who.id,
+    `device-${who.id}`,
+  )
+  run(
+    `insert into web_states (user_id, key, fence, version, generation, size, device_id, at)
+     values (?, 'site-key', 1, 1, 1, 1, ?, 1)`,
+    who.id,
+    `device-${who.id}`,
+  )
+  run(`insert into web_chunks (user_id, name, size, at) values (?, 'chunk-name', 1, 1)`, who.id)
+  run(
+    `insert into limits (scope, key, count, until) values
+       ('lease', ?1 || ':device', 1, 9e15), ('web-up', ?1 || ':site-key', 1, 9e15),
+       ('web-key', ?1, 1, 9e15)`,
+    who.id,
+  )
 }
 
 /** The ways the two reach each other: each is a member of the other's space, has
@@ -303,6 +331,8 @@ describe('deleting one of two accounts', () => {
       await env.NOTES.put(`spaces/${who.space}/${who.note}`, 'abc')
       await env.NOTES.put(`versions/${who.version}`, 'abc')
       await env.NOTES.put(`blobs/${who.blob}`, new Uint8Array([1]))
+      await env.NOTES.put(`web/${who.id}/site-key`, new Uint8Array([1]))
+      await env.NOTES.put(`web/${who.id}/chunks/chunk-name`, new Uint8Array([1]))
     }
     await env.NOTES.put(`versions/${SHARED_VERSION}`, 'abc')
     await env.NOTES.put(`blobs/${SHARED_BLOB}`, new Uint8Array([1]))
@@ -339,9 +369,35 @@ describe('deleting one of two accounts', () => {
         `versions/${SHARED_VERSION}`,
         `blobs/${STAYING.blob}`,
         `blobs/${SHARED_BLOB}`,
+        `web/${STAYING.id}/site-key`,
+        `web/${STAYING.id}/chunks/chunk-name`,
       ].sort(),
     )
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
+  })
+
+  test('empties its hub and the hubs of the guests at its address, and nobody else’s', async () => {
+    const running = hubs(env)
+    env.HUB = running.HUB
+
+    await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
+
+    const erased = running.asked.filter((one) => one.ask === 'erase').map((one) => one.id)
+    expect(erased.sort()).toEqual([LEAVING.guest, LEAVING.id].sort())
+    expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
+  })
+
+  test('keeps a hub that did not answer on the list for the next night', async () => {
+    env.HUB = {
+      idFromName: (name: string) => name,
+      get: () => ({ fetch: () => Promise.reject(new Error('the hub is unwell')) }),
+    } as unknown as DurableObjectNamespace
+
+    await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
+
+    expect(
+      env.db.prepare("select what from leftovers where what like 'hubs/%' order by what").all(),
+    ).toEqual([{ what: `hubs/${LEAVING.guest}` }, { what: `hubs/${LEAVING.id}` }])
   })
 
   test('undoes nothing when the transaction fails', async () => {

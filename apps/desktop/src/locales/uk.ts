@@ -1648,4 +1648,8 @@ export const uk: Dictionary = {
   'Agent tabs closed': 'Вкладки агентів закрито',
   'nibeditor is still running for your agents': 'nibeditor і далі працює для ваших агентів',
   '{client} wants to connect': '{client} хоче під’єднатися',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Такого пристрою немає',
+  'give the device a name': 'Дайте пристрою назву',
+  'that computer is no longer waiting': 'Цей комп’ютер більше не чекає',
 }

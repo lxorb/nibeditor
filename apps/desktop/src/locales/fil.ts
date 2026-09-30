@@ -1617,4 +1617,8 @@ export const fil: Dictionary = {
   'nibeditor is still running for your agents':
     'Tumatakbo pa rin ang nibeditor para sa iyong mga agent',
   '{client} wants to connect': 'Gustong kumonekta ng {client}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'walang ganoong device',
+  'give the device a name': 'bigyan ng pangalan ang device',
+  'that computer is no longer waiting': 'hindi na naghihintay ang computer na iyon',
 }

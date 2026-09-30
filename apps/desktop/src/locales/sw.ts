@@ -1607,4 +1607,8 @@ export const sw: Dictionary = {
   'nibeditor is still running for your agents':
     'nibeditor bado inaendelea kwa ajili ya mawakala wako',
   '{client} wants to connect': '{client} anataka kuunganishwa',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'hakuna kifaa kama hicho',
+  'give the device a name': 'kipe kifaa jina',
+  'that computer is no longer waiting': 'kompyuta hiyo haisubiri tena',
 }

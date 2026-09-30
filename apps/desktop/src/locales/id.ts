@@ -1578,4 +1578,8 @@ export const id: Dictionary = {
   'Agent tabs closed': 'Tab agen ditutup',
   'nibeditor is still running for your agents': 'nibeditor masih berjalan untuk agen Anda',
   '{client} wants to connect': '{client} ingin terhubung',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'tidak ada perangkat itu',
+  'give the device a name': 'beri perangkat itu nama',
+  'that computer is no longer waiting': 'komputer itu tidak menunggu lagi',
 }

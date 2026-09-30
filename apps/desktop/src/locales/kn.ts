@@ -1598,4 +1598,8 @@ export const kn: Dictionary = {
   'Agent tabs closed': 'ಏಜೆಂಟ್ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
   'nibeditor is still running for your agents': 'ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳಿಗಾಗಿ nibeditor ಇನ್ನೂ ಚಾಲನೆಯಲ್ಲಿದೆ',
   '{client} wants to connect': '{client} ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತದೆ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ಅಂತಹ ಸಾಧನ ಇಲ್ಲ',
+  'give the device a name': 'ಸಾಧನಕ್ಕೆ ಹೆಸರು ನೀಡಿ',
+  'that computer is no longer waiting': 'ಆ ಕಂಪ್ಯೂಟರ್ ಇನ್ನು ಕಾಯುತ್ತಿಲ್ಲ',
 }

@@ -1542,4 +1542,8 @@ export const yue: Dictionary = {
   'Agent tabs closed': '代理嘅分頁閂咗',
   'nibeditor is still running for your agents': 'nibeditor 仲喺度幫你啲代理做嘢',
   '{client} wants to connect': '{client} 想連接',
+  // Web logins that travel, and the devices of an account
+  'no such device': '冇呢部裝置',
+  'give the device a name': '幫裝置改個名',
+  'that computer is no longer waiting': '嗰部電腦已經唔再等',
 }

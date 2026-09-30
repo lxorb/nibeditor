@@ -1559,4 +1559,8 @@ export const am: Dictionary = {
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
   'nibeditor is still running for your agents': 'nibeditor ለወኪሎችዎ አሁንም እየሰራ ነው',
   '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'እንዲህ ያለ መሣሪያ የለም',
+  'give the device a name': 'ለመሣሪያው ስም ስጠው',
+  'that computer is no longer waiting': 'ያ ኮምፒውተር ከእንግዲህ እየጠበቀ አይደለም',
 }

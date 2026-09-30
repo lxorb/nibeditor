@@ -1579,4 +1579,8 @@ export const bn: Dictionary = {
   'Agent tabs closed': 'এজেন্টের ট্যাব বন্ধ হয়েছে',
   'nibeditor is still running for your agents': 'আপনার এজেন্টদের জন্য nibeditor এখনও চলছে',
   '{client} wants to connect': '{client} সংযোগ করতে চায়',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'এমন ডিভাইস নেই',
+  'give the device a name': 'ডিভাইসটির একটি নাম দিন',
+  'that computer is no longer waiting': 'সেই কম্পিউটারটি আর অপেক্ষা করছে না',
 }

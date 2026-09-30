@@ -1605,4 +1605,8 @@ export const ta: Dictionary = {
   'nibeditor is still running for your agents':
     'உங்கள் முகவர்களுக்காக nibeditor இன்னும் இயங்குகிறது',
   '{client} wants to connect': '{client} இணைய விரும்புகிறது',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
+  'give the device a name': 'சாதனத்திற்கு ஒரு பெயர் கொடுங்கள்',
+  'that computer is no longer waiting': 'அந்தக் கணினி இனி காத்திருக்கவில்லை',
 }

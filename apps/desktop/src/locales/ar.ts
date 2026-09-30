@@ -1675,4 +1675,8 @@ export const ar: Dictionary = {
   'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
   'nibeditor is still running for your agents': 'لا يزال nibeditor يعمل لوكلائك',
   '{client} wants to connect': '{client} يريد الاتصال',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'لا يوجد جهاز كهذا',
+  'give the device a name': 'أعطِ الجهاز اسمًا',
+  'that computer is no longer waiting': 'ذلك الحاسوب لم يعد ينتظر',
 }

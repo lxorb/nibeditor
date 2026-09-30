@@ -12,6 +12,7 @@
  *  the next one. */
 
 import { askInChunks, chunks, places } from './bound'
+import { eraseHubs } from './hub/reach'
 import type { Env } from './types'
 import { eraseRooms } from './rooms'
 
@@ -26,20 +27,28 @@ const OBJECTS_AT_ONCE = 2 * PER_DELETE
 const ROOMS_AT_ONCE = 200
 
 const ROOM = 'rooms/'
+/** An account's hub, or a guest's, which keeps leases and requests of its own; see
+ *  hub/hub.ts. Emptied the way a room is, and counted with the rooms. */
+const HUB = 'hubs/'
+
+/** Whether a name is an object's storage rather than the bucket's. */
+const isObject = (name: string) => name.startsWith(ROOM) || name.startsWith(HUB)
 
 /** Empties the oldest of what the list names, as much as one sweep takes on, and
  *  answers how many it crossed off. */
 export async function sweepLeftovers(env: Env): Promise<number> {
   const taken = async (sql: string, most: number) =>
-    (await env.DB.prepare(sql).bind(`${ROOM}%`, most).all<{ what: string }>()).results
+    (await env.DB.prepare(sql).bind(`${ROOM}%`, `${HUB}%`, most).all<{ what: string }>()).results
 
   const results = [
     ...(await taken(
-      'select what from leftovers where what not like ? order by since, what limit ?',
+      `select what from leftovers where what not like ?1 and what not like ?2
+        order by since, what limit ?3`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
-      'select what from leftovers where what like ? order by since, what limit ?',
+      `select what from leftovers where what like ?1 or what like ?2
+        order by since, what limit ?3`,
       ROOMS_AT_ONCE,
     )),
   ]
@@ -54,16 +63,20 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const named = await stillNamed(env, names)
   const loose = names.filter((one) => !named.has(one))
 
-  const objects = loose.filter((one) => !one.startsWith(ROOM))
+  const objects = loose.filter((one) => !isObject(one))
   for (const piece of chunks(objects, PER_DELETE)) await env.NOTES.delete(piece)
 
   const rooms = loose.filter((one) => one.startsWith(ROOM)).map((one) => one.slice(ROOM.length))
-  const emptied = new Set((await eraseRooms(env, rooms)).map((id) => ROOM + id))
+  const hubs = loose.filter((one) => one.startsWith(HUB)).map((one) => one.slice(HUB.length))
+  const emptied = new Set([
+    ...(await eraseRooms(env, rooms)).map((id) => ROOM + id),
+    ...(await eraseHubs(env, hubs)).map((id) => HUB + id),
+  ])
 
-  // Everything the bucket took, every room that answered, and every name that
-  // turned out to be somebody else's. A room that did not answer stays for the
+  // Everything the bucket took, every room and hub that answered, and every name
+  // that turned out to be somebody else's. One that did not answer stays for the
   // next sweep.
-  const done = names.filter((one) => !one.startsWith(ROOM) || named.has(one) || emptied.has(one))
+  const done = names.filter((one) => !isObject(one) || named.has(one) || emptied.has(one))
 
   for (const chunk of chunks(done)) {
     await env.DB.prepare(`delete from leftovers where what in (${places(chunk.length)})`)
@@ -79,7 +92,8 @@ export async function sweepLeftovers(env: Env): Promise<number> {
  *  A note's body and its room are the note's, so the note's row is the question. A
  *  version's body and a picture are addressed by their contents and shared by
  *  whoever holds the same bytes, so the question there is whether any row at all
- *  still names the hash. */
+ *  still names the hash. A web login's bytes and a hub are named by the account
+ *  itself, which never comes back: nothing else can name them. */
 async function stillNamed(env: Env, names: readonly string[]): Promise<Set<string>> {
   const byNote = new Map<string, string>()
   const versions = new Map<string, string>()

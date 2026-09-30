@@ -1570,4 +1570,8 @@ export const jv: Dictionary = {
   'Agent tabs closed': 'Tab agen ditutup',
   'nibeditor is still running for your agents': 'nibeditor isih mlaku kanggo agen sampeyan',
   '{client} wants to connect': '{client} kepengin nyambung',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ora ana piranti kuwi',
+  'give the device a name': 'wenehi jeneng piranti',
+  'that computer is no longer waiting': 'komputer kuwi wis ora ngenteni',
 }

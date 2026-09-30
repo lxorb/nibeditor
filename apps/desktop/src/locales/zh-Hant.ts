@@ -1542,4 +1542,8 @@ export const zhHant: Dictionary = {
   'Agent tabs closed': '已關閉代理程式分頁',
   'nibeditor is still running for your agents': 'nibeditor 仍在為你的代理程式執行',
   '{client} wants to connect': '{client} 想要連線',
+  // Web logins that travel, and the devices of an account
+  'no such device': '沒有這部裝置',
+  'give the device a name': '請為裝置命名',
+  'that computer is no longer waiting': '那部電腦已不再等候',
 }

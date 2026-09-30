@@ -1572,4 +1572,8 @@ export const ja: Dictionary = {
   'Agent tabs closed': 'エージェントのタブを閉じました',
   'nibeditor is still running for your agents': 'nibeditor はエージェントのために動き続けています',
   '{client} wants to connect': '{client} が接続しようとしています',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'そのデバイスはありません',
+  'give the device a name': 'デバイスに名前を付けてください',
+  'that computer is no longer waiting': 'そのコンピューターはもう待っていません',
 }

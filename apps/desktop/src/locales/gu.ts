@@ -1571,4 +1571,8 @@ export const gu: Dictionary = {
   'Agent tabs closed': 'એજન્ટની ટૅબ બંધ થઈ',
   'nibeditor is still running for your agents': 'તમારા એજન્ટ માટે nibeditor હજી ચાલે છે',
   '{client} wants to connect': '{client} જોડાવા માંગે છે',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'એવું ઉપકરણ નથી',
+  'give the device a name': 'ઉપકરણને નામ આપો',
+  'that computer is no longer waiting': 'તે કમ્પ્યુટર હવે રાહ જોતું નથી',
 }

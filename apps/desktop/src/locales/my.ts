@@ -1567,4 +1567,8 @@ export const my: Dictionary = {
   'Agent tabs closed': 'အေးဂျင့် တက်ဘ်များ ပိတ်လိုက်ပြီ',
   'nibeditor is still running for your agents': 'သင့်အေးဂျင့်များအတွက် nibeditor ဆက်လည်ပတ်နေသည်',
   '{client} wants to connect': '{client} ချိတ်ဆက်လိုသည်',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ထိုစက် မရှိပါ',
+  'give the device a name': 'စက်ကို အမည်ပေးပါ',
+  'that computer is no longer waiting': 'ထိုကွန်ပျူတာ စောင့်မနေတော့ပါ',
 }

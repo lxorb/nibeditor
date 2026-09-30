@@ -1601,4 +1601,8 @@ export const ml: Dictionary = {
   'nibeditor is still running for your agents':
     'നിങ്ങളുടെ ഏജന്റുകൾക്കായി nibeditor ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
   '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
+  'give the device a name': 'ഉപകരണത്തിന് ഒരു പേര് നൽകുക',
+  'that computer is no longer waiting': 'ആ കമ്പ്യൂട്ടർ ഇനി കാത്തിരിക്കുന്നില്ല',
 }

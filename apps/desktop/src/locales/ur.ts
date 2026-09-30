@@ -1578,4 +1578,8 @@ export const ur: Dictionary = {
   'Agent tabs closed': 'ایجنٹ ٹیب بند ہو گئے',
   'nibeditor is still running for your agents': 'آپ کے ایجنٹوں کے لیے nibeditor اب بھی چل رہا ہے',
   '{client} wants to connect': '{client} جڑنا چاہتا ہے',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ایسا کوئی آلہ نہیں',
+  'give the device a name': 'آلے کو نام دیں',
+  'that computer is no longer waiting': 'وہ کمپیوٹر اب انتظار نہیں کر رہا',
 }

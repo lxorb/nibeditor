@@ -1583,4 +1583,8 @@ export const ps: Dictionary = {
   'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
   'nibeditor is still running for your agents': 'nibeditor لا هم ستاسو د اېجنټانو لپاره چلېږي',
   '{client} wants to connect': '{client} غواړي وصل شي',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'داسې وسیله نشته',
+  'give the device a name': 'وسیلې ته نوم ورکړئ',
+  'that computer is no longer waiting': 'هغه کمپیوټر نور انتظار نه کوي',
 }

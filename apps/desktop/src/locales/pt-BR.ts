@@ -1614,4 +1614,8 @@ export const ptBR: Dictionary = {
   'Agent tabs closed': 'Abas dos agentes fechadas',
   'nibeditor is still running for your agents': 'O nibeditor continua rodando para seus agentes',
   '{client} wants to connect': '{client} quer se conectar',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'esse dispositivo não existe',
+  'give the device a name': 'dê um nome ao dispositivo',
+  'that computer is no longer waiting': 'esse computador não está mais esperando',
 }

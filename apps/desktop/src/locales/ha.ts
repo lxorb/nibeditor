@@ -1606,4 +1606,8 @@ export const ha: Dictionary = {
   'Agent tabs closed': 'An rufe shafukan wakilai',
   'nibeditor is still running for your agents': 'nibeditor yana ci gaba da aiki don wakilanka',
   '{client} wants to connect': '{client} yana son haɗawa',
+  // Web logins that travel, and the devices of an account
+  'no such device': "babu irin wannan na'ura",
+  'give the device a name': "ba na'urar suna",
+  'that computer is no longer waiting': 'wannan kwamfuta ba ta jira kuma',
 }

@@ -1586,4 +1586,8 @@ export const pa: Dictionary = {
   'Agent tabs closed': 'ਏਜੰਟ ਟੈਬ ਬੰਦ ਹੋਏ',
   'nibeditor is still running for your agents': 'ਤੁਹਾਡੇ ਏਜੰਟਾਂ ਲਈ nibeditor ਹਾਲੇ ਵੀ ਚੱਲ ਰਿਹਾ ਹੈ',
   '{client} wants to connect': '{client} ਜੁੜਨਾ ਚਾਹੁੰਦਾ ਹੈ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ਅਜਿਹਾ ਕੋਈ ਡਿਵਾਈਸ ਨਹੀਂ',
+  'give the device a name': 'ਡਿਵਾਈਸ ਨੂੰ ਨਾਂ ਦਿਓ',
+  'that computer is no longer waiting': 'ਉਹ ਕੰਪਿਊਟਰ ਹੁਣ ਉਡੀਕ ਨਹੀਂ ਕਰ ਰਿਹਾ',
 }

@@ -1580,4 +1580,8 @@ export const fa: Dictionary = {
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
   'nibeditor is still running for your agents': 'nibeditor هنوز برای عامل‌های شما کار می‌کند',
   '{client} wants to connect': '{client} می‌خواهد وصل شود',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'چنین دستگاهی نیست',
+  'give the device a name': 'برای دستگاه نامی بگذارید',
+  'that computer is no longer waiting': 'آن رایانه دیگر منتظر نیست',
 }

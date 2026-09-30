@@ -1541,4 +1541,8 @@ export const zhHans: Dictionary = {
   'Agent tabs closed': '已关闭智能体标签页',
   'nibeditor is still running for your agents': 'nibeditor 仍在为你的智能体运行',
   '{client} wants to connect': '{client} 想要连接',
+  // Web logins that travel, and the devices of an account
+  'no such device': '没有这个设备',
+  'give the device a name': '请为设备命名',
+  'that computer is no longer waiting': '那台电脑已不再等待',
 }

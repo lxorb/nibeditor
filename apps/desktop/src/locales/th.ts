@@ -1548,4 +1548,8 @@ export const th: Dictionary = {
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
   'nibeditor is still running for your agents': 'nibeditor ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
   '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ไม่มีอุปกรณ์นี้',
+  'give the device a name': 'ตั้งชื่อให้อุปกรณ์',
+  'that computer is no longer waiting': 'คอมพิวเตอร์เครื่องนั้นไม่ได้รอแล้ว',
 }
