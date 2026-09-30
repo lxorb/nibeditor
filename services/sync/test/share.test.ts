@@ -446,7 +446,7 @@ describe('every route that names a space', () => {
       what: 'changing the tree',
       needs: 'write',
       go: async (token) => {
-        const answer = await call<{ results: Record<string, unknown>[] }>(
+        const answer = await call<{ results?: Record<string, unknown>[] }>(
           env,
           `/v2/spaces/${space}/ops`,
           {
@@ -465,7 +465,7 @@ describe('every route that names a space', () => {
             },
           },
         )
-        return { status: answer.status, result: answer.json.results[0] }
+        return { status: answer.status, result: answer.json.results?.[0] }
       },
     },
     {
