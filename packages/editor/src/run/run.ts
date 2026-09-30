@@ -2,7 +2,7 @@ import type { StateEffect } from '@codemirror/state'
 import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import type { RunnableFence } from './door'
 import { addRunLines, closeRun, dropRun, openRun, runPanels } from './panel'
-import { frameScript } from '../web-frame'
+import { FRAME_SCRIPT } from '../frame-text'
 import { parseRunMessage, runnerDocument } from './protocol'
 
 /** How long the code may run before it is stopped and reported as timed out. A
@@ -50,8 +50,8 @@ let counter = 0
 export function runFence(view: EditorView, fence: RunnableFence): boolean {
   const panels = view.state.field(runPanels, false)
   // And a build with no frame script is a build with nothing to run code in; see
-  // web-frame.ts.
-  const script = frameScript()
+  // frame-text.ts.
+  const script = FRAME_SCRIPT
   if (!panels || script === null) return false
 
   // One run per block. The old sandbox goes now rather than when its timer is
