@@ -843,6 +843,8 @@ export const th: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'เต็มจอ',
   'Leave fullscreen': 'ออกจากเต็มจอ',
+  'Full window': 'เต็มหน้าต่าง',
+  'Leave full window': 'ออกจากเต็มหน้าต่าง',
   'Moving the caret': 'การย้ายเคอร์เซอร์',
   'Deleting a character': 'การลบอักขระ',
   'New line': 'บรรทัดใหม่',

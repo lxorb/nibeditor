@@ -862,6 +862,8 @@ export const ta: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'முழுத்திரை',
   'Leave fullscreen': 'முழுத்திரையை விடு',
+  'Full window': 'முழு சாளரம்',
+  'Leave full window': 'முழு சாளரத்தை விடு',
   'Moving the caret': 'நிலைக்குறியை நகர்த்துதல்',
   'Deleting a character': 'எழுத்தை நீக்குதல்',
   'New line': 'புதிய வரி',

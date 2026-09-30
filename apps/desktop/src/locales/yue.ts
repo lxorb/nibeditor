@@ -840,6 +840,8 @@ export const yue: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: '全螢幕',
   'Leave fullscreen': '離開全螢幕',
+  'Full window': '全個視窗',
+  'Leave full window': '離開全個視窗',
   'Moving the caret': '移動光標',
   'Deleting a character': '刪除字符',
   'New line': '換行',

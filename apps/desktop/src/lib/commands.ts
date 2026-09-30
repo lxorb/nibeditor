@@ -85,6 +85,7 @@ import { settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
+import { toggleFill } from './tab-fill/fill'
 import { closeWindow, invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
@@ -1239,6 +1240,19 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.typewriter'),
       run: () => modes.toggleTypewriter(view),
     },
+    // The tab alone in nib's window, which stays a window; see lib/tab-fill. Not on a
+    // phone or a tablet, which show one document and nothing beside it already.
+    ...(viewport.touch
+      ? []
+      : [
+          {
+            id: 'full-window',
+            label: workspace.panes.fills === null ? t('Full window') : t('Leave full window'),
+            hint: shortcuts.hint('app.fill-tab'),
+            disabled: workspace.panes.fills === null && !workspace.activeTabId,
+            run: () => void toggleFill(),
+          },
+        ]),
 
     {
       id: 'punctuation',

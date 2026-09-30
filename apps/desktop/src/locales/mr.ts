@@ -853,6 +853,8 @@ export const mr: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'पूर्ण स्क्रीन',
   'Leave fullscreen': 'पूर्ण स्क्रीनमधून बाहेर',
+  'Full window': 'पूर्ण विंडो',
+  'Leave full window': 'पूर्ण विंडोमधून बाहेर',
   'Moving the caret': 'कर्सर हलवणे',
   'Deleting a character': 'अक्षर हटवणे',
   'New line': 'नवीन ओळ',

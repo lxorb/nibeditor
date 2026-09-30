@@ -91,8 +91,8 @@
   const strip = $derived(workspace.tabsIn(pane.id))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
-   *  puts it and where it has been all along. */
-  const stripped = $derived(workspace.panes.count > 1)
+   *  puts it and where it has been all along - as it is for a pane filling the window. */
+  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills)
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
   const ownSurface = $derived(tab?.kind === 'canvas' || tab?.kind === 'terminal')
@@ -443,7 +443,7 @@
   ondrop={drop}
 >
   {#if stripped}
-    <div class="head"><Tabs paneId={pane.id} /></div>
+    <div class="head" data-chrome="top"><Tabs paneId={pane.id} /></div>
   {/if}
 
   <!-- Under the strip, which is where every editor puts its find bar, and above

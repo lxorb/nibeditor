@@ -142,6 +142,7 @@ describe('the document it belongs to', () => {
 describe('the shell', () => {
   const SOURCE = fileURLToPath(new URL('../', import.meta.url))
   const app = readFileSync(`${SOURCE}App.svelte`, 'utf8')
+  const wayOut = readFileSync(`${SOURCE}lib/FullscreenLeave.svelte`, 'utf8')
   const menu = readFileSync(`${SOURCE}lib/app-menu.ts`, 'utf8')
   const registry = readFileSync(`${SOURCE}lib/shortcuts/registry.ts`, 'utf8')
 
@@ -172,7 +173,7 @@ describe('the shell', () => {
     expect(app).toContain('{#if !fullscreen.on}')
     // Which kinds have the bar at all is `hasStatusBar` in regions.ts; what is
     // asserted here is only that full screen takes it away as well.
-    expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !fullscreen.on}')
+    expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}')
     expect(app).toContain('&& !fullscreen.on}\n        <button class="fab"')
 
     const gone = branches(app).find((one) => one.includes('class="panels"'))
@@ -189,8 +190,11 @@ describe('the shell', () => {
   })
 
   test('there are four ways back', () => {
-    // The button, Escape, back on Android, and the menu row that turned it on.
-    expect(app).toContain("t('Leave fullscreen')")
+    // The button, Escape, back on Android, and the menu row that turned it on. The
+    // button is fetched with full screen, which is never on as the window opens.
+    expect(app).toContain('{#await fullscreenWayOut() then WayOut}')
+    expect(wayOut).toContain("t('Leave fullscreen')")
+    expect(wayOut).toContain('onclick={() => void fullscreen.leave()}')
     expect(app).toContain("if (event.key === 'Escape' && fullscreen.on) {")
     expect(app).toContain('closeOnBack(fullscreen.on, () => void fullscreen.leave())')
     expect(menu).toContain('run: () => void fullscreen.toggle(workspace.activeTabId)')

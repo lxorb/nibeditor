@@ -75,6 +75,7 @@
   class:looking={looking || held || reading || !!paper}
   class:paper={!!paper}
   data-region="status"
+  data-chrome="bottom"
   tabindex="0"
   aria-label={t('What this note is')}
   onpointerenter={() => (looking = true)}

@@ -861,6 +861,8 @@ export const ha: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Cikakken allo',
   'Leave fullscreen': 'Fita daga cikakken allo',
+  'Full window': 'Cikakken taga',
+  'Leave full window': 'Fita daga cikakken taga',
   'Moving the caret': 'Matsar da alamar rubutu',
   'Deleting a character': 'Share baƙi',
   'New line': 'Sabon layi',

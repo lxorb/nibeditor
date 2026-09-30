@@ -865,6 +865,8 @@ export const ptBR: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Tela cheia',
   'Leave fullscreen': 'Sair da tela cheia',
+  'Full window': 'Janela inteira',
+  'Leave full window': 'Sair da janela inteira',
   'Moving the caret': 'Mover o cursor',
   'Deleting a character': 'Apagar um caractere',
   'New line': 'Linha nova',

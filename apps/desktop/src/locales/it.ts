@@ -874,6 +874,8 @@ export const it: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Schermo intero',
   'Leave fullscreen': 'Esci da schermo intero',
+  'Full window': 'Finestra intera',
+  'Leave full window': 'Esci dalla finestra intera',
   'Moving the caret': 'Spostare il cursore',
   'Deleting a character': 'Eliminare un carattere',
   'New line': 'Nuova riga',

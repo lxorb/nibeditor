@@ -889,6 +889,8 @@ export const ru: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Полный экран',
   'Leave fullscreen': 'Выйти из полного экрана',
+  'Full window': 'Всё окно',
+  'Leave full window': 'Выйти из режима всего окна',
   'Moving the caret': 'Перемещение курсора',
   'Deleting a character': 'Удаление символа',
   'New line': 'Новая строка',

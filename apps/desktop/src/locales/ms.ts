@@ -851,6 +851,8 @@ export const ms: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Skrin penuh',
   'Leave fullscreen': 'Keluar dari skrin penuh',
+  'Full window': 'Tetingkap penuh',
+  'Leave full window': 'Keluar dari tetingkap penuh',
   'Moving the caret': 'Mengalihkan kursor',
   'Deleting a character': 'Menghapus aksara',
   'New line': 'Baris baharu',

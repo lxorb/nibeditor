@@ -847,6 +847,8 @@ export const vi: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Toàn màn hình',
   'Leave fullscreen': 'Thoát toàn màn hình',
+  'Full window': 'Toàn cửa sổ',
+  'Leave full window': 'Thoát toàn cửa sổ',
   'Moving the caret': 'Di chuyển con trỏ',
   'Deleting a character': 'Xoá một ký tự',
   'New line': 'Dòng mới',

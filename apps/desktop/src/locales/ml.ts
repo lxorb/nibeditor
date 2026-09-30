@@ -862,6 +862,8 @@ export const ml: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ഫുൾസ്ക്രീൻ',
   'Leave fullscreen': 'ഫുൾസ്ക്രീൻ വിടുക',
+  'Full window': 'പൂർണ്ണ വിൻഡോ',
+  'Leave full window': 'പൂർണ്ണ വിൻഡോ വിടുക',
   'Moving the caret': 'കഴ്‌സർ നീക്കൽ',
   'Deleting a character': 'അക്ഷരം ഇല്ലാതാക്കൽ',
   'New line': 'പുതിയ വരി',

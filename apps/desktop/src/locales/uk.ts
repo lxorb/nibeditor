@@ -888,6 +888,8 @@ export const uk: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Повний екран',
   'Leave fullscreen': 'Вийти з повного екрана',
+  'Full window': 'Усе вікно',
+  'Leave full window': 'Вийти з режиму всього вікна',
   'Moving the caret': 'Переміщення курсора',
   'Deleting a character': 'Видалення символу',
   'New line': 'Новий рядок',

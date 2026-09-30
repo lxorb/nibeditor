@@ -9,7 +9,7 @@
 
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
-  import type { Frame, Split } from './workspace/pane-tree'
+  import { type Frame, paneIn, type Split } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 
   const { frame }: { frame: Frame } = $props()
@@ -18,6 +18,13 @@
    *  markup: this component names itself, and a type that refers to itself
    *  through the component it is a prop of is one the compiler gives up on. */
   const split = $derived(frame.kind === 'split' ? frame : null)
+
+  /** Which side holds the pane filling the window, where this split holds it: the other
+   *  side and the divider go while it does. See lib/tab-fill. */
+  const kept = $derived.by(() => {
+    const fills = workspace.panes.fills
+    return split && fills ? split.sides.findIndex((side) => paneIn(side, fills)) : -1
+  })
 
   let host = $state<HTMLElement>()
 
@@ -83,19 +90,25 @@
     class:down={split.along === 'column'}
     class:sliding={workspace.panes.sliding === split.id}
     bind:this={host}
-    style:grid-template-columns={split.along === 'row' ? share(split) : undefined}
-    style:grid-template-rows={split.along === 'column' ? share(split) : undefined}
+    style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
+    style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
   >
-    <div class="side"><PaneTree frame={split.sides[0]} /></div>
+    {#if kept !== 1}
+      <div class="side"><PaneTree frame={split.sides[0]} /></div>
+    {/if}
 
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="divider"
-      onpointerdown={(event) => grab(event, split)}
-      ondblclick={() => workspace.panes.equalise(split.id)}
-    ></div>
+    {#if kept < 0}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="divider"
+        onpointerdown={(event) => grab(event, split)}
+        ondblclick={() => workspace.panes.equalise(split.id)}
+      ></div>
+    {/if}
 
-    <div class="side"><PaneTree frame={split.sides[1]} /></div>
+    {#if kept !== 0}
+      <div class="side"><PaneTree frame={split.sides[1]} /></div>
+    {/if}
   </div>
 {:else if frame.kind === 'pane'}
   <Pane pane={frame} />

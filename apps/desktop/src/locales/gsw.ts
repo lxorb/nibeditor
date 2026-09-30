@@ -855,6 +855,8 @@ export const gsw: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Vollbild',
   'Leave fullscreen': 'Vollbild verlaa',
+  'Full window': 'Ganzes Fänschter',
+  'Leave full window': 'Ganzes Fänschter verlaa',
   'Moving the caret': 'De Cursor bewege',
   'Deleting a character': 'Es Zeiche lösche',
   'New line': 'Nöii Zile',

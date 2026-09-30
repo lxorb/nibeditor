@@ -847,6 +847,8 @@ export const my: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'မျက်နှာပြင်အပြည့်',
   'Leave fullscreen': 'မျက်နှာပြင်အပြည့်မှ ထွက်ပါ',
+  'Full window': 'ဝင်းဒိုးအပြည့်',
+  'Leave full window': 'ဝင်းဒိုးအပြည့်မှ ထွက်ပါ',
   'Moving the caret': 'ကာဆာရွှေ့မှု',
   'Deleting a character': 'အက္ခရာဖျက်မှု',
   'New line': 'လိုင်းအသစ်',

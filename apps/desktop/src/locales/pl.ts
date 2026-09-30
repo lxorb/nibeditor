@@ -888,6 +888,8 @@ export const pl: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Pełny ekran',
   'Leave fullscreen': 'Wyjdź z pełnego ekranu',
+  'Full window': 'Całe okno',
+  'Leave full window': 'Wyjdź z trybu całego okna',
   'Moving the caret': 'Ruch kursora',
   'Deleting a character': 'Usuwanie znaku',
   'New line': 'Nowy wiersz',

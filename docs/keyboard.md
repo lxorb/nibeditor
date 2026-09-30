@@ -400,6 +400,38 @@ in front, Arc's Cmd+D pins, VS Code's empty group is the nearest thing - so the 
 Emil's, and the look is the empty pane nib already has. On a Mac, Cmd+W then closes
 nothing, since the window is not empty. See `deselect` in `workspace/panes.svelte.ts`.
 
+**Full window**
+
+| | |
+| --- | --- |
+| Shift+F11 | the tab being worked in fills nib's window, and again gives the window back. Ctrl+Shift+Cmd+F on a Mac |
+
+Emil, 2026-09-30: *"a shortcut to make the current tab full screen (to toggle that). I mean
+by full screen the full window of nib, not F11 behaviour."* Both sides, the strip, the
+other panes of a split and the status bar go; the window keeps its size, its place and
+whether it is maximised, and a web tab keeps its own bar. It is F11's key with Shift on
+it: F11 is the screen and Shift+F11 the window, which is Sublime Text's pair for the same
+two jobs, and on a Mac the same Shift on full screen's Ctrl+Cmd+F. No browser binds
+Shift+F11, so no page is used to having it; VS Code's own (Ctrl+K Ctrl+M) is a chord,
+which nib has none of, and JetBrains' Ctrl+Shift+F12 is three keys in a corner and a
+volume key on a Mac. It is also a row of View, of the palette and of a tab's own menu.
+
+The window's bar is out of sight, and the pointer at the top edge brings it down over the
+tab - the way Edge brings its bar back in full screen - with the pane's tabs, the menu,
+the stretch the window is dragged by and its buttons; it goes up again a moment after
+nothing holds it. Over the tab rather than pushing it, so nothing is resized by a pointer
+going past. On a Mac the lights stay, in a row of their own.
+
+The way out is the key again, the palette or either menu row. Escape too, but only where
+nothing else wants it: in a note, a terminal, a canvas, a PDF or a page the Escape is
+theirs, and the fill's is the next level up, from the bar or from nothing. Ctrl+Tab, a
+digit, a link followed or a tab closed with another behind it keep the window filled on
+the next tab, as VS Code's maximized group stays maximized; working in another pane, the
+pane showing nothing, or asking for anything the fill hides - a panel's key, the sidebar's
+- gives the window back with it. Nothing about it is remembered, as nothing about full
+screen is: the layout underneath is never changed, so the window, and the next launch,
+come back exactly as they were. See `lib/tab-fill`.
+
 **Lines and the selection**
 
 What VS Code, Sublime and Obsidian taught every hand that writes, in the editor. Each is
@@ -463,7 +495,9 @@ inside the page is Chrome's way back to the address field.
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
 Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, nib's own Alt+0
-to 9, and F6 to the address field are never offered to the page. Alt and a digit is no
+to 9, F6 to the address field and Shift+F11, the tab filling the window, are never offered
+to the page. Shift+F11 alone leaves the page the keyboard: filling the window is no reason to
+take the caret out of what fills it. Alt and a digit is no
 character on Windows, so what a page loses with it is only an `accesskey` on a digit, as
 it does in Chrome on Linux; AltGr and a digit, which is Ctrl and Alt, stays the page's.
 The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address
@@ -496,7 +530,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | | |
 | --- | --- |
 | Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
-| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it |
 | Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
@@ -586,6 +620,7 @@ laptops, the Mac has its own default. Windows and Linux are unchanged.
 | | On a Mac | Elsewhere | Why |
 | --- | --- | --- | --- |
 | Full screen | ⌃⌘F | F11 | F11 is Show Desktop; ⌃⌘F is every Mac app's Enter Full Screen |
+| Full window | ⌃⇧⌘F | Shift+F11 | the same Shift on full screen's key, and Sublime Text's own pair |
 | Present | ⌥⌘P | F5 | Keynote's Play Slideshow |
 | Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Nib's own on the Ctrl+Cmd row beside ⌃⌘F |
 | Round the strip | ⌃⇥, ⌃⇧⇥, ⇧⌘], ⇧⌘[ | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | ⌘⇥ is the app switcher; the brackets are Safari's, Chrome's and VS Code's |
@@ -831,6 +866,7 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
 | `apps/desktop/src/lib/terminal/keys.ts` | which of them a terminal lets the app have. Pure, tested |
+| `apps/desktop/src/lib/tab-fill/rules.ts` | when a tab fills the window, when it stops, and when Escape is its. Pure, tested |
 | `apps/desktop/src/lib/text-size.ts` | Ctrl and the wheel over the note, and what it does not touch |
 | `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |
 | `apps/desktop/src/lib/Pages.svelte` | the paper's own keys and the four other ways it is zoomed |
@@ -840,5 +876,6 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `packages/editor/src/case.ts` | upper, lower and title case |
 | `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |
+| `apps/desktop/test/e2e/full-window.py` | Shift+F11 in and out, Escape, a split and a web tab |
 | `apps/desktop/test/e2e/fold-levels.py` | Fold more and Fold less, driven from the palette |
 | `apps/desktop/test/e2e/completions.py` | `[[##`, `[[^^` and `#` in the popup, driven by typing |

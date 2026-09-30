@@ -855,6 +855,8 @@ export const hi: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'पूर्ण स्क्रीन',
   'Leave fullscreen': 'पूर्ण स्क्रीन से बाहर',
+  'Full window': 'पूरी विंडो',
+  'Leave full window': 'पूरी विंडो से बाहर',
   'Moving the caret': 'कर्सर चलाना',
   'Deleting a character': 'अक्षर हटाना',
   'New line': 'नई पंक्ति',

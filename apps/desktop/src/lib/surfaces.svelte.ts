@@ -309,6 +309,11 @@ export function newKindChord(event: KeyboardEvent): boolean {
   return heldChooser?.(event) ?? false
 }
 
+/** What a window a tab fills keeps of its chrome, and full screen's way out: neither is
+ *  on screen as a window opens, since neither is remembered. See lib/tab-fill. */
+export const fillBar = held(() => import('./tab-fill/FillBar.svelte'))
+export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
+
 /** A note as a deck, over the whole window. The one overlay that is not latched:
  *  it takes the tab it is presenting as a prop, so there is nothing for it to be
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */

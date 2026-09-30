@@ -851,6 +851,8 @@ export const id: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Layar penuh',
   'Leave fullscreen': 'Keluar dari layar penuh',
+  'Full window': 'Jendela penuh',
+  'Leave full window': 'Keluar dari jendela penuh',
   'Moving the caret': 'Menggerakkan kursor',
   'Deleting a character': 'Menghapus karakter',
   'New line': 'Baris baru',
