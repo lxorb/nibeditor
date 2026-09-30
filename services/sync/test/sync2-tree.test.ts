@@ -52,7 +52,7 @@ interface FolderRow {
 }
 
 function row(id: string): Row {
-  return env.db.prepare('select * from notes where id = ?').get(id) as unknown as Row
+  return env.db.prepare('select * from notes where id = ?').get(id) as Row
 }
 
 function folders(): FolderRow[] {
@@ -234,7 +234,9 @@ describe('tree operations', () => {
     const day = { kind: 'note', parent: null, name: '2026-09-30.md', mergeable: { text: '' } }
     await one(op('create', { id: 'd1', ...day }))
     expect(await one(op('create', { id: 'd2', ...day }, 0), other)).toMatchObject({ merged: 'd1' })
-    expect(env.db.prepare("select count(*) as n from notes where id = 'd2'").get()).toEqual({ n: 0 })
+    expect(env.db.prepare("select count(*) as n from notes where id = 'd2'").get()).toEqual({
+      n: 0,
+    })
   })
 
   test('refuse a move that would put a folder inside itself', async () => {
@@ -270,7 +272,9 @@ describe('tree operations', () => {
   })
 
   test('bring back something deleted after its device last looked, for a rename of it', async () => {
-    const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' })])
+    const { cursor } = await ops([
+      op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),
+    ])
     await one(op('delete', { id: 'n' }, cursor))
 
     expect(await one(op('rename', { id: 'n', name: 'm.md' }, cursor), other)).toMatchObject({
@@ -440,7 +444,12 @@ describe('the feed', () => {
     for (let at = 0; at < 1100; at += 200) {
       await ops(
         Array.from({ length: Math.min(200, 1100 - at) }, (_, one) =>
-          op('create', { id: `p${String(at + one)}`, kind: 'note', parent: null, name: `${String(at + one)}.md` }),
+          op('create', {
+            id: `p${String(at + one)}`,
+            kind: 'note',
+            parent: null,
+            name: `${String(at + one)}.md`,
+          }),
         ),
       )
     }

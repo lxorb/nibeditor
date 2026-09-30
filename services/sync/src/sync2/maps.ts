@@ -65,16 +65,20 @@ function isPosition(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
+/** A bookmark as the v1 list holds it: its place in the list is where it is, not a
+ *  field of it. */
+function unplaced(value: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(value).filter(([field]) => field !== 'at'))
+}
+
 /** Whether a value is one this map may hold, judged by the same reader the v1 column
  *  is read through: what that reader would drop, a device may not send either. */
 function holds(map: MapName, key: string, value: unknown): boolean {
   if (value === null) return true
   switch (map) {
-    case 'bookmark': {
+    case 'bookmark':
       if (!isRecord(value) || !isPosition(value.at)) return false
-      const { at: _at, ...bookmark } = value
-      return readBookmarks(JSON.stringify([bookmark])).length === 1
-    }
+      return readBookmarks(JSON.stringify([unplaced(value)])).length === 1
     case 'icon': {
       if (!isRecord(value) || typeof value.icon !== 'string') return false
       const icon = readIcons(JSON.stringify({ x: value.icon }))
@@ -129,7 +133,7 @@ function projected(entries: readonly Kept[], tree: Tree): Record<string, string>
   const bookmarks = of('bookmark')
     .map((one) => one.value as Record<string, unknown>)
     .sort((a, b) => Number(a.at) - Number(b.at))
-    .map(({ at: _at, ...bookmark }) => bookmark)
+    .map(unplaced)
 
   const icons: Record<string, string> = {}
   const tints: Record<string, string> = {}
@@ -210,7 +214,12 @@ async function keptIn(env: Env, spaceId: string): Promise<Kept[]> {
 }
 
 /** The entries with these laid over them, the later one of a key standing. */
-function overlaid(kept: readonly Kept[], changes: readonly Entry[], seq: number, at: number): Kept[] {
+function overlaid(
+  kept: readonly Kept[],
+  changes: readonly Entry[],
+  seq: number,
+  at: number,
+): Kept[] {
   const byKey = new Map(kept.map((one) => [`${one.map}\u0000${one.key}`, one]))
   changes.forEach((one, index) => {
     byKey.set(`${one.map}\u0000${one.key}`, { ...one, seq: seq + index, at })
@@ -311,7 +320,9 @@ export async function v1Wrote(env: Env, space: Space, map: MapName, value: unkno
   const said = entriesFromV1(map, value, tree, mine)
 
   const named = new Set(said.map((one) => one.key))
-  const gone = mine.filter((one) => !named.has(one.key)).map((one) => ({ map, key: one.key, value: null }))
+  const gone = mine
+    .filter((one) => !named.has(one.key))
+    .map((one) => ({ map, key: one.key, value: null }))
   const changes = [...said, ...gone]
   if (!changes.length) return
 
@@ -376,12 +387,16 @@ function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly 
 
 function sameBookmark(kept: unknown, sent: unknown): boolean {
   if (!isRecord(kept) || !isRecord(sent)) return false
-  return (['kind', 'path', 'text', 'parent', 'view'] as const).every((field) => kept[field] === sent[field])
+  return (['kind', 'path', 'text', 'parent', 'view'] as const).every(
+    (field) => kept[field] === sent[field],
+  )
 }
 
 /** A space prepared for the first time: every v1 column read in as entries. */
 export async function backfillMaps(env: Env, spaceId: string): Promise<void> {
-  const space = await env.DB.prepare('select * from spaces where id = ?').bind(spaceId).first<Space>()
+  const space = await env.DB.prepare('select * from spaces where id = ?')
+    .bind(spaceId)
+    .first<Space>()
   if (!space) return
   const values: [MapName, unknown][] = [
     ['bookmark', readBookmarks(space.bookmarks)],
@@ -430,7 +445,10 @@ export async function entriesSince(
   }
 }
 
-type App = { Bindings: Env; Variables: Variables }
+interface App {
+  Bindings: Env
+  Variables: Variables
+}
 
 /** A request's entries, or null for one that is not a list of them. */
 function changesIn(body: unknown): Entry[] | null {

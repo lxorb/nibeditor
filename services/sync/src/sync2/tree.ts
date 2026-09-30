@@ -86,8 +86,17 @@ export interface Content {
 type Snapshot = Omit<TreeEntry, 'id' | 'kind'>
 
 function snapshotOf(entry: TreeEntry): Snapshot {
-  const { id: _id, kind: _kind, ...rest } = entry
-  return { ...rest }
+  const snapshot: Snapshot = {
+    parent: entry.parent,
+    name: entry.name,
+    deleted: entry.deleted,
+    seq: entry.seq,
+    docSeq: entry.docSeq,
+  }
+  if (entry.by !== undefined) snapshot.by = entry.by
+  if (entry.docBy !== undefined) snapshot.docBy = entry.docBy
+  if (entry.deletedIn !== undefined) snapshot.deletedIn = entry.deletedIn
+  return snapshot
 }
 
 function sameAs(entry: TreeEntry, before: Snapshot): boolean {
@@ -214,7 +223,8 @@ export class Tree {
     const key = nameKey(name)
     let deleted: TreeEntry | undefined
     for (const entry of this.state.entries.values()) {
-      if (entry.kind !== 'folder' || entry.parent !== parent || nameKey(entry.name) !== key) continue
+      if (entry.kind !== 'folder' || entry.parent !== parent || nameKey(entry.name) !== key)
+        continue
       if (!entry.deleted) return entry.id
       deleted ??= entry
     }
@@ -402,7 +412,10 @@ export class Tree {
       // Every row about to change lets go of its name first, so a batch that swaps two
       // names - or renames into a name another row is leaving - never meets itself
       // half way: SQLite holds a unique index row by row, not at the end.
-      for (const piece of chunks(folders.map((one) => one.id), 500)) {
+      for (const piece of chunks(
+        folders.map((one) => one.id),
+        500,
+      )) {
         out.push(
           db
             .prepare(
@@ -412,7 +425,10 @@ export class Tree {
             .bind(space, JSON.stringify(piece)),
         )
       }
-      for (const piece of chunks(notes.map((one) => one.id), 500)) {
+      for (const piece of chunks(
+        notes.map((one) => one.id),
+        500,
+      )) {
         out.push(
           db
             .prepare(

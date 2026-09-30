@@ -80,7 +80,10 @@ class Device {
     return { base, update: Y.encodeStateAsUpdateV2(this.doc, base) }
   }
 
-  push(pending: { base: Uint8Array; update: Uint8Array }, push = `${this.name}-${String(++this.pushes)}`) {
+  push(
+    pending: { base: Uint8Array; update: Uint8Array },
+    push = `${this.name}-${String(++this.pushes)}`,
+  ) {
     return framed<PushResponse>(env, '/v2/docs/push', token, {
       docs: [{ id: this.id, push, epoch: 1, seq: this.seq, ...pending, at: 1 }],
     })
@@ -126,7 +129,9 @@ describe('a room holding a note on sync v2', () => {
     const laptop = new Device(id, 'one\n', 'laptop')
     const phone = new Device(id, 'one\n', 'phone')
 
-    expect((await laptop.push(laptop.type(0, 'laptop ')).then((one) => one.value.docs[0]))).toMatchObject({ ok: true })
+    expect(
+      await laptop.push(laptop.type(0, 'laptop ')).then((one) => one.value.docs[0]),
+    ).toMatchObject({ ok: true })
 
     const { value } = await phone.push(phone.type(4, 'phone\n'))
     const moved = value.docs[0]
@@ -166,7 +171,10 @@ describe('a room holding a note on sync v2', () => {
     await device.push(device.type(0, 'x'))
     await rooms.settle()
 
-    const acks = v2.take().map((one) => roomNews(one)).filter((one) => one?.t === 'ack')
+    const acks = v2
+      .take()
+      .map((one) => roomNews(one))
+      .filter((one) => one?.t === 'ack')
     expect(acks.at(-1)).toMatchObject({ t: 'ack', seq: 2 })
     expect(v1.take().some((one) => roomNews(one) !== null)).toBe(false)
   })
@@ -217,7 +225,11 @@ describe('whole texts', () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const stale = row(id).version
-    await call(env, `/v1/notes/${id}`, { method: 'PUT', token, body: { content: 'two\n', baseVersion: stale } })
+    await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'two\n', baseVersion: stale },
+    })
 
     const late = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
@@ -237,13 +249,16 @@ describe('whole texts', () => {
     // What a connected app writes lands on top of what the room held unsettled, not
     // over it: the room settles first, and the text goes in as operations.
     const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
-    const written = await call<RpcView>(env, "/mcp", {
+    const written = await call<RpcView>(env, '/mcp', {
       token: mcp.json.token,
       body: {
         jsonrpc: '2.0',
         id: 1,
         method: 'tools/call',
-        params: { name: 'write_note', arguments: { space: 'Rooms', path: 'Plan.md', content: 'one\ntyped\nconnector\n' } },
+        params: {
+          name: 'write_note',
+          arguments: { space: 'Rooms', path: 'Plan.md', content: 'one\ntyped\nconnector\n' },
+        },
       },
     })
     expect(written.status).toBe(200)
@@ -328,7 +343,11 @@ describe('a canvas on sync v2', () => {
     await rooms.settle()
     expect(await snapshotOf(id)).toEqual(seedPlane(id, 1, readCanvas(writeCanvas(canvas))))
 
-    const next: Canvas = { ...canvas, nodes: [{ ...canvas.nodes[0], text: 'One two' } as CanvasNode], at: { a: 2 } }
+    const next: Canvas = {
+      ...canvas,
+      nodes: [{ ...canvas.nodes[0], text: 'One two' } as CanvasNode],
+      at: { a: 2 },
+    }
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -371,7 +390,8 @@ describe('the bulk read and the kept side', () => {
     expect(kept.status).toBe(200)
 
     const versions = await call(env, `/v1/notes/${id}/versions`, { token })
-    const newest = (versions.json as unknown as { versions: { at: number; by: string }[] }).versions[0]
+    const newest = (versions.json as unknown as { versions: { at: number; by: string }[] })
+      .versions[0]
     expect(newest?.by).toBe('Laptop')
     const words = await call(env, `/v1/notes/${id}/versions/${String(newest?.at)}`, { token })
     expect(words.json.content).toBe('the words that lost\n')

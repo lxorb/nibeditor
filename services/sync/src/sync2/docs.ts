@@ -82,7 +82,8 @@ async function reachedNotes(
 async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
   const spaces = new Set<string>()
   for (const { note } of found.values()) {
-    if ((note.epoch ?? 0) === 0 && DOCUMENT_KINDS.has(note.kind ?? 'note')) spaces.add(note.space_id)
+    if ((note.epoch ?? 0) === 0 && DOCUMENT_KINDS.has(note.kind ?? 'note'))
+      spaces.add(note.space_id)
   }
   if (!spaces.size) return
 
@@ -210,7 +211,7 @@ async function pushed(
 ): Promise<PushAnswer> {
   const note = found?.note
   if (!note || !DOCUMENT_KINDS.has(note.kind ?? 'note')) return refused(doc.id, 'gone')
-  if (!found || !allows(found.role, 'write')) return refused(doc.id, 'role')
+  if (!allows(found.role, 'write')) return refused(doc.id, 'role')
   if (doc.update.length > MOST_UPDATE_BYTES) return refused(doc.id, 'large')
 
   const epoch = note.epoch ?? 0

@@ -287,7 +287,7 @@ export async function ingestInto(
   if (!answer?.ok) return null
 
   // The room's own answer, written by `ingest` and nothing else.
-  return (await answer.json()) as Ingested
+  return await answer.json<Ingested>()
 }
 
 /** The subprotocols a socket offered, one by one. */

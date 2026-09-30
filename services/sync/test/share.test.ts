@@ -310,7 +310,11 @@ async function fileEntry(): Promise<{ id: string; hash: string }> {
   const kind = 'file'
   await call(env, `/v2/spaces/${space}/ops`, {
     token: owner,
-    body: { ops: [{ op: 'file', t: 'create', id: 'file', kind, parent: null, name: 'a.webm', hash, seen: 0 }] },
+    body: {
+      ops: [
+        { op: 'file', t: 'create', id: 'file', kind, parent: null, name: 'a.webm', hash, seen: 0 },
+      ],
+    },
   })
   return { id: 'file', hash }
 }
@@ -442,11 +446,26 @@ describe('every route that names a space', () => {
       what: 'changing the tree',
       needs: 'write',
       go: async (token) => {
-        const answer = await call<{ results: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
-          token,
-          body: { ops: [{ op: `mk-${token.slice(0, 8)}`, t: 'mkdir', id: `f-${token.slice(0, 8)}`, parent: null, name: `F ${token.slice(0, 8)}`, seen: 0 }] },
-        })
-        return { status: answer.status, result: answer.json.results?.[0] }
+        const answer = await call<{ results: Record<string, unknown>[] }>(
+          env,
+          `/v2/spaces/${space}/ops`,
+          {
+            token,
+            body: {
+              ops: [
+                {
+                  op: `mk-${token.slice(0, 8)}`,
+                  t: 'mkdir',
+                  id: `f-${token.slice(0, 8)}`,
+                  parent: null,
+                  name: `F ${token.slice(0, 8)}`,
+                  seen: 0,
+                },
+              ],
+            },
+          },
+        )
+        return { status: answer.status, result: answer.json.results[0] }
       },
     },
     {
@@ -459,9 +478,14 @@ describe('every route that names a space', () => {
         doc.getText(TEXT).insert(0, 'x')
         const update = Y.encodeStateAsUpdateV2(doc, base)
         const answer = await framed<PushResponse>(env, '/v2/docs/push', token, {
-          docs: [{ id: note, push: `p-${token.slice(0, 8)}`, epoch: 1, seq: 1, base, update, at: 1 }],
+          docs: [
+            { id: note, push: `p-${token.slice(0, 8)}`, epoch: 1, seq: 1, base, update, at: 1 },
+          ],
         })
-        return { status: answer.status, result: answer.value.docs[0] as Record<string, unknown> | undefined }
+        return {
+          status: answer.status,
+          result: answer.value.docs[0] as Record<string, unknown> | undefined,
+        }
       },
     },
     {
@@ -471,7 +495,10 @@ describe('every route that names a space', () => {
         const answer = await framed<PullResponse>(env, '/v2/docs/pull', token, {
           docs: [{ id: note, epoch: 1, sv: Y.encodeStateVector(new Y.Doc()) }],
         })
-        return { status: answer.status, result: answer.value.docs[0] as Record<string, unknown> | undefined }
+        return {
+          status: answer.status,
+          result: answer.value.docs[0] as Record<string, unknown> | undefined,
+        }
       },
     },
   ]

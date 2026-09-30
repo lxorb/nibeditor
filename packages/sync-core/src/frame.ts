@@ -110,7 +110,9 @@ export function unframe(bytes: Uint8Array): unknown {
   let header: unknown
   try {
     header = JSON.parse(
-      new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes.subarray(at, at + headerLength)),
+      new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(
+        bytes.subarray(at, at + headerLength),
+      ),
     )
   } catch {
     // Not JSON, or not UTF-8: not an envelope, and the caller answers 400.

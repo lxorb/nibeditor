@@ -60,6 +60,12 @@ export function live(env: TestEnv): Live {
   return { ...rooms, settle }
 }
 
+/** What a framed request was answered: the status, and the envelope read back. */
+export interface FramedAnswer<T> {
+  status: number
+  value: T
+}
+
 /** A v2 request with a framed body, answered framed and read back. */
 export async function framed<T = Record<string, unknown>>(
   env: TestEnv,
@@ -67,7 +73,7 @@ export async function framed<T = Record<string, unknown>>(
   token: string,
   body?: Framed,
   method = body === undefined ? 'GET' : 'POST',
-): Promise<{ status: number; value: T }> {
+): Promise<FramedAnswer<T>> {
   const headers: Record<string, string> = {
     authorization: `Bearer ${token}`,
     accept: 'application/octet-stream',

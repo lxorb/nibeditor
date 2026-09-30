@@ -19,7 +19,10 @@ import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
 
-type App = { Bindings: Env; Variables: Variables }
+interface App {
+  Bindings: Env
+  Variables: Variables
+}
 
 /** What a request that is not the one the route reads is told. A correct client never
  *  sends one, so this reaches no reader and has no catalogue row. */
@@ -71,7 +74,10 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
 v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
   await preparedSpace(context.env, space)
-  return answer(context, await feedPage(context.env, space.id, cursorIn(context.req.query('since'))))
+  return answer(
+    context,
+    await feedPage(context.env, space.id, cursorIn(context.req.query('since'))),
+  )
 })
 
 /** A first sync's bulk read: the space's documents, a few megabytes a page. */

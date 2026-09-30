@@ -205,9 +205,7 @@ export async function keepVersionNow(
     .first<{ one: number }>()
   if (!held) await env.NOTES.put(versionKey(hash), content)
 
-  const newest = await env.DB.prepare(
-    'select max(at) as at from note_versions where note_id = ?',
-  )
+  const newest = await env.DB.prepare('select max(at) as at from note_versions where note_id = ?')
     .bind(noteId)
     .first<{ at: number | null }>()
 

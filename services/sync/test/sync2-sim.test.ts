@@ -63,7 +63,18 @@ class WorkerAccount implements AccountAdapter {
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash,
                             name, name_key, kind, epoch, epoch_base, doc_seq)
          values (?, ?, ?, ?, 1, 0, 0, ?, ?, ?, ?, 'note', 1, ?, ?)`,
-      ).run(note.id, this.space, note.name, seq, note.text.length, hash, note.name, nameKey(note.name), hash, seq)
+      ).run(
+        note.id,
+        this.space,
+        note.name,
+        seq,
+        note.text.length,
+        hash,
+        note.name,
+        nameKey(note.name),
+        hash,
+        seq,
+      )
       await this.env.NOTES.put(`spaces/${this.space}/${note.id}`, note.text)
     }
     db.prepare('insert into space_cursor (space_id, next) values (?, ?)').run(this.space, seq + 1)
@@ -128,7 +139,9 @@ class WorkerAccount implements AccountAdapter {
     await this.ready
     const db = this.env.db
     const folders = db
-      .prepare('select id, parent_id as parent, name from folders where space_id = ? and deleted = 0')
+      .prepare(
+        'select id, parent_id as parent, name from folders where space_id = ? and deleted = 0',
+      )
       .all(this.space) as { id: string; parent: string | null; name: string }[]
     const notes = db
       .prepare('select * from notes where space_id = ? and deleted = 0')
@@ -157,7 +170,12 @@ class WorkerAccount implements AccountAdapter {
 
     return {
       entries: [
-        ...folders.map((one) => ({ id: one.id, kind: 'folder' as const, parent: one.parent, name: one.name })),
+        ...folders.map((one) => ({
+          id: one.id,
+          kind: 'folder' as const,
+          parent: one.parent,
+          name: one.name,
+        })),
         ...notes.map((one) => ({
           id: one.id,
           kind: 'note' as const,

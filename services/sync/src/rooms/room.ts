@@ -1415,7 +1415,10 @@ export class NoteRoom implements DurableObject {
     const seq = this.state.seq
     const sv = Y.encodeStateVector(this.state.doc)
     await this.state.flushAll()
-    await this.ctx.storage.put('pushes', [...remembered, { push: pushed.push, seq, sv }].slice(-REMEMBERED_PUSHES))
+    await this.ctx.storage.put(
+      'pushes',
+      [...remembered, { push: pushed.push, seq, sv }].slice(-REMEMBERED_PUSHES),
+    )
     await this.settleSoon()
 
     return frame({ ok: true, seq, sv } satisfies RoomAnswer)

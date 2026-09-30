@@ -48,7 +48,9 @@ interface Entries {
 }
 
 async function entries(since = 0): Promise<Entries> {
-  return (await call<Entries>(env, `/v2/spaces/${space}/maps?since=${String(since)}`, { token: laptop })).json
+  return (
+    await call<Entries>(env, `/v2/spaces/${space}/maps?since=${String(since)}`, { token: laptop })
+  ).json
 }
 
 function bookmark(path: string, at: number) {
@@ -121,7 +123,9 @@ describe('a v1 app writing a whole value', () => {
     await call(env, `/v1/spaces/${space}/bookmarks`, {
       method: 'PUT',
       token: laptop,
-      body: { bookmarks: [bookmark('a.md', 0), bookmark('b.md', 0)].map(({ at: _at, ...one }) => one) },
+      body: {
+        bookmarks: [bookmark('a.md', 0), bookmark('b.md', 0)].map(({ at: _at, ...one }) => one),
+      },
     })
     const first = await entries()
     expect(first.entries.filter((one) => one.value !== null)).toHaveLength(2)
@@ -166,7 +170,9 @@ describe("the account's settings", () => {
     // writing them.
     env.justBefore(/update users set settings/, () => {
       env.db
-        .prepare(`update users set settings = json_set(coalesce(settings, '{}'), '$.vim', json('true'))`)
+        .prepare(
+          `update users set settings = json_set(coalesce(settings, '{}'), '$.vim', json('true'))`,
+        )
         .run()
     })
     const answer = await call(env, '/v1/settings', {

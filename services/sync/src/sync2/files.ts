@@ -26,7 +26,10 @@ import type { Env, Note, Variables } from '../types'
 import { deviceOf } from './device'
 import { revive } from './ops'
 
-type App = { Bindings: Env; Variables: Variables }
+interface App {
+  Bindings: Env
+  Variables: Variables
+}
 
 const HASH = /^[a-f0-9]{64}$/
 
@@ -103,7 +106,11 @@ async function keepBlob(env: Env, user: string, hash: string, size: number, type
 }
 
 /** Whether this account keeps a blob already, and whether anybody's bytes are there. */
-async function held(env: Env, user: string, hash: string): Promise<{ mine: boolean; there: boolean }> {
+async function held(
+  env: Env,
+  user: string,
+  hash: string,
+): Promise<{ mine: boolean; there: boolean }> {
   const row = await env.DB.prepare(
     'select max(user_id = ?) as mine, count(*) as rows from blobs where hash = ?',
   )
@@ -174,7 +181,10 @@ async function uploadOf(env: Env, id: string, user: string): Promise<Upload | nu
 v2Blobs.post('/parts', async (context) => {
   const user = context.get('user')
   const body: unknown = await context.req.json().catch(() => null)
-  const { hash, size, type } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  const { hash, size, type } = (typeof body === 'object' && body !== null ? body : {}) as Record<
+    string,
+    unknown
+  >
   if (typeof hash !== 'string' || !HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
   if (typeof size !== 'number' || !Number.isSafeInteger(size) || size <= 0 || size > LARGEST) {
     return context.json({ error: TOO_BIG }, 413)
@@ -197,7 +207,12 @@ v2Blobs.post('/parts', async (context) => {
   await context.env.DB.prepare(
     'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
   )
-    .bind(UPLOADS, upload.uploadId, `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}`, now() + A_DAY)
+    .bind(
+      UPLOADS,
+      upload.uploadId,
+      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}`,
+      now() + A_DAY,
+    )
     .run()
 
   return context.json({ upload: upload.uploadId, part: PART }, 201)
@@ -216,7 +231,10 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   const body = await context.req.arrayBuffer()
   if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
 
-  const uploading = context.env.NOTES.resumeMultipartUpload(blobKey(upload.hash), context.req.param('upload'))
+  const uploading = context.env.NOTES.resumeMultipartUpload(
+    blobKey(upload.hash),
+    context.req.param('upload'),
+  )
   const uploaded = await uploading.uploadPart(part, body)
   return context.json({ part: uploaded.partNumber, etag: uploaded.etag })
 })
@@ -230,21 +248,29 @@ v2Blobs.post('/parts/:upload', async (context) => {
   if (!upload) return context.json({ error: NO_SUCH_FILE }, 404)
 
   const body: unknown = await context.req.json().catch(() => null)
-  const listed = (typeof body === 'object' && body !== null ? (body as { parts?: unknown }).parts : null)
+  const listed =
+    typeof body === 'object' && body !== null ? (body as { parts?: unknown }).parts : null
   if (!Array.isArray(listed)) return context.json({ error: WRONG_BYTES }, 400)
   const parts: R2UploadedPart[] = []
   for (const one of listed as unknown[]) {
-    const { part, etag } = (typeof one === 'object' && one !== null ? one : {}) as Record<string, unknown>
-    if (typeof part !== 'number' || typeof etag !== 'string') return context.json({ error: WRONG_BYTES }, 400)
+    const { part, etag } = (typeof one === 'object' && one !== null ? one : {}) as Record<
+      string,
+      unknown
+    >
+    if (typeof part !== 'number' || typeof etag !== 'string')
+      return context.json({ error: WRONG_BYTES }, 400)
     parts.push({ partNumber: part, etag })
   }
 
   const key = blobKey(upload.hash)
   await context.env.NOTES.resumeMultipartUpload(key, id).complete(parts)
-  await context.env.DB.prepare('delete from cached where scope = ? and key = ?').bind(UPLOADS, id).run()
+  await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
+    .bind(UPLOADS, id)
+    .run()
 
   const object = await context.env.NOTES.get(key)
-  const right = object !== null && object.size === upload.size && (await hashOf(object)) === upload.hash
+  const right =
+    object !== null && object.size === upload.size && (await hashOf(object)) === upload.hash
   if (!right) {
     // Only if nobody's row names it: a copy somebody else finished meanwhile stays.
     if (!(await held(context.env, user.id, upload.hash)).there) await context.env.NOTES.delete(key)
@@ -259,9 +285,7 @@ export const v2Files = new Hono<App>()
 
 /** The file entry a route names, in the space it names. */
 async function fileIn(env: Env, spaceId: string, id: string): Promise<Note | null> {
-  return await env.DB.prepare(
-    "select * from notes where id = ? and space_id = ? and kind = 'file'",
-  )
+  return await env.DB.prepare("select * from notes where id = ? and space_id = ? and kind = 'file'")
     .bind(id, spaceId)
     .first<Note>()
 }
@@ -296,7 +320,10 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const space = spaceOf(context)
   const id = context.req.param('id')
   const body: unknown = await context.req.json().catch(() => null)
-  const { hash, base } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  const { hash, base } = (typeof body === 'object' && body !== null ? body : {}) as Record<
+    string,
+    unknown
+  >
   if (typeof hash !== 'string' || !HASH.test(hash) || typeof base !== 'string') {
     return context.json({ error: NOT_A_HASH }, 400)
   }
@@ -310,7 +337,8 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const blob = await context.env.DB.prepare('select max(size) as size from blobs where hash = ?')
     .bind(hash)
     .first<{ size: number | null }>()
-  if (blob?.size === null || blob?.size === undefined) return context.json({ error: NO_SUCH_FILE }, 404)
+  if (blob?.size === null || blob?.size === undefined)
+    return context.json({ error: NO_SUCH_FILE }, 404)
 
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)

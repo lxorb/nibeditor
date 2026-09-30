@@ -47,7 +47,9 @@ async function place(name: string, hash: string, as = token): Promise<OpsRespons
   const id = `file-${String(counter)}`
   const answer = await call<OpsResponse>(env, `/v2/spaces/${space}/ops`, {
     token: as,
-    body: { ops: [{ op: `op-${id}`, t: 'create', id, kind: 'file', parent: null, name, hash, seen: 0 }] },
+    body: {
+      ops: [{ op: `op-${id}`, t: 'create', id, kind: 'file', parent: null, name, hash, seen: 0 }],
+    },
   })
   return answer.json
 }
@@ -100,7 +102,9 @@ describe('bytes up', () => {
       body: { parts },
     })
     expect(done.status).toBe(201)
-    expect(env.db.prepare('select size from blobs where hash = ?').get(hash)).toEqual({ size: 20_000 })
+    expect(env.db.prepare('select size from blobs where hash = ?').get(hash)).toEqual({
+      size: 20_000,
+    })
   })
 
   test('in parts that are not the bytes named, thrown away', async () => {
