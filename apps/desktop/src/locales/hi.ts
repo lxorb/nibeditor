@@ -1554,4 +1554,12 @@ export const hi: Dictionary = {
     one: '{count} संग्रहित आइटम अंदर',
     other: '{count} संग्रहित आइटम अंदर',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'दायाँ साइडबार',
+  'Ask about this space': 'इस स्पेस के बारे में पूछें',
+  'Insert at the caret': 'कर्सर पर जोड़ें',
+  'Save as a note': 'नोट के रूप में सहेजें',
+  'Settings › AI': 'सेटिंग्स › AI',
+  'New chat': 'नई चैट',
+  'Ask again': 'फिर से पूछें',
 }

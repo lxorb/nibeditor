@@ -1566,4 +1566,12 @@ export const gsw: Dictionary = {
     one: '{count} archivierte Iitrag drin',
     other: '{count} archivierti Iiträg drin',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Rächti Sitteleiste',
+  'Ask about this space': 'Öppis zu dere Ablag frage',
+  'Insert at the caret': 'Am Cursor iifüege',
+  'Save as a note': 'Als Notiz spichere',
+  'Settings › AI': 'Iistellige › KI',
+  'New chat': 'Neue Chat',
+  'Ask again': 'Nomol frage',
 }

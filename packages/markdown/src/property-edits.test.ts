@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { readProperties } from './properties'
-import { withItem, withoutItem, writeList, writeProperty, writtenList } from './property-edits'
+import {
+  removeProperty,
+  renameProperty,
+  withItem,
+  withoutItem,
+  writeList,
+  writeProperty,
+  writtenList,
+} from './property-edits'
 
 /** What a control in a property row writes back, which has to be plain front matter:
  *  a note edited through the rows and a note typed by hand are the same file, and
@@ -111,5 +119,60 @@ describe('a list', () => {
 
     expect(written).toContain('tags: []')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual([])
+  })
+})
+
+describe('a key renamed from the side panel', () => {
+  test('changes the name and nothing else, byte for byte', () => {
+    const edit = renameProperty(NOTE, 'done', 'finished')
+
+    expect(edit).toEqual({
+      from: NOTE.indexOf('done'),
+      to: NOTE.indexOf('done') + 4,
+      insert: 'finished',
+    })
+    expect(applied(NOTE, edit)).toBe(NOTE.replace('done:', 'finished:'))
+  })
+
+  test('refuses a name that is not a key, the same name, and one the block already has', () => {
+    expect(renameProperty(NOTE, 'done', 'two words')).toBeNull()
+    expect(renameProperty(NOTE, 'done', '')).toBeNull()
+    expect(renameProperty(NOTE, 'done', 'done')).toBeNull()
+    expect(renameProperty(NOTE, 'done', 'Title')).toBeNull()
+    expect(renameProperty(NOTE, 'missing', 'other')).toBeNull()
+  })
+})
+
+describe('a key taken away from the side panel', () => {
+  test('takes its line and leaves every other line as it was', () => {
+    expect(applied(NOTE, removeProperty(NOTE, 'count'))).toBe(NOTE.replace('count: 3\n', ''))
+  })
+
+  test('takes a list written over several lines with it', () => {
+    const note = '---\ntitle: A\ntags:\n  - one\n  - two\ndone: true\n---\nWords.\n'
+
+    expect(applied(note, removeProperty(note, 'tags'))).toBe(
+      '---\ntitle: A\ndone: true\n---\nWords.\n',
+    )
+  })
+
+  test('takes the fences too when it was the last key, and the blank line under them', () => {
+    expect(
+      applied(
+        '---\ntitle: A\n---\n\nWords.\n',
+        removeProperty('---\ntitle: A\n---\n\nWords.\n', 'title'),
+      ),
+    ).toBe('Words.\n')
+  })
+
+  test('keeps a file’s own line endings', () => {
+    const note = '---\r\ntitle: A\r\ndone: true\r\n---\r\nWords.\r\n'
+    expect(applied(note, removeProperty(note, 'title'))).toBe(
+      '---\r\ndone: true\r\n---\r\nWords.\r\n',
+    )
+  })
+
+  test('and changes nothing for a key the note does not have', () => {
+    expect(removeProperty(NOTE, 'missing')).toBeNull()
   })
 })

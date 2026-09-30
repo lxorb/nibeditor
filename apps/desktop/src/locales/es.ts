@@ -1604,4 +1604,12 @@ export const es: Dictionary = {
     many: '{count} de elementos archivados dentro',
     other: '{count} elementos archivados dentro',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Barra lateral derecha',
+  'Ask about this space': 'Preguntar sobre este espacio',
+  'Insert at the caret': 'Insertar en el cursor',
+  'Save as a note': 'Guardar como nota',
+  'Settings › AI': 'Ajustes › IA',
+  'New chat': 'Nuevo chat',
+  'Ask again': 'Volver a preguntar',
 }

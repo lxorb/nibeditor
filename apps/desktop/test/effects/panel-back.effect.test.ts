@@ -21,15 +21,20 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { closeOnBack } from '../../src/lib/backstack.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
+import { STARTS_RIGHT } from '../../src/lib/workspace/panels'
 import { computed, root, watch } from './runes.svelte'
 
+// Every panel on the one side, which is an arrangement a reader can make: what is
+// under test is one drawer changing what it holds, whichever panels its side has.
 beforeEach(() => {
   viewport.device = 'phone'
   workspace.panel = null
+  workspace.right = []
 })
 
 afterEach(() => {
   workspace.panel = null
+  workspace.right = [...STARTS_RIGHT]
   viewport.device = 'desktop'
 })
 

@@ -1516,4 +1516,12 @@ export const zhHans: Dictionary = {
   'Nothing archived is deleted': '已归档的内容不会被删除',
   'Show them': '显示',
   '{count} archived items inside': '其中有 {count} 个已归档项目',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': '右侧边栏',
+  'Ask about this space': '就此空间提问',
+  'Insert at the caret': '插入到光标处',
+  'Save as a note': '存为笔记',
+  'Settings › AI': '设置 › AI',
+  'New chat': '新对话',
+  'Ask again': '再问一次',
 }

@@ -1561,4 +1561,12 @@ export const pa: Dictionary = {
     one: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀ ਆਈਟਮ',
     other: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀਆਂ ਆਈਟਮਾਂ',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'ਸੱਜੇ ਪਾਸੇ ਦੀ ਪੱਟੀ',
+  'Ask about this space': 'ਇਸ ਥਾਂ ਬਾਰੇ ਪੁੱਛੋ',
+  'Insert at the caret': 'ਕਰਸਰ ਉੱਤੇ ਪਾਓ',
+  'Save as a note': 'ਨੋਟ ਵਜੋਂ ਸਾਂਭੋ',
+  'Settings › AI': 'ਸੈਟਿੰਗਾਂ › AI',
+  'New chat': 'ਨਵੀਂ ਚੈਟ',
+  'Ask again': 'ਦੁਬਾਰਾ ਪੁੱਛੋ',
 }

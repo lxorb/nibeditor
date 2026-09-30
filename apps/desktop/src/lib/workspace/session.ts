@@ -21,6 +21,7 @@ import { isNumber, isRecord, isString, keep, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
+import { PANELS } from './panels'
 
 /** The shape this version writes. */
 const VERSION = 2
@@ -126,15 +127,15 @@ export interface Session {
   closed?: ClosedTab[]
   /** The sidebar, for entries written before it became part of the layout. */
   panel: Panel | null
-  /** Which panels this window keeps on the right, and which of them is open.
-   *  Absent for a window that has never moved one over, which is every window
-   *  until somebody does: the left side is where all four have always been, so
-   *  there is no right side at all rather than an empty one. */
+  /** Which panels this window keeps on the right, which is open there and which was
+   *  last. Absent for a window never arranged, and then the homes decide; see
+   *  `rightFrom` in workspace/panels.ts. */
   right?: Panel[]
   rightPanel?: Panel | null
+  lastRight?: Panel | null
+  /** Which panels the build that wrote this knew, so one it did not is homed. */
+  known?: Panel[]
 }
-
-const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'links', 'footnotes']
 
 function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
@@ -351,6 +352,8 @@ export function readSession(value: unknown): Session | null {
     // would otherwise put a side's own tab strip out of step with itself.
     ...(Array.isArray(value.right) ? { right: [...new Set(value.right.filter(isPanel))] } : {}),
     ...(isPanel(value.rightPanel) ? { rightPanel: value.rightPanel } : {}),
+    ...(isPanel(value.lastRight) ? { lastRight: value.lastRight } : {}),
+    ...(Array.isArray(value.known) ? { known: value.known.filter(isPanel) } : {}),
     positions: readPositions(value.positions),
     ...(layout ? { layout } : {}),
     ...(drafts ? { tabs: drafts } : {}),

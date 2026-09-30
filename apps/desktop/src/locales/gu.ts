@@ -1547,4 +1547,12 @@ export const gu: Dictionary = {
     one: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
     other: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'જમણી બાજુપટ્ટી',
+  'Ask about this space': 'આ જગ્યા વિશે પૂછો',
+  'Insert at the caret': 'કર્સર પર દાખલ કરો',
+  'Save as a note': 'નોંધ તરીકે સાચવો',
+  'Settings › AI': 'ગોઠવણ › AI',
+  'New chat': 'નવી ચેટ',
+  'Ask again': 'ફરી પૂછો',
 }

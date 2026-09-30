@@ -134,9 +134,7 @@
     <div class="drag" class:sliver={!!only} data-tauri-drag-region></div>
   {/if}
 
-  <!-- The other side's own button, and only once that side holds a panel: a
-       window nobody has moved a panel over on has no right side, so there is
-       nothing here to press and nothing here at all. See workspace.movePanel. -->
+  <!-- The other side's own button, while that side holds a panel. -->
   {#if workspace.right.length}
     <SidebarToggle side="right" />
   {/if}

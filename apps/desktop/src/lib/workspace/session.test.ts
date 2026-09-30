@@ -75,6 +75,23 @@ describe('reading a session that was written down', () => {
     expect(session?.activePath).toBe('/Notes/b.md')
     expect(session?.tabs).toBeUndefined()
   })
+
+  test('brings back both sides: what is on the right, what it showed last, what it knew', () => {
+    const session = readSession({
+      spaces: [],
+      activeSpace: null,
+      panel: 'tree',
+      right: ['ask', 'nowhere', 'ask', 'outline'],
+      rightPanel: 'outline',
+      lastRight: 'ask',
+      known: ['tree', 'ask', 'somewhere'],
+    })
+
+    expect(session?.right).toEqual(['ask', 'outline'])
+    expect(session?.rightPanel).toBe('outline')
+    expect(session?.lastRight).toBe('ask')
+    expect(session?.known).toEqual(['tree', 'ask'])
+  })
 })
 
 describe('reading one tab', () => {

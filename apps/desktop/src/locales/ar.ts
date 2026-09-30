@@ -1651,4 +1651,12 @@ export const ar: Dictionary = {
     many: '{count} عنصرًا مؤرشفًا بالداخل',
     other: '{count} عنصر مؤرشف بالداخل',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'الشريط الجانبي الأيمن',
+  'Ask about this space': 'اسأل عن هذه المساحة',
+  'Insert at the caret': 'إدراج عند المؤشر',
+  'Save as a note': 'حفظ كملاحظة',
+  'Settings › AI': 'الإعدادات ‹ ذكاء اصطناعي',
+  'New chat': 'محادثة جديدة',
+  'Ask again': 'اسأل مجددًا',
 }

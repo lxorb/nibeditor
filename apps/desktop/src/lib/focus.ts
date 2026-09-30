@@ -64,18 +64,27 @@ function regionHere(): Region | null {
   return isRegion(name) ? name : null
 }
 
+/** A region, or one panel's body inside it where one is named: the right side is
+ *  one region holding its strip and its body. */
+function within(name: Region, panel?: Panel): HTMLElement | null {
+  const region = boxOf(name)
+  return (panel ? region?.querySelector<HTMLElement>(`[data-panel="${panel}"]`) : null) ?? region
+}
+
 /** The first thing in a region a key can land on. */
-function entryOf(name: Region): HTMLElement | null {
-  const box = boxOf(name)
+function entryOf(name: Region, panel?: Panel): HTMLElement | null {
+  const box = within(name, panel)
   if (!box) return null
 
   // A note is one element that takes the keyboard for the whole of itself, and
-  // it is the element CodeMirror listens on rather than the box around it.
-  const writing = box.querySelector('.cm-content')
+  // it is the element CodeMirror listens on rather than the box around it. A
+  // panel's own field says so with `data-entry`.
+  const writing = box.querySelector('.cm-content, [data-entry]')
   if (writing instanceof HTMLElement) return writing
 
+  // Past the edge that resizes the side, which is a control for the region.
   for (const one of box.querySelectorAll<HTMLElement>(FOCUSABLE)) {
-    if (reachable(one)) return one
+    if (reachable(one) && one.getAttribute('role') !== 'separator') return one
   }
 
   // Nothing in it to stand on - a Links panel for a note nothing points at, a
@@ -89,8 +98,8 @@ function entryOf(name: Region): HTMLElement | null {
 
 /** Puts the keyboard in a region. False where it is not on screen, which is what
  *  lets the caller open something and try again. */
-function focusRegion(name: Region): boolean {
-  const entry = entryOf(name)
+function focusRegion(name: Region, panel?: Panel): boolean {
+  const entry = entryOf(name, panel)
   if (!entry) return false
 
   entry.focus()
@@ -131,13 +140,15 @@ export function stepRegionFocus(direction: number): boolean {
  *  something and a second key nobody remembers for leaving it. The panel has to
  *  be drawn before it can be stood in, so the second half waits a frame. */
 export function revealPanel(panel: Panel): void {
-  if (workspace.panel === panel && regionHere() === 'list') {
+  const side = workspace.sideOf(panel)
+  const region: Region = side === 'right' ? 'right' : 'list'
+  if (workspace.openOn(side) === panel && regionHere() === region) {
     focusEditor()
     return
   }
 
   workspace.showPanel(panel)
-  settle('list')
+  settle(region, panel)
 }
 
 /** Puts the keyboard in a region, and keeps at it for a few frames while what is
@@ -148,13 +159,13 @@ export function revealPanel(panel: Panel): void {
  *  on its way out. So this stops only once the keyboard is somewhere that is still
  *  in the page - which, since a region with nothing in it takes the keyboard
  *  itself, is the very next frame in every ordinary case. */
-function settle(name: Region, left = 8): void {
+function settle(name: Region, panel?: Panel, left = 8): void {
   requestAnimationFrame(() => {
     const at = document.activeElement
-    if (at instanceof HTMLElement && at.isConnected && boxOf(name)?.contains(at)) return
+    if (at instanceof HTMLElement && at.isConnected && within(name, panel)?.contains(at)) return
 
-    focusRegion(name)
-    if (left > 0) settle(name, left - 1)
+    focusRegion(name, panel)
+    if (left > 0) settle(name, panel, left - 1)
   })
 }
 

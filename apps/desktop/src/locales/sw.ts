@@ -1581,4 +1581,12 @@ export const sw: Dictionary = {
     one: 'Kipengee {count} cha kumbukumbu ndani',
     other: 'Vipengee {count} vya kumbukumbu ndani',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Utepe wa kulia',
+  'Ask about this space': 'Uliza kuhusu nafasi hii',
+  'Insert at the caret': 'Ingiza kwenye kishale',
+  'Save as a note': 'Hifadhi kama dokezo',
+  'Settings › AI': 'Mipangilio › AI',
+  'New chat': 'Mazungumzo mapya',
+  'Ask again': 'Uliza tena',
 }

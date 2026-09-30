@@ -125,6 +125,13 @@ export const settingsSheet = latched(() => import('./SettingsPanel.svelte'))
  *  a page note is in front. See Sidebar.svelte. */
 export const pagesNavigator = held(() => import('./PagesNavigator.svelte'))
 
+/** The right side's panels that are more than a list of rows: the links with their
+ *  picture, the conversation with the providers behind it, and the front matter. The
+ *  right side is shut when a window opens; the links are warmed with the doors. */
+export const linksPanel = held(() => import('./Links.svelte'))
+export const askPanel = held(() => import('./AskPanel.svelte'))
+export const propertiesPanel = held(() => import('./PropertiesPanel.svelte'))
+
 /** The archive at the foot of the file list, once the space has one. Never the glasses'
  *  plugin's: its package is at its ceiling, and it hides what is archived without them. */
 export const archiveSection = held(() =>
@@ -277,6 +284,7 @@ export async function warmDoors(): Promise<void> {
   await Promise.all([
     findBar(),
     searchPanel(),
+    linksPanel(),
     appMenuRows(),
     readingSurface(),
     loadFind(),

@@ -1629,4 +1629,12 @@ export const ru: Dictionary = {
     many: '{count} архивных элементов внутри',
     other: '{count} архивного элемента внутри',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Правая боковая панель',
+  'Ask about this space': 'Спросить об этом пространстве',
+  'Insert at the caret': 'Вставить на месте курсора',
+  'Save as a note': 'Сохранить как заметку',
+  'Settings › AI': 'Настройки › ИИ',
+  'New chat': 'Новый чат',
+  'Ask again': 'Спросить снова',
 }

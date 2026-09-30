@@ -746,7 +746,9 @@ Features Typora does not have, which are the reason this exists.
       Backspace at the top joins nothing, Ctrl+A selects what is on the page, find
       does not stop in it, and the counts in the foot row leave it out. Inserting
       front matter shows the block while the caret is in it; see
-      `hidden-front-matter.ts`
+      `hidden-front-matter.ts`. Hidden is not gone: the Properties panel on the right
+      side is Obsidian's File properties view, the same rows and controls beside the
+      note, with a key renamed or removed from its menu; see docs/design.md
       One rule for everything else: if any line of the block is a shape nib cannot
       read - a Dataview query, a comment - the **whole** block stays source, because
       half a table is a table that lies about the file. Nowhere outside the app,

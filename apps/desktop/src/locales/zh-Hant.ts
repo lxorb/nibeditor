@@ -1516,4 +1516,12 @@ export const zhHant: Dictionary = {
   'Nothing archived is deleted': '已封存的內容不會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '其中有 {count} 個已封存項目',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': '右側邊欄',
+  'Ask about this space': '就此空間提問',
+  'Insert at the caret': '插入到游標處',
+  'Save as a note': '存為筆記',
+  'Settings › AI': '設定 › AI',
+  'New chat': '新對話',
+  'Ask again': '再問一次',
 }

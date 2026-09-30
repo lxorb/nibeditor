@@ -110,6 +110,7 @@ const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
+const { STARTS_RIGHT } = await import('./workspace/panels')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -493,6 +494,50 @@ describe('the two sides of the window', () => {
 
     expect(workspace.right).toEqual([])
     expect(workspace.panel).toBe('tree')
+  })
+})
+
+describe('the right side’s button', () => {
+  beforeEach(() => {
+    workspace.right = [...STARTS_RIGHT]
+    workspace.rightPanel = null
+    workspace.lastRight = null
+    workspace.panel = null
+  })
+
+  test('opens the side on its first panel and shuts it again', () => {
+    workspace.toggleSidebar('right')
+    expect(workspace.rightPanel).toBe('outline')
+    expect(workspace.panel).toBeNull()
+
+    workspace.toggleSidebar('right')
+    expect(workspace.rightPanel).toBeNull()
+  })
+
+  test('comes back to whatever the side showed last', () => {
+    workspace.showPanel('ask')
+    workspace.toggleSidebar('right')
+    expect(workspace.rightPanel).toBeNull()
+
+    workspace.toggleSidebar('right')
+    expect(workspace.rightPanel).toBe('ask')
+  })
+
+  test('and to its first panel once that one has moved to the other side', () => {
+    workspace.showPanel('properties')
+    workspace.movePanel('properties', 'left')
+    workspace.closePanel('right')
+
+    workspace.toggleSidebar('right')
+    expect(workspace.rightPanel).toBe('outline')
+  })
+
+  test('a key for a panel on the right opens it there, whichever side is open', () => {
+    workspace.showPanel('tree')
+    workspace.showPanel('links')
+
+    expect(workspace.openOn('left')).toBe('tree')
+    expect(workspace.openOn('right')).toBe('links')
   })
 })
 

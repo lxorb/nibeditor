@@ -1624,4 +1624,12 @@ export const uk: Dictionary = {
     many: '{count} архівних елементів усередині',
     other: '{count} архівного елемента всередині',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Права бічна панель',
+  'Ask about this space': 'Запитати про цей простір',
+  'Insert at the caret': 'Вставити за курсором',
+  'Save as a note': 'Зберегти як нотатку',
+  'Settings › AI': 'Налаштування › ШІ',
+  'New chat': 'Новий чат',
+  'Ask again': 'Запитати знову',
 }

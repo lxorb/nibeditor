@@ -828,24 +828,6 @@
       </div>
     {/if}
 
-    {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
-      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-      <!-- One scrim for both drawers, which is why it fades with whichever of
-           them a finger is on. Only one can be moving: a gesture belongs to one
-           edge. -->
-      <div
-        class="scrim"
-        class:over={!!workspace.rightPanel}
-        class:held={drawer.held || rightDrawer.held}
-        class:dragging={drawer.at !== null || rightDrawer.at !== null}
-        style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
-        onclick={() => {
-          workspace.closePanel()
-          workspace.closePanel('right')
-        }}
-      ></div>
-    {/if}
-
     <!-- On a phone too narrow for the drawer to leave any of the note showing,
          the layers swap: the list is the floor and the note is what moves,
          sliding off to the right to uncover it and back over it. The same
@@ -867,6 +849,26 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
+      {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <!-- One scrim for both drawers, which is why it fades with whichever of
+             them a finger is on. Only one can be moving: a gesture belongs to one
+             edge. Inside the document, because the right drawer is too: at the
+             narrow end the document is a layer of its own, and a scrim outside it
+             was drawn over the drawer it was meant to be under. -->
+        <div
+          class="scrim"
+          class:over={!!workspace.rightPanel}
+          class:held={drawer.held || rightDrawer.held}
+          class:dragging={drawer.at !== null || rightDrawer.at !== null}
+          style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
+          onclick={() => {
+            workspace.closePanel()
+            workspace.closePanel('right')
+          }}
+        ></div>
+      {/if}
+
       <!-- The three dots at the right end of it open the whole of the app on a
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->

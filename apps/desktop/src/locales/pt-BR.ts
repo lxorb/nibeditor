@@ -1590,4 +1590,12 @@ export const ptBR: Dictionary = {
     many: '{count} de itens arquivados dentro',
     other: '{count} itens arquivados dentro',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Barra lateral direita',
+  'Ask about this space': 'Perguntar sobre este espaço',
+  'Insert at the caret': 'Inserir no cursor',
+  'Save as a note': 'Salvar como nota',
+  'Settings › AI': 'Configurações › IA',
+  'New chat': 'Nova conversa',
+  'Ask again': 'Perguntar de novo',
 }

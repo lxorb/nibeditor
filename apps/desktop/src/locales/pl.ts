@@ -1630,4 +1630,12 @@ export const pl: Dictionary = {
     many: '{count} zarchiwizowanych elementów w środku',
     other: '{count} zarchiwizowanego elementu w środku',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Prawy panel boczny',
+  'Ask about this space': 'Zapytaj o tę przestrzeń',
+  'Insert at the caret': 'Wstaw na kursorze',
+  'Save as a note': 'Zapisz jako notatkę',
+  'Settings › AI': 'Ustawienia › AI',
+  'New chat': 'Nowy czat',
+  'Ask again': 'Zapytaj ponownie',
 }

@@ -37,3 +37,10 @@ export const ORDER_MARK = 'M2 3.5h5M2 6.5h4M2 9.5h3M10 2.6v7.8M8.5 8.9 10 10.4l1
 
 /** Two chevrons meeting: every row folded, as VS Code and Obsidian draw it. */
 export const FOLD_MARK = 'M3.5 1.8 6.5 4.6l3-2.8M3.5 11.2l3-2.8 3 2.8'
+
+/** A key and its value, three rows of them: a note's front matter. */
+export const PROPERTIES_MARK = 'M2 3.4h2.4M6.4 3.4h4.6M2 6.5h2.4M6.4 6.5h4.6M2 9.6h2.4M6.4 9.6h4.6'
+
+/** A four-point spark, the mark every assistant wears. */
+export const ASK_MARK =
+  'M6.5 2c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'

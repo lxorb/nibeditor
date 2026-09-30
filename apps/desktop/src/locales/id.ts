@@ -1552,4 +1552,12 @@ export const id: Dictionary = {
   'Nothing archived is deleted': 'Tidak ada yang diarsipkan yang dihapus',
   'Show them': 'Tampilkan',
   '{count} archived items inside': '{count} item diarsipkan di dalamnya',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Bilah sisi kanan',
+  'Ask about this space': 'Tanyakan tentang ruang ini',
+  'Insert at the caret': 'Sisipkan di kursor',
+  'Save as a note': 'Simpan sebagai catatan',
+  'Settings › AI': 'Pengaturan › AI',
+  'New chat': 'Obrolan baru',
+  'Ask again': 'Tanya lagi',
 }

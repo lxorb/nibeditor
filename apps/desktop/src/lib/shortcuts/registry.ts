@@ -683,6 +683,15 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-l',
     run: () => workspace.toggleSidebar(),
   },
+  // The other side, on VS Code's own key for its secondary side bar.
+  {
+    id: 'app.right-sidebar',
+    label: () => t('Right sidebar'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-b',
+    run: () => workspace.toggleSidebar('right'),
+  },
   // The four panels. One key each, and the same key back: it opens the panel and
   // puts the keyboard in it, and pressing it again while the keyboard is already
   // there gives the note the keyboard back. Two keys for one journey - one to go
@@ -751,6 +760,23 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-b',
     run: () => revealPanel('links'),
+  },
+  {
+    id: 'app.ask',
+    label: () => t('Ask'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-a',
+    run: () => revealPanel('ask'),
+  },
+  // No key of its own, as Footnotes has none; a row to put one on.
+  {
+    id: 'app.properties',
+    label: () => t('Properties'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    run: () => revealPanel('properties'),
   },
   // Round the regions of the window: the sidebar's header, its panel tabs, the
   // search pill, the list, the strip of notes, the note, the bar under it.

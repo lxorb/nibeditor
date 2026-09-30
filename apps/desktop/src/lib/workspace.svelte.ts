@@ -132,11 +132,10 @@ export interface Space {
  *  the workspace for a tab. */
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
-export type Panel = 'tree' | 'outline' | 'search' | 'links' | 'footnotes'
+export type Panel = 'tree' | 'outline' | 'search' | 'links' | 'footnotes' | 'properties' | 'ask'
 
-/** Which side of the window a panel sits on. Left is where every one of them has
- *  always been and where every one of them starts; see `right` below. Its own
- *  name because `Side` is already a pane's drop zone, which has four of them; see
+/** Which side of the window a panel sits on; where each starts is
+ *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
  *  workspace/zones.ts. */
 export type PanelSide = 'left' | 'right'
 
@@ -266,18 +265,17 @@ class Workspace {
    *  Not `$state`: nothing on screen reads it, and the session's own writes would
    *  otherwise be a dependency of everything that draws a panel. */
   private panelChosen = false
-  /** Which panels this window keeps on the right, in the order they were moved
-   *  there, and which of them is open.
-   *
-   *  Empty, always, until somebody moves one over: the left side is where all
-   *  four have always been, so a window nobody has arranged has no right side -
-   *  not an empty one. Nothing is drawn for it, which is what keeps the left
-   *  side, the foot row and the tab strip exactly where they were.
+  /** Which panels this window keeps on the right, in the order its strip shows
+   *  them, and which of them is open: the homes in workspace/panels.ts until
+   *  somebody moves one, and nothing open until somebody asks.
    *
    *  Per window rather than per account: which side a panel sits on is a fact
    *  about this screen, the way the sidebar's width is. */
-  right = $state<Panel[]>([])
+  right = $state<Panel[]>(panels.rightFrom(undefined))
   rightPanel = $state<Panel | null>(null)
+  /** What the right side showed last, so its button goes back there. Nothing on
+   *  screen reads it. */
+  lastRight: Panel | null = null
   /** The one tab holding a file that is only being looked at, of whatever kind:
    *  a note, a website, a canvas, a page note or a PDF. See `previewIn`. */
   previewTabId = $state<string | null>(null)
@@ -460,7 +458,7 @@ class Workspace {
   /** Whether the panels are held on a tab rather than following the pane. */
   readonly held = $derived(!!this.heldTabId && this.panelTab?.id === this.heldTabId)
 
-  /** Whether a panel is one that can be held: the three that are about one note. The
+  /** Whether a panel is one that can be held: the four that are about one note. The
    *  files are the space's and a search is the space's, so neither has a note to be held
    *  on.
    *
@@ -473,7 +471,10 @@ class Workspace {
    *  Here rather than in the panel that draws the button, because the palette asks the
    *  same question and two copies of one rule is one of them going stale. */
   holdable(panel: Panel | null): boolean {
-    return !viewport.touch && (panel === 'outline' || panel === 'links' || panel === 'footnotes')
+    return (
+      !viewport.touch &&
+      (panel === 'outline' || panel === 'links' || panel === 'footnotes' || panel === 'properties')
+    )
   }
 
   /** The panel a hold would be about: whichever side has one that can be held, the left
@@ -630,9 +631,12 @@ class Workspace {
     // The sidebar comes back the way it was left, on both sides - unless somebody
     // has already asked for one in the second the window has been up; see
     // `panelChosen`.
-    if (!this.panelChosen) this.panel = state.panel
-    this.right = state.right ?? []
-    this.rightPanel = state.rightPanel ?? null
+    if (!this.panelChosen) {
+      this.panel = state.panel
+      this.rightPanel = state.rightPanel ?? null
+    }
+    this.right = panels.rightFrom(state.right, state.known)
+    this.lastRight ??= state.lastRight ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
 
     // The folder wins over what was remembered, so the two cannot drift apart.
@@ -943,8 +947,11 @@ class Workspace {
       activeSpace: this.activeSpaceId,
       layout: this.layout(),
       panel: this.panel,
-      ...(this.right.length ? { right: [...this.right] } : {}),
+      // Even empty: every panel moved off the right is an arrangement too.
+      right: [...this.right],
+      known: [...panels.PANELS],
       ...(this.rightPanel ? { rightPanel: this.rightPanel } : {}),
+      ...(this.lastRight ? { lastRight: this.lastRight } : {}),
       positions: this.positions.all,
       closed: this.closed.stack,
     }
@@ -3789,6 +3796,7 @@ class Workspace {
     this.panel = next.panel
     this.rightPanel = next.rightPanel
     this.right = next.right
+    if (next.rightPanel) this.lastRight = next.rightPanel
     // Every deliberate showing, shutting and moving of a panel comes through here,
     // which is what makes this the one place a choice is noted; see `panelChosen`.
     this.panelChosen = true
@@ -3811,15 +3819,12 @@ class Workspace {
     return panels.panelsOn(this.right, side, every)
   }
 
-  /** The panel the right side shows when something asks it to open: whatever was
-   *  last open there, or the first one that was moved over - which, on a side
-   *  holding one panel, is that panel.
-   *
-   *  One rule, because two things ask it: the bar's own button for that side, and
-   *  the drag that pulls the drawer out from that edge on a phone. Nothing until
-   *  a panel has been moved over, which is a side that is not drawn at all. */
+  /** The panel the right side shows when something asks it to open: whatever is
+   *  open or was last open there, else its first. One rule for the bar's button, the
+   *  key and the thumb that pulls the drawer out. Nothing once every panel has left. */
   get nextRight(): Panel | null {
-    return this.rightPanel ?? this.right[0] ?? null
+    const last = this.lastRight
+    return this.rightPanel ?? (last && this.right.includes(last) ? last : this.right[0]) ?? null
   }
 
   /** Shows a panel. Asking for the one already showing leaves it showing, which is
@@ -3863,7 +3868,14 @@ class Workspace {
     this.sides = panels.moving(this.sides, panel, side)
   }
 
-  toggleSidebar() {
+  /** Opens or shuts one side: the left on the file list, the right on `nextRight`. */
+  toggleSidebar(side: PanelSide = 'left') {
+    if (side === 'right') {
+      const next = this.nextRight
+      if (next) this.togglePanel(next)
+      return
+    }
+
     this.panel = this.panel ? null : 'tree'
     this.panelChosen = true
     this.persist()

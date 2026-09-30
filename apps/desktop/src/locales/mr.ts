@@ -1556,4 +1556,12 @@ export const mr: Dictionary = {
     one: 'आत {count} संग्रहित आयटम',
     other: 'आत {count} संग्रहित आयटम',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'उजवा साइडबार',
+  'Ask about this space': 'या स्पेसबद्दल विचारा',
+  'Insert at the caret': 'कर्सरवर घाला',
+  'Save as a note': 'नोंद म्हणून जतन करा',
+  'Settings › AI': 'सेटिंग्ज › AI',
+  'New chat': 'नवीन चॅट',
+  'Ask again': 'पुन्हा विचारा',
 }

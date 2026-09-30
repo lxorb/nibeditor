@@ -112,7 +112,7 @@ Nine, in the order the window draws them, which is the order Tab already walks:
 | `tabs` | the strip of notes |
 | `editor` | the note |
 | `status` | the bar under it, over a note |
-| `right` | the other side of the window, once a panel has been moved over to it |
+| `right` | the other side of the window, while it is showing |
 
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
@@ -247,20 +247,25 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+O | Outline |
 | Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
+| Ctrl+Shift+A | Ask, the conversation about the space |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
+| Ctrl+Alt+B | show or hide the right side, VS Code's key for its secondary side bar |
 | no key | Show in the file list: the note in front, its rows unfolded and scrolled to. Collapse the file list: every row folded |
 
 The two without a key ship unbound in Obsidian and VS Code as well. Both are rows in
 the palette, Show in the file list is a row in a tab's own menu too, and while a row
 is unfolded the collapse is a glyph beside the order of the files.
 
-Footnotes is the fifth panel and has no key of its own. The four above are the four
-that had one, and a fifth combination nobody asked for is a key taken away from
-whatever a reader might have wanted it for: the tab strip and the palette are how it
-is reached.
+Footnotes and Properties have no key of their own. A combination nobody asked for is
+a key taken away from whatever a reader might have wanted it for: the tab strip and
+the palette are how they are reached, and both are rows in the Shortcuts pane with no
+key on them, so a reader who wants one has a row to put it on.
 
-Each of the four opens its panel **and puts the keyboard in it**, and pressing it
-again while the keyboard is already there gives the note the keyboard back. One
+Each of the five opens its panel **on whichever side it lives, and puts the keyboard
+in it** - for the Outline, the Links and Ask that is the right, so the key opens that
+side as well, and Ask's key lands in its field - and pressing it again while the
+keyboard is already there gives the note the keyboard back. In a browser Ctrl+Shift+A
+is the browser's own tab search, so there the tab and the palette reach Ask. One
 key there and one key back: the alternative is a key that opens something and a
 second key nobody remembers for leaving it.
 

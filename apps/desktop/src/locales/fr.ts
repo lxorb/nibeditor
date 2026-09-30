@@ -1615,4 +1615,12 @@ export const fr: Dictionary = {
     many: '{count} d’éléments archivés dedans',
     other: '{count} éléments archivés dedans',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Barre latérale droite',
+  'Ask about this space': 'Poser une question sur cet espace',
+  'Insert at the caret': 'Insérer au curseur',
+  'Save as a note': 'Enregistrer comme note',
+  'Settings › AI': 'Réglages › IA',
+  'New chat': 'Nouvelle discussion',
+  'Ask again': 'Redemander',
 }

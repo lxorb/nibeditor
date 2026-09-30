@@ -1522,4 +1522,12 @@ export const th: Dictionary = {
   'Nothing archived is deleted': 'สิ่งที่เก็บถาวรจะไม่ถูกลบ',
   'Show them': 'แสดง',
   '{count} archived items inside': 'มี {count} รายการที่เก็บถาวรอยู่ข้างใน',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'แถบข้างขวา',
+  'Ask about this space': 'ถามเกี่ยวกับพื้นที่นี้',
+  'Insert at the caret': 'แทรกที่เคอร์เซอร์',
+  'Save as a note': 'บันทึกเป็นโน้ต',
+  'Settings › AI': 'ตั้งค่า › AI',
+  'New chat': 'แชทใหม่',
+  'Ask again': 'ถามอีกครั้ง',
 }

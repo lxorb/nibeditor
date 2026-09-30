@@ -1579,4 +1579,12 @@ export const ta: Dictionary = {
     one: 'உள்ளே {count} காப்பக உருப்படி',
     other: 'உள்ளே {count} காப்பக உருப்படிகள்',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'வலது பக்கப்பட்டி',
+  'Ask about this space': 'இந்த இடத்தைப் பற்றிக் கேள்',
+  'Insert at the caret': 'நிலைக்குறியில் செருகு',
+  'Save as a note': 'குறிப்பாகச் சேமி',
+  'Settings › AI': 'அமைப்புகள் › AI',
+  'New chat': 'புதிய அரட்டை',
+  'Ask again': 'மீண்டும் கேள்',
 }

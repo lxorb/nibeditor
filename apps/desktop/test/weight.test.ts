@@ -723,6 +723,18 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/keys.ts', 'where a key is kept'],
     ['/lib/ai/rewriting.svelte.ts', 'the four rewrites'],
     ['/lib/RewriteSheet.svelte', 'the sheet they are read in'],
+    // The right side's two panels and what is behind them: the conversation, the
+    // retrieval that searches the space for it, and a note's front matter as rows.
+    // Fetched when one of their tabs is shown; see surfaces.svelte.ts.
+    ['/lib/AskPanel.svelte', 'the Ask panel'],
+    ['/lib/ai/asking.svelte.ts', 'the conversation'],
+    ['/lib/ai/retrieve.ts', 'what a question is sent with'],
+    ['/lib/PropertiesPanel.svelte', 'the Properties panel'],
+    // And the Links panel with the rows it draws, which moved to the right side with
+    // them: a side that is shut when the window opens. Warmed at the launch's last turn
+    // with the Search panel, so the tab is never a wait.
+    ['/lib/Links.svelte', 'the Links panel'],
+    ['/lib/HitList.svelte', 'its rows'],
     // The phone's own three ways in - something another app shared, a quick settings
     // tile, a widget row - and the recogniser behind Dictate. Gated on the capability
     // rather than on the build, so one bundle still runs everywhere: `onTheActivity`

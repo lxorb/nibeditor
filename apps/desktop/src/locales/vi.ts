@@ -1540,4 +1540,12 @@ export const vi: Dictionary = {
   'Nothing archived is deleted': 'Không gì đã lưu trữ bị xóa',
   'Show them': 'Hiển thị',
   '{count} archived items inside': '{count} mục đã lưu trữ bên trong',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Thanh bên phải',
+  'Ask about this space': 'Hỏi về không gian này',
+  'Insert at the caret': 'Chèn tại con trỏ',
+  'Save as a note': 'Lưu thành ghi chú',
+  'Settings › AI': 'Cài đặt › AI',
+  'New chat': 'Cuộc trò chuyện mới',
+  'Ask again': 'Hỏi lại',
 }

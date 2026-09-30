@@ -1551,4 +1551,12 @@ export const ms: Dictionary = {
   'Nothing archived is deleted': 'Tiada apa yang diarkibkan dipadam',
   'Show them': 'Tunjukkan',
   '{count} archived items inside': '{count} item diarkibkan di dalam',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Bar sisi kanan',
+  'Ask about this space': 'Tanya tentang ruang ini',
+  'Insert at the caret': 'Sisipkan pada kursor',
+  'Save as a note': 'Simpan sebagai nota',
+  'Settings › AI': 'Tetapan › AI',
+  'New chat': 'Sembang baharu',
+  'Ask again': 'Tanya lagi',
 }

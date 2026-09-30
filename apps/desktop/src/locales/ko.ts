@@ -1530,4 +1530,12 @@ export const ko: Dictionary = {
   'Nothing archived is deleted': '보관한 항목은 삭제되지 않습니다',
   'Show them': '보기',
   '{count} archived items inside': '안에 보관된 항목 {count}개',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': '오른쪽 사이드바',
+  'Ask about this space': '이 공간에 대해 질문하기',
+  'Insert at the caret': '커서 위치에 삽입',
+  'Save as a note': '노트로 저장',
+  'Settings › AI': '설정 › AI',
+  'New chat': '새 채팅',
+  'Ask again': '다시 묻기',
 }

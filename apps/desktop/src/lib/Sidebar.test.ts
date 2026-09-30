@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
+import { STARTS_RIGHT } from './workspace/panels'
 
 /** What the sidebar draws: which tabs its strip holds, what the Footnotes panel makes
  *  of a note's footnotes, and who is offered the button that holds a panel on one note.
@@ -21,6 +22,9 @@ vi.mock('./recorder/commands', () => ({
   recordLabel: () => 'Record',
 }))
 vi.mock('./surfaces.svelte', () => ({
+  askPanel: () => new Promise(() => undefined),
+  linksPanel: () => new Promise(() => undefined),
+  propertiesPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
   searchPanel: () => new Promise(() => undefined),
 }))
@@ -49,17 +53,32 @@ function drawn(
 }
 
 describe('the panel tabs', () => {
-  test('are the five the sidebar has, in one fixed order', () => {
-    open('# Head\n')
-    const html = drawn('tree')
-    const labels = [...html.matchAll(/role="tab"[^>]*aria-label="([^"]+)"/g)].map(([, one]) => one)
+  /** The labels of one side's strip, in the order it draws them. */
+  function strip(side: 'left' | 'right'): string[] {
+    viewport.device = 'desktop'
+    workspace.panel = 'tree'
+    workspace.rightPanel = 'outline'
+    const html = render(Sidebar, { props: { side } }).body
+    workspace.rightPanel = null
+    return [...html.matchAll(/role="tab"[^>]*aria-label="([^"]+)"/g)].map(([, one]) => one ?? '')
+  }
 
-    // The strip labels its tabs however the shell dresses them; what matters is that
-    // all five are in it and that Footnotes is the last of them.
-    for (const one of ['Files', 'Outline', 'Search', 'Links', 'Footnotes']) {
-      expect(html, one).toContain(one)
-    }
-    if (labels.length) expect(labels).toEqual(['Files', 'Outline', 'Search', 'Links', 'Footnotes'])
+  test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
+    open('# Head\n')
+
+    expect(strip('left')).toEqual(['Files', 'Search'])
+    expect(strip('right')).toEqual(['Outline', 'Links', 'Properties', 'Footnotes', 'Ask'])
+  })
+
+  test('and a panel moved over is on the other side, at the end of its strip', () => {
+    open('# Head\n')
+    workspace.movePanel('outline', 'left')
+
+    expect(strip('left')).toEqual(['Files', 'Outline', 'Search'])
+    expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask'])
+    workspace.movePanel('outline', 'right')
+    expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask', 'Outline'])
+    workspace.right = [...STARTS_RIGHT]
   })
 })
 
@@ -121,18 +140,18 @@ describe('the Footnotes panel', () => {
 describe('the button that holds a panel on a note', () => {
   const HELD = 'Stay on this note'
 
-  test('is offered on the three panels that are about one note', () => {
+  test('is offered on the four panels that are about one note', () => {
     open('# Head\n\nWords[^1].\n\n[^1]: said\n')
 
-    for (const panel of ['outline', 'links', 'footnotes'] as const) {
+    for (const panel of ['outline', 'links', 'footnotes', 'properties'] as const) {
       expect(drawn(panel), panel).toContain(HELD)
     }
   })
 
-  test('and on neither of the two that are about the space', () => {
+  test('and on none of the three that are about the space', () => {
     open('# Head\n')
 
-    for (const panel of ['tree', 'search'] as const) {
+    for (const panel of ['tree', 'search', 'ask'] as const) {
       expect(drawn(panel), panel).not.toContain(HELD)
     }
   })

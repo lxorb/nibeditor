@@ -1557,4 +1557,12 @@ export const fa: Dictionary = {
     one: '{count} مورد بایگانی‌شده در آن',
     other: '{count} مورد بایگانی‌شده در آن',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'نوار کناری راست',
+  'Ask about this space': 'پرسیدن درباره این فضا',
+  'Insert at the caret': 'افزودن در نشانگر',
+  'Save as a note': 'ذخیره به شکل یادداشت',
+  'Settings › AI': 'تنظیم ‹ هوش مصنوعی',
+  'New chat': 'گفتگوی تازه',
+  'Ask again': 'دوباره بپرس',
 }

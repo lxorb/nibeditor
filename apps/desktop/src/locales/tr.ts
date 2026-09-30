@@ -1561,4 +1561,12 @@ export const tr: Dictionary = {
     one: 'İçeride {count} arşivlenmiş öğe',
     other: 'İçeride {count} arşivlenmiş öğe',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Sağ kenar çubuğu',
+  'Ask about this space': 'Bu alan hakkında sor',
+  'Insert at the caret': 'İmlece ekle',
+  'Save as a note': 'Not olarak kaydet',
+  'Settings › AI': 'Ayarlar › YZ',
+  'New chat': 'Yeni sohbet',
+  'Ask again': 'Yeniden sor',
 }

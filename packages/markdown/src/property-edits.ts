@@ -18,7 +18,7 @@
  *  file at all. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { frontMatterEdit } from './front-matter'
+import { frontMatterBlock, frontMatterEdit } from './front-matter'
 import { type Property, type PropertyKind, readProperties } from './properties'
 import { flowItem, scalar } from './yaml'
 
@@ -87,4 +87,39 @@ export function withItem(property: Property, item: string): string[] | null {
 export function withoutItem(property: Property, item: string): string[] | null {
   if (!property.items.includes(item)) return null
   return property.items.filter((one) => one !== item)
+}
+
+/** What a key may be called: the shape `readProperties` reads a key by. */
+const KEY_NAME = /^[A-Za-z_][\w-]*$/
+
+/** One edit that renames a key and touches nothing else: its value, its place and
+ *  every other line of the block stay byte for byte. Null for a name that is not a
+ *  key, the same name, or a name another key of the block already has - two keys
+ *  of one name is a block YAML reads as the last of them. */
+export function renameProperty(source: string, key: string, next: string): TextEdit | null {
+  const name = next.trim()
+  if (!KEY_NAME.test(name) || name === key) return null
+
+  const rows = readProperties(source) ?? []
+  const found = rows.find((one) => one.key === key)
+  const taken = rows.some((one) => one !== found && one.key.toLowerCase() === name.toLowerCase())
+  if (!found || taken) return null
+
+  return { from: found.from, to: found.from + key.length, insert: name }
+}
+
+/** One edit that takes a key away with everything written under it: a list's
+ *  `- item` lines go with the key rather than being left behind as a shape nothing
+ *  reads. A block left with nothing in it goes too, with the blank lines under it,
+ *  as `frontMatterEdit` does for a single line. */
+export function removeProperty(source: string, key: string): TextEdit | null {
+  const found = readProperties(source)?.find((one) => one.key === key)
+  if (!found) return null
+
+  const past = source.startsWith('\r\n', found.to) ? found.to + 2 : found.to + 1
+  const after = source.slice(0, found.from) + source.slice(Math.min(past, source.length))
+  const block = frontMatterBlock(after)
+  if (!block || after.slice(block.body.from, block.body.to).trim()) return oneEdit(source, after)
+
+  return oneEdit(source, after.slice(block.to).replace(/^(?:\r?\n)+/, ''))
 }

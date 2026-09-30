@@ -1591,4 +1591,12 @@ export const fil: Dictionary = {
     one: '{count} na-archive na item sa loob',
     other: '{count} na-archive na item sa loob',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Kanang sidebar',
+  'Ask about this space': 'Magtanong tungkol sa espasyong ito',
+  'Insert at the caret': 'Ipasok sa cursor',
+  'Save as a note': 'I-save bilang tala',
+  'Settings › AI': 'Mga setting › AI',
+  'New chat': 'Bagong chat',
+  'Ask again': 'Itanong muli',
 }

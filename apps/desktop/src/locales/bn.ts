@@ -1556,4 +1556,12 @@ export const bn: Dictionary = {
     one: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
     other: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'ডান সাইডবার',
+  'Ask about this space': 'এই স্পেস নিয়ে প্রশ্ন করুন',
+  'Insert at the caret': 'কার্সরে যোগ করুন',
+  'Save as a note': 'নোট হিসেবে সেভ',
+  'Settings › AI': 'সেটিংস › AI',
+  'New chat': 'নতুন চ্যাট',
+  'Ask again': 'আবার জিজ্ঞাসা করুন',
 }

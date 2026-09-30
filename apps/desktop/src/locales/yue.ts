@@ -1517,4 +1517,12 @@ export const yue: Dictionary = {
   'Nothing archived is deleted': '封存咗嘅嘢唔會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '入面有 {count} 個封存咗嘅項目',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': '右邊嘅側邊欄',
+  'Ask about this space': '問下呢個空間嘅嘢',
+  'Insert at the caret': '插入喺光標處',
+  'Save as a note': '存做筆記',
+  'Settings › AI': '設定 › AI',
+  'New chat': '新對話',
+  'Ask again': '再問一次',
 }

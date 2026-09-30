@@ -1571,4 +1571,12 @@ export const kn: Dictionary = {
     one: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂ',
     other: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂಗಳು',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'ಬಲ ಸೈಡ್‌ಬಾರ್',
+  'Ask about this space': 'ಈ ಸ್ಪೇಸ್ ಬಗ್ಗೆ ಕೇಳಿ',
+  'Insert at the caret': 'ಕರ್ಸರ್ ಬಳಿ ಸೇರಿಸಿ',
+  'Save as a note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಿ',
+  'Settings › AI': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು › AI',
+  'New chat': 'ಹೊಸ ಚಾಟ್',
+  'Ask again': 'ಮತ್ತೆ ಕೇಳಿ',
 }

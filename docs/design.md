@@ -712,12 +712,34 @@ screen is name, tabs, entry, list - and the entry never moves.
 
 ### Either side of the note
 
-Any panel tab can live on the other side of the window - its own menu says
-`Move to the right`, and `Move to the left` again - and the right side is empty
-for everybody until somebody moves one over. Empty, not narrow: nothing is drawn
-at all, so the left column, the row under it and the strip of notes are pixel for
-pixel where they always were, which `test/e2e/right-side.py` measures before and
-after rather than promising.
+Two sides, and the panels are divided between them by what they are about. The left
+is the space: the file list and the search. The right is the note in front - its
+outline, its links, its properties, its footnotes - and the conversation about the
+space, which is the Ask panel; see `STARTS_RIGHT` in `workspace/panels.ts` and
+docs/ai.md. That is Obsidian's division, and VS Code keeps its chat on that side too:
+the eye goes to one side for "where am I" and to the other for "what is this".
+
+Having a home on the right is not being open. The right side is shut until somebody
+asks for it - its button at the end of the bar, **Ctrl+Alt+B**, or the key of any
+panel over there - so a window still opens on a note and nothing else, and the first
+paint is what it was. The button opens whatever the side showed last, and its first
+panel before that, which is the Outline: a first press lands on something that works
+with no setup at all. The button is there whether or not the side is showing, because
+a button that appears only once you have arranged the window is a button for people
+who already knew. It goes only when every panel has been moved off that side.
+
+Any panel can still live on either side - its own menu says `Move to the right`, and
+`Move to the left` again - and a window somebody arranged keeps its own arrangement.
+The session writes down which panels the build that wrote it knew, so a panel added
+later takes its own home rather than quietly appearing on the left of somebody who
+had moved their outline over before it existed; see `rightFrom`.
+
+Three of the right side's panels are fetched rather than carried: Ask and Properties
+when one of them is first shown - the conversation carries everything the app knows
+about talking to a model, and a window that opens on a note has not been asked for
+it - and the Links panel with its rows at the launch's last turn, as the Search panel
+is, so its tab is never a wait. `test/weight.test.ts` holds all three out of the first
+paint.
 
 One component draws both sides; the side is a prop. What differs is what belongs
 to the window rather than to a panel: the identity row - the space's name and its
@@ -737,12 +759,28 @@ Wherever the panels are drawers - a phone, a tablet upright - the right side is 
 drawer from the right over the note, the way a members panel is, dismissed by the
 same scrim, by Escape and by back. It leaves a strip of the note showing even at
 the narrowest width, because that strip is what there is to press to get out of
-it. It does not follow the thumb: the drag belongs to the left drawer, which is
-the one gesture a phone's edge has.
+it. A thumb pulls it out from the right edge the way the left one comes from the
+left, as Obsidian's phone app does: one engine serves both edges; see
+`drawer.svelte.ts`.
 
-Which side each panel is on, and which of them is open over there, is part of what
-the window remembers - beside which notes are open, and per window rather than per
-account, the way the sidebar's width already is.
+Which side each panel is on, which of them is open over there, and which it showed
+last is part of what the window remembers - beside which notes are open, and per
+window rather than per account, the way the sidebar's width already is.
+
+### Properties beside the note
+
+Front matter starts hidden in the note, because the metadata at the top of a file is
+what the app reads rather than what a reader reads on the way in. Hidden is not gone,
+so the Properties panel on the right is Obsidian's File properties view: the note's
+keys as rows, each with the control its value asks for - a field, a number, a date, a
+checkbox, chips for a list, a menu where the app has fixed answers - and a row to add
+one. A key is renamed by a double click on it or from its menu, and removed from its
+menu. Every change is one edit of exactly the characters that change, through
+`property-edits.ts` in @nib/markdown, into the note's own document: the note's own
+undo takes it back, and every pane showing the note has it at once. A block nib cannot
+read without guessing - a comment, a nested shape - is shown as the YAML it is and not
+turned into rows. A tag in a `tags` list asks the space about itself, as a tag does
+everywhere else.
 
 ### The rail is gone
 

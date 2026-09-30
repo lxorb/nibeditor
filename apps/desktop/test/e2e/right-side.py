@@ -1,17 +1,18 @@
 """The other side of the window.
 
-What it proves, in order: a window nobody has arranged has no right side at all -
-not an empty one - so the left side, the foot row and the tab strip are pixel for
-pixel where they were; a panel moved over draws a column on the right with that
-panel in it and takes its tab with it; the side's own button appears only once it
-holds something; the panel comes back on the right after a restart, because the
-side a panel sits on is part of what the window remembers; F6 reaches it as one
-region and leaves it again; and on a phone it is a drawer from the right with the
-same scrim, which the left drawer is not disturbed by.
+What it shows, in order: the note in front's panels have their home on the right
+and the side is shut until asked for, so the left side, the foot row and the tab
+strip are where they were; a panel that lives on the left - the Search - moved over
+joins the right side's strip and takes its open state with it; the panel comes back
+on the right after a restart, because the side a panel sits on is part of what the
+window remembers; F6 reaches it as one region and leaves it again; and on a phone it
+is a drawer from the right with the same scrim, which the left drawer is not
+disturbed by.
 
-The measurements are taken twice: once with nothing moved, and once with the
-right side emptied again. Both are compared against the first, so "nothing
-changed for anybody who never moves a panel" is a number rather than a promise.
+The measurements are taken twice: once as the window opens, and once with the
+Search moved back. Both are compared against the first, so "moving a panel over and
+back leaves the window as it was" is a number rather than a promise. The drive that
+checks the right side's homes and keys is ask-panel.py.
 
 Build first, with the app's own handle on the page:
 
@@ -187,9 +188,9 @@ def onDesktop(browser) -> None:
     shot("nothing-moved")
 
     say("--- a panel moved over ---")
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
-    page.evaluate("() => window.nibApp.workspace.movePanel('outline', 'right')")
+    page.evaluate("() => window.nibApp.workspace.movePanel('search', 'right')")
     page.wait_for_timeout(700)
 
     say(f"the sides say: {page.evaluate(SIDES)}")
@@ -197,7 +198,7 @@ def onDesktop(browser) -> None:
     moved = page.evaluate(MEASURED)
     say(f"with a panel on the right: right columns {moved['right']}, toggles {moved['toggles']}")
     say(f"the note is now {moved['editor']} (it was {before['editor']})")
-    shot("outline-on-the-right")
+    shot("search-on-the-right")
 
     # Both sides at once, which is the arrangement the whole thing is for.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
@@ -227,7 +228,7 @@ def onDesktop(browser) -> None:
     shot("after-a-restart")
 
     say("--- and moved back ---")
-    page.evaluate("() => window.nibApp.workspace.movePanel('outline', 'left')")
+    page.evaluate("() => window.nibApp.workspace.movePanel('search', 'left')")
     page.wait_for_timeout(700)
     after = page.evaluate(MEASURED)
     say(f"the sides say: {page.evaluate(SIDES)}")

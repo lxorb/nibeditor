@@ -200,8 +200,10 @@ export function modelsIn(body: unknown): string[] {
   return [...new Set(names)].sort((a, b) => a.localeCompare(b))
 }
 
+/** One thing said. `assistant` is an earlier answer, which is what a conversation
+ *  sends back with its next question. */
 export interface Message {
-  role: 'system' | 'user'
+  role: 'system' | 'user' | 'assistant'
   content: string
 }
 

@@ -1547,4 +1547,12 @@ export const ja: Dictionary = {
   'Nothing archived is deleted': 'アーカイブしたものは削除されません',
   'Show them': '表示',
   '{count} archived items inside': '中にアーカイブ済みの項目が{count}件',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': '右サイドバー',
+  'Ask about this space': 'このスペースについて質問',
+  'Insert at the caret': 'カーソル位置に挿入',
+  'Save as a note': 'ノートとして保存',
+  'Settings › AI': '設定 › AI',
+  'New chat': '新しいチャット',
+  'Ask again': 'もう一度質問',
 }

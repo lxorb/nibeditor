@@ -1421,6 +1421,25 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Footnotes'),
       run: () => revealPanel('footnotes'),
     },
+    {
+      id: 'properties-panel',
+      label: t('Properties'),
+      hint: shortcuts.hint('app.properties'),
+      run: () => revealPanel('properties'),
+    },
+    {
+      id: 'ask-panel',
+      label: t('Ask'),
+      hint: shortcuts.hint('app.ask'),
+      run: () => revealPanel('ask'),
+    },
+    {
+      id: 'right-sidebar',
+      label: t('Right sidebar'),
+      hint: shortcuts.hint('app.right-sidebar'),
+      disabled: !workspace.right.length,
+      run: () => workspace.toggleSidebar('right'),
+    },
     // Holding a panel on one note while another is written beside it. One row that
     // says which way it goes, the way every other two-state row in the palette does,
     // and greyed out where there is nothing to hold: no panel open that is about a

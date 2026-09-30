@@ -1546,4 +1546,12 @@ export const jv: Dictionary = {
   'Nothing archived is deleted': 'Ora ana sing diarsipaké sing dibusak',
   'Show them': 'Tuduhaké',
   '{count} archived items inside': '{count} item diarsipaké ing njero',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Bar sisih tengen',
+  'Ask about this space': 'Takon bab papan iki',
+  'Insert at the caret': 'Selipake ing kursor',
+  'Save as a note': 'Simpen minangka cathetan',
+  'Settings › AI': 'Setelan › AI',
+  'New chat': 'Obrolan anyar',
+  'Ask again': 'Takon maneh',
 }

@@ -1558,4 +1558,12 @@ export const ps: Dictionary = {
     one: '{count} آرشیف شوی توکی دننه',
     other: '{count} آرشیف شوي توکي دننه',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'ښي څنګ پټه',
+  'Ask about this space': 'د دې ځای په اړه پوښتنه',
+  'Insert at the caret': 'په نښانګر کې ورزياتول',
+  'Save as a note': 'لکه يادښت خوندي کړه',
+  'Settings › AI': 'امستنې ‹ مصنوعي ځيرکتيا',
+  'New chat': 'نوې خبرې',
+  'Ask again': 'بیا پوښتنه وکړئ',
 }

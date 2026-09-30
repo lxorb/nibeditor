@@ -1553,4 +1553,12 @@ export const ur: Dictionary = {
     one: '{count} آرکائیو شدہ آئٹم اندر',
     other: '{count} آرکائیو شدہ آئٹمز اندر',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'دائیں سائیڈ بار',
+  'Ask about this space': 'اس اسپیس کے بارے میں پوچھیں',
+  'Insert at the caret': 'کرسر پر داخل کریں',
+  'Save as a note': 'نوٹ کے طور پر محفوظ کریں',
+  'Settings › AI': 'ترتیبات ‹ AI',
+  'New chat': 'نئی چیٹ',
+  'Ask again': 'دوبارہ پوچھیں',
 }

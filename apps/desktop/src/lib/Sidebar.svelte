@@ -9,6 +9,7 @@
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
   import {
+    ASK_MARK,
     FILES_MARK,
     FOLD_MARK,
     FOOTNOTES_MARK,
@@ -16,6 +17,7 @@
     LINKS_MARK,
     ORDER_MARK,
     OUTLINE_MARK,
+    PROPERTIES_MARK,
     SEARCH_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
@@ -24,7 +26,14 @@
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
-  import { archiveSection, pagesNavigator, searchPanel } from './surfaces.svelte'
+  import {
+    archiveSection,
+    askPanel,
+    linksPanel,
+    pagesNavigator,
+    propertiesPanel,
+    searchPanel,
+  } from './surfaces.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
@@ -36,7 +45,6 @@
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
   import Bookmarks from './Bookmarks.svelte'
-  import Links from './Links.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
@@ -102,6 +110,10 @@
    *  of the note. Here for the reason the tack above is: one surface draws it. */
   const DOWN_MARK = 'M6.5 2.4v5.2M4.3 5.6l2.2 2.2 2.2-2.2M3.4 10.6h6.2'
 
+  /** A square and a pen: a conversation begun again. */
+  const FRESH_MARK =
+    'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
+
   /** The panel showing on this side, which every row below reads instead of
    *  `workspace.panel`: the left side's is that, and the right side's is its
    *  own. */
@@ -113,6 +125,8 @@
     { id: 'search', label: t('Search'), path: SEARCH_MARK },
     { id: 'links', label: t('Links'), path: LINKS_MARK },
     { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
+    { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
+    { id: 'ask', label: t('Ask'), path: ASK_MARK },
   ]
 
   /** The tabs this side holds, in the order it shows them; see
@@ -629,6 +643,18 @@
         </button>
       </div>
     {/if}
+    {#if showing === 'ask'}
+      <div class="tools">
+        <button
+          class="nib-glyph tool fresh"
+          title={t('New chat')}
+          aria-label={t('New chat')}
+          onclick={() => void import('./ai/asking.svelte').then((one) => one.asking.clear())}
+        >
+          <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
+        </button>
+      </div>
+    {/if}
     {#if showing === 'links'}
       <div class="tools">
         {#if graphing}
@@ -875,8 +901,18 @@
             {:else}
               <p class="empty-text">{t('No footnotes in this note')}</p>
             {/if}
+          {:else if showing === 'properties'}
+            {#await propertiesPanel() then PropertiesPanel}
+              <PropertiesPanel onsearch={runBookmarked} />
+            {/await}
+          {:else if showing === 'ask'}
+            {#await askPanel() then AskPanel}
+              <AskPanel {ongoto} />
+            {/await}
           {:else if showing === 'links'}
-            <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+            {#await linksPanel() then Links}
+              <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+            {/await}
           {:else if showing === 'search'}
             <!-- The one panel with a ranking engine behind it, fetched the first time
                  the tab is chosen rather than carried into the first paint; see
@@ -1344,6 +1380,16 @@
      this, which is the thing actually at the bottom of the screen. */
   :global([data-touch]) .body {
     padding-bottom: var(--space-4);
+  }
+
+  /* The conversation scrolls inside itself, over a field that stays put. */
+  .body[data-panel='ask'] {
+    overflow: hidden;
+    padding: 0;
+  }
+
+  aside:has(:global(.ask.is-empty)) .fresh {
+    visibility: hidden;
   }
 
   :global([data-touch]) .empty-text,

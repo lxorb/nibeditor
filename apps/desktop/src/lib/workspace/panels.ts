@@ -88,3 +88,33 @@ export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
     rightPanel: open ? null : sides.rightPanel,
   }
 }
+
+/** Where each panel lives until somebody moves it: the left is the space (the file
+ *  list, the search), the right is the note in front and the conversation about the
+ *  space - Obsidian's split, with the chat where VS Code keeps its own. */
+export const STARTS_RIGHT: readonly Panel[] = ['outline', 'links', 'properties', 'footnotes', 'ask']
+
+/** Every panel there is, in the order the left side's strip shows them. */
+export const PANELS: readonly Panel[] = [
+  'tree',
+  'outline',
+  'search',
+  'links',
+  'footnotes',
+  'properties',
+  'ask',
+]
+
+/** The panels a window could be arranged with before a session said which it knew. */
+const ARRANGED_BEFORE: readonly Panel[] = PANELS.slice(0, 5)
+
+/** The right side a window opens with: the homes when nothing was written down, else
+ *  what was written plus any homed there that the build which wrote it never knew. */
+export function rightFrom(
+  saved: readonly Panel[] | undefined,
+  known: readonly Panel[] = ARRANGED_BEFORE,
+): Panel[] {
+  if (!saved) return [...STARTS_RIGHT]
+
+  return [...saved, ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one))]
+}

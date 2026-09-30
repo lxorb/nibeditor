@@ -1540,4 +1540,12 @@ export const my: Dictionary = {
   'Nothing archived is deleted': 'မှတ်တမ်းတင်ထားသည့် မည်သည့်အရာမှ မဖျက်ပါ',
   'Show them': 'ပြပါ',
   '{count} archived items inside': 'အတွင်း၌ မှတ်တမ်းတင်ထားသော အရာ {count} ခု',
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'ညာဘေးတန်း',
+  'Ask about this space': 'ဤအလုပ်ခွင်အကြောင်းမေးပါ',
+  'Insert at the caret': 'ကာဆာနေရာတွင်ထည့်ပါ',
+  'Save as a note': 'မှတ်စုအဖြစ်သိမ်းပါ',
+  'Settings › AI': 'ဆက်တင် › AI',
+  'New chat': 'စကားဝိုင်းအသစ်',
+  'Ask again': 'ထပ်မေးရန်',
 }

@@ -697,7 +697,11 @@ def drive(browser: Browser, name: str, width: int, height: int,
         ]:
             page.keyboard.press(chord)
             page.wait_for_timeout(600)
-            showing = page.evaluate("() => window.nibApp.workspace.panel")
+            # On whichever side the panel lives: the Outline and the Links are the right's.
+            showing = page.evaluate(
+                "(one) => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf(one))",
+                "tree" if panel == "files" else panel,
+            )
             if showing is None:
                 say(f"[{name}] {panel}: the chord opened nothing")
                 continue

@@ -1582,4 +1582,12 @@ export const ha: Dictionary = {
     one: 'Abu {count} da aka ajiye a ciki',
     other: 'Abubuwa {count} da aka ajiye a ciki',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Gefen mashaya na dama',
+  'Ask about this space': 'Yi tambaya game da wannan wurin',
+  'Insert at the caret': 'Saka a wurin alamar rubutu',
+  'Save as a note': 'Ajiye a matsayin bayanin kula',
+  'Settings › AI': 'Saituna › AI',
+  'New chat': 'Sabuwar tattaunawa',
+  'Ask again': 'Sake tambaya',
 }

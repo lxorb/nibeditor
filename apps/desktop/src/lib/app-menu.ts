@@ -504,11 +504,19 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => workspace.toggleSidebar(),
         },
         {
+          label: t('Right sidebar'),
+          ...keyed('app.right-sidebar'),
+          checked: !!workspace.rightPanel,
+          disabled: !workspace.right.length,
+          run: () => workspace.toggleSidebar('right'),
+        },
+        {
           label: t('Files'),
           ...keyed('app.files'),
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
+        { label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') },
         DIVIDER,
         // Folding is a view operation, so these rows stand whether the note can
         // be written in or not.

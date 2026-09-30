@@ -1598,4 +1598,12 @@ export const de: Dictionary = {
     one: '{count} archivierter Eintrag darin',
     other: '{count} archivierte Einträge darin',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Rechte Seitenleiste',
+  'Ask about this space': 'Etwas zu diesem Bereich fragen',
+  'Insert at the caret': 'Am Cursor einfügen',
+  'Save as a note': 'Als Notiz speichern',
+  'Settings › AI': 'Einstellungen › KI',
+  'New chat': 'Neuer Chat',
+  'Ask again': 'Nochmals fragen',
 }

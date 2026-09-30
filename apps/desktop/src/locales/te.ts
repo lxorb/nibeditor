@@ -1561,4 +1561,12 @@ export const te: Dictionary = {
     one: 'లోపల {count} ఆర్కైవ్ అంశం',
     other: 'లోపల {count} ఆర్కైవ్ అంశాలు',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'కుడి సైడ్‌బార్',
+  'Ask about this space': 'ఈ స్పేస్ గురించి అడుగు',
+  'Insert at the caret': 'కర్సర్ వద్ద చేర్చు',
+  'Save as a note': 'నోట్‌గా సేవ్ చేయి',
+  'Settings › AI': 'సెట్టింగ్‌లు › AI',
+  'New chat': 'కొత్త చాట్',
+  'Ask again': 'మళ్లీ అడగండి',
 }

@@ -281,7 +281,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     ]:
         page.keyboard.press(chord)
         page.wait_for_timeout(500)
-        showing = page.evaluate("() => window.nibApp.workspace.panel")
+        # On whichever side the panel lives: the Outline and the Links are the right's.
+        showing = page.evaluate(
+            "(one) => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf(one))", panel
+        )
         say(f"    {chord:<18} -> panel {showing!r} (wanted {panel!r}), {page.evaluate(WHERE)}")
     shot("panels-links")
 

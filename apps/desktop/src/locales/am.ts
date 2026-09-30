@@ -1536,4 +1536,12 @@ export const am: Dictionary = {
     one: 'በውስጡ {count} በማህደር የተቀመጠ ንጥል',
     other: 'በውስጡ {count} በማህደር የተቀመጡ ንጥሎች',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'የቀኝ ጎን ሰሌዳ',
+  'Ask about this space': 'ስለዚህ ቦታ ጠይቅ',
+  'Insert at the caret': 'በጠቋሚው ላይ አስገባ',
+  'Save as a note': 'እንደ ማስታወሻ አስቀምጥ',
+  'Settings › AI': 'ማስተካከያ › AI',
+  'New chat': 'አዲስ ውይይት',
+  'Ask again': 'እንደገና ጠይቅ',
 }

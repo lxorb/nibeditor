@@ -1599,4 +1599,12 @@ export const ptPT: Dictionary = {
     many: '{count} de itens arquivados lá dentro',
     other: '{count} itens arquivados lá dentro',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'Barra lateral direita',
+  'Ask about this space': 'Perguntar acerca deste espaço',
+  'Insert at the caret': 'Inserir no cursor',
+  'Save as a note': 'Guardar como nota',
+  'Settings › AI': 'Definições › IA',
+  'New chat': 'Nova conversa',
+  'Ask again': 'Perguntar de novo',
 }

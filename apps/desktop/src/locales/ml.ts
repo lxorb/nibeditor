@@ -1575,4 +1575,12 @@ export const ml: Dictionary = {
     one: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനം',
     other: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനങ്ങൾ',
   },
+  // The right side: its own button, the Ask panel and where a provider is set up.
+  'Right sidebar': 'വലത്തെ സൈഡ്‌ബാർ',
+  'Ask about this space': 'ഈ സ്പേസിനെക്കുറിച്ച് ചോദിക്കുക',
+  'Insert at the caret': 'കഴ്‌സറിൽ ചേർക്കുക',
+  'Save as a note': 'കുറിപ്പായി സേവ് ചെയ്യുക',
+  'Settings › AI': 'സെറ്റിംഗ്സ് › AI',
+  'New chat': 'പുതിയ ചാറ്റ്',
+  'Ask again': 'വീണ്ടും ചോദിക്കുക',
 }

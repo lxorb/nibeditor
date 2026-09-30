@@ -27,21 +27,6 @@
 
   const open = $derived(!!workspace.openOn(side))
   const label = $derived(open ? t('Hide sidebar') : t('Show sidebar'))
-
-  /** The one on the right shuts whatever is open there and opens whatever was
-   *  last open - which, on a side that holds one panel, is that panel. That rule
-   *  is `nextRight` on the workspace, because the thumb drag that pulls the same
-   *  drawer out follows it too. The left one keeps the method it has always
-   *  called. */
-  function press() {
-    if (side === 'left') {
-      workspace.toggleSidebar()
-      return
-    }
-
-    const first = workspace.nextRight
-    if (first) workspace.togglePanel(first)
-  }
 </script>
 
 <!-- The glyph is mirrored for the right side and nothing else about it changes:
@@ -54,7 +39,7 @@
   title={label}
   aria-label={label}
   aria-pressed={open}
-  onclick={press}
+  onclick={() => workspace.toggleSidebar(side)}
 >
   <svg viewBox="0 0 14 14">
     <rect x="1" y="2.5" width="12" height="9" rx="1.5" />

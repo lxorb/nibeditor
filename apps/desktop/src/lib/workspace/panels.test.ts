@@ -1,5 +1,16 @@
 import { describe, expect, test } from 'vitest'
-import { closing, moving, openOn, panelsOn, showing, sideOf, type Sides } from './panels'
+import {
+  closing,
+  moving,
+  openOn,
+  PANELS,
+  panelsOn,
+  rightFrom,
+  showing,
+  sideOf,
+  type Sides,
+  STARTS_RIGHT,
+} from './panels'
 
 /** Which side each panel sits on, as arithmetic.
  *
@@ -132,5 +143,24 @@ describe('what each side shows', () => {
     expect(openOn(both, 'right')).toBe('search')
     expect(openOn(fresh(), 'left')).toBeNull()
     expect(openOn(fresh(), 'right')).toBeNull()
+  })
+})
+
+describe('where a panel lives until somebody moves it', () => {
+  test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
+    expect(rightFrom(undefined)).toEqual(['outline', 'links', 'properties', 'footnotes', 'ask'])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search'])
+  })
+
+  test('and a window arranged before the homes keeps its own arrangement', () => {
+    // A build with five panels wrote this: the outline moved over, the rest left.
+    expect(rightFrom(['outline'])).toEqual(['outline', 'properties', 'ask'])
+    // And one that had everything on the left wrote nothing at all.
+    expect(rightFrom(undefined)).toEqual(STARTS_RIGHT)
+  })
+
+  test('while one that knew every panel is kept exactly, however empty', () => {
+    expect(rightFrom([], PANELS)).toEqual([])
+    expect(rightFrom(['ask'], PANELS)).toEqual(['ask'])
   })
 })
