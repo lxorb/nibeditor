@@ -14,7 +14,7 @@
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { folderOf } from './space-paths'
-import { siteMark } from './web-tab/favicons.svelte'
+import { siteMark } from './web-tab/pages.svelte'
 import { workspace } from './workspace.svelte'
 
 /** Which key the space's map is asked under. For `A/A.md` that is `A/`, because
@@ -33,11 +33,9 @@ export function chosenIcon(path: string): string | null {
 }
 
 /** A website's own mark, as an address, or null for anything that is not one or has
- *  no mark yet: the last one this device saw where the `.url` points (or at `url`, for
- *  a row that is an address and no file), else the favicon out of the file's
- *  `Nib-Icon` - the same mark, through the same door, as the tab strip and the address
- *  bar show. Here beside the chosen icon so a row asks one façade for what it draws and
- *  never the index by name; see link-index `faviconOf` and web-tab/favicons.svelte.ts. */
+ *  none yet: `siteMark` for where the `.url` points (or `url`, for a row that is an
+ *  address and no file), falling back to the file's `Nib-Icon`. Here beside the chosen
+ *  icon so a row asks one façade for what it draws and never the index by name. */
 export function faviconFor(path: string | undefined, url?: string | null): string | null {
   const address = url ?? (path === undefined ? null : links.shortcutOf(path))
   return siteMark(null, address, path === undefined ? null : links.faviconOf(path))

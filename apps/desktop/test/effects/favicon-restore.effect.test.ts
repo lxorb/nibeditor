@@ -38,9 +38,9 @@ afterEach(() => {
 
 test('a tab restored with no page wears the mark its site last showed, in its first frame', async () => {
   // The run before: the page showed its mark, and the store wrote it down.
-  const before = await import('../../src/lib/web-tab/favicons.svelte')
-  before.favicons.saw(SITE, MARK)
-  before.favicons.write()
+  const before = await import('../../src/lib/web-tab/favicons')
+  before.saw(SITE, MARK)
+  before.write()
 
   // The restart, Svelte's own runtime with it: a component and the `mount` that runs it
   // have to be the same copy.

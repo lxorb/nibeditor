@@ -67,10 +67,9 @@ export interface ScannedNote {
    *  and canvas, and for a website nobody has followed a link out of yet. The twin of
    *  the same field in links.rs. See web-tab/shortcut.ts. */
   favicon: string | null
-  /** Where a website points: a `.url`'s own `URL`, which is what this device's own sight
-   *  of the site is looked up by. Null for everything else, and apart from `url`, which
-   *  says a note is a website in the old format. The twin of the same field in
-   *  links.rs. See web-tab/favicons.svelte.ts. */
+  /** Where a website points, which the device's own marks are looked up by; null for
+   *  everything else. Not `url`, which says a note is a website in the old format. The
+   *  twin of the same field in links.rs. */
   address: string | null
   /** The picture across the top of the note, as its front matter says it under
    *  `cover:`, or null where it says nothing - which is almost every note.
@@ -162,9 +161,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     // What `url:` means is a note that is a website in the old format and wants
     // converting; a shortcut is already one. See web-tab/shortcut.ts.
     url: null,
-    // The site's mark, so the row draws the favicon rather than the globe, and where it
-    // points, which the device's own sight of the site is kept under. A `.webloc` has no
-    // mark of its own.
+    // The site's mark for the row, and where it points; a `.webloc` has no mark.
     favicon: said?.icon ?? null,
     address: said?.url ?? null,
     cover: null,

@@ -181,7 +181,7 @@ describe('reading a website for the index', () => {
     expect(site.name).toBe('Svelte docs.url')
     expect(site.favicon).toBe('https://svelte.dev/favicon.png')
     // And where it points, which this device's own sight of the site is kept under;
-    // see web-tab/favicons.svelte.ts.
+    // see `favicons` in web-tab/pages.svelte.ts.
     expect(site.address).toBe('https://svelte.dev/docs')
     // A shortcut is a name, a mark and an address, and nothing else the index reads.
     expect(site.url).toBeNull()
