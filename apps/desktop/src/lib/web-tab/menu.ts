@@ -36,12 +36,16 @@ import type { Page } from './pages.svelte'
 /** The sizes a page can be drawn at, as multipliers.
  *
  *  Chrome's own ladder, so that `-` and `+` step where a reader expects them to and
- *  100% is one of the rungs rather than a number somebody has to land on. */
-export const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+ *  100% is one of the rungs rather than a number somebody has to land on. The engine
+ *  steps the same ladder for Ctrl and the wheel inside the page, so the rows and the
+ *  wheel meet on the same rungs and end at the same 500%. */
+export const ZOOMS = [
+  0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5,
+]
 
 /** The two ends of the ladder, named so the rows that grey out at them say why. */
 const SMALLEST = ZOOMS[0] ?? 0.25
-const LARGEST = ZOOMS[ZOOMS.length - 1] ?? 3
+const LARGEST = ZOOMS[ZOOMS.length - 1] ?? 5
 
 /** The next rung up or down from wherever the page is now, and the same rung at either
  *  end of the ladder. */

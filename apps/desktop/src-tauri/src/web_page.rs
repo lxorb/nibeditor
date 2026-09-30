@@ -12,9 +12,17 @@
 //!   the pane. `WebView2` says when a page holds a full screen element, and the window
 //!   answers by going full screen with the page over all of it. Escape and F11 give the
 //!   screen back, as in Chrome; they are the engine's to hear, so they are heard here.
-//! - **Zoom.** Ctrl and the wheel, or Ctrl and a sign, zoom the page inside the engine,
-//!   and the menu's percentage never knew. The engine says when it changes, so the
-//!   window can show it and keep it for the site.
+//! - **Zoom.** Ctrl and the wheel, Ctrl and a sign, or a pinch zoom the page inside the
+//!   engine (switched on for a web tab's page in `web_tabs.rs`), and the menu's
+//!   percentage never knew. The engine says when it changes, so the window can show it
+//!   and keep it for the site. And the engine keeps such a zoom for the one page it was
+//!   made on: at the next page, the same site's or not, it goes back to the last zoom the
+//!   app set and says so - which the window took for the site going back to that size,
+//!   and forgot what the reader chose. So a zoom made in the page is set again as the
+//!   app's own the moment it is heard, which is what the engine keeps across pages until
+//!   the window sets the next site's. Its Ctrl+0 goes back to that same zoom the app set,
+//!   which is no zoom at all; so Ctrl+0 is the page's first and then nib's, the way the
+//!   find keys are (see `web_opens.rs`), and `actual_size` answers it.
 //!
 //! All of it is said to the window as one event, `nib://web-page`, carrying the tab.
 //! `WebView2`'s alone: elsewhere nothing is said, a video fills its pane as it did, and
@@ -61,6 +69,25 @@ pub fn leaves(vk: u32, down: bool) -> bool {
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 const QUIET: &str =
     "document.querySelectorAll('audio, video').forEach(function (one) { one.muted = __MUTED__ })";
+
+/// Draws a tab's page at a hundred per cent, for Ctrl+0 pressed inside it that nothing
+/// in the page took, and tells the window, which forgets the site's size: a zoom the app
+/// sets is one the engine says nothing about. See the top of this file.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
+    use tauri::Emitter;
+
+    let Ok(view) = crate::web_tabs::found(app, tab) else {
+        return;
+    };
+    if view.set_zoom(1.0).is_ok() {
+        let heard = Heard {
+            tab: tab.to_string(),
+            said: Said::Zoom { factor: 1.0 },
+        };
+        let _ = app.emit_to(window, SAID, heard);
+    }
+}
 
 /// Mutes a tab's page, or lets it be heard again.
 #[tauri::command]
@@ -181,10 +208,13 @@ mod heard {
             let mut token = 0i64;
             let _ = controller.add_AcceleratorKeyPressed(&keys, &raw mut token);
 
+            // Only a zoom made in the page is heard: one the app sets says nothing, so
+            // setting this one again cannot come back round. See the top of this file.
             let zoomed = ZoomFactorChangedEventHandler::create(Box::new(move |sender, _| {
                 let mut factor = 1.0f64;
                 if let Some(controller) = sender {
                     if controller.ZoomFactor(&raw mut factor).is_ok() {
+                        let _ = controller.SetZoomFactor(factor);
                         tell(Said::Zoom { factor });
                     }
                 }

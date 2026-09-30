@@ -56,8 +56,10 @@ const INPUT_WINDOW: &str = "Chrome_RenderWidgetHostHWND";
 const WHEEL: u32 = 0x020A;
 const TILT: u32 = 0x020E;
 
-/// A key or a button that can be held down as a wheel turns: Ctrl, which a map zooms by,
-/// Shift, which scrolls sideways, and a drag the wheel turns during.
+/// A key or a button that can be held down as a wheel turns: Ctrl, which a map zooms by
+/// and the engine zooms the page by when the page let it go by, Shift, which scrolls
+/// sideways, and a drag the wheel turns during. Ctrl is read off this flag by the engine,
+/// so a notch posted with it is one rung of the page's zoom; see `web_page.rs`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hold {
     Ctrl,

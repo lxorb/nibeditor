@@ -100,7 +100,7 @@ test('steps along the ladder a browser steps along, and stops at both ends', () 
 
 test('ends the two ends of the ladder where a browser ends them', () => {
   expect(ZOOMS[0]).toBe(0.25)
-  expect(ZOOMS.at(-1)).toBe(3)
+  expect(ZOOMS.at(-1)).toBe(5)
   expect(ZOOMS).toContain(1)
 })
 

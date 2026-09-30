@@ -1140,6 +1140,14 @@ pub async fn web_open(
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
 
+    // Ctrl and the wheel, Ctrl and a sign, and a pinch zoom the page, the engine's own
+    // way and the page's handlers first, as in Chrome. Off in every webview unless asked
+    // for, and still off in the app's own page, where Ctrl and the wheel size a note's
+    // words. `WebView2`'s alone: elsewhere Tauri would put a zoom script of its own into
+    // the site. What the zoom is kept as is web_page.rs's.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = builder.zoom_hotkeys_enabled(true);
+
     // The middle button on a link, answered in the page so the tab it opens can be
     // left behind; see web_opens.rs. In every frame, since a link in a frame is a link.
     #[cfg(all(windows, not(feature = "cef")))]

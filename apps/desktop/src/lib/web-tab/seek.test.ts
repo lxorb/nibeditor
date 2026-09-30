@@ -1,7 +1,8 @@
 /** Find and the address field in a web tab: Ctrl+F, Ctrl+L and Alt+D are the page's
  *  first, as in Chrome. The script in every page asks for nib's answer only when nothing
  *  in the page took the key, and the crate's word for it is read into one of four asks
- *  for the tab it came from. See seek.ts, passed.svelte.ts and web_opens.rs. */
+ *  for the tab it came from. Ctrl+0 asks the same way, and the crate answers it itself.
+ *  See seek.ts, passed.svelte.ts, web_opens.rs and web_page.rs. */
 
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -62,9 +63,10 @@ type Pressed = Required<Key> & {
  *
  *  The page's window is the one target a key reaches last, and the DOM's order on it is
  *  kept: the capturing handlers, then the bubbling ones, each turn running the handlers
- *  there are when it starts, in the order they were added. `own` is a page with a find
- *  of its own, whose handler is added after the script, as every page's is. */
-function page(own = false) {
+ *  there are when it starts, in the order they were added. `own` is the key of a page
+ *  that answers Ctrl and that key itself - a find of its own, say - whose handler is
+ *  added after the script, as every page's is. */
+function page(own: number | null = null) {
   const opened: string[] = []
   const heard: Heard[] = []
   const window = {
@@ -92,9 +94,9 @@ function page(own = false) {
     throw new Error("the page's own open")
   }
   let ownFind = 0
-  if (own) {
+  if (own !== null) {
     addEventListener('keydown', (event) => {
-      if (event.ctrlKey && event.keyCode === 70) {
+      if (event.ctrlKey && event.keyCode === own) {
         event.preventDefault()
         ownFind++
       }
@@ -138,7 +140,7 @@ describe('the script in every page', () => {
   })
 
   test('leaves Ctrl+F to a page with a find of its own, added after the script', () => {
-    const one = page(true)
+    const one = page(70)
     expect(one.press({ keyCode: 70, ctrlKey: true })).toEqual({ opened: [], prevented: true })
     expect(one.press({ keyCode: 70, ctrlKey: true }).opened).toEqual([])
     expect(one.own()).toBe(2)
@@ -184,6 +186,28 @@ describe('the script in every page', () => {
     const one = page()
     expect(one.press({ keyCode: 76, ctrlKey: true }).opened).toEqual(['nib-address'])
     expect(one.press({ keyCode: 68, altKey: true }).opened).toEqual(['nib-address'])
+  })
+
+  test('asks for a hundred per cent on Ctrl+0 nothing in the page took, row or number pad', () => {
+    const one = page()
+    const actual = { opened: ['nib-actual-size'], prevented: true }
+    expect(one.press({ keyCode: 48, ctrlKey: true })).toEqual(actual)
+    expect(one.press({ keyCode: 96, ctrlKey: true })).toEqual(actual)
+    // With Shift or AltGr, or with no Ctrl, it is a character, and the page's.
+    for (const key of [
+      { keyCode: 48, ctrlKey: true, shiftKey: true },
+      { keyCode: 48, ctrlKey: true, altKey: true },
+      { keyCode: 48 },
+      { keyCode: 96 },
+    ]) {
+      expect(one.press(key), JSON.stringify(key)).toEqual({ opened: [], prevented: false })
+    }
+  })
+
+  test('leaves Ctrl+0 to a page that answers it itself', () => {
+    const one = page(48)
+    expect(one.press({ keyCode: 48, ctrlKey: true })).toEqual({ opened: [], prevented: true })
+    expect(one.own()).toBe(1)
   })
 
   test('answers only a key a person pressed', () => {

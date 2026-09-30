@@ -39,7 +39,7 @@
   import { showNumbered } from '../shortcuts/registry'
   import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
-  import { barKey, stops } from './bar-keys'
+  import { barKey, stops, type ZoomStep } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
@@ -64,6 +64,7 @@
     onsite,
     ondownloads,
     ontyping,
+    onzoom,
   }: {
     page: Page
     reads: boolean
@@ -81,6 +82,9 @@
     onsite: () => void
     ondownloads: () => void
     ontyping: (on: boolean) => void
+    /** A zoom key pressed while the app has the keyboard. Inside the page the engine
+     *  answers them itself; see web_page.rs. */
+    onzoom: (step: ZoomStep) => void
   } = $props()
 
   /** How far the files on their way have got, for the ring round the downloads glyph;
@@ -132,7 +136,7 @@
    *  says out loud. */
   const started = untrack(() => page.url === null)
 
-  /** A browser's keys - the address field, reload, the tabs by number - read here
+  /** A browser's keys - the address field, reload, the tabs by number, the zoom - read here
    *  rather than off the window, and only by the bar in the focused pane: an app-level
    *  key never reaches the editor, and these share chords with it and with Present. A
    *  pane showing a page has neither; see bar-keys.ts.
@@ -153,11 +157,13 @@
       if (!focused || overlays.depth > 0 || present.on) return
 
       const said = barKey(event, shortcuts)
-      if (!said) return
+      // With no page to zoom, the keys are the words' size again.
+      if (!said || (said.to === 'zoom' && !page.live)) return
 
       event.preventDefault()
       if (said.to === 'address') take()
       else if (said.to === 'step') onstep(said.step)
+      else if (said.to === 'zoom') onzoom(said.step)
       else showNumbered(said.index)
     }
 
