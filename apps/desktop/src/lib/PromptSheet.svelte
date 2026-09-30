@@ -8,7 +8,6 @@
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
-  import Select from './Select.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import { LAYER } from './motion'
   import { trap } from './trap'
@@ -22,11 +21,6 @@
   const MOST_SHOWN = 8
 
   let cursor = $state(0)
-
-  /** What the place already holds, while the name typed is one of them. Asked of the
-   *  caller, which is the only one that knows what is in a folder; null while nothing is
-   *  wrong and for every question that is not a save. See `taken` in prompt.svelte.ts. */
-  const collides = $derived(prompt.taken?.(prompt.value, prompt.folder) ?? null)
 
   /** The answers that match what has been typed, best first. */
   const matches = $derived(
@@ -62,37 +56,23 @@
     }
   }
 
-  /** A Mac's order for a row of answers: the one that lets work go on its own at the
-   *  left, and the default last, at the right edge, where the eye and Return look
-   *  for it. Elsewhere the row is the order it was asked in. */
+  /** A Mac's order for a row of answers: the default last, at the right edge, where
+   *  the eye and Return look for it. Elsewhere the row is the order it was asked in. */
   const mac = isDesktop && platform() === 'macos'
   const answers = $derived(
     mac
       ? [
-          ...prompt.options.filter((one) => one.discards),
-          ...prompt.options.filter((one) => !one.discards && !one.primary),
-          ...prompt.options.filter((one) => !one.discards && one.primary),
+          ...prompt.options.filter((one) => !one.primary),
+          ...prompt.options.filter((one) => one.primary),
         ]
       : prompt.options,
   )
-
-  /** Cmd+D is Don't Save on a Mac, in every sheet that asks about unsaved work. */
-  function onChooseKey(event: KeyboardEvent) {
-    if (!mac || prompt.mode !== 'choose' || !event.metaKey || event.key.toLowerCase() !== 'd')
-      return
-    const letGo = prompt.options.find((one) => one.discards)
-    if (!letGo) return
-    event.preventDefault()
-    prompt.pick(letGo.id)
-  }
 
   function submitFind() {
     const chosen = matches[cursor]
     if (chosen) prompt.pick(chosen.id)
   }
 </script>
-
-<svelte:window onkeydown={onChooseKey} />
 
 {#if prompt.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -130,46 +110,6 @@
           spellcheck="false"
           use:selectAll
         />
-
-        <!-- What the place already holds, while it holds this name: said under the field
-             rather than refused at the button, because the name is free to type and the
-             save steps it aside by number either way - `Plan` becomes `Plan 2`. Nothing a
-             save writes ever replaces a file; see `pickSavePath`. -->
-        {#if collides}
-          <p class="collides" role="status">{collides}</p>
-        {/if}
-
-        <!-- Where the file goes, for a save: a space, or a note in it - a note that holds
-             notes is what nib has instead of folders, so the word is never used; see
-             docs/tree.md. Only worth asking when there is more than one answer. -->
-        {#if prompt.folders.length > 1}
-          <div class="field">
-            <span class="label">{t('Where')}</span>
-            <Select
-              value={prompt.folder ?? ''}
-              options={prompt.folders.map((one) => ({ value: one.id, label: one.label }))}
-              onchange={(id: string) => {
-                prompt.folder = id
-              }}
-              label={t('Where')}
-            />
-          </div>
-        {/if}
-
-        <!-- Only worth asking when there is more than one answer. -->
-        {#if prompt.spaces.length > 1}
-          <div class="field">
-            <span class="label">{t('Space')}</span>
-            <Select
-              value={prompt.space ?? ''}
-              options={prompt.spaces.map((one) => ({ value: one.id, label: one.name }))}
-              onchange={(id: string) => {
-                prompt.space = id
-              }}
-              label={t('Space')}
-            />
-          </div>
-        {/if}
       {:else if prompt.mode === 'find'}
         <!-- svelte-ignore a11y_autofocus -->
         <input
@@ -219,7 +159,6 @@
             <button
               type="button"
               class="nib-button"
-              class:apart={mac && option.discards}
               class:is-danger={option.danger}
               class:is-quiet={!option.primary && !option.danger}
               onclick={() => prompt.pick(option.id)}
@@ -315,14 +254,6 @@
      column of names, and the letter a space falls back to set at the size of the
      marks beside it. The badge the switcher draws is not this - that is a place
      with a name of its own, and this is a row in a list of rows. */
-  /* Said quietly under the field: it is a fact about the place, not a refusal - the
-     button stays live and the save steps the name aside by number. */
-  .collides {
-    margin: calc(var(--space-2) * -1) 0 0;
-    color: var(--muted);
-    font-size: var(--text-row);
-  }
-
   .space {
     display: grid;
     place-items: center;
@@ -364,22 +295,6 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--space-2);
-  }
-
-  /* Don't Save on a Mac, at the far left of the row rather than beside Save. */
-  .apart {
-    margin-inline-end: auto;
-  }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .label {
-    font-size: var(--text-sm);
-    color: var(--muted);
   }
 
   /* The three buttons a question ever offers are `.nib-button` in the themes

@@ -249,11 +249,12 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Show hidden files toggle
 - [x] Recent files, and pinning notes and folders
 - [x] Undo move/rename/delete
-- [x] Auto-save, for a note in a space, where it is not an option but the way the
-      note works. A file opened from the computer is saved when asked.
+- [x] Auto-save, where it is not an option but the way every document works: a
+      note, a canvas and a page note are written a moment after they change, a new
+      tab becomes a file on its first word, and there is no Save to press
 - [x] A file opened from outside every space is watched: it reloads quietly when
-      another program writes it, and keeps what is in the editor when there is
-      something unsaved to lose
+      another program writes it, and when its words are about to go over a change
+      another program made, that change is kept as a version first
 - [x] The line endings a file already had are the ones it is written back with
 - [x] Version history and recovery
 

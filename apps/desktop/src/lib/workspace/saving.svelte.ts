@@ -1,50 +1,51 @@
-/** Writing what is open down, and the dot that says so.
+/** Writing what is open down.
  *
- *  Two rules, and everything here is one of them. A note in a space is Nib's to
- *  look after: it is written as soon as the typing pauses, wears no mark and asks
- *  nobody anything. A file opened from the computer is the reader's: it is written
- *  when they say so, and until they do it wears the dot. Which of the two a path
- *  is, is the workspace's to answer - see `keepsItself` - and everything below
- *  takes that answer as given.
+ *  One rule, and everything here is it: a document with words writes itself. A
+ *  note, a canvas and a page note are written a moment after their changes stop,
+ *  wherever the file is, and nobody is asked anything - no key to press, no mark
+ *  beside a name, no question on the way out. Emil, 2026-09-30: *"I don't want
+ *  there to be any manual saving anymore. Only autosaving, that's it."*
+ *
+ *  A document with no file yet - a new tab - is a draft, and the first words put
+ *  in it are what make it a file: where it goes and what it is called are
+ *  drafts.ts, and the moment itself is `born` below.
  *
  *  Its own module because its state is its own: which documents are waiting for
- *  the pause, which have a mark on them, and the timers behind both. The
- *  workspace holds one of these and hands its own calls straight through, so
- *  `workspace.save()` still means what it always did. */
+ *  the pause, which file operation each is in the middle of, and the timers behind
+ *  both. The workspace holds one of these and hands its calls straight through. */
 
 import { flushTableEdits } from '@nib/editor'
 import { saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
-import { key, t } from '../i18n.svelte'
+import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
-import { endingOf, nameFromContent, shownName } from '../note-name'
-import { owesLast } from '../parting'
-import { without } from '../records'
-import { isMarkdownPath, nameOf } from '../space-paths'
+import { owesLast, settleUp } from '../parting'
+import { folderOf, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
-import { keep, storedText } from '../stored'
 import { entryAt } from '../tree-edits'
-import type { Entry, Space } from '../workspace.svelte'
-import { holdsWords, NoteDoc, type Tab, UNTITLED } from './documents.svelte'
+import type { Entry } from '../workspace.svelte'
+import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
+import { draftFile, followedName, hasWords, isDraft, namedByWords } from './drafts'
 
-/** How long after the last keystroke a note that keeps itself is written, in
- *  milliseconds. A second is long enough that a burst of typing is one write and
- *  short enough that nothing is ever lost worth minding. */
-const SAVE_DELAY = 1200
+/** How long after the last change a document is written, in milliseconds.
+ *
+ *  Short, because nothing else keeps the words: a window killed a second after the
+ *  typing stopped has lost nothing. Still a pause rather than a keystroke, so a
+ *  burst of typing - whose gaps are shorter than this - is one write, and what a
+ *  write costs is paid per pause and never per character. */
+const SAVE_DELAY = 400
 
-/** How long the dot stays as a tick once the note is down, in milliseconds. */
-const SAVED_SHOWN = 1400
+/** And the longest the first unwritten change waits while the changes never stop:
+ *  somebody typing without a pause for a minute is written every couple of
+ *  seconds all the same. */
+const SAVE_AT_MOST = 2000
 
-/** The kinds of document a save can write. Every kind a tab holds but the two that
- *  are somebody else's file already: a PDF is read and never written, and the graph is
- *  a picture of the space rather than a document. */
-type Savable = 'note' | 'canvas' | 'pages' | 'web'
-
-const SAVABLE = new Set<string>(['note', 'canvas', 'pages', 'web'])
-
-const savable = (kind: string): kind is Savable => SAVABLE.has(kind)
+/** Pauses in a row that ended in a refused write before the light says so. One is
+ *  a virus scanner holding the file for a moment; three is a file that will not be
+ *  written until somebody does something about it. */
+const REFUSALS_TOLD = 3
 
 /** What writing needs of the store the documents are open in. */
 export interface Writes {
@@ -52,156 +53,39 @@ export interface Writes {
   readonly documents: NoteDoc[]
   readonly active: Tab | null
   readonly previewTabId: string | null
-  readonly spaces: Space[]
-  readonly activeSpaceId: string | null
-  /** The space on screen as the file list holds it, for the folders a save offers. */
+  /** The space on screen as the file list holds it: what says whether a note that
+   *  nobody is showing still has a file; see `gone`. */
   readonly tree: Entry | null
   keep(id: string): void
   scheduleSession(): void
-  loadTree(): Promise<void>
   persist(): void
-  /** Writes the shortcut for a website nobody has saved yet. The one document whose
-   *  file is not its own words, so the workspace writes it rather than this; see
-   *  `keepWeb` in workspace.svelte.ts. */
-  keepWeb(tab: Tab, path: string): Promise<void>
-  /** The name a folder will take: the wanted one, or the next number after it where the
-   *  folder already holds that name. The rule the file list follows for a duplicate, so
-   *  a save can never write over anything. */
-  freeName(folder: string, name: string): string
-  /** Makes a space and opens it; see `homeFor`. */
-  addSpace(name: string): Promise<Space | undefined>
-}
-
-/** The ending each kind of document is written under, and how a name that already
- *  wears one is recognised. Read through the app's own two answers rather than a regex
- *  of this file's own: `isMarkdownPath` for a note and `endingOf` for the rest, so
- *  saving `Plan.canvas` does not make `Plan.canvas.canvas`. See note-name.ts, which
- *  says why nothing here takes an ending off by hand. */
-const EXTENSION: Record<Savable, string> = {
-  note: '.md',
-  canvas: '.canvas',
-  pages: '.pages',
-  web: '.url',
-}
-
-/** The file a typed name comes to, under its kind's own ending. */
-function fileNamed(name: string, kind: Savable): string {
-  const already =
-    kind === 'note' ? isMarkdownPath(name) : endingOf(name)?.toLowerCase() === EXTENSION[kind]
-
-  return already ? name : `${name}${EXTENSION[kind]}`
-}
-
-/** The folder a save was last pointed at. This machine's, not the space's and not the
- *  account's: it is where a hand was a moment ago. */
-const FOLDER_KEY = 'nib:save-folder'
-
-/** A name for a file that has none, and the folder to put it in.
- *
- *  One sheet for every kind, and it is the sheet Chrome shows when a page is
- *  bookmarked, for the same reason: the two things nobody else can decide are what to
- *  call it and where to keep it. The folder starts at the one used last, so a run of
- *  drafts is one press each after the first.
- *
- *  **Nothing is ever replaced.** A name the chosen folder already holds steps aside by
- *  number - `Plan` becomes `Plan 2` - which is the rule the file list already follows
- *  for a duplicate, out of the same helper. The field starts on a free name, the sheet
- *  says so while a taken one is typed, and the path that comes back is free whatever was
- *  typed: a save that quietly wrote over somebody's note was the one thing this could get
- *  wrong.
- *
- *  Null where the question was dismissed, which always means "do nothing". */
-async function pickSavePath(ask: {
-  kind: Savable
-  doc: string
-  name: string
-  spaces: Space[]
-  activeId: string | null
-  tree: Entry | null
-  /** The name that folder will take, which is the wanted one or the next free number
-   *  after it; see `freeName` in workspace.svelte.ts. */
-  freeName: (folder: string, name: string) => string
-  addSpace: (name: string) => Promise<Space | undefined>
-}): Promise<{ path: string; name: string } | null> {
-  const here = ask.spaces.find((one) => one.id === ask.activeId) ?? ask.spaces[0]
-
-  // Every folder a file could go in, which is the list a move already works out: the
-  // space's own room, every note in it - a note that holds notes is a folder - and any
-  // other space there is. Fetched rather than imported, because nothing here is wanted
-  // until somebody saves something that has never been saved. None with no space.
-  const { moveTargets } = await import('../move-targets')
-  const folders = here
-    ? moveTargets({ moving: null, tree: ask.tree, spaces: ask.spaces, here: here.root })
-    : []
-
-  const last = storedText(FOLDER_KEY)
-  const start = folders.some((one) => one.id === last) ? last : (here?.root ?? null)
-
-  /** The file that name would be, free of anything already there: the name itself, or
-   *  the next number after it. The name as the field holds it - without the ending,
-   *  which a reader never types and never reads; see note-name.ts. */
-  const freeIn = (folder: string | null, name: string): string => {
-    const file = fileNamed(name.trim() || UNTITLED, ask.kind)
-    const root = folder ?? here?.root
-    return shownName(root ? ask.freeName(root, file) : file)
-  }
-
-  // The name it has, else the words at the top of it - which only a note has; a plane
-  // and a deck of pages hold JSON, and the first line of that is not a name. A website
-  // arrives here already called what the page calls itself.
-  const wanted =
-    (ask.name !== UNTITLED ? shownName(ask.name) : null) ??
-    (ask.kind === 'note' ? nameFromContent(ask.doc) : null) ??
-    UNTITLED
-
-  const { prompt } = await import('../prompt.svelte')
-  const answer = await prompt.askName({
-    title: t('Save'),
-    value: freeIn(start, wanted),
-    placeholder: t('Untitled'),
-    confirmLabel: key('Save'),
-    // A folder says which space it is in, so the spaces are not asked about twice.
-    spaces: [],
-    space: null,
-    folders: folders.map((one) => ({ id: one.id, label: one.label })),
-    folder: start,
-    // What the sheet says under the field while the name is one the folder already has.
-    // Asked of the sheet's own two values, so it answers the folder being changed as
-    // well as the name being typed.
-    taken: (name, folder) =>
-      freeIn(folder, name) === name.trim() ? null : t('That name is taken'),
-  })
-
-  if (!answer?.name) return null
-
-  const clean = answer.name.replace(/[\\/]/g, ' ').trim()
-  if (!clean) return null
-
-  const folder = answer.folder ?? here?.root ?? (await homeFor(ask.addSpace))
-  if (!folder) return null
-  keep(FOLDER_KEY, folder)
-
-  // Free again, at the moment of writing: the sheet said what was taken, and this is
-  // what makes it true whatever was typed over it.
-  const named = ask.freeName(folder, fileNamed(clean, ask.kind))
-  return { path: joinPath(folder, named), name: shownName(named) }
-}
-
-/** Where a save goes with no space at all: a first one, made once the name is
- *  answered. Ctrl+S on a fresh install used to do nothing; Obsidian always writes a
- *  note into a vault, so this makes one, named as the browser build names its own. */
-async function homeFor(addSpace: (name: string) => Promise<Space | undefined>) {
-  const space = await addSpace(t('Notes'))
-  return space?.root ?? null
+  loadTree(): Promise<void>
+  /** The folder a draft becomes a file in; see `draftHome` in workspace.svelte.ts. */
+  draftHome(): Promise<string | null>
+  /** The name a folder will take: the wanted one, or the next number after it where
+   *  the folder already holds that name - `except` left out of what it holds. The
+   *  rule the file list follows for a duplicate, so a draft never writes over
+   *  anything. */
+  freeName(folder: string, name: string, except?: string): string
+  /** A file renamed because the words it is named after changed: everything a rename
+   *  owes, but no step on the undo stack; see `retitle` in workspace.svelte.ts. */
+  retitle(path: string, name: string): Promise<void>
+  /** A file a draft has just become: its row in the list and a place among the notes
+   *  opened lately, before the disk has it. */
+  born(path: string): void
+  /** A file written over, so a list sorted by when things changed moves it. */
+  touched(path: string): void
+  /** A note born this sitting that ended up with nothing in it, gone again as its
+   *  last tab closes; see `closed`. */
+  discard(path: string): Promise<void>
+  /** Whether a file is outside every space: the reader's own file, which something
+   *  else may be writing too. See watch.svelte.ts. */
+  outside(path: string): boolean
 }
 
 export class Saving {
-  /** What the dot beside each name is saying, by the document's key. */
-  private state = $state<Record<string, 'saving' | 'saved'>>({})
-  private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
-
-  /** The write that waits for a pause in the typing; see timing.ts. */
-  private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY)
+  /** The write that waits for a pause in the changes; see timing.ts. */
+  private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
 
   /** Pauses in a row that ended in a refused write. */
   private failures = 0
@@ -210,59 +94,99 @@ export class Saving {
     () => saveRetryDelay(this.failures),
   )
 
-  /** Notes waiting to be written when the typing stops. A set rather than one
-   *  note, because two panes may hold two different notes and both be edited
-   *  between one pause and the next. */
+  /** Documents waiting to be written when the changes stop. A set rather than one,
+   *  because two panes may hold two different notes and both be edited between one
+   *  pause and the next. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly waiting = new Set<NoteDoc>()
 
+  /** The file operation each document is in the middle of: a write, a rename, a
+   *  birth. One at a time per document, so a rename never lands inside a write and
+   *  moves the file out from under it; see `holding`. */
+  private readonly busy = new WeakMap<NoteDoc, Promise<void>>()
+
+  /** Every one of those still running, for whoever has to wait for all of them: the
+   *  window going, and Ctrl+S. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly running = new Set<Promise<void>>()
+
+  /** Drafts on their way to being files, so a keystroke landing inside the round
+   *  trip that finds them a folder does not make a second file. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly bearing = new Set<NoteDoc>()
+
+  /** Born and not written yet: their first write is the one that makes the file, so
+   *  it is the one after which the list is read again. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly making = new Set<NoteDoc>()
+
   constructor(private readonly ws: Writes) {
     // A window closing runs no teardown, so the pause a note is written after never
-    // comes: a sentence typed and then closed on was gone, with nothing on the disk
-    // and nothing in the session either. Last of all, because a plane turns itself
-    // into its document first and this is what writes the document out. See
-    // parting.ts.
+    // comes. Last of all, because a plane turns itself into its document first and
+    // this is what writes the document out. See parting.ts.
     owesLast(() => this.part())
+
+    // Leaving the window - another program, the lid, the screen locking - writes
+    // what is waiting now rather than a pause later: a machine going to sleep is a
+    // pause that may not end.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('blur', () => this.hurry())
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.hurry()
+      })
+    }
   }
 
-  /** What is owed when the window goes: the session, and the write that was waiting
-   *  for the typing to stop.
+  /** What is owed when the window goes: the session, and every write that was
+   *  waiting for the changes to stop.
    *
-   *  The session always. It holds which notes are open, which one is in front and
-   *  what is unsaved in each of them, and it too is written after a pause - a tab
-   *  opened or brought forward in the last half second was simply not there on the
-   *  way back in. It is one synchronous line of storage, so it costs a closing window
-   *  nothing to be sure of it.
-   *
-   *  And the write, where there is one. That is a round trip, and a page being torn
-   *  down may not come back from it - which is the other reason the session goes
-   *  first: the words are in it either way, so whichever of the two landed, nothing
-   *  was typed and lost. */
+   *  The session first and always. It holds which notes are open and the words of
+   *  any that are not on the disk yet, it is one synchronous line of storage, and a
+   *  page being torn down may not come back from the writes' round trips - so
+   *  whichever of the two lands, nothing typed is lost. A launch after a crash puts
+   *  those words back and writes them; see `owed`. */
   private part() {
     this.ws.persist()
-    if (this.waiting.size) void this.saveWaiting()
+    this.hurry()
   }
 
   /** What a document reports whenever it changes, wherever the change came from:
-   *  a keystroke in either pane, an undo, a picture dropped in. Nothing here
-   *  touches the text - the rope is left as it is and `flush` turns it into a
-   *  string later, so the cost of a keystroke does not grow with the size of the
-   *  note. What happens at once is the dirty mark, because that is what the
-   *  writer is looking at, and the document has already set it. */
+   *  a keystroke in either pane, an undo, a picture dropped in, a stroke on a plane.
+   *  Nothing here touches the text - the rope is left as it is and `flush` turns it
+   *  into a string at the write - so the cost of a keystroke does not grow with the
+   *  size of the note. */
   edited(note: NoteDoc) {
     // Typing in a note you were only previewing is what makes it yours.
     const preview = this.ws.tabs.find((tab) => tab.id === this.ws.previewTabId)
     if (preview?.note === note) this.ws.keep(preview.id)
 
-    this.scheduleSave(note)
-    // The note may have nowhere to be written to, or be one nobody has asked to
-    // save yet. Either way the words themselves are written down.
+    this.owed(note)
+    // Whatever the write is waiting for, the words themselves are written down.
     this.ws.scheduleSession()
   }
 
-  /** What the dot beside a name is saying, if anything. */
-  of(tab: Tab): 'saving' | 'saved' | undefined {
-    return this.state[tab.note.key]
+  /** A document whose words are not on its file: one just changed, or one a launch
+   *  brought back with words a crash kept from the disk.
+   *
+   *  A file somebody shared on its own has no file here at all: its room is what
+   *  keeps it, and there is nowhere on this machine for a write to go. A draft is
+   *  written once it has something in it, which is the moment it becomes a file. */
+  owed(note: NoteDoc) {
+    if (note.shared !== null || !holdsWords(note.kind)) return
+
+    if (isDraft(note)) {
+      if (!hasWords(note)) return
+
+      const birth = this.born(note)
+      this.track(birth)
+      void birth.catch((error: unknown) =>
+        log('error', `save: a new ${note.kind} - ${String(error)}`),
+      )
+      return
+    }
+
+    this.waiting.add(note)
+    this.soon()
   }
 
   /** Brings every open note's words up to what its views hold. Everything that
@@ -280,22 +204,79 @@ export class Saving {
     note?.replace(text)
   }
 
-  /** A note in a space is written as soon as the typing pauses, because nothing in
-   *  the app is going to ask anybody to save it: it has no mark and no question on
-   *  the way out, and the light on the settings button is the whole report on
-   *  where its words have got to.
-   *
-   *  A file opened from the computer is written when the reader says so, and not
-   *  a moment before. That is the only place saving is still a thing somebody
-   *  does, so it is the only place where waiting for them is right.
-   *
-   *  A file somebody shared on its own has no file here at all: its room is what
-   *  keeps it, and there is nowhere on this machine for a write to go. */
-  private scheduleSave(note: NoteDoc) {
-    if (!note.keepsItself || note.shared !== null) return
+  /** Everything waiting, written now rather than a pause later: a tab brought
+   *  forward or closed, the window left, the window going. Nothing at all when
+   *  nothing is waiting, so it is safe to say on every one of those. */
+  hurry() {
+    if (!this.waiting.size) return
 
-    this.waiting.add(note)
-    this.soon()
+    this.soon.cancel()
+    void this.saveWaiting()
+  }
+
+  /** A document's last tab has closed. What it was waiting to write goes down now,
+   *  and a note born this sitting that says nothing any more goes with its tab: it
+   *  was a file only because a draft once had a letter in it, and an empty
+   *  `Untitled` left behind by every note somebody changed their mind about is the
+   *  litter this whole way of making notes exists to avoid. */
+  closed(note: NoteDoc) {
+    if (this.ws.tabs.some((tab) => tab.note === note)) return
+
+    const path = note.path
+    if (path !== null && note.follows && note.blank) {
+      this.waiting.delete(note)
+      this.making.delete(note)
+      void this.holding(note, () => this.ws.discard(path)).catch((error: unknown) => {
+        log('warn', `discard: ${path} - ${String(error)}`)
+      })
+      return
+    }
+
+    this.hurry()
+  }
+
+  /** Ctrl+S, `:w`, and a program that wrote into a note and wants it on the disk
+   *  before it answers: every write that is owed, done, and waited for. Never a
+   *  question and never a file picker.
+   *
+   *  The note in front is kept as a version too, because pressing the key is the one
+   *  thing a hand still says about a note: this is a moment worth going back to. A
+   *  version the same as the last is not kept twice; see history.rs. And a note that
+   *  was only being previewed is one to stay from here on. */
+  async writeNow(): Promise<void> {
+    // A table cell and a card on a plane hold their words until they lose focus;
+    // make sure they landed. Then everything else that writes on a timer.
+    flushTableEdits()
+    flushCardEdits()
+    settleUp()
+
+    const tab = this.ws.active
+    if (tab) this.ws.keep(tab.id)
+
+    await this.settled()
+
+    const path = tab?.path ?? null
+    if (tab && path !== null && holdsWords(tab.kind) && !tab.note.dirty) {
+      await invoke('snapshot_note', { path, content: tab.note.text }).catch(() => undefined)
+    }
+  }
+
+  /** Whether anything is waiting to be written or being written now: what decides
+   *  whether a window going has anything to wait for. */
+  get writing(): boolean {
+    return this.waiting.size > 0 || this.running.size > 0
+  }
+
+  /** Waits until nothing is waiting and nothing is being written. A few rounds at
+   *  most, because a write that lands can leave a keystroke from inside it waiting,
+   *  and a window going cannot wait for somebody who is still typing. */
+  async settled(): Promise<void> {
+    for (let round = 0; round < 4; round++) {
+      if (this.waiting.size) await this.saveWaiting()
+      if (!this.running.size) return
+
+      await Promise.all(this.running)
+    }
   }
 
   /** Each note on its own: a refused one is queued again, not lost with every
@@ -304,17 +285,102 @@ export class Saving {
     const notes = [...this.waiting]
     this.waiting.clear()
 
-    let refused = 0
-    for (const note of notes) {
-      await this.write(note).catch((error: unknown) => {
-        refused += 1
-        this.waiting.add(note)
-        log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
-      })
+    const refused: NoteDoc[] = []
+    await Promise.all(
+      notes.map((note) =>
+        this.write(note).catch((error: unknown) => {
+          refused.push(note)
+          this.waiting.add(note)
+          log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
+        }),
+      ),
+    )
+
+    this.failures = refused.length ? this.failures + 1 : 0
+    if (!refused.length) return
+
+    this.retry()
+    if (this.failures === REFUSALS_TOLD) await this.tell(refused)
+  }
+
+  /** A note the disk keeps refusing, on the light in the corner: the same place a
+   *  sync that failed is told, and the same kind of news. The words stay in the
+   *  note and in the session, and the writes go on being tried. */
+  private async tell(refused: readonly NoteDoc[]) {
+    const first = refused[0]
+    if (!first) return
+
+    // Imported here rather than at the top: syncing reads the workspace, and the
+    // two would import each other.
+    const { sync } = await import('../sync.svelte')
+    sync.status = 'error'
+    sync.lastError = t('{name} could not be written.', { name: first.shown })
+  }
+
+  /** One file operation on a document, after the one before it has finished.
+   *
+   *  A write and a rename of the same file are two round trips, and nothing orders
+   *  two round trips but this: a rename landing while a write was still in the air
+   *  moved the file, and the write then put the old name back beside it. So each
+   *  waits its turn, whoever asked for it - the pause, Ctrl+S, the window going, a
+   *  row renamed in the file list. */
+  holding(note: NoteDoc, run: () => Promise<void>): Promise<void> {
+    const before = this.busy.get(note) ?? Promise.resolve()
+    const mine = before.then(run)
+    this.busy.set(
+      note,
+      mine.catch(() => undefined),
+    )
+
+    this.track(mine)
+    return mine
+  }
+
+  /** Writes one document down: a note, a canvas or a page note. Everything that
+   *  writes comes through here, so a note open in two panes is written once
+   *  however the writing was asked for. */
+  write(note: NoteDoc): Promise<void> {
+    return this.holding(note, () => this.writeOne(note))
+  }
+
+  /** Whatever is running, known about until it has finished. Whoever started it
+   *  hears how it went; this only waits for it. */
+  private track(work: Promise<void>) {
+    const done = work.catch(() => undefined)
+    this.running.add(done)
+    void done.then(() => this.running.delete(done))
+  }
+
+  /** A draft's first words, which make it a file: in the space, under the name its
+   *  words or its own name give it, written at once. See drafts.ts.
+   *
+   *  The path is claimed in the same breath as it is chosen - the document has it
+   *  before anything else can ask - so two drafts born together step aside from each
+   *  other rather than landing on one file; see `freeName` in workspace.svelte.ts,
+   *  which counts every open document's path. */
+  private async born(note: NoteDoc): Promise<void> {
+    if (this.bearing.has(note)) return
+    this.bearing.add(note)
+
+    try {
+      const home = await this.ws.draftHome()
+      // Given a file some other way while the folder was being found, or nowhere
+      // to put one at all: either way this is not the moment.
+      if (home === null || note.path !== null) return
+
+      const follows = namedByWords(note)
+      const path = joinPath(home, this.ws.freeName(home, draftFile(note)))
+      note.path = path
+      note.name = nameOf(path)
+      note.follows = follows
+      this.making.add(note)
+      this.ws.born(path)
+    } finally {
+      this.bearing.delete(note)
     }
 
-    this.failures = refused ? this.failures + 1 : 0
-    if (refused) this.retry()
+    this.waiting.add(note)
+    this.hurry()
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
@@ -335,62 +401,17 @@ export class Saving {
   private gone(note: NoteDoc): boolean {
     const path = note.path
     const tree = this.ws.tree
-    if (path === null || !tree) return false
+    if (path === null || !tree || this.making.has(note)) return false
     if (this.ws.tabs.some((tab) => tab.note === note)) return false
     if (!path.startsWith(`${tree.path}/`)) return false
 
     return !entryAt(tree, path)
   }
 
-  /** The dot's three states. `saved` stands for a moment and then goes: it is
-   *  a confirmation, not a status, and a note with nothing to write should not
-   *  wear a mark forever.
-   *
-   *  A note in a space wears no dot at all. It is written every second or so, and
-   *  a mark that blinks whenever somebody pauses is not a report on anything they
-   *  have to know; the light on the settings button says how the space itself is
-   *  doing. */
-  private markSaving(note: NoteDoc) {
-    if (note.keepsItself) return
-
-    const id = note.key
-    this.forgetSavedTimer(id)
-    this.state = { ...this.state, [id]: 'saving' }
-  }
-
-  private markSaved(note: NoteDoc) {
-    if (note.keepsItself) return
-
-    const id = note.key
-    this.state = { ...this.state, [id]: 'saved' }
-    this.savedTimers[id] = setTimeout(() => this.clearSaveState(id), SAVED_SHOWN)
-  }
-
-  private clearSaveState(id: string) {
-    this.forgetSavedTimer(id)
-    this.state = without(this.state, id)
-  }
-
-  private forgetSavedTimer(id: string) {
-    clearTimeout(this.savedTimers[id])
-    this.savedTimers = without(this.savedTimers, id)
-  }
-
-  /** Notes holding work nothing else has hold of: notes and not tabs, so a note
-   *  open in two panes is one thing to ask about. What counts is the document's
-   *  own answer; see NoteDoc.unsaved. */
-  get unsaved(): NoteDoc[] {
-    this.flush()
-    return this.ws.documents.filter((note) => note.unsaved)
-  }
-
   /** The open notes a version could be kept of: each one's file, its words as
-   *  they stand, and which revision those words are at.
-   *
-   *  Every note with a file, rather than only the unsaved ones: a note in a space
-   *  is written as fast as it is typed and so is never unsaved, which is to say
-   *  almost every note there is. The revision is how file recovery tells the ones
-   *  that have moved since it last looked. See recovery.svelte.ts. */
+   *  they stand, and which revision those words are at. The revision is how file
+   *  recovery tells the ones that have moved since it last looked. See
+   *  recovery.svelte.ts. */
   get worthKeeping(): { key: string; path: string; text: string; revision: number }[] {
     this.flush()
     const out: { key: string; path: string; text: string; revision: number }[] = []
@@ -405,150 +426,108 @@ export class Saving {
     return out
   }
 
-  async save(target?: Tab) {
-    // A table cell holds its text until it loses focus; make sure it landed. A card
-    // on a canvas holds its words the same way, and saving on purpose used to write
-    // the empty card over the file; see canvas/writing.ts.
-    flushTableEdits()
-    flushCardEdits()
-
-    const tab = target ?? this.ws.active
-    if (!tab) return
-
-    // Saving is as deliberate as it gets: a note that was only being looked
-    // at is one to stay from here on, whether or not there was anything to
-    // write.
-    this.ws.keep(tab.id)
-
-    // A website nobody has saved is the one document whose file is not its words: what
-    // goes down is a shortcut holding the address the tab is on, so the same sheet asks
-    // the same two questions and the workspace writes the file. A saved one needs
-    // nothing here - the file follows the reading on its own; see keep.ts.
-    if (tab.kind === 'web') {
-      if (tab.path !== null) return
-
-      const picked = await pickSavePath({
-        kind: 'web',
-        doc: '',
-        name: tab.name,
-        spaces: this.ws.spaces,
-        activeId: this.ws.activeSpaceId,
-        tree: this.ws.tree,
-        freeName: (folder, name) => this.ws.freeName(folder, name),
-        addSpace: (name) => this.ws.addSpace(name),
-      })
-      if (!picked) return
-
-      await this.ws.keepWeb(tab, picked.path)
-      return
-    }
-
-    if (!holdsWords(tab.kind)) return
-    await this.write(tab.note)
-  }
-
-  /** Writes one document down: a note, or a canvas, which are the two things a
-   *  tab holds that have words of their own. Everything that saves comes through
-   *  here, so a note open in two panes is written once however the saving was
-   *  asked for.
-   *
-   *  Public for the one caller that has a document rather than a tab: the question
-   *  asked on the way out of a note somebody has to save; see `askToClose`. */
-  async write(note: NoteDoc) {
+  private async writeOne(note: NoteDoc): Promise<void> {
     // The keystrokes since the last pause, which are still only a rope.
     note.flush()
-    if (!holdsWords(note.kind)) return
+
+    let path = note.path
+    if (path === null || !holdsWords(note.kind)) return
 
     // The file this write is for may have been deleted while the write was waiting;
     // see `gone`. Nothing is written, because writing would be undeleting.
-    if (this.gone(note)) {
-      this.clearSaveState(note.key)
-      return
-    }
+    if (this.gone(note)) return
 
     // Which note this document is on as the write begins. A document outlives the
     // file in it - the one tab that previews a note takes another note on rather
-    // than being swapped for another document - and a write is a round trip with a
-    // name prompt in it, so the words and the path can otherwise be read a click
-    // apart and belong to two different notes. Checked again at the write below,
-    // which is the last moment before the pair reaches the disk. See
-    // NoteDoc.arrivals.
+    // than being swapped for another document - so the words and the path can
+    // otherwise be read a round trip apart and belong to two different notes.
+    // Checked again at the write below. See NoteDoc.arrivals.
     const holding = note.arrivals
+    const making = this.making.has(note)
 
-    let path = note.path
-    if (!path) {
-      // Every kind that has words asks the same two questions - what to call it, and
-      // which folder - and is written under its own extension. A plane used to refuse
-      // here, because a plane was only ever made with a file already; now one can be
-      // made as a tab and saved afterwards, which is what Emil asked for.
-      if (!savable(note.kind)) return
-
-      const picked = await pickSavePath({
-        kind: note.kind,
-        doc: note.text,
-        name: note.name,
-        spaces: this.ws.spaces,
-        activeId: this.ws.activeSpaceId,
-        tree: this.ws.tree,
-        freeName: (folder, name) => this.ws.freeName(folder, name),
-        addSpace: (name) => this.ws.addSpace(name),
-      })
-      if (!picked) return
-      path = picked.path
+    // A note named after its words follows them: the name they ask for now, before
+    // the words go down. A file that is not on the disk yet is simply pointed at the
+    // new name; one that is, is renamed, links and all.
+    const was = path
+    const folder = folderOf(was)
+    const renamed = followedName(note, (file) => this.ws.freeName(folder, file, was))
+    if (renamed !== null) {
+      if (making) {
+        note.path = joinPath(folder, renamed)
+        note.name = renamed
+      } else {
+        await this.ws.retitle(was, renamed).catch((error: unknown) => {
+          log('warn', `retitle: ${was} - ${String(error)}`)
+        })
+      }
+      path = note.path ?? was
     }
 
     // The words going down, and which revision of the note they are, both read
-    // once. Writing a file is a round trip: a keystroke landing inside it belongs
-    // to the next write, and the note has to be told which one it just had.
+    // once. A keystroke landing inside the round trip belongs to the next write,
+    // and the note has to be told which one it just had.
     const content = note.text
     const revision = note.revision
 
-    this.markSaving(note)
-
-    try {
-      // Keep the version that is about to be replaced, before replacing it.
-      if (note.path) {
-        await invoke('snapshot_note', { path, content }).catch(() => undefined)
-      }
-
-      // The document moved on to another note while this write was being got
-      // ready. Refused rather than written: these words are that other note's, and
-      // this path is not theirs to go to.
-      if (note.arrivals !== holding) {
-        console.warn(`nib: a write of ${path} was refused - those words are another note’s now`)
-        this.clearSaveState(note.key)
-        return
-      }
-
-      // Renamed mid-write: the words follow the file, not the old name.
-      if (note.path !== null) path = note.path
-
-      await invoke('write_note', { path, content })
-    } catch (error) {
-      this.clearSaveState(note.key)
-      throw error
+    // The words the file held when this sitting began, kept as a version before the
+    // first write replaces them. Every write is not a version: a note written as
+    // fast as it is typed would fill a history of forty with the last minute. The
+    // recovery timer keeps the rest; see recovery.svelte.ts.
+    const before = note.firstVersion()
+    if (before?.trim() && before !== content) {
+      await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
     }
 
+    // The reader's own file, which something else may have written since: what it
+    // says now is kept as a version before these words replace it.
+    if (this.ws.outside(path)) {
+      const { watch } = await import('../watch.svelte')
+      await watch.beforeWrite(path, content)
+    }
+
+    // The document moved on to another note while this write was being got ready.
+    // Refused rather than written: these words are that other note's, and this path
+    // is not theirs to go to.
+    if (note.arrivals !== holding) {
+      console.warn(`nib: a write of ${path} was refused - those words are another note’s now`)
+      return
+    }
+
+    // Moved while the write was being got ready: the words follow the file.
+    if (note.path !== null) path = note.path
+
+    await invoke('write_note', { path, content })
     note.written(path, nameOf(path), revision)
-    this.markSaved(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it
     // knows a canvas from a note by its name.
     links.noteSaved(path, content)
 
-    // Editing the config files in Nib should take effect on save.
+    // Editing the config files in Nib should take effect as they are written.
     if (/\.css$|snippets\.json$/.test(path)) {
       const { settings } = await import('../settings.svelte')
       const { theme } = await import('../theme.svelte')
       await Promise.all([settings.loadSnippets(), theme.reload()])
     }
 
-    await this.ws.loadTree()
+    if (this.ws.outside(path)) {
+      const { watch } = await import('../watch.svelte')
+      await watch.wrote(path)
+    }
+
+    // A file that is new is a row the list has not read yet; one written over is
+    // the row it was, a moment later.
+    if (making) {
+      this.making.delete(note)
+      await this.ws.loadTree()
+    } else {
+      this.ws.touched(path)
+    }
     this.ws.persist()
 
-    // Imported here rather than at the top: syncing reads the workspace, and
-    // the two would import each other.
+    // Imported here rather than at the top: syncing reads the workspace, and the
+    // two would import each other.
     const { sync } = await import('../sync.svelte')
     sync.nudge()
   }

@@ -251,11 +251,11 @@ describe('choosing a key', () => {
   test('and by resetting all of them', () => {
     const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
-    shortcuts.set('app.save', null)
+    shortcuts.set('app.new', null)
     shortcuts.resetAll()
 
     expect(shortcuts.overrides).toEqual({})
-    expect(shortcuts.keyFor('app.save')).toBe('Mod-s')
+    expect(shortcuts.keyFor('app.new')).toBe('Mod-n')
   })
 
   test('is refused where it would fire while typing', () => {
@@ -329,10 +329,10 @@ describe('what is written down', () => {
     localStorage.setItem('nib:shortcuts', '{{{')
     expect((await restarted()).shortcuts.keyFor('format.bold')).toBe('Mod-b')
 
-    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 42, 'app.save': null }))
+    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 42, 'app.new': null }))
     const { shortcuts } = await restarted()
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-    expect(shortcuts.keyFor('app.save')).toBeNull()
+    expect(shortcuts.keyFor('app.new')).toBeNull()
   })
 
   test('comes back from the account', () => {
@@ -557,41 +557,41 @@ describe('the keyboard the account carries', () => {
 describe('two shortcuts on one key', () => {
   test('is a conflict, and says whose key it is', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('app.save', 'Mod-o').map((one) => one.id)).toEqual(['app.open'])
+    expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual(['app.open'])
   })
 
   test('counts across the app and the editor, which cannot share one', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('app.save', 'Mod-b').map((one) => one.id)).toEqual(['format.bold'])
+    expect(shortcuts.conflicts('app.new', 'Mod-b').map((one) => one.id)).toEqual(['format.bold'])
   })
 
   test('is not a conflict when nothing else is on the key', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('app.save', 'Mod-Alt-j')).toEqual([])
+    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j')).toEqual([])
   })
 
   test('follows the keys as they are now, not as they started', () => {
     const { shortcuts } = registry
     shortcuts.set('app.open', 'Mod-Alt-j')
 
-    expect(shortcuts.conflicts('app.save', 'Mod-o')).toEqual([])
-    expect(shortcuts.conflicts('app.save', 'Mod-Alt-j').map((one) => one.id)).toEqual(['app.open'])
+    expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
+    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j').map((one) => one.id)).toEqual(['app.open'])
   })
 
   test('leaves the contextual ones out, which is how they share the arrows', () => {
     const { shortcuts } = registry
     expect(shortcuts.conflicts('table.below', 'ArrowUp')).toEqual([])
-    expect(shortcuts.conflicts('app.save', 'ArrowDown')).toEqual([])
+    expect(shortcuts.conflicts('app.new', 'ArrowDown')).toEqual([])
   })
 
   test('is resolved by taking the key, which leaves the other with none', () => {
     const { shortcuts } = registry
     shortcuts.set('app.open', null)
-    shortcuts.set('app.save', 'Mod-o')
+    shortcuts.set('app.new', 'Mod-o')
 
     expect(shortcuts.keyFor('app.open')).toBeNull()
-    expect(shortcuts.keyFor('app.save')).toBe('Mod-o')
-    expect(shortcuts.conflicts('app.save', 'Mod-o')).toEqual([])
+    expect(shortcuts.keyFor('app.new')).toBe('Mod-o')
+    expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
   })
 
   test('names the fixed key a combination would land on', () => {
@@ -747,14 +747,14 @@ describe('the file list', () => {
 
 describe('what a reader is shown', () => {
   test('is the key written the way this machine writes it', () => {
-    expect(registry.shortcuts.hint('app.save')).toBe('Ctrl+S')
+    expect(registry.shortcuts.hint('app.new')).toBe('Ctrl+N')
     expect(registry.shortcuts.hint('paragraph.heading-1')).toBe('Ctrl+1')
   })
 
   test('and follows a rebind', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.save', 'Mod-Alt-s')
-    expect(shortcuts.hint('app.save')).toBe('Ctrl+Alt+S')
+    shortcuts.set('app.new', 'Mod-Alt-s')
+    expect(shortcuts.hint('app.new')).toBe('Ctrl+Alt+S')
   })
 
   test('reaches the menus and the palette', async () => {
@@ -801,12 +801,6 @@ describe('the keys that move the keyboard about', () => {
 
   test('and the list of every key there is', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
-  })
-
-  /** Every Mac app's File menu has Save As on Shift and the key Save is on, and it
-   *  was the one row of File here with no key at all. */
-  test('and Save as, on Shift and the key Save is on', () => {
-    expect(registry.shortcuts.keyFor('app.save-as')).toBe('Mod-Shift-s')
   })
 
   /** Shift+Cmd+? is the search field of every Mac app's Help menu, which is where
@@ -1016,7 +1010,7 @@ describe('on a Mac', () => {
     const { shortcuts } = await restarted()
 
     expect(shortcuts.platform).toBe('mac')
-    expect(shortcuts.hint('app.save')).toBe('⌘S')
+    expect(shortcuts.hint('app.new')).toBe('⌘N')
     expect(shortcuts.hint('paragraph.code-block')).toBe('⇧⌘K')
     // Cmd+Tab never reaches a window there, so the note switcher is Ctrl+Tab.
     expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')

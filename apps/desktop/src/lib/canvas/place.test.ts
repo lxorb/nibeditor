@@ -93,7 +93,6 @@ function canvasDoc(path: string) {
       dirty: false,
     },
     () => undefined,
-    () => true,
   )
 }
 

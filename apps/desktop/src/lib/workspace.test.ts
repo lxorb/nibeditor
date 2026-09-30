@@ -22,11 +22,9 @@ const notes: Record<string, string> = {
   '/elsewhere/beside it.md': '# beside it',
 }
 
-/** Those files, which are what "external" means: nothing but this disk is holding
- *  them, so saving them is the reader's to ask for and the only place the app
- *  still asks anybody about anything. */
+/** One of those files, which is what "outside" means: nothing but this disk is
+ *  holding it, and something else may be writing it too. */
 const OUTSIDE = '/elsewhere/outside.md'
-const ALSO_OUTSIDE = '/elsewhere/beside it.md'
 
 /** The path an invoke was given, or an empty one: `args` is a bag of unknowns
  *  and a path that is not a string is not a path. */
@@ -69,18 +67,13 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The sheet, scripted. `choose` is the closing question and `askName` is what
- *  saving a note with no home yet goes through, so both are answered from here
- *  and both record that they were asked. */
+/** The sheet, scripted: every question is answered from here and written down, so a
+ *  test can say that nothing was asked - which, now that nothing is ever saved by hand,
+ *  is what closing a tab, a pane or the window must come to. */
 const sheet = {
   asked: [] as string[],
-  named: [] as string[],
-  /** What `choose` answers: `save`, `discard`, `cancel`, or null for dismissed. */
+  /** What `choose` answers, or null for dismissed. */
   answer: null as string | null,
-  /** The name a save is given, or null for a question nobody answers. */
-  name: null as string | null,
-  /** The folder the save sheet is answered with, or null for "wherever it offered". */
-  folder: null as string | null,
 }
 
 vi.mock('./prompt.svelte', () => ({
@@ -88,12 +81,6 @@ vi.mock('./prompt.svelte', () => ({
     choose: (options: { title: string }) => {
       sheet.asked.push(options.title)
       return Promise.resolve(sheet.answer)
-    },
-    askName: (options: { title: string }) => {
-      sheet.named.push(options.title)
-      return Promise.resolve(
-        sheet.name === null ? null : { name: sheet.name, space: 's', folder: sheet.folder },
-      )
     },
   },
 }))
@@ -143,7 +130,13 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 
-afterEach(() => {
+afterEach(async () => {
+  // Whatever a test typed goes down before the next one runs, rather than landing
+  // in the middle of it: the next tab brought forward writes everything waiting.
+  holding.write = null
+  holding.read = null
+  await workspace.writesSettled()
+
   // Drop whatever a test left waiting before the next one runs; dropping is not
   // firing, so a stale write never lands. Real again on the way out, and a test's
   // own useRealTimers has run before this, so this only tidies what it left.
@@ -220,11 +213,11 @@ describe('keeping a preview tab', () => {
     expect(workspace.previewTabId).toBe(previewed.id)
   })
 
-  test('is what saving does, even with nothing to write', async () => {
+  test('is what Ctrl+S does, even with nothing to write', async () => {
     const tab = await preview('/space/a.md')
     expect(tab.dirty).toBe(false)
 
-    await workspace.save()
+    await workspace.writeNow()
     expect(workspace.previewTabId).toBeNull()
     expect(workspace.tabs.map((one) => one.id)).toEqual([tab.id])
   })
@@ -1045,21 +1038,22 @@ describe('a note in two panes', () => {
     expect(workspace.active.anchor).toBe(1)
   })
 
-  test('wears one dirty mark and one place to save to', async () => {
-    // A file from outside every space, because that is the note the app still
-    // asks about on the way out - see the rule further down.
-    await workspace.open(OUTSIDE)
+  test('is one note and one write, whichever pane it was typed in', async () => {
+    await workspace.open('/space/a.md')
     workspace.split('row')
 
     const [left, right] = workspace.tabs
     if (!left || !right) throw new Error('the split did not happen')
 
-    left.note.live.replace('# outside, typed in one pane')
-
+    sent.length = 0
+    left.note.live.replace('# a, typed in one pane')
     expect(right.dirty).toBe(true)
+
+    await workspace.writesSettled()
     expect(right.doc).toBe(left.doc)
-    // One note to ask about on the way out, not two.
-    expect(workspace.unsaved).toHaveLength(1)
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([
+      { command: 'write_note', path: '/space/a.md', content: '# a, typed in one pane' },
+    ])
   })
 
   test('shows the link toggle in both panes and sets it for both', async () => {
@@ -1668,14 +1662,16 @@ describe('an arrangement kept under a name', () => {
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md'])
   })
 
-  test('keeps a note nobody has saved rather than dropping it', async () => {
+  test('keeps a note whose words are not on the disk yet rather than dropping it', async () => {
     await workspace.open('/space/a.md')
     workspace.saveLayout('one up')
 
-    workspace.openBlank('Untitled', '# unsaved words')
+    onePane()
+    await workspace.open('/space/b.md')
+    workspace.active?.note.live.replace('# unwritten words')
     await workspace.useLayout('one up')
 
-    expect(workspace.tabs.some((tab) => tab.doc === '# unsaved words')).toBe(true)
+    expect(workspace.tabs.some((tab) => tab.doc === '# unwritten words')).toBe(true)
   })
 
   test('is gone once it is deleted', async () => {
@@ -1892,23 +1888,20 @@ describe('a replacement across the space', () => {
   })
 })
 
-describe('closing something that holds unsaved work', () => {
+/** Closing never asks. Every note writes itself a moment after its last keystroke,
+ *  so there is nothing a question on the way out could be about: whatever a tab was
+ *  waiting to write goes down as it closes, and a pane and the window go the same
+ *  way. Emil, 2026-09-30: *"I don't want there to be any manual saving anymore. Only
+ *  autosaving, that's it."* */
+describe('closing, which never asks anything', () => {
   beforeEach(() => {
     onePane()
     workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
     workspace.activeSpaceId = 's'
     workspace.closed.stack = []
     sheet.asked = []
-    sheet.named = []
     sheet.answer = 'cancel'
-    sheet.name = null
     sent.length = 0
-  })
-
-  afterEach(() => {
-    // A note that keeps itself has a write on a timer; the fake clock takes it
-    // with it, so nothing lands in the middle of the next test.
-    vi.useRealTimers()
   })
 
   /** A note open with something typed into it that has not been written. */
@@ -1921,238 +1914,91 @@ describe('closing something that holds unsaved work', () => {
     return tab
   }
 
-  test('asks nothing about a note that is on disk as it stands', async () => {
-    await workspace.open('/space/a.md')
-    const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
+  const written = () =>
+    sent.filter((one) => one.command === 'write_note').map((one) => [one.path, one.content])
 
-    await workspace.closeAsking(tab.id)
+  test('writes what a tab was typing as it closes, and asks nothing', async () => {
+    const tab = await dirty('/space/a.md')
+
+    workspace.close(tab.id)
+    await workspace.writesSettled()
 
     expect(sheet.asked).toEqual([])
+    expect(written()).toEqual([['/space/a.md', '# a, typed']])
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
   })
 
-  test('asks about a file with something typed in it, and Save writes it down', async () => {
-    const tab = await dirty(OUTSIDE)
-    sheet.answer = 'save'
-
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.asked).toEqual(['Save outside?'])
-    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.content)).toEqual([
-      '# outside, typed',
-    ])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
-  })
-
-  test('lets it go on the second answer, without writing anything', async () => {
-    const tab = await dirty(OUTSIDE)
-    sheet.answer = 'discard'
-
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.asked).toHaveLength(1)
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
-  })
-
-  test('leaves the tab where it is on Cancel, and on a question dismissed', async () => {
+  test('and a file opened from outside every space the same way', async () => {
     const tab = await dirty(OUTSIDE)
 
-    await workspace.closeAsking(tab.id)
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
+    workspace.close(tab.id)
+    await workspace.writesSettled()
 
-    sheet.answer = null
-    await workspace.closeAsking(tab.id)
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
-    expect(sheet.asked).toHaveLength(2)
+    expect(sheet.asked).toEqual([])
+    expect(written()).toEqual([[OUTSIDE, '# outside, typed']])
   })
 
-  test('closes an empty untitled note without a word', async () => {
+  test('closes an empty new note without a word, and writes nothing', async () => {
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('no blank tab')
 
-    await workspace.closeAsking(tab.id)
+    workspace.close(tab.id)
+    await workspace.writesSettled()
 
     expect(sheet.asked).toEqual([])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+    expect(written()).toEqual([])
+    expect(workspace.tabs).toEqual([])
   })
 
-  /** The question names the draft the way its tab does: by its own first
-   *  heading, since three drafts all asked about as Untitled would be three
-   *  questions nobody could tell apart. */
-  test('asks about an untitled note with words in it, and Save asks for a name', async () => {
-    workspace.openBlank('Untitled', '# a draft')
-    const tab = workspace.active
-    if (!tab) throw new Error('no blank tab')
-    sheet.answer = 'save'
-    sheet.name = 'Draft'
-
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.asked).toEqual(['Save a draft?'])
-    // One sheet for every kind now - a name and a folder, which is what Chrome asks
-    // when a page is bookmarked - so the title is the word on the button.
-    expect(sheet.named).toEqual(['Save'])
-    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
-      '/space/Draft.md',
-    ])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
-  })
-
-  test('keeps an untitled note whose name is never given', async () => {
-    workspace.openBlank('Untitled', '# a draft')
-    const tab = workspace.active
-    if (!tab) throw new Error('no blank tab')
-    sheet.answer = 'save'
-
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.named).toHaveLength(1)
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
-  })
-
-  test('asks nothing when the note stays open in another pane', async () => {
-    await dirty(OUTSIDE)
-    workspace.split('row')
-
-    const beside = workspace.active
-    if (!beside) throw new Error('the split did not happen')
-
-    await workspace.closeAsking(beside.id)
-
-    expect(sheet.asked).toEqual([])
-    expect(workspace.tabs).toHaveLength(1)
-  })
-
-  test('asks once for each note in a pane that is closing', async () => {
+  test('closes a pane and everything in it, writing what was typed', async () => {
     await workspace.open('/space/a.md')
     await beside(OUTSIDE)
     const paneId = workspace.panes.focusedId
     await dirty(OUTSIDE)
-    sheet.answer = 'discard'
 
     await workspace.closePane(paneId)
+    await workspace.writesSettled()
 
-    expect(sheet.asked).toEqual(['Save outside?'])
+    expect(sheet.asked).toEqual([])
     expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md'])
+    expect(written()).toEqual([[OUTSIDE, '# outside, typed']])
   })
 
-  test('a pane stays whole when one of its notes is cancelled', async () => {
-    await workspace.open('/space/a.md')
-    await beside(OUTSIDE)
-    const paneId = workspace.panes.focusedId
-    await dirty(OUTSIDE)
-
-    await workspace.closePane(paneId)
-
-    expect(workspace.panes.count).toBe(2)
-    expect(workspace.tabsIn(paneId)).toHaveLength(1)
-  })
-
-  test('the window asks once per note, and Cancel keeps it open', async () => {
-    await dirty(OUTSIDE)
-    await dirty(ALSO_OUTSIDE)
-
-    expect(await workspace.mayCloseWindow()).toBe(false)
-    expect(sheet.asked).toEqual(['Save outside?'])
-
-    sheet.asked = []
-    sheet.answer = 'discard'
-    expect(await workspace.mayCloseWindow()).toBe(true)
-    expect(sheet.asked).toEqual(['Save outside?', 'Save beside it?'])
-  })
-
-  /** The window goes with its tabs, and the next window opens the session they were
-   *  written into - on a Mac the Dock brings one back at once. A note let go of on
-   *  the way out came back in it, words and all, and was asked about again on every
-   *  quit after, however often the answer was Don't save. */
-  test('a note let go of on the way out is not in the session the next window opens', async () => {
-    await dirty(OUTSIDE)
-    sheet.answer = 'discard'
-
-    expect(await workspace.mayCloseWindow()).toBe(true)
-
-    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
-      layout?: { frame: { pane?: { tabs?: { path: string | null; dirty?: boolean }[] } } }
-    }
-    const tabs = written.layout?.frame.pane?.tabs ?? []
-    expect(tabs.filter((one) => one.path === OUTSIDE)).toEqual([])
-  })
-
-  test('asks nothing about a note in a space, whatever was typed in it', async () => {
-    vi.useFakeTimers()
-
-    const tab = await dirty('/space/a.md')
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.asked).toEqual([])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
-    // The write that was waiting, so the queue is empty for the next test.
-    await vi.advanceTimersByTimeAsync(1200)
-  })
-
-  test('and nothing on the way out of the window either', async () => {
-    vi.useFakeTimers()
-
+  /** The window waits for its writes before it goes; see start.ts. */
+  test('and the window going has nothing left to wait for once the writes are down', async () => {
     await dirty('/space/a.md')
     await dirty('/space/b.md')
 
-    expect(await workspace.mayCloseWindow()).toBe(true)
+    expect(workspace.writing).toBe(true)
+    await workspace.writesSettled()
+
+    expect(workspace.writing).toBe(false)
     expect(sheet.asked).toEqual([])
-    await vi.advanceTimersByTimeAsync(1200)
-  })
-
-  test('but asks about a file opened from outside every space', async () => {
-    vi.useFakeTimers()
-
-    const tab = await dirty(OUTSIDE)
-    sheet.answer = 'discard'
-    await workspace.closeAsking(tab.id)
-
-    expect(sheet.asked).toEqual(['Save outside?'])
-    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+    expect(
+      written()
+        .map(([path]) => path)
+        .sort(),
+    ).toEqual(['/space/a.md', '/space/b.md'])
   })
 })
 
-/** Whether saving a note is anybody's job. One question, behind the mark on the
- *  tab, the question on the way out, and the writing itself.
- *
- *  A note in a space keeps itself: Nib writes it as soon as the typing pauses, an
- *  account carries it away when there is one, and a room carries every keystroke
- *  while another device is in it. So nothing ever asks anybody about it. A file
- *  opened from the computer lives outside every space, and nothing here is looking
- *  after it, so saving that stays the reader's to ask for, mark and all.
- *
- *  Whether an account is signed in does not come into it, which is the whole point
- *  of asking about the space rather than about the mirror: the welcome note a
- *  browser opens on a first visit is somebody's writing before they have an
- *  account, and it must not be waiting on a key nobody has been told about. */
 /** A tab with no file, of every kind there is.
  *
  *  Emil, 2026-09-14: *"if you create a new webnote by clicking the plus for a new tab,
  *  then it should open it as a tab and not create it in the sidebar. Same for canvas and
- *  page notes. And like normal notes, then can then of course be saved as well, but they
- *  should be able to exist in an "unsaved" state. Just as a tab, like a browser tab
- *  normally would."*
- *
- *  A blank note has always been this; three of the four kinds wrote a file and a row in
- *  the list before the first frame. What is pinned here is the one model: a tab, no
- *  file, no row, the words in memory, and a save that writes the kind's own file where
- *  the sheet was told to put it. */
-describe('a tab nobody has saved', () => {
+ *  page notes."* And 2026-09-30: no saving at all. So a new note, plane or deck is a
+ *  tab and nothing else until something is put in it, and then it is a file in the
+ *  space with no question asked. A web tab is a browser tab: nothing is written until
+ *  somebody keeps it. */
+describe('a new tab', () => {
   beforeEach(() => {
     onePane()
     workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
     workspace.activeSpaceId = 's'
     workspace.closed.stack = []
+    workspace.tree = null
     sheet.asked = []
-    sheet.named = []
-    sheet.answer = 'cancel'
-    sheet.name = null
-    sheet.folder = null
     sent.length = 0
   })
 
@@ -2188,91 +2034,63 @@ describe('a tab nobody has saved', () => {
     expect(written()).toEqual([])
   })
 
-  test('closes without a word while nothing has been drawn on it', async () => {
-    await workspace.newCanvas()
+  test('a note becomes a file in the space on its first character', async () => {
+    workspace.openBlank()
     const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
+    if (!tab) throw new Error('no blank tab')
 
-    await workspace.closeAsking(tab.id)
+    tab.note.live.replace('W')
+    await workspace.writesSettled()
 
+    expect(tab.path).toBe('/space/W.md')
+    expect(written().map((one) => [one.path, one.content])).toEqual([['/space/W.md', 'W']])
     expect(sheet.asked).toEqual([])
-    expect(workspace.tabs).toEqual([])
   })
 
-  test('and asks once there is something on it', async () => {
-    await workspace.newCanvas()
+  /** Named after its first line as that line is typed, so it is not left called after
+   *  its first letter; and every link to it follows, as with any rename. */
+  test('and follows its first line, off the undo stack', async () => {
+    workspace.openBlank()
     const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
+    if (!tab) throw new Error('no blank tab')
 
-    tab.note.replace('{ "nodes": [1] }')
-    expect(tab.unsaved).toBe(true)
+    tab.note.live.replace('W')
+    await workspace.writesSettled()
+    const undoable = workspace.undone.last
+    tab.note.live.replace('# Weekly review\n\nwords')
+    await workspace.writesSettled()
 
-    await workspace.closeAsking(tab.id)
-
-    // Cancelled, which is the answer this sheet is scripted with, so it stays.
-    expect(sheet.asked).toHaveLength(1)
-    expect(workspace.tabs).toHaveLength(1)
+    expect(tab.path).toBe('/space/Weekly review.md')
+    expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
+    expect(written().at(-1)?.path).toBe('/space/Weekly review.md')
+    expect(workspace.undone.last).toBe(undoable)
   })
 
-  /** A web tab closes like a browser tab: no question, whatever the page is. */
-  test('while a website closes without a question either way', async () => {
-    workspace.openWebsite()
+  test('and stops following once somebody renames it', async () => {
+    workspace.openBlank()
     const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace('W')
+    await workspace.writesSettled()
 
-    await workspace.closeAsking(tab.id)
+    await workspace.rename('/space/W.md', 'Mine.md')
+    tab.note.live.replace('# Something else')
+    await workspace.writesSettled()
 
-    expect(sheet.asked).toEqual([])
-    expect(workspace.tabs).toEqual([])
+    expect(tab.path).toBe('/space/Mine.md')
+    expect(written().at(-1)?.path).toBe('/space/Mine.md')
   })
 
-  test('saves as the file its own kind is written as', async () => {
-    await workspace.newCanvas()
-    sheet.name = 'Plan'
+  /** An import and a file uploaded into the browser arrive with words and a name,
+   *  and are files from the start. */
+  test('that arrives with words is a file at once, under the name it came with', async () => {
+    workspace.openBlank('Report', '# Quarterly\n\nwords')
+    await workspace.writesSettled()
 
-    await workspace.save()
-
-    expect(written().map((one) => one.path)).toEqual(['/space/Plan.canvas'])
-    expect(workspace.active?.path).toBe('/space/Plan.canvas')
-    // The same tab, in place: what changed is which file the document is of.
-    expect(workspace.tabs).toHaveLength(1)
-    expect(workspace.active?.unsaved).toBe(false)
+    expect(workspace.active?.path).toBe('/space/Report.md')
+    expect(written().map((one) => one.path)).toEqual(['/space/Report.md'])
   })
 
-  test('and a deck of pages as a deck of pages', async () => {
-    await workspace.newPages()
-    sheet.name = 'Papers'
-
-    await workspace.save()
-
-    expect(written().map((one) => one.path)).toEqual(['/space/Papers.pages'])
-  })
-
-  /** The shortcut holds the address the tab is on, which is the whole of what a website
-   *  note is; see web-tab/shortcut.ts. */
-  test('and a website as a shortcut holding the address it is on', async () => {
-    workspace.openWebsite()
-    const tab = workspace.active
-    if (!tab) throw new Error('nothing opened')
-
-    tab.address = 'https://example.com/a'
-    sheet.name = 'Example'
-
-    await workspace.save(tab)
-
-    const wrote = written()
-    expect(wrote.map((one) => one.path)).toEqual(['/space/Example.url'])
-    expect(wrote[0]!.content).toContain('URL=https://example.com/a')
-    // The same tab, in place: what changed is which file the document is of.
-    expect(tab.path).toBe('/space/Example.url')
-  })
-
-  /** A save must never write over a file, and the sheet is the only place that could:
-   *  the reader types a name, and a name is easy to type twice. So the name steps aside
-   *  by number, out of the same helper the file list uses for a duplicate - and it does
-   *  so at the moment of writing, whatever was typed over the free name the field
-   *  offered. This was real data loss: the draft prompt wrote over a note of the same
-   *  name without a word. */
   test('never writes over a file the folder already has', async () => {
     workspace.tree = {
       name: 'space',
@@ -2281,50 +2099,103 @@ describe('a tab nobody has saved', () => {
       modified: 0,
       created: 0,
       children: [
-        {
-          name: 'Plan.canvas',
-          path: '/space/Plan.canvas',
-          is_dir: false,
-          modified: 0,
-          created: 0,
-          children: [],
-        },
+        { name: 'W.md', path: '/space/W.md', is_dir: false, modified: 0, created: 0, children: [] },
       ],
     }
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
 
-    await workspace.newCanvas()
-    sheet.name = 'Plan'
+    tab.note.live.replace('W')
+    await workspace.writesSettled()
 
-    await workspace.save()
-
-    expect(written().map((one) => one.path)).toEqual(['/space/Plan 2.canvas'])
-    expect(workspace.active?.path).toBe('/space/Plan 2.canvas')
+    expect(tab.path).toBe('/space/W 2.md')
     workspace.tree = null
   })
 
-  test('is left where it was when the sheet is dismissed', async () => {
+  test('a plane becomes a file on its first stroke, as Untitled', async () => {
     await workspace.newCanvas()
-    sheet.name = null
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
 
-    await workspace.save()
+    tab.note.replace('{ "nodes": [1] }')
+    await workspace.writesSettled()
 
+    expect(tab.path).toBe('/space/Untitled.canvas')
+    expect(written().map((one) => one.path)).toEqual(['/space/Untitled.canvas'])
+  })
+
+  test('closes without a word while nothing has been drawn on it, and leaves nothing', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    workspace.close(tab.id)
+    await workspace.writesSettled()
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
     expect(written()).toEqual([])
-    expect(workspace.active?.path).toBeNull()
+  })
+
+  /** Begun and emptied again: an empty `Untitled` left behind by every note somebody
+   *  changed their mind about is the litter this way of making notes avoids. */
+  test('a note begun and emptied again goes with its tab', async () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace('W')
+    await workspace.writesSettled()
+
+    tab.note.live.replace('')
+    workspace.close(tab.id)
+    await workspace.writesSettled()
+
+    expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
+      '/space/W.md',
+    ])
+    expect(workspace.closed.any).toBe(false)
+  })
+
+  /** A web tab closes like a browser tab: no question, whatever the page is. */
+  test('while a website closes without a question either way', () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    workspace.close(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
+  })
+
+  /** Keeping is somebody's gesture, never Ctrl+S: the shortcut holds the address the
+   *  tab is on and is named after the page. See web-tab/shortcut.ts. */
+  test('a website is kept as a shortcut holding the address it is on', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.address = 'https://example.com/a'
+    pages.of(tab.id).title = 'Example: the page'
+
+    await workspace.writeNow()
+    expect(written()).toEqual([])
+
+    await workspace.keepAsWebNote(tab)
+
+    const wrote = written()
+    expect(wrote.map((one) => one.path)).toEqual(['/space/Example the page.url'])
+    expect(wrote[0]!.content).toContain('URL=https://example.com/a')
+    // The same tab, in place: what changed is which file the document is of.
+    expect(tab.path).toBe('/space/Example the page.url')
   })
 
   /** One file is one document, and keeping a website is a document being given a
    *  file - the one place in the app where that happens to a document that already
-   *  exists. The name comes from the sheet, which stepped it aside by number off
-   *  the file list; the file list is a listing, and a listing is a round trip
-   *  behind what is open. Two tabs kept in the same instant read the same listing
-   *  and were handed the same name, and what that leaves is two documents over one
-   *  file: each honest about its own address, both reporting theirs as that file's,
-   *  and whichever settles last is the site the file opens at.
-   *
-   *  So the name is asked for again at the moment of writing, against what is open
-   *  as well as what is listed, and the path is claimed before the write begins -
-   *  which is the same rule, and the same owner, as opening a file. See
-   *  workspace/open.ts. */
+   *  exists. A listing is a round trip behind what is open, so two tabs kept in the
+   *  same instant once read the same listing and were handed the same name. The name
+   *  is asked for at the moment of writing, against what is open as well as what is
+   *  listed, and claimed before the write begins. See workspace/open.ts. */
   test('never lands two websites on one file', async () => {
     workspace.openWebsite()
     const first = workspace.active
@@ -2334,11 +2205,10 @@ describe('a tab nobody has saved', () => {
 
     first.address = 'https://example.com/a'
     second.address = 'https://example.com/b'
+    pages.of(first.id).title = 'Example'
+    pages.of(second.id).title = 'Example'
 
-    await Promise.all([
-      workspace.keepWeb(first, '/space/Example.url'),
-      workspace.keepWeb(second, '/space/Example.url'),
-    ])
+    await Promise.all([workspace.keepAsWebNote(first), workspace.keepAsWebNote(second)])
 
     expect(first.path).toBe('/space/Example.url')
     expect(second.path).toBe('/space/Example 2.url')
@@ -2346,23 +2216,20 @@ describe('a tab nobody has saved', () => {
     expect(written().map((one) => one.path)).toEqual(['/space/Example.url', '/space/Example 2.url'])
   })
 
-  /** A browser brings back the tabs it had, and so does this: the words of a document
-   *  with no file exist in the session and nowhere else, so they are kept whether or not
-   *  anybody has typed in it. See `draftOf`. */
-  test('comes back after a restart, words and all', async () => {
-    await workspace.newCanvas()
+  test('a website kept twice from one tab is one file', async () => {
+    workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
-    tab.note.replace('{ "nodes": [2] }')
+    pages.of(tab.id).title = 'Example'
 
-    const draft = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)[0]
+    await Promise.all([workspace.keepAsWebNote(tab), workspace.keepAsWebNote(tab)])
 
-    expect(draft?.kind).toBe('canvas')
-    expect(draft?.path).toBeNull()
-    expect(draft?.doc).toBe('{ "nodes": [2] }')
+    expect(written().map((one) => one.path)).toEqual(['/space/Example.url'])
   })
 
-  test('including one nobody has touched', async () => {
+  /** A browser brings back the tabs it had, and so does this: the words of a document
+   *  with no file exist in the session and nowhere else. See `draftOf`. */
+  test('an untouched one comes back after a restart', async () => {
     await workspace.newPages()
 
     const drafts = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)
@@ -2370,7 +2237,7 @@ describe('a tab nobody has saved', () => {
   })
 })
 
-describe('a note that keeps itself, and one that does not', () => {
+describe('a note writes itself, wherever it is', () => {
   const WELCOME = '/Notes/Read me.md'
 
   beforeEach(() => {
@@ -2392,7 +2259,7 @@ describe('a note that keeps itself, and one that does not', () => {
   afterEach(async () => {
     // Whatever was waiting to be written goes down now rather than in the middle
     // of the next test.
-    await vi.advanceTimersByTimeAsync(1200)
+    await workspace.writesSettled()
     vi.useRealTimers()
   })
 
@@ -2408,89 +2275,102 @@ describe('a note that keeps itself, and one that does not', () => {
 
   const written = () => sent.filter((one) => one.command === 'write_note').map((one) => one.path)
 
-  test('a note in a space goes down as soon as the typing pauses', async () => {
+  test('a note in a space goes down well inside a second of the typing pausing', async () => {
     const tab = await typedIn('/space/a.md')
 
-    await vi.advanceTimersByTimeAsync(1200)
+    await vi.advanceTimersByTimeAsync(400)
 
     expect(written()).toEqual(['/space/a.md'])
-    expect(tab.unsaved).toBe(false)
-    expect(workspace.unsaved).toEqual([])
-  })
-
-  test('and wears no mark at any point, because there is nothing to report', async () => {
-    const tab = await typedIn('/space/a.md')
-
-    // Before the write as much as after it: the words have moved, and that is
-    // the app's business rather than the reader's.
-    expect(tab.dirty).toBe(true)
-    expect(tab.unsaved).toBe(false)
-    expect(workspace.savingOf(tab)).toBeUndefined()
-
-    await vi.advanceTimersByTimeAsync(1200)
-    expect(workspace.savingOf(tab)).toBeUndefined()
+    expect(tab.dirty).toBe(false)
   })
 
   test('signing out changes nothing about it: a space is a space', async () => {
     // Nothing here has ever been told about an account, which is the state a
     // browser on a first visit and a desktop nobody has signed in on are both in.
-    const tab = await typedIn(WELCOME)
+    await typedIn(WELCOME)
 
-    await vi.advanceTimersByTimeAsync(1200)
+    await vi.advanceTimersByTimeAsync(400)
 
     expect(written()).toEqual([WELCOME])
-    expect(tab.unsaved).toBe(false)
-    expect(workspace.keepsItself(WELCOME)).toBe(true)
+    expect(workspace.outside(WELCOME)).toBe(false)
   })
 
-  test('a file opened from outside every space waits for the reader, and says so', async () => {
-    const tab = await typedIn(OUTSIDE)
+  test('and a file opened from outside every space writes itself too', async () => {
+    await typedIn(OUTSIDE)
 
-    await vi.advanceTimersByTimeAsync(10_000)
+    await vi.advanceTimersByTimeAsync(400)
+    await workspace.writesSettled()
 
-    expect(written()).toEqual([])
-    expect(tab.unsaved).toBe(true)
-    expect(workspace.unsaved).toHaveLength(1)
-    expect(workspace.keepsItself(OUTSIDE)).toBe(false)
+    expect(written()).toEqual([OUTSIDE])
+    expect(workspace.outside(OUTSIDE)).toBe(true)
   })
 
-  test('a file typed in while it was being written is still out of step with it', async () => {
-    const tab = await typedIn(OUTSIDE)
+  test('a file typed in while it was being written is written again', async () => {
+    const tab = await typedIn('/space/a.md')
 
     // Writing a file is a round trip, and a keystroke can land inside it. What
     // went down is the words as they were when the write began; the ones typed
-    // after that are on this machine and nowhere else, so the mark stays and the
-    // way out still asks.
+    // after that are the next write's.
     let release: () => void = () => undefined
     holding.write = new Promise<void>((resolve) => {
       release = resolve
     })
 
-    const saving = workspace.save(tab)
+    const writing = workspace.writeNow()
+    await vi.advanceTimersByTimeAsync(0)
     tab.note.live.edit([{ from: 0, to: 0, insert: 'typed during the write\n' }])
     release()
-    await saving
+    await writing
     holding.write = null
 
-    expect(tab.unsaved).toBe(true)
-    expect(workspace.unsaved).toHaveLength(1)
+    // Ctrl+S waits for everything owed, the keystroke from inside its own write too.
+    expect(tab.dirty).toBe(false)
+    expect(written()).toEqual(['/space/a.md', '/space/a.md'])
   })
 
   test('Ctrl+S stays harmless: it writes at once and keeps the preview tab', async () => {
     const tab = await preview('/space/a.md')
     tab.note.live.replace('# a, typed')
 
-    await workspace.save()
+    await workspace.writeNow()
 
     expect(written()).toEqual(['/space/a.md'])
     expect(workspace.previewTabId).toBeNull()
+    expect(sheet.asked).toEqual([])
   })
 
-  test('file recovery is offered a version of both kinds', async () => {
+  /** A rename landing inside a write used to move the file out from under it, and
+   *  the write put the old name back beside the new one. */
+  test('a rename during a write waits for it, and one file is left, with the words', async () => {
+    const tab = await typedIn('/space/a.md')
+
+    let release: () => void = () => undefined
+    holding.write = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const writing = workspace.writeNow()
+    await vi.advanceTimersByTimeAsync(0)
+    const renaming = workspace.rename('/space/a.md', 'Renamed.md')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
+
+    release()
+    await Promise.all([writing, renaming])
+    holding.write = null
+
+    const order = sent
+      .filter((one) => one.command === 'write_note' || one.command === 'rename_note')
+      .map((one) => one.command)
+    expect(order).toEqual(['write_note', 'rename_note'])
+    expect(tab.path).toBe('/space/Renamed.md')
+  })
+
+  test('file recovery is offered a version of every note with a file', async () => {
     await typedIn('/space/a.md')
     await typedIn(OUTSIDE)
     // Nowhere to keep a version of, so nothing to offer.
-    workspace.openBlank('Untitled', '# a draft')
+    workspace.openBlank()
 
     expect(workspace.worthKeeping.map((one) => one.path)).toEqual(['/space/a.md', OUTSIDE])
     expect(workspace.worthKeeping.every((one) => one.revision > 0)).toBe(true)
@@ -2544,16 +2424,17 @@ describe('reopening the tab that was closed last', () => {
     ])
   })
 
-  test('brings back what was never written down', async () => {
-    workspace.openBlank('Untitled', '# a draft')
+  test('brings back what was typed a moment before it closed', async () => {
+    await workspace.open('/space/a.md')
     const tab = workspace.active
-    if (!tab) throw new Error('no blank tab')
+    if (!tab) throw new Error('nothing opened')
+    tab.note.live.replace('# a, typed just now')
 
-    await workspace.closeAsking(tab.id)
+    workspace.close(tab.id)
     await workspace.reopenClosed()
 
-    expect(workspace.active.doc).toBe('# a draft')
-    expect(workspace.active.dirty).toBe(true)
+    expect(workspace.active.doc).toBe('# a, typed just now')
+    await workspace.writesSettled()
   })
 
   test('remembers nothing about the blank page a window starts with', async () => {
@@ -2985,15 +2866,17 @@ describe('the note a window comes back on', () => {
   })
 
   /** And the pane that ends up showing nothing still takes the first note it has:
-   *  an arrangement with no notes in it, and a note nobody saved carried into it. */
+   *  an arrangement with no notes in it, and a note whose words were not on the disk
+   *  yet carried into it. */
   test('is the first in the strip only where the pane was left showing nothing', async () => {
-    workspace.openBlank('Untitled', '# unsaved words')
+    await workspace.open('/space/c.md')
+    workspace.active?.note.live.replace('# unwritten words')
 
     const empty = drafted(0)
     empty.frame.pane.tabs = []
     await workspace.applyLayout(empty)
 
-    expect(workspace.active?.doc).toBe('# unsaved words')
+    expect(workspace.active?.doc).toBe('# unwritten words')
   })
 })
 
@@ -3002,7 +2885,6 @@ describe('what a document is called on screen', () => {
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
-    sheet.name = null
   })
 
   test('is a note without its extension', async () => {
@@ -3080,17 +2962,19 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('Report')
   })
 
-  test('is the file name again once the draft is saved', async () => {
+  test('is still its words once the draft is a file, and the file name once named', async () => {
     workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+    workspace.activeSpaceId = 's'
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('the draft did not open')
-    tab.note.live.replace('# A draft\n')
-    sheet.name = 'Kept'
+    tab.note.live.replace('# A draft: first\n')
+    await workspace.writesSettled()
 
-    await workspace.save()
+    expect(tab.path).toBe('/space/A draft first.md')
+    expect(tab.shown).toBe('A draft: first')
 
-    expect(tab.path).toBe('/space/Kept.md')
+    await workspace.rename('/space/A draft first.md', 'Kept.md')
     expect(tab.shown).toBe('Kept')
   })
 })
@@ -3689,13 +3573,14 @@ describe('a website the app writes', () => {
     delete notes['/space/Docs.url']
   })
 
-  test('and is linked once a tab nobody had saved is kept', async () => {
+  test('and is linked once a tab nobody had kept is kept', async () => {
     workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('no tab')
     tab.address = 'https://svelte.dev/'
+    pages.of(tab.id).title = 'Docs'
 
-    await workspace.keepWeb(tab, '/space/Docs.url')
+    await workspace.keepAsWebNote(tab)
 
     expect(links.fileNamed('Docs.url')).toBe('Docs.url')
     expect(linkedFrom('/space/Docs.url')).toEqual(['One.md', 'One.md'])

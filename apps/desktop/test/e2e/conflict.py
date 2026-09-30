@@ -432,7 +432,7 @@ def write_line(page: Page, said: str) -> None:
     )
     page.wait_for_timeout(400)
     page.evaluate(
-        "async () => { window.nibApp.workspace.flush(); await window.nibApp.workspace.save() }"
+        "async () => { await window.nibApp.workspace.writeNow() }"
     )
     page.wait_for_timeout(900)
 

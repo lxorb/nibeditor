@@ -341,7 +341,7 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
           const note = ws.notes.find((one) => one.path === path)
           if (note) await ws.open(note.path)
           window.nibApp.workspace.replace('# The plan\\n\\nSomething else entirely.')
-          await ws.save()
+          await ws.writeNow()
         }""",
         made,
     )

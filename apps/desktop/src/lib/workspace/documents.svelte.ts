@@ -1,15 +1,14 @@
 /** What is open, and who is looking at it.
  *
  *  Two things, deliberately apart. A document is a note that is open: its words,
- *  its name, whether it has anything unsaved, and the live text every view of it
+ *  its name, whether they are on the disk yet, and the live text every view of it
  *  shares (see shared.ts in the editor package). A tab is one pane's view of a
  *  document: which pane it is in, where the caret is, how far it is scrolled.
  *
  *  That is what makes the same note in two panes one note. There is one document
- *  and two tabs: typing in either reaches the same words, the dirty mark is one
- *  mark and saving saves once, while each tab keeps its own caret and its own
- *  place in the note. Nothing has to be kept in step, because there is nothing
- *  to keep in step. */
+ *  and two tabs: typing in either reaches the same words and the note is written
+ *  once, while each tab keeps its own caret and its own place in the note. Nothing
+ *  has to be kept in step, because there is nothing to keep in step. */
 
 import { type FoldLines, SharedDoc } from '@nib/editor'
 import type { Camera } from '../camera'
@@ -20,8 +19,8 @@ import { draftName, shownName, TITLE_CHARS } from '../note-name'
 /** The name a note nobody has named carries. It is never on screen: such a note
  *  is called after its own first words instead, so a window of drafts is a window
  *  of names rather than a row of Untitleds; see `shown`. It is what a written
- *  session holds for a tab that never had a file, and what a save dialog knows to
- *  offer a first line in place of. */
+ *  session holds for a tab that never had a file, and what tells a draft's first
+ *  file to take its name from its words; see drafts.ts. */
 export const UNTITLED = 'Untitled'
 
 /** What a tab holds. Almost always a note. The graph of the space is a tab
@@ -39,13 +38,14 @@ export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web' | 't
  *  whose words are the JSON in them.
  *
  *  What the answer decides is every place words cross between a tab and a file:
- *  whether there is anything unsaved, what a save writes, and what a tab that is
- *  put back after a restart is filled from. The graph is drawn from the space and
- *  a PDF is read, so neither has words to write down or to read back.
+ *  what is written as the typing pauses, what a tab with no file becomes a file
+ *  for, and what a tab that is put back after a restart is filled from. The graph
+ *  is drawn from the space and a PDF is read, so neither has words to write down
+ *  or to read back.
  *
  *  A website is not one either, and the answer carries more here than anywhere
  *  else: nothing the reader does in the page is an edit, so there is nothing to
- *  save and nothing to keep in step - and a room is only ever opened for a file
+ *  write and nothing to keep in step - and a room is only ever opened for a file
  *  whose words are a document, which is why a web tab has no collaboration and
  *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
@@ -105,26 +105,31 @@ export class NoteDoc {
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false
 
-  /** Whether anything other than somebody saving is keeping these words. Handed
-   *  in rather than read, because the answer is about where the note sits and
-   *  this file is only about what is open; the spaces are the workspace's, and it
-   *  holds these documents. See `workspace.keepsItself`. */
-  private readonly kept: (path: string) => boolean
+  /** Whether this note is still called after its own first words: a draft that
+   *  became a file when the first of them was typed, and whose file has followed
+   *  its first line since, the way a note in Apple Notes or a new document in iA
+   *  Writer does. For this document only - the sitting it was born in - and until
+   *  somebody names it themselves; see drafts.ts and `rename` in
+   *  workspace.svelte.ts. Reactive because what the tab is called turns on it. */
+  follows = $state(false)
+
+  /** The words the file held when this document took it on, until the first
+   *  write of the sitting has kept them as a version. What going back to how a
+   *  note was this morning needs: a write is not a version of its own any more,
+   *  so the one before the first is. Null once kept, and for a document that has
+   *  no file or came back holding words the file never had; see `firstVersion`. */
+  private before: string | null
 
   /** `edited` hears about every change to the words, wherever it came from: a
    *  keystroke in any pane, an undo, a picture dropped in. */
-  constructor(
-    start: DocumentStart,
-    edited: (doc: NoteDoc) => void,
-    kept: (path: string) => boolean,
-  ) {
-    this.kept = kept
+  constructor(start: DocumentStart, edited: (doc: NoteDoc) => void) {
     this.kind = start.kind
     this.shared = start.shared ?? null
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
     this.words = start.text
+    this.before = start.path !== null && !start.dirty ? start.text : null
     this.live = new SharedDoc(start.text)
     this.retitle()
 
@@ -164,12 +169,14 @@ export class NoteDoc {
    *  saying which part of it the paste became. */
   pasted = $state(false)
 
-  /** Whether nobody has given this document a name: no file, and the placeholder the
-   *  openers hand out. A note like that is called after its own first words; a plane or
-   *  a deck of pages is called Untitled, because what is in one of those is not words
-   *  to read a title off. */
+  /** Whether nobody has given this document a name: no file and the placeholder the
+   *  openers hand out, or a file named after its words that is still following them.
+   *  A note like that is called after its own first words as they are typed, rather
+   *  than as the file catches up with them on the pause; a plane or a deck of pages is
+   *  called Untitled, because what is in one of those is not words to read a title
+   *  off. */
   private get unnamed(): boolean {
-    return this.path === null && this.name === UNTITLED
+    return (this.path === null && this.name === UNTITLED) || this.follows
   }
 
   /** The words at the top of an unnamed note: its first heading, else its first
@@ -181,7 +188,7 @@ export class NoteDoc {
 
   /** The words a name can be read off, for a document that has none: a note's first
    *  heading or line. A plane and a deck of pages hold JSON rather than prose, so there
-   *  is nothing to read there and such a tab says Untitled until it is saved. */
+   *  is nothing to read there and such a tab, and the file it becomes, says Untitled. */
   private get titleWords(): string | null {
     return this.kind === 'note' ? this.firstWords : null
   }
@@ -196,43 +203,24 @@ export class NoteDoc {
     this.unnamed ? (this.titleWords ?? t('Untitled')) : shownName(this.name),
   )
 
-  /** Whether this note keeps itself, which is to say something other than
-   *  somebody saving it is holding on to the words: it sits in a space, so Nib
-   *  writes it as the typing pauses, and an account carries it away when there is
-   *  one; see `workspace.keepsItself`.
-   *
-   *  Such a note has nothing to save, and so no mark, no question on the way out
-   *  and no key to press. A file opened from the computer lives outside every
-   *  space and has none of that behind it, which is why saving stays the reader's
-   *  to ask for there. */
-  get keepsItself(): boolean {
-    // A file somebody shared on its own keeps itself too, and by the same
-    // argument: something other than a person pressing save is holding the words.
-    // Its room is, which writes them into the owner's space as they are typed.
-    // So no mark, no question on the way out, and nothing to save - there is no
-    // file here for a save to be about.
-    if (this.shared !== null) return true
+  /** Whether there is nothing in this document yet but white space. Asked of a
+   *  draft on each change until it has words, so it reads a fixed slice of the rope
+   *  and never the whole: a draft pasted into can be a megabyte on its first change.
+   *  See drafts.ts. */
+  get blank(): boolean {
+    const text = this.live.text
+    if (text.length > TITLE_CHARS) return false
 
-    return this.path !== null && this.kept(this.path)
+    return text.sliceString(0, TITLE_CHARS).trim().length === 0
   }
 
-  /** Whether this document holds work that nothing has hold of, which is what
-   *  the dot, the closing question and the way out of the window all mean by
-   *  unsaved.
-   *
-   *  A note that has a file is out of step with it whatever it now says, even
-   *  when what it says is nothing: emptying a note is an edit like any other. An
-   *  untitled one that says nothing has no file and nothing to lose, which is
-   *  exactly the blank page a window starts with. And a note that keeps itself
-   *  is never out of step for long enough to be worth saying so.
-   *
-   *  Reads the words as of the last flush, like everything else here. */
-  get unsaved(): boolean {
-    if (!this.dirty || this.keepsItself) return false
-    // Only a file with words in it can be out of step with what is on disk.
-    if (!holdsWords(this.kind)) return false
-
-    return this.path !== null || this.words.trim().length > 0
+  /** The words the file held when this document took it on, handed over once: the
+   *  first write of a sitting keeps them as a version before it replaces them, and
+   *  nothing after it has to. See `write` in saving.svelte.ts. */
+  firstVersion(): string | null {
+    const before = this.before
+    this.before = null
+    return before
   }
 
   /** Reads the note's own title off the top of the rope, for a note that has no
@@ -265,7 +253,7 @@ export class NoteDoc {
    *  reaches every pane showing this note.
    *
    *  `dirty` says whether this leaves the note out of step with its file. A
-   *  version restored does and has to be saved; a note re-read from disk does
+   *  version restored does and has to be written; a note re-read from disk does
    *  not, and text that matches the file is nothing to tell the app about. */
   replace(text: string, dirty = true) {
     this.quiet = !dirty
@@ -279,6 +267,9 @@ export class NoteDoc {
     this.words = text
     this.behind = false
     this.dirty = dirty
+    // A note re-read from its file: that is what the file holds now, where the
+    // version the first write keeps has not been taken yet.
+    if (!dirty && this.before !== null) this.before = text
   }
 
   /** Words changed under the note by something other than an editor, as the
@@ -293,6 +284,7 @@ export class NoteDoc {
     this.words = text
     this.behind = false
     this.dirty = false
+    if (this.before !== null) this.before = text
   }
 
   /** The one tab that previews a note, moving on to another one.
@@ -309,6 +301,8 @@ export class NoteDoc {
   adopt(note: { path: string; name: string; text: string }) {
     this.path = note.path
     this.name = note.name
+    this.follows = false
+    this.before = note.text
     this.arrivals++
 
     // Not `replace`: this document is not being edited, it is being pointed at
@@ -337,6 +331,7 @@ export class NoteDoc {
     this.path = path
     this.name = name
     this.dirty = this.revision !== revision
+    this.before = null
   }
 }
 
@@ -483,13 +478,5 @@ export class Tab {
 
   set dirty(to: boolean) {
     this.note.dirty = to
-  }
-
-  /** Whether this note holds words nothing has hold of, which is what the mark
-   *  beside its name says. See NoteDoc.unsaved: `dirty` is the mechanical fact
-   *  that the words have moved since they were written, and this is whether that
-   *  is anybody's problem. */
-  get unsaved(): boolean {
-    return this.note.unsaved
   }
 }

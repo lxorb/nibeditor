@@ -33,7 +33,7 @@ import type {
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
 import { i18n, t } from './i18n.svelte'
-import { DIVIDER, type MenuItem } from './menu-item'
+import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
   type Change,
@@ -56,7 +56,6 @@ import {
 import { shownName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
-import { canSaveAs } from './save-as'
 import { present } from './slides/present.svelte'
 import { nameOf } from './space-paths'
 import { appMenuRows } from './surfaces.svelte'
@@ -178,9 +177,6 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
       entryRow('app.new-kind', context, { label: t('New tab') }),
       entryRow('app.new-window', context),
       entryRow('app.open', context, { asks: true }),
-      DIVIDER,
-      entryRow('app.save', context, { disabled: !open }),
-      entryRow('app.save-as', context, { asks: true, disabled: !canSaveAs() }),
     ],
     closing: [
       entryRow('app.close', context, { disabled: !open }),

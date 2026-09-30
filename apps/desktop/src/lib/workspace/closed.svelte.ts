@@ -3,7 +3,7 @@
  *  Per window, the way a browser's own Ctrl+Shift+T is: the stack belongs to the
  *  strip it was closed from, and another window's closed notes are that window's
  *  business. It survives a restart because it travels in the session, which is
- *  where the words of an unsaved note are written down anyway.
+ *  where the words the disk has not been given yet are written down anyway.
  *
  *  Bounded, and the oldest goes first: a sitting that closes a hundred notes
  *  should not carry the text of all hundred around with it. */

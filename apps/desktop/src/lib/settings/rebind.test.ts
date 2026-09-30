@@ -112,40 +112,40 @@ describe('a key that cannot be taken', () => {
 describe('a key something else already answers to', () => {
   test('is held back until it is answered', () => {
     rebind.listen('format.bold')
-    // Ctrl+S is Save.
-    rebind.record(press('s', { ctrl: true }))
+    // Ctrl+O is Open file.
+    rebind.record(press('o', { ctrl: true }))
 
-    expect(rebind.clash?.key).toBe('Mod-s')
-    expect(rebind.clash?.holders.map((one) => one.id)).toContain('app.save')
+    expect(rebind.clash?.key).toBe('Mod-o')
+    expect(rebind.clash?.holders.map((one) => one.id)).toContain('app.open')
     // Nothing written while the question stands.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-    expect(shortcuts.keyFor('app.save')).toBe('Mod-s')
+    expect(shortcuts.keyFor('app.open')).toBe('Mod-o')
   })
 
   test('taking it over leaves the one that held it with none', () => {
     rebind.listen('format.bold')
-    rebind.record(press('s', { ctrl: true }))
+    rebind.record(press('o', { ctrl: true }))
     rebind.takeOver()
 
-    expect(shortcuts.keyFor('format.bold')).toBe('Mod-s')
-    expect(shortcuts.keyFor('app.save')).toBeNull()
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-o')
+    expect(shortcuts.keyFor('app.open')).toBeNull()
     expect(rebind.clash).toBeNull()
   })
 
   test('leaving it alone changes nothing at all', () => {
     rebind.listen('format.bold')
-    rebind.record(press('s', { ctrl: true }))
+    rebind.record(press('o', { ctrl: true }))
     rebind.clash = null
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-    expect(shortcuts.keyFor('app.save')).toBe('Mod-s')
+    expect(shortcuts.keyFor('app.open')).toBe('Mod-o')
   })
 })
 
 describe('closing the pane', () => {
   test('leaves nothing listening and no question standing', () => {
     rebind.listen('format.bold')
-    rebind.record(press('s', { ctrl: true }))
+    rebind.record(press('o', { ctrl: true }))
 
     rebind.forget()
 

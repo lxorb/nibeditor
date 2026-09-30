@@ -155,7 +155,7 @@ export async function newNote(args: Said): Promise<unknown> {
   const made = workspace.active
   if (content) {
     workspace.replace(content)
-    await workspace.save()
+    await workspace.writeNow()
   }
 
   if (silent && made) {

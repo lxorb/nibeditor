@@ -6,8 +6,8 @@ const POLL_BUSY = 20_000
 const POLL_IDLE_MAX = 120_000
 const POLL_HIDDEN_MAX = 600_000
 
-/** After a local save, so an edit does not sit waiting for a slow timer. Long
- *  enough that a burst of saves becomes one pass. */
+/** After a note is written, so an edit does not sit waiting for a slow timer. Long
+ *  enough that a burst of writes becomes one pass. */
 export const NUDGE_DELAY = 2_000
 
 /** How long a nudge leaves before the next pass, given how long the pass already

@@ -147,8 +147,9 @@ export interface MenuBarWords {
 export interface MenuBarSources {
   /** The in-window menu's groups, as `appMenu` builds them. */
   groups: MenuGroup[]
-  /** File's rows the in-window menu leaves to their keys: making, opening and saving
-   *  ahead of its own rows, closing after them. With a web tab in front a key is a
+  /** File's rows the in-window menu leaves to their keys: making and opening ahead
+   *  of its own rows, closing after them. No Save and no Save As: every note writes
+   *  itself, and Cmd+S is a key with no row; see `writeKey` in shortcuts.svelte.ts. With a web tab in front a key is a
    *  key only as a row of the strip (see the top of this file), so Cmd+N, Cmd+W and
    *  the rest have to be rows here; and a Mac's File menu has them. Open Recent goes
    *  under the row that opens a file. */
@@ -595,7 +596,7 @@ function shapeOf(entry: NativeEntry): string {
  *  Building one is a round trip to the crate for every row, a hundred and more of
  *  them, and it leaves behind the channel each row's action came in on; telling one
  *  row its new tick is one round trip and leaves nothing. Most of what changes while
- *  the app is used - a mode switched, a tab closed, a note that can now be saved - is
+ *  the app is used - a mode switched, a tab closed, a note opened - is
  *  a tick or a grey, so most of the time this is a handful of calls. */
 export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Change[] | null {
   const was = flatten(before)

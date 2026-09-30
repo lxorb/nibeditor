@@ -577,10 +577,10 @@ nothing to slip, in the box the two share so the name beside them does not move.
 
 ### Dots, and what is not a dot
 
-A dot is one fact: something is not written down yet. That is the tab's saving
-dot, and the two lights that are about work in progress rather than about a file
-(a request waiting to be let in, the foot's sync light) borrow the shape because
-they are the same kind of statement.
+A dot is one fact: something is still under way. The two lights that are about
+work in progress rather than about a file - a request waiting to be let in, the
+foot's sync light - wear it. A tab wears none: every note writes itself a moment
+after it changes, so there is never anything unwritten worth a mark.
 
 That somebody else is in this at all is a mark, never a dot. `SharedMark.svelte`
 draws it once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's

@@ -28,7 +28,7 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://new?name=Idea&content=Words&silent` | writes it without opening it |
 | `nib://append?path=Daily.md&content=Words` | adds the words to the end of that note, and makes it if it is not there |
 | `nib://search?query=tag:%23work` | opens the search panel on that query |
-| `nib://command?id=save` | runs one command out of the registry |
+| `nib://command?id=new` | runs one command out of the registry |
 
 `nib://command` takes the ids the palette knows, minus the handful only somebody at
 the keyboard may press: **Record**, **Meeting**, **Dictate**, **Photo** and **Sign

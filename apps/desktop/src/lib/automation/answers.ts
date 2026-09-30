@@ -37,7 +37,7 @@ export async function listFiles(args: Said): Promise<unknown> {
   }
 }
 
-/** One note, as it stands. What is open counts as what it stands at: an unsaved
+/** One note, as it stands. What is open counts as what it stands at: an unwritten
  *  keystroke is still what the reader is looking at. */
 export async function readFile(args: Said): Promise<unknown> {
   const note = await noteFor(args)

@@ -103,7 +103,7 @@ describe('File', () => {
   /** Every row that left is still a command: in the palette, and on its key. */
   test('and every row it gave up is still in the palette and on its key', () => {
     const offered = new Set(appCommands().map((one) => one.id))
-    const commands = ['new', 'open', 'import', 'space', 'save', 'save-as', 'settings']
+    const commands = ['new', 'open', 'import', 'space', 'settings']
     for (const id of [...commands, 'close', 'reopen', 'new-window', 'close-window']) {
       expect(offered.has(id), id).toBe(true)
     }
@@ -111,8 +111,6 @@ describe('File', () => {
     const keys = [
       'app.new',
       'app.open',
-      'app.save',
-      'app.save-as',
       'app.close',
       'app.reopen',
       'app.new-window',
@@ -120,6 +118,20 @@ describe('File', () => {
       'app.settings',
     ]
     for (const id of keys) expect(BY_ID.get(id)?.key, id).toBeTruthy()
+  })
+
+  /** Emil, 2026-09-30: *"I don't want there to be any manual saving anymore. Only
+   *  autosaving, that's it."* Every note writes itself, so there is no Save and no
+   *  Save as to offer anywhere; Ctrl+S is the chord's default and nobody's row. See
+   *  `writeKey` in shortcuts.svelte.ts. */
+  test('and there is no Save anywhere: not in the palette and not on a key', () => {
+    const offered = appCommands().map((one) => one.id)
+    expect(offered).not.toContain('save')
+    expect(offered).not.toContain('save-as')
+
+    expect(BY_ID.has('app.save')).toBe(false)
+    expect(BY_ID.has('app.save-as')).toBe(false)
+    expect([...BY_ID.values()].filter((one) => one.key === 'Mod-s')).toEqual([])
   })
 })
 

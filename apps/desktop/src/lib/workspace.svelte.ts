@@ -23,7 +23,7 @@ import {
   relativeTo,
   withinSpace,
 } from './space-paths'
-import { key, t } from './i18n.svelte'
+import { t } from './i18n.svelte'
 import { nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
@@ -220,11 +220,13 @@ function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
 
-/** Whether a tab is worth remembering once it has been closed. A blank untitled
- *  note is not: it is the empty page a window starts with, and reopening it
- *  would put back something nobody ever wrote. */
+/** Whether a tab is worth remembering once it has been closed. A blank new note
+ *  is not: it is the empty page a window starts with, or a note that was begun and
+ *  emptied again and goes with its tab, and reopening it would put back something
+ *  nobody ever wrote. See `closed` in workspace/saving.svelte.ts. */
 function worthReopening(tab: Tab): boolean {
-  return tab.kind !== 'note' || tab.path !== null || tab.doc.trim().length > 0
+  if (tab.kind !== 'note' || !tab.note.blank) return true
+  return tab.path !== null && !tab.note.follows
 }
 
 class Workspace {
@@ -237,7 +239,12 @@ class Workspace {
   tabs = $state<Tab[]>([])
   /** How the panes are arranged and which one has the focus; see
    *  workspace/panes.svelte.ts. */
-  readonly panes = new Panes(() => this.scheduleSession())
+  readonly panes = new Panes(() => {
+    this.scheduleSession()
+    // Another tab brought forward, or another pane: whatever was being written in
+    // goes down now rather than a pause later.
+    this.saving.hurry()
+  })
   /** Arrangements someone has named; see workspace/layouts.svelte.ts. */
   readonly layouts = new Layouts()
   // Hidden until asked for, the way Typora starts.
@@ -321,7 +328,7 @@ class Workspace {
   readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
-  /** Writing what is open down, and the dot beside a name that says so; see
+  /** Writing what is open down, and a new tab becoming a file; see
    *  workspace/saving. */
   private readonly saving = new Saving(this)
   /** The strip of tabs, written after a pause in the typing; see timing.ts. */
@@ -332,12 +339,7 @@ class Workspace {
    *  documents over one file are two notes wearing one name. */
   private readonly opened = new OpenDocuments(
     () => this.tabs,
-    (start) =>
-      new NoteDoc(
-        start,
-        (note) => this.saving.edited(note),
-        (path) => this.keepsItself(path),
-      ),
+    (start) => new NoteDoc(start, (note) => this.saving.edited(note)),
   )
 
   /** Where each note was last being read; see workspace/positions.ts. */
@@ -399,11 +401,6 @@ class Workspace {
     return this.documents
       .filter((note) => holdsWords(note.kind) && (note.path !== null || note.shared !== null))
       .map((note) => ({ key: note.key, path: note.path ?? '', note }))
-  }
-
-  /** What the dot beside a name is saying, if anything. */
-  savingOf(tab: Tab): 'saving' | 'saved' | undefined {
-    return this.saving.of(tab)
   }
 
   /** The note being read, named the way a link names it: relative to the space.
@@ -656,7 +653,7 @@ class Workspace {
 
   /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made
    *  elsewhere shows up; one that was not is restored from its draft and stays
-   *  dirty. Replacing someone's unsaved work with what happens to be on disk is
+   *  dirty. Replacing somebody's unwritten words with what happens to be on disk is
    *  the one thing this must never do.
    *
    *  A canvas is read back exactly as a note is, because its words are a file's
@@ -692,10 +689,15 @@ class Workspace {
                 dirty: draft.dirty,
               })
 
-        // Deleted or moved while Nib was away, and nothing unsaved to keep.
+        // Deleted or moved while Nib was away, and no words of its own to keep.
         if (!note) continue
         made.push(this.viewOf(note, paneId, draft))
       }
+
+      // Words that came back without their file having them - a window that was
+      // killed before the pause, a tab closed a moment after its last keystroke -
+      // go down now, and a draft with words in it becomes the file it would have.
+      for (const tab of made) if (tab.note.dirty) this.saving.owed(tab.note)
 
       return made
     })
@@ -764,7 +766,7 @@ class Workspace {
    *  one has the focus, and the sidebar. The session on the way in, and a named
    *  layout whenever one is chosen.
    *
-   *  A note with unsaved words that the arrangement says nothing about is not
+   *  A note with unwritten words that the arrangement says nothing about is not
    *  thrown away: it lands in the pane that ends up with the focus. Arranging
    *  what is open is never a reason to lose what somebody wrote.
    *
@@ -805,7 +807,7 @@ class Workspace {
     // note, and the window has been up and taking keys the whole time.
     //
     // A layout somebody chose is what they want on screen, so it replaces what is
-    // open and only unsaved words are carried over. The session is not chosen - it
+    // open and only unwritten words are carried over. The session is not chosen - it
     // arrives a second into a sitting that has already begun - so everything open is
     // kept and whatever is in front stays in front. A note opened in that second
     // used to be closed again a moment later, and a drive had to hold still for a
@@ -883,7 +885,7 @@ class Workspace {
       kind: tab.kind,
       path: tab.path,
       name: tab.name,
-      // Only unsaved words are worth writing down: a note that is on disk is
+      // Only unwritten words are worth writing down: a note that is on disk is
       // re-read from there on the way back in (see `tabsFrom`), so its copy here
       // would never be looked at, and copying a large one every time the typing
       // pauses is not free.
@@ -1000,25 +1002,29 @@ class Workspace {
     this.scheduleSession()
   }
 
+  /** A new note: a tab, and nothing else, until its first word makes it a file; see
+   *  workspace/drafts.ts. One that arrives with words in it already - a document
+   *  imported, a file uploaded into the browser - is a file from the start. */
   openBlank(name = UNTITLED, doc = '') {
     const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc })
     this.add(new Tab(note, this.panes.focusedId))
+    if (doc) this.saving.owed(note)
   }
 
   /** A new plane, and a new stack of paper: a tab, and nothing else.
    *
-   *  No file in the space and no row in the list until somebody saves it, which is what
-   *  a new note has always been and what Emil asked for the other three to be: *"if you
-   *  create a new webnote by clicking the plus for a new tab, then it should open it as
-   *  a tab and not create it in the sidebar. Same for canvas and page notes. And like
-   *  normal notes, then can then of course be saved as well, but they should be able to
-   *  exist in an "unsaved" state. Just as a tab, like a browser tab normally would."*
+   *  No file in the space and no row in the list until something is drawn or written
+   *  on it, which is what a new note is and what Emil asked for the other three to be:
+   *  *"if you create a new webnote by clicking the plus for a new tab, then it should
+   *  open it as a tab and not create it in the sidebar. Same for canvas and page
+   *  notes."* An untouched plane closed again leaves nothing behind; the first stroke
+   *  makes it a file in the space, the way a note's first word does. See
+   *  workspace/drafts.ts.
    *
-   *  Clean rather than dirty, like the blank page a window used to start with: an
-   *  untouched plane has nothing in it to lose, so it wears no dot and closes without a
-   *  question, and the first stroke drawn on it is what makes both true. The words are
-   *  what a blank one says, so the surface has something to read and the session has
-   *  something to keep; see `draftOf` and NewHere.svelte.
+   *  Clean rather than dirty, like the blank page a window starts with: an untouched
+   *  plane has nothing in it to write. The words are what a blank one says, so the
+   *  surface has something to read and the session has something to keep; see
+   *  `draftOf` and NewHere.svelte.
    *
    *  The two makers beside these - `createCanvas` and `createPages` - are the file
    *  list's own gesture and still write a named file where they are asked to. */
@@ -1112,22 +1118,66 @@ class Workspace {
     return this.opened.make(start)
   }
 
-  /** Whether the note at a path keeps itself, which is to say whether saving it
-   *  is anybody's job. A note in a space is Nib's to look after: it is written as
-   *  soon as the typing pauses, an account carries it away when there is one, and
-   *  a room carries every keystroke while another device is in it. Nobody has to
-   *  save such a note, so nothing asks them to - no mark, no question on the way
-   *  out, and no auto-save to turn on, because it is always on.
-   *
-   *  A file opened from the computer is the other case, and the only one: it lives
-   *  outside every space, nothing here is looking after it, and writing over
-   *  somebody's own file is not something to do behind their back. Saving is
-   *  theirs to ask for, and it wears the mark until they do.
-   *
-   *  Whether an account is signed in does not come into it. A space is a space:
-   *  what the reader sees must not change under them when a sync stops. */
-  keepsItself(path: string | null): boolean {
-    return path !== null && this.spaces.some((one) => within(one.root, path) !== null)
+  /** Whether a file is outside every space: one the reader opened from elsewhere on
+   *  the computer. It writes itself as a note in a space does, and it is the one
+   *  kind of file something else may be writing too - a build, a script, git - so
+   *  what it says on the disk is kept as a version before a write replaces it; see
+   *  watch.svelte.ts. */
+  outside(path: string): boolean {
+    return !this.spaces.some((one) => within(one.root, path) !== null)
+  }
+
+  /** The folder a new tab becomes a file in: the root of the space on screen. Read
+   *  first where the spaces are not known yet, so a note typed into in the launch's
+   *  first second lands in the space that is there; a machine with none gets its
+   *  first, as Obsidian's first launch ends in a vault. */
+  async draftHome(): Promise<string | null> {
+    if (!this.activeSpace) await this.loadSpaces()
+
+    const here = this.activeSpace?.root
+    if (here !== undefined) return here
+
+    const made = await this.addSpace(t('Notes'))
+    return made?.root ?? null
+  }
+
+  /** A file the note's own words renamed: everything a rename owes - the links to
+   *  it, the stores that keep it by path, the account - with no step on the undo
+   *  stack, because nobody did it. See workspace/drafts.ts. */
+  async retitle(path: string, name: string) {
+    await this.renameFile(path, joinPath(folderOf(path), name), false)
+  }
+
+  /** A file a new tab has just become, in the list and among the notes opened lately
+   *  before the disk has it: the same optimistic row every other new file gets. */
+  born(path: string) {
+    this.showEntry(this.freshEntry(path, false))
+    this.remember(path)
+  }
+
+  /** A file just written over, in a list sorted by when things changed: the row
+   *  moves as it would have at the next listing. Nothing in any other order, where
+   *  the row is exactly where it was, and never a listing of the whole space per
+   *  write. */
+  touched(path: string) {
+    if (!this.sortMode.startsWith('modified')) return
+
+    const entry = this.entryAt(path)
+    if (entry) this.showEntry({ ...entry, modified: Date.now() })
+  }
+
+  /** A note born this sitting that ended up with nothing in it, gone again as its
+   *  last tab closed. Deleted outright rather than put in the trash or on the undo
+   *  stack: there is nothing in it to want back. See `closed` in
+   *  workspace/saving.svelte.ts. */
+  async discard(path: string) {
+    this.hideEntry(path)
+    links.noteGone(path)
+    try {
+      await invoke('delete_note', { path })
+    } finally {
+      await this.loadTree()
+    }
   }
 
   /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
@@ -1287,7 +1337,7 @@ class Workspace {
 
   /** The preview tab the next look may take the place of, or null where there is
    *  none to take: one only being looked at, in the pane being worked in, holding
-   *  nothing unsaved, and the one view of its document - taking over a tab another
+   *  nothing unwritten, and the one view of its document - taking over a tab another
    *  pane is also showing would change what that pane shows. */
   private replaceablePreview(): Tab | null {
     return (
@@ -1452,9 +1502,9 @@ class Workspace {
     return convertWebsites(this)
   }
 
-  /** A web tab with nowhere to go yet: what "Open a website" makes. The address
-   *  field takes the keyboard, and the file is written as soon as the page says what
-   *  it is called; see `keepWeb`.
+  /** A web tab with nowhere to go yet: what "Open a website" and Ctrl+T make. The
+   *  address field takes the keyboard, and nothing is written: browsing leaves no
+   *  file behind until somebody keeps the page; see `keepAsWebNote`.
    *
    *  No file first, because this is the gesture that starts with an address rather
    *  than with a name: a folder of `Untitled` shortcuts is what asking for a name
@@ -1484,10 +1534,10 @@ class Workspace {
    *  it arrives in front of the reader or only in the strip is the browser's own rule
    *  about which modifier was held, decided in open-link.ts and not here.
    *
-   *  Nothing is written down. A tab with no file is a browser tab until Ctrl+S makes a
-   *  shortcut of it, which is exactly what a link followed and closed again deserves:
+   *  Nothing is written down. A tab with no file is a browser tab until somebody keeps
+   *  it as a web note, which is exactly what a link followed and closed again deserves:
    *  a folder full of `.url` files nobody asked for is what writing here would leave
-   *  behind. See `keepWeb`.
+   *  behind. See `keepAsWebNote`.
    *
    *  A press with a modifier puts the tab beside the one it was pressed in, as a
    *  browser does; see new-tab.ts. `opener` is for a page asking for a window of its
@@ -1624,7 +1674,7 @@ class Workspace {
    *  page do not write two files. */
   private readonly keeping = new Set<string>()
 
-  /** What the strip calls a website nobody has saved: whatever the page calls itself.
+  /** What the strip calls a website nobody has kept: whatever the page calls itself.
    *
    *  A tab with no file is a browser tab, so it wears the page's own title and the
    *  page's own mark and there is nothing on disk saying either. A tab that has a file
@@ -1637,60 +1687,62 @@ class Workspace {
     if (named && tab.name !== named) tab.name = named
   }
 
-  /** Writes the shortcut for a website that has none, which is what saving one means.
+  /** Keeps a website as a web note: the shortcut for a tab that has none.
    *
-   *  Emil, 2026-09-14: a new web tab *"should open it as a tab and not create it in the
-   *  sidebar ... they should be able to exist in an "unsaved" state. Just as a tab, like
-   *  a browser tab normally would."* So nothing is written while somebody is only
-   *  reading, and this is the moment they say to keep it: the address the tab is on, the
-   *  title the page reported, and the site's own mark, in the folder the sheet asked
-   *  about. From here on it is an ordinary file and the reading follows it; see keep.ts.
+   *  Browsing writes nothing - not as a note writes itself, and not on Ctrl+S - and
+   *  keeping a page is something somebody does, the way a bookmark is: from the tab's
+   *  menu or the palette, the address, the page's title and its mark, in the space on
+   *  screen, named after the page, asked nothing. From here on it is an ordinary file
+   *  and the reading follows it; see keep.ts.
    *
-   *  The tab becomes the saved one in place - the same tab, the same page, still live -
+   *  The tab becomes the kept one in place - the same tab, the same page, still live -
    *  because all that changes is which file the document is of.
    *
    *  Which makes this the one gesture that gives a file to a document that already
-   *  exists, and so the one that can put a second document on a file. The name came
-   *  from the save sheet, which stepped it aside by number off the file list - and a
-   *  listing is a round trip behind what is open, so two tabs kept in the same
-   *  instant were handed the same name. It is asked for again here, against what is
-   *  open as well as what is listed, and claimed before the write begins: the same
-   *  rule and the same owner as opening a file. See workspace/open.ts. */
-  async keepWeb(tab: Tab, path: string) {
+   *  exists, and so the one that can put a second document on a file. A listing is a
+   *  round trip behind what is open, so two tabs kept in the same instant were once
+   *  handed the same name. The name is asked for against what is open as well as
+   *  what is listed, and claimed before the write begins: the same rule and the same
+   *  owner as opening a file. See workspace/open.ts. */
+  async keepAsWebNote(tab: Tab) {
     if (tab.kind !== 'web' || tab.path !== null || this.keeping.has(tab.id)) return
-
-    // Picked and claimed with nothing between them, which is the whole of it: a
-    // second keep of the same name finds this one written down however closely it
-    // follows, and steps aside by number rather than landing on the same file.
-    const dir = folderOf(path)
-    const target = joinPath(dir, this.freeName(dir, nameOf(path)))
-    await this.opened.opening(target, () => this.keptWeb(tab, target))
-  }
-
-  /** The shortcut one keep writes, and the document it leaves at that file. Only
-   *  `keepWeb` calls it, and only through the one claim. */
-  private async keptWeb(tab: Tab, path: string): Promise<NoteDoc | null> {
-    const page = pages.of(tab.id)
-    const url = page.url ?? tab.address ?? ''
-    const title = (page.title || tab.name || UNTITLED).trim()
+    this.keep(tab.id)
 
     this.keeping.add(tab.id)
     try {
-      const text = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
+      const dir = await this.draftHome()
+      if (dir === null) return
 
-      this.showEntry(this.freshEntry(path, false))
-      await writeFile(path, text)
-      await this.loadTree()
+      const title = (pages.of(tab.id).title || tab.name || UNTITLED).trim()
 
-      tab.note.path = path
-      tab.note.name = nameOf(path)
-      tab.note.replace(text, false)
-      this.remember(path)
-      this.persist()
-      return tab.note
+      // Picked and claimed with nothing between them, which is the whole of it: a
+      // second keep of the same name finds this one written down however closely it
+      // follows, and steps aside by number rather than landing on the same file.
+      const file = `${nameFromTitle(title) ?? UNTITLED}.url`
+      const target = joinPath(dir, this.freeName(dir, file))
+      await this.opened.opening(target, () => this.keptWeb(tab, target, title))
     } finally {
       this.keeping.delete(tab.id)
     }
+  }
+
+  /** The shortcut one keep writes, and the document it leaves at that file. Only
+   *  `keepAsWebNote` calls it, and only through the one claim. */
+  private async keptWeb(tab: Tab, path: string, title: string): Promise<NoteDoc | null> {
+    const page = pages.of(tab.id)
+    const url = page.url ?? tab.address ?? ''
+    const text = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
+
+    this.showEntry(this.freshEntry(path, false))
+    await writeFile(path, text)
+    await this.loadTree()
+
+    tab.note.path = path
+    tab.note.name = nameOf(path)
+    tab.note.replace(text, false)
+    this.remember(path)
+    this.persist()
+    return tab.note
   }
 
   /** A page note in the space, in a tab of its own. The same three lines a canvas
@@ -1790,7 +1842,7 @@ class Workspace {
    *  - so none of them can open a paper or a plane as text.
    *
    *  `open` itself stays about notes: a note is what the caret, the preview tab
-   *  and every unsaved word belong to. */
+   *  and every word typed belong to. */
   /** Steps off the welcome note once the account has brought real notes down.
    *
    *  A browser build opens the welcome note because on a first visit there is
@@ -1855,7 +1907,7 @@ class Workspace {
    *  `=== tab` on the object just pushed is never true.
    *
    *  A tab that is not a note is never scaffolding: the graph of the space has no
-   *  path and nothing unsaved either, and closing it behind the reader's back
+   *  path and no words either, and closing it behind the reader's back
    *  because they opened a note would be a surprise. */
   private dropScaffolding(kept: Tab) {
     for (const other of this.tabsIn(kept.paneId)) {
@@ -2392,33 +2444,29 @@ class Workspace {
     if (this.previewTabId === id) this.previewTabId = null
   }
 
-  /** Closes a tab, asking first when the note in it holds work that is not on
-   *  disk. Every close somebody asked for goes through here: the cross on the
-   *  tab, Ctrl+W, the menu row and the palette. `close` below stays the plain
-   *  operation, which is what everything that closes a tab because the note has
+  /** Closes a tab somebody asked to close: the cross on the tab, Ctrl+W, the menu row
+   *  and the palette. Nothing is asked about words - every note writes itself, and
+   *  what one was waiting to write goes down as its tab closes; see `closed` in
+   *  workspace/saving.svelte.ts. The one question left is a terminal's, about
+   *  something still running in it; see terminal/closing.ts. `close` below stays the
+   *  plain operation, which is what everything that closes a tab because the note has
    *  gone away needs.
    *
-   *  Nothing is asked when the note stays open in another pane: closing one of
-   *  two views of a note loses nothing at all.
-   *
    *  A pinned tab has no cross, but its menu row and the middle button close it
-   *  outright, as a browser's do. This used to refuse. */
+   *  outright, as a browser's do. */
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (!tab) return
-    if (await this.mayClose([tab])) this.close(id)
+    if (tab && (await this.mayClose([tab]))) this.close(id)
   }
 
-  /** The tab being worked in, closed with the question. What Ctrl+W, the File
-   *  menu, the palette and `:q` all mean by closing, and a pinned tab is asked
-   *  about first; see workspace/closing-pinned.ts. */
+  /** The tab being worked in, closed. What Ctrl+W, the palette and `:q` all mean by
+   *  closing, and a pinned tab is asked about first; see workspace/closing-pinned.ts. */
   async closeActive() {
     const tab = this.active
     if (tab && (!tab.pinned || (await closesPinned()))) await this.closeAsking(tab.id)
   }
 
-  /** The tabs of a pane around one, asking once about anything unsaved; which tabs
-   *  is workspace/closing-around.ts. */
+  /** The tabs of a pane around one; which tabs is workspace/closing-around.ts. */
   async closeAround(id: string, which: Around) {
     const tab = this.tabs.find((one) => one.id === id)
     const going = tab ? closedAround(this.tabsIn(tab.paneId), id, which) : []
@@ -2432,84 +2480,43 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  /** Whether the window may go, which is the same question over every tab in it.
-   *  See start.ts, which is what prevents the close until this answers.
-   *
-   *  A note somebody answered Don't save about is closed before the window goes, as
-   *  closing its tab would close it, and the session is written at once. The window
-   *  goes with its tabs, and the next window - the Dock's, the next launch's - opens
-   *  the session they were written into, so the words came back, and the question with
-   *  them on every quit after. */
-  async mayCloseWindow(): Promise<boolean> {
-    const letGo: NoteDoc[] = []
-    if (!(await this.mayClose(this.tabs, letGo, false))) return false
-
-    for (const tab of this.tabs.filter((one) => letGo.includes(one.note))) this.close(tab.id)
-    this.persist()
-    return true
-  }
-
-  /** Whether a set of tabs may all go: the closing question once per note,
-   *  however many of the tabs hold it, and nothing asked about a note that stays
-   *  open outside the set. Cancel at any one of them stops the lot, because
-   *  closing is one gesture and half of it done is worse than none.
-   *
-   *  Asked of documents rather than of tabs throughout: a note is the thing with
-   *  words in it, and a tab is only a way of looking at one. `letGo` is told which
-   *  notes were answered Don't save. A terminal running something asks too, except as
-   *  the window goes (`shells` false); see terminal/closing.ts. */
-  private async mayClose(
-    closing: readonly Tab[],
-    letGo: NoteDoc[] = [],
-    shells = true,
-  ): Promise<boolean> {
-    this.flush()
-
-    const going = closing.map((tab) => tab.id)
-    const asked: NoteDoc[] = []
-
-    for (const tab of closing) {
-      if (asked.includes(tab.note)) continue
-      asked.push(tab.note)
-
-      if (!tab.note.unsaved) continue
-      // A note another pane keeps showing is not going anywhere.
-      if (this.tabs.some((one) => one.note === tab.note && !going.includes(one.id))) continue
-      if (!(await this.askToClose(tab.note, letGo))) return false
-    }
-
-    if (__EVEN_PLUGIN__ || !shells || !closing.some((tab) => tab.kind === 'terminal')) return true
+  /** Whether a set of tabs may all go. Nothing is asked about a note, which writes
+   *  itself; a terminal running something asks, once for all of them - but never as
+   *  the window goes, which puts every tab back on the next launch. See
+   *  terminal/closing.ts. */
+  private async mayClose(closing: readonly Tab[]): Promise<boolean> {
+    if (__EVEN_PLUGIN__ || !closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
     return mayEnd(closing)
   }
 
-  /** The one question the app asks before words are lost, in three answers
-   *  because there are three things a person can mean: write it down, let it go,
-   *  or stay where they are.
-   *
-   *  Saving a note with no home yet goes through the name prompt, the way saving
-   *  one always does. A name nobody gives leaves the note unsaved, and then the
-   *  close does not happen either. */
-  private async askToClose(note: NoteDoc, letGo: NoteDoc[]): Promise<boolean> {
-    const { prompt } = await import('./prompt.svelte')
-
-    const answer = await prompt.choose({
-      title: t('Save {name}?', { name: note.shown }),
-      options: [
-        { id: 'save', label: key('Save'), primary: true },
-        { id: 'discard', label: key('Don’t save'), danger: true, discards: true },
-        { id: 'cancel', label: key('Cancel') },
-      ],
-    })
-
-    if (answer === 'discard') letGo.push(note)
-    if (answer !== 'save') return answer === 'discard'
-
-    await this.saving.write(note)
-    return !note.unsaved
+  /** Every write that is owed, done and waited for: what the window waits on before
+   *  it goes, and what Ctrl+S is. See start.ts and `writeNow` in
+   *  workspace/saving.svelte.ts. */
+  async writeNow() {
+    await this.saving.writeNow()
   }
 
-  /** `reopenable` false is for a tab nobody closed - a preview the next look took
+  /** The same wait without the version Ctrl+S keeps: the window going. */
+  async writesSettled() {
+    await this.saving.settled()
+  }
+
+  /** Whether anything is waiting to be written or being written now. */
+  get writing(): boolean {
+    return this.saving.writing
+  }
+
+  /** Closes a tab. Every close goes through here: the cross on the tab, Ctrl+W, the
+   *  menu row, the palette, and everything that closes a tab because its note has
+   *  gone away. Nothing is asked - there is nothing unsaved to ask about - and what
+   *  the note was waiting to write goes down now; see `closed` in
+   *  workspace/saving.svelte.ts.
+   *
+   *  A pinned tab has no cross, but its menu row and the middle button close it
+   *  outright, as a browser's do.
+   *
+   *  `reopenable` false is for a tab nobody closed - a preview the next look took
    *  the place of - which the closed stack has no business bringing back. */
   close(id: string, reopenable = true) {
     const tab = this.tabs.find((one) => one.id === id)
@@ -2518,7 +2525,7 @@ class Workspace {
     const paneId = tab.paneId
     const at = this.tabsIn(paneId).findIndex((one) => one.id === id)
 
-    // The words as they stand, since a tab closed with something unsaved in it
+    // The words as they stand, since a tab closed a moment after its last keystroke
     // has to bring that back with it.
     this.flush()
     if (reopenable && worthReopening(tab)) {
@@ -2531,6 +2538,7 @@ class Workspace {
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
+    this.saving.closed(tab.note)
 
     const left = this.tabsIn(paneId)
 
@@ -2554,7 +2562,7 @@ class Workspace {
 
   /** The tab that was closed last, back where it was: in the pane it was closed
    *  from while that pane is still there, at its own place in the strip, with
-   *  whatever was unsaved in it.
+   *  whatever words it held that its file had not been given yet.
    *
    *  A note that has since been deleted cannot come back, so the entry is spent
    *  and the one under it is tried: reaching past a note that is gone is what
@@ -2615,19 +2623,9 @@ class Workspace {
     this.saving.replace(text, target)
   }
 
-  /** Notes holding work nothing else has hold of. */
-  get unsaved(): NoteDoc[] {
-    return this.saving.unsaved
-  }
-
   /** The open notes a version could be kept of; see recovery.svelte.ts. */
   get worthKeeping(): { key: string; path: string; text: string; revision: number }[] {
     return this.saving.worthKeeping
-  }
-
-  /** Writes one tab down, because somebody asked. */
-  async save(target?: Tab) {
-    await this.saving.save(target)
   }
 
   /** Notes opened lately, for the palette. The taskbar keeps a list of its
@@ -3147,8 +3145,9 @@ class Workspace {
    *  import, an export and a note coming back out of Recently deleted all read it.
    *  Its own copy took the last dot of the name for an extension however little was
    *  in front of it, so `.hidden` came back as ` 2.hidden`. */
-  freeName(dir: string, wanted: string): string {
+  freeName(dir: string, wanted: string, except?: string): string {
     const taken = this.everyPath()
+    if (except !== undefined) taken.delete(except)
     return freePath(wanted, (candidate) => taken.has(joinPath(dir, candidate)))
   }
 
@@ -3278,10 +3277,28 @@ class Workspace {
     const target = joinPath(folderOf(path), clean)
     if (target === path) return
 
+    const note = this.opened.at(path)
+    if (!note) {
+      await this.renameFile(path, target, true)
+      return
+    }
+
+    // Named by somebody now, so no longer after its first line; see
+    // workspace/drafts.ts. And after whatever write of it is in the air, so the
+    // write cannot put the old name back beside the new one.
+    note.follows = false
+    await this.saving.holding(note, () => this.renameFile(path, target, true))
+  }
+
+  /** One file under another name in the same folder, and everything that owes: the
+   *  row, the links to it, the stores that keep it by path, the account, and the open
+   *  document. `undoable` is whether somebody did it - a row renamed - or the note's
+   *  own words did; only the first is a step to undo and a heading to rewrite. */
+  private async renameFile(path: string, target: string, undoable: boolean) {
     // The new name is on the row before the rename has happened; the listing
     // that follows is what settles it.
     this.showMove(path, target)
-    this.naming = null
+    if (undoable) this.naming = null
 
     // And back under the name it had if the rename did not happen. The field refuses
     // a name the listing it was drawn from held, so what is left here is a race - a
@@ -3304,7 +3321,14 @@ class Workspace {
     // pointed at the old name means resolving them against the space as it was.
     const rewrote = (await this.retarget(path, target)) > 0
     this.pathMoved(path, target)
-    this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
+    if (undoable) {
+      this.undone.record({
+        kind: 'rename',
+        from: path,
+        to: target,
+        ...(rewrote ? { rewrote } : {}),
+      })
+    }
 
     const note = this.opened.at(path)
     if (note) {
@@ -3312,10 +3336,12 @@ class Workspace {
       // A new note is written with its own name as the heading, so renaming it
       // straight afterwards would otherwise leave `# Untitled` at the top. Only
       // while the heading still is the old name; an edited one is the author's.
+      // Never for a note its own words renamed: the heading is where the name came
+      // from.
       const was = `# ${shownName(nameOf(path))}`
-      if (note.text === was || note.text.startsWith(was + '\n')) {
+      if (undoable && (note.text === was || note.text.startsWith(was + '\n'))) {
         // Nobody typed this, so it goes in the way any other outside edit does.
-        note.replace(`# ${shownName(clean)}${note.text.slice(was.length)}`, note.dirty)
+        note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
       }
 
       note.path = target
@@ -3950,8 +3976,8 @@ class Workspace {
     return !(tab?.paneId === paneId && this.tabsIn(paneId).length < 2)
   }
 
-  /** A pane and everything in it, asking about whatever is unsaved among its
-   *  notes. The last pane cannot go: a window with none has nowhere to show a
+  /** A pane and everything in it, asking only about a terminal running something
+   *  among its tabs. The last pane cannot go: a window with none has nowhere to show a
    *  note. */
   async closePane(paneId: string = this.panes.focusedId) {
     if (this.panes.count < 2) return

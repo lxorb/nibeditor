@@ -325,7 +325,6 @@ function openNote(path: string, words: string) {
   return new NoteDoc(
     { kind: 'note', path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
     () => undefined,
-    () => true,
   )
 }
 

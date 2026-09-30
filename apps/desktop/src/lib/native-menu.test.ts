@@ -22,7 +22,6 @@ const KEYS: Record<string, string> = {
   'app.new': 'Mod-n',
   'app.new-kind': 'Mod-t',
   'app.open': 'Mod-o',
-  'app.save': 'Mod-s',
   'app.settings': 'Mod-,',
   'app.close': 'Mod-w',
   'app.fullscreen': 'Mod-Ctrl-f',
@@ -111,8 +110,6 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
         row('New note', 'app.new'),
         row('New tab', 'app.new-kind'),
         row('Open file', 'app.open'),
-        DIVIDER,
-        row('Save', 'app.save'),
       ],
       closing: [row('Close note', 'app.close')],
     },
@@ -242,8 +239,6 @@ describe('the strip', () => {
       'Open file',
       'Open recent',
       '---',
-      'Save',
-      '---',
       'Print',
       '---',
       'Version history',
@@ -251,7 +246,6 @@ describe('the strip', () => {
       'Close note',
     ])
     expect(itemIn(file, 'New tab').accelerator).toBe('Cmd+T')
-    expect(itemIn(file, 'Save').accelerator).toBe('Cmd+S')
     expect(itemIn(file, 'Close note').accelerator).toBe('Cmd+W')
   })
 
@@ -262,8 +256,6 @@ describe('the strip', () => {
       'New tab',
       'Open file',
       'Open recent',
-      '---',
-      'Save',
       '---',
       'Close note',
     ])
@@ -426,7 +418,7 @@ describe('the strip, changed', () => {
 
     expect(changesBetween(before, after)).toEqual([
       { id: 'nib.quit', text: 'Nib beenden' },
-      { id: 'file.9', enabled: true },
+      { id: 'file.7', enabled: true },
       { id: 'format.0', accelerator: 'Cmd+Shift+B' },
       { id: 'view.0', checked: true },
     ])
@@ -597,12 +589,12 @@ describe('the words a Mac writes its menus in', () => {
   test('a row that asks first ends in an ellipsis', () => {
     const groups = GROUPS.map((group) =>
       group.id === 'file'
-        ? { ...group, rows: [row('Save as', 'app.save-as', { asks: true }), ...group.rows] }
+        ? { ...group, rows: [row('Rename', 'app.rename', { asks: true }), ...group.rows] }
         : group,
     )
     const file = menu(bar({ groups }), 'file')
 
-    expect(read(file)).toContain('Save as…')
+    expect(read(file)).toContain('Rename…')
     expect(read(menu(bar(), 'nib'))).toContain('Settings…')
   })
 

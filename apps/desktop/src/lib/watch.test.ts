@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *  shim is stood in for before anything is imported. */
 const disk = new Map<string, { text: string; modified: number }>()
 
+/** The versions kept, as the history would have them. */
+const kept: { path: string; content: string }[] = []
+
 const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -21,6 +24,11 @@ vi.mock('./tauri', async (importOriginal) => ({
 
     if (command === 'file_stamp') {
       return Promise.resolve(file ? { modified: file.modified, len: file.text.length } : null)
+    }
+
+    if (command === 'snapshot_note') {
+      const content = typeof args?.content === 'string' ? args.content : ''
+      kept.push({ path: pathOf(args), content })
     }
 
     return Promise.resolve(undefined)
@@ -73,7 +81,9 @@ beforeEach(async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
 
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)
+  await workspace.writesSettled()
   disk.clear()
+  kept.length = 0
   sync.status = 'off'
   sync.lastError = null
 
@@ -116,7 +126,7 @@ describe('a file that changes under a note nobody has edited', () => {
   })
 })
 
-describe('a file that changes under a note with unsaved words in it', () => {
+describe('a file that changes under a note with unwritten words in it', () => {
   /** The rule: the editor's words are the ones somebody is looking at, and nothing
    *  the disk says is worth taking them away. */
   test('keeps every word the editor holds', async () => {
@@ -141,12 +151,35 @@ describe('a file that changes under a note with unsaved words in it', () => {
     expect([...watch.clashing]).toEqual([PATH])
   })
 
-  test('settles once the note is saved, and reloads nothing over the top of it', async () => {
+  /** The note writes itself, so its words are on their way over the file: what the
+   *  file said is kept as a version first, and nothing is lost either way. */
+  test('keeps what the disk said as a version before the note is written over it', async () => {
     open().replace('mine\n')
     written('theirs\n', 2000)
     await watch.look()
 
-    // Saved: the file is what the editor holds, and the clash is over.
+    expect(kept).toEqual([{ path: PATH, content: 'theirs\n' }])
+  })
+
+  test('and the same when the file moved in the moment before a write', async () => {
+    written('theirs\n', 2000)
+    await watch.beforeWrite(PATH, 'mine\n')
+
+    expect(kept).toEqual([{ path: PATH, content: 'theirs\n' }])
+    expect(sync.status).toBe('error')
+  })
+
+  test('but keeps nothing when the file is as the last look left it', async () => {
+    await watch.beforeWrite(PATH, 'mine\n')
+    expect(kept).toEqual([])
+  })
+
+  test('settles once the note is written, and reloads nothing over the top of it', async () => {
+    open().replace('mine\n')
+    written('theirs\n', 2000)
+    await watch.look()
+
+    // Written: the file is what the editor holds, and the clash is over.
     written('mine\n', 3000)
     open().replace('mine\n', false)
     await watch.look()

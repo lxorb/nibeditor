@@ -97,7 +97,7 @@ vi.mock('../workspace.svelte', () => ({
       return Promise.resolve()
     },
     replace: () => undefined,
-    save: () => Promise.resolve(),
+    writeNow: () => Promise.resolve(),
     open: (path: string) => {
       opened.push(path)
       return Promise.resolve()

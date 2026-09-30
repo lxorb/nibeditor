@@ -81,7 +81,7 @@
   <!-- The file's own mark, drawn by the component the file list draws it with and
        handed the same path: a note that chose a rocket wears the rocket here too, and
        one that chose nothing wears its kind's drawing. A tab with no file yet - an
-       unsaved note, a new plane - has no path to have chosen anything with, and gets
+       new note, a new plane - has no path to have chosen anything with, and gets
        its kind's drawing for the same reason. -->
   <FileMark {mark} path={tab.path ?? undefined} />
 {:else}

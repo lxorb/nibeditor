@@ -230,26 +230,19 @@ function closeEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** Only for a tab with no file: every other kind of tab is written as the typing
- *  pauses and has nothing to save. The row is here because a tab is where somebody
- *  looking at an unsaved one is pointing; the key and the menu bar say the same thing.
- *  See `save` in workspace/saving.svelte.ts. */
-function saveEntry(tab: Tab): MenuEntry[] {
-  // A terminal is a session: nothing in it is a file's words.
-  if (tab.path !== null || tab.kind === 'terminal') return []
+/** Only for a web tab with no file: browsing writes nothing, and this is where
+ *  somebody pointing at the tab says to keep the page, as a web note in the space.
+ *  Every other kind of tab writes itself and has nothing to keep. See
+ *  `keepAsWebNote` in workspace.svelte.ts. */
+function keepWebEntry(tab: Tab): MenuEntry[] {
+  if (tab.kind !== 'web' || tab.path !== null) return []
 
-  return [
-    {
-      label: t('Save'),
-      hint: shortcuts.hint('app.save'),
-      run: () => void workspace.save(tab),
-    },
-  ]
+  return [{ label: t('Keep as web note'), run: () => void workspace.keepAsWebNote(tab) }]
 }
 
 export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
   return [
-    ...saveEntry(tab),
+    ...keepWebEntry(tab),
     ...readingEntry(tab),
     ...pageEntries(tab),
     ...shellEntries(tab),

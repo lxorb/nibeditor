@@ -182,7 +182,7 @@ def drive(browser) -> None:
     say("--- the reader's own list ---")
     page.evaluate(
         "() => { const bar = window.nibApp.toolbar; bar.reset();"
-        " bar.add('paragraph.task-list'); bar.add('app.save'); bar.remove('format.clear');"
+        " bar.add('paragraph.task-list'); bar.add('app.reading'); bar.remove('format.clear');"
         " bar.move(bar.ids.length - 1, 0); return bar.ids }"
     )
     page.wait_for_timeout(400)
@@ -192,9 +192,9 @@ def drive(browser) -> None:
 
     # A command that is not the editor's at all, pressed from the bar.
     page.evaluate(CARET)
-    page.click('.nib-bar.docked button[aria-label="Save"]')
+    page.click('.nib-bar.docked button[aria-label="Reading"]')
     page.wait_for_timeout(400)
-    say(f"Save from the bar left the note saved: {page.evaluate('() => !window.nibApp.workspace.active.unsaved')}")
+    say(f"Reading from the bar turned the note: {page.evaluate('() => window.nibApp.workspace.active.reading')}")
 
     say("--- the pane it is put together in ---")
     page.evaluate(KEYS, 0)

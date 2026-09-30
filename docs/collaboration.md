@@ -741,9 +741,9 @@ never shows the moment in between.
 
 A space somebody else is in carries a quiet mark on its row in the switcher,
 `SharedMark.svelte`, which is the same mark the file list draws on a shared
-note. It used to be a dot in the accent, and a dot on a tab means a note not
-written down yet: one shape was saying two unrelated things, so the dot is the
-saving dot now and anything about other people is a mark.
+note. It used to be a dot in the accent, and a dot on a tab meant a note not
+written down yet: one shape was saying two unrelated things, so anything about
+other people is a mark. The tab's dot has since gone too, with manual saving.
 
 A guest the link let in is a row in the same two lists, named by the name their
 device gave them, with `Guest` under it where a member has their address - and

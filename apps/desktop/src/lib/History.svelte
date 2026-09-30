@@ -84,7 +84,7 @@
 
   /** Both histories as one list, newest first.
    *
-   *  A save the device kept and then pushed is one moment, and it is in both
+   *  A version the device kept and then pushed is one moment, and it is in both
    *  lists; the device's copy wins, because reading it costs nothing. Anything
    *  the account holds that this machine does not - written on the phone, or
    *  written here before the disk was wiped - comes after it in time order like
@@ -110,8 +110,8 @@
     return [...here, ...fromAccount].sort((one, other) => other.at - one.at)
   }
 
-  /** How close two versions have to be to be the same save seen twice. A push
-   *  follows the save that caused it by a pass at most. */
+  /** How close two versions have to be to be the same one seen twice. A push
+   *  follows the write that caused it by a pass at most. */
   const TOGETHER = 60 * 1000
 
   $effect(() => {
@@ -239,10 +239,8 @@
     aria-label={t('Version history')}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    {#if !workspace.active?.path}
-      <p class="empty">{t('Save this note first; there is nothing to compare against yet.')}</p>
-    {:else if !versions.length}
-      <p class="empty">{t('No earlier versions yet. One is kept each time you save.')}</p>
+    {#if !workspace.active?.path || !versions.length}
+      <p class="empty">{t('No earlier versions yet.')}</p>
     {:else}
       <ul class="versions" use:scrollbar>
         {#each rows as row (row.month ?? row.version?.at)}

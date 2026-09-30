@@ -1,21 +1,17 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Writing what is open down, driven by a stand-in store.
  *
- *  The workspace's own tests take the two rules the long way round - a note in a
- *  space writes itself, a file from the computer waits to be asked; see
- *  workspace.test.ts. What is here is the dot's own life, which those cannot watch
- *  without a clock: it comes on for a write, turns to a tick when the file is down,
- *  and goes by itself a moment later. And the one refusal that matters - a
- *  document that moved on to another note while its write was in the air. */
+ *  The workspace's own tests take the rules the long way round, through tabs and
+ *  files; see workspace.test.ts. What is here is the machinery on its own clock:
+ *  the pause, the ceiling on it, a draft's first word making a file, the name that
+ *  follows the first line, one file operation at a time per document, the version
+ *  a sitting's first write keeps, and a write the disk refuses. */
 
 const sent: { command: string; path: string; content: string }[] = []
 
-/** A write held open, so a test can move the document on mid-flight. */
+/** A write held open, so a test can do something while it is in the air. */
 let holding: Promise<void> | null = null
-
-/** Which command `holding` holds open: the write itself, or the snapshot before it. */
-let held = 'write_note'
 
 /** Paths the disk refuses a write to, and how many more times it will. */
 const refusing = new Map<string, number>()
@@ -27,7 +23,7 @@ vi.mock('../tauri', () => ({
       path: typeof args?.path === 'string' ? args.path : '',
       content: typeof args?.content === 'string' ? args.content : '',
     })
-    if (command === held && holding) await holding
+    if (command === 'write_note' && holding) await holding
 
     const path = typeof args?.path === 'string' ? args.path : ''
     const left = refusing.get(path) ?? 0
@@ -45,79 +41,130 @@ vi.mock('../link-index.svelte', () => ({
   links: { noteSaved: () => undefined },
 }))
 
-vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+/** What the watch on outside files was told: a write about to land, and one that did. */
+const watched: string[] = []
+vi.mock('../watch.svelte', () => ({
+  watch: {
+    beforeWrite: (path: string) => {
+      watched.push(`before ${path}`)
+      return Promise.resolve()
+    },
+    wrote: (path: string) => {
+      watched.push(`wrote ${path}`)
+      return Promise.resolve()
+    },
+  },
+}))
+
+const light = { status: 'off', lastError: null as string | null }
+vi.mock('../sync.svelte', () => ({ sync: Object.assign(light, { nudge: () => undefined }) }))
 
 const { Saving } = await import('./saving.svelte')
 const { settleUp } = await import('../parting')
-const { NoteDoc, Tab } = await import('./documents.svelte')
+const { NoteDoc, Tab, UNTITLED } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('./documents.svelte').NoteDoc
+type Entry = import('../workspace.svelte').Entry
 
 const SPACE = '/space'
 
 /** One row of a listing, as the disk hands it over. */
-function row(path: string, children: Entry[] = []): Entry {
+function row(path: string): Entry {
   return {
     name: path.slice(path.lastIndexOf('/') + 1),
     path,
-    is_dir: children.length > 0,
+    is_dir: false,
     modified: 0,
     created: 0,
-    children,
+    children: [],
   }
 }
 
-/** The space's listing, holding whatever paths are named. What the store's own
- *  `tree` is, and what says whether a note still has a file: a delete takes the
- *  row out of it before it touches the disk. */
+/** The space's listing, holding whatever paths are named. What says whether a note
+ *  still has a file: a delete takes the row out of it before it touches the disk. */
 function listing(paths: readonly string[]): Entry {
-  return row(
-    SPACE,
-    paths.map((one) => row(one)),
-  )
+  return { ...row(SPACE), is_dir: true, children: paths.map(row) }
 }
 
-type Entry = import('../workspace.svelte').Entry
+const written = (path?: string) =>
+  sent.filter((one) => one.command === 'write_note' && (path === undefined || one.path === path))
 
-/** A store with one document open in it. `kept` is the workspace's own answer to
- *  "is saving this anybody's job", which is the whole of what the two rules turn
- *  on. */
-function open(path: string | null, { kept = true, text = '# a' } = {}) {
+const versions = () => sent.filter((one) => one.command === 'snapshot_note')
+
+/** Every store a test made, so what one left waiting is written before the next
+ *  begins: the window going writes every store there is, and a note one test left
+ *  on its clock would otherwise land in the next test's list of writes. */
+const stores: InstanceType<typeof Saving>[] = []
+
+/** What a test document starts as, where it is not a note saying `# a`. */
+interface Starting {
+  text?: string
+  kind?: 'note' | 'canvas'
+}
+
+/** A store with one document open in it: a note at `path`, or a draft with none. */
+function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {}) {
   let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
+  const retitled: [string, string][] = []
+  const discarded: string[] = []
 
-  const ws: Writes & { kept: string[]; persisted: number } = {
+  const ws: Writes & { persisted: number; lists: number } = {
     tabs: [],
     documents: [],
     active: null,
     previewTabId: null,
-    spaces: [{ id: 's', name: 'Space', root: SPACE }],
-    activeSpaceId: 's',
     get tree() {
       return tree
     },
-    kept: [],
     persisted: 0,
-    keep(id) {
-      this.kept.push(id)
-    },
+    lists: 0,
+    keep: () => undefined,
     scheduleSession: () => undefined,
-    loadTree: () => Promise.resolve(),
+    loadTree() {
+      this.lists += 1
+      return Promise.resolve()
+    },
     persist() {
       this.persisted += 1
     },
-    keepWeb: () => Promise.resolve(),
-    // Nothing is in the way in these tests, so the wanted name is the free one.
-    freeName: (_folder: string, name: string) => name,
-    // There is a space already, so a save never has to make one here; see
-    // first-save.test.ts for the save that does.
-    addSpace: () => Promise.resolve(undefined),
+    draftHome: () => Promise.resolve(SPACE),
+    // What the listing and every open document hold, the one asking left out.
+    freeName: (folder: string, name: string, except?: string) => {
+      const taken = new Set([
+        ...tree.children.map((one) => one.path),
+        ...ws.documents.flatMap((one) => (one.path === null ? [] : [one.path])),
+      ])
+      if (except !== undefined) taken.delete(except)
+
+      const dot = name.lastIndexOf('.')
+      for (let n = 1; ; n++) {
+        const candidate = n === 1 ? name : `${name.slice(0, dot)} ${n}${name.slice(dot)}`
+        if (!taken.has(`${folder}/${candidate}`)) return candidate
+      }
+    },
+    retitle(from: string, name: string) {
+      retitled.push([from, name])
+      const note = ws.documents.find((one) => one.path === from)
+      if (note) {
+        note.path = `${SPACE}/${name}`
+        note.name = name
+      }
+      return Promise.resolve()
+    },
+    born: () => undefined,
+    touched: () => undefined,
+    discard(path: string) {
+      discarded.push(path)
+      return Promise.resolve()
+    },
+    outside: (at: string) => !at.startsWith(`${SPACE}/`),
   }
 
   const saving = new Saving(ws)
+  stores.push(saving)
   const note: Doc = new NoteDoc(
-    { kind: 'note', path, name: 'a.md', text, dirty: false },
+    { kind, path, name: path?.slice(path.lastIndexOf('/') + 1) ?? UNTITLED, text, dirty: false },
     (one) => saving.edited(one),
-    () => kept,
   )
   const tab = new Tab(note, 'p1')
 
@@ -126,160 +173,258 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
   Object.defineProperty(ws, 'active', { get: () => tab })
 
   /** The note deleted, as the store deletes one: the row leaves the listing and
-   *  the tab it was open in is closed, both before the file itself goes. See
-   *  `remove` in workspace.svelte.ts. */
+   *  the tab it was open in is closed, both before the file itself goes. */
   const deleted = () => {
     tree = listing([])
     ws.tabs.length = 0
     ws.documents.length = 0
   }
 
-  /** The tab closed on a note that is still there, which is the ordinary way a
-   *  document stops being shown. */
+  /** The tab closed, which is the ordinary way a document stops being shown. */
   const closed = () => {
     ws.tabs.length = 0
     ws.documents.length = 0
+    saving.closed(note)
   }
 
-  /** A second note open beside the first, in the same space and the same store. */
+  /** A second note open beside the first. */
   const beside = (other: string, words = '# b') => {
     tree = listing([...(path ? [path] : []), other])
     const second: Doc = new NoteDoc(
-      { kind: 'note', path: other, name: nameOfPath(other), text: words, dirty: false },
+      {
+        kind: 'note',
+        path: other,
+        name: other.slice(other.lastIndexOf('/') + 1),
+        text: words,
+        dirty: false,
+      },
       (one) => saving.edited(one),
-      () => kept,
     )
     ws.tabs.push(new Tab(second, 'p2'))
     ws.documents.push(second)
     return second
   }
 
-  return { saving, note, tab, ws, deleted, closed, beside }
-}
+  /** Types into the note the way the editor does: through the live text. */
+  const type = (words: string) => {
+    note.live.replace(words, true)
+  }
 
-const nameOfPath = (path: string) => path.slice(path.lastIndexOf('/') + 1)
+  return { saving, note, tab, ws, deleted, closed, beside, type, retitled, discarded }
+}
 
 beforeEach(() => {
   sent.length = 0
+  watched.length = 0
   holding = null
-  held = 'write_note'
   refusing.clear()
+  light.status = 'off'
+  light.lastError = null
   vi.useRealTimers()
 })
 
-describe('the dot beside a name', () => {
-  test('comes on for a write and turns to a tick when the file is down', async () => {
-    vi.useFakeTimers()
-    const { saving, tab } = open('/elsewhere/a.md', { kept: false })
-
-    const writing = saving.save(tab)
-    expect(saving.of(tab)).toBe('saving')
-
-    await writing
-    expect(saving.of(tab)).toBe('saved')
-  })
-
-  test('and the tick goes by itself a moment later', async () => {
-    vi.useFakeTimers()
-    const { saving, tab } = open('/elsewhere/a.md', { kept: false })
-
-    await saving.save(tab)
-    expect(saving.of(tab)).toBe('saved')
-
-    await vi.advanceTimersByTimeAsync(1400)
-    expect(saving.of(tab)).toBeUndefined()
-  })
-
-  test('and a note that keeps itself never wears one at all', async () => {
-    const { saving, tab } = open(`${SPACE}/a.md`)
-
-    await saving.save(tab)
-    expect(saving.of(tab)).toBeUndefined()
-    expect(sent.map((one) => one.command)).toEqual(['snapshot_note', 'write_note'])
-  })
-})
-
-describe('a write whose document has moved on', () => {
-  test('is refused rather than landing on the note that is there now', async () => {
-    // A file from the computer, so the dot is in play and can say what happened.
-    const { saving, note, tab } = open('/elsewhere/a.md', { kept: false })
-    const said = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-
-    let letGo = () => {
-      // Replaced the moment the promise below hands over its resolver.
-    }
-    holding = new Promise<void>((go) => {
-      letGo = () => go()
-    })
-
-    const writing = saving.save(tab)
-    expect(saving.of(tab)).toBe('saving')
-
-    // The one tab that previews a note takes another note on rather than being
-    // swapped for another document; see NoteDoc.arrivals.
-    note.adopt({ path: '/elsewhere/b.md', name: 'b.md', text: '# b' })
-    letGo()
-    await writing
-
-    // Not 'saved': the words reached the snapshot, and telling the document they
-    // are its file would be telling the wrong note.
-    expect(saving.of(tab)).toBeUndefined()
-    expect(said).toHaveBeenCalledOnce()
-    expect(note.path).toBe('/elsewhere/b.md')
-    said.mockRestore()
-  })
+afterEach(async () => {
+  vi.useRealTimers()
+  holding = null
+  refusing.clear()
+  await Promise.all(stores.map((one) => one.settled()))
 })
 
 describe('what the pause after the typing writes', () => {
-  test('is every note typed in since the last one, once each', async () => {
+  test('is every note typed in since the last one, once each, well inside a second', async () => {
     vi.useFakeTimers()
     const { note } = open(`${SPACE}/a.md`)
 
     note.replace('# a again')
     note.replace('# a once more')
-    expect(sent).toEqual([])
+    expect(written()).toEqual([])
 
-    await vi.advanceTimersByTimeAsync(1200)
-    expect(sent.filter((one) => one.command === 'write_note')).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(400)
+    expect(written()).toEqual([
+      { command: 'write_note', path: `${SPACE}/a.md`, content: '# a once more' },
+    ])
   })
 
-  test('and nothing at all for a note the reader is looking after themselves', async () => {
+  /** Somebody typing without a pause is written all the same: the pause is put off
+   *  by every keystroke, but never past its ceiling. */
+  test('and never waits more than two seconds while the typing never stops', async () => {
     vi.useFakeTimers()
-    const { note } = open('/elsewhere/a.md', { kept: false })
+    const { note } = open(`${SPACE}/a.md`)
+
+    for (let at = 0; at < 10; at++) {
+      note.replace(`# a ${String(at)}`)
+      await vi.advanceTimersByTimeAsync(250)
+    }
+
+    expect(written().length).toBeGreaterThanOrEqual(1)
+  })
+
+  /** Every document writes itself, wherever its file is: there is no Save for a
+   *  file from the computer to wait for either. */
+  test('and a file opened from the computer writes itself as well', async () => {
+    const { note, saving } = open('/elsewhere/a.md')
 
     note.replace('# typed')
-    await vi.advanceTimersByTimeAsync(5000)
+    expect(saving.writing).toBe(true)
+    await saving.settled()
 
-    expect(sent).toEqual([])
+    expect(written('/elsewhere/a.md')).toHaveLength(1)
+    // And the file is asked about on either side of the write, so what another
+    // program wrote meanwhile is kept as a version first; see watch.svelte.ts.
+    expect(watched).toEqual(['before /elsewhere/a.md', 'wrote /elsewhere/a.md'])
+  })
+
+  test('and keeps no version of its own: only the words as the sitting began', async () => {
+    vi.useFakeTimers()
+    const { note } = open(`${SPACE}/a.md`, { text: '# this morning' })
+
+    note.replace('# a')
+    await vi.advanceTimersByTimeAsync(400)
+    note.replace('# a b')
+    await vi.advanceTimersByTimeAsync(400)
+
+    expect(versions()).toEqual([
+      { command: 'snapshot_note', path: `${SPACE}/a.md`, content: '# this morning' },
+    ])
+    expect(written()).toHaveLength(2)
+  })
+})
+
+describe('a draft', () => {
+  /** A new tab is a tab and nothing else, and its first word makes it a file:
+   *  Apple Notes and Notion have no Save, and neither does a new note here. */
+  test('becomes a file on its first character, named after it, at once', async () => {
+    const { note, type, saving, ws } = open(null, { text: '' })
+
+    type('P')
+    await saving.settled()
+
+    expect(note.path).toBe(`${SPACE}/P.md`)
+    expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/P.md`, content: 'P' }])
+    // The list is read again once, for the file that is new.
+    expect(ws.lists).toBe(1)
+  })
+
+  test('and follows its first line on the pause after, rather than on every keystroke', async () => {
+    vi.useFakeTimers()
+    const { note, type, saving, retitled } = open(null, { text: '' })
+
+    type('P')
+    await saving.settled()
+    type('# Plan for Monday\n\nwords')
+    type('# Plan for Monday\n\nmore words')
+    expect(retitled).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(400)
+    expect(retitled).toEqual([[`${SPACE}/P.md`, 'Plan for Monday.md']])
+    expect(note.path).toBe(`${SPACE}/Plan for Monday.md`)
+    expect(written().at(-1)?.path).toBe(`${SPACE}/Plan for Monday.md`)
+  })
+
+  test('and stops following once somebody names it', async () => {
+    vi.useFakeTimers()
+    const { note, type, saving, retitled } = open(null, { text: '' })
+
+    type('P')
+    await saving.settled()
+    note.follows = false
+    type('# Something else')
+    await vi.advanceTimersByTimeAsync(400)
+
+    expect(retitled).toEqual([])
+  })
+
+  test('keeps the name it came with, where it came with one', async () => {
+    const { note, saving } = open(null, { text: '' })
+    note.name = 'Imported'
+    note.live.replace('words', true)
+    await saving.settled()
+
+    expect(note.path).toBe(`${SPACE}/Imported.md`)
+    expect(note.follows).toBe(false)
+  })
+
+  test('says nothing of white space: a blank draft stays a tab', async () => {
+    const { note, type, saving } = open(null, { text: '' })
+
+    type('   \n\n')
+    await saving.settled()
+
+    expect(note.path).toBeNull()
+    expect(written()).toEqual([])
+  })
+
+  test('closed untouched leaves nothing behind', async () => {
+    const { closed, saving, discarded } = open(null, { text: '' })
+
+    closed()
+    await saving.settled()
+
+    expect(written()).toEqual([])
+    expect(discarded).toEqual([])
+  })
+
+  /** A note begun and emptied again is litter, the empty `Untitled` every app
+   *  that makes the file first leaves behind; it goes with its tab. */
+  test('born and emptied again goes with its tab', async () => {
+    const { type, saving, closed, discarded } = open(null, { text: '' })
+
+    type('P')
+    await saving.settled()
+    type('')
+    closed()
+    await saving.settled()
+
+    expect(discarded).toEqual([`${SPACE}/P.md`])
+  })
+
+  test('a plane is born on its first change, as Untitled', async () => {
+    const { note, saving } = open(null, { text: '{}', kind: 'canvas' })
+
+    note.replace('{"nodes":[{"id":"a"}]}')
+    await saving.settled()
+
+    expect(note.path).toBe(`${SPACE}/Untitled.canvas`)
+    expect(note.follows).toBe(false)
+  })
+
+  test('two born together never land on one file', async () => {
+    const { note, type, saving, ws } = open(null, { text: '' })
+    const other = new NoteDoc(
+      { kind: 'note', path: null, name: UNTITLED, text: '', dirty: false },
+      (one) => saving.edited(one),
+    )
+    ws.tabs.push(new Tab(other, 'p2'))
+    ws.documents.push(other)
+
+    type('P')
+    other.live.replace('P', true)
+    await saving.settled()
+
+    expect(new Set([note.path, other.path]).size).toBe(2)
   })
 })
 
 describe('the window going while the typing is still warm', () => {
-  /** A note is written a second or so after the last keystroke, and a window closing
-   *  runs no teardown: the pause never came, so the sentence somebody typed and then
-   *  closed the window on was on no disk and in no session either. See `part` in
-   *  saving.svelte.ts and parting.ts. */
   const PATH = `${SPACE}/parting.md`
-  const written = () => sent.filter((one) => one.command === 'write_note' && one.path === PATH)
 
   test('writes the note that was waiting for the typing to stop', async () => {
     vi.useFakeTimers()
     const { note } = open(PATH)
 
     note.replace('# a\n\nthe last sentence')
-    expect(written()).toEqual([])
+    expect(written(PATH)).toEqual([])
 
     settleUp()
     await vi.advanceTimersByTimeAsync(0)
 
-    expect(written()).toEqual([
+    expect(written(PATH)).toEqual([
       { command: 'write_note', path: PATH, content: '# a\n\nthe last sentence' },
     ])
   })
 
   /** And the session with it, synchronously, because the write above is a round trip
-   *  a page being torn down may never come back from: whichever of the two landed,
-   *  the words are there to come back to. */
+   *  a page being torn down may never come back from. */
   test('and puts the same words in the session, which storage takes at once', () => {
     const { note, ws } = open(PATH)
 
@@ -290,28 +435,43 @@ describe('the window going while the typing is still warm', () => {
     expect(ws.persisted).toBe(was + 1)
   })
 
-  /** The session goes down whether or not anything was typed: a tab opened or
-   *  brought forward in the last half second is what it holds, and that is written
-   *  after a pause too. A file is only written where there was something to write. */
-  test('and writes the session even where nothing was typed', async () => {
-    vi.useFakeTimers()
-    const { ws } = open(PATH)
+  test('and says it is writing until the write has landed', async () => {
+    const { note, saving } = open(PATH)
 
-    const was = ws.persisted
-    settleUp()
-    await vi.advanceTimersByTimeAsync(0)
+    note.replace('# a\n\nthe last sentence')
+    expect(saving.writing).toBe(true)
 
-    expect(ws.persisted).toBe(was + 1)
-    expect(written()).toEqual([])
+    await saving.settled()
+    expect(saving.writing).toBe(false)
+  })
+})
+
+describe('Ctrl+S', () => {
+  test('writes what is waiting now, keeps the note in front as a version, and asks nothing', async () => {
+    const PATH = `${SPACE}/pressed.md`
+    const { note, saving } = open(PATH)
+
+    note.replace('# a\n\ntyped')
+    await saving.writeNow()
+
+    expect(written(PATH)).toEqual([{ command: 'write_note', path: PATH, content: '# a\n\ntyped' }])
+    expect(versions().at(-1)).toEqual({
+      command: 'snapshot_note',
+      path: PATH,
+      content: '# a\n\ntyped',
+    })
+  })
+
+  test('and on a blank new tab does nothing at all', async () => {
+    const { saving, note, ws } = open(null, { text: '' })
+
+    await saving.writeNow()
+    expect(note.path).toBeNull()
+    expect(ws.lists).toBe(0)
   })
 })
 
 describe('a note deleted while the typing was still warm', () => {
-  /** A note is written a second or so after the last keystroke, so deleting one
-   *  straight after typing in it leaves a write in the air with nowhere to go. It
-   *  used to land: the row came back into the file list about a second after it was
-   *  deleted, with the words in it, and where the delete took the folder around it
-   *  the folder came back too. See `gone` in saving.svelte.ts. */
   test('is not written back to the disk by the write that was waiting', async () => {
     vi.useFakeTimers()
     const { note, deleted } = open(`${SPACE}/a.md`)
@@ -320,21 +480,17 @@ describe('a note deleted while the typing was still warm', () => {
     deleted()
 
     await vi.advanceTimersByTimeAsync(5000)
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(written()).toEqual([])
   })
 
-  /** The other half of the same moment, and the reason the listing is asked about
-   *  rather than the tab alone: closing a tab on a note that is still there has to
-   *  write what was typed just before it was shut. */
-  test('while a tab closed on a note that is still there is written as it always was', async () => {
-    vi.useFakeTimers()
-    const { note, closed } = open(`${SPACE}/a.md`)
+  test('while a tab closed on a note that is still there is written at once', async () => {
+    const { note, closed, saving } = open(`${SPACE}/a.md`)
 
     note.replace('# a\n\nthe last thing typed')
     closed()
+    await saving.settled()
 
-    await vi.advanceTimersByTimeAsync(5000)
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([
+    expect(written()).toEqual([
       { command: 'write_note', path: `${SPACE}/a.md`, content: '# a\n\nthe last thing typed' },
     ])
   })
@@ -355,13 +511,8 @@ describe('what is worth keeping a version of', () => {
 })
 
 describe('a write the disk refuses', () => {
-  /** A full disk, a file a virus scanner is holding, a folder gone read-only. The
-   *  pause used to throw out of the queue: the note was never tried again unless
-   *  somebody typed in it, and every note behind it in the queue went unwritten. */
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
-  const written = (path: string) =>
-    sent.filter((one) => one.command === 'write_note' && one.path === path)
 
   test('is tried again a moment later without another keystroke', async () => {
     vi.useFakeTimers()
@@ -369,7 +520,7 @@ describe('a write the disk refuses', () => {
     refusing.set(A, 1)
 
     note.replace('# a\n\nthe last sentence')
-    await vi.advanceTimersByTimeAsync(1200)
+    await vi.advanceTimersByTimeAsync(400)
     expect(written(A)).toHaveLength(1)
     expect(note.dirty).toBe(true)
 
@@ -378,7 +529,7 @@ describe('a write the disk refuses', () => {
     expect(note.dirty).toBe(false)
   })
 
-  test('and does not keep the notes waiting behind it from going down', async () => {
+  test('and does not keep the notes waiting beside it from going down', async () => {
     vi.useFakeTimers()
     const { note, beside } = open(A)
     const other = beside(B)
@@ -386,21 +537,35 @@ describe('a write the disk refuses', () => {
 
     note.replace('# a typed')
     other.replace('# b typed')
-    await vi.advanceTimersByTimeAsync(1200)
+    await vi.advanceTimersByTimeAsync(400)
 
     expect(written(B)).toEqual([{ command: 'write_note', path: B, content: '# b typed' }])
     expect(other.dirty).toBe(false)
   })
+
+  /** A file that will not be written until somebody does something about it is on
+   *  the light, with its name: the words stay in the note and the tries go on. */
+  test('and the third refusal in a row is on the light', async () => {
+    vi.useFakeTimers()
+    const { note } = open(A)
+    refusing.set(A, 10)
+
+    note.replace('# a typed')
+    await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)
+
+    expect(light.status).toBe('error')
+    expect(light.lastError).toContain('a')
+    expect(note.dirty).toBe(true)
+  })
 })
 
 describe('a note renamed while its write was in the air', () => {
-  /** A write is two round trips, the snapshot and then the file, and a rename can
-   *  land between them. The words used to go to the name read at the start: the
-   *  old file came back beside the renamed one, and the document went back to the
-   *  old name with them. */
-  test('is written under its new name, and keeps it', async () => {
-    const { saving, note, tab } = open(`${SPACE}/a.md`)
-    held = 'snapshot_note'
+  /** A write and a rename are two round trips, and a rename landing inside a write
+   *  used to move the file out from under it: the write then put the old name back
+   *  beside the new one. One at a time per document, whoever asked. */
+  test('is renamed only once the write has landed', async () => {
+    const { saving, note } = open(`${SPACE}/a.md`)
+    const order: string[] = []
 
     let letGo = () => {
       // Replaced the moment the promise below hands over its resolver.
@@ -409,15 +574,22 @@ describe('a note renamed while its write was in the air', () => {
       letGo = () => go()
     })
 
-    const writing = saving.save(tab)
-    // What `rename` in workspace.svelte.ts does to an open note once the file moved.
-    note.path = `${SPACE}/b.md`
-    letGo()
-    await writing
+    note.replace('# a typed')
+    const writing = saving.write(note)
+    const renaming = saving.holding(note, () => {
+      order.push(`rename after ${String(written().length)} write`)
+      note.path = `${SPACE}/b.md`
+      return Promise.resolve()
+    })
 
-    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
-      `${SPACE}/b.md`,
-    ])
+    await Promise.resolve()
+    expect(order).toEqual([])
+
+    letGo()
+    await Promise.all([writing, renaming])
+
+    expect(order).toEqual(['rename after 1 write'])
+    expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`])
     expect(note.path).toBe(`${SPACE}/b.md`)
   })
 })

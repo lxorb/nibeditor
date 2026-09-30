@@ -114,6 +114,41 @@ describe('a call that waits for quiet', () => {
     vi.advanceTimersByTime(0)
     expect(ran).toBe(2)
   })
+
+  /** A burst that never stops still runs: a note typed into without a pause for a
+   *  minute is written every couple of seconds all the same. */
+  test('runs no later than its ceiling after the first call, however the calls go on', () => {
+    let ran = 0
+    const soon = afterQuiet(() => ran++, 100, 250)
+
+    for (let at = 0; at < 4; at++) {
+      soon()
+      vi.advanceTimersByTime(60)
+    }
+    expect(ran).toBe(0)
+
+    soon()
+    vi.advanceTimersByTime(10)
+    expect(ran).toBe(1)
+  })
+
+  test('and counts the ceiling afresh for the next burst', () => {
+    let ran = 0
+    const soon = afterQuiet(() => ran++, 100, 250)
+
+    soon()
+    vi.advanceTimersByTime(100)
+    expect(ran).toBe(1)
+
+    soon()
+    vi.advanceTimersByTime(90)
+    soon()
+    vi.advanceTimersByTime(90)
+    expect(ran).toBe(1)
+
+    vi.advanceTimersByTime(10)
+    expect(ran).toBe(2)
+  })
 })
 
 describe('a call that happens once a frame', () => {

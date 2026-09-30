@@ -16,8 +16,9 @@ What it proves, in order:
   new tab a browser makes and what a fast hand is after.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
   website open with no file in the space and no row in the list.
-* **Saving one** asks for a name and where, and writes the file the kind belongs in -
-  `Plan.canvas`, not `Plan.md`.
+* **Nothing is saved by hand**: a new note becomes a file on its first word, named after
+  it; Ctrl+S asks nothing and writes no file for an untouched plane or a web tab; and
+  keeping a web tab is what writes its shortcut.
 * **A pane with nothing open** shows those same kinds as buttons, with the keyboard on
   the first, and pressing one makes that kind; Ctrl+T over it is the same dialog.
 
@@ -389,10 +390,12 @@ def unsaved(page) -> None:
     page.screenshot(path=str(SHOTS / "unsaved-tabs.png"))
 
 
-def saving(page) -> None:
-    """Saving an unsaved plane, which is the sheet and the file it writes."""
-    say("--- saving an unsaved plane ---")
+def autosaving(page) -> None:
+    """No saving at all: a new tab becomes a file on its first word, Ctrl+S asks nothing,
+    and a web tab is written only when somebody keeps it."""
+    say("--- no saving: first words, Ctrl+S, keeping a page ---")
 
+    # Ctrl+S on a plane nobody has drawn on: no sheet, no file, no question.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -401,58 +404,71 @@ def saving(page) -> None:
         }"""
     )
     page.wait_for_timeout(400)
-
+    files = page.evaluate(STATE)["files"]
     page.keyboard.press("Control+KeyS")
     page.wait_for_timeout(700)
-    if not page.locator(".sheet input").count():
-        wrong("Ctrl+S on an unsaved plane asked nothing")
-        return
+    if page.locator('[role="dialog"] input').count():
+        wrong("Ctrl+S on an untouched plane asked something")
+    if page.evaluate(STATE)["files"] != files:
+        wrong("Ctrl+S on an untouched plane wrote a file")
+    else:
+        say("Control+S on a plane   -> nothing asked, nothing written")
 
-    page.locator(".sheet input").first.fill("Plan")
-    page.wait_for_timeout(200)
-    page.screenshot(path=str(SHOTS / "save-sheet.png"))
-    page.keyboard.press("Enter")
-    page.wait_for_timeout(1000)
+    # A new note, typed into: a file in the space from its first word, named after it.
+    page.evaluate("() => window.nibApp.workspace.openBlank()")
+    page.wait_for_timeout(400)
+    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.keyboard.type("Plan for Monday")
+    page.wait_for_timeout(1200)
 
     state = page.evaluate(STATE)
     path = (state["active"] or {}).get("path") or ""
-    if not path.endswith("Plan.canvas"):
-        wrong(f"saving did not write Plan.canvas: {state['active']}")
+    if not path.endswith("/Plan for Monday.md"):
+        wrong(f"typing into a new tab did not make it a file named after it: {state['active']}")
     else:
-        say(f"saved                  -> {path}")
-    if "Plan.canvas" not in state["files"]:
-        wrong(f"the space has no Plan.canvas: {state['files']}")
-    else:
-        say("the space              -> holds Plan.canvas")
+        say(f"typed into a new tab   -> {path}")
+    if "Plan for Monday.md" not in state["files"]:
+        wrong(f"the space has no Plan for Monday.md: {state['files']}")
+    page.screenshot(path=str(SHOTS / "typed-new-tab.png"))
 
-    # And the same name again, which must never replace the first: the sheet says the
-    # name is taken and the save steps it aside by number, the way the file list does
-    # for a duplicate.
-    page.evaluate("async () => window.nibApp.workspace.newCanvas()")
-    page.wait_for_timeout(500)
     page.keyboard.press("Control+KeyS")
-    page.wait_for_timeout(700)
-
-    offered = page.locator(".sheet input").first.input_value()
-    said = page.locator(".sheet .collides").count()
-    page.locator(".sheet input").first.fill("Plan")
-    page.wait_for_timeout(250)
-    if not page.locator(".sheet .collides").count():
-        wrong("the sheet said nothing about a name the folder already has")
+    page.wait_for_timeout(500)
+    if page.locator('[role="dialog"] input').count():
+        wrong("Ctrl+S on a note asked something")
     else:
-        say(f"typing Plan again      -> {page.locator('.sheet .collides').first.text_content()!r}")
-    say(f"the field offered      -> {offered!r} (collision line at once: {bool(said)})")
-    page.screenshot(path=str(SHOTS / "taken.png"))
+        say("Control+S on a note    -> nothing asked")
 
-    page.keyboard.press("Enter")
-    page.wait_for_timeout(1000)
+    # A web tab: Ctrl+S writes no shortcut, and keeping it does.
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          const tab = ws.tabs.find((one) => one.kind === 'web' && one.path === null)
+          if (tab) ws.activate(tab.id)
+        }"""
+    )
+    page.wait_for_timeout(400)
+    before = [one for one in page.evaluate(STATE)["files"] if one.endswith(".url")]
+    page.keyboard.press("Control+KeyS")
+    page.wait_for_timeout(600)
+    after = [one for one in page.evaluate(STATE)["files"] if one.endswith(".url")]
+    if after != before:
+        wrong(f"Ctrl+S on a web tab wrote a shortcut: {after}")
+    else:
+        say("Control+S on a web tab -> no .url written")
+
+    page.evaluate(
+        """async () => {
+          const ws = window.nibApp.workspace
+          if (ws.active) await ws.keepAsWebNote(ws.active)
+        }"""
+    )
+    page.wait_for_timeout(800)
     state = page.evaluate(STATE)
-    if (state["active"] or {}).get("path") != "/Notes/Plan 2.canvas":
-        wrong(f"a second Plan replaced the first: {state['active']}")
+    kept = (state["active"] or {}).get("path") or ""
+    if not kept.endswith(".url"):
+        wrong(f"keeping the web tab wrote no shortcut: {state['active']}")
     else:
-        say("saved again            -> /Notes/Plan 2.canvas, nothing replaced")
-    if "Plan.canvas" not in state["files"]:
-        wrong(f"the first Plan.canvas is gone: {state['files']}")
+        say(f"Keep as web note       -> {kept}")
 
 
 def nothing_open(page) -> None:
@@ -579,7 +595,7 @@ def drive(browser) -> None:
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     chooser(page)
     unsaved(page)
-    saving(page)
+    autosaving(page)
     nothing_open(page)
 
     page.screenshot(path=str(SHOTS / "after.png"))

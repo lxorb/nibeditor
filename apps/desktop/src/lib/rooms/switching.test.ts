@@ -162,8 +162,6 @@ function previewing(path: string, words: string): InstanceType<typeof NoteDoc> {
   return new NoteDoc(
     { kind: 'note', path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
     () => undefined,
-    // Every note here is in a space, which is what a room is ever about.
-    () => true,
   )
 }
 

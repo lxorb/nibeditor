@@ -32,10 +32,14 @@ import {
 } from './shortcuts/registry'
 import { isRecord, keep, stored, storedText } from './stored'
 import { isNative } from './tauri'
+import { workspace } from './workspace.svelte'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
 const STORAGE_KEY = 'nib:shortcuts'
+
+/** Ctrl+S, and Cmd+S on a Mac; see `writeKey`. */
+const WRITE_CHORD = 'Mod-s'
 /** Beside the map rather than inside it, so an entry written before there were
  *  presets still reads as the map it is. */
 const PRESET_KEY = 'nib:preset'
@@ -298,6 +302,21 @@ class Shortcuts {
     }
 
     return false
+  }
+
+  /** Ctrl+S, Cmd+S on a Mac: the key nothing needs and every hand still presses.
+   *  Every document writes itself, so there is no Save; but a habit must never meet a
+   *  question, a file picker or the browser's Save page as. So it writes what is owed
+   *  now and keeps the note in front as a version. No row of the list: `handle` runs
+   *  first, so a command put on the chord wins. True when the press was answered. */
+  writeKey(event: KeyboardEvent): boolean {
+    if (event.defaultPrevented || !matchesCombination(WRITE_CHORD, event, this.platform)) {
+      return false
+    }
+
+    event.preventDefault()
+    void workspace.writeNow()
+    return true
   }
 }
 

@@ -29,7 +29,6 @@ function opened(text = blankCanvas()) {
   const note = new NoteDoc(
     { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
     () => undefined,
-    () => true,
   )
 
   return { store: new CanvasStore(new Tab(note, 'pane')), note }

@@ -59,7 +59,6 @@ function tabFor(kind: TabKind, path: string | null, text = ''): InstanceType<typ
   const doc = new NoteDoc(
     { kind, path, name: path?.split('/').at(-1) ?? 'Untitled', text, dirty: false },
     () => undefined,
-    () => true,
   )
 
   return new Tab(doc, 'pane')

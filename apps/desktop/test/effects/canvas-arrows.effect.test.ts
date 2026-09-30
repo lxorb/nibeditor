@@ -56,7 +56,6 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     note = new NoteDoc(
       { kind, path: `/space/${name}`, name, text: blank(), dirty: false },
       () => undefined,
-      () => true,
     )
     store = new Store(new Tab(note, 'pane'))
 

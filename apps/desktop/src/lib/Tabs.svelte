@@ -101,16 +101,6 @@
     void import('./new-kinds').then(({ showNewKinds }) => showNewKinds(event, paneId))
   }
 
-  /** The dot says one of three things, and says it in words to a reader who
-   *  cannot see it. A note in a space wears no dot at all: nothing about it is
-   *  ever waiting to be written down. */
-  function saveLabel(tab: Tab): string {
-    const state = workspace.savingOf(tab)
-    if (state === 'saving') return t('Saving')
-    if (state === 'saved') return t('Saved')
-    return t('Unsaved')
-  }
-
   /* ── Where the tabs are ───────────────────────────────────────────
      Chrome's layout, which is tab-strip/layout.ts. Every tab is placed by hand -
      absolutely, at a transform along the strip - rather than by a flex row, because
@@ -914,20 +904,6 @@
               {/each}
             </span>
           {/if}
-          {#if tab.unsaved || workspace.savingOf(tab)}
-            <!-- The dot says one of three things and says it in words too, which
-                 needs a role to be read at all. What it means as it changes is said
-                 once, out loud, in the app's one live region; see said.svelte.ts. -->
-            <span
-              class="dot"
-              class:writing={workspace.savingOf(tab) === 'saving'}
-              class:down={workspace.savingOf(tab) === 'saved'}
-              role="img"
-              aria-label={saveLabel(tab)}
-              title={saveLabel(tab)}
-              transition:fade={{ duration: dur(190) }}
-            ></span>
-          {/if}
         </button>
         <!-- A pinned tab has no cross: what is kept is not closed by the hand that
              happened to be passing over it. Ctrl+W, the middle button and the row
@@ -1252,8 +1228,7 @@
      list. */
   .reading,
   .label,
-  .here,
-  .dot {
+  .here {
     margin-inline-start: 6px;
   }
 
@@ -1298,23 +1273,6 @@
     opacity: 0.75;
   }
 
-  /* The whole report on saving: unwritten, going down, down. Colour and a
-     breath of movement rather than a spinner - it is ambient, not an event. */
-  .dot {
-    width: 5px;
-    height: 5px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--accent);
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
-  }
-
-  .dot.writing {
-    animation: breathe 900ms var(--ease-in-out) infinite;
-  }
-
   /* One dot per other device in the note, stacked so they read as a small group
      rather than as a row of separate marks. Three at most: past that the answer
      is "several", and counting them is not what anyone is looking for. */
@@ -1336,26 +1294,6 @@
     /* A ring in the tab's own colour, so two dots against each other still read
        as two. */
     box-shadow: 0 0 0 1.5px var(--bg);
-  }
-
-  .dot.down {
-    background: var(--success);
-    transform: scale(0.8);
-  }
-
-  @keyframes breathe {
-    50% {
-      opacity: 0.35;
-    }
-  }
-
-  /* Movement is a preference, and a dot that pulses forever is exactly what
-     it is about. The colour still says which state it is in. */
-  @media (prefers-reduced-motion: reduce) {
-    .dot.writing {
-      animation: none;
-      opacity: 0.55;
-    }
   }
 
   /* The close button: sixteen pixels and round, at the end of the body, lit by a

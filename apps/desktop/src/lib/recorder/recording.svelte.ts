@@ -230,7 +230,7 @@ class Recorder {
       settings.error = message(error, key('That recording could not be saved.'))
     } finally {
       this.saving = false
-      void workspace.save()
+      void workspace.writesSettled()
     }
   }
 

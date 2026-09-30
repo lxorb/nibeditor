@@ -116,10 +116,9 @@ function placesIn(entry: Entry): Place[] {
 }
 
 export function moveTargets(input: {
-  /** The note or folder being moved, or null where nothing is: a save asks where a file
-   *  it is about to make could go, and a file that does not exist yet is in nobody's
-   *  way. Null offers every place there is; a path leaves out its own and anything
-   *  inside it. */
+  /** The note or folder being moved, or null where nothing is: a file that does not
+   *  exist yet is in nobody's way. Null offers every place there is; a path leaves out
+   *  its own and anything inside it. */
   moving: string | null
   /** The space on screen, as the file list holds it. */
   tree: Entry | null

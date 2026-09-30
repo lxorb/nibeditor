@@ -23,10 +23,6 @@ interface Choice {
   label: string
   primary?: boolean
   danger?: boolean
-  /** The answer that lets unsaved work go. On a Mac it stands apart at the left of
-   *  the row, with the way back and the default to the right of it, and Cmd+D picks
-   *  it - which is where every Mac document app puts Don't Save. */
-  discards?: boolean
   /** The mark the row wears, where the answers are things a file list also
    *  shows. Absent for a question about anything else, and then the row is words
    *  alone. The `id` is the path, so a row that chose an icon of its own wears it
@@ -52,40 +48,6 @@ interface Find {
   placeholder?: string
 }
 
-interface SpaceOption {
-  id: string
-  name: string
-}
-
-interface AskName extends Ask {
-  /** Offered as a dropdown beside the name. Hidden when there is only one. */
-  spaces: SpaceOption[]
-  space: string | null
-  /** Where the file will be written, as folders rather than spaces: the space's own
-   *  room, a note that would become a folder, another space. What a save offers, and
-   *  the sheet shows these instead of the spaces where a caller hands them over - a
-   *  folder already says which space it is in. See move-targets.ts. */
-  folders?: FolderOption[]
-  folder?: string | null
-  /** What is wrong with the name typed, in the place chosen, or null while nothing is:
-   *  the one thing the sheet cannot work out for itself is what a folder already holds.
-   *  Asked of both values, so changing the folder answers as well as typing. */
-  taken?: (name: string, folder: string | null) => string | null
-}
-
-interface FolderOption {
-  /** The folder's own path, which is what a caller writes into. */
-  id: string
-  label: string
-}
-
-interface NamedIn {
-  name: string
-  space: string | null
-  /** The folder chosen, where folders were offered. */
-  folder: string | null
-}
-
 type Pending = { resolve: (answer: unknown) => void } | null
 
 /** One small modal for the questions the app ever asks: name this, are you sure,
@@ -102,19 +64,8 @@ class Prompt {
   confirmLabel = $state('')
   danger = $state(false)
   lands = $state(false)
-  spaces = $state<SpaceOption[]>([])
-  space = $state<string | null>(null)
-  folders = $state<FolderOption[]>([])
-  folder = $state<string | null>(null)
-  taken = $state<((name: string, folder: string | null) => string | null) | null>(null)
 
   private pending: Pending = null
-
-  /** Whether the question was "what shall it be called, and where" rather than "what
-   *  shall it be called". Set by `askName` and cleared by everything else: a caller that
-   *  asked where cannot be answered with a bare name, and a list of places that turned
-   *  out to hold one row is still a question about where. */
-  private naming = false
 
   /** Resolves to the typed text, or null if it was dismissed. */
   ask(options: Ask): Promise<string | null> {
@@ -125,33 +76,8 @@ class Prompt {
     this.placeholder = options.placeholder ?? ''
     this.confirmLabel = options.confirmLabel ?? 'Create'
     this.danger = false
-    this.spaces = []
-    this.space = null
-    this.folders = []
-    this.folder = null
-    this.taken = null
-    this.naming = false
 
     return this.show() as Promise<string | null>
-  }
-
-  /** A name and where to put it: a space, or - what a save asks - a folder. */
-  askName(options: AskName): Promise<NamedIn | null> {
-    this.mode = 'text'
-    this.title = options.title
-    this.detail = ''
-    this.value = options.value ?? ''
-    this.placeholder = options.placeholder ?? ''
-    this.confirmLabel = options.confirmLabel ?? 'Save'
-    this.danger = false
-    this.spaces = options.spaces
-    this.space = options.space ?? options.spaces[0]?.id ?? null
-    this.folders = options.folders ?? []
-    this.folder = options.folder ?? this.folders[0]?.id ?? null
-    this.taken = options.taken ?? null
-    this.naming = true
-
-    return this.show() as Promise<NamedIn | null>
   }
 
   confirm(options: Confirm): Promise<boolean> {
@@ -162,7 +88,6 @@ class Prompt {
     this.confirmLabel = options.confirmLabel ?? 'Confirm'
     this.danger = options.danger ?? false
     this.lands = options.lands ?? false
-    this.naming = false
 
     return this.show().then((answer) => answer !== null)
   }
@@ -175,10 +100,6 @@ class Prompt {
     this.detail = options.detail ?? ''
     this.value = ''
     this.options = options.options
-    this.spaces = []
-    this.folders = []
-    this.taken = null
-    this.naming = false
 
     return this.show() as Promise<string | null>
   }
@@ -195,10 +116,6 @@ class Prompt {
     this.value = ''
     this.placeholder = options.placeholder ?? ''
     this.options = options.options
-    this.spaces = []
-    this.folders = []
-    this.taken = null
-    this.naming = false
 
     return this.show() as Promise<string | null>
   }
@@ -224,13 +141,8 @@ class Prompt {
     const typed = this.value.trim()
     if (this.mode === 'text' && !typed) return
 
-    // A name asked for with somewhere to put it resolves both; everything else is a
-    // string. The folder travels even where only one was offered and no dropdown was
-    // drawn: the caller asked where to write, and there is an answer either way.
-    const answer = this.naming ? { name: typed, space: this.space, folder: this.folder } : typed
-
     this.open = false
-    this.pending?.resolve(this.mode === 'confirm' ? '' : answer)
+    this.pending?.resolve(this.mode === 'confirm' ? '' : typed)
     this.pending = null
   }
 

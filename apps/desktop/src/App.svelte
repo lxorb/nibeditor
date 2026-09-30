@@ -142,7 +142,7 @@
   // is said here rather than in start.ts; `:e` opens it on its note search,
   // which is what a reader typing `:e` is after.
   setVimCommands({
-    write: () => void workspace.save(),
+    write: () => void workspace.writeNow(),
     quit: () => void workspace.closeActive(),
     edit: () => {
       palette = true
@@ -157,7 +157,7 @@
   // facts are read here so the effect follows them. See window-document.ts.
   $effect(() => {
     const active = workspace.active
-    const facts = active && { shown: active.shown, unsaved: active.unsaved, path: active.path }
+    const facts = active && { shown: active.shown, path: active.path }
     void import('./lib/window-document').then(({ windowDocument }) => {
       const inWindow = windowDocument(facts, onMac)
       document.title = inWindow.title
@@ -690,7 +690,8 @@
     // the plain command below. See new-kind-chord.ts and surfaces.svelte.ts.
     if (newKindChord(event)) return
 
-    shortcuts.handle(event, appContext())
+    // Ctrl+S last, and only where no command took the chord; see `writeKey`.
+    if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
 
   /** The palette on the commands, waiting for it the once it has not arrived yet. */
@@ -737,24 +738,16 @@
       )
   }
 
-  /** Half of what the app tells somebody it tells with a colour: the gear in the
-   *  panel's foot is lit while a pass is running and red when the last one failed,
-   *  and the dot on a tab is amber until the note is on the disk. Neither has any
-   *  words anywhere in the page, so neither reached a reader who is listening.
+  /** What the app tells somebody with a colour: the gear in the panel's foot is lit
+   *  while a pass is running and red when the last one failed. It has no words
+   *  anywhere in the page, so it reached no reader who is listening.
    *
-   *  Said here rather than in the two components, because the region is one
-   *  region: see said.svelte.ts. */
+   *  Said here rather than in the component, because the region is one region: see
+   *  said.svelte.ts. */
   $effect(() => {
     const status = sync.status
     if (status === 'syncing') said.say(t('Syncing'))
     else if (status === 'error') said.say(sync.lastError ?? t('Sync failed'))
-  })
-
-  $effect(() => {
-    const tab = workspace.active
-    const state = tab ? workspace.savingOf(tab) : undefined
-    if (state === 'saving') said.say(t('Saving'))
-    else if (state === 'saved') said.say(t('Saved'))
   })
 </script>
 

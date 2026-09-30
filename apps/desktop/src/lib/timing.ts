@@ -40,23 +40,39 @@ export interface Later {
  *  The delay may be a function, for the two callers whose wait is not a constant:
  *  one reads it through `dur()`, which is zero where the reader asked for less
  *  motion, and one waits longer for a store than for a screen. It is read at each
- *  call rather than once, which is what makes that work. */
-export function afterQuiet(run: () => void, ms: number | (() => number)): Later {
+ *  call rather than once, which is what makes that work.
+ *
+ *  `atMost` is how long the first call still waiting may be put off in all, for a
+ *  caller whose calls may never stop: somebody typing without a pause for a minute
+ *  still has their words written every couple of seconds. */
+export function afterQuiet(
+  run: () => void,
+  ms: number | (() => number),
+  atMost = Number.POSITIVE_INFINITY,
+): Later {
   let timer: ReturnType<typeof setTimeout> | undefined
+  /** When the first call that is still waiting arrived. */
+  let since: number | undefined
 
   const waiting = () => {
     timer = undefined
+    since = undefined
     run()
   }
 
   const later = () => {
     clearTimeout(timer)
-    timer = setTimeout(waiting, typeof ms === 'number' ? ms : ms())
+    const now = Date.now()
+    since ??= now
+
+    const wait = typeof ms === 'number' ? ms : ms()
+    timer = setTimeout(waiting, Math.max(0, Math.min(wait, since + atMost - now)))
   }
 
   later.cancel = () => {
     clearTimeout(timer)
     timer = undefined
+    since = undefined
   }
 
   later.flush = () => {
@@ -64,6 +80,7 @@ export function afterQuiet(run: () => void, ms: number | (() => number)): Later 
 
     clearTimeout(timer)
     timer = undefined
+    since = undefined
     run()
   }
 

@@ -69,7 +69,6 @@ import {
   record,
   recordLabel,
 } from './recorder/commands'
-import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
 import { closeAfterLabel } from './workspace/closing-around'
 import { prompt } from './prompt.svelte'
@@ -236,8 +235,8 @@ export function exportCommands(): Command[] {
   const offered = offeredBy(kind)
   // Nothing here goes out as anything: the graph of a space, or a pane with
   // nothing in it. The rows a note would have are shown greyed out rather than
-  // taken away, so the Export menu keeps its shape and says no the way Save and
-  // Rename already do with no note open.
+  // taken away, so the Export menu keeps its shape and says no the way Rename
+  // already does with no note open.
   const nothing = offered.length === 0
   /** Whether these are a note's rows, which is what the paper and pandoc are for.
    *  A drawing has no paper, and a copy is the bytes that are already there. */
@@ -414,6 +413,17 @@ function webCommands(): Command[] {
       hint: shortcuts.hint(key),
       run: () => void pages.step(tab.id, step),
     })),
+    // Browsing writes nothing; this is the one row that keeps the page, as a web note
+    // in the space. Only for a tab that has no file yet: one that has is kept already.
+    ...(tab.path === null
+      ? [
+          {
+            id: 'web-keep',
+            label: t('Keep as web note'),
+            run: () => void workspace.keepAsWebNote(tab),
+          },
+        ]
+      : []),
     {
       id: 'web-find',
       label: t('Find'),
@@ -925,12 +935,6 @@ export function appCommands(view?: EditorView): Command[] {
 
   return [
     {
-      id: 'save',
-      label: t('Save'),
-      hint: shortcuts.hint('app.save'),
-      run: () => void workspace.save(),
-    },
-    {
       id: 'new',
       label: t('New note'),
       hint: shortcuts.hint('app.new'),
@@ -957,10 +961,9 @@ export function appCommands(view?: EditorView): Command[] {
           },
           {
             // The other way round: a tab with an address field and nothing in it yet,
-            // for somebody who has the address and no name in mind. The file is
-            // written as soon as the page says what it is called, the way every note
-            // in a space keeps itself; see workspace.keepWeb. A phone has no web tab
-            // at all - there the system browser is the answer.
+            // for somebody who has the address and no name in mind. Nothing is
+            // written while it is only browsed; the row below keeps it. A phone has no
+            // web tab at all - there the system browser is the answer.
             id: 'new-website',
             label: t('Open a website'),
             run: () => workspace.openWebsite(),
@@ -1013,13 +1016,6 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-    {
-      id: 'save-as',
-      label: t('Save as'),
-      hint: shortcuts.hint('app.save-as'),
-      disabled: !canSaveAs(),
-      run: () => void saveAs(),
-    },
     {
       id: 'close',
       label: t('Close note'),

@@ -359,8 +359,8 @@
   })
 
   // What the strip calls a tab with no file: what the page calls itself. Nothing is
-  // written - a new web tab is a browser tab until somebody saves it, which is Ctrl+S
-  // and writes the shortcut; see `keepWeb` in workspace.svelte.ts.
+  // written - a new web tab is a browser tab until somebody keeps it as a web note;
+  // see `keepAsWebNote` in workspace.svelte.ts.
   $effect(() => {
     const title = page.title
     untrack(() => workspace.webNamed(tab, title))

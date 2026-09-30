@@ -4,8 +4,8 @@
  *  on the stroke or the letter itself, because writing it costs the size of the
  *  thing: a plane is serialised whole, and every space's graph settings are. A window
  *  closing runs no effect's teardown, so nothing would ever reach those timers, and
- *  until the write has happened the document is not one the workspace knows is
- *  unsaved either - so the window would not even ask.
+ *  a note's own write waits for a pause the same way - so the words would never
+ *  reach the disk.
  *
  *  A register rather than a list of calls in start.ts, because the launch must not
  *  have to load a thing in order to call one function on it on the way out. Reaching
@@ -22,7 +22,7 @@ const owing = new Set<() => void>()
  *
  *  Turning what is on screen into words and putting those words on the disk are two
  *  writes, and the second cannot run before the first: a plane serialises itself into
- *  its document, and the document is what the save writes out. One list would leave
+ *  its document, and the document is what its write takes down. One list would leave
  *  that to the order the modules happened to load in, which is the order the reader
  *  happened to open things in. */
 const lastly = new Set<() => void>()

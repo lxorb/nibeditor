@@ -4,8 +4,8 @@
  *  every keystroke reaching the plane would be a serialised canvas per character -
  *  the same bargain the editor's table cells make. Everything that reads the plane
  *  in between reads a card that is still empty, and two of those readers matter:
- *  saving on purpose wrote a blank card over the file, and a window shut mid-word
- *  wrote the plane without the word in it and took it with it.
+ *  Ctrl+S wrote a blank card over the file, and a window shut mid-word wrote the
+ *  plane without the word in it and took it with it.
  *
  *  So this is the twin of `flushTableEdits` in @nib/editor, and for the same reason:
  *  whatever is about to read the document says so first. One card, because there is
@@ -13,8 +13,8 @@
  *
  *  Its own module rather than a field on the canvas store: the card is a component
  *  and the store is a store, and the two things that have to say this - the plane's
- *  own parting write and the workspace's save - reach neither of them from the
- *  other. See CanvasNode.svelte, `part` in store.svelte.ts and `save` in
+ *  own parting write and the workspace's write-now - reach neither of them from the
+ *  other. See CanvasNode.svelte, `part` in store.svelte.ts and `writeNow` in
  *  workspace/saving.svelte.ts. */
 
 /** What the card being written in does with its words. Null while no card is open. */

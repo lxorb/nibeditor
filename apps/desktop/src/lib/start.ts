@@ -19,6 +19,7 @@ import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop, isMobile } from './tauri'
+import { waited } from './timing'
 import { mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
@@ -182,8 +183,8 @@ async function openAll(paths: string[]) {
   for (const path of paths) await workspace.open(path)
 }
 
-/** Nothing with words in it is lost on the way out: closing asks first, and so
- *  does quitting. */
+/** Nothing with words in it is lost on the way out: what is owed is written as the
+ *  window goes, and the window waits for it. Nothing is ever asked. */
 async function guardClose() {
   // A phone never closes the window. It puts the app away, and may end it while it
   // is away without a word to it - so a sentence typed a moment before the home
@@ -201,8 +202,8 @@ async function guardClose() {
   addEventListener('pagehide', () => settle())
 
   const window = await currentWindow()
-  // The handler answers at once and the questions happen after: preventing the
-  // close is the only part that has to be synchronous.
+  // The handler answers at once and the waiting happens after: preventing the close
+  // is the only part that has to be synchronous.
   await window.onCloseRequested((event) => void onClose(event, window))
 
   // Cmd+Q closes no window, so the crate holds the quit and asks each window to
@@ -221,59 +222,61 @@ interface Closable {
   destroy(): Promise<void>
 }
 
-/** Whether the question below is already up, so it is never put twice. */
-let asking = false
+/** How long a window going waits for its writes. A disk that does not answer must
+ *  not hold a window open for ever, and what did not land is in the session, which
+ *  the next launch writes; see `owed` in workspace/saving.svelte.ts. */
+const GIVE_UP = 3000
+
+/** Whether the window is already on its way out, so a second close waits for the
+ *  first rather than starting another. */
+let going = false
 
 async function onClose(event: Closing, window: Closable) {
   settle()
 
-  // A tab gets no chance to ask its own question - `beforeunload` runs to
-  // completion before anything is painted. Preventing it is the whole
-  // signal, and the browser puts up its own leave-page dialog.
-  if (!isDesktop) {
-    if (workspace.unsaved.length) event.preventDefault()
-    return
-  }
+  // A browser tab cannot wait for anything - `beforeunload` runs to completion
+  // before a write could come back - and it asks nothing either: the session holds
+  // every word the disk has not been given yet, synchronously, and the next visit
+  // writes them.
+  if (!isDesktop) return
 
-  // Nothing to ask about and no update to put in place: the window just goes.
-  if (!workspace.unsaved.length && !ready() && !asking) return
+  // Nothing being written and no update to put in place: the window just goes.
+  if (!workspace.writing && !ready() && !going) return
 
   event.preventDefault()
-  if (asking) return
-  if (await mayGo()) await window.destroy()
+  if (going) return
+  await go()
+  await window.destroy()
 }
 
-/** The app is quitting: go as the close button would, or say the window stays. */
+/** The app is quitting: go as the close button would. */
 async function onQuit(window: Closable) {
-  if (asking) return
+  if (going) return
 
   settle()
-  if (await mayGo()) await window.destroy()
-  else await invoke('keep_running').catch(() => undefined)
+  await go()
+  await window.destroy()
 }
 
 /** Whatever is waiting on a timer goes down now, before anything can end the
  *  window: a filter typed into the graph's card in the last breath is written once
- *  the typing stops, and a plane's file once the drawing does. Both run off a timer
- *  that a window going away would never reach, and a plane has to go first - it
- *  writes into a document, and it is the unsaved documents that decide whether the
- *  window asks. Whoever owes a write has said so themselves rather than being
- *  reached for from here; see parting.ts. */
+ *  the typing stops, a plane's file once the drawing does, and a note's a moment
+ *  after its last keystroke. All of them run off a timer that a window going away
+ *  would never reach, and a plane has to go first - it writes into a document, and
+ *  the document is what goes to the disk. Whoever owes a write has said so
+ *  themselves rather than being reached for from here; see parting.ts. */
 function settle() {
   settleUp()
   workspace.graphSettings.flush()
 }
 
-/** Whether the window may go, having asked about each unsaved note - the question
- *  a tab asks, so the reader meets one sheet - and put a waiting update in place. */
-async function mayGo(): Promise<boolean> {
-  asking = true
+/** The writes that are owed, waited for, and a waiting update put in place. */
+async function go(): Promise<void> {
+  going = true
   try {
-    if (workspace.unsaved.length && !(await workspace.mayCloseWindow())) return false
-
+    await Promise.race([workspace.writesSettled(), waited(GIVE_UP)])
     await installStaged()
-    return true
   } finally {
-    asking = false
+    going = false
   }
 }

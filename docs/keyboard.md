@@ -235,8 +235,8 @@ in the palette, and it can be rebound. What was already there is marked.
 | `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
 | Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
-| Ctrl+Shift+S | save a file from outside the space under another name; a note in a space saves itself |
-| Ctrl+Shift+W | close the window, asking about anything unsaved first. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
+| Ctrl+S | nothing to save: every note writes itself a moment after it changes. The key is harmless out of habit - it writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
+| Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
 
 **The panels**

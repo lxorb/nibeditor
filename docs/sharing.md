@@ -150,10 +150,9 @@ That question used to be asked of the path - what may be done where a file sits 
 and a shared file has no path, so it is asked of the document instead:
 `canWriteIn(note)`, which the pane, the find bar and the canvas surface all use.
 
-That makes such a document `keepsItself`, like every note in a space: nothing to
-save, no dirty mark, no question on the way out. The one extra rule is that
-nothing tries to write it to disk, because there is no file here for a write to
-go to.
+Like every note, such a document has nothing to save and no question on the way
+out. The one extra rule is that nothing tries to write it to disk, because there
+is no file here for a write to go to: its room keeps it.
 
 A guest sees the same thing through the join page, because a guest is a person in
 a file exactly as they are a person in a space.

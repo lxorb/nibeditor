@@ -1,11 +1,14 @@
 /** File recovery: how often a note being written in is kept, and how long what
  *  is kept lives.
  *
- *  A version is already kept before every save. This is the other half of it: a
- *  note somebody is in the middle of, kept every few minutes whether or not it
- *  has been saved, so a crash or an edit that went wrong between two saves has
- *  something behind it. And a sweep, because a note kept every minute for a
- *  month is a disk full; the policy it sweeps by is next door in recovery.ts.
+ *  Every note writes itself a moment after each pause in the typing, and a write
+ *  is not a version: a history of forty would be the last minute. So a version is
+ *  kept of the words a sitting began with, before its first write (see
+ *  workspace/saving.svelte.ts), of whatever Ctrl+S was pressed on, and - this is
+ *  the other half - of a note somebody is in the middle of, every few minutes, so
+ *  an edit that went wrong has something behind it. And a sweep, because a note
+ *  kept every minute for a month is a disk full; the policy it sweeps by is next
+ *  door in recovery.ts.
  *
  *  One timer for the app, not one per note: the tick asks the workspace for the
  *  open notes and keeps the ones whose words have moved since it last looked. It
@@ -29,8 +32,8 @@ const MINUTE = 60 * 1000
 const DAY = 24 * 60 * MINUTE
 
 class Recovery {
-  /** Minutes between versions of a note being written in. Zero is off: then a
-   *  save is the only thing that keeps one. */
+  /** Minutes between versions of a note being written in. Zero is off: then the
+   *  words a sitting began with and Ctrl+S are the only things that keep one. */
   every = $state<number>(DEFAULT_MINUTES)
   /** How many days a version is kept for. */
   days = $state<number>(DEFAULT_DAYS)
@@ -118,11 +121,10 @@ class Recovery {
    *  One pass over the open notes, and nothing at all when none of them has
    *  moved.
    *
-   *  Which ones those are is asked of the revision each document counts rather
-   *  than of what is unsaved. A note in a space is written down as fast as it is
-   *  typed and so is never unsaved, and that is almost every note there is - the
-   *  ones this is here for. A revision of zero is a note nobody has touched since
-   *  it was opened. */
+   *  Which ones those are is asked of the revision each document counts: every
+   *  note is written down as fast as it is typed, so whether it is on the disk says
+   *  nothing about whether it has moved. A revision of zero is a note nobody has
+   *  touched since it was opened. */
   private async snapshot() {
     const now: Record<string, number> = {}
 

@@ -23,11 +23,7 @@ function open() {
     () => tabs,
     (start: DocumentStart) => {
       made.push(start.path ?? start.name)
-      return new NoteDoc(
-        start,
-        () => undefined,
-        () => true,
-      )
+      return new NoteDoc(start, () => undefined)
     },
   )
 

@@ -41,7 +41,6 @@ function opened(text = blankPages(), path = '/space/Lecture.pages') {
   const note = new NoteDoc(
     { kind: 'pages', path, name: 'Lecture.pages', text, dirty: false },
     () => undefined,
-    () => true,
   )
 
   const store = new PagesStore(new Tab(note, 'pane'))

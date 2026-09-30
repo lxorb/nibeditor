@@ -39,8 +39,8 @@ class Said {
   /** What was last written into the region, as a plain field rather than as
    *  state - and that is the whole of why this class has two of them.
    *
-   *  `say` is called from an `$effect`: the sync light and a tab's save dot both
-   *  become words in App.svelte. A reactive read inside an effect is a
+   *  `say` is called from an `$effect`: the sync light, and whatever else
+   *  becomes words in App.svelte. A reactive read inside an effect is a
    *  dependency, so reading `words` here made every caller an effect that depends
    *  on the very state this writes - and the empty-then-restore below, which is
    *  what makes a live region repeat itself, then wrote that dependency twice per

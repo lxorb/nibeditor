@@ -131,7 +131,7 @@ const browserWindow: WindowLike = {
     return Promise.resolve()
   },
   // A page cannot ask its own question on the way out: the browser owns that
-  // dialog. The handler is still run so unsaved work can be written first.
+  // dialog. The handler is still run so what is owed can be written first.
   onCloseRequested: (handler) => {
     const listener = (event: BeforeUnloadEvent) => {
       // Written inside the handler's own callback, so it is read back through a
@@ -163,8 +163,8 @@ export async function currentWindow(): Promise<WindowLike> {
   return getCurrentWindow()
 }
 
-/** Closes the window the way its close button does, so what is unsaved in it is
- *  asked about first; see start.ts. A browser tab and a phone have none to close. */
+/** Closes the window the way its close button does, so what is owed in it is
+ *  written first; see start.ts. A browser tab and a phone have none to close. */
 export async function closeWindow(): Promise<void> {
   if (isDesktop) await (await currentWindow()).close()
 }

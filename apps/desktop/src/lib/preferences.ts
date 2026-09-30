@@ -183,9 +183,9 @@ export function preferences(view?: EditorView): Pane[] {
       label: t('General'),
       groups: [
         {
-          // A note being written in is kept every so often on top of what a
-          // save keeps, so a crash between two saves is not the end of the
-          // story; History is where the versions are.
+          // A note being written in is kept every so often on top of the words
+          // each sitting began with, so an edit that went wrong is not the end of
+          // the story; History is where the versions are.
           title: t('Recovery'),
           fields: [
             {

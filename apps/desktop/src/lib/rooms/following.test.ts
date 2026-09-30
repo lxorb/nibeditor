@@ -145,7 +145,6 @@ function documentOn(path: string, words: string, kind: 'note' | 'canvas' = 'note
   return new NoteDoc(
     { kind, path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
     () => undefined,
-    () => true,
   )
 }
 

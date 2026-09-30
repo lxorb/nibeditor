@@ -3,8 +3,8 @@
  *  A note in a space is the app's own: it writes it, it syncs it, and it knows
  *  when it changed. A file the reader opened from anywhere else on the disk is not
  *  the app's at all - a build writes it, a script rewrites it, git checks another
- *  branch out over the top - and a note sitting stale in the editor until somebody
- *  saves over what is now on disk is a note that loses work.
+ *  branch out over the top - and a note sitting stale in the editor until its next
+ *  write lands over what is now on disk is a note that loses work.
  *
  *  So every open file of the reader's own is stamped, and asked about now and then
  *  and whenever the window comes back to the front, which is when somebody has
@@ -15,16 +15,16 @@
  *  disk. There is nothing to lose and nothing to ask, and a question in the way of
  *  a file that simply reloaded is a question nobody thanked anybody for.
  *
- *  A file that changed under a note with unsaved words in it keeps every one of
- *  those words, and the light in the corner goes red. That is a clash, only the
- *  person can settle it, and the app's job is to say so and to touch nothing.
+ *  A file that changed under a note with unwritten words keeps every one of them,
+ *  and the light goes red. Those words are about to go over the file, so what it
+ *  said is kept as a version first; see `beforeWrite`.
  *
  *  It costs a stat call per open file of the reader's own, which is almost always
  *  none: a space's notes are not watched, because nothing else writes them. */
 
 import { SvelteSet } from 'svelte/reactivity'
 import { t } from './i18n.svelte'
-import { isExternalFile } from './save-as'
+import { nameOf } from './space-paths'
 import { sync } from './sync.svelte'
 import { fileStamp, type Stamp } from './sync/mirror'
 import { invoke, isDesktop } from './tauri'
@@ -39,8 +39,14 @@ const EVERY = 4000
 /** One stamp as one string, so two of them are compared with `===`. */
 const mark = (stamp: Stamp): string => `${stamp.modified}:${stamp.len}`
 
+/** Whether a path is a file of its own on the disk rather than a note in a space.
+ *  A note with no path at all is neither: it has never been anywhere. */
+function isExternalFile(path: string | null): boolean {
+  return path !== null && path !== '' && workspace.outside(path)
+}
+
 class Watch {
-  /** The files that changed under a note with unsaved words in it. Held here as
+  /** The files that changed under a note with unwritten words in it. Held here as
    *  well as shown on the light, because the light is the sync store's and its
    *  next pass has its own news to report. */
   readonly clashing = new SvelteSet<string>()
@@ -93,7 +99,7 @@ class Watch {
 
     // The first look at a file is what it looks like, not news about it.
     if (before === undefined || before === now) {
-      // A note saved since the clash was noticed has settled it.
+      // A note written since the clash was noticed has settled it.
       if (this.clashing.has(path) && !note.dirty) this.clashing.delete(path)
       return
     }
@@ -115,21 +121,45 @@ class Watch {
       return
     }
 
-    // The app's own write, most likely a save a moment ago: the file and the note
-    // say the same thing, so there is nothing to reload and nothing to report.
+    // The app's own write, most likely a moment ago: the file and the note say the
+    // same thing, so there is nothing to reload and nothing to report.
     if (text === note.text) {
       this.clashing.delete(path)
       return
     }
 
+    // The note's own words are on their way over this: what the file says now is
+    // kept as a version first.
     if (note.dirty) {
+      await invoke('snapshot_note', { path, content: text }).catch(() => undefined)
       this.clash(path, note.name)
       return
     }
 
     // Quietly: the note becomes the file, every pane showing it follows, and the
-    // note is as saved afterwards as it was before.
+    // note is as written afterwards as it was before.
     note.replace(text, false)
+    this.clashing.delete(path)
+  }
+
+  /** An outside file about to be written over. Where it moved since the last look
+   *  or write, what it says is kept as a version first and the light says so. */
+  async beforeWrite(path: string, words: string): Promise<void> {
+    const before = this.seen.get(path)
+    const answer = await fileStamp(path)
+    if (before === undefined || !answer || mark(answer) === before) return
+
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    if (text === null || text === words) return
+
+    await invoke('snapshot_note', { path, content: text }).catch(() => undefined)
+    this.clash(path, nameOf(path))
+  }
+
+  /** The app's own write, stamped, so the next look does not take it for another's. */
+  async wrote(path: string): Promise<void> {
+    const answer = await fileStamp(path)
+    if (answer) this.seen.set(path, mark(answer))
     this.clashing.delete(path)
   }
 

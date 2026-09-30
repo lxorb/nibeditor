@@ -1,9 +1,10 @@
 /** "Open file", which means two different things.
  *
- *  On a desktop the file stays where it is: it opens from its own path, and
- *  saving writes back to that path, space or no space. In the browser there
- *  is no path to write back to, so opening means uploading. The text comes in
- *  as an unsaved note, and saving it means choosing a space to keep it in. */
+ *  On a desktop the file stays where it is: it opens from its own path, and it
+ *  writes itself back to that path as it is typed in, space or no space. In the
+ *  browser there is no path to write back to, so opening means uploading: the
+ *  text comes in as a new note under the file's own name, and is a note in the
+ *  space from the start. */
 
 import { chooseFiles } from './choose-files'
 import { isDesktop } from './tauri'

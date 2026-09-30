@@ -157,21 +157,23 @@ which is the whole point of naming a thing before making it.
 
 **A new tab** - the strip's plus, Ctrl+T, the palette, the buttons a pane with
 nothing open shows - is the other way round, and is a browser tab: a live page with an
-address field and **no file at all**. Nothing is written while somebody is only reading.
-Saving it is the moment they say to keep it - Ctrl+S, the palette's Save, or Save on the tab's
-own menu - and it asks the two questions Chrome asks when a page is bookmarked: what to
-call it, and which folder. Then the shortcut goes down with the address the tab is on
-and the mark the page reported, and the tab becomes that file in place, still live.
+address field and **no file at all**. Nothing is written while somebody is only reading,
+and Ctrl+S does not change that: browsing is not a document being saved. **Keep as web
+note** - on the tab's own menu, and in the palette while the page is in front - is the
+moment they say to keep it, the way a bookmark is kept: the shortcut goes down in the
+space with the address the tab is on, the page's title as its name and the mark the page
+reported, and the tab becomes that file in place, still live. Nothing is asked; the row
+can be renamed and moved like any other. See `keepAsWebNote` in `workspace.svelte.ts`.
 
 Emil, 2026-09-14: _"if you create a new webnote by clicking the plus for a new tab, then
 it should open it as a tab and not create it in the sidebar. Same for canvas and page
 notes. And like normal notes, then can then of course be saved as well, but they should
 be able to exist in an "unsaved" state. Just as a tab, like a browser tab normally
 would."_ Which is one model for all four kinds: see `newCanvas` and `newPages` beside
-`openWebsite` in `workspace.svelte.ts`, and `pickSavePath` in `workspace/saving.svelte.ts`
-for the one sheet that names any of them. A restart brings unsaved tabs back the way a
-browser does - the session is the only place their words exist, so it keeps them whether
-or not anybody has typed in one.
+`openWebsite` in `workspace.svelte.ts`. Since 2026-09-30 nothing is ever saved by hand: a
+new note, plane or deck becomes a file in the space on its first word or stroke, and only
+a web tab waits to be kept; see `workspace/drafts.ts`. A restart brings a tab with no file
+back the way a browser does - the session is the only place its words exist.
 
 Neither is offered on a phone, and neither is in the editor's `/` menu. A phone has
 no bar to type an address into and no tab to put a page in - the row would make a
@@ -1366,8 +1368,7 @@ versions and goes to the trash like every other document.
 | `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
 | `apps/desktop/src/lib/rooms/kind.ts`                  | no room for a website, said at the file's end                                                                                                                                                                                                          |
 | `services/sync/src/notes.ts`                          | the extensions the account carries                                                                                                                                                                                                                     |
-| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                          |
-| `apps/desktop/src/lib/workspace/saving.svelte.ts`     | `pickSavePath`: the one sheet that names an unsaved tab of any kind, and where a save writes it                                                                                                                                                        |
+| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepAsWebNote`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                       |
 | `scripts/web-tab-e2e.py`                              | the drive: the file, the mark, the tab, the card, the clip                                                                                                                                                                                             |
 | `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |

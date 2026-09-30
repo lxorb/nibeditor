@@ -32,14 +32,14 @@ import { workspace } from './workspace.svelte'
 
 /** How long the typing rests before the note is written.
  *
- *  Longer than a pane's own saving, because this writes a file nobody has open and
- *  every write of one is a snapshot and a thing to undo. Whatever is still unsaved
+ *  Longer than a pane's own writing, because this writes a file nobody has open and
+ *  every write of one is a snapshot and a thing to undo. Whatever is still unwritten
  *  when the card closes goes then, so nothing waits on this to be finished with.
- *  Matches the shape of the app's own saving; see workspace/saving.svelte.ts. */
+ *  Matches the shape of the app's own writing; see workspace/saving.svelte.ts. */
 const SETTLES_AFTER = 900
 
 /** Mounts the editor, or answers null where there is nothing to write back to: a
- *  note outside any open space has no path the app can save. */
+ *  note outside any open space has no path the app can write. */
 export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void) | null {
   const root = workspace.activeSpace?.root
   if (root === undefined) return null

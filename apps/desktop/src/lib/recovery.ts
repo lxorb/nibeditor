@@ -1,8 +1,9 @@
 /** What the app keeps a note's earlier versions for, and for how long.
  *
- *  A version is kept before every save; on top of that one is kept every few
- *  minutes while a note is being written in, so a crash or a bad edit between
- *  two saves still has something to go back to. What is kept has to be swept,
+ *  A version is kept of the words a sitting began with, before its first write,
+ *  and of whatever Ctrl+S was pressed on; on top of that one is kept every few
+ *  minutes while a note is being written in, so a bad edit still has something to
+ *  go back to. What is kept has to be swept,
  *  or a long note edited all day would leave hundreds of copies of itself on
  *  the disk, so this is the policy: pure, and the same one on both sides of
  *  the app, since the browser keeps its versions in IndexedDB and the desktop
@@ -13,7 +14,7 @@ const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 
 /** How often a version is taken while a note is being edited, in minutes. Zero
- *  is off: only a save keeps anything. */
+ *  is off: only a sitting's first write and Ctrl+S keep anything. */
 export const SNAPSHOT_MINUTES = [0, 1, 5, 15] as const
 
 /** How long a version is kept, in days. */

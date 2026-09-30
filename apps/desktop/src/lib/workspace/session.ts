@@ -99,7 +99,7 @@ export interface Position {
  *
  *  Written down like everything else here, because closing a note and then
  *  restarting is exactly when reopening it is worth most. It holds the same
- *  draft a tab does, so unsaved words come back with it, plus where it sat. */
+ *  draft a tab does, so unwritten words come back with it, plus where it sat. */
 export interface ClosedTab {
   draft: Draft
   /** The pane it was closed from. Reopening looks for that pane and settles for
@@ -154,7 +154,7 @@ const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'pages'
  *  a plane, which is the two ends of one file building different documents for it.
  *
  *  A tab no file names is left to say for itself, because there is nothing to ask:
- *  that is the graph, and an unsaved draft. Everything else a name has no opinion
+ *  that is the graph, and a new tab with no file yet. Everything else a name has no opinion
  *  about - a paper being read - it keeps. */
 function tabKind(value: unknown, path: unknown): TabKind {
   const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'

@@ -16,7 +16,6 @@ function documentAt(path: string): NoteDoc {
   return new NoteDoc(
     { kind: 'note', path, name: path.split('/').at(-1) ?? '', text: '', dirty: false },
     () => undefined,
-    () => true,
   )
 }
 

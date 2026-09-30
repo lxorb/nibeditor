@@ -1,4 +1,4 @@
-"""A new tab in the packaged app: the chord, the kinds, and a website nobody has saved.
+"""A new tab in the packaged app: the chord, the kinds, and a website somebody keeps.
 
 Windows only, and the one thing the browser drive cannot answer: a web tab's page is a
 second webview inside the window, so whether the app's own keys still reach the window
@@ -417,33 +417,23 @@ def main() -> int:
         ran(port, secret, "(() => { window.nibApp.overlays.escape(); return true })()")
         time.sleep(0.5)
 
-        say("--- saving the website ---")
+        say("--- keeping the website ---")
         ran(
             port,
             secret,
             "(() => { const ws = window.nibApp.workspace;"
-            " const tab = ws.tabs.find((o) => o.kind === 'web'); if (tab) void ws.save(tab); return true })()",
+            " const tab = ws.tabs.find((o) => o.kind === 'web');"
+            " if (tab) void ws.keepAsWebNote(tab); return true })()",
         )
-        time.sleep(1.5)
-        if not ran(port, secret, "(() => !!document.querySelector('.sheet input'))()"):
-            wrong("Ctrl+S on an unsaved website asked nothing")
+        time.sleep(2.0)
+        now = state(port, secret)
+        path = (now.get("active") or {}).get("path") or ""
+        if not path.endswith(".url"):
+            wrong(f"keeping the website did not write the shortcut: {now.get('active')}")
         else:
-            ran(
-                port,
-                secret,
-                "(() => { const input = document.querySelector('.sheet input');"
-                " input.value = 'A page'; input.dispatchEvent(new Event('input', { bubbles: true }));"
-                " input.closest('form').requestSubmit(); return true })()",
-            )
-            time.sleep(2.0)
-            now = state(port, secret)
-            path = (now.get("active") or {}).get("path") or ""
-            if not path.endswith("A page.url"):
-                wrong(f"saving the website did not write the shortcut: {now.get('active')}")
-            else:
-                say(f"saved                  -> {path}")
+            say(f"kept                   -> {path}")
 
-            written = spaces / SPACE / "A page.url"
+            written = spaces / SPACE / path.replace("\\", "/").split("/")[-1]
             if not written.exists():
                 wrong(f"no shortcut on disk: {sorted(one.name for one in (spaces / SPACE).iterdir())}")
             else:

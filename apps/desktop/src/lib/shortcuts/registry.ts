@@ -282,25 +282,6 @@ const onMac = () => isDesktop && platform() === 'macos'
  *  command palette does. */
 const APP_ENTRIES: Shortcut[] = [
   {
-    id: 'app.save',
-    label: () => t('Save'),
-    category: 'file',
-    scope: 'app',
-    key: 'Mod-s',
-    run: () => void workspace.save(),
-  },
-  {
-    // A Mac's File menu has it on Shift and the key Save is on, and so do the editors
-    // on Windows and Linux. Fetched by the press, like the palette that has its row.
-    id: 'app.save-as',
-    label: () => t('Save as'),
-    category: 'file',
-    scope: 'app',
-    key: 'Mod-Shift-s',
-    run: () =>
-      void import('../save-as').then(({ canSaveAs, saveAs }) => canSaveAs() && void saveAs()),
-  },
-  {
     id: 'app.new',
     label: () => t('New note'),
     category: 'file',

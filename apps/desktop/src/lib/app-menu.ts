@@ -164,7 +164,7 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'file',
       label: t('File'),
       // What a document goes out as and what it was, and nothing more. Making,
-      // opening, saving and closing are on the keys every editor has them on, the
+      // opening and closing are on the keys every editor has them on, the
       // strip's plus, a tab's own menu and the palette, and Settings is the gear in
       // the panel's foot; a row for each here was a second list to read past. Emil,
       // 2026-09-30: *"I would like to remove some options here: everything till

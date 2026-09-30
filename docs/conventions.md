@@ -54,11 +54,12 @@ kind; a second copy is the bug the file's own header describes.
 `apps/desktop/src/lib/workspace.svelte.ts` is the app's centre: the spaces, the
 tree, the tabs and the panes. What has a rule of its own lives in
 `apps/desktop/src/lib/workspace/`, and the store hands its own calls through, so
-`workspace.save()` and the rest mean what they always did.
+`workspace.writeNow()` and the rest are the store's calls wherever they live.
 
 | Module | What it owns |
 | --- | --- |
-| `saving.svelte.ts` | Writing what is open down, and the dot beside a name. Its state is its own. |
+| `saving.svelte.ts` | Writing what is open down, a moment after it changes: every note, canvas and page note, and a new tab the moment it has words. Its state is its own. |
+| `drafts.ts` | What a new tab's file is called and whether it follows its first line. Pure. |
 | `note-text.ts` | The words in a space's notes, read and written without opening them: a replacement, a tag renamed, a task ticked. |
 | `composing.ts` | One note out of another, and two into one. |
 | `spaces.ts` | The list of spaces: which exist, in what order, which is open. |

@@ -14,8 +14,8 @@
  *
  *  Written from here rather than from the workspace because it is about the shortcut
  *  and not about the session: the workspace still owns what a tab is, and it is the
- *  one that writes a file the first time a page says what it is called - see
- *  `keepWeb`. A write is only ever made for a note that already has a file.
+ *  one that writes a file when somebody keeps the page - see `keepAsWebNote`. A write
+ *  is only ever made for a note that already has a file.
  *
  *  Quiet about a write that fails. A shortcut that could not be written is a note that
  *  opens where it opened yesterday, which is what it did before any of this. */

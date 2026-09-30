@@ -409,15 +409,15 @@ export class CanvasStore implements PlaneSurface {
     this.keepPicked()
   }
 
-  /** The canvas into the document, which marks it unsaved and starts the clock
-   *  on the auto-save. The revision is noted so `follow` can tell our own write
-   *  from somebody else's. */
+  /** The canvas into the document, which starts the clock on its write - and, for a
+   *  plane with no file yet, is what makes it one. The revision is noted so `follow`
+   *  can tell our own write from somebody else's. */
   protected commit() {
     this.writing.cancel()
 
     const text = this.serialise(this.canvas)
     // A plane that comes back saying exactly what the file says is not an edit, and
-    // marking the note unsaved for it would start a round of writes over nothing.
+    // marking the note changed for it would start a round of writes over nothing.
     if (text !== this.note.text) this.note.replace(text)
     this.at = this.note.revision
   }
@@ -502,8 +502,8 @@ export class CanvasStore implements PlaneSurface {
  *  A plane's file is written once the drawing stops rather than on the tick the pen
  *  came up, and a surface going away writes what is owing itself - but a window
  *  closing tears nothing down: no effect's cleanup runs, so nothing would call
- *  `part`. Until the file is written the document is not one the workspace knows is
- *  unsaved either, so the window would not even ask.
+ *  `part`, and until the plane is in its document there is nothing for the document's
+ *  own write to take down.
  *
  *  Weak references, so a canvas that has been closed is collected with everything
  *  else about it and this list never keeps one alive. */

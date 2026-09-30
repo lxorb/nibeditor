@@ -329,7 +329,7 @@ different things in the same place.**
 
 | case | what happens | on screen |
 | --- | --- | --- |
-| one device, online | written to disk 1.2 s after typing stops (autosave), sent to the account at the same moment | the light, nothing else |
+| one device, online | written to disk 0.4 s after typing stops (autosave, and at least every 2 s while it never stops), sent to the account at the same moment | the light, nothing else |
 | two devices, both online, same note | live, keystroke by keystroke, as rooms do today | the other device's caret and dot |
 | two devices online, different notes | the other device's change arrives within about a second (a poke) | the file list and any open tab update in place |
 | offline for an hour or a week | every edit is kept on the device as the file and as CRDT updates; nothing is asked while away | the light is hollow (offline), never red |
@@ -345,7 +345,7 @@ different things in the same place.**
 | both created `Untitled.md` | two notes: `Untitled.md` and `Untitled 2.md` | the second device's row renames itself |
 | both appended to a day's note that did not exist yet (a shortcut, the append action) | one note, both lines kept | nothing |
 | a file edited by git or another editor | merged three-way against what nib last wrote | nothing |
-| the app crashed | at most the last 1.2 s of typing is lost, as with any autosave; everything written is resent | nothing |
+| the app crashed | at most the last 0.4 s of typing is lost from the file (the session keeps it and the next launch writes it), as with any autosave; everything written is resent | nothing |
 | a picture, recording or PDF added | uploaded once by content; other devices fetch it (large ones when opened) | the embed draws |
 | the same picture file replaced on two devices while apart | cannot merge: the modal, when opened | as below |
 
