@@ -279,6 +279,7 @@ export const it: Dictionary = {
   },
   'on this device': 'su questo dispositivo',
   '{count} notes': { one: '{count} nota', many: '{count} note', other: '{count} note' },
+  '{count} tabs': { one: '{count} scheda', many: '{count} schede', other: '{count} schede' },
   'Empty Recently deleted?': 'Svuotare Eliminati di recente?',
   'Everything in it is gone for good.': 'Tutto il contenuto sparisce per sempre.',
   'could not reach the server': 'il server non risponde',

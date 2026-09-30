@@ -271,6 +271,7 @@ export const my: Dictionary = {
   'gone in {count} days': '{count} ရက်အတွင်းပျောက်မည်',
   'on this device': 'ဤစက်ပေါ်တွင်',
   '{count} notes': 'မှတ်စု {count} ခု',
+  '{count} tabs': '{count} တဘ်',
   'Empty Recently deleted?': 'မကြာမီဖျက်ခဲ့သည်ကိုသုတ်သင်မလား?',
   'Everything in it is gone for good.': 'အထဲရှိအားလုံးအပြီးအပိုင်ပျောက်မည်။',
   'could not reach the server': 'ဆာဗာနှင့်မဆက်သွယ်နိုင်',

@@ -274,6 +274,7 @@ export const kn: Dictionary = {
   },
   'on this device': 'ಈ ಸಾಧನದಲ್ಲಿ',
   '{count} notes': { one: '{count} ಟಿಪ್ಪಣಿ', other: '{count} ಟಿಪ್ಪಣಿಗಳು' },
+  '{count} tabs': { one: '{count} ಟ್ಯಾಬ್', other: '{count} ಟ್ಯಾಬ್‌ಗಳು' },
   'Empty Recently deleted?': 'ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವನ್ನು ಖಾಲಿ ಮಾಡಬೇಕೆ?',
   'Everything in it is gone for good.': 'ಅದರಲ್ಲಿರುವ ಎಲ್ಲವೂ ಶಾಶ್ವತವಾಗಿ ಹೋಗುತ್ತದೆ.',
   'could not reach the server': 'ಸರ್ವರ್ ತಲುಪಲಾಗಲಿಲ್ಲ',

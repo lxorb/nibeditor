@@ -271,6 +271,7 @@ export const ko: Dictionary = {
   'gone in {count} days': '{count}일 후 사라짐',
   'on this device': '이 기기에서',
   '{count} notes': '노트 {count}개',
+  '{count} tabs': '탭 {count}개',
   'Empty Recently deleted?': '최근 삭제를 비울까요？',
   'Everything in it is gone for good.': '안에 있는 모든 것이 완전히 사라집니다.',
   'could not reach the server': '서버에 연결할 수 없습니다',

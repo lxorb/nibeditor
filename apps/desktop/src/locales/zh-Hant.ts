@@ -271,6 +271,7 @@ export const zhHant: Dictionary = {
   'gone in {count} days': '{count}天後清除',
   'on this device': '在此裝置上',
   '{count} notes': '{count}篇筆記',
+  '{count} tabs': '{count} 個分頁',
   'Empty Recently deleted?': '清空最近刪除？',
   'Everything in it is gone for good.': '其中的內容會永久清除。',
   'could not reach the server': '無法連上伺服器',

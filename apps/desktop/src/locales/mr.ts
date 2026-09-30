@@ -271,6 +271,7 @@ export const mr: Dictionary = {
   'gone in {count} days': { one: '{count} दिवसात जाईल', other: '{count} दिवसांत जाईल' },
   'on this device': 'या उपकरणावर',
   '{count} notes': { one: '{count} नोंद', other: '{count} नोंदी' },
+  '{count} tabs': { one: '{count} टॅब', other: '{count} टॅब' },
   'Empty Recently deleted?': '“नुकतेच हटवलेले” रिकामे करा?',
   'Everything in it is gone for good.': 'त्यातील सर्व कायमचे जाईल.',
   'could not reach the server': 'सर्व्हरपर्यंत पोहोचता आले नाही',

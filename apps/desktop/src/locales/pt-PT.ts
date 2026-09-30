@@ -279,6 +279,11 @@ export const ptPT: Dictionary = {
   },
   'on this device': 'neste dispositivo',
   '{count} notes': { one: '{count} nota', many: '{count} notas', other: '{count} notas' },
+  '{count} tabs': {
+    one: '{count} separador',
+    many: '{count} separadores',
+    other: '{count} separadores',
+  },
   'Empty Recently deleted?': 'Esvaziar a reciclagem?',
   'Everything in it is gone for good.': 'Tudo o que está lá desaparece de vez.',
   'could not reach the server': 'não foi possível contactar o servidor',

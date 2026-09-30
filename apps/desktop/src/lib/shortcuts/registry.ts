@@ -338,7 +338,7 @@ const APP_ENTRIES: Shortcut[] = [
     // Chrome's do; see tab-strip/chosen.svelte.ts.
     run: () => {
       const many = chosen.of(workspace.panes.focusedId)
-      if (many.length) void tabOps().then((ops) => ops.closeChosen(many))
+      if (many.length) void import('../tab-strip/picking').then((one) => one.closeChosen(many))
       else if (workspace.activeTabId || workspace.tabs.length || !onMac())
         void workspace.closeActive()
       else void closeWindow()

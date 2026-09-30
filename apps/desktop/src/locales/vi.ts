@@ -271,6 +271,7 @@ export const vi: Dictionary = {
   'gone in {count} days': 'mất sau {count} ngày',
   'on this device': 'trên thiết bị này',
   '{count} notes': '{count} ghi chú',
+  '{count} tabs': '{count} tab',
   'Empty Recently deleted?': 'Dọn sạch mục Vừa xoá?',
   'Everything in it is gone for good.': 'Mọi thứ trong đó mất hẳn.',
   'could not reach the server': 'không kết nối được máy chủ',

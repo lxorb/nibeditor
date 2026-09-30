@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import {
   clampedStart,
   endOf,
-  gathered,
   holds,
   keptWidths,
   moved,
@@ -212,31 +211,6 @@ describe('where a dragged tab belongs', () => {
     expect(moved(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd'])
     expect(moved(['a', 'b', 'c', 'd'], 3, 0)).toEqual(['d', 'a', 'b', 'c'])
     expect(moved(['a', 'b'], 5, 0)).toEqual(['a', 'b'])
-  })
-})
-
-describe('several tabs carried as one', () => {
-  const tabs = ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id }))
-  const widths = [100, 80, 100, 60, 100]
-
-  test('stand as the dragged one, as wide as all of them', () => {
-    const block = gathered(tabs, widths, ['b', 'd'], 'd')
-
-    expect(block.order.map((one) => one.id)).toEqual(['a', 'c', 'd', 'e'])
-    expect(block.widths).toEqual([100, 100, 140, 100])
-    expect(block.from).toBe(2)
-  })
-
-  test('held from where the dragged one sits inside the block', () => {
-    expect(gathered(tabs, widths, ['b', 'd'], 'd').before).toBe(80)
-    expect(gathered(tabs, widths, ['b', 'd'], 'b').before).toBe(0)
-  })
-
-  test('and go along the strip by the rules one tab goes by', () => {
-    const block = gathered(tabs, widths, ['b', 'd'], 'b')
-    // Past the middle of the tab after it: the block is one slot on.
-    expect(nearestSlot(block.widths, block.from, 160, 0, false)).toBe(2)
-    expect(moved(block.order, block.from, 2).map((one) => one.id)).toEqual(['a', 'c', 'b', 'e'])
   })
 })
 

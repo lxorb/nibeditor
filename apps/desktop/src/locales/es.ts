@@ -279,6 +279,7 @@ export const es: Dictionary = {
   },
   'on this device': 'en este dispositivo',
   '{count} notes': { one: '{count} nota', many: '{count} notas', other: '{count} notas' },
+  '{count} tabs': { one: '{count} pestaña', many: '{count} pestañas', other: '{count} pestañas' },
   'Empty Recently deleted?': '¿Vaciar la papelera?',
   'Everything in it is gone for good.': 'Todo lo que hay dentro desaparece para siempre.',
   'could not reach the server': 'no se pudo conectar con el servidor',

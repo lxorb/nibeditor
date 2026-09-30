@@ -271,6 +271,7 @@ export const bn: Dictionary = {
   'gone in {count} days': { one: '{count} দিনে চলে যাবে', other: '{count} দিনে চলে যাবে' },
   'on this device': 'এই ডিভাইসে',
   '{count} notes': { one: '{count}টি নোট', other: '{count}টি নোট' },
+  '{count} tabs': { one: '{count}টি ট্যাব', other: '{count}টি ট্যাব' },
   'Empty Recently deleted?': 'সম্প্রতি মুছে ফেলা খালি করবেন?',
   'Everything in it is gone for good.': 'ভিতরের সবকিছু চিরতরে চলে যাবে।',
   'could not reach the server': 'সার্ভারে পৌঁছানো গেল না',

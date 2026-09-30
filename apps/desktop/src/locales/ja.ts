@@ -271,6 +271,7 @@ export const ja: Dictionary = {
   'gone in {count} days': 'あと{count}日で消えます',
   'on this device': 'このデバイス上',
   '{count} notes': '{count}件のノート',
+  '{count} tabs': '{count}個のタブ',
   'Empty Recently deleted?': '最近削除した項目を空にしますか？',
   'Everything in it is gone for good.': '中身はすべて完全に消えます。',
   'could not reach the server': 'サーバーに接続できませんでした',

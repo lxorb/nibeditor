@@ -286,6 +286,12 @@ export const pl: Dictionary = {
     many: '{count} notatek',
     other: '{count} notatki',
   },
+  '{count} tabs': {
+    one: '{count} karta',
+    few: '{count} karty',
+    many: '{count} kart',
+    other: '{count} karty',
+  },
   'Empty Recently deleted?': 'Opróżnić Ostatnio usunięte?',
   'Everything in it is gone for good.': 'Wszystko w środku znika na dobre.',
   'could not reach the server': 'serwer nie odpowiada',

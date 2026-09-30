@@ -33,14 +33,8 @@ import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
 import { chosen } from './chosen.svelte'
-import {
-  duplicateMany,
-  duplicateTab,
-  moveManyToOtherPane,
-  moveToOtherPane,
-  pinMany,
-  renameFromTab,
-} from './ops'
+import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
+import { duplicateMany, moveManyToOtherPane, pinMany } from './picking'
 
 /** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
  *  pauses it there, as a press in the page would; Stop ends its work in the tab and

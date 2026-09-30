@@ -274,6 +274,7 @@ export const ml: Dictionary = {
   'gone in {count} days': { one: '{count} ദിവസത്തിൽ പോകും', other: '{count} ദിവസങ്ങളിൽ പോകും' },
   'on this device': 'ഈ ഉപകരണത്തിൽ',
   '{count} notes': { one: '{count} കുറിപ്പ്', other: '{count} കുറിപ്പുകൾ' },
+  '{count} tabs': { one: '{count} ടാബ്', other: '{count} ടാബുകൾ' },
   'Empty Recently deleted?': 'അടുത്തിടെ ഇല്ലാതാക്കിയവ കാലിയാക്കണോ?',
   'Everything in it is gone for good.': 'അതിലുള്ളതെല്ലാം എന്നേക്കുമായി പോകും.',
   'could not reach the server': 'സെർവറിൽ എത്താനായില്ല',

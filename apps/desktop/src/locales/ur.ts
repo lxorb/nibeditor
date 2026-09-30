@@ -271,6 +271,7 @@ export const ur: Dictionary = {
   'gone in {count} days': { one: '{count} دن میں ختم', other: '{count} دنوں میں ختم' },
   'on this device': 'اس ڈیوائس پر',
   '{count} notes': { one: '{count} نوٹ', other: '{count} نوٹس' },
+  '{count} tabs': { one: '{count} ٹیب', other: '{count} ٹیبز' },
   'Empty Recently deleted?': 'حال میں حذف شدہ خالی کریں؟',
   'Everything in it is gone for good.': 'اس کا سب کچھ ہمیشہ کے لیے چلا جاتا ہے۔',
   'could not reach the server': 'سرور تک نہیں پہنچ سکے',

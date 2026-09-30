@@ -271,6 +271,7 @@ export const tr: Dictionary = {
   'gone in {count} days': { one: '{count} gün sonra gider', other: '{count} gün sonra gider' },
   'on this device': 'bu aygıtta',
   '{count} notes': { one: '{count} not', other: '{count} not' },
+  '{count} tabs': { one: '{count} sekme', other: '{count} sekme' },
   'Empty Recently deleted?': 'Son silinenler boşaltılsın mı?',
   'Everything in it is gone for good.': 'İçindeki her şey kalıcı olarak gider.',
   'could not reach the server': 'sunucuya ulaşılamadı',

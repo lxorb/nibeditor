@@ -274,6 +274,7 @@ export const ha: Dictionary = {
   },
   'on this device': "a wannan na'ura",
   '{count} notes': { one: 'bayanin kula {count}', other: 'bayanan kula {count}' },
+  '{count} tabs': { one: '{count} tab', other: '{count} tabs' },
   'Empty Recently deleted?': 'A zuba Wanda aka share kwanan nan?',
   'Everything in it is gone for good.': 'Duk abin da ke ciki ya tafi har abada.',
   'could not reach the server': 'ba a iya kai wa uwar garke ba',

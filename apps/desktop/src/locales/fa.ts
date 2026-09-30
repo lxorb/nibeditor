@@ -271,6 +271,7 @@ export const fa: Dictionary = {
   'gone in {count} days': { one: '{count} روز دیگر می‌رود', other: '{count} روز دیگر می‌رود' },
   'on this device': 'روی این دستگاه',
   '{count} notes': { one: '{count} یادداشت', other: '{count} یادداشت' },
+  '{count} tabs': { one: '{count} زبانه', other: '{count} زبانه' },
   'Empty Recently deleted?': 'تازه حذف‌شده تخلیه شود؟',
   'Everything in it is gone for good.': 'هر چه در آن است برای همیشه می‌رود.',
   'could not reach the server': 'کارساز در دسترس نبود',
