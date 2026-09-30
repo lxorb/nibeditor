@@ -13,6 +13,7 @@
  *  omnibox.ts. */
 
 import { keep, stored } from '../stored'
+import { favicons } from './favicons.svelte'
 import { completion, suggested, type Completion } from './omnibox'
 import { named, typedTo, unvisited, visitKey, visited as arrived, visitsFrom } from './visits'
 import type { Visit } from './visits'
@@ -82,9 +83,11 @@ class Visited {
     this.counted.delete(tab)
   }
 
-  /** Takes one address out, which is Shift+Delete on a row of the list. */
+  /** Takes one address out, which is Shift+Delete on a row of the list, and the mark
+   *  this device kept for it: a page forgotten is forgotten everywhere it was kept. */
   remove(book: Book, url: string) {
     this.write(book, unvisited(this.rows(book), url))
+    favicons.forget(url)
   }
 
   /** What a page called itself the last time a tab was on it, or the empty string:

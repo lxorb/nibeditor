@@ -24,6 +24,7 @@
    *  bar over a page, a new web note asking where it points - finishes it the same. */
 
   import { untrack } from 'svelte'
+  import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import Suggest from '../Suggest.svelte'
@@ -277,10 +278,17 @@
       {active}
       shown={shownAddress}
       aside={(url: string) => titles.get(url) ?? ''}
+      lead={site}
       onchoose={go}
     />
   {/if}
 </div>
+
+<!-- The site's mark in front of each page offered, the one its tab wore: Chrome's
+     omnibox rows, and the first thing an eye finds in a list of addresses. -->
+{#snippet site(url: string)}
+  <FileMark mark="web" {url} />
+{/snippet}
 
 <style>
   /* The field takes whatever the glyphs beside it leave, and never less than can be

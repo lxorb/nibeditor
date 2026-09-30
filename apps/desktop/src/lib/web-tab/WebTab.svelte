@@ -34,6 +34,7 @@
   import { plainOrigin, webAddress } from './address'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
+  import { siteMark } from './favicons.svelte'
   import { filling } from './filling.svelte'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
@@ -585,7 +586,7 @@
          stack, so the page is out of sight while either is up and the still picture of
          it stands in; see `covered`. -->
     {#if asking}
-      <WebAsk {asking} icon={page.icon} />
+      <WebAsk {asking} icon={siteMark(page.icon, page.url)} />
     {:else if showingSite && page.url !== null}
       <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
     {:else if showingDownloads}
@@ -664,7 +665,7 @@
         {#if marked}
           <img
             class="mark"
-            src={new URL('/favicon.ico', address).href}
+            src={siteMark(page.icon, address) ?? new URL('/favicon.ico', address).href}
             alt=""
             draggable="false"
             onerror={() => (marked = false)}

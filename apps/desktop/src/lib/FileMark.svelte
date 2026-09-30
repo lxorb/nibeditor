@@ -38,7 +38,17 @@
    *  saved. Both mean the same thing here, which is what the spelling says: under
    *  `exactOptionalPropertyTypes` an optional property and one that may be undefined
    *  are two different types, and this is both. */
-  const { mark, path }: { mark: FileMark; path?: string | undefined } = $props()
+  const {
+    mark,
+    path,
+    url,
+  }: {
+    mark: FileMark
+    path?: string | undefined
+    /** For a website that is an address and no file - a page in the history, one the
+     *  address field offers - which wears the mark this device last saw there. */
+    url?: string | undefined
+  } = $props()
 
   /** What the file or folder at this path chose, or null for a row that chose
    *  nothing - and for a caller that knows a name but no path, which gets its kind's
@@ -46,11 +56,12 @@
   const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
   const tint = $derived(path === undefined ? null : chosenTint(path))
 
-  /** The site's own mark for a website, out of its `.url`'s `Nib-Icon`. Only a
-   *  website has one, and only when a page has found one; the globe stands in until
-   *  then. Read from the path through the same façade the chosen icon is, so this
-   *  names no store of its own; see chosen-icon.ts and TabMark.svelte. */
-  const favicon = $derived(mark === 'web' && path !== undefined ? faviconFor(path) : null)
+  /** The site's own mark for a website: the last one this device saw there, else its
+   *  `.url`'s `Nib-Icon`. Only a website has one, and only once a page has shown one;
+   *  the globe stands in until then. Read from the path through the same façade the
+   *  chosen icon is, so this names no store of its own; see chosen-icon.ts and
+   *  TabMark.svelte. */
+  const favicon = $derived(mark === 'web' ? faviconFor(path, url) : null)
 
   /** Whether the picture refused to arrive: a mark whose address has moved, or one
    *  the content policy will not fetch. The globe reads better than a broken picture,

@@ -14,6 +14,7 @@
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { folderOf } from './space-paths'
+import { siteMark } from './web-tab/favicons.svelte'
 import { workspace } from './workspace.svelte'
 
 /** Which key the space's map is asked under. For `A/A.md` that is `A/`, because
@@ -32,12 +33,14 @@ export function chosenIcon(path: string): string | null {
 }
 
 /** A website's own mark, as an address, or null for anything that is not one or has
- *  no mark cached yet. The favicon out of the `.url`'s `Nib-Icon`, drawn as a picture
- *  in front of the row rather than the plain globe - the same mark the tab strip and
- *  the address bar show. Here beside the chosen icon so a row asks one façade for
- *  what it draws and never the index by name; see link-index `faviconOf`. */
-export function faviconFor(path: string): string | null {
-  return links.faviconOf(path)
+ *  no mark yet: the last one this device saw where the `.url` points (or at `url`, for
+ *  a row that is an address and no file), else the favicon out of the file's
+ *  `Nib-Icon` - the same mark, through the same door, as the tab strip and the address
+ *  bar show. Here beside the chosen icon so a row asks one façade for what it draws and
+ *  never the index by name; see link-index `faviconOf` and web-tab/favicons.svelte.ts. */
+export function faviconFor(path: string | undefined, url?: string | null): string | null {
+  const address = url ?? (path === undefined ? null : links.shortcutOf(path))
+  return siteMark(null, address, path === undefined ? null : links.faviconOf(path))
 }
 
 /** The colour a stroked icon is drawn in, or null for the plain foreground.
