@@ -386,6 +386,7 @@ export interface Reply {
   client_id_metadata_document_supported: boolean
   authorization_response_iss_parameter_supported: boolean
   resource: string
+  resource_name: string
   authorization_servers: string[]
 
   // Registering, and the tokens that follow.
