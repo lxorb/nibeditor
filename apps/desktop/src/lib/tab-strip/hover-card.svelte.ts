@@ -133,9 +133,7 @@ class Hovering {
   private may(): boolean {
     const own = this.uncover ? 1 : 0
     return (
-      overlays.depth <= own &&
-      workspace.panes.dragging === null &&
-      workspace.panes.landing === null
+      overlays.depth <= own && workspace.panes.dragging === null && workspace.panes.landing === null
     )
   }
 
@@ -165,7 +163,9 @@ class Hovering {
     this.card = {
       id: tab.id,
       title: tab.shown,
-      where: web ? siteOf(pages.addressOf(tab.id) ?? tab.address) : whereOf(tab.path, workspace.spaces),
+      where: web
+        ? siteOf(pages.addressOf(tab.id) ?? tab.address)
+        : whereOf(tab.path, workspace.spaces),
       still,
       x: at.x,
       y: at.y,
