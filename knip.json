@@ -10,6 +10,7 @@
     "packages/glasses": {},
     "packages/markdown": {},
     "packages/rooms": {},
+    "packages/sync-core": {},
     "apps/desktop": {
       "entry": [
         "src/**/*.svelte",

@@ -531,7 +531,7 @@ applying them. The device then has three texts:
 - **R**, remote: confirmed plus what the account sent;
 
 and computes **M**, the CRDT merge of both, in a scratch document. The classifier
-(`@nib/sync/diverge`) diffs B to L and B to R at character level with semantic cleanup, in
+(`@nib/sync-core/diverge`) diffs B to L and B to R at character level with semantic cleanup, in
 B's coordinates, and looks at the edits that meet:
 
 - **Identical edits** (same span, same replacement) count once. Both fixed the typo. The
@@ -572,7 +572,7 @@ modal is answered).
 **The three answers**, precisely:
 
 - **Keep (this device)**: apply R to the live document, then the operations that turn M's
-  text into L's (`@nib/sync/textops`, a character diff to Yjs operations), and send pending
+  text into L's (`@nib/sync-core/textops`, a character diff to Yjs operations), and send pending
   plus those, checked against R's state. Every device ends at L. R is a version.
 - **Keep (the other device)**: drop pending (it was never sent), set the live document to
   confirmed plus R. L is written to this device's history first and pushed to the account as
@@ -665,7 +665,7 @@ space cursor the device had seen (`seen`):
 
 The account applies them in arrival order and answers each with the result (final name and
 parent, or a refusal), and devices apply the account's feed the same way, so every device
-converges on the account's order. The rules, all in `@nib/sync/tree` and shared by the
+converges on the account's order. The rules, all in `@nib/sync-core/tree` and shared by the
 Worker and the client (which applies its own ops optimistically):
 
 - **Names are unique per folder, case-insensitively and after NFC normalisation**
@@ -988,7 +988,7 @@ Phones and the browser build never hold the web key: they have no web tabs.
 All routes are under `/v2`, behind the session guard like `/v1`, and every refusal a
 person can cause is an English sentence with a row in every catalogue. Binary payloads
 (Yjs updates, state vectors, blobs, bundles) travel as `application/octet-stream` inside a
-small framed envelope (`@nib/sync/wire`: a JSON header, then length-prefixed binary
+small framed envelope (`@nib/sync-core/wire`: a JSON header, then length-prefixed binary
 parts), because base64 would cost a third more on every update.
 
 ### Tree and feed
@@ -1216,7 +1216,7 @@ Files that do not exist yet are named from their package: `lib/` is the app's
 
 | where | what | lane |
 | --- | --- | --- |
-| `@nib/sync` (a new package beside `packages/rooms`) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
+| `@nib/sync-core` (`packages/sync-core`, beside `packages/rooms`; `@nib/sync` is already the Worker's name) | `merge3`, `diverge`, `textops`, `seed`, `tree`, `outbox`, `wire`, `plane-diverge`; pure, shared by app and Worker | core |
 | `src-tauri/src/sync_store.rs` | the sync store (SQLite through `rusqlite`, bundled, now on every target) and its batched commands | store |
 | `src-tauri/src/space_watch.rs` | the space folder watcher (`notify`), debounced, with file identities | store |
 | `lib/web/sync-store.ts` | the same store over IndexedDB for the browser build | store |
@@ -1360,7 +1360,7 @@ routes.
 
 ### A deterministic multi-device simulator
 
-`test/sim/` in `@nib/sync`: N devices, one account, one network, one clock, all in one
+`test/sim/` in `@nib/sync-core`: N devices, one account, one network, one clock, all in one
 process and all driven by a seeded random generator, so a failure is a seed and a seed is a
 replay.
 
@@ -1437,7 +1437,7 @@ first, lands on main behind the flags, and keeps v1 green.
 
 | lane | owns | depends on | wave |
 | --- | --- | --- | --- |
-| `sync-core` | `@nib/sync` | nothing | 1 |
+| `sync-core` | `@nib/sync-core` | nothing | 1 |
 | `sync-server-hub` | the Worker's `src/hub/`, `0039`, `wrangler.jsonc`, web state, device and web-store routes | nothing (this document is the protocol) | 1 |
 | `sync-client-store` | `sync_store.rs`, `space_watch.rs`, `web/sync-store.ts` | nothing (section 9.2 is the schema) | 1 |
 | `web-state` | `src-tauri/src/web_state/`, the scripts, the crypto | nothing for capture, restore and crypto; the hub's routes for upload | 1 |
@@ -1452,7 +1452,7 @@ then `web_sync`.
 
 ### 13.1 The interfaces the lanes meet at
 
-- `@nib/sync` exports exactly: `merge3`, `diverge` (with `Verdict`, `Overlap`,
+- `@nib/sync-core` exports exactly: `merge3`, `diverge` (with `Verdict`, `Overlap`,
   `CONTESTED = 80`), `textops`, `seedUpdate(noteId, epoch, text)`, `seedPlane(noteId, epoch,
   canvas)`, `applyOp`/`TreeState` and the rules of 5.9, `coalesce` for the outbox, and the
   wire types and codecs of section 7.
