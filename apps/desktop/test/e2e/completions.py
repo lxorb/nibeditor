@@ -32,15 +32,7 @@ from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # Front matter is hidden until asked for since 31209a29, so the caret this drive puts
-        # in a `tags:` list lands on the first line that shows.
-        "a `tags:` list offered nothing": "hunt-7, whose branch holds the fix",
-        "the tag was not written into the list": "hunt-7, whose branch holds the fix",
-    },
-)
+DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin

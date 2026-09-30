@@ -46,15 +46,7 @@ from playwright.sync_api import Page
 
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # A page note renamed to a canvas keeps its tab as a page note, and opening the
-        # path brings that tab forward rather than a canvas: an app bug on main before
-        # the harness, 2026-09-30.
-        "a renamed page note opens as": "handed to hunt-7",
-    },
-)
+DRIVE = Drive(__file__)
 say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin

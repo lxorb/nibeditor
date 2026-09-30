@@ -40,13 +40,7 @@ from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # Record left the phone's plus on 2026-09-27 (docs/mobile.md).
-        "no Record row on the phone's plus": "hunt-7, whose branch holds the fix",
-    },
-)
+DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 

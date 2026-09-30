@@ -35,14 +35,7 @@ from playwright.sync_api import Browser, Page
 import harness
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # A folder's first note does not join the file list: an app bug on main before the
-        # harness.
-        "the note to be written": "hunt-7, whose branch holds the fix",
-    },
-)
+DRIVE = Drive(__file__)
 say, wait_for = DRIVE.say, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin

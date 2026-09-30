@@ -38,13 +38,7 @@ from __future__ import annotations
 
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # Shift+click opens a tab in front since d68541d7 (docs/web-tabs.md).
-        "Shift+click made a tab rather than leaving": "hunt-7, whose branch holds the fix",
-    },
-)
+DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 SHOTS = DRIVE.shots

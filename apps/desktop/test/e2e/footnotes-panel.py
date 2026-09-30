@@ -31,13 +31,7 @@ from settling import HIDE_CARET, quiet
 
 from harness import Drive
 
-DRIVE = Drive(
-    __file__,
-    known={
-        # The note's panels are homed on the right since 4a5f7ddc.
-        "rather than the five the sidebar has": "hunt-7, whose branch holds the fix",
-    },
-)
+DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
