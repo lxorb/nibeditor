@@ -9,7 +9,7 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { sameCombination } from './keys'
-import { SYSTEM_KEYS } from './shortcuts/registry'
+import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 
 /** The store writes to the browser's storage and asks the browser what kind
  *  of machine this is, and there is neither under node. */
@@ -1000,6 +1000,44 @@ describe('the keys that move the keyboard about', () => {
  *  text size, they fire on the window after the surface has had the press, and one
  *  key doing both would resize the words and the paper at once. So they are one
  *  modifier over, which is the trade `canvas.fit` already made. */
+/** Full window: the tab alone in nib's window, which stays a window.
+ *
+ *  Full screen's own key with Shift on it - F11 and Ctrl+Cmd+F are the screen, Shift+F11
+ *  and Ctrl+Shift+Cmd+F the window - which is Sublime Text's pair for the same two jobs.
+ *  No browser binds Shift+F11, so no page is used to having it, and it is a key the
+ *  terminal hands to the app and the crate keeps from a page; see terminal/keys.ts and
+ *  web_keys.rs. Pinned, because moving it would be a decision. */
+describe('full window', () => {
+  const entry = () => registry.SHORTCUTS.find((one) => one.id === 'app.fill-tab')
+
+  test('is Shift+F11, and Ctrl+Shift+Cmd+F on a Mac', () => {
+    expect(defaultKeyFor(entry()!, 'win')).toBe('Shift-F11')
+    expect(defaultKeyFor(entry()!, 'linux')).toBe('Shift-F11')
+    expect(defaultKeyFor(entry()!, 'mac')).toBe('Mod-Ctrl-Shift-f')
+  })
+
+  test('sits in View beside full screen, which keeps its own key', () => {
+    expect(entry()?.category).toBe('view')
+    expect(entry()?.scope).toBe('app')
+    expect(registry.shortcuts.keyFor('app.fullscreen')).toBe('F11')
+  })
+
+  test('is no key a browser keeps for itself', () => {
+    for (const platform of PLATFORMS) {
+      const key = defaultKeyFor(entry()!, platform)
+      expect(key).not.toBeNull()
+      expect(BROWSER_KEYS.some((held) => sameCombination(held, key ?? '', platform))).toBe(false)
+    }
+  })
+
+  test('answers the press it is on', () => {
+    const shiftF11 = press('F11', { code: 'F11', shift: true })
+    expect(registry.shortcuts.pressed('app.fill-tab', shiftF11)).toBe(true)
+    expect(registry.shortcuts.pressed('app.fullscreen', shiftF11)).toBe(false)
+    expect(registry.shortcuts.pressed('app.fill-tab', press('F11', { code: 'F11' }))).toBe(false)
+  })
+})
+
 describe('a page note’s zoom', () => {
   test('is on the keys the plane’s Fit is on, one modifier over', () => {
     expect(registry.shortcuts.keyFor('pages.zoom.in')).toBe('Mod-Alt-=')
@@ -1119,6 +1157,7 @@ describe('on a Mac', () => {
    *  move a Windows reader's hands as well. */
   const MAC: [id: string, mac: string | null, elsewhere: string][] = [
     ['app.fullscreen', 'Mod-Ctrl-f', 'F11'],
+    ['app.fill-tab', 'Mod-Ctrl-Shift-f', 'Shift-F11'],
     ['app.present', 'Mod-Alt-p', 'F5'],
     ['app.focus', 'Mod-Ctrl-o', 'F8'],
     ['app.typewriter', 'Mod-Ctrl-t', 'F9'],

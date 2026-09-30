@@ -854,6 +854,8 @@ export const fa: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'تمام‌صفحه',
   'Leave fullscreen': 'بیرون آمدن از تمام‌صفحه',
+  'Full window': 'تمام‌پنجره',
+  'Leave full window': 'بیرون آمدن از تمام‌پنجره',
   'Moving the caret': 'جابه‌جایی نشانگر',
   'Deleting a character': 'حذف نویسه',
   'New line': 'خط تازه',

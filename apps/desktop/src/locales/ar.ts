@@ -899,6 +899,8 @@ export const ar: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ملء الشاشة',
   'Leave fullscreen': 'إنهاء ملء الشاشة',
+  'Full window': 'ملء النافذة',
+  'Leave full window': 'إنهاء ملء النافذة',
   'Moving the caret': 'تحريك المؤشر',
   'Deleting a character': 'حذف حرف',
   'New line': 'سطر جديد',

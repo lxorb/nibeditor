@@ -845,6 +845,8 @@ export const am: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ሙሉ ማሳያ',
   'Leave fullscreen': 'ከሙሉ ማሳያ ውጣ',
+  'Full window': 'ሙሉ መስኮት',
+  'Leave full window': 'ከሙሉ መስኮት ውጣ',
   'Moving the caret': 'ጠቋሚን ማንቀሳቀስ',
   'Deleting a character': 'ቁምፊ ማጥፋት',
   'New line': 'አዲስ መስመር',

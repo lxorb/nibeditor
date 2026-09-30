@@ -847,6 +847,8 @@ export const ko: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: '전체 화면',
   'Leave fullscreen': '전체 화면 끝내기',
+  'Full window': '창 전체',
+  'Leave full window': '창 전체 끝내기',
   'Moving the caret': '커서 이동',
   'Deleting a character': '문자 삭제',
   'New line': '새 줄',

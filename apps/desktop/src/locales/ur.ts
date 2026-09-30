@@ -853,6 +853,8 @@ export const ur: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'پوری اسکرین',
   'Leave fullscreen': 'پوری اسکرین سے نکلیں',
+  'Full window': 'پوری ونڈو',
+  'Leave full window': 'پوری ونڈو سے نکلیں',
   'Moving the caret': 'کرسر کی حرکت',
   'Deleting a character': 'حرف حذف کرنا',
   'New line': 'نئی سطر',

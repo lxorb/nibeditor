@@ -850,6 +850,8 @@ export const ja: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: '全画面',
   'Leave fullscreen': '全画面を終了',
+  'Full window': 'ウィンドウ全体',
+  'Leave full window': 'ウィンドウ全体を終了',
   'Moving the caret': 'カーソル移動',
   'Deleting a character': '文字の削除',
   'New line': '改行',

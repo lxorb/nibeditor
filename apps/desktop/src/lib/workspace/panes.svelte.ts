@@ -41,6 +41,8 @@ export interface Dragging {
 export class Panes {
   frame = $state<Frame>(pane(identifier()))
   focusedId = $state('')
+  /** The pane filling the window, while one is; see lib/tab-fill. */
+  fills = $state<string | null>(null)
   /** Tab ids, the one last in front first, for Ctrl+Tab in that order; see
    *  recency.ts. Here because every tab coming to the front comes through `activate`. */
   used: string[] = []

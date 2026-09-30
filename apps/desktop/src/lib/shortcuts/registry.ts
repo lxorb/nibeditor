@@ -962,6 +962,16 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Mod-Ctrl-f',
     run: (context) => context.fullscreen(),
   },
+  // The tab alone in the window, which stays a window; see lib/tab-fill.
+  {
+    id: 'app.fill-tab',
+    label: () => t('Full window'),
+    category: 'view',
+    scope: 'app',
+    key: 'Shift-F11',
+    mac: 'Mod-Ctrl-Shift-f',
+    run: () => void import('../tab-fill/fill').then((one) => one.toggleFill()),
+  },
   // The three keys every browser and every editor changes the size of the words
   // with. They are the note's own text size here - `--zoom`, never the webview's; see
   // text-size.ts - and they are these three keys because a reader who wants bigger

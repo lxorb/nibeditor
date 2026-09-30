@@ -840,6 +840,8 @@ export const zhHans: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: '全屏',
   'Leave fullscreen': '退出全屏',
+  'Full window': '全窗口',
+  'Leave full window': '退出全窗口',
   'Moving the caret': '移动光标',
   'Deleting a character': '删除字符',
   'New line': '换行',

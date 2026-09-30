@@ -852,6 +852,8 @@ export const bn: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ফুলস্ক্রিন',
   'Leave fullscreen': 'ফুলস্ক্রিন বন্ধ',
+  'Full window': 'পূর্ণ উইন্ডো',
+  'Leave full window': 'পূর্ণ উইন্ডো বন্ধ',
   'Moving the caret': 'কার্সর সরানো',
   'Deleting a character': 'অক্ষর মোছা',
   'New line': 'নতুন লাইন',

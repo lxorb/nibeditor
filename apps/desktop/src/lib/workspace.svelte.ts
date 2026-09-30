@@ -3952,6 +3952,7 @@ class Workspace {
    *  So the fact is held here rather than by everybody who asks for it, and the
    *  gesture that switches says switch; see `togglePanel`. */
   showPanel(next: Panel) {
+    this.unfill()
     if (this.openOn(this.sideOf(next)) === next) return
 
     this.sides = panels.showing(this.sides, next)
@@ -3964,7 +3965,16 @@ class Workspace {
    *  showing. The rule itself is `showing` in workspace/panels.ts, which answers
    *  what the two sides are after the press. */
   togglePanel(next: Panel) {
+    if (this.unfill() && this.openOn(this.sideOf(next)) === next) return
     this.sides = panels.showing(this.sides, next)
+  }
+
+  /** A tab filling the window hides both sides, so a side asked for is the window asked
+   *  back for, with its sides as they were; see lib/tab-fill. Answers whether one was. */
+  private unfill(): boolean {
+    if (this.panes.fills === null) return false
+    this.panes.fills = null
+    return true
   }
 
   /** Shuts a side whichever panel is in it. */
@@ -3981,6 +3991,7 @@ class Workspace {
 
   /** Opens or shuts one side: the left on the file list, the right on `nextRight`. */
   toggleSidebar(side: PanelSide = 'left') {
+    if (this.unfill() && this.openOn(side)) return
     if (side === 'right') {
       const next = this.nextRight
       if (next) this.togglePanel(next)

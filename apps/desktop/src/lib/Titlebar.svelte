@@ -54,9 +54,11 @@
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
-  /** The one pane, while there is only one. Null once something is split, and
-   *  then the strips live in the panes. */
-  const only = $derived(workspace.panes.count === 1 ? workspace.panes.focused : null)
+  /** The one pane, while there is only one or one fills the window. Null once
+   *  something is split, and then the strips live in the panes. */
+  const only = $derived(
+    workspace.panes.count === 1 || workspace.panes.fills ? workspace.panes.focused : null,
+  )
 
   /** A phone and a tablet show one document, so the bar says which one. The mark in
    *  front of the name is the same one the desktop's tab wears, because this bar is
@@ -79,7 +81,7 @@
      its tab, so there is no separate title; a phone and a tablet hold one
      document, so the name is the middle of the row and the whole of the app is
      behind the dots at the end of it. -->
-<header class:lights={cornered}>
+<header class:lights={cornered} data-chrome="top">
   <!-- The application itself, at the top left corner of the screen, which is
        where it was when there was a column of spaces to put it above. A phone
        reaches it through the three dots at the other end of this same row

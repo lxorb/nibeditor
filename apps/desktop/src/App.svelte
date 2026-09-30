@@ -38,7 +38,9 @@
   import { settings } from './lib/settings.svelte'
   import {
     contextMenu,
+    fillBar,
     formatBar as formatBarDoor,
+    fullscreenWayOut,
     historySheet,
     iconPicker,
     joinSheet,
@@ -96,6 +98,8 @@
    *  somebody shared to read says the same word in the strip that the reader's
    *  own read-only switch does; see sharing.svelte.ts. */
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
+  /** Whether a tab fills the window; see lib/tab-fill. */
+  const filled = $derived(workspace.panes.fills !== null)
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
    *  on the commands, which is a `>` in its field and a caret after it. */
@@ -848,10 +852,12 @@
          sideways, where the only thing a thumb can reach is the bar's. -->
     <!-- Full screen leaves the document and nothing else: no file list, no
          bars. Left out rather than slid away, so nothing in them can be reached
-         by a key while they are gone; see fullscreen.svelte.ts. -->
-    {#if !fullscreen.on}
+         by a key while they are gone; see fullscreen.svelte.ts. A tab filling the
+         window leaves the same, and its bar at the top edge; see lib/tab-fill. -->
+    {#if !fullscreen.on && !filled}
       <div
         class="panels"
+        data-chrome="start"
         inert={viewport.drawer && !workspace.panel}
         class:open={!!workspace.panel}
         class:held={drawer.held}
@@ -914,15 +920,13 @@
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->
       {#if !fullscreen.on}
-        <Titlebar
-          {view}
-          onpalette={() => {
-            palette = true
-          }}
-          onhistory={() => {
-            settings.historyOpen = true
-          }}
-        />
+        {#if filled}
+          {#await fillBar() then FillBar}
+            <FillBar>{@render bar()}</FillBar>
+          {/await}
+        {:else}
+          {@render bar()}
+        {/if}
       {/if}
 
       <!-- The note and, beside it, the other side of the window - which is empty
@@ -950,9 +954,10 @@
           <PaneTree frame={workspace.panes.frame} />
         </div>
 
-        {#if workspace.right.length && !fullscreen.on}
+        {#if workspace.right.length && !fullscreen.on && !filled}
           <div
             class="panels right"
+            data-chrome="end"
             inert={viewport.drawer && !workspace.rightPanel}
             class:open={!!workspace.rightPanel}
             class:held={rightDrawer.held}
@@ -984,7 +989,7 @@
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
            keyboard's own table describes. -->
-      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on}
+      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}
@@ -1002,23 +1007,11 @@
         </button>
       {/if}
 
-      <!-- The way back out of full screen, in the corner the bar's own buttons
-           were in. It fades once nothing has moved for a while - it is a way out,
-           not part of what is being read - and stays there faintly rather than
-           going, because a screen with no way off it is the one thing this must
-           never be. Escape, back on Android and the menu row do the same. -->
+      <!-- The way back out of full screen; see FullscreenLeave.svelte. -->
       {#if fullscreen.on}
-        <button
-          class="leave"
-          class:idle={fullscreen.idle}
-          title={t('Leave fullscreen')}
-          aria-label={t('Leave fullscreen')}
-          onclick={() => void fullscreen.leave()}
-        >
-          <svg viewBox="0 0 16 16">
-            <path d="M6.5 2.5v4h-4M9.5 2.5v4h4M6.5 13.5v-4h-4M9.5 13.5v-4h4" />
-          </svg>
-        </button>
+        {#await fullscreenWayOut() then WayOut}
+          <WayOut />
+        {/await}
       {/if}
     </div>
   </div>
@@ -1054,6 +1047,18 @@
       </div>
     {/if}
   </div>
+{/snippet}
+
+{#snippet bar()}
+  <Titlebar
+    {view}
+    onpalette={() => {
+      palette = true
+    }}
+    onhistory={() => {
+      settings.historyOpen = true
+    }}
+  />
 {/snippet}
 
 <!-- Over everything, with no chrome of its own: while a note is being presented
@@ -1263,85 +1268,9 @@
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   }
 
-  /* The way back, in the corner the window's own buttons were in. Small, and
-     quieter still once nothing has moved for a while - but never gone: it stays
-     reachable by a finger and by a key. */
-  .leave {
-    position: absolute;
-    top: max(var(--space-2), var(--inset-top));
-    inset-inline-end: max(var(--space-2), var(--inset-end));
-    z-index: var(--z-float);
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--surface-3) 82%, transparent);
-    color: var(--muted-strong);
-    box-shadow: var(--shadow-sm);
-    cursor: default;
-    width: var(--leave-size);
-    height: var(--leave-size);
-    transition:
-      opacity var(--dur-slow) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  /* Arrives with the screen it belongs to rather than appearing on it. In CSS,
-     so it goes with the tokens under reduced motion. */
-  .leave {
-    animation: arrive var(--dur-base) var(--ease-out);
-  }
-
-  @keyframes arrive {
-    from {
-      opacity: 0;
-    }
-  }
-
-  .leave.idle {
-    opacity: 0.22;
-  }
-
-  @media (hover: hover) {
-    .leave:hover {
-      opacity: 1;
-      background: var(--surface-3);
-      color: var(--text-strong);
-    }
-  }
-
-  .leave:active {
-    opacity: 1;
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .leave:focus-visible {
-    opacity: 1;
-    outline-offset: 2px;
-  }
-
-  .leave svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  /* A thumb's target rather than a pointer's, and drawn at the size every other
-     icon on a touch screen is. */
+  /* A thumb's target rather than a pointer's; see FullscreenLeave.svelte. */
   :global([data-touch]) main {
     --leave-size: var(--touch-target);
-  }
-
-  :global([data-touch]) .leave svg {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
   }
 
   /* Sits above the document, clear of the gesture bar. */

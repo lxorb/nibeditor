@@ -859,6 +859,8 @@ export const kn: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ಪೂರ್ಣ ಪರದೆ',
   'Leave fullscreen': 'ಪೂರ್ಣ ಪರದೆ ಬಿಡಿ',
+  'Full window': 'ಪೂರ್ಣ ವಿಂಡೋ',
+  'Leave full window': 'ಪೂರ್ಣ ವಿಂಡೋ ಬಿಡಿ',
   'Moving the caret': 'ಕರ್ಸರ್ ಸರಿಸುವುದು',
   'Deleting a character': 'ಅಕ್ಷರ ಅಳಿಸುವುದು',
   'New line': 'ಹೊಸ ಸಾಲು',

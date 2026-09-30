@@ -852,6 +852,8 @@ export const ps: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'بشپړ پرده',
   'Leave fullscreen': 'له بشپړ پرده وتل',
+  'Full window': 'بشپړه کړکۍ',
+  'Leave full window': 'له بشپړې کړکۍ وتل',
   'Moving the caret': 'نښانګر خوځول',
   'Deleting a character': 'توری ړنګول',
   'New line': 'نوې کرښه',

@@ -868,6 +868,8 @@ export const es: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Pantalla completa',
   'Leave fullscreen': 'Salir de pantalla completa',
+  'Full window': 'Ventana completa',
+  'Leave full window': 'Salir de ventana completa',
   'Moving the caret': 'Mover el cursor',
   'Deleting a character': 'Eliminar un carácter',
   'New line': 'Línea nueva',

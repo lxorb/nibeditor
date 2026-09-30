@@ -864,6 +864,8 @@ export const de: Dictionary = {
   'Last note': 'Letzte Notiz',
   Fullscreen: 'Vollbild',
   'Leave fullscreen': 'Vollbild verlassen',
+  'Full window': 'Ganzes Fenster',
+  'Leave full window': 'Ganzes Fenster verlassen',
   'Moving the caret': 'Cursor bewegen',
   'Deleting a character': 'Zeichen löschen',
   'New line': 'Neue Zeile',

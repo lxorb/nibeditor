@@ -849,6 +849,8 @@ export const jv: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Layar wutuh',
   'Leave fullscreen': 'Metu saka layar wutuh',
+  'Full window': 'Jendhela wutuh',
+  'Leave full window': 'Metu saka jendhela wutuh',
   'Moving the caret': 'Ngobahake kursor',
   'Deleting a character': 'Mbusak aksara',
   'New line': 'Larik anyar',

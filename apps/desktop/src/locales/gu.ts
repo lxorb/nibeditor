@@ -853,6 +853,8 @@ export const gu: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'આખી સ્ક્રીન',
   'Leave fullscreen': 'આખી સ્ક્રીનમાંથી બહાર',
+  'Full window': 'આખી વિન્ડો',
+  'Leave full window': 'આખી વિન્ડોમાંથી બહાર',
   'Moving the caret': 'કર્સર ખસેડવું',
   'Deleting a character': 'અક્ષર કાઢવો',
   'New line': 'નવી લીટી',

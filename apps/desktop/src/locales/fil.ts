@@ -863,6 +863,8 @@ export const fil: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Buong screen',
   'Leave fullscreen': 'Lumabas sa buong screen',
+  'Full window': 'Buong window',
+  'Leave full window': 'Lumabas sa buong window',
   'Moving the caret': 'Paggalaw ng cursor',
   'Deleting a character': 'Pagtanggal ng karakter',
   'New line': 'Bagong linya',

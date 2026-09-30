@@ -855,6 +855,8 @@ export const te: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ఫుల్‌స్క్రీన్',
   'Leave fullscreen': 'ఫుల్‌స్క్రీన్ వదిలివేయి',
+  'Full window': 'పూర్తి విండో',
+  'Leave full window': 'పూర్తి విండో వదిలివేయి',
   'Moving the caret': 'కర్సర్ కదిలించడం',
   'Deleting a character': 'అక్షరం తొలగించడం',
   'New line': 'కొత్త పంక్తి',

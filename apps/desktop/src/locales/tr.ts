@@ -854,6 +854,8 @@ export const tr: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Tam ekran',
   'Leave fullscreen': 'Tam ekrandan çık',
+  'Full window': 'Tam pencere',
+  'Leave full window': 'Tam pencereden çık',
   'Moving the caret': 'İmleci taşıma',
   'Deleting a character': 'Karakter silme',
   'New line': 'Yeni satır',

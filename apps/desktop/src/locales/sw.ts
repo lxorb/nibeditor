@@ -860,6 +860,8 @@ export const sw: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Skrini nzima',
   'Leave fullscreen': 'Toka kwenye skrini nzima',
+  'Full window': 'Dirisha zima',
+  'Leave full window': 'Toka kwenye dirisha zima',
   'Moving the caret': 'Kusogeza kishale',
   'Deleting a character': 'Kufuta herufi',
   'New line': 'Mstari mpya',

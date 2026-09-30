@@ -678,6 +678,8 @@
       return
     }
     if (event.key === 'Escape' && (picked || control)) {
+      // Spent, so a tab filling the window is not left by the same press; see lib/tab-fill.
+      event.preventDefault()
       picked = null
       control = null
       return

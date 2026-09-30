@@ -10,7 +10,7 @@
  *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
  *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
- *  | the panes | Share, Stack, Split right and down, Move to other pane |
+ *  | the panes | Share, Stack, Split right and down, Move to other pane, Full window |
  *
  *  A row that could only do nothing is left out rather than greyed where the thing
  *  it is about is not there at all - a graph has no file to rename - and greyed where
@@ -28,9 +28,11 @@ import { bookmarkAll } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
 import { shownName } from '../note-name'
 import { nameOf, withinSpace } from '../space-paths'
+import { toggleFill } from '../tab-fill/fill'
 import { openTerminal, shellRows } from '../terminal/open'
 import { readSpec } from '../terminal/spec'
 import { pages } from '../web-tab/pages.svelte'
+import { viewport } from '../viewport.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
@@ -87,6 +89,15 @@ function paneEntries(tab: Tab): MenuEntry[] {
       label: t('Move to other pane'),
       hint: shortcuts.hint('pane.move-tab'),
       run: () => moveToOtherPane(tab.id),
+    })
+  }
+  // The tab alone in the window, brought to the front first where it is not; see
+  // lib/tab-fill. A phone and a tablet show one document already.
+  if (!viewport.touch) {
+    entries.push({
+      label: workspace.panes.fills === null ? t('Full window') : t('Leave full window'),
+      hint: shortcuts.hint('app.fill-tab'),
+      run: () => void toggleFill(tab.id),
     })
   }
 

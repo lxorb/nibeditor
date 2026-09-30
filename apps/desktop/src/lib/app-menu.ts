@@ -34,6 +34,7 @@ import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
+import { toggleFill } from './tab-fill/fill'
 import { present } from './slides/present.svelte'
 import { isDesktop, openExternal } from './tauri'
 import { updates } from './updates.svelte'
@@ -461,6 +462,19 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: fullscreen.on,
           run: () => void fullscreen.toggle(workspace.activeTabId),
         },
+        // The tab alone in the window, which stays a window; see lib/tab-fill. A phone
+        // and a tablet show one document already.
+        ...(viewport.touch
+          ? []
+          : [
+              {
+                label: t('Full window'),
+                ...keyed('app.fill-tab'),
+                checked: workspace.panes.fills !== null,
+                disabled: workspace.panes.fills === null && !workspace.activeTabId,
+                run: () => void toggleFill(),
+              },
+            ]),
         // A window that stays over everything else, for writing beside whatever is
         // being written about. Only a desktop has a window of its own to raise.
         ...(isDesktop

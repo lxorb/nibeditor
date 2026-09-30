@@ -868,6 +868,8 @@ export const ptPT: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'Ecrã completo',
   'Leave fullscreen': 'Sair do ecrã completo',
+  'Full window': 'Janela inteira',
+  'Leave full window': 'Sair da janela inteira',
   'Moving the caret': 'Mover o cursor',
   'Deleting a character': 'Apagar um carácter',
   'New line': 'Linha nova',

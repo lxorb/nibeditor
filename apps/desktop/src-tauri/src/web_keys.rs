@@ -10,10 +10,11 @@
 //! is never offered them: a new tab, closing one, going round them, moving one along,
 //! reopening the last, a new window - and F6, which a hand in a browser presses to get
 //! out of the page to the address field. And nib's own Alt and a digit, the tabs by
-//! number, which Chrome keeps from a page on Linux. Everything else is the page's, which
-//! is what lets a site's own Ctrl+K work, so nothing else is touched. Reloading needs
-//! nothing here: F5 and Ctrl+R pressed in a page are the engine's own, as they are in
-//! Chrome. See docs/web-tabs.md.
+//! number, which Chrome keeps from a page on Linux, and Shift+F11, the tab filling nib's
+//! window, which no browser binds and so no site is used to having. Everything else is
+//! the page's, which is what lets a site's own Ctrl+K work, so nothing else is touched.
+//! Reloading needs nothing here: F5 and Ctrl+R pressed in a page are the engine's own, as
+//! they are in Chrome. See docs/web-tabs.md.
 //!
 //! Finding and the address field's other two keys are not among them, because Chrome
 //! asks the page first: Google Docs, Notion and VS Code on the web have a find of their
@@ -78,6 +79,14 @@ pub struct Pressed {
 }
 
 impl Pressed {
+    /// Whether the page keeps the keyboard after this key. Every other chord here is about
+    /// the browser, and the next key a hand presses is too; a tab filling the window is no
+    /// reason to take the caret out of what fills it.
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub fn keeps_page(&self) -> bool {
+        self.code == "F11"
+    }
+
     /// A letter pressed with Ctrl alone, once: a chord the page was offered first and
     /// let go by, said in the same words as the ones here. Ctrl+D is the one, which
     /// Chrome gives the page first as well; see `web_opens.rs`.
@@ -123,6 +132,12 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
     // character on any keyboard.
     if vk == 0x75 && !held.ctrl && !held.shift && !held.alt {
         return Some(pressed("F6", "F6"));
+    }
+
+    // Shift+F11, the tab filling nib's window: bound by no browser and not a character, so
+    // a page loses nothing a site relies on. F11 alone stays the page's, for its video.
+    if vk == 0x7A && held.shift && !held.ctrl && !held.alt {
+        return Some(pressed("F11", "F11"));
     }
 
     // Alt and a digit, nib's own way to the tabs by number, and Chrome's and Firefox's on
@@ -262,12 +277,14 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
 
             // A chord is the browser's: the page never hears it, and the keyboard goes
             // back to the app, where the rest of the gesture - T again, the arrows, the
-            // release - is a key like any other. A release is only told: the page gets
-            // its own as well.
+            // release - is a key like any other; see `keeps_page` for the one that does
+            // not. A release is only told: the page gets its own as well.
             if down {
                 args.SetHandled(true)?;
-                if let Some(ours) = app.get_webview(&window) {
-                    let _ = ours.set_focus();
+                if !pressed.keeps_page() {
+                    if let Some(ours) = app.get_webview(&window) {
+                        let _ = ours.set_focus();
+                    }
                 }
             }
 
@@ -429,7 +446,7 @@ pub mod chromium {
         // own thread taking a message, where a question to a window waits for itself.
         let (app, window) = (app.clone(), holder);
         std::thread::spawn(move || {
-            if down {
+            if down && !pressed.keeps_page() {
                 if let Some(ours) = app.get_webview(&window) {
                     let _ = ours.set_focus();
                 }
@@ -632,6 +649,34 @@ mod tests {
         assert_eq!(pressed(0x61, alt(false)), None);
         // Ctrl and the nought is still the page's zoom.
         assert_eq!(down(0x30, false), None);
+    }
+
+    #[test]
+    fn shift_f11_fills_the_window_and_leaves_the_page_its_keyboard() {
+        let shift = Held {
+            shift: true,
+            ..Held::default()
+        };
+        let filled = meaning(0x7A, shift, true, false);
+        assert_eq!(filled.as_ref().map(|one| (one.key, one.code)), Some(("F11", "F11")));
+        // Said with its Shift, so the window reads Shift+F11 rather than full screen.
+        assert!(filled.as_ref().is_some_and(|one| one.held.shift));
+        assert!(filled.is_some_and(|one| one.keeps_page()));
+
+        // F11 alone is the page's, for a video's own full screen, and so is it with Ctrl
+        // or Alt.
+        assert_eq!(meaning(0x7A, Held::default(), true, false), None);
+        assert_eq!(meaning(0x7A, Held { shift: true, ..CTRL }, true, false), None);
+        let alt = Held {
+            shift: true,
+            alt: true,
+            ..Held::default()
+        };
+        assert_eq!(meaning(0x7A, alt, true, false), None);
+
+        // Every other chord hands the keyboard back to the app.
+        assert!(meaning(0x54, CTRL, true, false).is_some_and(|one| !one.keeps_page()));
+        assert!(meaning(0x75, Held::default(), true, false).is_some_and(|one| !one.keeps_page()));
     }
 
     #[test]

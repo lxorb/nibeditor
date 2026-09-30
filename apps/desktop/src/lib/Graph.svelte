@@ -720,6 +720,8 @@
     if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
     if (focused instanceof HTMLElement && focused.isContentEditable) return
 
+    // Spent, so a tab filling the window is not left by the same press; see lib/tab-fill.
+    event.preventDefault()
     onescape()
   }
 </script>

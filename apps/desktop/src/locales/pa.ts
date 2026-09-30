@@ -858,6 +858,8 @@ export const pa: Dictionary = {
   'Last note': 'Last note',
   Fullscreen: 'ਪੂਰੀ ਸਕਰੀਨ',
   'Leave fullscreen': 'ਪੂਰੀ ਸਕਰੀਨ ਤੋਂ ਬਾਹਰ',
+  'Full window': 'ਪੂਰੀ ਵਿੰਡੋ',
+  'Leave full window': 'ਪੂਰੀ ਵਿੰਡੋ ਤੋਂ ਬਾਹਰ',
   'Moving the caret': 'ਕਰਸਰ ਹਿਲਾਉਣਾ',
   'Deleting a character': 'ਅੱਖਰ ਮਿਟਾਉਣਾ',
   'New line': 'ਨਵੀਂ ਲਾਈਨ',
