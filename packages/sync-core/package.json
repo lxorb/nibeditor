@@ -13,11 +13,13 @@
     "./seed": "./src/seed.ts",
     "./textops": "./src/textops.ts",
     "./tree": "./src/tree.ts",
-    "./wire": "./src/wire.ts"
+    "./wire": "./src/wire.ts",
+    "./sim": "./test/sim/index.ts"
   },
   "scripts": {
     "test": "vitest run",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "sim:long": "vitest run --config vitest.long.config.ts"
   },
   "dependencies": {
     "@nib/markdown": "workspace:*",

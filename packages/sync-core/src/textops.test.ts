@@ -128,4 +128,40 @@ describe('textops', () => {
       { numRuns: 300 },
     )
   })
+
+  test('property: the CRDT converges for every delivery order and every duplication', () => {
+    fc.assert(
+      fc.property(
+        note,
+        fc.array(changes, { minLength: 2, maxLength: 4 }),
+        fc.array(fc.nat(), { minLength: 1, maxLength: 12 }),
+        (before, edits, order) => {
+          // Several devices, one seed, each its own edits, each edit its own update.
+          const seed = docReading(before)
+          const updates = edits.map((mine, index) => {
+            const doc = new Y.Doc()
+            doc.clientID = 100 + index
+            Y.applyUpdateV2(doc, Y.encodeStateAsUpdateV2(seed))
+            const vector = Y.encodeStateVector(doc)
+            textops(doc.getText(TEXT), before, edited(before, mine))
+            return Y.encodeStateAsUpdateV2(doc, vector)
+          })
+
+          const reading = (sequence: readonly Uint8Array[]) => {
+            const doc = new Y.Doc()
+            Y.applyUpdateV2(doc, Y.encodeStateAsUpdateV2(seed))
+            for (const update of sequence) Y.applyUpdateV2(doc, update)
+            return doc.getText(TEXT).toJSON()
+          }
+
+          const inOrder = reading(updates)
+          // Any order, with repeats, as long as every update arrives at least once.
+          const shuffled = order.map((at) => updates[at % updates.length] ?? new Uint8Array())
+          expect(reading([...shuffled, ...[...updates].reverse()])).toBe(inOrder)
+          expect(reading([Y.mergeUpdatesV2([...updates].reverse())])).toBe(inOrder)
+        },
+      ),
+      { numRuns: 300 },
+    )
+  })
 })

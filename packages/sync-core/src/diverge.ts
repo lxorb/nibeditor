@@ -32,7 +32,7 @@ import {
   type Analysis,
   type Edit,
   type Meeting,
-  merge3,
+  sharedPoints,
   type Span,
   type Whose,
   written,
@@ -221,21 +221,55 @@ function brokenBy(local: string, remote: string, merges: readonly string[]): Bro
   return null
 }
 
-/** The note as it should read, starting from the CRDT's own merge rather than from
- *  a merge worked out here.
+/** How far apart two texts are: every character one would have to delete or type to
+ *  turn one into the other. */
+function distance(one: string, other: string): number {
+  return edits(one, other, 'operations').reduce(
+    (sum, edit) => sum + (edit.to - edit.from) + edit.insert.length,
+    0,
+  )
+}
+
+/** The note as it should read, in the CRDT's own order.
  *
- *  The CRDT puts two insertions at one point in the order its client ids give, which
- *  nothing here can know, and a resolution that disagreed would move one of them -
- *  deleting it and typing it again, which loses anything a third device was typing
- *  into it at that moment. So the corrections (the second copy of an identical edit
- *  taken out, each minor overlap as its newer side wrote it) are worked out on the
- *  pure merge, as the difference between the merge written the CRDT's way (`raw`)
- *  and the merge as it should read (`meant`), and then laid onto the CRDT's text as a
- *  three-way merge of their own. Where a correction and the CRDT's own arrangement
- *  meet, the correction stands. */
-function resolved(raw: string, merged: string, meant: string): string {
-  if (merged === raw) return meant
-  return merge3(raw, merged, meant, () => 'remote').text
+ *  What it says is exact from the pure merge: every edit that meets nothing, identical
+ *  edits once, each overlap as its newer side wrote it. What the pure merge cannot know
+ *  is the order the CRDT gave two sides' words that landed at one point, which follows
+ *  client ids; a resolution that disagreed would move one of them, deleting it and
+ *  typing it again, which loses whatever a third device was typing into it at that
+ *  moment. So at every such point the order is chosen to match `merged`, the CRDT's
+ *  text, one point at a time. (An earlier version laid the corrections onto the CRDT
+ *  text as a three-way merge of their own, and lost words wherever the CRDT's order
+ *  and a correction crossed; content from the pure merge cannot.)
+ *
+ *  Even with nothing to correct the CRDT's text is not simply the note. Operations
+ *  that change nothing a diff can see - a stretch deleted and typed again - still
+ *  land somewhere in the other side's words, and found once in a simulated run a
+ *  word of the other side cut in two by a line typed back into its middle. The pure
+ *  merge has none of that, and textops takes the CRDT's text to it. */
+function resolved(
+  base: string,
+  analysis: Analysis,
+  settle: (meeting: Meeting) => Whose,
+  merged: string,
+): string {
+  const order = new Map<number, Whose>()
+  const write = () => written(base, analysis, { settle, first: (at) => order.get(at) ?? 'local' })
+  let best = write()
+  let cost = distance(merged, best)
+  for (const point of sharedPoints(analysis)) {
+    if (cost === 0) break
+    order.set(point, 'remote')
+    const text = write()
+    const far = distance(merged, text)
+    if (far < cost) {
+      best = text
+      cost = far
+    } else {
+      order.delete(point)
+    }
+  }
+  return best
 }
 
 /** Classifies what merging `local` and `remote` against `base` would do, and says
@@ -279,21 +313,18 @@ export function diverge(
   }
   overlaps.sort((a, b) => a.base.from - b.base.from)
 
-  const meant = written(base, analysis, { settle: () => newer, first: 'local', twice: false })
-  // Two insertions at one point may land either way round in the CRDT; without its
+  const settle = () => newer
+  // Two sides' words at one point may land either way round in the CRDT; without its
   // text to read, the structure is checked both ways, so which side is called local
   // never changes the verdict.
   const checked =
     merged === undefined
-      ? [meant, written(base, analysis, { settle: () => newer, first: 'remote', twice: false })]
-      : [
-          resolved(
-            written(base, analysis, { settle: () => 'both', first: 'local', twice: true }),
-            merged,
-            meant,
-          ),
+      ? [
+          written(base, analysis, { settle }),
+          written(base, analysis, { settle, first: () => 'remote' }),
         ]
-  const resolution = checked[0] ?? meant
+      : [resolved(base, analysis, settle, merged)]
+  const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
 
   const asks = broken !== null || overlaps.some((overlap) => overlap.asks !== null)

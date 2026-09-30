@@ -53,6 +53,23 @@ describe('merge3', () => {
     expect(merge3(base, local, remote, () => 'remote').text).toBe(remote)
   })
 
+  test('one passage put back at one point by both sides meets, rather than being said twice', () => {
+    const base = 'Intro.\n\nOutro.\n'
+    const passage = 'We ship on Monday after the review, with milk and eggs.\n\n'
+    const local = `Intro.\n\n${passage}Outro.\n`
+    const remote = `Intro.\n\n${passage.replace('Monday', 'Tuesday')}Outro.\n`
+
+    const merged = merge3(base, local, remote, () => 'remote')
+    expect(merged.meetings).toHaveLength(1)
+    expect(merged.text).toBe(remote)
+  })
+
+  test('two different lines appended at one point are both kept', () => {
+    const merged = merge3('- milk\n', '- milk\n- eggs and bread\n', '- milk\n- a new kettle\n')
+    expect(merged.meetings).toEqual([])
+    expect(merged.text).toBe('- milk\n- eggs and bread\n- a new kettle\n')
+  })
+
   test('an insertion strictly inside a span the other replaced meets it', () => {
     const merged = merge3('one two three', 'one tw-o three', 'one 2 three')
     expect(merged.meetings).toHaveLength(1)

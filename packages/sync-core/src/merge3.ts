@@ -13,7 +13,8 @@
  *
  *  - **the same edit on both sides** (both fixed the typo) counts once;
  *  - **insertions at one point** (both appended to the list) are both kept, which is
- *    not a conflict at all;
+ *    not a conflict at all - unless they share more than a line of words, which is one
+ *    passage put back or written twice, and meets like an overlap;
  *  - **edits that overlap** - spans that intersect, or an insertion strictly inside a
  *    span the other side replaced - form a meeting, joined transitively, whose size is
  *    what both sides wrote there plus the ancestor text they cover.
@@ -23,7 +24,7 @@
  *  it where it has no CRDT text to hand, and as the reference the simulator checks
  *  the CRDT against. */
 
-import { edits } from './diff'
+import { edits, wordEdits } from './diff'
 
 /** A stretch of a text, as UTF-16 offsets, `to` exclusive. */
 export interface Span {
@@ -81,11 +82,29 @@ function sameEdit(one: Edit, other: Edit): boolean {
   return one.from === other.from && one.to === other.to && one.insert === other.insert
 }
 
+/** How many characters of whole words two insertions have in common. Asked with the
+ *  two in one order whichever side each came from, because a diff may line up
+ *  repeated words differently read the other way round, and which side is local must
+ *  never change a verdict. */
+function shared(one: string, other: string): number {
+  const [first, second] = one < other ? [one, other] : [other, one]
+  return wordEdits(first, second).reduce((left, edit) => left - (edit.to - edit.from), first.length)
+}
+
+/** More words than this in common, and two insertions at one point are one passage
+ *  written twice rather than two things added side by side. The block rule's number:
+ *  about a line. */
+const ONE_PASSAGE = 16
+
 /** Whether an edit of one side and an edit of the other overlap. Two insertions at
- *  one point do not: both are kept. An insertion at the very edge of a span the
- *  other side replaced does not either: it is beside the replacement, not in it. */
+ *  one point do not, and both are kept (both appended to the list) - unless they share
+ *  more than a line of words, which is the same passage put back or written twice, and
+ *  keeping both would say it twice. An insertion at the very edge of a span the other
+ *  side replaced does not overlap either: it is beside the replacement, not in it. */
 function meets(one: Edit, other: Edit): boolean {
-  if (isInsertion(one) && isInsertion(other)) return false
+  if (isInsertion(one) && isInsertion(other)) {
+    return one.from === other.from && shared(one.insert, other.insert) > ONE_PASSAGE
+  }
   if (isInsertion(one)) return other.from < one.from && one.from < other.to
   if (isInsertion(other)) return one.from < other.from && other.from < one.to
   return one.from < other.to && other.from < one.to
@@ -242,43 +261,53 @@ function both(base: string, meeting: Meeting, first: Whose): string {
   return out
 }
 
-/** How the merge is written: each meeting settled by `settle`; insertions at one
- *  point with `first`'s side ahead; and identical edits once, or `twice` as the CRDT
- *  holds them before anybody removes the second copy. */
+/** How the merge is written: each meeting settled by `settle`, identical edits once,
+ *  and where both sides put words at one point, `first` says whose go ahead (local,
+ *  unless it says otherwise for that point). */
 export interface Writing {
   settle: (meeting: Meeting) => Settle
-  first: Whose
-  twice: boolean
+  first?: (at: number) => Whose
+}
+
+/** The points where both sides' words land at one place, so their order is a choice:
+ *  what `first` in `Writing` is asked about. */
+export function sharedPoints(analysis: Analysis): number[] {
+  const side = (whose: Whose) => [
+    ...analysis.alone[whose],
+    ...analysis.meetings.flatMap((meeting) => meeting[whose]),
+  ]
+  const mine = new Set(side('local').map((edit) => edit.from))
+  const points = new Set<number>()
+  for (const edit of side('remote')) if (mine.has(edit.from)) points.add(edit.from)
+  return [...points].sort((a, b) => a - b)
 }
 
 /** The ancestor with the edits written in, as `writing` says. */
 export function written(base: string, analysis: Analysis, writing: Writing): string {
-  const rankOf = (whose: Whose) => (whose === writing.first ? 0 : 1)
+  const first = writing.first ?? (() => 'local')
+  const rankOf = (whose: Whose, at: number) => (whose === first(at) ? 0 : 1)
   const pieces: Piece[] = []
 
-  for (const edit of analysis.alone.local) pieces.push({ ...edit, rank: rankOf('local') })
-  for (const edit of analysis.alone.remote) pieces.push({ ...edit, rank: rankOf('remote') })
-  for (const edit of analysis.identical) {
-    const insert = writing.twice ? edit.insert + edit.insert : edit.insert
-    pieces.push({ ...edit, insert, rank: 0 })
-  }
+  for (const edit of analysis.alone.local)
+    pieces.push({ ...edit, rank: rankOf('local', edit.from) })
+  for (const edit of analysis.alone.remote)
+    pieces.push({ ...edit, rank: rankOf('remote', edit.from) })
+  for (const edit of analysis.identical) pieces.push({ ...edit, rank: 0 })
 
   for (const meeting of analysis.meetings) {
     const settled = writing.settle(meeting)
     if (settled === 'both') {
-      pieces.push({ ...meeting.base, insert: both(base, meeting, writing.first), rank: 0 })
+      const insert = both(base, meeting, first(meeting.base.from))
+      pieces.push({ ...meeting.base, insert, rank: 0 })
       continue
     }
-    for (const edit of meeting[settled]) pieces.push({ ...edit, rank: rankOf(settled) })
+    for (const edit of meeting[settled]) pieces.push({ ...edit, rank: rankOf(settled, edit.from) })
   }
 
-  pieces.sort(
-    (a, b) =>
-      a.from - b.from ||
-      Number(!isInsertion(a)) - Number(!isInsertion(b)) ||
-      a.rank - b.rank ||
-      a.to - b.to,
-  )
+  // In order along the ancestor; at one point, whoever goes first. A replacement's
+  // words and an insertion at its start land at the same place, so they are ordered
+  // like two insertions, and the replaced text is skipped whichever comes first.
+  pieces.sort((a, b) => a.from - b.from || a.rank - b.rank || a.to - b.to)
 
   let out = ''
   let at = 0
@@ -302,6 +331,6 @@ export function merge3(
   const analysis = analyse(base, local, remote)
   return {
     ...analysis,
-    text: written(base, analysis, { settle, first: 'local', twice: false }),
+    text: written(base, analysis, { settle }),
   }
 }

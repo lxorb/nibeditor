@@ -254,8 +254,8 @@ describe('documents', () => {
   test('a push and its answers survive the envelope', () => {
     const request = {
       docs: [
-        { id: 'n', epoch: 1, seq: 3, base: bytes(0), update: bytes(1), at: 5 },
-        { id: 'm', epoch: 1, seq: 0, base: bytes(2), update: bytes(3), at: 6 },
+        { id: 'n', push: 'p1', epoch: 1, seq: 3, base: bytes(0), update: bytes(1), at: 5 },
+        { id: 'm', push: 'p2', epoch: 1, seq: 0, base: bytes(2), update: bytes(3), at: 6 },
       ],
     }
     expect(pushRequestOf(unframe(frame(request)))).toEqual(request)
@@ -263,7 +263,7 @@ describe('documents', () => {
     const response = {
       docs: [
         { id: 'n', ok: true, seq: 4, sv: bytes(1) },
-        { id: 'm', moved: bytes(2), seq: 9, sv: bytes(3) },
+        { id: 'm', moved: bytes(2), seq: 9, sv: bytes(3), at: 12 },
         { id: 'o', epoch: 2 },
         { id: 'p', refused: 'large' },
       ],
@@ -274,13 +274,13 @@ describe('documents', () => {
   test('bytes where bytes belong, and no more documents than a batch', () => {
     expect(
       pushRequestOf({
-        docs: [{ id: 'n', epoch: 1, seq: 1, base: 'AA==', update: bytes(1), at: 5 }],
+        docs: [{ id: 'n', push: 'p', epoch: 1, seq: 1, base: 'AA==', update: bytes(1), at: 5 }],
       }),
     ).toBeNull()
     expect(
       pushRequestOf({ docs: [{ id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 }] }),
     ).toBeNull()
-    const one = { id: 'n', epoch: 1, seq: 1, base: bytes(0), update: bytes(1), at: 5 }
+    const one = { id: 'n', push: 'p', epoch: 1, seq: 1, base: bytes(0), update: bytes(1), at: 5 }
     expect(pushRequestOf({ docs: Array.from({ length: PUSH_BATCH + 1 }, () => one) })).toBeNull()
   })
 

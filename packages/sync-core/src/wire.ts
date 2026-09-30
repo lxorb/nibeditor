@@ -206,12 +206,18 @@ export interface PullResponse {
  *  vector. The account applies the update only if the document is still at `seq`;
  *  otherwise it answers `moved` with the diff against `base`, and the device
  *  classifies (section 5.4) and pushes again naming the version `moved` brought it
- *  to, which is what makes the second device the one that checks. A push whose answer
- *  was lost and is sent again is answered `moved` with its own operations, classifies
- *  as identical, and goes through on the next round. `at` is when the newest of the
- *  updates was made, on the device's clock: what `minor` compares, and nothing else. */
+ *  to, which is what makes the second device the one that checks.
+ *
+ *  `push` is the push's own id. A push whose answer was lost is sent again with the
+ *  same id and exactly the same update, whatever was typed since, and the account
+ *  answers it with the answer it gave the first time. Without it the device could
+ *  not tell its own words, already on the account, from somebody else's: they come
+ *  back in `moved`, and once it has written around them they no longer classify as
+ *  identical, and merge in twice. `at` is when the newest of the updates was made, on
+ *  the device's clock: what `minor` compares, and nothing else. */
 export interface PushDoc {
   id: string
+  push: string
   epoch: number
   seq: number
   base: Uint8Array
@@ -225,11 +231,13 @@ export interface PushRequest {
 }
 
 /** Per document: applied and durable (the account is now at `seq`, with state vector
- *  `sv`); moved on since `seq` (here is what the device is missing, and the version
- *  it comes to: classify and come back); on a newer epoch; or refused. */
+ *  `sv`); moved on since `seq` (here is what the device is missing, the version it
+ *  comes to, and when the account last changed it, `at` on the account's clock, which
+ *  is what a minor overlap compares with the device's own time: classify and come
+ *  back); on a newer epoch; or refused. */
 export type PushAnswer =
   | { id: string; ok: true; seq: number; sv: Uint8Array }
-  | { id: string; moved: Uint8Array; seq: number; sv: Uint8Array }
+  | { id: string; moved: Uint8Array; seq: number; sv: Uint8Array; at: number }
   | { id: string; epoch: number }
   | { id: string; refused: DocRefusal }
 
@@ -539,11 +547,10 @@ export function pullResponseOf(value: unknown): PullResponse | null {
 
 function pushDocOf(value: unknown): PushDoc | null {
   if (!isRecord(value)) return null
-  const { id, epoch, seq, base, update, at } = value
-  if (!isId(id) || !isCount(epoch) || !isCount(seq) || !isBytes(base) || !isBytes(update)) {
-    return null
-  }
-  return isTime(at) ? { id, epoch, seq, base, update, at } : null
+  const { id, push, epoch, seq, base, update, at } = value
+  if (!isId(id) || !isId(push) || !isCount(epoch) || !isCount(seq)) return null
+  if (!isBytes(base) || !isBytes(update) || !isTime(at)) return null
+  return { id, push, epoch, seq, base, update, at }
 }
 
 /** `POST /v2/docs/push`, as the Worker reads it: at most `PUSH_BATCH` documents. The
@@ -557,11 +564,11 @@ export function pushRequestOf(value: unknown): PushRequest | null {
 
 function pushAnswerOf(value: unknown): PushAnswer | null {
   if (!isRecord(value) || !isId(value.id)) return null
-  const { id } = value
-  const { seq, sv } = value
+  const { id, seq, sv, at } = value
   if (value.ok === true && isCount(seq) && isBytes(sv)) return { id, ok: true, seq, sv }
-  if (isBytes(value.moved) && isCount(seq) && isBytes(sv))
-    return { id, moved: value.moved, seq, sv }
+  if (isBytes(value.moved) && isCount(seq) && isBytes(sv) && isTime(at)) {
+    return { id, moved: value.moved, seq, sv, at }
+  }
   if (isCount(value.epoch)) return { id, epoch: value.epoch }
   const refused = docRefusalOf(value.refused)
   return refused ? { id, refused } : null

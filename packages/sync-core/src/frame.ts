@@ -22,15 +22,10 @@
 
 import type { RoomNews } from './wire'
 
-/** A JSON value whose leaves may also be bytes: what `frame` carries. */
-export type Framed =
-  | string
-  | number
-  | boolean
-  | null
-  | Uint8Array
-  | readonly Framed[]
-  | { readonly [key: string]: Framed | undefined }
+/** A JSON value whose leaves may also be bytes: what `frame` carries. Objects are
+ *  `object` rather than a map of framed values, because every request and answer here
+ *  is an interface, and TypeScript will not read an interface as a map. */
+export type Framed = string | number | boolean | null | Uint8Array | readonly unknown[] | object
 
 const VERSION = 1
 const PART = '$part'
@@ -43,12 +38,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** A value with every byte array replaced by a reference to its part. */
-function lifted(value: Framed | undefined, parts: Uint8Array[]): unknown {
+function lifted(value: unknown, parts: Uint8Array[]): unknown {
   if (value instanceof Uint8Array) {
     parts.push(value)
     return { [PART]: parts.length - 1 }
   }
-  if (Array.isArray(value)) return value.map((one: Framed) => lifted(one, parts))
+  if (Array.isArray(value)) return value.map((one: unknown) => lifted(one, parts))
   if (typeof value !== 'object' || value === null) return value
 
   const out: Record<string, unknown> = {}

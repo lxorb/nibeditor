@@ -551,7 +551,10 @@ coordinates, and looks at the edits that meet:
   CRDT would keep both insertions (`thethe`), so the second copy is removed from M as part
   of what the device sends.
 - **Pure insertions at the same point** are not a conflict: both are kept, in the order Yjs
-  gives, which is the same on every device. Both appended to the list.
+  gives, which is the same on every device. Both appended to the list. Unless they share
+  more than 16 characters of whole words: that is one passage written or put back twice
+  (two devices that each answered Keep for the same deleted paragraph), and keeping both
+  would say it twice, so they are an overlap like any other.
 - **Overlapping edits**: spans that intersect, or an insertion strictly inside a span the
   other side replaced. Their size is the characters of both replacements plus the ancestor
   text they cover.
@@ -1030,7 +1033,8 @@ parts), because base64 would cost a third more on every update.
   epoch: newer, epochBase }` when the device is on an old epoch. No room is woken.
 - `POST /v2/docs/push` with `{ docs: [{ id, epoch, seq, base: sv, update, at }] }` (at most
   50; each goes to its room). Per document: `{ id, ok, seq, sv }`, `{ id, moved: update,
-  seq, sv }`, `{ id, epoch: newer }`, or `{ id, refused }`.
+  seq, sv, at }` (`at` is the account's `updated_at`, which a minor overlap compares),
+  `{ id, epoch: newer }`, or `{ id, refused }`.
 - `POST /v2/docs/keep` with `{ id, text, device }`: the losing side of a modal answer, kept
   as a version.
 - `GET /v2/spaces/:space/snapshot?after=<id>`: the first sync's bulk read, documents in id

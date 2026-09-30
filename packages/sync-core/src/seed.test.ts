@@ -1,8 +1,10 @@
 import { emptyCanvas, type Canvas } from '@nib/markdown/canvas'
 import { readPlane } from '@nib/rooms/plane'
 import { TEXT } from '@nib/rooms'
+import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
+import { note } from '../test/markdown'
 import { hash32, seedPlane, seedUpdate } from './seed'
 
 function textOf(...updates: Uint8Array[]): string {
@@ -84,5 +86,20 @@ describe('seedPlane', () => {
     }
 
     expect(seedPlane('c1', 1, shuffled)).toEqual(seedPlane('c1', 1, canvas))
+  })
+})
+
+describe('seed property', () => {
+  test('property: two seeds of one note are byte-identical and merge to one copy', () => {
+    fc.assert(
+      fc.property(note, fc.string({ minLength: 1, maxLength: 12 }), (text, id) => {
+        const one = seedUpdate(id, 1, text)
+        const other = seedUpdate(id, 1, text)
+        expect(one).toEqual(other)
+        expect(textOf(one, other)).toBe(text.replace(/\r\n?/g, '\n'))
+        expect(textOf(Y.mergeUpdatesV2([one, other, one]))).toBe(text.replace(/\r\n?/g, '\n'))
+      }),
+      { numRuns: 1000 },
+    )
   })
 })

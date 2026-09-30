@@ -12,8 +12,7 @@
 import { closesFence, fenceMark } from '@nib/markdown/fences'
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 
-export type BlockKind =
-  'front-matter' | 'heading' | 'paragraph' | 'item' | 'fence' | 'row' | 'quote'
+type BlockKind = 'front-matter' | 'heading' | 'paragraph' | 'item' | 'fence' | 'row' | 'quote'
 
 /** One block, as the offsets of its text without the line break that ends it. */
 export interface Block {
