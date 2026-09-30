@@ -166,6 +166,26 @@ export async function writeNoteText(
 /** One note's share of a replacement, as it is put back later. */
 type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]
 
+/** How a write keeps the version it replaces. By default every note it touches is
+ *  kept, the way saving keeps one. An agent's edits keep the version before its first
+ *  edit of a note, and say whose edit it was kept for: fifty edits keeping fifty
+ *  versions would push the one before them out of the forty a note keeps. See
+ *  docs/agent-native.md 8.5. */
+export interface Keeping {
+  /** Whether a version is kept at all. */
+  snapshot?: boolean
+  /** Who it was kept for, written beside it and shown in the versions list. */
+  source?: string
+}
+
+/** Keeps the version a write is about to replace, as `keeping` says. */
+async function keep(path: string, content: string, keeping: Keeping) {
+  if (keeping.snapshot === false) return
+
+  const source = keeping.source === undefined ? {} : { source: keeping.source }
+  await invoke('snapshot_note', { path, content, ...source }).catch(() => undefined)
+}
+
 /** Writes a replacement across the space. Every note keeps a snapshot of
  *  what it said before it is written, a note open in a pane takes the change
  *  as the words that changed so no caret moves, and however many notes were
@@ -176,14 +196,20 @@ type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]
  *  the notes before it. So a note that is open takes its edits carried onto the
  *  words it holds at that moment, and is written as it then stands; see
  *  `writeOpen`. */
-export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[]): Promise<void> {
+export async function replaceInNotes(
+  ws: HoldsNotes,
+  changes: readonly Change[],
+  keeping: Keeping = {},
+): Promise<void> {
   if (!changes.length) return
 
   const done: Undone[] = []
 
   for (const change of changes) {
     const open = ws.documentAt(change.path)
-    done.push(open ? await writeOpen(open, change) : await writeClosed(ws, change))
+    done.push(
+      open ? await writeOpen(open, change, keeping) : await writeClosed(ws, change, keeping),
+    )
   }
 
   ws.undone.record({ kind: 'replace', notes: done })
@@ -205,7 +231,7 @@ export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[])
  *  Carried by guessing where the document no longer remembers the words the change
  *  was read from, because a replacement somebody asked for has to be written; the
  *  guess is exact wherever the edits are clear of what changed. */
-async function writeOpen(open: NoteDoc, change: Change): Promise<Undone> {
+async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promise<Undone> {
   open.flush()
   const before = open.text
   const edits = open.live.carried(change.edits, change.before, true) ?? change.edits
@@ -215,7 +241,7 @@ async function writeOpen(open: NoteDoc, change: Change): Promise<Undone> {
 
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
-  await invoke('snapshot_note', { path: change.path, content: before }).catch(() => undefined)
+  await keep(change.path, before, keeping)
   await writeFile(change.path, after)
 
   return { path: change.path, content: before, edits: reverse(before, edits) }
@@ -224,10 +250,8 @@ async function writeOpen(open: NoteDoc, change: Change): Promise<Undone> {
 /** A note nobody has open, written as the change says. A pane that opened it while
  *  the write was in the air read the file before it, and takes the edits the way an
  *  open note does; one that read it after already has them. */
-async function writeClosed(ws: HoldsNotes, change: Change): Promise<Undone> {
-  await invoke('snapshot_note', { path: change.path, content: change.before }).catch(
-    () => undefined,
-  )
+async function writeClosed(ws: HoldsNotes, change: Change, keeping: Keeping): Promise<Undone> {
+  await keep(change.path, change.before, keeping)
   await writeFile(change.path, change.after)
 
   const late = ws.documentAt(change.path)

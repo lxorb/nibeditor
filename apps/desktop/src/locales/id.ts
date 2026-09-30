@@ -1540,4 +1540,6 @@ export const id: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Nib as the default browser
   'Default browser': 'Peramban bawaan',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Urungkan suntingan {name}',
 }

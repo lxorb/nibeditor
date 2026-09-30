@@ -1521,4 +1521,6 @@ export const am: Dictionary = {
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Nib as the default browser
   'Default browser': 'ነባር አሳሽ',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
 }

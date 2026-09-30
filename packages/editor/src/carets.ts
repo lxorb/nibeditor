@@ -43,6 +43,15 @@ export interface Peer {
  *  keep in step. */
 export const setPeers = StateEffect.define<readonly Peer[]>()
 
+/** The agents writing in the note, as carets of their own: a peer the app makes up
+ *  for each, at the place it last wrote. A list apart from the room's, because the
+ *  two are told by different things - the room by the devices in it, the app by
+ *  the agents - and one list would have each wiping out the other's. Drawn the way a
+ *  person's caret is, and gone by itself a few seconds after the agent last wrote,
+ *  because an agent is somewhere only while it is writing. See docs/agent-native.md
+ *  8.4. */
+export const setAgents = StateEffect.define<readonly Peer[]>()
+
 /** One person's caret: a bar, and their name above it until it fades.
  *
  *  Where the caret is takes part in what makes one of these equal to another,
@@ -54,17 +63,25 @@ class Caret extends NibWidget {
     private readonly name: string,
     private readonly colour: string,
     private readonly at: number,
+    /** An agent's, which fades on its own; see `setAgents`. */
+    private readonly passing: boolean,
   ) {
     super()
   }
 
   override eq(other: Caret): boolean {
-    return other.name === this.name && other.colour === this.colour && other.at === this.at
+    return (
+      other.name === this.name &&
+      other.colour === this.colour &&
+      other.at === this.at &&
+      other.passing === this.passing
+    )
   }
 
   override toDOM(): HTMLElement {
     const caret = document.createElement('span')
     caret.className = 'cm-nib-caret'
+    if (this.passing) caret.classList.add('is-passing')
     caret.style.setProperty('--peer', this.colour)
 
     const tag = caret.appendChild(document.createElement('span'))
@@ -75,23 +92,30 @@ class Caret extends NibWidget {
   }
 }
 
-/** The peers as of the last thing the app said, and the decorations for them. */
+/** The peers and the agents as of the last thing the app said, and the decorations
+ *  for them. */
 interface Present {
   peers: readonly Peer[]
+  agents: readonly Peer[]
   marks: DecorationSet
 }
 
-const nobody: Present = { peers: [], marks: Decoration.none }
+const nobody: Present = { peers: [], agents: [], marks: Decoration.none }
 
 /** The decorations for one list of peers: a caret each, and a wash over whatever
  *  each has selected. Handed over unsorted and sorted by the range set, because a
  *  caret and somebody else's selection can start at the same place and which of the
  *  two goes first is the set's rule rather than this function's. */
-function marksFor(state: EditorState, peers: readonly Peer[]): DecorationSet {
+function marksFor(
+  state: EditorState,
+  peers: readonly Peer[],
+  agents: readonly Peer[],
+): DecorationSet {
   const length = state.doc.length
   const marks: Range<Decoration>[] = []
+  const agent = new Set(agents)
 
-  for (const peer of peers) {
+  for (const peer of [...peers, ...agents]) {
     const head = Math.min(Math.max(0, peer.head), length)
     const anchor = Math.min(Math.max(0, peer.anchor), length)
 
@@ -106,7 +130,7 @@ function marksFor(state: EditorState, peers: readonly Peer[]): DecorationSet {
 
     marks.push(
       Decoration.widget({
-        widget: new Caret(peer.name, peer.colour, head),
+        widget: new Caret(peer.name, peer.colour, head, agent.has(peer)),
         side: 1,
       }).range(head),
     )
@@ -118,25 +142,34 @@ function marksFor(state: EditorState, peers: readonly Peer[]): DecorationSet {
 const present = StateField.define<Present>({
   create: () => nobody,
   update: (held, transaction) => {
-    for (const effect of transaction.effects) {
-      if (!effect.is(setPeers)) continue
-
-      return { peers: effect.value, marks: marksFor(transaction.state, effect.value) }
-    }
-
-    if (!transaction.docChanged || !held.peers.length) return held
+    let told = held
+    const moved = (peers: readonly Peer[]) =>
+      peers.map((peer) => ({
+        ...peer,
+        head: transaction.changes.mapPos(peer.head),
+        anchor: transaction.changes.mapPos(peer.anchor),
+      }))
 
     // The words moved under the carets. Mapping is what keeps a remote caret in
     // the same place in the text while somebody types above it, and it costs the
     // size of the change rather than the size of the note.
-    return {
-      peers: held.peers.map((peer) => ({
-        ...peer,
-        head: transaction.changes.mapPos(peer.head),
-        anchor: transaction.changes.mapPos(peer.anchor),
-      })),
-      marks: held.marks.map(transaction.changes),
+    if (transaction.docChanged && (held.peers.length || held.agents.length)) {
+      told = {
+        peers: moved(held.peers),
+        agents: moved(held.agents),
+        marks: held.marks.map(transaction.changes),
+      }
     }
+
+    for (const effect of transaction.effects) {
+      if (effect.is(setPeers)) told = { ...told, peers: effect.value }
+      else if (effect.is(setAgents)) told = { ...told, agents: effect.value }
+      else continue
+
+      told = { ...told, marks: marksFor(transaction.state, told.peers, told.agents) }
+    }
+
+    return told
   },
   provide: (field) => EditorView.decorations.from(field, (held) => held.marks),
 })
@@ -144,6 +177,11 @@ const present = StateField.define<Present>({
 /** How long a name stays after its caret has moved. Long enough to read, short
  *  enough that a note two people are writing in is words rather than labels. */
 const NAME_SHOWN = '1.6s'
+
+/** How long an agent's caret stays after it last wrote, fading at the end: three
+ *  seconds of nothing, and then it is gone. The app takes the peer away when this
+ *  has run; see lib/agents/docs/presence.ts. */
+const AGENT_SHOWN = '3.4s'
 
 const style = EditorView.baseTheme({
   '.cm-nib-caret': {
@@ -182,6 +220,20 @@ const style = EditorView.baseTheme({
     animation: `cm-nib-caret-name ${NAME_SHOWN} var(--ease-out) forwards`,
   },
 
+  // An agent's caret, name and all, stays while it writes and goes when it stops.
+  '.cm-nib-caret.is-passing': {
+    animation: `cm-nib-caret-passing ${AGENT_SHOWN} var(--ease-out) forwards`,
+  },
+
+  '.cm-nib-caret.is-passing .cm-nib-caret-name': {
+    animation: 'none',
+  },
+
+  '@keyframes cm-nib-caret-passing': {
+    '0%, 88%': { opacity: 1 },
+    to: { opacity: 0 },
+  },
+
   '@keyframes cm-nib-caret-name': {
     from: { opacity: 0, transform: 'translateY(2px)' },
     '12%': { opacity: 1, transform: 'none' },
@@ -198,4 +250,9 @@ export function remoteCarets(): Extension {
 /** Who a view is showing, for a test and for anything that wants to count them. */
 export function peersOf(state: EditorState): readonly Peer[] {
   return state.field(present, false)?.peers ?? []
+}
+
+/** The agents a view is showing, the same way. */
+export function agentsOf(state: EditorState): readonly Peer[] {
+  return state.field(present, false)?.agents ?? []
 }

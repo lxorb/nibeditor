@@ -1564,4 +1564,6 @@ export const ta: Dictionary = {
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
   // Nib as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
 }

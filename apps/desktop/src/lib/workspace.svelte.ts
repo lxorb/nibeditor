@@ -3000,9 +3000,10 @@ class Workspace {
     return text.toggleTaskAt(this, path, line)
   }
 
-  /** Writes a replacement across the space, as one thing to undo. */
-  async replaceInNotes(changes: readonly Change[]) {
-    await text.replaceInNotes(this, changes)
+  /** Writes a replacement across the space, as one thing to undo. `keeping` says
+   *  which versions are kept on the way; see workspace/note-text.ts. */
+  async replaceInNotes(changes: readonly Change[], keeping?: text.Keeping) {
+    await text.replaceInNotes(this, changes, keeping)
   }
 
   /** Writes the whole of one note that nobody has open, as the one span it changed

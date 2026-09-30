@@ -385,7 +385,9 @@ interface Row {
 }
 
 /** Every line of some markdown, so the walks here do not each carry their own
- *  fence state.
+ *  fence state. Exported for the one walk outside this file that has to agree with
+ *  these about which lines are code: what an agent's anchor names in a note, which
+ *  has to be what a link names; see apps/desktop/src/lib/agents/docs/anchors.ts.
  *
  *  Walked with indexOf rather than split, because this runs over every note in a
  *  space: a large note should not be copied into an array of lines only to be
@@ -396,7 +398,7 @@ interface Row {
  *  its own mark and nothing else: a line of tildes inside a backtick block is
  *  code being shown, and reading it as the end of the block took the rest of the
  *  note for prose. */
-function* lines(text: string): Generator<Row> {
+export function* lines(text: string): Generator<Row> {
   let fence: string | null = null
   let line = 0
   let at = 0

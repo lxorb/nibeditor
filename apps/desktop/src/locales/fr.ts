@@ -1599,4 +1599,6 @@ export const fr: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Navigateur par défaut',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Annuler les modifications de {name}',
 }

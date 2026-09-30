@@ -1541,4 +1541,6 @@ export const mr: Dictionary = {
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },
   // Nib as the default browser
   'Default browser': 'मूळ ब्राउझर',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
 }

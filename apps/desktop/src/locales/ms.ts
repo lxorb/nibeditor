@@ -1539,4 +1539,6 @@ export const ms: Dictionary = {
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Nib as the default browser
   'Default browser': 'Pelayar lalai',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Buat asal suntingan {name}',
 }

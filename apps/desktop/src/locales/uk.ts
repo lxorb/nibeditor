@@ -1607,4 +1607,6 @@ export const uk: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Браузер за умовчанням',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Скасувати правки {name}',
 }

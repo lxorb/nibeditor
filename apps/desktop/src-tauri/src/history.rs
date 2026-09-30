@@ -28,22 +28,54 @@ pub struct Snapshot {
     taken_at: u64,
     size: u64,
     path: String,
+    /// Who the version was kept for, when it was not a save: an agent's name, kept
+    /// before its first edit of the note. What the versions list shows where it
+    /// shows a device; see docs/agent-native.md 8.5.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<String>,
 }
+
+/// The extension of the file beside a snapshot that says who it was kept for. Beside
+/// it and named after it, so it goes wherever the snapshot's folder goes.
+const SOURCE: &str = "by";
+
+/// As much of a name as a version keeps: a label, not a paragraph.
+const LONGEST_SOURCE: usize = 64;
 
 /// Keeps a copy of a note before it is overwritten. Does nothing for a note with
 /// no text in it, which is what an empty new note is, and nothing when the text
 /// has not changed since the last copy.
+///
+/// `source` names who it was kept for when that was not a save: an agent about to
+/// edit the note. The same words as the last copy are that copy, which then says so.
 #[tauri::command(async)]
-pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
+pub fn snapshot_note(
+    app: AppHandle,
+    path: String,
+    content: String,
+    source: Option<String>,
+) -> Result<(), String> {
     if content.trim().is_empty() {
         return Ok(());
     }
 
-    let dir = history_root(&app, &path)?;
+    keep_in(
+        &history_root(&app, &path)?,
+        &path,
+        &content,
+        source.as_deref(),
+    )
+}
 
-    let mut existing = snapshot_files(&dir);
+/// `snapshot_note` into one note's history folder, apart from the app it is found
+/// through.
+fn keep_in(dir: &Path, path: &str, content: &str, source: Option<&str>) -> Result<(), String> {
+    let mut existing = snapshot_files(dir);
     if let Some(last) = existing.last() {
         if fs::read_to_string(last).is_ok_and(|body| body == content) {
+            if let Some(source) = source {
+                name_source(last, source);
+            }
             return Ok(());
         }
     }
@@ -55,27 +87,56 @@ pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<()
     while dir.join(format!("{taken_at}.md")).exists() {
         taken_at += 1;
     }
-    write_atomically(&dir.join(format!("{taken_at}.md")), content.as_bytes())?;
+    let file = dir.join(format!("{taken_at}.md"));
+    write_atomically(&file, content.as_bytes())?;
+    if let Some(source) = source {
+        name_source(&file, source);
+    }
 
-    existing = snapshot_files(&dir);
+    existing = snapshot_files(dir);
     if existing.len() > KEEP {
         for old in &existing[..existing.len() - KEEP] {
-            let _ = fs::remove_file(old);
+            drop_version(old);
         }
     }
 
     // The note's own path is recorded so history can be listed by name later. Not
     // worth failing a snapshot over.
-    let _ = fs::write(dir.join(ORIGIN), &path);
+    let _ = fs::write(dir.join(ORIGIN), path);
     Ok(())
+}
+
+/// Writes who a version was kept for beside it. A label, so a failure to write it
+/// is not worth failing the version over.
+fn name_source(snapshot: &Path, source: &str) {
+    let name: String = source.trim().chars().take(LONGEST_SOURCE).collect();
+    if !name.is_empty() {
+        let _ = fs::write(snapshot.with_extension(SOURCE), name);
+    }
+}
+
+/// Who a version was kept for, when anybody says.
+fn source_of(snapshot: &Path) -> Option<String> {
+    let name = fs::read_to_string(snapshot.with_extension(SOURCE)).ok()?;
+    let name = name.trim();
+    (!name.is_empty()).then(|| name.to_owned())
+}
+
+/// A version gone, and who it was kept for with it. Answers whether it went.
+fn drop_version(snapshot: &Path) -> bool {
+    let _ = fs::remove_file(snapshot.with_extension(SOURCE));
+    fs::remove_file(snapshot).is_ok()
 }
 
 /// Every kept version of one note, newest first.
 #[tauri::command(async)]
 pub fn list_snapshots(app: AppHandle, path: String) -> Result<Vec<Snapshot>, String> {
-    let dir = history_root(&app, &path)?;
+    Ok(listed(&history_root(&app, &path)?))
+}
 
-    let mut snapshots: Vec<Snapshot> = snapshot_files(&dir)
+/// The versions in one history folder, newest first.
+fn listed(dir: &Path) -> Vec<Snapshot> {
+    let mut snapshots: Vec<Snapshot> = snapshot_files(dir)
         .into_iter()
         .filter_map(|file| {
             let taken_at = moment(&file)?;
@@ -83,13 +144,14 @@ pub fn list_snapshots(app: AppHandle, path: String) -> Result<Vec<Snapshot>, Str
             Some(Snapshot {
                 taken_at,
                 size: fs::metadata(&file).map_or(0, |one| one.len()),
+                source: source_of(&file),
                 path: file.to_string_lossy().to_string(),
             })
         })
         .collect();
 
     snapshots.reverse();
-    Ok(snapshots)
+    snapshots
 }
 
 /// A day and an hour in milliseconds, which is the unit every snapshot's name
@@ -158,7 +220,7 @@ pub fn purge_snapshots(app: AppHandle, days: u64) -> Result<usize, String> {
         let taken: Vec<u64> = files.iter().filter_map(|file| moment(file)).collect();
 
         for at in stale(&taken, now, days) {
-            if fs::remove_file(note.join(format!("{at}.md"))).is_ok() {
+            if drop_version(&note.join(format!("{at}.md"))) {
                 dropped += 1;
             }
         }
@@ -272,7 +334,7 @@ fn snapshot_files(dir: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{rehome_in, snapshot_files, stale, DAY, HOUR};
+    use super::{keep_in, listed, rehome_in, snapshot_files, stale, DAY, HOUR, KEEP};
     use crate::paths::{folder_key, ORIGIN};
     use std::fs;
 
@@ -384,6 +446,55 @@ mod tests {
 
         assert!(stale(&versions, NOW, 1 << 54).is_empty());
         assert!(stale(&versions, NOW, u64::MAX).is_empty());
+    }
+
+    /// An agent's first edit of a note keeps the version before it, and the list
+    /// says whose edit it was kept for - where it says a device for the account's.
+    #[test]
+    fn a_version_kept_for_an_agent_says_whose() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+
+        keep_in(here, "/notes/a.md", "saved", None).expect("a save");
+        keep_in(here, "/notes/a.md", "before the agent", Some("Claude Code")).expect("kept");
+
+        let versions = listed(here);
+        let sources: Vec<Option<&str>> = versions.iter().map(|one| one.source.as_deref()).collect();
+        assert_eq!(sources, [Some("Claude Code"), None]);
+    }
+
+    /// The words an agent is about to edit are often what the last save kept, and
+    /// then that version is the one before the agent, and says so.
+    #[test]
+    fn the_same_words_as_the_last_version_are_that_version() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+
+        keep_in(here, "/notes/a.md", "saved", None).expect("a save");
+        keep_in(here, "/notes/a.md", "saved", Some("Codex")).expect("kept");
+
+        let versions = listed(here);
+        assert_eq!(versions.len(), 1);
+        assert_eq!(versions[0].source.as_deref(), Some("Codex"));
+    }
+
+    #[test]
+    fn who_a_version_was_kept_for_goes_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+
+        keep_in(here, "/notes/a.md", "first", Some("Claude Code")).expect("kept");
+        for at in 0..KEEP {
+            keep_in(here, "/notes/a.md", &format!("save {at}"), None).expect("a save");
+        }
+
+        let left = fs::read_dir(here)
+            .expect("the folder")
+            .flatten()
+            .filter(|entry| entry.path().extension().is_some_and(|one| one == "by"))
+            .count();
+        assert_eq!(left, 0);
+        assert_eq!(listed(here).len(), KEEP);
     }
 
     #[test]

@@ -1505,4 +1505,6 @@ export const yue: Dictionary = {
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Nib as the default browser
   'Default browser': '預設瀏覽器',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '復原 {name} 嘅編輯',
 }

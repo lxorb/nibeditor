@@ -39,6 +39,8 @@ export interface SnapshotRow {
   content: string
   taken_at: number
   size: number
+  /** Who it was kept for when that was not a save; see history.rs. */
+  source?: string
 }
 
 /** What a file list needs and nothing else: a path and its two times. The same

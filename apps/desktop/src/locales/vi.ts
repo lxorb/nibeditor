@@ -1528,4 +1528,6 @@ export const vi: Dictionary = {
   'Paste {count} lines?': 'Dán {count} dòng?',
   // Nib as the default browser
   'Default browser': 'Trình duyệt mặc định',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
 }

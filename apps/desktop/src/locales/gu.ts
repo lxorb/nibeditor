@@ -1532,4 +1532,6 @@ export const gu: Dictionary = {
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Nib as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
 }

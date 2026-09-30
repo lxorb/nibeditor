@@ -1534,4 +1534,6 @@ export const jv: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Nib as the default browser
   'Default browser': 'Panjelajah gawan',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Wurungaké suntingan {name}',
 }

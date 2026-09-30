@@ -1518,4 +1518,6 @@ export const ko: Dictionary = {
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
   // Nib as the default browser
   'Default browser': '기본 브라우저',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name}의 편집 실행 취소',
 }

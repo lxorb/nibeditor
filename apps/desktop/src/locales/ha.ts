@@ -1567,4 +1567,6 @@ export const ha: Dictionary = {
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Nib as the default browser
   'Default browser': 'Birawuza na asali',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Soke gyare-gyaren {name}',
 }

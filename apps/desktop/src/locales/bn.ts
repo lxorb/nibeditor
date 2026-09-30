@@ -1541,4 +1541,6 @@ export const bn: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
 }

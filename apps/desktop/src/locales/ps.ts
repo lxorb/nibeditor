@@ -1543,4 +1543,6 @@ export const ps: Dictionary = {
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
   // Nib as the default browser
   'Default browser': 'اصلي کوټګر',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
 }

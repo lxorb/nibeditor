@@ -1510,4 +1510,6 @@ export const th: Dictionary = {
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
   // Nib as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
 }

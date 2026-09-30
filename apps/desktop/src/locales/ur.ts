@@ -1538,4 +1538,6 @@ export const ur: Dictionary = {
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Nib as the default browser
   'Default browser': 'طے شدہ براؤزر',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
 }

@@ -1528,4 +1528,6 @@ export const my: Dictionary = {
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
   // Nib as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
 }

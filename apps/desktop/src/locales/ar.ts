@@ -1632,4 +1632,6 @@ export const ar: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'المتصفح الافتراضي',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'تراجع عن تعديلات {name}',
 }

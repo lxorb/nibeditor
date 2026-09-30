@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { EditorState } from '@codemirror/state'
 import type { Decoration } from '@codemirror/view'
 import { EditorView } from '@codemirror/view'
-import { type Peer, peersOf, remoteCarets, setPeers } from './carets'
+import { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
 
 /** A state with the carets extension in it and nothing else, which is all the
  *  extension needs: the decorations are worked out from the state, so nothing here
@@ -139,5 +139,39 @@ describe('the other people in a note', () => {
 
     expect(marks(after)).toEqual([])
     expect(peersOf(after)).toBe(peersOf(state))
+  })
+})
+
+/** An agent's caret, which the app makes up for it: drawn beside the room's carets,
+ *  told by a list of its own so neither wipes the other out, and moved by typing
+ *  the same way. See docs/agent-native.md 8.4. */
+describe('an agent in the note', () => {
+  const AGENT: Peer = { id: -1, name: 'Claude Code', colour: '#7c6bf5', head: 2, anchor: 2 }
+
+  test('is drawn beside the people in a room, and neither list wipes out the other', () => {
+    const state = withPeers('hello world', [MAC])
+      .update({ effects: setAgents.of([AGENT]) })
+      .state.update({ effects: setPeers.of([MAC, PHONE]) }).state
+
+    expect(peersOf(state)).toEqual([MAC, PHONE])
+    expect(agentsOf(state)).toEqual([AGENT])
+    expect(carets(state)).toEqual([2, 4, 9])
+  })
+
+  test('moves with the words typed before it', () => {
+    const state = stateOn('hello world')
+      .update({ effects: setAgents.of([AGENT]) })
+      .state.update({ changes: { from: 0, insert: '>> ' } }).state
+
+    expect(agentsOf(state)[0]?.head).toBe(5)
+    expect(carets(state)).toEqual([5])
+  })
+
+  test('and is gone when the app says so', () => {
+    const state = stateOn('hello world')
+      .update({ effects: setAgents.of([AGENT]) })
+      .state.update({ effects: setAgents.of([]) }).state
+
+    expect(carets(state)).toEqual([])
   })
 })

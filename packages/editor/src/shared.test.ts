@@ -503,3 +503,86 @@ describe('edits carried onto the words as they are now', () => {
     expect(note.since('')).toBeNull()
   })
 })
+
+/** What an agent's edit is in a note somebody is writing in: a step of its own in
+ *  the reader's Ctrl+Z, named, and heard by whoever is keeping track of it - which
+ *  is how "undo the agent's edits" knows what the reader has already taken back. */
+describe('an edit from outside, as a step of its own', () => {
+  test('is one Ctrl+Z, apart from the typing either side of it', () => {
+    const note = new SharedDoc('one')
+    const pane = new Pane(note)
+    pane.type(3, ' two')
+    note.edit([{ from: 0, to: 0, insert: 'AGENT ' }], { userEvent: 'agent' })
+    pane.type(13, ' three')
+
+    const view = pane as unknown as EditorView
+    fromInput('historyUndo')?.(view)
+    expect(pane.text).toBe('AGENT one two')
+    fromInput('historyUndo')?.(view)
+    expect(pane.text).toBe('one two')
+    fromInput('historyUndo')?.(view)
+    expect(pane.text).toBe('one')
+  })
+
+  test('is heard with its marks, and so is the Ctrl+Z that takes it back', () => {
+    const note = new SharedDoc('one')
+    const pane = new Pane(note)
+    const heard: string[] = []
+    note.listen(({ by, marks }) => {
+      heard.push(`${by}${marks.map((mark) => ` ${mark.id}:${String(mark.undone)}`).join('')}`)
+    })
+
+    note.edit([{ from: 3, to: 3, insert: '!' }], {
+      userEvent: 'agent',
+      marks: [{ id: 'a1', undone: false }],
+    })
+    const view = pane as unknown as EditorView
+    fromInput('historyUndo')?.(view)
+    fromInput('historyRedo')?.(view)
+
+    expect(heard).toEqual(['outside a1:false', 'reader a1:true', 'reader a1:false'])
+  })
+
+  test('and stops being heard when asked', () => {
+    const note = new SharedDoc('one')
+    const heard: string[] = []
+    const stop = note.listen(({ by }) => void heard.push(by))
+
+    note.edit([{ from: 0, to: 0, insert: '>' }])
+    stop()
+    note.edit([{ from: 0, to: 0, insert: '>' }])
+
+    expect(heard).toEqual(['outside'])
+  })
+})
+
+/** Where the reader has been writing lately, which an agent's edit asks before it
+ *  goes there; see docs/agent-native.md 8.3. */
+describe('where the reader typed lately', () => {
+  test('is where their keystrokes are now, carried through what came after', () => {
+    const note = new SharedDoc('one two')
+    const pane = new Pane(note)
+    pane.type(7, '!')
+    note.edit([{ from: 0, to: 0, insert: '>> ' }])
+
+    expect(note.touchedWithin(2000)).toEqual([{ from: 10, to: 11 }])
+    expect(note.readerAt).not.toBeNull()
+  })
+
+  test('and nothing once it is longer ago than asked', () => {
+    const note = new SharedDoc('one')
+    const pane = new Pane(note)
+    pane.type(3, '!')
+
+    expect(note.touchedWithin(2000, Date.now() + 5000)).toEqual([])
+  })
+
+  test('counts nothing somebody else wrote', () => {
+    const note = new SharedDoc('one')
+    note.edit([{ from: 0, to: 0, insert: '>' }])
+    note.arrived([{ from: 0, to: 0, insert: '<' }])
+
+    expect(note.touchedWithin(2000)).toEqual([])
+    expect(note.readerAt).toBeNull()
+  })
+})

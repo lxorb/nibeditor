@@ -1551,4 +1551,6 @@ export const gsw: Dictionary = {
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Nib as the default browser
   'Default browser': 'Standardbrowser',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
 }

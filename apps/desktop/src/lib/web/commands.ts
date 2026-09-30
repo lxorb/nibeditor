@@ -451,14 +451,20 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
 const KEEP_SNAPSHOTS = 40
 
-async function snapshot(path: string, content: string) {
+async function snapshot(path: string, content: string, source: string | undefined) {
   const notePath = normalise(path)
   const kept = (await snapshots.forNote(notePath)).sort((a, b) => b.taken_at - a.taken_at)
+  const said = source ? { source: source.trim().slice(0, 64) } : {}
   // Nothing to keep when the words have not moved since the last version, which
-  // is what the disk side does too; see src-tauri/src/history.rs.
-  if (kept[0]?.content === content) return
+  // is what the disk side does too; see src-tauri/src/history.rs. That version is
+  // then the one kept, and says who for.
+  const last = kept[0]
+  if (last?.content === content) {
+    if (source) await snapshots.put({ ...last, ...said })
+    return
+  }
 
-  await snapshots.put({ notePath, content, taken_at: now(), size: content.length })
+  await snapshots.put({ notePath, content, taken_at: now(), size: content.length, ...said })
 
   for (const old of kept.slice(KEEP_SNAPSHOTS - 1)) {
     if (old.id !== undefined) await snapshots.remove(old.id)
@@ -811,14 +817,23 @@ export async function webInvoke<T>(
     }
 
     case 'snapshot_note':
-      await snapshot(path, args.content as string)
+      await snapshot(
+        path,
+        args.content as string,
+        typeof args.source === 'string' ? args.source : undefined,
+      )
       return undefined as T
 
     case 'list_snapshots': {
       const kept = await snapshots.forNote(normalise(path))
       return kept
         .sort((a, b) => b.taken_at - a.taken_at)
-        .map((row) => ({ path: String(row.id), taken_at: row.taken_at, size: row.size })) as T
+        .map((row) => ({
+          path: String(row.id),
+          taken_at: row.taken_at,
+          size: row.size,
+          ...(row.source ? { source: row.source } : {}),
+        })) as T
     }
 
     case 'read_snapshot': {

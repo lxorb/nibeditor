@@ -1583,4 +1583,6 @@ export const de: Dictionary = {
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
   // Nib as the default browser
   'Default browser': 'Standardbrowser',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
 }

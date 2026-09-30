@@ -1539,4 +1539,6 @@ export const hi: Dictionary = {
   'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },
   // Nib as the default browser
   'Default browser': 'डिफ़ॉल्ट ब्राउज़र',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} के संपादन पूर्ववत करें',
 }

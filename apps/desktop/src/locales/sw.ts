@@ -1566,4 +1566,6 @@ export const sw: Dictionary = {
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
   // Nib as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
 }

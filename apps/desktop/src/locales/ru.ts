@@ -1612,4 +1612,6 @@ export const ru: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Браузер по умолчанию',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Отменить правки {name}',
 }

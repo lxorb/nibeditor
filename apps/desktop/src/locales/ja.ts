@@ -1535,4 +1535,6 @@ export const ja: Dictionary = {
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
   // Nib as the default browser
   'Default browser': '既定のブラウザ',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} の編集を元に戻す',
 }

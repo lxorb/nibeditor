@@ -1560,4 +1560,6 @@ export const ml: Dictionary = {
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Nib as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
 }

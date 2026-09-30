@@ -80,6 +80,7 @@ import { modes } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { settings } from './settings.svelte'
+import { touchedBy } from './agents/docs/touched'
 import { shortcuts } from './shortcuts.svelte'
 import { closeWindow, invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
@@ -352,6 +353,21 @@ export interface Command extends MenuItem {
 
 /** Fetched as the launch ends; see `warmDoors`. */
 const tabOps = () => import('./tab-strip/ops')
+
+/** Taking back what an agent wrote into the note in front: everything that agent did
+ *  to it this session, as one step, mapped round whatever the reader wrote since. A
+ *  row per agent with edits here, and none at all while no agent has written in it;
+ *  see docs/agent-native.md 8.5. What does it is fetched on the press. */
+function agentUndoRows(): Command[] {
+  const path = workspace.active?.path
+  if (!path) return []
+
+  return touchedBy(path).map((agent) => ({
+    id: `agent-undo:${agent.id}`,
+    label: t('Undo edits by {name}', { name: agent.name }),
+    run: () => void import('./agents/docs').then((docs) => docs.undoAgentIn(agent, path)),
+  }))
+}
 
 /** A tab's own menu, about the tab being read; see tab-strip/menu.ts. */
 function tabCommands(): Command[] {
@@ -1096,6 +1112,7 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !workspace.active?.path,
       run: () => (settings.historyOpen = true),
     },
+    ...agentUndoRows(),
     // A `nib://` link to what is open, for a task manager, a shortcut or another
     // note somewhere else. Also the whole of how anybody finds out the scheme
     // exists. Not in the plugin, which cannot be reached by a link and whose

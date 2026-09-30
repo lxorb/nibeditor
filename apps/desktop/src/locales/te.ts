@@ -1546,4 +1546,6 @@ export const te: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
 }

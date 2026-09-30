@@ -1613,4 +1613,6 @@ export const pl: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Domyślna przeglądarka',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': 'Cofnij zmiany {name}',
 }

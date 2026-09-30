@@ -1504,4 +1504,6 @@ export const zhHans: Dictionary = {
   'Paste {count} lines?': '粘贴 {count} 行？',
   // Nib as the default browser
   'Default browser': '默认浏览器',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '撤销 {name} 的编辑',
 }

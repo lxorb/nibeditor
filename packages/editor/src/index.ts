@@ -1,7 +1,17 @@
 export { createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
 export { HeldState, type StateView } from './held'
-export { type Peer, peersOf, remoteCarets, setPeers } from './carets'
-export { type DocView, documentOf, letGo, redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
+export { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
+export {
+  type DocView,
+  documentOf,
+  type Heard,
+  letGo,
+  type Mark,
+  redoEdit,
+  SharedDoc,
+  sharedOf,
+  undoEdit,
+} from './shared'
 export { type AiAsk, type AiRunner, setAiRunner } from './ai/run'
 export {
   calloutSign,
@@ -168,5 +178,5 @@ export {
 } from './shortcuts'
 export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
-export { EditorState, StateEffect } from '@codemirror/state'
-export type { ChangeSet, StateCommand, Text, Transaction, TransactionSpec } from '@codemirror/state'
+export { ChangeSet, EditorState, StateEffect, Text } from '@codemirror/state'
+export type { StateCommand, Transaction, TransactionSpec } from '@codemirror/state'

@@ -597,7 +597,16 @@ So an agent's edit names **what** it changes, not where:
 | `{block: "idea"}` | the block named `^idea` |
 | `{task: "Buy milk"}` | that task's line |
 | `{selection: true}` | what the reader has selected |
-| `{start: true}`, `{end: true}` | |
+| `{start: true}`, `{end: true}` | where the words start (past the front matter), and the end |
+
+A heading's section is its own line down to the last words before the next heading at its
+level or above, and `Plan/Later` finds Later anywhere under Plan (a slash in a title is
+`\/`). A block is the run of lines round its `^name`, the way `[[Note#^name]]` reads it,
+and a replacement keeps the name. Several headings or tasks with one name are told apart
+by `nth`, which `read_note` hands out only where it is needed. Words put before or after a
+task are a line of their own, before or after a section or a block a paragraph of its own,
+at the end a paragraph after the last one, the way somebody adding one more presses Enter
+first; beside a quote or the selection they are just words.
 
 **Resolved and applied in one synchronous step on the window's thread**, against the
 editor's state at that moment: the anchors are found, the edits built as one change set,
@@ -610,7 +619,9 @@ agent read, for the agent that wants that.
 A closed note is edited the same way on its text, and then written; `replaceInNotes` gets
 the same fix for the open note it happens to be showing (map the edits through whatever
 changed since `before`), which lane `agent-live-docs` owns because the person's own
-replace-all has the same hole.
+replace-all has the same hole. Fixed: the open document remembers its last few hundred
+changes (`SharedDoc.carried`), so a replacement lands on the words as they are, keystrokes
+typed since the read included, and the note is written as it then stands.
 
 ### 8.3 The reader's typing wins
 
@@ -685,6 +696,20 @@ caret is ordinary awareness. Nothing in 8.2 to 8.5 changes shape; what changes i
 agent's edits merge with another device's as well as with the reader's, because they are
 the same kind of thing. Lane `agent-live-docs` builds 8.2 to 8.5 on today's editor first,
 behind an interface the Yjs peer replaces, and moves when `sync-client-engine` lands.
+
+**The seam.** `lib/agents/docs/index.ts` is `NoteDocs` - `readNote`, `editNote`,
+`writeNote`, `undoAgent` - over a `Desk` (`desk.ts`: the note's words, the note in front,
+the one write path). On today's editor the open note is the document's shared state: one
+CodeMirror transaction per call (`userEvent: "agent"`, `isolateHistory`, a mark the
+history carries through `invertedEffects`), `SharedDoc.touchedWithin` for the reader's
+last two seconds, `Track` and `Steps` for undoing one agent's edits (the history's own
+bookkeeping over one agent), and `setAgents` on the room's caret layer. The Yjs peer is a
+second `NoteDocs`: `editNote` resolves the same anchors against the `Y.Text` and applies
+them in one `doc.transact(fn, origin)` under the agent's own client id; `Track` becomes an
+`UndoManager` with `trackedOrigins: new Set([origin])`; the caret becomes the agent's
+awareness state; the reader's last two seconds are the updates of the reader's own origin,
+kept as relative positions. `anchors.ts`, `edits.ts`, `read.ts` and `rev.ts` stay as they
+are.
 
 ---
 

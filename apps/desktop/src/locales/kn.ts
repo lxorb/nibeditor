@@ -1556,4 +1556,6 @@ export const kn: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
+  // An agent's edits in a note, taken back
+  'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
 }

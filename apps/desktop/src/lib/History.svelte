@@ -22,6 +22,9 @@
     taken_at: number
     size: number
     path: string
+    /** Who it was kept for when that was not a save: an agent, before its first edit
+     *  of the note. See history.rs and docs/agent-native.md 8.5. */
+    source?: string | null
   }
 
   /** One version, wherever it is kept.
@@ -29,8 +32,9 @@
    *  Two places keep them and the reader wants one list: the device's own, which
    *  is instant and goes back to before the note was ever synced, and the
    *  account's, which is the only one another machine can see. `by` is the device
-   *  that wrote an account version, which is the whole of what a row has to say
-   *  about where it came from. */
+   *  that wrote an account version, or the agent a version of this machine's was
+   *  kept for, which is the whole of what a row has to say about where it came
+   *  from. */
   interface Version {
     at: number
     size: number
@@ -95,7 +99,7 @@
       at: one.taken_at,
       size: one.size,
       path: one.path,
-      by: '',
+      by: one.source ?? '',
     }))
 
     const token = account.accountToken
@@ -255,8 +259,9 @@
               >
                 <span>{when(version.at, 'medium')}</span>
                 <!-- Where it came from, said only where that is worth saying: a
-                     version this machine kept needs no label, and one the account
-                     holds is worth knowing the device for. -->
+                     version this machine kept needs no label, one the account
+                     holds is worth knowing the device for, and one kept before an
+                     agent's edits the agent. -->
                 {#if version.by}
                   <em>{version.by}</em>
                 {/if}

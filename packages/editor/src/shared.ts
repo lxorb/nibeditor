@@ -18,7 +18,7 @@
  *  recorded in its own history (see `sharing` below); undo and redo are asked
  *  of the document and come back as a change like any other. */
 
-import { history, redo, undo } from '@codemirror/commands'
+import { history, invertedEffects, isolateHistory, redo, undo } from '@codemirror/commands'
 import {
   ChangeSet,
   type EditorSelection,
@@ -115,6 +115,52 @@ interface Replacement {
   insert: string
 }
 
+/** Who made a change. The reader, in a pane: typing, a paste, their own undo. Something
+ *  outside the editor: a replacement across the space, a version put back, an agent.
+ *  Or another device, through the room. */
+export type Made = 'reader' | 'outside' | 'room'
+
+/** A name put on an edit made from outside, which the history carries: undoing that
+ *  edit says the name again with `undone`, and redoing it says it once more without.
+ *  What lets whoever made an edit know when the reader's Ctrl+Z took it back. */
+export interface Mark {
+  id: string
+  undone: boolean
+}
+
+const marked = StateEffect.define<Mark>()
+
+/** The history keeps a mark with its edit and hands it back turned round: see
+ *  `invertedEffects` in @codemirror/commands. */
+const marksKept = invertedEffects.of((transaction) =>
+  transaction.effects.flatMap((effect) =>
+    effect.is(marked) ? [marked.of({ id: effect.value.id, undone: !effect.value.undone })] : [],
+  ),
+)
+
+/** A document's own state: words and a history, nothing that draws. */
+function documentState(doc: string | Text): EditorState {
+  return EditorState.create({ doc, extensions: [history(), marksKept] })
+}
+
+/** A change, as whoever listens to a document hears it: what changed, from which
+ *  words, who made it, and the marks it carried. `switch` is the document taking
+ *  another note on, after which nothing heard before means anything. */
+export interface Heard {
+  changes: ChangeSet
+  before: Text
+  by: Made | 'switch'
+  marks: readonly Mark[]
+}
+
+/** How an edit from outside goes into the history: as a step of its own, named for
+ *  what made it, carrying its marks. */
+export interface Stepped {
+  /** What the transaction says it was, CodeMirror's `userEvent`: `agent`. */
+  userEvent: string
+  marks?: readonly Mark[]
+}
+
 /** How many of its latest changes a document remembers; see `recent`. Hundreds of
  *  keystrokes, which is minutes of typing: longer than any write across a space
  *  takes to come back, and far longer than an edit takes between being worked out
@@ -187,7 +233,10 @@ export class SharedDoc {
    *  A push per change and a trim now and then, so a keystroke pays nothing for it.
    *  A rope is shared with the one after it but for the piece that changed, so the
    *  words kept here weigh what was typed rather than the note times four hundred. */
-  private recent: { before: Text; changes: ChangeSet }[] = []
+  private recent: { before: Text; changes: ChangeSet; by: Made; at: number }[] = []
+
+  /** Whoever wants to hear every change: see `listen`. */
+  private readonly listeners = new Set<(heard: Heard) => void>()
 
   /** How many steps of this note's own are there to take back, and to put back.
    *  Zero for a document that has just taken another note on, whatever was done in
@@ -201,7 +250,7 @@ export class SharedDoc {
   }
 
   constructor(doc: string | Text = '') {
-    this.state = EditorState.create({ doc, extensions: [history()] })
+    this.state = documentState(doc)
   }
 
   /** This document is taking on another note's words: the one tab that previews a
@@ -235,12 +284,13 @@ export class SharedDoc {
       })
 
       this.carry(made.changes, null)
+      this.tell({ changes: made.changes, before: made.startState.doc, by: 'switch', marks: [] })
     }
 
     // A history of its own rather than the old one emptied: a fresh state cannot
     // be holding a step from the note this document has just left. The same for
     // what it remembers: the old note's words carry nothing into this one.
-    this.state = EditorState.create({ doc: text, extensions: [history()] })
+    this.state = documentState(text)
     this.recent = []
     this.ownUndo = 0
     this.ownRedo = 0
@@ -337,12 +387,13 @@ export class SharedDoc {
    *  the document too, so undoing this edit later comes back to where it was
    *  made rather than to wherever another pane happens to be. */
   local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
-    this.took(changes)
-    this.state = this.state.update({ changes, selection }).state
+    const made = this.state.update({ changes, selection })
+    this.state = made.state
 
     this.did()
     this.carry(changes, from)
     this.made(changes)
+    this.took(made, 'reader')
   }
 
   /** Text put into the document from outside: a version restored, a note a sync
@@ -371,11 +422,11 @@ export class SharedDoc {
       ...(recorded ? {} : { annotations: Transaction.addToHistory.of(false) }),
     })
 
-    this.took(made.changes)
     this.state = made.state
     if (recorded) this.did()
     this.carry(made.changes, null)
     this.made(made.changes)
+    this.took(made, 'outside')
   }
 
   /** A step of this note's own went into the history. Whatever could have been put
@@ -392,14 +443,23 @@ export class SharedDoc {
    *  view holds is mapped through a change set, and a change set covering the
    *  document maps every caret in it to the same place; the words that changed
    *  leave every caret but the ones inside them where they were. */
-  edit(changes: readonly Replacement[]) {
-    const made = this.state.update({ changes })
+  edit(changes: readonly Replacement[] | ChangeSet, stepped?: Stepped): ChangeSet {
+    const made = this.state.update({
+      changes,
+      ...(stepped
+        ? {
+            annotations: [Transaction.userEvent.of(stepped.userEvent), isolateHistory.of('full')],
+            effects: (stepped.marks ?? []).map((mark) => marked.of(mark)),
+          }
+        : {}),
+    })
 
-    this.took(made.changes)
     this.state = made.state
     this.did()
     this.carry(made.changes, null)
     this.made(made.changes)
+    this.took(made, 'outside')
+    return made.changes
   }
 
   /** Words another device wrote, brought over by the room this note has joined.
@@ -415,10 +475,10 @@ export class SharedDoc {
       annotations: Transaction.addToHistory.of(false),
     })
 
-    this.took(made.changes)
     this.state = made.state
     this.carry(made.changes, null)
     this.onChange?.(this.state.doc)
+    this.took(made, 'room')
   }
 
   /** Something to say to every view of this note that is not a change to the
@@ -473,10 +533,10 @@ export class SharedDoc {
     const done = made.transaction
     if (!ran || !done) return false
 
-    this.took(done.changes)
     this.state = done.state
     this.carry(done.changes, null, { view: asked, selection: done.state.selection })
     this.made(done.changes)
+    this.took(done, 'reader')
     return true
   }
 
@@ -528,12 +588,61 @@ export class SharedDoc {
     return ChangeSet.of(span ? [span] : [], before.length)
   }
 
-  /** A change about to be made, remembered with the words it is made to. */
-  private took(changes: ChangeSet) {
-    this.recent.push({ before: this.state.doc, changes })
+  /** Where the reader's own changes of the last `ms` landed, in the words as they
+   *  are now: what an agent's edit asks before it goes somewhere the reader is
+   *  writing. Each is carried through everything after it, so a place the reader
+   *  typed in and then typed above is still found where it now is. */
+  touchedWithin(ms: number, now = Date.now()): { from: number; to: number }[] {
+    const touched: { from: number; to: number }[] = []
+    let later = ChangeSet.empty(this.state.doc.length)
+
+    for (let at = this.recent.length - 1; at >= 0; at--) {
+      const step = this.recent[at]
+      if (!step || now - step.at > ms) break
+
+      if (step.by === 'reader') {
+        step.changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
+          touched.push({ from: later.mapPos(fromB, -1), to: later.mapPos(toB, 1) })
+        })
+      }
+
+      later = step.changes.compose(later)
+    }
+
+    return touched
+  }
+
+  /** When the reader last changed these words, or null when they have not lately. */
+  get readerAt(): number | null {
+    for (let at = this.recent.length - 1; at >= 0; at--) {
+      const step = this.recent[at]
+      if (step?.by === 'reader') return step.at
+    }
+    return null
+  }
+
+  /** Hears every change after it is made, whoever made it; see `Heard`. Answers the
+   *  way to stop hearing. Nothing listens until something asks, so a note nobody
+   *  is working on alongside the reader pays nothing for it. */
+  listen(listener: (heard: Heard) => void): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
+  }
+
+  /** A change made, remembered with the words it was made to, and told. */
+  private took(made: Transaction, by: Made) {
+    this.recent.push({ before: made.startState.doc, changes: made.changes, by, at: Date.now() })
     // Trimmed in halves rather than one at a time, so the copy is paid once per
     // few hundred keystrokes.
     if (this.recent.length > REMEMBERED * 2) this.recent = this.recent.slice(-REMEMBERED)
+
+    if (!this.listeners.size) return
+    const marks = made.effects.flatMap((effect) => (effect.is(marked) ? [effect.value] : []))
+    this.tell({ changes: made.changes, before: made.startState.doc, by, marks })
+  }
+
+  private tell(heard: Heard) {
+    for (const listener of [...this.listeners]) listener(heard)
   }
 
   /** A change made here, reported once: to the app, which writes the words down,
