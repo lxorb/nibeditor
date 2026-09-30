@@ -257,8 +257,9 @@ export interface Opened {
 // ---- the window's commands ------------------------------------------------------------
 
 /** The commands the window calls the crate with: the settings pane (`agents_read`,
- *  `agents_write`, `agents_mint`) and the activity panel (the rest). Each answers only
- *  nib's own window. */
+ *  `agents_write`, `agents_mint`), the activity panel, and the agent harness's one test
+ *  hook (`agents_test_reader_focus`), which answers only in debug and probe builds. Each
+ *  answers only nib's own window. */
 export const AGENT_COMMANDS = [
   'agents_read',
   'agents_write',
@@ -270,6 +271,7 @@ export const AGENT_COMMANDS = [
   'agents_state',
   'agents_log',
   'agents_adopt',
+  'agents_test_reader_focus',
 ] as const
 
 /** `agents_state`: everything the activity panel draws from at once; the events keep it
