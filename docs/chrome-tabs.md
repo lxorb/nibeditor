@@ -178,5 +178,5 @@ so a width change lays out that one tab and nothing beside it.
   pane. A pick closed, and the tabs closed around one, come back with one Reopen closed tab,
   as Firefox brings them back; Chrome hands them back one at a time. Shift and an arrow does
   not extend a pick here: a tab brought to the front takes the keyboard into its note. See
-  `tab-strip/chosen.svelte.ts` and `tab-strip/picking.ts`.
+  `tab-strip/picking.svelte.ts`.
 - **No groups.** Tab search is the palette.

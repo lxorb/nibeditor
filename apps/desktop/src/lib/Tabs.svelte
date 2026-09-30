@@ -17,10 +17,9 @@
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
-  import { chosen, pickingOf } from './tab-strip/chosen.svelte'
   import { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
-  import { arrival, handOver, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
+  import { arrival, handOver, picks, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
   import {
     type Bounds,
     endOf,
@@ -169,14 +168,12 @@
   )
   const base = $derived(placed(widths))
 
-  /** What a pick does (tab-strip/picking.ts), fetched with the first click that picks. */
-  let picking = $state<typeof import('./tab-strip/picking') | null>(null)
-  /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/chosen.svelte.ts. */
-  const picked = $derived(new Set(chosen.of(paneId).map((one) => one.id)))
-  /** A plain press on a picked tab, which picks it alone if it turns out a click. */
+  /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/picking.svelte.ts. */
+  const picking = $derived(picks.loaded)
+  const picked = $derived(new Set(picking?.chosen.of(paneId).map((one) => one.id)))
+  /** A plain press on a picked tab, which picks it alone if it was a click. */
   let plainOnPick = false
-
-  /** What the press would carry: every tab picked with it that is pinned as it is. */
+  /** What the press would carry: the tabs picked with it, pinned as it is. */
   let carrying = $state<{ lead: string; ids: readonly string[] } | null>(null)
   /** The strip as a drag of several sees it, the block standing as one tab. */
   const group = $derived(
@@ -199,8 +196,7 @@
     const carried = drag.tabId
 
     if (carried) {
-      // A block of several goes along the strip as one tab as wide as all of them,
-      // and is drawn as its tabs side by side from where the drag has it.
+      // A block of several goes along as one tab and is drawn as its tabs.
       const rows = group?.order ?? sized
       const rowWidths = group?.widths ?? widths
       const from = drag.from
@@ -408,8 +404,6 @@
     const press = drag.pressing
     if (!press) return null
 
-    // The tab dragged, held where it was grabbed; a block's others are behind it, which
-    // the chip says with the edge of one more card.
     const width = widths[sized.findIndex((one) => one.id === drag.tabId)] ?? 0
     const grab = press.grab - (group?.before ?? 0)
     const left = i18n.factor > 0 ? drag.pointer.x - grab : drag.pointer.x + grab - width
@@ -441,22 +435,21 @@
     if (event.button !== 0 || drag.pressing) return
 
     const finger = event.pointerType === 'touch'
-    const how = finger ? null : pickingOf(event, shortcuts.platform === 'mac')
-    if (how) {
+    if (!finger && picksWith(event)) {
       // Ctrl or Shift: the pick changes, and the press drags nothing.
       event.preventDefault()
       withPicking((one) => {
-        const front = one.pick(paneId, tab.id, how)
+        const how = one.pickingOf(event, shortcuts.platform === 'mac')
+        const front = how && one.pick(paneId, tab.id, how)
         if (front) workspace.activate(front)
       })
       return
     }
     if (!finger) {
       // Chrome activates a tab on the press, before anything has moved, so the tab
-      // under a mouse answers at once and the one being dragged is the one open; the
-      // pick stays while this may be dragging all of it. A finger's press may be the
-      // start of a scroll, so it waits for the tap.
-      if (!picked.has(tab.id)) chosen.clear()
+      // under a mouse answers at once and the one being dragged is the one open, and a
+      // pick stays while this may drag it. A finger's press may be a scroll, so it waits.
+      if (!picked.has(tab.id)) picking?.chosen.clear()
       workspace.activate(tab.id)
     }
     plainOnPick = picked.has(tab.id)
@@ -567,9 +560,8 @@
     const ending = drag.release()
     unfollow()
     if (ending.kind === 'click') {
-      // A plain click on a picked tab, which turned out not to be a drag, picks that
-      // tab alone, as Chrome's release does.
-      if (plainOnPick) chosen.clear()
+      // Chrome's release: a plain click on a picked tab picks it alone.
+      if (plainOnPick) picking?.chosen.clear()
       return
     }
 
@@ -585,7 +577,7 @@
     }
 
     // Let go over another strip or a pane: that is where it goes, from where it was,
-    // and a block's others with it, in front of the tab it landed in front of.
+    // a block's others with it.
     if (where) {
       if (from) handOver(ending.tabId, from.left, from.top)
       const before =
@@ -603,17 +595,21 @@
     withPicking((one) => {
       one.placeBlock(ids, into, before)
       workspace.activate(lead)
-      chosen.paneId = into
+      one.chosen.paneId = into
     })
   }
 
-  function withPicking(run: (loaded: typeof import('./tab-strip/picking')) => void) {
-    if (picking) {
-      run(picking)
+  /** Whether a click picks: Ctrl, Cmd on a Mac, or Shift. */
+  const picksWith = (event: MouseEvent) =>
+    event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
+
+  function withPicking(run: (loaded: typeof import('./tab-strip/picking.svelte')) => void) {
+    if (picks.loaded) {
+      run(picks.loaded)
       return
     }
-    void import('./tab-strip/picking').then((loaded) => {
-      picking = loaded
+    void import('./tab-strip/picking.svelte').then((loaded) => {
+      picks.loaded = loaded
       run(loaded)
     })
   }
@@ -779,24 +775,13 @@
     void import('./tab-strip/ops').then((ops) => ops.renameFromTab(tab.id))
   }
 
-  /* ── The card under a tab ─────────────────────────────────────────
-     Chrome's hover card, fetched with the first pointer to rest on a tab; see
-     tab-strip/hover-card.svelte.ts. */
-
+  /** Chrome's hover card, fetched with the first pointer on a tab; see hover-card.svelte.ts. */
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
 
-  /** A tab the pointer came to rest on, or the keyboard arrived at: the card hangs from
-   *  its body, and waits as long as the widest tab of this strip says. */
   function aimCard(tab: Tab, node: Element, focused = false) {
-    const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
-    const aim = {
-      tab,
-      box: { left: body.left, right: body.right, bottom: body.bottom },
-      widest: Math.max(0, ...widths),
-      focused,
-    }
+    const widest = Math.max(0, ...widths)
     void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
-      hovering.enter(aim),
+      hovering.restOn(tab, node, widest, focused),
     )
   }
 
@@ -964,7 +949,7 @@
           onclick={(event) => {
             givesBack(tab.id)
             // A click with Ctrl or Shift was a pick, and its press has answered it.
-            if (event.detail > 0 && pickingOf(event, shortcuts.platform === 'mac')) return
+            if (event.detail > 0 && picksWith(event)) return
             workspace.activate(tab.id)
           }}
           ondblclick={() => workspace.keep(tab.id)}
@@ -1131,7 +1116,6 @@
   <div
     class="chip"
     class:onbar={carriedTab.kind === 'web'}
-    class:many={lifted.length > 1}
     use:portal
     style:width="{chip.width}px"
     style:transform="translate({chip.left}px, {chip.top}px)"
@@ -1168,10 +1152,8 @@
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
     --tab-ground: var(--bg);
-    /* The fill a hovered tab gets: the active tab's colour, part of the way, and
-       further for a picked one. */
+    /* The fill a hovered tab gets: the active tab's colour, part of the way. */
     --tab-hover: color-mix(in srgb, var(--tab-ground) 40%, transparent);
-    --tab-chosen: color-mix(in srgb, var(--tab-ground) 70%, transparent);
     /* Chrome's top corner, and its concave foot at the bottom. */
     --tab-round: var(--radius-md);
     --tab-foot: var(--radius-md);
@@ -1257,11 +1239,9 @@
     background: var(--tab-ground);
   }
 
-  /* Picked with Ctrl or Shift: the hover's box, held and a step stronger, which is
-     Chrome's selected tab - a tab with a fill of its own that is not the one in front. */
+  /* Picked with Ctrl or Shift: the hover's box, held, as Chrome's selected tab. */
   .tab.chosen:not(.active)::before {
     opacity: 1;
-    background: var(--tab-chosen);
   }
 
   /* The two feet: where the active tab meets the bar under it, it flares out into
@@ -1577,15 +1557,6 @@
 
   .chip.onbar {
     background: var(--surface);
-  }
-
-  /* Several carried: the edge of the next card behind the first. */
-  .chip.many {
-    box-shadow:
-      0 0 0 1px var(--line-strong),
-      3px 3px 0 -1px var(--bg),
-      3px 3px 0 0 var(--line-strong),
-      var(--shadow-md);
   }
 
   .chip .label {

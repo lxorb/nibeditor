@@ -89,6 +89,18 @@ class Hovering {
     )
   }
 
+  /** A tab the pointer came to rest on, or the keyboard arrived at: the card hangs from
+   *  its body, and waits as long as the widest tab of its strip says. */
+  restOn(tab: Tab, node: Element, widest: number, focused = false) {
+    const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
+    this.enter({
+      tab,
+      box: { left: body.left, right: body.right, bottom: body.bottom },
+      widest,
+      focused,
+    })
+  }
+
   /** The pointer came to rest on a tab, or the keyboard arrived at one. */
   enter(aim: Aim) {
     if (viewport.touch || aim.tab.id === this.hushed) return

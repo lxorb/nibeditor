@@ -1,17 +1,65 @@
-/** What a click that picks does to a pick of tabs, and what a pick does together: the
- *  tab's menu on a picked tab, Ctrl+W, and a drag of several. The pick itself is
- *  chosen.svelte.ts; this is fetched with the first click that picks.
+/** Several tabs at once: the ones Ctrl and Shift picked out of one pane's strip, and
+ *  what a pick does together - a tab's menu on a picked tab, Ctrl+W, a drag of several.
+ *  Fetched with the first click that picks, and held by `picks` in drag.svelte.ts, which
+ *  is how the strips, the registry and a drag reach it; nothing of it is in front of the
+ *  first paint.
  *
  *  Chrome's selection (tab.cc, docs/chrome-tabs.md): Ctrl - Cmd on a Mac - and a click
  *  adds a tab or takes it out again, Shift and a click takes every tab from the last one
  *  clicked to this one, and both together add that run to what is there. The tab in
  *  front is always one of them. A plain press on one of them leaves the pick alone while
- *  it may be the start of dragging all of them, and its release picks that one alone. */
+ *  it may be the start of dragging all of them, and its release picks that one alone.
+ *
+ *  One pane's at a time, and only while the tab in front is one of them: anything else
+ *  that brings a tab to the front has put the pick down without having to say so. */
 
 import { workspace, type Tab } from '../workspace.svelte'
 import { closesPinned } from '../workspace/closing-pinned'
-import { chosen, type Picking } from './chosen.svelte'
 import { duplicateTab, moveToOtherPane } from './ops'
+
+/** What a click with a modifier does to the pick. */
+export type Picking = 'toggle' | 'run' | 'add-run'
+
+/** A click's modifiers, as a pick: Ctrl - Cmd on a Mac - for one tab, Shift for a run,
+ *  both to add a run. Null for a plain click. */
+export function pickingOf(
+  event: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey'>,
+  mac: boolean,
+): Picking | null {
+  const toggle = mac ? event.metaKey : event.ctrlKey
+  if (toggle && event.shiftKey) return 'add-run'
+  if (event.shiftKey) return 'run'
+  return toggle ? 'toggle' : null
+}
+
+class Chosen {
+  /** The pane the pick is in, and its tabs, by id. */
+  paneId = $state<string | null>(null)
+  ids = $state<readonly string[]>([])
+  /** Where a Shift and a click counts from: the last tab clicked. */
+  anchor: string | null = null
+
+  /** The tabs picked in a pane, in the strip's order, while there are two or more of
+   *  them and the tab in front is one. Nothing otherwise. */
+  of(paneId: string): Tab[] {
+    if (this.paneId !== paneId || this.ids.length < 2) return []
+
+    const front = workspace.panes.at(paneId)?.activeTabId
+    if (!front || !this.ids.includes(front)) return []
+
+    const tabs = workspace.tabsIn(paneId).filter((one) => this.ids.includes(one.id))
+    return tabs.length > 1 ? tabs : []
+  }
+
+  /** One tab alone again. */
+  clear() {
+    this.paneId = null
+    this.ids = []
+    this.anchor = null
+  }
+}
+
+export const chosen = new Chosen()
 
 /** The tabs from one to another along a strip, both ends included, in its order. */
 export function runOf(order: readonly string[], from: string, to: string): string[] {

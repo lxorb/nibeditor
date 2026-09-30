@@ -18,7 +18,7 @@
  *  the right" on the last tab. Each command that has a key says it; see the registry.
  *
  *  A tab that is one of several picked out with Ctrl or Shift offers what can be done to
- *  all of them at once, Chrome's rows for a pick: see `pickMenu` and chosen.svelte.ts. */
+ *  all of them at once, Chrome's rows for a pick: see `pickMenu` and picking.svelte.ts. */
 
 import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
@@ -32,9 +32,8 @@ import { readSpec } from '../terminal/spec'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
-import { chosen } from './chosen.svelte'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
-import { duplicateMany, moveManyToOtherPane, pinMany } from './picking'
+import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
 /** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
  *  pauses it there, as a press in the page would; Stop ends its work in the tab and
