@@ -334,8 +334,14 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
     return context.json({ moved: { hash: file.hash, size: file.size, at: file.updated_at } })
   }
 
-  const blob = await context.env.DB.prepare('select max(size) as size from blobs where hash = ?')
-    .bind(hash)
+  // Bytes the asker or the space's owner keeps, for the reason `blobSizes` in ops.ts
+  // gives.
+  const who = context.get('who')
+  const asker = who.kind === 'user' ? who.user.id : space.user_id
+  const blob = await context.env.DB.prepare(
+    'select max(size) as size from blobs where hash = ? and user_id in (?, ?)',
+  )
+    .bind(hash, asker, space.user_id)
     .first<{ size: number | null }>()
   if (blob?.size === null || blob?.size === undefined)
     return context.json({ error: NO_SUCH_FILE }, 404)

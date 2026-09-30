@@ -60,7 +60,9 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
 
   const device = await deviceOf(context)
   await preparedSpace(context.env, space, device)
-  const done = await applyOps(context.env, space, device, request.ops)
+  const who = context.get('who')
+  const asker = who.kind === 'user' ? who.user.id : null
+  const done = await applyOps(context.env, space, asker, device, request.ops)
   if (done.changed) {
     // What a v1 app reads of the folders' icons and order is keyed by path.
     await reproject(context.env, space.id)

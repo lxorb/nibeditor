@@ -147,6 +147,15 @@ describe('bytes down', () => {
     expect((await call(env, `/v2/files/${space}/${id}`, { token: stranger })).status).toBe(404)
     expect((await call(env, `/i/${hash}`)).status).toBe(404)
   })
+
+  test('never for bytes only somebody outside the space keeps, whose hash is all anybody knows', async () => {
+    const other = await signIn(env, 'other@example.com')
+    const data = bytes(300, 9)
+    await upload(data, 'application/pdf', other)
+
+    const placed = await place('theirs.pdf', await hashOf(data))
+    expect(placed.results[0]).toMatchObject({ refused: 'gone' })
+  })
 })
 
 describe('a file replaced', () => {

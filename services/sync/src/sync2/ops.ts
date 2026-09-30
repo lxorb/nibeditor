@@ -19,8 +19,14 @@ import { type Changed, changeTree, type Content, kindOfName, type Tree } from '.
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
 /** The size of each blob a batch of file creates names, by hash: a file's entry is
- *  only made for bytes the account is keeping. */
-async function blobSizes(env: Env, ops: readonly Op[]): Promise<Map<string, number>> {
+ *  only made for bytes the asker or the space's owner keeps. Not anybody's: an entry
+ *  is a way to read its bytes back through the space, and a hash is something that
+ *  can be learned without the file - so naming somebody else's would be reading it. */
+async function blobSizes(
+  env: Env,
+  keepers: readonly string[],
+  ops: readonly Op[],
+): Promise<Map<string, number>> {
   const hashes = new Set<string>()
   for (const op of ops) {
     if (op.t === 'create' && op.kind === 'file' && op.hash) hashes.add(op.hash.toLowerCase())
@@ -29,9 +35,11 @@ async function blobSizes(env: Env, ops: readonly Op[]): Promise<Map<string, numb
 
   const { results } = await env.DB.prepare(
     `select hash, max(size) as size from blobs
-      where hash in (select value from json_each(?)) group by hash`,
+      where hash in (select value from json_each(?1))
+        and user_id in (select value from json_each(?2))
+      group by hash`,
   )
-    .bind(JSON.stringify([...hashes]))
+    .bind(JSON.stringify([...hashes]), JSON.stringify(keepers))
     .all<{ hash: string; size: number }>()
   return new Map(results.map((row) => [row.hash, row.size]))
 }
@@ -40,10 +48,12 @@ async function blobSizes(env: Env, ops: readonly Op[]): Promise<Map<string, numb
 export async function applyOps(
   env: Env,
   space: Reached,
+  asker: string | null,
   device: string,
   ops: readonly Op[],
 ): Promise<Changed<OpResult[]>> {
-  const sizes = await blobSizes(env, ops)
+  const keepers = asker ? [asker, space.user_id] : [space.user_id]
+  const sizes = await blobSizes(env, keepers, ops)
   const context: OpContext = { role: space.role, device }
 
   return await changeTree(
