@@ -3446,11 +3446,41 @@ class Workspace {
 
       note.path = target
       note.name = nameOf(target)
+      this.rekind(note)
     }
 
     await this.movedOnAccount(path, target)
     await this.loadTree()
     this.persist()
+  }
+
+  /** A plane renamed across its two kinds, shown as the kind its name says now.
+   *
+   *  A page note and a canvas are one format - a plane of cards and ink, the page note
+   *  with its pages over it - so the same words under the other name are the other
+   *  kind. The open document kept the kind it was opened as, and one file is one
+   *  document, so the tab went on as a page note named as a canvas and opening the
+   *  file again found that same page note. So the words, and whether they are written,
+   *  go over to a document of the new kind, and every tab showing the file shows it.
+   *
+   *  Only between those two. A note's words are no plane: shown as a canvas they are
+   *  an empty one, and a stroke on it would write that plane over them. A note renamed
+   *  to a plane's name goes on showing its words until it is opened again. */
+  rekind(note: NoteDoc) {
+    const path = note.path
+    const kind =
+      path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
+    if (path === null || kind === null || kind === note.kind) return
+    if (note.kind !== 'canvas' && note.kind !== 'pages') return
+
+    const fresh = this.document({
+      kind,
+      path,
+      name: note.name,
+      text: note.latest,
+      dirty: note.dirty,
+    })
+    for (const tab of this.tabs) if (tab.note === note) tab.note = fresh
   }
 
   /** Everything kept under a path, told that the path is another one now.

@@ -443,6 +443,47 @@ describe('renaming a row that exists', () => {
     workspace.startRenaming('/space')
     expect(workspace.naming).toBeNull()
   })
+
+  /** A page note and a canvas are one format - a plane of cards and ink, the page note
+   *  with its pages over it - so a page note renamed to a canvas's name is that plane
+   *  as a canvas, and a canvas renamed the other way is a page note. The tab showing it
+   *  used to go on being the old kind, and so did opening the file again, because the
+   *  open document answered for the path whatever kind it had been opened as: the
+   *  pages drive caught it (a renamed page note opened as 'pages'). */
+  test('a page note renamed to a canvas is shown as the canvas it now is', async () => {
+    const plane =
+      '{"nodes":[{"id":"a","type":"text","text":"A card","x":0,"y":0,"width":200,"height":80}],"edges":[]}'
+    files.set('/space/Deck.pages', plane)
+    await workspace.loadTree()
+    await workspace.openEntry('/space/Deck.pages')
+    expect(workspace.active?.kind).toBe('pages')
+
+    await workspace.rename('/space/Deck.pages', 'Deck.canvas')
+    expect(workspace.active?.kind).toBe('canvas')
+    expect(workspace.active?.path).toBe('/space/Deck.canvas')
+    expect(workspace.active?.doc).toBe(plane)
+
+    // And opening it again is the same tab, as the canvas.
+    await workspace.openEntry('/space/Deck.canvas')
+    expect(workspace.tabs.filter((one) => one.path === '/space/Deck.canvas')).toHaveLength(1)
+    expect(workspace.active?.kind).toBe('canvas')
+
+    // And the rename put back is the page note again.
+    await workspace.undoFileAction()
+    expect(workspace.active?.path).toBe('/space/Deck.pages')
+    expect(workspace.active?.kind).toBe('pages')
+  })
+
+  // A note's words are not a plane: shown as a canvas they would be an empty one, and a
+  // stroke on it would write that plane over them. So a note renamed to a plane's name
+  // goes on showing its words until it is opened again.
+  test('but a note renamed to a canvas keeps showing its words', async () => {
+    await workspace.openEntry('/space/Beta.md')
+    await workspace.rename('/space/Beta.md', 'Beta.canvas')
+
+    expect(workspace.active?.kind).toBe('note')
+    expect(workspace.active?.doc).toBe('# Beta')
+  })
 })
 
 describe('a listing arriving while a name is being typed', () => {

@@ -29,6 +29,9 @@ export interface PutsBack {
   openEntry(path: string): Promise<void>
   /** The document a file is open as; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null
+  /** A plane whose name now says the other kind, shown as that kind; see `rekind` in
+   *  workspace.svelte.ts. A rename put back is a rename. */
+  rekind(note: NoteDoc): void
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
@@ -183,6 +186,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   if (note) {
     note.path = action.from
     note.name = nameOf(action.from)
+    ws.rekind(note)
   }
 
   // The rename rewrote every link that pointed at the note; putting the name
