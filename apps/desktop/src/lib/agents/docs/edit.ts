@@ -81,7 +81,9 @@ function trackOf(agent: Agent, path: string): Track {
   const found = tracks.get(key)
   if (found) return found
 
-  const made = new Track(agent.id)
+  const made = new Track(agent.id, (edits) => {
+    touch(path, agent, edits)
+  })
   tracks.set(key, made)
   return made
 }
@@ -248,7 +250,6 @@ function changeOpen(
 
   const last = planned.edits.at(-1)
   if (last) showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme())
-  touch(note.path, agent, track.steps.size)
 
   return answer(note, open.live.text.toString(), planned, changes)
 }
@@ -281,7 +282,6 @@ async function changeClosed(
   })
 
   track.recordClosed(before, planned.edits, after, id)
-  touch(note.path, agent, track.steps.size)
   return answer(note, after, planned, null)
 }
 
@@ -352,18 +352,13 @@ export async function undoAt(desk: Desk, agent: Agent, note: Located): Promise<{
 
   return inTurn(key, async () => {
     const open = openNote(desk, note)
-    if (open) {
-      const undone = track.undoOpen(open)
-      touch(note.path, agent, track.steps.size)
-      return { undone }
-    }
+    if (open) return { undone: track.undoOpen(open) }
 
     const words = await wordsOf(desk, note)
     const back = track.undoClosed(words)
     if (!back) return { undone: 0 }
 
     await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
-    touch(note.path, agent, track.steps.size)
     return { undone: back.count }
   })
 }

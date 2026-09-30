@@ -365,6 +365,9 @@ describe('taking an agent’s edits back', () => {
     ])
     pane.undo()
     expect(pane.text).toBe('one base')
+    // And the palette offers taking back only the one that is left.
+    const mine = touchedBy('/space/plan.md').filter((one) => one.id === agent.id)
+    expect(mine.map((one) => one.edits)).toEqual([1])
 
     expect(await undoAgent(desk, agent, { path: 'plan.md' })).toEqual({ undone: 1 })
     expect(pane.text).toBe('base')

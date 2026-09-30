@@ -37,8 +37,16 @@ export class Track {
   /** True while this track is making a change itself, which it does not hear. */
   private making = false
   private made = 0
+  /** How many steps were last said; see `told`. */
+  private said = 0
 
-  constructor(private readonly prefix: string) {}
+  /** `told` hears how many edits there are to take back whenever that changes -
+   *  the agent writing, the reader's Ctrl+Z taking one back, everything taken back
+   *  at once - so the palette offers taking back only what is there. */
+  constructor(
+    private readonly prefix: string,
+    private readonly told: (edits: number) => void,
+  ) {}
 
   /** A name for the next edit's mark: unique in this session. */
   nextId(): string {
@@ -61,6 +69,7 @@ export class Track {
 
     this.seen = words
     if (open) this.hold(open)
+    this.tell()
   }
 
   /** An edit of this agent's into the open note: one transaction, its own step in the
@@ -74,6 +83,7 @@ export class Track {
       note.live.edit(edits, { userEvent: AGENT_EVENT, marks: [{ id, undone: false }] }),
     )
     this.steps.push([id], changes, before)
+    this.tell()
     return changes
   }
 
@@ -83,6 +93,7 @@ export class Track {
   recordClosed(before: string, edits: readonly Replacement[], after: string, id: string) {
     this.steps.push([id], ChangeSet.of(edits, before.length), ropeOf(before))
     this.seen = after
+    this.tell()
   }
 
   /** Every step taken back as one change, applied to the open note as one
@@ -94,6 +105,7 @@ export class Track {
 
     const marks: Mark[] = all.ids.map((id) => ({ id, undone: true }))
     this.quietly(() => note.live.edit(all.changes, { userEvent: UNDO_EVENT, marks }))
+    this.tell()
     return all.ids.length
   }
 
@@ -111,6 +123,7 @@ export class Track {
 
     const after = all.changes.apply(ropeOf(words)).toString()
     this.seen = after
+    this.tell()
     return { edits, after, count: all.ids.length }
   }
 
@@ -142,6 +155,14 @@ export class Track {
     }
 
     if (!this.steps.heard(heard)) this.steps.carry(heard.changes.desc)
+    this.tell()
+  }
+
+  private tell() {
+    if (this.steps.size === this.said) return
+
+    this.said = this.steps.size
+    this.told(this.said)
   }
 
   private quietly<T>(make: () => T): T {
