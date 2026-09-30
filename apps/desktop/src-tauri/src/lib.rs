@@ -34,6 +34,10 @@
 
 #[cfg(desktop)]
 mod agents;
+// Claude Code and Codex, run headless on this machine with the reader's own plan; see
+// ai_cli.rs and docs/ai.md.
+#[cfg(desktop)]
+mod ai_cli;
 #[cfg(desktop)]
 mod appearance;
 #[cfg(desktop)]
@@ -254,6 +258,9 @@ macro_rules! desktop_commands {
             agents::shell::agents_shell,
             agents::shell::agents_hold,
             mcp::program::mcp_program,
+            ai_cli::ai_cli_status,
+            ai_cli::ai_cli_ask,
+            ai_cli::ai_cli_stop,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_ground,
@@ -504,6 +511,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // terminal.rs.
     #[cfg(desktop)]
     let builder = terminal::managed(builder);
+
+    // The questions Claude Code and Codex are answering; see ai_cli.rs.
+    #[cfg(desktop)]
+    let builder = builder.manage(ai_cli::Asks::default());
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(desktop_commands!());
