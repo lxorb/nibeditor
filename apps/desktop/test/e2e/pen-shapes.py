@@ -37,106 +37,22 @@ stores reachable from the page; see the other drives beside this one.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
 import sys
-import threading
 import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-SHOTS = HERE / "shots" / "pen-shapes"
-DIST = APP / "dist"
+from harness import Drive
 
-# Its own port, above the dev server and above the other drives.
-PORT = 18881
-ORIGIN = f"http://127.0.0.1:{PORT}"
-
-failures: list[str] = []
-
-
-def say(what: str) -> None:
-    print(f"  {what}", flush=True)
+DRIVE = Drive(__file__)
+say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
 
 
 def fail(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
-
-
-def build() -> None:
-    say("building the web app")
-    # From nothing: a build over the last one leaves its chunks behind, and a drive that
-    # photographs yesterday's ink is worse than no drive at all.
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    """Never reuses the address; see pen-bar.py for why that matters on Windows."""
-
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 # The real user agents, because the profile is read off one and that is the only thing
@@ -203,13 +119,6 @@ def opened(page: Page, label: str, tablet: bool = False) -> None:
 
     page.wait_for_selector(".canvas", timeout=15000)
     page.wait_for_timeout(400)
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    path = SHOTS / f"{name}.png"
-    page.screenshot(path=str(path))
-    say(f"photographed {path.name}")
 
 
 def plane(page: Page) -> dict:
@@ -866,34 +775,14 @@ def drive_finger(browser) -> None:
 
 
 def main() -> int:
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    build()
-    server = serve()
+    with DRIVE.session() as browser:
+        drive_pencil(browser)
+        drive_surface(browser)
+        drive_wacom(browser)
+        drive_usi(browser)
+        drive_finger(browser)
 
-    try:
-        with sync_playwright() as playwright:
-            # The machine's own Chrome, which is what Emil is looking at.
-            browser = playwright.chromium.launch(channel="chrome")
-            try:
-                drive_pencil(browser)
-                drive_surface(browser)
-                drive_wacom(browser)
-                drive_usi(browser)
-                drive_finger(browser)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-    if failures:
-        print("\n%d thing(s) wrong:" % len(failures))
-        for one in failures:
-            print(f"  - {one}")
-        return 1
-
-    print("\nevery pen the drive could emulate behaves")
-    return 0
+    return DRIVE.verdict("every pen the drive could emulate behaves")
 
 
 if __name__ == "__main__":

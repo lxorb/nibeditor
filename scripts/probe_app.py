@@ -596,3 +596,12 @@ def sized(hwnd: int, width: int, height: int) -> None:
     user32.SetWindowPos(
         hwnd, None, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
     )
+
+
+def spaces_folder(name: str) -> pathlib.Path:
+    """A spaces folder of the drive's own for `NIB_SPACES_DIR`: a temp folder named
+    after the drive, never the reader's Documents/Nib. The caller removes it."""
+
+    import tempfile
+
+    return pathlib.Path(tempfile.mkdtemp(prefix=f"nib-{name}-spaces-"))

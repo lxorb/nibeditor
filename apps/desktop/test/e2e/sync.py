@@ -31,7 +31,6 @@ import hashlib
 import hmac
 import json
 import os
-import shutil
 import struct
 import subprocess
 import tempfile
@@ -41,15 +40,17 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SERVICE = ROOT / "services" / "sync"
+import harness
+from harness import Drive
 
-# Above 1425, and not any other drive's port.
-PORT = 18995
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+ROOT = harness.ROOT
+
 
 EMAIL = "sync-drive@example.com"
 
@@ -61,22 +62,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [shutil.which("npx") or "npx", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
 
 
 def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
@@ -107,134 +92,14 @@ def totp(secret_hex: str, at: float | None = None) -> str:
     return str(value % 1_000_000).zfill(6)
 
 
-class Worker:
-    """The Worker under wrangler dev, its database, and the built app it serves.
-    Lifted from first-sync.py, which brings the same three up."""
+class Worker(harness.Worker):
+    """The real Worker, with the secret the account's OpenAI key is kept under and
+    this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        self.log = APP / "test" / "e2e" / "shots" / "sync-worker.log"
-        self.opened = None
-        self.vars: Path | None = None
+        super().__init__(DRIVE, variables={"OPENAI_KEY_SECRET": "a secret for the drive"})
 
-    def build(self) -> None:
-        say("building the app against the local Worker")
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-
-    def migrate(self) -> None:
-        say("applying the migrations")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-        # Not wrangler's own output: it draws a table, and a Windows console
-        # cannot encode the box it draws it with.
-        say(f"{done.stdout.count('0027') + done.stdout.count('0028')} of the new two named")
-
-    def sql(self, statement: str) -> str:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-        return done.stdout
-
-    def start(self) -> None:
-        say(f"starting the Worker on {ORIGIN}")
-        # A secret the way `wrangler dev` takes one. Written here rather than kept
-        # in the repository, and taken away again on the way out: it is the thing
-        # the second factor is encrypted under, and a file of secrets is not
-        # something a drive leaves behind.
-        self.vars = SERVICE / ".dev.vars"
-        self.vars.write_text("OPENAI_KEY_SECRET=a secret for the drive" + chr(10), "utf-8")
-
-        self.log.parent.mkdir(parents=True, exist_ok=True)
-        self.opened = self.log.open("wb")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                "--local",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 150
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            try:
-                if request("/health").get("ok"):
-                    say("the Worker is answering")
-                    return
-            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-                time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        if self.opened:
-            self.opened.flush()
-        if not self.log.exists():
-            return "(nothing)"
-
-        return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-40:])
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        say("stopping the Worker")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
-
-        if self.vars and self.vars.exists():
-            self.vars.unlink()
-
-    def account(self, device: str = "the drive") -> tuple[str, str]:
+    def account(self, device: str = "the drive") -> tuple[str, str]:  # type: ignore[override]
         """An account with a live session, put straight into the database: the
         emailed code is not what any of this is about."""
         now = int(time.time() * 1000)
@@ -554,15 +419,12 @@ def page_note(browser, token: str, space: str) -> None:
 
 
 def main() -> int:
-    out = Path(__file__).resolve().parent / "shots" / "sync"
+    out = DRIVE.shots
     worker = Worker()
 
-    worker.clean()
-    worker.migrate()
-    worker.build()
     worker.start()
 
-    try:
+    with DRIVE.session() as browser:
         token, user = worker.account()
         say("an account with nothing in it; the app makes its own space")
 
@@ -578,28 +440,15 @@ def main() -> int:
         # line is then pointed at.
         remote = ""
 
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for one in [
-                    ("desktop", 1440, 900, DESKTOP_AGENT, False),
-                    ("phone", 390, 844, PHONE_AGENT, True),
-                ]:
-                    say(f"--- {one[0]} ---")
-                    remote = drive(browser, worker, out, token, user, *one) or remote
-                say("--- a page note across two devices ---")
-                if remote:
-                    page_note(browser, token, remote)
-            finally:
-                browser.close()
-
-        say("--- the sessions ---")
-        sessions(worker, token, user)
-
-        say("--- from the command line ---")
-        headless(worker, token, remote)
-    finally:
-        worker.stop()
+        for one in [
+            ("desktop", 1440, 900, DESKTOP_AGENT, False),
+            ("phone", 390, 844, PHONE_AGENT, True),
+        ]:
+            say(f"--- {one[0]} ---")
+            remote = drive(browser, worker, out, token, user, *one) or remote
+        say("--- a page note across two devices ---")
+        if remote:
+            page_note(browser, token, remote)
 
     say(f"shots in {out}")
     return 0

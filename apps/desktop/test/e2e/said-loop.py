@@ -8,19 +8,13 @@ on the page answers again.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import threading
-from pathlib import Path
+import harness
+from harness import Drive
 
-from playwright.sync_api import sync_playwright
+DRIVE = Drive(__file__)
+say = DRIVE.say
+APP = harness.APP
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-
-PORT = 20515
-FOLDER = os.environ.get("NIB_DIST", "dist")
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -28,105 +22,79 @@ DESKTOP_AGENT = (
 )
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *args: object) -> None:
-        return
-
-
 def main() -> int:
-    folder = APP / FOLDER
-    handler = functools.partial(Quiet, directory=str(folder))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    origin = f"http://127.0.0.1:{PORT}"
-    say(f"serving {folder} on {origin}")
-
     trouble: list[str] = []
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch()
-            context = browser.new_context(
-                viewport={"width": 1440, "height": 900}, user_agent=DESKTOP_AGENT
-            )
-            page = context.new_page()
-            page.set_default_timeout(15000)
+    with DRIVE.session() as browser:
+        context = browser.new_context(
+            viewport={"width": 1440, "height": 900}, user_agent=DESKTOP_AGENT
+        )
+        page = context.new_page()
+        page.set_default_timeout(15000)
 
-            def hurt(words: str) -> None:
-                trouble.append(words)
-                say(words)
+        def hurt(words: str) -> None:
+            trouble.append(words)
+            say(words)
 
-            page.on("pageerror", lambda error: hurt(f"PAGE ERROR: {error}"))
-            page.on(
-                "console",
-                lambda one: hurt(f"console {one.type}: {one.text[:300]}")
-                if one.type == "error"
-                else None,
-            )
+        page.on("pageerror", lambda error: hurt(f"PAGE ERROR: {error}"))
+        page.on(
+            "console",
+            lambda one: hurt(f"console {one.type}: {one.text[:300]}")
+            if one.type == "error"
+            else None,
+        )
 
-            page.goto(origin, wait_until="domcontentloaded")
-            page.wait_for_function("() => !!window.nibApp", timeout=40000)
-            page.wait_for_function(
-                "() => !!window.nibApp.workspace.activeSpace", timeout=40000
-            )
-            page.evaluate(
-                """() => {
-                  const ws = window.nibApp.workspace
-                  if (ws.panel !== 'tree') ws.showPanel('tree')
-                }"""
-            )
-            page.wait_for_timeout(1000)
-            say(f"switcher before: {page.locator('aside .name').count()}")
+        DRIVE.open(page)
+        page.evaluate(
+            """() => {
+              const ws = window.nibApp.workspace
+              if (ws.panel !== 'tree') ws.showPanel('tree')
+            }"""
+        )
+        page.wait_for_timeout(1000)
+        say(f"switcher before: {page.locator('aside .name').count()}")
 
-            # One pass, as the loop reports it.
-            page.evaluate("() => (window.nibApp.sync.status = 'syncing')")
-            page.wait_for_timeout(1500)
-            say(f"said: {page.evaluate('''() => document.querySelector('p[role=status]')?.textContent''')!r}")
+        # One pass, as the loop reports it.
+        page.evaluate("() => (window.nibApp.sync.status = 'syncing')")
+        page.wait_for_timeout(1500)
+        say(f"said: {page.evaluate('''() => document.querySelector('p[role=status]')?.textContent''')!r}")
 
-            # And now something has to happen on the page. A switcher that does
-            # not open is a page whose updates have stopped.
-            page.locator("aside .name").first.click()
+        # And now something has to happen on the page. A switcher that does
+        # not open is a page whose updates have stopped.
+        page.locator("aside .name").first.click()
+        page.wait_for_timeout(800)
+        spaces = page.locator(".spaces")
+        seen = bool(spaces.count()) and spaces.first.is_visible()
+        say(f"after one pass, the switcher: layer={spaces.count()} seen={seen}")
+        if not seen:
+            hurt("THE SWITCHER DIED AFTER THE SYNC LIGHT SPOKE")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+
+        # A pass that failed, twice, which is the same words twice.
+        page.evaluate(
+            """() => {
+              const sync = window.nibApp.sync
+              sync.lastError = 'the account refused that'
+              sync.status = 'error'
+            }"""
+        )
+        page.wait_for_timeout(600)
+        page.evaluate("() => (window.nibApp.sync.status = 'idle')")
+        page.wait_for_timeout(200)
+        page.evaluate("() => (window.nibApp.sync.status = 'error')")
+        page.wait_for_timeout(1200)
+
+        rows = page.locator("aside .nib-row.row[data-path]")
+        say(f"tree rows {rows.count()}")
+        if rows.count():
+            rows.first.click(button="right")
             page.wait_for_timeout(800)
-            spaces = page.locator(".spaces")
-            seen = bool(spaces.count()) and spaces.first.is_visible()
-            say(f"after one pass, the switcher: layer={spaces.count()} seen={seen}")
-            if not seen:
-                hurt("THE SWITCHER DIED AFTER THE SYNC LIGHT SPOKE")
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(400)
-
-            # A pass that failed, twice, which is the same words twice.
-            page.evaluate(
-                """() => {
-                  const sync = window.nibApp.sync
-                  sync.lastError = 'the account refused that'
-                  sync.status = 'error'
-                }"""
-            )
-            page.wait_for_timeout(600)
-            page.evaluate("() => (window.nibApp.sync.status = 'idle')")
-            page.wait_for_timeout(200)
-            page.evaluate("() => (window.nibApp.sync.status = 'error')")
-            page.wait_for_timeout(1200)
-
-            rows = page.locator("aside .nib-row.row[data-path]")
-            say(f"tree rows {rows.count()}")
-            if rows.count():
-                rows.first.click(button="right")
-                page.wait_for_timeout(800)
-                popup = page.locator("[role=menu].menu")
-                there = bool(popup.count()) and popup.first.is_visible()
-                say(f"after a failed pass, the note's menu: layer={popup.count()} seen={there}")
-                if not there:
-                    hurt("THE NOTE'S MENU DIED AFTER THE SYNC LIGHT SPOKE TWICE")
-
-            browser.close()
-    finally:
-        server.shutdown()
+            popup = page.locator("[role=menu].menu")
+            there = bool(popup.count()) and popup.first.is_visible()
+            say(f"after a failed pass, the note's menu: layer={popup.count()} seen={there}")
+            if not there:
+                hurt("THE NOTE'S MENU DIED AFTER THE SYNC LIGHT SPOKE TWICE")
 
     say("")
     if trouble:

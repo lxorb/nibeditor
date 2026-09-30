@@ -37,28 +37,20 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 
 from __future__ import annotations
 
-import os
-import shutil
-import socket
-import subprocess
 import sys
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "shell-polish"
+import harness
+from harness import Drive
 
-# A port of this run's own, above the dev server's 1420 and clear of the others.
-# It was 18896, which another drive on this machine was found serving from its own
-# `dist`: the server below writes nothing to the console, so the page that loaded
-# was somebody else's app and the run gave up waiting for a handle it was never
-# going to get. `free` refuses to start on a port that is answering, and the number
-# moved into this batch's own range.
-PORT = 19655
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wait_for = DRIVE.say, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+
 
 PATIENCE = 40
 
@@ -66,15 +58,10 @@ PATIENCE = 40
 # pixel is what rounding costs; anything past one is visible.
 SLACK = 1.0
 
-failures: list[str] = []
 
 # A badge may hold an emoji, and this console is code page 1252.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
 
 
 def check(fine: bool, what: str) -> None:
@@ -85,59 +72,11 @@ def check(fine: bool, what: str) -> None:
         say(f"WRONG {what}")
 
 
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") == "1":
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme=scheme)
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    DRIVE.open(page)
     # A first visit in a browser is given a welcome note, and the app opens it
     # after the space is there rather than with it; see `restore` in
     # workspace.svelte.ts. A panel opened before that has happened is shut again
@@ -1076,62 +1015,14 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         page.context.close()
 
 
-def free() -> None:
-    """Nothing else on this port. The server below is started with its output
-    thrown away, so a port already in use fails silently and the run measures
-    whatever page the other server answers with."""
-    with socket.socket() as one:
-        one.settimeout(2)
-        if one.connect_ex(("127.0.0.1", PORT)) == 0:
-            raise SystemExit(f"something is already answering on {ORIGIN}")
-
-
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    free()
-    build()
+    with DRIVE.session() as browser:
+        drive(browser, "light", {"width": 1180, "height": 760}, "light")
+        drive(browser, "dark", {"width": 1180, "height": 760}, "dark")
+        on_phone(browser, "light")
+        on_phone(browser, "dark")
 
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                drive(browser, "light", {"width": 1180, "height": 760}, "light")
-                drive(browser, "dark", {"width": 1180, "height": 760}, "dark")
-                on_phone(browser, "light")
-                on_phone(browser, "dark")
-            finally:
-                browser.close()
-    finally:
-        say("stopping the server")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(server.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            server.terminate()
-        try:
-            server.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            server.kill()
-
-    if failures:
-        print("\nwhat is still wrong:", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe bar is one row and every mark is centred", flush=True)
-    return 0
+    return DRIVE.verdict("the bar is one row and every mark is centred")
 
 
 if __name__ == "__main__":

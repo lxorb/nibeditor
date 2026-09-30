@@ -14,7 +14,7 @@ photographs and checks:
   - and axe-core on the sheet, which may report nothing serious that access.py does not
     already excuse.
 
-Serves the built web app and drives it in the machine's own Chrome, headless. The build
+Serves the built web app and drives it in Chromium, headless. The build
 has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not there.
 
 Run it from the repository root:
@@ -27,31 +27,23 @@ beside this file under `shots/diverged/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
 from settling import HIDE_CARET, steady
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "diverged"
+import harness
+from harness import Drive
+
+DRIVE = Drive(__file__)
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+
 AXE = APP / "node_modules" / "axe-core" / "axe.min.js"
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 18998
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP = {"width": 1280, "height": 820}
 PHONE = {"width": 390, "height": 844}
@@ -128,89 +120,7 @@ HOLD = """
 }
 """
 
-failures: list[str] = []
 axe_table: dict[str, dict] = {}
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.ThreadingTCPServer):
-    """Never reuses the address, and a thread per request with a deep queue: a page
-    fetching forty chunks at once overflows a single-threaded server's backlog."""
-
-    allow_reuse_address = False
-    daemon_threads = True
-    request_queue_size = 128
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 20) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 def shot(page: Page, name: str) -> None:
@@ -222,7 +132,7 @@ def shot(page: Page, name: str) -> None:
 def axe(page: Page, name: str) -> None:
     """axe-core on the page with the sheet up: nothing serious or critical that
     access.py does not already excuse by name."""
-    page.add_script_tag(path=str(AXE))
+    DRIVE.inject(page, AXE)
     found = page.evaluate(
         """async () => {
           const found = await window.axe.run(document, { resultTypes: ['violations'] })
@@ -392,36 +302,16 @@ def canvas(browser: Browser) -> None:
 def main() -> int:
     if not AXE.exists():
         raise SystemExit(f"axe-core is not here: {AXE}. Run pnpm install.")
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
+    with DRIVE.session() as browser:
+        desktop(browser)
+        dark(browser)
+        phone(browser)
+        arabic(browser)
+        canvas(browser)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                desktop(browser)
-                dark(browser)
-                phone(browser)
-                arabic(browser)
-                canvas(browser)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-    SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
 
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe question comes up over the held note, reads either way, and says nothing it need not", flush=True)
-    return 0
+    return DRIVE.verdict("the question comes up over the held note, reads either way, and says nothing it need not")
 
 
 if __name__ == "__main__":

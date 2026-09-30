@@ -23,21 +23,28 @@ Screenshots go beside this file under `shots/agent-activity/`.
 
 from __future__ import annotations
 
-import os
-import socket
-import subprocess
 import sys
-import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-SHOTS = Path(os.environ.get("NIB_SHOTS", HERE / "shots" / "agent-activity"))
+from harness import Drive
 
-PORT = int(os.environ.get("NIB_DRIVE_PORT", "18973"))
-ORIGIN = f"http://agent-activity-ui.localhost:{PORT}"
+DRIVE = Drive(__file__, dev=True)
+say, wrong = DRIVE.say, DRIVE.wrong
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+
+
+def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
+    """Whether it came in time; a failure counted, and the drive carries on, if not."""
+    return DRIVE.waited(page, expression, what, patience)
+
+
+def shot(page: Page, name: str) -> None:
+    settle(page)
+    DRIVE.shot(page, name)
+
+
 
 AGENT = "claude-code"
 
@@ -80,81 +87,10 @@ PICTURE = """
 }
 """
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def serve() -> subprocess.Popen[bytes]:
-    say(f"serving the app on {ORIGIN}")
-    with socket.socket() as probe:
-        if probe.connect_ex(("127.0.0.1", PORT)) == 0:
-            raise SystemExit(f"something is already listening on port {PORT}")
-
-    server = subprocess.Popen(
-        [
-            "node",
-            str(APP / "node_modules" / "vite" / "bin" / "vite.js"),
-            "--port",
-            str(PORT),
-            "--strictPort",
-            "--host",
-            "127.0.0.1",
-        ],
-        cwd=APP,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    until = time.monotonic() + 60
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.3)
-
-    stop(server)
-    raise SystemExit("the dev server never answered")
-
-
-def stop(server: subprocess.Popen[bytes]) -> None:
-    if sys.platform == "win32":
-        subprocess.run(
-            ["taskkill", "/PID", str(server.pid), "/T", "/F"], capture_output=True, check=False
-        )
-    else:
-        server.terminate()
-    server.wait(timeout=10)
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return True
-        page.wait_for_timeout(50)
-    wrong(f"gave up waiting for {what}")
-    return False
-
 
 def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(250)
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    settle(page)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
 
 
 def fake(page: Page, call: str) -> object:
@@ -252,33 +188,23 @@ def drive(page: Page, scheme: str) -> None:
 
 
 def main() -> int:
-    server = serve()
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            for scheme in ("light", "dark"):
-                say(f"-- {scheme}")
-                context = browser.new_context(
-                    viewport={"width": 1280, "height": 800},
-                    color_scheme=scheme,
-                    reduced_motion="reduce",
-                )
-                page = context.new_page()
-                errors: list[str] = []
-                page.on("pageerror", lambda error: errors.append(str(error)))
-                drive(page, scheme)
-                for error in errors:
-                    wrong(f"the page threw: {error}")
-                context.close()
-            browser.close()
-    finally:
-        stop(server)
+    with DRIVE.session() as browser:
+        for scheme in ("light", "dark"):
+            say(f"-- {scheme}")
+            context = browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                color_scheme=scheme,
+                reduced_motion="reduce",
+            )
+            page = context.new_page()
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            drive(page, scheme)
+            for error in errors:
+                wrong(f"the page threw: {error}")
+            context.close()
 
-    if failures:
-        print(f"{len(failures)} failed")
-        return 1
-    print("all good")
-    return 0
+    return DRIVE.verdict("all good")
 
 
 if __name__ == "__main__":

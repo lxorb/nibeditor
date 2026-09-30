@@ -38,17 +38,18 @@ every note in the space open where this prints 39.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import importlib.util
-import os
-import threading
 from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+import harness
+from harness import Drive
+
+DRIVE = Drive(__file__)
+say = DRIVE.say
+APP = harness.APP
+
 
 # The seeding and the user agent are first-paint.py's; one space of three thousand
 # notes, written once and read by both drives. The file name has a dash in it, so
@@ -58,27 +59,12 @@ assert _spec and _spec.loader
 first_paint = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(first_paint)
 
-# A port of this drive's own. Never 1420, and not one another drive uses.
-PORT = 18995
 #: How many notes the space holds.
 NOTES = 3000
-#: Which build to drive.
-FOLDER = os.environ.get("NIB_DIST", "dist")
 
 #: The panel, by the attribute F6 already walks it with rather than by a class a
 #: build is free to rename.
 LIST = 'aside [data-region="list"]'
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
 
 
 # What the list is: how many rows exist, which two are at the ends of them, and how
@@ -212,115 +198,98 @@ def ready(page: Page, origin: str) -> None:
 
 
 def main() -> int:
-    folder = APP / FOLDER
-    if not (folder / "index.html").exists():
-        say(f"nothing built in {folder}")
-        return 1
+    origin = DRIVE.origin
+    with DRIVE.session() as browser:
+        context = browser.new_context(
+            viewport={"width": 1440, "height": 900},
+            user_agent=first_paint.DESKTOP_AGENT,
+        )
+        page = context.new_page()
+        page.on("pageerror", lambda error: say(f"page error: {error}"))
 
-    handler = functools.partial(Quiet, directory=str(folder))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    origin = f"http://127.0.0.1:{PORT}"
-    (folder / "seed.html").write_text(first_paint.SEED_PAGE, encoding="utf-8")
-    say(f"serving {folder} on {origin}")
+        page.goto(f"{origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
+        page.evaluate(first_paint.SEED, NOTES)
+        say(f"{NOTES} notes seeded")
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            context = browser.new_context(
-                viewport={"width": 1440, "height": 900},
-                user_agent=first_paint.DESKTOP_AGENT,
-            )
-            page = context.new_page()
-            page.on("pageerror", lambda error: say(f"page error: {error}"))
+        ready(page, origin)
+        say(f"at rest:        {page.evaluate(COUNT)}")
 
-            page.goto(f"{origin}/seed.html", wait_until="domcontentloaded")
-            page.evaluate(first_paint.SEED, NOTES)
-            say(f"{NOTES} notes seeded")
+        page.evaluate(SCROLL_TO, 20000)
+        page.wait_for_timeout(400)
+        say(f"20,000px down:  {page.evaluate(COUNT)}")
 
-            ready(page, origin)
-            say(f"at rest:        {page.evaluate(COUNT)}")
+        page.evaluate(SCROLL_TO, 0)
+        page.wait_for_timeout(300)
+        # The keyboard put on the first row rather than a click on it: a click
+        # opens the note and the note takes the keyboard, which is the right
+        # thing and the wrong thing to measure the walk with.
+        page.locator(f"{LIST} .row").first.focus()
+        page.wait_for_timeout(300)
+        say(f"the first row:  {page.evaluate(FOCUS)}")
 
-            page.evaluate(SCROLL_TO, 20000)
-            page.wait_for_timeout(400)
-            say(f"20,000px down:  {page.evaluate(COUNT)}")
+        page.keyboard.press("End")
+        page.wait_for_timeout(500)
+        say(f"End:            {page.evaluate(FOCUS)}")
+        say(f"                {page.evaluate(COUNT)}")
 
-            page.evaluate(SCROLL_TO, 0)
-            page.wait_for_timeout(300)
-            # The keyboard put on the first row rather than a click on it: a click
-            # opens the note and the note takes the keyboard, which is the right
-            # thing and the wrong thing to measure the walk with.
-            page.locator(f"{LIST} .row").first.focus()
-            page.wait_for_timeout(300)
-            say(f"the first row:  {page.evaluate(FOCUS)}")
+        page.keyboard.press("Home")
+        page.wait_for_timeout(500)
+        say(f"Home:           {page.evaluate(FOCUS)}")
 
-            page.keyboard.press("End")
-            page.wait_for_timeout(500)
-            say(f"End:            {page.evaluate(FOCUS)}")
-            say(f"                {page.evaluate(COUNT)}")
+        for letter in "note-19":
+            page.keyboard.press("Minus" if letter == "-" else letter)
+        page.wait_for_timeout(600)
+        say(f"spelled a name: {page.evaluate(FOCUS)}")
 
-            page.keyboard.press("Home")
-            page.wait_for_timeout(500)
-            say(f"Home:           {page.evaluate(FOCUS)}")
+        page.keyboard.press("ArrowDown")
+        page.keyboard.press("ArrowDown")
+        page.wait_for_timeout(400)
+        say(f"two downs:      {page.evaluate(FOCUS)}")
 
-            for letter in "note-19":
-                page.keyboard.press("Minus" if letter == "-" else letter)
-            page.wait_for_timeout(600)
-            say(f"spelled a name: {page.evaluate(FOCUS)}")
+        twist = page.evaluate(FIRST_FOLDER)
+        say(f"a twist on:     {twist}")
+        say(f"  opening:      {page.evaluate(SLIDE, twist)}")
+        page.wait_for_timeout(400)
+        say(f"  open:         {page.evaluate(COUNT)}")
+        say(f"  shutting:     {page.evaluate(SLIDE, twist)}")
+        page.wait_for_timeout(400)
+        say(f"  shut:         {page.evaluate(COUNT)}")
 
-            page.keyboard.press("ArrowDown")
-            page.keyboard.press("ArrowDown")
-            page.wait_for_timeout(400)
-            say(f"two downs:      {page.evaluate(FOCUS)}")
+        page.evaluate(
+            """async () => {
+                const ws = window.nibApp.workspace
+                await ws.openEntry(ws.notes[ws.notes.length - 1].path)
+            }"""
+        )
+        page.wait_for_timeout(800)
+        say(f"the last note:  {page.evaluate(COUNT)}")
+        say(f"  in view:      {page.evaluate(IN_VIEW)}")
 
-            twist = page.evaluate(FIRST_FOLDER)
-            say(f"a twist on:     {twist}")
-            say(f"  opening:      {page.evaluate(SLIDE, twist)}")
-            page.wait_for_timeout(400)
-            say(f"  open:         {page.evaluate(COUNT)}")
-            say(f"  shutting:     {page.evaluate(SLIDE, twist)}")
-            page.wait_for_timeout(400)
-            say(f"  shut:         {page.evaluate(COUNT)}")
+        far = page.evaluate(FAR_NOTE)
+        page.evaluate("(path) => window.nibApp.workspace.startRenaming(path)", far)
+        page.wait_for_timeout(700)
+        said = page.evaluate(f'() => !!document.querySelector({LIST!r} + " input")')
+        say(f"renaming a row  600 down: field in the page = {said}")
+        say(f"                {page.evaluate(COUNT)}")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
 
-            page.evaluate(
-                """async () => {
-                    const ws = window.nibApp.workspace
-                    await ws.openEntry(ws.notes[ws.notes.length - 1].path)
-                }"""
-            )
-            page.wait_for_timeout(800)
-            say(f"the last note:  {page.evaluate(COUNT)}")
-            say(f"  in view:      {page.evaluate(IN_VIEW)}")
+        page.evaluate(SCROLL_TO, 12345)
+        page.wait_for_timeout(900)
+        ready(page, origin)
+        page.wait_for_timeout(1500)
+        say(f"after a reload: {page.evaluate(COUNT)}")
+        say(f"                panel = {page.evaluate('() => window.nibApp.workspace.panel')}")
 
-            far = page.evaluate(FAR_NOTE)
-            page.evaluate("(path) => window.nibApp.workspace.startRenaming(path)", far)
-            page.wait_for_timeout(700)
-            said = page.evaluate(f'() => !!document.querySelector({LIST!r} + " input")')
-            say(f"renaming a row  600 down: field in the page = {said}")
-            say(f"                {page.evaluate(COUNT)}")
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(300)
+        # And the list at its longest: every note in the space open at once.
+        say(f"every note open: {page.evaluate(ALL_OPEN)} rows in the list")
+        page.wait_for_timeout(1200)
+        say(f"                {page.evaluate(COUNT)}")
+        page.evaluate(SCROLL_TO, 40000)
+        page.wait_for_timeout(400)
+        say(f"  40,000px down: {page.evaluate(COUNT)}")
 
-            page.evaluate(SCROLL_TO, 12345)
-            page.wait_for_timeout(900)
-            ready(page, origin)
-            page.wait_for_timeout(1500)
-            say(f"after a reload: {page.evaluate(COUNT)}")
-            say(f"                panel = {page.evaluate('() => window.nibApp.workspace.panel')}")
-
-            # And the list at its longest: every note in the space open at once.
-            say(f"every note open: {page.evaluate(ALL_OPEN)} rows in the list")
-            page.wait_for_timeout(1200)
-            say(f"                {page.evaluate(COUNT)}")
-            page.evaluate(SCROLL_TO, 40000)
-            page.wait_for_timeout(400)
-            say(f"  40,000px down: {page.evaluate(COUNT)}")
-
-            browser.close()
-    finally:
-        server.shutdown()
-
-    return 0
+    return DRIVE.verdict()
 
 
 if __name__ == "__main__":

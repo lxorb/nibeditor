@@ -29,8 +29,8 @@ Run it from the repository root:
     python apps/desktop/test/e2e/access.py
 
 Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. NIB_DIST names another folder to
-serve, and NIB_LABEL names the run, which is how the same drive measures the app
-before a change and after it:
+serve, built by hand, and NIB_LABEL names the run, which is how the same drive
+measures the app before a change and after it:
 
     NIB_DIST=dist-before NIB_LABEL=before python apps/desktop/test/e2e/access.py
 
@@ -40,35 +40,29 @@ are written to `shots/access/<label>/axe.json` so two runs can be compared.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, sync_playwright
+from playwright.sync_api import Browser
 
+import harness
+from harness import Drive
 from settling import HIDE_CARET, steady
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / os.environ.get("NIB_DIST", "dist")
+#: Which run this is, so the same drive measures the app before a change and after.
 LABEL = os.environ.get("NIB_LABEL", "after")
-SHOTS = HERE / "shots" / "access" / LABEL
+
+DRIVE = Drive(__file__, shots=f"access/{LABEL}")
+say, wrong = DRIVE.say, DRIVE.wrong
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
 
 # axe-core comes off the disk: the CDN is not reachable from here, and a drive
 # that fetched its own measuring stick would be measuring the day's network.
 AXE = APP / "node_modules" / "axe-core" / "axe.min.js"
 
-# Above 1425, and not any other drive's port.
-PORT = 18937
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -350,68 +344,7 @@ KNOWN = {
     "color-contrast": "the ink on an accent fill is a palette decision",
 }
 
-failures: list[str] = []
 axe_table: dict[str, dict] = {}
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say(f"reusing the build in {DIST.name}")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-def serve() -> socketserver.TCPServer:
-    say(f"serving {DIST} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
 
 
 class Window:
@@ -463,7 +396,7 @@ class Window:
         self.page.wait_for_timeout(200)
         say(f"[{name}] the space holds {len(self.page.evaluate(SEED))} files")
         self.page.wait_for_timeout(700)
-        self.page.add_script_tag(path=str(AXE))
+        DRIVE.inject(self.page, AXE)
         self.page.wait_for_function("() => !!window.axe", timeout=20000)
 
     def listen(self) -> None:
@@ -974,46 +907,26 @@ def main() -> int:
     if not AXE.exists():
         raise SystemExit(f"axe-core is not here: {AXE}. Run pnpm install.")
 
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
-
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
+    with DRIVE.session() as browser:
+        # One window going wrong is one window's worth of findings lost,
+        # not the run: the other three still have something to say.
+        for one in WINDOWS:
+            say(f"=== {one[0]} ===")
             try:
-                # One window going wrong is one window's worth of findings lost,
-                # not the run: the other three still have something to say.
-                for one in WINDOWS:
-                    say(f"=== {one[0]} ===")
-                    try:
-                        drive(browser, *one)
-                    except Exception as error:  # noqa: BLE001
-                        wrong(f"[{one[0]}] the walk stopped: {str(error).splitlines()[0][:120]}")
+                drive(browser, *one)
+            except Exception as error:  # noqa: BLE001
+                wrong(f"[{one[0]}] the walk stopped: {str(error).splitlines()[0][:120]}")
 
-                say("=== the window itself ===")
-                try:
-                    extras(browser)
-                except Exception as error:  # noqa: BLE001
-                    wrong(f"[extras] stopped: {str(error).splitlines()[0][:120]}")
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
+        say("=== the window itself ===")
+        try:
+            extras(browser)
+        except Exception as error:  # noqa: BLE001
+            wrong(f"[extras] stopped: {str(error).splitlines()[0][:120]}")
 
-    SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
     say(f"axe counts in {SHOTS / 'axe.json'}")
 
-    if failures:
-        print(f"\nFAILED ({len(failures)})", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nevery surface answers a keyboard, and axe finds nothing serious", flush=True)
-    return 0
+    return DRIVE.verdict("every surface answers a keyboard, and axe finds nothing serious")
 
 
 if __name__ == "__main__":

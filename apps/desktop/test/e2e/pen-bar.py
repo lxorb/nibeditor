@@ -31,28 +31,17 @@ and the ink read back off the plane.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
 import sys
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-SHOTS = HERE / "shots" / "pen-bar"
-DIST = APP / "dist"
+from harness import Drive
 
-# Its own port, and never 1420, which is the dev server somebody may be using.
-PORT = 18877
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+
 
 # What a phone and a tablet say about themselves, which is half of what decides
 # the device class; the other half is the pointer, emulated with the context.
@@ -64,102 +53,6 @@ TABLET_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
-
-def say(what: str) -> None:
-    print(f"  {what}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    say("building the web app")
-    # From nothing. A build over the last one leaves its chunks behind, and a
-    # test that photographs yesterday's bar is worse than no test at all.
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached.
-
-    Silent because its log is every asset the app loads and none of it is what
-    this test is about. Uncached because a build names its chunks after their
-    contents and a browser that already has one of those names will not ask for
-    it again: a run against yesterday's bar that says everything is fine is the
-    worst outcome this file has."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    """Never reuses the address.
-
-    Windows reads `SO_REUSEADDR` as leave to bind a port somebody is already
-    listening on, and the one still listening goes on answering: a second run
-    then binds happily, serves nothing, and photographs the first run's build.
-    Refusing the bind turns that into a message instead of an hour."""
-
-    allow_reuse_address = False
-
-
-def serve() -> tuple[Strict, threading.Thread]:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server, thread
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 # Written before any of the app's own scripts run.
@@ -271,12 +164,6 @@ def opened(page: Page, label: str, device: str) -> None:
     # The bar is what everything after this presses.
     page.wait_for_selector('[aria-label="Move the bar"]', timeout=15000)
     page.wait_for_timeout(400)
-
-
-def shot(page: Page, name: str) -> None:
-    path = SHOTS / f"{name}.png"
-    page.screenshot(path=str(path))
-    say(f"photographed {path.name}")
 
 
 def pen_at(page: Page, index: int):
@@ -545,37 +432,12 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
 
 
 def main() -> int:
-    if SHOTS.exists():
-        shutil.rmtree(SHOTS, ignore_errors=True)
-    SHOTS.mkdir(parents=True, exist_ok=True)
+    with DRIVE.session() as browser:
+        for device in ("tablet", "phone"):
+            for theme in ("light", "dark"):
+                photograph(browser, theme, device, DRIVE.failures)
 
-    failures: list[str] = []
-    build()
-    server, thread = serve()
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                for device in ("tablet", "phone"):
-                    for theme in ("light", "dark"):
-                        photograph(browser, theme, device, failures)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=5)
-        say("everything stopped")
-
-    if failures:
-        print("\nwhat went wrong:", flush=True)
-        for one in failures:
-            print(f"  {one}", flush=True)
-        return 1
-
-    print(f"\nall of it held. the pictures are under {SHOTS}", flush=True)
-    return 0
+    return DRIVE.verdict(f"all of it held. the pictures are under {SHOTS}")
 
 
 if __name__ == "__main__":

@@ -43,28 +43,23 @@ beside it under `shots/`.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
-import shutil
-import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
-import uuid
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-SERVICE = ROOT / "services" / "sync"
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots"
+import harness
+from harness import Drive
 
-# A port of this test's own, well clear of the dev server's 1420.
-PORT = 18871
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+
 
 EMAIL = "renamer@example.com"
 SPACE = "Notes"
@@ -78,36 +73,6 @@ PATIENCE = 40
 
 # Every room socket each browser has opened, by label; see `signed_in`.
 sockets: dict[str, list[str]] = {}
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    """A command from the repository's own node_modules."""
-    executable = shutil.which("npx") or shutil.which("npx.cmd")
-    if not executable:
-        raise SystemExit("npx is not on the path")
-
-    return subprocess.run(
-        [executable, *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
 
 
 def request(
@@ -130,141 +95,14 @@ def request(
         return json.loads(answer.read() or b"null")
 
 
-class Worker:
-    """The Worker under wrangler dev, and the local database behind it."""
+class Worker(harness.Worker):
+    """The real Worker, with this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        # Its output goes to a file rather than to a pipe. A pipe nobody reads fills
-        # up, and a Worker whose output has nowhere to go stops answering.
-        self.log = SHOTS.parent / "space-rename-worker.log"
-        self.opened = None
+        super().__init__(DRIVE)
 
-    def build(self) -> None:
-        say("building the web app against the local Worker")
-        # `vite build` is a production build whatever mode it is given unless the
-        # environment says otherwise, and a production build is the one with the
-        # app's stores hidden. Both are set, so the built page keeps them.
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-
-    def migrate(self) -> None:
-        say("applying the migrations to the local database")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-    def sql(self, statement: str) -> None:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-    def start(self) -> None:
-        say(f"starting the Worker on {ORIGIN}")
-        self.log.parent.mkdir(parents=True, exist_ok=True)
-        self.opened = self.log.open("wb")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 90
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            try:
-                if request("/health").get("ok"):
-                    say("the Worker is answering")
-                    return
-            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-                time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        """The last of what the Worker printed, for a failure to be read beside."""
-        if self.opened:
-            self.opened.flush()
-        if not self.log.exists():
-            return "(nothing)"
-
-        return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-40:])
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        say("stopping the Worker")
-        # The whole tree. `wrangler dev` is a wrapper around the runtime itself, and
-        # stopping only the wrapper leaves the runtime holding the port.
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
-
-    def account(self) -> str:
-        """An account with a live session, put straight into the database. Signing in
-        needs an emailed code, and what is under test is not the sign-in."""
-        token = uuid.uuid4().hex + uuid.uuid4().hex
-        digest = hashlib.sha256(token.encode()).hexdigest()
-        now = int(time.time() * 1000)
-        user = str(uuid.uuid4())
-
-        self.sql(
-            f"insert into users (id, email, created_at) values ('{user}', '{EMAIL}', {now});"
-            f"insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
-        )
-
-        return token
-
-
-def say(words_said: str) -> None:
-    print(f"  {words_said}", flush=True)
+    def account(self) -> str:  # type: ignore[override]
+        return super().account(EMAIL)
 
 
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
@@ -520,14 +358,19 @@ def restores_a_canvas(browser: Browser, token: str, failures: list[str]) -> None
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
     worker = Worker()
     failures: list[str] = []
 
-    try:
-        worker.build()
-        worker.clean()
-        worker.migrate()
+    # One browser, two contexts: two devices as far as the app and the account
+    # are concerned. The flags matter - a browser slows down a page it is not
+    # showing, and a page waiting to hear from the room is exactly that page.
+    with DRIVE.session(
+        args=[
+            "--disable-background-timer-throttling",
+            "--disable-backgrounding-occluded-windows",
+            "--disable-renderer-backgrounding",
+        ],
+    ) as browser:
         worker.start()
 
         token = worker.account()
@@ -539,109 +382,97 @@ def main() -> int:
         request(f"/v1/spaces/{space['id']}/notes", token, {"path": CANVAS, "content": "{}"})
         say(f"the account holds {SPACE}/{NOTE} as {note_id}, and {SPACE}/{CANVAS} beside it")
 
-        with sync_playwright() as playwright:
-            # One browser, two contexts: two devices as far as the app and the account
-            # are concerned. The flags matter - a browser slows down a page it is not
-            # showing, and a page waiting to hear from the room is exactly that page.
-            browser = playwright.chromium.launch(
-                executable_path=chromium(),
-                headless=True,
-                args=[
-                    "--disable-background-timer-throttling",
-                    "--disable-backgrounding-occluded-windows",
-                    "--disable-renderer-backgrounding",
-                ],
+        one = signed_in(browser, token, "one")
+        opened(one, "one", note_id)
+        two = signed_in(browser, token, "two")
+        opened(two, "two", note_id)
+        say("both browsers are in the room")
+
+        # Before the rename, so that what follows is about the rename and not
+        # about the room ever having worked.
+        crosses(one, two, "\nbefore the rename\n", "before the rename, one to two")
+
+        # The rename itself, through the app: the space's folder is renamed and
+        # every open note's path is rewritten under the new root, with every id
+        # left alone. This is the moment the note used to go quiet.
+        #
+        # Both halves of it, because a rename is both: the workspace moves the
+        # folder and the mirror is re-keyed onto its new root. That pair is what
+        # `commitSpaceName` in lib/space-actions.ts does when the field in the
+        # header is committed, and it is spelled out here rather than typed into
+        # that field because the field is a component - what this drive is about
+        # is the room, not the sidebar. Without the second half the mirror still
+        # answers about the old root, and the note is not one the account knows
+        # a path for at all.
+        which = one.evaluate(
+            "() => window.nibApp.workspace.spaces.find("
+            f"  (one) => one.name === {json.dumps(SPACE)}).id"
+        )
+        one.evaluate(
+            "async ([id, name]) => {"
+            "  const workspace = window.nibApp.workspace;"
+            "  const space = workspace.spaces.find((one) => one.id === id);"
+            "  const from = space.root;"
+            "  await workspace.renameSpace(id, name);"
+            "  await window.nibApp.sync.renamed(from, space.root, space.name)"
+            "}",
+            [which, RENAMED],
+        )
+        wait_for(
+            one,
+            "() => window.nibApp.workspace.spaces.some("
+            f"  (one) => one.name === {json.dumps(RENAMED)})",
+            "[one] the space to be renamed",
+        )
+        moved = one.evaluate("() => window.nibApp.workspace.active?.path ?? ''")
+        say(f"the space is renamed and the open note is now at {moved}")
+        say(f"the renamer has opened {len(sockets['one'])} room sockets so far")
+        if f"/{RENAMED}/" not in moved:
+            failures.append(f"the open note was not moved with its space: {moved!r}")
+
+        # The note is back in its room - which is what makes the file sync right to
+        # stand back from it. Back, and waited for: the pairing lets the room go
+        # between the rename's two halves and joins another a moment later (see the
+        # top of this file), so the instant after the rename can be that moment.
+        try:
+            wait_for(
+                one,
+                f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+                "the renamed note to be in its room again",
             )
-            try:
-                one = signed_in(browser, token, "one")
-                opened(one, "one", note_id)
-                two = signed_in(browser, token, "two")
-                opened(two, "two", note_id)
-                say("both browsers are in the room")
+        except SystemExit:
+            failures.append("the renamed note left its room")
 
-                # Before the rename, so that what follows is about the rename and not
-                # about the room ever having worked.
-                crosses(one, two, "\nbefore the rename\n", "before the rename, one to two")
+        # And the whole point: words still cross, both ways.
+        crosses(one, two, "\nafter the rename\n", "after the rename, one to two")
+        crosses(two, one, "\nand back again\n", "after the rename, two to one")
 
-                # The rename itself, through the app: the space's folder is renamed and
-                # every open note's path is rewritten under the new root, with every id
-                # left alone. This is the moment the note used to go quiet.
-                #
-                # Both halves of it, because a rename is both: the workspace moves the
-                # folder and the mirror is re-keyed onto its new root. That pair is what
-                # `commitSpaceName` in lib/space-actions.ts does when the field in the
-                # header is committed, and it is spelled out here rather than typed into
-                # that field because the field is a component - what this drive is about
-                # is the room, not the sidebar. Without the second half the mirror still
-                # answers about the old root, and the note is not one the account knows
-                # a path for at all.
-                which = one.evaluate(
-                    "() => window.nibApp.workspace.spaces.find("
-                    f"  (one) => one.name === {json.dumps(SPACE)}).id"
-                )
-                one.evaluate(
-                    "async ([id, name]) => {"
-                    "  const workspace = window.nibApp.workspace;"
-                    "  const space = workspace.spaces.find((one) => one.id === id);"
-                    "  const from = space.root;"
-                    "  await workspace.renameSpace(id, name);"
-                    "  await window.nibApp.sync.renamed(from, space.root, space.name)"
-                    "}",
-                    [which, RENAMED],
-                )
-                wait_for(
-                    one,
-                    "() => window.nibApp.workspace.spaces.some("
-                    f"  (one) => one.name === {json.dumps(RENAMED)})",
-                    "[one] the space to be renamed",
-                )
-                moved = one.evaluate("() => window.nibApp.workspace.active?.path ?? ''")
-                say(f"the space is renamed and the open note is now at {moved}")
-                say(f"the renamer has opened {len(sockets['one'])} room sockets so far")
-                if f"/{RENAMED}/" not in moved:
-                    failures.append(f"the open note was not moved with its space: {moved!r}")
+        # Both sides hold the same note.
+        until = time.monotonic() + PATIENCE
+        while time.monotonic() < until:
+            if words(one) == words(two):
+                break
+            one.wait_for_timeout(25)
 
-                # The note is still in its room - which is what makes the file sync
-                # right to stand back from it.
-                if not one.evaluate(
-                    f"() => window.nibApp.rooms.carries({json.dumps(note_id)})"
-                ):
-                    failures.append("the renamed note left its room")
+        here, over_there = words(one), words(two)
+        if here != over_there:
+            failures.append(f"the two never agreed:\n{here!r}\n{over_there!r}")
+        else:
+            say("both browsers hold the same words")
 
-                # And the whole point: words still cross, both ways.
-                crosses(one, two, "\nafter the rename\n", "after the rename, one to two")
-                crosses(two, one, "\nand back again\n", "after the rename, two to one")
+        for expected in ("before the rename", "after the rename", "and back again"):
+            if expected not in here:
+                failures.append(f"{expected!r} was lost")
 
-                # Both sides hold the same note.
-                until = time.monotonic() + PATIENCE
-                while time.monotonic() < until:
-                    if words(one) == words(two):
-                        break
-                    one.wait_for_timeout(25)
+        # The other channel: the room settles the note into the account.
+        reaches_the_account(token, note_id, "after the rename")
 
-                here, over_there = words(one), words(two)
-                if here != over_there:
-                    failures.append(f"the two never agreed:\n{here!r}\n{over_there!r}")
-                else:
-                    say("both browsers hold the same words")
+        one.screenshot(path=str(SHOTS / "space-rename-one.png"))
+        two.screenshot(path=str(SHOTS / "space-rename-two.png"))
 
-                for expected in ("before the rename", "after the rename", "and back again"):
-                    if expected not in here:
-                        failures.append(f"{expected!r} was lost")
-
-                # The other channel: the room settles the note into the account.
-                reaches_the_account(token, note_id, "after the rename")
-
-                one.screenshot(path=str(SHOTS / "space-rename-one.png"))
-                two.screenshot(path=str(SHOTS / "space-rename-two.png"))
-
-                # And the other half of the same mistake, in a browser of its own: a
-                # session that says a canvas is a note.
-                restores_a_canvas(browser, token, failures)
-            finally:
-                browser.close()
-    finally:
-        worker.stop()
+        # And the other half of the same mistake, in a browser of its own: a
+        # session that says a canvas is a note.
+        restores_a_canvas(browser, token, failures)
 
     if failures:
         print("\nFAILED")

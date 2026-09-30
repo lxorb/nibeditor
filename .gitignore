@@ -7,6 +7,9 @@ dist-before/
 # see apps/desktop/test/e2e/speed.py.
 dist-profile/
 dist-even/
+# The build the drives against the real Worker load, pointed at that Worker; see
+# apps/desktop/test/e2e/harness.py.
+dist-worker/
 target/
 # What Tauri generates for the mobile targets. The Android project is source:
 # its manifest, its theme and MainActivity are edited by hand, and the files

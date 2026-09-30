@@ -25,16 +25,14 @@ It prints what it saw, and photographs the space switcher standing open.
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+from harness import Drive
+from shell import DESKTOP_AGENT, PHONE_AGENT, SEED
 
-from playwright.sync_api import sync_playwright
+DRIVE = Drive(__file__)
+say = DRIVE.say
 
-from shell import DESKTOP_AGENT, ORIGIN, PHONE_AGENT, Pages, SEED, say
-
-OUT = Path(__file__).resolve().parent / "shots" / "shell-swapping"
+OUT = DRIVE.shots
 
 # Fourteen frames, from inside the page, so the reading is of the frame and not
 # of a round trip. Every property the swap is allowed to touch is read on each,
@@ -72,7 +70,6 @@ async () => {
 
 
 def drive(browser, name: str, width: int, height: int, agent: str, finger: bool, still: bool):
-    OUT.mkdir(parents=True, exist_ok=True)
 
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -83,9 +80,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool,
         device_scale_factor=2,
     )
     page = context.new_page()
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     page.evaluate(SEED)
     page.wait_for_timeout(700)
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
@@ -118,23 +113,12 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool,
 
 
 def main() -> int:
-    pages = Pages()
-    pages.start()
+    with DRIVE.session() as browser:
+        drive(browser, "desktop", 1440, 900, DESKTOP_AGENT, False, False)
+        drive(browser, "desktop-still", 1440, 900, DESKTOP_AGENT, False, True)
+        drive(browser, "phone", 390, 844, PHONE_AGENT, True, False)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                drive(browser, "desktop", 1440, 900, DESKTOP_AGENT, False, False)
-                drive(browser, "desktop-still", 1440, 900, DESKTOP_AGENT, False, True)
-                drive(browser, "phone", 390, 844, PHONE_AGENT, True, False)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {OUT}")
-    return 0
+    return DRIVE.verdict(f"shots in {OUT}")
 
 
 if __name__ == "__main__":

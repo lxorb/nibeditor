@@ -8,8 +8,8 @@ open over a note.
 
 The before pictures this reads from were taken with
 `apps/desktop/test/e2e/shell.py`, which serves the built web app and drives it in
-the machine's own Chrome as a desktop in both schemes, as a tablet either way up
-and as a phone. They are under `apps/desktop/test/e2e/shots/shell-before/`, which
+Chromium as a desktop in both schemes, as a tablet either way up
+and as a phone. They are under `apps/desktop/test/e2e/shots/shell/before/`, which
 is ignored; the names appear in the text.
 
 ## What the others do better

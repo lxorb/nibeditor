@@ -35,28 +35,13 @@ under `shots/notices/`, which is ignored.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "notices"
+from harness import Drive
 
-# Not the dev server's 1420, and not another drive's either.
-PORT = 18853
-ORIGIN = os.environ.get("NIB_ORIGIN") or f"http://127.0.0.1:{PORT}"
-BORROWED = bool(os.environ.get("NIB_ORIGIN"))
+DRIVE = Drive(__file__)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 #: Where the page goes: everything in the web surface under its bar. On a desktop
 #: this is the hole the webview is placed over, and the two are the same box - the
@@ -133,17 +118,6 @@ BAR_CONTROLS = """
 }
 """
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
 
 def overlaps(one: dict[str, float], other: dict[str, float]) -> bool:
     """Whether two rectangles share a pixel."""
@@ -153,77 +127,6 @@ def overlaps(one: dict[str, float], other: dict[str, float]) -> bool:
         and one["y"] < other["y"] + other["height"]
         and other["y"] < one["y"] + one["height"]
     )
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    # `drive` keeps `window.nibApp`, which is the only way to put the update notice
-    # up: nothing else offers one but a look at a release server. See smoke.py.
-    say("building the web app in drive")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
 
 
 def clear_over_the_page(page: Page, when: str) -> dict[str, float]:
@@ -245,10 +148,7 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page)
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
 
     page.evaluate("() => window.nibApp.workspace.openWebsite()")
@@ -344,32 +244,10 @@ def drive(browser: Browser) -> None:
 
 
 def main() -> int:
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    if BORROWED:
-        say(f"driving {ORIGIN}, which somebody else is serving")
-        server = None
-    else:
-        build()
-        server = serve()
+    with DRIVE.session() as browser:
+        drive(browser)
 
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            try:
-                drive(browser)
-            finally:
-                browser.close()
-    finally:
-        if server:
-            server.shutdown()
-            server.server_close()
-
-    if failures:
-        say(f"{len(failures)} of the questions about the page's rectangle came back wrong")
-        return 1
-
-    say("nothing of the app's is over the page")
-    return 0
+    return DRIVE.verdict("nothing of the app's is over the page")
 
 
 if __name__ == "__main__":

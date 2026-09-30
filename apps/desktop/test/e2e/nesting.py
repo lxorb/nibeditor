@@ -23,37 +23,29 @@ go beside this file under `shots/nesting/`.
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
 import sys
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "nesting"
+import harness
+from harness import Drive
 
-# A port of this run's own. Never 1420, which is the dev server's, and not one the
-# other drives use either.
-PORT = 18982
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wait_for = DRIVE.say, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+
 
 PATIENCE = 40
 
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
 
-failures: list[str] = []
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
 
 
 def check(fine: bool, what: str) -> None:
@@ -62,59 +54,11 @@ def check(fine: bool, what: str) -> None:
         failures.append(what)
 
 
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD"):
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    DRIVE.open(page)
     return page
 
 
@@ -272,48 +216,11 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    build()
+    with DRIVE.session() as browser:
+        shoot(browser, "desktop", DESKTOP)
+        shoot(browser, "phone", PHONE)
 
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                shoot(browser, "desktop", DESKTOP)
-                shoot(browser, "phone", PHONE)
-            finally:
-                browser.close()
-    finally:
-        say("stopping the server")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(server.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            server.terminate()
-        try:
-            server.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            server.kill()
-
-    if failures:
-        print("\n%d of it did not hold:" % len(failures), flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\na note held notes, and stopped holding them again", flush=True)
-    return 0
+    return DRIVE.verdict("a note held notes, and stopped holding them again")
 
 
 if __name__ == "__main__":

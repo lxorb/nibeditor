@@ -11,7 +11,7 @@ And then the space next door, which is the other half of "every heading in the
 space": a second space, opened, offers its own and none of the first one's, from
 the moment it is opened rather than from the moment it has been read.
 
-Serves the built web app and drives it in the machine's own Chrome. The build has
+Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
 are not there.
 
@@ -25,28 +25,27 @@ go beside this file under `shots/completions/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
 import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "completions"
+from harness import Drive
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 19102
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(
+    __file__,
+    known={
+        # Front matter is hidden until asked for since 31209a29, so the caret this drive puts
+        # in a `tags:` list lands on the first line that shows.
+        "a `tags:` list offered nothing": "hunt-7, whose branch holds the fix",
+        "the tag was not written into the list": "hunt-7, whose branch holds the fix",
+    },
+)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+
 
 PLAN = """---
 tags: [work/nib]
@@ -140,97 +139,6 @@ FRESH_LINE = """
 }
 """
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    # `--mode drive`, which is a release build with `__DRIVEABLE__` left on:
-    # `window.nibApp` and `window.nib`, the handles this file steers the app by. They
-    # used to be behind `import.meta.env.DEV`, which a development build set - so this
-    # said `--mode development` and got them by accident. It does not any more: a
-    # development build has no handles in it at all, and this drive stopped half a
-    # second in, waiting for an app it could never see. See `__DRIVEABLE__` in
-    # src/env.d.ts and smoke.py.
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=os.environ.copy(),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
-
 
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
@@ -294,10 +202,7 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
         if message.type == "error"
         else None,
     )
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page)
     paths = page.evaluate(SEED, [PLAN, IDEAS, SCRATCH])
     say(f"the space holds {json.dumps([one.split('/')[-1] for one in paths])}")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
@@ -613,32 +518,7 @@ def drive(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
-
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                say("--- a pointer ---")
-                drive(browser)
-                say("--- a finger ---")
-                drive_finger(browser)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\nthe space's headings, blocks and tags all finish themselves", flush=True)
-    return 0
+    return DRIVE.run(drive, "the space's headings, blocks and tags all finish themselves")
 
 
 if __name__ == "__main__":

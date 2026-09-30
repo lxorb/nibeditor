@@ -18,6 +18,9 @@ export default tseslint.config(
       // from; see apps/desktop/test/e2e/speed.py.
       '**/dist-profile/**',
       '**/dist-even/**',
+      // The build the drives against the real Worker load; see
+      // apps/desktop/test/e2e/harness.py.
+      '**/dist-worker/**',
       '**/target/**',
       // What the drives photograph, and the builds some of them make beside the
       // pictures: `layers.py` leaves a whole `main-dist` in there. Git ignores the

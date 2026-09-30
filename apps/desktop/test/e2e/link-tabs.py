@@ -33,20 +33,21 @@ loudly: anything wrong is printed at the end and the exit code says so.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import threading
-from pathlib import Path
 
-from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SERVED = APP / "dist"
-SHOTS = APP / "test" / "e2e" / "shots" / "link-tabs"
+from harness import Drive
 
-PORT = 23794
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(
+    __file__,
+    known={
+        # Shift+click opens a tab in front since d68541d7 (docs/web-tabs.md).
+        "Shift+click made a tab rather than leaving": "hunt-7, whose branch holds the fix",
+    },
+)
+say, wrong = DRIVE.say, DRIVE.wrong
+failures = DRIVE.failures
+SHOTS = DRIVE.shots
+
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -97,38 +98,6 @@ CATCH = """
 """
 
 LEFT = "() => window.__left"
-
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(words: str) -> None:
-    failures.append(words)
-    print(f"  FAIL {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(SERVED))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {SERVED} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
 
 
 def web_tabs(state: dict) -> list[str]:
@@ -354,8 +323,7 @@ def drive(browser) -> None:
     page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
+    DRIVE.open(page)
     page.wait_for_timeout(900)
 
     say(f"{page.evaluate(SEED)} tab(s) open")
@@ -372,31 +340,10 @@ def drive(browser) -> None:
 
 
 def main() -> int:
-    if not (SERVED / "index.html").exists():
-        raise SystemExit("build the drive bundle first; see the top of this file")
+    with DRIVE.session() as browser:
+        drive(browser)
 
-    pages = Pages()
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                drive(browser)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {SHOTS}")
-
-    if failures:
-        print("\n%d thing(s) wrong:" % len(failures))
-        for one in failures:
-            print(f"  - {one}")
-        return 1
-
-    print("\neverything the drive checked was right")
-    return 0
+    return DRIVE.verdict("everything the drive checked was right")
 
 
 if __name__ == "__main__":

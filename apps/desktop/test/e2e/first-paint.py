@@ -75,22 +75,19 @@ them - not the scrolling.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import statistics
-import threading
 from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+import harness
+from harness import Drive
 
-# Above 1425, and not any other drive's port. One per build, so each has storage of
-# its own: two builds cannot share one database, since the one after the change
-# keeps a listing beside the notes and the one before it does not.
-PORT = 18991
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+APP = harness.APP
+
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -101,23 +98,6 @@ DESKTOP_AGENT = (
 NOTES = 3000
 #: How many launches each number is the middle of.
 ROUNDS = 9
-
-#: A page on the app's own origin that is not the app, so the storage underneath it
-#: can be written without the app being up to read it half way through.
-SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
 
 
 # Three thousand notes into IndexedDB, written the way the app's own store writes
@@ -439,26 +419,23 @@ class Lane:
     machine's own load moves by more than the change does: five launches of one
     build and then five of the other measures the afternoon, not the code."""
 
-    def __init__(self, tag: str, folder: str, port: int) -> None:
+    def __init__(self, tag: str, folder: Path) -> None:
         self.tag = tag
-        self.folder = APP / folder
-        self.port = port
-        self.origin = f"http://127.0.0.1:{port}"
+        self.folder = folder
+        self.origin = ""
         self.rounds: list[dict[str, float]] = []
         self.warm: dict[str, float] = {}
-
-        handler = functools.partial(Quiet, directory=str(self.folder))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.server: harness.Served | None = None
         self.page: Page | None = None
 
     def start(self) -> None:
-        (self.folder / "seed.html").write_text(SEED_PAGE, encoding="utf-8")
-        self.thread.start()
+        self.server = harness.Served(self.folder)
+        self.origin = self.server.origin(f"{self.tag}.localhost")
         say(f"{self.tag}: serving {self.folder} on {self.origin}")
 
     def stop(self) -> None:
-        self.server.shutdown()
+        if self.server:
+            self.server.close()
 
     def ready(self, browser) -> None:
         """A seeded store, and a session as an app somebody has used before leaves
@@ -473,7 +450,7 @@ class Lane:
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"{self.tag}: page error: {error}"))
 
-        page.goto(f"{self.origin}/seed.html", wait_until="domcontentloaded")
+        page.goto(f"{self.origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
         stores = page.evaluate(SEED, NOTES)
         say(f"{self.tag}: {NOTES} notes seeded into {stores}")
 
@@ -532,9 +509,11 @@ class Lane:
 def main() -> int:
     # A folder per build. The one before the change is built into `dist-before`;
     # see the note at the top of this file.
+    if harness.OWN_BUILD:
+        harness.build()
     wanted = [
-        Lane("before", "dist-before", PORT + 1),
-        Lane("after", "dist", PORT),
+        Lane("before", APP / "dist-before"),
+        Lane("after", harness.DIST),
     ]
     lanes = [one for one in wanted if (one.folder / "index.html").exists()]
     if not lanes:
@@ -545,9 +524,7 @@ def main() -> int:
         lane.start()
 
     try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-
+        with DRIVE.session() as browser:
             for lane in lanes:
                 lane.ready(browser)
 
@@ -565,8 +542,6 @@ def main() -> int:
                     if other is not lane:
                         other.park()
                 lane.measure()
-
-            browser.close()
     finally:
         for lane in lanes:
             lane.stop()

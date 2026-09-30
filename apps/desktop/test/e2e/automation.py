@@ -6,7 +6,7 @@ Drives the browser build, which is the one place the whole router can be exercis
 without an installer: a browser hands `web+nib://` back as `?nib=`, and that is the
 same string the crate hands over on a desktop. See docs/automation.md.
 
-Serves the built web app and drives it in the machine's own Chrome. The build has
+Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
 are not there.
 
@@ -20,29 +20,17 @@ go beside this file under `shots/automation/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 from urllib.parse import quote
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "automation"
+from harness import Drive
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 23303
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+
 
 PLAN = """# The plan
 
@@ -96,7 +84,6 @@ STATE = """
 }
 """
 
-failures: list[str] = []
 
 # What the browser says about the app's policy rather than about the app. The policy
 # is delivered as a `<meta>` in the page because the web app has no server of ours
@@ -104,15 +91,6 @@ failures: list[str] = []
 # in for the header the installed app is served with. Chrome logs that at error
 # level on every load; see apps/desktop/src/csp.ts.
 EXPECTED = ["'frame-ancestors' is ignored when delivered via a <meta> element"]
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
 
 
 def heard(kind: str, text: str) -> None:
@@ -124,82 +102,6 @@ def heard(kind: str, text: str) -> None:
         return
 
     wrong(f"console error: {text}")
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    """Never reuses the address, so a run cannot photograph the last one."""
-
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
 
 
 def ready(page: Page, label: str) -> None:
@@ -389,42 +291,23 @@ async () => {
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
+    with DRIVE.session() as browser:
+        page = fresh(browser)
+        say("--- a link that opens a note ---")
+        drive_opening(page)
+        say("--- a link that lands on a heading ---")
+        drive_heading(page)
+        say("--- a link that makes a note, and one that adds to it ---")
+        drive_making(page)
+        say("--- a link that adds to a note ---")
+        drive_appending(page)
+        say("--- a link that searches ---")
+        drive_searching(page)
+        say("--- what a link may not do ---")
+        drive_refusals(page)
+        page.context.close()
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                page = fresh(browser)
-                say("--- a link that opens a note ---")
-                drive_opening(page)
-                say("--- a link that lands on a heading ---")
-                drive_heading(page)
-                say("--- a link that makes a note, and one that adds to it ---")
-                drive_making(page)
-                say("--- a link that adds to a note ---")
-                drive_appending(page)
-                say("--- a link that searches ---")
-                drive_searching(page)
-                say("--- what a link may not do ---")
-                drive_refusals(page)
-                page.context.close()
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\na nib:// link opens, makes, appends and searches, and is refused where it should be")
-    return 0
+    return DRIVE.verdict("a nib:// link opens, makes, appends and searches, and is refused where it should be")
 
 
 if __name__ == "__main__":

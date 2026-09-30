@@ -34,27 +34,22 @@ reading their notes for all but five seconds of it instead of none of it.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
-import shutil
-import subprocess
 import sys
-import time
 import urllib.error
 import urllib.request
-import uuid
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SERVICE = ROOT / "services" / "sync"
+import harness
+from harness import Drive
 
-# Above 1425, and not any other drive's port.
-PORT = 18993
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+
 
 EMAIL = "first-sync@example.com"
 SPACE = "Account"
@@ -73,22 +68,6 @@ UP = 750_000 / 8
 PATIENCE = 240
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [shutil.which("npx") or "npx", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-
-
 def request(path: str, token: str | None = None, body: dict | None = None):
     data = None if body is None else json.dumps(body).encode()
     headers = {}
@@ -102,141 +81,14 @@ def request(path: str, token: str | None = None, body: dict | None = None):
         return json.loads(answer.read() or b"null")
 
 
-class Worker:
-    """The Worker under wrangler dev, the database behind it, and the built app it
-    serves. Lifted from collaborate.py, which brings the same three up."""
+class Worker(harness.Worker):
+    """The real Worker, with this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        self.log = APP / "test" / "e2e" / "shots" / "first-sync-worker.log"
-        self.opened = None
+        super().__init__(DRIVE)
 
-    def build(self) -> None:
-        say("building the app against the local Worker")
-        # `vite build` is a production build whatever mode it is given unless the
-        # environment says otherwise, and a production build is the one with the
-        # app's stores hidden. Both are set, so the built page keeps them.
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-
-    def migrate(self) -> None:
-        say("applying the migrations")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-    def sql(self, statement: str) -> None:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-    def start(self) -> None:
-        say(f"starting the Worker on {ORIGIN}")
-        self.log.parent.mkdir(parents=True, exist_ok=True)
-        # To a file rather than a pipe: a pipe nobody drains fills, and a Worker
-        # whose output has nowhere to go stops answering.
-        self.opened = self.log.open("wb")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                # Every binding local, which is the only way it starts without a
-                # Cloudflare token: the account's own Workers AI binding is remote
-                # by nature, and nothing here asks anything of it.
-                "--local",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 120
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            try:
-                if request("/health").get("ok"):
-                    say("the Worker is answering")
-                    return
-            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-                time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        if self.opened:
-            self.opened.flush()
-        if not self.log.exists():
-            return "(nothing)"
-
-        return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-40:])
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        say("stopping the Worker")
-        # The whole tree: `wrangler dev` wraps the runtime, and stopping the wrapper
-        # alone leaves the runtime holding the port.
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
-
-    def account(self) -> str:
-        """An account with a live session, put straight into the database. Signing
-        in needs an emailed code, and the sign-in is not what is being measured."""
-        token = uuid.uuid4().hex + uuid.uuid4().hex
-        digest = hashlib.sha256(token.encode()).hexdigest()
-        now = int(time.time() * 1000)
-        user = str(uuid.uuid4())
-
-        self.sql(
-            f"insert into users (id, email, created_at) values ('{user}', '{EMAIL}', {now});"
-            f"insert into sessions (token_hash, user_id, created_at, expires_at)"
-            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
-        )
-
-        return token
+    def account(self) -> str:  # type: ignore[override]
+        return super().account(EMAIL)
 
 
 def body(at: int) -> str:
@@ -360,12 +212,8 @@ def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
 
     worker = Worker()
-    worker.build()
-    worker.clean()
-    worker.migrate()
-    worker.start()
-
-    try:
+    with DRIVE.session() as browser:
+        worker.start()
         token = worker.account()
         space = request("/v1/spaces", token, {"name": SPACE})["space"]
         for at in range(NOTES):
@@ -376,14 +224,7 @@ def main() -> int:
             )
         say(f"the account holds {NOTES} notes in {SPACE}")
 
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                taken = drive(browser, token)
-            finally:
-                browser.close()
-    finally:
-        worker.stop()
+        taken = drive(browser, token)
 
     print()
     print(f"{tag}, signing in to {NOTES} notes on a {LATENCY}ms line:")

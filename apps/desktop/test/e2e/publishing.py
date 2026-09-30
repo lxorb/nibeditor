@@ -36,33 +36,30 @@ from __future__ import annotations
 import difflib
 import hashlib
 import json
-import os
 import re
-import shutil
-import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
 import uuid
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-SERVICE = ROOT / "services" / "sync"
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "publishing"
+import harness
+from harness import Drive
 
-# A port of this drive's own. Never 1420, which is the dev server's, and not one
-# another drive already took.
-PORT = 18863
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+SERVICE = harness.SERVICE
+
 
 # Every browser resolves `*.localhost` itself, so a blog's own hostname needs no
 # hosts file: the Worker is told that this is the domain blogs are published under.
 BLOG_ROOT = "localhost"
-BLOG = f"http://field.{BLOG_ROOT}:{PORT}"
+BLOG = f"http://field.{BLOG_ROOT}:{harness.worker_port()}"
 
 OWNER = "owner@example.com"
 SPACE = "Field notes"
@@ -73,39 +70,6 @@ OTHER_TEXT = "# Another note\n\nThe other note itself.\n\n## Why it works\n\nBec
 FIXTURE = SERVICE / "test" / "everything.md"
 
 PATIENCE = 60
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    executable = shutil.which("npx") or shutil.which("npx.cmd")
-    if not executable:
-        raise SystemExit("npx is not on the path")
-
-    return subprocess.run(
-        [executable, *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
 
 
 def request(path: str, token: str | None = None, body: dict | None = None, method: str | None = None):
@@ -126,142 +90,12 @@ def request(path: str, token: str | None = None, body: dict | None = None, metho
         return json.loads(answer.read() or b"null")
 
 
-def answering() -> bool:
-    """Whether anything is listening yet. Any answer at all counts: a session
-    acting as a blog serves `/health` as a note nobody published rather than as the
-    API's own health, and the port is open either way."""
-    try:
-        urllib.request.urlopen(f"{ORIGIN}/health", timeout=5).read()
-        return True
-    except urllib.error.HTTPError:
-        return True
-    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-        return False
-
-
-class Worker:
-    """The Worker under wrangler dev, and the local database behind it."""
+class Worker(harness.Worker):
+    """The real Worker, told which domain blogs are published under, with a named
+    account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        self.log = SHOTS.parent / "publishing-worker.log"
-        self.opened = None
-
-    def build(self) -> None:
-        say("building the web app against the local Worker")
-        # A build made `--mode drive` keeps `window.nibApp`, which is how a drive
-        # opens a note without pointing at anything.
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-        if self.log.exists():
-            self.log.unlink()
-
-    def migrate(self) -> None:
-        say("applying the migrations to the local database")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-    def sql(self, statement: str) -> None:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-    def start(self, upstream: str | None = None) -> None:
-        """The Worker, listening on the loopback address.
-
-        `wrangler dev` answers whatever asks it and builds the URL the Worker sees
-        from the origin it was given rather than from the request's own Host
-        header, so which hostname a run is *on* is decided here: without one it is
-        the app and the API, and with `upstream` it is that blog. The browser talks
-        to the same address either way."""
-        say(f"starting the Worker on {ORIGIN}" + (f" as {upstream}" if upstream else ""))
-        SHOTS.mkdir(parents=True, exist_ok=True)
-        self.opened = self.log.open("wb")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                # Everything local, including the bindings wrangler would otherwise
-                # reach for over the network: the account's Workers AI is not what
-                # publishing a note is about, and asking for it would want a token.
-                "--local",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--var",
-                f"BLOG_ROOT:{BLOG_ROOT}",
-                *(["--local-upstream", upstream] if upstream else []),
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 90
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            if answering():
-                say("the Worker is answering")
-                return
-            time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        if self.opened:
-            self.opened.flush()
-        if not self.log.exists():
-            return ""
-
-        return self.log.read_text("utf-8", errors="replace")
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        say("stopping the Worker")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
+        super().__init__(DRIVE, variables={"BLOG_ROOT": BLOG_ROOT})
 
     def account(self, email: str) -> str:
         """An account with a live session, put straight into the database: signing
@@ -325,6 +159,7 @@ ALLOWED = [
     "the front matter, which became that furniture rather than a table on the page",
     "the mermaid diagram, which this drive publishes through the API rather than"
     " from the app, so nothing has drawn its picture and the fence stays code",
+    "a tag, which is a link to the search in the app and words on a page",
 ]
 
 #: Where the site's own script is served from: this origin, at a path that is the
@@ -363,6 +198,13 @@ def trimmed(tree: list[str]) -> list[str]:
         bare = line.strip()
         if CHROME.match(bare) or bare == PROPERTIES:
             dropping = depth
+            continue
+
+        # A tag is a press that searches in the app and words on a page with nothing
+        # to search, so `a.tag` there and `span.tag` here; see packages/markdown's
+        # tags.ts. The same tag either way.
+        if bare in ("a.tag", "span.tag"):
+            out.append("  " * depth + "TAG")
             continue
 
         # The app draws the diagram and a page cannot, so both come to one line
@@ -430,7 +272,6 @@ def main() -> int:
         raise SystemExit(f"the fixture is missing: {FIXTURE}")
 
     fixture = FIXTURE.read_text("utf-8")
-    SHOTS.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
 
     def wrong(words: str) -> None:
@@ -438,12 +279,9 @@ def main() -> int:
         say(f"WRONG: {words}")
 
     worker = Worker()
-    worker.build()
-    worker.clean()
-    worker.migrate()
     worker.start()
 
-    try:
+    with DRIVE.session() as browser:
         token = worker.account(OWNER)
         space = request("/v1/spaces", token=token, body={"name": SPACE})["space"]
         for path, content in ((NOTE, fixture), (OTHER, OTHER_TEXT)):
@@ -457,203 +295,196 @@ def main() -> int:
         )
         say(f"the space is published at {BLOG}")
 
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium())
-            try:
-                # ── The note in the app ──────────────────────────────────
-                app = fresh(browser, "app", ORIGIN, token=token)
-                wait_for(app, "() => !!window.nibApp", "the app to start")
-                app.evaluate("() => window.nibApp.theme.setScheme('light')")
+        # ── The note in the app ──────────────────────────────────
+        app = fresh(browser, "app", ORIGIN, token=token)
+        wait_for(app, "() => !!window.nibApp", "the app to start")
+        app.evaluate("() => window.nibApp.theme.setScheme('light')")
 
-                folder = wait_for(
-                    app,
-                    "() => {"
-                    "  const found = window.nibApp.workspace.spaces.find("
-                    f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space['id'])});"
-                    "  return found ? found.name : null"
-                    "}",
-                    "the space to arrive in the app",
-                )
-                app.evaluate(
-                    "(name) => {"
-                    "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-                    "  if (space) window.nibApp.workspace.showSpace(space.id)"
-                    "}",
-                    folder,
-                )
+        folder = wait_for(
+            app,
+            "() => {"
+            "  const found = window.nibApp.workspace.spaces.find("
+            f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space['id'])});"
+            "  return found ? found.name : null"
+            "}",
+            "the space to arrive in the app",
+        )
+        app.evaluate(
+            "(name) => {"
+            "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
+            "  if (space) window.nibApp.workspace.showSpace(space.id)"
+            "}",
+            folder,
+        )
 
-                listed = (
-                    "() => {"
-                    "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-                    "  const paths = walk(window.nibApp.workspace.tree);"
-                    f"  return paths.includes('/{folder}/{NOTE}') && paths.includes('/{folder}/{OTHER}')"
-                    "}"
-                )
-                wait_for(app, listed, "both notes to arrive in the app")
+        listed = (
+            "() => {"
+            "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
+            "  const paths = walk(window.nibApp.workspace.tree);"
+            f"  return paths.includes('/{folder}/{NOTE}') && paths.includes('/{folder}/{OTHER}')"
+            "}"
+        )
+        wait_for(app, listed, "both notes to arrive in the app")
 
-                # The space, read through. A space is read when it is opened, and
-                # these notes arrived from the Worker after that - so this is the
-                # state a reader is in who opens a space that already has notes.
-                app.evaluate(
-                    "(name) => {"
-                    "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-                    "  return space ? window.nibApp.links.build(space.root) : null"
-                    "}",
-                    folder,
-                )
-                # The space has to have been read before the note is: a wikilink
-                # points at a note the index knows about, and the reading view is
-                # drawn once. See link-index.svelte.ts.
-                wait_for(
-                    app,
-                    "() => window.nibApp.links"
-                    f"  .index('/{folder}/{NOTE}').notes"
-                    f"  .some((one) => one.name === {json.dumps(OTHER.replace('.md', ''))})",
-                    "the space to be read through",
-                )
+        # The space, read through. A space is read when it is opened, and
+        # these notes arrived from the Worker after that - so this is the
+        # state a reader is in who opens a space that already has notes.
+        app.evaluate(
+            "(name) => {"
+            "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
+            "  return space ? window.nibApp.links.build(space.root) : null"
+            "}",
+            folder,
+        )
+        # The space has to have been read before the note is: a wikilink
+        # points at a note the index knows about, and the reading view is
+        # drawn once. See link-index.svelte.ts.
+        wait_for(
+            app,
+            "() => window.nibApp.links"
+            f"  .index('/{folder}/{NOTE}').notes"
+            f"  .some((one) => one.name === {json.dumps(OTHER.replace('.md', ''))})",
+            "the space to be read through",
+        )
 
-                app.evaluate(f"() => window.nibApp.workspace.open('/{folder}/{NOTE}')")
-                wait_for(app, "() => !!document.querySelector('.cm-content')", "the editor")
+        app.evaluate(f"() => window.nibApp.workspace.open('/{folder}/{NOTE}')")
+        wait_for(app, "() => !!document.querySelector('.cm-content')", "the editor")
 
-                app.evaluate("() => window.nibApp.workspace.toggleReading()")
-                wait_for(app, "() => !!document.querySelector('#write .callout')", "the reading view")
-                # The diagram drawers load on the first render of a note.
-                app.wait_for_timeout(1500)
+        app.evaluate("() => window.nibApp.workspace.toggleReading()")
+        wait_for(app, "() => !!document.querySelector('#write .callout')", "the reading view")
+        # The diagram drawers load on the first render of a note.
+        app.wait_for_timeout(1500)
 
-                reading = app.evaluate(TREE)
-                if not reading:
-                    raise SystemExit("the reading view rendered nothing")
-                app.screenshot(path=str(SHOTS / "reading-pane.png"))
-                # The whole note in one picture. The app pins the window and
-                # scrolls the pane inside it, so nothing stitches a tall shot
-                # together here: the window is made as tall as the note instead.
-                tall(app)
-                app.locator("#write").screenshot(path=str(SHOTS / "reading.png"))
-                say(f"the reading view is drawn: {len(reading)} elements")
+        reading = app.evaluate(TREE)
+        if not reading:
+            raise SystemExit("the reading view rendered nothing")
+        app.screenshot(path=str(SHOTS / "reading-pane.png"))
+        # The whole note in one picture. The app pins the window and
+        # scrolls the pane inside it, so nothing stitches a tall shot
+        # together here: the window is made as tall as the note instead.
+        tall(app)
+        app.locator("#write").screenshot(path=str(SHOTS / "reading.png"))
+        say(f"the reading view is drawn: {len(reading)} elements")
 
-                # ── The same note, published ─────────────────────────────
-                # The session is started again as the blog's own hostname, which is
-                # how the Worker is asked for a published page; the space and its
-                # notes are on disk from the run above. The browser still talks to
-                # the loopback address, so the page's own links resolve.
-                app.close()
-                worker.stop()
-                worker.start(upstream=f"field.{BLOG_ROOT}")
-
-                asked: list[str] = []
-                page = fresh(browser, "page", f"{ORIGIN}/everything", asked=asked)
-                page.wait_for_selector("#write .callout", timeout=15_000)
-                page.wait_for_timeout(500)
-
-                # ── What the page fetched, and from whom ─────────────────
-                # A face is fetched when something on the page is set in it, so the
-                # equations have to be drawn before the list is read.
-                page.evaluate("async () => { await document.fonts.ready }")
-                elsewhere = sorted({url for url in asked if not url.startswith(ORIGIN)})
-                say(f"the page asked for {len(asked)} addresses:")
-                for url in sorted(set(asked)):
-                    say(f"  {url[len(ORIGIN) :] if url.startswith(ORIGIN) else url}")
-                if elsewhere:
-                    wrong(f"the published page fetched from elsewhere: {', '.join(elsewhere)}")
-
-                # And the maths is drawn in KaTeX's own faces, served from here: a
-                # formula laid out in the reader's serif is what a missing font
-                # looks like, and it looks like nothing is wrong.
-                faces = page.evaluate(
-                    "() => [...document.fonts]"
-                    "  .filter((one) => one.family.startsWith('KaTeX_') && one.status === 'loaded')"
-                    "  .map((one) => one.family).sort()"
-                )
-                drawn = page.evaluate(
-                    "() => {"
-                    "  const found = document.querySelector('#write .katex-display .katex');"
-                    "  return found ? Math.round(found.getBoundingClientRect().width) : 0"
-                    "}"
-                )
-                if not faces:
-                    wrong("the published page drew its maths without any KaTeX face")
-                elif not drawn:
-                    wrong("the published page drew no block equation")
-                else:
-                    say(f"the equation is {drawn}px wide, set in {', '.join(faces)}")
-
-                published = page.evaluate(TREE)
-                if not published:
-                    raise SystemExit("the published page rendered nothing")
-                page.screenshot(path=str(SHOTS / "published-page.png"), full_page=True)
-                page.locator("#write").screenshot(path=str(SHOTS / "published.png"))
-                say(f"the published page is drawn: {len(published)} elements")
-
-                # ── The same page, dark ─────────────────────────────────
-                # A published page has nobody to ask which theme they are in and
-                # no script to ask with, so it reads the browser's own answer.
-                light = page.evaluate("() => getComputedStyle(document.body).backgroundColor")
-                night = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="dark")
-                after = night.new_page()
-                after.goto(f"{ORIGIN}/everything", wait_until="domcontentloaded")
-                after.wait_for_selector("#write .callout", timeout=15_000)
-                tall(after)
-                after.locator("#write").screenshot(path=str(SHOTS / "published-dark.png"))
-
-                if after.evaluate("() => getComputedStyle(document.body).backgroundColor") == light:
-                    wrong("the published page is the same colour in the dark as in the light")
-                night.close()
-
-                # ── The same page? ──────────────────────────────────────
-                one = trimmed(reading)
-                other = trimmed(published)
-
-                if one != other:
-                    diff = [
-                        line
-                        for line in difflib.unified_diff(one, other, "reading", "published", n=2, lineterm="")
-                        if line.strip()
-                    ]
-                    (SHOTS / "difference.txt").write_text("\n".join(diff), "utf-8")
-                    wrong(f"the two differ in {sum(1 for line in diff if line[:1] in '+-') - 2} places")
-                    for line in diff[:40]:
-                        say(line)
-                else:
-                    say(f"the same {len(one)} elements, in the same order, with the same classes")
-
-                for note in ALLOWED:
-                    say(f"allowed: {note}")
-
-                # Whose code runs on the page. It used to be nobody's: a published note
-                # carried no script at all. A site has a search box, a tree, contents,
-                # backlinks and a picture of the space now, and the theme is set before
-                # the first paint by one inline line the policy names by its hash - so
-                # what is checked is not that nothing runs but that only this site's own
-                # does. See services/sync/src/blog/script.ts and shell.ts.
-                carried = page.evaluate(
-                    """() => [...document.querySelectorAll('script')].map((one) => ({
-                         src: one.getAttribute('src') ?? '',
-                         kind: one.getAttribute('type') ?? '',
-                         words: (one.textContent ?? '').trim(),
-                       }))"""
-                )
-                for one in carried:
-                    # The picture of the space arrives as data in a tag of its own,
-                    # which is read rather than run.
-                    if one["kind"] == "application/json":
-                        say("allowed: the graph's own data, which is not code")
-                    elif one["src"]:
-                        if one["src"].startswith(OWN_SCRIPT):
-                            say(f"allowed: the site's own script at {one['src']}")
-                        else:
-                            wrong(f"the published page carries somebody else's script: {one['src']!r}")
-                    elif THEME_LINE in one["words"]:
-                        say("allowed: the one inline line that sets the theme before the first paint")
-                    else:
-                        wrong(f"the published page carries an inline script: {one['words'][:80]!r}")
-                if not page.evaluate(
-                    "() => [...document.styleSheets].some((one) => (one.href ?? '').includes('/s/'))"
-                ):
-                    wrong("the published page is not wearing the app's stylesheet")
-            finally:
-                browser.close()
-    finally:
+        # ── The same note, published ─────────────────────────────
+        # The session is started again as the blog's own hostname, which is
+        # how the Worker is asked for a published page; the space and its
+        # notes are on disk from the run above. The browser still talks to
+        # the loopback address, so the page's own links resolve.
+        app.close()
         worker.stop()
+        worker.start(upstream=f"field.{BLOG_ROOT}")
+
+        asked: list[str] = []
+        page = fresh(browser, "page", f"{ORIGIN}/everything", asked=asked)
+        page.wait_for_selector("#write .callout", timeout=15_000)
+        page.wait_for_timeout(500)
+
+        # ── What the page fetched, and from whom ─────────────────
+        # A face is fetched when something on the page is set in it, so the
+        # equations have to be drawn before the list is read.
+        page.evaluate("async () => { await document.fonts.ready }")
+        elsewhere = sorted({url for url in asked if not url.startswith(ORIGIN)})
+        say(f"the page asked for {len(asked)} addresses:")
+        for url in sorted(set(asked)):
+            say(f"  {url[len(ORIGIN) :] if url.startswith(ORIGIN) else url}")
+        if elsewhere:
+            wrong(f"the published page fetched from elsewhere: {', '.join(elsewhere)}")
+
+        # And the maths is drawn in KaTeX's own faces, served from here: a
+        # formula laid out in the reader's serif is what a missing font
+        # looks like, and it looks like nothing is wrong.
+        faces = page.evaluate(
+            "() => [...document.fonts]"
+            "  .filter((one) => one.family.startsWith('KaTeX_') && one.status === 'loaded')"
+            "  .map((one) => one.family).sort()"
+        )
+        drawn = page.evaluate(
+            "() => {"
+            "  const found = document.querySelector('#write .katex-display .katex');"
+            "  return found ? Math.round(found.getBoundingClientRect().width) : 0"
+            "}"
+        )
+        if not faces:
+            wrong("the published page drew its maths without any KaTeX face")
+        elif not drawn:
+            wrong("the published page drew no block equation")
+        else:
+            say(f"the equation is {drawn}px wide, set in {', '.join(faces)}")
+
+        published = page.evaluate(TREE)
+        if not published:
+            raise SystemExit("the published page rendered nothing")
+        page.screenshot(path=str(SHOTS / "published-page.png"), full_page=True)
+        page.locator("#write").screenshot(path=str(SHOTS / "published.png"))
+        say(f"the published page is drawn: {len(published)} elements")
+
+        # ── The same page, dark ─────────────────────────────────
+        # A published page has nobody to ask which theme they are in and
+        # no script to ask with, so it reads the browser's own answer.
+        light = page.evaluate("() => getComputedStyle(document.body).backgroundColor")
+        night = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="dark")
+        after = night.new_page()
+        after.goto(f"{ORIGIN}/everything", wait_until="domcontentloaded")
+        after.wait_for_selector("#write .callout", timeout=15_000)
+        tall(after)
+        after.locator("#write").screenshot(path=str(SHOTS / "published-dark.png"))
+
+        if after.evaluate("() => getComputedStyle(document.body).backgroundColor") == light:
+            wrong("the published page is the same colour in the dark as in the light")
+        night.close()
+
+        # ── The same page? ──────────────────────────────────────
+        one = trimmed(reading)
+        other = trimmed(published)
+
+        if one != other:
+            diff = [
+                line
+                for line in difflib.unified_diff(one, other, "reading", "published", n=2, lineterm="")
+                if line.strip()
+            ]
+            (SHOTS / "difference.txt").write_text("\n".join(diff), "utf-8")
+            wrong(f"the two differ in {sum(1 for line in diff if line[:1] in '+-') - 2} places")
+            for line in diff[:40]:
+                say(line)
+        else:
+            say(f"the same {len(one)} elements, in the same order, with the same classes")
+
+        for note in ALLOWED:
+            say(f"allowed: {note}")
+
+        # Whose code runs on the page. It used to be nobody's: a published note
+        # carried no script at all. A site has a search box, a tree, contents,
+        # backlinks and a picture of the space now, and the theme is set before
+        # the first paint by one inline line the policy names by its hash - so
+        # what is checked is not that nothing runs but that only this site's own
+        # does. See services/sync/src/blog/script.ts and shell.ts.
+        carried = page.evaluate(
+            """() => [...document.querySelectorAll('script')].map((one) => ({
+                 src: one.getAttribute('src') ?? '',
+                 kind: one.getAttribute('type') ?? '',
+                 words: (one.textContent ?? '').trim(),
+               }))"""
+        )
+        for one in carried:
+            # The picture of the space arrives as data in a tag of its own,
+            # which is read rather than run.
+            if one["kind"] == "application/json":
+                say("allowed: the graph's own data, which is not code")
+            elif one["src"]:
+                if one["src"].startswith(OWN_SCRIPT):
+                    say(f"allowed: the site's own script at {one['src']}")
+                else:
+                    wrong(f"the published page carries somebody else's script: {one['src']!r}")
+            elif THEME_LINE in one["words"]:
+                say("allowed: the one inline line that sets the theme before the first paint")
+            else:
+                wrong(f"the published page carries an inline script: {one['words'][:80]!r}")
+        if not page.evaluate(
+            "() => [...document.styleSheets].some((one) => (one.href ?? '').includes('/s/'))"
+        ):
+            wrong("the published page is not wearing the app's stylesheet")
 
     if failures:
         print("\nFAILED", flush=True)

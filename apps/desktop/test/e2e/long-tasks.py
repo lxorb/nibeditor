@@ -36,27 +36,17 @@ and is reported rather than gated.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
+from harness import Drive
 
-#: Not the dev server's, and not smoke.py's or any other drive's.
-PORT = 18853
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wait_for = DRIVE.say, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+
 
 #: How many notes the fixed space holds.
 NOTES = 100
@@ -134,64 +124,6 @@ async (count) => {
 """
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-    say("building the web app in drive")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        # Cached the way a returning reader's browser caches it, so the launch
-        # measured is the app's and not the file server's.
-        self.send_header("Cache-Control", "max-age=3600")
-        super().end_headers()
-
-
-def serve() -> socketserver.TCPServer:
-    handler = functools.partial(Quiet, directory=str(DIST))
-    server = socketserver.ThreadingTCPServer(("127.0.0.1", PORT), handler)
-    server.daemon_threads = True
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-    raise SystemExit(f"gave up waiting for {what}")
-
-
 def marks(page: Page) -> dict[str, float]:
     return page.evaluate(
         "() => Object.fromEntries(performance.getEntriesByType('mark')"
@@ -201,49 +133,41 @@ def marks(page: Page) -> dict[str, float]:
 
 
 def main() -> int:
-    build()
-    server = serve()
     slowed = float(os.environ.get("NIB_CPU") or 1)
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-            context = browser.new_context(viewport={"width": 1180, "height": 820})
-            context.add_init_script(OBSERVE)
-            page = context.new_page()
-            page.goto(ORIGIN, wait_until="domcontentloaded")
-            wait_for(page, "window.nibApp?.workspace?.activeSpace", "a space")
-            wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
-            say(f"the space holds {page.evaluate(SEED, NOTES)} notes")
-            # Written as a returning reader's session is, then the machine timed while
-            # nothing else in the page is running.
-            page.wait_for_timeout(1500)
-            bench = min(page.evaluate(BENCH) for _ in range(7))
+    with DRIVE.session() as browser:
+        context = browser.new_context(viewport={"width": 1180, "height": 820})
+        context.add_init_script(OBSERVE)
+        page = context.new_page()
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        wait_for(page, "window.nibApp?.workspace?.activeSpace", "a space")
+        wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+        say(f"the space holds {page.evaluate(SEED, NOTES)} notes")
+        # Written as a returning reader's session is, then the machine timed while
+        # nothing else in the page is running.
+        page.wait_for_timeout(1500)
+        bench = min(page.evaluate(BENCH) for _ in range(7))
 
-            session = context.new_cdp_session(page)
-            if slowed != 1:
-                session.send("Emulation.setCPUThrottlingRate", {"rate": slowed})
-            page.reload(wait_until="commit")
-            wait_for(
-                page,
-                "performance.getEntriesByName('nib: launch order finished').length",
-                "the launch order",
-            )
-            # The last turn's fetches land a moment after the turn itself.
-            page.wait_for_timeout(1000)
-            if slowed != 1:
-                session.send("Emulation.setCPUThrottlingRate", {"rate": 1})
+        session = context.new_cdp_session(page)
+        if slowed != 1:
+            session.send("Emulation.setCPUThrottlingRate", {"rate": slowed})
+        page.reload(wait_until="commit")
+        wait_for(
+            page,
+            "performance.getEntriesByName('nib: launch order finished').length",
+            "the launch order",
+        )
+        # The last turn's fetches land a moment after the turn itself.
+        page.wait_for_timeout(1000)
+        if slowed != 1:
+            session.send("Emulation.setCPUThrottlingRate", {"rate": 1})
 
-            seen = marks(page)
-            marks_all = page.evaluate(
-                "() => performance.getEntriesByType('mark')"
-                ".filter((one) => one.name.startsWith('nib: '))"
-                ".map((one) => [one.name.slice(5), one.startTime])"
-            )
-            tasks = page.evaluate("() => window.__longTasks")
-            browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
+        seen = marks(page)
+        marks_all = page.evaluate(
+            "() => performance.getEntriesByType('mark')"
+            ".filter((one) => one.name.startsWith('nib: '))"
+            ".map((one) => [one.name.slice(5), one.startTime])"
+        )
+        tasks = page.evaluate("() => window.__longTasks")
 
     # From the first frame to the end of the launch order, less the task that builds
     # the editor the note it was left on arrives in. That task is the note arriving
