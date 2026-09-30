@@ -47,6 +47,8 @@ describe('on Windows and Linux', () => {
       ['r', null],
       ['c', null],
       ['d', null],
+      // End of input to a shell, and Deselect tab everywhere else.
+      ['d', 'app.deselect-tab'],
     ] as const) {
       expect(routeKey(press(key, ctrl), 'win', command, false), key).toBe('shell')
     }

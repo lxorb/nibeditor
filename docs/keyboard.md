@@ -482,7 +482,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
 | Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it |
-| Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
