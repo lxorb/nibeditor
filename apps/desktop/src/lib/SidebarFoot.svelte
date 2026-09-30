@@ -21,7 +21,7 @@
   import { sync } from './sync.svelte'
   import { t } from './i18n.svelte'
   import { theme } from './theme.svelte'
-  import { titled } from './titled'
+  import { shortcuts } from './shortcuts.svelte'
 
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
@@ -33,7 +33,7 @@
   function syncTitle(): string {
     if (sync.status === 'syncing') return t('Syncing')
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
-    return titled(t('Settings'), 'app.settings')
+    return shortcuts.tooltip(t('Settings'), 'app.settings')
   }
 
   /** Every theme, each shown on the whole app while it is pointed at: a right click

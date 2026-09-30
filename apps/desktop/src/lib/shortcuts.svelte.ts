@@ -32,6 +32,7 @@ import {
 } from './shortcuts/registry'
 import { isRecord, keep, stored, storedText } from './stored'
 import { isNative } from './tauri'
+import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
@@ -113,6 +114,21 @@ class Shortcuts {
   hint(id: string): string | undefined {
     const key = this.keyFor(id)
     return key ? showCombination(key, this.platform) : undefined
+  }
+
+  /** What a button's tooltip says: its name, and the key that does the same thing.
+   *
+   *  `Back (Alt+←)`, and `Back (⌃[)` on a Mac: VS Code's shape, a name with the key in
+   *  brackets after it, which Edge and Firefox put on their own toolbars too. A button
+   *  that says its key once is how a hand learns the keyboard, and after that the button
+   *  is there for the times it is on the pointer instead. The key is the one held now, so
+   *  a key rebound in Settings is the next hover's, and a key taken away takes the
+   *  brackets with it. A touch screen is shown the name alone: a key means nothing to a
+   *  thumb. The brackets are a catalogue row, so a language that brackets differently
+   *  can say so. */
+  tooltip(label: string, id: string | null = null): string {
+    const key = id !== null && !viewport.touch ? this.hint(id) : undefined
+    return key ? t('{label} ({key})', { label, key }) : label
   }
 
   /** The entries a combination would collide with.

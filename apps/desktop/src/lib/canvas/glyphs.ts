@@ -52,7 +52,7 @@ import type { IconNode } from 'lucide'
 import { type InkTool } from './format'
 import { type Tool } from './pointer'
 import { t } from '../i18n.svelte'
-import { titled } from '../titled'
+import { shortcuts } from '../shortcuts.svelte'
 
 /** One button on the bar. */
 export interface Mark {
@@ -69,11 +69,11 @@ export interface ToolMark extends Mark {
 }
 
 /** What a hover says: the name, and the key that does the same thing, in the words
- *  every other button in the app says it with; see titled.ts. This is how the bar
- *  teaches the keyboard: somebody reads "Rectangle (R)" once, and after that the
- *  button is there for the times their hand is on the glass rather than on the keys. */
+ *  every other button in the app says it with; see `tooltip` in shortcuts.svelte.ts.
+ *  This is how the bar teaches the keyboard: somebody reads "Rectangle (R)" once, and
+ *  after that the button is there for the times their hand is on the glass. */
 export function hinted(mark: Pick<Mark, 'title' | 'key'>): string {
-  return titled(mark.title(), mark.key)
+  return shortcuts.tooltip(mark.title(), mark.key)
 }
 
 /** Getting about the plane: the arrow, and the hand that moves it. */

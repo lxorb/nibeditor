@@ -24,7 +24,7 @@
   import NameField from './NameField.svelte'
   import { overlays } from './overlays'
   import { roving } from './roving'
-  import { titled } from './titled'
+  import { shortcuts } from './shortcuts.svelte'
   import { trap } from './trap'
   import { commitSpaceName, newSpace, spaceMenu } from './space-actions'
   import SharedMark from './SharedMark.svelte'
@@ -143,7 +143,7 @@
   <button
     class={bare ? 'nib-glyph bare' : 'name'}
     class:open
-    title={titled(bare ? called : name, 'space.switcher')}
+    title={shortcuts.tooltip(bare ? called : name, 'space.switcher')}
     aria-label={bare ? called : undefined}
     aria-haspopup="menu"
     aria-expanded={open}
