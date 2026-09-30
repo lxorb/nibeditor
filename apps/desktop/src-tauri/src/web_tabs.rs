@@ -3064,9 +3064,23 @@ mod tests {
         );
     }
 
+    /// nib's own Chromium hands a page the same script, asking through its binding.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
+        assert_eq!(
+            opening(None, "https://a.example/page"),
+            format!(
+                "{};
+",
+                crate::web_opens::script()
+            )
+        );
+    }
+
     /// And every other engine is handed nothing at all until there is a place to put
     /// back.
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(all(not(windows), not(feature = "cef")))]
     #[test]
     fn a_page_is_handed_nothing() {
         assert_eq!(opening(None, "https://a.example/page"), "");
