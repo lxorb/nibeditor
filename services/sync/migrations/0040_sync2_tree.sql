@@ -2,10 +2,10 @@
 -- the operations that move either applied once each. See docs/sync-v2.md sections 5.9
 -- and 8, and services/sync/src/sync2/.
 --
--- Numbered 0040 although 0041 and 0042 landed first. `wrangler d1 migrations apply`
+-- Numbered 0040 although 0041 to 0043 landed first. `wrangler d1 migrations apply`
 -- applies every file whose name is not yet in `d1_migrations`, in name order, so on a
--- database that already has 0041 and 0042 this one simply runs next; nothing in it
--- reads or writes what those two made.
+-- database that already has those this one simply runs next; nothing in it reads or
+-- writes what they made.
 
 -- A folder, which until now was only a word in a path. `name_key` is the name as a
 -- folder on Windows or a Mac compares it (NFC, without case), which is what two live

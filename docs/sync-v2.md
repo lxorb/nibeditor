@@ -1173,7 +1173,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   Chromium (`cef`) has no capture, so there leases never start.
 
 **As built** (lane `sync-server-docs`, `services/sync/src/sync2/` and `src/rooms/`),
-where it adds to the above:
+where it adds to the routes of this section:
 
 - Every v2 route reads a framed envelope (`application/octet-stream`) or plain JSON, and
   answers in the shape it was asked in (`accept: application/octet-stream` asks for an
@@ -1300,9 +1300,9 @@ entry (so a folder restored brings back what went with it).
 place its note as a tree create on the first epoch), and `space_entries (space_id, map,
 key, value, seq, at, by)`, the per-entry maps of 5.11. `tree_ops.op_id` is
 `<space>/<op>`, so no device reaches another space's answers. The number is 0040 though
-0041 and 0042 landed first: `wrangler d1 migrations apply` applies every file not yet in
+0041 to 0043 landed first: `wrangler d1 migrations apply` applies every file not yet in
 `d1_migrations`, so it runs next on the live database and first on a fresh one, and
-nothing in it touches what 0041 or 0042 made. The tree is serialised without an object
+nothing in it touches what 0041 to 0043 made. The tree is serialised without an object
 per space: each batch is guarded by the space's cursor and done again from a fresh read
 when another write moved it. Every note whose path a change moved (a renamed folder's
 descendants too, in Recently deleted as well) takes a cursor of its own, because a v1
