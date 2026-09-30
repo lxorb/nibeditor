@@ -5,6 +5,7 @@ export const bn: Dictionary = {
   Save: 'সেভ',
   'New note': 'নতুন নোট',
   'Open file': 'ফাইল খুলুন',
+  'Random note': 'এলোমেলো নোট',
   'New note inside': 'ভিতরে নতুন নোট',
   'New canvas': 'নতুন ক্যানভাস',
   'New page note': 'নতুন পাতার নোট',

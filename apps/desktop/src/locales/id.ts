@@ -5,6 +5,7 @@ export const id: Dictionary = {
   Save: 'Simpan',
   'New note': 'Catatan baru',
   'Open file': 'Buka berkas',
+  'Random note': 'Catatan acak',
   'New note inside': 'Catatan baru di dalam',
   'New canvas': 'Kanvas baru',
   'New page note': 'Catatan halaman baru',

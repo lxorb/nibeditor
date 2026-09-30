@@ -5,6 +5,7 @@ export const am: Dictionary = {
   Save: 'አስቀምጥ',
   'New note': 'አዲስ ማስታወሻ',
   'Open file': 'ፋይል ክፈት',
+  'Random note': 'የዘፈቀደ ማስታወሻ',
   'New note inside': 'ውስጡ አዲስ ማስታወሻ',
   'New canvas': 'አዲስ ሸራ',
   'New page note': 'አዲስ የገጾች ማስታወሻ',

@@ -5,6 +5,7 @@ export const ko: Dictionary = {
   Save: '저장',
   'New note': '새 노트',
   'Open file': '파일 열기',
+  'Random note': '무작위 노트',
   'New note inside': '안에 새 노트',
   'New canvas': '새 캔버스',
   'New page note': '새 페이지 노트',

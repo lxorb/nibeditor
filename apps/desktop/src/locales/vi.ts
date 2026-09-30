@@ -5,6 +5,7 @@ export const vi: Dictionary = {
   Save: 'Lưu',
   'New note': 'Ghi chú mới',
   'Open file': 'Mở tệp',
+  'Random note': 'Ghi chú ngẫu nhiên',
   'New note inside': 'Ghi chú mới bên trong',
   'New canvas': 'Canvas mới',
   'New page note': 'Ghi chú nhiều trang mới',

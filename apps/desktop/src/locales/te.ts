@@ -5,6 +5,7 @@ export const te: Dictionary = {
   Save: 'సేవ్ చేయి',
   'New note': 'కొత్త నోట్',
   'Open file': 'ఫైల్ తెరువు',
+  'Random note': 'యాదృచ్ఛిక నోట్',
   'New note inside': 'ఇందులో కొత్త నోట్',
   'New canvas': 'కొత్త క్యాన్వాస్',
   'New page note': 'కొత్త పేజీ నోట్',

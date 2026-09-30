@@ -5,6 +5,7 @@ export const ms: Dictionary = {
   Save: 'Simpan',
   'New note': 'Nota baharu',
   'Open file': 'Buka fail',
+  'Random note': 'Nota rawak',
   'New note inside': 'Nota baharu di dalam',
   'New canvas': 'Kanvas baharu',
   'New page note': 'Nota halaman baharu',

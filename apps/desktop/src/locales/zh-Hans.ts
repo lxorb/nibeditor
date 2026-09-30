@@ -5,6 +5,7 @@ export const zhHans: Dictionary = {
   Save: '保存',
   'New note': '新建笔记',
   'Open file': '打开文件',
+  'Random note': '随机笔记',
   'New note inside': '在其中新建笔记',
   'New canvas': '新建画布',
   'New page note': '新建分页笔记',

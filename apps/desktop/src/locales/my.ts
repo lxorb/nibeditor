@@ -5,6 +5,7 @@ export const my: Dictionary = {
   Save: 'သိမ်းဆည်း',
   'New note': 'မှတ်စုအသစ်',
   'Open file': 'ဖိုင်ဖွင့်',
+  'Random note': 'ကျပန်းမှတ်စု',
   'New note inside': 'အထဲတွင်မှတ်စုအသစ်',
   'New canvas': 'ကန်ဗတ်အသစ်',
   'New page note': 'စာမျက်နှာမှတ်စုအသစ်',

@@ -5,6 +5,7 @@ export const ar: Dictionary = {
   Save: 'حفظ',
   'New note': 'ملاحظة جديدة',
   'Open file': 'فتح ملف',
+  'Random note': 'ملاحظة عشوائية',
   'New note inside': 'ملاحظة جديدة بالداخل',
   'New canvas': 'لوحة جديدة',
   'New page note': 'ملاحظة صفحات جديدة',

@@ -90,6 +90,7 @@ import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openFile } from './open-file'
+import { openRandomNote, randomChoices } from './random-note'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -1024,6 +1025,15 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Open file'),
       hint: shortcuts.hint('app.open'),
       run: () => void openFile(),
+    },
+    // Greyed where there is nothing else to open: a space of one note, or of notes
+    // that are all left out. See random-note.ts.
+    {
+      id: 'random-note',
+      label: t('Random note'),
+      hint: shortcuts.hint('app.random-note'),
+      disabled: !randomChoices().length,
+      run: () => openRandomNote(),
     },
     ...(imported ? [imported] : []),
     {

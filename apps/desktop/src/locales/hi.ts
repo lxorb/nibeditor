@@ -5,6 +5,7 @@ export const hi: Dictionary = {
   Save: 'सहेजें',
   'New note': 'नया नोट',
   'Open file': 'फ़ाइल खोलें',
+  'Random note': 'यादृच्छिक नोट',
   'New note inside': 'इसमें नया नोट',
   'New canvas': 'नया कैनवास',
   'New page note': 'नया पृष्ठ नोट',

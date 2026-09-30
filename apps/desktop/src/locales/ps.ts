@@ -5,6 +5,7 @@ export const ps: Dictionary = {
   Save: 'خوندول',
   'New note': 'نوې يادښت',
   'Open file': 'دوتنه پرانيستل',
+  'Random note': 'تصادفي يادښت',
   'New note inside': 'په دې کې نوې يادښت',
   'New canvas': 'نوی تخته',
   'New page note': 'نوې د مخونو يادښت',

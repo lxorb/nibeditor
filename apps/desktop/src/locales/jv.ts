@@ -5,6 +5,7 @@ export const jv: Dictionary = {
   Save: 'Simpen',
   'New note': 'Cathetan anyar',
   'Open file': 'Bukak berkas',
+  'Random note': 'Cathetan acak',
   'New note inside': 'Cathetan anyar ing njero',
   'New canvas': 'Kanvas anyar',
   'New page note': 'Cathetan kaca anyar',

@@ -5,6 +5,7 @@ export const gu: Dictionary = {
   Save: 'સાચવો',
   'New note': 'નવી નોંધ',
   'Open file': 'ફાઇલ ખોલો',
+  'Random note': 'યાદૃચ્છિક નોંધ',
   'New note inside': 'અંદર નવી નોંધ',
   'New canvas': 'નવું કેનવાસ',
   'New page note': 'નવી પાનાંવાળી નોંધ',

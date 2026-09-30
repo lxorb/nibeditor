@@ -5,6 +5,7 @@ export const kn: Dictionary = {
   Save: 'ಉಳಿಸಿ',
   'New note': 'ಹೊಸ ಟಿಪ್ಪಣಿ',
   'Open file': 'ಫೈಲ್ ತೆರೆಯಿರಿ',
+  'Random note': 'ಯಾದೃಚ್ಛಿಕ ಟಿಪ್ಪಣಿ',
   'New note inside': 'ಇದರೊಳಗೆ ಹೊಸ ಟಿಪ್ಪಣಿ',
   'New canvas': 'ಹೊಸ ಕ್ಯಾನ್ವಾಸ್',
   'New page note': 'ಹೊಸ ಪುಟ ಟಿಪ್ಪಣಿ',

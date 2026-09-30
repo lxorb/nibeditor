@@ -5,6 +5,7 @@ export const ptPT: Dictionary = {
   Save: 'Guardar',
   'New note': 'Nova nota',
   'Open file': 'Abrir ficheiro',
+  'Random note': 'Nota aleatória',
   'New note inside': 'Nova nota dentro',
   'New canvas': 'Nova tela',
   'New page note': 'Nova nota de páginas',

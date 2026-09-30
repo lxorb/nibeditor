@@ -5,6 +5,7 @@ export const ur: Dictionary = {
   Save: 'محفوظ کریں',
   'New note': 'نیا نوٹ',
   'Open file': 'فائل کھولیں',
+  'Random note': 'بے ترتیب نوٹ',
   'New note inside': 'اندر نیا نوٹ',
   'New canvas': 'نیا کینوس',
   'New page note': 'نیا صفحات والا نوٹ',

@@ -329,6 +329,15 @@ const APP_ENTRIES: Shortcut[] = [
     // the app menu's rows bring that as the launch ends; see `warmDoors`.
     run: () => void import('../open-file').then(({ openFile }) => openFile()),
   },
+  // Obsidian's Random note. No key out of the box, as there; see random-note.ts.
+  {
+    id: 'app.random-note',
+    label: () => t('Random note'),
+    category: 'file',
+    scope: 'app',
+    key: null,
+    run: () => void import('../random-note').then(({ openRandomNote }) => openRandomNote()),
+  },
   {
     id: 'app.close',
     label: () => t('Close note'),

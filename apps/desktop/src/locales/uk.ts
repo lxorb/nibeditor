@@ -5,6 +5,7 @@ export const uk: Dictionary = {
   Save: 'Зберегти',
   'New note': 'Нова нотатка',
   'Open file': 'Відкрити файл',
+  'Random note': 'Випадкова нотатка',
   'New note inside': 'Нова нотатка всередині',
   'New canvas': 'Нове полотно',
   'New page note': 'Нова нотатка зі сторінками',

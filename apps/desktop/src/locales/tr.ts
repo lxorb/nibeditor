@@ -5,6 +5,7 @@ export const tr: Dictionary = {
   Save: 'Kaydet',
   'New note': 'Yeni not',
   'Open file': 'Dosya aç',
+  'Random note': 'Rastgele not',
   'New note inside': 'İçine yeni not',
   'New canvas': 'Yeni tuval',
   'New page note': 'Yeni sayfalı not',

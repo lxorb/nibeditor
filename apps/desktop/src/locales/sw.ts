@@ -5,6 +5,7 @@ export const sw: Dictionary = {
   Save: 'Hifadhi',
   'New note': 'Dokezo jipya',
   'Open file': 'Fungua faili',
+  'Random note': 'Dokezo la nasibu',
   'New note inside': 'Dokezo jipya ndani',
   'New canvas': 'Turubai jipya',
   'New page note': 'Dokezo jipya la kurasa',

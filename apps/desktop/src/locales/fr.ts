@@ -5,6 +5,7 @@ export const fr: Dictionary = {
   Save: 'Enregistrer',
   'New note': 'Nouvelle note',
   'Open file': 'Ouvrir un fichier',
+  'Random note': 'Note au hasard',
   'New note inside': 'Nouvelle note dedans',
   'New canvas': 'Nouveau canevas',
   'New page note': 'Nouvelle note en pages',

@@ -5,6 +5,7 @@ export const ru: Dictionary = {
   Save: 'Сохранить',
   'New note': 'Новая заметка',
   'Open file': 'Открыть файл',
+  'Random note': 'Случайная заметка',
   'New note inside': 'Новая заметка внутри',
   'New canvas': 'Новое полотно',
   'New page note': 'Новая заметка со страницами',

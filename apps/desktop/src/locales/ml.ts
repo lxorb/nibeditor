@@ -5,6 +5,7 @@ export const ml: Dictionary = {
   Save: 'സേവ് ചെയ്യുക',
   'New note': 'പുതിയ കുറിപ്പ്',
   'Open file': 'ഫയൽ തുറക്കുക',
+  'Random note': 'ക്രമരഹിതമായ കുറിപ്പ്',
   'New note inside': 'ഇതിനുള്ളിൽ പുതിയ കുറിപ്പ്',
   'New canvas': 'പുതിയ ക്യാൻവാസ്',
   'New page note': 'പുതിയ താൾ കുറിപ്പ്',

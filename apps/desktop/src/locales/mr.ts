@@ -5,6 +5,7 @@ export const mr: Dictionary = {
   Save: 'जतन करा',
   'New note': 'नवीन नोंद',
   'Open file': 'फाइल उघडा',
+  'Random note': 'यादृच्छिक नोंद',
   'New note inside': 'यात नवीन नोंद',
   'New canvas': 'नवीन कॅनव्हास',
   'New page note': 'नवी पानांची नोंद',

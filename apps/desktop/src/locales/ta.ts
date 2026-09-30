@@ -5,6 +5,7 @@ export const ta: Dictionary = {
   Save: 'சேமி',
   'New note': 'புதிய குறிப்பு',
   'Open file': 'கோப்பைத் திற',
+  'Random note': 'சீரற்ற குறிப்பு',
   'New note inside': 'இதனுள் புதிய குறிப்பு',
   'New canvas': 'புதிய கேன்வாஸ்',
   'New page note': 'புதிய பக்கக் குறிப்பு',

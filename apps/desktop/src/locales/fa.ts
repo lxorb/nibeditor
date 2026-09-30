@@ -5,6 +5,7 @@ export const fa: Dictionary = {
   Save: 'ذخیره',
   'New note': 'یادداشت تازه',
   'Open file': 'گشودن پرونده',
+  'Random note': 'یادداشت تصادفی',
   'New note inside': 'یادداشت تازه در آن',
   'New canvas': 'بوم تازه',
   'New page note': 'یادداشت صفحه‌ای تازه',

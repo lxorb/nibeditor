@@ -5,6 +5,7 @@ export const zhHantHK: Dictionary = {
   Save: '儲存',
   'New note': '新增筆記',
   'Open file': '開啟檔案',
+  'Random note': '隨機筆記',
   'New note inside': '在其中新增筆記',
   'New canvas': '新增畫布',
   'New page note': '新增分頁筆記',

@@ -5,6 +5,7 @@ export const ha: Dictionary = {
   Save: 'Ajiye',
   'New note': 'Sabuwar bayanin kula',
   'Open file': 'Buɗe fayil',
+  'Random note': 'Bayanin kula na bazata',
   'New note inside': 'Sabon bayanin kula a ciki',
   'New canvas': 'Sabon kanbas',
   'New page note': 'Sabon bayanin kula na shafuka',

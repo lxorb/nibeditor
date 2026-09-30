@@ -5,6 +5,7 @@ export const ja: Dictionary = {
   Save: '保存',
   'New note': '新しいノート',
   'Open file': 'ファイルを開く',
+  'Random note': 'ランダムなノート',
   'New note inside': 'この中に新しいノート',
   'New canvas': '新しいキャンバス',
   'New page note': '新しいページノート',

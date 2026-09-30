@@ -5,6 +5,7 @@ export const pa: Dictionary = {
   Save: 'ਸਾਂਭੋ',
   'New note': 'ਨਵੀਂ ਨੋਟ',
   'Open file': 'ਫ਼ਾਈਲ ਖੋਲ੍ਹੋ',
+  'Random note': 'ਬੇਤਰਤੀਬ ਨੋਟ',
   'New note inside': 'ਅੰਦਰ ਨਵੀਂ ਨੋਟ',
   'New canvas': 'ਨਵਾਂ ਕੈਨਵਸ',
   'New page note': 'ਨਵੀਂ ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',

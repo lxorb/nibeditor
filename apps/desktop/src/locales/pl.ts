@@ -5,6 +5,7 @@ export const pl: Dictionary = {
   Save: 'Zapisz',
   'New note': 'Nowa notatka',
   'Open file': 'Otwórz plik',
+  'Random note': 'Losowa notatka',
   'New note inside': 'Nowa notatka w środku',
   'New canvas': 'Nowa kanwa',
   'New page note': 'Nowa notatka ze stronami',

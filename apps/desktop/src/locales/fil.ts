@@ -5,6 +5,7 @@ export const fil: Dictionary = {
   Save: 'I-save',
   'New note': 'Bagong tala',
   'Open file': 'Buksan ang file',
+  'Random note': 'Random na tala',
   'New note inside': 'Bagong tala sa loob',
   'New canvas': 'Bagong canvas',
   'New page note': 'Bagong talang may pahina',

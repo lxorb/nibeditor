@@ -5,6 +5,7 @@ export const th: Dictionary = {
   Save: 'บันทึก',
   'New note': 'โน้ตใหม่',
   'Open file': 'เปิดไฟล์',
+  'Random note': 'โน้ตแบบสุ่ม',
   'New note inside': 'สร้างโน้ตข้างใน',
   'New canvas': 'แคนวาสใหม่',
   'New page note': 'โน้ตแบบหน้าใหม่',
