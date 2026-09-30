@@ -83,7 +83,9 @@ tauri-plugin-os = "2"
 # installer and a phone in its manifest, and the arriving half is the same code.
 tauri-plugin-deep-link = "2"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# `raw_value` so a web state's IndexedDB dump passes through as the text the page
+# wrote rather than being parsed into a tree and printed again; see web_state.rs.
+serde_json = { version = "1", features = ["raw_value"] }
 # Bytes cross the bridge as base64: an export is a Word file, an ePub or a
 # picture, and JSON digits would cost six characters a byte. Already in the lock
 # file as something tauri builds with, so this adds nothing to the build.
@@ -143,6 +145,25 @@ window-vibrancy = "0.6"
 # Wezterm's own crate: it hands over a reader, a writer, a resize and the child, and
 # nothing else. See src/terminal.rs.
 portable-pty = "0.9"
+# A web login carried between computers is sealed on the device and opened only on
+# another of the person's own: an X25519 key pair per computer, the web key wrapped
+# to each one in a sealed box, and every bundle XChaCha20-Poly1305 under a key HKDF
+# derives from it, named by HMAC-SHA256. RustCrypto's own crates, pure Rust, and a
+# desktop's alone: a phone never holds the web key. hkdf and hmac are in the lock
+# file already, through the keychain's Secret Service transport, and sha2 is above.
+# See src/web_state/crypto.rs and docs/sync-v2.md 6.6.
+x25519-dalek = { version = "2", default-features = false, features = [
+  "static_secrets",
+  "zeroize",
+] }
+chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
+hkdf = "0.12"
+hmac = "0.12"
+zeroize = "1"
+# How long a web state's capture or restore waits for the engine before it gives up,
+# which is tokio's timer. Tauri runs on tokio already and builds its runtime with every
+# driver the features compile in; this is the one feature it does not ask for itself.
+tokio = { version = "1", default-features = false, features = ["time"] }
 
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
 # the only way into them: Notes has no export. Bundled so the read does not depend
@@ -233,6 +254,10 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
   "objc2-app-kit",
   "block2",
+  # A web state's scripts run in a world of their own, and a hidden page is made an
+  # origin with an HTML string; see web_state/isolated.rs and restore_view.rs.
+  "WKContentWorld",
+  "WKNavigation",
   "WKDownload",
   "WKFrameInfo",
   "WKHTTPCookieStore",
@@ -247,6 +272,13 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebViewConfiguration",
   "WKWebsiteDataStore",
 ] }
+
+# WebKitGTK as the objects wry hands out, at the versions it is built against, for a web
+# state's scripts: a script world of their own and an async function call need 2.40,
+# which every distribution nib is packaged for has. See web_state/isolated.rs.
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
+javascriptcore-rs = "=1.1.2"
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

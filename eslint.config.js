@@ -130,8 +130,10 @@ export default tseslint.config(
     // The asset worker is a page of its own: a classic script served from the
     // root of the site rather than a module in the app's graph, so no tsconfig
     // covers it and the rules that need types cannot see it. The plain rules
-    // still apply. See apps/desktop/public/sw.js for why it is written that way.
-    files: ['apps/desktop/public/*.js'],
+    // still apply. See apps/desktop/public/sw.js for why it is written that way. The web
+    // state scripts are the same kind of thing: page scripts the crate runs in a site's
+    // own page, never modules of the app; see src-tauri/src/web_state.rs.
+    files: ['apps/desktop/public/*.js', 'apps/desktop/src-tauri/src/web_state/scripts/*.js'],
     ...tseslint.configs.disableTypeChecked,
   },
   {

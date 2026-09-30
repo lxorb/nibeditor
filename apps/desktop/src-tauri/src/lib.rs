@@ -130,6 +130,8 @@ mod web_page;
 #[cfg(desktop)]
 mod web_reload;
 #[cfg(desktop)]
+mod web_state;
+#[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;
@@ -280,6 +282,19 @@ macro_rules! desktop_commands {
             downloads::web_download_open,
             downloads::web_download_show,
             downloads::web_download_cancel,
+            // A web login carried between computers; see web_state.rs.
+            web_state::web_state_capture,
+            web_state::web_state_restore,
+            web_state::web_state_session,
+            web_state::web_state_inbox,
+            web_state::web_key_device,
+            web_state::web_key_digits,
+            web_state::web_key_wrap,
+            web_state::web_key_accept,
+            web_state::web_key_rotate,
+            web_state::web_key_current,
+            web_state::web_key_lease,
+            web_state::web_key_forget,
         ]
     };
 }

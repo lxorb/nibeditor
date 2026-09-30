@@ -75,8 +75,10 @@ mod stop;
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod browser;
+// The one door to the DevTools Protocol on a `WebView2` page; web state uses it too
+// (see web_state/cdp.rs).
 #[cfg(all(windows, not(feature = "cef")))]
-mod cdp;
+pub(crate) mod cdp;
 #[cfg(all(windows, not(feature = "cef")))]
 mod memory;
 #[cfg(all(windows, not(feature = "cef")))]
