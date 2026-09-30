@@ -79,6 +79,11 @@ describe('the engine build', () => {
    *  crate the writer has no pin for stops it, rather than going through as Tauri 2. */
   test('the writer moves every form of Tauri line the app writes', () => {
     const app = [
+      '[build-dependencies]',
+      'tauri-build = { version = "2", features = [] }',
+      'tauri-utils = "2"',
+      'serde_json = "1"',
+      '',
       '[dependencies]',
       'tauri = { version = "2", features = ["protocol-asset", "unstable"] }',
       'tauri-plugin-os = "2"',
@@ -103,6 +108,14 @@ describe('the engine build', () => {
     )
     expect(written).toContain(`tauri = { version = "=${pin('tauri')}", features = ["tray-icon"] }`)
     expect(written).toContain(`tauri-plugin-os = "=${pin('plugins')}"`)
+    expect(written).toContain(
+      [
+        '[build-dependencies]',
+        `tauri-build = "=${pin('tauri-build')}"`,
+        `tauri-utils = "=${pin('tauri-utils')}"`,
+        'serde_json = "1"',
+      ].join('\n'),
+    )
     expect(written).toContain(`tauri-plugin-notification = "=${pin('plugins')}"`)
     expect(written).toContain(
       `tauri-plugin-single-instance = { version = "=${pin('plugins')}", features = ["deep-link"] }`,

@@ -25,6 +25,7 @@ interface Pins {
   runtime: string
   core: string
   build: string
+  utils: string
   plugins: string
   cef: string
 }
@@ -42,6 +43,7 @@ function pins(head: string): Pins {
     runtime: value('tauri-runtime-cef'),
     core: value('tauri-runtime'),
     build: value('tauri-build'),
+    utils: value('tauri-utils'),
     plugins: value('plugins'),
     cef: value('cef'),
   }
@@ -52,6 +54,10 @@ const listed = (features: string[]) => features.map((one) => `"${one}"`).join(',
 
 /** One line of the app's tables, as the engine build needs it. */
 function moved(line: string, pinned: Pins): string[] {
+  // The build script's own two: the step that makes the context, and what it reads the
+  // config with (identity.rs).
+  if (/^tauri-build = /.test(line)) return [`tauri-build = "=${pinned.build}"`]
+  if (/^tauri-utils = /.test(line)) return [`tauri-utils = "=${pinned.utils}"`]
   const tauri = /^tauri = \{ version = "2", features = \[([^\]]*)\] \}$/.exec(line)
   if (tauri) {
     const features = [...(tauri[1] ?? '').matchAll(/"([^"]+)"/g)].map((one) => one[1] ?? '')
@@ -105,9 +111,9 @@ export function engineManifest(app: string, engine: string): string {
   const pinned = pins(head)
 
   const lines = app.replace(/\r\n/g, '\n').split('\n')
-  const from = lines.indexOf('[dependencies]')
+  const from = lines.indexOf('[build-dependencies]')
   const profile = lines.indexOf('[profile.release]')
-  if (from < 0 || profile < from) {
+  if (from < 0 || lines.indexOf('[dependencies]') < from || profile < from) {
     throw new Error('the app manifest is not in the order this reads it in')
   }
 
@@ -115,14 +121,12 @@ export function engineManifest(app: string, engine: string): string {
     slice.filter((line) => line.trim() !== '' && !line.trimStart().startsWith('#'))
 
   const written = [
-    '[build-dependencies]',
-    `tauri-build = "=${pinned.build}"`,
     ...kept(lines.slice(from, profile)).flatMap((line) =>
       line.startsWith('[') ? ['', line] : moved(line, pinned),
     ),
     '',
     ...kept(lines.slice(profile)),
-  ]
+  ].slice(1)
   return `${head}\n${MARKER}\n\n${written.join('\n')}\n`
 }
 

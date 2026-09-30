@@ -63,7 +63,7 @@ engine, byte for byte. `nib-chromium` is the same `src/lib.rs` compiled a second
 against Tauri 3 and `tauri-runtime-cef` from crates.io, by the package in
 `apps/desktop/src-tauri/cef` - whose dependency list is the app's own, written by
 `scripts/engine-manifest.ts` and held to it by `apps/desktop/test/cef.test.ts`. The
-six pins (`tauri`, `tauri-runtime-cef`, `tauri-runtime`, `tauri-build`, the plugins, `cef`) are the
+seven pins (`tauri`, `tauri-runtime-cef`, `tauri-runtime`, `tauri-build`, `tauri-utils`, the plugins, `cef`) are the
 one thing that manifest says for itself, and `cef/bump.py` moves them to the newest set
 that was built together. No checkout, no patch, no `upstream.py`: the day
 `tauri-runtime-cef` was published is the day that went.
