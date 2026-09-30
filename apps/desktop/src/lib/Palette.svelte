@@ -553,7 +553,7 @@
                    what the row is: the mark a file wears in the file list, the one a
                    tab wears in the strip, a chevron for a command - the `>` the field
                    narrows to them with - or the tick of one that is on, the drawing a
-                   pane wears in the settings, a globe for the web. See FileMark. -->
+                   pane wears in the settings, the site's mark for the web. See FileMark. -->
               {#if row.kind === 'command'}
                 {#if row.command.checked}
                   <span class="mark tick">✓</span>
@@ -574,7 +574,7 @@
                   >
                 {/if}
               {:else if row.kind === 'page' || row.kind === 'address'}
-                <FileMark mark="web" />
+                <FileMark mark="web" url={row.url} />
               {:else if row.kind === 'setting'}
                 <svg class="mark drawn" viewBox="0 0 16 16"
                   ><path d={ICONS[row.setting.section]} /></svg
