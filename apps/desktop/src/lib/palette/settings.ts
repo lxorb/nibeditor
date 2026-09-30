@@ -92,7 +92,8 @@ export function settingValue(field: Field | null): string | null {
 
   switch (field.kind) {
     case 'select':
-    case 'segmented': {
+    case 'segmented':
+    case 'swatches': {
       const held = field.get()
       return field.options.find((one) => one.value === held)?.label ?? null
     }
