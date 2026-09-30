@@ -184,9 +184,14 @@ export const openFind = asks(false)
 export const openReplace = asks(true)
 
 /** Says the bar has gone, which is what takes the marks off the matches. The
- *  caret going back where it was is the bar's own doing. */
+ *  caret going back where it was is the bar's own doing.
+ *
+ *  Only while it is up. The app answers this by shutting its bar, and shutting its
+ *  bar is this call again: said every time, the two told each other until the stack
+ *  ran out, inside whatever was flushing at the time - and a selection after that
+ *  brought no format bar up. See test/effects/find-close.effect.test.ts in the app. */
 export function closeFind(view: EditorView) {
-  view.dispatch({ effects: findAsked.of(null) })
+  if (view.state.field(findShown, false)) view.dispatch({ effects: findAsked.of(null) })
 }
 
 /** What the bar is looking for. Written as one effect on every keystroke, which
