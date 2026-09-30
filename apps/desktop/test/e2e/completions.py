@@ -495,6 +495,10 @@ def drive_quiet(page: Page) -> None:
 
 def drive_front_matter(page: Page, paths: list[str]) -> None:
     """The one place a tag is written without a hash: a `tags:` list."""
+    # Front matter is hidden until a reader asks for it (31209a29), and a caret put
+    # inside hidden metadata is put at the first line that shows. The list is written
+    # where it is the YAML it is made of.
+    page.evaluate("() => window.nibApp.modes.setProperties('source')")
     open_note(page, paths[2])
 
     # The caret at the end of the `tags:` line of this note's own front matter.
@@ -525,6 +529,8 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
         wrong(f"the tag was not written into the list: {json.dumps(written[:60])}")
     if "#reading" in written.split("---")[1]:
         wrong("a hash was written into the front matter, where YAML reads one as a comment")
+
+    page.evaluate("() => window.nibApp.modes.setProperties('hidden')")
 
 
 def drive_finger(browser: Browser) -> None:
