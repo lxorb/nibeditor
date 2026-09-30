@@ -575,6 +575,9 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | `canvas/geometry.ts` | the plane's arithmetic: boxes, shapes, edges |
 | `canvas/lattice.ts` | the pattern behind the plane: which level a zoom asks for, and the fade to it |
 | `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, how far ahead of the nib the ink may reach, and what one pen event means whichever browser sent it |
+| `canvas/paint.ts` | a stroke's outline, a kind of ink and one fill of them: the one picture of a stroke the tiles, the pen's own layer and a page's thumbnail share |
+| `canvas/tiles.ts` | the ink as tiles of pixels kept between repaints, so a pan copies them and a stroke fills only the tiles it crosses |
+| `canvas/ink-grid.ts` | which strokes are near a part of the plane, without walking the whole plane |
 | `canvas/ease.ts` | coming up to a number rather than jumping to it |
 | `canvas/upload.ts` | asking the device for a picture |
 | `Canvas.svelte` | the surface: hit testing, the events, and the effects carried out |

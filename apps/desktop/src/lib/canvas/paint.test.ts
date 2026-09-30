@@ -1,23 +1,14 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import type { InkStroke } from './format'
 
-/** What a repaint costs, counted.
- *
- *  Panning a plane of ten thousand strokes ran at twelve frames a second, and the
- *  hundred milliseconds a frame was not the fills: it was putting the batch paths
- *  together again. `addPath` copies a stroke's outline into the batch, so every
- *  frame of a drag copied a hundred thousand points of geometry that had not
- *  changed and were not going to. The paths are in plane coordinates, so the camera
- *  has nothing to do with what they are.
- *
- *  So what is counted here is strokes put into a batch, and what it has to say is
- *  "once, and then not again while the camera stays near". A count rather than a
- *  clock, for the reason the counter's own comment gives. */
+/** The paint itself: an outline, a kind of ink, a fill. What the tiles do with it is
+ *  tiles.test.ts; this is what one fill of some strokes is, which the tiles, the pen's
+ *  own layer and a thumbnail all share. */
 
 /** A path that counts what is copied into it and draws nothing: this runs under
  *  node, where there is no canvas and no `Path2D`. */
 class CountingPath {
-  static copied = 0
+  held = 0
 
   moveTo() {
     return undefined
@@ -32,61 +23,56 @@ class CountingPath {
   }
 
   addPath() {
-    CountingPath.copied += 1
+    this.held += 1
   }
 }
 
-/** And a context that accepts everything and remembers the fills. */
+/** A context that accepts everything and remembers its fills: how many strokes each
+ *  was, in which colour, at which alpha and through which blend. */
 function context() {
-  const fills: unknown[] = []
-  return {
-    fills,
-    ctx: {
-      globalAlpha: 1,
-      globalCompositeOperation: 'source-over',
-      fillStyle: '',
-      strokeStyle: '',
-      lineWidth: 1,
-      setTransform: () => undefined,
-      clearRect: () => undefined,
-      createPattern: () => null,
-      fill: (path: unknown) => fills.push(path),
-      stroke: () => undefined,
-    } as unknown as CanvasRenderingContext2D,
+  const fills: { strokes: number; colour: string; alpha: number; blend: string }[] = []
+  const transforms: number[][] = []
+  const ctx = {
+    globalAlpha: 1,
+    globalCompositeOperation: 'source-over',
+    fillStyle: '',
+    setTransform: (...values: number[]) => transforms.push(values),
+    clearRect: () => undefined,
+    createPattern: () => null,
+    fill: (path: CountingPath) =>
+      fills.push({
+        strokes: path.held,
+        colour: ctx.fillStyle,
+        alpha: ctx.globalAlpha,
+        blend: ctx.globalCompositeOperation,
+      }),
   }
+
+  return { ctx: ctx as unknown as CanvasRenderingContext2D, fills, transforms }
 }
 
 beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
 })
 
-const { GATHERED_A_FRAME, inkPending, paintInk, strokesBatched } = await import('./paint')
+const { fillInk, firstSeen, origin, paintInk, paintLive, strokesFilled } = await import('./paint')
 
-/** A plane of strokes laid out in a grid, each a short line, all in one ink - so
- *  they are one batch and the count is about gathering rather than about how many
- *  kinds of pen are on the plane. */
-function plane(count: number, across = 40): InkStroke[] {
-  const strokes: InkStroke[] = []
-
-  for (let one = 0; one < count; one++) {
-    const x = (one % across) * 120
-    const y = Math.floor(one / across) * 120
-    const points = []
-    for (let step = 0; step < 6; step++) {
-      points.push({
-        x: x + step * 8,
-        y: y + step * 2,
-        pressure: 0.5,
-        tiltX: 0,
-        tiltY: 0,
-        t: step * 10,
-      })
-    }
-
-    strokes.push({ id: `s${one}`, tool: 'pen', color: 'ink', size: 3, points })
+function stroke(id: string, x: number, overrides: Partial<InkStroke> = {}): InkStroke {
+  return {
+    id,
+    tool: 'pen',
+    color: 'ink',
+    size: 3,
+    points: [0, 1, 2].map((step) => ({
+      x: x + step * 8,
+      y: 100,
+      pressure: 0.5,
+      tiltX: 0,
+      tiltY: 0,
+      t: step * 10,
+    })),
+    ...overrides,
   }
-
-  return strokes
 }
 
 const view = (x: number, y: number, scale = 1) => ({
@@ -96,209 +82,90 @@ const view = (x: number, y: number, scale = 1) => ({
   ratio: 1,
 })
 
-describe('repainting the ink under the camera', () => {
-  test('gathers the strokes once and not again while the camera stays near', () => {
-    const strokes = plane(600)
-    const { ctx } = context()
-
-    const first = strokesBatched()
-    paintInk(ctx, strokes, view(1000, 1000), {})
-    const gathered = strokesBatched() - first
-
-    // Something was gathered, and not the whole plane: the part of it near the view.
-    expect(gathered).toBeGreaterThan(0)
-    expect(gathered).toBeLessThan(strokes.length)
-
-    // Forty frames of a drag, which is about a second of a hand moving. Not one
-    // stroke is copied again: this is the twelve frames a second the comment above
-    // is about, and it is now the fills alone.
-    const before = strokesBatched()
-    for (let frame = 0; frame < 40; frame++)
-      paintInk(ctx, strokes, view(1000 + frame * 6, 1000), {})
-
-    expect(strokesBatched() - before).toBe(0)
-  })
-
-  test('gathers again once the camera has left what was gathered', () => {
-    const strokes = plane(600)
-    const { ctx } = context()
-
-    paintInk(ctx, strokes, view(1000, 1000), {})
-    const before = strokesBatched()
-
-    // Right across the plane, which is a long way outside a viewport of margin,
-    // and still over strokes: what is counted is gathering, not finding nothing.
-    paintInk(ctx, strokes, view(4000, 1000), {})
-    expect(strokesBatched() - before).toBeGreaterThan(0)
-  })
-
-  test('puts one drawn stroke in on its own, not the plane again', () => {
-    const strokes = plane(600)
-    const { ctx } = context()
-
-    paintInk(ctx, strokes, view(1000, 1000), {})
-    const before = strokesBatched()
-
-    // A stroke drawn where the camera is, which is a new list with the old one at
-    // the front of it. One stroke goes in, not six hundred: this is the hundred
-    // milliseconds the pen used to lift for.
-    const drawn = { ...plane(1)[0]!, id: 'drawn' }
-    drawn.points = drawn.points.map((point) => ({ ...point, x: point.x + 1000, y: point.y + 1000 }))
-    paintInk(ctx, [...strokes, drawn], view(1000, 1000), {})
-
-    expect(strokesBatched() - before).toBe(1)
-  })
-
-  test('gathers the plane again when the strokes in it changed rather than grew', () => {
-    const strokes = plane(600)
-    const { ctx } = context()
-
-    paintInk(ctx, strokes, view(1000, 1000), {})
-    const before = strokesBatched()
-
-    // An eraser, a move, a colour: a list of the same length with other objects in
-    // it, and nothing in the batches can be trusted.
-    paintInk(ctx, plane(600), view(1000, 1000), {})
-    expect(strokesBatched() - before).toBeGreaterThan(1)
-  })
-
-  test('fills once per kind of ink on the plane, however many strokes there are', () => {
-    const strokes = plane(300)
-    // Two inks that are not the first, and neither of them grainy: a grain is a
-    // tile drawn on a canvas of its own, and there is no canvas under node.
+describe('one fill of some strokes', () => {
+  test('fills once per kind of ink, however many strokes there are', () => {
+    const strokes = Array.from({ length: 300 }, (_, one) => stroke(`s${one}`, one * 2))
     strokes[7] = { ...strokes[7]!, tool: 'fountain' }
     strokes[9] = { ...strokes[9]!, color: 'red' }
     const { ctx, fills } = context()
 
-    paintInk(ctx, strokes, view(200, 200), {})
+    const before = strokesFilled()
+    fillInk(ctx, strokes, {}, () => 0)
 
-    // Three kinds of ink near the view, three fills - not one per stroke.
+    // Three kinds, three fills - and every stroke counted once.
     expect(fills).toHaveLength(3)
+    expect(fills.reduce((sum, one) => sum + one.strokes, 0)).toBe(300)
+    expect(strokesFilled() - before).toBe(300)
   })
 
-  test('keeps one plane per list of strokes, so two panes do not empty each other', () => {
-    const one = plane(600)
-    const other = plane(600, 30)
-    const { ctx } = context()
+  test('two opacities of one pen are two fills, so neither comes out at the other', () => {
+    const { ctx, fills } = context()
+    fillInk(ctx, [stroke('a', 0), stroke('b', 10, { opacity: 0.4 })], {}, () => 0)
 
-    paintInk(ctx, one, view(1000, 1000), {})
-    paintInk(ctx, other, view(1000, 1000), {})
-    const before = strokesBatched()
-
-    // Back and forth between two canvases, as two panes showing one each would
-    // be. Neither is gathered again: what was gathered belongs to its own plane.
-    for (let turn = 0; turn < 6; turn++) {
-      paintInk(ctx, one, view(1000, 1000), {})
-      paintInk(ctx, other, view(1000, 1000), {})
-    }
-
-    expect(strokesBatched() - before).toBe(0)
+    expect(fills.map((one) => one.alpha).sort()).toEqual([0.4, 1])
   })
 
-  test('never paints fewer strokes than a fresh gather for the same view', () => {
-    const strokes = plane(600)
-    const fresh = context()
-    const kept = context()
+  test('fills the kinds in the order it is given, not the order it meets them', () => {
+    const { ctx, fills } = context()
+    const order = new Map([
+      ['highlighter\nyellow\n0.32', 0],
+      ['pen\nink\n1', 1],
+    ])
 
-    // One camera reached in one step, and the same camera panned to. What was
-    // gathered before covers a viewport either side of where it was asked for, so
-    // it holds everything a fresh gather would hold and some of what it would not -
-    // which is the one direction this may ever be wrong in: more than is needed,
-    // never less.
-    const drawn = paintInk(fresh.ctx, strokes, view(1300, 1000), {})
+    fillInk(
+      ctx,
+      [stroke('word', 0), stroke('mark', 0, { tool: 'highlighter', color: 'yellow' })],
+      { yellow: 'Y', ink: 'I' },
+      (kind) => order.get(kind) ?? order.size,
+    )
 
-    paintInk(kept.ctx, strokes, view(1000, 1000), {})
-    const again = paintInk(kept.ctx, strokes, view(1300, 1000), {})
+    expect(fills.map((one) => one.colour)).toEqual(['Y', 'I'])
+    expect(fills[0]?.blend).toBe('multiply')
+  })
 
-    expect(again).toBeGreaterThanOrEqual(drawn)
+  test('the order kinds first appear in is the plane order', () => {
+    const order = firstSeen([
+      stroke('a', 0, { color: 'red' }),
+      stroke('b', 0),
+      stroke('c', 0, { color: 'red' }),
+    ])
+
+    expect([...order.keys()]).toEqual(['pen\nred\n1', 'pen\nink\n1'])
   })
 })
 
-/** What the first frame of a plane too big to gather in one costs.
- *
- *  A canvas opened for the first time frames itself to fit what is on it, so every
- *  stroke there is meets the view and the gather that used to happen on the mount
- *  was the whole plane: ten thousand outlines in one task, a second of it, before a
- *  single card was on screen. The cards are what somebody opening a canvas is
- *  waiting for, and the ink can arrive behind them.
- *
- *  Counted rather than timed, for the reason the counts above are: the count is what
- *  the code did and it is the same number on a busy machine. A frame is held to its
- *  budget, the frames after it carry on from where it stopped, and the plane ends up
- *  with every stroke in it - which is the three things that have to be true at once,
- *  and the three assertions below. */
-describe('the first frame of a plane bigger than one frame', () => {
-  test('gathers its budget and no more, and says there is more to come', () => {
-    const strokes = plane(4_000, 4)
-    const { ctx } = context()
+describe('where the plane lands on a layer', () => {
+  test('in whole device pixels, whatever the camera', () => {
+    const at = origin({
+      camera: { x: 10.37, y: -4.21, scale: 1.3 },
+      width: 801,
+      height: 599,
+      ratio: 1.25,
+    })
 
-    const before = strokesBatched()
-    // The whole plane in view, which is what framing a canvas to fit does.
-    paintInk(ctx, strokes, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
-    const first = strokesBatched() - before
-
-    expect(first).toBe(GATHERED_A_FRAME)
-    expect(inkPending(strokes)).toBe(true)
+    expect(Number.isInteger(at.x)).toBe(true)
+    expect(Number.isInteger(at.y)).toBe(true)
   })
 
-  test('carries on where it stopped, and gathers exactly what one frame would', () => {
-    // Two planes of the same shape, so each has a gather of its own to compare.
-    const budgeted = plane(4_000, 4)
-    const whole = plane(4_000, 4)
+  test('the stroke under the pen is placed by the same rounding as the tiles', () => {
+    const { ctx, transforms } = context()
+    const at = view(10.37, -4.21, 1.3)
+    paintLive(ctx, stroke('live', 0), at, {})
 
-    const atOnce = strokesBatched()
-    paintInk(context().ctx, whole, view(0, 0, 0.02), {})
-    const once = strokesBatched() - atOnce
-
-    const { ctx } = context()
-    const before = strokesBatched()
-    let frames = 0
-    do {
-      paintInk(ctx, budgeted, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
-      frames++
-    } while (inkPending(budgeted) && frames < 40)
-
-    // The same strokes, gathered exactly once between them: no frame went back over
-    // what an earlier one had done, which is what the cursor is for, and none was
-    // left out, which is what would show as ink missing off the plane.
-    expect(strokesBatched() - before).toBe(once)
-    expect(inkPending(budgeted)).toBe(false)
-    expect(frames).toBeGreaterThan(1)
+    const placed = transforms.find((one) => one[0] !== 1)
+    expect(placed?.slice(4)).toEqual([origin(at).x, origin(at).y])
   })
+})
 
-  test('gathers a plane that fits in one frame in one frame', () => {
-    // Fewer strokes near the view than a frame's budget, which is the ordinary
-    // plane: this arrives whole on the frame it was asked for and never comes back.
-    const strokes = plane(200)
-    const { ctx } = context()
+describe('a thumbnail', () => {
+  test('paints what is in view in one go, once per kind', () => {
+    const inside = Array.from({ length: 50 }, (_, one) => stroke(`in${one}`, one * 4))
+    const outside = Array.from({ length: 50 }, (_, one) => stroke(`out${one}`, 50_000 + one * 4))
+    const { ctx, fills } = context()
 
-    const before = strokesBatched()
-    paintInk(ctx, strokes, view(1000, 1000), {}, undefined, GATHERED_A_FRAME)
+    paintInk(ctx, [...inside, ...outside], view(100, 100), {})
 
-    expect(strokesBatched() - before).toBeLessThan(GATHERED_A_FRAME)
-    expect(inkPending(strokes)).toBe(false)
-  })
-
-  test('takes a stroke drawn while the rest is still arriving', () => {
-    const strokes = plane(4_000, 4)
-    const { ctx } = context()
-
-    paintInk(ctx, strokes, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
-    expect(inkPending(strokes)).toBe(true)
-
-    // The pen, on the frame after the first: the plane is the same strokes and one
-    // more on the end, and what has been gathered stands. Counting from the end of
-    // the old list rather than from the cursor would have left the middle out.
-    const drawn = plane(1)[0]
-    if (!drawn) throw new Error('no stroke')
-    const grown = [...strokes, { ...drawn, id: 'drawn' }]
-
-    let frames = 0
-    do {
-      paintInk(ctx, grown, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
-      frames++
-    } while (inkPending(grown) && frames < 40)
-
-    expect(inkPending(grown)).toBe(false)
+    expect(fills).toHaveLength(1)
+    expect(fills[0]?.strokes).toBe(50)
   })
 })

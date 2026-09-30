@@ -10,10 +10,11 @@
    *  The lower one is not redrawn while the plane is being moved. A pan and a
    *  zoom are the same picture seen from somewhere else, so the pixels already
    *  there are moved with a transform - which costs nothing, being composited -
-   *  and the strokes are rasterised again once the view settles. It is painted
+   *  and the layer is put together again once the view settles. It is painted
    *  with a margin all round, so a pan uncovers ink that was already drawn rather
-   *  than an empty edge. Five thousand strokes is a sixth of a second of
-   *  rasterising; doing it sixty times a second is a plane nobody can pan.
+   *  than an empty edge. Putting it together is copying tiles of pixels kept from
+   *  the last time (see canvas/tiles.ts), so a settle fills only the strokes on
+   *  plane nobody had painted yet.
    *
    *  The upper one is asked for a desynchronised context, which is a hint the
    *  browser may take or leave; where it is taken, the ink lands under the nib
@@ -31,14 +32,8 @@
   import type { Camera } from './camera'
   import type { InkStroke } from './canvas/format'
   import { type InkMode, inkLayer, wantedInkMode } from './canvas/backing'
-  import {
-    GATHERED_A_FRAME,
-    inkPending,
-    type Palette,
-    paintInk,
-    paintLive,
-    type View,
-  } from './canvas/paint'
+  import { type Palette, paintLive, type View } from './canvas/paint'
+  import { InkTiles } from './canvas/tiles'
 
   const {
     ink,
@@ -103,6 +98,10 @@
    *  the one that was asked for. */
   let mode = $state<InkMode>(wantedInkMode())
 
+  /** The ink as tiles of pixels, this layer's own: a plane in another pane keeps
+   *  its own, so two panes never empty each other's. */
+  const tiles = new InkTiles()
+
   /** One context per element, kept: the attributes cannot be changed after the
    *  first call, so asking twice would silently hand back the first answer
    *  anyway. */
@@ -142,14 +141,14 @@
       // The layer is the view plus a margin all round, and its middle is the
       // view's middle, so the transform above works from the same point.
       const view: View = { camera, width: wide, height: tall, ratio }
-      paintInk(context, ink, view, palette, picked, GATHERED_A_FRAME)
+      const pending = tiles.paint(context, ink, view, palette, picked)
       painted = { ...camera }
 
-      // A plane too big to gather in one frame is carried on next frame, so the
+      // A plane too big to paint in one frame is carried on next frame, so the
       // cards are on screen for the first of them and the ink fills in behind.
       // Everything else on the surface - the pen, a pan, a card picked up - works
       // while this is going on, because each of these frames is a short one.
-      if (inkPending(ink)) {
+      if (pending) {
         stillAt = moves
         filling ||= requestAnimationFrame(fill)
       }
@@ -164,12 +163,12 @@
   /** The next slice of a plane that is still arriving.
    *
    *  Not while the view is moving. A pan is a transform over the pixels already
-   *  there and costs nothing; gathering on the same frames put a slice of the plane
+   *  there and costs nothing; painting on the same frames put a slice of the plane
    *  into every one of them and took the worst frame of a drag from eighteen
    *  milliseconds to thirty-six. So the hand is asked rather than the clock: `moves`
    *  is what the camera effect counts, and a fill whose turn comes up while it is
    *  still climbing waits for the next frame instead. The raster `settle` runs when
-   *  the hand stops carries the gather on from where this left it, so nothing is
+   *  the hand stops carries the tiles on from where this left them, so nothing is
    *  lost by waiting - and somebody dragging the plane about is not looking at the
    *  ink they have not reached yet. */
   function fill() {
@@ -220,16 +219,34 @@
    *
    *  A surface's effects flush in the task that mounted it, so a raster here is a
    *  raster inside the mount - and the first raster of a plane of ten thousand
-   *  strokes is a gather. So the first one is put off to the next frame, which is
-   *  the frame the plane's cards and its paper are already on screen for.
+   *  strokes is the first slice of their outlines. So the first one is put off to
+   *  the next frame, which is the frame the plane's cards and its paper are already
+   *  on screen for.
    *
-   *  Only the first. A pan that reaches plane nobody has gathered yet rasterises in
+   *  Only the first. A pan that reaches plane nobody has painted yet rasterises in
    *  the frame it happens in, as it always did, or the ink would blink on every
    *  drag. */
   let everDrawn = false
 
-  // What there is to draw changed, so it is drawn. Never waits after the first: an
-  // edit has to show at once.
+  /** The frame an edit's raster is waiting on, or nought. */
+  let edited = 0
+
+  /** A raster before the next frame is drawn, once however many edits arrive first.
+   *
+   *  Before the frame, so an edit is on screen in the very frame it would have been in
+   *  had it been drawn where it happened. Once, because an edit is a repaint of the
+   *  tiles it touched and a hand can make several in a frame - a rub, a pen that
+   *  reports faster than the screen - and one repaint of all of them is one frame's
+   *  budget where one each was a budget per event. */
+  function redraw() {
+    edited ||= requestAnimationFrame(() => {
+      edited = 0
+      rasterise()
+    })
+  }
+
+  // What there is to draw changed, so it is drawn - on the frame it changed in, and
+  // never later: an edit has to show at once.
   $effect(() => {
     follows(ink)
     follows(picked)
@@ -238,7 +255,7 @@
     follows(tall)
 
     if (everDrawn) {
-      rasterise()
+      redraw()
       return
     }
 
@@ -278,6 +295,7 @@
   $effect(() => () => {
     cancelAnimationFrame(looking)
     cancelAnimationFrame(filling)
+    cancelAnimationFrame(edited)
   })
 
   /** Whether the upper layer has anything on it. An empty one is left alone
