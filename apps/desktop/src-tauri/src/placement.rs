@@ -913,10 +913,12 @@ mod tests {
 
     /// Nothing in the crate asks for the keyboard or the front but `raised` and
     /// `keyboard_to`, which both do nothing where a drive sent the windows away; and
-    /// nothing asks Windows for the front at all. Read off the source for the same reason
-    /// as the test above: a call that forgets is only ever found by the person whose
-    /// typing it took. foreground.rs, which keeps a probe out of the front, is the one
-    /// file that names the system's calls, and its test the one that makes them.
+    /// nothing asks Windows or an engine for either directly - `WebView2`'s `MoveFocus`,
+    /// wry's `focus_parent` and a Chromium host's `set_focus` all activate the window the
+    /// page is in. Read off the source for the same reason as the test above: a call that
+    /// forgets is only ever found by the person whose typing it took. foreground.rs, which
+    /// keeps a probe out of the front, is the one file that names the system's calls, and
+    /// its test the one that makes them.
     #[test]
     fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
         let asks_the_system = [
@@ -928,6 +930,8 @@ mod tests {
             "SetFocus",
             "SendInput",
             "keybd_event",
+            "MoveFocus",
+            "focus_parent",
         ];
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
         let mut sources = vec![root.clone()];
@@ -961,7 +965,7 @@ mod tests {
                             !code[..from].ends_with(|c: char| c.is_alphanumeric() || c == '_')
                         })
                     });
-                    if code.contains(".set_focus()") || named {
+                    if code.contains(".set_focus(") || named {
                         found.push(format!("{name}:{}", at + 1));
                     }
                 }
