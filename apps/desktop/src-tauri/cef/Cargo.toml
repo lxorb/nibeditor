@@ -18,7 +18,7 @@
 
 [package]
 name = "nib-chromium"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 license = "AGPL-3.0-only"
 publish = false
