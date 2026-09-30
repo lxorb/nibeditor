@@ -52,6 +52,10 @@ const PRESSED_THROUGH = [
  *  same wait as `LEAVING` in web-tab/WebTab.svelte. */
 const LEAVING = 300
 
+/** How long the crate holds the keyboard for a site still out of sight; `OWED_MS` in
+ *  src-tauri/src/keyboard.rs. */
+const OWED = 1000
+
 /** Whether the keyboard is nowhere in this page. */
 export function adrift(at: Element | null): boolean {
   return !at || at === document.body || at === document.documentElement || !at.isConnected
@@ -137,9 +141,7 @@ class KeyboardHome {
     this.regaining = true
     setTimeout(() => (this.regaining = false))
     requestAnimationFrame(() => {
-      if (overlays.depth === 0 && document.hasFocus() && adrift(document.activeElement)) {
-        this.home()
-      }
+      if (document.hasFocus()) this.orHome()
     })
   }
 
@@ -172,7 +174,18 @@ class KeyboardHome {
 
   private async back() {
     const paged = isDesktop && (await invoke<boolean>('keyboard_back').catch(() => false))
-    if (!paged && overlays.depth === 0 && adrift(document.activeElement)) this.home()
+    // A site still out of sight under the layer takes it as it is shown again, which the
+    // crate waits a second for; one that is never shown again leaves it with this page.
+    if (paged) {
+      setTimeout(() => {
+        if (document.hasFocus()) this.orHome()
+      }, OWED)
+    } else this.orHome()
+  }
+
+  /** Home, if the keyboard is still nowhere in this page and nothing is over it. */
+  private orHome() {
+    if (overlays.depth === 0 && adrift(document.activeElement)) this.home()
   }
 
   private home() {

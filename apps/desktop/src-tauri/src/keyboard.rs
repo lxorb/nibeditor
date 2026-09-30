@@ -366,8 +366,13 @@ mod watching {
         _id: usize,
         _data: usize,
     ) -> LRESULT {
-        let window = WINDOWS.with_borrow(|all| all.get(&(hwnd.0 as isize)).cloned());
+        // Every message the window gets passes through here, so the label is only looked
+        // up for the three this is about.
         let now = moment(message, wparam.0);
+        let window = match now {
+            Moment::Nothing => None,
+            _ => WINDOWS.with_borrow(|all| all.get(&(hwnd.0 as isize)).cloned()),
+        };
         if let (Some(window), Moment::Leaving) = (&window, &now) {
             left(window);
         }

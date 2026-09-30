@@ -149,6 +149,20 @@ test('or to the site that had it, which the crate hands it to', async () => {
   expect(document.activeElement).toBe(document.body)
 })
 
+test('a site never shown again leaves the keyboard with the page after a moment', async () => {
+  terminal.focus()
+  pageTakesIt = true
+  const close = layer()
+  close()
+  await frames()
+  expect(document.activeElement).toBe(document.body)
+
+  const having = vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+  await new Promise((done) => setTimeout(done, 1100))
+  having.mockRestore()
+  expect(document.activeElement).toBe(terminal)
+})
+
 test('a layer that put the keyboard somewhere on its way out leaves it there', async () => {
   editor.focus()
   const close = layer()
