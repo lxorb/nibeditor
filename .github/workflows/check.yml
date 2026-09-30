@@ -85,9 +85,9 @@ jobs:
   #
   # This job runs the shallowest of those drives - the four facts whose failure
   # means the app is not usable - in a real browser on every change. Depth stays in
-  # the drive written beside each feature and in run-all.py, which is far too long
-  # for a pull request; the floor is what a pull request can afford. See
-  # apps/desktop/test/e2e/smoke.py.
+  # the drive written beside each feature, and the whole set of them runs every
+  # night in drives.yml, which is far too long for a pull request; the floor is what
+  # a pull request can afford. See apps/desktop/test/e2e/smoke.py.
   smoke:
     runs-on: ubuntu-latest
     permissions:
@@ -118,11 +118,10 @@ jobs:
       # `import.meta.env.DEV`, so the only build anything could drive was the one
       # nobody ships, and three reported bugs turned out to be unreproducible in
       # every build a drive could reach. This is the first gate in the repository
-      # that exercises the shape that ships. The other eighty-nine build the same
-      # mode now: while they built a development one they were building the app with
-      # these handles compiled out, and every one of them gave up waiting for the
-      # app. What holds them to it from here is apps/desktop/test/drives.test.ts, in
-      # the job above, which costs no browser; a harness they could share is the rest.
+      # that exercises the shape that ships. Every other drive builds the same shape,
+      # through the harness they share (apps/desktop/test/e2e/harness.py), and
+      # apps/desktop/test/drives.test.ts in the job above holds them to it without a
+      # browser.
       # Every drive in the folder, parsed. Nothing else in the repository reads
       # these ninety files - eslint does not, prettier cannot - so a syntax error
       # in one of them is invisible until somebody runs it, which for most of them
