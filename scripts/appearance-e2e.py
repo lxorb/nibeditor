@@ -1,13 +1,13 @@
-"""The window's frame and its translucency, toggled in the real app.
+"""The window's frame and its material, toggled in the real app.
 
 What it proves:
 
     the window starts with nib's own frame and no material behind it
     the system's frame is the system's: a titlebar appears, which is a client area
       that no longer fills the window
-    translucency on asks the compositor for the window's material, and off takes it
-      away again - read back off the window itself with `DwmGetWindowAttribute`, not
-      off the app's own opinion of what it did
+    the glass theme asks the compositor for the window's material (Mica Alt), and the
+      built-in takes it away again - read back off the window itself with
+      `DwmGetWindowAttribute`, not off the app's own opinion of what it did
     both choices are remembered: the app is stopped, started again, and comes up the
       way it was left
     nothing here is a screenshot of a hope - each state is photographed
@@ -46,10 +46,11 @@ ROOT = HERE.parent
 WORK = ROOT / "target" / "appearance-e2e"
 SHOTS = WORK / "shots"
 
-# What DWM calls the material behind a window, and what it calls none.
+# What DWM calls the material behind a window, and what it calls none. Mica Alt is the
+# tabbed one, which is what glass wears; see appearance.rs.
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_DISABLE = 1
-DWMSBT_MAINWINDOW = 2
+DWMSBT_TABBEDWINDOW = 4
 
 failures: list[str] = []
 
@@ -254,8 +255,9 @@ def framed_as(held: dict, wanted: str) -> None:
 
 
 def translucent_as(held: dict, wanted: bool) -> None:
+    """The material on or off, which is the glass theme on or the built-in."""
     if translucent_said(held) != wanted:
-        pressed(held, "translucency")
+        pressed(held, "theme:glass" if wanted else "theme:default")
 
 
 def shot(pid: int, name: str) -> None:
@@ -313,7 +315,7 @@ def drive(app: pathlib.Path) -> None:
         if not ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib draws its own frame and none of its own window buttons")
 
-        if backdrop_of(hwnd) == DWMSBT_MAINWINDOW:
+        if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
             wrong("the window came up with a material behind it, which is not the default")
         shot(process.pid, "01-nib-frame")
 
@@ -340,28 +342,27 @@ def drive(app: pathlib.Path) -> None:
         if frame_of(hwnd) != bare:
             wrong(f"going back to nib's own frame left {frame_of(hwnd) - bare}px of the system's")
 
-        # ── translucency ───────────────────────────────────────────────────
+        # ── the material, which is the glass theme ─────────────────────────
         translucent_as(held, True)
 
         behind = backdrop_of(hwnd)
-        if behind != DWMSBT_MAINWINDOW:
-            wrong(f"DWM says the backdrop is {behind}, not the window material ({DWMSBT_MAINWINDOW})")
+        if behind != DWMSBT_TABBEDWINDOW:
+            wrong(f"DWM says the backdrop is {behind}, not the window material ({DWMSBT_TABBEDWINDOW})")
         else:
-            say("translucency on: the compositor is drawing the window's own material")
+            say("glass: the compositor is drawing Mica Alt behind the window")
 
         if not translucent_said(held):
             wrong("the root does not say so, so the app's own ground is still opaque")
-        ground = ran(held, "getComputedStyle(document.documentElement).getPropertyValue('--window-ground').trim()")
-        if ground != "transparent":
+        ground = ran(held, "getComputedStyle(document.body).backgroundColor")
+        if ground != "rgba(0, 0, 0, 0)":
             wrong(f"the window's ground is {ground!r} rather than transparent")
         else:
             say("and the app's own ground is transparent, so the material can be seen")
 
         shot(process.pid, "03-translucent")
 
-        # And the pane the two rows are read in, which is where a reader meets them.
-        # Photographed rather than only asserted: two segmented rows in one group, in the
-        # same shape as every other pair of choices in the app.
+        # And the pane the frame is chosen in, which is where a reader meets it. The
+        # material has no row there any more: it is the glass theme, under Style.
         asked(held, "commands.run", {"id": "settings"})
         time.sleep(1.2)
 
@@ -384,8 +385,8 @@ def drive(app: pathlib.Path) -> None:
             " return JSON.stringify(rows.filter((one) => /Frame|Translucency/.test(one))) })()",
         )
         say(f"the pane shows {pane}")
-        if not pane or "Frame" not in str(pane) or "Translucency" not in str(pane):
-            wrong(f"the Appearance pane does not show the two window rows: {pane}")
+        if not pane or "Frame" not in str(pane) or "Translucency" in str(pane):
+            wrong(f"the Appearance pane should show the Frame row and no Translucency: {pane}")
 
         shot(process.pid, "03b-the-pane")
         # And shut again, so the rest of the drive is looking at the window rather
@@ -394,8 +395,8 @@ def drive(app: pathlib.Path) -> None:
         time.sleep(0.8)
 
         translucent_as(held, False)
-        if backdrop_of(hwnd) == DWMSBT_MAINWINDOW:
-            wrong("turning translucency off left the material behind the window")
+        if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
+            wrong("going back to the built-in theme left the material behind the window")
         else:
             say("off again: the material is cleared")
 
@@ -428,8 +429,8 @@ def drive(app: pathlib.Path) -> None:
         else:
             say("after a restart the system's frame is still on")
 
-        if backdrop_of(hwnd) != DWMSBT_MAINWINDOW:
-            wrong("translucency was not there after a restart")
+        if backdrop_of(hwnd) != DWMSBT_TABBEDWINDOW:
+            wrong("glass's material was not there after a restart")
         else:
             say("and so is the material behind the window")
 
