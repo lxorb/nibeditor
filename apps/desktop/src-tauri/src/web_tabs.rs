@@ -1688,7 +1688,7 @@ pub fn web_place(app: AppHandle, tab: String, pane: Pane, visible: bool) -> Resu
 
     // A page shown again after a layer that closed over it may be owed the keyboard; see
     // keyboard.rs.
-    crate::keyboard::placed(&app, view.label(), visible);
+    crate::keyboard::placed(&app, &view, visible);
     Ok(())
 }
 

@@ -162,9 +162,10 @@ pub fn built(page: &str) {
 }
 
 /// A page shown or hidden, from `web_place` on the window's own thread; a page owed the
-/// keyboard takes it as it arrives.
-pub fn placed(app: &AppHandle, page: &str, visible: bool) {
-    if homes(|all| all.placed(page, visible, now())) {
+/// keyboard takes it as it arrives, while its window is still the one in front.
+pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
+    let page = view.label();
+    if homes(|all| all.placed(page, visible, now())) && native::in_front(&view.window()) {
         native::take(app, page);
     }
 }
