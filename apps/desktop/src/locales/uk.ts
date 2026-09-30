@@ -1602,6 +1602,10 @@ export const uk: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Браузер за умовчанням',
+  // The engine web tabs run on
+  Engine: 'Рушій',
+  Relaunch: 'Перезапустити',
+  'Chromium did not start': 'Chromium не запустився',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

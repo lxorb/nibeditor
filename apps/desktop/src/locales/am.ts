@@ -1515,6 +1515,10 @@ export const am: Dictionary = {
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Nib as the default browser
   'Default browser': 'ነባር አሳሽ',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it

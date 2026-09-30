@@ -1562,6 +1562,10 @@ export const ha: Dictionary = {
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Nib as the default browser
   'Default browser': 'Birawuza na asali',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

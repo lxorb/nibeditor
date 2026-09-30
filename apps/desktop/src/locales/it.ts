@@ -1590,6 +1590,10 @@ export const it: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Browser predefinito',
+  // The engine web tabs run on
+  Engine: 'Motore',
+  Relaunch: 'Riavvia',
+  'Chromium did not start': 'Chromium non si è avviato',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annulla le modifiche di {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

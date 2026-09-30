@@ -1607,6 +1607,10 @@ export const ru: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Браузер по умолчанию',
+  // The engine web tabs run on
+  Engine: 'Движок',
+  Relaunch: 'Перезапустить',
+  'Chromium did not start': 'Chromium не запустился',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

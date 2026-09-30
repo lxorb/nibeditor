@@ -1535,6 +1535,10 @@ export const bn: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
   // The archive: a row put away and taken back, and what refuses to delete it

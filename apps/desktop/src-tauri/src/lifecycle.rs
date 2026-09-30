@@ -90,7 +90,12 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         // And nothing a terminal started is left running once the app has gone.
-        RunEvent::Exit => crate::terminal::end_all(app),
+        RunEvent::Exit => {
+            crate::terminal::end_all(app);
+            // And the next launch, where the engine is being switched; see
+            // engine_switch.rs.
+            crate::engine_switch::leaving();
+        }
 
         RunEvent::WindowEvent {
             label,
@@ -166,6 +171,7 @@ pub fn quit(app: &AppHandle) {
 /// than finishing a quit nobody still wants.
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
+    crate::engine_switch::relaunch_called_off();
     let quitting = state(&app);
     if quitting.now() == ASKING {
         quitting.set(RUNNING);

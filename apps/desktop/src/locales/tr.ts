@@ -1542,6 +1542,10 @@ export const tr: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
+  // The engine web tabs run on
+  Engine: 'Motor',
+  Relaunch: 'Yeniden başlat',
+  'Chromium did not start': 'Chromium başlamadı',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
   // The archive: a row put away and taken back, and what refuses to delete it

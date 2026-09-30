@@ -1555,6 +1555,10 @@ export const ml: Dictionary = {
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Nib as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1577,6 +1577,10 @@ export const ptPT: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Navegador predefinido',
+  // The engine web tabs run on
+  Engine: 'Motor',
+  Relaunch: 'Reiniciar',
+  'Chromium did not start': 'O Chromium não arrancou',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
