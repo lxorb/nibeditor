@@ -3,7 +3,7 @@
  *
  *  Moving the notes of one space is next door, in sync/pass.ts. */
 
-import { api } from './api'
+import { api, ApiError } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
@@ -673,6 +673,14 @@ class Sync {
       })
 
       if (mine !== this.generation) return moved
+
+      // The account itself is gone - deleted on another device, or its session ended
+      // there - and every pass from here would say so again. Signed out now, the way
+      // the next launch would sign it out, rather than a light saying error until then.
+      if (error instanceof ApiError && error.status === 401) {
+        void account.signOut()
+        return moved
+      }
 
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : t('sync failed')

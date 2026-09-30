@@ -1606,6 +1606,28 @@ describe('a pass that fails partway through', () => {
     expect(sync.passing).toBe(false)
   })
 
+  /** A deleted account answers every request with a 401, and so does a session that
+   *  was signed out on another device. The token is finished; the device signs out at
+   *  once rather than showing an error until its next launch. */
+  test('signs out when the account says the session is finished', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    const { ApiError } = await import('./api')
+    const real = fake.api.changes
+    fake.api.changes = () => Promise.reject(new ApiError(401, 'unauthorized'))
+    try {
+      await sync.run()
+    } finally {
+      fake.api.changes = real
+    }
+
+    expect(account.token).toBeNull()
+    expect(sync.status).not.toBe('error')
+  })
+
   test('says so, lets anybody waiting in, and leaves the loop looping', async () => {
     await machineWithNotes()
     accountWithNotes()
