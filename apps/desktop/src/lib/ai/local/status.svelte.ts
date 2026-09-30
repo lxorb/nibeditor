@@ -45,12 +45,10 @@ class Plans {
 
   /** Asks a program whether it is installed and signed in. */
   async check(kind: LocalKind): Promise<Plan> {
-    const said = await invoke<unknown>('ai_cli_status', { tool: kind }).catch(() => undefined)
-    const standing = said === undefined ? null : standingOf(kind, saidIn(said))
-    const now: Plan = {
-      ...(standing ?? { state: 'unknown', program: null, plan: null, account: null }),
-      limit: this.local[kind].limit,
-    }
+    // A crate that could not ask is a program that cannot be run from here, which the
+    // row says the way it says one that is not installed.
+    const said = await invoke<unknown>('ai_cli_status', { tool: kind }).catch(() => null)
+    const now: Plan = { ...standingOf(kind, saidIn(said)), limit: this.local[kind].limit }
     this.local[kind] = now
     return now
   }

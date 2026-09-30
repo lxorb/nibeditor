@@ -30,7 +30,10 @@ const FIXED: Record<Exclude<ProviderKind, 'compatible'>, string> = {
   codex: 'codex',
 }
 
+/** A kind this build knows. Claude Code is left out of a build that does not offer it,
+ *  so a row kept from one that did is not drawn with nothing behind it. */
 function isKind(value: unknown): value is ProviderKind {
+  if (value === 'claude-code' && !__CLAUDE_CODE__) return false
   return value === 'compatible' || (isString(value) && value in FIXED)
 }
 
