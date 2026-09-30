@@ -45,23 +45,40 @@ function pins(head: string): Pins {
   }
 }
 
+/** A feature list as a manifest writes one. */
+const listed = (features: string[]) => features.map((one) => `"${one}"`).join(', ')
+
 /** One line of the app's tables, as the engine build needs it. */
 function moved(line: string, pinned: Pins): string[] {
-  // The app's own `tauri`, the one every build has: the engine's, embedding the
-  // interface as a release does, with the engine itself and the crate the library
-  // reaches Chromium's own objects through.
-  if (line.startsWith('tauri = { version = "2", features = ["protocol-asset"')) {
+  const tauri = /^tauri = \{ version = "2", features = \[([^\]]*)\] \}$/.exec(line)
+  if (tauri) {
+    const features = [...(tauri[1] ?? '').matchAll(/"([^"]+)"/g)].map((one) => one[1] ?? '')
+    // The app's own `tauri`, the one every build has: the engine's, with every feature
+    // the app asks for, embedding the interface as a release does, and beside it the
+    // engine itself and the crate the library reaches Chromium's own objects through.
+    if (features.includes('protocol-asset')) {
+      return [
+        `tauri = { version = "=${pinned.tauri}", features = [${listed([...features, 'custom-protocol'])}] }`,
+        `tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["unstable"] }`,
+        `cef = { version = "=${pinned.cef}", default-features = false }`,
+      ]
+    }
+    // A platform's own features - the desktop's developer tools, which Tauri 3 takes
+    // from the runtime, and anything else, which it takes as Tauri 2 did.
+    const kept = features.filter((one) => one !== 'devtools')
     return [
-      `tauri = { version = "=${pinned.tauri}", features = ["protocol-asset", "custom-protocol"] }`,
-      `tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["unstable"] }`,
-      `cef = { version = "=${pinned.cef}", default-features = false }`,
+      ...(features.includes('devtools')
+        ? [`tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["devtools"] }`]
+        : []),
+      ...(kept.length > 0
+        ? [`tauri = { version = "=${pinned.tauri}", features = [${listed(kept)}] }`]
+        : []),
     ]
   }
-  // The desktop's `tauri` asks for developer tools, which Tauri 3 takes from the runtime.
-  if (line === 'tauri = { version = "2", features = ["devtools"] }') {
-    return [`tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["devtools"] }`]
-  }
-  const plugin = /^(tauri-plugin-[a-z-]+) = (?:"2"|\{ version = "2"(.*))$/.exec(line)
+  // Every plugin on the plugins' pin, whatever the app narrowed its own to: a `~2.3` that
+  // keeps a Tauri 2 plugin off a release wanting a newer Tauri 2 says nothing about 3.
+  const plugin =
+    /^(tauri-plugin-[a-z-]+) = (?:"[~^=]?2[.\d]*"|\{ version = "[~^=]?2[.\d]*"(.*))$/.exec(line)
   if (plugin?.[1]) {
     return [
       plugin[2] === undefined

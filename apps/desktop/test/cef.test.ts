@@ -73,6 +73,46 @@ describe('the engine build', () => {
     ).toBe(engineManifest(cargo, engine))
   })
 
+  /** Every way the app's manifest says Tauri: its own `tauri` with every feature it asks
+   *  for, a platform's features, developer tools (the runtime's in Tauri 3), and plugins
+   *  however the app narrowed their Tauri 2 version - all on the engine's pins. A Tauri
+   *  crate the writer has no pin for stops it, rather than going through as Tauri 2. */
+  test('the writer moves every form of Tauri line the app writes', () => {
+    const app = [
+      '[dependencies]',
+      'tauri = { version = "2", features = ["protocol-asset", "unstable"] }',
+      'tauri-plugin-os = "2"',
+      '',
+      "[target.'cfg(windows)'.dependencies]",
+      'tauri = { version = "2", features = ["devtools"] }',
+      'tauri-plugin-notification = "~2.4"',
+      'tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }',
+      'tauri = { version = "2", features = ["tray-icon"] }',
+      '',
+      '[profile.release]',
+      'lto = true',
+    ].join('\n')
+    const [written = ''] = engineManifest(app, engine).split(`${MARKER}\n`).slice(1)
+    const pin = (key: string) => new RegExp(`^${key} = "([^"]+)"$`, 'm').exec(engine)?.[1]
+
+    expect(written).toContain(
+      `tauri = { version = "=${pin('tauri')}", features = ["protocol-asset", "unstable", "custom-protocol"] }`,
+    )
+    expect(written).toContain(
+      `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`,
+    )
+    expect(written).toContain(`tauri = { version = "=${pin('tauri')}", features = ["tray-icon"] }`)
+    expect(written).toContain(`tauri-plugin-os = "=${pin('plugins')}"`)
+    expect(written).toContain(`tauri-plugin-notification = "=${pin('plugins')}"`)
+    expect(written).toContain(
+      `tauri-plugin-single-instance = { version = "=${pin('plugins')}", features = ["deep-link"] }`,
+    )
+    expect(written).not.toMatch(/"~?2[".]/)
+    expect(() =>
+      engineManifest(app.replace('tauri-plugin-os = "2"', 'tauri-specta = "2"'), engine),
+    ).toThrow()
+  })
+
   test("it is the only manifest that names the engine, and it compiles the app's own library", () => {
     expect(engine).toMatch(/^tauri-runtime-cef = /m)
     expect(engine).toContain('path = "../src/lib.rs"')
