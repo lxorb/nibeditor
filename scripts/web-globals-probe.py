@@ -15,10 +15,10 @@ engine's own `DevTools` protocol (see `devtools.py`):
 * **a page may declare `ipc`** - a classic script with `let ipc` at the top level runs.
 * **nothing of the app is on its `window`** - no `ipc`, `isTauri` or `__TAURI_*`, and no
   `window.chrome.webview`.
-* **nib's own scripts are in nib's world and not the page's** - the middle button's and
-  the keys' listeners are on the window in the world named `nib`, and none of them in the
-  page's own; in the page, in a frame from the same site, and in a frame from another
-  site, which runs in a process of its own.
+* **nib's own scripts are in nib's world and not the page's** - the listeners for a link
+  pressed for a tab of its own and for the keys are on the window in the world named
+  `nib`, and none of them in the page's own; in the page, in a frame from the same site,
+  and in a frame from another site, which runs in a process of its own.
 * **a window asked for from nib's world reaches the app** - `nib-behind`, as the middle
   button asks, opens a tab behind the page.
 * **a page's dialogs are the page's** - `confirm()` holds the page's script until nib's
@@ -462,9 +462,9 @@ def main() -> int:
             one = frames.get(path, {})
             nib = json.loads(str(one.get("nib") or "[]"))
             page = json.loads(str(one.get("page") or "[]"))
-            if not {"auxclick", "keydown"} <= set(nib):
+            if not {"auxclick", "click", "keydown"} <= set(nib):
                 wrong.append(f"nib's world in {path} has no listeners: {one}")
-            if {"auxclick", "keydown"} & set(page):
+            if {"auxclick", "click", "keydown"} & set(page):
                 wrong.append(f"the page's own world in {path} has nib's listeners: {page}")
         added = (
             [one for one in after if one not in before]
