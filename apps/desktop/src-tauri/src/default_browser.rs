@@ -538,8 +538,7 @@ mod tests {
     }
 
     fn source(relative: &str) -> String {
-        std::fs::read_to_string(crate::app_dir().join(relative))
-            .expect("a file beside the crate")
+        std::fs::read_to_string(crate::app_dir().join(relative)).expect("a file beside the crate")
     }
 
     #[test]

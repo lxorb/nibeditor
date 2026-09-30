@@ -29,7 +29,7 @@ const CONFIG: &str = include_str!("../../tauri.conf.json");
 
 /// The folder the engine keeps its profiles in, inside the app's own settings folder.
 /// `engine::root` in the library names the same place; the comment there is the layout.
-const ROOT: &str = "web";
+const ROOT: &str = "chromium";
 
 /// Which sandbox policy to run with, from the environment.
 ///
@@ -99,7 +99,10 @@ fn allow_debugging(root: &std::path::Path) {
     };
     if let Some(devtools) = said
         .as_object_mut()
-        .map(|all| all.entry("devtools").or_insert_with(|| serde_json::json!({})))
+        .map(|all| {
+            all.entry("devtools")
+                .or_insert_with(|| serde_json::json!({}))
+        })
         .and_then(serde_json::Value::as_object_mut)
     {
         devtools.insert(
@@ -195,7 +198,10 @@ mod tests {
                 ("v".to_owned(), Some("1".to_owned())),
             ]
         );
-        assert!(switches("").is_empty(), "an unset variable adds no switches");
+        assert!(
+            switches("").is_empty(),
+            "an unset variable adds no switches"
+        );
     }
 
     /// The engine's profiles are inside the app's own folder, under the name the library
@@ -207,7 +213,9 @@ mod tests {
             .unwrap()
             .to_owned();
         let path = root_cache_path().expect("a config folder");
-        assert!(path.ends_with("web"));
-        assert!(path.parent().unwrap().ends_with(&identifier) || option_env!("TAURI_CONFIG").is_some());
+        assert!(path.ends_with("chromium"));
+        assert!(
+            path.parent().unwrap().ends_with(&identifier) || option_env!("TAURI_CONFIG").is_some()
+        );
     }
 }

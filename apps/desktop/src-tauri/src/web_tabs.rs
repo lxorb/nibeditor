@@ -230,7 +230,10 @@ const MOVED: &str = "nib://web-tab";
 ///
 /// Only `WebView2` and `WKWebView` raise the request this carries, so on Linux nothing
 /// emits it; the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
-#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
+#[cfg_attr(
+    any(not(any(windows, target_os = "macos")), feature = "cef"),
+    allow(dead_code)
+)]
 const ASKED: &str = "nib://web-ask";
 
 /// The event the window hears when a page asks for a window of its own, carrying
@@ -629,7 +632,10 @@ struct Looked {
 /// Built only where a permission request is raised, which is Windows and macOS; on
 /// Linux the ask module is a stub and nothing constructs this, so it is allowed to be
 /// dead there.
-#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
+#[cfg_attr(
+    any(not(any(windows, target_os = "macos")), feature = "cef"),
+    allow(dead_code)
+)]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,
@@ -701,6 +707,22 @@ pub(crate) fn allowed(url: &Url) -> bool {
         host.as_str(),
         "tauri.localhost" | "ipc.localhost" | "asset.localhost" | "nib.localhost"
     )
+}
+
+/// Opens `url` in a tab beside `tab`, behind it or in front: what the window does with a
+/// window a page asked for, and what nib's own Chromium does with a link pressed for a
+/// tab of its own, which never becomes a window request there; see `web_opens.rs`.
+#[cfg(feature = "cef")]
+pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
+    let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
+        return;
+    };
+    let payload = Opening {
+        tab: tab.to_string(),
+        url: address,
+        behind,
+    };
+    let _ = app.emit_to(window, OPENED, payload);
 }
 
 /// The address the window opens as a tab of its own for a window the page asked
@@ -821,7 +843,9 @@ fn opening(place: Option<Place>, url: &str) -> String {
 
     #[cfg(all(windows, not(feature = "cef")))]
     let mut scripts = vec![crate::web_opens::SCRIPT.to_string()];
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(feature = "cef")]
+    let mut scripts = vec![crate::web_opens::script()];
+    #[cfg(all(not(windows), not(feature = "cef")))]
     let mut scripts: Vec<String> = Vec::new();
 
     if let Some(one) = want {
@@ -1294,13 +1318,30 @@ fn reporting(
         // An engine that cannot say when the page's mark changes is asked for it once
         // the page is there, which is when a browser puts the site's icon on the tab.
         // `WebView2` says so itself, from inside the page's own profile; see web_icons.rs.
-        #[cfg(any(not(windows), feature = "cef"))]
+        #[cfg(all(not(windows), not(feature = "cef")))]
         {
             let marked = sending.clone();
             let named = moved.clone();
             let holder = view.window().label().to_string();
             let _ = view.eval_with_callback(crate::web_icons::ASK, move |answer| {
                 let declaring = serde_json::from_str(&answer).unwrap_or_default();
+                if let Some(icon) = crate::web_icons::best(&declaring) {
+                    crate::web_icons::said(&marked, &holder, &named, &icon);
+                }
+            });
+        }
+        // nib's own Chromium asks in nib's world, from a thread of its own; see
+        // web_worlds.rs.
+        #[cfg(feature = "cef")]
+        {
+            let marked = sending.clone();
+            let named = moved.clone();
+            let holder = view.window().label().to_string();
+            let asking = view.clone();
+            std::thread::spawn(move || {
+                let declaring = crate::web_worlds::value(&asking, crate::web_icons::ASK)
+                    .and_then(|said| serde_json::from_value(said).ok())
+                    .unwrap_or_default();
                 if let Some(icon) = crate::web_icons::best(&declaring) {
                     crate::web_icons::said(&marked, &holder, &named, &icon);
                 }
@@ -1365,7 +1406,28 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     #[cfg(feature = "cef")]
     if let Some((address, scripts)) = onward.clone() {
         let clearing = view.clone();
+        let (hearing, named, holder) = (
+            app.clone(),
+            tab.to_string(),
+            view.window().label().to_string(),
+        );
+        #[cfg(windows)]
+        {
+            use cef::{ImplBrowser as _, ImplBrowserHost as _};
+            use tauri_runtime_cef::WebviewCefExt as _;
+            let (keyed, label) = (holder.clone(), view.label().to_string());
+            let _ = view.with_cef_webview(move |page| {
+                if let Some(host) = page.browser().host() {
+                    crate::web_keys::chromium::page(
+                        &label,
+                        host.window_handle().0 as isize,
+                        &keyed,
+                    );
+                }
+            });
+        }
         std::thread::spawn(move || {
+            crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
             let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
             crate::trace::mark(&format!("web tab: {}", cleared.said()));
         });
@@ -1845,6 +1907,8 @@ pub async fn web_close(
             // Its find and its dialogs go with it, whichever way the page goes.
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
+            #[cfg(feature = "cef")]
+            let_go(view.label());
             if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -1931,8 +1995,20 @@ pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
 /// `web_close`.
 pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
+        #[cfg(feature = "cef")]
+        let_go(view.label());
         let _ = view.close();
     }
+}
+
+/// What nib's own Chromium keeps about a page it speaks to, let go of as the page closes,
+/// so a tab opened again under the same label is a new page to it; see
+/// `engine/devtools.rs` and `web_keys.rs`.
+#[cfg(feature = "cef")]
+fn let_go(label: &str) {
+    crate::engine::devtools::forget(label);
+    #[cfg(windows)]
+    crate::web_keys::chromium::gone(label);
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been

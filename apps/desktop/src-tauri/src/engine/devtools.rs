@@ -2,7 +2,7 @@
 //! says back.
 //!
 //! The same protocol `WebView2` speaks through its COM interfaces (see
-//! agents/cdp.rs and web_worlds.rs), reached the way `tauri-runtime-cef` offers it: a
+//! `agents/cdp.rs` and `web_worlds.rs`), reached the way `tauri-runtime-cef` offers it: a
 //! message sent to the browser's own agent, and one observer per browser that hears
 //! every message the agent sends - the answers to anybody's calls, the runtime's own
 //! included, and every event. No port and no socket, so nothing else on the machine
@@ -223,20 +223,25 @@ mod tests {
         let page = Page::default();
         let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let noting = seen.clone();
-        page.hearing
-            .lock()
-            .unwrap()
-            .push(std::sync::Arc::new(move |method: &str, session: Option<&str>, _: &serde_json::Value| {
+        page.hearing.lock().unwrap().push(std::sync::Arc::new(
+            move |method: &str, session: Option<&str>, _: &serde_json::Value| {
                 noting
                     .lock()
                     .unwrap()
                     .push((method.to_string(), session.map(str::to_string)));
-            }));
-        read(&page, &json!({ "method": "Target.attachedToTarget", "params": {}, "sessionId": "S9" }));
+            },
+        ));
+        read(
+            &page,
+            &json!({ "method": "Target.attachedToTarget", "params": {}, "sessionId": "S9" }),
+        );
         read(&page, &json!({ "id": 99, "result": {} }));
         assert_eq!(
             *seen.lock().unwrap(),
-            vec![("Target.attachedToTarget".to_string(), Some("S9".to_string()))]
+            vec![(
+                "Target.attachedToTarget".to_string(),
+                Some("S9".to_string())
+            )]
         );
     }
 }

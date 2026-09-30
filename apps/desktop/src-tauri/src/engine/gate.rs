@@ -236,8 +236,7 @@ fn walk(app: &AppHandle, tabs: usize) {
     let probe = "gate-web-0";
     match probe_window(app, probe, PROBE) {
         Ok(()) => say(&format!(
-            "\"event\":\"page\",\"label\":\"{probe}\",\"url\":\"{}\"",
-            PROBE
+            "\"event\":\"page\",\"label\":\"{probe}\",\"url\":\"{PROBE}\""
         )),
         Err(error) => check(
             "a website opens in a window of the gate's own",
@@ -422,7 +421,7 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
     // pictures put the engine's own pages at x = 1180 and photographed the desktop
     // beside them, so a screenshot corroborated nothing. Everything the gate opens is
     // in the top-left 1024 by 768 now, tabs on one column and pages on the next.
-    let y = if at % 2 == 0 { 60.0 } else { 330.0 };
+    let y = if at.is_multiple_of(2) { 60.0 } else { 330.0 };
     let pane: crate::web_tabs::Pane = serde_json::from_value(serde_json::json!({
         "x": 400.0, "y": y, "width": 300.0, "height": 260.0
     }))

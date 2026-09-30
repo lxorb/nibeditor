@@ -1,48 +1,40 @@
 //! Which engine every webview in this build runs on, and which profile each of
 //! them is in.
 //!
-//! Two builds come out of this crate and they differ in one thing.
+//! Two builds come out of this source and they differ in one thing. The app that ships
+//! runs every webview on the system's engine - `WebView2` on Windows, `WKWebView` on a
+//! Mac, `WebKitGTK` on Linux - which is what Tauri gives without being asked. The other,
+//! `nib-chromium`, is the same library compiled against Tauri 3 and `tauri-runtime-cef`
+//! by `apps/desktop/src-tauri/cef`, with the `cef` feature on: nib's own Chromium, in
+//! nib's own process, the app's interface and every web tab views in one browser process.
+//! Which of the two a launch is, is the reader's choice in Settings; see
+//! `engine_switch.rs`, and docs/browser.md for the design and the measurements.
 //!
-//! The default one is the app that ships, and it is untouched by anything here:
-//! the system's engine behind every webview - `WebView2` on Windows, `WKWebView`
-//! on a Mac, `WebKitGTK` on Linux - which is what Tauri gives without being
-//! asked. The other is behind the `cef` feature: nib's own Chromium, in nib's own
-//! process, through `tauri-runtime-cef`, with the app's own interface and every
-//! web tab as views in one browser process. See docs/browser.md, which is the
-//! design and the measurement, and `apps/desktop/src-tauri/cef`, which is the
-//! binary that links the engine and hands it to `run_on`.
+//! **The default build names no engine.** Everything Chromium is behind the feature, and
+//! `tauri-runtime-cef`, the `cef` crate and the three hundred megabytes they download
+//! are a dependency of the engine build's manifest alone, so the app's dependency graph,
+//! lock file and launch are the ones that shipped yesterday.
 //!
-//! **Nothing here names Chromium.** The engine arrives as an already-configured
-//! `tauri::Builder` from the binary that linked it, and that is the whole point of
-//! the seam: `tauri-runtime-cef`, the `cef` crate and the three hundred megabytes
-//! they download are not a dependency of this crate at all, in either build, so
-//! the default build's dependency graph, lock file and launch are the ones that
-//! shipped yesterday.
-//!
-//! **The two profiles.** Chromium serves many profiles from one browser process,
-//! and an extension is installed into a profile - so two profiles is what keeps an
-//! extension a reader installed for the web out of nib's own interface. It is not a
-//! precaution: with one profile the spike's test extension read the app's own
-//! document, in a screenshot, on the first try (docs/browser.md section 9).
-//!
-//! Which of the two is the engine's *primary* profile is a decision and not a
-//! detail. An extension installed from the command line or by Chromium's own policy
-//! mechanisms lands in the primary profile, so **the browsing profile is the primary
-//! one and nib's interface is the named one beside it** - the opposite way round
-//! from the sketch in docs/browser.md, and the only way round that puts a reader's
-//! extensions where a reader's pages are.
+//! **The two profiles.** Chromium serves many profiles from one browser process, and an
+//! extension is installed into a profile - so two profiles is what keeps an extension a
+//! reader installed for the web out of nib's own interface. It is not a precaution: with
+//! one profile the spike's test extension read the app's own document, in a screenshot,
+//! on the first try (docs/browser.md section 9). The browsing profile is the engine's
+//! *primary* one, which is where an extension installed by the command line or by
+//! Chromium's policies lands, and nib's interface is the named one beside it. A space
+//! that keeps its web data apart has a profile of its own too.
 //!
 //! ```text
-//! <config>/web/           the user data directory: Chromium's own, one lock on it
-//! <config>/web/Default    the browsing profile. Cookies, logins, extensions
-//! <config>/web/app        nib's own interface. No extensions, nothing granted
+//! <config>/chromium/                Chromium's user data directory, one lock on it
+//! <config>/chromium/Default         the browsing profile. Cookies, logins, extensions
+//! <config>/chromium/app             nib's own interface. No extensions, nothing granted
+//! <config>/chromium/store-<name>    a space's or a site's own store; see web_stores.rs
 //! ```
 //!
-//! The default build keeps the directory it has always used - `<config>/web`, the
-//! whole of it, as one `WebView2` user data folder or one `WKWebView` data store -
-//! so nobody's cookies move because a feature exists. A space that keeps its web data
-//! apart has a folder of its own beside it, under `<config>/web-stores`; see
-//! `web_stores.rs`.
+//! The system's engine keeps the folder it has always used - `<config>/web`, as one
+//! `WebView2` user data folder or one `WKWebView` data store - so nobody's cookies moved
+//! because a second engine exists, and the two engines never read each other's files. A
+//! store of its own is a folder under `<config>/web-stores`; see `web_stores.rs`.
 
 use std::path::PathBuf;
 
@@ -51,13 +43,20 @@ use tauri::{AppHandle, Runtime};
 
 use crate::paths::{config_dir, made};
 
-/// The folder inside the app's own settings folder that the web lives in.
-///
-/// One name for two things on purpose, because they are the same thing: the
-/// `WebView2` user data folder the default build has always used, and Chromium's
-/// user data directory under the `cef` feature. A profile is a direct child of it,
-/// which is the only shape CEF accepts.
+/// The folder inside the app's own settings folder that the web lives in: the
+/// `WebView2` user data folder the system's engine has always used.
+#[cfg(not(feature = "cef"))]
 const ROOT: &str = "web";
+
+/// And nib's own Chromium's user data directory, a folder of its own beside it: two
+/// engines on one machine, each with its own profiles. A profile is a direct child of
+/// it, which is the only shape CEF accepts. `cef/src/main.rs` names the same place.
+#[cfg(feature = "cef")]
+const ROOT: &str = "chromium";
+
+/// What a store of its own is called as a Chromium profile, in front of its name.
+#[cfg(feature = "cef")]
+const STORE_PROFILE: &str = "store-";
 
 /// The profile nib's own interface is in, as a folder name.
 ///
@@ -190,19 +189,25 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder)
 }
 
-/// Where a web tab's site data goes on nib's own Chromium: the engine's own primary
-/// profile, which is the one line of this seam that is a decision. See above.
+/// Where a web tab's site data goes on nib's own Chromium: the engine's primary
+/// profile for the store every space shares - asked for as the user data directory
+/// itself, which is how the runtime is told "the primary one" rather than a profile named
+/// after it - and a profile of its own beside it for a store of its own. See above.
 #[cfg(feature = "cef")]
-#[allow(
-    clippy::unnecessary_wraps,
-    reason = "the seam is one signature for every engine and platform; the system engine's path can fail and the caller returns Result either way"
-)]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     app: &AppHandle,
-    _store: Option<&str>,
+    store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
-    Ok(builder.data_directory(root(app)?))
+    let root = root(app)?;
+    Ok(builder.data_directory(match store {
+        None => root,
+        Some(name) => {
+            let dir = root.join(format!("{STORE_PROFILE}{name}"));
+            made(&dir)?;
+            dir
+        }
+    }))
 }
 
 /// The window the config describes, taken out of it so it is built by our own code
@@ -326,5 +331,15 @@ mod tests {
         assert!(!APP_PROFILE.contains('\\'));
         assert!(!ROOT.is_empty());
         assert_ne!(APP_PROFILE, ROOT, "the interface is not the whole of it");
+    }
+
+    /// A store of its own is a profile beside nib's interface and never the interface:
+    /// a store is named `space_` or `site_` something, and the interface is `app`.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn a_store_s_profile_is_never_the_interface_s() {
+        let named = format!("{}{}", super::STORE_PROFILE, "space_1");
+        assert_ne!(named, APP_PROFILE);
+        assert!(!named.contains('/') && !named.contains('\\'));
     }
 }
