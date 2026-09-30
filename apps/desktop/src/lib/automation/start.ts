@@ -52,6 +52,15 @@ export async function startAutomation(): Promise<() => void> {
   const stopping: (() => void)[] = []
   const { listen } = await import('@tauri-apps/api/event')
 
+  // A link clicked in another program, which a desktop hands over once nib is its
+  // browser; see web-tab/handed.ts. First, because asking for those pages is also how
+  // the crate learns this window's page is up, and so has a question to ask before a
+  // quit closes it; see `is_listening` in launch.rs.
+  if (isDesktop) {
+    const { hearPages } = await import('../web-tab/handed')
+    stopping.push(await hearPages())
+  }
+
   // The link the app was launched by, which arrived before anything was listening.
   for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
     await follow(uri)
@@ -67,13 +76,7 @@ export async function startAutomation(): Promise<() => void> {
   // browser tab has no socket. The answer goes back through a command rather than
   // an event because it belongs to one request - the crate is holding a socket open
   // for it, and nothing else should hear it. See src-tauri/src/endpoint.rs.
-  //
-  // And a link clicked in another program, which a desktop hands over once nib is its
-  // browser; see web-tab/handed.ts.
   if (isDesktop) {
-    const { hearPages } = await import('../web-tab/handed')
-    stopping.push(await hearPages())
-
     stopping.push(
       await listen<Request>('nib://automation', (event) => {
         const asked = event.payload

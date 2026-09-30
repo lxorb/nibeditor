@@ -95,8 +95,6 @@ mod pdf;
 #[cfg(desktop)]
 mod placement;
 mod query;
-#[cfg(desktop)]
-mod recent;
 mod regex;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
@@ -150,13 +148,7 @@ mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
 
-use paths::Opened;
-#[cfg(desktop)]
-use paths::{note_from_outside, outside_spaces};
-#[cfg(desktop)]
-use std::path::Path;
-#[cfg(desktop)]
-use tauri::AppHandle;
+use paths::Picked;
 use tauri::Manager;
 
 /// The commands the window may call, as one list. A builder takes a single
@@ -260,7 +252,6 @@ macro_rules! desktop_commands {
             ground::remember_ground,
             apple_notes::read_apple_notes,
             apple_notes::open_full_disk_access,
-            launch::take_startup_files,
             launch::take_startup_pages,
             launch::new_window,
             default_browser::default_browser,
@@ -274,8 +265,6 @@ macro_rules! desktop_commands {
             pdf::pdf_supported,
             pdf::print_pdf,
             pdf::print_page,
-            recent::remember_recent,
-            recent::forget_recent,
             secrets::secret_forget,
             secrets::secret_read,
             secrets::secret_write,
@@ -394,7 +383,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::begin();
 
     // A second launch belongs to the window that is already open: it raises it
-    // and hands over whatever file it was asked to open. A phone launches an app
+    // and hands over whatever page it was asked to open. A phone launches an app
     // once, has no installer to run and no dialog to pick a file in.
     #[cfg(desktop)]
     let builder = builder
@@ -435,7 +424,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         )
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_deep_link::init())
-        .manage(Opened::default())
+        .manage(Picked::default())
         .manage(uris::Pending::default());
     trace::mark("plugins: opener, os, deep link");
 
@@ -523,8 +512,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .run(on_event);
 }
 
-/// What the system asks of the app as a whole, rather than of a window: a file
-/// from the Finder, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
+/// What the system asks of the app as a whole, rather than of a window: a link
+/// from another program, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
 /// none of the three.
 fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     #[cfg(desktop)]
@@ -553,11 +542,13 @@ fn ready(
 
     // A picture in a note is loaded by the webview itself, over the asset
     // protocol, which has a scope of its own. The spaces folder is in it from the
-    // start; the folder a note was opened from elsewhere is added when that
-    // happens, and nothing else is ever readable this way.
+    // start, and the only other thing that ever is: a file the reader picked in the
+    // system's own dialog, which the dialog adds. Heard from here on, so what an
+    // export was pointed at may be written; see `Picked` in paths.rs.
     if let Ok(root) = paths::spaces_dir(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
+    paths::hear_picks(handle);
     trace::mark("asset scope");
 
     // Links into the app, on every platform: the one the app was launched by, and
@@ -575,24 +566,27 @@ fn ready(
     #[cfg(desktop)]
     trace::mark("automation endpoint");
 
-    // A command line is a desktop's way of being handed a file, and a link when nib
-    // is the browser. A phone app is launched by tapping it, and there is nothing in
+    // A command line is a desktop's way of being handed a link, when nib is the
+    // browser; never a note, since nib opens nothing from outside its spaces (see
+    // launch.rs). A phone app is launched by tapping it, and there is nothing in
     // `args` worth reading.
     //
-    // Added to, not replaced: on a Mac a file the Finder opened the app with may
-    // already be waiting there; see lifecycle.rs.
+    // Added to, not replaced: on a Mac a link the system opened the app with may
+    // already be waiting there; see lifecycle.rs. And the trace says which kind of
+    // launch this was, because a link's is measured from the click to the page.
     #[cfg(desktop)]
     {
-        let (files, pages) = launch::handed_by(std::env::args().collect());
-        if !files.is_empty() {
-            remember(handle, &files);
-        }
+        let args: Vec<String> = std::env::args().collect();
         if let Some(pending) = handle.try_state::<launch::Pending>() {
-            pending.hold(launch::Handed::Files, files);
-            pending.hold(launch::Handed::Pages, pages);
+            pending.hold(launch::Handed::Pages, launch::handed_by(&args));
         }
+        trace::mark(if web_handed::for_a_link(&args) {
+            "launch arguments, a link's"
+        } else {
+            "launch arguments"
+        });
     }
-
+    #[cfg(not(desktop))]
     trace::mark("launch arguments");
 
     // What the window's own page may be given: the microphone the moment somebody
@@ -674,7 +668,7 @@ fn ready(
         }
     }
 
-    // From here a file that finds no window at all is one that has to open one.
+    // From here a link that finds no window at all is one that has to open one.
     #[cfg(desktop)]
     if let Some(pending) = handle.try_state::<launch::Pending>() {
         pending.launched();
@@ -700,19 +694,6 @@ fn ready(
     }
 
     Ok(())
-}
-
-/// Notes the app was launched with come from outside the spaces folder as often
-/// as not, and a file handed over by the shell is as deliberate a choice as one
-/// picked in a dialog. Recording them is what lets the pictures beside them load.
-#[cfg(desktop)]
-fn remember(app: &AppHandle, files: &[String]) {
-    for file in files {
-        let path = Path::new(file);
-        if outside_spaces(app, path) {
-            note_from_outside(app, path);
-        }
-    }
 }
 
 #[cfg(test)]

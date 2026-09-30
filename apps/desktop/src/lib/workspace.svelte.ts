@@ -94,7 +94,8 @@ import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged } from './workspace/arranged.svelte'
-import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
+import { log } from './log'
+import { invoke, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
@@ -699,6 +700,13 @@ class Workspace {
       const made: Tab[] = []
 
       for (const draft of drafts) {
+        // A tab from a sitting before nib stopped opening files from outside its
+        // spaces goes quietly: nothing in nib opens that file any more.
+        if (draft.path && !(await this.opens(draft.path))) {
+          log('info', `restore: ${draft.path} is outside every space, so its tab is not put back`)
+          continue
+        }
+
         const already = this.already(draft)
         if (already) {
           made.push(this.viewOf(already, paneId, draft))
@@ -1153,13 +1161,22 @@ class Workspace {
     return this.opened.make(start)
   }
 
-  /** Whether a file is outside every space: one the reader opened from elsewhere on
-   *  the computer. It writes itself as a note in a space does, and it is the one
-   *  kind of file something else may be writing too - a build, a script, git - so
-   *  what it says on the disk is kept as a version before a write replaces it; see
-   *  watch.svelte.ts. */
+  /** Whether a file is outside every space, which is a file nib opens nothing of -
+   *  but for the app's own two settings files; see `opens`. */
   outside(path: string): boolean {
     return !this.spaces.some((one) => within(one.root, path) !== null)
+  }
+
+  /** Whether nib opens a file: a note in a space, or one of the app's own two
+   *  settings files, Edit custom CSS and Edit snippets, which only the crate can
+   *  name. Asked of the crate only for a path outside every space, so a note in one
+   *  costs nothing; a refusal is its answer. See `openable` in paths.rs. */
+  private async opens(path: string): Promise<boolean> {
+    if (!this.outside(path)) return true
+    return invoke('file_stamp', { path }).then(
+      () => true,
+      () => false,
+    )
   }
 
   /** The folder a new tab becomes a file in: the root of the space on screen. Read
@@ -2684,24 +2701,19 @@ class Workspace {
     return this.saving.worthKeeping
   }
 
-  /** Notes opened lately, for the palette. The taskbar keeps a list of its
-   *  own, which is what the second call puts a note into. */
-  /** The notes read lately, newest first, without what has since been archived. */
+  /** Notes opened lately, for the palette, newest first: the app's own list and no
+   *  system's, since a recent document on the taskbar or in the Dock is a file handed
+   *  back to nib from outside, which it no longer opens. Only the ones in a space, so a
+   *  note opened from elsewhere by an older nib is not offered again, and without what
+   *  has since been archived. */
   get recent(): string[] {
-    const recent = this.device.recent
-    return this.archive.any ? recent.filter((path) => !this.archive.has(path)) : recent
+    return this.device.recent.filter(
+      (path) => !this.outside(path) && !(this.archive.any && this.archive.has(path)),
+    )
   }
 
   private remember(path: string) {
     this.device.remember(path)
-    if (isDesktop) void invoke('remember_recent', { path }).catch(() => undefined)
-  }
-
-  /** Both lists, as the two calls above filled both: File > Open Recent > Clear
-   *  Menu on a Mac empties the Dock's too; see recent.rs. */
-  forgetRecent() {
-    this.device.forgetRecent()
-    if (isDesktop) void invoke('forget_recent').catch(() => undefined)
   }
 
   /** The icon a space shows in the switcher, if it has been given one. Keyed by

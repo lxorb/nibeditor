@@ -91,7 +91,6 @@ import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { pages, type Step } from './web-tab/pages.svelte'
-import { openFile } from './open-file'
 import { openRandomNote, randomChoices } from './random-note'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
@@ -289,8 +288,9 @@ export function exportCommands(): Command[] {
  *  opens the import sheet.
  *
  *  A row in File rather than in Export, because importing makes notes of its own
- *  and has nothing to do with what is open - it belongs beside Open file, which is
- *  the other way a document that is not yet a note becomes one.
+ *  and has nothing to do with what is open. It is the way a document that is not
+ *  yet a note becomes one: nib opens nothing from outside its spaces, so a file
+ *  from elsewhere comes in as a copy.
  *
  *  Always there, on every platform. What can be read is a question about the file
  *  the reader is holding, and the sheet answers it once the file is in; a row that
@@ -1049,12 +1049,6 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-    {
-      id: 'open',
-      label: t('Open file'),
-      hint: shortcuts.hint('app.open'),
-      run: () => void openFile(),
-    },
     // Greyed where there is nothing else to open: a space of one note, or of notes
     // that are all left out. See random-note.ts.
     {

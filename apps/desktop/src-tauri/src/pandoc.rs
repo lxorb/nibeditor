@@ -10,6 +10,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use tauri::AppHandle;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -128,10 +129,9 @@ pub fn has_pandoc() -> bool {
 
 /// What one import is run with: the options, then `--`, then the file.
 ///
-/// The marker is the whole point of the function. `chosen` judges a path and
-/// deliberately allows any file the app can reach, so what arrives is the reader's
-/// own - a file picked in the dialog, one named on the command line, one the shell
-/// handed over - and a name that opens with a dash is a name pandoc reads as an
+/// The marker is the whole point of the function. `chosen` judges a path, and lets
+/// through a file the reader picked in the dialog wherever it is, so what arrives is
+/// the reader's own - and a name that opens with a dash is a name pandoc reads as an
 /// option instead. `--lua-filter=…` names a script pandoc runs, which is the same
 /// road `is_format` below closes for a writer's name. `--` is where pandoc stops
 /// reading options, so everything after it is a file however it is spelled.
@@ -155,10 +155,10 @@ fn reading(source: &str) -> [&str; 8] {
 /// whichever folder the app happens to have been started in, which for an app
 /// launched from its own shortcut is a folder nobody would think to look in.
 #[tauri::command(async)]
-pub fn import_document(path: String) -> Result<String, String> {
-    // The same gate the note readers go through: a file the reader picked in the
-    // dialog, judged as a path before pandoc is handed it.
-    let source = chosen(&path)?;
+pub fn import_document(app: AppHandle, path: String) -> Result<String, String> {
+    // A file the reader picked in the dialog, judged as a path before pandoc is
+    // handed it; see `chosen`.
+    let source = chosen(&app, &path)?;
     let beside = source
         .parent()
         .filter(|parent| parent.is_dir())
@@ -207,11 +207,16 @@ fn is_format(format: &str) -> bool {
 /// The file it writes is wherever the reader chose to save it, so it is judged the
 /// way `write_bytes` judges the same choice; see `chosen`.
 #[tauri::command(async)]
-pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), String> {
+pub fn run_pandoc(
+    app: AppHandle,
+    source: String,
+    output: String,
+    format: String,
+) -> Result<(), String> {
     if !is_format(&format) {
         return Err(format!("{format} is not a format pandoc writes"));
     }
-    let target = chosen(&output)?;
+    let target = chosen(&app, &output)?;
 
     let mut child = pandoc()
         .args(["--from", WRITE_FROM, "--to", &format, "--standalone"])
@@ -260,16 +265,6 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{complaint, is_format, reading};
-
-    /// The file an export is written to is judged before pandoc is started, the
-    /// way the other writers judge theirs, so the refusal is the same sentence
-    /// whether pandoc is installed or not.
-    #[test]
-    fn writes_only_to_a_path_that_names_a_file() {
-        let error = super::run_pandoc("# Plan".into(), "/".into(), "odt".into())
-            .expect_err("a root that is not a file");
-        assert!(error.contains("does not name a file"), "{error}");
-    }
 
     /// A path is the reader's own, and pandoc reads a leading dash as an option.
     #[test]

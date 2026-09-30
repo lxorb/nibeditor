@@ -4,7 +4,6 @@ export const am: Dictionary = {
   // Files and notes
   Save: 'አስቀምጥ',
   'New note': 'አዲስ ማስታወሻ',
-  'Open file': 'ፋይል ክፈት',
   'Random note': 'የዘፈቀደ ማስታወሻ',
   'New note inside': 'ውስጡ አዲስ ማስታወሻ',
   'New canvas': 'አዲስ ሸራ',
@@ -814,8 +813,6 @@ export const am: Dictionary = {
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
   'Report an issue': 'ችግር አሳውቅ',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} በዲስክ ላይ ተቀይሯል። በአዘጋጁ ውስጥ ያለው የእርስዎ ነው።',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',
   'Copy the line up': 'መስመሩን ወደ ላይ አባዛ',
@@ -1466,8 +1463,6 @@ export const am: Dictionary = {
   'Show all': 'ሁሉንም አሳይ',
   'Quit {name}': 'ከ{name} ውጣ',
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
-  'Open recent': 'የቅርብ ጊዜውን ክፈት',
-  'Clear menu': 'ምናሌውን አጽዳ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

@@ -583,7 +583,7 @@ describe('installed themes', () => {
 describe('what the browser cannot do', () => {
   test('answers the shape that makes the app hide the feature', async () => {
     expect(await webInvoke('has_pandoc')).toBe(false)
-    expect(await webInvoke('take_startup_files')).toEqual([])
+    expect(await webInvoke('file_stamp', { path: '/Notes/Idea.md' })).toBeNull()
     expect(await webInvoke('theme_dir')).toBe('')
   })
 

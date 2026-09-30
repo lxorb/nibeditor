@@ -42,7 +42,7 @@ describe('on Windows and Linux', () => {
     for (const [key, command] of [
       ['w', 'app.close'],
       ['n', 'app.new'],
-      ['o', 'app.open'],
+      ['o', 'app.palette.open'],
       ['s', 'app.save'],
       ['r', null],
       ['c', null],

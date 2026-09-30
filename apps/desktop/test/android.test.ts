@@ -24,6 +24,7 @@ const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
 
 const manifest = read(ANDROID, 'AndroidManifest.xml')
 const activity = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'MainActivity.kt')
+const shared = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Shared.kt')
 const tiles = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Tiles.kt')
 const widgets = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Widgets.kt')
 const layout = read(ANDROID, 'res', 'layout', 'widget_notes.xml')
@@ -103,11 +104,24 @@ describe('what the app asks the phone for', () => {
 })
 
 describe('what another app may share with nib', () => {
-  test('one thing, several things, and a note opened from somewhere else', () => {
+  test('one thing and several things, each copied into a space', () => {
     expect(manifest).toContain('android.intent.action.SEND"')
     expect(manifest).toContain('android.intent.action.SEND_MULTIPLE"')
-    expect(manifest).toContain('android.intent.action.VIEW"')
-    expect(manifest).toContain('android:mimeType="text/markdown"')
+  })
+
+  /** A VIEW filter for a file is nib in a file manager's "Open with", and nib opens
+   *  nothing from outside its spaces. The one VIEW left is the `nib://` link. */
+  test('never a file to open where it lies', () => {
+    const views = [...manifest.matchAll(/<intent-filter>([\s\S]*?)<\/intent-filter>/g)]
+      .map((one) => one[1] ?? '')
+      .filter((filter) => filter.includes('android.intent.action.VIEW"'))
+
+    expect(views).toHaveLength(1)
+    expect(views[0]).toContain('android:scheme="nib"')
+    expect(manifest).not.toContain('android:scheme="content"')
+    expect(manifest).not.toContain('android:scheme="file"')
+    expect(manifest).not.toContain('android:mimeType="text/markdown"')
+    expect(shared).not.toContain('ACTION_VIEW')
   })
 
   /** The filters are on the launcher activity rather than on one of their own,

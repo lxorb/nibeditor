@@ -54,6 +54,11 @@ vi.mock('./tauri', async (importOriginal) => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
 
+    // The crate's judge: nib opens nothing from outside its spaces but its own two
+    // settings files, and the stamp is where the window asks; see `openable`.
+    if (command === 'file_stamp' && pathOf(args).startsWith('/elsewhere/')) {
+      throw new Error(`${pathOf(args)} is outside the notes folder`)
+    }
     if (command === 'write_note' && holding.write) await holding.write
     if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
       await holding.read
@@ -1973,16 +1978,6 @@ describe('closing, which never asks anything', () => {
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
   })
 
-  test('and a file opened from outside every space the same way', async () => {
-    const tab = await dirty(OUTSIDE)
-
-    workspace.close(tab.id)
-    await workspace.writesSettled()
-
-    expect(sheet.asked).toEqual([])
-    expect(written()).toEqual([[OUTSIDE, '# outside, typed']])
-  })
-
   test('closes an empty new note without a word, and writes nothing', async () => {
     workspace.openBlank()
     const tab = workspace.active
@@ -2340,16 +2335,6 @@ describe('a note writes itself, wherever it is', () => {
     expect(workspace.outside(WELCOME)).toBe(false)
   })
 
-  test('and a file opened from outside every space writes itself too', async () => {
-    await typedIn(OUTSIDE)
-
-    await vi.advanceTimersByTimeAsync(400)
-    await workspace.writesSettled()
-
-    expect(written()).toEqual([OUTSIDE])
-    expect(workspace.outside(OUTSIDE)).toBe(true)
-  })
-
   test('a file typed in while it was being written is written again', async () => {
     const tab = await typedIn('/space/a.md')
 
@@ -2680,6 +2665,62 @@ describe('a canvas that comes back after a restart', () => {
 
     expect(held).toBeDefined()
     expect(held?.doc).toBe('')
+  })
+})
+
+/** A sitting written by an older nib, which opened files from anywhere on the disk.
+ *  nib opens nothing from outside its spaces now, so a tab on such a file does not
+ *  come back - not clean, not with words unwritten in it, not as a paper - and the
+ *  rest of the sitting does. The app's own settings files are the exception the
+ *  crate makes, and they come back. */
+describe('a tab on a file outside every space, after the update', () => {
+  function drafted(tabs: { kind: 'note' | 'pdf'; path: string; dirty?: boolean }[]) {
+    return {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: tabs.map(({ kind, path, dirty = false }) => ({
+            kind,
+            path,
+            name: path.slice(path.lastIndexOf('/') + 1),
+            doc: dirty ? '# typed' : '',
+            dirty,
+            cursor: 0,
+            scroll: 0,
+          })),
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    }
+  }
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+  })
+
+  test('is left out quietly, and the rest of the sitting comes back', async () => {
+    notes['/config/custom.css'] = 'body {}'
+    await workspace.applyLayout(
+      drafted([
+        { kind: 'note', path: OUTSIDE },
+        { kind: 'note', path: '/space/a.md' },
+        { kind: 'note', path: '/elsewhere/beside it.md', dirty: true },
+        { kind: 'pdf', path: '/elsewhere/paper.pdf' },
+        { kind: 'note', path: '/config/custom.css' },
+      ]),
+      false,
+    )
+
+    expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md', '/config/custom.css'])
+    // Nothing of the file was read, and nothing was written over it.
+    const touched = sent.filter((one) => one.path.startsWith('/elsewhere/'))
+    expect(touched.map((one) => one.command)).not.toContain('read_note')
+    expect(touched.map((one) => one.command)).not.toContain('write_note')
   })
 })
 

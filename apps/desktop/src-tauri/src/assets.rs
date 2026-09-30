@@ -11,9 +11,7 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{
-    beside_a_note, cannot, folded, free_spot, inside, made, space_root, spaces_dir,
-};
+use crate::paths::{cannot, folded, free_spot, in_spaces, inside, made, space_root, spaces_dir};
 
 /// Bigger than any picture belongs in a document, and small enough that turning
 /// it into text cannot exhaust the memory of the window asking.
@@ -39,7 +37,7 @@ const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 /// thirty megabyte PDF a copy rather than a hundred megabytes of numbers.
 #[tauri::command(async)]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
-    let target = beside_a_note(&app, &path)?;
+    let target = in_spaces(&app, &path)?;
     // A PDF iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     crate::notes::icloud::fetched(&app, &target)?;
@@ -54,7 +52,7 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
 /// Refuses anything large enough to bloat the file past usefulness.
 #[tauri::command(async)]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
-    let target = beside_a_note(&app, &path)?;
+    let target = in_spaces(&app, &path)?;
     let Some(bytes) = under(&target, LIMIT)? else {
         return Err(format!("{path} is larger than {LIMIT_MB} MB"));
     };
@@ -108,17 +106,14 @@ pub fn save_asset(
     name: String,
     bytes: Vec<u8>,
 ) -> Result<String, String> {
-    let note = beside_a_note(&app, &note_path)?;
+    let note = in_spaces(&app, &note_path)?;
     let note_folder = note
         .parent()
         .ok_or_else(|| format!("{note_path} has no folder"))?;
 
-    // How far a picture may be put from the note: anywhere in the space, or, for
-    // a note opened from elsewhere on the disk, its own folder and no further.
-    let limit = spaces_dir(&app)
-        .ok()
-        .and_then(|spaces| space_root(&spaces, note_folder))
-        .unwrap_or_else(|| note_folder.to_path_buf());
+    // How far a picture may be put from the note: anywhere in its space.
+    let limit = space_root(&spaces_dir(&app)?, note_folder)
+        .ok_or_else(|| format!("{note_path} is not in a space"))?;
 
     let relative = trimmed(&folder);
     let dir = asset_dir(note_folder, relative, &limit)?;

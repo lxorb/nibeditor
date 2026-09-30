@@ -53,11 +53,9 @@ import {
   type SeenKey,
   type StandIn,
 } from './native-menu'
-import { shownName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
 import { present } from './slides/present.svelte'
-import { nameOf } from './space-paths'
 import { appMenuRows } from './surfaces.svelte'
 import { currentWindow, invoke } from './tauri'
 import { afterQuiet } from './timing'
@@ -116,8 +114,6 @@ function words(): MenuBarWords {
     minimize: t('Minimize'),
     zoom: t('Zoom'),
     bringAllToFront: t('Bring all to front'),
-    openRecent: t('Open recent'),
-    clearMenu: t('Clear menu'),
     find: t('Find'),
   }
 }
@@ -141,7 +137,6 @@ function signature(context: MenuBarContext): unknown[] {
     workspace.closed.any,
     workspace.panel,
     workspace.panes.count,
-    workspace.recent,
     modes.readOnly,
     modes.source,
     modes.typewriter,
@@ -178,7 +173,6 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
       entryRow('app.new', context),
       entryRow('app.new-kind', context, { label: t('New tab') }),
       entryRow('app.new-window', context),
-      entryRow('app.open', context, { asks: true }),
     ],
     closing: [
       entryRow('app.close', context, { disabled: !open }),
@@ -266,11 +260,6 @@ class MenuBar {
       groups: appMenu(context),
       file: fileRows(context),
       settings: entryRow('app.settings', context),
-      recent: workspace.recent.map((path) => ({
-        label: shownName(nameOf(path)),
-        run: () => void workspace.openEntry(path),
-      })),
-      clearRecent: () => workspace.forgetRecent(),
       windowRows: [entryRow('app.next-note', context), entryRow('app.previous-note', context)],
       helpRows: [entryRow('app.keys', context)],
       keyFor: (command) => shortcuts.keyFor(command),

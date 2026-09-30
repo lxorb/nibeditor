@@ -316,16 +316,6 @@ const APP_ENTRIES: Shortcut[] = [
     // button that did nothing. The palette's row is greyed on the same condition.
     desktop: true,
   },
-  {
-    id: 'app.open',
-    label: () => t('Open file'),
-    category: 'file',
-    scope: 'app',
-    key: 'Mod-o',
-    // Fetched by the press, and already here by then: the command list holds it, and
-    // the app menu's rows bring that as the launch ends; see `warmDoors`.
-    run: () => void import('../open-file').then(({ openFile }) => openFile()),
-  },
   // Obsidian's Random note. No key out of the box, as there; see random-note.ts.
   {
     id: 'app.random-note',
@@ -659,7 +649,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
-  // Shift twice, JetBrains' key and Emil's; Ctrl+P second. See tapped.ts.
+  // Shift twice, JetBrains' key and Emil's; Ctrl+P second, Ctrl+O third. See tapped.ts.
   {
     id: 'app.palette',
     label: () => t('Command palette'),
@@ -674,6 +664,19 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-p',
+    alias: true,
+    run: (context) => context.palette(),
+  },
+  // Ctrl+O as well, which is what a hand reaches for to open something, and what is
+  // there to open is in a space: nib opens nothing from outside its spaces. Obsidian's
+  // Ctrl+O is its quick switcher, which is this palette on the notes, so the key
+  // lands where a vault app's hand expects it. It was Open file, which is gone.
+  {
+    id: 'app.palette.open',
+    label: () => t('Command palette'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-o',
     alias: true,
     run: (context) => context.palette(),
   },

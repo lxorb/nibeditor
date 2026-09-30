@@ -8,6 +8,7 @@
 import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './account.svelte'
 import { installAiRunner } from './ai/ask'
+import { guardDrops } from './drops'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
@@ -19,7 +20,7 @@ import { recovery } from './recovery.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, invoke, isDesktop, isMobile } from './tauri'
+import { currentWindow, isDesktop, isMobile } from './tauri'
 import { waited } from './timing'
 import { mark } from './trace'
 import { theme } from './theme.svelte'
@@ -29,7 +30,6 @@ import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
-import { watch } from './watch.svelte'
 import { workspace } from './workspace.svelte'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -75,11 +75,9 @@ export function start(): () => void {
   // looking for it.
   if (theme.offerContrast) settings.show('appearance')
 
-  /** What the files handed over by a second launch are heard on, once there is
-   *  something listening. Torn down with everything else. */
-  let stopListening: (() => void) | null = null
-  /** And the same for `nib://` links and the `nib` command, both of which act on a
-   *  space and so cannot be listened for until there is one. */
+  /** What `nib://` links, the `nib` command and the pages another program hands over
+   *  are heard on: all three act on a space and so cannot be listened for until there
+   *  is one. Torn down with everything else. */
   let stopAutomation: (() => void) | null = null
 
   /** And the phone's own three ways in: something another app shared, a quick
@@ -93,7 +91,6 @@ export function start(): () => void {
     .restore()
     .then(async () => {
       mark('space restored')
-      stopListening = await openLaunchFiles()
       // The plugin is a page on a pair of glasses: nothing can hand it a link and
       // it has no socket, so the whole of automation is left out of that build
       // rather than guarded inside it. See vite.even.config.ts.
@@ -132,9 +129,9 @@ export function start(): () => void {
   // is being written in, and a sweep on the same daily rhythm as the trash.
   const stopRecovery = recovery.start()
 
-  // Files the reader opened from outside every space, which other programs write
-  // too; see watch.svelte.ts.
-  const stopWatching = watch.start()
+  // A file dragged in from another app and let go where nothing takes it is not
+  // opened in place of the app; see drops.ts.
+  const stopStrayDrops = guardDrops()
 
   void guardClose()
 
@@ -162,39 +159,12 @@ export function start(): () => void {
     stopPointer?.()
     clearInterval(sweeper)
     stopRecovery()
-    stopWatching()
+    stopStrayDrops()
     stopLooking()
-    stopListening?.()
     stopAutomation?.()
     stopHanded?.()
     stopAgents?.()
   }
-}
-
-/** Files the app was launched with, and any handed over later by a second launch
- *  or the Finder. Answers how to stop listening for the later kind.
- *
- *  On this window alone, since later files go to the window in front, and before
- *  asking, since asking is what tells the crate this window hears them; see
- *  `hand_over` in launch.rs. */
-async function openLaunchFiles(): Promise<(() => void) | null> {
-  if (!isDesktop) return null
-
-  const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  const stop = await getCurrentWindow().listen<string[]>(
-    'nib://open-files',
-    (event) => void openAll(event.payload),
-  )
-
-  for (const path of await invoke<string[]>('take_startup_files').catch(() => [])) {
-    await workspace.open(path)
-  }
-
-  return stop
-}
-
-async function openAll(paths: string[]) {
-  for (const path of paths) await workspace.open(path)
 }
 
 /** Nothing with words in it is lost on the way out: what is owed is written as the

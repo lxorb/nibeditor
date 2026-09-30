@@ -4,7 +4,6 @@ export const vi: Dictionary = {
   // Files and notes
   Save: 'Lưu',
   'New note': 'Ghi chú mới',
-  'Open file': 'Mở tệp',
   'Random note': 'Ghi chú ngẫu nhiên',
   'New note inside': 'Ghi chú mới bên trong',
   'New canvas': 'Canvas mới',
@@ -816,8 +815,6 @@ export const vi: Dictionary = {
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
   'Report an issue': 'Báo lỗi',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} đã đổi trên đĩa. Những gì trong trình soạn thảo là của bạn.',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',
   'Copy the line up': 'Sao dòng lên trên',
@@ -1476,8 +1473,6 @@ export const vi: Dictionary = {
   'Show all': 'Hiện tất cả',
   'Quit {name}': 'Thoát {name}',
   'Bring all to front': 'Đưa tất cả ra trước',
-  'Open recent': 'Mở gần đây',
-  'Clear menu': 'Xóa menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

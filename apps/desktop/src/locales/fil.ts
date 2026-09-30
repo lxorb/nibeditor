@@ -4,7 +4,6 @@ export const fil: Dictionary = {
   // Files and notes
   Save: 'I-save',
   'New note': 'Bagong tala',
-  'Open file': 'Buksan ang file',
   'Random note': 'Random na tala',
   'New note inside': 'Bagong tala sa loob',
   'New canvas': 'Bagong canvas',
@@ -832,8 +831,6 @@ export const fil: Dictionary = {
   'Always on top': 'Laging nasa itaas',
   'What is new': 'Ano ang bago',
   'Report an issue': 'Mag-ulat ng problema',
-  '{name} changed on the disk. What is in the editor is yours.':
-    'Nagbago ang {name} sa disk. Sa iyo ang nasa editor.',
   'Move the line up': 'Iakyat ang linya',
   'Move the line down': 'Ibaba ang linya',
   'Copy the line up': 'Kopyahin ang linya pataas',
@@ -1519,8 +1516,6 @@ export const fil: Dictionary = {
   'Show all': 'Ipakita lahat',
   'Quit {name}': 'Umalis sa {name}',
   'Bring all to front': 'Dalhin lahat sa harap',
-  'Open recent': 'Buksan ang kamakailan',
-  'Clear menu': 'I-clear ang menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

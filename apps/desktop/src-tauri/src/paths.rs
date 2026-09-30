@@ -3,9 +3,10 @@
 //!
 //! This module owns the two folders the app has - the one the spaces live in and
 //! its own, where what it keeps *about* a file goes - the containment check every
-//! note and space command goes through, the one deliberate way out of that folder,
-//! what counts as a note, a PDF or a canvas, the walk that reads a whole space,
-//! and the two file operations that must not leave a mess behind when they fail.
+//! note and space command goes through, the two narrow ways past it (the app's own
+//! settings files, and where the reader picked in the system's dialog), what counts
+//! as a note, a PDF or a canvas, the walk that reads a whole space, and the two file
+//! operations that must not leave a mess behind when they fail.
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -17,8 +18,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
-/// The extensions the app treats as a note. Anything else is not listed, not
-/// searched and not opened from the command line.
+/// The extensions the app treats as a note. Anything else is not listed and not
+/// searched.
 pub const MARKDOWN: [&str; 4] = ["md", "markdown", "mdown", "mkd"];
 
 /// Recently deleted things wait in here. It sits inside the spaces folder but is
@@ -393,90 +394,129 @@ fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     Ok(target)
 }
 
-/// A path the reader chose: a file picked in the dialog, one named on the
-/// command line, one the shell handed over, or the target of an export.
-///
-/// This is deliberately any path the app can reach. Nib edits files, and a file
-/// worth editing is wherever it already is, so `read_note` and `write_note` are
-/// the one way out of the spaces folder. It is written down here so that it
-/// reads as a decision at the call site rather than as a missing check.
-pub fn chosen(path: &str) -> Result<PathBuf, String> {
-    let target = folded(Path::new(path));
+/// A file the app opens in a tab: a note in a space, or one of the two settings
+/// files it offers to edit (Edit custom CSS, Edit snippets), which are its own rather
+/// than anybody's documents; see `own_files` in themes.rs. nib opens nothing else
+/// from anywhere on the disk, so this is what `read_note` and `file_stamp` stand
+/// behind.
+pub fn openable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    past_spaces(app, path, |target| is_own_file(app, target))
+}
 
-    if target.file_name().is_none() {
-        return Err(format!("{path} does not name a file"));
+/// A path the reader chose: anything `openable` reaches, or where they picked a file
+/// in the system's own dialog - the file an export was saved as and the folder it is
+/// in, where a bundle's pictures land beside it, and the document an import read.
+///
+/// The one way out of the spaces, and a narrow one: nothing here is ever opened, only
+/// written, or read by pandoc to become a note inside a space. `write_note`,
+/// `write_bytes`, `run_pandoc`, `print_pdf` and `import_document` stand behind it.
+pub fn chosen(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    past_spaces(app, path, |target| {
+        is_own_file(app, target)
+            || app
+                .try_state::<Picked>()
+                .is_some_and(|picked| picked.reach(target))
+    })
+}
+
+/// Inside the spaces folder `in_spaces` decides alone, trash and all, whatever else
+/// might let a path in: a reader who saved an export into the spaces folder did not
+/// pick its trash. Outside it, `beyond` is the only way in.
+fn past_spaces(
+    app: &AppHandle,
+    path: &str,
+    beyond: impl FnOnce(&Path) -> bool,
+) -> Result<PathBuf, String> {
+    judged_beyond(&spaces_dir(app)?, path, beyond)
+}
+
+/// That rule, with the spaces folder passed in, so what it lets past can be said
+/// without an app around it.
+fn judged_beyond(
+    root: &Path,
+    path: &str,
+    beyond: impl FnOnce(&Path) -> bool,
+) -> Result<PathBuf, String> {
+    let target = folded(Path::new(path));
+    if inside(root, &target) || !beyond(&target) {
+        return judged(root, path);
     }
 
     Ok(target)
 }
 
-/// Whether a path lies outside the spaces folder. A documents folder that cannot
-/// even be resolved counts as outside, which is the cautious answer.
-pub fn outside_spaces(app: &AppHandle, path: &Path) -> bool {
-    spaces_dir(app).map_or(true, |root| !inside(&root, path))
+/// Whether a path is one of the app's own two settings files.
+fn is_own_file(app: &AppHandle, target: &Path) -> bool {
+    crate::themes::own_files(app)
+        .iter()
+        .any(|own| same_path(own, target))
 }
 
-/// The folders notes were opened from outside the spaces folder. Pictures sit
-/// beside a note rather than inside it, so what is remembered is the folder and
-/// not the single file.
-#[derive(Default)]
-pub struct Opened(Mutex<HashSet<PathBuf>>);
+/// Whether two paths name the same place, each inside the other.
+fn same_path(one: &Path, other: &Path) -> bool {
+    inside(one, other) && inside(other, one)
+}
 
-/// Whether a folder is one whose whole tree a note in it may reach.
+/// Where the reader has picked a file in the system's own dialog this run: the folder
+/// of each file, since an export of a note and its pictures writes the note and an
+/// `assets` folder beside the name picked, and a picked folder itself.
 ///
-/// What this rules out is the top of a disk. Opening a note gives the folder it
-/// sits in, and everything under that folder, to the picture readers and to the
-/// asset protocol - which for a note at `C:\` or at `/` would be the whole
-/// machine. A note there is a note whose own folder is not a folder anybody meant
-/// to share, so it gets no pictures rather than giving away a disk.
-pub fn a_shareable_folder(folder: &Path) -> bool {
+/// Heard from the asset protocol's scope, which the dialog plugin adds every pick to
+/// and which nothing else in the app adds to after the launch; see `hear_picks`. So a
+/// path is here only because the reader chose it in a window of the system's own,
+/// which no note, link or script can open for them. Held for the run and never
+/// written down.
+#[derive(Default)]
+pub struct Picked(Mutex<HashSet<PathBuf>>);
+
+impl Picked {
+    /// Takes a pick. A file at the top of a disk gives itself and not its folder,
+    /// which would be the whole drive; see `a_shareable_folder`.
+    fn add(&self, path: &Path) {
+        let path = folded(path);
+        let reach = if path.is_dir() {
+            path
+        } else {
+            match path.parent().map(folded) {
+                Some(folder) if a_shareable_folder(&folder) => folder,
+                _ => path,
+            }
+        };
+
+        if let Ok(mut picked) = self.0.lock() {
+            picked.insert(reach);
+        }
+    }
+
+    /// Whether a path is within reach of a pick.
+    fn reach(&self, target: &Path) -> bool {
+        self.0
+            .lock()
+            .is_ok_and(|picked| picked.iter().any(|one| inside(one, target)))
+    }
+}
+
+/// Starts hearing the dialog's picks. Called once the launch has put the spaces
+/// folder in the same scope, so that is not taken for a pick.
+pub fn hear_picks(app: &AppHandle) {
+    let heard = app.clone();
+    app.asset_protocol_scope().listen(move |event| {
+        if let tauri::scope::fs::Event::PathAllowed(path) = event {
+            if let Some(picked) = heard.try_state::<Picked>() {
+                picked.add(path);
+            }
+        }
+    });
+}
+
+/// Whether a folder is one whose whole tree a pick may reach.
+///
+/// What this rules out is the top of a disk. Saving an export at `C:\` or at `/` is
+/// the reader's choice of that one file, not of every file on the drive.
+fn a_shareable_folder(folder: &Path) -> bool {
     folder
         .parent()
         .is_some_and(|above| !above.as_os_str().is_empty())
-}
-
-/// Records a note the app was asked to open from outside the spaces folder, so
-/// the pictures beside it can be read and shown as well.
-pub fn note_from_outside(app: &AppHandle, path: &Path) {
-    let Some(folder) = path.parent().map(folded) else {
-        return;
-    };
-    if !a_shareable_folder(&folder) {
-        return;
-    }
-
-    if let Some(opened) = app.try_state::<Opened>() {
-        if let Ok(mut folders) = opened.0.lock() {
-            folders.insert(folder.clone());
-        }
-    }
-
-    // The webview loads a picture over the asset protocol, which keeps a scope
-    // of its own: a note it may read is a note whose pictures it may show.
-    let _ = app.asset_protocol_scope().allow_directory(&folder, true);
-}
-
-/// Where a picture may be read from or written to: inside the spaces folder, or
-/// beside a note the app was asked to open from outside it. A note can point at
-/// a picture, so this is the reach a note gets, and no more.
-pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
-    let target = folded(Path::new(path));
-
-    if let Ok(root) = spaces_dir(app) {
-        if inside(&root, &target) && !inside(&root.join(TRASH), &target) {
-            return Ok(target);
-        }
-    }
-
-    if let Some(opened) = app.try_state::<Opened>() {
-        if let Ok(folders) = opened.0.lock() {
-            if folders.iter().any(|folder| inside(folder, &target)) {
-                return Ok(target);
-            }
-        }
-    }
-
-    Err(format!("{path} is not in a folder nibeditor has open"))
 }
 
 /// The folders a walk has already been inside, judged by where they really are
@@ -756,7 +796,8 @@ mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, folder_key, folder_named, free_spot,
         highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged,
-        judged_space, link_to, move_highlights, space_root, write_atomically,
+        judged_beyond, judged_space, link_to, move_highlights, same_path, space_root,
+        write_atomically, Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -924,12 +965,11 @@ mod tests {
         .is_err());
     }
 
-    /// Opening a note hands its whole folder to the picture readers and to the
-    /// asset protocol. The top of a disk is not a folder anybody meant by that: a
-    /// note written to `C:\x.md` and then read would otherwise make every file on
-    /// the drive readable.
+    /// A pick reaches the folder it was made in, for the pictures an export writes
+    /// beside it. The top of a disk is not a folder anybody meant by that: an export
+    /// saved as `C:\x.md` would otherwise make every file on the drive writable.
     #[test]
-    fn the_top_of_a_disk_is_not_a_folder_a_note_shares() {
+    fn the_top_of_a_disk_is_not_a_folder_a_pick_shares() {
         assert!(a_shareable_folder(&path(&["Users", "me", "Notes"])));
 
         if cfg!(windows) {
@@ -944,6 +984,60 @@ mod tests {
         // A note with no folder above it at all shares nothing either.
         assert!(!a_shareable_folder(Path::new("")));
         assert!(!a_shareable_folder(Path::new("Idea.md")));
+    }
+
+    /// The one way past the spaces folder, `openable` and `chosen` alike: a path out
+    /// there is refused unless the way in says yes, and a path in there is the
+    /// spaces' own to judge whatever the way in says - its trash included.
+    #[test]
+    fn nothing_outside_the_spaces_is_let_in_unless_the_way_in_says_so() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |one: &[&str], beyond: bool| {
+            judged_beyond(&root, &path(one).to_string_lossy(), |_| beyond)
+        };
+
+        let outside = ["Downloads", "Idea.md"];
+        assert!(said(&outside, false).is_err());
+        assert_eq!(said(&outside, true), Ok(path(&outside)));
+
+        let note = ["Documents", "Nib", "Work", "a.md"];
+        assert_eq!(said(&note, false), Ok(path(&note)));
+        assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"], true).is_err());
+        // A climb out of the folder is outside it, and refused like any other.
+        assert!(said(&["Documents", "Nib", "..", "Downloads", "Idea.md"], false).is_err());
+    }
+
+    #[test]
+    fn a_path_is_the_same_place_however_it_was_spelled() {
+        let file = path(&["config", "custom.css"]);
+        assert!(same_path(&file, &path(&["config", ".", "custom.css"])));
+        assert!(!same_path(&file, &path(&["config", "custom.css", "x"])));
+        assert!(!same_path(&file, &path(&["config"])));
+    }
+
+    /// What the dialog handed over is what a pick reaches: the folder a file was
+    /// saved in and everything below it, a picked folder itself, and nothing else.
+    #[test]
+    fn a_pick_reaches_its_own_folder_and_no_further() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let desk = dir.path().join("Desktop");
+        std::fs::create_dir_all(&desk).expect("a folder");
+        let picked = Picked::default();
+
+        assert!(!picked.reach(&desk.join("Idea.md")));
+
+        // Saved as, so not there yet.
+        picked.add(&desk.join("Idea.md"));
+        assert!(picked.reach(&desk.join("Idea.md")));
+        assert!(picked.reach(&desk.join("assets").join("one.png")));
+        assert!(!picked.reach(&dir.path().join("Elsewhere.md")));
+        assert!(!picked.reach(&desk.join("..").join("Elsewhere.md")));
+
+        let bundle = dir.path().join("Idea.textbundle");
+        std::fs::create_dir_all(&bundle).expect("a picked folder");
+        picked.add(&bundle);
+        assert!(picked.reach(&bundle.join("text.md")));
+        assert!(!picked.reach(&dir.path().join("Other.md")));
     }
 
     #[test]

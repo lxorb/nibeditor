@@ -22,7 +22,6 @@ import {
 const KEYS: Record<string, string> = {
   'app.new': 'Mod-n',
   'app.new-kind': 'Mod-t',
-  'app.open': 'Mod-o',
   'app.settings': 'Mod-,',
   'app.close': 'Mod-w',
   'app.fullscreen': 'Mod-Ctrl-f',
@@ -98,8 +97,6 @@ const WORDS = {
   minimize: 'Minimize',
   zoom: 'Zoom',
   bringAllToFront: 'Bring all to front',
-  openRecent: 'Open recent',
-  clearMenu: 'Clear menu',
   find: 'Find',
 }
 
@@ -107,16 +104,10 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
   return {
     groups: GROUPS,
     file: {
-      opening: [
-        row('New note', 'app.new'),
-        row('New tab', 'app.new-kind'),
-        row('Open file', 'app.open'),
-      ],
+      opening: [row('New note', 'app.new'), row('New tab', 'app.new-kind')],
       closing: [row('Close note', 'app.close')],
     },
     settings: row('Settings', 'app.settings'),
-    recent: [row('One.md'), row('Two.md')],
-    clearRecent: () => undefined,
     windowRows: [row('Next note', 'app.next-note')],
     helpRows: [row('Keyboard shortcuts', 'app.keys')],
     keyFor: (command) => KEYS[command] ?? null,
@@ -253,14 +244,13 @@ describe('the strip', () => {
 
   /** The in-window File menu is Export, Print and Version history and nothing else
    *  (Emil, 2026-09-30). A Mac's keeps what a Mac's File menu has, and with a web tab
-   *  in front a key is only a key there as a row. */
-  test('File has the making, opening and closing rows around the in-window menu’s', () => {
+   *  in front a key is only a key there as a row - but no Open File and no Open
+   *  Recent: nib opens nothing from outside its spaces. */
+  test('File has the making and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
     expect(read(file)).toEqual([
       'New note',
       'New tab',
-      'Open file',
-      'Open recent',
       '---',
       'Print',
       '---',
@@ -277,26 +267,9 @@ describe('the strip', () => {
     expect(read(menu(bar({ groups }), 'file'))).toEqual([
       'New note',
       'New tab',
-      'Open file',
-      'Open recent',
       '---',
       'Close note',
     ])
-  })
-
-  test('Open Recent lists the notes and a way to clear them', () => {
-    expect(read(menu(menu(bar(), 'file').items, 'file.3'))).toEqual([
-      'One.md',
-      'Two.md',
-      '---',
-      'Clear menu',
-    ])
-  })
-
-  test('and with none, only a greyed Clear Menu', () => {
-    const recent = menu(menu(bar({ recent: [] }), 'file').items, 'file.3')
-    expect(read(recent)).toEqual(['Clear menu'])
-    expect(itemIn(recent, 'Clear menu').enabled).toBe(false)
   })
 
   test('Edit’s clipboard rows are the system’s, so they reach a field and a web page', () => {
@@ -441,7 +414,7 @@ describe('the strip, changed', () => {
 
     expect(changesBetween(before, after)).toEqual([
       { id: 'nib.quit', text: 'Nib beenden' },
-      { id: 'file.7', enabled: true },
+      { id: 'file.5', enabled: true },
       { id: 'format.0', accelerator: 'Cmd+Shift+B' },
       { id: 'view.0', checked: true },
     ])
@@ -452,7 +425,8 @@ describe('the strip, changed', () => {
   })
 
   test('built again when a row came or went', () => {
-    expect(changesBetween(bar(), bar({ recent: [row('One.md')] }))).toBeNull()
+    const file = { opening: [row('New note', 'app.new')], closing: [] }
+    expect(changesBetween(bar(), bar({ file }))).toBeNull()
   })
 
   test('and when a row became a different kind of thing', () => {
@@ -592,14 +566,10 @@ describe('the words a Mac writes its menus in', () => {
     expect(titled('Heading 1')).toBe('Heading 1')
   })
 
-  test('in English the strip is in title case, and the notes keep their names', () => {
-    const recent = [row('shopping list.md')]
-    const file = menu(bar({ english: true, recent }), 'file')
-    const opened = file.items.find((one) => one.kind === 'submenu')
+  test('in English the strip is in title case', () => {
+    const file = menu(bar({ english: true }), 'file')
 
     expect(read(file)).toContain('Close Note')
-    expect(opened?.text).toBe('Open Recent')
-    expect(opened?.kind === 'submenu' && read(opened)).toContain('shopping list.md')
     expect(read(menu(bar({ english: true }), 'window'))).toContain(
       '[BringAllToFront] Bring All to Front',
     )

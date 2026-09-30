@@ -51,7 +51,7 @@ pub fn pages_in(args: &[String]) -> Vec<String> {
 }
 
 /// The pages among what a Mac was asked to open. A `file:` address among them is a
-/// document, which takes the files' road; see lifecycle.rs.
+/// document, which nib opens nothing of; see lifecycle.rs.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(

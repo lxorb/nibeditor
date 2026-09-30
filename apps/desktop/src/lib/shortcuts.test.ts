@@ -138,7 +138,7 @@ describe('every shortcut there is', () => {
   test('offers nothing only a desktop has where there is no desktop', async () => {
     const { runnable } = await import('./shortcuts/registry')
     expect(runnable('app.new-window')).toBe(false)
-    expect(runnable('app.open')).toBe(true)
+    expect(runnable('app.palette')).toBe(true)
   })
 
   /** Every entry sits in one of the groups the settings list draws, or it is in
@@ -557,7 +557,9 @@ describe('the keyboard the account carries', () => {
 describe('two shortcuts on one key', () => {
   test('is a conflict, and says whose key it is', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual(['app.open'])
+    expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual([
+      'app.palette.open',
+    ])
   })
 
   test('counts across the app and the editor, which cannot share one', () => {
@@ -572,10 +574,12 @@ describe('two shortcuts on one key', () => {
 
   test('follows the keys as they are now, not as they started', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.open', 'Mod-Alt-j')
+    shortcuts.set('app.palette.open', 'Mod-Alt-j')
 
     expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
-    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j').map((one) => one.id)).toEqual(['app.open'])
+    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j').map((one) => one.id)).toEqual([
+      'app.palette.open',
+    ])
   })
 
   test('leaves the contextual ones out, which is how they share the arrows', () => {
@@ -586,10 +590,10 @@ describe('two shortcuts on one key', () => {
 
   test('is resolved by taking the key, which leaves the other with none', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.open', null)
+    shortcuts.set('app.palette.open', null)
     shortcuts.set('app.new', 'Mod-o')
 
-    expect(shortcuts.keyFor('app.open')).toBeNull()
+    expect(shortcuts.keyFor('app.palette.open')).toBeNull()
     expect(shortcuts.keyFor('app.new')).toBe('Mod-o')
     expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
   })

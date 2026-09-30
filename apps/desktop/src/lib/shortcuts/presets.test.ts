@@ -265,14 +265,14 @@ describe('the Obsidian keyboard', () => {
 
   /** Obsidian's two: the quick switcher on Ctrl+O and the command palette on Ctrl+P,
    *  which are Nib's one palette, and the same palette narrowed to the commands. Shift
-   *  twice stays its first key. */
+   *  twice stays its first key, and Ctrl+O is its second, which a Mac's menu shows. */
   test('opens the palette on Ctrl+O and narrows it to the commands on Ctrl+P', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
     expect(keys['app.palette']).toBeUndefined()
     expect(keys['app.palette.alt']).toBe('Mod-o')
+    expect(keys['app.palette.open']).toBeNull()
     expect(keys['app.commands.alt']).toBe('Mod-p')
-    expect(keys['app.open']).toBeNull()
     expect(registry.BY_ID.get('app.commands.alt')?.alias).toBe(true)
   })
 

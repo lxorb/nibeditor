@@ -4,7 +4,6 @@ export const uk: Dictionary = {
   // Files and notes
   Save: 'Зберегти',
   'New note': 'Нова нотатка',
-  'Open file': 'Відкрити файл',
   'Random note': 'Випадкова нотатка',
   'New note inside': 'Нова нотатка всередині',
   'New canvas': 'Нове полотно',
@@ -852,8 +851,6 @@ export const uk: Dictionary = {
   'Always on top': 'Поверх усіх вікон',
   'What is new': 'Що нового',
   'Report an issue': 'Повідомити про проблему',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} змінився на диску. У редакторі - ваша версія.',
   'Move the line up': 'Перемістити рядок вище',
   'Move the line down': 'Перемістити рядок нижче',
   'Copy the line up': 'Копіювати рядок вище',
@@ -1548,8 +1545,6 @@ export const uk: Dictionary = {
   'Show all': 'Показати всі',
   'Quit {name}': 'Вийти з {name}',
   'Bring all to front': 'Усе на передній план',
-  'Open recent': 'Відкрити недавні',
-  'Clear menu': 'Очистити меню',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

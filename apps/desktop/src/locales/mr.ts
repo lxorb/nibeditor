@@ -4,7 +4,6 @@ export const mr: Dictionary = {
   // Files and notes
   Save: 'जतन करा',
   'New note': 'नवीन नोंद',
-  'Open file': 'फाइल उघडा',
   'Random note': 'यादृच्छिक नोंद',
   'New note inside': 'यात नवीन नोंद',
   'New canvas': 'नवीन कॅनव्हास',
@@ -822,8 +821,6 @@ export const mr: Dictionary = {
   'Always on top': 'नेहमी वर',
   'What is new': 'नवीन काय',
   'Report an issue': 'अडचण सांगा',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} डिस्कवर बदलले. संपादकात जे आहे ते तुमचे.',
   'Move the line up': 'ओळ वर हलवा',
   'Move the line down': 'ओळ खाली हलवा',
   'Copy the line up': 'ओळ वर कॉपी करा',
@@ -1488,8 +1485,6 @@ export const mr: Dictionary = {
   'Show all': 'सर्व दाखवा',
   'Quit {name}': '{name} बंद करा',
   'Bring all to front': 'सर्व पुढे आणा',
-  'Open recent': 'अलीकडील उघडा',
-  'Clear menu': 'मेनू साफ करा',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

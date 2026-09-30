@@ -49,9 +49,9 @@ export function writeSpec(spec: Spec): string {
 
 /** Where a new terminal starts: the folder of the space being worked in, which is where
  *  a person who opens a shell beside their notes means to be - VS Code's workspace root.
- *  Except for a file opened from somewhere else on the computer, which is in no space:
- *  its own folder is the one that has anything to do with it. Null where there is
- *  neither, and the shell starts at home. */
+ *  Except for a file in no space - the app's own `custom.css` or `snippets.json`, the one
+ *  kind nib opens from outside its spaces - whose own folder is the one that has
+ *  anything to do with it. Null where there is neither, and the shell starts at home. */
 export function startingFolder(
   showing: string | null,
   space: string | null,

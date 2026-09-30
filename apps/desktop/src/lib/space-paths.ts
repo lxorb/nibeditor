@@ -58,7 +58,7 @@ export function insideSpace(root: string, relative: string): string {
  *  alone. A `..` in it is left in: a picture kept in one folder for the whole space is
  *  written that way, and a path that climbs out of the space is refused where every
  *  other path is, by the reader rather than by a second rule here. See
- *  `beside_a_note` in src-tauri/src/paths.rs and `normalise` in web/paths.ts.
+ *  `in_spaces` in src-tauri/src/paths.rs and `normalise` in web/paths.ts.
  *
  *  Ordered, each place once, and empty only for a page that names no file at all. */
 export function placesOf(file: string, notePath: string | null, root: string | null): string[] {

@@ -220,15 +220,31 @@ fn themes_root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+/// What the reader's own stylesheet is called in the settings folder.
+const CUSTOM_CSS_FILE: &str = "custom.css";
+
+/// And their snippets.
+const SNIPPETS_FILE: &str = "snippets.json";
+
 /// `custom.css` sits beside the themes folder rather than in it, so it is not
 /// offered as a theme of its own.
 fn custom_css_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(settings_dir(app)?.join("custom.css"))
+    Ok(settings_dir(app)?.join(CUSTOM_CSS_FILE))
 }
 
 /// `snippets.json`, beside `custom.css`.
 fn snippets_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(settings_dir(app)?.join("snippets.json"))
+    Ok(settings_dir(app)?.join(SNIPPETS_FILE))
+}
+
+/// The two files outside every space that the app opens in a tab of its own, Edit
+/// custom CSS and Edit snippets, because they are the app's own rather than
+/// somebody's documents. Where they are, and nothing more: judging a path is no
+/// reason to make a folder. See `openable` in paths.rs.
+pub fn own_files(app: &AppHandle) -> Vec<PathBuf> {
+    config_dir(app)
+        .map(|dir| vec![dir.join(CUSTOM_CSS_FILE), dir.join(SNIPPETS_FILE)])
+        .unwrap_or_default()
 }
 
 /// Whether a file is a stylesheet, in whichever case the extension is written.

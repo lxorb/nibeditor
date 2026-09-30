@@ -30,7 +30,7 @@ describe("the space's assets folder", () => {
   })
 
   test('falls back to one beside a note that is in no space at all', () => {
-    // A file opened from anywhere on the disk has no space to keep a folder in.
+    // A note no space holds has no space to keep a folder in.
     expect(attachmentFolder('space', '/elsewhere/Notes.md', SPACE)).toBe('assets')
     expect(attachmentFolder('space', '/elsewhere/Notes.md', null)).toBe('assets')
   })

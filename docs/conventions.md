@@ -159,24 +159,38 @@ quietly: a change that touches one says so where it is made.
   `apps/desktop/src-tauri/src/paths.rs` holds the four judges, strictest first.
   `a_space`: a folder directly inside the spaces folder, for the commands that
   move a whole tree. `in_spaces`: inside the spaces folder and not the trash,
-  which is every note, folder, tree, search and trash command. `beside_a_note`:
-  that, or beside a note the app was asked to open from elsewhere, which is the
-  reach a note's own pictures get. And `chosen`, which is any path at all.
+  which is every note, folder, tree, search and trash command, and every file a
+  note points at (`read_file`, `read_asset`, `save_asset`). `openable`: that, or
+  one of the app's own two settings files, `custom.css` and `snippets.json`,
+  which Edit custom CSS and Edit snippets open in a tab; `read_note` and
+  `file_stamp` stand behind it. And `chosen`: that, or where the reader picked
+  a file in the system's own dialog, for `write_note`, `write_bytes`,
+  `run_pandoc`, `print_pdf` and `import_document`.
 
-`chosen` is the deliberate exception, not a gap in the other three: nib edits
-files, and a file worth editing is wherever it already is, so `read_note`,
-`write_note`, `write_bytes`, `file_stamp` and `import_document` take whatever
-path they are handed, and so do `run_pandoc` and `print_pdf` for the file an
-export is saved as. It checks that the string names a file, and `folded`
-_collapses_ a `..` rather than refusing it, so a path climbing out of a space
-is not an error there: it is a different file, created if it is missing and
-replaced if it is not. Those seven are safe because of what
-stands in front of them, which means a new caller of one of them is exactly
-where that stops being true:
+**nib opens nothing from outside its spaces.** No bundle declares a file type,
+no command line, second launch or Finder hand-off is read as a note (only a web
+page, once nib is the browser; see `launch.rs`), there is no Open file, and a
+file dropped where nothing takes it is not opened in place of the app
+(`apps/desktop/src/lib/drops.ts`). A file from elsewhere comes in as a copy:
+Import, a drop onto the file list or into a note, a share on the phone.
+`packaging.test.ts` holds the bundles and the package managers to that, and a
+tab left on such a file by a sitting from before is not put back (`tabsFrom` in
+the workspace).
 
-- **The window's own gestures.** The path came from the file dialog, the
-  command line, a shell hand-off, or `joinPath` off a space root. The reader
-  chose it.
+`chosen` is the one way past the spaces, and a narrow one. Inside the spaces
+folder `in_spaces` decides alone, trash and all. Outside it, a path is let
+through only when the reader picked it, or a file in the same folder, in the
+save or open dialog this run: `Picked` hears every pick from the asset
+protocol's scope, which the dialog plugin adds each one to and nothing else in
+the app adds to after the launch. So an export lands where it was pointed, with
+its pictures beside it, and a document an import reads is the one the reader
+chose; nothing a note, a link or a script says can open that dialog for them.
+A pick at the top of a disk reaches that one file and not the drive. `folded`
+_collapses_ a `..` rather than refusing it, so a path is judged by where it
+points. What stands in front of all four, and so what a new caller has to keep:
+
+- **The window's own gestures.** The path came from `joinPath` off a space
+  root, from the settings files the crate names, or from the file dialog.
 - **The local endpoint and every `nib://` link**, the two roads another
   program has in. Both are judged by one function, `insideOnly` in
   `apps/desktop/src/lib/automation/inside.ts`: relative, `/` separators, no
@@ -186,11 +200,10 @@ where that stops being true:
   them that write can only make a note or add to the end of one;
   `eval` is refused in the crate, before the window is asked, unless
   the endpoint file turns it on. A caller that names no path at all is
-  answered about the note on screen, and that note is judged too: a note
-  opened from a downloads folder is outside every space, so `noteFor` in
-  `automation/space.ts` refuses it through `withinSpace`, which is
-  `insideOnly` under a space's root. The answer names a note relative to
-  the space and never by a path on this disk.
+  answered about the note on screen, and that note is judged too: `noteFor`
+  in `automation/space.ts` refuses a note outside every space through
+  `withinSpace`, which is `insideOnly` under a space's root. The answer names
+  a note relative to the space and never by a path on this disk.
 - **A link inside a note**, because a note can arrive from a shared space, a
   room, a pull or a paste, so its prose is somebody else's. `followLink` in
   `apps/desktop/src/lib/workspace.svelte.ts` judges the target with that
@@ -211,16 +224,17 @@ where that stops being true:
   are rows in IndexedDB (`apps/desktop/src/lib/web/commands.ts`), and
   `web/paths.ts` clamps at the virtual root.
 - **The phone**, whose spaces folder is inside the app's own external files
-  directory and whose manifest asks for no storage permission, so the whole
-  of `chosen`'s reach there is this app's own sandbox. A share hands over
-  bytes and a name, never a path. The one road bounded by nothing but that
-  sandbox is the `open` intent extra in
-  `apps/desktop/src/lib/mobile/handed.ts`, which the widget sends as an
-  absolute path and which reaches `read_note` unjudged.
+  directory and whose manifest asks for no storage permission. A share hands
+  over bytes and a name, never a path, and nib is no file manager's "Open
+  with": the manifest's one VIEW filter is the `nib://` link. The widget's
+  `open` intent extra is an absolute path, judged against the spaces by
+  `openable` in `apps/desktop/src/lib/mobile/handed.ts` and by `openable` in
+  the crate.
 
 So: a path that came from outside the app is judged by `insideOnly` on the
-window's side, or by `in_spaces` in the crate, before it reaches any of those
-five. A caller that skips both is the bug, not the command.
+window's side, and by `in_spaces`, `openable` or `chosen` in the crate, before
+anything on disk is touched. A caller that skips the window's judge is the bug,
+not the command.
 
 The policy that backs the first three is `apps/desktop/src/csp.ts`, which is
 the one copy of the app's `Content-Security-Policy`: the Tauri config, the three

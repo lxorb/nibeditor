@@ -140,7 +140,7 @@ describe('what a button wears', () => {
   test('and the first letter of its name where it has none', () => {
     // Upper case, because the marks are: a lower-case letter among them would
     // read as a typo.
-    expect(markFor('app.open')).toBe('O')
+    expect(markFor('app.settings')).toBe('S')
     expect(markFor('paragraph.table')).toBe('T')
   })
 

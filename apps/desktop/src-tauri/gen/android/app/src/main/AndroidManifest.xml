@@ -82,6 +82,13 @@
               what makes the second share of the day arrive in the app that is
               already open (`singleTask`, and `onNewIntent`).
 
+              A share is a copy into a space, the way Import is, and so it stays
+              while nib opens nothing from outside its spaces: what arrives is
+              bytes and a name, written into the space, and never a file opened
+              where it lies. Which is also why there is no VIEW filter for a
+              `.md`: that is nib offering itself to open somebody's file, in a
+              file manager's "Open with", and it opens none.
+
               `*/*` on purpose. A note is where anything goes that somebody wants
               to keep a word about, and Android only ever offers this row to
               somebody who asked to share something; what the thing is decides
@@ -101,23 +108,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="*/*" />
-            </intent-filter>
-
-            <!--
-              And a note opened from somewhere else on the phone: a file manager,
-              a mail attachment, a download. Markdown and plain text only, because
-              those are files Nib can be the answer for; a `content://` URI has no
-              path to read an extension off, so the type is all there is to go on.
-            -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:mimeType="text/markdown" />
-                <data android:mimeType="text/x-markdown" />
-                <data android:mimeType="text/plain" />
             </intent-filter>
 
             <!--

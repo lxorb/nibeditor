@@ -3,7 +3,7 @@
 # Nib ships an official .deb for both architectures, so this package unpacks
 # that rather than rebuilding the app: no Rust or Node toolchain is pulled in
 # to install an editor. What comes out of the .deb is repaired on the way in -
-# Tauri's own .desktop entry carries no categories, no MIME types and no
+# Tauri's own .desktop entry carries no categories, no web handlers and no
 # comment, and its 256x256 icon is filed under a scale-2 directory.
 
 pkgname=nib-bin
@@ -27,7 +27,7 @@ source=('nib.desktop')
 source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Nib-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
-sha256sums=('9b13cb05a4fed539796154aa6002ba49f2aacfcc4b5ffee1fd536acfe25ab30e')
+sha256sums=('1e3a357024c158d5f7b76dac11ac55c9df15a26d3753da44c603b881be462dcc')
 sha256sums_x86_64=('4284fede6d9e6aad8d5a6c398c360517f18a9fa78a9a66fa0ebe0b6e0884c8da')
 sha256sums_aarch64=('828e659ca983c8ba91c339f1afddf646c76e9a62d0a92db95c0ebd674eccf8b3')
 

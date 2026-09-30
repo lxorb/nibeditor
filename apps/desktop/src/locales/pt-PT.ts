@@ -4,7 +4,6 @@ export const ptPT: Dictionary = {
   // Files and notes
   Save: 'Guardar',
   'New note': 'Nova nota',
-  'Open file': 'Abrir ficheiro',
   'Random note': 'Nota aleatória',
   'New note inside': 'Nova nota dentro',
   'New canvas': 'Nova tela',
@@ -833,8 +832,6 @@ export const ptPT: Dictionary = {
   'Always on top': 'Sempre à frente',
   'What is new': 'Novidades',
   'Report an issue': 'Comunicar um problema',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} mudou no disco. O que está no editor é o que vale.',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
   'Copy the line up': 'Copiar a linha acima',
@@ -1524,8 +1521,6 @@ export const ptPT: Dictionary = {
   'Show all': 'Mostrar tudo',
   'Quit {name}': 'Sair do {name}',
   'Bring all to front': 'Trazer tudo para a frente',
-  'Open recent': 'Abrir recente',
-  'Clear menu': 'Limpar menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
   'Redo the last file change': 'Refazer a última alteração de ficheiro',

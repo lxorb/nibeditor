@@ -4,7 +4,6 @@ export const ja: Dictionary = {
   // Files and notes
   Save: '保存',
   'New note': '新しいノート',
-  'Open file': 'ファイルを開く',
   'Random note': 'ランダムなノート',
   'New note inside': 'この中に新しいノート',
   'New canvas': '新しいキャンバス',
@@ -819,8 +818,6 @@ export const ja: Dictionary = {
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
   'Report an issue': '問題を報告',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} がディスク上で変わりました。エディタにあるものがあなたのものです。',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',
   'Copy the line up': '行を上へ複製',
@@ -1482,8 +1479,6 @@ export const ja: Dictionary = {
   'Show all': 'すべてを表示',
   'Quit {name}': '{name}を終了',
   'Bring all to front': 'すべてを手前に移動',
-  'Open recent': '最近使った項目を開く',
-  'Clear menu': 'メニューを消去',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'コピーを元に戻す',
   'Redo the last file change': '直前のファイル操作をやり直す',
