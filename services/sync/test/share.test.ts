@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { type PullResponse, type PushResponse, seedUpdate } from '@nib/sync-core'
+import { TEXT } from '@nib/rooms'
+import * as Y from 'yjs'
 import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+import { framed, live } from './sync2'
 
 const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'
@@ -81,6 +85,8 @@ const SHARED = 'Plans'
 
 beforeEach(async () => {
   env = testEnv()
+  // The rooms run under the routes, for the ones that reach a note's room.
+  live(env)
   owner = await signIn(env, OWNER)
   stranger = await signIn(env, STRANGER)
 
@@ -289,6 +295,83 @@ const ROUTES: Route[] = [
   },
 ]
 
+/** A file of the space's tree, made by its owner the first time a route asks for one:
+ *  its bytes kept, and an entry naming them. Answers its id and its hash. */
+async function fileEntry(): Promise<{ id: string; hash: string }> {
+  const bytes = new Uint8Array([1, 2, 3, 4])
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  const hash = [...new Uint8Array(digest)].map((one) => one.toString(16).padStart(2, '0')).join('')
+  await call(env, `/v2/blobs/${hash}`, {
+    method: 'PUT',
+    token: owner,
+    raw: bytes,
+    headers: { 'content-type': 'audio/webm' },
+  })
+  const kind = 'file'
+  await call(env, `/v2/spaces/${space}/ops`, {
+    token: owner,
+    body: { ops: [{ op: 'file', t: 'create', id: 'file', kind, parent: null, name: 'a.webm', hash, seen: 0 }] },
+  })
+  return { id: 'file', hash }
+}
+
+// Sync v2's routes that name a space, held to the same matrix as v1's.
+ROUTES.push(
+  {
+    what: 'reading what changed, the way sync v2 reads it',
+    needs: 'read',
+    go: (token) => call(env, `/v2/spaces/${space}/feed?since=0`, { token }),
+  },
+  {
+    what: 'reading the documents in bulk',
+    needs: 'read',
+    go: (token) => call(env, `/v2/spaces/${space}/snapshot`, { token }),
+  },
+  {
+    what: 'making the tree into rows',
+    needs: 'read',
+    go: (token) => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' }),
+  },
+  {
+    what: "reading the space's maps",
+    needs: 'read',
+    go: (token) => call(env, `/v2/spaces/${space}/maps?since=0`, { token }),
+  },
+  {
+    what: "changing the space's maps",
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v2/spaces/${space}/maps`, {
+        method: 'PATCH',
+        token,
+        body: { entries: [{ map: 'graph', key: 'orphans', value: true }] },
+      }),
+  },
+  {
+    what: 'fetching a file',
+    needs: 'read',
+    go: async (token) => call(env, `/v2/files/${space}/${(await fileEntry()).id}`, { token }),
+  },
+  {
+    what: 'replacing a file',
+    needs: 'write',
+    go: async (token) => {
+      const { id, hash } = await fileEntry()
+      return call(env, `/v2/files/${space}/${id}`, {
+        method: 'PUT',
+        token,
+        body: { hash, base: hash },
+      })
+    },
+  },
+  {
+    what: 'keeping the other side of an answer as a version',
+    needs: 'write',
+    go: (token) =>
+      call(env, '/v2/docs/keep', { token, body: { id: note, text: 'kept', device: 'Laptop' } }),
+  },
+)
+
 /** Which roles a route lets through, so each case below reads as one sentence. */
 const RANK = { read: 0, write: 1, owner: 2 }
 
@@ -344,6 +427,71 @@ describe('every route that names a space', () => {
     test(`answers a stranger asking about ${route.what} with nothing at all`, async () => {
       const { status } = await route.go(stranger)
       expect(status).toBe(404)
+    })
+  }
+
+  /** Sync v2's routes that judge each thing they carry rather than the request: a
+   *  batch of tree operations in a space, and documents from anywhere. What a role may
+   *  not do is refused per thing, with the request itself answered. */
+  const ITEMS: {
+    what: string
+    needs: 'read' | 'write'
+    go: (token: string) => Promise<{ status: number; result: Record<string, unknown> | undefined }>
+  }[] = [
+    {
+      what: 'changing the tree',
+      needs: 'write',
+      go: async (token) => {
+        const answer = await call<{ results: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
+          token,
+          body: { ops: [{ op: `mk-${token.slice(0, 8)}`, t: 'mkdir', id: `f-${token.slice(0, 8)}`, parent: null, name: `F ${token.slice(0, 8)}`, seen: 0 }] },
+        })
+        return { status: answer.status, result: answer.json.results?.[0] }
+      },
+    },
+    {
+      what: 'pushing what a device wrote',
+      needs: 'write',
+      go: async (token) => {
+        const doc = new Y.Doc()
+        Y.applyUpdateV2(doc, seedUpdate(note, 1, '# Plan\n'))
+        const base = Y.encodeStateVector(doc)
+        doc.getText(TEXT).insert(0, 'x')
+        const update = Y.encodeStateAsUpdateV2(doc, base)
+        const answer = await framed<PushResponse>(env, '/v2/docs/push', token, {
+          docs: [{ id: note, push: `p-${token.slice(0, 8)}`, epoch: 1, seq: 1, base, update, at: 1 }],
+        })
+        return { status: answer.status, result: answer.value.docs[0] as Record<string, unknown> | undefined }
+      },
+    },
+    {
+      what: 'pulling what a document says',
+      needs: 'read',
+      go: async (token) => {
+        const answer = await framed<PullResponse>(env, '/v2/docs/pull', token, {
+          docs: [{ id: note, epoch: 1, sv: Y.encodeStateVector(new Y.Doc()) }],
+        })
+        return { status: answer.status, result: answer.value.docs[0] as Record<string, unknown> | undefined }
+      },
+    },
+  ]
+
+  for (const item of ITEMS) {
+    for (const holder of HOLDERS) {
+      const allowed = RANK[holder.role] >= RANK[item.needs]
+
+      test(`${allowed ? 'lets' : 'refuses'} ${holder.as} through ${item.what}`, async () => {
+        const { status, result } = await item.go(holder.token())
+        expect(status).toBe(200)
+        if (allowed) expect(result).not.toHaveProperty('refused')
+        else expect(result).toMatchObject({ refused: 'role' })
+      })
+    }
+
+    test(`answers a stranger asking about ${item.what} with nothing at all`, async () => {
+      const { status, result } = await item.go(stranger)
+      if (status === 200) expect(result).toMatchObject({ refused: 'gone' })
+      else expect(status).toBe(404)
     })
   }
 })

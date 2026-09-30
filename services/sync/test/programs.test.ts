@@ -92,6 +92,30 @@ describe('what a program may reach', () => {
     expect(programMayReach('PUT', '/v1/notes/abc', true)).toBe(false)
     expect(programMayReach('POST', '/v1/spaces/abc/notes', true)).toBe(false)
   })
+
+  /** Sync v2's documents: a program reads them, and writes the way it always has,
+   *  through the v1 routes, whose words a note's room takes in. */
+  test('and of sync v2, the feed and the pull and nothing that writes', () => {
+    for (const readOnly of [false, true]) {
+      expect(programMayReach('GET', '/v2/spaces/abc/feed', readOnly)).toBe(true)
+      expect(programMayReach('POST', '/v2/docs/pull', readOnly)).toBe(true)
+    }
+    for (const [method, path] of [
+      ['POST', '/v2/spaces/abc/ops'],
+      ['POST', '/v2/spaces/abc/prepare'],
+      ['GET', '/v2/spaces/abc/snapshot'],
+      ['GET', '/v2/spaces/abc/maps'],
+      ['PATCH', '/v2/spaces/abc/maps'],
+      ['POST', '/v2/docs/push'],
+      ['POST', '/v2/docs/keep'],
+      ['GET', '/v2/files/abc/def'],
+      ['PUT', '/v2/files/abc/def'],
+      ['PUT', `/v2/blobs/${'a'.repeat(64)}`],
+      ['POST', '/v2/blobs/parts'],
+    ] as const) {
+      expect(programMayReach(method, path, false), `${method} ${path}`).toBe(false)
+    }
+  })
 })
 
 describe('a token acting for somebody', () => {

@@ -180,6 +180,19 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   // Letting themselves out, which is the one thing under `share` that is not
   // the owner's: being in a space is something a person can stop.
   { method: 'DELETE', path: /^\/v1\/spaces\/[^/]+\/share\/me$/ },
+  // Sync v2, for a guest's device as for anybody's: the space's tree, its feed, its
+  // maps and its documents, and its files' bytes. Each is still behind its own role,
+  // per space or per document. Not the blob uploads: a guest has no storage to keep
+  // bytes in, as the v1 blob routes already say by not being here.
+  {
+    method: 'GET',
+    path: /^\/v2\/spaces\/[^/]+\/(feed|snapshot|maps)$/,
+  },
+  { method: 'POST', path: /^\/v2\/spaces\/[^/]+\/(prepare|ops)$/ },
+  { method: 'PATCH', path: /^\/v2\/spaces\/[^/]+\/maps$/ },
+  { method: 'POST', path: /^\/v2\/docs\/(pull|push|keep)$/ },
+  { method: 'GET', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
+  { method: 'PUT', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
 ]
 
 export function guestMayReach(method: string, path: string): boolean {

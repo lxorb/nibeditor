@@ -29,7 +29,7 @@
  *  all. Narrowing it means a column and a second pane, which is a decision for
  *  whoever wants it rather than something to guess at. See docs/sync.md. */
 
-const OPEN_TO_PROGRAMS: readonly { method: string; path: RegExp }[] = [
+const OPEN_TO_PROGRAMS: readonly { method: string; path: RegExp; reads?: true }[] = [
   // Which spaces there are, so a script can name one by its name.
   { method: 'GET', path: /^\/v1\/spaces$/ },
   // The change feed, which is how a checkout catches up without asking for
@@ -53,13 +53,22 @@ const OPEN_TO_PROGRAMS: readonly { method: string; path: RegExp }[] = [
   // notes a request, so nothing about it is a way to spend an account in one call.
   // See `rollback` in notes.ts.
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/rollback$/ },
+  // Sync v2's reading half: what changed in a space, and what a document now says as
+  // the operations a copy is missing. A POST that writes nothing, so a read-only token
+  // reaches it too. Nothing else of v2: a program writes through the v1 routes above,
+  // whose words a note's room takes in (docs/sync-v2.md section 7).
+  { method: 'GET', path: /^\/v2\/spaces\/[^/]+\/feed$/ },
+  { method: 'POST', path: /^\/v2\/docs\/pull$/, reads: true },
 ]
 
 /** The methods that change something, for a token that may only read. */
 const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 export function programMayReach(method: string, path: string, readOnly: boolean): boolean {
-  if (readOnly && WRITES.has(method)) return false
-
-  return OPEN_TO_PROGRAMS.some((one) => one.method === method && one.path.test(path))
+  return OPEN_TO_PROGRAMS.some(
+    (one) =>
+      one.method === method &&
+      one.path.test(path) &&
+      !(readOnly && WRITES.has(method) && !one.reads),
+  )
 }
