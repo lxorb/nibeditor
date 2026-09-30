@@ -3,6 +3,9 @@ import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
 import { nextSeq, noteKey, presentNote } from './notes'
+import { snapshotKey } from './rooms/epoch'
+import { deviceOf } from './sync2/device'
+import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
@@ -56,6 +59,7 @@ async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
     `select n.*, s.name as space_name from notes n
        join spaces s on s.id = n.space_id
       where s.user_id = ? and s.deleted = 0 and n.deleted = 1 and n.deleted_at is not null
+        and n.kind != 'file'
       order by n.deleted_at desc limit ?`,
   )
     .bind(userId, AT_ONCE)
@@ -92,7 +96,7 @@ async function deletedNote(
 /** Takes a note's content away for good. The row stays as the tombstone the
  *  change feed relies on, and stops being listed. */
 async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
-  await env.NOTES.delete(noteKey(note.space_id, note.id))
+  await env.NOTES.delete([noteKey(note.space_id, note.id), snapshotKey(note.id)])
   // And what the account remembered it saying before. A version of a note whose
   // words have gone for good is a version of nothing; the bodies go with the
   // rows, each only once the last row naming it has gone. See versions.ts.
@@ -144,7 +148,10 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
     .bind(space.id, take)
     .all<{ id: string }>()
 
-  await Promise.all(results.map((note) => env.NOTES.delete(noteKey(space.id, note.id))))
+  // The note's words and the snapshot of its document, in one delete apiece.
+  await Promise.all(
+    results.map((note) => env.NOTES.delete([noteKey(space.id, note.id), snapshotKey(note.id)])),
+  )
 
   // Exactly the rows whose bytes have gone, so nothing rejected above is left
   // recorded as purged. A chunk at a time, because a batch is five hundred notes
@@ -156,7 +163,13 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   }
 
   if (results.length < take) {
-    await env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id).run()
+    // And sync v2's tree of it, which is nothing once the notes have gone.
+    await env.DB.batch([
+      env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from space_entries where space_id = ?').bind(space.id),
+      env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id),
+    ])
   }
 
   return results.length
@@ -276,6 +289,16 @@ trash.post('/notes/:id/restore', async (context) => {
   const note = await deletedNote(env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to restore' }, 404)
   if (note.space_deleted) return context.json({ error: 'restore its space first' }, 409)
+
+  // In a space whose tree is rows, a restore the tree says: the note back where it
+  // was, with the folders it was in, numbered if its name was taken meanwhile.
+  if (note.name_key) {
+    await deleteById(env, note.space_id, await deviceOf(context), note.id, true)
+    const back = await env.DB.prepare('select * from notes where id = ?')
+      .bind(note.id)
+      .first<Note>()
+    if (back) return context.json({ note: presentNote(back) })
+  }
 
   const live = await env.DB.prepare('select path from notes where space_id = ? and deleted = 0')
     .bind(note.space_id)

@@ -18,7 +18,7 @@ export async function usedBytes(env: Env, userId: string): Promise<number> {
     `select
        (select coalesce(sum(n.size), 0)
           from notes n join spaces s on s.id = n.space_id
-         where s.user_id = ?1) as notes,
+         where s.user_id = ?1 and n.kind != 'file') as notes,
        (select coalesce(sum(size), 0) from blobs where user_id = ?1) as blobs`,
   )
     .bind(userId)

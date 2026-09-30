@@ -50,7 +50,8 @@ function named(path: string): string {
 
 async function pathsIn(env: Env, space: Space): Promise<{ id: string; path: string }[]> {
   const { results } = await env.DB.prepare(
-    'select id, path from notes where space_id = ? and deleted = 0 order by path limit ?',
+    `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
+      order by path limit ?`,
   )
     .bind(space.id, MOST_NOTES)
     .all<{ id: string; path: string }>()

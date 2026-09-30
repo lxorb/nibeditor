@@ -34,10 +34,12 @@ const AT_ONCE = 200
 export async function fillFronts(env: Env, spaceId: string | null): Promise<number> {
   const asking = spaceId
     ? env.DB.prepare(
-        'select id, space_id, path from notes where front is null and deleted = 0 and space_id = ? limit ?',
+        `select id, space_id, path from notes
+          where front is null and deleted = 0 and kind != 'file' and space_id = ? limit ?`,
       ).bind(spaceId, AT_ONCE)
     : env.DB.prepare(
-        'select id, space_id, path from notes where front is null and deleted = 0 limit ?',
+        `select id, space_id, path from notes
+          where front is null and deleted = 0 and kind != 'file' limit ?`,
       ).bind(AT_ONCE)
 
   const { results } = await asking.all<{ id: string; space_id: string; path: string }>()

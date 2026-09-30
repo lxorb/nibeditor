@@ -654,7 +654,8 @@ function titleOf(page: Page): string {
  *  two. See `isPagesTarget` in @nib/markdown/links. */
 async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
   const listing = await env.DB.prepare(
-    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
+    `select * from notes where space_id = ? and deleted = 0 and kind != 'file'
+      order by path limit ?`,
   )
     .bind(space.id, MOST_LISTED)
     .all<Note>()
@@ -1035,7 +1036,7 @@ async function takeAnswer(
   }
 
   const note = await env.DB.prepare(
-    'select * from notes where id = ? and space_id = ? and deleted = 0',
+    "select * from notes where id = ? and space_id = ? and deleted = 0 and kind != 'file'",
   )
     .bind(noteId, space.id)
     .first<Note>()
@@ -1236,7 +1237,7 @@ async function served(
     if (slug) return missing()
 
     const only = await env.DB.prepare(
-      'select * from notes where space_id = ? and path = ? and deleted = 0',
+      "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
     )
       .bind(space.id, space.blog_note)
       .first<Note>()

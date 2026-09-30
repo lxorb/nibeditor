@@ -343,7 +343,7 @@ export async function notesAmong(
   const found = await askInChunks(spaceIds, async (chunk) => {
     const { results } = await env.DB.prepare(
       `select space_id, count(*) as notes from notes
-        where space_id in (${places(chunk.length)}) and deleted = 0
+        where space_id in (${places(chunk.length)}) and deleted = 0 and kind != 'file'
         group by space_id`,
     )
       .bind(...chunk)

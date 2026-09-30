@@ -8,10 +8,9 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { FeedPage, OpResult, OpsResponse } from '@nib/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { invited, type Live, live } from './sync2'
+import { invited, live } from './sync2'
 
 let env: TestEnv
-let rooms: Live
 /** Two devices of one account: two sessions, which the tree tells apart. */
 let token: string
 let other: string
@@ -19,7 +18,8 @@ let space: string
 
 beforeEach(async () => {
   env = testEnv()
-  rooms = live(env)
+  // The rooms run under the routes: a v1 save of a note with an epoch goes to its room.
+  live(env)
   token = await signIn(env, 'tree@example.com')
   other = await signIn(env, 'tree@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Tree' } })).json.space.id

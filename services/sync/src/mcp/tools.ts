@@ -185,7 +185,8 @@ async function askedSpace(
 
 async function listNotes(env: Env, space: Space): Promise<string> {
   const { results } = await env.DB.prepare(
-    'select path from notes where space_id = ? and deleted = 0 order by path limit ?',
+    `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
+      order by path limit ?`,
   )
     .bind(space.id, MOST_NOTES)
     .all<{ path: string }>()
@@ -198,7 +199,7 @@ async function readNote(env: Env, space: Space, args: Record<string, unknown>): 
   if (!path) return 'That is not a note path.'
 
   const note = await env.DB.prepare(
-    'select id from notes where space_id = ? and path = ? and deleted = 0',
+    "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
     .bind(space.id, path)
     .first<{ id: string }>()
@@ -225,7 +226,8 @@ async function searchNotes(
     if (found.length >= MOST_MATCHES || read >= MOST_SEARCHED) break
 
     const { results } = await env.DB.prepare(
-      'select id, path from notes where space_id = ? and deleted = 0 order by path limit ?',
+      `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
+        order by path limit ?`,
     )
       .bind(one.id, MOST_NOTES)
       .all<{ id: string; path: string }>()
@@ -263,7 +265,8 @@ async function listBacklinks(
   for (let at = 0; at < parts.length; at++) names.add(parts.slice(at).join('/'))
 
   const { results } = await env.DB.prepare(
-    'select id, path from notes where space_id = ? and deleted = 0 order by path limit ?',
+    `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
+        order by path limit ?`,
   )
     .bind(space.id, MOST_NOTES)
     .all<{ id: string; path: string }>()
@@ -298,7 +301,7 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
 
   const existing = await env.DB.prepare(
-    'select * from notes where space_id = ? and path = ? and deleted = 0',
+    "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
     .bind(space.id, path)
     .first<Note>()

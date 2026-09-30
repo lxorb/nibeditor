@@ -74,7 +74,8 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   }
 
   const { results } = await context.env.DB.prepare(
-    'select path, front, size from notes where space_id = ? and deleted = 0 order by path limit ?',
+    `select path, front, size from notes where space_id = ? and deleted = 0 and kind != 'file'
+      order by path limit ?`,
   )
     .bind(space.id, MOST_LISTED)
     .all<{ path: string; front: string | null; size: number }>()
