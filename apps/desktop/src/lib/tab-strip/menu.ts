@@ -8,19 +8,23 @@
  *  | --- | --- |
  *  | the page | Reload, Copy link and Mute site, on a web tab only |
  *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
- *  | the tab | Rename, Duplicate, Pin, Show in the file list |
+ *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane |
  *
  *  A row that could only do nothing is left out rather than greyed where the thing
  *  it is about is not there at all - a graph has no file to rename - and greyed where
  *  it is there and there is nothing to do yet, the way Chrome greys "Close tabs to
- *  the right" on the last tab. Each command that has a key says it; see the registry. */
+ *  the right" on the last tab. Each command that has a key says it; see the registry.
+ *
+ *  A tab that is one of several picked out with Ctrl or Shift offers what can be done to
+ *  all of them at once, Chrome's rows for a pick: see `pickMenu` and chosen.svelte.ts. */
 
 import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
-import { t } from '../i18n.svelte'
+import { plural, t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
+import { bookmarkAll } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
 import { withinSpace } from '../space-paths'
 import { openTerminal, shellRows } from '../terminal/open'
@@ -28,7 +32,15 @@ import { readSpec } from '../terminal/spec'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
-import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
+import { chosen } from './chosen.svelte'
+import {
+  duplicateMany,
+  duplicateTab,
+  moveManyToOtherPane,
+  moveToOtherPane,
+  pinMany,
+  renameFromTab,
+} from './ops'
 
 /** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
  *  pauses it there, as a press in the page would; Stop ends its work in the tab and
@@ -183,6 +195,7 @@ function tabEntries(tab: Tab): MenuEntry[] {
       hint: shortcuts.hint('app.pin'),
       run: () => workspace.togglePin(tab.id),
     },
+    ...bookmarkAll(tab.path === null ? [] : [tab.path]),
   ]
 }
 
@@ -259,7 +272,98 @@ function keepWebEntry(tab: Tab): MenuEntry[] {
   return [{ label: t('Keep as web note'), run: () => void workspace.keepAsWebNote(tab) }]
 }
 
+/** What a pick of tabs offers, all of it about every tab picked: Chrome's rows for a
+ *  selection - reload, duplicate, pin, close, close the others, move - and the bookmark
+ *  a row of the file list has. The others the strip closes are the tabs not picked, and
+ *  the ones to the right are right of the last of them. */
+function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
+  const ids = tabs.map((one) => one.id)
+  const web = tabs.filter((one) => one.kind === 'web')
+  const last = tabs.at(-1)?.id ?? ''
+  const others = workspace.tabsIn(paneId).filter((one) => !ids.includes(one.id) && !one.pinned)
+  const copies = tabs.every((one) => workspace.canDuplicateTab(one) && one.kind !== 'terminal')
+  const paths = tabs.flatMap((one) => (one.path === null ? [] : [one.path]))
+
+  return [
+    ...(web.length
+      ? [
+          {
+            label: t('Reload'),
+            run: () => {
+              for (const one of web) void pages.step(one.id, 'reload')
+            },
+          },
+          DIVIDER,
+        ]
+      : []),
+    ...(copies
+      ? [
+          {
+            label: t('Duplicate'),
+            hint: shortcuts.hint('app.duplicate-tab'),
+            run: () => duplicateMany(ids),
+          },
+        ]
+      : []),
+    {
+      label: tabs.some((one) => !one.pinned) ? t('Pin') : t('Unpin'),
+      hint: shortcuts.hint('app.pin'),
+      run: () => pinMany(tabs),
+    },
+    ...bookmarkAll(paths),
+    DIVIDER,
+    {
+      label: t('Close'),
+      hint: shortcuts.hint('app.close'),
+      run: () => void workspace.closeMany(ids),
+    },
+    {
+      label: t('Close others'),
+      disabled: others.length === 0,
+      run: () => void workspace.closeMany(others.map((one) => one.id)),
+    },
+    {
+      label: closeAfterLabel(),
+      hint: shortcuts.hint('app.close-right'),
+      disabled: workspace.closesAround(last, 'right') === 0,
+      run: () => void workspace.closeAround(last, 'right'),
+    },
+    {
+      label: t('Close all'),
+      hint: shortcuts.hint('app.close-all'),
+      disabled: workspace.closesAround(last, 'all') === 0,
+      run: () => void workspace.closeAround(last, 'all'),
+    },
+    ...reopenEntry(),
+    ...(workspace.canMoveToOtherPane(last)
+      ? [
+          DIVIDER,
+          {
+            label: t('Move to other pane'),
+            hint: shortcuts.hint('pane.move-tab'),
+            run: () => moveManyToOtherPane(ids),
+          },
+        ]
+      : []),
+  ]
+}
+
+/** The tabs a menu on this tab is about: the pick it is one of, or it alone. */
+function pickOf(tab: Tab, paneId: string): Tab[] {
+  const many = chosen.of(paneId)
+  return many.some((one) => one.id === tab.id) ? many : []
+}
+
+/** What the menu says it is about: the tab's name, or how many tabs are picked. */
+export function tabMenuTitle(tab: Tab, paneId: string): string {
+  const many = pickOf(tab, paneId).length
+  return many ? plural(many, { one: '{count} tab', other: '{count} tabs' }) : tab.shown
+}
+
 export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
+  const many = pickOf(tab, paneId)
+  if (many.length) return pickMenu(many, paneId)
+
   return [
     ...agentEntries(tab),
     ...keepWebEntry(tab),

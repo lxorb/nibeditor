@@ -2619,9 +2619,19 @@ class Workspace {
   async closeAround(id: string, which: Around) {
     const tab = this.tabs.find((one) => one.id === id)
     const going = tab ? closedAround(this.tabsIn(tab.paneId), id, which) : []
+    await this.closeMany(going.map((one) => one.id))
+  }
+
+  /** Several tabs closed by one gesture - a pick of them, or the tabs around one - and
+   *  brought back by one Reopen closed tab; see workspace/closed.svelte.ts. Closed in
+   *  the order the strips hold them, which is what puts each back at its own place. */
+  async closeMany(ids: readonly string[]) {
+    const going = this.tabs.filter((one) => ids.includes(one.id))
     if (!(await this.mayClose(going))) return
 
-    for (const one of going) this.close(one.id)
+    this.closed.together(() => {
+      for (const one of going) this.close(one.id)
+    })
   }
 
   closesAround(id: string, which: Around): number {
@@ -2711,7 +2721,8 @@ class Workspace {
 
   /** The tab that was closed last, back where it was: in the pane it was closed
    *  from while that pane is still there, at its own place in the strip, with
-   *  whatever words it held that its file had not been given yet.
+   *  whatever words it held that its file had not been given yet. With it, every
+   *  tab the same gesture closed; see `closeMany`.
    *
    *  A note that has since been deleted cannot come back, so the entry is spent
    *  and the one under it is tried: reaching past a note that is gone is what
@@ -2721,18 +2732,26 @@ class Workspace {
    *  the usual sense, and closing the blank page somebody is looking at because
    *  they asked for a tab back would be a surprise. */
   async reopenClosed() {
-    for (let closed = this.closed.take(); closed; closed = this.closed.take()) {
-      const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
-      const [tab] = await this.tabsFrom([closed.draft], paneId)
-      if (!tab) continue
+    for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
+      // Tabs closed together come back together, newest first so each lands at its
+      // own place, and the first of them to have been closed is the one in front.
+      let back: { tab: Tab; paneId: string } | null = null
+      for (const closed of batch) {
+        const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
+        const [tab] = await this.tabsFrom([closed.draft], paneId)
+        if (!tab) continue
 
-      this.tabs = this.placed(tab, paneId, closed.at)
-      this.panes.activate(paneId, tab.id)
-      this.panes.focus(paneId)
+        this.tabs = this.placed(tab, paneId, closed.at)
+        back = { tab, paneId }
+      }
+      if (!back) continue
+
+      this.panes.activate(back.paneId, back.tab.id)
+      this.panes.focus(back.paneId)
       // Where there is room for one document, the one coming back takes the
       // place of the one on screen - and that one goes on the stack in its turn,
       // so back and forward walk the same line.
-      this.onlyOne(tab)
+      this.onlyOne(back.tab)
       this.persist()
       return
     }

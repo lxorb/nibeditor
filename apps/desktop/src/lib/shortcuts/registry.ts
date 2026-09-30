@@ -28,6 +28,7 @@ import { settings } from '../settings.svelte'
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
+import { chosen } from '../tab-strip/chosen.svelte'
 import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
@@ -333,11 +334,15 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-w',
     // On a Mac the same key closes the window once nothing is left in it to close,
     // as it does in Safari and VS Code there. A pane put down with Ctrl+D still has
-    // its tabs, so there it closes nothing.
-    run: () =>
-      void (workspace.activeTabId || workspace.tabs.length || !onMac()
-        ? workspace.closeActive()
-        : closeWindow()),
+    // its tabs, so there it closes nothing. Several tabs picked go together, as
+    // Chrome's do; see tab-strip/chosen.svelte.ts.
+    run: () => {
+      const many = chosen.of(workspace.panes.focusedId)
+      if (many.length) void tabOps().then((ops) => ops.closeChosen(many))
+      else if (workspace.activeTabId || workspace.tabs.length || !onMac())
+        void workspace.closeActive()
+      else void closeWindow()
+    },
   },
   {
     // Every Mac app's File menu has it under the same key with Shift, and so does a

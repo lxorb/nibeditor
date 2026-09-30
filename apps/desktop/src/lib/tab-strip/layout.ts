@@ -199,6 +199,40 @@ export function moved<T>(order: readonly T[], from: number, to: number): T[] {
   return [...rest.slice(0, to), one, ...rest.slice(to)]
 }
 
+/** A strip with several of its tabs carried as one, which is Chrome's drag of a pick:
+ *  the others of the block taken out, and the tab being dragged standing for all of
+ *  them, as wide as they are together - so every rule for one tab going along a strip
+ *  holds for the block unchanged. `before` is how far into the block the dragged tab
+ *  starts, which is where the pointer holds the block from. */
+export function gathered<T extends { readonly id: string }>(
+  order: readonly T[],
+  widths: readonly number[],
+  block: readonly string[],
+  lead: string,
+): { order: T[]; widths: number[]; from: number; before: number } {
+  const kept: T[] = []
+  const keptWidths: number[] = []
+  let before = 0
+  let wide = 0
+  let passed = false
+
+  for (const [at, one] of order.entries()) {
+    const width = widths[at] ?? 0
+    if (block.includes(one.id)) {
+      wide += width
+      if (one.id === lead) passed = true
+      else if (!passed) before += width
+      if (one.id !== lead) continue
+    }
+    kept.push(one)
+    keptWidths.push(width)
+  }
+
+  const from = kept.findIndex((one) => one.id === lead)
+  if (from >= 0) keptWidths[from] = wide
+  return { order: kept, widths: keptWidths, from, before }
+}
+
 /** Where a tab would start if it were moved from `from` to `to`, given every
  *  tab's width in the strip as it stands. Moving a tab changes no width - only
  *  which tab is active or pinned does - so the widths travel with their tabs. */

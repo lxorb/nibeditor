@@ -165,8 +165,9 @@ async function openAll(paths: readonly string[]) {
 }
 
 /** The selection bookmarked with one press, as a row bookmarks itself: the note a
- *  folder is drawn as where it has one. The word says which way the press goes. */
-function bookmarkAll(paths: readonly string[]): MenuEntry[] {
+ *  folder is drawn as where it has one. The word says which way the press goes. A
+ *  tab's menu offers the same row for the files its tabs show; see tab-strip/menu.ts. */
+export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const marks = paths.flatMap((path) => {
     const entry = entryAt(workspace.tree, path)
     const mark = entry && workspace.bookmarks.forEntry(folderNote(entry) ?? entry)

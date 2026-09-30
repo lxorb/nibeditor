@@ -108,6 +108,10 @@ export interface ClosedTab {
   paneId: string
   /** Its place in that pane's strip, counting from zero. */
   at: number
+  /** When it was closed along with others by one gesture - a pick of tabs, the tabs
+   *  around one - which all carry the same stamp and come back together. Absent for a
+   *  tab closed on its own. */
+  batch?: number
 }
 
 export interface Session {
@@ -334,6 +338,7 @@ export function readClosed(value: unknown): ClosedTab | null {
     draft,
     paneId: isString(value.paneId) ? value.paneId : '',
     at: isNumber(value.at) && value.at >= 0 ? value.at : 0,
+    ...(isNumber(value.batch) ? { batch: value.batch } : {}),
   }
 }
 

@@ -18,12 +18,14 @@
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
+  import { chosen, pickingOf } from './tab-strip/chosen.svelte'
   import { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
   import { arrival, handOver, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
   import {
     type Bounds,
     endOf,
+    gathered,
     holds,
     keptWidths,
     MAGNETISM,
@@ -81,8 +83,8 @@
   function showMenu(event: MouseEvent, tab: Tab) {
     event.preventDefault()
     event.stopPropagation()
-    void import('./tab-strip/menu').then(({ tabMenu }) =>
-      menu.show(event, tabMenu(tab, paneId), { title: tab.shown }),
+    void import('./tab-strip/menu').then(({ tabMenu, tabMenuTitle }) =>
+      menu.show(event, tabMenu(tab, paneId), { title: tabMenuTitle(tab, paneId) }),
     )
   }
 
@@ -169,6 +171,21 @@
   )
   const base = $derived(placed(widths))
 
+  /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/chosen.svelte.ts. */
+  const picked = $derived(new Set(chosen.of(paneId).map((one) => one.id)))
+  /** Whether the press being held was a plain one on a picked tab, which picks that tab
+   *  alone once it turns out to have been a click. */
+  let plainOnPick = false
+
+  /** What the press being held would carry, when that is more than the tab pressed:
+   *  every tab picked with it that is pinned as it is. */
+  let carrying = $state<{ lead: string; ids: readonly string[] } | null>(null)
+  /** The strip as a drag of several sees it, the block standing as one tab; see
+   *  `gathered`. */
+  const group = $derived(carrying ? gathered(sized, widths, carrying.ids, carrying.lead) : null)
+  /** Every tab that is up: the one dragged, and a block's others with it. */
+  const lifted = $derived(drag.tabId === null ? [] : (carrying?.ids ?? [drag.tabId]))
+
   const landing = $derived(workspace.panes.landing)
   /** Where something from outside the strip is about to be dropped: a note out of
    *  the file list, or a tab carried in from another pane. The strip makes room for
@@ -183,24 +200,37 @@
     const carried = drag.tabId
 
     if (carried) {
+      // A block of several goes along the strip as one tab as wide as all of them,
+      // and is drawn as its tabs side by side from where the drag has it.
+      const rows = group?.order ?? sized
+      const rowWidths = group?.widths ?? widths
       const from = drag.from
-      const own = { x: drag.x, width: widths[from] ?? 0 }
+      const own = { x: drag.x, width: rowWidths[from] ?? 0 }
+      const lay = () => {
+        let x = own.x
+        for (const id of lifted) {
+          const width = widths[sized.findIndex((one) => one.id === id)] ?? 0
+          boxes[id] = { x, width }
+          x += width
+        }
+      }
 
       // Out over the panes: the strip closes up behind it, and the tab itself stays
       // where it last was, out of sight, holding the pointer.
       if (drag.out) {
-        const rest = sized.filter((_, at) => at !== from)
+        const rest = sized.filter((one) => !lifted.includes(one.id))
         const bounds = placed(widthsFor(rest, room))
         for (const [at, one] of rest.entries()) boxes[one.id] = bounds[at] ?? own
-        boxes[carried] = own
+        lay()
         return { boxes, end: endOf(bounds) }
       }
 
-      const order = moved(sized, from, drag.slot)
-      const bounds = placed(moved(widths, from, drag.slot))
+      const order = moved(rows, from, drag.slot)
+      const bounds = placed(moved(rowWidths, from, drag.slot))
       for (const [at, one] of order.entries()) {
-        boxes[one.id] = one.id === carried ? own : (bounds[at] ?? own)
+        if (one.id !== carried) boxes[one.id] = bounds[at] ?? own
       }
+      lay()
       return { boxes, end: endOf(bounds) }
     }
 
@@ -227,12 +257,16 @@
   const lines = $derived.by(() => {
     const ids =
       drag.on && !drag.out
-        ? moved(sized, drag.from, drag.slot).map((one) => one.id)
-        : sized.filter((one) => !(drag.out && one.id === drag.tabId)).map((one) => one.id)
+        ? moved(group?.order ?? sized, drag.from, drag.slot).flatMap((one) =>
+            one.id === drag.tabId ? lifted : [one.id],
+          )
+        : sized.filter((one) => !(drag.out && lifted.includes(one.id))).map((one) => one.id)
     // The room opening for a drop is a tab that is not there yet, and a gap needs
     // no hairline either side of it.
     if (incoming !== null) ids.splice(incoming, 0, '')
-    const filled = new Set([activeId, hovered, drag.tabId, ''].filter((one) => one !== null))
+    const filled = new Set<string>([...lifted, ...picked, ''])
+    if (activeId !== null) filled.add(activeId)
+    if (hovered !== null) filled.add(hovered)
 
     return separated(ids, filled)
   })
@@ -377,8 +411,11 @@
     const press = drag.pressing
     if (!press) return null
 
-    const width = widths[drag.from] ?? 0
-    const left = i18n.factor > 0 ? drag.pointer.x - press.grab : drag.pointer.x + press.grab - width
+    // The tab dragged, held where it was grabbed; a block's others are behind it, which
+    // the chip says with the edge of one more card.
+    const width = widths[sized.findIndex((one) => one.id === drag.tabId)] ?? 0
+    const grab = press.grab - (group?.before ?? 0)
+    const left = i18n.factor > 0 ? drag.pointer.x - grab : drag.pointer.x + grab - width
     const target = landing?.kind === 'strip' ? stripOf(landing.paneId) : undefined
 
     return { left, top: target ? target.top() : drag.pointer.y - grabY, width }
@@ -407,24 +444,46 @@
     if (event.button !== 0 || drag.pressing) return
 
     const finger = event.pointerType === 'touch'
-    // Chrome activates a tab on the press, before anything has moved, so the tab
-    // under a mouse answers at once and the one being dragged is the one open. A
-    // finger's press may be the start of a scroll, so it waits for the tap.
-    if (!finger) workspace.activate(tab.id)
+    const how = finger ? null : pickingOf(event, shortcuts.platform === 'mac')
+    if (how) {
+      // Ctrl or Shift: the pick changes, and a tab taken out of it is not dragged.
+      const front = chosen.pick(paneId, tab.id, how)
+      if (front) workspace.activate(front)
+      withOps(() => undefined)
+      if (front !== tab.id) {
+        event.preventDefault()
+        return
+      }
+    } else if (!finger) {
+      // Chrome activates a tab on the press, before anything has moved, so the tab
+      // under a mouse answers at once and the one being dragged is the one open. A
+      // press on a picked tab leaves the pick alone: it may be the start of dragging
+      // all of them. A finger's press may be the start of a scroll, so it waits for
+      // the tap.
+      if (!picked.has(tab.id)) chosen.clear()
+      workspace.activate(tab.id)
+    }
+    plainOnPick = !how && picked.has(tab.id)
 
     const node = event.currentTarget as HTMLElement
     const top = node.closest('.tab')?.getBoundingClientRect().top ?? event.clientY
     const along = alongOf(event.clientX)
+    const block = finger ? [] : tabs.filter((one) => picked.has(one.id) && one.pinned === tab.pinned)
+    carrying =
+      block.length > 1 && picked.has(tab.id)
+        ? { lead: tab.id, ids: block.map((one) => one.id) }
+        : null
+    const gather = carrying ? gathered(sized, widths, carrying.ids, tab.id) : null
 
     grabY = event.clientY - (top + TOP)
     drag.down({
       tabId: tab.id,
-      from: at,
+      from: gather ? gather.from : at,
       pinned: tab.pinned,
       along,
       x: event.clientX,
       y: event.clientY,
-      grab: along - (base[at]?.x ?? 0),
+      grab: along - (base[at]?.x ?? 0) + (gather?.before ?? 0),
       finger,
     })
 
@@ -446,7 +505,11 @@
         event.clientY,
         press.finger ? MAGNETISM.touch : MAGNETISM.mouse,
       ),
-      { widths, room: room ?? endOf(base), pinnedRun: run },
+      {
+        widths: group?.widths ?? widths,
+        room: room ?? endOf(base),
+        pinnedRun: group ? pinnedRun(group.order) : run,
+      },
     )
     if (!up) return
 
@@ -500,25 +563,65 @@
 
     const from = chip
     const where = workspace.panes.landing
+    const block = carrying?.ids ?? null
+    const rows = group?.order ?? null
+    carrying = null
     const ending = drag.release()
     unfollow()
-    if (ending.kind === 'click') return
+    if (ending.kind === 'click') {
+      // A plain click on a picked tab, which turned out not to be a drag, picks that
+      // tab alone, as Chrome's release does.
+      if (plainOnPick) chosen.clear()
+      return
+    }
 
     event.preventDefault()
     settle(ending.tabId)
 
     if (ending.kind === 'moved') {
-      if (ending.to !== ending.from) workspace.moveTab(ending.tabId, paneId, ending.to)
+      if (block && rows) {
+        const before = moved(rows, ending.from, ending.to)[ending.to + 1]?.id ?? null
+        putDown(block, ending.tabId, paneId, before)
+      } else if (ending.to !== ending.from) workspace.moveTab(ending.tabId, paneId, ending.to)
       return
     }
 
-    // Let go over another strip or a pane: that is where it goes, from where it was.
+    // Let go over another strip or a pane: that is where it goes, from where it was,
+    // and a block's others with it, in front of the tab it landed in front of.
     if (where) {
       if (from) handOver(ending.tabId, from.left, from.top)
+      const before =
+        where.kind === 'strip' ? (workspace.tabsIn(where.paneId)[where.at]?.id ?? null) : null
       workspace.dropTab(ending.tabId, where)
+      const into = workspace.tabs.find((one) => one.id === ending.tabId)?.paneId
+      if (block && into) putDown(block, ending.tabId, into, before)
     } else if (from) {
       flyHome(ending.tabId, from)
     }
+  }
+
+  /** A block of picked tabs let go of: side by side in their order, in front of one tab
+   *  of a pane or at its end, the one dragged in front and all of them still picked. */
+  function putDown(ids: readonly string[], lead: string, into: string, before: string | null) {
+    withOps((ops) => {
+      ops.placeBlock(ids, into, before)
+      workspace.activate(lead)
+      chosen.paneId = into
+    })
+  }
+
+  /** What a pick does together, kept once fetched so a block let go of lands in the frame
+   *  it was let go in. Fetched with the first pick; see tab-strip/ops.ts. */
+  let ops: typeof import('./tab-strip/ops') | null = null
+  function withOps(run: (loaded: typeof import('./tab-strip/ops')) => void) {
+    if (ops) {
+      run(ops)
+      return
+    }
+    void import('./tab-strip/ops').then((loaded) => {
+      ops = loaded
+      run(loaded)
+    })
   }
 
   /** The drag given up - Escape, or a window that took the pointer away. Every tab
@@ -526,6 +629,7 @@
   function giveUp() {
     const tabId = drag.tabId
     const from = chip
+    carrying = null
     drag.cancel()
     unfollow()
     if (!tabId) return
@@ -821,8 +925,9 @@
         class:preview={tab.id === workspace.previewTabId}
         class:line={lines.has(tab.id)}
         class:closable={parts.close}
-        class:carried={drag.tabId === tab.id && !drag.out}
-        class:gone={drag.tabId === tab.id && drag.out}
+        class:chosen={picked.has(tab.id)}
+        class:carried={lifted.includes(tab.id) && !drag.out}
+        class:gone={lifted.includes(tab.id) && drag.out}
         class:settling={settling === tab.id}
         class:onbar={tab.kind === 'web'}
         style:width="{box.width}px"
@@ -862,8 +967,10 @@
             if (event.currentTarget.matches(':focus-visible')) aimCard(tab, event.currentTarget, true)
           }}
           onblur={() => unaimCard(tab.id)}
-          onclick={() => {
+          onclick={(event) => {
             givesBack(tab.id)
+            // A click with Ctrl or Shift was a pick, and its press has answered it.
+            if (event.detail > 0 && pickingOf(event, shortcuts.platform === 'mac')) return
             workspace.activate(tab.id)
           }}
           ondblclick={() => workspace.keep(tab.id)}
@@ -1030,6 +1137,7 @@
   <div
     class="chip"
     class:onbar={carriedTab.kind === 'web'}
+    class:many={lifted.length > 1}
     use:portal
     style:width="{chip.width}px"
     style:transform="translate({chip.left}px, {chip.top}px)"
@@ -1066,8 +1174,10 @@
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
     --tab-ground: var(--bg);
-    /* The fill a hovered tab gets: the active tab's colour, part of the way. */
+    /* The fill a hovered tab gets: the active tab's colour, part of the way, and
+       further for a picked one. */
     --tab-hover: color-mix(in srgb, var(--tab-ground) 40%, transparent);
+    --tab-chosen: color-mix(in srgb, var(--tab-ground) 70%, transparent);
     /* Chrome's top corner, and its concave foot at the bottom. */
     --tab-round: var(--radius-md);
     --tab-foot: var(--radius-md);
@@ -1151,6 +1261,13 @@
 
   .tab.active .fill {
     background: var(--tab-ground);
+  }
+
+  /* Picked with Ctrl or Shift: the hover's box, held and a step stronger, which is
+     Chrome's selected tab - a tab with a fill of its own that is not the one in front. */
+  .tab.chosen:not(.active)::before {
+    opacity: 1;
+    background: var(--tab-chosen);
   }
 
   /* The two feet: where the active tab meets the bar under it, it flares out into
@@ -1466,6 +1583,15 @@
 
   .chip.onbar {
     background: var(--surface);
+  }
+
+  /* Several carried: the edge of the next card behind the first. */
+  .chip.many {
+    box-shadow:
+      0 0 0 1px var(--line-strong),
+      3px 3px 0 -1px var(--bg),
+      3px 3px 0 0 var(--line-strong),
+      var(--shadow-md);
   }
 
   .chip .label {
