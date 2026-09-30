@@ -29,10 +29,13 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const has = (flag) => args.includes(flag)
 const after = (flag) => (has(flag) ? args[args.indexOf(flag) + 1] : undefined)
 
+/** The question on stdin, as its last line of words: nib wraps a question in tags, and
+ *  the answer echoes what was asked rather than the tag that closed it. */
 async function question() {
   let text = ''
   for await (const chunk of process.stdin) text += chunk
-  return text
+  const lines = text.split(/\r?\n/).map((line) => line.trim())
+  return lines.filter((line) => line && !/^<\/?[a-z]+>$/.test(line)).at(-1) ?? ''
 }
 
 function refuse(why) {
@@ -125,7 +128,7 @@ async function claude() {
 
   const model = after('--model') ?? 'claude-fake-1'
   say({ type: 'stream_event', event: { type: 'message_start', message: { model, content: [] } } })
-  const words = `You asked: ${asked.split('\n').at(-1) ?? ''}`.split(/(?<= )/)
+  const words = `You asked: ${asked}`.split(/(?<= )/)
   for (const word of words) {
     say({
       type: 'stream_event',
@@ -196,7 +199,7 @@ async function codex() {
     item: {
       id: 'item_1',
       type: 'agent_message',
-      text: `You asked: ${asked.split('\n').at(-1) ?? ''}`,
+      text: `You asked: ${asked}`,
     },
   })
   say({
