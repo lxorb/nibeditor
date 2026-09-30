@@ -1591,4 +1591,21 @@ export const ml: Dictionary = {
   'This {device}': 'ഈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} തിരിച്ചെത്തി: {device} അതിൽ എഴുതുകയായിരുന്നു',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'തുറക്കൽ',
+  Pressing: 'അമർത്തൽ',
+  Typing: 'ടൈപ്പിംഗ്',
+  Closing: 'അടയ്ക്കൽ',
+  Deleting: 'ഇല്ലാതാക്കൽ',
+  Searching: 'തിരയൽ',
+  Running: 'പ്രവർത്തിപ്പിക്കൽ',
+  'Stop agents': 'ഏജന്റുകളെ നിർത്തുക',
+  Agents: 'ഏജന്റുകൾ',
+  'Always on this site': 'ഈ സൈറ്റിൽ എപ്പോഴും',
+  'Give back': 'തിരികെ നൽകുക',
+  'Take over': 'നിയന്ത്രണം ഏറ്റെടുക്കുക',
+  'Agents stopped': 'ഏജന്റുകളെ നിർത്തി',
+  'Agent tabs closed': 'ഏജന്റ് ടാബുകൾ അടച്ചു',
+  'Nib is still running for your agents': 'നിങ്ങളുടെ ഏജന്റുകൾക്കായി Nib ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
+  '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
 }

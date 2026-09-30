@@ -918,6 +918,16 @@ describe('what the app evaluates before it draws anything', () => {
     }
   })
 
+  /** Everything an agent is to the window - its verbs, its notes, the activity panel,
+   *  the frame and the mark, the stop - arrives with the first agent, and a window
+   *  nobody pairs one with never fetches a byte of it (docs/agent-native.md 11). What
+   *  the shell carries is the one module the strip and the pages read their marks from,
+   *  which is the door and not the room. */
+  test('and nothing of the agents', () => {
+    expect([...names].filter((one) => one.includes('/lib/agents/'))).toEqual([])
+    expect(holds('/lib/agent-marks.svelte.ts')).toBe(true)
+  })
+
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {
     for (const wanted of [
       '@codemirror/state',

@@ -92,7 +92,14 @@ export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
 /** Where each panel lives until somebody moves it: the left is the space (the file
  *  list, the search), the right is the note in front and the conversation about the
  *  space - Obsidian's split, with the chat where VS Code keeps its own. */
-export const STARTS_RIGHT: readonly Panel[] = ['outline', 'links', 'properties', 'footnotes', 'ask']
+export const STARTS_RIGHT: readonly Panel[] = [
+  'outline',
+  'links',
+  'properties',
+  'footnotes',
+  'ask',
+  'agents',
+]
 
 /** Every panel there is, in the order the left side's strip shows them. */
 export const PANELS: readonly Panel[] = [
@@ -103,6 +110,7 @@ export const PANELS: readonly Panel[] = [
   'footnotes',
   'properties',
   'ask',
+  'agents',
 ]
 
 /** The panels a window could be arranged with before a session said which it knew. */

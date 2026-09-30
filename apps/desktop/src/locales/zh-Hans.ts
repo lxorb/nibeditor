@@ -1531,4 +1531,21 @@ export const zhHans: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '这台{device}',
   '{name} is back: {device} was writing in it': '{name} 已恢复：{device} 正在其中写作',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: '打开',
+  Pressing: '点击',
+  Typing: '输入',
+  Closing: '关闭',
+  Deleting: '删除',
+  Searching: '搜索',
+  Running: '运行',
+  'Stop agents': '停止智能体',
+  Agents: '智能体',
+  'Always on this site': '在此网站始终',
+  'Give back': '交还',
+  'Take over': '接管',
+  'Agents stopped': '已停止智能体',
+  'Agent tabs closed': '已关闭智能体标签页',
+  'Nib is still running for your agents': 'Nib 仍在为你的智能体运行',
+  '{client} wants to connect': '{client} 想要连接',
 }

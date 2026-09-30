@@ -1605,4 +1605,21 @@ export const ptBR: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it': '{name} voltou: {device} estava escrevendo nela',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Abertura',
+  Pressing: 'Clique',
+  Typing: 'Digitação',
+  Closing: 'Fechamento',
+  Deleting: 'Exclusão',
+  Searching: 'Pesquisa',
+  Running: 'Execução',
+  'Stop agents': 'Parar agentes',
+  Agents: 'Agentes',
+  'Always on this site': 'Sempre neste site',
+  'Give back': 'Devolver',
+  'Take over': 'Assumir o controle',
+  'Agents stopped': 'Agentes parados',
+  'Agent tabs closed': 'Abas dos agentes fechadas',
+  'Nib is still running for your agents': 'O Nib continua rodando para seus agentes',
+  '{client} wants to connect': '{client} quer se conectar',
 }

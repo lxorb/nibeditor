@@ -1630,4 +1630,21 @@ export const fr: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (cet appareil)',
   '{name} is back: {device} was writing in it': '{name} est de retour : {device} y écrivait',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Ouverture',
+  Pressing: 'Clic',
+  Typing: 'Saisie',
+  Closing: 'Fermeture',
+  Deleting: 'Suppression',
+  Searching: 'Recherche',
+  Running: 'Exécution',
+  'Stop agents': 'Arrêter les agents',
+  Agents: 'Agents',
+  'Always on this site': 'Toujours sur ce site',
+  'Give back': 'Rendre la main',
+  'Take over': 'Prendre la main',
+  'Agents stopped': 'Agents arrêtés',
+  'Agent tabs closed': 'Onglets des agents fermés',
+  'Nib is still running for your agents': 'Nib continue de tourner pour vos agents',
+  '{client} wants to connect': '{client} veut se connecter',
 }

@@ -1555,4 +1555,21 @@ export const vi: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} này',
   '{name} is back: {device} was writing in it': '{name} đã quay lại: {device} đang viết trong đó',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Mở',
+  Pressing: 'Nhấn',
+  Typing: 'Gõ',
+  Closing: 'Đóng',
+  Deleting: 'Xóa',
+  Searching: 'Tìm',
+  Running: 'Chạy',
+  'Stop agents': 'Dừng tác tử',
+  Agents: 'Tác tử',
+  'Always on this site': 'Luôn trên trang này',
+  'Give back': 'Trả lại',
+  'Take over': 'Tiếp quản',
+  'Agents stopped': 'Đã dừng tác tử',
+  'Agent tabs closed': 'Đã đóng các tab của tác tử',
+  'Nib is still running for your agents': 'Nib vẫn chạy cho các tác tử của bạn',
+  '{client} wants to connect': '{client} muốn kết nối',
 }

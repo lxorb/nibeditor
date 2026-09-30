@@ -1571,4 +1571,21 @@ export const bn: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'এই {device}',
   '{name} is back: {device} was writing in it': '{name} ফিরে এসেছে: {device} এতে লিখছিল',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'খোলা',
+  Pressing: 'চাপা',
+  Typing: 'টাইপ করা',
+  Closing: 'বন্ধ করা',
+  Deleting: 'মোছা',
+  Searching: 'খোঁজা',
+  Running: 'চালানো',
+  'Stop agents': 'এজেন্ট থামান',
+  Agents: 'এজেন্ট',
+  'Always on this site': 'এই সাইটে সবসময়',
+  'Give back': 'ফিরিয়ে দিন',
+  'Take over': 'নিয়ন্ত্রণ নিন',
+  'Agents stopped': 'এজেন্ট থামানো হয়েছে',
+  'Agent tabs closed': 'এজেন্টের ট্যাব বন্ধ হয়েছে',
+  'Nib is still running for your agents': 'আপনার এজেন্টদের জন্য Nib এখনও চলছে',
+  '{client} wants to connect': '{client} সংযোগ করতে চায়',
 }

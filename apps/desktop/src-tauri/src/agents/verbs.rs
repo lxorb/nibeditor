@@ -1288,6 +1288,12 @@ pub enum Event {
         /// Whether the tabs were closed too.
         closed: bool,
     },
+    /// Which agents are connected now: those that called in the last ten minutes and
+    /// did not say goodbye. Said whenever the list changes; see shell.rs.
+    Connected {
+        /// Their ids.
+        agents: Vec<String>,
+    },
 }
 
 // ---------------------------------------------------------------------------------------

@@ -13,8 +13,12 @@
 //!
 //! A call in flight is cancelled by the count it started under changing: every wait in
 //! a call asks `cancelled` between its steps, so a stop is felt within one step.
+//!
+//! **One agent** can be stopped too, from its row in the activity panel: its next call
+//! is refused as a stopped call is, and every other agent carries on. What it has in
+//! flight finishes, because the count above is everybody's.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, PoisonError};
 
@@ -31,6 +35,9 @@ static STOPPED: AtomicBool = AtomicBool::new(false);
 /// Pauses on single tabs: (agent, tab) and why.
 static PAUSED: Mutex<Option<HashMap<(String, String), PausedBy>>> = Mutex::new(None);
 
+/// The agents stopped one at a time.
+static HALTED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
+
 /// The stop a call starts under.
 pub fn generation() -> u64 {
     GENERATION.load(Ordering::SeqCst)
@@ -44,6 +51,45 @@ pub fn cancelled(since: u64) -> bool {
 /// Whether every agent is paused by the stop.
 pub fn stopped() -> bool {
     STOPPED.load(Ordering::SeqCst)
+}
+
+/// Whether an agent is stopped: by the stop for everyone, or on its own.
+pub fn stopped_for(agent: &str) -> bool {
+    stopped()
+        || HALTED
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+            .is_some_and(|all| all.contains(agent))
+}
+
+/// The agents stopped one at a time.
+pub fn halted() -> Vec<String> {
+    HALTED
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .as_ref()
+        .map(|all| all.iter().cloned().collect())
+        .unwrap_or_default()
+}
+
+/// Stops one agent, and says so: its next call is refused until it is given back.
+pub fn halt(app: &AppHandle, agent: &str) {
+    let fresh = HALTED
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .get_or_insert_with(HashSet::new)
+        .insert(agent.to_string());
+    if fresh {
+        let _ = app.emit(
+            EVENT,
+            Event::Paused {
+                agent: agent.to_string(),
+                tab: None,
+                by: PausedBy::Stop,
+            },
+        );
+    }
 }
 
 /// Why an agent is paused on a tab, if it is.
@@ -113,10 +159,21 @@ pub fn stop(app: &AppHandle) -> bool {
     again
 }
 
-/// Gives a pause back: the stop's, or one agent's on one tab, or all of one agent's.
+/// Gives a pause back: the stop's and everything under it, or one agent's on one tab,
+/// or all of one agent's, its own stop included.
 pub fn resume(app: &AppHandle, agent: Option<&str>, tab: Option<&str>) {
-    if agent.is_none() && tab.is_none() {
-        STOPPED.store(false, Ordering::SeqCst);
+    if tab.is_none() {
+        let mut halted = HALTED.lock().unwrap_or_else(PoisonError::into_inner);
+        match (agent, halted.as_mut()) {
+            (None, _) => {
+                STOPPED.store(false, Ordering::SeqCst);
+                *halted = None;
+            }
+            (Some(agent), Some(all)) => {
+                all.remove(agent);
+            }
+            (Some(_), None) => {}
+        }
     }
     let given: Vec<(String, String)> = {
         let mut held = PAUSED.lock().unwrap_or_else(PoisonError::into_inner);
@@ -138,28 +195,30 @@ pub fn resume(app: &AppHandle, agent: Option<&str>, tab: Option<&str>) {
     said_resumed(app, agent, tab, &given);
 }
 
+/// Says what was given back: each tab's pause, and the stop - everybody's, or one
+/// agent's - whenever no tab was named, so a window that only heard the stop hears it
+/// lifted.
 fn said_resumed(
     app: &AppHandle,
     agent: Option<&str>,
     tab: Option<&str>,
     given: &[(String, String)],
 ) {
-    if given.is_empty() {
-        let _ = app.emit(
-            EVENT,
-            Event::Resumed {
-                agent: agent.unwrap_or_default().to_string(),
-                tab: tab.map(str::to_string),
-            },
-        );
-        return;
-    }
     for (agent, tab) in given {
         let _ = app.emit(
             EVENT,
             Event::Resumed {
                 agent: agent.clone(),
                 tab: Some(tab.clone()),
+            },
+        );
+    }
+    if tab.is_none() || given.is_empty() {
+        let _ = app.emit(
+            EVENT,
+            Event::Resumed {
+                agent: agent.unwrap_or_default().to_string(),
+                tab: tab.map(str::to_string),
             },
         );
     }
@@ -186,6 +245,26 @@ mod tests {
         assert!(!cancelled(started));
         GENERATION.fetch_add(1, Ordering::SeqCst);
         assert!(cancelled(started));
+    }
+
+    #[test]
+    fn one_agent_stopped_is_that_agent_and_nobody_else() {
+        HALTED
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get_or_insert_with(HashSet::new)
+            .insert("halting".into());
+        assert!(stopped_for("halting"));
+        assert!(!stopped_for("someone-else"));
+        assert!(halted().contains(&"halting".to_string()));
+        if let Some(all) = HALTED
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_mut()
+        {
+            all.remove("halting");
+        }
+        assert!(!stopped_for("halting"));
     }
 
     #[test]

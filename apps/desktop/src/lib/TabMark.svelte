@@ -26,9 +26,10 @@
    *  strip of every kind at once reads as a strip rather than as a row of unrelated
    *  pictures. */
   import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs'
+  import { agentMarks } from './agent-marks.svelte'
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { GRAPH_MARK } from './panel-marks'
+  import { ASK_MARK, GRAPH_MARK } from './panel-marks'
   import { type Page, pages } from './web-tab/pages.svelte'
   import { iconOf } from './web-tab/shortcut'
   import type { Tab } from './workspace.svelte'
@@ -50,6 +51,10 @@
    *  the index, else whatever the file chose, else the globe. */
   const found = $derived(page ? (page.icon ?? iconOf(tab.path, tab.doc)) : null)
 
+  /** An agent acting here: its spark in its colour, turning, or still and muted while
+   *  paused (docs/agent-native.md 7.1). It outranks a page on its way. */
+  const worn = $derived(agentMarks.on[tab.id] ?? null)
+
   /** Whether the picture refused to arrive. A site whose mark has moved, or one the
    *  content policy will not fetch, leaves a broken picture where a mark should be,
    *  and the globe reads better than that. The bar over the page falls back the same
@@ -62,7 +67,17 @@
   })
 </script>
 
-{#if page?.loading}
+{#if worn}
+  <span
+    class="mark agent"
+    class:turning={!worn.paused}
+    class:resting={worn.paused}
+    style:--agent={worn.colour}
+    aria-hidden="true"
+  >
+    <svg viewBox="0 0 13 13"><path d={ASK_MARK} /></svg>
+  </span>
+{:else if page?.loading}
   <!-- A page on its way, said in the box the mark is in, which is where a browser
        says it. One turn a second - the speed the reload glyph over the page turns
        at, and slow enough to read as waiting rather than as an animation. -->
@@ -135,6 +150,21 @@
   .turning svg {
     stroke-width: 1.6;
     animation: turn 1s linear infinite;
+  }
+
+  /* Somebody else's mark, at full strength like a favicon. */
+  .agent svg {
+    fill: var(--agent);
+    stroke: var(--agent);
+    stroke-width: 0.6;
+    transition:
+      fill var(--dur-base) var(--ease-out),
+      stroke var(--dur-base) var(--ease-out);
+  }
+
+  .agent.resting svg {
+    fill: var(--muted);
+    stroke: var(--muted);
   }
 
   /* The same hairline on the panel's 13 unit grid rather than Lucide's 24: a stroke

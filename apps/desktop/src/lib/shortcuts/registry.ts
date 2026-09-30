@@ -787,6 +787,18 @@ const APP_ENTRIES: Shortcut[] = [
     key: null,
     run: () => revealPanel('properties'),
   },
+  {
+    // The stop for every agent (docs/agent-native.md 9.5), from any app while one is
+    // connected, so three modifiers nobody presses by accident; see lib/agents/ui.
+    id: 'agents.stop',
+    label: () => t('Stop agents'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-Shift-k',
+    mac: 'Mod-Ctrl-Alt-k',
+    run: () => void import('../agents/ui/index').then(({ stopAgents }) => stopAgents()),
+    desktop: true,
+  },
   // Round the regions of the window: the sidebar's header, its panel tabs, the
   // search pill, the list, the strip of notes, the note, the bar under it.
   //

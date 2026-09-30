@@ -1531,4 +1531,21 @@ export const zhHantHK: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '這部{device}',
   '{name} is back: {device} was writing in it': '{name} 已恢復：{device} 正在其中寫作',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: '開啟',
+  Pressing: '按下',
+  Typing: '輸入',
+  Closing: '關閉',
+  Deleting: '刪除',
+  Searching: '搜尋',
+  Running: '執行',
+  'Stop agents': '停止代理',
+  Agents: '代理',
+  'Always on this site': '在此網站一律',
+  'Give back': '交還',
+  'Take over': '接管',
+  'Agents stopped': '已停止代理',
+  'Agent tabs closed': '已關閉代理分頁',
+  'Nib is still running for your agents': 'Nib 仍在為你的代理運作',
+  '{client} wants to connect': '{client} 想連線',
 }

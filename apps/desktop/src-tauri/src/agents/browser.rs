@@ -222,7 +222,6 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, Webview)
 fn gate<'a>(
     app: &AppHandle,
     caller: &Caller,
-    tab: &str,
     verb: &str,
     view: &'a Webview,
     place: &Place,
@@ -234,14 +233,22 @@ fn gate<'a>(
                 Code::PausedByReader,
                 "the reader is using this tab: it is theirs until they give it back",
             ),
-            _ => Answer::error(
+            PausedBy::Takeover => Answer::error(
                 Code::PausedByReader,
                 "the reader is doing a step in this tab",
+            ),
+            PausedBy::Stop => Answer::error(
+                Code::Stopped,
+                "the reader stopped you in this tab: leave it until they give it back",
             ),
         });
     }
     let label = view.label().to_string();
     let own = matches!(place, Place::Own(_));
+    // The tab by the id the window knows it under: an agent's tab the reader was shown is
+    // the reader's tab now, whichever of its two ids the agent called it by (6.7), and it
+    // is that tab that wears the frame and hears the reader take it back.
+    let tab = place.id();
     if !own {
         super::reader::acting(app, caller.id(), tab, view);
     }
@@ -278,7 +285,7 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
         Ok(found) => found,
         Err(refused) => return refused,
     };
-    let page = match gate(app, caller, &tab, name, &view, &place, since) {
+    let page = match gate(app, caller, name, &view, &place, since) {
         Ok(page) => page,
         Err(refused) => return refused,
     };

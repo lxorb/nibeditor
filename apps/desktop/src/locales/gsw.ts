@@ -1581,4 +1581,21 @@ export const gsw: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (das Grät)',
   '{name} is back: {device} was writing in it': '{name} isch zrugg: {device} het drin gschribe',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Ufmache',
+  Pressing: 'Drücke',
+  Typing: 'Tippe',
+  Closing: 'Zuemache',
+  Deleting: 'Lösche',
+  Searching: 'Sueche',
+  Running: 'Uusfüere',
+  'Stop agents': 'Agänte aahalte',
+  Agents: 'Agänte',
+  'Always on this site': 'Immer uf dere Websiite',
+  'Give back': 'Zruggää',
+  'Take over': 'Übernää',
+  'Agents stopped': 'Agänte aaghalte',
+  'Agent tabs closed': 'Agänte-Tabs zuegmacht',
+  'Nib is still running for your agents': 'Nib lauft für dini Agänte wiiter',
+  '{client} wants to connect': '{client} wott sich verbinde',
 }

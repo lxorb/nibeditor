@@ -1573,4 +1573,21 @@ export const ps: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'دا {device}',
   '{name} is back: {device} was writing in it': '{name} بېرته راغی: {device} پکې لیکل',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'پرانيستل',
+  Pressing: 'کېکاږل',
+  Typing: 'ټایپ کول',
+  Closing: 'تړل',
+  Deleting: 'ړنګول',
+  Searching: 'لټون',
+  Running: 'چلول',
+  'Stop agents': 'اېجنټان درول',
+  Agents: 'اېجنټان',
+  'Always on this site': 'په دې سایټ تل',
+  'Give back': 'بېرته ورکول',
+  'Take over': 'کنټرول اخيستل',
+  'Agents stopped': 'اېجنټان ودرول شول',
+  'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
+  'Nib is still running for your agents': 'Nib لا هم ستاسو د اېجنټانو لپاره چلېږي',
+  '{client} wants to connect': '{client} غواړي وصل شي',
 }

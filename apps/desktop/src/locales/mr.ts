@@ -1571,4 +1571,21 @@ export const mr: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'हे {device}',
   '{name} is back: {device} was writing in it': '{name} परत आली: {device} त्यात लिहित होते',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'उघडणे',
+  Pressing: 'दाबणे',
+  Typing: 'टंकन',
+  Closing: 'बंद करणे',
+  Deleting: 'हटवणे',
+  Searching: 'शोध',
+  Running: 'चालवणे',
+  'Stop agents': 'एजंट थांबवा',
+  Agents: 'एजंट',
+  'Always on this site': 'या साइटवर नेहमी',
+  'Give back': 'परत द्या',
+  'Take over': 'नियंत्रण घ्या',
+  'Agents stopped': 'एजंट थांबवले',
+  'Agent tabs closed': 'एजंट टॅब बंद झाले',
+  'Nib is still running for your agents': 'तुमच्या एजंटसाठी Nib अजूनही चालू आहे',
+  '{client} wants to connect': '{client} जोडू इच्छितो',
 }

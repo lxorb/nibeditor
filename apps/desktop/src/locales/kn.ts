@@ -1587,4 +1587,21 @@ export const kn: Dictionary = {
   'This {device}': 'ಈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ಮರಳಿ ಬಂದಿದೆ: {device} ಅದರಲ್ಲಿ ಬರೆಯುತ್ತಿತ್ತು',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'ತೆರೆಯುವಿಕೆ',
+  Pressing: 'ಒತ್ತುವಿಕೆ',
+  Typing: 'ಟೈಪಿಂಗ್',
+  Closing: 'ಮುಚ್ಚುವಿಕೆ',
+  Deleting: 'ಅಳಿಸುವಿಕೆ',
+  Searching: 'ಹುಡುಕಾಟ',
+  Running: 'ಚಾಲನೆ',
+  'Stop agents': 'ಏಜೆಂಟ್‌ಗಳನ್ನು ನಿಲ್ಲಿಸಿ',
+  Agents: 'ಏಜೆಂಟ್‌ಗಳು',
+  'Always on this site': 'ಈ ಸೈಟ್‌ನಲ್ಲಿ ಯಾವಾಗಲೂ',
+  'Give back': 'ಹಿಂತಿರುಗಿಸಿ',
+  'Take over': 'ನಿಯಂತ್ರಣ ತೆಗೆದುಕೊಳ್ಳಿ',
+  'Agents stopped': 'ಏಜೆಂಟ್‌ಗಳನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ',
+  'Agent tabs closed': 'ಏಜೆಂಟ್ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
+  'Nib is still running for your agents': 'ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳಿಗಾಗಿ Nib ಇನ್ನೂ ಚಾಲನೆಯಲ್ಲಿದೆ',
+  '{client} wants to connect': '{client} ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತದೆ',
 }

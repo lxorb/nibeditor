@@ -1576,4 +1576,21 @@ export const te: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ఈ {device}',
   '{name} is back: {device} was writing in it': '{name} తిరిగి వచ్చింది: {device} దానిలో రాస్తోంది',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'తెరవడం',
+  Pressing: 'నొక్కడం',
+  Typing: 'టైప్ చేయడం',
+  Closing: 'మూసివేయడం',
+  Deleting: 'తొలగించడం',
+  Searching: 'వెతకడం',
+  Running: 'అమలు చేయడం',
+  'Stop agents': 'ఏజెంట్లను ఆపు',
+  Agents: 'ఏజెంట్లు',
+  'Always on this site': 'ఈ సైట్‌లో ఎల్లప్పుడూ',
+  'Give back': 'తిరిగి ఇవ్వు',
+  'Take over': 'నియంత్రణ తీసుకో',
+  'Agents stopped': 'ఏజెంట్లు ఆపబడ్డాయి',
+  'Agent tabs closed': 'ఏజెంట్ ట్యాబ్‌లు మూసివేయబడ్డాయి',
+  'Nib is still running for your agents': 'మీ ఏజెంట్ల కోసం Nib ఇంకా నడుస్తోంది',
+  '{client} wants to connect': '{client} కనెక్ట్ కావాలనుకుంటోంది',
 }

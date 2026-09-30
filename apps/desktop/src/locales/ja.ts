@@ -1562,4 +1562,21 @@ export const ja: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'この{device}',
   '{name} is back: {device} was writing in it': '{name} が戻りました: {device} で書き込み中でした',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: '開いています',
+  Pressing: '押しています',
+  Typing: '入力しています',
+  Closing: '閉じています',
+  Deleting: '削除しています',
+  Searching: '検索しています',
+  Running: '実行しています',
+  'Stop agents': 'エージェントを停止',
+  Agents: 'エージェント',
+  'Always on this site': 'このサイトでは常に',
+  'Give back': '返す',
+  'Take over': '引き継ぐ',
+  'Agents stopped': 'エージェントを停止しました',
+  'Agent tabs closed': 'エージェントのタブを閉じました',
+  'Nib is still running for your agents': 'Nib はエージェントのために動き続けています',
+  '{client} wants to connect': '{client} が接続しようとしています',
 }

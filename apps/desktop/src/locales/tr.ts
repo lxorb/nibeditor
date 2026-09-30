@@ -1576,4 +1576,21 @@ export const tr: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Bu {device}',
   '{name} is back: {device} was writing in it': '{name} geri geldi: {device} içine yazıyordu',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Açma',
+  Pressing: 'Tıklama',
+  Typing: 'Giriş',
+  Closing: 'Kapatma',
+  Deleting: 'Silme',
+  Searching: 'Arama',
+  Running: 'Çalıştırma',
+  'Stop agents': 'Ajanları durdur',
+  Agents: 'Ajanlar',
+  'Always on this site': 'Bu sitede her zaman',
+  'Give back': 'Geri ver',
+  'Take over': 'Kontrolü al',
+  'Agents stopped': 'Ajanlar durduruldu',
+  'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
+  'Nib is still running for your agents': 'Nib ajanlarınız için çalışmaya devam ediyor',
+  '{client} wants to connect': '{client} bağlanmak istiyor',
 }

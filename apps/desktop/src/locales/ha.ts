@@ -1597,4 +1597,21 @@ export const ha: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Wannan {device}',
   '{name} is back: {device} was writing in it': '{name} ya dawo: {device} yana rubutu a ciki',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Buɗewa',
+  Pressing: 'Dannawa',
+  Typing: 'Bugawa',
+  Closing: 'Rufewa',
+  Deleting: 'Gogewa',
+  Searching: 'Nema',
+  Running: 'Gudanarwa',
+  'Stop agents': 'Dakatar da wakilai',
+  Agents: 'Wakilai',
+  'Always on this site': 'Koyaushe a wannan shafin',
+  'Give back': 'Mayar',
+  'Take over': 'Karɓi iko',
+  'Agents stopped': 'An dakatar da wakilai',
+  'Agent tabs closed': 'An rufe shafukan wakilai',
+  'Nib is still running for your agents': 'Nib yana ci gaba da aiki don wakilanka',
+  '{client} wants to connect': '{client} yana son haɗawa',
 }

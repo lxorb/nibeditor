@@ -1551,4 +1551,21 @@ export const am: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ይህ {device}',
   '{name} is back: {device} was writing in it': '{name} ተመልሷል: {device} በውስጡ እየጻፈ ነበር',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'መክፈት',
+  Pressing: 'መጫን',
+  Typing: 'መተየብ',
+  Closing: 'መዝጋት',
+  Deleting: 'መሰረዝ',
+  Searching: 'መፈለግ',
+  Running: 'ማስኬድ',
+  'Stop agents': 'ወኪሎችን አቁም',
+  Agents: 'ወኪሎች',
+  'Always on this site': 'በዚህ ጣቢያ ሁልጊዜ',
+  'Give back': 'መልስ',
+  'Take over': 'ተረከብ',
+  'Agents stopped': 'ወኪሎች ቆመዋል',
+  'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
+  'Nib is still running for your agents': 'Nib ለወኪሎችዎ አሁንም እየሰራ ነው',
+  '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
 }

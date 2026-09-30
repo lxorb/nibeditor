@@ -1546,4 +1546,21 @@ export const ko: Dictionary = {
   'This {device}': '이 {device}',
   '{name} is back: {device} was writing in it':
     '{name}이(가) 돌아왔습니다: {device}에서 쓰고 있었습니다',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: '열기',
+  Pressing: '누르기',
+  Typing: '입력',
+  Closing: '닫기',
+  Deleting: '삭제',
+  Searching: '검색',
+  Running: '실행',
+  'Stop agents': '에이전트 중지',
+  Agents: '에이전트',
+  'Always on this site': '이 사이트에서 항상',
+  'Give back': '돌려주기',
+  'Take over': '직접 제어',
+  'Agents stopped': '에이전트가 중지됨',
+  'Agent tabs closed': '에이전트 탭이 닫힘',
+  'Nib is still running for your agents': '에이전트를 위해 Nib이 계속 실행 중입니다',
+  '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
 }

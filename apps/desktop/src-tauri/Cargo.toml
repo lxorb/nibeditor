@@ -134,6 +134,17 @@ tauri-plugin-process = "2"
 # how a link reaches an app that is already open.
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 tauri-plugin-updater = "2"
+# The stop for every agent from any app (docs/agent-native.md 9.5), held only while an
+# agent is connected and added to the app then rather than at launch. Tauri's own
+# plugin, because a key from any app is three different system calls on three desktops
+# - RegisterHotKey, Carbon's hot keys, an X grab - each wanting the event loop's thread,
+# which the plugin already knows how to reach. See src/agents/shell.rs.
+tauri-plugin-global-shortcut = "~2.3"
+# One notification per question an agent asks while nib is not in front, and one for
+# the stop: Tauri's own plugin, which is the platform's own notification on each
+# desktop and knows the installed app's identity on Windows. Added on the first agent
+# request, never at launch; see src/agents/shell.rs.
+tauri-plugin-notification = "~2.4"
 # An AI provider's key goes in the machine's own keychain and nowhere else: the
 # Credential Manager, the Keychain, the Secret Service. Named features rather than
 # the defaults, so only the three stores the three desktops have are compiled in -
@@ -187,6 +198,13 @@ tokio = { version = "1", default-features = false, features = ["time"] }
 # given back rather than left blank (lifecycle.rs). And the iPhone's own keychain for
 # an AI provider's key, which is the Mac's store under the same feature; Android keeps
 # them through the activity instead (secrets.rs).
+# The tray icon an agent's work keeps nib in when the window it lives in is closed, with
+# Open, the stop and Quit (docs/agent-native.md, open question 6). Not on Linux, where
+# the tray library is loaded from the system and is not on every desktop: there the
+# window closes the ordinary way. Already in the lock file, as what tauri builds with.
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+
 [target.'cfg(target_os = "ios")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }
 objc2 = "0.6"

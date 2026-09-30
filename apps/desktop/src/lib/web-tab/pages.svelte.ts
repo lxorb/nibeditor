@@ -424,6 +424,39 @@ class Pages {
     await this.build(tabId, page, pane, visible)
   }
 
+  /** An agent's page handed to a tab just made for it, without loading it again
+   *  (docs/agent-native.md 6.7). The page counts as on its way until `handing` answers,
+   *  so the pane's first look is kept rather than answered with a second page; one the
+   *  crate could not hand over (parked) is built the ordinary way. */
+  async adopt(tabId: string, handing: () => Promise<void>): Promise<void> {
+    const page = this.of(tabId)
+    if (!isDesktop) {
+      await handing()
+      return
+    }
+
+    page.opening = true
+    let handed = false
+    try {
+      await this.listen()
+      await handing()
+      handed = true
+      page.live = true
+      page.openable = true
+      this.bound(tabId)
+    } catch {
+      // Nothing to hand over: built below like any other.
+    } finally {
+      page.opening = false
+    }
+
+    const wanted = page.wanted
+    page.wanted = null
+    if (!wanted) return
+    if (handed) await this.place(tabId, wanted.pane, wanted.visible, wanted.covering)
+    else await this.build(tabId, page, wanted.pane, wanted.visible)
+  }
+
   /** The webview for a tab, and then whatever happened while it was being built.
    *
    *  The crate builds a page on the window's own thread and answers when the platform

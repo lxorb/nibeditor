@@ -1556,4 +1556,21 @@ export const my: Dictionary = {
   'This {device}': 'ဤ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ပြန်ရောက်လာပါပြီ: {device} က ၎င်းထဲတွင် ရေးနေခဲ့သည်',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'ဖွင့်နေသည်',
+  Pressing: 'နှိပ်နေသည်',
+  Typing: 'ရိုက်နေသည်',
+  Closing: 'ပိတ်နေသည်',
+  Deleting: 'ဖျက်နေသည်',
+  Searching: 'ရှာနေသည်',
+  Running: 'လုပ်ဆောင်နေသည်',
+  'Stop agents': 'အေးဂျင့်များကို ရပ်ရန်',
+  Agents: 'အေးဂျင့်များ',
+  'Always on this site': 'ဤဆိုက်တွင် အမြဲ',
+  'Give back': 'ပြန်ပေးရန်',
+  'Take over': 'ထိန်းချုပ်မှု ယူရန်',
+  'Agents stopped': 'အေးဂျင့်များ ရပ်လိုက်ပြီ',
+  'Agent tabs closed': 'အေးဂျင့် တက်ဘ်များ ပိတ်လိုက်ပြီ',
+  'Nib is still running for your agents': 'သင့်အေးဂျင့်များအတွက် Nib ဆက်လည်ပတ်နေသည်',
+  '{client} wants to connect': '{client} ချိတ်ဆက်လိုသည်',
 }

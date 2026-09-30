@@ -8,6 +8,9 @@
 /** The event the crate's news arrives on. */
 export const AGENT_EVENT = 'nib://agent'
 
+/** The event an agent tab's pictures arrive on, while the activity panel watches. */
+export const AGENT_FRAME_EVENT = 'nib://agent-frame'
+
 /** Every verb the crate answers, in the crate's order. */
 export const BROWSER_VERBS = [
   'browser_tabs',
@@ -272,6 +275,10 @@ export const AGENT_COMMANDS = [
   'agents_log',
   'agents_adopt',
   'agents_test_reader_focus',
+  'agents_pause',
+  'agents_watch',
+  'agents_shell',
+  'agents_hold',
 ] as const
 
 /** `agents_state`: everything the activity panel draws from at once; the events keep it
@@ -282,6 +289,29 @@ export interface Overview {
   approvals: Approval[]
   stopped: boolean
   paused: [string, string][]
+  /** The agents stopped one at a time, beside the stop for all of them. */
+  halted: string[]
+  /** The agents that called in the last ten minutes and did not say goodbye. */
+  connected: string[]
+}
+
+/** One picture of an agent tab, from the engine's screencast: a JPEG, base64. */
+export interface Frame {
+  tab: string
+  jpeg: string
+}
+
+/** The words the crate says in the reader's language: the tray's rows and the
+ *  notifications it raises. The window hands them over, since only it has the
+ *  catalogues. */
+export interface ShellWords {
+  show: string
+  stop: string
+  quit: string
+  stopped: string
+  closed: string
+  hidden: string
+  pairing: string
 }
 
 // ---- events ---------------------------------------------------------------------------
@@ -296,3 +326,4 @@ export type AgentEvent =
   | { kind: 'tab'; agent: string; id: string; url: string; title: string }
   | { kind: 'closed'; agent: string; id: string }
   | { kind: 'stopped'; closed: boolean }
+  | { kind: 'connected'; agents: string[] }

@@ -1620,4 +1620,21 @@ export const es: Dictionary = {
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it':
     '{name} ha vuelto: {device} estaba escribiendo en ella',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Apertura',
+  Pressing: 'Pulsación',
+  Typing: 'Tecleo',
+  Closing: 'Cierre',
+  Deleting: 'Eliminación',
+  Searching: 'Búsqueda',
+  Running: 'Ejecución',
+  'Stop agents': 'Detener agentes',
+  Agents: 'Agentes',
+  'Always on this site': 'Siempre en este sitio',
+  'Give back': 'Devolver',
+  'Take over': 'Tomar el control',
+  'Agents stopped': 'Agentes detenidos',
+  'Agent tabs closed': 'Pestañas de agentes cerradas',
+  'Nib is still running for your agents': 'Nib sigue en marcha para tus agentes',
+  '{client} wants to connect': '{client} quiere conectarse',
 }

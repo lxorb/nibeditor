@@ -17,6 +17,7 @@
  *  it is there and there is nothing to do yet, the way Chrome greys "Close tabs to
  *  the right" on the last tab. Each command that has a key says it; see the registry. */
 
+import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
@@ -28,6 +29,24 @@ import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
+
+/** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
+ *  pauses it there, as a press in the page would; Stop ends its work in the tab and
+ *  tells it so; Give back is the tab handed back after either. First, because while an
+ *  agent is in a tab it is the thing about the tab most worth reaching. */
+function agentEntries(tab: Tab): MenuEntry[] {
+  const worn = agentMarks.on[tab.id]
+  const act = agentMarks.act
+  if (!worn || !act) return []
+
+  return [
+    ...(worn.paused
+      ? [{ label: t('Give back'), run: () => act(tab.id, 'give-back') }]
+      : [{ label: t('Take over'), run: () => act(tab.id, 'take-over') }]),
+    { label: t('Stop'), run: () => act(tab.id, 'stop') },
+    DIVIDER,
+  ]
+}
 
 /** What a double click on the tab does, for a finger that cannot double click.
  *  Only offered while the tab is still a preview: once kept, there is nothing left
@@ -242,6 +261,7 @@ function keepWebEntry(tab: Tab): MenuEntry[] {
 
 export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
   return [
+    ...agentEntries(tab),
     ...keepWebEntry(tab),
     ...readingEntry(tab),
     ...pageEntries(tab),

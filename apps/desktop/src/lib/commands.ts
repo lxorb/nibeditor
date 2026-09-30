@@ -82,6 +82,7 @@ import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
+import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { closeWindow, invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
@@ -369,6 +370,24 @@ function agentUndoRows(): Command[] {
     label: t('Undo edits by {name}', { name: agent.name }),
     run: () => void import('./agents/docs').then((docs) => docs.undoAgentIn(agent, path)),
   }))
+}
+
+/** The agents' panel and the stop, from the first agent heard in this run: before
+ *  that there is nothing to show and nobody to stop. The stop is the window's own - a
+ *  link or another program is not the reader pressing it. See lib/agents/ui. */
+function agentRows(): Command[] {
+  if (!agentMarks.heard) return []
+
+  return [
+    { id: 'agents-panel', label: t('Agents'), run: () => revealPanel('agents') },
+    {
+      id: 'agents-stop',
+      label: t('Stop agents'),
+      hint: shortcuts.hint('agents.stop'),
+      ownWindow: true,
+      run: () => void import('./agents/ui/index').then((ui) => ui.stopAgents()),
+    },
+  ]
 }
 
 /** Putting away what is open, or taking it back: one row saying which, the words
@@ -1134,6 +1153,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => (settings.historyOpen = true),
     },
     ...agentUndoRows(),
+    ...agentRows(),
     // A `nib://` link to what is open, for a task manager, a shortcut or another
     // note somewhere else. Also the whole of how anybody finds out the scheme
     // exists. Not in the plugin, which cannot be reached by a link and whose

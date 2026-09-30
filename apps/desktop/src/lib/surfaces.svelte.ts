@@ -113,6 +113,9 @@ export const findBar = held(() => import('./FindBar.svelte'))
  *  carries a ranking engine. */
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
+/** The activity panel, whose tab is there only once an agent has spoken. */
+export const agentsPanel = held(() => import('./agents/ui/ActivityPanel.svelte'))
+
 /** The settings sheet: every pane it has, the theme store, the sync pane, the AI pane,
  *  the security pane. The app's largest single panel, and not on screen when the window
  *  opens. Mounted for good once it arrives rather than with the sheet, so that opening

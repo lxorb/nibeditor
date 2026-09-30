@@ -2,6 +2,7 @@
   import { onDestroy, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
+  import { agentMarks } from './agent-marks.svelte'
   import { dragged, isTreeDrag, mayCarryAddress } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
@@ -81,6 +82,15 @@
     void import('./tab-strip/menu').then(({ tabMenu }) =>
       menu.show(event, tabMenu(tab, paneId), { title: tab.shown }),
     )
+  }
+
+  /** A press on a paused agent's mark gives the tab back to it, and nothing else
+   *  does (docs/agent-native.md 7.3). Read on the press, which is where the pointer
+   *  was: the tab captures it, so the click lands on the tab as a whole. */
+  let onMark = false
+  function givesBack(id: string) {
+    if (onMark && agentMarks.on[id]?.paused) agentMarks.act?.(id, 'give-back')
+    onMark = false
   }
 
   /** The empty stretch's own menu, by the point: a held finger's has no target. */
@@ -817,13 +827,19 @@
           data-tab={tab.id}
           title={tab.shown}
           aria-label={tab.shown}
-          onclick={() => workspace.activate(tab.id)}
+          onclick={() => {
+            givesBack(tab.id)
+            workspace.activate(tab.id)
+          }}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
           onauxclick={(event) => {
             if (event.button === 1) closeTab(tab, 'mouse')
           }}
-          onpointerdown={(event) => pressed(event, tab, at)}
+          onpointerdown={(event) => {
+            onMark = event.target instanceof Element && !!event.target.closest('.face')
+            pressed(event, tab, at)
+          }}
           onpointermove={movedTo}
           onpointerup={released}
           onpointercancel={giveUp}

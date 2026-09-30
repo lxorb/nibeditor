@@ -2,13 +2,15 @@
   import { carried, carrySection, draggedSection, isSectionDrag, landing } from './drag-paths'
   import { dropOnList } from './list-landing.svelte'
   import { movesSection } from './sections'
-  import { fly, slide } from 'svelte/transition'
+  import { fade, fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
+  import { agentMarks } from './agent-marks.svelte'
   import {
+    AGENTS_MARK,
     ASK_MARK,
     FILES_MARK,
     FOLD_MARK,
@@ -27,6 +29,7 @@
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
   import {
+    agentsPanel,
     archiveSection,
     askPanel,
     linksPanel,
@@ -127,6 +130,7 @@
     { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
     { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
     { id: 'ask', label: t('Ask'), path: ASK_MARK },
+    { id: 'agents', label: t('Agents'), path: AGENTS_MARK },
   ]
 
   /** The tabs this side holds, in the order it shows them; see
@@ -137,7 +141,10 @@
       PANELS.map((one) => one.id),
     )
 
-    return held.flatMap((id) => PANELS.filter((one) => one.id === id))
+    // The agents' tab only once one has spoken; see agent-marks.svelte.ts.
+    return held.flatMap((id) =>
+      PANELS.filter((one) => one.id === id && (id !== 'agents' || agentMarks.heard)),
+    )
   })
 
   /** Whether the Links panel is showing the picture. Held here because the switch
@@ -586,6 +593,12 @@
           use:longPress={(event) => showTabMenu(event, item.id, item.label)}
         >
           <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
+          <!-- The questions agents are waiting on. -->
+          {#if item.id === 'agents' && agentMarks.waiting}
+            <span class="waiting" transition:fade={{ duration: dur(140) }}>
+              {agentMarks.waiting}
+            </span>
+          {/if}
         </button>
       {/each}
     </div>
@@ -640,6 +653,20 @@
           onclick={showOrder}
         >
           <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
+        </button>
+      </div>
+    {/if}
+    {#if showing === 'agents'}
+      <div class="tools">
+        <button
+          class="nib-glyph tool"
+          title={t('Stop agents')}
+          aria-label={t('Stop agents')}
+          onclick={() => void import('./agents/ui/index').then((one) => one.stopAgents())}
+        >
+          <svg viewBox="0 0 13 13"
+            ><rect class="solid" x="3.2" y="3.2" width="6.6" height="6.6" rx="1.2" /></svg
+          >
         </button>
       </div>
     {/if}
@@ -905,6 +932,10 @@
             {#await propertiesPanel() then PropertiesPanel}
               <PropertiesPanel onsearch={runBookmarked} />
             {/await}
+          {:else if showing === 'agents'}
+            {#await agentsPanel() then AgentsPanel}
+              <AgentsPanel />
+            {/await}
           {:else if showing === 'ask'}
             {#await askPanel() then AskPanel}
               <AskPanel {ongoto} />
@@ -1093,6 +1124,32 @@
      row is one with narrower tabs in it, not one with smaller icons. */
   .switch .nib-segmented button svg {
     flex: none;
+  }
+
+  /* A browser's badge on an extension's icon, over the tab's corner: the tab is
+     already the box it is placed against (base.css). */
+  .waiting {
+    position: absolute;
+    top: 1px;
+    inset-inline-end: 1px;
+    min-width: 13px;
+    height: 13px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 9px;
+    font-weight: var(--weight-strong);
+    line-height: 13px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .tool .solid {
+    fill: currentColor;
+    stroke: none;
   }
 
   /* The tools keep their size: they are square glyph buttons, and a row that has

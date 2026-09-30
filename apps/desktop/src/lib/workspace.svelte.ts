@@ -132,7 +132,8 @@ export interface Space {
  *  the workspace for a tab. */
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
-export type Panel = 'tree' | 'outline' | 'search' | 'links' | 'footnotes' | 'properties' | 'ask'
+export type Panel =
+  'tree' | 'outline' | 'search' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see

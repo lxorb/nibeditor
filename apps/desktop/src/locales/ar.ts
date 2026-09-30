@@ -1666,4 +1666,21 @@ export const ar: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'هذا {device}',
   '{name} is back: {device} was writing in it': 'عادت {name}: كان {device} يكتب فيها',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'الفتح',
+  Pressing: 'النقر',
+  Typing: 'الإدخال',
+  Closing: 'الإغلاق',
+  Deleting: 'الحذف',
+  Searching: 'البحث',
+  Running: 'التشغيل',
+  'Stop agents': 'إيقاف الوكلاء',
+  Agents: 'الوكلاء',
+  'Always on this site': 'دائمًا على هذا الموقع',
+  'Give back': 'إعادة التحكم',
+  'Take over': 'تولي التحكم',
+  'Agents stopped': 'تم إيقاف الوكلاء',
+  'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
+  'Nib is still running for your agents': 'لا يزال Nib يعمل لوكلائك',
+  '{client} wants to connect': '{client} يريد الاتصال',
 }

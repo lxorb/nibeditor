@@ -1532,4 +1532,21 @@ export const yue: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '呢部{device}',
   '{name} is back: {device} was writing in it': '{name} 返嚟咗：{device} 啱啱喺入面寫緊嘢',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: '開緊',
+  Pressing: '撳緊',
+  Typing: '打緊字',
+  Closing: '閂緊',
+  Deleting: '刪緊',
+  Searching: '搵緊',
+  Running: '行緊',
+  'Stop agents': '停晒啲代理',
+  Agents: '代理',
+  'Always on this site': '喺呢個網站一直咁做',
+  'Give back': '交返畀佢',
+  'Take over': '由我嚟控制',
+  'Agents stopped': '啲代理停咗',
+  'Agent tabs closed': '代理嘅分頁閂咗',
+  'Nib is still running for your agents': 'Nib 仲喺度幫你啲代理做嘢',
+  '{client} wants to connect': '{client} 想連接',
 }

@@ -68,6 +68,9 @@ export function showAgent(note: NoteDoc, agent: Agent, at: number, scheme: 'dark
   })
 
   announce(note, here)
+  // And every tab showing the note wears the agent's mark while it writes, which is
+  // how a note the reader is not looking at says so (8.4); see lib/agents/ui.
+  void import('../ui/index').then(({ wrote }) => wrote(note, agent.id))
 }
 
 /** Starts carrying a note's carets through its changes. */

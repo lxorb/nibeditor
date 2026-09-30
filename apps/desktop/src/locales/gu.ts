@@ -1562,4 +1562,21 @@ export const gu: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'આ {device}',
   '{name} is back: {device} was writing in it': '{name} પાછી આવી: {device} તેમાં લખી રહ્યું હતું',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'ખોલવું',
+  Pressing: 'દબાવવું',
+  Typing: 'ટાઇપ કરવું',
+  Closing: 'બંધ કરવું',
+  Deleting: 'કાઢી નાખવું',
+  Searching: 'શોધ',
+  Running: 'ચલાવવું',
+  'Stop agents': 'એજન્ટ રોકો',
+  Agents: 'એજન્ટ',
+  'Always on this site': 'આ સાઇટ પર હંમેશાં',
+  'Give back': 'પાછું આપો',
+  'Take over': 'નિયંત્રણ લો',
+  'Agents stopped': 'એજન્ટ રોકાયા',
+  'Agent tabs closed': 'એજન્ટની ટૅબ બંધ થઈ',
+  'Nib is still running for your agents': 'તમારા એજન્ટ માટે Nib હજી ચાલે છે',
+  '{client} wants to connect': '{client} જોડાવા માંગે છે',
 }

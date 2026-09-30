@@ -1607,4 +1607,21 @@ export const fil: Dictionary = {
   'This {device}': 'Itong {device}',
   '{name} is back: {device} was writing in it':
     'Bumalik ang {name}: may isinusulat dito ang {device}',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Pagbubukas',
+  Pressing: 'Pagpindot',
+  Typing: 'Pagta-type',
+  Closing: 'Pagsasara',
+  Deleting: 'Pagbubura',
+  Searching: 'Paghahanap',
+  Running: 'Pagpapatakbo',
+  'Stop agents': 'Itigil ang mga agent',
+  Agents: 'Mga agent',
+  'Always on this site': 'Palagi sa site na ito',
+  'Give back': 'Ibalik',
+  'Take over': 'Kunin ang kontrol',
+  'Agents stopped': 'Itinigil ang mga agent',
+  'Agent tabs closed': 'Isinara ang mga tab ng agent',
+  'Nib is still running for your agents': 'Tumatakbo pa rin ang Nib para sa iyong mga agent',
+  '{client} wants to connect': 'Gustong kumonekta ng {client}',
 }

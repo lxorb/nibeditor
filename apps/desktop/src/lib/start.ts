@@ -5,6 +5,7 @@
  *  because a launch that has to be read in order should be readable in one
  *  place. */
 
+import { agentMarks, listenForAgents } from './agent-marks.svelte'
 import { account } from './account.svelte'
 import { installAiRunner } from './ai/ask'
 import { i18n } from './i18n.svelte'
@@ -85,6 +86,9 @@ export function start(): () => void {
    *  settings tile, a widget row. See mobile/handed.ts. */
   let stopHanded: (() => void) | null = null
 
+  /** And the agents' news; see agent-marks.svelte.ts. */
+  let stopAgents: (() => void) | null = null
+
   void workspace
     .restore()
     .then(async () => {
@@ -96,6 +100,8 @@ export function start(): () => void {
       if (!__EVEN_PLUGIN__) {
         const { startAutomation } = await import('./automation/start')
         stopAutomation = await startAutomation()
+        // The agents' news, which fetches their interface; see agent-marks.svelte.ts.
+        stopAgents = await listenForAgents()
       }
       // After the space is open, because a share becomes a note in it, a widget
       // row names one, and the widget's own rows are read out of its file list.
@@ -161,6 +167,7 @@ export function start(): () => void {
     stopListening?.()
     stopAutomation?.()
     stopHanded?.()
+    stopAgents?.()
   }
 }
 
@@ -240,6 +247,17 @@ let going = false
 
 async function onClose(event: Closing, window: Closable) {
   settle()
+
+  // An agent's pages live in this window: it hides instead, and the tray has Quit
+  // (docs/agent-native.md, open question 6).
+  if (agentMarks.holding && agentMarks.hide) {
+    event.preventDefault()
+    if ((await agentMarks.hide()) || going) return
+    // Not kept after all: the last agent went a moment ago.
+    await go()
+    await window.destroy()
+    return
+  }
 
   // A browser tab cannot wait for anything - `beforeunload` runs to completion
   // before a write could come back - and it asks nothing either: the session holds

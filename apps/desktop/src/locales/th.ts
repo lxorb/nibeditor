@@ -1537,4 +1537,21 @@ export const th: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} เครื่องนี้',
   '{name} is back: {device} was writing in it': '{name} กลับมาแล้ว: {device} กำลังเขียนอยู่ในนั้น',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'เปิด',
+  Pressing: 'กด',
+  Typing: 'พิมพ์',
+  Closing: 'ปิด',
+  Deleting: 'ลบ',
+  Searching: 'ค้นหา',
+  Running: 'เรียกใช้',
+  'Stop agents': 'หยุดเอเจนต์',
+  Agents: 'เอเจนต์',
+  'Always on this site': 'เสมอในเว็บไซต์นี้',
+  'Give back': 'คืนการควบคุม',
+  'Take over': 'รับช่วงควบคุม',
+  'Agents stopped': 'หยุดเอเจนต์แล้ว',
+  'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
+  'Nib is still running for your agents': 'Nib ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
+  '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
 }

@@ -329,6 +329,7 @@ fn let_go(app: &AppHandle, label: &str) {
     }
     cdp::forget(label);
     quiet::forget(app, label);
+    super::watch::forget(label);
 }
 
 /// An agent said goodbye: its tabs go in ten minutes, unless it comes back.
@@ -358,16 +359,11 @@ pub fn said(app: &AppHandle, tab: &Tab) {
     );
 }
 
-/// The window agent tabs live in: the reader's first window.
-fn host(app: &AppHandle) -> Option<tauri::Window> {
-    app.get_window("main")
-        .or_else(|| crate::launch::document_windows(app).into_iter().next())
-}
-
 /// Builds a tab's page, out of sight and quiet, and sends it to `address` - or leaves it
 /// on nothing for a window the engine hands over. Waits for the build.
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    let window = host(app).ok_or("nib has no window for an agent's tab to live in")?;
+    let window =
+        super::shell::host(app).ok_or("nib has no window for an agent's tab to live in")?;
     let label = tab.label();
     let blank: Url = "about:blank"
         .parse()

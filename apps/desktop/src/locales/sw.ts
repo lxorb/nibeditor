@@ -1597,4 +1597,21 @@ export const sw: Dictionary = {
   'This {device}': '{device} hiki',
   '{name} is back: {device} was writing in it':
     '{name} imerudi: {device} ilikuwa ikiandika ndani yake',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Kufungua',
+  Pressing: 'Kubonyeza',
+  Typing: 'Kuchapa',
+  Closing: 'Kufunga',
+  Deleting: 'Kufuta',
+  Searching: 'Kutafuta',
+  Running: 'Kuendesha',
+  'Stop agents': 'Simamisha mawakala',
+  Agents: 'Mawakala',
+  'Always on this site': 'Daima kwenye tovuti hii',
+  'Give back': 'Rudisha',
+  'Take over': 'Chukua udhibiti',
+  'Agents stopped': 'Mawakala wamesimamishwa',
+  'Agent tabs closed': 'Vichupo vya mawakala vimefungwa',
+  'Nib is still running for your agents': 'Nib bado inaendelea kwa ajili ya mawakala wako',
+  '{client} wants to connect': '{client} anataka kuunganishwa',
 }

@@ -1576,4 +1576,21 @@ export const pa: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ਇਹ {device}',
   '{name} is back: {device} was writing in it': '{name} ਵਾਪਸ ਆ ਗਿਆ: {device} ਇਸ ਵਿੱਚ ਲਿਖ ਰਿਹਾ ਸੀ',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'ਖੋਲ੍ਹਣਾ',
+  Pressing: 'ਦਬਾਉਣਾ',
+  Typing: 'ਟਾਈਪ ਕਰਨਾ',
+  Closing: 'ਬੰਦ ਕਰਨਾ',
+  Deleting: 'ਮਿਟਾਉਣਾ',
+  Searching: 'ਖੋਜ',
+  Running: 'ਚਲਾਉਣਾ',
+  'Stop agents': 'ਏਜੰਟ ਰੋਕੋ',
+  Agents: 'ਏਜੰਟ',
+  'Always on this site': 'ਇਸ ਸਾਈਟ ’ਤੇ ਹਮੇਸ਼ਾ',
+  'Give back': 'ਵਾਪਸ ਦਿਓ',
+  'Take over': 'ਕੰਟਰੋਲ ਲਓ',
+  'Agents stopped': 'ਏਜੰਟ ਰੋਕੇ ਗਏ',
+  'Agent tabs closed': 'ਏਜੰਟ ਟੈਬ ਬੰਦ ਹੋਏ',
+  'Nib is still running for your agents': 'ਤੁਹਾਡੇ ਏਜੰਟਾਂ ਲਈ Nib ਹਾਲੇ ਵੀ ਚੱਲ ਰਿਹਾ ਹੈ',
+  '{client} wants to connect': '{client} ਜੁੜਨਾ ਚਾਹੁੰਦਾ ਹੈ',
 }

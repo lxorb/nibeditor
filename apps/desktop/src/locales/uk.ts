@@ -1639,4 +1639,21 @@ export const uk: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (цей пристрій)',
   '{name} is back: {device} was writing in it': '{name} повернулася: у ній писав {device}',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Відкриття',
+  Pressing: 'Натискання',
+  Typing: 'Введення',
+  Closing: 'Закриття',
+  Deleting: 'Видалення',
+  Searching: 'Пошук',
+  Running: 'Виконання',
+  'Stop agents': 'Зупинити агентів',
+  Agents: 'Агенти',
+  'Always on this site': 'Завжди на цьому сайті',
+  'Give back': 'Повернути',
+  'Take over': 'Перебрати керування',
+  'Agents stopped': 'Агентів зупинено',
+  'Agent tabs closed': 'Вкладки агентів закрито',
+  'Nib is still running for your agents': 'Nib і далі працює для ваших агентів',
+  '{client} wants to connect': '{client} хоче під’єднатися',
 }

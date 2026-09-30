@@ -70,7 +70,9 @@ describe('the durations JavaScript hands out', () => {
     const missing = sources
       .filter(
         (one) =>
-          /duration:\s*(dur\(|LAYER\.)/.test(one.text) && !/from '\.\.?\/*motion'/.test(one.text),
+          // Wherever the file is: a component two folders down imports `../../motion`.
+          /duration:\s*(dur\(|LAYER\.)/.test(one.text) &&
+          !/from '(?:\.\.?\/)+motion'/.test(one.text),
       )
       .map((one) => one.name)
 

@@ -71,7 +71,7 @@ describe('the mirror of the crate agent verbs', () => {
       fileURLToPath(new URL('../../../src-tauri/src/lib.rs', import.meta.url)),
       'utf8',
     )
-    const named = [...registered.matchAll(/agents::(?:grants::)?(agents_[a-z_]+),/g)].map(
+    const named = [...registered.matchAll(/agents::(?:[a-z]+::)?(agents_[a-z_]+),/g)].map(
       (one) => one[1],
     )
     expect(named).toEqual([...AGENT_COMMANDS])
@@ -163,12 +163,15 @@ describe('the mirror of the crate agent verbs', () => {
       approvals: [approval],
       stopped: false,
       paused: [['claude-code', opened.tab]],
+      halted: [],
+      connected: ['claude-code'],
     }
     expect(overview.tabs[0]?.[1].id).toBe('a1')
     const events: AgentEvent[] = [
       { kind: 'asked', approval },
       { kind: 'paused', agent: 'claude-code', by },
       { kind: 'tab', agent: 'claude-code', id: own.id, url: own.url, title: reader.title },
+      { kind: 'connected', agents: ['claude-code'] },
     ]
 
     expect(BROWSER_VERBS).toContain(verb)
@@ -176,7 +179,7 @@ describe('the mirror of the crate agent verbs', () => {
       'error',
       'deny',
       'https://shop.example/',
-      3,
+      4,
     ])
   })
 })

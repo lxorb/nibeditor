@@ -1572,4 +1572,21 @@ export const fa: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'این {device}',
   '{name} is back: {device} was writing in it': '{name} برگشت: {device} در آن می‌نوشت',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'گشودن',
+  Pressing: 'فشردن',
+  Typing: 'تایپ کردن',
+  Closing: 'بستن',
+  Deleting: 'حذف کردن',
+  Searching: 'جستجو',
+  Running: 'اجرا',
+  'Stop agents': 'ایستاندن عامل‌ها',
+  Agents: 'عامل‌ها',
+  'Always on this site': 'همیشه در این سایت',
+  'Give back': 'بازگرداندن',
+  'Take over': 'در دست گرفتن',
+  'Agents stopped': 'عامل‌ها ایستانده شدند',
+  'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
+  'Nib is still running for your agents': 'Nib هنوز برای عامل‌های شما کار می‌کند',
+  '{client} wants to connect': '{client} می‌خواهد وصل شود',
 }

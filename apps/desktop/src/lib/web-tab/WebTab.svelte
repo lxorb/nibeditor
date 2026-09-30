@@ -17,6 +17,7 @@
    *  page the page is hidden - otherwise a menu would come up behind it. */
 
   import { onMount, untrack } from 'svelte'
+  import { agentMarks } from '../agent-marks.svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
@@ -82,6 +83,16 @@
    *  and a card with nothing in that box reads better than a card with that. */
   let marked = $state(true)
 
+  /** An agent acting in this tab, or paused in it: the frame round the page and the
+   *  mark on the tab (docs/agent-native.md 7.1). Written by lib/agents/ui, which is never
+   *  in the first paint; see agent-marks.svelte.ts. */
+  const worn = $derived(agentMarks.on[tab.id] ?? null)
+
+  /** How wide the frame round a page an agent acts in is. The page is placed that much
+   *  inside the hole and the pane draws the frame in what is left, because nothing of
+   *  the app's can be drawn over a page. */
+  const FRAME = 2
+
   /** Where the hole is, as the window measures it. Null before it is on the page. */
   function rect(): Rect | null {
     // A page holding the whole screen is placed over all of it; see filling.svelte.ts.
@@ -90,7 +101,13 @@
     const box = hole?.getBoundingClientRect()
     if (!box || box.width < 1 || box.height < 1) return null
 
-    return { x: box.x, y: box.y, width: box.width, height: box.height }
+    const inset = worn ? FRAME : 0
+    return {
+      x: box.x + inset,
+      y: box.y + inset,
+      width: box.width - inset * 2,
+      height: box.height - inset * 2,
+    }
   }
 
   /** Whether the page has to be out of sight, because something of the app's is over
@@ -318,6 +335,9 @@
     }
   })
 
+  // An agent began acting here or let go: the page moves in by the frame or back out.
+  $effect(() => follow(worn !== null))
+
   // A drag over the panes began or ended. Neither is a press this pane hears - the
   // tab lifts ten pixels after its own press, whenever the hand gets there - nor
   // anything on the overlay stack, so the page is told here; see `covered`.
@@ -410,6 +430,9 @@
 
   /** The site this tab is on, which is what a permission and the popover are about. */
   const site = $derived(siteOf(page.url))
+
+  /** An agent's request for the reader to do one step in this tab; see TakeoverBar. */
+  const takeover = $derived(agentMarks.takeovers[tab.id] ?? null)
 
   /** The question this pane has to put on screen, if any: the first request from this
    *  tab nobody has answered. One at a time, the way a browser asks. */
@@ -570,6 +593,15 @@
     {/if}
   </div>
 
+  <!-- An agent asked the reader to do one step here: its line and Done, under the bar
+       like the find bar, so the page stays in sight to do the step in. Fetched with the
+       first one; see lib/agents/ui. -->
+  {#if takeover}
+    {#await import('../agents/ui/TakeoverBar.svelte') then bar}
+      <bar.default id={takeover.id} reason={takeover.reason} />
+    {/await}
+  {/if}
+
   <!-- Under the bar and above the page, where every surface puts its find bar: a bar
        over the page would be drawn under it, since the page is a webview of its own. -->
   {#if page.find.open}
@@ -594,6 +626,9 @@
          first page in a tab, which nothing has photographed yet. -->
     <div
       class="hole"
+      class:acted={worn !== null}
+      class:resting={worn?.paused}
+      style:--agent={worn?.colour}
       class:still={page.shot !== null}
       style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
       bind:this={hole}
@@ -601,6 +636,9 @@
   {:else if page.framing === 'frame' && address}
     <iframe
       class="framed"
+      class:acted={worn !== null}
+      class:resting={worn?.paused}
+      style:--agent={worn?.colour}
       title={page.title || plainOrigin(address)}
       src={address}
       sandbox={SANDBOX}
@@ -616,7 +654,12 @@
          A desktop that could not make its webview lands here too, rather than on an
          empty hole: the card is the one surface that always has somewhere to send
          the reader. -->
-    <div class="card">
+    <div
+      class="card"
+      class:acted={worn !== null}
+      class:resting={worn?.paused}
+      style:--agent={worn?.colour}
+    >
       {#if address}
         {#if marked}
           <img
@@ -700,6 +743,27 @@
     width: 100%;
     border: none;
     background: var(--bg);
+  }
+
+  /* The frame round a page an agent acts in: two pixels of its colour, inside the edge
+     of the room the page is placed in, which the page leaves free (see FRAME). Muted
+     while it is paused there. An outline, because it is drawn over whatever the room
+     holds - a frame's document in the browser build included - and eased in and out,
+     so a job starting or finishing is a change of colour rather than a jump. */
+  .hole,
+  .framed,
+  .card {
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    transition: outline-color var(--dur-base) var(--ease-out);
+  }
+
+  .acted {
+    outline-color: var(--agent);
+  }
+
+  .acted.resting {
+    outline-color: var(--muted);
   }
 
   /* A card in the middle of the space the page would have filled: the same quiet

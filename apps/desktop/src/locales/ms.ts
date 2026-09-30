@@ -1567,4 +1567,21 @@ export const ms: Dictionary = {
   'This {device}': '{device} ini',
   '{name} is back: {device} was writing in it':
     '{name} kembali: {device} sedang menulis di dalamnya',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Membuka',
+  Pressing: 'Menekan',
+  Typing: 'Menaip',
+  Closing: 'Menutup',
+  Deleting: 'Memadam',
+  Searching: 'Mencari',
+  Running: 'Menjalankan',
+  'Stop agents': 'Hentikan ejen',
+  Agents: 'Ejen',
+  'Always on this site': 'Sentiasa di tapak ini',
+  'Give back': 'Kembalikan',
+  'Take over': 'Ambil alih',
+  'Agents stopped': 'Ejen dihentikan',
+  'Agent tabs closed': 'Tab ejen ditutup',
+  'Nib is still running for your agents': 'Nib masih berjalan untuk ejen anda',
+  '{client} wants to connect': '{client} ingin bersambung',
 }

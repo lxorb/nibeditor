@@ -1644,4 +1644,21 @@ export const ru: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (это устройство)',
   '{name} is back: {device} was writing in it': '{name} вернулась: в ней писал {device}',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Открытие',
+  Pressing: 'Нажатие',
+  Typing: 'Ввод',
+  Closing: 'Закрытие',
+  Deleting: 'Удаление',
+  Searching: 'Поиск',
+  Running: 'Выполнение',
+  'Stop agents': 'Остановить агентов',
+  Agents: 'Агенты',
+  'Always on this site': 'Всегда на этом сайте',
+  'Give back': 'Вернуть',
+  'Take over': 'Взять управление',
+  'Agents stopped': 'Агенты остановлены',
+  'Agent tabs closed': 'Вкладки агентов закрыты',
+  'Nib is still running for your agents': 'Nib продолжает работать для ваших агентов',
+  '{client} wants to connect': '{client} хочет подключиться',
 }

@@ -1595,4 +1595,21 @@ export const ta: Dictionary = {
   'This {device}': 'இந்த {device}',
   '{name} is back: {device} was writing in it':
     '{name} திரும்பி வந்தது: {device} அதில் எழுதிக்கொண்டிருந்தது',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'திறத்தல்',
+  Pressing: 'அழுத்துதல்',
+  Typing: 'தட்டச்சு',
+  Closing: 'மூடுதல்',
+  Deleting: 'நீக்குதல்',
+  Searching: 'தேடல்',
+  Running: 'இயக்குதல்',
+  'Stop agents': 'முகவர்களை நிறுத்து',
+  Agents: 'முகவர்கள்',
+  'Always on this site': 'இந்தத் தளத்தில் எப்போதும்',
+  'Give back': 'திருப்பிக் கொடு',
+  'Take over': 'கட்டுப்பாட்டை எடு',
+  'Agents stopped': 'முகவர்கள் நிறுத்தப்பட்டன',
+  'Agent tabs closed': 'முகவர் தாவல்கள் மூடப்பட்டன',
+  'Nib is still running for your agents': 'உங்கள் முகவர்களுக்காக Nib இன்னும் இயங்குகிறது',
+  '{client} wants to connect': '{client} இணைய விரும்புகிறது',
 }

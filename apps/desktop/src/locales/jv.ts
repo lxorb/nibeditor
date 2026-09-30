@@ -1561,4 +1561,21 @@ export const jv: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} iki',
   '{name} is back: {device} was writing in it': '{name} bali: {device} lagi nulis ing kono',
+  // Agents: the activity panel, the mark on a tab, the stop and the tray
+  Opening: 'Mbukak',
+  Pressing: 'Mencet',
+  Typing: 'Ngetik',
+  Closing: 'Nutup',
+  Deleting: 'Mbusak',
+  Searching: 'Nggoleki',
+  Running: 'Nglakokake',
+  'Stop agents': 'Mandhegake agen',
+  Agents: 'Agen',
+  'Always on this site': 'Tansah ing situs iki',
+  'Give back': 'Balekake',
+  'Take over': 'Njupuk kendhali',
+  'Agents stopped': 'Agen dimandhegake',
+  'Agent tabs closed': 'Tab agen ditutup',
+  'Nib is still running for your agents': 'Nib isih mlaku kanggo agen sampeyan',
+  '{client} wants to connect': '{client} kepengin nyambung',
 }

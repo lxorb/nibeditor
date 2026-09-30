@@ -15,6 +15,7 @@
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
 //! | `memory`, `leases` | the engine's memory, and sync v2's seam |
+//! | `shell`, `watch` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept - and the pictures of their tabs |
 //!
 //! **Nothing at launch.** Not a thread, not a file read, not a webview: the state below
 //! is made on the first request that names an agent verb or carries an agent's token,
@@ -72,6 +73,9 @@ mod snapshot;
     allow(dead_code, reason = "only WebView2 has a tab to pause on")
 )]
 mod stop;
+
+pub mod shell;
+pub mod watch;
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod browser;
@@ -170,6 +174,7 @@ pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
 
 /// Answers one verb of the crate's own, and writes it in the log.
 pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, args: Value) -> Answer {
+    shell::start(app);
     let started = Instant::now();
     let name = verb.name();
     let tab = args.get("tab").and_then(Value::as_str).map(str::to_string);
@@ -189,6 +194,13 @@ pub fn logged(
     answered: &Answer,
     started: Instant,
 ) {
+    // Every call but the goodbye, which would otherwise count as the agent still being
+    // here the moment after it left.
+    if let Caller::Agent(grant) = caller {
+        if verb != "agent_bye" {
+            shell::heard(app, &grant.id);
+        }
+    }
     let code = match answered {
         Answer::Error { code, .. } => serde_json::to_value(code).ok(),
         _ => None,
@@ -228,10 +240,11 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
         Verb::Bye(_) => {
             #[cfg(all(windows, not(feature = "cef")))]
             tabs::bye(caller.id());
+            shell::bye(app, caller.id());
             Answer::ok(verbs::Nothing {})
         }
         browsing => {
-            if stop::stopped() {
+            if stop::stopped_for(caller.id()) {
                 return Answer::error(
                     Code::Stopped,
                     "the reader pressed the stop: nothing runs until they resume",
@@ -315,7 +328,7 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let tabs = Vec::new();
     Answer::ok(verbs::Status {
-        paused: stop::stopped().then_some(verbs::PausedBy::Stop),
+        paused: stop::stopped_for(&grant.id).then_some(verbs::PausedBy::Stop),
         paused_tabs: stop::paused_tabs(&grant.id),
         tabs,
         approvals: approvals::pending(Some(&grant.id)),
@@ -382,7 +395,7 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     let Caller::Agent(_) = caller else {
         return Ok(());
     };
-    if stop::stopped() {
+    if stop::stopped_for(caller.id()) {
         return Err("the reader pressed the stop: nothing runs until they resume".into());
     }
     let Some((_, needs)) = verbs::window::AGENT_VERBS
@@ -415,11 +428,43 @@ pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
 }
 
 /// The stop: every call in flight cancelled, every agent paused, and on a second press
-/// every agent's tabs closed. Answers whether they were.
+/// every agent's tabs closed. Answers whether they were. With an agent named, that one
+/// agent stopped and nobody else, which closes nothing.
 #[tauri::command]
-pub fn agents_stop(webview: tauri::Webview, app: AppHandle) -> Result<bool, String> {
+pub fn agents_stop(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: Option<String>,
+) -> Result<bool, String> {
     from_the_app(&webview)?;
-    Ok(stop::stop(&app))
+    Ok(match agent {
+        Some(agent) => {
+            stop::halt(&app, &agent);
+            false
+        }
+        None => stop::stop(&app),
+    })
+}
+
+/// The reader taking one of their tabs from an agent on purpose (7.3): Take over in the
+/// tab's menu, which is a press in the page said in words, or Stop there, which ends the
+/// agent's work in that tab and tells it so. Given back with `agents_resume`.
+#[tauri::command]
+pub fn agents_pause(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: String,
+    tab: String,
+    stop: bool,
+) -> Result<(), String> {
+    from_the_app(&webview)?;
+    let by = if stop {
+        verbs::PausedBy::Stop
+    } else {
+        verbs::PausedBy::Reader
+    };
+    stop::pause(&app, &agent, &tab, by);
+    Ok(())
 }
 
 /// A pause given back by the reader: the stop's, when neither is named; one agent's on
@@ -570,6 +615,8 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
         approvals: approvals::pending(None),
         stopped: stop::stopped(),
         paused,
+        halted: stop::halted(),
+        connected: shell::connected(),
     })
 }
 
@@ -586,6 +633,10 @@ pub struct Overview {
     pub stopped: bool,
     /// Every pause on one tab: the agent and the tab.
     pub paused: Vec<(String, String)>,
+    /// The agents stopped one at a time.
+    pub halted: Vec<String>,
+    /// The agents connected now.
+    pub connected: Vec<String>,
 }
 
 /// One day of the audit log, oldest first, for the activity panel and Add to note.

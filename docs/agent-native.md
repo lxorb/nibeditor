@@ -1032,8 +1032,10 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
 - **Events** from the crate to the window, on `nib://agent`, each with its `kind`:
   `acting {agent, tab, verb}`, `paused {agent, tab?, by}` (`reader`, `takeover`, `stop`),
   `resumed {agent, tab?}`, `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
-  title}`, `closed {agent, id}`, `stopped {closed}`. The activity UI is built against a
-  fake emitter of exactly these.
+  title}`, `closed {agent, id}`, `stopped {closed}`, `connected {agents}` (the agents that
+  called in the last ten minutes and did not say goodbye, said whenever the list
+  changes). An `acting` names a shown tab by the reader's id. The activity UI is built
+  against a fake emitter of exactly these (`lib/agents/ui/fake.ts`).
 - **The grant**: `{id, name, client, scopes[], spaces[] | "all", sites: {site: "allow" |
   "deny" | "agent-store"}, scripts[], mode, asks: {category: bool}, always: {site:
   [category]}, programs[], limits, created}`, stored by the crate in `<config>/agents.json`
@@ -1044,7 +1046,14 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   `agents_resume {agent?, tab?}`, `agents_answer {id, allow, always}` (a takeover answered
   is the tab handed back), `agents_ask {agent, category, summary, key}` for a window verb
   that asks first, `agents_state` for everything the activity panel draws at once,
-  `agents_log {day}`, and `agents_adopt {agent_tab, tab}` for Show (6.7).
+  `agents_log {day}`, and `agents_adopt {agent_tab, tab}` for Show (6.7). The activity
+  UI adds five: `agents_stop {agent?}` stops one agent where one is named,
+  `agents_pause {agent, tab, stop}` is Take over and a tab's Stop, `agents_watch {tabs}`
+  starts the screencast of those agent tabs (and stops the rest) with its frames on
+  `nib://agent-frame`, `agents_shell {key, words}` hands the crate the stop's key in the
+  system's notation and the words the tray and the notifications say, and `agents_hold
+  {hide}` answers whether the asking window holds the agents' pages and, with `hide`,
+  hides it instead of closing it (open question 6).
 - **The window's verbs the crate asks**, on the endpoint's own road, each optional:
   `agent.reader_tabs` (the reader's web tabs with their space and whether in front),
   `agent.store_for {space?, url}` (which store, as `web-data.ts` decides) and

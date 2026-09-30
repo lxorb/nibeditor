@@ -44,3 +44,7 @@ export const PROPERTIES_MARK = 'M2 3.4h2.4M6.4 3.4h4.6M2 6.5h2.4M6.4 6.5h4.6M2 9
 /** A four-point spark, the mark every assistant wears. */
 export const ASK_MARK =
   'M6.5 2c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
+
+/** A frame with a spark in it, an agent at work in a page: the activity panel's tab. */
+export const AGENTS_MARK =
+  'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM6.5 4.3c.2 1.2.9 1.9 2.2 2.2-1.3.3-2 1-2.2 2.2-.2-1.2-.9-1.9-2.2-2.2 1.3-.3 2-1 2.2-2.2z'
