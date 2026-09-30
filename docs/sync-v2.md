@@ -1172,6 +1172,58 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   others; `granted`'s `rotate` is read and nothing is done with it yet. And nib's own
   Chromium (`cef`) has no capture, so there leases never start.
 
+**As built** (lane `sync-server-docs`, `services/sync/src/sync2/` and `src/rooms/`),
+where it adds to the above:
+
+- Every v2 route reads a framed envelope (`application/octet-stream`) or plain JSON, and
+  answers in the shape it was asked in (`accept: application/octet-stream` asks for an
+  envelope); bytes in a JSON answer are lists of numbers. See `sync2/envelope.ts`.
+- `POST /v2/spaces/:space/prepare` (any member) answers `{ cursor }`. The feed, the ops
+  and the snapshot prepare a space themselves the first time; preparing is idempotent,
+  and a v1 write that raced it is placed by the next read of the tree.
+- `POST /v2/spaces/:space/ops`: at most 200 ops, 600 requests a minute per account or
+  guest (429 `too many changes at once - try again in a minute`). A reader's ops are
+  each `refused: 'role'`; somebody given one file of the space gets 404, as from every
+  space route. A `create` of kind `file` is refused `gone` (and not remembered) until
+  the account keeps a blob with that hash. The feed's cursor is the last item's `seq`.
+- A device is its session: the device a hub `hello` bound to it, or `session:<16 hex>`
+  before one; a guest is `guest:<id>` and a program `program:<account>`.
+- `POST /v2/docs/push`: 50 documents, 600 requests a minute; each goes to its room, six
+  at a time. An `ok` names the version and state vector right after the push applied,
+  not the room's latest, so words a socket typed meanwhile still meet the device as
+  `moved`. `x-nib-device` names the version the settle writes. A push to a note of a
+  space nobody prepared prepares it first.
+- `POST /v2/docs/pull`: 200 documents; the bucket's `crdt/<note>` (V2 encoding, with
+  `seq`, `epoch`, `epochBase` and `at` as custom metadata) when the room has written
+  one at this epoch, otherwise the seed of the note's words when they still hash to
+  `epoch_base`, otherwise (a note written between its epoch and its room waking) the
+  room itself. A seed is version 1, or 0 for a note with no words.
+- `POST /v2/docs/keep` writes the version directly (never throttled, never a room),
+  `by` the device name sent; 404 and 403 as the v1 note routes say them.
+- `GET /v2/spaces/:space/snapshot?after=` pages at 4 MB or 200 documents.
+- Files: `PUT /v2/blobs/:hash` takes any type up to 64 MB and checks the hash; images
+  and PDFs keep their type, anything else is kept as `application/octet-stream`, which
+  `/i/` never serves. `POST /v2/blobs/parts {hash, size, type}` answers `{ upload, part }`
+  (8 MB), `PUT /v2/blobs/parts/:upload/:n` a part, `POST /v2/blobs/parts/:upload
+  {parts}` completes, measures and hashes (a Worker's `DigestStream`) and throws away
+  bytes that are not the hash. `GET /v2/files/:space/:id` for members;
+  `PUT /v2/files/:space/:id {hash, base}` replaces (writers), answering
+  `{ moved: {hash, size, at} }` when `base` is not what the entry holds.
+- Maps (5.11): `GET /v2/spaces/:space/maps?since=` answers `{ entries: [{ map, key,
+  value, seq, at }], cursor, more }` and `PATCH /v2/spaces/:space/maps { entries }` (at
+  most 200, writers) sets them; maps are `bookmark` (key: an id; value: the bookmark
+  with `at`, its position), `icon` (key: a folder id; value `{icon, tint?}`), `order`
+  (key: the id placed; value: its position among its siblings), `graph` (key: the
+  setting) and `excluded` (key: the path; value `true`); `path:<path>` keys what the
+  tree does not hold. The v1 columns are written from the entries, and written again
+  after a v2 rename, so a v1 app keeps a folder's icon and order across it.
+- The room's socket: `nib.device.<id>` beside `nib.v2` names the device the words are
+  written down as. At a new epoch a **v1** socket is closed with **1012**, not 4001:
+  1012 is the one code the v1 app's join logic reads as "this room was rebuilt, meet it
+  again from the file"; any other code reconnects with the old document and would
+  merge two documents seeded apart, which doubles the text. v2 sockets hear `EPOCH`
+  and 4001 as above.
+
 ### What a program token may reach
 
 `nib_...` tokens (`programs.ts`) reach the feed, `/v2/docs/pull`, and the v1 note routes they
@@ -1242,6 +1294,20 @@ something, in the same batch. The nightly job sweeps `tree_ops` after 30 days.
 `@nib/sync-core/tree`: which device made the latest change and the latest content change
 (a device's own writing never stands against its own delete), and which delete took an
 entry (so a folder restored brings back what went with it).
+
+**As built**, `0040_sync2_tree.sql` is the above plus two things the build needed:
+`spaces.prepared_at` (whether a space's tree is rows yet, which a v1 create reads to
+place its note as a tree create on the first epoch), and `space_entries (space_id, map,
+key, value, seq, at, by)`, the per-entry maps of 5.11. `tree_ops.op_id` is
+`<space>/<op>`, so no device reaches another space's answers. The number is 0040 though
+0041 and 0042 landed first: `wrangler d1 migrations apply` applies every file not yet in
+`d1_migrations`, so it runs next on the live database and first on a fresh one, and
+nothing in it touches what 0041 or 0042 made. The tree is serialised without an object
+per space: each batch is guarded by the space's cursor and done again from a fresh read
+when another write moved it. Every note whose path a change moved (a renamed folder's
+descendants too, in Recently deleted as well) takes a cursor of its own, because a v1
+app pages its feed by cursor; the rows travel through `json_each`, so five hundred of
+them are a handful of statements.
 
 `0039_sync2_devices_web.sql` (lane `sync-server-hub`):
 
