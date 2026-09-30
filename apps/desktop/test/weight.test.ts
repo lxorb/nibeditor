@@ -552,7 +552,12 @@ function holds(tail: string): boolean {
  *  link-index.svelte.ts). The launch's own marks went onto the page's timeline and a
  *  deleted account signs out at its first refused pass in the same round. Measured
  *  3,182,482 and 377; the production build preloads 1,317,861 bytes in 163 chunks
- *  against 1,326,639 in 164. */
+ *  against 1,326,639 in 164.
+ *
+ *  Not raised when the design pass took the last module under the ceiling (main at
+ *  3,200,989 and 380), and four slots given back instead: the rows a query fence
+ *  answers with, fetched by the first fence, and what a cover row writes, fetched by
+ *  its press. Measured 3,187,262 and 376, which the ceiling is within one per cent of. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
 
@@ -864,6 +869,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/reading/drawn.ts', 'a paper or a plane drawn in a note'],
     // And the app menu itself, behind its three bars; see AppMenu.svelte.
     ['/lib/AppMenuPanel.svelte', 'the app menu'],
+    // The rows a query fence answers with, fetched by the first fence (see
+    // link-index.svelte.ts), and what a note's cover row writes, fetched by the press
+    // and warmed at the last turn (see menu.svelte.ts).
+    ['/lib/query-block.ts', "a query fence's rows"],
+    ['/lib/note-cover.ts', "a note's cover, written"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -898,7 +908,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/drawer.svelte.ts', 'the drawers as the markup reads them'],
     ['/editor/src/run/door.ts', 'the door the Run button knocks on'],
     ['/editor/src/wikilink/block-namer.ts', 'the facet every editor is built with'],
-    ['/lib/search/task.ts', 'the task a query fence row is'],
     ['/markdown/src/slide-breaks.ts', 'whether a note is a deck'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)

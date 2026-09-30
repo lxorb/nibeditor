@@ -5,7 +5,6 @@ import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
 import { links } from './link-index.svelte'
-import { canHaveCover, chooseCover, removeCover } from './note-cover'
 import { canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
 import { isMarkdownPath, withinSpace } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
@@ -195,16 +194,27 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
  *  Which of Set and Change is offered comes from the index, so the words follow the
  *  file without this asking the disk; see `coverOf` in link-index.svelte.ts. */
 export function coverEntries(path: string | null | undefined): MenuEntry[] {
-  if (!canHaveCover(path) || !path) return []
+  // `canHaveCover` in note-cover.ts, said here without it: the writing is fetched by
+  // the press on a row rather than carried with every menu, and it is warmed at the
+  // launch's last turn, so the file chooser opens in the gesture that asked for it.
+  if (!path || !isMarkdownPath(path)) return []
 
   const there = links.coverOf(path) !== null
+  const cover = () => import('./note-cover')
 
   return [
     {
       label: there ? t('Change cover') : t('Set cover'),
-      run: () => void chooseCover(path),
+      run: () => void cover().then((one) => one.chooseCover(path)),
     },
-    ...(there ? [{ label: t('Remove cover'), run: () => void removeCover(path) }] : []),
+    ...(there
+      ? [
+          {
+            label: t('Remove cover'),
+            run: () => void cover().then((one) => one.removeCover(path)),
+          },
+        ]
+      : []),
   ]
 }
 

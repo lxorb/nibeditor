@@ -390,5 +390,8 @@ export async function warmDoors(): Promise<void> {
     // The editor in the card a pointer resting on a link opens, which a hand can ask
     // for at any moment; see `previewCard` in Editor.svelte.
     import('./preview-card'),
+    // And what a cover row in a note's menu writes, so the file chooser it opens is
+    // opened in the press that asked; see `coverEntries` in menu.svelte.ts.
+    import('./note-cover'),
   ])
 }

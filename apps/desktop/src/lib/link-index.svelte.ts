@@ -47,7 +47,6 @@ import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
 import { shownName } from './note-name'
-import { pressRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -130,6 +129,10 @@ interface Held {
   notes: ScannedNote[]
   files: readonly string[]
 }
+
+/** The query fence's rows, once the first fence has asked for them; see `query` in the
+ *  space the editor is handed. */
+let queryBlock: typeof import('./query-block') | null = null
 
 class Links {
   /** Every note of the open space as the last scan read it.
@@ -778,8 +781,15 @@ class Links {
       // opens. Handed over with the rest of what the space holds, so a fence is
       // answered again whenever a note is saved: this object is remade then, and a
       // widget holding the old one is not equal to one holding the new.
-      query: (code) => queryRowsHtml(code, t('Nothing found')),
-      pressRow: (target) => pressRow(target),
+      //
+      // Fetched with the first fence that asks rather than carried: most notes have
+      // none. A row exists only once its fence has been answered, so by the time one
+      // can be pressed the module is here.
+      query: async (code) => {
+        queryBlock ??= await import('./query-block')
+        return queryBlock.queryRowsHtml(code, t('Nothing found'))
+      },
+      pressRow: (target) => queryBlock?.pressRow(target) ?? false,
       // How a note the editor shows rather than edits is rendered: an embed, and
       // the preview over a link. The reading view's own call, so one render
       // serves every place a note is read; see reading/render.ts.
