@@ -789,29 +789,41 @@ describe('the window’s own frame', () => {
   })
 })
 
-describe('translucency', () => {
-  test('is off, which is what every window starts as', () => {
-    expect(modes.translucent).toBe(false)
-    expect(root.attributes.has('data-translucent')).toBe(false)
+/** Translucency was a switch here, and under any theme but glass it showed next to
+ *  nothing; glass is what it means now. What a reader is given for it is the theme
+ *  store's answer (see theme.test.ts); this is that it is asked once and then gone. */
+describe('translucency, which the glass theme is now', () => {
+  const saved = () =>
+    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+
+  /** The store as a launch finds it, with the theme's answer listened to. */
+  async function restartedAsking() {
+    vi.resetModules()
+    const { theme } = await import('./theme.svelte')
+    const adopt = vi.spyOn(theme, 'adoptTranslucency').mockImplementation(() => undefined)
+    ;(await import('./modes.svelte')).modes.restore()
+    return adopt
+  }
+
+  test('is not a mode any more', () => {
+    expect('translucent' in modes).toBe(false)
   })
 
-  test('is remembered, and is what makes the app’s own ground transparent', async () => {
-    modes.setTranslucent(true)
-    expect(modes.translucent).toBe(true)
-    // The attribute is what `--window-ground` hangs off; see packages/themes.
-    expect(root.attributes.has('data-translucent')).toBe(true)
+  test('a reader who had it on is handed to the theme, and the switch is written away', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ translucent: true }))
+    const adopt = await restartedAsking()
 
-    const again = await restarted()
-    expect(again.translucent).toBe(true)
-    expect(root.attributes.has('data-translucent')).toBe(true)
+    expect(adopt).toHaveBeenCalledOnce()
+    expect(saved()).not.toHaveProperty('translucent')
+    // So the next launch asks nothing.
+    expect(await restartedAsking()).not.toHaveBeenCalled()
   })
 
-  test('and goes back off again, ground and all', () => {
-    modes.setTranslucent(true)
-    modes.setTranslucent(false)
+  test('and one who had it off is left alone', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ translucent: false }))
 
-    expect(modes.translucent).toBe(false)
-    expect(root.attributes.has('data-translucent')).toBe(false)
+    expect(await restartedAsking()).not.toHaveBeenCalled()
+    expect(saved()).not.toHaveProperty('translucent')
   })
 })
 

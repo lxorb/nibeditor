@@ -13,8 +13,9 @@
   import { tick } from 'svelte'
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { accentTokens } from '../accents'
-  import AccentSwatches from '../AccentSwatches.svelte'
+  import { ACCENTS, accentSetting, accentTokens } from '../accents'
+  import { paintsOver } from '../themes/settings'
+  import Swatches from '../Swatches.svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
   import { LAYER } from '../motion'
@@ -57,7 +58,11 @@
 
     const sheets = [tokens, one.css ?? '', custom]
     return SIDES.filter((side) => one.variants.includes(side)).map((side) =>
-      lookOf(sheets, side, one.ownAccent ? {} : accentTokens(theme.accent, side)),
+      lookOf(
+        sheets,
+        side,
+        paintsOver(one.css ?? '', accentSetting()) ? {} : accentTokens(theme.accent, side),
+      ),
     )
   }
 
@@ -337,7 +342,7 @@
           }}
           onclick={() => choose(one.id)}
         >
-          <Mini looks={looksOf(one)} />
+          <Mini looks={looksOf(one)} desk={one.translucent === true} />
           <span class="name">{t(one.name)}</span>
         </button>
       {/each}
@@ -370,7 +375,13 @@
          while a theme that brings its own is being tried, only out of reach, so
          nothing moves under the pointer on its way across the cards. -->
     <div class="foot" class:owned={theme.accentIsTheme} inert={theme.accentIsTheme}>
-      <AccentSwatches
+      <Swatches
+        options={ACCENTS.map((one) => ({
+          value: one.id,
+          label: t(one.name),
+          colour: one[theme.current],
+        }))}
+        label={t('Accent')}
         chosen={picking.kept.accent}
         onchoose={(id: string) => picking.keepAccent(id)}
         onpoint={(id: string | null) => picking.point('accent', id)}
@@ -558,7 +569,7 @@
   }
 
   /* A theme that brings its own accent keeps it, so the dots are quiet while one
-     is being tried or kept; see `paintAccent` in theme.svelte.ts. */
+     is being tried or kept; see `paintsOver` in themes/settings.ts. */
   .foot.owned {
     opacity: 0.4;
   }

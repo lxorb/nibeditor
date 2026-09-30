@@ -12,7 +12,7 @@ import { describe, expect, test } from 'vitest'
  *  originals here instead.
  *
  *  Which is the whole of what a skeleton in this app can be. The shell has no colour of
- *  its own: `main` is `--window-ground` and every panel above it is transparent, so
+ *  its own: `main` is `--shell-ground` and every panel above it is transparent, so
  *  until the rows arrive the ground is the shell. Grey boxes drawn here would be a look
  *  the app does not have, and a jump when the real thing landed. */
 
@@ -52,11 +52,22 @@ function inline(selector: string): string {
 
 describe('the ground a launch paints before it has read anything', () => {
   test('is the dark palette’s own background', () => {
-    expect(inline('html')).toBe(background('dark'))
+    expect(inline(':where(html)')).toBe(background('dark'))
   })
 
   test('and the light palette’s on the other side', () => {
-    expect(inline("html[data-theme='light']")).toBe(background('light'))
+    expect(inline(":where(html[data-theme='light'])")).toBe(background('light'))
+  })
+
+  /** A hint for the moment before the app's sheet, weighing nothing, so the sheet wins
+   *  whichever arrives first. The light side's `html[data-theme]` once outranked the
+   *  sheet's own `html` and kept a light window opaque over the material the glass
+   *  theme stands on. */
+  test('and never outranks the app’s own sheet', () => {
+    const coloured = rules().filter((one) => one.sets.includes('background:'))
+
+    expect(coloured.length).toBeGreaterThan(0)
+    expect(coloured.filter((one) => !/^:where\(.*\)$/.test(one.on))).toEqual([])
   })
 
   test('and the phone’s status bar is told the same colour', () => {

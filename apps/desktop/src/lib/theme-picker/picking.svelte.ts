@@ -56,6 +56,9 @@ class Picking {
     if (this.open) return
 
     this.kept = { id: theme.id, scheme: theme.scheme, accent: theme.accent }
+    // Glass's sheet, which is fetched rather than carried, so its card has colours
+    // to be drawn in and pointing at it paints at once.
+    theme.warm()
     this.pointed = { ...NOTHING }
     this.query = ''
     this.at = at

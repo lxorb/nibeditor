@@ -470,7 +470,6 @@ export const ar: Dictionary = {
   Window: 'النافذة',
   'Nib’s own': 'الخاص بـ Nib',
   'The system’s': 'الخاص بالنظام',
-  Translucency: 'الشفافية',
   'Window frame': 'إطار النافذة',
   System: 'النظام',
   'Mode: {name}': 'الوضع: {name}',
@@ -846,6 +845,7 @@ export const ar: Dictionary = {
   'Stack tabs': 'ترتيب الألسنة في أعمدة',
   'Unstack tabs': 'إلغاء ترتيب الألسنة',
   'High contrast': 'تباين عالٍ',
+  Glass: 'زجاج',
   'Front matter': 'بيانات أولية',
   'Front matter: {name}': 'البيانات الأولية: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

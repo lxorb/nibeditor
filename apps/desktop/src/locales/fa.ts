@@ -442,7 +442,6 @@ export const fa: Dictionary = {
   Window: 'پنجره',
   'Nib’s own': 'خودِ Nib',
   'The system’s': 'سیستم',
-  Translucency: 'نیم‌شفافی',
   'Window frame': 'قاب پنجره',
   System: 'سامانه',
   'Mode: {name}': 'حالت: {name}',
@@ -809,6 +808,7 @@ export const fa: Dictionary = {
   'Stack tabs': 'چیدن زبانه‌ها در ستون',
   'Unstack tabs': 'برچیدن ستون زبانه‌ها',
   'High contrast': 'کنتراست بالا',
+  Glass: 'شیشه',
   'Front matter': 'پیش‌داده',
   'Front matter: {name}': 'فرامتن: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

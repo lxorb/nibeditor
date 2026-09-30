@@ -445,7 +445,6 @@ export const fil: Dictionary = {
   Window: 'Bintana',
   'Nib’s own': 'Sa Nib',
   'The system’s': 'Sa sistema',
-  Translucency: 'Pagkahalumigmig',
   'Window frame': 'Kuwadro ng bintana',
   System: 'Sistema',
   'Mode: {name}': 'Mode: {name}',
@@ -818,6 +817,7 @@ export const fil: Dictionary = {
   'Stack tabs': 'Isalansan ang mga tab',
   'Unstack tabs': 'Alisin ang salansan ng tab',
   'High contrast': 'Mataas na kontrast',
+  Glass: 'Salamin',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

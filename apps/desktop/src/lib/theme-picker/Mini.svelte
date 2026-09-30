@@ -9,13 +9,17 @@
    *
    *  A theme that states both schemes is drawn twice and cut on the diagonal, light
    *  above and dark below, the way a Mac draws Auto: one card that says it follows
-   *  the room. Spans throughout, because it lives inside a button. */
+   *  the room. Spans throughout, because it lives inside a button.
+   *
+   *  `desk` is glass's: its frame and its list stand on what is behind the window, so
+   *  they are drawn over a desk, and the note keeps its paper. A picture of a desk
+   *  rather than the reader's own, which no card can see. */
   import type { Look } from './looks'
 
-  const { looks }: { looks: readonly Look[] } = $props()
+  const { looks, desk = false }: { looks: readonly Look[]; desk?: boolean } = $props()
 </script>
 
-<span class="mini" aria-hidden="true">
+<span class="mini" class:desk aria-hidden="true">
   {#each looks as look, index (index)}
     <span
       class="window"
@@ -161,5 +165,21 @@
     height: 100%;
     border-radius: 2px;
     background: var(--mini-accent);
+  }
+
+  /* Glass: a desk behind the window, the frame and the list a wash over it and the
+     note on its own paper, which is the whole of what the theme is. The desk is drawn
+     in the canvas's colours, which every palette states. */
+  .desk .window {
+    background: linear-gradient(135deg, var(--canvas-5), var(--canvas-6) 55%, var(--canvas-2));
+  }
+
+  .desk .bar,
+  .desk .side {
+    background: color-mix(in srgb, var(--mini-frame) 64%, transparent);
+  }
+
+  .desk .note {
+    background: var(--mini-ground);
   }
 </style>

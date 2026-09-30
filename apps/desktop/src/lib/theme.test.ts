@@ -1,3 +1,4 @@
+import { glassCss } from '@nib/themes/glass'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The theme and the scheme, which are two choices and not one.
@@ -41,6 +42,11 @@ const media = {
 /** What the page says it is wearing. Held here rather than reached for through
  *  the stubbed document, so a test can read it the way it reads the storage. */
 let dataset: Record<string, string> = {}
+/** What the cascade would answer for a custom property, which is where a theme's
+ *  own declarations are read from, and what the app wrote onto the root, which is
+ *  where its answers go. Two halves of one page; see themes/settings.ts. */
+let resolves: Record<string, string> = {}
+let painted: Record<string, string> = {}
 /** The last `<style>` the app made, so a test can read what it put on the page. */
 let style: { id: string; textContent: string; remove: () => void } | null = null
 
@@ -56,6 +62,8 @@ function stubs() {
   media.contrast = false
   media.listeners = []
   dataset = {}
+  resolves = {}
+  painted = {}
   style = null
 
   vi.stubGlobal('localStorage', kept)
@@ -70,11 +78,20 @@ function stubs() {
         void media.listeners.push(listener),
     }),
   })
-  vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue: () => '' }))
+  vi.stubGlobal('getComputedStyle', () => ({
+    getPropertyValue: (name: string) => resolves[name] ?? '',
+  }))
   vi.stubGlobal('document', {
     documentElement: {
       dataset,
-      style: { setProperty: () => undefined, removeProperty: () => undefined },
+      style: {
+        setProperty: (name: string, value: string) => {
+          painted[name] = value
+        },
+        removeProperty: (name: string) => {
+          painted = Object.fromEntries(Object.entries(painted).filter(([one]) => one !== name))
+        },
+      },
     },
     querySelector: () => null,
     getElementById: () => null,
@@ -103,11 +120,29 @@ const folder = vi.hoisted(() => ({
   reading: true,
 }))
 
+/** Which system the window is on, and what the crate was asked about the material
+ *  behind it and answered. Windows unless a test says otherwise: glass is offered
+ *  where there is a material for it to stand on. */
+interface Host {
+  platform: string
+  material: string | null
+  asked: { on: boolean; dark: boolean; said?: string | undefined }[]
+}
+
+const host = vi.hoisted((): Host => ({ platform: 'windows', material: 'mica', asked: [] }))
+
 vi.mock('./tauri', () => ({
   isDesktop: true,
   isNative: true,
-  platform: () => 'linux',
+  platform: () => host.platform,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
+    if (command === 'set_translucency') {
+      // With what the page was saying as it asked, which is the order that matters.
+      host.asked.push({ on: args.on === true, dark: args.dark === true, said: dataset.translucent })
+      if (args.on !== true) return Promise.resolve('')
+      return host.material ? Promise.resolve(host.material) : Promise.reject(new Error('none'))
+    }
+
     if (command === 'list_themes') {
       if (!folder.listing) return Promise.reject(new Error('no such folder'))
 
@@ -151,6 +186,9 @@ beforeEach(() => {
   folder.files.clear()
   folder.listing = true
   folder.reading = true
+  host.platform = 'windows'
+  host.material = 'mica'
+  host.asked = []
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
@@ -158,7 +196,7 @@ beforeEach(() => {
 })
 
 describe('what the dropdown offers', () => {
-  test('is the two the app ships with, and then what is installed', async () => {
+  test('is the three the app ships with, and then what is installed', async () => {
     installed('rose', 'Rose', PAIR)
     installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
     await theme.reload()
@@ -166,11 +204,13 @@ describe('what the dropdown offers', () => {
     expect(theme.all.map((one) => one.id)).toEqual([
       'default',
       'contrast',
+      'glass',
       'file:rose',
       'file:warm-paper',
     ])
     expect(theme.all[0]?.name).toBe('Default')
     expect(theme.all[1]?.name).toBe('High contrast')
+    expect(theme.all[2]?.name).toBe('Glass')
   })
 
   test('and never a Dark or a Light, which were the scheme wearing a theme name', async () => {
@@ -178,7 +218,7 @@ describe('what the dropdown offers', () => {
 
     expect(theme.all.map((one) => one.id)).not.toContain('dark')
     expect(theme.all.map((one) => one.id)).not.toContain('light')
-    expect(theme.all).toHaveLength(2)
+    expect(theme.all).toHaveLength(3)
   })
 
   /** High contrast is a mode in every sense that matters and a theme in the way it is
@@ -192,8 +232,8 @@ describe('what the dropdown offers', () => {
     expect(found?.css).toContain("[data-theme='dark']")
     expect(found?.variants).toEqual(['dark', 'light'])
     // Its own accent, so the reader's colour is not painted over the palette the row
-    // showed; see `paintAccent`.
-    expect(found?.ownAccent).toBe(true)
+    // showed. Read off the sheet by `paintsOver` rather than written down beside it.
+    expect(found?.css).toMatch(/--accent\s*:/)
   })
 
   test('and choosing it puts its palette on the page with nothing to fetch', () => {
@@ -418,7 +458,7 @@ describe('a folder that will not answer', () => {
     await theme.reload()
 
     expect(theme.files.map((one) => one.name)).toEqual(['Rose', 'Warm Paper'])
-    expect(theme.all).toHaveLength(4)
+    expect(theme.all).toHaveLength(5)
   })
 
   test('does not write the chosen theme away as though it had been deleted', async () => {
@@ -487,7 +527,8 @@ describe('a look shown and not kept', () => {
     expect(injected()).toContain('--bg: #fff')
     expect(kept.getItem('nib:theme')).toBe('default')
     expect(kept.getItem('nib:theme-scheme')).toBe('dark')
-    expect(kept.getItem('nib:accent')).toBe('violet')
+    expect(theme.accent).toBe('teal')
+    expect(kept.getItem('nib:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'violet' } }))
   })
 
   test('and showing the kept one again is the kept one exactly', async () => {
@@ -517,7 +558,7 @@ describe('an installed theme across a restart', () => {
     theme.init()
     await theme.reload()
 
-    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'High contrast', 'Rose'])
+    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'High contrast', 'Glass', 'Rose'])
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
@@ -608,5 +649,352 @@ describe('answering a system that asks for more contrast', () => {
 
     expect(dataset.theme).toBe('dark')
     expect('contrast' in dataset).toBe(false)
+  })
+})
+
+/** Whatever a stylesheet was fetched for is on the page by now. The glass theme's
+ *  sheet arrives through a dynamic import, which is a promise however local it is. */
+const settled = async (done?: () => boolean) => {
+  // Polled rather than counted in turns: what is being waited for is a dynamic
+  // import - the glass theme's stylesheet, or the grammar a theme declares its
+  // settings in - and how many turns one of those takes is the machine's
+  // business. A fixed number of microtasks passed alone and failed under a full
+  // suite, which is the worst kind of test there is.
+  for (let turn = 0; turn < 400; turn++) {
+    await new Promise((next) => setTimeout(next, 1))
+    if (!done || done()) return
+  }
+}
+
+/** A theme that declares one dial of its own, and the answer the cascade would
+ *  give for it. Both halves, because a declaration is a name in the file and a
+ *  value on the page; see themes/settings.ts. */
+const DIALLED = `:root { --nib-setting-warmth: range "Warmth" 0 100 40 %; }`
+const WARMTH = { '--nib-setting-warmth': 'range "Warmth" 0 100 40 %' }
+
+describe('the settings a theme offers', () => {
+  test('are the app’s own on a theme that brings no palette of its own', () => {
+    theme.init()
+
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(theme.accentIsTheme).toBe(false)
+  })
+
+  test('and one choice among them paints every token that depends on it', () => {
+    theme.init()
+    theme.setAccent('teal')
+
+    expect(theme.accent).toBe('teal')
+    expect(painted['--accent']).toBe('#33c7ba')
+    // Five and not one: the hover, the wash, the rule and the selection move with
+    // the colour, which is the whole reason a setting paints a map.
+    expect(Object.keys(painted).sort()).toEqual([
+      '--accent',
+      '--accent-hover',
+      '--accent-line',
+      '--accent-soft',
+      '--selection',
+    ])
+  })
+
+  test('are withdrawn where the theme paints their tokens itself', async () => {
+    theme.init()
+    theme.setAccent('teal')
+    theme.select('contrast')
+    await settled()
+
+    expect(theme.settings).toEqual([])
+    expect(theme.accentIsTheme).toBe(true)
+    // And taken off the page with the row: a theme chosen from a picture of
+    // itself must not be wearing the last theme's colour.
+    expect(painted).toEqual({})
+  })
+
+  test('and come back, still on the colour that was chosen, when the theme does', async () => {
+    theme.init()
+    theme.setAccent('teal')
+    theme.select('contrast')
+    await settled()
+    theme.select('default')
+    await settled()
+
+    expect(theme.accent).toBe('teal')
+    expect(painted['--accent']).toBe('#33c7ba')
+  })
+
+  test('follow the reader from one theme to the next, because the accent is the app’s', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.init()
+    theme.setAccent('pink')
+
+    theme.select('file:rose')
+    await settled()
+
+    // Rose states no accent, so it inherits the app's - and inherits the answer
+    // with it. A setting a theme declares is that theme's and is filed under it.
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(theme.accent).toBe('pink')
+  })
+
+  test('include whatever the theme declared, after its own sheet is on the page', async () => {
+    installed('warm', 'Warm', DIALLED)
+    resolves = WARMTH
+    await theme.reload()
+    theme.select('file:warm')
+    await settled(() => theme.settings.length > 1)
+
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'warmth'])
+    expect(theme.values.warmth).toBe(40)
+    expect(painted['--nib-warmth']).toBe('40%')
+  })
+
+  test('are kept when the theme is switched away from, and found again when it is back', async () => {
+    installed('warm', 'Warm', DIALLED)
+    resolves = WARMTH
+    await theme.reload()
+    theme.select('file:warm')
+    await settled(() => theme.settings.length > 1)
+    theme.set('warmth', 75)
+
+    theme.select('default')
+    await settled()
+    expect(painted['--nib-warmth']).toBeUndefined()
+
+    theme.select('file:warm')
+    await settled(() => theme.settings.length > 1)
+    expect(theme.values.warmth).toBe(75)
+    expect(painted['--nib-warmth']).toBe('75%')
+  })
+
+  test('and a setting the theme has stopped offering is simply not read', async () => {
+    installed('warm', 'Warm', DIALLED)
+    resolves = WARMTH
+    await theme.reload()
+    theme.select('file:warm')
+    await settled(() => theme.settings.length > 1)
+    theme.set('warmth', 75)
+
+    // The theme is updated and the dial is gone. Nothing is thrown away: what was
+    // chosen stays written down, so a theme that brings the dial back - or a
+    // reader who puts the older file back - finds the answer still there.
+    folder.files.clear()
+    installed('warm', 'Warm', ':root { --bg: #201510; }')
+    resolves = {}
+    await theme.reload()
+    theme.select('file:warm')
+    await settled(() => theme.settings.length === 1)
+
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
+    expect(painted['--nib-warmth']).toBeUndefined()
+
+    folder.files.clear()
+    installed('warm', 'Warm', DIALLED)
+    resolves = WARMTH
+    await theme.reload()
+    theme.select('file:warm')
+    await settled(() => theme.settings.length > 1)
+
+    expect(theme.values.warmth).toBe(75)
+  })
+
+  test('read the accent an older device wrote under a key of its own', () => {
+    kept.setItem('nib:accent', 'orange')
+    theme.init()
+
+    expect(theme.accent).toBe('orange')
+    expect(painted['--accent']).toBe('#f08437')
+  })
+
+  test('and what this one writes outranks it, so the key is read once and never again', () => {
+    kept.setItem('nib:accent', 'orange')
+    theme.init()
+    theme.setAccent('green')
+    theme.init()
+
+    expect(theme.accent).toBe('green')
+  })
+})
+
+describe('the glass theme', () => {
+  // The material is fetched by the store the first time a theme asks for it, and keeps
+  // what it last asked for; a fresh one per test, as each launch has.
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  test('is fetched rather than carried, so its bytes are not in front of a launch', () => {
+    const found = theme.all.find((one) => one.id === 'glass')
+
+    expect(found?.path).toBeUndefined()
+    expect(typeof found?.load).toBe('function')
+  })
+
+  test('is offered where the window has a material to stand on, and nowhere else', () => {
+    for (const [platform, offered] of [
+      ['windows', true],
+      ['macos', false],
+      ['linux', false],
+    ] as const) {
+      host.platform = platform
+      // The list is derived; asking it again is enough once the platform has moved.
+      theme.files = [...theme.files]
+      expect(
+        theme.all.some((one) => one.id === 'glass'),
+        platform,
+      ).toBe(offered)
+    }
+  })
+
+  test('but is still worn by its id where it is not offered, which is how a drive shows it', async () => {
+    host.platform = 'linux'
+    theme.files = [...theme.files]
+    theme.select('glass')
+    await settled(() => injected().includes('--glass-chrome'))
+
+    expect(theme.id).toBe('glass')
+  })
+
+  test('puts its sheet on the page and keeps the reader’s accent beside it', async () => {
+    theme.init()
+    theme.select('glass')
+    await settled(() => injected().includes('--glass-chrome'))
+
+    expect(injected()).toBe(glassCss)
+    // No accent of its own: glass is a window and not a palette, so the row of
+    // swatches stays and the reader's colour shows on it.
+    expect(glassCss).not.toMatch(/--accent\s*:/)
+    expect(theme.accentIsTheme).toBe(false)
+  })
+
+  test('stands the window on the material, and says so on the root once the crate has', async () => {
+    theme.init()
+    theme.setScheme('dark')
+    theme.select('glass')
+    await settled(() => dataset.translucent !== undefined)
+
+    // The material first, and the page says so only once the crate has answered.
+    expect(host.asked.at(-1)).toEqual({ on: true, dark: true, said: undefined })
+    expect(dataset.translucent).toBe('mica')
+    expect(kept.getItem('nib:material')).toBe('mica')
+  })
+
+  test('and asks again in the other scheme, which is what Mica is tinted by', async () => {
+    theme.init()
+    theme.setScheme('dark')
+    theme.select('glass')
+    await settled(() => dataset.translucent !== undefined)
+    theme.setScheme('light')
+    await settled()
+
+    expect(host.asked.at(-1)).toMatchObject({ on: true, dark: false })
+  })
+
+  test('where there is nothing to stand on, stands on its own ground and says nothing', async () => {
+    host.material = null
+    theme.init()
+    theme.select('glass')
+    await settled(() => host.asked.length > 0)
+    await settled()
+
+    expect(dataset.translucent).toBeUndefined()
+    expect(kept.getItem('nib:material')).toBeNull()
+  })
+
+  test('takes the ground back before the material when another theme is chosen', async () => {
+    theme.init()
+    theme.select('glass')
+    await settled(() => dataset.translucent !== undefined)
+    theme.select('default')
+    await settled(() => host.asked.at(-1)?.on === false)
+
+    // Before the crate is asked: a page with a transparent ground and no material
+    // under it is somebody's desk behind the words.
+    expect(host.asked.at(-1)).toEqual({ on: false, dark: true, said: undefined })
+    expect(dataset.translucent).toBeUndefined()
+    expect(kept.getItem('nib:material')).toBeNull()
+  })
+
+  test('a launch that cannot tell what it stood on asks for the material off', async () => {
+    // Storage cleared under a crate that put the material back from its own file.
+    theme.init()
+    await settled(() => host.asked.length > 0)
+
+    expect(host.asked).toEqual([{ on: false, dark: true, said: undefined }])
+  })
+
+  test('and one that stood on a colour asks nothing at all', async () => {
+    kept.setItem('nib:ground', 'rgb(14, 16, 19)')
+    theme.init()
+    // As long as an ask would take to arrive, and then some.
+    await settled(() => host.asked.length > 0)
+
+    expect(host.asked).toEqual([])
+  })
+
+  test('is shown as glass by the picker, and pointing away gives the window back', async () => {
+    theme.init()
+    await theme.reload()
+    theme.preview('glass', 'dark', 'violet')
+    await settled(() => dataset.translucent !== undefined)
+    expect(dataset.translucent).toBe('mica')
+
+    theme.preview('default', 'dark', 'violet')
+    await settled(() => dataset.translucent === undefined)
+    expect(dataset.translucent).toBeUndefined()
+    // Shown, not kept: nothing about the material is written down for a launch.
+    expect(kept.getItem('nib:material')).toBeNull()
+  })
+
+  test('opens a launch in the sheet it wore last time, before its own chunk is in', async () => {
+    theme.init()
+    theme.select('glass')
+    await settled(() => injected() === glassCss)
+
+    // A launch: a page with nothing on it, and the storage the last one left.
+    const storage = kept
+    stubs()
+    kept = storage
+    vi.stubGlobal('localStorage', kept)
+    theme.id = 'default'
+    theme.init()
+
+    // On the frame the launch paints, with no promise in between.
+    expect(injected()).toBe(glassCss)
+  })
+
+  test('hands its sheet to the picker, which draws its card from it', async () => {
+    theme.warm()
+    await settled(() => theme.all.find((one) => one.id === 'glass')?.css !== undefined)
+
+    expect(theme.all.find((one) => one.id === 'glass')?.css).toBe(glassCss)
+  })
+})
+
+/** What a reader who had the old switch on is given, once; see modes.svelte.ts, which
+ *  asks. */
+describe('translucency, which was a switch before it was glass', () => {
+  test('under the built-in theme is glass', () => {
+    theme.init()
+    theme.adoptTranslucency()
+
+    expect(theme.id).toBe('glass')
+    expect(kept.getItem('nib:theme')).toBe('glass')
+  })
+
+  test('under a theme somebody chose is that theme still', () => {
+    theme.init()
+    theme.select('contrast')
+    theme.adoptTranslucency()
+
+    expect(theme.id).toBe('contrast')
+  })
+
+  test('and where there is no material at all is nothing', () => {
+    host.platform = 'linux'
+    theme.init()
+    theme.adoptTranslucency()
+
+    expect(theme.id).toBe('default')
   })
 })

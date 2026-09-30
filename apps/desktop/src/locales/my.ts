@@ -442,7 +442,6 @@ export const my: Dictionary = {
   Window: 'ဝင်းဒိုး',
   'Nib’s own': 'Nib ၏ကိုယ်ပိုင်',
   'The system’s': 'စနစ်၏',
-  Translucency: 'တစ်ဝက်ပွင့်လင်းမှု',
   'Window frame': 'ဝင်းဒိုးအဘောင်',
   System: 'စနစ်',
   'Mode: {name}': 'မုဒ်: {name}',
@@ -800,6 +799,7 @@ export const my: Dictionary = {
   'Stack tabs': 'တက်ဗ်များ အတန်းစီရန်',
   'Unstack tabs': 'တက်ဗ် အတန်းစီမှု ဖျက်ရန်',
   'High contrast': 'အရောင်ကွာဟမှု မြင့်',
+  Glass: 'မှန်',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ခေါင်းစီးအချက်အလက်: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

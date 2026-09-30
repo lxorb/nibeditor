@@ -2,6 +2,9 @@
  *  Each carries its own shade per scheme, because a colour bright enough to
  *  read on black is usually too pale on white. */
 
+import { t } from './i18n.svelte'
+import type { ThemeSetting } from './themes/settings'
+
 export interface Accent {
   id: string
   name: string
@@ -83,7 +86,7 @@ function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
  *  These took a third answer once, for a contrast switch that pushed the colour
  *  further from the page. Contrast is a theme now, and a theme that states an
  *  accent keeps it - nothing here is painted over such a theme at all, see
- *  `paintAccent` in theme.svelte.ts - so the push had nowhere left to land: the
+ *  `paintsOver` in themes/settings.ts - so the push had nowhere left to land: the
  *  contrast theme's own accent is the one that wins, which is what a theme chosen
  *  from a picture of it is supposed to do. */
 export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<string, string> {
@@ -101,5 +104,24 @@ export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<strin
     '--accent-soft': `rgb(${r} ${g} ${b} / ${soft})`,
     '--accent-line': `rgb(${r} ${g} ${b} / ${line})`,
     '--selection': `rgb(${r} ${g} ${b} / ${chosen})`,
+  }
+}
+
+/** The accent as a theme setting: declared in code for its words and its five tokens,
+ *  and shared, so it follows the reader across themes; see themes/settings.ts. */
+export function accentSetting(): ThemeSetting {
+  return {
+    id: 'accent',
+    label: t('Accent'),
+    shared: true,
+    kind: 'colour',
+    initial: DEFAULT_ACCENT,
+    options: ACCENTS.map((one) => ({
+      value: one.id,
+      name: t(one.name),
+      dark: one.dark,
+      light: one.light,
+    })),
+    paint: (value, scheme) => accentTokens(String(value), scheme),
   }
 }

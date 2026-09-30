@@ -445,7 +445,6 @@ export const sw: Dictionary = {
   Window: 'Dirisha',
   'Nib’s own': 'Ya Nib',
   'The system’s': 'Ya mfumo',
-  Translucency: 'Uwazi',
   'Window frame': 'Fremu ya dirisha',
   System: 'Mfumo',
   'Mode: {name}': 'Hali: {name}',
@@ -814,6 +813,7 @@ export const sw: Dictionary = {
   'Stack tabs': 'Panga vichupo safu',
   'Unstack tabs': 'Ondoa safu za vichupo',
   'High contrast': 'Utofautishaji wa juu',
+  Glass: 'Kioo',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Data ya kichwa: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

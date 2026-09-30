@@ -35,7 +35,7 @@
          stylesheet is a fetch and a parse away: a fifth of a second of white, every
          launch, on a window whose whole look is dark. So the ground is stated here,
          where it costs nothing and needs nothing - the shell above it has no colour of
-         its own, `main` is `--window-ground` and every panel is transparent over it, so
+         its own, `main` is `--shell-ground` and every panel is transparent over it, so
          this *is* the shell as far as the eye is concerned until the rows arrive.
 
          The two colours are `--bg` on either side, copied because a custom property
@@ -45,7 +45,12 @@
          On `html` alone, deliberately: a translucent window's ground is nothing at all,
          and the script below says so by making this one element transparent again. A
          colour on `body` as well would show through that and flash a solid window over
-         somebody's wallpaper. -->
+         somebody's wallpaper.
+
+         And inside `:where`, so it weighs nothing: it is a hint for the moment before the
+         app's own sheet, and has to lose to it. The light side's `html[data-theme]`
+         outranked the sheet's own `html` and kept a light window opaque for good, over
+         the platform's material the glass theme stands on. -->
     <style>
       html,
       body {
@@ -54,11 +59,11 @@
         overflow: hidden;
       }
 
-      html {
+      :where(html) {
         background: #0e1013;
       }
 
-      html[data-theme='light'] {
+      :where(html[data-theme='light']) {
         background: #fbfcfd;
       }
     </style>

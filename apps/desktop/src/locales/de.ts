@@ -446,7 +446,6 @@ export const de: Dictionary = {
   Window: 'Fenster',
   'Nib’s own': 'Von Nib',
   'The system’s': 'Vom System',
-  Translucency: 'Transparenz',
   'Window frame': 'Fensterrahmen',
   System: 'System',
   'Mode: {name}': 'Modus: {name}',
@@ -819,6 +818,7 @@ export const de: Dictionary = {
   'Stack tabs': 'Tabs stapeln',
   'Unstack tabs': 'Tabs nicht stapeln',
   'High contrast': 'Hoher Kontrast',
+  Glass: 'Glas',
   'Front matter': 'Kopfdaten',
   'Front matter: {name}': 'Kopfdaten: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

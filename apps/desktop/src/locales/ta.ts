@@ -441,7 +441,6 @@ export const ta: Dictionary = {
   Window: 'சாளரம்',
   'Nib’s own': 'Nib-இன் சொந்தம்',
   'The system’s': 'கணினியின்',
-  Translucency: 'அரைவெளிப்படைத்தன்மை',
   'Window frame': 'சாளரச் சட்டம்',
   System: 'கணினி',
   'Mode: {name}': 'நிலை: {name}',
@@ -817,6 +816,7 @@ export const ta: Dictionary = {
   'Stack tabs': 'தாவல்களை அடுக்கு',
   'Unstack tabs': 'தாவல் அடுக்கை நீக்கு',
   'High contrast': 'உயர் மாறுபாடு',
+  Glass: 'கண்ணாடி',
   'Front matter': 'முன்தகவல்',
   'Front matter: {name}': 'முன்தகவல்: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

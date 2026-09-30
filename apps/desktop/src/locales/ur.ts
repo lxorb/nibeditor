@@ -442,7 +442,6 @@ export const ur: Dictionary = {
   Window: 'ونڈو',
   'Nib’s own': 'Nib کا اپنا',
   'The system’s': 'سسٹم کا',
-  Translucency: 'نیم شفافیت',
   'Window frame': 'ونڈو کا فریم',
   System: 'سسٹم',
   'Mode: {name}': 'موڈ: {name}',
@@ -807,6 +806,7 @@ export const ur: Dictionary = {
   'Stack tabs': 'ٹیبز کو کالموں میں رکھیں',
   'Unstack tabs': 'ٹیب کالم ہٹائیں',
   'High contrast': 'زیادہ تضاد',
+  Glass: 'شیشہ',
   'Front matter': 'ابتدائی ڈیٹا',
   'Front matter: {name}': 'ابتدائی معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

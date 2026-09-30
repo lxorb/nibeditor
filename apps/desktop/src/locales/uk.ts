@@ -461,7 +461,6 @@ export const uk: Dictionary = {
   Window: 'Вікно',
   'Nib’s own': 'Nib',
   'The system’s': 'Системна',
-  Translucency: 'Напівпрозорість',
   'Window frame': 'Рамка вікна',
   System: 'Системна',
   'Mode: {name}': 'Режим: {name}',
@@ -838,6 +837,7 @@ export const uk: Dictionary = {
   'Stack tabs': 'Розставити вкладки в стовпці',
   'Unstack tabs': 'Прибрати стовпці вкладок',
   'High contrast': 'Висока контрастність',
+  Glass: 'Скло',
   'Front matter': 'Метадані',
   'Front matter: {name}': 'Метадані: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

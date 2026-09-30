@@ -442,7 +442,6 @@ export const ms: Dictionary = {
   Window: 'Tetingkap',
   'Nib’s own': 'Milik Nib',
   'The system’s': 'Milik sistem',
-  Translucency: 'Kelegapan',
   'Window frame': 'Bingkai tetingkap',
   System: 'Sistem',
   'Mode: {name}': 'Mod: {name}',
@@ -805,6 +804,7 @@ export const ms: Dictionary = {
   'Stack tabs': 'Susun tab',
   'Unstack tabs': 'Buang susunan tab',
   'High contrast': 'Kontras tinggi',
+  Glass: 'Kaca',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

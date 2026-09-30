@@ -78,6 +78,25 @@ pub fn remembered(app: &AppHandle) -> Option<Color> {
     colour_of(said.trim())
 }
 
+/// Whether the window last stood on the platform's own material rather than on a colour,
+/// which is what the glass theme is: a launch that finds this puts the material on the
+/// window before the page has started, so the first frame is the material and never the
+/// desk through an empty window. See `wear_from_the_start` in appearance.rs.
+pub fn see_through(app: &AppHandle) -> bool {
+    file(app)
+        .ok()
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .is_some_and(|said| clear(said.trim()))
+}
+
+/// `rgba(…, 0)`, the one colour a browser resolves a transparent ground to.
+fn clear(said: &str) -> bool {
+    said.strip_prefix("rgba(")
+        .and_then(|inside| inside.strip_suffix(')'))
+        .and_then(|inside| inside.rsplit(',').next())
+        .is_some_and(|alpha| alpha.trim().parse::<f32>().is_ok_and(|one| one <= 0.0))
+}
+
 /// `rgb(14, 16, 19)` or `rgba(14, 16, 19, 1)`, as a browser writes a resolved colour.
 ///
 /// Nothing for anything else, which includes `transparent`, `rgba(…, 0)` and every
@@ -113,7 +132,7 @@ fn colour_of(said: &str) -> Option<Color> {
 
 #[cfg(test)]
 mod tests {
-    use super::colour_of;
+    use super::{clear, colour_of};
     use tauri::utils::config::Color;
 
     #[test]
@@ -137,6 +156,23 @@ mod tests {
         assert_eq!(colour_of("rgba(0, 0, 0, 0)"), None);
         assert_eq!(colour_of("rgba(14, 16, 19, 0.5)"), None);
         assert_eq!(colour_of("transparent"), None);
+    }
+
+    /// And the same value read the other way round: that is a window whose material has
+    /// to be there before the page is, and nothing else is.
+    #[test]
+    fn only_a_ground_with_nothing_in_it_asks_for_the_material() {
+        assert!(clear("rgba(0, 0, 0, 0)"));
+        assert!(clear("rgba(14, 16, 19, 0)"));
+        for said in [
+            "rgb(14, 16, 19)",
+            "rgba(14, 16, 19, 1)",
+            "rgba(0, 0, 0, 0.5)",
+            "",
+            "transparent",
+        ] {
+            assert!(!clear(said), "{said}");
+        }
     }
 
     /// And anything else at all, because the file is on a disk and disks keep halves

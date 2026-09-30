@@ -442,7 +442,6 @@ export const ja: Dictionary = {
   Window: 'ウィンドウ',
   'Nib’s own': 'Nib のもの',
   'The system’s': 'システムのもの',
-  Translucency: '半透明',
   'Window frame': 'ウィンドウの枠',
   System: 'システム',
   'Mode: {name}': 'モード: {name}',
@@ -804,6 +803,7 @@ export const ja: Dictionary = {
   'Stack tabs': 'タブを並べる',
   'Unstack tabs': 'タブを並べない',
   'High contrast': 'ハイコントラスト',
+  Glass: 'ガラス',
   'Front matter': 'フロントマター',
   'Front matter: {name}': 'フロントマター: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

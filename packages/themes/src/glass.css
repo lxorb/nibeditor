@@ -1,0 +1,107 @@
+/* Glass: the theme that is about the window rather than about the palette.
+
+   The chrome - the title bar with the tabs in it, the list down the side, the foot
+   row - stands on the material the platform composites behind the window: Mica Alt on
+   Windows 11, Acrylic on Windows 10. The writing surface does not: a note is what
+   somebody reads for hours, so every pane paints its own paper (see Pane.svelte), and a
+   tab that is open runs down into that paper exactly as it does in every other theme.
+   It is the layering Windows 11 asks of an app on Mica and the one Finder and Notes
+   have on a Mac: the material behind the frame, the content on a surface of its own.
+
+   The window wears the material only under this theme; see material.ts in the app.
+
+   ── What it stands on ──
+
+   `data-translucent` on the root says which material the platform put there, and the
+   two kinds are not the same thing to read on.
+
+   Mica keeps its own brightness whatever the wallpaper is: it takes the wallpaper's
+   colour and not its light, and falls back to a flat colour of its own when the
+   window is not the one in front, when the system turns transparency off and on
+   battery saver. So on Mica the chrome is a thin wash of this palette's own colour and
+   the material shows, the way Terminal's tab row and Explorer's side do.
+
+   Acrylic - and a Mac's vibrancy, the day its webview can be seen through - is the
+   desk itself, blurred, and a desk may be a white photograph under the dark side or a
+   black one under the light. So on those the wash is most of the colour, enough that
+   the worst desk there is, unblurred, still leaves every word on the chrome at four and
+   a half to one. apps/desktop/test/e2e/glass.py reads the ratios back off the page over
+   a white desk, a black one and a busy one, and scripts/glass-probe.py off the packaged
+   app's own picture.
+
+   Where the platform has nothing to stand on - which is where the theme is not offered
+   at all, see theme.svelte.ts - the window stands on the palette's own ground and this
+   is a palette like any other.
+
+   ── The words ──
+
+   The two quiet greys are a level stronger than the built-in's, and so is the body
+   text: a caption on a washed surface is the first thing to go, and on light Mica Alt
+   the built-in's quiet grey is under four and a half to one before any wash at all. */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* The colour the chrome is a wash of, and how much of it there is where the desk
+     could be anything: dark enough, at that weight, that a white desk under it still
+     leaves the quiet grey on a row under the pointer at four and a half to one. */
+  --glass-chrome: #191e26;
+  --glass-wash: 92%;
+  /* And what the list down the side adds over that: a layer, the way Windows lays a
+     navigation pane over Mica, which is a lift of the light rather than a colour. */
+  --glass-layer: rgb(255 255 255 / 0.04);
+
+  --muted: #b6bec9;
+  --muted-strong: #d2d8e1;
+  --text: #e8edf4;
+  --text-strong: #ffffff;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --glass-chrome: #f4f6f9;
+  --glass-wash: 88%;
+  --glass-layer: rgb(255 255 255 / 0.4);
+
+  --muted: #4c5563;
+  --muted-strong: #363f4d;
+  --text: #13161b;
+  --text-strong: #05070a;
+}
+
+/* Where the ground is transparent and the material is under it. The shell's own
+   ground is the one layer every surface of the chrome stands on - `main` paints it,
+   and the bar, the foot row and the row of notices are transparent over it - so the
+   wash is said once, there, and the frame and the list only say what they add. */
+:root[data-translucent] {
+  --shell-ground: color-mix(in srgb, var(--glass-chrome) var(--glass-wash), transparent);
+  --tab-frame: transparent;
+  --side-bar-bg-color: var(--glass-layer);
+  /* A row under the pointer is a lift of whatever it is on rather than a colour of
+     its own, so it reads the same on the list, in the bar and in a menu. */
+  --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+/* Mica keeps its own brightness, so the chrome can let it show: enough of a wash
+   lighter than the paper to hold the frame a step off it on Mica Alt's darkest and its
+   lightest - so the open tab still reads as the paper running up into the frame - and
+   the rest is the material. */
+:root[data-translucent='mica'] {
+  --glass-chrome: #232932;
+  --glass-wash: 40%;
+}
+
+:root[data-translucent='mica'][data-theme='light'] {
+  --glass-chrome: #f4f6f9;
+  --glass-wash: 30%;
+}
+
+/* A system asking for less transparency is answered with none: Windows turns Mica into
+   a flat colour by itself, and this makes the page's own chrome flat with it. */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-translucent][data-theme] {
+    --glass-wash: 100%;
+  }
+}

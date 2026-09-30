@@ -445,7 +445,6 @@ export const pa: Dictionary = {
   Window: 'ਵਿੰਡੋ',
   'Nib’s own': 'Nib ਦਾ ਆਪਣਾ',
   'The system’s': 'ਸਿਸਟਮ ਦਾ',
-  Translucency: 'ਅਰਧ-ਪਾਰਦਰਸ਼ਤਾ',
   'Window frame': 'ਵਿੰਡੋ ਦਾ ਫ਼ਰੇਮ',
   System: 'ਸਿਸਟਮ',
   'Mode: {name}': 'ਰੂਪ: {name}',
@@ -812,6 +811,7 @@ export const pa: Dictionary = {
   'Stack tabs': 'ਟੈਬ ਕਾਲਮਾਂ ਵਿੱਚ ਰੱਖੋ',
   'Unstack tabs': 'ਟੈਬ ਕਾਲਮ ਹਟਾਓ',
   'High contrast': 'ਉੱਚ ਕੰਟਰਾਸਟ',
+  Glass: 'ਸ਼ੀਸ਼ਾ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ਮੁੱਖ ਜਾਣਕਾਰੀ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

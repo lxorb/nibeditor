@@ -46,11 +46,11 @@ import {
   type Marks,
 } from '@nib/glasses/choices'
 import { glassesKey } from './even/key.svelte'
-import { rememberGround } from './ground'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
+import { theme } from './theme.svelte'
 
 const STORAGE_KEY = 'nib:modes'
 
@@ -145,7 +145,6 @@ interface Saved {
   spellWords: string[]
   alwaysOnTop: boolean
   frame: Frame
-  translucent: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
   glassesBreak: GlassesBreak
@@ -277,12 +276,11 @@ class Modes {
    *  on. */
   alwaysOnTop = $state(false)
 
-  /** Who draws the frame round the window, and whether the desk shows through it.
+  /** Who draws the frame round the window.
    *
-   *  This machine's own, both of them, and for the same reason `alwaysOnTop` is: they
-   *  are about the desk the window is on rather than about the notes in it. Somebody
-   *  with a Mac and a Linux laptop wants their system's titlebar on one and not the
-   *  other, and Mica exists on exactly one of them.
+   *  This machine's own, for the same reason `alwaysOnTop` is: it is about the desk the
+   *  window is on rather than about the notes in it. Somebody with a Mac and a Linux
+   *  laptop wants their system's titlebar on one and not the other.
    *
    *  Nib's own frame is the default and stays the default: the bar it draws holds the
    *  menu, the sidebar toggle, the tabs and the window's three buttons, and every
@@ -290,7 +288,6 @@ class Modes {
    *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that
    *  stand down when the system draws its own. */
   frame = $state<Frame>('nib')
-  translucent = $state(false)
   closeBrackets = $state(true)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
@@ -484,7 +481,11 @@ class Modes {
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
       this.frame = frameChoice(saved.frame) ?? 'nib'
-      this.translucent = saved.translucent === true
+      // Translucency was a switch here until the glass theme was what it meant; see
+      // `adoptTranslucency` in theme.svelte.ts, which answers it once. Written back
+      // without it, so once is all.
+      if (saved.translucent === true) theme.adoptTranslucency()
+      stale ||= 'translucent' in saved
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
       if (isNumber(saved.highlightTone) || saved.highlightTone === null) {
@@ -513,11 +514,10 @@ class Modes {
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
 
-    // Both of these are the window's own, so they are put on before the first paint
-    // rather than after it: a window that came up with nib's frame and grew the
-    // system's a moment later is a window that jumped.
+    // The window's own, so it is put on before the first paint rather than after it: a
+    // window that came up with nib's frame and grew the system's a moment later is a
+    // window that jumped.
     this.applyFrame()
-    this.applyTranslucency()
 
     // Written back without whatever this version has not got; see `stale` above.
     if (stale) this.persist()
@@ -541,14 +541,6 @@ class Modes {
     this.persist()
   }
 
-  setTranslucent(on: boolean) {
-    if (on === this.translucent) return
-
-    this.translucent = on
-    this.applyTranslucency()
-    this.persist()
-  }
-
   /** The frame, asked of the crate and said on the root.
    *
    *  Both, because both halves have to agree: the crate is what puts a titlebar on the
@@ -560,26 +552,6 @@ class Modes {
 
     if (!isDesktop) return
     void invoke('set_frame', { system: this.frame === 'system' }).catch(() => undefined)
-  }
-
-  /** And the material behind the window, the same way round.
-   *
-   *  The attribute is what makes the app's own ground transparent, so there is something
-   *  for the material to be seen through; see `[data-translucent]` in the themes. A
-   *  platform that has nothing to turn on answers an error, and the switch goes back:
-   *  a translucency that is on and invisible is worse than one that says it cannot. */
-  private applyTranslucency() {
-    document.documentElement.toggleAttribute('data-translucent', this.translucent)
-    // The ground the next launch opens on: nothing at all while this is on, and the
-    // theme's colour once it is off again. See ground.ts.
-    rememberGround()
-
-    if (!isDesktop) return
-    void invoke('set_translucency', { on: this.translucent }).catch(() => {
-      this.translucent = false
-      document.documentElement.toggleAttribute('data-translucent', false)
-      this.persist()
-    })
   }
 
   private applyAlwaysOnTop() {
@@ -1317,7 +1289,6 @@ class Modes {
       attachments: this.attachments,
       pagesPaper: this.pagesPaper,
       frame: this.frame,
-      translucent: this.translucent,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,

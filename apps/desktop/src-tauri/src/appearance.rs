@@ -4,13 +4,13 @@
 //! Nib draws its own frame by default - one bar holding the menu, the sidebar toggle,
 //! the tabs and the window's three buttons, which is the shape the whole shell is built
 //! round - and somebody who would rather have their system's titlebar can have it. The
-//! second is translucency: the window's ground becomes the material the platform
-//! composites behind it, which is Mica on Windows 11, Acrylic on Windows 10 and a
-//! vibrancy view on macOS.
+//! second is the material: the window's ground becomes what the platform composites
+//! behind it, which is Mica Alt on Windows 11, Acrylic on Windows 10 and a vibrancy view
+//! on macOS. Nobody switches that on by itself any more; the glass theme wears it.
 //!
-//! Applied to every window the app draws itself, which is all of them but the
-//! presenter's: that one is deliberately the system's, because a second screen showing a
-//! speaker's notes is not a window anybody arranges.
+//! Both are for every window the app draws itself but the presenter's: that one is
+//! deliberately the system's, because a second screen showing a speaker's notes is not
+//! a window anybody arranges.
 //!
 //! `get_window` rather than `get_webview_window`, for the reason `web_tabs.rs` gives at
 //! length: a window holding a web tab has two webviews in it, and the webview-window
@@ -90,67 +90,86 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// Whether the window's ground is the platform's own material.
+/// Whether this window's ground is the platform's own material, and which one it got.
 ///
-/// Answers an error the pane can show rather than failing quietly: a reader who turns
-/// this on on a platform that has nothing to turn on has asked a question and deserves
-/// the answer. Turning it off never fails - a window with no material to clear is a
-/// window with no material.
+/// Asked by the glass theme, which is the one look that wears it: a theme chosen in a
+/// window is that window's, so only the window that asked is touched - a second window
+/// still wearing glass must not lose its material to the first trying another look in
+/// the theme picker. `dark` is the scheme the page is in, which is what the material is
+/// tinted by on Windows; a Mac's is told the scheme by the page itself.
+///
+/// Answers the material by name, which the page writes on its root so the theme can
+/// know what it is standing on; see glass.css in @nib/themes. An error where there is
+/// nothing to turn on, which the theme answers by standing on a colour of its own.
+/// Turning it off never fails: a window with no material to clear is a window with no
+/// material.
 #[tauri::command]
-pub fn set_translucency(app: AppHandle, on: bool) -> Result<(), String> {
-    let mut trouble: Option<String> = None;
-
-    for window in ours(&app) {
-        if on {
-            // The colour the window opened on goes first. A launch that had a ground
-            // remembered painted it on the window's own layer so that the window could be
-            // on screen before there was anything in it, and a material composited behind
-            // an opaque window is a material nobody can see. Both layers, because the
-            // colour was set on both: the window's is what the platform draws behind, and
-            // the webview's is what shows wherever the page is transparent - which, with
-            // the material on, is everywhere. See ground.rs, which is also why a window
-            // that was already translucent never remembers a colour to begin with.
-            let _ = window.set_background_color(None);
-            if let Some(view) = app.get_webview_window(window.label()) {
-                let _ = view.set_background_color(None);
-            }
-
-            if let Err(reason) = material::apply(&window) {
-                trouble = Some(reason);
-            }
-        } else {
-            material::clear(&window);
-        }
+pub fn set_translucency(window: Window, on: bool, dark: bool) -> Result<&'static str, String> {
+    if window.label() == PRESENTER {
+        return Err("the presenter's window keeps the system's own".to_string());
     }
 
-    match trouble {
-        Some(reason) => Err(reason),
-        None => Ok(()),
+    if !on {
+        material::clear(&window);
+        return Ok("");
+    }
+
+    without_colour(&window);
+    material::apply(&window, Some(dark))
+}
+
+/// The material a window wears from its first frame, for a launch whose page last stood
+/// on it: without it the window is on screen with nothing behind the page at all until
+/// the page has started and asked, and what shows in that third of a second is the desk
+/// itself. The scheme is the system's until the page says otherwise, a moment later.
+/// See `see_through` in ground.rs, which is what says the page stood on it.
+pub fn wear_from_the_start(window: &Window) {
+    without_colour(window);
+    let _ = material::apply(window, None);
+}
+
+/// The colour the window opened on goes first. A launch that had a ground remembered
+/// painted it on the window's own layer so that the window could be on screen before
+/// there was anything in it, and a material composited behind an opaque window is a
+/// material nobody can see. Both layers, because the colour was set on both: the
+/// window's is what the platform draws behind, and the webview's is what shows wherever
+/// the page is transparent - which, with the material on, is everywhere. See ground.rs.
+fn without_colour(window: &Window) {
+    let _ = window.set_background_color(None);
+    if let Some(view) = window.app_handle().get_webview_window(window.label()) {
+        let _ = view.set_background_color(None);
     }
 }
 
 /// What each platform composites behind a window, through the one crate that knows how
 /// to ask for it. Tauri's own `set_effects` wraps the same crate and picks the first
 /// effect it is handed rather than the first the platform supports, which is the whole
-/// question on Windows: Mica is Windows 11's and Acrylic is what Windows 10 has.
+/// question on Windows.
 #[cfg(target_os = "windows")]
 mod material {
     use tauri::Window;
-    use window_vibrancy::{apply_acrylic, apply_mica, clear_acrylic, clear_mica};
+    use window_vibrancy::{
+        apply_acrylic, apply_mica, apply_tabbed, clear_acrylic, clear_mica, clear_tabbed,
+    };
 
-    pub fn apply(window: &Window) -> Result<(), String> {
-        // Mica first, which is the one Windows 11 draws and the one that costs nothing:
-        // it is the desktop's own wallpaper, blurred by the compositor that was drawing
-        // it anyway. Acrylic behind it for Windows 10, where Mica does not exist.
-        if apply_mica(window, None).is_ok() {
-            return Ok(());
+    pub fn apply(window: &Window, dark: Option<bool>) -> Result<&'static str, String> {
+        // Mica Alt first, which is what Windows 11 asks of an app whose tabs are in its
+        // title bar: Mica with the desk's colour taken further, the backdrop Terminal
+        // and Edge stand on. Plain Mica for the first Windows 11, which has no Mica
+        // Alt. Both are opaque and keep their brightness whatever the wallpaper is,
+        // which is what lets the chrome show them; see glass.css. Acrylic for Windows
+        // 10, which has neither, and which does not.
+        if apply_tabbed(window, dark).is_ok() || apply_mica(window, dark).is_ok() {
+            return Ok("mica");
         }
 
         apply_acrylic(window, None)
+            .map(|()| "acrylic")
             .map_err(|error| format!("this window cannot be made translucent: {error}"))
     }
 
     pub fn clear(window: &Window) {
+        let _ = clear_tabbed(window);
         let _ = clear_mica(window);
         let _ = clear_acrylic(window);
     }
@@ -161,15 +180,17 @@ mod material {
     use tauri::Window;
     use window_vibrancy::{apply_vibrancy, clear_vibrancy, NSVisualEffectMaterial};
 
-    pub fn apply(window: &Window) -> Result<(), String> {
+    pub fn apply(window: &Window, _dark: Option<bool>) -> Result<&'static str, String> {
         // The material a window's own background is, rather than a sidebar's or a
-        // menu's: this is the ground the whole app sits on.
+        // menu's: this is the ground the whole app sits on. Its scheme is the window's
+        // appearance, which the page sets; see `paintWindow` in theme.svelte.ts.
         apply_vibrancy(
             window,
             NSVisualEffectMaterial::UnderWindowBackground,
             None,
             None,
         )
+        .map(|()| "vibrancy")
         .map_err(|error| format!("this window cannot be made translucent: {error}"))
     }
 
@@ -185,7 +206,7 @@ mod material {
 mod material {
     use tauri::Window;
 
-    pub fn apply(_window: &Window) -> Result<(), String> {
+    pub fn apply(_window: &Window, _dark: Option<bool>) -> Result<&'static str, String> {
         Err("this platform has no translucency to turn on".to_string())
     }
 

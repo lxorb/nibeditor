@@ -442,7 +442,6 @@ export const gu: Dictionary = {
   Window: 'વિન્ડો',
   'Nib’s own': 'Nib નું પોતાનું',
   'The system’s': 'સિસ્ટમનું',
-  Translucency: 'અર્ધપારદર્શકતા',
   'Window frame': 'વિન્ડોની ફ્રેમ',
   System: 'સિસ્ટમ',
   'Mode: {name}': 'રીત: {name}',
@@ -807,6 +806,7 @@ export const gu: Dictionary = {
   'Stack tabs': 'ટેબ થપ્પી કરો',
   'Unstack tabs': 'ટેબ થપ્પી હટાવો',
   'High contrast': 'ઉચ્ચ કોન્ટ્રાસ્ટ',
+  Glass: 'કાચ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ફ્રન્ટ મેટર: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

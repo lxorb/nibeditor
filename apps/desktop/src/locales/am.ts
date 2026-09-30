@@ -440,7 +440,6 @@ export const am: Dictionary = {
   Window: 'መስኮት',
   'Nib’s own': 'የNib ራሱ',
   'The system’s': 'የሥርዓቱ',
-  Translucency: 'ግልጽነት',
   'Window frame': 'የመስኮት ክፈፍ',
   System: 'ሥርዓት',
   'Mode: {name}': 'ዘዴ: {name}',
@@ -800,6 +799,7 @@ export const am: Dictionary = {
   'Stack tabs': 'ትሮችን አደራድር',
   'Unstack tabs': 'ትሮችን አታደራድር',
   'High contrast': 'ከፍተኛ ንፅፅር',
+  Glass: 'መስታወት',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ራስጌ መረጃ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

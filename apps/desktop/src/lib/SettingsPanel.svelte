@@ -4,7 +4,7 @@
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import AccentSwatches from './AccentSwatches.svelte'
+  import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
@@ -122,14 +122,6 @@
         text: [],
       })),
     ]
-
-    if (!theme.accentIsTheme) {
-      all.push({
-        section: 'appearance',
-        label: t('Accent'),
-        text: theme.accents.map((one) => t(one.name)),
-      })
-    }
 
     if (isDesktop) {
       all.push({
@@ -578,6 +570,19 @@
           </button>
         {/each}
       </div>
+    </div>
+  {:else if field.kind === 'swatches'}
+    <!-- The one control whose options are colours rather than words: nine names
+         would say what nine dots already say. The same row of dots the theme
+         picker has at its foot; see Swatches.svelte. -->
+    <div class="nib-setting setting swatched">
+      {@render named(field, where)}
+      <Swatches
+        options={field.options}
+        label={field.label}
+        chosen={field.get()}
+        onchoose={(value: string) => field.set(value)}
+      />
     </div>
   {:else if field.kind === 'text'}
     <!-- A line somebody types. The placeholder is what the app answers to with
@@ -1215,15 +1220,6 @@
     </div>
   </div>
 
-  <!-- A theme that brought an accent of its own keeps it, so the row would be a
-       row of swatches that change nothing. Left out rather than left dead. -->
-  {#if !theme.accentIsTheme}
-    <h3>{t('Accent')}</h3>
-    <div class="card">
-      <AccentSwatches chosen={theme.accent} onchoose={(id: string) => theme.setAccent(id)} />
-    </div>
-  {/if}
-
   <!-- Theme files and custom.css live in a folder, which only a desktop has. -->
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
@@ -1827,6 +1823,26 @@
     background: var(--bg);
   }
 
+  /* A row whose control is a row of dots rather than one word. It wraps, unlike
+     every other setting row: the control is as wide as the theme's list is long,
+     and a list that does not fit belongs under the name rather than squeezed
+     beside it. */
+  .swatched {
+    flex-wrap: wrap;
+  }
+
+  .swatched > :global(.swatches) {
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  /* Under a thumb the dots are what a thumb needs, which is wider than the row has
+     beside a name, so the name takes the first line and they take the rest. */
+  .sheet.phone .swatched > :global(.swatches) {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
   .meter {
     height: 8px;
     border-radius: 99px;
@@ -2020,10 +2036,6 @@
   }
 
   .sheet.phone .card > .stack {
-    padding: var(--touch-pad);
-  }
-
-  .sheet.phone .card > :global(.accents) {
     padding: var(--touch-pad);
   }
 

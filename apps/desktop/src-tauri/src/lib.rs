@@ -607,8 +607,15 @@ fn ready(
         // Mac, where it is built hidden so its traffic lights are placed before anything
         // is drawn (see lights.rs). A Mac's webview starts in fourteen milliseconds, not
         // in the third of a second Windows needs, which is what showing it at once is for.
+        //
+        // And standing on the platform's material from the first frame where the page
+        // last stood on it, which is the glass theme: see `wear_from_the_start`.
+        let see_through = ground::see_through(handle);
         if let Some(at) = placement::away() {
-            placement::built_away(building, at)?;
+            let window = placement::built_away(building, at)?;
+            if see_through {
+                appearance::wear_from_the_start(&window.as_ref().window());
+            }
         } else {
             let colour = ground::remembered(handle);
             let at_once = colour.is_some() && !cfg!(target_os = "macos");
@@ -617,6 +624,9 @@ fn ready(
                 None => building,
             };
             let window = building.visible(at_once).build()?;
+            if see_through {
+                appearance::wear_from_the_start(&window.as_ref().window());
+            }
             if !at_once {
                 #[cfg(target_os = "macos")]
                 lights::hold(&window);

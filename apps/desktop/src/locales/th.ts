@@ -440,7 +440,6 @@ export const th: Dictionary = {
   Window: 'หน้าต่าง',
   'Nib’s own': 'ของ Nib',
   'The system’s': 'ของระบบ',
-  Translucency: 'ความโปร่งแสง',
   'Window frame': 'กรอบหน้าต่าง',
   System: 'ระบบ',
   'Mode: {name}': 'โหมด: {name}',
@@ -796,6 +795,7 @@ export const th: Dictionary = {
   'Stack tabs': 'เรียงแท็บเป็นคอลัมน์',
   'Unstack tabs': 'เลิกเรียงแท็บ',
   'High contrast': 'คอนทราสต์สูง',
+  Glass: 'กระจก',
   'Front matter': 'ส่วนหัวเอกสาร',
   'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -450,7 +450,6 @@ export const ptBR: Dictionary = {
   Window: 'Janela',
   'Nib’s own': 'Do Nib',
   'The system’s': 'Do sistema',
-  Translucency: 'Translucidez',
   'Window frame': 'Moldura da janela',
   System: 'Sistema',
   'Mode: {name}': 'Modo: {name}',
@@ -819,6 +818,7 @@ export const ptBR: Dictionary = {
   'Stack tabs': 'Empilhar abas',
   'Unstack tabs': 'Desempilhar abas',
   'High contrast': 'Alto contraste',
+  Glass: 'Vidro',
   'Front matter': 'Cabeçalho YAML',
   'Front matter: {name}': 'Metadados: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

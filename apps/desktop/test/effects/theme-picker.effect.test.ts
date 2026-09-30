@@ -323,13 +323,23 @@ test('the scheme and the accent are tried the same way and kept with a click', a
   // Still open: the scheme is a part of the look, not the end of choosing one.
   expect(picking.open).toBe(true)
 
+  // The accent is a theme setting, kept in the app's own drawer of them; see
+  // themes/settings.ts.
+  const keptAccent = () =>
+    (
+      JSON.parse(localStorage.getItem('nib:theme-settings') ?? '{}') as Record<
+        string,
+        Record<string, unknown> | undefined
+      >
+    )['*']?.accent
+
   const teal = document.querySelector<HTMLElement>('[aria-label="Teal"]')
   pointAt(teal ?? undefined)
   expect(theme.accent).toBe('teal')
-  expect(localStorage.getItem('nib:accent')).toBeNull()
+  expect(keptAccent()).toBeUndefined()
   teal?.click()
   flushSync()
-  expect(localStorage.getItem('nib:accent')).toBe('teal')
+  expect(keptAccent()).toBe('teal')
 
   // And leaving now gives back what was kept, which is what was just clicked.
   expect(overlays.escape()).toBe(true)

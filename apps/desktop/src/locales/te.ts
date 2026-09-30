@@ -440,7 +440,6 @@ export const te: Dictionary = {
   Window: 'విండో',
   'Nib’s own': 'Nib సొంతం',
   'The system’s': 'సిస్టమ్‌ది',
-  Translucency: 'అర్ధపారదర్శకత',
   'Window frame': 'విండో ఫ్రేమ్',
   System: 'సిస్టమ్',
   'Mode: {name}': 'మోడ్: {name}',
@@ -808,6 +807,7 @@ export const te: Dictionary = {
   'Stack tabs': 'ట్యాబ్‌లను నిలువుగా పెట్టు',
   'Unstack tabs': 'ట్యాబ్ నిలువు తీసివేయి',
   'High contrast': 'అధిక కాంట్రాస్ట్',
+  Glass: 'గాజు',
   'Front matter': 'ఫ్రంట్ మేటర్',
   'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -444,7 +444,6 @@ export const ha: Dictionary = {
   Window: 'Taga',
   'Nib’s own': 'Na Nib',
   'The system’s': 'Na tsarin',
-  Translucency: 'Sheƙewa',
   'Window frame': 'Firam ɗin taga',
   System: 'Tsarin',
   'Mode: {name}': 'Yanayi: {name}',
@@ -816,6 +815,7 @@ export const ha: Dictionary = {
   'Stack tabs': 'Tara shafuka a ginshiƙi',
   'Unstack tabs': 'Warware tarin shafuka',
   'High contrast': 'Bambanci mai ƙarfi',
+  Glass: 'Gilashi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Bayanan gaba: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

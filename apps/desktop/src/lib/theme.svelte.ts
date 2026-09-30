@@ -1,10 +1,31 @@
 import { contrastCss } from '@nib/themes/contrast'
-import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
+import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
-import { rememberGround } from './ground'
-import { forget, keep, storedText } from './stored'
+import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
+import {
+  forget,
+  isBoolean,
+  isNumber,
+  isRecord,
+  isString,
+  keep,
+  recordOf,
+  stored,
+  storedText,
+} from './stored'
 import { invoke, isDesktop, platform } from './tauri'
+import {
+  type ChosenSettings,
+  declares,
+  paintOf,
+  paintsOver,
+  SETTINGS_KEY,
+  SHARED,
+  type ThemeSetting,
+  type ThemeValue,
+  valueOf,
+} from './themes/settings'
 import { type Stamp, stampOf } from './themes/validate'
 
 export type Scheme = 'dark' | 'light'
@@ -20,14 +41,13 @@ interface ThemeInfo {
    *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
-  /** The stylesheet itself: the high contrast one, which the app ships with, or a
-   *  file's as `reload` last read it. Held, so choosing a theme - or pointing at one in
-   *  the picker - paints in the frame it is asked for rather than after a read. */
+  /** The stylesheet itself: high contrast's, a file's as `reload` last read it, or
+   *  glass's once it has arrived. Held, so choosing or pointing paints at once. */
   css?: string
-  /** Whether the theme states an accent of its own. One that does keeps it: the
-   *  card in the store showed that colour, and what the app looks like has to be
-   *  what the card showed. */
-  ownAccent?: boolean
+  /** A built-in's stylesheet behind a door: glass's. */
+  load?: () => Promise<string>
+  /** Whether the window wears the platform's material: glass's; see material.ts. */
+  translucent?: boolean
   /** What the store wrote into the file when it installed it, for a theme that
    *  came from there. Absent for a file somebody put in the folder themselves,
    *  which the store has nothing to say about. */
@@ -51,7 +71,11 @@ const SIDE_KEY = 'nib:theme-side'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
+/** Where the accent was kept before it was a theme setting. Read, never written. */
 const ACCENT_KEY = 'nib:accent'
+/** The sheet last worn, for a theme whose own is not in hand as the launch paints, so
+ *  the first frame is that theme and not the built-in for a moment. */
+const SHEET_KEY = 'nib:theme-sheet'
 /** That the contrast theme has been offered, so it is offered once and never
  *  again. Absent means the offer has not been made yet; see `offerContrast`. */
 const OFFERED_KEY = 'nib:contrast-offered'
@@ -86,7 +110,7 @@ const DEFAULT_THEME: ThemeInfo = {
  *  and what a system asking for more contrast is answered with - and a theme in the
  *  way it is built, which is what keeps it out of every other theme's way. It states
  *  an accent of its own, so the reader's accent is not painted over the palette the
- *  row showed; see `paintAccent`.
+ *  row showed; see `paintsOver` in themes/settings.ts.
  *
  *  Offline, because the launch that needs it most is a first launch. See
  *  contrast.css in @nib/themes. */
@@ -94,8 +118,26 @@ const CONTRAST: ThemeInfo = {
   id: CONTRAST_THEME,
   name: 'High contrast',
   variants: ['dark', 'light'],
-  ownAccent: true,
   css: contrastCss,
+}
+
+/** And the third: glass, the chrome on the platform's material and the note on paper,
+ *  which is what translucency is in this app; see glass.css and docs/design.md. */
+const GLASS_THEME = 'glass'
+
+/** Whether glass has a material to stand on: Windows, today. A browser and a phone have
+ *  no window of their own, Linux no one answer, and a Mac's webview is opaque until
+ *  Tauri's private API is on. Still worn by id, which is how a drive shows it. */
+function hasMaterial(): boolean {
+  return isDesktop && platform() === 'windows'
+}
+
+const GLASS: ThemeInfo = {
+  id: GLASS_THEME,
+  name: 'Glass',
+  variants: ['dark', 'light'],
+  translucent: true,
+  load: () => import('@nib/themes/glass').then((module) => module.glassCss),
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
@@ -107,6 +149,22 @@ const MORE = '(prefers-contrast: more)'
 /** The line the store writes on the front of a theme it installs. Taken off
  *  before the file is read for what it sets: what it says is a name, not CSS. */
 const STAMP_LINE = /^\s*\/\*!\s*nib-theme\s*\{.*?\}\s*\*\//
+
+/** The app's own settings, a function because their labels follow the language. */
+function appSettings(): ThemeSetting[] {
+  return [accentSetting()]
+}
+
+function isValue(one: unknown): one is ThemeValue {
+  return isString(one) || isNumber(one) || isBoolean(one)
+}
+
+/** The sheet a launch may wear before its theme's own is in hand; see `SHEET_KEY`. */
+function earlySheet(): { id: string; css: string } | null {
+  const held = stored(SHEET_KEY)
+  if (!isRecord(held) || typeof held.id !== 'string' || typeof held.css !== 'string') return null
+  return { id: held.id, css: held.css }
+}
 
 function isScheme(value: unknown): value is Scheme {
   return value === 'dark' || value === 'light'
@@ -136,7 +194,15 @@ class Themes {
   /** Which scheme was asked for, which is a choice and not a theme. `system`
    *  follows the media query through the day rather than only at launch. */
   scheme = $state<SchemeChoice>('system')
-  accent = $state<string>(DEFAULT_ACCENT)
+  /** Every answer the settings were given, in drawers, and what the picker only shows. */
+  private chosen = $state<ChosenSettings>({})
+  private trying = $state<Record<string, ThemeValue>>({})
+  /** The sheet in force, what it declared, and the fetched built-ins' sheets. */
+  private sheet = $state('')
+  private declared = $state<ThemeSetting[]>([])
+  private loaded = $state<Record<string, string>>({})
+  /** Whether the material has been asked about this run; see `apply`. */
+  private material = false
   files = $state<ThemeInfo[]>([])
   /** What the system currently prefers. */
   private preferred = $state<Scheme>('dark')
@@ -149,9 +215,21 @@ class Themes {
   /** The built-in first, then what is installed, in the order the folder gave
    *  them - both platforms list a folder by name, so the order is the same on
    *  every machine and does not move as themes are used. */
-  readonly all = $derived<ThemeInfo[]>([DEFAULT_THEME, CONTRAST, ...this.files])
+  readonly all = $derived<ThemeInfo[]>([
+    DEFAULT_THEME,
+    CONTRAST,
+    ...(!__EVEN_PLUGIN__ && hasMaterial() ? [this.withLoaded(GLASS)] : []),
+    ...this.files,
+  ])
 
-  readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
+  /** The list, and glass where it is not listed. */
+  private readonly known = $derived<ThemeInfo[]>(
+    __EVEN_PLUGIN__ || this.all.some((one) => one.id === GLASS_THEME)
+      ? this.all
+      : [...this.all, this.withLoaded(GLASS)],
+  )
+
+  readonly active = $derived(this.known.find((one) => one.id === this.id) ?? DEFAULT_THEME)
 
   /** The scheme that was asked for, by name or through the system. */
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
@@ -182,9 +260,62 @@ class Themes {
 
     this.restoreChoice()
     this.offerTheContrastTheme()
-    this.accent = storedText(ACCENT_KEY) ?? DEFAULT_ACCENT
+    this.restoreSettings()
+    this.early = earlySheet()
+    // What the crate put back behind the window before the page started, said on the
+    // first frame; and a launch that stood on it, or cannot tell, asks for it off
+    // under any other theme.
+    if (this.active.translucent === true) standAsBefore()
+    this.material = stoodOnNothing() || groundUnknown()
     this.apply()
     void this.reload()
+  }
+
+  /** A fetched built-in, with its sheet once in hand. */
+  private withLoaded(theme: ThemeInfo): ThemeInfo {
+    const css = this.loaded[theme.id]
+    return css === undefined ? theme : { ...theme, css }
+  }
+
+  /** Fetches those sheets for the picker's cards. */
+  warm() {
+    for (const theme of this.all) {
+      // A card with no sheet is drawn bare, and choosing the theme asks again.
+      if (theme.css === undefined && theme.load) void this.fetched(theme).catch(() => undefined)
+    }
+  }
+
+  private async fetched(theme: ThemeInfo): Promise<string> {
+    const held = this.loaded[theme.id]
+    if (held !== undefined || !theme.load) return held ?? ''
+
+    const css = await theme.load()
+    this.loaded = { ...this.loaded, [theme.id]: css }
+    return css
+  }
+
+  /** Every answer, the accent's old key read into the app's drawer and left for an
+   *  older build. Nothing is trusted: `valueOf` reads each against its setting. */
+  private restoreSettings() {
+    const drawers: ChosenSettings = Object.fromEntries(
+      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
+        owner,
+        recordOf(values, isValue),
+      ]),
+    )
+
+    const accent = storedText(ACCENT_KEY)
+    if (accent !== null && drawers[SHARED]?.accent === undefined) {
+      drawers[SHARED] = { ...drawers[SHARED], accent }
+    }
+
+    this.chosen = drawers
+  }
+
+  /** A reader who had the old Translucency switch on under the built-in is given glass;
+   *  any other theme stands. Asked once, by modes.svelte.ts. */
+  adoptTranslucency() {
+    if (this.id === DEFAULT_ID && !__EVEN_PLUGIN__ && hasMaterial()) this.select(GLASS_THEME)
   }
 
   /** What was chosen, in whichever version's spelling.
@@ -307,7 +438,8 @@ class Themes {
 
       const stamp = stampOf(whole)
       // Read past the stamp: it holds a name out of the catalogue, and a theme
-      // called `--accent:` would otherwise be read as one that brings its own.
+      // called `[data-theme=dark]` would otherwise be read as one that states a
+      // scheme it does not state.
       const css = whole.replace(STAMP_LINE, '')
 
       return {
@@ -316,7 +448,6 @@ class Themes {
         // spelled it rather than worked out from the file name.
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
-        ownAccent: /--accent\s*:/.test(css),
         ...(whole ? { css } : {}),
       }
     })
@@ -324,10 +455,10 @@ class Themes {
     // A theme file may have been deleted while it was selected. Only ever
     // decided on a folder that answered: until one has, a theme the storage
     // names is one not found yet rather than one that is gone.
-    if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
+    if (!this.known.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing
-    // to apply and its accent was nobody's yet.
+    // to apply and whatever it declared was nobody's yet.
     else this.apply()
 
     await this.loadCustom()
@@ -366,7 +497,7 @@ class Themes {
   preview(id: string, scheme: SchemeChoice, accent: string) {
     this.id = id
     this.scheme = scheme
-    this.accent = accent
+    this.trying = { accent }
     this.apply(false)
   }
 
@@ -410,32 +541,59 @@ class Themes {
     this.setScheme(this.current === 'dark' ? 'light' : 'dark')
   }
 
-  setAccent(id: string) {
-    this.accent = id
-    keep(ACCENT_KEY, id)
-    this.paintAccent()
+  /** The app's settings the theme does not paint itself, then what it declared. */
+  readonly settings = $derived<ThemeSetting[]>([
+    ...appSettings().filter((one) => !paintsOver(this.sheet, one)),
+    ...this.declared,
+  ])
+
+  /** Which drawer a setting's value is kept in; see `ChosenSettings`. */
+  private drawerOf(setting: ThemeSetting): string {
+    return setting.shared === true ? SHARED : this.id
   }
 
-  /** Whether the accent belongs to the theme rather than to the reader. What
-   *  makes the row of swatches worth showing. */
-  readonly accentIsTheme = $derived(this.active.ownAccent === true)
+  /** What each setting holds: what is tried, else what was kept. */
+  readonly values = $derived<Record<string, ThemeValue>>(
+    Object.fromEntries(
+      this.settings.map((one) => [
+        one.id,
+        valueOf(one, this.trying[one.id] ?? this.chosen[this.drawerOf(one)]?.[one.id]),
+      ]),
+    ),
+  )
 
-  /** Written straight onto the root element, so it sits above whatever theme is
-   *  underneath, including one loaded from a file.
-   *
-   *  Except where the theme brought an accent of its own, which is the one thing
-   *  that outranks the reader's colour: a theme is chosen from a picture of it,
-   *  and repainting a third of that picture afterwards would make the picture a
-   *  lie. Taken off first either way, so the theme underneath is uncovered
-   *  rather than left with yesterday's colour written over it. */
-  private paintAccent() {
+  /** Turns one dial, and keeps it. */
+  set(id: string, value: ThemeValue) {
+    const setting = this.settings.find((one) => one.id === id)
+    if (!setting) return
+
+    const drawer = this.drawerOf(setting)
+    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
+    this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
+    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    this.paintSettings()
+  }
+
+  /** The accent by name. */
+  readonly accent = $derived<string>(String(this.values.accent ?? DEFAULT_ACCENT))
+
+  /** Whether the accent is the theme's rather than the reader's. */
+  readonly accentIsTheme = $derived(!this.settings.some((one) => one.id === 'accent'))
+
+  setAccent(id: string) {
+    this.set('accent', id)
+  }
+
+  /** Every setting's tokens on the root, over the theme; last time's taken off first. */
+  private painted: string[] = []
+
+  private paintSettings() {
     const style = document.documentElement.style
-    const tokens = accentTokens(this.accent, this.current)
+    for (const token of this.painted) style.removeProperty(token)
 
-    for (const token of Object.keys(tokens)) style.removeProperty(token)
-    if (this.accentIsTheme) return
-
+    const tokens = paintOf(this.settings, this.values, this.current)
     for (const [token, value] of Object.entries(tokens)) style.setProperty(token, value)
+    this.painted = Object.keys(tokens)
   }
 
   /** Which application is the latest. Reading a theme file is a round trip, and
@@ -445,6 +603,9 @@ class Themes {
    *  wearing one theme's stylesheet under another theme's tokens. */
   private applied = 0
 
+  /** See `SHEET_KEY`. */
+  private early: { id: string; css: string } | null = null
+
   private apply(kept = true) {
     const theme = this.active
     const applying = ++this.applied
@@ -452,19 +613,33 @@ class Themes {
     // The scheme decides the tokens, whichever theme sits on top of them: the
     // built-in states both, and a theme file only overrides what it cares about.
     document.documentElement.dataset.theme = this.current
-    this.paintAccent()
 
-    // A stylesheet already held needs no round trip: the high contrast one is applied
-    // on the frame it is chosen on, and on a first launch with no network at all, and a
-    // file read by `reload` the same way. Only one not read yet waits for the disk, and
-    // one that has gone away leaves the built-in tokens the attribute set up. Before the
-    // bars, which read the ground back: one restyle rather than two, and the right `--bg`.
-    if (theme.css !== undefined) this.inject(theme.css)
-    else if (!theme.path) this.inject('')
+    // A sheet held needs no round trip. One not in hand waits for the disk or its chunk,
+    // wearing last time's until then; one gone leaves the built-in tokens.
+    const early = this.early?.id === theme.id ? this.early.css : undefined
+    this.early = null
+
+    if (theme.css !== undefined) this.wear(theme.css, kept)
+    else if (theme.load) {
+      if (early !== undefined) this.wear(early, false)
+      void this.fetched(theme)
+        .then((css) => this.wear(applying === this.applied ? css : null, kept))
+        .catch(() => this.wear(applying === this.applied ? '' : null, kept))
+    } else if (!theme.path) this.wear('', kept)
     else {
+      if (early !== undefined) this.wear(early, false)
       void invoke<string>('read_theme', { path: theme.path })
-        .then((css) => this.inject(applying === this.applied ? css : null))
-        .catch(() => this.inject(applying === this.applied ? '' : null))
+        .then((css) => this.wear(applying === this.applied ? css : null, kept))
+        .catch(() => this.wear(applying === this.applied ? '' : null, kept))
+    }
+
+    // The material, behind a door every theme but glass never opens, and on a preview
+    // too, so the picker shows glass as glass; see material.ts.
+    const translucent = theme.translucent === true
+    if (!__EVEN_PLUGIN__ && isDesktop && (translucent || this.material)) {
+      this.material = true
+      const dark = this.current === 'dark'
+      void import('./material').then(({ wearMaterial }) => wearMaterial(translucent, dark, kept))
     }
 
     this.paintSystemBars()
@@ -472,6 +647,48 @@ class Themes {
     // ground.ts. Off the window rather than off the theme, so a theme file's own
     // colour and a translucent window are both what they really are.
     if (kept) rememberGround()
+  }
+
+  /** The sheet on the page, then what needs it there: its declarations, the dials, the
+   *  bars. Null is an answer that arrived after a newer one. */
+  private wear(css: string | null, kept: boolean) {
+    if (css === null) return
+
+    this.inject(css)
+    const sheet = css.replace(STAMP_LINE, '')
+    if (sheet !== this.sheet) this.declared = []
+    this.sheet = sheet
+    this.paintSettings()
+    this.paintSystemBars()
+    if (kept) this.keepSheet(css)
+
+    if (declares(sheet)) void this.readDeclarations(sheet)
+  }
+
+  /** What the next launch wears early; nothing for a theme whose sheet is carried. */
+  private keepSheet(css: string) {
+    // Not on the glasses, whose storage rides a small cookie; see even/local.ts.
+    if (__EVEN_PLUGIN__) return
+    const theme = this.active
+    if (theme.load === undefined && theme.path === undefined) {
+      forget(SHEET_KEY)
+      return
+    }
+
+    if (earlySheet()?.css !== css) keep(SHEET_KEY, JSON.stringify({ id: theme.id, css }))
+  }
+
+  /** What the theme declares, once the grammar behind its door arrives; the sheet
+   *  states its own defaults, so the frame in between is right. See declared.ts. */
+  private async readDeclarations(css: string) {
+    // Left out of the glasses' plugin.
+    if (__EVEN_PLUGIN__) return
+    const applying = this.applied
+    const { declaredIn, readProperty } = await import('./themes/declared')
+    if (applying !== this.applied || css !== this.sheet) return
+
+    this.declared = declaredIn(css, readProperty)
+    this.paintSettings()
   }
 
   /** The bars the system draws over the page: its clock and battery at the top,

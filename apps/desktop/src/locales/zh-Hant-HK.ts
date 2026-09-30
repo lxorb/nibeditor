@@ -439,7 +439,6 @@ export const zhHantHK: Dictionary = {
   Window: '視窗',
   'Nib’s own': 'Nib 自己的',
   'The system’s': '系統的',
-  Translucency: '半透明',
   'Window frame': '視窗邊框',
   System: '系統',
   'Mode: {name}': '模式：{name}',
@@ -793,6 +792,7 @@ export const zhHantHK: Dictionary = {
   'Stack tabs': '並排標籤頁',
   'Unstack tabs': '取消並排標籤頁',
   'High contrast': '高對比',
+  Glass: '玻璃',
   'Front matter': '前置數據',
   'Front matter: {name}': '前置資料：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

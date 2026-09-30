@@ -148,10 +148,34 @@ describe('the Appearance pane', () => {
   /** There was a third row: a More contrast switch, which painted a palette of
    *  its own over whichever theme was in force. Contrast is a theme now, so the
    *  pane asks the two questions it has always had and the store answers the
-   *  third. */
+   *  third.
+   *
+   *  And then whatever the theme in force offers, under them and with no heading
+   *  between: the accent is one of those, declared by the app and inherited by
+   *  every theme that does not paint over it, so it is here because it is in the
+   *  list rather than because the pane knows what an accent is. See
+   *  themes/settings.ts, and `accentSetting` in accents.ts. */
   test('and asks two questions, contrast being a theme rather than a switch', () => {
-    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Style', 'Mode'])
+    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Style', 'Mode', 'Accent'])
   })
+
+  test('and draws the theme’s own settings as a row apiece, in the group that chose it', () => {
+    const group = pane('appearance').groups[0]
+    const accent = group?.fields.find((one) => one.label === 'Accent')
+
+    // A colour is a row of swatches, which is the one control in the app whose
+    // options are painted rather than read.
+    expect(accent?.kind).toBe('swatches')
+    expect(accent?.kind === 'swatches' && accent.options.length).toBe(theme.accents.length)
+    expect(accent?.get()).toBe(theme.accent)
+  })
+
+  /** A theme that states a colour of its own withdraws the row, because swatches
+   *  over that palette would either do nothing or make the picture a lie. Not
+   *  asserted here: which settings the theme in force offers is the theme store's
+   *  question and is answered where the folder, the storage and the page are all
+   *  stood in for - see theme.test.ts, and test/e2e/glass.py for the same thing on
+   *  a real page. What this pane owes is drawing whatever it is handed. */
 
   /** The group is the theme and both rows are about it, so neither row may be
    *  called Theme as well: the pane read "Theme / Theme / Mode" and said nothing

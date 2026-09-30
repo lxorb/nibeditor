@@ -442,7 +442,6 @@ export const bn: Dictionary = {
   Window: 'উইন্ডো',
   'Nib’s own': 'Nib-এর নিজের',
   'The system’s': 'সিস্টেমের',
-  Translucency: 'আধা-স্বচ্ছতা',
   'Window frame': 'উইন্ডোর ফ্রেম',
   System: 'সিস্টেম',
   'Mode: {name}': 'মোড: {name}',
@@ -807,6 +806,7 @@ export const bn: Dictionary = {
   'Stack tabs': 'ট্যাব স্তূপ করুন',
   'Unstack tabs': 'ট্যাব স্তূপ সরান',
   'High contrast': 'উচ্চ বৈসাদৃশ্য',
+  Glass: 'কাচ',
   'Front matter': 'ফ্রন্ট ম্যাটার',
   'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

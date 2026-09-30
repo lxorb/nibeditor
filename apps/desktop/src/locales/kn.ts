@@ -444,7 +444,6 @@ export const kn: Dictionary = {
   Window: 'ವಿಂಡೋ',
   'Nib’s own': 'Nib ನದೇ',
   'The system’s': 'ಸಿಸ್ಟಂನದು',
-  Translucency: 'ಅರೆಪಾರದರ್ಶಕತೆ',
   'Window frame': 'ವಿಂಡೋದ ಚೌಕಟ್ಟು',
   System: 'ಸಿಸ್ಟಂ',
   'Mode: {name}': 'ಮೋಡ್: {name}',
@@ -812,6 +811,7 @@ export const kn: Dictionary = {
   'Stack tabs': 'ಟ್ಯಾಬ್‌ಗಳನ್ನು ಜೋಡಿಸಿ',
   'Unstack tabs': 'ಟ್ಯಾಬ್ ಜೋಡಣೆ ತೆಗೆ',
   'High contrast': 'ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್',
+  Glass: 'ಗಾಜು',
   'Front matter': 'ಫ್ರಂಟ್ ಮ್ಯಾಟರ್',
   'Front matter: {name}': 'ಮುನ್ನುಡಿ ಮಾಹಿತಿ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

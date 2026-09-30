@@ -1108,9 +1108,9 @@
        scrolls, and `vh` would leave the editor taller than the screen. */
     height: 100vh;
     height: 100dvh;
-    /* The window's ground rather than a colour: with translucency on it is nothing,
-       and what shows is what the platform draws behind the window. See base.css. */
-    background: var(--window-ground);
+    /* What the shell stands on rather than a colour: under the glass theme the
+       platform's material with a wash of the theme's own over it. See base.css. */
+    background: var(--shell-ground);
     transition: background var(--dur-slow) var(--ease-out);
   }
 

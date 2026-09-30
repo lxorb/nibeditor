@@ -442,7 +442,6 @@ export const ps: Dictionary = {
   Window: 'کړکۍ',
   'Nib’s own': 'د Nib خپل',
   'The system’s': 'د سيستم',
-  Translucency: 'نيم رڼاتوب',
   'Window frame': 'د کړکۍ چوکاټ',
   System: 'غونډال',
   'Mode: {name}': 'حالت: {name}',
@@ -806,6 +805,7 @@ export const ps: Dictionary = {
   'Stack tabs': 'ټوپونه په ستنو کې کېښکېنه',
   'Unstack tabs': 'د ټوپونو ستنې لرې کړه',
   'High contrast': 'لوړ تضاد',
+  Glass: 'ښیښه',
   'Front matter': 'سرمنځپانګه',
   'Front matter: {name}': 'سرلیک معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

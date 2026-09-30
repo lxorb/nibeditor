@@ -442,7 +442,6 @@ export const jv: Dictionary = {
   Window: 'Jendhela',
   'Nib’s own': 'Duwèké Nib',
   'The system’s': 'Duwèké sistem',
-  Translucency: 'Semu tembus',
   'Window frame': 'Kerangka jendhela',
   System: 'Sistem',
   'Mode: {name}': 'Mode: {name}',
@@ -804,6 +803,7 @@ export const jv: Dictionary = {
   'Stack tabs': 'Tumpuk tab',
   'Unstack tabs': 'Batalake tumpukan tab',
   'High contrast': 'Kontras dhuwur',
+  Glass: 'Kaca',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

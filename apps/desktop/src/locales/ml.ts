@@ -445,7 +445,6 @@ export const ml: Dictionary = {
   Window: 'വിൻഡോ',
   'Nib’s own': 'Nib-ന്റെ സ്വന്തം',
   'The system’s': 'സിസ്റ്റത്തിന്റെ',
-  Translucency: 'അർധസുതാര്യത',
   'Window frame': 'വിൻഡോയുടെ ചട്ടക്കൂട്',
   System: 'സിസ്റ്റം',
   'Mode: {name}': 'മോഡ്: {name}',
@@ -817,6 +816,7 @@ export const ml: Dictionary = {
   'Stack tabs': 'ടാബുകൾ അടുക്കുക',
   'Unstack tabs': 'ടാബ് അടുക്കൽ മാറ്റുക',
   'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
+  Glass: 'ഗ്ലാസ്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
   'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

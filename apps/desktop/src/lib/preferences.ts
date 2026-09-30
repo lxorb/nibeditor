@@ -19,6 +19,7 @@ import { isDesktop } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
+import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
 import { updates } from './updates.svelte'
 
@@ -30,6 +31,18 @@ interface Common {
    *  somebody who already knows the word; one that explains itself has none, and
    *  shows no glyph at all. */
   hint?: string
+}
+
+/** One colour among a row of them, drawn as the colour itself. The only control
+ *  in the app whose options are not words: naming nine shades would be nine
+ *  words saying what nine squares already say. */
+export interface SwatchOption {
+  value: string
+  /** What a pointer resting on it says, and what a screen reader is told - the
+   *  one place the colour does have to be a word. */
+  label: string
+  /** The colour to paint it, in the scheme the app is in. */
+  colour: string
 }
 
 /** One choice among a few, drawn as a row rather than opened as a list. Only
@@ -70,6 +83,15 @@ export type Field = Common &
     | {
         kind: 'segmented'
         options: Segment[]
+        initial?: string
+        get(): string
+        set(value: string): void
+      }
+    /** A row of colours. Only ever a theme setting: a colour is one of the four
+     *  things a theme may offer, and the accent is the app's own. */
+    | {
+        kind: 'swatches'
+        options: SwatchOption[]
         initial?: string
         get(): string
         set(value: string): void
@@ -129,6 +151,74 @@ const DICTIONARIES = [
  *  holds. Following the system is what anything else reads as. */
 function asChoice(value: string): SchemeChoice {
   return value === 'dark' || value === 'light' ? value : 'system'
+}
+
+/** One of the theme's own settings, as a row of the pane.
+ *
+ *  The whole of what Appearance knows about what a theme offers. A theme declares
+ *  a kind and the app already has a control for each: a colour is a row of
+ *  swatches, a number in a range is the dial every other measurement in the app
+ *  uses, a switch is a switch, and a choice of two or three short words is the
+ *  segmented control - past three it is a dropdown, because a row of six words is
+ *  a row nobody can read at a glance.
+ *
+ *  The label goes through `t()` on its way in: a theme the app ships with declares
+ *  words the catalogues carry, and a theme file declares its author's own, which
+ *  `t()` hands back unchanged. */
+function themeField(setting: ThemeSetting): Field {
+  const label = t(setting.label)
+  const get = () => theme.values[setting.id]
+  const common = { label, initial: setting.initial }
+
+  if (setting.kind === 'range') {
+    return {
+      ...common,
+      kind: 'slider',
+      min: setting.min,
+      max: setting.max,
+      step: setting.step,
+      unit: setting.unit,
+      initial: setting.initial,
+      get: () => Number(get() ?? setting.initial),
+      set: (value) => theme.set(setting.id, value),
+    }
+  }
+
+  if (setting.kind === 'switch') {
+    return {
+      ...common,
+      kind: 'switch',
+      initial: setting.initial,
+      get: () => get() === true,
+      set: (on) => theme.set(setting.id, on),
+    }
+  }
+
+  if (setting.kind === 'colour') {
+    return {
+      ...common,
+      kind: 'swatches',
+      options: setting.options.map((one) => ({
+        value: one.value,
+        label: t(one.name),
+        colour: one[theme.current],
+      })),
+      initial: setting.initial,
+      get: () => String(get() ?? setting.initial),
+      set: (value) => theme.set(setting.id, value),
+    }
+  }
+
+  const options = setting.options.map((one) => ({ value: one.value, label: t(one.label) }))
+
+  return {
+    ...common,
+    kind: options.length > 3 ? 'select' : 'segmented',
+    options,
+    initial: setting.initial,
+    get: () => String(get() ?? setting.initial),
+    set: (value) => theme.set(setting.id, value),
+  }
 }
 
 /** The panes that are only about settings. The account and the LLM connector are
@@ -648,14 +738,25 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => theme.shown,
               set: (value) => theme.setScheme(asChoice(value)),
             },
+            // And whatever the theme in force offers of its own, under the two
+            // rows that chose it and with no heading between: they are the
+            // theme's, and where they sit is what says so. A theme with nothing
+            // to offer adds nothing, so the group is the same two rows it has
+            // always been. See themes/settings.ts.
+            ...theme.settings.map(themeField),
           ],
         },
 
-        // The window itself: who draws its frame, and whether the desk shows through
-        // it. Desktop only, because a browser tab has neither - and on a phone the
-        // system draws everything. Nib's own frame stays the default: the bar it draws
-        // holds the menu, the sidebar toggle, the tabs and the window's three buttons,
-        // and it is the shape the whole shell is measured from. See appearance.rs.
+        // The window itself: who draws its frame. Desktop only, because a browser tab
+        // has none - and on a phone the system draws everything. Nib's own frame stays
+        // the default: the bar it draws holds the menu, the sidebar toggle, the tabs
+        // and the window's three buttons, and it is the shape the whole shell is
+        // measured from. See appearance.rs.
+        //
+        // Whether the desk shows through the window is not here: that is the glass
+        // theme, chosen under Style above. A row of its own was a switch that took the
+        // window's ground away and showed next to nothing, since every surface painted
+        // over the ground; see material.ts.
         ...(isDesktop
           ? ([
               {
@@ -671,22 +772,6 @@ export function preferences(view?: EditorView): Pane[] {
                     initial: 'nib',
                     get: () => modes.frame,
                     set: (value) => modes.setFrame(value),
-                  },
-                  {
-                    // A switch would read as "Translucency: on", which is the same two
-                    // words in a shape that says less; the row beside it is a choice of
-                    // two and these read as a pair. Where the platform has nothing to
-                    // turn on, turning it on says so and comes back off; see
-                    // `applyTranslucency` in modes.svelte.ts.
-                    kind: 'segmented',
-                    label: t('Translucency'),
-                    options: [
-                      { value: 'off', label: t('Off') },
-                      { value: 'on', label: t('On') },
-                    ],
-                    initial: 'off',
-                    get: () => (modes.translucent ? 'on' : 'off'),
-                    set: (value) => modes.setTranslucent(value === 'on'),
                   },
                 ],
               },

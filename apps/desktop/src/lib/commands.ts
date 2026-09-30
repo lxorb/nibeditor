@@ -1261,21 +1261,17 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => modes.resetZoom(),
     },
 
-    // The window's own two, which only a desktop has a window for. Each says what it
+    // The window's own frame, which only a desktop has a window for. It says what it
     // would do rather than what is on, the way every other toggle in this list does:
-    // a row somebody reads before they press it. The pane in Settings shows both as a
-    // pair of choices; see preferences.ts and appearance.rs.
+    // a row somebody reads before they press it. The pane in Settings shows it as a
+    // pair of choices; see preferences.ts and appearance.rs. What the window stands on
+    // is the glass theme's, one of the rows below.
     ...(isDesktop
       ? [
           {
             id: 'window-frame',
             label: t('Window frame'),
             run: () => modes.setFrame(modes.frame === 'system' ? 'nib' : 'system'),
-          },
-          {
-            id: 'translucency',
-            label: t('Translucency'),
-            run: () => modes.setTranslucent(!modes.translucent),
           },
         ]
       : []),
@@ -1308,12 +1304,17 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !theme.offers(choice),
       run: () => theme.setScheme(choice),
     })),
-    ...theme.accents.map((swatch) => ({
-      id: `accent:${swatch.id}`,
-      label: t('Accent: {name}', { name: t(swatch.name) }),
-      checked: swatch.id === theme.accent,
-      run: () => theme.setAccent(swatch.id),
-    })),
+    // Only where the accent is the reader's to choose. A theme that states one of
+    // its own is showing that colour on purpose, and nine rows in the palette that
+    // change nothing are nine rows in the way of the one somebody meant.
+    ...(theme.accentIsTheme
+      ? []
+      : theme.accents.map((swatch) => ({
+          id: `accent:${swatch.id}`,
+          label: t('Accent: {name}', { name: t(swatch.name) }),
+          checked: swatch.id === theme.accent,
+          run: () => theme.setAccent(swatch.id),
+        }))),
     // What a note's front matter is drawn as. A row each, for the same reason the
     // scheme has one each: the keyboard reaches the same three words the pane
     // offers, and the one in force is ticked.

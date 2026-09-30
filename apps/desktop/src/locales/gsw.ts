@@ -442,7 +442,6 @@ export const gsw: Dictionary = {
   Window: 'Fänschter',
   'Nib’s own': 'Vo Nib',
   'The system’s': 'Vom Syschtem',
-  Translucency: 'Transparänz',
   'Window frame': 'Fänschterrahme',
   System: 'System',
   'Mode: {name}': 'Modus: {name}',
@@ -809,6 +808,7 @@ export const gsw: Dictionary = {
   'Stack tabs': 'Tabs stapla',
   'Unstack tabs': 'Tabs nöd stapla',
   'High contrast': 'Hohe Kontrascht',
+  Glass: 'Glas',
   'Front matter': 'Chopfdate',
   'Front matter: {name}': 'Chopfdate: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

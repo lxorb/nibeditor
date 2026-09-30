@@ -441,7 +441,6 @@ export const ko: Dictionary = {
   Window: '창',
   'Nib’s own': 'Nib의 것',
   'The system’s': '시스템의 것',
-  Translucency: '반투명',
   'Window frame': '창 테두리',
   System: '시스템',
   'Mode: {name}': '모드: {name}',
@@ -799,6 +798,7 @@ export const ko: Dictionary = {
   'Stack tabs': '탭을 나란히',
   'Unstack tabs': '탭 나란히 해제',
   'High contrast': '고대비',
+  Glass: '유리',
   'Front matter': '프런트 매터',
   'Front matter: {name}': '프런트 매터: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

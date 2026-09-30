@@ -442,7 +442,6 @@ export const hi: Dictionary = {
   Window: 'विंडो',
   'Nib’s own': 'Nib का अपना',
   'The system’s': 'सिस्टम का',
-  Translucency: 'पारभासकता',
   'Window frame': 'विंडो का फ़्रेम',
   System: 'सिस्टम',
   'Mode: {name}': 'मोड: {name}',
@@ -809,6 +808,7 @@ export const hi: Dictionary = {
   'Stack tabs': 'टैब को स्तंभों में रखें',
   'Unstack tabs': 'टैब के स्तंभ हटाएँ',
   'High contrast': 'उच्च कंट्रास्ट',
+  Glass: 'कांच',
   'Front matter': 'फ़्रंट मैटर',
   'Front matter: {name}': 'फ़्रंट मैटर: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

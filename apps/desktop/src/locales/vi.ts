@@ -441,7 +441,6 @@ export const vi: Dictionary = {
   Window: 'Cửa sổ',
   'Nib’s own': 'Của Nib',
   'The system’s': 'Của hệ thống',
-  Translucency: 'Độ trong mờ',
   'Window frame': 'Khung cửa sổ',
   System: 'Hệ thống',
   'Mode: {name}': 'Chế độ: {name}',
@@ -800,6 +799,7 @@ export const vi: Dictionary = {
   'Stack tabs': 'Xếp thẻ thành cột',
   'Unstack tabs': 'Bỏ xếp cột thẻ',
   'High contrast': 'Tương phản cao',
+  Glass: 'Kính',
   'Front matter': 'Phần đầu tệp',
   'Front matter: {name}': 'Siêu dữ liệu: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

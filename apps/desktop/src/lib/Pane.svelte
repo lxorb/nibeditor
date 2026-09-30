@@ -672,6 +672,10 @@
 </div>
 
 <style>
+  /* The paper whatever the pane shows is written on. The window's ground was the paper
+     while a window could only be opaque; under glass it is the platform's material, so
+     the words stand on something of their own. A pane with its own strip is paper under
+     the strip only, since the strip is the frame. */
   .pane {
     position: relative;
     flex: 1;
@@ -679,6 +683,11 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    background: var(--bg);
+  }
+
+  .pane:has(> .head) {
+    background: linear-gradient(transparent var(--titlebar-height), var(--bg) 0);
   }
 
   /* A pane beside another one carries its own strip. The window's single pane

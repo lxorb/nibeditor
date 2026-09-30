@@ -47,7 +47,7 @@ export function search(query: string, panes: Pane[], places: Place[]): Hit[] {
 
 function words(field: Field, group: Group, pane: Pane): string[] {
   const own =
-    field.kind === 'select' || field.kind === 'segmented'
+    field.kind === 'select' || field.kind === 'segmented' || field.kind === 'swatches'
       ? field.options.map((option) => option.label)
       : field.kind === 'slider' && field.unit
         ? [field.unit]

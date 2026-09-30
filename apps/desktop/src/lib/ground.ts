@@ -17,12 +17,37 @@
  *  the inline script there, and test/ground.test.ts, which holds the two to each other.
  */
 
-import { keep } from './stored'
+import { keep, storedText } from './stored'
 import { invoke, isDesktop } from './tauri'
 
 /** Where it is kept. The same string is in index.html, which is read before any module
  *  of ours exists and so cannot import this; ground.test.ts holds the two together. */
 const KEY = 'nib:ground'
+
+/** A transparent ground as a browser resolves it: a window on the platform's material. */
+const NOTHING = 'rgba(0, 0, 0, 0)'
+
+/** Which material the window stood on; written by material.ts. */
+export const MATERIAL_KEY = 'nib:material'
+
+/** Whether the window last stood on the material, which the crate has then put back
+ *  before the page started; see `see_through` in src-tauri/src/ground.rs. */
+export function stoodOnNothing(): boolean {
+  return storedText(KEY) === NOTHING
+}
+
+/** Whether nothing about the ground is written down here: a first launch, or storage
+ *  cleared under a crate that may still have put the material back. */
+export function groundUnknown(): boolean {
+  return storedText(KEY) === null
+}
+
+/** Says on the root, before the first frame, the material the crate put back, so the
+ *  page's ground is not painted solid over it for the moment the answer takes. */
+export function standAsBefore(): void {
+  const was = storedText(MATERIAL_KEY)
+  if (was && stoodOnNothing()) document.documentElement.dataset.translucent = was
+}
 
 /** Whether a read is already scheduled for the next frame. */
 let asked = false

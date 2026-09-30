@@ -442,7 +442,6 @@ export const tr: Dictionary = {
   Window: 'Pencere',
   'Nib’s own': 'Nib’in kendi',
   'The system’s': 'Sistemin',
-  Translucency: 'Yarı saydamlık',
   'Window frame': 'Pencere çerçevesi',
   System: 'Sistem',
   'Mode: {name}': 'Kip: {name}',
@@ -808,6 +807,7 @@ export const tr: Dictionary = {
   'Stack tabs': 'Sekmeleri yan yana diz',
   'Unstack tabs': 'Sekme dizilişini kaldır',
   'High contrast': 'Yüksek karşıtlık',
+  Glass: 'Cam',
   'Front matter': 'Ön bilgi',
   'Front matter: {name}': 'Ön bilgi: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

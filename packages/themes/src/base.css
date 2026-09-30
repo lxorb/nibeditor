@@ -9,15 +9,21 @@
 
 /* The window's own ground.
    `--bg` in every window there has ever been, and the one thing a reader can take
-   away: with translucency on it is nothing at all, so what shows through the app is
-   whatever the platform composites behind the window - Mica on Windows 11, Acrylic on
-   Windows 10, a vibrancy view on macOS. See appearance.rs and modes.svelte.ts.
+   away: under the glass theme it is nothing at all, so what shows through the app is
+   whatever the platform composites behind the window - Mica Alt on Windows 11. See
+   appearance.rs and material.ts in the app.
 
    The ground and nothing else. Every surface above it keeps the token it had, so a
    row, a card, a sheet and a menu are the colours they were measured at: a translucent
-   window must not become a window whose words are on somebody's wallpaper. */
+   window must not become a window whose words are on somebody's wallpaper.
+
+   `--shell-ground` is what the app's own shell stands on over that: the same colour,
+   unless a theme lays a wash over the material. The glass theme does, and says it
+   here rather than on the ground, which `html` and `body` both paint and would lay
+   twice. See glass.css. */
 :root {
   --window-ground: var(--bg);
+  --shell-ground: var(--window-ground);
 }
 
 :root[data-translucent] {

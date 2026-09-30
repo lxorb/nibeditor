@@ -454,7 +454,6 @@ export const it: Dictionary = {
   Window: 'Finestra',
   'Nib’s own': 'Di Nib',
   'The system’s': 'Di sistema',
-  Translucency: 'Trasparenza',
   'Window frame': 'Cornice della finestra',
   System: 'Sistema',
   'Mode: {name}': 'Modalità: {name}',
@@ -828,6 +827,7 @@ export const it: Dictionary = {
   'Stack tabs': 'Impila le schede',
   'Unstack tabs': 'Separa le schede',
   'High contrast': 'Contrasto elevato',
+  Glass: 'Vetro',
   'Front matter': 'Intestazione YAML',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
