@@ -169,7 +169,14 @@ export const PUSH_BATCH = 50
  *  account has no such document, or the update is past `MOST_UPDATE_BYTES`. */
 export type DocRefusal = 'role' | 'gone' | 'large'
 
-/** One document a device wants news of: what it has, as a state vector. */
+/** One document a device wants news of: what it has, as a state vector.
+ *
+ *  Beside every state vector travels the document's `seq`: its version on the
+ *  account, a counter the room moves on with every change it applies. The two answer
+ *  different questions. A state vector says which insertions a copy holds, which is
+ *  what a diff is made against; but a Yjs deletion only adds to the delete set and
+ *  moves no client's clock, so two copies with one state vector can read differently.
+ *  Whether anything changed is the version's to say. */
 export interface PullDoc {
   id: string
   epoch: number
@@ -182,9 +189,10 @@ export interface PullRequest {
 }
 
 /** What the device is missing (`Y.diffUpdateV2` of the snapshot against its state
- *  vector); or, for a device on an old epoch, the epoch it should be on. */
+ *  vector, deletions and all) and the version that brings it to; or, for a device on
+ *  an old epoch, the epoch it should be on. */
 export type PullAnswer =
-  | { id: string; update: Uint8Array }
+  | { id: string; update: Uint8Array; seq: number }
   | { id: string; epoch: number; epochBase: string }
   | { id: string; refused: DocRefusal }
 
@@ -194,16 +202,19 @@ export interface PullResponse {
 
 /** One document's pending updates on their way up.
  *
- *  `base` is the confirmed state vector they were made on. `checked` is the state
- *  the device classified against after a `moved` (section 5.4): the account applies
- *  a push that names it only if it has not moved again since. `at` is when the
- *  newest of the updates was made, on the device's clock: what `minor` compares, and
- *  nothing else. */
+ *  `seq` is the version the device's confirmed state is at, and `base` that state's
+ *  vector. The account applies the update only if the document is still at `seq`;
+ *  otherwise it answers `moved` with the diff against `base`, and the device
+ *  classifies (section 5.4) and pushes again naming the version `moved` brought it
+ *  to, which is what makes the second device the one that checks. A push whose answer
+ *  was lost and is sent again is answered `moved` with its own operations, classifies
+ *  as identical, and goes through on the next round. `at` is when the newest of the
+ *  updates was made, on the device's clock: what `minor` compares, and nothing else. */
 export interface PushDoc {
   id: string
   epoch: number
+  seq: number
   base: Uint8Array
-  checked?: Uint8Array
   update: Uint8Array
   at: number
 }
@@ -213,12 +224,12 @@ export interface PushRequest {
   docs: PushDoc[]
 }
 
-/** Per document: applied and durable (`sv` is the account's state now); moved on
- *  since `base` (here is what the device is missing, classify and come back); on a
- *  newer epoch; or refused. */
+/** Per document: applied and durable (the account is now at `seq`, with state vector
+ *  `sv`); moved on since `seq` (here is what the device is missing, and the version
+ *  it comes to: classify and come back); on a newer epoch; or refused. */
 export type PushAnswer =
-  | { id: string; ok: true; sv: Uint8Array }
-  | { id: string; moved: Uint8Array; sv: Uint8Array }
+  | { id: string; ok: true; seq: number; sv: Uint8Array }
+  | { id: string; moved: Uint8Array; seq: number; sv: Uint8Array }
   | { id: string; epoch: number }
   | { id: string; refused: DocRefusal }
 
@@ -239,6 +250,7 @@ export interface SnapshotDoc {
   id: string
   epoch: number
   epochBase?: string
+  seq: number
   update: Uint8Array
 }
 
@@ -256,10 +268,15 @@ export interface SnapshotPage {
  *  client and hears neither message below. */
 export const ROOM_V2 = 'nib.v2'
 
-/** What the room says beyond y-protocols: the state it has made durable (at each
- *  settle), and the epoch it is moving to (before it closes with 4001). */
+/** What the room says beyond y-protocols: the version and state it has made durable
+ *  (at each settle), and the epoch it is moving to (before it closes with 4001).
+ *
+ *  An ACK's state vector confirms a device's pending insertions by their clocks. A
+ *  pending update that only deletes has no clock to confirm it by, so it stays pending
+ *  until a push is answered `ok`; sending it again is harmless, because Yjs ignores
+ *  what it already has. */
 export type RoomNews =
-  { t: 'ack'; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
+  { t: 'ack'; seq: number; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
 
 /** The close code a room uses when its document starts a new epoch. */
 export const NEW_EPOCH = 4001
@@ -504,7 +521,8 @@ function docRefusalOf(value: unknown): DocRefusal | null {
 function pullAnswerOf(value: unknown): PullAnswer | null {
   if (!isRecord(value) || !isId(value.id)) return null
   const { id } = value
-  if (isBytes(value.update)) return { id, update: value.update }
+  if (isBytes(value.update) && isCount(value.seq))
+    return { id, update: value.update, seq: value.seq }
   if (isCount(value.epoch) && typeof value.epochBase === 'string') {
     return { id, epoch: value.epoch, epochBase: value.epochBase }
   }
@@ -521,15 +539,11 @@ export function pullResponseOf(value: unknown): PullResponse | null {
 
 function pushDocOf(value: unknown): PushDoc | null {
   if (!isRecord(value)) return null
-  const { id, epoch, base, checked, update, at } = value
-  if (!isId(id) || !isCount(epoch) || !isBytes(base) || !isBytes(update) || !isTime(at)) {
+  const { id, epoch, seq, base, update, at } = value
+  if (!isId(id) || !isCount(epoch) || !isCount(seq) || !isBytes(base) || !isBytes(update)) {
     return null
   }
-  if (checked !== undefined && !isBytes(checked)) return null
-
-  const doc: PushDoc = { id, epoch, base, update, at }
-  if (checked !== undefined) doc.checked = checked
-  return doc
+  return isTime(at) ? { id, epoch, seq, base, update, at } : null
 }
 
 /** `POST /v2/docs/push`, as the Worker reads it: at most `PUSH_BATCH` documents. The
@@ -544,8 +558,10 @@ export function pushRequestOf(value: unknown): PushRequest | null {
 function pushAnswerOf(value: unknown): PushAnswer | null {
   if (!isRecord(value) || !isId(value.id)) return null
   const { id } = value
-  if (value.ok === true && isBytes(value.sv)) return { id, ok: true, sv: value.sv }
-  if (isBytes(value.moved) && isBytes(value.sv)) return { id, moved: value.moved, sv: value.sv }
+  const { seq, sv } = value
+  if (value.ok === true && isCount(seq) && isBytes(sv)) return { id, ok: true, seq, sv }
+  if (isBytes(value.moved) && isCount(seq) && isBytes(sv))
+    return { id, moved: value.moved, seq, sv }
   if (isCount(value.epoch)) return { id, epoch: value.epoch }
   const refused = docRefusalOf(value.refused)
   return refused ? { id, refused } : null
@@ -566,11 +582,17 @@ export function keepRequestOf(value: unknown): KeepRequest | null {
 }
 
 function snapshotDocOf(value: unknown): SnapshotDoc | null {
-  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isBytes(value.update)) {
+  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isCount(value.seq)) {
     return null
   }
+  if (!isBytes(value.update)) return null
   if (value.epochBase !== undefined && typeof value.epochBase !== 'string') return null
-  const doc: SnapshotDoc = { id: value.id, epoch: value.epoch, update: value.update }
+  const doc: SnapshotDoc = {
+    id: value.id,
+    epoch: value.epoch,
+    seq: value.seq,
+    update: value.update,
+  }
   if (typeof value.epochBase === 'string') doc.epochBase = value.epochBase
   return doc
 }

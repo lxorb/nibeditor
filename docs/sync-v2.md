@@ -465,15 +465,25 @@ form.
 
 Per note, a device keeps two things:
 
-- **confirmed**: the document as the account has acknowledged it (an encoded Yjs update) and
-  its state vector;
+- **confirmed**: the document as the account has acknowledged it (an encoded Yjs update),
+  its state vector, and its version `seq`;
 - **pending**: the updates this device made that the account has not acknowledged.
 
-The live document is confirmed plus pending. Updates arriving from the account (over the
-socket, or in a pull) are applied to both. On an acknowledgement the account names the
-state vector it has made durable, and whatever pending that covers moves into confirmed.
-This is Replicache's rebase and Differential Synchronization's shadow, with the CRDT doing
-the replay: nothing has to be re-executed, because Yjs updates commute.
+`seq` is the document's version on the account, a counter the room moves on with every
+change it applies. It and not the state vector says whether a document changed: a Yjs
+deletion adds to the delete set and moves no client's clock, so two copies with one state
+vector can read differently, and a check on state vectors alone would merge silently over a
+paragraph another device deleted. The state vector is still what a diff is made against.
+
+The live document is confirmed plus pending. Updates arriving over a live socket are
+applied to both. A pull never lands on a document holding pending edits made while apart:
+those go up first and meet the account's changes through `moved` (section 5.4), so they
+are always classified against the state they were made on. On an acknowledgement the
+account names the version and state vector it has made durable, and whatever pending that
+covers moves into confirmed (a pending update that only deletes has no clock to be covered
+by, and stays pending until a push is answered `ok`; sending it again is harmless). This
+is Replicache's rebase and Differential Synchronization's shadow, with the CRDT doing the
+replay: nothing has to be re-executed, because Yjs updates commute.
 
 **Write order, which is the crash story.** A keystroke goes into the live document, into
 the socket if it is up, and into the pending buffer in memory. On autosave's pause the file
@@ -522,17 +532,20 @@ cannot merge operations into the new one, and so they fall back to the three-way
 ### 5.4 When a merge is silent, and when it asks
 
 Only one device ever asks, and it is the one whose edits arrive second. When a device sends
-pending updates it names the confirmed state vector they were made on. If the account has
-moved past it, the account answers `moved` with what the device is missing instead of
-applying them. The device then has three texts:
+pending updates it names the version (`seq`, section 5.2) and state vector of the confirmed
+state they were made on. If the account's version is newer, the account answers `moved`
+with what the device is missing (the diff against that state vector, deletions included)
+and the version it comes to, instead of applying them. The device then has three texts:
 
 - **B**, the ancestor: its confirmed document as text;
 - **L**, local: confirmed plus pending;
 - **R**, remote: confirmed plus what the account sent;
 
 and computes **M**, the CRDT merge of both, in a scratch document. The classifier
-(`@nib/sync-core/diverge`) diffs B to L and B to R at character level with semantic cleanup, in
-B's coordinates, and looks at the edits that meet:
+(`@nib/sync-core/diverge`) diffs B to L and B to R at character level with semantic cleanup,
+widens every edit that cuts into a word to the whole word (so `noon` changed to `one` is one
+changed word, not two letters deleted beside the other side's change), works in B's
+coordinates, and looks at the edits that meet:
 
 - **Identical edits** (same span, same replacement) count once. Both fixed the typo. The
   CRDT would keep both insertions (`thethe`), so the second copy is removed from M as part
@@ -552,13 +565,15 @@ The verdict:
 | `diverged` | any overlap above 80 characters; or a paragraph, list item, heading, fenced block or table row deleted on one side and edited by more than 16 characters on the other; or M breaks a structure both L and R kept (front matter that no longer parses, a code fence left open) | **holds the note**: applies nothing, sends nothing, marks the row; the modal when the note is on screen |
 
 Eighty characters is about a sentence: a word or two changed on both sides merges quietly,
-a sentence written two ways asks. It is one constant, `CONTESTED`, and an open question
-(section 14).
+a sentence written two ways asks. It is counted per overlap, is one constant, `CONTESTED`,
+and is an open question (section 14).
 
-The account never classifies. It applies what a device sends once that device says which
-state it checked against (`checked`), and refuses again if it has moved since, so two
-devices returning at once cannot both be second: whichever lands first is first, and the
-other checks against it.
+The account never classifies. After classifying, the device's confirmed state is at the
+version `moved` named, and its next push names that version; the account applies it if the
+document is still there and answers `moved` again if it is not, so two devices returning at
+once cannot both be second: whichever lands first is first, and the other checks against
+it. A push whose answer was lost and is sent again comes back `moved` with its own
+operations, classifies as identical edits, and goes through on the next round.
 
 Live sockets never go through this. Keystrokes exchanged while both devices are connected
 were seen as they happened, and a connected device applies what the room forwards even
@@ -573,7 +588,7 @@ modal is answered).
 
 - **Keep (this device)**: apply R to the live document, then the operations that turn M's
   text into L's (`@nib/sync-core/textops`, a character diff to Yjs operations), and send pending
-  plus those, checked against R's state. Every device ends at L. R is a version.
+  plus those, naming R's version. Every device ends at L. R is a version.
 - **Keep (the other device)**: drop pending (it was never sent), set the live document to
   confirmed plus R. L is written to this device's history first and pushed to the account as
   a version (`POST /v2/docs/keep`), so any device can put it back.
@@ -681,10 +696,15 @@ Worker and the client (which applies its own ops optimistically):
   against the text both started from, and drops its own id. Two appends are two pure
   insertions, so they merge silently; two people rewriting the same line of the day asks.
   Every other create keeps its own identity and is numbered.
-- **An edit beats a delete.** A `delete` whose note has content changes after `seen` is
-  refused as `edited`, and the device that deleted it puts it back (the toast). A folder
-  delete takes what the device had seen; anything created or edited in it since survives
-  and keeps the folder.
+- **An edit beats a delete.** A `delete` whose note has content changes after `seen` by
+  another device is refused as `edited`, and the device that deleted it puts it back (the
+  toast); the deleting device's own writing never stands against it, since it had seen it
+  whatever its cursor says. A folder delete takes what the device had seen; anything
+  created, moved in, renamed or edited in it since by another device survives and keeps the
+  folder. An edit that lands on a note already deleted brings it back, with its folders.
+- **A rename or move of something deleted after its device last looked brings it back**:
+  tree operations are last-writer-wins by arrival, as a delete arriving after a rename
+  deletes.
 - **A move or create into a deleted folder brings the folder back** (with its ancestors).
 - **A move that would put a folder inside itself** (two concurrent moves making a cycle) is
   refused as `cycle` and the device undoes it locally. Kleppmann's move operation for trees
@@ -1006,17 +1026,17 @@ parts), because base64 would cost a third more on every update.
 ### Documents
 
 - `POST /v2/docs/pull` with `{ docs: [{ id, epoch, sv }] }` (at most 200). The Worker reads
-  each R2 snapshot and answers `Y.diffUpdateV2(snapshot, sv)`, or `{ id, epoch: newer,
-  epochBase }` when the device is on an old epoch. No room is woken.
-- `POST /v2/docs/push` with `{ docs: [{ id, epoch, base: sv, checked?: sv, update, at }] }`
-  (at most 50; each goes to its room). Per document: `{ id, ok, sv }`, `{ id, moved:
-  update, sv }`, `{ id, epoch: newer }`, or `{ id, refused }`.
+  each R2 snapshot and answers `{ id, update: Y.diffUpdateV2(snapshot, sv), seq }`, or `{ id,
+  epoch: newer, epochBase }` when the device is on an old epoch. No room is woken.
+- `POST /v2/docs/push` with `{ docs: [{ id, epoch, seq, base: sv, update, at }] }` (at most
+  50; each goes to its room). Per document: `{ id, ok, seq, sv }`, `{ id, moved: update,
+  seq, sv }`, `{ id, epoch: newer }`, or `{ id, refused }`.
 - `POST /v2/docs/keep` with `{ id, text, device }`: the losing side of a modal answer, kept
   as a version.
 - `GET /v2/spaces/:space/snapshot?after=<id>`: the first sync's bulk read, documents in id
   order, about 4 MB a page.
 - The room's socket (`/rooms/:id`) keeps y-protocols and gains, under the subprotocol
-  `nib.v2`: `ACK (sv)` from the room at each settle, and `EPOCH (epoch, epochBase)` before
+  `nib.v2`: `ACK (seq, sv)` from the room at each settle, and `EPOCH (epoch, epochBase)` before
   it closes with 4001. A socket without `nib.v2` is a v1 client and hears neither.
 
 ### Files
@@ -1067,7 +1087,9 @@ create table folders (
   seq integer not null,
   deleted integer not null default 0,
   deleted_at integer,
-  updated_at integer not null
+  deleted_in integer,
+  updated_at integer not null,
+  updated_by text
 );
 create unique index folders_live_name on folders(space_id, coalesce(parent_id, ''), name_key)
   where deleted = 0;
@@ -1080,6 +1102,9 @@ alter table notes add column kind text not null default 'note';
 alter table notes add column epoch integer not null default 0;
 alter table notes add column epoch_base text;
 alter table notes add column doc_seq integer;
+alter table notes add column doc_by text;
+alter table notes add column updated_by text;
+alter table notes add column deleted_in integer;
 create unique index notes_live_name on notes(space_id, coalesce(folder_id, ''), name_key)
   where deleted = 0 and name_key is not null;
 
@@ -1100,6 +1125,10 @@ tree). Two names that differ only by case or normalisation (possible today from 
 device) cannot both keep theirs under `name_key`: the later one is numbered in the backfill,
 as a rename every device then applies. `path` is kept current by every op that moves
 something, in the same batch. The nightly job sweeps `tree_ops` after 30 days.
+`updated_by`, `doc_by` and `deleted_in` are `TreeEntry`'s `by`, `docBy` and `deletedIn` in
+`@nib/sync-core/tree`: which device made the latest change and the latest content change
+(a device's own writing never stands against its own delete), and which delete took an
+entry (so a folder restored brings back what went with it).
 
 `0039_sync2_devices_web.sql` (lane `sync-server-hub`):
 
@@ -1455,7 +1484,11 @@ then `web_sync`.
 - `@nib/sync-core` exports exactly: `merge3`, `diverge` (with `Verdict`, `Overlap`,
   `CONTESTED = 80`), `textops`, `seedUpdate(noteId, epoch, text)`, `seedPlane(noteId, epoch,
   canvas)`, `applyOp`/`TreeState` and the rules of 5.9, `coalesce` for the outbox, and the
-  wire types and codecs of section 7.
+  wire types and codecs of section 7; with them `excerpt` for the modal, `hash32` for the
+  room's own client id, `divergePlane` for 5.6, and `nameKey`, `treeState` and
+  `contentChanged` for the tree. The simulator kit of section 12 is `@nib/sync-core/sim`,
+  with the `AccountAdapter` and `DeviceAdapter` the Worker's and the engine's lanes plug
+  their code into.
 - The engine exposes to the UX lane:
   `held: { readonly notes: readonly Held[]; answer(id, 'mine'|'theirs'|'both'): Promise<void> }`
   where `Held = { id, path, name, mine: Side, theirs: Side }` and

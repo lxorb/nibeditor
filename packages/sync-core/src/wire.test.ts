@@ -102,8 +102,14 @@ describe('the envelope', () => {
 })
 
 describe("the room's v2 messages", () => {
-  test('an ACK carries its state vector', () => {
-    expect(roomNews(ackFrame(bytes(1, 2, 3)))).toEqual({ t: 'ack', sv: bytes(1, 2, 3) })
+  test('an ACK carries its version and state vector', () => {
+    expect(roomNews(ackFrame(41, bytes(1, 2, 3)))).toEqual({
+      t: 'ack',
+      seq: 41,
+      sv: bytes(1, 2, 3),
+    })
+    expect(roomNews(ackFrame(2 ** 40, bytes()))).toEqual({ t: 'ack', seq: 2 ** 40, sv: bytes() })
+    expect(roomNews(bytes(100, 1, 2))).toBeNull()
   })
 
   test('an EPOCH carries the epoch and its base', () => {
@@ -237,7 +243,7 @@ describe('documents', () => {
 
     const response = {
       docs: [
-        { id: 'n', update: bytes(1, 2) },
+        { id: 'n', update: bytes(1, 2), seq: 7 },
         { id: 'm', epoch: 2, epochBase: 'hash' },
         { id: 'o', refused: 'gone' },
       ],
@@ -248,16 +254,16 @@ describe('documents', () => {
   test('a push and its answers survive the envelope', () => {
     const request = {
       docs: [
-        { id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 },
-        { id: 'm', epoch: 1, base: bytes(0), checked: bytes(2), update: bytes(3), at: 6 },
+        { id: 'n', epoch: 1, seq: 3, base: bytes(0), update: bytes(1), at: 5 },
+        { id: 'm', epoch: 1, seq: 0, base: bytes(2), update: bytes(3), at: 6 },
       ],
     }
     expect(pushRequestOf(unframe(frame(request)))).toEqual(request)
 
     const response = {
       docs: [
-        { id: 'n', ok: true, sv: bytes(1) },
-        { id: 'm', moved: bytes(2), sv: bytes(3) },
+        { id: 'n', ok: true, seq: 4, sv: bytes(1) },
+        { id: 'm', moved: bytes(2), seq: 9, sv: bytes(3) },
         { id: 'o', epoch: 2 },
         { id: 'p', refused: 'large' },
       ],
@@ -267,9 +273,14 @@ describe('documents', () => {
 
   test('bytes where bytes belong, and no more documents than a batch', () => {
     expect(
-      pushRequestOf({ docs: [{ id: 'n', epoch: 1, base: 'AA==', update: bytes(1), at: 5 }] }),
+      pushRequestOf({
+        docs: [{ id: 'n', epoch: 1, seq: 1, base: 'AA==', update: bytes(1), at: 5 }],
+      }),
     ).toBeNull()
-    const one = { id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 }
+    expect(
+      pushRequestOf({ docs: [{ id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 }] }),
+    ).toBeNull()
+    const one = { id: 'n', epoch: 1, seq: 1, base: bytes(0), update: bytes(1), at: 5 }
     expect(pushRequestOf({ docs: Array.from({ length: PUSH_BATCH + 1 }, () => one) })).toBeNull()
   })
 
@@ -281,7 +292,10 @@ describe('documents', () => {
     })
     expect(keepRequestOf({ id: 'n', text: 3, device: 'laptop' })).toBeNull()
 
-    const page = { docs: [{ id: 'a', epoch: 1, epochBase: 'h', update: bytes(1) }], next: 'a' }
+    const page = {
+      docs: [{ id: 'a', epoch: 1, epochBase: 'h', seq: 2, update: bytes(1) }],
+      next: 'a',
+    }
     expect(snapshotPageOf(unframe(frame(page)))).toEqual(page)
     expect(snapshotPageOf({ docs: [], next: null })).toEqual({ docs: [], next: null })
   })

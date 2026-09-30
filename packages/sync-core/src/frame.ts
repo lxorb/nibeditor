@@ -145,12 +145,14 @@ export function unframe(bytes: Uint8Array): unknown {
 const ACK = 100
 const EPOCH = 101
 
-/** "This much of the document is durable": the state vector the room made durable at
- *  its settle. */
-export function ackFrame(sv: Uint8Array): Uint8Array {
-  const out = new Uint8Array(1 + sv.length)
+/** "This much of the document is durable": the version and the state vector the room
+ *  made durable at its settle. The version as eight bytes, a double, which holds every
+ *  whole number a counter will reach. */
+export function ackFrame(seq: number, sv: Uint8Array): Uint8Array {
+  const out = new Uint8Array(1 + 8 + sv.length)
   out[0] = ACK
-  out.set(sv, 1)
+  new DataView(out.buffer).setFloat64(1, seq)
+  out.set(sv, 9)
   return out
 }
 
@@ -166,7 +168,12 @@ export function epochFrame(epoch: number, epochBase: string): Uint8Array {
 /** One of the room's v2 messages, or null for anything else: a y-protocols message,
  *  or bytes that do not read as either of these. */
 export function roomNews(bytes: Uint8Array): RoomNews | null {
-  if (bytes[0] === ACK) return { t: 'ack', sv: bytes.slice(1) }
+  if (bytes[0] === ACK) {
+    if (bytes.length < 9) return null
+    const seq = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getFloat64(1)
+    if (!Number.isSafeInteger(seq) || seq < 0) return null
+    return { t: 'ack', seq, sv: bytes.slice(9) }
+  }
   if (bytes[0] !== EPOCH) return null
 
   try {
