@@ -26,20 +26,14 @@ a scratch drive rather than a test: it drives the app and says what it saw.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import sys
-import threading
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+DRIVE = Drive(__file__)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
 
-# Above 1425, and not any other drive's port.
-PORT = 18961
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -125,33 +119,6 @@ RING = """
 """
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(APP / "dist"))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
-
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     out.mkdir(parents=True, exist_ok=True)
 
@@ -166,10 +133,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
@@ -392,24 +356,13 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
 
 def main() -> int:
-    out = Path(__file__).resolve().parent / "shots" / "keyboard"
+    out = DRIVE.shots
+    with DRIVE.session() as browser:
+        for one in DEVICES:
+            say(f"=== {one[0]} ===")
+            drive(browser, out, *one)
 
-    pages = Pages()
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for one in DEVICES:
-                    say(f"=== {one[0]} ===")
-                    drive(browser, out, *one)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {out}")
-    return 0
+    return DRIVE.verdict(f"shots in {out}")
 
 
 if __name__ == "__main__":

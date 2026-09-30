@@ -18,87 +18,28 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
 import sys
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "rules"
+import harness
+from harness import Drive
 
-# A port of this run's own, above the dev server's 1420 and clear of the others.
-PORT = 18895
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wait_for = DRIVE.say, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
+
 
 PATIENCE = 40
-
-
-def say(words: str) -> None:
-    # A Windows console is not UTF-8, and what is reported here holds class names
-    # the compiler made: anything unprintable is said as an escape rather than
-    # taking the run down.
-    safe = f"  {words}".encode(sys.stdout.encoding or "ascii", "backslashreplace")
-    print(safe.decode(sys.stdout.encoding or "ascii"), flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") == "1":
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 def fresh(browser: Browser, label: str, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, color_scheme=scheme)
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    DRIVE.open(page)
     return page
 
 
@@ -233,42 +174,11 @@ def shoot(browser: Browser, scheme: str) -> None:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    build()
+    with DRIVE.session() as browser:
+        shoot(browser, "light")
+        shoot(browser, "dark")
 
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-    server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"],
-        cwd=APP / "dist",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                shoot(browser, "light")
-                shoot(browser, "dark")
-            finally:
-                browser.close()
-    finally:
-        say("stopping the server")
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(server.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            server.terminate()
-        try:
-            server.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            server.kill()
-
-    print("\nthe rule is a hairline and nothing else, and it can be typed", flush=True)
-    return 0
+    return DRIVE.verdict("the rule is a hairline and nothing else, and it can be typed")
 
 
 if __name__ == "__main__":

@@ -20,26 +20,18 @@ go beside this file under `shots/`.
 
 from __future__ import annotations
 
-import functools
 import json
-import http.server
-import os
-import shutil
-import subprocess
 import sys
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "touch-move"
+from harness import Drive
 
-# A port of this test's own, and not the dev server's 1420.
-PORT = 18877
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+
 
 # A phone. The size alone is not one: the device class is decided from what the
 # machine says about itself and from the pointer, and the width only tells a phone
@@ -52,81 +44,6 @@ PHONE_AGENT = (
 )
 
 PATIENCE = 20
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit("no chromium under %s" % local)
-
-    return str(found[-1])
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (APP / "dist" / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    # A production build hides the app's stores, and the test drives them.
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Pages:
-    """The built page, served. No Worker: nothing here signs in."""
-
-    def __init__(self) -> None:
-        self.server: http.server.ThreadingHTTPServer | None = None
-
-    def start(self) -> None:
-        say(f"serving the build on {ORIGIN}")
-        handler = functools.partial(
-            http.server.SimpleHTTPRequestHandler, directory=str(APP / "dist")
-        )
-        # Its own log would drown the run.
-        handler.log_message = lambda *args, **kwargs: None  # type: ignore[assignment]
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
-
-    def stop(self) -> None:
-        if not self.server:
-            return
-
-        say("stopping the server")
-        self.server.shutdown()
-        self.server.server_close()
-        self.server = None
-
-
-def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        answer = page.evaluate(script)
-        if answer:
-            return answer
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
 
 
 def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
@@ -271,8 +188,6 @@ def hold_for(page: Page, selector: str, index: int, wanted: str, label: str) -> 
         return
 
 
-
-
 def hold(page: Page, selector: str, label: str) -> None:
     """Presses and holds until the menu opens, then lets go.
 
@@ -365,165 +280,136 @@ def open_the_list(page: Page) -> None:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    pages = Pages()
-    failures: list[str] = []
+    with DRIVE.session() as browser:
+        page = fresh(browser, "phone")
+        seed(page)
+        open_the_list(page)
+        say(f"the list holds {tree_paths(page)!r}")
 
-    def wrong(what: str) -> None:
-        say(f"FAILED: {what}")
-        failures.append(what)
+        # ── A note's menu offers the move ──────────────────────────
+        hold(page, ".row[data-path$='.md']", "phone")
+        offered = page.locator('[role="menuitem"]').all_inner_texts()
+        if "Move" not in [one.strip() for one in offered]:
+            wrong(f"a note's menu on a touch screen offers {offered!r}, with no Move")
+        else:
+            say("a note's menu offers Move")
 
-    try:
-        build()
-        pages.start()
+        page.wait_for_timeout(200)
+        page.screenshot(path=str(SHOTS / "touch-move-menu-light.png"))
 
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                page = fresh(browser, "phone")
-                seed(page)
-                open_the_list(page)
-                say(f"the list holds {tree_paths(page)!r}")
+        # ── Which opens the picker, in the app's own sheet ─────────
+        page.get_by_role("menuitem", name="Move", exact=True).click()
+        # The sheet, by what it is. It was told apart from the menu by having
+        # no role at all until the sheets were given one; now it says it is a
+        # dialog, that it is modal, and what it is called. See
+        # PromptSheet.svelte.
+        sheet = page.locator('div.sheet[role="dialog"]')
+        sheet.wait_for(state="visible", timeout=5000)
+        page.wait_for_timeout(250)
+        page.screenshot(path=str(SHOTS / "touch-move-picker-light.png"))
 
-                # ── A note's menu offers the move ──────────────────────────
-                hold(page, ".row[data-path$='.md']", "phone")
-                offered = page.locator('[role="menuitem"]').all_inner_texts()
-                if "Move" not in [one.strip() for one in offered]:
-                    wrong(f"a note's menu on a touch screen offers {offered!r}, with no Move")
-                else:
-                    say("a note's menu offers Move")
+        rows = [one.strip() for one in page.locator(".found-row").all_inner_texts()]
+        say(f"the picker offers {rows!r}")
+        # The name is what is looked for rather than the whole row: a
+        # space's row carries its mark as well, so "Uni" arrives as the
+        # badge letter and then the name.
+        for wanted in ("Work", "Uni"):
+            if not any(wanted in one for one in rows):
+                wrong(f"the picker does not offer {wanted}: {rows!r}")
 
-                page.wait_for_timeout(200)
-                page.screenshot(path=str(SHOTS / "touch-move-menu-light.png"))
+        # ── Tapping a target moves the note, and undo takes it back ─
+        before = tree_paths(page)
+        moved = next(
+            (one for one in before if one.endswith(".md") and "/Work/" not in one), None
+        )
+        if not moved:
+            raise SystemExit(f"no note to move in {before!r}")
 
-                # ── Which opens the picker, in the app's own sheet ─────────
-                page.get_by_role("menuitem", name="Move", exact=True).click()
-                # The sheet, by what it is. It was told apart from the menu by having
-                # no role at all until the sheets were given one; now it says it is a
-                # dialog, that it is modal, and what it is called. See
-                # PromptSheet.svelte.
-                sheet = page.locator('div.sheet[role="dialog"]')
-                sheet.wait_for(state="visible", timeout=5000)
-                page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-picker-light.png"))
+        page.locator(".found-row", has_text="Work").first.click()
+        wait_for(
+            page,
+            "() => {"
+            "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
+            "  return walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
+            "}",
+            "the note to land in Work",
+        )
+        say(f"{moved} moved into Work")
 
-                rows = [one.strip() for one in page.locator(".found-row").all_inner_texts()]
-                say(f"the picker offers {rows!r}")
-                # The name is what is looked for rather than the whole row: a
-                # space's row carries its mark as well, so "Uni" arrives as the
-                # badge letter and then the name.
-                for wanted in ("Work", "Uni"):
-                    if not any(wanted in one for one in rows):
-                        wrong(f"the picker does not offer {wanted}: {rows!r}")
+        # The same undo a drag leaves behind.
+        label = page.evaluate("() => window.nibApp.workspace.undoLabel ?? null")
+        say(f"undo offers {label!r}")
+        page.evaluate("() => window.nibApp.workspace.undoFileAction()")
+        wait_for(
+            page,
+            "() => {"
+            "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
+            "  return !walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
+            "}",
+            "the move to be undone",
+        )
+        say("and undo put it back")
 
-                # ── Tapping a target moves the note, and undo takes it back ─
-                before = tree_paths(page)
-                moved = next(
-                    (one for one in before if one.endswith(".md") and "/Work/" not in one), None
-                )
-                if not moved:
-                    raise SystemExit(f"no note to move in {before!r}")
+        # ── A finger that moves first never opens the menu ──────────
+        page.evaluate(SWIPE, ".row[data-path$='.md']")
+        page.wait_for_timeout(900)
+        if page.locator('[role="menu"]:visible').count():
+            wrong("a finger that set off across the row still opened the menu")
+        else:
+            say("a finger that moves first opens no menu, so a drag can have it")
 
-                page.locator(".found-row", has_text="Work").first.click()
-                wait_for(
-                    page,
-                    "() => {"
-                    "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-                    "  return walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
-                    "}",
-                    "the note to land in Work",
-                )
-                say(f"{moved} moved into Work")
+        # ── A space steps up the list from its own menu ────────────
+        #
+        # The column of squares this order used to be dragged in is
+        # gone, and the menu is the whole of how a space is moved now -
+        # the same two rows on a desktop as under a thumb. See
+        # docs/design.md and space-actions.ts.
+        was = space_names(page)
+        open_the_switcher(page)
+        hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "phone")
 
-                # The same undo a drag leaves behind.
-                label = page.evaluate("() => window.nibApp.workspace.undoLabel ?? null")
-                say(f"undo offers {label!r}")
-                page.evaluate("() => window.nibApp.workspace.undoFileAction()")
-                wait_for(
-                    page,
-                    "() => {"
-                    "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-                    "  return !walk(window.nibApp.workspace.tree).some((one) => one.includes('/Work/') && one.endsWith('.md'))"
-                    "}",
-                    "the move to be undone",
-                )
-                say("and undo put it back")
+        offered = [
+            one.strip() for one in page.locator('[role="menuitem"]').all_inner_texts()
+        ]
+        say(f"the second space's menu offers {offered!r}")
+        page.wait_for_timeout(250)
+        page.screenshot(path=str(SHOTS / "touch-move-spaces-light.png"))
 
-                # ── A finger that moves first never opens the menu ──────────
-                page.evaluate(SWIPE, ".row[data-path$='.md']")
-                page.wait_for_timeout(900)
-                if page.locator('[role="menu"]:visible').count():
-                    wrong("a finger that set off across the row still opened the menu")
-                else:
-                    say("a finger that moves first opens no menu, so a drag can have it")
+        page.get_by_role("menuitem", name="Move up", exact=True).first.click()
+        wait_for(
+            page,
+            "() => window.nibApp.workspace.spaces.map((one) => one.name).join() !== "
+            + json.dumps(",".join(was)),
+            "the list of spaces to reorder",
+        )
+        now = space_names(page)
+        if now != list(reversed(was)):
+            wrong(f"one step up turned {was!r} into {now!r}")
+        else:
+            say(f"the spaces went from {was!r} to {now!r}")
 
-                # ── A space steps up the list from its own menu ────────────
-                #
-                # The column of squares this order used to be dragged in is
-                # gone, and the menu is the whole of how a space is moved now -
-                # the same two rows on a desktop as under a thumb. See
-                # docs/design.md and space-actions.ts.
-                was = space_names(page)
-                open_the_switcher(page)
-                hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "phone")
+        # ── The same two surfaces in the dark ─────────────────────────
+        page = fresh(browser, "dark", theme="dark")
+        seed(page)
+        open_the_list(page)
 
-                offered = [
-                    one.strip() for one in page.locator('[role="menuitem"]').all_inner_texts()
-                ]
-                say(f"the second space's menu offers {offered!r}")
-                page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-spaces-light.png"))
+        hold(page, ".row[data-path$='.md']", "dark")
+        page.wait_for_timeout(200)
+        page.screenshot(path=str(SHOTS / "touch-move-menu-dark.png"))
 
-                page.get_by_role("menuitem", name="Move up", exact=True).first.click()
-                wait_for(
-                    page,
-                    "() => window.nibApp.workspace.spaces.map((one) => one.name).join() !== "
-                    + json.dumps(",".join(was)),
-                    "the list of spaces to reorder",
-                )
-                now = space_names(page)
-                if now != list(reversed(was)):
-                    wrong(f"one step up turned {was!r} into {now!r}")
-                else:
-                    say(f"the spaces went from {was!r} to {now!r}")
-            finally:
-                browser.close()
+        page.get_by_role("menuitem", name="Move", exact=True).click()
+        page.locator('div.sheet[role="dialog"]').wait_for(state="visible", timeout=5000)
+        page.wait_for_timeout(250)
+        page.screenshot(path=str(SHOTS / "touch-move-picker-dark.png"))
 
-            # ── The same two surfaces in the dark ─────────────────────────
-            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
-            try:
-                page = fresh(browser, "dark", theme="dark")
-                seed(page)
-                open_the_list(page)
+        page.keyboard.press("Escape")
+        open_the_switcher(page)
+        hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "dark")
+        page.wait_for_timeout(250)
+        page.screenshot(path=str(SHOTS / "touch-move-spaces-dark.png"))
+        say("photographed all three in the dark")
 
-                hold(page, ".row[data-path$='.md']", "dark")
-                page.wait_for_timeout(200)
-                page.screenshot(path=str(SHOTS / "touch-move-menu-dark.png"))
-
-                page.get_by_role("menuitem", name="Move", exact=True).click()
-                page.locator('div.sheet[role="dialog"]').wait_for(state="visible", timeout=5000)
-                page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-picker-dark.png"))
-
-                page.keyboard.press("Escape")
-                open_the_switcher(page)
-                hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "dark")
-                page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-spaces-dark.png"))
-                say("photographed all three in the dark")
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\na finger can move a note and reorder the spaces", flush=True)
-    return 0
+    return DRIVE.verdict("a finger can move a note and reorder the spaces")
 
 
 if __name__ == "__main__":

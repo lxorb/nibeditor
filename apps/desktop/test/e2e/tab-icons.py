@@ -15,7 +15,7 @@ two against each other again - nothing tells the tab. And because the icon is th
 whole of a pinned tab, one tab is pinned at the end of the run and measured again as
 a chip.
 
-Serves the built web app and drives it in the machine's own Chrome, and serves one
+Serves the built web app and drives it in Chromium, and serves one
 picture of its own for a website's favicon to point at. The build has to be one a
 drive may steer - `--mode drive` - or `window.nibApp` is not there.
 
@@ -29,29 +29,24 @@ beside this file under `shots/tab-icons/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
-import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "tab-icons"
+import harness
+from harness import Drive
 
-# Where a drive of this repository may listen; see docs/conventions.md. Not the dev
-# server's 1420, and not the other drives' ports either.
-PORT = 22431
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
+ORIGIN = DRIVE.origin
+DIST = harness.DIST
+
+
+def shot(page: Page, name: str, selector: str | None = None) -> None:
+    """The window, or the one part of it `selector` names."""
+    DRIVE.shot(page.locator(selector) if selector else page, name)
+
+
 
 # The picture a website points its `Nib-Icon` at, served from the app's own icon so
 # the drive needs nothing off the network.
@@ -207,42 +202,10 @@ ROWS = """
   )
 """
 
-failures: list[str] = []
 
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The build, plus a picture for each of the two addresses a mark is looked for at.
+@DRIVE.answers
+def marks(request: harness.Files) -> bool:
+    """A picture for each of the two addresses a mark is looked for at.
 
     `MARK` is where a website file points its `Nib-Icon`, which is what the tab strip
     reads. `/favicon.ico` is where the card under a page guesses, in a browser build
@@ -250,72 +213,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     answer with, so without this the run is full of a 404 that says nothing about the
     strip. See web-tab/WebTab.svelte, which does the same thing in scripts/web-tab-e2e.py.
     """
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-    def do_GET(self) -> None:
-        if self.path not in {MARK, "/favicon.ico"}:
-            super().do_GET()
-            return
-
-        body = (DIST / "icon-256.png").read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", "image/png")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-
-class Strict(socketserver.TCPServer):
-    """Never reuses the address, so a run cannot photograph the last one."""
-
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str, selector: str | None = None) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    target = SHOTS / f"{name}.png"
-    if selector:
-        page.locator(selector).screenshot(path=str(target))
-    else:
-        page.screenshot(path=str(target))
-    say(f"shot {name}.png")
+    if request.path not in {MARK, "/favicon.ico"}:
+        return False
+    return request.reply((DIST / "icon-256.png").read_bytes(), "image/png")
 
 
 def fresh(browser: Browser, scheme: str) -> Page:
@@ -345,10 +245,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
         if answer.status == 404
         else None,
     )
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", f"[{scheme}] the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", f"[{scheme}] a space")
+    DRIVE.open(page)
     page.wait_for_timeout(300)
     return page
 
@@ -512,28 +409,15 @@ def drive(page: Page, scheme: str) -> list[dict]:
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
-
     measured: dict[str, list[dict]] = {}
-
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
+    with DRIVE.session() as browser:
+        for scheme in ["light", "dark"]:
+            say(f"--- {scheme} ---")
+            page = fresh(browser, scheme)
             try:
-                for scheme in ["light", "dark"]:
-                    say(f"--- {scheme} ---")
-                    page = fresh(browser, scheme)
-                    try:
-                        measured[scheme] = drive(page, scheme)
-                    finally:
-                        page.context.close()
+                measured[scheme] = drive(page, scheme)
             finally:
-                browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
+                page.context.close()
 
     # The same strip in both schemes, to the pixel: a scheme paints a mark and never
     # moves it.
@@ -545,18 +429,10 @@ def main() -> int:
         if shapes[0] != shapes[1]:
             wrong(f"the strip is not the same shape in both schemes: {shapes}")
 
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print(
-        "\nseven kinds of tab, one mark each, one box, one weight, one place - and the"
-        " file's own mark in the strip as in the list, down to the pinned chip",
-        flush=True,
+    return DRIVE.verdict(
+        "seven kinds of tab, one mark each, one box, one weight, one place - and the"
+        " file's own mark in the strip as in the list, down to the pinned chip"
     )
-    return 0
 
 
 if __name__ == "__main__":

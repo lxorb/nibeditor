@@ -622,7 +622,7 @@ functions. That is reuse of the engine, not a second engine - but it is the hone
 line between the two.
 
 The whole of it is driven for real by `test/e2e/canvas-arrange.py`: the built web app
-in the machine's own Chrome, with mouse, touch and pen events through the DevTools
+in Chromium, with mouse, touch and pen events through the DevTools
 protocol, photographing the cursor every tool sets, the pattern at four zooms, the bar
 at each of the four edges, every put-down tool while it is being dragged out, and the
 barrel button in each shape a browser can be made to report it in.

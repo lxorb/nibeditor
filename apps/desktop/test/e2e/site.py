@@ -32,9 +32,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import os
-import shutil
-import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -42,23 +39,22 @@ import uuid
 from pathlib import Path
 from xml.etree import ElementTree
 
-from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SERVICE = ROOT / "services" / "sync"
-SHOTS = APP / "test" / "e2e" / "shots" / "site"
+import harness
+from harness import Drive
 
-# In this drive's own band, and not a port any other drive here uses: several of
-# these run at once, in worktrees of their own, against Workers of their own.
-PORT = 20841
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+SHOTS = DRIVE.shots
+#: The Worker's own address, which is also where the app it serves is loaded from.
+ORIGIN = harness.worker_origin()
+
 
 # Every browser resolves `*.localhost` itself, so a blog's own hostname needs no
 # hosts file: the Worker is told that this is the domain blogs are published under.
 BLOG_ROOT = "localhost"
 BLOG_HOST = f"field.{BLOG_ROOT}"
-BLOG = f"http://{BLOG_HOST}:{PORT}"
+BLOG = f"http://{BLOG_HOST}:{harness.worker_port()}"
 
 EMAIL = "site-drive@example.com"
 PASSWORD = "the quiet part"
@@ -100,22 +96,6 @@ NOTES = {
         "  - * Your name\n  - Your email: email\n  - What you want to say: lines\n```\n"
     ),
 }
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [shutil.which("npx") or "npx", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
 
 
 def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
@@ -179,133 +159,14 @@ def site(
         return Answer(refused.code, refused.read().decode("utf-8", "replace"), refused.headers)
 
 
-def answering() -> bool:
-    try:
-        urllib.request.urlopen(f"{ORIGIN}/health", timeout=5).read()
-        return True
-    except urllib.error.HTTPError:
-        return True
-    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
-        return False
-
-
-class Worker:
-    """The Worker under wrangler dev, and the local database behind it."""
+class Worker(harness.Worker):
+    """The real Worker, told which domain blogs are published under, with a named
+    account in it; see harness.py."""
 
     def __init__(self) -> None:
-        self.process: subprocess.Popen[bytes] | None = None
-        self.log = SHOTS / "worker.log"
-        self.opened = None
+        super().__init__(DRIVE, variables={"BLOG_ROOT": BLOG_ROOT})
 
-    def build(self) -> None:
-        say("building the app against the local Worker")
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
-        built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-            cwd=APP,
-            env=environment,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if built.returncode != 0:
-            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-    def clean(self) -> None:
-        state = SERVICE / ".wrangler" / "state"
-        if state.exists():
-            say("clearing what the last run left")
-            shutil.rmtree(state, ignore_errors=True)
-
-    def migrate(self) -> None:
-        say("applying the migrations")
-        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
-        if done.returncode != 0:
-            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
-
-        # The four publishing carries: the note's front matter and the site's
-        # own block, then the search index and the answers a form takes. By file
-        # name, because a bare number is in every hash the output prints.
-        wanted = ("0029_note_front", "0030_space_site", "0031_site_search", "0032_form_answers")
-        named = [one for one in wanted if one in done.stdout]
-        say(f"{len(named)} of the four publishing migrations named")
-
-    def sql(self, statement: str) -> str:
-        done = npx(
-            "wrangler", "d1", "execute", "nib", "--local", f"--command={statement}", cwd=SERVICE
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-
-        return done.stdout
-
-    def start(self, upstream: str | None = None) -> None:
-        say(f"the Worker on {ORIGIN}" + (f", answering as {upstream}" if upstream else ""))
-        SHOTS.mkdir(parents=True, exist_ok=True)
-        self.opened = self.log.open("ab")
-        self.process = subprocess.Popen(
-            [
-                shutil.which("npx") or "npx",
-                "wrangler",
-                "dev",
-                "--local",
-                "--port",
-                str(PORT),
-                "--ip",
-                "127.0.0.1",
-                "--var",
-                f"BLOG_ROOT:{BLOG_ROOT}",
-                *(["--local-upstream", upstream] if upstream else []),
-                "--show-interactive-dev-session=false",
-            ],
-            cwd=SERVICE,
-            stdout=self.opened,
-            stderr=subprocess.STDOUT,
-        )
-
-        until = time.monotonic() + 150
-        while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
-            if answering():
-                say("it is answering")
-                return
-            time.sleep(1)
-
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
-
-    def said(self) -> str:
-        if self.opened:
-            self.opened.flush()
-
-        return self.log.read_text("utf-8", errors="replace") if self.log.exists() else ""
-
-    def stop(self) -> None:
-        if not self.process:
-            return
-
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/F", "/T", "/PID", str(self.process.pid)],
-                capture_output=True,
-                check=False,
-            )
-        else:
-            self.process.terminate()
-
-        try:
-            self.process.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
-
-        self.process = None
-        if self.opened:
-            self.opened.close()
-            self.opened = None
-
-    def account(self) -> str:
+    def account(self) -> str:  # type: ignore[override]
         """An account with a live session, put straight into the database: signing
         in is not what this is about."""
         token = uuid.uuid4().hex + uuid.uuid4().hex
@@ -886,18 +747,12 @@ def password(worker: Worker, token: str, space: str) -> None:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
     worker = Worker()
-
-    worker.clean()
-    worker.migrate()
-    worker.build()
-    worker.start()
-
     token = ""
     space = ""
 
-    try:
+    with DRIVE.session() as browser:
+        worker.start()
         token = worker.account()
         made = request("/v1/spaces", token, {"name": "Field notes"})
         space = made["space"]["id"]
@@ -909,23 +764,16 @@ def main() -> int:
         worker.sql(f"update spaces set icon = 'FileText' where id = '{space}';")
         say(f"the account holds {len(NOTES)} notes in Field notes, marked FileText")
 
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for one in [
-                    ("desktop", 1440, 900, DESKTOP_AGENT, False),
-                    ("phone", 390, 844, PHONE_AGENT, True),
-                ]:
-                    say(f"--- the sheet, {one[0]} ---")
-                    sheet(browser, SHOTS, token, *one)
-            finally:
-                browser.close()
-    finally:
-        worker.stop()
+        for one in [
+            ("desktop", 1440, 900, DESKTOP_AGENT, False),
+            ("phone", 390, 844, PHONE_AGENT, True),
+        ]:
+            say(f"--- the sheet, {one[0]} ---")
+            sheet(browser, SHOTS, token, *one)
 
-    # And now as the blog itself, on the same database.
-    worker.start(upstream=BLOG_HOST)
-    try:
+        # And now as the blog itself, on the same database.
+        worker.stop()
+        worker.start(upstream=BLOG_HOST)
         say("--- what the hostname serves ---")
         pages(worker, token, space)
         say("--- getting around it ---")
@@ -940,31 +788,18 @@ def main() -> int:
         # In a browser before the counter is set below, so that "it asked nobody
         # but this site" is the whole truth rather than the truth minus one script
         # the author asked for.
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                drawn(browser, SHOTS)
-            finally:
-                browser.close()
+        drawn(browser, SHOTS)
 
         say("--- the author's own dressing ---")
         dressing(token, space)
 
         say("--- the site in a browser ---")
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                looking(browser, SHOTS)
-            finally:
-                browser.close()
+        looking(browser, SHOTS)
 
         say("--- behind a password ---")
         password(worker, token, space)
-    finally:
-        worker.stop()
 
-    say(f"shots in {SHOTS}")
-    return 0
+    return DRIVE.verdict(f"shots in {SHOTS}")
 
 
 if __name__ == "__main__":

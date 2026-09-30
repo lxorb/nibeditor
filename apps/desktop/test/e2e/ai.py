@@ -7,7 +7,7 @@ arrived, a refused key writing nothing, `@note` carrying the note, and a rewrite
 accepted from its diff are all facts rather than hopes. No key, no network, no
 bill.
 
-Serves the built web app and drives it in the machine's own Chrome. The build has
+Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
 are not there.
 
@@ -21,31 +21,18 @@ go beside this file under `shots/ai/`.
 
 from __future__ import annotations
 
-import functools
 import http.server
 import json
-import os
 import re
-import shutil
-import socket
-import socketserver
-import subprocess
-import threading
 import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "ai"
+from harness import Drive
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 19941
-MODEL_PORT = 19942
-ORIGIN = f"http://127.0.0.1:{PORT}"
-MODEL_ORIGIN = f"http://127.0.0.1:{MODEL_PORT}"
+DRIVE = Drive(__file__)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
+
 
 # The model's own name, as the fake server reports it and as the line over an
 # answer has to say.
@@ -134,57 +121,6 @@ PRESS = """
   return button.title
 }
 """
-
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    # A production build hides the app's stores, and the drive needs them.
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """A file server that says nothing and is never cached."""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    """Never reuses the address, so a run cannot photograph the last one."""
-
-    allow_reuse_address = False
 
 
 class Model(http.server.BaseHTTPRequestHandler):
@@ -275,40 +211,8 @@ class Model(http.server.BaseHTTPRequestHandler):
             return
 
 
-def serve(port: int, handler: object, what: str) -> Strict:
-    say(f"serving {what} on http://127.0.0.1:{port}")
-    try:
-        server = Strict(("127.0.0.1", port), handler)  # type: ignore[arg-type]
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {port}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", port), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit(f"{what} never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
+#: Where the fake provider answers, on a port of this run's own.
+MODEL_ORIGIN = DRIVE.side(Model)
 
 
 def state(page: Page) -> dict:
@@ -340,10 +244,7 @@ def fresh(browser: Browser, label: str) -> Page:
         if message.type == "error" and not NOT_OURS.search(message.text)
         else None,
     )
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", f"[{label}] the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [NOTE, PLAIN])}")
     page.wait_for_timeout(400)
     return page
@@ -721,44 +622,23 @@ def drive_pane(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    files = serve(PORT, functools.partial(Quiet, directory=str(DIST)), DIST.name)
-    model = serve(MODEL_PORT, Model, "a fake OpenAI-compatible provider")
+    with DRIVE.session() as browser:
+        say("--- the block ---")
+        drive_block(browser)
+        say("--- stopping ---")
+        drive_stop(browser)
+        say("--- a refusal ---")
+        drive_refusal(browser)
+        say("--- nothing set up ---")
+        drive_no_provider(browser)
+        say("--- a rewrite ---")
+        drive_rewrite(browser)
+        say("--- a rewrite thrown away ---")
+        drive_discard(browser)
+        say("--- the pane ---")
+        drive_pane(browser)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                say("--- the block ---")
-                drive_block(browser)
-                say("--- stopping ---")
-                drive_stop(browser)
-                say("--- a refusal ---")
-                drive_refusal(browser)
-                say("--- nothing set up ---")
-                drive_no_provider(browser)
-                say("--- a rewrite ---")
-                drive_rewrite(browser)
-                say("--- a rewrite thrown away ---")
-                drive_discard(browser)
-                say("--- the pane ---")
-                drive_pane(browser)
-            finally:
-                browser.close()
-    finally:
-        for server in (files, model):
-            server.shutdown()
-            server.server_close()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\na block is asked, answered, replaced and stopped; a selection is rewritten", flush=True)
-    return 0
+    return DRIVE.verdict("a block is asked, answered, replaced and stopped; a selection is rewritten")
 
 
 if __name__ == "__main__":

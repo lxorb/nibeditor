@@ -23,7 +23,7 @@ Then, from the repository root, once for each build:
     python apps/desktop/test/e2e/html-in-notes.py before dist-before
     python apps/desktop/test/e2e/html-in-notes.py after dist
 
-Shots go beside this file under `shots/html-in-notes-<tag>/`, which is ignored. It
+Shots go beside this file under `shots/html-in-notes/<tag>/`, which is ignored. It
 counts the coloured spans in each region as well as photographing it, because a grey
 region and a coloured one are two different pictures but only one of them is a
 regression, and a count says which.
@@ -34,20 +34,16 @@ brings a note beyond the colours: `<em>` typed inside a raw block closes itself.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import sys
-import threading
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+#: A run is one tag's folder, and the other tag's is what it is compared with.
+DRIVE = Drive(__file__, fresh=False)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
 
-# Above 1425, and not any other drive's port.
-PORT = 21447
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -119,34 +115,6 @@ OPEN = """async (text) => {
 }"""
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self, where: str) -> None:
-        self.where = APP / where
-        handler = functools.partial(Quiet, directory=str(self.where))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {self.where} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
-
-
 def drive(browser, out: Path, scheme: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     context = browser.new_context(
@@ -158,9 +126,7 @@ def drive(browser, out: Path, scheme: str) -> None:
     page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{scheme}] page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    DRIVE.open(page)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(400)
 
@@ -212,26 +178,13 @@ def drive(browser, out: Path, scheme: str) -> None:
 
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
-    # Which build to photograph. Two names because both halves of a comparison can be
-    # on the machine at once: `dist-before` is what the other tree built.
-    out = Path(__file__).resolve().parent / "shots" / f"html-in-notes-{tag}"
+    out = DRIVE.shots / tag
+    with DRIVE.session() as browser:
+        for scheme in ("light", "dark"):
+            say(f"--- {scheme} ---")
+            drive(browser, out, scheme)
 
-    pages = Pages(sys.argv[2] if len(sys.argv) > 2 else "dist")
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for scheme in ("light", "dark"):
-                    say(f"--- {scheme} ---")
-                    drive(browser, out, scheme)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {out}")
-    return 0
+    return DRIVE.verdict(f"shots in {out}")
 
 
 if __name__ == "__main__":

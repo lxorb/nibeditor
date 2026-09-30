@@ -270,53 +270,115 @@ machine; CI is the reference.
 
 ## Drives
 
-`apps/desktop/test/e2e/*.py` is a drive each: it serves the built web app on a
-port of its own, seeds a space through `window.nibApp`, walks the app in the
-machine's own Chrome and photographs what it found into
-`apps/desktop/test/e2e/shots/`. A drive that checks something exits non-zero
-when it does not find it; the rest print what they saw. They are not in `pnpm
-test`, because each one is a build and a browser.
+`apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
+Chromium, seeds a space through `window.nibApp`, walks the app and photographs what
+it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exits
+non-zero when it does not find it; the rest print what they saw. They are not in
+`pnpm test`, because each one is a build and a browser. They run every night
+instead, in `.github/workflows/drives.yml`, and whenever that workflow is
+dispatched; `smoke.py` alone also runs on every change, in `check.yml`.
 
-The whole set, one build and then one drive at a time:
+Everything round a drive's steps is `apps/desktop/test/e2e/harness.py`'s, so a new
+drive is its steps and nothing else:
 
-```sh
-python apps/desktop/test/e2e/run-all.py              # build once, run all
-python apps/desktop/test/e2e/run-all.py --no-build   # reuse apps/desktop/dist
-python apps/desktop/test/e2e/run-all.py --only tree  # the drives matching a word
-python apps/desktop/test/e2e/run-all.py --list       # what would run, in order
+```python
+from playwright.sync_api import Browser
+
+from harness import Drive
+
+DRIVE = Drive(__file__)
+say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
+
+
+def drive(browser: Browser) -> None:
+    page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
+    DRIVE.open(page)
+    DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n")
+    DRIVE.open_note(page, "Plan")
+    if "What we are doing" not in page.inner_text(".cm-content"):
+        wrong("the plan is not on screen")
+    shot(page, "01-plan")
+
+
+if __name__ == "__main__":
+    raise SystemExit(DRIVE.run(drive, "the plan is on screen"))
 ```
 
-It prints a table of what passed, what it cost and where the screenshots went,
-and exits with the number of drives that failed. Every drive is run with
-`NIB_SKIP_BUILD=1`, which is how a drive is told the build in
-`apps/desktop/dist` is the one to use; a new drive should honour it. The build
-is a development one, because a production build hides the `window.nibApp` the
-drives seed through.
+What that one import gives it, so that no drive writes any of it again:
 
-One set at a time on a machine. Every drive serves the same
-`apps/desktop/dist`, and a drive that builds replaces it: a build landing under
-a drive that is already running changes the asset hashes it is fetching, and the
-page fails on a chunk that is no longer there rather than on anything about the
-app. The runner is one drive at a time for that reason, and two runners at once
-undo it. Ports belong to the machine too, so a drive run by hand beside a set
-takes the port the set was going to want.
+- **One build.** `--mode drive`, the release shape with the two handles a drive
+  steers by. A drive run by hand builds; `NIB_SKIP_BUILD=1` reuses
+  `apps/desktop/dist`; `NIB_DIST` names a folder built by hand - the other half of a
+  before-and-after - which is never rebuilt.
+- **An origin of its own.** A port the system hands out and
+  `http://<drive>.localhost:<port>`, so no storage, service worker or cookie is
+  shared with another drive or with the dev server, and drives run side by side.
+- **The server a deploy is.** HTTP/1.1, a hashed asset good for ever and the rest
+  asked about every time, one fixed `Last-Modified`, the types written out rather
+  than read from the Windows registry. `DRIVE.answers` adds a route of the drive's
+  own; `DRIVE.side` starts a second server, such as a fake OpenAI-compatible
+  provider.
+- **The browser CI has.** Playwright's own Chromium, headless; `NIB_BROWSER=chrome`
+  drives the machine's own Chrome instead.
+- **The app's own word, not a clock.** `DRIVE.open` returns once the handle, the
+  space and the launch order's last mark (`nib: launch order finished`, see
+  `apps/desktop/src/lib/startup.svelte.ts`) are there, `DRIVE.open_note` once the
+  editor shows that note, and `DRIVE.reading` once the reading view has drawn it. A
+  new wait is `DRIVE.wait_for` on something the page can be asked, never a sleep.
+- **One verdict.** `wrong` counts, a page error counts, and `DRIVE.run` exits
+  non-zero when anything did. A drive that walks out half way still closes its
+  browser, its servers and its Worker; a close that hangs is ended after
+  `TEARDOWN` seconds, and a drive that hangs anywhere prints every thread's stack
+  before the runner gives up on it.
+- **Offline means the network.** `DRIVE.preload` puts every chunk of the build into
+  the page before a drive takes the network away, because the installed app keeps
+  its own files on the disk and a chunk first asked for offline never loads.
+- **The real Worker**, `harness.Worker(DRIVE)`: `wrangler dev --local` with a
+  database in a temp folder, every migration applied, an account written straight
+  in, the mail it would have sent, and every process under it ended with it.
+  `--local` switches the remote bindings off, so no Cloudflare token is wanted. The
+  app such a drive loads is a build of its own, `dist-worker`, that asks its own
+  origin for the API - as the web app at nibeditor.com does - so one build serves
+  every Worker on any port, several drives run their Workers side by side, and
+  `dist` is never rebuilt under a drive that is still fetching from it.
+- **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
+  `run_probe`, off every screen, with `NIB_SPACES_DIR` in a temp folder.
+
+A drive that needs what a machine may not have says so at its top -
+`NEEDS = ("native",)` - and is listed as skipped, with the reason, everywhere it is
+missing. One that launches the desktop app is read as needing a native build
+whether it says so or not. A drive whose honest run is longer than the fifteen
+minutes any drive is given says that too, `BUDGET = 2400`, rather than every drive
+being given more. And a failure a drive found that is already somebody's to fix is
+named where the drive is made - `Drive(__file__, known={"words it says": "who has
+it"})` - so the run goes past it as `known` in the table, every night, and says so
+the night it stops happening, so the entry comes off rather than staying.
+
+The whole set, on one build:
+
+```sh
+python apps/desktop/test/e2e/run-all.py                 # build once, run all
+python apps/desktop/test/e2e/run-all.py --jobs 1        # one at a time, out loud
+python apps/desktop/test/e2e/run-all.py --only tree     # the drives matching a word
+python apps/desktop/test/e2e/run-all.py --no-build      # reuse apps/desktop/dist
+python apps/desktop/test/e2e/run-all.py --list          # what would run, and how
+```
+
+Several at once - a quarter of the machine's cores, at most four, unless `--jobs`
+says otherwise - each lane taking the next drive from one queue, longest first, so
+no lane is left holding the slowest at the end. A drive that fails is run once more
+on its own at the end, the way Playwright and Chromium's own harness retry, and one
+that holds then is called `flaky` in the table - green, and named, so a drive that
+only passes on a quiet machine is written down rather than hidden. The table says
+what passed, what it cost and where the pictures went; it is also `shots/results.md`
+and `shots/results.json`, each drive's own output is `shots/logs/<drive>.log`, and
+the exit status is the number of drives that failed. The nightly job is exactly this
+with `--jobs 2`: the table on the run's own page, the shots and logs as its
+artifact, red when a drive failed.
 
 A run leaves the working tree dirty in one place: `store-shot.py` writes
 `docs/media/screenshot.png`, which is tracked. Keep it when the app's look has
 changed and it is the shot you wanted; otherwise check it out again.
-
-Six of them - `collaborate`, `draw-together`, `first-sync`, `publishing`,
-`share`, `signin` - start the real Worker under `wrangler dev`, and two things
-follow from that. They want `CLOUDFLARE_API_TOKEN` in the environment, because
-the Worker binds Workers AI and that has no local emulation, so wrangler opens a
-remote proxy session for it and cannot without one; nothing the drives do
-reaches the AI. The two that hold a socket open, `collaborate` and
-`draw-together`, do not start without it; the ones that only make requests have
-been seen to carry on. And they bake their own Worker's address into `dist` as
-the API, so the runner makes the shared build again after each of them.
-
-A drive whose port something else already holds is reported `blocked` rather
-than failed, because that is not the app being wrong.
 
 ### Proving a change moved nothing
 

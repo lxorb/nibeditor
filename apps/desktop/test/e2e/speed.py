@@ -87,26 +87,25 @@ way, and the folder is ignored so it can be left lying about.
 from __future__ import annotations
 
 import argparse
-import functools
 import http.server
 import json
 import os
 import shutil
 import statistics
 import subprocess
-import threading
 from pathlib import Path
 
 from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
+import harness
+from harness import Drive
 
-# Above 1425, and not any other drive's port. One per build and per space: two
-# builds cannot share one database, and a space of five thousand notes in the same
-# database as the empty one would make the empty launch a launch of both.
-PORTS = {("before", "big"): 21901, ("after", "big"): 21902, ("before", "empty"): 21903, ("after", "empty"): 21904}
+DRIVE = Drive(__file__, served=False)
+#: Eleven parts over two spaces, several rounds each: thirteen minutes on a busy machine.
+BUDGET = 1800
+say = DRIVE.say
+APP = harness.APP
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -122,10 +121,6 @@ STROKES = 10000
 #: How many points each of them went through.
 POINTS = 10
 
-#: A page on the app's own origin that is not the app, so the storage underneath it
-#: can be written before the app is up to read it.
-SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
-
 #: How long to watch for jank while a gesture runs.
 GESTURE = 1500
 
@@ -136,100 +131,36 @@ WARMING = 3
 SETTLING = 2000
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-#: What each lane's server was asked for, by port: how many requests, how many of
-#: them were answered out of the folder rather than with a "you already have it",
-#: and how many bytes went down the socket. A lane that fetches its assets while
-#: the other lane reads them out of the browser's cache is not the same launch, and
-#: this is the counter that says so.
-SERVED: dict[int, dict[str, int]] = {}
-
 #: Served the way this file used to serve, for showing that the way it serves now is
 #: what fixed the lane bias: HTTP/1.0, no caching headers, and the build's own
 #: mtimes. `--as-was` sets it. Nothing but the proof should ever want it.
 AS_WAS = False
 
 
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, told to behave like the one a build is really served by.
+class AsWas(harness.Files):
+    """The build served the way this file used to serve it, which measured the rig
+    rather than the app.
 
-    Three things, all of which were measuring the rig rather than the app.
+    HTTP/1.0, which closes the connection after every response: a page of thirty
+    assets was thirty TCP connections and thirty Python threads, taking the
+    interpreter's lock turn and turn about with the thread driving the measurement.
+    No `Cache-Control`, so Chrome guessed how long a file was good for - a tenth of
+    the file's own age - and the two lanes, two folders written at two different
+    times, got two different lifetimes: the older folder came out of the browser's
+    cache and the newer one revalidated every asset. That was the lane bias; it
+    followed the folder's timestamp, not the code in it, which is why it survived
+    byte-identical builds. harness.Files is the server that fixed it, and counts the
+    same way, so the two runs can be read side by side."""
 
-    HTTP/1.1, so the connection is kept between assets. The default is HTTP/1.0,
-    which closes after every response: a page of thirty assets was thirty TCP
-    connections and - because this is a `ThreadingHTTPServer` - thirty Python
-    threads, taking the interpreter's lock turn and turn about with the thread that
-    is driving the measurement.
-
-    A `Cache-Control` on everything, because without one Chrome has to guess how
-    long a file is good for, and what it guesses is a tenth of the file's own age.
-    The two lanes are two folders written at two different times, so the same build
-    served twice got two different freshness lifetimes: the older folder was served
-    out of the browser's cache and the newer one revalidated every asset over the
-    socket. That is the lane bias - it follows the folder's timestamp, not the code
-    in it, which is why it survived byte-identical builds.
-
-    And a fixed `Last-Modified`, so nothing downstream of this can tell the two
-    folders apart by their age either.
-    """
-
-    @property
-    def protocol_version(self) -> str:  # type: ignore[override]
-        """One connection for the whole page, as a real server keeps it."""
-        return "HTTP/1.0" if AS_WAS else "HTTP/1.1"
-
-    #: A kept connection holds a thread; this is how long an idle one keeps it.
-    timeout = 10
-
-    #: One date for every file in every lane. The build's own mtimes are what made
-    #: the two lanes different, and nothing here wants to know them.
-    STAMP = "Mon, 01 Jan 2024 00:00:00 GMT"
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
+    protocol_version = "HTTP/1.0"
 
     def send_header(self, keyword: str, value: str) -> None:
-        """`Last-Modified` flattened on the way out, wherever it is sent from - and
-        the body's length counted where it is promised, which is the one place a
-        length is known and is not a race with the socket."""
-        if keyword == "Last-Modified" and not AS_WAS:
-            value = self.STAMP
         if keyword == "Content-Length":
             self.tally()["bytes"] += int(value)
-        super().send_header(keyword, value)
+        http.server.SimpleHTTPRequestHandler.send_header(self, keyword, value)
 
     def end_headers(self) -> None:
-        """The caching a deploy of this actually sends, and the desktop build has by
-        being on the disk already: an asset under a hash of its content is good
-        forever, and the page that names them is checked every time so a rebuild is
-        never missed. Both lanes, identically."""
-        if not AS_WAS:
-            forever = self.path.startswith("/assets/") and "." in self.path.rsplit("/", 1)[-1]
-            super().send_header(
-                "Cache-Control",
-                "public, max-age=31536000, immutable" if forever else "no-cache",
-            )
-        super().end_headers()
-
-    def tally(self) -> dict[str, int]:
-        """This lane's counter."""
-        return SERVED.setdefault(
-            self.server.server_address[1], {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
-        )
-
-    def send_response(self, code: int, message: str | None = None) -> None:
-        """Counted here, where every answer passes and its code is known."""
-        held = self.tally()
-        held["asked"] += 1
-        if code == 200:
-            held["sent"] += 1
-        elif code == 304:
-            held["again"] += 1
-        super().send_response(code, message)
-
+        http.server.SimpleHTTPRequestHandler.end_headers(self)
 
 
 # --------------------------------------------------------------------------- seed
@@ -1379,13 +1310,13 @@ def ready(page: Page, lane: Lane) -> None:
 class Lane:
     """One build over one space, served and driven."""
 
-    def __init__(self, tag: str, folder: str, space: str) -> None:
+    def __init__(self, tag: str, folder: Path, space: str) -> None:
         self.tag = tag
         self.space = space
         self.name = f"{tag}/{space}"
-        self.folder = APP / folder
-        self.port = PORTS[(tag, space)]
-        self.origin = f"http://127.0.0.1:{self.port}"
+        self.folder = folder
+        self.server: harness.Served | None = None
+        self.origin = ""
         self.root = "/Big" if space == "big" else "/Empty"
         self.rounds: dict[str, list[dict]] = {}
         self.lost: dict[str, int] = {}
@@ -1394,17 +1325,20 @@ class Lane:
         self.page: Page | None = None
         self.cdp = None
 
-        handler = functools.partial(Quiet, directory=str(self.folder))
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", self.port), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
     def start(self) -> None:
-        (self.folder / "seed.html").write_text(SEED_PAGE, encoding="utf-8")
-        self.thread.start()
+        """A server and an origin of the lane's own. One per build and per space: two
+        builds cannot share one database, and a space of five thousand notes in the
+        same database as the empty one would make the empty launch a launch of both."""
+        if AS_WAS:
+            self.server = harness.Served(handler=type("Lane", (AsWas,), {"folder": str(self.folder)}))
+        else:
+            self.server = harness.Served(self.folder)
+        self.origin = self.server.origin(f"{self.tag}-{self.space}.localhost")
         say(f"{self.name}: serving {self.folder.name} on {self.origin}")
 
     def stop(self) -> None:
-        self.server.shutdown()
+        if self.server:
+            self.server.close()
 
     def note(self, words: str) -> None:
         self.notes.append(f"{self.name}: {words}")
@@ -1429,7 +1363,7 @@ class Lane:
         self.page = page
         self.cdp = context.new_cdp_session(page)
 
-        page.goto(f"{self.origin}/seed.html", wait_until="domcontentloaded")
+        page.goto(f"{self.origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
         plan = {
             "notes": NOTES if self.space == "big" else 0,
             "lines": LINES if self.space == "big" else 0,
@@ -1535,8 +1469,14 @@ class Lane:
         return out
 
     def served(self) -> dict[str, int]:
-        """What this lane's server was asked for over the whole run."""
-        return SERVED.get(self.port, {"asked": 0, "sent": 0, "again": 0, "bytes": 0})
+        """What this lane's server was asked for over the whole run: how many
+        requests, how many of them were answered out of the folder rather than with a
+        "you already have it", and how many bytes went down the socket. A lane that
+        fetches its assets while the other lane reads them out of the browser's cache
+        is not the same launch, and this is the counter that says so."""
+        if not self.server:
+            return {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
+        return self.server.tally
 
 
 #: The numbers, in the order they are worth reading, and what each is in.
@@ -1765,9 +1705,11 @@ def main() -> int:
             return 1
 
     spaces = [told.space] if told.space else ["big", "empty"]
+    if harness.OWN_BUILD and told.build != "before":
+        harness.build()
     builds = [
         (tag, folder)
-        for tag, folder in (("before", "dist-before"), ("after", "dist"))
+        for tag, folder in (("before", APP / "dist-before"), ("after", harness.DIST))
         if not told.build or told.build == tag
     ]
     wanted = [Lane(tag, folder, space) for space in spaces for tag, folder in builds]
@@ -1793,13 +1735,9 @@ def main() -> int:
         lane.start()
 
     try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(
-                channel="chrome",
-                # The heap, honestly: without this the number is bucketed into
-                # steps too coarse to compare two builds by.
-                args=["--enable-precise-memory-info"],
-            )
+        # The heap, honestly: without the flag the number is bucketed into steps too
+        # coarse to compare two builds by.
+        with DRIVE.session(args=["--enable-precise-memory-info"]) as browser:
 
             for lane in lanes:
                 lane.ready(browser)
@@ -1834,8 +1772,6 @@ def main() -> int:
                         # to be quiet again before anything is timed.
                         lane.quiet()
                         lane.round(part)
-
-            browser.close()
     finally:
         for lane in lanes:
             lane.stop()

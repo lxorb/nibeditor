@@ -30,31 +30,25 @@ beside this file under `shots/recording/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import math
-import os
-import shutil
-import socket
-import socketserver
 import struct
-import subprocess
 import tempfile
-import threading
-import time
 from pathlib import Path
 
-from playwright.sync_api import Browser, Page, Route, sync_playwright
+from playwright.sync_api import Browser, Page, Route
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "recording"
+from harness import Drive
 
-# In this agent's own range, and nowhere near the dev server's 1420.
-PORT = 23304
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(
+    __file__,
+    known={
+        # Record left the phone's plus on 2026-09-27 (docs/mobile.md).
+        "no Record row on the phone's plus": "hunt-7, whose branch holds the fix",
+    },
+)
+say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
+
 
 # What the fake Whisper route answers with, and what a summary comes back as. German,
 # so the language the route reports has somewhere to show up: the callout is headed
@@ -117,17 +111,6 @@ PLAYERS = """
 }
 """
 
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-
 
 def wav(seconds: float, path: Path) -> Path:
     """A microphone, as a file: sixteen bit mono at 48 kHz, which is what Chromium's
@@ -150,80 +133,6 @@ def wav(seconds: float, path: Path) -> Path:
 
     path.write_bytes(head + bytes(frames))
     return path
-
-
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-
-
-class Strict(socketserver.TCPServer):
-    allow_reuse_address = False
-
-
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 40) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(100)
-
-    # Whatever the app is complaining about, because a recording that could not start
-    # says so there rather than on the console.
-    said = page.evaluate("() => window.nibApp?.settings?.error ?? ''")
-    raise SystemExit(f"gave up waiting for {what}; the app says {said!r}")
-
-
-def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
 
 
 class Byok:
@@ -333,10 +242,7 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     page.route("**/v1/ask/heard*", whisper.listen)
     page.route("**/v1/ask/summary", whisper.summarise)
 
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page)
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     # The worker in front of the page is what answers for a file in the space; without
     # it a player is pointed at an address nothing serves.
@@ -775,42 +681,22 @@ def phone(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
+    with tempfile.TemporaryDirectory() as made:
+        sound = wav(4, Path(made) / "microphone.wav")
+        with DRIVE.session(
+            args=[
+                "--use-fake-device-for-media-stream",
+                "--use-fake-ui-for-media-stream",
+                f"--use-file-for-fake-audio-capture={sound}",
+                "--autoplay-policy=no-user-gesture-required",
+            ],
+        ) as browser:
+            drive(browser)
+            byok(browser)
+            meeting(browser)
+            phone(browser)
 
-    try:
-        with tempfile.TemporaryDirectory() as made:
-            sound = wav(4, Path(made) / "microphone.wav")
-            with sync_playwright() as play:
-                browser = play.chromium.launch(
-                    channel="chrome",
-                    args=[
-                        "--use-fake-device-for-media-stream",
-                        "--use-fake-ui-for-media-stream",
-                        f"--use-file-for-fake-audio-capture={sound}",
-                        "--autoplay-policy=no-user-gesture-required",
-                    ],
-                )
-                try:
-                    drive(browser)
-                    byok(browser)
-                    meeting(browser)
-                    phone(browser)
-                finally:
-                    browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-
-    if failures:
-        print("\nFAILED", flush=True)
-        for one in failures:
-            print(f"  - {one}", flush=True)
-        return 1
-
-    print("\na recording, a transcript and a meeting, on a pointer and a finger", flush=True)
-    return 0
+    return DRIVE.verdict("a recording, a transcript and a meeting, on a pointer and a finger")
 
 
 if __name__ == "__main__":

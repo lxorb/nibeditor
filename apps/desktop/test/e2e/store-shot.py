@@ -18,25 +18,21 @@ packaging/flathub/ch.emilvinu.nib.metainfo.xml points at by commit.
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import shutil
-import subprocess
 import sys
-import threading
-from pathlib import Path
 
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-ROOT = APP.parent.parent
+import harness
+from harness import Drive
+
+DRIVE = Drive(__file__)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
+APP = harness.APP
+ROOT = harness.ROOT
+
 SHOT = ROOT / "docs" / "media" / "screenshot.png"
 
-# Its own port, and never 1420, which is the dev server somebody may be using.
-PORT = 18879
-ORIGIN = f"http://127.0.0.1:{PORT}"
 
 # What a catalogue shows. Flathub asks for a window of 1000x700 or smaller so
 # that the text is still legible in a card, or twice that for a sharp one, which
@@ -87,58 +83,13 @@ async (note) => {
 """
 
 
-def say(what: str) -> None:
-    print(f"  {what}", flush=True)
-
-
-def chromium() -> str:
-    """The newest chromium Playwright has downloaded."""
-    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
-    found = sorted(
-        local.glob("chromium-*/chrome-win*/chrome.exe"),
-        key=lambda path: int(path.parents[1].name.split("-")[1]),
-    )
-    if not found:
-        raise SystemExit(f"no chromium under {local}")
-
-    return str(found[-1])
-
-
-def build() -> None:
-    """The web app, built from nothing.
-
-    In development mode on purpose: that is what leaves the app's own stores
-    reachable from the page, so the notes can be written through the workspace
-    instead of clicked into being. Everything the picture shows is the real
-    editor either way."""
-    say("building the web app")
-    shutil.rmtree(APP / "dist", ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-
-
 def shoot(browser: Browser) -> None:
     context = browser.new_context(
         viewport=SIZE, device_scale_factor=SCALE, color_scheme="light"
     )
     page: Page = context.new_page()
     page.on("pageerror", lambda error: say(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    page.wait_for_function("() => !!window.nibApp", timeout=40000)
-    page.wait_for_function(
-        "() => !!window.nibApp.workspace.activeSpace", timeout=40000
-    )
+    DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
 
     # The table and the formula are set by the editor itself, so the shot waits
@@ -158,26 +109,7 @@ def shoot(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
-
-    handler = functools.partial(
-        http.server.SimpleHTTPRequestHandler, directory=str(APP / "dist")
-    )
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(executable_path=chromium())
-            try:
-                shoot(browser)
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-
-    return 0
+    return DRIVE.run(shoot)
 
 
 if __name__ == "__main__":

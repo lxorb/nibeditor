@@ -16,22 +16,20 @@ Screenshots go beside this file under `shots/shell-themes/`, which is ignored.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import sys
-import threading
 import urllib.request
-from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+import harness
+from harness import Drive
 
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots" / "shell-themes"
+DRIVE = Drive(__file__)
+say = DRIVE.say
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+APP = harness.APP
 
-PORT = 18954
-ORIGIN = f"http://127.0.0.1:{PORT}"
+
 REGISTRY = "https://nibeditor.com/themes"
 
 # Two that push in opposite directions: one dark and cool, one warm paper.
@@ -55,17 +53,6 @@ async () => {
 """
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
-
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
 def fetch(url: str) -> str:
     # The edge in front of the registry refuses a request with no user agent,
     # which is what urllib sends by default.
@@ -75,8 +62,6 @@ def fetch(url: str) -> str:
 
 
 def main() -> int:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-
     try:
         index = json.loads(fetch(f"{REGISTRY}/index.json"))
     except Exception as why:  # noqa: BLE001 - a scratch drive says what it could not reach
@@ -91,47 +76,31 @@ def main() -> int:
         sheets[one] = fetch(f"{REGISTRY}/{one}/theme.css")
         say(f"{one}: {len(sheets[one])} bytes of stylesheet")
 
-    handler = functools.partial(Quiet, directory=str(APP / "dist"))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    say(f"serving {APP / 'dist'} on {ORIGIN}")
+    with DRIVE.session() as browser:
+        for name, sheet in sheets.items():
+            for scheme in ("light", "dark"):
+                context = browser.new_context(
+                    viewport={"width": 1280, "height": 820},
+                    user_agent=DESKTOP_AGENT,
+                    color_scheme=scheme,
+                    device_scale_factor=2,
+                )
+                page = context.new_page()
+                page.on("pageerror", lambda error: say(f"page error: {error}"))
+                DRIVE.open(page)
+                page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+                page.evaluate(SEED)
+                page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for name, sheet in sheets.items():
-                    for scheme in ("light", "dark"):
-                        context = browser.new_context(
-                            viewport={"width": 1280, "height": 820},
-                            user_agent=DESKTOP_AGENT,
-                            color_scheme=scheme,
-                            device_scale_factor=2,
-                        )
-                        page = context.new_page()
-                        page.on("pageerror", lambda error: say(f"page error: {error}"))
-                        page.goto(ORIGIN, wait_until="domcontentloaded")
-                        page.wait_for_function("() => !!window.nibApp", timeout=20000)
-                        page.wait_for_function(
-                            "() => !!window.nibApp.workspace.activeSpace", timeout=20000
-                        )
-                        page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
-                        page.evaluate(SEED)
-                        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+                # What installing does: the theme's stylesheet, on the page.
+                page.add_style_tag(content=sheet)
+                page.wait_for_timeout(900)
 
-                        # What installing does: the theme's stylesheet, on the page.
-                        page.add_style_tag(content=sheet)
-                        page.wait_for_timeout(900)
+                page.screenshot(path=str(SHOTS / f"{name}-{scheme}.png"))
+                say(f"shot {name}-{scheme}.png")
+                context.close()
 
-                        page.screenshot(path=str(SHOTS / f"{name}-{scheme}.png"))
-                        say(f"shot {name}-{scheme}.png")
-                        context.close()
-            finally:
-                browser.close()
-    finally:
-        server.shutdown()
-
-    return 0
+    return DRIVE.verdict()
 
 
 if __name__ == "__main__":

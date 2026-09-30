@@ -17,16 +17,14 @@ Build first, as for shell.py, then from the repository root:
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+from harness import Drive
+from shell import PHONE_AGENT, SEED
 
-from playwright.sync_api import sync_playwright
+DRIVE = Drive(__file__)
+say = DRIVE.say
 
-from shell import ORIGIN, PHONE_AGENT, Pages, SEED, say
-
-OUT = Path(__file__).resolve().parent / "shots" / "shell-drawer-edge"
+OUT = DRIVE.shots
 
 # What is actually painted over the bar: every element the top left corner of the
 # screen hits, from the front backwards, with the panel's own box beside it.
@@ -75,58 +73,47 @@ async () => {
 
 
 def main() -> int:
-    OUT.mkdir(parents=True, exist_ok=True)
-    pages = Pages()
-    pages.start()
+    with DRIVE.session() as browser:
+        context = browser.new_context(
+            viewport={"width": 844, "height": 390},
+            user_agent=PHONE_AGENT,
+            has_touch=True,
+            is_mobile=True,
+            device_scale_factor=2,
+        )
+        page = context.new_page()
+        DRIVE.open(page)
+        page.evaluate(SEED)
+        page.wait_for_timeout(700)
 
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            context = browser.new_context(
-                viewport={"width": 844, "height": 390},
-                user_agent=PHONE_AGENT,
-                has_touch=True,
-                is_mobile=True,
-                device_scale_factor=2,
+        def corner(tag: str) -> None:
+            page.screenshot(
+                path=str(OUT / f"{tag}.png"), clip={"x": 0, "y": 0, "width": 420, "height": 90}
             )
-            page = context.new_page()
-            page.goto(ORIGIN, wait_until="domcontentloaded")
-            page.wait_for_function("() => !!window.nibApp", timeout=20000)
-            page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
-            page.evaluate(SEED)
-            page.wait_for_timeout(700)
+            say(f"{tag}: {page.evaluate(CORNER)}")
 
-            def corner(tag: str) -> None:
-                page.screenshot(
-                    path=str(OUT / f"{tag}.png"), clip={"x": 0, "y": 0, "width": 420, "height": 90}
-                )
-                say(f"{tag}: {page.evaluate(CORNER)}")
+        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.wait_for_timeout(600)
+        corner("01-open")
 
-            page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-            page.wait_for_timeout(600)
-            corner("01-open")
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.wait_for_timeout(90)
+        corner("02-going")
 
-            page.evaluate("() => window.nibApp.workspace.closePanel()")
-            page.wait_for_timeout(90)
-            corner("02-going")
+        page.wait_for_timeout(700)
+        corner("03-shut")
 
-            page.wait_for_timeout(700)
-            corner("03-shut")
+        # And back, by the gesture rather than by a button: the drag measures
+        # the panel's own width, and with the column of spaces gone a shut
+        # drawer has no width at all to measure, so this is the path that had
+        # to keep working. Real touch events, dispatched in the page: the
+        # drawer listens for touches and a synthesised mouse is not one.
+        page.evaluate(SWIPE)
+        page.wait_for_timeout(800)
+        say(f"dragged open: panel is {page.evaluate('() => window.nibApp.workspace.panel')}")
+        corner("04-dragged-back")
 
-            # And back, by the gesture rather than by a button: the drag measures
-            # the panel's own width, and with the column of spaces gone a shut
-            # drawer has no width at all to measure, so this is the path that had
-            # to keep working. Real touch events, dispatched in the page: the
-            # drawer listens for touches and a synthesised mouse is not one.
-            page.evaluate(SWIPE)
-            page.wait_for_timeout(800)
-            say(f"dragged open: panel is {page.evaluate('() => window.nibApp.workspace.panel')}")
-            corner("04-dragged-back")
-
-            context.close()
-            browser.close()
-    finally:
-        pages.stop()
+        context.close()
 
     say(f"shots in {OUT}")
     return 0

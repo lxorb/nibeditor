@@ -22,7 +22,7 @@ testing a policy the app does not ship.
    pressed on a slide. Every violation the browser reports is collected and any one
    of them fails the run.
 
-All of it twice: in the machine's own Chrome, which is what WebView2 is, and in
+All of it twice: in Chromium, which is what WebView2 is, and in
 Playwright's WebKit, which is what a Mac, an iPhone and Linux run the app in.
 
 Run it from the repository root:
@@ -36,30 +36,23 @@ go beside this file under `shots/frames/`.
 
 from __future__ import annotations
 
-import functools
-import http.server
 import json
-import os
 import re
-import shutil
-import socket
-import socketserver
-import subprocess
 import sys
-import threading
 import time
-from pathlib import Path
 
-from playwright.sync_api import Browser, ConsoleMessage, Error, Frame, Page, sync_playwright
+from playwright.sync_api import Browser, ConsoleMessage, Error, Frame, Page
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "frames"
+import harness
+from harness import Drive
 
-# Not the dev server's 1420, and not the other drives' ports either.
-PORT = 19305
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wait_for = DRIVE.say, DRIVE.wait_for
+failures = DRIVE.failures
+ORIGIN = DRIVE.origin
+SHOTS = DRIVE.shots
+DIST = harness.DIST
+
 
 # The page this note frames. Nothing is ever fetched from it - the card is only
 # ever pressed once, and what is checked then is the frame's own attributes.
@@ -168,45 +161,24 @@ FRAME = """
 }
 """
 
-failures: list[str] = []
 violations: list[str] = []
 
-# The engines the drive walks, in turn: the machine's own Chrome, which is what
+# The engines the drive walks, in turn: Chromium, which is what
 # WebView2 is, and Playwright's WebKit, which is what a Mac, an iPhone and Linux
 # run the app in. `--engine chrome` or `--engine webkit` runs one.
 ENGINES = ("chrome", "webkit")
 engine = ENGINES[0]
 
 
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
 def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(f"[{engine}] {what}")
+    DRIVE.wrong(f"[{engine}] {what}")
 
 
-def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env=environment,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
+def shot(page: Page, name: str) -> None:
+    # The caret as it is: hiding it is a stylesheet Playwright puts into every frame,
+    # and in WebKit the runner's own policy - `default-src 'none'` - refuses it out
+    # loud, which would be the drive complaining about itself.
+    DRIVE.shot(page, f"{engine}/{name}", caret="initial")
 
 
 def policy() -> str:
@@ -222,75 +194,6 @@ def policy() -> str:
         raise SystemExit("the built index.html declares no policy to serve")
 
     return re.sub(r"\s+", " ", found.group(1)).strip()
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    policy = ""
-
-    def log_message(self, format: str, *args: object) -> None:
-        return
-
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        # The header as well as the meta the page carries, because a served build
-        # is the nearest thing to the installed app this drive can stand in. It is
-        # the meta form, read out of the page itself: the one directive the header
-        # form adds is `frame-ancestors`, which says who may frame this page and so
-        # has nothing to do with the frames the page makes, which is all this drive
-        # is about. See src/csp.ts.
-        self.send_header("Content-Security-Policy", self.policy)
-        super().end_headers()
-
-
-class Strict(socketserver.ThreadingTCPServer):
-    """A server that refuses a port somebody else holds, and answers a page's burst
-    of chunk requests at once: one at a time behind a queue of five, a loaded
-    machine refused some of them and the page failed on a chunk it never got."""
-
-    allow_reuse_address = False
-    daemon_threads = True
-    request_queue_size = 128
-
-
-def serve(said: str) -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN} under the app's own policy")
-    Quiet.policy = said
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-
-    raise SystemExit("the file server never answered")
-
-
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
-    until = time.monotonic() + patience
-    while time.monotonic() < until:
-        if page.evaluate(f"() => !!({expression})"):
-            return
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what}")
-
-
-def shot(page: Page, name: str) -> None:
-    (SHOTS / engine).mkdir(parents=True, exist_ok=True)
-    # The caret as it is: hiding it is a stylesheet Playwright puts into every frame,
-    # and in WebKit the runner's own policy - `default-src 'none'` - refuses it out
-    # loud, which would be the drive complaining about itself.
-    page.screenshot(path=str(SHOTS / engine / f"{name}.png"), caret="initial")
-    say(f"shot {engine}/{name}.png")
 
 
 def scroll_to(page: Page, selector: str) -> None:
@@ -333,10 +236,7 @@ def fresh(browser: Browser) -> Page:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on("console", noticed)
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    DRIVE.open(page, origin=ORIGIN)
     say(f"the space holds {page.evaluate(SEED, [NOTE, 'Frames'])}")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
@@ -540,35 +440,36 @@ def slides(page: Page) -> None:
 
 
 def main() -> int:
-    global engine
+    global engine, ORIGIN
 
     asked = sys.argv[sys.argv.index("--engine") + 1] if "--engine" in sys.argv else None
     engines = [one for one in ENGINES if asked in (None, one)]
     if not engines:
         raise SystemExit(f"no engine called {asked}; the drive knows {', '.join(ENGINES)}")
 
-    build()
-    shutil.rmtree(SHOTS, ignore_errors=True)
-    said = policy()
-    say(f"the policy is {said[:90]}…")
-    server = serve(said)
-
-    try:
-        with sync_playwright() as play:
-            for engine in engines:
-                say(f"-- {engine} --")
-                browser = (
-                    play.chromium.launch(channel="chrome")
-                    if engine == "chrome"
-                    else play.webkit.launch()
-                )
-                try:
-                    drive(browser)
-                finally:
-                    browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
+    with DRIVE.session(playwright=True) as play:
+        # The header as well as the meta the page carries, because a served build is
+        # the nearest thing to the installed app this drive can stand in. It is the
+        # meta form, read out of the page itself: the one directive the header form
+        # adds is `frame-ancestors`, which says who may frame this page and so has
+        # nothing to do with the frames the page makes, which is all this drive is
+        # about. See src/csp.ts.
+        said = policy()
+        say(f"the policy is {said[:90]}…")
+        DRIVE.header("Content-Security-Policy", said)
+        for engine in engines:
+            say(f"-- {engine} --")
+            # WebKit is driven on the loopback address rather than on the drive's
+            # own name under `.localhost`: under such a name it never ran the fence's
+            # sandbox, where on the address - and on `tauri://localhost`, which is
+            # where the app meets WebKit - it does.
+            if engine != "chrome" and DRIVE.server is not None:
+                ORIGIN = DRIVE.server.origin("127.0.0.1")
+            browser = DRIVE.browser(play) if engine == "chrome" else play.webkit.launch()
+            try:
+                drive(browser)
+            finally:
+                browser.close()
 
     if violations:
         say(f"{len(violations)} complaint(s) about the policy")

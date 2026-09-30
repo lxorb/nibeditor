@@ -34,19 +34,21 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import sys
-from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+import harness
+from harness import Drive
 
-HERE = Path(__file__).resolve().parent
+DRIVE = Drive(__file__, served=False)
+say = DRIVE.say
+ORIGIN = harness.worker_origin()
 
-#: first-sync.py's Worker harness, and speed.py's five thousand note fixture. Both
+
+#: first-sync.py's account, and speed.py's five thousand note fixture. Both
 #: imported by path because both filenames hold a hyphen, and both are the one
-#: statement of what they are: a Worker with a database behind it, and a space of
-#: the size somebody actually has.
+#: statement of what they are: an account with a live session, and a space of the
+#: size somebody actually has.
 def sibling(name: str):
-    spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(name.replace("-", "_"), harness.HERE / f"{name}.py")
     if not spec or not spec.loader:
         raise SystemExit(f"cannot read {name}.py")
 
@@ -60,10 +62,6 @@ speed = sibling("speed")
 
 #: How many notes the machine holds before anybody signs in.
 NOTES = 5000
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
 
 
 #: Every moment and every long task, installed before the app's first script runs.
@@ -108,19 +106,17 @@ def drive(browser, token: str) -> dict[str, object]:
     page.on("pageerror", lambda error: say(f"page error: {error}"))
 
     asked: list[str] = []
-    page.on("request", lambda one: asked.append(one.url) if first.ORIGIN in one.url else None)
+    page.on("request", lambda one: asked.append(one.url) if ORIGIN in one.url else None)
 
     # A machine with a space of five thousand notes on it and nobody signed in.
-    page.goto(f"{first.ORIGIN}/seed.html", wait_until="domcontentloaded")
+    page.goto(f"{ORIGIN}{harness.SEED_PATH}", wait_until="domcontentloaded")
     seeded = page.evaluate(
         speed.SEED,
         {"notes": NOTES, "lines": 0, "strokes": 0, "points": speed.POINTS, "space": "/Big"},
     )
     say(f"{seeded['rows']} rows seeded into {seeded['stores']}")
 
-    page.goto(first.ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
+    DRIVE.open(page, origin=ORIGIN, patience=60)
     page.evaluate(
         "() => { const ws = window.nibApp.workspace;"
         " if (ws.panel !== 'tree') ws.showPanel('tree') }"
@@ -234,22 +230,11 @@ def drive(browser, token: str) -> dict[str, object]:
 
 
 def main() -> int:
-    service = first.Worker()
-    service.build()
-    (first.APP / "dist" / "seed.html").write_text(speed.SEED_PAGE, encoding="utf-8")
-    service.clean()
-    service.migrate()
-    service.start()
-    try:
-        token = service.account()
-        with sync_playwright() as play:
-            browser = play.chromium.launch(
-                channel="chrome", args=["--enable-precise-memory-info"]
-            )
-            found = drive(browser, token)
-            browser.close()
-    finally:
-        service.stop()
+    service = harness.Worker(DRIVE)
+    with DRIVE.session(args=["--enable-precise-memory-info"]) as browser:
+        service.start()
+        token = service.account(first.EMAIL)
+        found = drive(browser, token)
 
     print()
     print(f"signing in with {NOTES} notes already on the machine:")
