@@ -134,6 +134,14 @@ jobs:
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
+      # And the launch's second half, on the build smoke.py just made: once the window
+      # is whole, nothing the launch order starts holds the thread for a frame a key
+      # would wait through. Counted against a line scaled to this runner, so it asks
+      # the same question here as on the machine the one-second table was measured on.
+      # See apps/desktop/test/e2e/long-tasks.py.
+      - name: The launch hands the thread back
+        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
+
       # And the half of that rule a test over source text cannot prove: that a real
       # release does not carry the handle. `window.nibApp` is the whole workspace,
       # and the page it sits on renders other people's HTML, so "the bundler removed
