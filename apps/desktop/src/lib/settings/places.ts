@@ -7,6 +7,7 @@
  *  settings-search.ts and palette/settings.ts. */
 
 import { account } from '../account.svelte'
+import { reach } from '../agents/settings/reach.svelte'
 import { t } from '../i18n.svelte'
 import type { Place } from '../settings-search'
 import { isDesktop } from '../tauri'
@@ -53,6 +54,15 @@ export function places(): Place[] {
       text: [t('Custom')],
     })
     all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
+  }
+
+  // The agents on this machine: a desktop's alone. See agents/settings/reach.svelte.ts.
+  if (!__EVEN_PLUGIN__ && reach.offered) {
+    all.push({
+      section: 'agents',
+      label: t('Agents'),
+      text: ['MCP', 'nib mcp', 'Claude Code', 'Codex', 'token', t('Create a token')],
+    })
   }
 
   if (account.user) {

@@ -862,6 +862,13 @@
     <!-- Its own component: a provider is two or three fields and a list fetched
          from a server, not a row of settings. -->
     <AiPane />
+  {:else if !__EVEN_PLUGIN__ && settings.section === 'agents'}
+    <!-- Fetched as it is opened: nothing of the agents is in the app until somebody
+         looks at them, or one connects, and nothing at all in the glasses' plugin,
+         which has no agents. See agents/settings/AgentsPane.svelte. -->
+    {#await import('./agents/settings/AgentsPane.svelte') then agents}
+      <agents.default />
+    {/await}
   {:else if settings.section === 'llm'}
     <!-- Its own component: the pane is a small guide, not a list of settings. -->
     <McpSetup />

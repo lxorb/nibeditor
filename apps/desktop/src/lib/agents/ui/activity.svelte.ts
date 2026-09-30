@@ -15,6 +15,7 @@ import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { AgentEvent, Approval, Grant } from '../verbs'
 import { touchedBy } from '../docs/touched'
+import { keepInNote } from './keep'
 import { callsOf, sessionMarkdown, today, type Call } from './session'
 import { heard, isStopped, nothing, overviewed, pausedKey, type Seen, wrote } from './seen'
 import type { Source } from './source'
@@ -201,17 +202,7 @@ export class Activity {
   /** The session written into the note in front, or into a note of its own. */
   async addToNote(agent: string): Promise<void> {
     await this.readLog()
-    const text = sessionMarkdown(this.nameOf(agent), this.callsOf(agent))
-    const front = workspace.active
-
-    if (front?.kind === 'note' && front.path !== null) {
-      const { appendTo } = await import('../../recorder/note')
-      const before = front.doc.endsWith('\n\n') ? '' : front.doc.endsWith('\n') ? '\n' : '\n\n'
-      if (appendTo(front.path, `${before}${text}`)) return
-    }
-
-    const path = await workspace.noteFrom(text)
-    if (path !== null) await workspace.open(path)
+    await keepInNote(sessionMarkdown(this.nameOf(agent), this.callsOf(agent)))
   }
 
   /** The note in front, if the agent has edits of its own to take back in it: what

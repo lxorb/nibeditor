@@ -240,6 +240,8 @@ macro_rules! desktop_commands {
             agents::agents_ask,
             agents::agents_state,
             agents::agents_log,
+            agents::agents_log_days,
+            agents::agents_log_clear,
             agents::agents_adopt,
             agents::agents_capture,
             agents::agents_test_reader_focus,
