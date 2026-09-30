@@ -94,7 +94,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::end_all(app);
             // And the next launch, where the engine is being switched; see
             // engine_switch.rs.
-            crate::engine_switch::leaving();
+            crate::engine_switch::on_leaving();
         }
 
         RunEvent::WindowEvent {

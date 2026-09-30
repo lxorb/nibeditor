@@ -679,7 +679,7 @@ fn ready(
     // nib's own Chromium got as far as its window, so the next launch hands over to it
     // again; see engine_switch.rs.
     #[cfg(desktop)]
-    engine_switch::shown(handle);
+    engine_switch::window_shown(handle);
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);

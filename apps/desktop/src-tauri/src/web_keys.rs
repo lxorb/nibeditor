@@ -320,7 +320,7 @@ pub mod chromium {
     }
 
     /// And the page gone.
-    pub fn gone(label: &str) {
+    pub fn page_closed(label: &str) {
         PAGES
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
