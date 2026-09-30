@@ -45,6 +45,7 @@ import {
   type Thing,
 } from '@nib/markdown/canvas'
 import * as Y from 'yjs'
+import { fold } from './fold'
 
 /** The two shared maps, under names both ends ask for. */
 export const PLANE = 'canvas'
@@ -123,7 +124,7 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) 
 
   if (!held) {
     const made = new Y.Map<unknown>()
-    for (const [key, value] of Object.entries(fields)) made.set(key, value)
+    for (const [key, value] of Object.entries(fields)) made.set(key, shared(key, value))
     made.set(KIND, kindOf(thing))
     made.set(AT, at)
     made.set(Z, z)
@@ -132,7 +133,12 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) 
   }
 
   for (const [key, value] of Object.entries(fields)) {
-    if (!same(held.get(key), value)) held.set(key, value)
+    const current = held.get(key)
+    if (key === WORDS && typeof value === 'string' && current instanceof Y.Text) {
+      rewrite(current, value)
+      continue
+    }
+    if (!same(current, value)) held.set(key, shared(key, value))
   }
 
   // A field that has gone, such as a card that lost its colour, goes from the
@@ -143,6 +149,27 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) 
   }
 
   if (held.get(AT) !== at) held.set(AT, at)
+}
+
+/** The one field of an object that is prose: a card's words. */
+const WORDS = 'text'
+
+/** A field's value as the room keeps it. A card's words are a `Y.Text` of their own
+ *  rather than one value, so two devices editing one card while apart merge like prose
+ *  instead of one of them losing (docs/sync-v2.md section 5.6); every other field is
+ *  one value, and the newer one stands. Read back, a `Y.Text` is its string, so the
+ *  file a plane settles into is byte for byte what it was. */
+function shared(key: string, value: unknown): unknown {
+  return key === WORDS && typeof value === 'string' ? new Y.Text(value) : value
+}
+
+/** A card's words brought to `wanted` as the one replacement they differ by, so a
+ *  device typing in the card and another editing it elsewhere both keep theirs. */
+function rewrite(text: Y.Text, wanted: string) {
+  const change = fold(text.toJSON(), wanted)
+  if (!change) return
+  if (change.to > change.from) text.delete(change.from, change.to - change.from)
+  if (change.insert) text.insert(change.from, change.insert)
 }
 
 /** Where the next thing to arrive sits in the stack: after everything already

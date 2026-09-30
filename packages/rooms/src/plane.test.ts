@@ -61,8 +61,11 @@ function touched(transaction: Y.Transaction): Set<string> {
       continue
     }
 
-    // An object's own map. Which object it is is the key it hangs on.
-    const key = parent.parentSub
+    // An object's own map, or a card's words inside it. Which object it is is the key
+    // the object's own map hangs on, however far down the change was.
+    let item = parent
+    while (item.parent instanceof Y.AbstractType && item.parent._item) item = item.parent._item
+    const key = item.parentSub
     if (key !== null) ids.add(key)
   }
 
@@ -184,6 +187,23 @@ describe('two devices on one plane', () => {
       expect(node?.y).toBe(40)
       expect(node?.color).toBe('4')
     }
+  })
+
+  test("edits to one card's words made apart are both kept, as prose merges", () => {
+    const one = new Device()
+    const two = new Device()
+    one.edit(withNodes(emptyCanvas(), [card('a', 0, 0, 'We ship on Monday.')]))
+    carry(one, two)
+
+    one.edit(withNodes(one.canvas, [card('a', 0, 0, 'We ship on Monday morning.')]), 2000)
+    two.edit(withNodes(two.canvas, [card('a', 0, 0, 'Maybe we ship on Monday.')]), 2100)
+    both(one, two)
+
+    for (const device of [one, two]) {
+      expect(device.canvas.nodes[0]?.text).toBe('Maybe we ship on Monday morning.')
+    }
+    // And the file is the one a string would have written.
+    expect(writeCanvas(one.canvas)).toBe(writeCanvas(two.canvas))
   })
 
   test('two strokes drawn at the same moment are both kept, in the same order', () => {
