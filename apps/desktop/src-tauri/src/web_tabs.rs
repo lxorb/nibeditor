@@ -1006,7 +1006,12 @@ mod session {
             return;
         };
 
+        // Never the keyboard: wry hands every new webview the focus unless told otherwise,
+        // and this one is built by the first page of the run, which may be an agent's,
+        // opened while somebody types in a note. The keys went to a page of one pixel
+        // that nobody can see; the agent harness's keyboard check caught it.
         let builder = tauri::WebviewBuilder::new(ANCHOR, tauri::WebviewUrl::External(blank))
+            .focused(false)
             .disable_drag_drop_handler();
 
         // The same store every tab's page is given, through the same seam: which folder
