@@ -28,6 +28,19 @@
   } = $props()
 
   let at = $state<{ x: number; y: number } | null>(null)
+
+  /** The editor the bar was last placed over. Not a rune: nothing is drawn from it,
+   *  and the effect below it must not wake when `follow` writes it. */
+  let over: EditorView | null = null
+
+  // The bar is told where to stand by the selection moving, and an editor that has
+  // been taken apart never moves again: the last tab in a pane closed with a line
+  // selected, or the window's keyboard gone to another pane. So once the window's
+  // editor is not the one the bar stands over, it goes.
+  $effect(() => {
+    if (view !== over) at = null
+  })
+
   let bar = $state<HTMLElement>()
   /** Whether the colours are showing instead of the actions. */
   let colouring = $state(false)
@@ -148,6 +161,7 @@
     const middle = (start.left + end.right) / 2
     const x = Math.min(Math.max(middle, half), window.innerWidth - half)
 
+    over = current
     at = { x, y: Math.min(start.top, end.top) }
   }
 

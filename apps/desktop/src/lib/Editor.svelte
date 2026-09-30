@@ -323,6 +323,13 @@
       if (switching && showing.anchor === undefined && showing.scroll) {
         current.scrollDOM.scrollTop = showing.scroll
       }
+
+      // Another note is another selection, and a state swapped in is not an
+      // update: CodeMirror tells no listener about `setState`. So whatever follows
+      // the selection hears it from here - or the bar over a line selected in the
+      // note that just closed stands over the next note's heading, and the count at
+      // the foot goes on counting words that have left.
+      if (switching) onselection?.(current)
     })
   })
 

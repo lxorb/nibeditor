@@ -69,3 +69,34 @@ describe('what a pane has selected', () => {
     expect(views.chosen).toBe(0)
   })
 })
+
+describe('a pane whose editor has gone', () => {
+  // Close the last tab in a pane with a line selected and its editor is taken apart
+  // without a word: nothing moves in a view that no longer exists. The count at the
+  // foot and the passage the Ask panel quotes read from here, and went on quoting
+  // the note that had closed.
+  test('has nothing selected any more', () => {
+    const view = viewOf('one two three', [{ from: 0, to: 7 }])
+    views.put('pane', view)
+    views.moved(view)
+
+    views.forget('pane')
+
+    expect(views.chosen).toBe(0)
+    expect(views.selectedText()).toBe('')
+  })
+
+  test('and another pane that reported last keeps its own', () => {
+    const gone = viewOf('one two three', [{ from: 0, to: 3 }])
+    const kept = viewOf('four five', [{ from: 0, to: 4 }])
+    views.put('gone', gone)
+    views.put('kept', kept)
+    views.moved(gone)
+    views.moved(kept)
+
+    views.forget('gone')
+
+    expect(views.chosen).toBe(4)
+    expect(views.selectedText()).toBe('four')
+  })
+})

@@ -24,8 +24,17 @@ class Views {
     this.held.set(paneId, view)
   }
 
+  /** A pane's editor taken apart. Nothing moves in a view that no longer exists, so
+   *  if it was the one that reported last its selection goes with it here: the
+   *  count at the foot and the passage the Ask panel quotes would otherwise go on
+   *  reading a note that has closed. */
   forget(paneId: string) {
+    const gone = this.held.get(paneId)
     this.held.delete(paneId)
+    if (!gone || gone !== this.reporting) return
+
+    this.reporting = null
+    this.chosen = 0
   }
 
   /** How much is selected in the pane that reported last, in characters, or zero
