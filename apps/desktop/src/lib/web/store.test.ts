@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'vitest'
-import { inSlices } from './store'
+import 'fake-indexeddb/auto'
+import { describe, expect, test, vi } from 'vitest'
+import { files, inSlices, type RowChange, stats } from './store'
 
 /** Reading a whole store without stopping the thread.
  *
@@ -72,5 +73,41 @@ describe('a whole store read in slices', () => {
     // The first read is full, so there may be more; the second says there is not.
     expect(found).toHaveLength(500)
     expect(store.asked).toEqual([500, 0])
+  })
+})
+
+describe('a file written over', () => {
+  test('keeps the day it was made, read off its listing and never off the file', async () => {
+    await files.write('/s/plane.canvas', 'x'.repeat(1000), 100)
+
+    const reads = vi.spyOn(IDBObjectStore.prototype, 'get')
+    await files.write('/s/plane.canvas', 'y'.repeat(1000), 200)
+    const stores = reads.mock.contexts.map((store) => (store as IDBObjectStore).name)
+    reads.mockRestore()
+
+    expect(stores).toEqual(['stats'])
+    expect(await files.get('/s/plane.canvas')).toMatchObject({ created: 100, modified: 200 })
+    expect((await stats.all()).find((row) => row.path === '/s/plane.canvas')).toMatchObject({
+      created: 100,
+      modified: 200,
+      size: 1000,
+    })
+  })
+
+  test('says which path changed, and not what is in it', async () => {
+    const heard: unknown[] = []
+    const listening = new BroadcastChannel('nib:rows')
+    const arrived = new Promise<void>((done) => {
+      listening.onmessage = (event: MessageEvent<unknown>) => {
+        heard.push(event.data)
+        done()
+      }
+    })
+
+    await files.write('/s/note.md', '# words', 300)
+    await arrived
+    listening.close()
+
+    expect(heard).toEqual([{ written: ['/s/note.md'], gone: [] } satisfies RowChange])
   })
 })

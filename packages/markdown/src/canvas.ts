@@ -415,14 +415,6 @@ export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge |
   }
 }
 
-/** The flattened points of every stroke that has been written down, kept.
- *
- *  A canvas is written whole on every edit, and flattening five thousand strokes
- *  that have not changed since the last one is most of the cost of doing so.
- *  Weak and keyed on the stroke, like every other cache in this codebase: a
- *  stroke that changed is a new object, so the answers cannot go stale. */
-const flattened = new WeakMap<InkStroke, number[]>()
-
 /** The points of a stroke as they go into a file: flattened, six numbers each,
  *  and rounded to a tenth of a unit, which is finer than any pen is steady.
  *
@@ -836,19 +828,13 @@ function writtenShape(node: ShapeNode): Record<string, unknown> {
 }
 
 function writtenStroke(stroke: InkStroke): Record<string, unknown> {
-  let points = flattened.get(stroke)
-  if (!points) {
-    points = packed(stroke.points)
-    flattened.set(stroke, points)
-  }
-
   return {
     id: stroke.id,
     tool: stroke.tool,
     color: stroke.color,
     size: Math.round(stroke.size * 100) / 100,
     ...(stroke.opacity === undefined ? {} : { opacity: clampOpacity(stroke.opacity) }),
-    points,
+    points: packed(stroke.points),
   }
 }
 
@@ -866,61 +852,192 @@ function writtenEdge(edge: CanvasEdge): Record<string, unknown> {
   }
 }
 
-/** The same map with its keys in order, so a canvas that has not changed is
- *  written back byte for byte however the map was built. */
-function sortedTimes(times: Record<string, number>): Record<string, number> {
-  return Object.fromEntries(Object.entries(times).sort(([a], [b]) => (a < b ? -1 : 1)))
-}
-
 /** How the parts of a canvas that are not the spec's are written. Bumped only
  *  when an older Nib could no longer read a newer file, which so far it can. */
 const NIB_VERSION = 1
 
+/** Tabs to a depth: the indentation `JSON.stringify(value, null, '\t')` gives a
+ *  line that many levels in. */
+const TABS = ['', '\t', '\t\t', '\t\t\t']
+
+/** A value as that call prints it `depth` levels into a document: its own lines
+ *  indented by the levels around it. JSON never holds a raw line break inside a
+ *  string, so every one in the text is the printer's.
+ *
+ *  Split and joined rather than `replaceAll`, whose answer V8 keeps in a shape that
+ *  costs every later join of it again: ten thousand strokes joined into a file took
+ *  seventy-five milliseconds that way and four this way. */
+function printed(value: unknown, depth: number): string {
+  return JSON.stringify(value, null, '\t')
+    .split('\n')
+    .join(`\n${TABS[depth] ?? ''}`)
+}
+
+/** Each object's text in the file, printed once and kept.
+ *
+ *  A plane is written whole on every edit, and printing ten thousand strokes that
+ *  have not changed since the last write was the whole of what writing one cost:
+ *  ninety milliseconds, where the strokes that did change are one. Every object on
+ *  a plane is replaced rather than changed in place - that is what `stamped` in
+ *  canvas-merge.ts reads what changed from - so an object's text cannot go stale,
+ *  and weak, so a stroke rubbed out takes its text with it. One map per list,
+ *  because a list decides how deep its objects sit. */
+function kept<T extends object>(depth: number, fields: (thing: T) => unknown) {
+  const texts = new WeakMap<T, string>()
+
+  return (thing: T): string => {
+    let text = texts.get(thing)
+    if (text === undefined) {
+      text = printed(fields(thing), depth)
+      texts.set(thing, text)
+    }
+    return text
+  }
+}
+
+const cardText = kept<CanvasNode>(2, writtenNode)
+const edgeText = kept<CanvasEdge>(2, writtenEdge)
+const pageText = kept<PageNode>(3, writtenPage)
+const strokeText = kept<InkStroke>(3, writtenStroke)
+const shapeText = kept<ShapeNode>(3, writtenShape)
+
+/** The strokes' text printed now, for a writer that wants the next write to find
+ *  it done: a plane just opened is printed a slice at a time before anybody draws
+ *  on it. See `warm` in the app's canvas store. */
+export function printStrokes(strokes: readonly InkStroke[]): void {
+  for (const stroke of strokes) strokeText(stroke)
+}
+
+/** A list's items one level under `depth`, each followed by the comma and the
+ *  line break the printer puts between two of them, and the last by nothing. */
+function listed(texts: readonly string[], depth: number): string[] {
+  const between = `,\n${TABS[depth + 1] ?? ''}`
+  const out: string[] = []
+  for (const text of texts) {
+    if (out.length) out.push(between)
+    out.push(text)
+  }
+  return out
+}
+
+/** Whether a key is one an object puts before every other, in the order of the
+ *  number it is: a whole number an array could be indexed by. */
+function isIndex(key: string): boolean {
+  return /^(?:0|[1-9]\d{0,9})$/.test(key) && Number(key) < 2 ** 32 - 1
+}
+
+/** A map of times two levels in, as the printer prints it with its keys in order,
+ *  a line to a piece, each with its own line break but the last. In order, so a
+ *  canvas that has not changed is written back byte for byte however the map was
+ *  built: the keys by their code units, after the ones any object puts first.
+ *
+ *  Printed line by line rather than as a sorted copy of the map, which was a tenth
+ *  of every write of a plane of ten thousand strokes. */
+function timeLines(times: Record<string, number>): string[] {
+  const keys = Object.keys(times).sort()
+  const first = keys.filter(isIndex)
+  const ordered = first.length
+    ? [
+        ...first.sort((one, other) => Number(one) - Number(other)),
+        ...keys.filter((key) => !isIndex(key)),
+      ]
+    : keys
+
+  const out = ['{\n']
+  const last = ordered.length - 1
+  ordered.forEach((key, at) => {
+    const line = `\t\t\t${JSON.stringify(key)}: ${JSON.stringify(times[key])}`
+    out.push(at < last ? `${line},\n` : `${line}\n`)
+  })
+  out.push('\t\t}')
+  return out
+}
+
+/** How many runs `canvasRuns` answers with, whatever is on the plane. */
+export const CANVAS_RUNS = 15
+
+/** The canvas as a file, in runs of pieces that join to the text `writeCanvas`
+ *  answers: the structure between the lists, and each list as its items - every
+ *  stroke, card, edge and shape one piece, the same string as long as it is the
+ *  same object - and the two maps of times a line to a piece. Always the same
+ *  runs in the same order, empty where the plane has nothing, so the runs of two
+ *  writes line up and a writer can tell which few pieces an edit changed; see
+ *  canvas/written.ts in the app. */
+export function canvasRuns(canvas: Canvas): string[][] {
+  const shapes = canvas.nodes.filter((node): node is ShapeNode => node.type === 'shape')
+  const pages = canvas.nodes.filter(isPage)
+  // A page goes into `nodes` as the spec node it is - a PDF page, or a labelled
+  // frame - so a page note is a JSON Canvas file and nothing in it is an invention
+  // of ours. Numbered as they are written, which is the order they are in, so it is
+  // printed afresh rather than kept.
+  let numbered = -1
+  const cards = canvas.nodes
+    .filter((node) => node.type !== 'shape')
+    .map((node) =>
+      isPage(node) ? printed(writtenNode(asSpecNode(node, ++numbered)), 2) : cardText(node),
+    )
+  const edges = canvas.edges.map(edgeText)
+  // Worth writing only when something is not where the spec would put it: a
+  // canvas of nothing but cards stacks in the order `nodes` already gives, and
+  // a second list saying so again is noise in the file.
+  const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
+  const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
+  const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
+  // First in `nib`, because it is the one key in there a person would ever open the
+  // file to read: what the row in the file list wears.
+  const icon = canvas.icon ? `,\n\t\t"icon": ${JSON.stringify(canvas.icon)}` : ''
+  const tint =
+    canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
+  const nib =
+    icon !== '' ||
+    [pages, canvas.ink, shapes, order].some((list) => list.length > 0) ||
+    at !== null ||
+    gone !== null
+
+  // Opens a list under `key` at `depth`, or writes it empty where it is.
+  const opens = (key: string, depth: number, count: number, always = false) =>
+    count ? `,\n${TABS[depth]}"${key}": [\n${TABS[depth + 1]}` : always ? `,\n\t"${key}": []` : ''
+  const closes = (depth: number, count: number) => (count ? `\n${TABS[depth]}]` : '')
+
+  return [
+    [cards.length ? '{\n\t"nodes": [\n\t\t' : '{\n\t"nodes": []'],
+    listed(cards, 1),
+    [closes(1, cards.length) + opens('edges', 1, edges.length, true)],
+    listed(edges, 1),
+    [
+      closes(1, edges.length) +
+        (nib ? `,\n\t"nib": {\n\t\t"version": ${NIB_VERSION}${icon}${tint}` : '') +
+        opens('pages', 2, pages.length),
+    ],
+    listed(pages.map(pageText), 2),
+    [closes(2, pages.length) + opens('ink', 2, canvas.ink.length)],
+    listed(canvas.ink.map(strokeText), 2),
+    [closes(2, canvas.ink.length) + opens('shapes', 2, shapes.length)],
+    listed(shapes.map(shapeText), 2),
+    [
+      closes(2, shapes.length) +
+        (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
+        (at ? ',\n\t\t"at": ' : ''),
+    ],
+    at ?? [],
+    [gone ? ',\n\t\t"gone": ' : ''],
+    gone ?? [],
+    [nib ? '\n\t}\n}\n' : '\n}\n'],
+  ]
+}
+
 /** The canvas as a file. Tabs and a closing newline, which is how Obsidian
  *  writes one, so a canvas that travels between the two apps and back shows no
- *  diff at all beyond what somebody actually changed.
+ *  diff at all beyond what somebody actually changed. Exactly what
+ *  `JSON.stringify(file, null, '\t')` prints, put together out of the pieces
+ *  above; canvas.test.ts holds the two to each other.
  *
  *  Nothing of ours is written into a canvas that has none: a plane of plain
  *  cards is exactly the file the spec describes, with no key of Nib's in it. */
 export function writeCanvas(canvas: Canvas): string {
-  const shapes = canvas.nodes.filter((node): node is ShapeNode => node.type === 'shape')
-  const pages = canvas.nodes.filter(isPage)
-  // Worth writing only when something is not where the spec would put it: a
-  // canvas of nothing but cards stacks in the order `nodes` already gives, and
-  // a second list saying so again is noise in the file.
-  const ink = canvas.ink.map(writtenStroke)
-  const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
-
-  const nib = {
-    // First, because it is the one key in here a person would ever open the file
-    // to read: what the row in the file list wears.
-    ...(canvas.icon ? { icon: canvas.icon } : {}),
-    ...(canvas.icon && canvas.iconColor ? { iconColor: canvas.iconColor } : {}),
-    // Before the ink, because the pages are what the ink is written on, and the
-    // list's own order is the order they turn in.
-    ...(pages.length ? { pages: pages.map(writtenPage) } : {}),
-    ...(ink.length ? { ink } : {}),
-    ...(shapes.length ? { shapes: shapes.map(writtenShape) } : {}),
-    ...(order.length ? { order } : {}),
-    ...(Object.keys(canvas.at).length ? { at: sortedTimes(canvas.at) } : {}),
-    ...(Object.keys(canvas.gone).length ? { gone: sortedTimes(canvas.gone) } : {}),
-  }
-
-  // A page goes into `nodes` as the spec node it is - a PDF page, or a labelled
-  // frame - so a page note is a JSON Canvas file and nothing in it is an invention
-  // of ours. Numbered as they are written, which is the order they are in.
-  let numbered = -1
-  const written = {
-    nodes: canvas.nodes
-      .filter((node) => node.type !== 'shape')
-      .map((node) =>
-        isPage(node) ? writtenNode(asSpecNode(node, ++numbered)) : writtenNode(node),
-      ),
-    edges: canvas.edges.map(writtenEdge),
-    ...(Object.keys(nib).length ? { nib: { version: NIB_VERSION, ...nib } } : {}),
-  }
-
-  return `${JSON.stringify(written, null, '\t')}\n`
+  return canvasRuns(canvas)
+    .map((run) => run.join(''))
+    .join('')
 }
 
 /** What a canvas file says before anybody has drawn on it. */

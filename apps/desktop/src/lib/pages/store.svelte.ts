@@ -25,7 +25,7 @@ import {
   settled,
 } from '@nib/markdown/pages'
 import { type Camera, clampScale, zoomed } from '../camera'
-import { type Canvas, type PageNode, readCanvas, takeParsed, writeCanvas } from '../canvas/format'
+import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'
 import type { KeptView } from '../canvas/place'
 import { CanvasStore } from '../canvas/store.svelte'
@@ -429,7 +429,7 @@ export class PagesStore extends CanvasStore {
     return settled(takeParsed(text) ?? readCanvas(text))
   }
 
-  protected override serialise(canvas: Canvas): string {
-    return writeCanvas(settled(canvas))
+  protected override runs(canvas: Canvas): string[][] {
+    return canvasRuns(settled(canvas))
   }
 }

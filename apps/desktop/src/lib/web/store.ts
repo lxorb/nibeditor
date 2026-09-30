@@ -15,6 +15,7 @@
  *  the two cannot come apart even if the tab is closed mid-write. */
 
 import { breathe } from '../breathe'
+import type { PlaneMarks } from '../scan-canvas'
 
 const NAME = 'nib'
 const VERSION = 2
@@ -57,6 +58,12 @@ export interface StatRow {
   modified: number
   created: number
   size?: number
+  /** And for a plane, what the link index reads off it: the scan of a space takes a
+   *  plane's icon and links from here and never reads the plane, which for ten
+   *  thousand strokes was a row of seven megabytes built into a string, one task of
+   *  a quarter of a second, for a row of the file list. Written with the plane, and
+   *  learnt by that scan for a row written before it was kept, the way `size` is. */
+  plane?: PlaneMarks
 }
 
 let open: Promise<IDBDatabase> | null = null
@@ -194,10 +201,14 @@ function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
   )
 }
 
-/** One change to the rows, as anything holding a copy of them hears it. */
+/** One change to the rows, as anything holding a copy of them hears it: which
+ *  paths, and never the rows. A row posted across is a copy of the file made on
+ *  the page's thread, which for a plane of ten thousand strokes was a tenth of a
+ *  second per stroke drawn, for a worker that holds no planes; a listener reads the
+ *  rows it wants itself, on its own thread. */
 export interface RowChange {
-  /** The rows as they now stand. */
-  rows: FileRow[]
+  /** The paths written. */
+  written: string[]
   /** The paths that no longer have one. */
   gone: string[]
 }
@@ -226,17 +237,17 @@ function bus(): BroadcastChannel | null {
   return (channel ??= new BroadcastChannel(CHANNEL))
 }
 
-function announce(rows: FileRow[], gone: string[]): void {
-  bus()?.postMessage({ rows, gone } satisfies RowChange)
+function announce(written: string[], gone: string[]): void {
+  bus()?.postMessage({ written, gone } satisfies RowChange)
 }
 
 function isRowChange(value: unknown): value is RowChange {
   if (typeof value !== 'object' || value === null) return false
 
-  const shape = value as { rows?: unknown; gone?: unknown }
+  const shape = value as { written?: unknown; gone?: unknown }
   return (
-    Array.isArray(shape.rows) &&
-    shape.rows.every((row) => typeof (row as FileRow | null)?.path === 'string') &&
+    Array.isArray(shape.written) &&
+    shape.written.every((path) => typeof path === 'string') &&
     Array.isArray(shape.gone) &&
     shape.gone.every((path) => typeof path === 'string')
   )
@@ -336,7 +347,22 @@ export const files = {
     batch(WITH_STATS, (change) => {
       change.objectStore('files').put(row)
       change.objectStore('stats').put(statOf(row))
-    }).then(() => announce([row], [])),
+    }).then(() => announce([row.path], [])),
+  /** New words for a file at `at`, keeping the time it was made - read off its
+   *  listing in the same transaction, never off the file, which for a plane is
+   *  megabytes built into a string for the sake of one number - and, for a plane,
+   *  what the index reads off it. */
+  write: (path: string, content: string, at: number, plane?: PlaneMarks) =>
+    batch(WITH_STATS, (change) => {
+      const listing = change.objectStore('stats')
+      const asked = listing.get(path)
+      asked.onsuccess = () => {
+        const held = asked.result as StatRow | undefined
+        const row = { path, content, created: held?.created ?? at, modified: at }
+        change.objectStore('files').put(row)
+        listing.put({ ...statOf(row), ...(plane ? { plane } : {}) })
+      }
+    }).then(() => announce([path], [])),
   remove: (path: string) =>
     batch(WITH_STATS, (change) => {
       change.objectStore('files').delete(path)
@@ -364,7 +390,7 @@ export const files = {
       }
     }).then(() =>
       announce(
-        rows,
+        rows.map((row) => row.path),
         gone.filter((path) => !rows.some((row) => row.path === path)),
       ),
     ),
@@ -398,10 +424,11 @@ export const stats = {
       (after, most) => slice<StatRow>('stats', after, most),
       (row) => row.path,
     ),
-  /** Sizes a pass over the files found out, written into the rows that did not
-   *  have one. Only into a row still describing the file that was read - the same
-   *  modified time - since a file written meanwhile has written its own. */
-  learn: (found: readonly { path: string; modified: number; size: number }[]) =>
+  /** Sizes and planes' marks a pass over the files found out, written into the rows
+   *  that did not have them. Only into a row still describing the file that was
+   *  read - the same modified time - since a file written meanwhile has written its
+   *  own. */
+  learn: (found: readonly { path: string; modified: number; size: number; plane?: PlaneMarks }[]) =>
     batch(['stats'], (change) => {
       const listing = change.objectStore('stats')
 
@@ -409,9 +436,14 @@ export const stats = {
         const asked = listing.get(one.path)
         asked.onsuccess = () => {
           const row = asked.result as StatRow | undefined
-          if (row?.size === undefined && row?.modified === one.modified) {
-            listing.put({ ...row, size: one.size })
-          }
+          if (row?.modified !== one.modified) return
+          if (row.size !== undefined && (row.plane || !one.plane)) return
+
+          listing.put({
+            ...row,
+            size: row.size ?? one.size,
+            ...(one.plane ? { plane: one.plane } : {}),
+          })
         }
       }
     }),
@@ -430,6 +462,17 @@ export const meta = {
 
 export const snapshots = {
   put: (row: SnapshotRow) => run<IDBValidKey>('snapshots', 'readwrite', (s) => s.put(row)),
+  /** One version by the id a listing gave out. */
+  get: (id: number) => run<SnapshotRow | undefined>('snapshots', 'readonly', (s) => s.get(id)),
+  /** A note's newest version, alone: the one a new version is compared with. Asking
+   *  for all of them read forty copies of a plane to look at one. */
+  newest: (notePath: string) =>
+    run<IDBCursorWithValue | null>('snapshots', 'readonly', (s) =>
+      s.index('notePath').openCursor(IDBKeyRange.only(notePath), 'prev'),
+    ).then((cursor) => cursor?.value as SnapshotRow | undefined),
+  /** The ids of a note's versions, oldest first, and none of their words. */
+  idsOf: (notePath: string) =>
+    run<number[]>('snapshots', 'readonly', (s) => s.index('notePath').getAllKeys(notePath)),
   remove: (id: number) => run<undefined>('snapshots', 'readwrite', (s) => s.delete(id)),
   forNote: (notePath: string) =>
     run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.index('notePath').getAll(notePath)),

@@ -32,6 +32,17 @@ export function breathe(): Promise<void> {
   return new Promise((go) => setTimeout(go, 0))
 }
 
+/** A moment the thread has nothing else to do, for work that can wait for one: a
+ *  plane printing its strokes ahead of its first write waits behind the ink filling
+ *  in rather than sharing its frames. The next task where there is no such moment to
+ *  ask for. */
+export function idle(): Promise<void> {
+  return new Promise((go) => {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(() => go())
+    else setTimeout(go, 0)
+  })
+}
+
 /** A task of its own for whatever comes next.
  *
  *  `breathe` is the wrong tool where the point is *which task* the work lands in:

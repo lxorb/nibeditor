@@ -17,8 +17,11 @@ const disk = vi.hoisted(() => {
    *  kept sizes does, and the sizes a scan wrote back into it. */
   const sized = { yes: true }
   const learnt = new Map<string, number>()
+  /** What each plane's listing says the index wants of it, written with the plane or
+   *  learnt by a scan. */
+  const planes = new Map<string, unknown>()
 
-  return { files, assets, meta, snapshots, reads, sized, learnt }
+  return { files, assets, meta, snapshots, reads, sized, learnt, planes }
 })
 
 vi.mock('./store', () => ({
@@ -41,6 +44,12 @@ vi.mock('./store', () => ({
       return Promise.resolve(rows)
     },
     put: (row: FileRow) => Promise.resolve(void disk.files.set(row.path, row)),
+    write: (path: string, content: string, at: number, plane?: unknown) => {
+      const created = disk.files.get(path)?.created ?? at
+      if (plane) disk.planes.set(path, plane)
+      else disk.planes.delete(path)
+      return Promise.resolve(void disk.files.set(path, { path, content, created, modified: at }))
+    },
     remove: (path: string) => Promise.resolve(void disk.files.delete(path)),
     // The real one is a single transaction; here it is a single statement,
     // which is the same promise from the caller's side.
@@ -67,11 +76,13 @@ vi.mock('./store', () => ({
       Promise.resolve([
         ...[...disk.files.values()].map((row) => {
           const size = disk.sized.yes ? row.content.length : disk.learnt.get(row.path)
+          const plane = disk.planes.get(row.path)
           return {
             path: row.path,
             modified: row.modified,
             created: row.created,
             ...(size === undefined ? {} : { size }),
+            ...(plane ? { plane } : {}),
           }
         }),
         ...[...disk.assets.values()].map((row) => ({
@@ -81,8 +92,11 @@ vi.mock('./store', () => ({
           ...(disk.sized.yes ? { size: row.data.length } : {}),
         })),
       ]),
-    learn: (found: { path: string; size: number }[]) => {
-      for (const one of found) disk.learnt.set(one.path, one.size)
+    learn: (found: { path: string; size: number; plane?: unknown }[]) => {
+      for (const one of found) {
+        disk.learnt.set(one.path, one.size)
+        if (one.plane) disk.planes.set(one.path, one.plane)
+      }
       return Promise.resolve()
     },
   },
@@ -93,8 +107,24 @@ vi.mock('./store', () => ({
     keys: () => Promise.resolve([...disk.meta.keys()].sort()),
   },
   snapshots: {
-    put: (row: SnapshotRow) => Promise.resolve(void disk.snapshots.push(row)),
-    remove: (id: number) => Promise.resolve(void disk.snapshots.splice(id, 1)),
+    put: (row: SnapshotRow) => {
+      const at = disk.snapshots.findIndex((one) => row.id !== undefined && one.id === row.id)
+      if (at >= 0) disk.snapshots[at] = row
+      else disk.snapshots.push({ ...row, id: (disk.snapshots.at(-1)?.id ?? 0) + 1 })
+      return Promise.resolve()
+    },
+    get: (id: number) => Promise.resolve(disk.snapshots.find((one) => one.id === id)),
+    newest: (notePath: string) =>
+      Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath).at(-1)),
+    idsOf: (notePath: string) =>
+      Promise.resolve(
+        disk.snapshots.filter((one) => one.notePath === notePath).map((one) => one.id ?? 0),
+      ),
+    remove: (id: number) => {
+      const at = disk.snapshots.findIndex((one) => one.id === id)
+      if (at >= 0) disk.snapshots.splice(at, 1)
+      return Promise.resolve()
+    },
     forNote: (notePath: string) =>
       Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath)),
   },
@@ -136,8 +166,36 @@ beforeEach(() => {
   disk.reads.length = 0
   disk.sized.yes = true
   disk.learnt.clear()
+  disk.planes.clear()
   localStorage.clear()
   forgetSeedStore()
+})
+
+describe('versions of a note', () => {
+  const keep = (content: string, source?: string) =>
+    webInvoke('snapshot_note', { path: '/Notes/Plane.canvas', content, source })
+
+  /** A plane is megabytes, and a version is kept every few minutes somebody draws:
+   *  comparing it with every earlier one read forty planes to look at one. */
+  test('are compared with the newest alone, and forty are kept', async () => {
+    const { snapshots } = await import('./store')
+    const every = vi.spyOn(snapshots, 'forNote')
+    for (let one = 0; one < 45; one++) await keep(`plane ${String(one)}`)
+    await keep('plane 44', 'agent')
+
+    expect(every).not.toHaveBeenCalled()
+    expect(disk.snapshots).toHaveLength(40)
+    expect(disk.snapshots.at(0)?.content).toBe('plane 5')
+    expect(disk.snapshots.at(-1)).toMatchObject({ content: 'plane 44', source: 'agent' })
+  })
+
+  test('are read back one at a time by the id the listing gave out', async () => {
+    await keep('first')
+    await keep('second')
+    const id = disk.snapshots.find((one) => one.content === 'first')?.id
+
+    expect(await webInvoke('read_snapshot', { path: String(id) })).toBe('first')
+  })
 })
 
 describe('notes', () => {
@@ -706,6 +764,8 @@ describe('reading a whole space for the link index', () => {
     }
     const plane = JSON.stringify({ nodes: [], nib: { ink: [], padding: 'x'.repeat(3_000_000) } })
     await write('/Notes/note-150.canvas', plane)
+    // A plane written before its listing said what is in it; see the tests below.
+    disk.planes.delete('/Notes/note-150.canvas')
 
     await webInvoke('scan_links', { root: '/Notes' })
 
@@ -746,6 +806,54 @@ describe('reading a whole space for the link index', () => {
     await webInvoke('scan_links', { root: '/Notes' })
     const lengths = disk.reads.map((rows) => rows.reduce((all, row) => all + row.content.length, 0))
     for (const length of lengths) expect(length).toBeLessThanOrEqual(SCANNED_AT_ONCE)
+  })
+
+  /** A plane of ten thousand strokes is seven megabytes, and the scan read all of it
+   *  out of storage, one task of a quarter of a second, for its icon. */
+  const drawn = (icon: string) =>
+    JSON.stringify({
+      nodes: [{ id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'note-001.md' }],
+      edges: [],
+      nib: { version: 1, icon, ink: [{ id: 's', points: [] }], padding: 'x'.repeat(100_000) },
+    })
+
+  test('never reads a plane whose listing says what the index wants of it', async () => {
+    for (let at = 0; at < 20; at++) await write(`/Notes/note-${String(at).padStart(3, '0')}.md`)
+    await write('/Notes/note-005.canvas', drawn('rocket'))
+    await write('/Notes/Book.pages', JSON.stringify({ nodes: [], padding: 'x'.repeat(100_000) }))
+
+    const found = await webInvoke<{
+      notes: { path: string; icon: string | null; links: { target: string }[] }[]
+      files: string[]
+    }>('scan_links', { root: '/Notes' })
+
+    const read = disk.reads.flat().map((row) => row.path)
+    expect(read).not.toContain('/Notes/note-005.canvas')
+    expect(read).not.toContain('/Notes/Book.pages')
+    expect(read).toHaveLength(20)
+
+    const plane = found.notes.find((one) => one.path === 'note-005.canvas')
+    expect(plane?.icon).toBe('rocket')
+    expect(plane?.links.map((link) => link.target)).toEqual(['note-001.md'])
+    expect(found.files).toEqual(['Book.pages'])
+  })
+
+  test('reads a plane written before once, and learns what it wants of it', async () => {
+    await write('/Notes/Idea.md', '# idea')
+    await write('/Notes/Board.canvas', drawn('rocket'))
+    disk.planes.delete('/Notes/Board.canvas')
+
+    await webInvoke('scan_links', { root: '/Notes' })
+    expect(disk.reads.flat().map((row) => row.path)).toContain('/Notes/Board.canvas')
+    expect(disk.planes.get('/Notes/Board.canvas')).toMatchObject({ icon: 'rocket' })
+
+    disk.reads.length = 0
+    const found = await webInvoke<{ notes: { path: string; icon: string | null }[] }>(
+      'scan_links',
+      { root: '/Notes' },
+    )
+    expect(disk.reads.flat().map((row) => row.path)).toEqual(['/Notes/Idea.md'])
+    expect(found.notes.find((one) => one.path === 'Board.canvas')?.icon).toBe('rocket')
   })
 
   test('a space nothing is in answers nothing', async () => {

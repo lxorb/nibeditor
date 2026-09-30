@@ -25,17 +25,20 @@
  *  room it is the room's, so undo takes back what you drew and never what somebody
  *  else did. See shared.ts for the contract and rooms/plane.ts for the room. */
 
+import { idle } from '../breathe'
 import { type Camera, clampScale, framingBox } from '../camera'
 import { owes } from '../parting'
 import {
   type Canvas,
+  canvasRuns,
   emptyCanvas,
   merged,
+  printStrokes,
   readCanvas,
   stamped,
   takeParsed,
-  writeCanvas,
 } from './format'
+import { changesBetween, type Written, written } from './written'
 import { pickedBox } from './edits'
 import { type KeptView, viewKept, viewOf } from './place'
 import { bounds } from './geometry'
@@ -58,6 +61,10 @@ const PADDING = 48
  *  room's own settle waits, so a device being drawn on and a device being watched
  *  write their file at the same moment. */
 const WRITE_DELAY = 1_200
+
+/** How many points of ink one slice of printing a plane ahead takes on: eight or so
+ *  milliseconds of it, measured over a plane of ten thousand strokes. See `warm`. */
+const PRINTED_AT_ONCE = 10_000
 
 export class CanvasStore implements PlaneSurface {
   /** The plane as it stands. Replaced whole by every edit; see edits.ts.
@@ -118,6 +125,13 @@ export class CanvasStore implements PlaneSurface {
   private readonly writing = afterQuiet(() => this.commit(), WRITE_DELAY)
   /** The gesture the last edit belonged to, while one is under way; see `edit`. */
   private during: string | null = null
+  /** The file as this surface last wrote it, or read it and found it what it would
+   *  have written: what the next write is worked out against; see written.ts. */
+  private wrote: Written | null = null
+  /** The plane as this surface read it, and which revision of the document that was,
+   *  until the first write: what that write is worked out against when the printing
+   *  ahead has not got there first; see `asRead`. */
+  private opened: { canvas: Canvas; revision: number } | null = null
   /** The view this device had written down for this plane, where it had one and
    *  the camera was taken from it.
    *
@@ -158,7 +172,8 @@ export class CanvasStore implements PlaneSurface {
     return null
   }
 
-  /** The file's words as a plane, and a plane as the file's words.
+  /** The file's words as a plane, and a plane as the file's words, in the runs of
+   *  pieces a write is worked out in; see written.ts.
    *
    *  Overridable, and the only pair of methods that is. A page note is the same
    *  plane in the same format with pages among the objects on it, so it wants this
@@ -176,8 +191,8 @@ export class CanvasStore implements PlaneSurface {
     return takeParsed(text) ?? readCanvas(text)
   }
 
-  protected serialise(canvas: Canvas): string {
-    return writeCanvas(canvas)
+  protected runs(canvas: Canvas): string[][] {
+    return canvasRuns(canvas)
   }
 
   /** Where the file is, or null for a plane that has none.
@@ -204,7 +219,7 @@ export class CanvasStore implements PlaneSurface {
    *  The camera and nothing else, for a plane. A page note has one more fact to
    *  keep - whether the zoom is the reader's own rather than the fitted one - and
    *  these two are where it goes; see pages/store.svelte.ts. Two lines, like
-   *  `parse` and `serialise` above, rather than a second store. */
+   *  `parse` and `runs` above, rather than a second store. */
   protected get keptView(): KeptView {
     return this.camera
   }
@@ -399,6 +414,8 @@ export class CanvasStore implements PlaneSurface {
     if (!mine) {
       this.canvas = arrived
       this.keepPicked()
+      this.opened = { canvas: arrived, revision: this.at }
+      void this.warm()
       return true
     }
 
@@ -412,8 +429,8 @@ export class CanvasStore implements PlaneSurface {
     this.shared?.push(ours, together)
 
     // Written back only when the merge actually kept something of ours, so a
-    // canvas that arrived unchanged does not start a round of writes.
-    if (this.serialise(together) !== this.note.text) this.commit()
+    // canvas that arrived unchanged does not start a round of writes; see `commit`.
+    this.commit()
     return true
   }
 
@@ -421,6 +438,48 @@ export class CanvasStore implements PlaneSurface {
     this.canvas = this.parse(this.note.text)
     this.at = this.note.revision
     this.keepPicked()
+    this.opened = { canvas: this.canvas, revision: this.at }
+    void this.warm()
+  }
+
+  /** A plane just read, printed ahead of its first write, a slice at a time.
+   *
+   *  The first write after a plane opens would otherwise print every stroke on it -
+   *  ninety milliseconds for ten thousand, in one task, a moment after somebody's
+   *  first stroke. So the strokes are printed while nobody is drawing yet, in the
+   *  moments the thread has nothing else to do: behind the ink filling in, never in
+   *  its frames. And then the file they come to is set beside the one that was read,
+   *  so the first write has something to be worked out against; see `asRead`. */
+  private async warm() {
+    const ink = this.canvas.ink
+
+    let from = 0
+    while (from < ink.length) {
+      await idle()
+      let points = 0
+      let to = from
+      while (to < ink.length && points < PRINTED_AT_ONCE) {
+        points += ink[to]?.points.length ?? 0
+        to++
+      }
+      printStrokes(ink.slice(from, to))
+      from = to
+    }
+
+    await idle()
+    if (this.wrote?.text !== this.note.text) this.wrote = this.asRead() ?? this.wrote
+  }
+
+  /** The file as this surface read it, printed, where the document still holds
+   *  exactly that and it is what printing gives: a plane this app wrote. Null for
+   *  one written by hand or by another program, whose first write is then compared
+   *  the long way, once. */
+  private asRead(): Written | null {
+    const opened = this.opened
+    if (opened?.revision !== this.note.revision) return null
+
+    const read = written(this.runs(opened.canvas))
+    return read.text === this.note.text ? read : null
   }
 
   /** The canvas into the document, which starts the clock on its write - and, for a
@@ -429,10 +488,21 @@ export class CanvasStore implements PlaneSurface {
   protected commit() {
     this.writing.cancel()
 
-    const text = this.serialise(this.canvas)
+    const next = written(this.runs(this.canvas))
+    const text = next.text
+    const last = this.wrote?.text === this.note.text ? this.wrote : this.asRead()
+    this.opened = null
+    // What changed since the last write, where the document still holds that write.
+    const changes = last ? changesBetween(last, next.runs) : null
+    this.wrote = next
+
     // A plane that comes back saying exactly what the file says is not an edit, and
     // marking the note changed for it would start a round of writes over nothing.
-    if (text !== this.note.text) this.note.replace(text)
+    if (changes && last) {
+      if (changes.length) this.note.replace(text, true, { from: last.text, changes })
+    } else if (text !== this.note.text) {
+      this.note.replace(text)
+    }
     this.at = this.note.revision
   }
 

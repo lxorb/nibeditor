@@ -558,6 +558,34 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
   })
 
+  /** Every card on a plane is drawn from the index, so a new list of notes is every
+   *  card drawn again: a stroke saved must leave it as it was. */
+  test('keeps its notes as they were when a plane is saved with only ink changed', async () => {
+    const { scanCanvas } = await import('./scan-canvas')
+    await space({ 'Plan.md': '# Plan' })
+    const plane = (strokes: number) =>
+      JSON.stringify({
+        nodes: [{ id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'Plan.md' }],
+        edges: [],
+        nib: {
+          version: 1,
+          icon: 'rocket',
+          ink: Array.from({ length: strokes }, (_, one) => ({ id: `s${String(one)}`, points: [] })),
+        },
+      })
+
+    links.noteSaved(at('Board.canvas'), plane(1))
+    await vi.waitFor(() => expect(links.iconOf(at('Board.canvas'))).toBe('rocket'))
+    const before = links.index(null).notes
+
+    links.noteSaved(at('Board.canvas'), plane(2))
+    await import('./scan-canvas')
+    await Promise.resolve()
+
+    expect(scanCanvas('Board.canvas', plane(2)).icon).toBe('rocket')
+    expect(links.index(null).notes).toBe(before)
+  })
+
   /** The other way a scan stops being the one anybody is waiting for: the window
    *  has no space open at all any more. */
   test('leaves a window with no space open empty when the rows land', async () => {

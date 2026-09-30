@@ -1,8 +1,10 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
   blankCanvas,
   type Canvas,
+  CANVAS_RUNS,
   canvasIconEdit,
+  canvasRuns,
   clampOpacity,
   DEFAULT_INK,
   freshId,
@@ -12,6 +14,7 @@ import {
   SHAPES,
   writeCanvas,
 } from './canvas'
+import { emptyPages, pagesFromPdf } from './pages'
 
 /** A canvas written the way the spec's own examples are: every node type, every
  *  optional field, and edges naming their sides and their ends.
@@ -766,5 +769,91 @@ describe('the icon a canvas wears', () => {
 
     expect(after.at).toEqual(drawn.at)
     expect(after.nodes).toEqual(drawn.nodes)
+  })
+})
+
+describe('writing a canvas a piece at a time', () => {
+  /** A plane of `count` strokes with a card, a shape, an icon and times on it. */
+  function plane(count: number): Canvas {
+    const ink = Array.from({ length: count }, (_, at) => ({
+      id: `s${String(at)}`,
+      tool: 'pen' as const,
+      color: 'ink' as const,
+      size: 3,
+      points: [
+        { x: at, y: 2, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+        { x: at + 8, y: 9, pressure: 0.5, tiltX: 0, tiltY: 0, t: 12 },
+      ],
+    }))
+    return {
+      nodes: [
+        { id: 'card', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'a "quoted"\nline' },
+        { id: 'box', type: 'shape', shape: 'rect', x: 200, y: 0, width: 80, height: 40 },
+      ],
+      edges: [{ id: 'e', fromNode: 'card', toNode: 'box' }],
+      ink,
+      // Ids that read as numbers are the ones a JSON object puts first, whatever
+      // order they were written in.
+      at: Object.fromEntries([
+        ...ink.map((one) => [one.id, 5]),
+        ['12', 7],
+        ['4294967295', 1],
+        ['07', 2],
+        ['card', 3],
+      ]),
+      gone: { '3': 1, old: 2 },
+      icon: 'rocket',
+      iconColor: 'teal',
+    }
+  }
+
+  /** What `JSON.stringify` prints for the same file, which is what the pieces must
+   *  come to character for character. */
+  const printed = (text: string) => `${JSON.stringify(JSON.parse(text), null, '\t')}\n`
+
+  test.each([
+    ['an empty plane', readCanvas(blankCanvas())],
+    ['the spec example', readCanvas(JSON.stringify(SPEC_EXAMPLE))],
+    ['a drawn plane', plane(3)],
+    [
+      'a plane with no icon colour and no times',
+      { ...plane(1), iconColor: null, at: {}, gone: {} },
+    ],
+    ['a page note', emptyPages()],
+    [
+      'a page note of a PDF',
+      pagesFromPdf('paper.pdf', [
+        { width: 600, height: 800 },
+        { width: 600, height: 800 },
+      ]),
+    ],
+  ])('comes to what the printer prints for %s', (_, canvas) => {
+    const written = writeCanvas(canvas)
+    expect(written).toBe(printed(written))
+    expect(readCanvas(written)).toEqual(readCanvas(printed(written)))
+  })
+
+  test('always in the same runs, so two writes line up', () => {
+    expect(canvasRuns(readCanvas(blankCanvas()))).toHaveLength(CANVAS_RUNS)
+    expect(canvasRuns(plane(4))).toHaveLength(CANVAS_RUNS)
+  })
+
+  test('prints a stroke once, however often the plane is written', () => {
+    const before = plane(200)
+    writeCanvas(before)
+    const after = { ...before, ink: [...before.ink, { ...before.ink[0]!, id: 'new' }] }
+
+    const printing = vi.spyOn(JSON, 'stringify')
+    const written = writeCanvas(after)
+    const characters = printing.mock.results.reduce(
+      (sum, one) => sum + (typeof one.value === 'string' ? one.value.length : 0),
+      0,
+    )
+    printing.mockRestore()
+
+    // The new stroke and the two maps of times, a line an id: never the two hundred
+    // strokes that were printed the last time.
+    expect(characters).toBeLessThan(written.length / 5)
+    expect(written).toBe(printed(written))
   })
 })

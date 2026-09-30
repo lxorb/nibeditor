@@ -180,6 +180,9 @@ const TREE_KEY = 'nib:tree'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
 const SESSION_DELAY = 400
+/** The most words of a document with a file the session copies: longer than a book,
+ *  a fifth of what storage holds. A plane of ten thousand strokes is seven million. */
+const WORDS_KEPT = 1_000_000
 /** How far back one tab remembers. Longer than anybody follows a link in one
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
@@ -964,6 +967,7 @@ class Workspace {
   }
 
   private draftOf(tab: Tab): Draft {
+    const copied = tab.path === null || (tab.dirty && tab.doc.length <= WORDS_KEPT)
     return {
       kind: tab.kind,
       path: tab.path,
@@ -977,8 +981,12 @@ class Workspace {
       // this is the only place its words exist, so an untouched new plane that is
       // clean still has a blank plane's worth of JSON to come back as. A browser
       // restores the tabs it had, and so does this.
-      doc: tab.dirty || tab.path === null ? tab.doc : '',
-      dirty: tab.dirty,
+      //
+      // One with a file and more words than `WORDS_KEPT` comes back from its file,
+      // which is a pause behind it: storage refuses a copy that size, after it has
+      // cost its whole length to write out, on every pause.
+      doc: copied ? tab.doc : '',
+      dirty: copied && tab.dirty,
       cursor: tab.cursor ?? 0,
       scroll: tab.scroll ?? 0,
       anchor: tab.anchor,

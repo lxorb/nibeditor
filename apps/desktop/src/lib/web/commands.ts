@@ -3,7 +3,7 @@
 
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
-import { scanCanvas } from '../scan-canvas'
+import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
@@ -58,13 +58,29 @@ export const SCANNED_AT_ONCE = 256 * 1024
  *  it kept sizes is read the way it always was. See `StatRow` in store.ts. */
 const UNSIZED = SCANNED_AT_ONCE / 128
 
-/** Paths in order, in runs of about `SCANNED_AT_ONCE` characters each. */
-function chunksOf(paths: readonly string[], sizes: ReadonlyMap<string, number>): string[][] {
+/** The paths whose words are read, in order, in runs of about `SCANNED_AT_ONCE`
+ *  characters each. A run is one stretch of the store, so a file between two of its
+ *  paths is read with them: one whose words are not wanted ends the run before it
+ *  unless it is small enough not to matter, and is in none. */
+function chunksOf(
+  paths: readonly string[],
+  sizes: ReadonlyMap<string, number>,
+  wanted: (path: string) => boolean,
+): string[][] {
   const out: string[][] = []
   let chunk: string[] = []
   let held = 0
 
   for (const path of paths) {
+    if (!wanted(path)) {
+      if (chunk.length && (sizes.get(path) ?? Infinity) > UNSIZED) {
+        out.push(chunk)
+        chunk = []
+        held = 0
+      }
+      continue
+    }
+
     const size = sizes.get(path) ?? UNSIZED
     if (chunk.length && held + size > SCANNED_AT_ONCE) {
       out.push(chunk)
@@ -167,15 +183,15 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
 }
 
 async function writeNote(path: string, content: string) {
-  const target = normalise(path)
-  const existing = await files.get(target)
-
-  await files.put({
-    path: target,
+  // A plane's marks go into its listing with it, so the scan of the space never has
+  // to read the plane for them; see `scanLinks`. Read to its icon and no further,
+  // for a plane this app wrote; see scan-canvas.ts.
+  await files.write(
+    normalise(path),
     content,
-    created: existing?.created ?? now(),
-    modified: now(),
-  })
+    now(),
+    isCanvas(path) ? planeMarks(content) : undefined,
+  )
 }
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
@@ -442,28 +458,52 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   const beside: string[] = []
   const paths = (await files.paths()).filter((path) => within(base, path))
   const sizes = new Map<string, number>()
+  const marked = new Map<string, PlaneMarks>()
   for (const row of await stats.all()) {
-    if (row.size !== undefined && within(base, row.path)) sizes.set(row.path, row.size)
+    if (!within(base, row.path)) continue
+    if (row.size !== undefined) sizes.set(row.path, row.size)
+    if (row.plane) marked.set(row.path, row.plane)
+  }
+  // A plane or a page note nobody has sized yet may be megabytes; see `chunksOf`.
+  for (const path of paths) {
+    if (!sizes.has(path) && (isCanvas(path) || isPages(path))) sizes.set(path, Infinity)
+  }
+
+  // Whose words are read: a note's and a website's, and a canvas's only where its
+  // listing does not say yet what the index wants of it - its icon, for a row of the
+  // tree, and the notes its cards are. The desktop's `scan_links` reads a canvas for
+  // the same two on the same pass. Everything else is a name beside the notes.
+  const read = (path: string) =>
+    isMarkdown(path) || isWebTarget(path) || (isCanvas(path) && !marked.has(path))
+
+  for (const path of paths) {
+    if (read(path)) continue
+
+    const marks = marked.get(path)
+    // A `.keep` is scaffolding rather than a file somebody put in the space, and a
+    // PDF's highlights are part of the PDF.
+    if (marks) notes.push(markedPlane(relative(path), marks))
+    else if (basename(path) !== KEEP && !path.endsWith(SIDECAR)) beside.push(path)
   }
 
   // What the listing did not know and this pass found out, so the next pass knows.
-  const learnt: { path: string; modified: number; size: number }[] = []
+  const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []
 
-  for (const chunk of chunksOf(paths, sizes)) {
+  for (const chunk of chunksOf(paths, sizes, read)) {
     // Every path in the space sorts together, so the stretch between the first and
-    // the last of a chunk is that chunk and nothing else.
+    // the last of a chunk is that chunk and whatever small file lies between.
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
-      if (!sizes.has(row.path)) {
-        learnt.push({ path: row.path, modified: row.modified, size: row.content.length })
-      }
+      const found = { path: row.path, modified: row.modified, size: row.content.length }
 
-      // A canvas is read too, for the icon its `nib` key may carry: every row of
-      // the tree wants that, and the desktop's `scan_links` reads it on the same
-      // pass for the same reason.
-      if (isCanvas(row.path)) {
-        notes.push(scanCanvas(relative(row.path), row.content))
+      if (isCanvas(row.path) && read(row.path)) {
+        const marks = planeMarks(row.content)
+        notes.push(markedPlane(relative(row.path), marks))
+        learnt.push({ ...found, plane: marks })
         continue
       }
+
+      if (!sizes.has(row.path)) learnt.push(found)
+      if (!read(row.path)) continue
 
       if (isMarkdown(row.path)) {
         notes.push(scanNote(relative(row.path), row.content))
@@ -474,11 +514,8 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
       // resolves, and a row in the index, so `[[Svelte docs]]` does and the graph
       // has a node for it. Its one line worth reading is the favicon the file list
       // draws in front of the row; see scanShortcut.
-      if (isWebTarget(row.path)) notes.push(scanShortcut(relative(row.path), row.content))
-
-      // A `.keep` is scaffolding rather than a file somebody put in the space, and
-      // a PDF's highlights are part of the PDF.
-      if (basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR)) beside.push(row.path)
+      notes.push(scanShortcut(relative(row.path), row.content))
+      beside.push(row.path)
     }
 
     await breathe()
@@ -501,12 +538,11 @@ const KEEP_SNAPSHOTS = 40
 
 async function snapshot(path: string, content: string, source: string | undefined) {
   const notePath = normalise(path)
-  const kept = (await snapshots.forNote(notePath)).sort((a, b) => b.taken_at - a.taken_at)
   const said = source ? { source: source.trim().slice(0, 64) } : {}
   // Nothing to keep when the words have not moved since the last version, which
   // is what the disk side does too; see src-tauri/src/history.rs. That version is
   // then the one kept, and says who for.
-  const last = kept[0]
+  const last = await snapshots.newest(notePath)
   if (last?.content === content) {
     if (source) await snapshots.put({ ...last, ...said })
     return
@@ -514,8 +550,9 @@ async function snapshot(path: string, content: string, source: string | undefine
 
   await snapshots.put({ notePath, content, taken_at: now(), size: content.length, ...said })
 
-  for (const old of kept.slice(KEEP_SNAPSHOTS - 1)) {
-    if (old.id !== undefined) await snapshots.remove(old.id)
+  const ids = await snapshots.idsOf(notePath)
+  for (const id of ids.slice(0, Math.max(0, ids.length - KEEP_SNAPSHOTS))) {
+    await snapshots.remove(id)
   }
 }
 
@@ -885,7 +922,8 @@ export async function webInvoke<T>(
       // Every note's versions rather than one note's: the row is asked for by
       // the id the listing gave out, and the caller has no reason to say which
       // note it belongs to twice.
-      const found = (await snapshots.all()).find((row) => String(row.id) === path)
+      const id = Number(path)
+      const found = Number.isInteger(id) ? await snapshots.get(id) : undefined
       return (found?.content ?? '') as T
     }
 

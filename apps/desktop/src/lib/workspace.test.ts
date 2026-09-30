@@ -1724,6 +1724,16 @@ describe('an arrangement kept under a name', () => {
     expect(workspace.tabs.some((tab) => tab.doc === '# unwritten words')).toBe(true)
   })
 
+  test('comes back from its file where the words are too many to copy', async () => {
+    await workspace.open('/space/b.md')
+    workspace.active?.note.live.replace(`# long\n${'x'.repeat(1_000_000)}`)
+
+    const drafts = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)
+
+    expect(workspace.active?.dirty).toBe(true)
+    expect(drafts.map((draft) => [draft.doc, draft.dirty])).toEqual([['', false]])
+  })
+
   test('is gone once it is deleted', async () => {
     await workspace.open('/space/a.md')
     workspace.saveLayout('for a moment')

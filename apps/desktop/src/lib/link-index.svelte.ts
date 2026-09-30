@@ -653,7 +653,13 @@ class Links {
     // back. See `edit`.
     const mine = this.scans
     void import('./scan-canvas').then(({ scanCanvas }) => {
-      if (this.scans === mine) this.put(scanCanvas(relative, content))
+      if (this.scans !== mine) return
+
+      // A stroke changes nothing the index holds, and a new list of notes is every
+      // card on the plane drawn again.
+      const read = scanCanvas(relative, content)
+      const held = this.notes.find((note) => note.path === relative)
+      if (!held || JSON.stringify(held) !== JSON.stringify(read)) this.put(read)
     })
   }
 

@@ -14,7 +14,7 @@ vi.stubGlobal('localStorage', {
 
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { CanvasStore } = await import('./store.svelte')
-const { blankCanvas, readCanvas } = await import('./format')
+const { blankCanvas, readCanvas, writeCanvas } = await import('./format')
 type Canvas = import('./format').Canvas
 type CanvasNode = import('./format').CanvasNode
 type Shared = import('./shared').SharedPlane
@@ -246,3 +246,92 @@ describe('a plane that is in a room', () => {
 function blank(): Canvas {
   return { nodes: [], edges: [], ink: [], at: {}, gone: {} }
 }
+
+describe('a plane written after it opens', () => {
+  /** A plane of `count` strokes, as this app writes one. */
+  function drawnPlane(count: number): string {
+    const plane = blank()
+    plane.ink = Array.from({ length: count }, (_, at) => ({
+      id: `s${String(at).padStart(4, '0')}`,
+      tool: 'pen' as const,
+      color: 'ink' as const,
+      size: 3,
+      points: Array.from({ length: 10 }, (__, step) => ({
+        x: at * 10 + step,
+        y: step,
+        pressure: 0.5,
+        tiltX: 0,
+        tiltY: 0,
+        t: step * 12,
+      })),
+    }))
+    plane.at = Object.fromEntries(plane.ink.map((stroke) => [stroke.id, 1]))
+    return writeCanvas(plane)
+  }
+
+  /** Every turn the plane's printing ahead takes, taken. */
+  async function warmed() {
+    for (let turn = 0; turn < 20; turn++) await new Promise((go) => setTimeout(go, 0))
+  }
+
+  /** What the document's words were handed for each write: how many characters went
+   *  in, and whether they came as the changes or as the whole file. */
+  function watched(note: InstanceType<typeof NoteDoc>) {
+    const handed: { inserted: number; known: boolean }[] = []
+    const replace = note.live.replace.bind(note.live)
+    note.live.replace = (text, recorded, changes) => {
+      handed.push({
+        inserted: changes ? changes.reduce((sum, one) => sum + one.insert.length, 0) : text.length,
+        known: changes !== undefined,
+      })
+      replace(text, recorded, changes)
+    }
+    return handed
+  }
+
+  test('hands the document the stroke drawn, not the plane', async () => {
+    const { store, note } = opened(drawnPlane(300))
+    await warmed()
+    const handed = watched(note)
+
+    const stroke = { ...store.canvas.ink[0]!, id: 'new' }
+    store.edit({ ...store.canvas, ink: [...store.canvas.ink, stroke] })
+    store.part()
+
+    expect(handed).toHaveLength(1)
+    expect(handed[0]?.known).toBe(true)
+    expect(handed[0]?.inserted).toBeLessThan(note.text.length / 50)
+    expect(note.text).toBe(writeCanvas(store.canvas))
+    expect(note.live.text.toString()).toBe(note.text)
+  })
+
+  test('and the stroke rubbed out, from the middle of it', async () => {
+    const { store, note } = opened(drawnPlane(300))
+    await warmed()
+    const handed = watched(note)
+
+    store.edit({ ...store.canvas, ink: store.canvas.ink.filter((_, at) => at !== 150) })
+    store.part()
+
+    expect(handed[0]?.known).toBe(true)
+    expect(handed[0]?.inserted).toBeLessThan(note.text.length / 50)
+    expect(note.text).toBe(writeCanvas(store.canvas))
+    expect(note.live.text.toString()).toBe(note.text)
+  })
+
+  test('a plane some other program wrote is compared once, and then the same way', async () => {
+    const { store, note } = opened(JSON.stringify(JSON.parse(drawnPlane(50))))
+    await warmed()
+    const handed = watched(note)
+
+    for (const id of ['one', 'two']) {
+      const stroke = { ...store.canvas.ink[0]!, id }
+      store.edit({ ...store.canvas, ink: [...store.canvas.ink, stroke] })
+      store.part()
+    }
+
+    expect(handed.map((one) => one.known)).toEqual([false, true])
+    expect(note.text).toBe(writeCanvas(store.canvas))
+    expect(note.live.text.toString()).toBe(note.text)
+  })
+})

@@ -150,7 +150,7 @@ describe('reading a canvas for the index', () => {
         { id: 'b', type: 'text', x: 0, y: 0, width: 1, height: 1, text: 'a card with [[words]]' },
       ],
       edges: [],
-      nib: { version: 1, ink, icon: 'rocket', iconColor: 'violet' },
+      nib: { version: 1, icon: 'rocket', iconColor: 'violet', ink },
     })
 
     const parse = vi.spyOn(JSON, 'parse')
@@ -165,6 +165,27 @@ describe('reading a canvas for the index', () => {
     expect(read.icon).toBe(whole.icon)
     expect(read.iconColor).toBe(whole.iconColor)
     expect(read.links.map((link) => [link.target, link.heading])).toEqual([['Plan.md', 'Later']])
+  })
+
+  /** Every write of a plane is read for the index, so what the walk may skip is
+   *  counted by what it could not have got past: a plane in the order this app
+   *  writes one is read to its icon, and ink that would stop a walk is never met. */
+  test('stops at the icon of a plane in the order this app writes one', () => {
+    const cards =
+      '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
+    const nib = '"nib":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
+    const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${nib}`)
+
+    expect(read.icon).toBe('rocket')
+    expect(read.iconColor).toBe('violet')
+    expect(read.links.map((link) => link.target)).toEqual(['Plan.md'])
+  })
+
+  test('and walks the whole of one in any other order', () => {
+    const plane = JSON.stringify({ nib: { ink: [[1]], version: 1, icon: 'rocket' }, nodes: [] })
+
+    expect(scanCanvas('Board.canvas', plane).icon).toBe('rocket')
+    expect(scanCanvas('Board.canvas', plane.replace('[[1]]', '[[1]')).icon).toBeNull()
   })
 })
 

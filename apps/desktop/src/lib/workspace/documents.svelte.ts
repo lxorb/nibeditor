@@ -254,14 +254,22 @@ export class NoteDoc {
    *
    *  `dirty` says whether this leaves the note out of step with its file. A
    *  version restored does and has to be written; a note re-read from disk does
-   *  not, and text that matches the file is nothing to tell the app about. */
-  replace(text: string, dirty = true) {
+   *  not, and text that matches the file is nothing to tell the app about.
+   *
+   *  `changed` is what turns the words `from` into `text`, from a writer that knows:
+   *  a plane; see canvas/written.ts. Taken only while these are still those words. */
+  replace(
+    text: string,
+    dirty = true,
+    changed?: { from: string; changes: readonly { from: number; to: number; insert: string }[] },
+  ) {
     this.quiet = !dirty
+    const known = changed && !this.behind && this.words === changed.from
     // Whether this is a step for undo to stop at is the same question as whether it
     // leaves the note out of step with its file. A version put back is somebody
     // asking for it and has to be undoable; a note re-read from disk is not, and a
     // Ctrl+Z that put the old file back would be an edit the app invented.
-    this.live.replace(text, dirty)
+    this.live.replace(text, dirty, known ? changed.changes : undefined)
     this.quiet = false
 
     this.words = text

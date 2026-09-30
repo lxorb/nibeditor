@@ -131,6 +131,17 @@ function pastValue(text: string, at: number, end: number): number {
   return one > at ? one : -1
 }
 
+/** What a caller knows of the order the object was written in, so the walk can stop
+ *  before the end of it. Both are about text this app wrote; see scan-canvas.ts. */
+export interface Order {
+  /** The keys a writer puts first, in its order: an object whose first key is the
+   *  first of these is read no further than the first key that is none of them. */
+  ahead?: readonly string[]
+  /** The key a writer puts last: once it is reached with every other wanted key
+   *  found, its value is taken to run to the end of `within`, unread. */
+  last?: string
+}
+
 /** Where each of `keys` is in the object that `within` spans (the whole text when
  *  it is not given), or null when that is not an object. A key written twice is the
  *  later one, as `JSON.parse` has it; a key not there is not in the answer. */
@@ -138,6 +149,7 @@ export function skim(
   text: string,
   keys: readonly string[],
   within: Span = { from: 0, to: text.length },
+  order: Order = {},
 ): Map<string, Span> | null {
   const end = within.to
   let at = skipSpace(text, within.from, end)
@@ -147,7 +159,8 @@ export function skim(
   at = skipSpace(text, at + 1, end)
   if (text.charCodeAt(at) === CLOSE_BRACE) return found
 
-  for (;;) {
+  let ahead: readonly string[] | null = null
+  for (let first = true; ; first = false) {
     if (text.charCodeAt(at) !== QUOTE) return null
     const named = pastString(text, at, end)
     if (named < 0) return null
@@ -157,10 +170,18 @@ export function skim(
     const raw = text.slice(at + 1, named - 1)
     const key = raw.includes('\\') ? String(JSON.parse(text.slice(at, named)) as unknown) : raw
 
+    if (first && order.ahead?.[0] === key) ahead = order.ahead
+    if (ahead && !ahead.includes(key)) return found
+
     at = skipSpace(text, named, end)
     if (text.charCodeAt(at) !== COLON) return null
 
     const from = skipSpace(text, at + 1, end)
+    if (key === order.last && keys.every((one) => one === key || found.has(one))) {
+      found.set(key, { from, to: end })
+      return found
+    }
+
     const to = pastValue(text, from, end)
     if (to < 0) return null
     if (keys.includes(key)) found.set(key, { from, to })

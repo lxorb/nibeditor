@@ -30,11 +30,16 @@ function warmth() {
 }
 
 // What the page writes, the worker hears: one note read again rather than a space.
+// A change at a time, in the order they were made, since a note is read back
+// between hearing of one and the next.
+let hearing = Promise.resolve()
 watchRows((change) => {
-  // What has gone first: a rename is both, and the new row is the one to keep.
-  for (const path of change.gone) space.gone(path)
-  for (const row of change.rows) space.wrote(row)
-  warmth()
+  hearing = hearing.then(async () => {
+    // What has gone first: a rename is both, and the new row is the one to keep.
+    for (const path of change.gone) space.gone(path)
+    for (const path of change.written) await space.rewritten(path).catch(() => undefined)
+    warmth()
+  })
 })
 
 self.onmessage = (event: MessageEvent<unknown>) => {

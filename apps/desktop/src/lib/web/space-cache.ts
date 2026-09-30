@@ -222,6 +222,16 @@ class Space {
     // would make that pass the space squared.
   }
 
+  /** A path that has just been written, read again here on the worker's thread,
+   *  and only where it is a note of the space held. See `RowChange` in store.ts. */
+  async rewritten(path: string): Promise<void> {
+    const base = this.root
+    if (base === null || !within(base, path) || !isMarkdown(path)) return
+
+    const row = await files.get(path)
+    if (row) this.wrote(row)
+  }
+
   /** A row that has gone: deleted, or moved to another path. */
   gone(path: string): void {
     const at = this.at(path)

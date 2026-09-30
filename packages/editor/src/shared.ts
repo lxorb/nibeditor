@@ -411,12 +411,23 @@ export class SharedDoc {
    *  to be undoable, the way it is in a single view. A note re-read from disk after
    *  another program wrote it is not: nobody typed it, the note is as saved
    *  afterwards as it was before, and a Ctrl+Z that put the file's old words back
-   *  under the same name would be the app inventing an edit. */
-  replace(text: string, recorded = true) {
-    const held = this.state.doc.toString()
-    if (held === text) return
+   *  under the same name would be the app inventing an edit.
+   *
+   *  `changes`, where the caller knows them, are what turns these words into `text`,
+   *  and then neither is read: a plane of ten thousand strokes is seven megabytes of
+   *  words, and turning the rope into a string and walking both for the one span
+   *  that differs was a hundred and fifty milliseconds per stroke drawn. */
+  replace(text: string, recorded = true, changes?: readonly Replacement[]) {
+    let change: readonly Replacement[] | Replacement
+    if (changes) {
+      if (!changes.length) return
+      change = changes
+    } else {
+      const held = this.state.doc.toString()
+      if (held === text) return
+      change = fold(held, text) ?? { from: 0, to: held.length, insert: text }
+    }
 
-    const change = fold(held, text) ?? { from: 0, to: held.length, insert: text }
     const made = this.state.update({
       changes: change,
       ...(recorded ? {} : { annotations: Transaction.addToHistory.of(false) }),
