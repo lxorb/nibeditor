@@ -409,7 +409,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_single_instance::init(launch::second_launch))
+        .plugin(tauri_plugin_single_instance::init(launch::second_launch_heard))
         .manage(launch::Pending::default());
     // Where the app is on its way out, and on a Mac where the window was; see
     // lifecycle.rs.

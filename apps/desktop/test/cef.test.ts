@@ -1,32 +1,34 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { engineManifest } from '../../../scripts/engine-manifest'
 
-/** The engine the app ships on, held to.
+/** The two builds, held apart and held together.
  *
- *  nib has two builds: the app, on the system's own engine, and the one behind the
- *  crate's `cef` feature, which is nib's own Chromium through `tauri-runtime-cef`.
- *  The second one is a gate rather than a product - docs/browser.md batch 1 - and
- *  the promise that makes it safe to have in the repository at all is that the first
- *  one is untouched by it: the same engine, the same launch, the same installer, the
- *  same tests.
+ *  nib is built twice from one source: the app on the system's own engine, which is
+ *  what the installers carry, and `nib-chromium`, the same library on nib's own
+ *  Chromium through `tauri-runtime-cef`, which the Browser setting fetches and switches
+ *  to (src-tauri/src/engine_switch.rs). Two promises make that safe, and neither can be
+ *  a Rust test, because what would break them is a manifest or a workflow rather than
+ *  a line of Rust:
  *
- *  A promise like that is worth exactly as much as the test that holds it, and it
- *  cannot be a Rust test, because what would break it is a manifest or a workflow
- *  rather than a line of Rust. So this reads the packaging: the crate has no default
- *  features, nothing that builds a release passes the flag or builds the flagged
- *  workspace, the app's own manifest patches nothing, and the two workflows that do
- *  build it are gated to a branch nobody releases from. */
+ *  - **apart**: the app that ships is untouched by the engine - no feature on by
+ *    default, no Chromium in its dependency graph or its lock file, no installer that
+ *    carries it;
+ *  - **together**: the engine build compiles the app's own library with the app's own
+ *    dependencies, so its manifest's dependency list is the app's, written by
+ *    scripts/engine-manifest.ts, and never a copy that drifted. */
 
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 
 const WORKFLOWS = fileURLToPath(new URL('../../../.github/workflows/', import.meta.url))
 
-/** The two that are allowed to know about the engine, and nothing else is. */
-const FLAGGED = ['cef.yml', 'cef-bump.yml']
+/** The workflows that build the engine: its proof, its bump, and the release that
+ *  publishes it beside the installers. */
+const BUILDERS = ['cef.yml', 'cef-bump.yml', 'release.yml']
 
 const cargo = read('../src-tauri/Cargo.toml')
-const flagged = read('../src-tauri/cef/Cargo.toml')
+const engine = read('../src-tauri/cef/Cargo.toml').replace(/\r\n/g, '\n')
 
 const workflows = readdirSync(WORKFLOWS)
   .filter((name) => name.endsWith('.yml'))
@@ -37,71 +39,87 @@ describe('the app that ships', () => {
     expect(cargo).toContain('\ncef = []')
   })
 
-  /** The one line that keeps it off. A default feature list is the only way a
-   *  plain `cargo build`, the Tauri CLI or a runner could turn it on without
-   *  anybody typing it. */
+  /** The one line that keeps it off. A default feature list is the only way a plain
+   *  `cargo build`, the Tauri CLI or a runner could turn it on without anybody typing
+   *  it. */
   test('the crate has no default features at all', () => {
     expect(cargo).not.toMatch(/\ndefault = \[/)
   })
 
-  /** And the other way a build could change under everyone: a patch section in the
-   *  app's own manifest applies to every build of that workspace, which is exactly
-   *  why the engine lives in a workspace of its own. */
+  /** A patch section in the app's own manifest applies to every build of that
+   *  workspace, which is exactly why the engine lives in a manifest of its own. */
   test('the app patches nothing, and depends on no engine', () => {
     expect(cargo).not.toContain('[patch')
-    // The comment above the feature names the crate; a dependency on it would be
-    // a line that starts with it, and there is none in either build.
     expect(cargo).not.toMatch(/^tauri-runtime-cef/m)
     // `cef = []` is the feature; `cef = "..."` would be Chromium itself.
     expect(cargo).not.toMatch(/^cef = ["{]/m)
   })
 
-  test('the flagged workspace is the only place the engine is named', () => {
-    expect(flagged).toContain('tauri-runtime-cef')
-    expect(flagged).toContain('[patch.crates-io]')
-  })
-
-  /** The pin, in one place, as one revision. A second revision anywhere in that
-   *  manifest would be a build made of two different Tauris; a short one is a
-   *  moving target. */
-  test('the pin is one whole revision', () => {
-    const revisions = [...flagged.matchAll(/^revision = "([0-9a-f]+)"/gm)].map((one) => one[1])
-    expect(revisions).toHaveLength(1)
-    expect(revisions[0]).toHaveLength(40)
+  test('the lock file the installers are built from has no Chromium in it', () => {
+    const lock = read('../src-tauri/Cargo.lock')
+    expect(lock).not.toContain('name = "tauri-runtime-cef"')
+    expect(lock).not.toContain('name = "cef-dll-sys"')
   })
 })
 
-describe('nothing that ships knows about the engine', () => {
+describe('the engine build', () => {
+  /** Every dependency the app has, with the Tauri family on the engine's pins: a crate
+   *  added to the app is a crate the engine build would be missing, and this says so
+   *  with the fix in its message. */
+  test('its dependencies are the app\'s, as scripts/engine-manifest.ts writes them', () => {
+    expect(
+      engine,
+      'apps/desktop/src-tauri/cef/Cargo.toml is out of date: run `node scripts/engine-manifest.ts`',
+    ).toBe(engineManifest(cargo, engine))
+  })
+
+  test('it is the only manifest that names the engine, and it compiles the app\'s own library', () => {
+    expect(engine).toMatch(/^tauri-runtime-cef = /m)
+    expect(engine).toContain('path = "../src/lib.rs"')
+    expect(engine).toContain('default = ["cef"]')
+  })
+
+  /** Published crates at exact versions, so a build gives the same answer twice and a
+   *  bump is a line in a diff. */
+  test('every Tauri crate it takes is pinned exactly', () => {
+    for (const line of engine.split('\n').filter((one) => /^(tauri|cef)[a-z-]* = /.test(one))) {
+      expect(line, line).toMatch(/"=\d/)
+    }
+    expect(engine).not.toContain('git = ')
+    expect(engine).not.toContain('[patch')
+  })
+})
+
+describe('where it is built', () => {
   test('the scan finds the workflows', () => {
     expect(workflows).toContain('publish.yml')
     expect(workflows).toContain('check.yml')
     expect(workflows.length).toBeGreaterThan(6)
   })
 
-  for (const name of workflows.filter((one) => !FLAGGED.includes(one))) {
-    test(`${name} never asks for it`, () => {
+  for (const name of workflows.filter((one) => !BUILDERS.includes(one))) {
+    test(`${name} never builds it`, () => {
       const text = readFileSync(`${WORKFLOWS}${name}`, 'utf8')
       expect(text).not.toContain('features cef')
       expect(text).not.toContain('features=cef')
       expect(text).not.toContain('src-tauri/cef')
-      expect(text).not.toContain('nib-cef')
+      expect(text).not.toContain('nib-chromium')
     })
   }
 
-  /** The scripts a person runs by hand, and the config the installers are built
-   *  from. `tauri build` reads the second one and passes no features of its own. */
-  test('no script and no bundle config asks for it', () => {
-    expect(read('../package.json')).not.toContain('cef')
-    expect(read('../src-tauri/tauri.conf.json')).not.toContain('cef')
-    expect(read('../../../package.json')).not.toContain('cef')
+  /** The installers are the app's own `tauri build`, which passes no feature of its
+   *  own; the engine is a job of its own whose archives go on the release beside them. */
+  test('the release builds the engine in a job of its own, never into an installer', () => {
+    const text = readFileSync(`${WORKFLOWS}release.yml`, 'utf8')
+    expect(text).not.toContain('features cef')
+    expect(text).not.toContain('--features=cef')
+    expect(text).toMatch(/\n {2}chromium:\n/)
+    expect(text).toContain('apps/desktop/src-tauri/cef/pack.py')
   })
-})
 
-describe('the two that do build it', () => {
-  for (const name of FLAGGED) {
-    /** A branch named `ci-check-cef*`, or somebody asking by hand. Never a pull
-     *  request, and never a push to the branch releases are cut from: the job
-     *  downloads three hundred megabytes of Chromium and takes an hour and a half. */
+  /** The proof and the bump download three hundred megabytes of Chromium each and take
+   *  an hour: a branch named `ci-check-cef*`, a schedule, or somebody asking. */
+  for (const name of ['cef.yml', 'cef-bump.yml']) {
     test(`${name} runs on nothing a release runs on`, () => {
       const text = readFileSync(`${WORKFLOWS}${name}`, 'utf8')
       expect(text).not.toContain('pull_request')
@@ -110,9 +128,9 @@ describe('the two that do build it', () => {
     })
   }
 
-  test('the gate builds the app as it ships as well, which is what the numbers are read against', () => {
-    const text = readFileSync(`${WORKFLOWS}cef.yml`, 'utf8')
-    expect(text).toContain('apps/desktop/src-tauri/Cargo.toml --release')
-    expect(text).toContain('gate.py')
+  test('no script and no bundle config asks for it', () => {
+    expect(read('../package.json')).not.toContain('cef')
+    expect(read('../src-tauri/tauri.conf.json')).not.toContain('cef')
+    expect(read('../../../package.json')).not.toContain('cef')
   })
 })
