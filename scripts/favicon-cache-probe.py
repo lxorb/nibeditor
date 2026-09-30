@@ -13,14 +13,15 @@ closes it. Then it is started again and asked, before anything has loaded that t
 * what the window says: the tab's mark in the strip is the site's picture, and the crate
   has no page for that tab;
 * what the window looks like: a picture of the probe's own window, with the magenta
-  square in the strip.
+  square in the strip. Taken by the window's own engine through its DevTools port, the
+  way launch.py reaches it: PrintWindow answers black for a window kept off the screen.
 
     python scripts/favicon-cache-probe.py --exe path/to/nib.exe \\
         --identifier ch.emilvinu.nib.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
 every screen and never taking the keyboard, and the app is driven through its automation
-endpoint; the picture is PrintWindow's, of the probe's own window and nothing else.
+endpoint; the picture is of the probe's own page and nothing else.
 """
 
 from __future__ import annotations
@@ -29,10 +30,10 @@ import argparse
 import http.server
 import importlib.util
 import json
+import os
 import pathlib
 import shutil
 import struct
-import subprocess
 import sys
 import threading
 import time
@@ -126,6 +127,34 @@ STRIP = """(async () => {
 })()"""
 
 
+def photograph(identifier: str, shot: pathlib.Path) -> str:
+    """The app's own page as its engine draws it, into `shot`, through the DevTools port
+    the launch was given. Says what went wrong, or nothing."""
+
+    from playwright.sync_api import sync_playwright  # A drive's own, not the app's.
+
+    port_file = next(borrowed().local_dir(identifier).rglob("DevToolsActivePort"), None)
+    if port_file is None:
+        return "no DevTools port"
+    port = port_file.read_text().splitlines()[0].strip()
+    with sync_playwright() as driver:
+        browser = driver.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+        page = next(
+            (
+                one
+                for context in browser.contexts
+                for one in context.pages
+                if "tauri.localhost" in one.url or one.url.startswith("tauri:")
+            ),
+            None,
+        )
+        if page is None:
+            return "no app page behind the DevTools port"
+        page.screenshot(path=str(shot))
+        browser.close()
+    return ""
+
+
 def magenta_in_strip(picture: pathlib.Path) -> int:
     """How many pixels of the mark's colour are in the top band of the window, where the
     tab strip is."""
@@ -136,9 +165,7 @@ def magenta_in_strip(picture: pathlib.Path) -> int:
         rgb = image.convert("RGB")
         width, height = rgb.size
         band = rgb.crop((0, 0, width, min(height, max(120, height // 8))))
-        return sum(
-            1 for r, g, b in band.getdata() if r > 200 and g < 70 and b > 200
-        )
+        return sum(1 for r, g, b in band.get_flattened_data() if r > 200 and g < 70 and b > 200)
 
 
 def main() -> int:
@@ -163,6 +190,9 @@ def main() -> int:
     space.mkdir(parents=True, exist_ok=True)
     (space / "Idea.md").write_text("# Idea\n\nA note.\n", encoding="utf-8")
 
+    # Every launch opens its engine's DevTools on a port of its own, for the picture.
+    os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = "--remote-debugging-port=0"
+
     said: dict[str, object] = {}
     running = None
     try:
@@ -178,7 +208,7 @@ def main() -> int:
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         app.open("Idea.md", switch.SPACE)
         time.sleep(2)
-        app.ask(f"nib.workspace.openPage({json.dumps(url)}) && 'opened'")
+        said["opened"] = app.ask(f"nib.workspace.openPage({json.dumps(url)}) && 'opened'")
         until = time.perf_counter() + 30
         before: object = None
         while time.perf_counter() < until:
@@ -211,25 +241,8 @@ def main() -> int:
         said["after the restart"] = after
 
         shot = args.shot.resolve()
-        captured = subprocess.run(
-            [
-                "powershell",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                str(HERE / "capture-window.ps1"),
-                "-Pid",
-                str(running.pid),
-                "-Out",
-                str(shot),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=90,
-            check=False,
-        )
-        said["picture"] = str(shot) if shot.exists() else captured.stderr.strip()
+        failed = photograph(args.identifier, shot)
+        said["picture"] = failed or str(shot)
         said["magenta pixels in the strip"] = magenta_in_strip(shot) if shot.exists() else 0
         said["window"] = hex(hwnd)
     finally:
