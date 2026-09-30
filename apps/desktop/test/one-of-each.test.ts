@@ -699,7 +699,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the six that show one wear the class rather than a card of their own', () => {
+  test('and the nine that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -710,6 +710,8 @@ describe('the bubble a sentence appears in', () => {
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
+      // Chrome's hover card under a tab: a name and where it lives.
+      'lib/tab-strip/TabCard.svelte',
       // Another computer asking for the web logins, in the same shape as a program.
       'lib/web-tab/WebApprove.svelte',
       'lib/web-tab/WebAsk.svelte',

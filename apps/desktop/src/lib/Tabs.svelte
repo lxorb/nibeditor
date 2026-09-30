@@ -681,6 +681,32 @@
     void import('./tab-strip/ops').then((ops) => ops.renameFromTab(tab.id))
   }
 
+  /* ── The card under a tab ─────────────────────────────────────────
+     Chrome's hover card, fetched with the first pointer to rest on a tab: nothing of
+     it is in front of the first paint. See tab-strip/hover-card.svelte.ts. */
+
+  let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
+
+  /** A tab the pointer came to rest on, or the keyboard arrived at. The card hangs
+   *  from the tab's body rather than its box, and waits as long as the widest tab of
+   *  this strip says. */
+  function aimCard(tab: Tab, node: Element, focused = false) {
+    const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
+    const aim = {
+      tab,
+      box: { left: body.left, right: body.right, bottom: body.bottom },
+      widest: Math.max(0, ...widths),
+      focused,
+    }
+    void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
+      hovering.enter(aim),
+    )
+  }
+
+  function unaimCard(id: string) {
+    void cards?.then(({ hovering }) => hovering.leave(id))
+  }
+
   /** Puts an element at the end of the page, where no strip can clip it and no
    *  pane can draw over it: the tab carried over the panes. */
   function portal(node: HTMLElement) {
@@ -803,10 +829,13 @@
         style:transform="translateX({box.x * i18n.factor}px)"
         style:--w="{box.width}px"
         onpointerenter={(event) => {
-          if (event.pointerType === 'mouse') hovered = tab.id
+          if (event.pointerType !== 'mouse') return
+          hovered = tab.id
+          aimCard(tab, event.currentTarget)
         }}
         onpointerleave={() => {
           if (hovered === tab.id) hovered = null
+          unaimCard(tab.id)
         }}
         in:arrive={{ id: tab.id, x: box.x * i18n.factor }}
         out:leave
@@ -822,13 +851,17 @@
         <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
-             nothing to call it. -->
+             nothing to call it. No `title`: the card under the tab is what a pointer
+             resting on it is shown, and the two at once would be one too many. -->
         <button
           class="pick"
           class:centred={parts.centred}
           data-tab={tab.id}
-          title={tab.shown}
           aria-label={tab.shown}
+          onfocus={(event) => {
+            if (event.currentTarget.matches(':focus-visible')) aimCard(tab, event.currentTarget, true)
+          }}
+          onblur={() => unaimCard(tab.id)}
           onclick={() => {
             givesBack(tab.id)
             workspace.activate(tab.id)
