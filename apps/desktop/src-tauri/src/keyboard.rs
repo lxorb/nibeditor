@@ -165,7 +165,7 @@ pub fn placed(app: &AppHandle, page: &str, visible: bool) {
 /// A page closed, on the window's own thread.
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
-    native::forget(page);
+    native::let_go_of(page);
 }
 
 /// The window was left: whichever of its pages has the keyboard is where it goes back to.
@@ -434,7 +434,7 @@ mod native {
         PAGES.with_borrow_mut(|all| all.insert(label.to_string(), page));
     }
 
-    pub fn forget(label: &str) {
+    pub fn let_go_of(label: &str) {
         PAGES.with_borrow_mut(|all| all.remove(label));
     }
 
@@ -513,7 +513,7 @@ mod native {
         look(&mut PAGES.lock().unwrap_or_else(PoisonError::into_inner))
     }
 
-    fn kept(page: Page) {
+    fn keep_host(page: Page) {
         pages(|all| {
             all.retain(|one| one.label != page.label);
             all.push(page);
@@ -525,7 +525,7 @@ mod native {
 
     /// A reader's page, by its browser's host, as its browser is found.
     pub fn chromium_page(label: &str, window: &str, host: cef::BrowserHost) {
-        kept(Page {
+        keep_host(Page {
             label: label.to_string(),
             window: window.to_string(),
             own: false,
@@ -533,7 +533,7 @@ mod native {
         });
     }
 
-    pub fn forget(label: &str) {
+    pub fn let_go_of(label: &str) {
         pages(|all| all.retain(|one| one.label != label));
     }
 
@@ -584,7 +584,7 @@ mod native {
         let own = webview.label().to_string();
         let _ = webview.with_cef_webview(move |page| {
             if let Some(host) = page.browser().host() {
-                kept(Page {
+                keep_host(Page {
                     label: own,
                     window: label,
                     own: true,
@@ -640,7 +640,7 @@ mod native {
         }
     }
 
-    pub fn forget(label: &str) {
+    pub fn let_go_of(label: &str) {
         PAGES.with_borrow_mut(|all| all.remove(label));
     }
 
@@ -689,7 +689,7 @@ mod native {
         PAGES.with_borrow_mut(|all| all.insert(label.to_string(), (window.to_string(), view)));
     }
 
-    pub fn forget(label: &str) {
+    pub fn let_go_of(label: &str) {
         PAGES.with_borrow_mut(|all| all.remove(label));
     }
 
@@ -726,7 +726,7 @@ mod native {
 
     pub fn page(_platform: &PlatformWebview, _label: &str, _window: &str) {}
 
-    pub fn forget(_label: &str) {}
+    pub fn let_go_of(_label: &str) {}
 
     pub fn holding(_window: &str) -> Option<String> {
         None
@@ -752,7 +752,7 @@ pub use native::page;
 mod tests {
     use super::{moment, Back, Homes, Moment, OWED_MS};
 
-    fn with(window: &str, page: &str) -> Homes {
+    fn typing_in(window: &str, page: &str) -> Homes {
         let mut homes = Homes::default();
         homes.placed(page, true, 0);
         homes.page_took(window, page);
@@ -768,7 +768,7 @@ mod tests {
 
     #[test]
     fn the_page_that_took_the_keyboard_is_where_it_goes_back() {
-        let homes = with("main", "web-a");
+        let homes = typing_in("main", "web-a");
         assert_eq!(homes.home("main"), Some("web-a"));
         // Each window its own.
         assert_eq!(homes.home("window-2"), None);
@@ -776,14 +776,14 @@ mod tests {
 
     #[test]
     fn a_person_in_the_app_s_own_page_takes_it_from_the_page() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.own_took("main");
         assert_eq!(homes.home("main"), None);
     }
 
     #[test]
     fn the_last_page_to_take_it_wins() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-b", true, 0);
         homes.page_took("main", "web-b");
         assert_eq!(homes.home("main"), Some("web-b"));
@@ -791,7 +791,7 @@ mod tests {
 
     #[test]
     fn a_page_out_of_sight_is_never_handed_it_as_the_window_comes_back() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.home("main"), None);
         // In sight again, it is.
@@ -801,7 +801,7 @@ mod tests {
 
     #[test]
     fn a_page_that_closed_is_forgotten() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.closed("web-a");
         assert_eq!(homes.home("main"), None);
         assert_eq!(homes.back("main", 0), Back::Own);
@@ -812,13 +812,13 @@ mod tests {
 
     #[test]
     fn a_layer_closing_hands_a_page_on_screen_the_keyboard_now() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         assert_eq!(homes.back("main", 5), Back::Page("web-a".into()));
     }
 
     #[test]
     fn a_page_still_under_the_layer_takes_it_as_it_is_shown_again() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.back("main", 100), Back::Later);
         // Another page shown first owes nothing.
@@ -830,7 +830,7 @@ mod tests {
 
     #[test]
     fn a_debt_runs_out() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.back("main", 100), Back::Later);
         assert!(!homes.placed("web-a", true, 101 + OWED_MS));
@@ -838,13 +838,13 @@ mod tests {
 
     #[test]
     fn the_keyboard_going_anywhere_else_first_clears_the_debt() {
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.back("main", 0), Back::Later);
         homes.own_took("main");
         assert!(!homes.placed("web-a", true, 10));
 
-        let mut homes = with("main", "web-a");
+        let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.back("main", 0), Back::Later);
         homes.closed("web-a");

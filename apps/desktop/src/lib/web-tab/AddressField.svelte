@@ -105,26 +105,48 @@
     return field?.isConnected === true
   }
 
+  /** What was half typed when the keyboard left the window with it in this field, where
+   *  the caret was, and over which address: it comes back with the keyboard, as in
+   *  Chrome's address field, while the page is still there. */
+  let kept: { value: string; typed: string; from: number; to: number; over: string } | null = null
+
   function onFocus() {
-    // Back from another window with the half-typed address still in the field; see
-    // `onBlur`.
-    if (!here() || !field || editing) return
+    if (!here() || !field) return
 
     visited.wake(book)
     editing = true
     ontyping(true)
-    field.value = address
-    typed = address
     rows = []
     active = -1
     shut = false
+    const back = kept?.over === address ? kept : null
+    kept = null
+    if (back) {
+      field.value = back.value
+      typed = back.typed
+      field.setSelectionRange(back.from, back.to)
+      return
+    }
+    field.value = address
+    typed = address
     field.select()
   }
 
   function onBlur() {
-    // The window going, not the field: it still has the keyboard as far as this page is
-    // concerned, and comes back with it, caret and all, as Chrome's address field does.
-    if (!here() || !field || document.activeElement === field) return
+    if (!here() || !field) return
+
+    // The window's keyboard going somewhere else - another program, or the page - rather
+    // than this field's: the element is still the one the page would type into.
+    const away = document.activeElement === field && field.value !== address
+    kept = away
+      ? {
+          value: field.value,
+          typed,
+          from: field.selectionStart ?? 0,
+          to: field.selectionEnd ?? 0,
+          over: address,
+        }
+      : null
 
     editing = false
     ontyping(false)
