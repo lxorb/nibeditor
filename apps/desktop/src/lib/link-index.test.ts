@@ -406,7 +406,7 @@ describe('a note saved keeps the index up to date', () => {
 
     expect(links.faviconOf(site)).toBe('https://a.example/icon.png')
     // And where it points, which is what this device's own sight of the site is
-    // looked up by; see web-tab/favicons.svelte.ts.
+    // looked up by; see `favicons` in web-tab/pages.svelte.ts.
     expect(links.shortcutOf(site)).toBe('https://a.example/read')
   })
 

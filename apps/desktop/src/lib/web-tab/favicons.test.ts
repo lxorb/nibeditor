@@ -27,10 +27,10 @@ function mark(n: number, bytes = 0): string {
   return `data:image/png;base64,${btoa(`mark-${String(n)}${'.'.repeat(bytes)}`)}`
 }
 
-/** The store as a new launch finds it. */
+/** The store as a new launch finds it: the reading half and the writing half. */
 async function fresh() {
   vi.resetModules()
-  return import('./favicons.svelte')
+  return { ...(await import('./pages.svelte')), ...(await import('./favicons')) }
 }
 
 beforeEach(() => {
@@ -65,7 +65,7 @@ describe('what a page is kept under', () => {
 describe('a mark seen', () => {
   test('is found again at its page after a restart', async () => {
     const one = await fresh()
-    one.favicons.saw('https://docs.google.com/spreadsheets/d/1/edit', mark(1))
+    one.saw('https://docs.google.com/spreadsheets/d/1/edit', mark(1))
     vi.runAllTimers()
 
     const two = await fresh()
@@ -75,9 +75,9 @@ describe('a mark seen', () => {
   /** Chrome's `fallback_to_host` and Firefox's root icon: a page this device never
    *  showed wears the last mark its origin did. */
   test('and at every other page of its origin, where that page showed none', async () => {
-    const { favicons } = await fresh()
-    favicons.saw('https://docs.google.com/spreadsheets/d/1/edit', mark(1))
-    favicons.saw('https://docs.google.com/document/d/2/edit', mark(2))
+    const { favicons, saw } = await fresh()
+    saw('https://docs.google.com/spreadsheets/d/1/edit', mark(1))
+    saw('https://docs.google.com/document/d/2/edit', mark(2))
 
     expect(favicons.of('https://docs.google.com/spreadsheets/d/1/edit')).toBe(mark(1))
     expect(favicons.of('https://docs.google.com/document/d/2/edit')).toBe(mark(2))
@@ -85,8 +85,8 @@ describe('a mark seen', () => {
   })
 
   test('but not at another origin of the same site: mail and docs are two products', async () => {
-    const { favicons } = await fresh()
-    favicons.saw('https://mail.google.com/mail/u/0/', mark(1))
+    const { favicons, saw } = await fresh()
+    saw('https://mail.google.com/mail/u/0/', mark(1))
 
     expect(favicons.of('https://docs.google.com/')).toBeNull()
     expect(favicons.of('http://mail.google.com/')).toBeNull()
@@ -95,8 +95,8 @@ describe('a mark seen', () => {
   /** An unread count redrawn into the mark is the page's mark now, and it replaces the
    *  last one rather than adding to it: Firefox bug 1598371 stored 207,000 of those. */
   test('a page that redraws its mark replaces it, and keeps one picture', async () => {
-    const { favicons } = await fresh()
-    for (let n = 0; n < 50; n++) favicons.saw('https://web.whatsapp.com/', mark(n))
+    const { favicons, saw } = await fresh()
+    for (let n = 0; n < 50; n++) saw('https://web.whatsapp.com/', mark(n))
     vi.runAllTimers()
 
     expect(favicons.of('https://web.whatsapp.com/')).toBe(mark(49))
@@ -104,14 +104,14 @@ describe('a mark seen', () => {
   })
 
   test('is only a picture a page can draw, of a size worth keeping', async () => {
-    const { favicons } = await fresh()
+    const { favicons, saw } = await fresh()
     for (const said of [
       'https://a.example/favicon.ico',
       'data:text/html;base64,PHNjcmlwdD4=',
       'data:image/png;base64,"><script>',
       `data:image/png;base64,${'A'.repeat(64 * 1024)}`,
     ]) {
-      favicons.saw('https://a.example/', said)
+      saw('https://a.example/', said)
     }
 
     expect(favicons.of('https://a.example/')).toBeNull()
@@ -130,10 +130,10 @@ function storedPictures(): string[] {
 
 describe('the ceiling', () => {
   test('holds 500 pages, the least recently used going first', async () => {
-    const { favicons } = await fresh()
+    const { favicons, saw } = await fresh()
     for (let n = 0; n < 300; n++) {
       vi.setSystemTime(n * 1000)
-      favicons.saw(`https://site${String(n)}.example/`, mark(n))
+      saw(`https://site${String(n)}.example/`, mark(n))
     }
     vi.runAllTimers()
 
@@ -146,17 +146,17 @@ describe('the ceiling', () => {
   })
 
   test('and half a megabyte of pictures, a page drawn lately outliving one that was not', async () => {
-    const { favicons } = await fresh()
+    const { favicons, saw } = await fresh()
     // Twenty kilobytes each once written out, so 25 fit in the half megabyte and a 26th
     // does not.
     for (let n = 0; n < 25; n++) {
       vi.setSystemTime(Date.UTC(2026, 0, 1) + n * 1000)
-      favicons.saw(`https://site${String(n)}.example/`, mark(n, 15_400))
+      saw(`https://site${String(n)}.example/`, mark(n, 15_400))
     }
     // The first site is drawn again a day and more later, which is a use.
     vi.setSystemTime(Date.UTC(2026, 0, 3))
     expect(favicons.of('https://site0.example/')).toBe(mark(0, 15_400))
-    favicons.saw('https://late.example/', mark(99, 15_400))
+    saw('https://late.example/', mark(99, 15_400))
     vi.runAllTimers()
 
     expect(favicons.of('https://site0.example/')).toBe(mark(0, 15_400))
@@ -171,9 +171,9 @@ describe('the ceiling', () => {
 describe('forgetting', () => {
   test('a page forgotten takes its mark and its origin s with it, on disk too', async () => {
     const one = await fresh()
-    one.favicons.saw('https://secret.example/a', mark(1))
+    one.saw('https://secret.example/a', mark(1))
     vi.runAllTimers()
-    one.favicons.forget('https://secret.example/a#top')
+    one.forget('https://secret.example/a#top')
     vi.runAllTimers()
 
     expect(one.favicons.of('https://secret.example/a')).toBeNull()
@@ -185,9 +185,9 @@ describe('forgetting', () => {
   })
 
   test('a history row removed is a mark forgotten', async () => {
-    const { favicons } = await fresh()
+    const { favicons, saw } = await fresh()
     const { visited } = await import('./visited')
-    favicons.saw('https://secret.example/a', mark(1))
+    saw('https://secret.example/a', mark(1))
     visited.saw('nib:web-visits', 'tab', 'https://secret.example/a', 'Secret')
 
     visited.remove('nib:web-visits', 'https://secret.example/a')
@@ -200,15 +200,15 @@ describe('which mark is drawn', () => {
   /** The live page's own mark always wins: the cache is what stands in for a page
    *  that is not there, never what corrects one that is. */
   test('the live page s own, whatever the cache says', async () => {
-    const { favicons, siteMark } = await fresh()
-    favicons.saw('https://a.example/', mark(1))
+    const { saw, siteMark } = await fresh()
+    saw('https://a.example/', mark(1))
 
     expect(siteMark(mark(2), 'https://a.example/', mark(3))).toBe(mark(2))
   })
 
   test('then the cache, then what the file wrote, then nothing', async () => {
-    const { favicons, siteMark } = await fresh()
-    favicons.saw('https://a.example/', mark(1))
+    const { saw, siteMark } = await fresh()
+    saw('https://a.example/', mark(1))
 
     expect(siteMark(null, 'https://a.example/x', mark(3))).toBe(mark(1))
     expect(siteMark(null, 'https://b.example/', mark(3))).toBe(mark(3))

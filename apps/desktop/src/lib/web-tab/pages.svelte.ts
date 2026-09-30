@@ -29,9 +29,9 @@
  *  day with thirty sites in it is not thirty browsers. Looking at a parked tab again
  *  opens the page where it was, at the place it was at. */
 
+import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
-import { favicons } from './favicons.svelte'
 import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
@@ -297,7 +297,7 @@ export class Page {
 
   /** Where the engine last said the page is. `url` stops following it while the address
    *  field is typed in, and a mark belongs to the page rather than to the field, so it is
-   *  filed under this; see favicons.svelte.ts. Not drawn. */
+   *  filed under this; see `favicons`. Not drawn. */
   at: string | null = null
 
   /** Where the first load in this tab finished, or null before it has. What the
@@ -1017,7 +1017,7 @@ class Pages {
       if (said && downloads.heard(said)) void this.downloaded(said.tab)
     })
     // A page's mark has changed, which the engine says for as long as the page is open,
-    // and it is the device's mark for that page from now on; see favicons.svelte.ts. A page
+    // and it is the device's mark for that page from now on; see `favicons`. A page
     // with none says nothing about the one it had: a page on its way says none too.
     await listen('nib://web-icon', (event) => {
       const said = readIconed(event.payload)
@@ -1025,7 +1025,8 @@ class Pages {
       if (!said || !page) return
 
       page.marked(said.icon)
-      if (said.icon) favicons.saw(page.at ?? page.url, said.icon)
+      const at = page.at ?? page.url
+      if (said.icon) void import('./favicons').then((one) => one.saw(at, said.icon))
     })
     // Sound, full screen, zoom and find; see heard.ts.
     await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
@@ -1073,3 +1074,121 @@ class Pages {
 }
 
 export const pages = new Pages()
+
+/** The marks pages have shown, kept for the next launch: the one favicon cache.
+ *
+ *  Emil, 2026-09-30: *"When I restart nib all the icons from previously opened websites
+ *  are gone [...] But they could be cached."* Chrome's Favicons database, kept small: a
+ *  page (its origin and path) maps to a picture stored once, and a page never seen
+ *  borrows its origin's last mark - Chrome's `fallback_to_host`, Firefox's root icon -
+ *  never the registrable site's, since mail and docs under one domain are two products.
+ *  Shared by every space: it is only asked about an address a surface already shows,
+ *  and no page can read it. The reading is here, synchronous, so a restored tab's first
+ *  frame has its mark; the writing is fetched with the first mark; see favicons.ts. */
+
+/** Which picture each page and origin showed last, and when it was last wanted. */
+export const MARKS = 'nib:favicons'
+/** One picture, under its own id. */
+export const MARK = 'nib:favicon:'
+
+/** A picture the window draws as it stands, no larger than web_icons.rs sends one. */
+export function drawable(picture: string): boolean {
+  return (
+    picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
+  )
+}
+
+/** A page's picture and when it was last shown or drawn. */
+export type Seen = [picture: string, used: number]
+
+/** The two keys an address is looked for under, the page first, or null for anything
+ *  that is not a web page. */
+export function keysOf(url: string | null | undefined): [string, string] | null {
+  if (!url) return null
+
+  try {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once and thrown away
+    const at = new URL(url)
+    if (at.protocol !== 'https:' && at.protocol !== 'http:') return null
+    return [at.origin + at.pathname, at.origin]
+  } catch {
+    return null
+  }
+}
+
+/** Not private, because favicons.ts writes what this reads. */
+class Favicons {
+  /** Moved on every change, so every mark drawn from here is drawn again. */
+  changed = $state(0)
+  /** Each picture's length, and so which have a key of their own in storage. */
+  readonly sizes = new Map<string, number>()
+  /** Pictures read or seen this run, and those seen and not yet written. */
+  readonly pictures = new Map<string, string | null>()
+  readonly unwritten = new Map<string, string>()
+
+  private held: Map<string, Seen> | null = null
+
+  /** The index, read on the first ask. */
+  index(): Map<string, Seen> {
+    if (this.held) return this.held
+
+    this.held = new Map()
+    const saved = stored(MARKS)
+    if (!isRecord(saved) || !isRecord(saved.pages) || !isRecord(saved.sizes)) return this.held
+
+    for (const [key, one] of Object.entries(saved.pages)) {
+      if (Array.isArray(one) && isString(one[0]) && isNumber(one[1])) {
+        this.held.set(key, [one[0], one[1]])
+      }
+    }
+    for (const [id, size] of Object.entries(saved.sizes)) {
+      if (isNumber(size)) this.sizes.set(id, size)
+    }
+    return this.held
+  }
+
+  private picture(id: string): string | null {
+    let found = this.pictures.get(id)
+    if (found === undefined) {
+      const text = storedText(MARK + id)
+      found = text !== null && drawable(text) ? text : null
+      this.pictures.set(id, found)
+    }
+    return found
+  }
+
+  /** The mark last seen at `url`, else at its origin, else null. Drawing one is a use,
+   *  written down once a day. */
+  of(url: string | null | undefined): string | null {
+    // Read, so whatever asked is asked again when a page shows a new mark.
+    const keys = this.changed >= 0 ? keysOf(url) : null
+    if (!keys) return null
+
+    const index = this.index()
+    for (const key of keys) {
+      const held = index.get(key)
+      const picture = held ? this.picture(held[0]) : null
+      if (!held || !picture) continue
+
+      if (Date.now() - held[1] > 86_400_000) {
+        held[1] = Date.now()
+        void import('./favicons').then((one) => one.later())
+      }
+      return picture
+    }
+    return null
+  }
+}
+
+export const favicons = new Favicons()
+
+/** The one answer to which picture a site wears: the live page's own, else the last one
+ *  this device saw at the address, else the one a file wrote down, else null for the
+ *  globe. Every surface that draws a site's mark asks this and nothing else. */
+export function siteMark(
+  live: string | null | undefined,
+  url: string | null | undefined,
+  written?: string | null,
+): string | null {
+  return live ?? favicons.of(url) ?? written ?? null
+}

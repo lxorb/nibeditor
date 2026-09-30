@@ -42,10 +42,9 @@
   import { barKey, stops, type ZoomStep } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
-  import { siteMark } from './favicons.svelte'
   import { addressing } from './passed.svelte'
   import { clipSource } from './note'
-  import type { Page } from './pages.svelte'
+  import { type Page, siteMark } from './pages.svelte'
 
   const {
     page,
@@ -94,7 +93,7 @@
   const RING = 2 * Math.PI * 10
 
   /** The site's own mark: the page's, else the last one this device saw there, so a
-   *  tab coming back wears it before its page does. See favicons.svelte.ts. */
+   *  tab coming back wears it before its page does. See `favicons` in pages.svelte.ts. */
   const mark = $derived(siteMark(page.icon, page.url))
 
   /** Whether the site's own mark arrived. A site with none, or one the engine will not

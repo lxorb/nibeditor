@@ -56,11 +56,9 @@
   const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
   const tint = $derived(path === undefined ? null : chosenTint(path))
 
-  /** The site's own mark for a website: the last one this device saw there, else its
-   *  `.url`'s `Nib-Icon`. Only a website has one, and only once a page has shown one;
-   *  the globe stands in until then. Read from the path through the same façade the
-   *  chosen icon is, so this names no store of its own; see chosen-icon.ts and
-   *  TabMark.svelte. */
+  /** The site's own mark for a website, the globe standing in until a page has shown
+   *  one. Read through the same façade the chosen icon is, so this names no store of its
+   *  own; see chosen-icon.ts and TabMark.svelte. */
   const favicon = $derived(mark === 'web' ? faviconFor(path, url) : null)
 
   /** Whether the picture refused to arrive: a mark whose address has moved, or one
