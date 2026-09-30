@@ -184,7 +184,7 @@ pub fn hear(
 }
 
 /// Lets go of a page that has closed, so its label can be a new page's.
-pub fn forget(label: &str) {
+pub fn let_go_of(label: &str) {
     PAGES
         .lock()
         .unwrap_or_else(PoisonError::into_inner)

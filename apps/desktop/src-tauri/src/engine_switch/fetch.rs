@@ -114,7 +114,7 @@ pub fn release(version: &str) -> String {
 }
 
 /// Where a version's files are served from.
-fn source(version: &str) -> String {
+fn source_of(version: &str) -> String {
     std::env::var(SOURCE).map_or_else(
         |_| format!("{RELEASES}{}/", release(version)),
         |own| format!("{}/", own.trim_end_matches('/')),
@@ -275,13 +275,13 @@ async fn downloaded(
     }
     drop(file);
 
-    let key = crate::engine_switch::fetch::key(app)?;
+    let key = crate::engine_switch::fetch::updater_key(app)?;
     verified(to, &archive.signature, &key)
 }
 
 /// The updater's public key, from the app's own config: the key every release is signed
 /// with.
-fn key(app: &AppHandle) -> Result<String, String> {
+fn updater_key(app: &AppHandle) -> Result<String, String> {
     app.config()
         .plugins
         .0
@@ -294,9 +294,9 @@ fn key(app: &AppHandle) -> Result<String, String> {
 
 /// Fetches this version's Chromium build - the runtime too, where the one it needs is
 /// not here yet - and says where it got to.
-async fn fetch(app: &AppHandle, places: &Places) -> Result<(), String> {
+async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), String> {
     let version = places.version.clone();
-    let base = source(&version);
+    let base = source_of(&version);
     let client = reqwest::Client::builder()
         .build()
         .map_err(|error| error.to_string())?;
@@ -395,11 +395,11 @@ pub async fn engine_fetch(app: AppHandle, version: Option<String>) -> Result<Sta
     let done = if places.chromium_exe().is_some() {
         Ok(())
     } else {
-        fetch(&app, &places).await
+        fetch_engine(&app, &places).await
     };
     fetching.running.store(false, Ordering::SeqCst);
     done?;
-    super::places(&app).map(|running| super::state(&running))
+    super::places(&app).map(|running| super::row_state(&running))
 }
 
 /// Stops a fetch that is running. What it had downloaded is thrown away.
