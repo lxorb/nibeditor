@@ -15,6 +15,9 @@
 
 import { workspace, type Tab } from '../workspace.svelte'
 import { closesPinned } from '../workspace/closing-pinned'
+import type { Landing } from '../workspace/panes.svelte'
+import { pinnedRun } from '../workspace/pinning'
+import { type Bounds, endOf, moved, placed, widthsFor } from './layout'
 import { duplicateTab, moveToOtherPane } from './ops'
 
 /** What a click with a modifier does to the pick. */
@@ -130,6 +133,109 @@ export function gathered<T extends { readonly id: string }>(
   const from = kept.findIndex((one) => one.id === lead)
   if (from >= 0) keptWidths[from] = wide
   return { order: kept, widths: keptWidths, from, before }
+}
+
+/** A tab as the strip lays it out. */
+interface Laid {
+  readonly id: string
+  readonly pinned: boolean
+  readonly active: boolean
+}
+
+/** Where a drag has the tab it holds; see drag.svelte.ts. */
+interface Held {
+  readonly x: number
+  readonly from: number
+  readonly slot: number
+  readonly out: boolean
+}
+
+/** A drag of several: every tab picked with the one pressed that is pinned as it is,
+ *  carried as one block - gathered beside the dragged tab as it lifts, along the strip
+ *  as one tab as wide as all of them, and put down together wherever it is let go, the
+ *  way Chrome drags a selection. Made on the press, from the strip as it stands; the
+ *  strip asks it where its tabs are drawn for as long as the drag lasts. */
+export class Block {
+  /** The strip with the block standing as the dragged tab; see `gathered`. */
+  readonly strip: { order: Laid[]; widths: number[]; from: number; before: number }
+
+  private constructor(
+    readonly lead: string,
+    readonly ids: readonly string[],
+    private readonly sized: readonly Laid[],
+    private readonly widths: readonly number[],
+  ) {
+    this.strip = gathered(sized, widths, ids, lead)
+  }
+
+  /** What a press on `tab` carries, or null where it carries the tab alone. */
+  static of(paneId: string, tab: Tab, sized: readonly Laid[], widths: readonly number[]) {
+    const picked = chosen.of(paneId)
+    const ids = picked.filter((one) => one.pinned === tab.pinned).map((one) => one.id)
+    return picked.includes(tab) && ids.length > 1 ? new Block(tab.id, ids, sized, widths) : null
+  }
+
+  /** What the drag measures slots in: the block as one tab. */
+  frame(room: number): { widths: number[]; room: number; pinnedRun: number } {
+    return { widths: this.strip.widths, room, pinnedRun: pinnedRun(this.strip.order) }
+  }
+
+  /** Where each tab is drawn while the block is carried: along the strip, or out over
+   *  the panes with the strip closed up behind it. The block's tabs side by side from
+   *  where the drag has it. */
+  layout(room: number | null, held: Held): { boxes: Record<string, Bounds>; end: number } {
+    const boxes: Record<string, Bounds> = {}
+    let bounds: Bounds[]
+
+    if (held.out) {
+      const rest = this.sized.filter((one) => !this.ids.includes(one.id))
+      bounds = placed(widthsFor(rest, room))
+      for (const [at, one] of rest.entries()) boxes[one.id] = bounds[at] ?? { x: 0, width: 0 }
+    } else {
+      const order = moved(this.strip.order, held.from, held.slot)
+      bounds = placed(moved(this.strip.widths, held.from, held.slot))
+      for (const [at, one] of order.entries()) {
+        if (one.id !== this.lead) boxes[one.id] = bounds[at] ?? { x: 0, width: 0 }
+      }
+    }
+
+    let x = held.x
+    for (const id of this.ids) {
+      const width = this.widths[this.sized.findIndex((one) => one.id === id)] ?? 0
+      boxes[id] = { x, width }
+      x += width
+    }
+    return { boxes, end: endOf(bounds) }
+  }
+
+  /** The strip's order while the block is in it, for the hairlines between tabs. */
+  order(held: Held): string[] {
+    return moved(this.strip.order, held.from, held.slot).flatMap((one) =>
+      one.id === this.lead ? [...this.ids] : [one.id],
+    )
+  }
+
+  /** Let go along its own strip, at a slot. */
+  moved(paneId: string, from: number, to: number) {
+    this.land(paneId, moved(this.strip.order, from, to)[to + 1]?.id ?? null)
+  }
+
+  /** Let go over another strip or against a pane: where the dragged tab goes, and the
+   *  others with it, in front of the tab it landed in front of. */
+  dropped(where: Landing) {
+    const before =
+      where.kind === 'strip' ? (workspace.tabsIn(where.paneId)[where.at]?.id ?? null) : null
+    workspace.dropTab(this.lead, where)
+    const into = workspace.tabs.find((one) => one.id === this.lead)?.paneId
+    if (into) this.land(into, before)
+  }
+
+  /** Side by side in their order, the dragged one in front and all of them still picked. */
+  private land(paneId: string, before: string | null) {
+    placeBlock(this.ids, paneId, before)
+    workspace.activate(this.lead)
+    chosen.paneId = paneId
+  }
 }
 
 /** Several tabs put down together, in their own order, in front of one tab of a pane or
