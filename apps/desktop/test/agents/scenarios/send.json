@@ -93,6 +93,5 @@
       "record": "sent",
       "count": 0
     }
-  ],
-  "known": "agent-core: sending is recognised only on the sites of a list (policy.rs SOCIAL), so a compose form anywhere else, a self-hosted webmail included, sends without asking (9.3)"
+  ]
 }

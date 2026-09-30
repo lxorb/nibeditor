@@ -27,6 +27,10 @@ from typing import Any
 
 Answer = dict[str, Any]
 
+#: Where `nib mcp` puts the contract's answer in a tool call's result, beside the text a
+#: model reads: under `_meta`, which no model is shown (src-tauri/src/mcp/results.rs).
+ANSWER_META = "ch.emilvinu.nib/answer"
+
 #: What the window says for a verb it has not got, and what makes an answer `missing`.
 NO_VERB = "there is no verb called"
 
@@ -185,16 +189,15 @@ class Mcp:
         text = "\n".join(str(one.get("text", "")) for one in result.get("content", []) if one.get("type") == "text")
         pictures = [one for one in result.get("content", []) if one.get("type") == "image"]
         untrusted = marked_source(text)
-        # A server that hands the contract's answer back as text is read as that answer.
-        try:
-            inner = json.loads(text)
-        except ValueError:
-            inner = None
-        if isinstance(inner, dict) and inner.get("status") in ("ok", "needs_approval", "error"):
-            return {**inner, "ms": round(ms, 1), "text": text, "untrusted": inner.get("untrusted") or untrusted}
+        # The contract's answer itself, which the text is only written from.
+        said = (result.get("_meta") or {}).get(ANSWER_META)
+        if isinstance(said, dict) and said.get("status") in ("ok", "needs_approval", "error"):
+            return {**said, "ms": round(ms, 1), "text": text, "pictures": len(pictures),
+                    "untrusted": said.get("untrusted") or untrusted}
+        # One of nib's own sentences - the pairing's state, a call it could not make.
         status = "error" if result.get("isError") else "ok"
         return answer(status, ms, text=text, message=text if status == "error" else None,
-                      untrusted=untrusted, pictures=len(pictures), result=result.get("structuredContent"))
+                      untrusted=untrusted, pictures=len(pictures), result=None)
 
     def has(self, verb: str) -> bool:
         return verb in self.tools

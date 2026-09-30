@@ -99,7 +99,7 @@ LANES = {
 HOOKS: dict[str, str | None] = {
     # A `GotFocus` on a tab's page as the engine raises it for a reader's press, without
     # pressing anything on this machine (docs/agent-native.md 7.3).
-    "reader_focus": None,
+    "reader_focus": "agents_test_reader_focus",
 }
 
 
