@@ -27,7 +27,7 @@
 //! so), when the page it belongs to loads again, when its window is destroyed, and when
 //! the app exits - so no shell is ever left running with nothing to show it.
 
-mod process;
+pub(crate) mod process;
 mod session;
 pub mod shells;
 

@@ -113,7 +113,7 @@ pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
     unsafe_code,
     reason = "the toolhelp snapshot is Win32's own call and has no safe wrapper"
 )]
-fn processes() -> Vec<Process> {
+pub(crate) fn processes() -> Vec<Process> {
     use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Diagnostics::ToolHelp::{
         CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W,

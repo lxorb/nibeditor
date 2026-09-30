@@ -288,7 +288,7 @@ fn same_path(one: &Path, other: &Path) -> bool {
 /// which Windows drops without saying, no dot at the front, which hides a file on the
 /// other two, and no device name. A name with nothing left is `download`, which is
 /// Chrome's word for it.
-fn clean_name(suggested: &OsStr) -> String {
+pub(crate) fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
         .chars()
@@ -362,7 +362,7 @@ fn split_extension(name: &str) -> (&str, &str) {
 
 /// The first of `name`, `name (1)`, `name (2)` ... in `folder` that nothing has taken,
 /// the numbering Chrome uses.
-fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
+pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
     let first = folder.join(name);
     if !taken(&first) {
         return first;
@@ -377,7 +377,7 @@ fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBu
 
 /// The folder downloads go to: the one a probe named, or the system's Downloads
 /// folder, or the home folder on a system that has none.
-fn folder(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(named) = crate::paths::folder_named(std::env::var_os(DOWNLOADS_DIR).as_deref()) {
         return Ok(named);
     }
