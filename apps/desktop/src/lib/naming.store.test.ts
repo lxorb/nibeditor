@@ -348,6 +348,20 @@ describe('opening a row that is a folder', () => {
     expect(workspace.notes.map((one) => one.path)).toContain('/space/Work/Work.md')
   })
 
+  // Only where the list has the folder: a file in a folder it leaves out, a settings
+  // folder behind a dot, is written like any other and leaves the list alone - not a
+  // row, and not a list made again on every save, which is what a whole new tree is
+  // to everything drawn from it.
+  test('but a note in a folder the list leaves out leaves the list alone', async () => {
+    await workspace.open('/space/.hidden/Notes.md', { blank: true })
+    const listed = workspace.tree
+    workspace.active?.note.live.replace('# Kept here')
+    await workspace.writesSettled()
+
+    expect(files.get('/space/.hidden/Notes.md')).toBe('# Kept here')
+    expect(workspace.tree).toBe(listed)
+  })
+
   test('and a row that is a note opens that note', async () => {
     await workspace.openRow('/space/Beta.md')
     expect(workspace.active?.path).toBe('/space/Beta.md')

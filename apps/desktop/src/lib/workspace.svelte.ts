@@ -1217,10 +1217,11 @@ class Workspace {
     // Written for the first time without being born: the note a folder is drawn as,
     // opened as the empty page it would be and then written in. The list has never
     // read it, and nothing else will list the space again, so it is the row a draft
-    // gets. A file of another space, or of no space, is not a row of this list.
+    // gets - where the list holds the folder it is in. A file of another space, of no
+    // space, or of a folder the list leaves out is not a row of this list.
     if (!entry) {
-      const root = this.activeSpace?.root
-      if (root !== undefined && within(root, path) !== null) this.born(path)
+      const folder = folderOf(path)
+      if (folder === this.tree?.path || this.entryAt(folder)?.is_dir) this.born(path)
       return
     }
 
