@@ -397,11 +397,11 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `list_backlinks` | `path` | every link in the space that points at it; also `read_note`'s `backlinks` |
 | `read_note` | `path`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task |
 | `edit_note` | `path`, `edits`: `[{at, replace?, insert_before?, insert_after?, delete?}]` (one of the four), `if_rev`? | anchored edits in one transaction (8.2) |
-| `write_note` | `path`, `text`, `if_rev`? | the whole text, for parity with the account connector; applied as the smallest edit between what is there and what is sent, as one transaction, so it is an anchored edit like the rest |
-| `append_note` | `path`, `text`, `under`? (a heading) | |
+| `write_note` | `path`, `content`, `if_rev`? | the whole text, for parity with the account connector (whose argument is `content`, so every note tool here says `content` for words); applied as the smallest edit between what is there and what is sent, as one transaction, so it is an anchored edit like the rest |
+| `append_note` | `path`, `content`, `under`? (a heading) | |
 | `set_property` | `path`, `key`, `value` or `null` | the front matter, through `frontMatterEdit` |
 | `set_task` | `path`, `at`, `done` | ticks or clears one box |
-| `create_note` | `path`, `text`?, `open`?: false | never over an existing note |
+| `create_note` | `path`, `content`?, `open`?: false | never over an existing note |
 | `list_versions` | `path` | the versions, with who wrote each (8.5) |
 | `restore_version` | `path`, `version` | asks first (9.3) |
 
@@ -892,6 +892,44 @@ instructions say to prefer it while nib runs, because it sees the words on scree
 sync v2 a note with a document is written only by its room (`sync-v2.md` 5.3), and the
 connector's `write_note` hands its text to the room's `ingest`, so a cloud agent and a
 local one writing one note merge instead of overwriting each other.
+
+**As built** (`src-tauri/src/mcp/`, std and serde only):
+
+- **The line** is `claude mcp add --scope user nib -- "<nib.exe>" mcp` (user scope, so nib is
+  there in every folder Claude Code starts in), `codex mcp add nib -- "<nib.exe>" mcp`, or
+  the `mcpServers` entry for a client configured by file; `src/lib/agents/mcp.ts` writes
+  all three for Settings > Agents from the crate's `mcp_program` (the installed exe, or an
+  AppImage's own path).
+- **Which nib.** The identifier comes from the build (build.rs reads the config the way
+  tauri-build does), so a probe's `nib mcp` reaches that probe and never the reader's own
+  nib. A port in `automation.json` is asked once with no credential, and only nib's own 401
+  counts, before a secret or a token goes to it.
+- **Pairing without holding anybody up.** `initialize` is answered at once with the
+  instructions and `tools.listChanged`; the link to nib runs on a thread. A client with a
+  token under `<config>/agents/clients/<client>` proves it with `agent_status`; one without
+  asks through `agent_pair` twenty seconds at a time, looking between the waits for a token
+  a second run of the same client was given. Until the reader answers, the one tool listed
+  is `agent_status`, which says where the question stands; `tools/list` waits up to eight
+  seconds for the answer (under the ten Codex gives a server to start), and the Allow sends
+  `notifications/tools/list_changed`. Don't allow, and a token that stops working (the
+  agent removed), are final for that run.
+- **What is listed** is what the grant reaches (`browser.script` also needs a site), and of
+  the window's verbs only those the running window answers, asked once with the secret
+  (`verbs`). The modified times of `automation.json` and `agents.json` are read every two
+  seconds; a change re-reads the grant or the endpoint and, when the list would differ,
+  says `list_changed`.
+- **Results are text, never `structuredContent`**: Claude Code and Codex show a model only
+  the structured part when there is one, which would drop the marks. A snapshot is its tree,
+  a find is snapshot lines, a screenshot an image with one line saying its words are the
+  page's; `needs_approval` is not an error and says to carry on; an error is `isError` with
+  its code, its sentence and, where it is not obvious, the next step. The contract's answer
+  rides under `_meta["ch.emilvinu.nib/answer"]` for scripts and the harness; no model is
+  shown `_meta`. The six tools shared with the connector answer in its words.
+- **Starting nib**: on Windows through `cmd /c start /min` with no console, so the app's
+  first window takes `SW_SHOWMINNOACTIVE` and none of the client's pipes; on a Mac `open -g
+  -j`; on Linux a plain detached launch. Only at the start of a session: a reader who quits
+  nib later has ended the job, and a call says so.
+- `scripts/mcp-probe.py` drives all of it over real pipes against a probe build.
 
 **The endpoint stays what it is**, with two changes: a request may carry an agent's token
 instead of the installation's secret (the secret keeps meaning the reader's own command

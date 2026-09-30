@@ -79,6 +79,10 @@ mod lights;
 mod links;
 mod logs;
 mod matcher;
+// `nib mcp`, the server an agent's client runs; main.rs hands it the process before
+// anything below starts.
+#[cfg(desktop)]
+pub mod mcp;
 #[cfg(desktop)]
 mod menu_bar;
 mod notes;
@@ -241,6 +245,7 @@ macro_rules! desktop_commands {
             agents::agents_state,
             agents::agents_log,
             agents::agents_adopt,
+            mcp::program::mcp_program,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_ground,

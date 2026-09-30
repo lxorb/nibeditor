@@ -1507,11 +1507,18 @@ fn whole(value: f64) -> i64 {
 }
 
 /// The error an element that is gone answers with: take a snapshot again.
+///
+/// A node of a document the tab has since left is refused by `WebView2` itself, before the
+/// protocol says anything, with the system's `E_INVALIDARG`: "The parameter is incorrect."
+/// Every call this reads for names its element by that node, so that sentence is the
+/// element being gone too (measured by scripts/mcp-probe.py: a ref of one page pressed
+/// after the tab went to the next).
 fn stale(why: &str) -> Answer {
     let gone = why.contains("No node")
         || why.contains("Could not find node")
         || why.contains("does not belong")
-        || why.contains("No object");
+        || why.contains("No object")
+        || why.contains("The parameter is incorrect");
     if gone {
         Answer::error(
             Code::NoSuchRef,
@@ -1670,6 +1677,13 @@ mod tests {
     fn a_gone_element_says_to_look_again() {
         assert!(matches!(
             stale("No node with given id found"),
+            Answer::Error {
+                code: Code::NoSuchRef,
+                ..
+            }
+        ));
+        assert!(matches!(
+            stale("The parameter is incorrect."),
             Answer::Error {
                 code: Code::NoSuchRef,
                 ..

@@ -2616,6 +2616,7 @@ dependencies = [
  "tauri-plugin-process",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "tauri-utils",
  "tempfile",
  "tokio",
  "webkit2gtk",
