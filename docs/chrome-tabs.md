@@ -139,6 +139,12 @@ so a width change lays out that one tab and nothing beside it.
   about that strip's pane. Chrome's other rows there - bookmark all tabs, name the
   window, the task manager - have nothing behind them in nib. A held finger asks for
   it too. See `tab-strip/strip-menu.ts`.
+- **Ctrl+D puts the tab down** rather than bookmarking the page: no tab in the strip is
+  the active one, so none has the fill or the feet and every hairline shows, the pane
+  shows the cards a pane with nothing open shows, and every tab stays open. Chrome always
+  has a tab in front; nib already had the empty pane. The focused pane only; a press on
+  a tab, the digits or Ctrl+Tab bring one back. A page is offered the key first, as
+  Chrome offers it its bookmark key. See docs/keyboard.md.
 - **Double click on a tab keeps a preview** (VS Code's rule; nib opens previews).
 - **Ctrl+1..9 are Ctrl+Alt+1..9**, because Ctrl and a digit is a heading level.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active

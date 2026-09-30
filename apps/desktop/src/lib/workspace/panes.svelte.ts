@@ -237,8 +237,28 @@ export class Panes {
     if (!one || one.activeTabId === tabId) return
 
     one.activeTabId = tabId
-    if (tabId) this.used = [tabId, ...this.used.filter((one) => one !== tabId)].slice(0, 200)
+    if (tabId) this.usedNow(tabId)
     this.changed()
+  }
+
+  /** Nothing in front of a pane, and every tab in it left open: Ctrl+D. The tab that
+   *  was in front is written down as the one used last - a tab the session put there
+   *  was never activated - because it is what this pane comes back to; see `lastOf`. */
+  deselect(id: string) {
+    const was = paneIn(this.frame, id)?.activeTabId
+    if (!was) return
+
+    this.usedNow(was)
+    this.activate(id, null)
+  }
+
+  /** Of a pane's tabs, the one in front last. */
+  lastOf(strip: readonly string[]): string | null {
+    return this.used.find((id) => strip.includes(id)) ?? null
+  }
+
+  private usedNow(tabId: string) {
+    this.used = [tabId, ...this.used.filter((one) => one !== tabId)].slice(0, 200)
   }
 
   /** One pane again, keeping the focused one. What a phone gets, where there is

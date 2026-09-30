@@ -87,6 +87,7 @@ export const gsw: Dictionary = {
   'Close all': 'Alli zuemache',
   'Close all tabs': 'Alli Tabs zuemache',
   'Duplicate tab': 'Tab verdopple',
+  'Deselect tab': 'Tab abwähle',
   'Move to other pane': 'Is anderi Teilfänschter verschiebe',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',

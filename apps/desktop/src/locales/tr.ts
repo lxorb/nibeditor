@@ -87,6 +87,7 @@ export const tr: Dictionary = {
   'Close all': 'Tümünü kapat',
   'Close all tabs': 'Tüm sekmeleri kapat',
   'Duplicate tab': 'Sekmeyi çoğalt',
+  'Deselect tab': 'Sekme seçimini kaldır',
   'Move to other pane': 'Diğer bölmeye taşı',
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',

@@ -87,6 +87,7 @@ export const ptPT: Dictionary = {
   'Close all': 'Fechar todos',
   'Close all tabs': 'Fechar todos os separadores',
   'Duplicate tab': 'Duplicar separador',
+  'Deselect tab': 'Desmarcar separador',
   'Move to other pane': 'Mover para o outro painel',
   Tabs: 'Separadores',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de utilização',

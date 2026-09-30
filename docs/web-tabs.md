@@ -703,7 +703,9 @@ app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
-itself". On `WebView2` only; see `docs/keyboard.md` and
+itself". So is Ctrl+D, which is Chrome's bookmark and nib's Deselect tab: Sheets fills
+down with it and Figma duplicates, and what a page lets go by is played on the window as
+the key it was. On `WebView2` only; see `docs/keyboard.md` and
 `src-tauri/src/web_keys.rs`.
 
 The bar reads F5, the reload keys and Ctrl and a digit before the window's own handler

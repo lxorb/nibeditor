@@ -61,6 +61,18 @@ describe('Cmd+W', () => {
     expect(closing).not.toHaveBeenCalled()
   })
 
+  /** Ctrl+D leaves nothing in front and every tab open, and a window with tabs in it
+   *  is not a window with nothing left in it. */
+  test('but not while the tabs are only put down', () => {
+    showing(null)
+    const was = workspace.tabs
+    workspace.tabs = [{} as never]
+    press('app.close')
+    workspace.tabs = was
+
+    expect(closed).not.toHaveBeenCalled()
+  })
+
   test('and nowhere else, where one more press than notes would end the app', () => {
     os = 'windows'
     showing(null)

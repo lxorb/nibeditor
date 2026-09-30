@@ -355,8 +355,12 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-w',
     // On a Mac the same key closes the window once nothing is left in it to close,
-    // as it does in Safari and VS Code there.
-    run: () => void (workspace.activeTabId || !onMac() ? workspace.closeActive() : closeWindow()),
+    // as it does in Safari and VS Code there. A pane put down with Ctrl+D still has
+    // its tabs, so there it closes nothing.
+    run: () =>
+      void (workspace.activeTabId || workspace.tabs.length || !onMac()
+        ? workspace.closeActive()
+        : closeWindow()),
   },
   {
     // Every Mac app's File menu has it under the same key with Shift, and so does a
@@ -609,6 +613,21 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-PageDown',
     run: () => moveTab(1),
+  },
+  // Emil, 2026-09-30: *"add Ctrl + D as a shortcut. Effectively it just deselects the
+  // currently selected tab."* The pane shows nothing and every tab stays open. It took
+  // the key from Select word, which has none now (the VS Code keyboard gives it back),
+  // and from the file list's Duplicate, which is a row of the row's menu: putting a tab
+  // down is harmless where a copy writes files, and Explorer's own Ctrl+D deletes. A
+  // page and a plane with something picked answer it first; see web_opens.rs and
+  // canvas/actions.ts.
+  {
+    id: 'app.deselect-tab',
+    label: () => t('Deselect tab'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-d',
+    run: () => workspace.deselect(),
   },
   // F2 on a tab, the file list's key, read by the strip itself.
   {
@@ -1103,12 +1122,14 @@ const PANEL_ENTRIES: Shortcut[] = [
     mac: null,
     contextual: true,
   },
+  // No key: Ctrl+D puts the tab down, in the list as everywhere else. The row's menu
+  // has Duplicate, and a reader who wants Finder's Cmd+D back can give it one.
   {
     id: 'tree.duplicate',
     label: () => t('Duplicate'),
     category: 'panel',
     scope: 'panel',
-    key: 'Mod-d',
+    key: null,
     contextual: true,
   },
   // Moving a row within the order somebody arranged, which is the one of the
@@ -1186,6 +1207,8 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.group', () => t('Group'), 'g'],
     ['canvas.ungroup', () => t('Ungroup'), 'u'],
     ['canvas.delete', () => t('Delete what is picked'), 'Delete'],
+    // Figma's, Excalidraw's and tldraw's, and shared with Deselect tab: the plane
+    // takes it only with something picked, so the press is spent or let go whole.
     ['canvas.duplicate', () => t('Duplicate'), 'Mod-d'],
     // One modifier over from the 0 a zoom is reset with everywhere else, because the
     // app's own text size holds that one now: the press is read off the plane and goes

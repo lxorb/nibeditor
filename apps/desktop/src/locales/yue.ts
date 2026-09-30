@@ -87,6 +87,7 @@ export const yue: Dictionary = {
   'Close all': '全部關閉',
   'Close all tabs': '關閉所有標籤頁',
   'Duplicate tab': '複製標籤頁',
+  'Deselect tab': '取消揀選標籤頁',
   'Move to other pane': '搬去另一個窗格',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
