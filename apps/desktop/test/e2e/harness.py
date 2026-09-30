@@ -1036,19 +1036,27 @@ class Worker:
         ]
         for key, value in self.variables.items():
             command += ["--var", f"{key}:{value}"]
-        # Its output to a file rather than a pipe: a pipe nobody reads fills, and a
-        # Worker with nowhere to write stops answering.
-        self.process = spawn(command, cwd=SERVICE, stdout=self._output, stderr=subprocess.STDOUT)
-
-        until = time.monotonic() + WORKER_PATIENCE
-        while time.monotonic() < until:
-            if (code := self.process.poll()) is not None:
-                raise SystemExit(f"the Worker stopped ({code}) before it answered:\n{self.said()}")
-            if self.answering():
-                say("the Worker is answering")
-                return
-            time.sleep(0.5)
-        raise SystemExit(f"the Worker never answered:\n{self.said()}")
+        # A second go for a Worker that dies before it ever answers: workerd on a busy
+        # Windows machine now and then ends at its start with 0xC0000409, a crash of
+        # its own rather than anything the drive did.
+        for last in (False, True):
+            # Its output to a file rather than a pipe: a pipe nobody reads fills, and a
+            # Worker with nowhere to write stops answering.
+            self.process = spawn(command, cwd=SERVICE, stdout=self._output, stderr=subprocess.STDOUT)
+            until = time.monotonic() + WORKER_PATIENCE
+            while time.monotonic() < until:
+                if (code := self.process.poll()) is not None:
+                    if last:
+                        raise SystemExit(f"the Worker stopped ({code}) before it answered:\n{self.said()}")
+                    say(f"the Worker stopped ({code}) before it answered; starting it again")
+                    end(self.process)
+                    break
+                if self.answering():
+                    say("the Worker is answering")
+                    return
+                time.sleep(0.5)
+            else:
+                raise SystemExit(f"the Worker never answered:\n{self.said()}")
 
     def answering(self) -> bool:
         """Whether anything answers yet. Any answer at all counts: a Worker acting as a
