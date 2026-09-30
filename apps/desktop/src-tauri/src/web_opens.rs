@@ -128,9 +128,10 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 ///
 /// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L and Alt+D, and Ctrl+0 on
 /// the row or the number pad, that nothing in the page took ask for nib's answer by
-/// name, and are taken so the engine does not answer them too. By Windows' key code, which is what the engine and Chrome read a
-/// chord by, so a layout whose letters are not Latin still has them. Ctrl+Alt types a
-/// character on half the keyboards in Europe, and is left alone.
+/// name, and are taken so the engine does not answer them too. By Windows' key code,
+/// which is what the engine and Chrome read a chord by, so a layout whose letters are
+/// not Latin still has them. Ctrl+Alt types a character on half the keyboards in Europe,
+/// and is left alone.
 ///
 /// Both run last, after every handler the page has, so they see whether one of them took
 /// the key or the press. Being on the window is not enough for that: the page's own
