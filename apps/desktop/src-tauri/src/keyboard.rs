@@ -106,6 +106,13 @@ impl Homes {
 
     /// The page to hand the keyboard back to as the window comes back: the one that had
     /// it, while it is still on screen.
+    #[cfg_attr(
+        not(windows),
+        allow(
+            dead_code,
+            reason = "a Mac and Linux keep a window's keyboard across activation themselves"
+        )
+    )]
     fn home(&self, window: &str) -> Option<&str> {
         self.typing
             .get(window)
