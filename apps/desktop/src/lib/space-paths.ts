@@ -117,7 +117,11 @@ export function within(folder: string, path: string, root?: string): string | nu
   // answer without taking either apart.
   if (path.startsWith(folder) && !/[\\/]$/.test(folder)) {
     const rest = path.slice(folder.length)
-    if (!rest || /^[\\/]/.test(rest)) return rest.split(/[\\/]+/).filter(Boolean).join('/')
+    if (!rest || /^[\\/]/.test(rest))
+      return rest
+        .split(/[\\/]+/)
+        .filter(Boolean)
+        .join('/')
   }
 
   const head = steps(folder)
