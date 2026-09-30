@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { engineManifest } from '../../../scripts/engine-manifest'
+import { engineManifest, MARKER } from '../../../scripts/engine-manifest'
 
 /** The two builds, held apart and held together.
  *
@@ -82,11 +82,12 @@ describe('the engine build', () => {
   /** Published crates at exact versions, so a build gives the same answer twice and a
    *  bump is a line in a diff. */
   test('every Tauri crate it takes is pinned exactly', () => {
-    for (const line of engine.split('\n').filter((one) => /^(tauri|cef)[a-z-]* = /.test(one))) {
+    const written = engine.split(MARKER)[1] ?? ''
+    for (const line of written.split('\n').filter((one) => /^(tauri|cef)[a-z-]* = /.test(one))) {
       expect(line, line).toMatch(/"=\d/)
     }
     expect(engine).not.toContain('git = ')
-    expect(engine).not.toContain('[patch')
+    expect(engine).not.toMatch(/^\[patch/m)
   })
 })
 

@@ -166,9 +166,117 @@ jobs:
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
 
+  # nib's own Chromium, for the Browser setting to fetch: the same app built again on
+  # the engine, packed as the engine's own files and the app built on them, and signed
+  # with the updater's key like an installer. Never inside an installer - most people
+  # never switch, and it is four hundred megabytes - and never in the way of one: a
+  # platform whose engine does not build is a release without Chromium on that
+  # platform, and the installers go out regardless. See docs/browser.md and
+  # apps/desktop/src-tauri/cef.
+  #
+  # Windows and a Mac. Not Linux, where the engine's toolkit and the app's cannot share
+  # a process (docs/browser.md section 10), so the setting has no row there.
+  chromium:
+    needs: version
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows-x86_64
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            platform: windows-aarch64
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos-aarch64
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos-x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      CEF_DIR: ${{ github.workspace }}/.cef
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri/cef
+          key: chromium-${{ matrix.target }}
+
+      # The interface the engine build embeds, as the installers do.
+      - name: The frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @nib/desktop build
+
+      - name: The engine
+        run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
+
+      - name: Build the app on it
+        working-directory: apps/desktop/src-tauri/cef
+        env:
+          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Pack
+        run: |
+          suffix=''
+          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
+          python apps/desktop/src-tauri/cef/pack.py \
+            --binary "apps/desktop/src-tauri/cef/target/${{ matrix.target }}/release/nib-chromium$suffix" \
+            --engine "$CEF_PATH" \
+            --version "${{ needs.version.outputs.version }}" \
+            --platform "${{ matrix.platform }}" \
+            --out chromium-out
+
+      # With the updater's own key, which is what the app checks every archive against
+      # before it unpacks a byte. Without the key there is nothing the app would accept,
+      # so nothing is uploaded either.
+      - name: Sign
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "no signing key: this platform's Chromium is not published"; exit 1; }
+          for archive in chromium-out/*.tar.gz; do
+            pnpm --filter @nib/desktop exec tauri signer sign -p '' "$PWD/$archive"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: chromium-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            chromium-out/*.tar.gz
+            chromium-out/*.sig
+            chromium-out/*.json
+
   # One manifest for every platform, which is what the app polls.
   publish:
-    needs: [version, build]
+    needs: [version, build, chromium]
+    # The installers are the release; Chromium goes with them where it built, and a
+    # platform whose engine failed is a release without it rather than no release.
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
@@ -208,11 +316,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$TAG" --title "$TAG" --generate-notes || true
 
+      # What the Browser setting reads first; see scripts/chromium-manifest.mjs. None at
+      # all where no platform's engine built and signed.
+      - name: Build chromium.json
+        run: node scripts/chromium-manifest.mjs "$VERSION" artifacts > chromium.json || rm -f chromium.json
+
       - name: Upload the files
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "$TAG" latest.json --clobber
+          if [ -f chromium.json ]; then
+            gh release upload "$TAG" chromium.json --clobber
+            find artifacts -type f \( -name 'chromium-runtime-*.tar.gz' -o -name 'nib-chromium-*.tar.gz' \) \
+              -exec gh release upload "$TAG" {} --clobber \;
+          fi
           # The .app.tar.gz is what the updater downloads on a Mac, so it has to
           # be a release asset even though nobody clicks it.
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) \
