@@ -147,6 +147,7 @@ so a width change lays out that one tab and nothing beside it.
   own close.
 - **A web tab's active fill is the bar's `--surface`, a note's is the page's
   `--bg`**: the active tab is filled with whatever is under the strip, which in
-  nib is not always a toolbar. With window translucency on, the page is the
-  wallpaper and the fill is still `--bg`, so the merge is only exact without it.
+  nib is not always a toolbar. Under the glass theme the strip stands on the
+  window's material and every pane paints its own paper, so the merge is exact
+  there too.
 - **No hover cards, groups, multi-select or tab search.** nib has none of them.
