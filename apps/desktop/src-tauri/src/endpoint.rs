@@ -347,12 +347,10 @@ fn answer(
     // An agent's every call is in its log, the window's verbs as well as the crate's.
     if agent {
         let answered = match &outcome {
-            Ok(text) if text.contains("\"ok\":true") => {
-                crate::agents::verbs::Answer::ok(serde_json::Value::Null)
-            }
-            Ok(_) | Err(_) => crate::agents::verbs::Answer::error(
+            Ok(text) => crate::agents::verbs::Answer::from_window(text),
+            Err(reason) => crate::agents::verbs::Answer::error(
                 crate::agents::verbs::Code::Failed,
-                String::new(),
+                reason.clone(),
             ),
         };
         let tab = args.get("tab").and_then(serde_json::Value::as_str);

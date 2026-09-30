@@ -828,6 +828,31 @@ impl Answer {
             Answer::Error { .. } => "error",
         }
     }
+
+    /// The window's answer to a verb it answered for an agent, as the audit log files it:
+    /// by its `status`, the contract's own word, because a question asked is `ok` to the
+    /// endpoint and not a thing done; by `ok` alone for a verb that answers in the
+    /// command line's `{ok, value}`. A code the contract does not have is a failure, in
+    /// the window's words.
+    pub fn from_window(text: &str) -> Self {
+        if let Ok(answer) = serde_json::from_str::<Answer>(text) {
+            return answer;
+        }
+        let said: Value = serde_json::from_str(text).unwrap_or_default();
+        let message = ["message", "error"]
+            .iter()
+            .find_map(|key| said.get(key).and_then(Value::as_str))
+            .unwrap_or_default();
+        let done = match said.get("status").and_then(Value::as_str) {
+            Some(status) => status == "ok",
+            None => said.get("ok").and_then(Value::as_bool) == Some(true),
+        };
+        if done {
+            Answer::ok(said.get("result").or_else(|| said.get("value")))
+        } else {
+            Answer::error(Code::Failed, message)
+        }
+    }
 }
 
 /// A reader's web tab, as `browser_tabs` lists it.
@@ -1361,6 +1386,49 @@ pub mod window {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    /// The window answers an agent's verb in the contract's shape with `ok` beside it
+    /// (automation/caller.ts `AgentAnswer`), and the command line's verbs as `{ok,
+    /// value}`: the log files each by what it says, not by whether it says `ok`.
+    #[test]
+    fn a_window_answer_is_read_by_its_status() {
+        let read = Answer::from_window;
+        assert_eq!(
+            read(r#"{"ok":true,"status":"ok","result":{"path":"a.md"}}"#).status(),
+            "ok"
+        );
+        assert_eq!(
+            read(
+                r#"{"ok":true,"status":"needs_approval","approval":"a17","summary":"Publish Notes"}"#
+            ),
+            Answer::NeedsApproval {
+                approval: "a17".into(),
+                summary: "Publish Notes".into(),
+            }
+        );
+        assert!(matches!(
+            read(r#"{"ok":false,"status":"error","code":"not_granted","message":"no","error":"no"}"#),
+            Answer::Error { code: Code::NotGranted, ref message, .. } if message == "no"
+        ));
+        // A code the contract does not have is a failure, in the window's words.
+        assert!(matches!(
+            read(r#"{"ok":false,"status":"error","code":"nope","message":"why"}"#),
+            Answer::Error { code: Code::Failed, ref message, .. } if message == "why"
+        ));
+        // The command line's own shape, which has no status.
+        assert_eq!(read(r#"{"ok":true,"value":3}"#).status(), "ok");
+        assert!(matches!(
+            read(r#"{"ok":false,"error":"gone"}"#),
+            Answer::Error { code: Code::Failed, ref message, .. } if message == "gone"
+        ));
+        // Words that only hold `"ok":true` are no ok, and nothing readable is a failure.
+        assert_eq!(
+            read(r#"{"ok":false,"status":"error","code":"failed","message":"\"ok\":true"}"#)
+                .status(),
+            "error"
+        );
+        assert_eq!(read("not json").status(), "error");
+    }
 
     /// Every name in the table reads back as the verb it names, and there is no name
     /// twice.
