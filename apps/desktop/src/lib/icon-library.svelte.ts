@@ -19,7 +19,7 @@
  *  value names is never fetched at all. */
 
 import { type IconNode, keyNamed, loadIcons, LUCIDE, shapeFor, type WrittenIcon } from './icons'
-import { type IconShape, type LoadedSet, setNamed } from './icon-sets'
+import type { IconShape, LoadedSet } from './icon-sets'
 import { startup } from './startup.svelte'
 
 class IconLibrary {
@@ -54,16 +54,20 @@ class IconLibrary {
    *  screenful of rows asks for one the moment it is drawn, which put it in front
    *  of the note somebody was waiting to read. The row shows its kind's own mark
    *  until the set lands, which is what it does anyway for the second or two a set
-   *  takes; see FileMark.svelte and startup.svelte.ts. */
+   *  takes; see FileMark.svelte and startup.svelte.ts. Which sets there are is read
+   *  at the same turn, since nothing before it asks: the list of them is fifteen
+   *  kilobytes the first paint has no use for (see test/weight.test.ts). */
   load(id: string = LUCIDE) {
     if (this.asked.has(id)) return
-
-    const set = setNamed(id)
-    if (!set) return
-
     this.asked.add(id)
 
-    void startup.turn('icons').then(() => {
+    void startup.turn('icons').then(async () => {
+      const set = (await import('./icon-sets')).setNamed(id)
+      if (!set) {
+        this.asked.delete(id)
+        return
+      }
+
       void set
         .load()
         .then((held) => {
