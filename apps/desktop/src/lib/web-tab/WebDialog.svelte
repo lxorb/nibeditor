@@ -16,9 +16,9 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
-  import { keyboardHere } from '../keyboard-here'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
+  import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../tauri'
   import type { Dialog } from './dialogs.svelte'
   import { dialogs } from './dialogs.svelte'
@@ -44,7 +44,7 @@
     } else {
       answering?.focus({ preventScroll: true })
     }
-    if (isDesktop && !document.hasFocus()) void keyboardHere()
+    if (isDesktop && !document.hasFocus()) void takeKeyboard()
   })
 </script>
 

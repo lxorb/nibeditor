@@ -33,7 +33,6 @@ import type {
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
 import { i18n, t } from './i18n.svelte'
-import { keyboardHere } from './keyboard-here'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
@@ -58,6 +57,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
 import { present } from './slides/present.svelte'
 import { appMenuRows } from './surfaces.svelte'
+import { takeKeyboard } from './take-keyboard'
 import { currentWindow, invoke } from './tauri'
 import { afterQuiet } from './timing'
 import { viewport } from './viewport.svelte'
@@ -417,7 +417,7 @@ class MenuBar {
 
     const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
     if (entry.key && !keyRuns(entry.anywhere, at)) return
-    if (away) void keyboardHere()
+    if (away) void takeKeyboard()
 
     run()
   }

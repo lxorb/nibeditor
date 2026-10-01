@@ -11,6 +11,6 @@ import { invoke } from './tauri'
  *  whose windows were sent off the screen: there a page taking the keyboard activates a
  *  window nobody can see, and on 2026-09-30 such a window was in front of somebody
  *  working. See `keyboard_to` in src-tauri/src/placement.rs. */
-export async function keyboardHere(): Promise<void> {
+export async function takeKeyboard(): Promise<void> {
   await invoke('take_keyboard').catch(() => undefined)
 }

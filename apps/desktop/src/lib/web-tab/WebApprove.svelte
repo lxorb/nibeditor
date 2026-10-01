@@ -18,9 +18,9 @@
   import { accentFor } from '../accents'
   import { t } from '../i18n.svelte'
   import { initial } from '../icons'
-  import { keyboardHere } from '../keyboard-here'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
+  import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../tauri'
   import { theme } from '../theme.svelte'
   import type { Approval } from './approval.svelte'
@@ -46,7 +46,7 @@
   // page must not give another computer the logins.
   onMount(() => {
     card?.focus({ preventScroll: true })
-    if (isDesktop && !document.hasFocus()) void keyboardHere()
+    if (isDesktop && !document.hasFocus()) void takeKeyboard()
   })
 </script>
 

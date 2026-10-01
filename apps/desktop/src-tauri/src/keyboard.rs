@@ -185,8 +185,16 @@ fn left(window: &str) {
 }
 
 /// The window took the keyboard, which the engine has just put in the app's own page.
+///
+/// Never in a run whose windows were sent off the screen: a page handed the keyboard
+/// activates the window it is in, and a probe's window must never be activated; see
+/// foreground.rs. A probe's window is never activated to begin with, so this is the
+/// guard's second line, not its first.
 #[cfg(windows)]
 fn returned(window: &str) {
+    if crate::placement::away().is_some() {
+        return;
+    }
     match homes(|all| all.home(window).map(str::to_string)) {
         Some(page) => {
             if !native::take_now(&page) {
@@ -236,7 +244,9 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
         let page = crate::web_tabs::label_of(&tab);
         homes(|all| all.page_took(window.label(), &page));
     }
-    if !native::in_front(&window) {
+    // A probe's window is never in front, and never handed the keyboard besides; see
+    // `returned`.
+    if crate::placement::away().is_some() || !native::in_front(&window) {
         return false;
     }
     match homes(|all| all.back(window.label(), now())) {

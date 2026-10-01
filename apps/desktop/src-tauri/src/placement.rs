@@ -918,7 +918,9 @@ mod tests {
     /// page is in. Read off the source for the same reason as the test above: a call that
     /// forgets is only ever found by the person whose typing it took. foreground.rs, which
     /// keeps a probe out of the front, is the one file that names the system's calls, and
-    /// its test the one that makes them.
+    /// its test the one that makes them. keyboard.rs hands a window's keyboard back to the
+    /// page that had it, each engine its own way, and only through `returned` and
+    /// `keyboard_back`, which both stop first where the windows were sent away.
     #[test]
     fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
         let asks_the_system = [
@@ -955,6 +957,14 @@ mod tests {
                     continue;
                 }
                 let text = std::fs::read_to_string(&path).unwrap_or_default();
+                if name == "keyboard.rs" {
+                    assert_eq!(
+                        text.matches("crate::placement::away().is_some()").count(),
+                        2,
+                        "keyboard.rs hands the keyboard over past the guard"
+                    );
+                    continue;
+                }
                 for (at, line) in text.lines().enumerate() {
                     let code = line.trim_start();
                     if code.starts_with("//") {

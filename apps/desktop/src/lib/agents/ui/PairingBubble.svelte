@@ -17,9 +17,9 @@
   import { accentFor } from '../../accents'
   import { t } from '../../i18n.svelte'
   import { initial } from '../../icons'
-  import { keyboardHere } from '../../keyboard-here'
   import { dur } from '../../motion'
   import { overlays } from '../../overlays'
+  import { takeKeyboard } from '../../take-keyboard'
   import { isDesktop } from '../../tauri'
   import { theme } from '../../theme.svelte'
   import type { Activity } from './activity.svelte'
@@ -41,7 +41,7 @@
   // something else must not let a program in.
   onMount(() => {
     card?.focus({ preventScroll: true })
-    if (isDesktop && !document.hasFocus()) void keyboardHere()
+    if (isDesktop && !document.hasFocus()) void takeKeyboard()
   })
 </script>
 

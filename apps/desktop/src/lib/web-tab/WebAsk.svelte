@@ -18,9 +18,9 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
-  import { keyboardHere } from '../keyboard-here'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
+  import { takeKeyboard } from '../take-keyboard'
   import { isDesktop } from '../tauri'
   import type { Asking } from './permissions.svelte'
   import { grants } from './permissions.svelte'
@@ -61,7 +61,7 @@
   // where the keys go once somebody comes back to it.
   onMount(() => {
     card?.focus({ preventScroll: true })
-    if (isDesktop && !document.hasFocus()) void keyboardHere()
+    if (isDesktop && !document.hasFocus()) void takeKeyboard()
   })
 </script>
 
