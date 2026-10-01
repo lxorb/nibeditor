@@ -29,11 +29,12 @@ import type { DocRow } from './store'
  *  binding (rooms/bind.ts marks its transactions with the same word); `MINE` is what the
  *  engine writes for this device - another program's edit folded in, an overlap
  *  settled, an answer carried out. Both are pending. `ROOM` is what a live socket
- *  brought and `PULLED` what a pull or a push's answer brought: both are confirmed. */
+ *  brought (rooms/door.ts applies with the same word) and `PULLED` what a pull or a
+ *  push's answer brought: both are confirmed. */
 export const HERE = 'here'
 export const MINE = 'mine'
-export const ROOM = 'room'
-export const PULLED = 'pulled'
+const ROOM = 'room'
+const PULLED = 'pulled'
 const LOADED = 'loaded'
 
 /** How many pending updates a document keeps apart before the ones no push is carrying

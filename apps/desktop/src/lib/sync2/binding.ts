@@ -59,7 +59,14 @@ async function agree(engine: Engine, id: string, note: Held, doc: Doc): Promise<
   }
 
   const merged = mergedOf(base, mine, theirs)
-  const judged = judge('words', base, mine, theirs, { local: Date.now(), remote: doc.pendingAt }, merged)
+  const judged = judge(
+    'words',
+    base,
+    mine,
+    theirs,
+    { local: Date.now(), remote: doc.pendingAt },
+    merged,
+  )
   if (judged.resolution === null) {
     // Held like another program's edit: the note keeps what it says here, and the
     // question comes up over it.

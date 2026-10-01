@@ -81,7 +81,7 @@ export function accountOver(reaching: Reaching): Account {
       }
       if (response.status === 429 || response.status >= 500) return null
       if (!response.ok) {
-        const said = await response.json().catch(() => null)
+        const said: unknown = await response.json().catch(() => null)
         const error =
           typeof said === 'object' && said !== null && 'error' in said ? String(said.error) : ''
         throw new Refused(response.status, error || `request failed (${String(response.status)})`)

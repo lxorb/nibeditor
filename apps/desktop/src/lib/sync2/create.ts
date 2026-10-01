@@ -38,7 +38,7 @@ export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
 }
 
 /** An id no other device will ever make: 128 random bits. */
-export function freshId(core: Core): string {
+function freshId(core: Core): string {
   let out = ''
   for (let part = 0; part < 4; part += 1) {
     out += Math.floor(core.world.random() * 0x100000000)
@@ -128,7 +128,15 @@ export async function made(
   const seen = space.row.cursor
   const op: Op = what.folder
     ? { op: core.nextId('o'), t: 'mkdir', id, parent, name, seen }
-    : { op: `${id}.c`, t: 'create', id, kind: kind as Exclude<EntryKind, 'folder'>, parent, name, seen }
+    : {
+        op: `${id}.c`,
+        t: 'create',
+        id,
+        kind: kind as Exclude<EntryKind, 'folder'>,
+        parent,
+        name,
+        seen,
+      }
   if (op.t === 'create' && what.mergeable !== undefined) op.mergeable = { text: what.mergeable }
   changes.push(...queue(core, space, op))
 
@@ -176,7 +184,9 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   const shown = space.shown().entries.get(entry.id)
   if (shown?.parent === parent) {
     if (shown.name !== name) {
-      changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }))
+      changes.push(
+        ...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }),
+      )
     }
   } else {
     const op: Op = { op: core.nextId('o'), t: 'move', id: entry.id, parent, seen }

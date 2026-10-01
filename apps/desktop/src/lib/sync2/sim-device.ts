@@ -104,7 +104,13 @@ export class EngineDevice implements DeviceAdapter {
   private async seed(seeded: readonly Seeded[]) {
     const store = this.store.open()
     const changes: Change[] = [
-      put('spaces', { space_id: SPACE, root: this.root, cursor: seeded.length, role: 'owner', store: null }),
+      put('spaces', {
+        space_id: SPACE,
+        root: this.root,
+        cursor: seeded.length,
+        role: 'owner',
+        store: null,
+      }),
       put('meta', wantedRow(SPACE, new Map())),
     ]
     seeded.forEach((note, index) => {
@@ -133,7 +139,10 @@ export class EngineDevice implements DeviceAdapter {
           pending: null,
           pending_at: null,
         }),
-        put('meta', numbersRow(note.id, { seq: 1, pulled: index + 1, pending: false, flight: null })),
+        put(
+          'meta',
+          numbersRow(note.id, { seq: 1, pulled: index + 1, pending: false, flight: null }),
+        ),
         put('written', { id: note.id, text: note.text }),
       )
       this.disk.files.set(`${this.root}/${note.name}`, note.text)
@@ -153,8 +162,14 @@ export class EngineDevice implements DeviceAdapter {
           if (reply === null) return null
           const value = unframe(reply)
           // The account's refusal of one request, as a status the Worker's adapter says.
-          if (typeof value === 'object' && value !== null && 'refused' in value && typeof value.refused === 'number') {
-            throw new Refused(value.refused, String((value as { error?: unknown }).error ?? ''))
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            'refused' in value &&
+            typeof value.refused === 'number'
+          ) {
+            const error = (value as { error?: unknown }).error
+            throw new Refused(value.refused, typeof error === 'string' ? error : '')
           }
           return value
         },
@@ -162,7 +177,8 @@ export class EngineDevice implements DeviceAdapter {
       name: this.id,
       now: () => this.clock.now + this.skew,
       random: () => this.random.next(),
-      digest: (text) => Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
+      digest: (text) =>
+        Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
       join: (root, path) => `${root}/${path}`,
       foldsCase: true,
       platform: 'other',
@@ -245,7 +261,8 @@ export class EngineDevice implements DeviceAdapter {
    *  one that is not on the disk yet. */
   private pathOf(engine: Engine, id: string | null): string | null {
     if (id === null) return ''
-    return engine.core.spaces.get(SPACE)?.entries.get(id)?.local_path || null
+    const path = engine.core.spaces.get(SPACE)?.entries.get(id)?.local_path
+    return path === undefined || path === '' ? null : path
   }
 
   private full(path: string): string {
@@ -258,7 +275,8 @@ export class EngineDevice implements DeviceAdapter {
       if (!space) return false
       const key = nameKey(path)
       for (const one of space.paths().values()) if (nameKey(one) === key) return true
-      for (const one of this.disk.files.keys()) if (nameKey(one) === nameKey(this.full(path))) return true
+      for (const one of this.disk.files.keys())
+        if (nameKey(one) === nameKey(this.full(path))) return true
       return false
     }
   }
@@ -310,7 +328,8 @@ export class EngineDevice implements DeviceAdapter {
       case 'create':
       case 'mkdir': {
         const folders = this.live(engine).filter((entry) => entry.kind === 'folder')
-        const folder = action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
+        const folder =
+          action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
         const at = this.pathOf(engine, folder)
         if (at === null) return
         const path = freeIn(this.taken(engine), at, action.name)
@@ -329,7 +348,8 @@ export class EngineDevice implements DeviceAdapter {
         if (!target || !from) return
         const taken = this.taken(engine)
         const wanted = joined(folderOf(from), action.name)
-        const to = nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
+        const to =
+          nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
         if (to === from) return
         await this.disk.move(this.full(from), this.full(to))
         await engine.moved(this.full(from), this.full(to))
@@ -339,7 +359,8 @@ export class EngineDevice implements DeviceAdapter {
         const entries = this.live(engine)
         const target = this.chosen(entries, action.target)
         const folders = entries.filter((entry) => entry.kind === 'folder')
-        const parent = action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
+        const parent =
+          action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
         const from = target ? this.pathOf(engine, target.id) : null
         const into = this.pathOf(engine, parent)
         if (!target || !from || into === null || parent === target.id) return
@@ -361,11 +382,16 @@ export class EngineDevice implements DeviceAdapter {
       }
       case 'append-day': {
         const day = this.live(engine).find(
-          (entry) => entry.parent === null && nameKey(entry.name) === nameKey(action.name) && holdsDocument(entry.kind),
+          (entry) =>
+            entry.parent === null &&
+            nameKey(entry.name) === nameKey(action.name) &&
+            holdsDocument(entry.kind),
         )
         if (day) {
           if (engine.core.hasDoc(day.id) && !engine.core.isHeld(day.id)) {
-            await this.type(engine, day.id, (text) => (text ? `${text}\n${action.words}` : action.words))
+            await this.type(engine, day.id, (text) =>
+              text ? `${text}\n${action.words}` : action.words,
+            )
           }
           return
         }
@@ -382,7 +408,11 @@ export class EngineDevice implements DeviceAdapter {
         if (!doc) return
         const { writtenOf } = await import('./ingest')
         const ancestor = (await writtenOf(engine.core, id)) ?? doc.text()
-        const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
+        const file = withoutWords(
+          withWords(ancestor, action.at, action.words),
+          1 - action.at,
+          action.cut,
+        )
         await this.disk.write(this.full(path), file)
         await engine.foreign(this.full(path))
 
@@ -465,7 +495,12 @@ export class EngineDevice implements DeviceAdapter {
     const engine = await this.ready()
     if (!engine) return { entries: [], texts: {} }
     return await engine.core.use(async () => {
-      const entries = this.live(engine).map(({ id, kind, parent, name }) => ({ id, kind, parent, name }))
+      const entries = this.live(engine).map(({ id, kind, parent, name }) => ({
+        id,
+        kind,
+        parent,
+        name,
+      }))
       const texts: Record<string, string> = {}
       for (const entry of entries) {
         if (!holdsDocument(entry.kind)) continue

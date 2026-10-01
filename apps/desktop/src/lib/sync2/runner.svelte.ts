@@ -40,7 +40,7 @@ import { firstPass, mirrorsFrom, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
 
-export type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
+type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 /** How long after a change here the pass that sends it waits, so a burst of saves is one
  *  pass. */
@@ -60,6 +60,7 @@ const FIRST = 'first:'
 const TOUCHED = 5_000
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
   const out = new Map<string, V1Space>()
   const saved = stored(MIRRORS)
   if (!isRecord(saved)) return out
@@ -111,9 +112,13 @@ class Runner {
     if (!user || this.engine) return
     this.accountId = user.id
     const store = await openSyncStore(user.id)
-    const engine = await Engine.start(appWorld(() => account.token, this.telling), store, {
-      names: (device) => this.nameOf(device),
-    })
+    const engine = await Engine.start(
+      appWorld(() => account.token, this.telling),
+      store,
+      {
+        names: (device) => this.nameOf(device),
+      },
+    )
     if (this.accountId !== user.id) {
       await store.close()
       return
@@ -211,7 +216,10 @@ class Runner {
     const user = account.user
     if (!user) return
     const store = await openSyncStore(user.id)
-    const engine = await Engine.start(appWorld(() => account.token, this.telling), store)
+    const engine = await Engine.start(
+      appWorld(() => account.token, this.telling),
+      store,
+    )
     try {
       if (!engine.core.spaces.size) return
       for (const id of engine.core.spaces.keys()) await engine.pass(id).catch(() => null)
@@ -299,7 +307,10 @@ class Runner {
           const v1 = this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null
           if (!(await firstPass(engine.core, space, v1))) {
             offline = true
-            await engine.core.commit([...engine.core.forgetSpace(id), ...engine.core.addSpace(id, space.row.root, space.row.role)])
+            await engine.core.commit([
+              ...engine.core.forgetSpace(id),
+              ...engine.core.addSpace(id, space.row.root, space.row.role),
+            ])
             continue
           }
           await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
@@ -383,7 +394,8 @@ class Runner {
       share: (root, shared) => {
         const space = [...core.spaces.values()].find((one) => one.row.root === root)
         if (!space) return
-        const role = account.spaces.find((one) => one.id === space.id)?.role ?? (shared ? 'write' : 'owner')
+        const role =
+          account.spaces.find((one) => one.id === space.id)?.role ?? (shared ? 'write' : 'owner')
         if (space.row.role === role) return
         space.row = { ...space.row, role }
         changes.push(put('spaces', { ...space.row }))
@@ -435,13 +447,17 @@ class Runner {
   follow(op: FileOp): Promise<void> | undefined {
     const engine = this.engine
     if (!engine) return undefined
-    const key = op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
+    const key =
+      op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
     if (key && this.own.has(key)) return undefined
 
     const done = (async () => {
       if (op.op === 'created') {
         const document = op.key ? workspace.documents.find((one) => one.key === op.key) : undefined
-        const text = op.kind === 'folder' ? undefined : (document?.latest ?? (await engine.core.world.disk.read(op.path)) ?? '')
+        const text =
+          op.kind === 'folder'
+            ? undefined
+            : (document?.latest ?? (await engine.core.world.disk.read(op.path)) ?? '')
         // A day's note the append action made starts from nothing, which is what two of
         // them made apart are merged against.
         const mergeable = this.mergeables.delete(op.path) ? '' : undefined
@@ -494,7 +510,7 @@ class Runner {
   tracked(path: string): { id: string; version: number; hash: string } | null {
     const engine = this.engine
     const entry = engine?.entryAt(path)
-    if (!engine || !entry || entry.seq === null) return null
+    if (!engine || entry?.seq == null) return null
     return {
       id: entry.id,
       version: engine.core.numbers.get(entry.id)?.seq ?? 0,
@@ -547,11 +563,13 @@ class Runner {
   private async bindNow(open: typeof workspace.openNotes) {
     const engine = this.engine
     if (!engine) return
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away within this call
     const wanted = new Map<string, { id: string; note: (typeof open)[number]['note'] }>()
     for (const one of open) {
       if (one.note.kind !== 'note' || !one.path) continue
       const entry = engine.entryAt(one.path)
-      if (entry && engine.core.hasDoc(entry.id)) wanted.set(one.key, { id: entry.id, note: one.note })
+      if (entry && engine.core.hasDoc(entry.id))
+        wanted.set(one.key, { id: entry.id, note: one.note })
     }
 
     for (const [key, one] of this.bound) {
@@ -598,7 +616,7 @@ class Runner {
     const doc = core.docs.get(id)
     const entry = core.entry(id)
     const space = core.spaceOf(id)
-    if (!doc?.live || !entry || entry.seq === null || !space || core.isHeld(id)) return
+    if (!doc?.live || entry?.seq == null || !space || core.isHeld(id)) return
     if (doc.epoch < (core.epochs.get(id) ?? doc.epoch) || !account.token) return
 
     this.carried.add(key)

@@ -114,7 +114,12 @@ export class HeldList implements HeldNotes {
     this.changed?.(out)
   }
 
-  private async heldOf(space: SpaceState, entry: EntryRow, doc: Doc, holding: Holding): Promise<Held> {
+  private async heldOf(
+    space: SpaceState,
+    entry: EntryRow,
+    doc: Doc,
+    holding: Holding,
+  ): Promise<Held> {
     const against = holding.against
     const sides = sidesOf(doc, against)
     const theirsAt = against.t === 'moved' ? against.at : holding.row.at
@@ -196,7 +201,11 @@ export class HeldList implements HeldNotes {
 
   /** What the account holds now, for a note held against a push: pulled again, so an
    *  answer is carried out against the newest words. Offline, what was held. */
-  private async freshest(space: SpaceState, doc: Doc, holding: Holding): Promise<Holding['against']> {
+  private async freshest(
+    space: SpaceState,
+    doc: Doc,
+    holding: Holding,
+  ): Promise<Holding['against']> {
     const against = holding.against
     if (against.t !== 'moved' || !this.freshens) return against
     try {
@@ -207,7 +216,8 @@ export class HeldList implements HeldNotes {
       )
       const answer = reply === null ? null : pullResponseOf(reply)
       const one = answer?.docs.find((each) => each.id === doc.id)
-      if (one && 'update' in one) return { t: 'moved', update: one.update, seq: one.seq, at: against.at }
+      if (one && 'update' in one)
+        return { t: 'moved', update: one.update, seq: one.seq, at: against.at }
     } catch {
       // Offline or refused: what was held is what there is.
     }

@@ -59,7 +59,11 @@ interface Matched {
 
 /** The first v2 pass of a space. Answers whether it got through; a pass that met no
  *  account is asked again next time, from the top. */
-export async function firstPass(core: Core, space: SpaceState, v1: V1Space | null): Promise<boolean> {
+export async function firstPass(
+  core: Core,
+  space: SpaceState,
+  v1: V1Space | null,
+): Promise<boolean> {
   const life = core.life
   const alive = () => core.life === life
   const world = core.world
@@ -94,7 +98,9 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
 
   const strays: { path: string; dir: boolean }[] = []
   for (const listed of listing) {
-    const entry = listed.dir ? byPlace(listed.path, true) : (byTracked(listed.path) ?? byPlace(listed.path, false))
+    const entry = listed.dir
+      ? byPlace(listed.path, true)
+      : (byTracked(listed.path) ?? byPlace(listed.path, false))
     if (!entry) {
       strays.push(listed)
       continue
@@ -117,7 +123,8 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
   const needs: Matched[] = []
   for (const one of matched) {
     const digest = await world.digest(one.file)
-    const seeds = one.item.epochBase === digest && (one.tracked === undefined || one.tracked.hash === digest)
+    const seeds =
+      one.item.epochBase === digest && (one.tracked === undefined || one.tracked.hash === digest)
     if (seeds) {
       seed(core, space, one, changes)
     } else if (one.tracked?.hash !== digest) {
@@ -131,7 +138,9 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
     const batch = needs.slice(at, at + PULL_BATCH)
     const reply = await world.account.ask(
       'pull',
-      { docs: batch.map((one) => ({ id: one.entry.id, epoch: one.item.epoch ?? 1, sv: EMPTY_SV })) },
+      {
+        docs: batch.map((one) => ({ id: one.entry.id, epoch: one.item.epoch ?? 1, sv: EMPTY_SV })),
+      },
       space.id,
     )
     if (!alive() || reply === null) return false
@@ -159,7 +168,9 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
   // And a file the account has never heard of is made there, folders first.
   for (const stray of strays) {
     if (!stray.dir && !shapeOf(kindOfName(stray.path))) continue
-    const text = stray.dir ? undefined : await world.disk.read(world.join(space.row.root, stray.path))
+    const text = stray.dir
+      ? undefined
+      : await world.disk.read(world.join(space.row.root, stray.path))
     const madeHere = await made(core, space, {
       path: stray.path,
       folder: stray.dir,
@@ -177,7 +188,13 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
 function seed(core: Core, space: SpaceState, one: Matched, changes: Change[]) {
   const shape = shapeOf(one.entry.kind) ?? 'words'
   const epoch = one.item.epoch ?? 1
-  const doc = core.made(one.entry.id, shape, epoch, seedOf(shape, one.entry.id, epoch, one.file), one.file ? 1 : 0)
+  const doc = core.made(
+    one.entry.id,
+    shape,
+    epoch,
+    seedOf(shape, one.entry.id, epoch, one.file),
+    one.file ? 1 : 0,
+  )
   // Pulled from nothing: the pull brings whatever came after the seed, as a diff.
   core.wanted(space.id).set(one.entry.id, { docSeq: one.item.docSeq ?? 0, epoch })
   changes.push(...core.docChanges(doc))
@@ -211,7 +228,9 @@ async function reconcile(
     // The account did not move: the file's words are this device's edits on it.
     take(local)
   } else {
-    const ancestor = one.tracked ? ((await core.world.ancestor?.(one.entry.id, one.tracked.hash)) ?? null) : null
+    const ancestor = one.tracked
+      ? ((await core.world.ancestor?.(one.entry.id, one.tracked.hash)) ?? null)
+      : null
     if (ancestor !== null) {
       const times = { local: core.world.now(), remote: 0 }
       const judged = judge(shape, ancestor, local, remote, times)
@@ -237,7 +256,13 @@ async function reconcile(
 function hold(core: Core, id: string, base: string, local: string): Change[] {
   const against = { t: 'file', base, local } as const
   return core.holdChanges({
-    row: { id, remote: againstBytes(against), remote_sv: new Uint8Array(), device: null, at: core.world.now() },
+    row: {
+      id,
+      remote: againstBytes(against),
+      remote_sv: new Uint8Array(),
+      device: null,
+      at: core.world.now(),
+    },
     against,
   })
 }

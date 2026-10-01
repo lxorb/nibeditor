@@ -113,7 +113,7 @@ export class WorkerAccount implements AccountAdapter {
     // a device reads and acts on (a version kept of a note deleted meanwhile, say);
     // anything else is the Worker failing, which no run should meet.
     if (response.status === 404 || response.status === 403) {
-      const said = (await response.json()) as { error?: string }
+      const said = await response.json<{ error?: string }>()
       return frame({ refused: response.status, error: said.error ?? '' })
     }
     if (response.status !== 200) {

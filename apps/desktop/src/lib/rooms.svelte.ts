@@ -94,7 +94,10 @@ class Rooms {
   private open: readonly Open[] = []
 
   /** Sync v2's rooms, by document key (sync2/carry.ts): reached here as these are. */
-  readonly carried = new Map<string, { live: unknown; room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'> }>()
+  readonly carried = new Map<
+    string,
+    { live: unknown; room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'> }
+  >()
 
   /** Whether a room now holds the truth of this file, by its id on the account. What
    *  the file sync asks before it writes anything about a note, so it can leave the

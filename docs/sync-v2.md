@@ -1444,6 +1444,67 @@ Files that do not exist yet are named from their package: `lib/` is the app's
 `sync.svelte.ts` chooses the engine at start from `account.user.syncVersion`; the rooms
 store (`rooms.svelte.ts`) becomes the engine's socket layer for open documents.
 
+**As built** (lane `sync-client-engine`, `lib/sync2/`), one responsibility a file:
+
+| file | what |
+| --- | --- |
+| `world.ts` | everything the engine reaches: the disk, the account, a clock, randomness, a digest. `app-world.ts` is the window's (the crate's commands; the web build answers the same ones), `sim-device.ts` the simulator's, `test-device.ts` the Worker tests' |
+| `engine.ts`, `core.ts` | the engine's doors, and everything it holds in memory and in the store behind one commit queue. A write the store refuses goes in front of the next one, so a full disk loses nothing a later write can carry (road 7) |
+| `docs.ts`, `records.ts` | a document (confirmed, pending, what was typed since the pause, its client id), and the engine's own rows |
+| `places.ts`, `create.ts` | the tree shown here (the account's entries with the outbox applied), local names, the disk brought to it; creates, moves and deletes made into ops |
+| `pass.ts`, `transport.ts` | the pass of 5.12, and the routes of section 7 over HTTP: no answer stops a pass quietly, a refusal is said |
+| `kinds.ts`, `rejoin.ts`, `held.ts` | the shapes (words, plane, link) and what `diverge` says of each; the meeting of pending with the account's moves; the held notes and the three answers |
+| `project.ts`, `ingest.ts`, `watching.ts` | a document onto its file; a file changed by another program folded in three ways; the space watcher and the launch scan |
+| `migrate.ts` | section 11 step 2, and `mirrorsFrom` for the way back |
+| `binding.ts`, `carry.ts` | an open note joined to its document, and the document carried live through its room (`rooms/carried.ts`) |
+| `runner.svelte.ts` | the engine in the window: when it passes, the file operations, the light, the question |
+
+What the build settled that the above leaves open:
+
+- **The store.** Beside 9.2's tables the engine keeps, in `meta`: `doc:<id>` (the
+  document's numbers: `seq`, `pulled`, whether anything is pending, the push in the air),
+  `gen:<id>` (which session's client id it has), `clients` and `counter`, `want:<space>`
+  (every entry's document version and epoch as the feed last said them) and `first:<space>`
+  (the first pass is done). An outbox row's `op` is a framed record: an op and whether it
+  has gone, a `keep`, or a `merge` (5.9); a held row's `remote` is what it is held against:
+  the account's update, a file, or a merge. `pending` is a framed list of updates, at most
+  32, the rest merged into one.
+- **Client ids.** One a document a device, random, kept across clean exits and turned over
+  after an unclean one. It is set after the document is read, never before: Yjs gives a
+  document a new id when it applies an update carrying its own.
+- **`diverge`** says `settled: 'newer' | 'both'`. `both` is an overlap whose newer side would
+  say a passage twice (one the older side moved, words both put back over a deletion): the
+  document's own merge is taken, and both sides are kept as versions. `merge3` reads two
+  insertions of the same passage at one point as one.
+- **Unsaved tabs** are not the engine's until they are saved: a draft never reaches the
+  account, a room or the link index, and saving it is the `created` file operation, which
+  makes the id, the document and the `create` in that moment.
+- **Rooms** under v2 offer `nib.v2` and `nib.device.<id>`. A document with pending edits opens
+  its room with its confirmed state vector, and what the room says is read without being
+  applied until the engine has met it (`rejoin`), the way an HTTP `moved` is. The room's
+  `ACK` moves the pushed updates to confirmed, and `EPOCH` (with 4001) starts a three-way
+  merge against the confirmed text. App.svelte joins v1's rooms only under v1.
+- **Choosing the engine.** `sync.svelte.ts` keeps the account's last word in
+  `nib:sync-version`, so an offline launch never starts v1 over files v2 has been keeping;
+  the runner is fetched at the launch's `rooms` turn. An account moved back to 1 has its
+  `nib:mirrors` written from the store first, every note with the hash the account holds,
+  so v1 meets each as one it knows.
+- **The light** is hollow when the account cannot be reached; the pass log is the store's
+  `log` table.
+- **Not built yet:** attachments as blobs (5.8): v2 keeps notes, canvases and web notes, and
+  every other file stays where it is; a canvas's document is synced by the passes but not
+  carried live through its room under v2; classification runs on the main thread (it is
+  measured below).
+
+Measured against 9.3 (2026-10-01, Snapdragon X Elite, the engine against the simulator's
+account in memory, so the network is not in these): first paint 3,210,064 bytes of own
+source against 3,213,972 before the engine (v1's pairing is fetched when a pairing is due);
+a keystroke 0.014 ms median, 0.2 ms p99 in a 100 KB note, no store write, no file write, no
+request; the pause on a 100 KB note one store write and one file write in 3 ms; a 100 KB
+note's document joined to its editor in under a millisecond; a pass after a week away with
+all 300 notes changed on both sides 211 ms of engine time over 14 requests (two feeds, twelve
+pushes of 50); ten thousand simulator seeds in 137 s on four cores.
+
 ### 9.2 The sync store
 
 One SQLite file per account in the app's data folder (`sync/<account>.db`, WAL), opened on a

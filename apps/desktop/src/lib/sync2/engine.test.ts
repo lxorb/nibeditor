@@ -9,7 +9,7 @@ import { HERE } from './docs'
 import { Engine } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
-import { put, type Change } from './store'
+import { put, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@nib/sync-core/seed'
 import type { World } from './world'
@@ -19,7 +19,8 @@ import * as Y from 'yjs'
  *  simulator kit's reference one): what a keystroke costs, what a crash loses, when a
  *  client id turns over, what an open note hears from another device, and that a held
  *  note neither goes up nor takes anything in (docs/sync-v2.md sections 5.2 to 5.4 and
- *  9.3). The simulator's ten thousand seeds are sim.test.ts. */
+ *  9.3), and that a full store loses nothing (road 7). The simulator's walks are
+ *  sim.test.ts and walks/walk.ts. */
 
 const ROOT = '/device/space'
 const SPACE = 'sim'
@@ -35,12 +36,21 @@ interface Device {
 }
 
 /** One device holding the simulator's two seeded notes, the way a migrated one does. */
-async function device(account = new ReferenceAccount(new Clock(), SEEDED), id = 'd0'): Promise<Device> {
+async function device(
+  account = new ReferenceAccount(new Clock(), SEEDED),
+  id = 'd0',
+): Promise<Device> {
   const store = new MemoryStore(id)
   const disk = new MemoryDisk()
   const seeding = store.open()
   const changes: Change[] = [
-    put('spaces', { space_id: SPACE, root: ROOT, cursor: SEEDED.length, role: 'owner', store: null }),
+    put('spaces', {
+      space_id: SPACE,
+      root: ROOT,
+      cursor: SEEDED.length,
+      role: 'owner',
+      store: null,
+    }),
     put('meta', wantedRow(SPACE, new Map())),
   ]
   SEEDED.forEach((note, index) => {
@@ -99,7 +109,8 @@ async function device(account = new ReferenceAccount(new Clock(), SEEDED), id = 
         name: id,
         now: () => 1000,
         random: Math.random,
-        digest: (text) => Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
+        digest: (text) =>
+          Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
         join: (root, path) => `${root}/${path}`,
         foldsCase: true,
         platform: 'other',
@@ -125,7 +136,8 @@ describe('a keystroke', () => {
     const writes = one.store.writes
     const files = new Map(one.disk.files)
 
-    for (let at = 0; at < 50; at++) doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'x'), HERE)
+    for (let at = 0; at < 50; at++)
+      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'x'), HERE)
 
     expect(one.store.writes).toBe(writes)
     expect(one.disk.files).toEqual(files)
@@ -159,7 +171,7 @@ describe('a crash', () => {
     const one = await device()
     const doc = await one.engine.hold(PLAN)
     const before = doc?.client
-    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
     await one.engine.quit()
     one.engine.stop()
 
@@ -170,6 +182,28 @@ describe('a crash', () => {
   })
 })
 
+describe('a full store (road 7)', () => {
+  test('loses no word: what it refused is written with the next write, even the quit’s', async () => {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const store = one.engine.core.store
+    const write = store.write.bind(store)
+    let full = true
+    store.write = (changes) => (full ? Promise.reject(new StoreError('disk full')) : write(changes))
+
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    await expect(one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')).rejects.toThrow(
+      'disk full',
+    )
+    full = false
+    await one.engine.quit()
+    one.engine.stop()
+
+    const again = await one.launch()
+    expect((await again.hold(PLAN))?.text().startsWith('kept We ship')).toBe(true)
+  })
+})
+
 describe('an open note', () => {
   test('opens with its file’s words, and the document joins without changing them', async () => {
     const one = await device()
@@ -177,7 +211,12 @@ describe('an open note', () => {
     let changed = 0
     note.onChange = () => (changed += 1)
 
-    const part = await attach(one.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
+    const part = await attach(
+      one.engine,
+      PLAN,
+      { live: note, latest: note.text.toString() },
+      () => true,
+    )
     expect(part).not.toBeNull()
     expect(changed).toBe(0)
     expect(note.text.toString()).toBe(SEEDED[0]?.text)
@@ -206,14 +245,17 @@ describe('an open note', () => {
     await attach(here.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
 
     const doc = await there.engine.hold(PLAN)
-    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(doc.live?.getText(TEXT).length ?? 0, 'From there.'), HERE)
+    const live = doc?.live
+    live?.transact(() => live.getText(TEXT).insert(live.getText(TEXT).length, 'From there.'), HERE)
     await there.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     await there.engine.pass(SPACE)
     await here.engine.pass(SPACE)
 
     expect(note.text.toString()).toBe(`${SEEDED[0]?.text ?? ''}From there.`)
     // One small edit at the end, not the whole note replaced.
-    expect(arrived).toEqual([[{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }]])
+    expect(arrived).toEqual([
+      [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
+    ])
   })
 })
 
@@ -224,12 +266,10 @@ describe('a held note', () => {
     const there = await device(account, 'd1')
     const rewrite = async (one: Device, words: string) => {
       const doc = await one.engine.hold(PLAN)
-      const text = doc?.text() ?? ''
       doc?.live?.transact(() => {
         doc.live?.getText(TEXT).delete(0, 36)
         doc.live?.getText(TEXT).insert(0, words)
       }, HERE)
-      void text
       await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     }
 

@@ -72,7 +72,10 @@ export class Engine implements AskedEngine {
     return this.core.store
   }
 
-  on<T extends keyof EngineEvents>(type: T, listener: (event: EngineEvents[T]) => void): () => void {
+  on<T extends keyof EngineEvents>(
+    type: T,
+    listener: (event: EngineEvents[T]) => void,
+  ): () => void {
     const listening: Set<(event: EngineEvents[T]) => void> = this.listeners[type]
     listening.add(listener)
     return () => listening.delete(listener)
@@ -149,11 +152,21 @@ export class Engine implements AskedEngine {
 
   /** A file or folder that came to be here: a new tab given its place, a file made in
    *  the list, one another program made. Answers its id. */
-  created(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
+  created(
+    path: string,
+    folder: boolean,
+    text?: string,
+    mergeable?: string,
+  ): Promise<string | null> {
     return this.core.use(() => this.make(path, folder, text, mergeable))
   }
 
-  private async make(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
+  private async make(
+    path: string,
+    folder: boolean,
+    text?: string,
+    mergeable?: string,
+  ): Promise<string | null> {
     const placed = this.placed(path)
     if (!placed || placed.space.at(placed.path)) return null
     const { id, changes } = await made(this.core, placed.space, {
@@ -204,7 +217,7 @@ export class Engine implements AskedEngine {
     const forgets: Change[] = []
     const changed = await settle(space, {
       disk: this.core.world.disk,
-      join: this.core.world.join,
+      join: (folder, path) => this.core.world.join(folder, path),
       keeps: (id) => this.core.hasPending(id) || this.core.isHeld(id),
       forget: (id) => forgets.push(...this.core.forgetChanges(id)),
     })
@@ -241,7 +254,13 @@ export class Engine implements AskedEngine {
     const against = { t: 'file', base, local } as const
     return this.core.commit(
       this.core.holdChanges({
-        row: { id, remote: againstBytes(against), remote_sv: new Uint8Array(), device: null, at: this.core.world.now() },
+        row: {
+          id,
+          remote: againstBytes(against),
+          remote_sv: new Uint8Array(),
+          device: null,
+          at: this.core.world.now(),
+        },
         against,
       }),
     )

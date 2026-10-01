@@ -92,7 +92,12 @@ function flushAll(core: Core): Change[] {
   return core.dirtyChanges()
 }
 
-async function ask(core: Core, space: SpaceState, route: Parameters<Core['world']['account']['ask']>[0], body: object) {
+async function ask(
+  core: Core,
+  space: SpaceState,
+  route: Parameters<Core['world']['account']['ask']>[0],
+  body: object,
+) {
   return await core.world.account.ask(route, body, space.id)
 }
 
@@ -127,7 +132,11 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
 
     // What has not gone yet is folded; what may have gone goes again as it was.
     const waiting = ops.filter((one) => one.record.t === 'op' && !one.record.sent)
-    const folded = coalesce(waiting.map((one) => (one.record.t === 'op' ? one.record.op : null)).filter((op): op is Op => op !== null))
+    const folded = coalesce(
+      waiting
+        .map((one) => (one.record.t === 'op' ? one.record.op : null))
+        .filter((op): op is Op => op !== null),
+    )
     const changes: Change[] = []
     const kept = new Set(folded.map((op) => op.op))
     for (const one of waiting) {
@@ -136,7 +145,9 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
       changes.push(remove('outbox', one.row.op_id))
     }
     for (const op of folded) {
-      const one = space.outbox.find((other) => other.record.t === 'op' && other.record.op.op === op.op)
+      const one = space.outbox.find(
+        (other) => other.record.t === 'op' && other.record.op.op === op.op,
+      )
       if (!one) continue
       one.record = { t: 'op', op }
       one.row = { ...one.row, op: outgoingBytes(one.record) }
@@ -162,21 +173,27 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
 
     const done: Change[] = []
     for (const result of answer.results) {
-      const one = space.outbox.find((other) => other.record.t === 'op' && other.record.op.op === result.op)
-      if (!one || one.record.t !== 'op') continue
+      const one = space.outbox.find(
+        (other) => other.record.t === 'op' && other.record.op.op === result.op,
+      )
+      if (one?.record.t !== 'op') continue
       const op = one.record.op
       space.outbox = space.outbox.filter((other) => other !== one)
       done.push(remove('outbox', one.row.op_id))
 
       if ('merged' in result && op.t === 'create') {
         const merge: Merging = { mine: op.id, into: result.merged, create: op }
-        const { one: queued, change } = core.outgoing(space, { t: 'merge', merge }, space.row.cursor)
+        const { one: queued, change } = core.outgoing(
+          space,
+          { t: 'merge', merge },
+          space.row.cursor,
+        )
         space.outbox.push(queued)
         done.push(change, core.counterRow())
         continue
       }
       if ('refused' in result) {
-        done.push(...(await refused(core, space, op, result.refused)))
+        done.push(...refused(core, space, op, result.refused))
         continue
       }
       done.push(...core.entryChanges(space.answered(op, result)))
@@ -191,12 +208,13 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
 
 /** An op the account would not apply. Nothing of this device's is lost by any of them:
  *  the op comes out of what is shown, and the tree reads as the account has it. */
-async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
+function refused(core: Core, space: SpaceState, op: Op, why: string): Change[] {
   // A delete of something another device had written in since: the note stays, and
   // this device is told so once its words are back.
   if (op.t === 'delete' && why === 'edited') {
     const entry = space.entries.get(op.id)
-    if (entry) core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
+    if (entry)
+      core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
     return []
   }
   // A note made here whose folder the account no longer has: made again at the top of
@@ -279,7 +297,7 @@ async function settleDisk(core: Core, space: SpaceState) {
   const forgets: Change[] = []
   const moved = await settle(space, {
     disk: core.world.disk,
-    join: core.world.join,
+    join: (folder, path) => core.world.join(folder, path),
     keeps: (id) => core.hasPending(id) || core.isHeld(id),
     forget: (id) => forgets.push(...core.forgetChanges(id)),
   })
@@ -300,7 +318,11 @@ function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
 
 /** Pulls one batch. Answers how many documents it brought, or null when the account did
  *  not answer. */
-async function pullDocs(core: Core, space: SpaceState, alive: () => boolean): Promise<number | null> {
+async function pullDocs(
+  core: Core,
+  space: SpaceState,
+  alive: () => boolean,
+): Promise<number | null> {
   const due = [...space.entries.values()].filter((entry) => pullable(core, space, entry))
   if (!due.length) return 0
   const wanted = core.wanted(space.id)
@@ -371,7 +393,12 @@ async function pullDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
 
 /** A file written with a document's words - after any change another program made to it
  *  since nib last wrote it has been folded in, so nothing is written over. */
-async function foldedThenProjected(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
+async function foldedThenProjected(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  doc: Doc,
+): Promise<Change[]> {
   const changes = entry.local_path ? await foldIn(core, space, entry) : []
   if (core.isHeld(entry.id)) return changes
   return [...changes, ...(await project(core, space, entry, doc))]
@@ -418,12 +445,26 @@ async function mergeDays(core: Core, space: SpaceState) {
     const times = { local: ours?.pendingAt ?? 0, remote: theirs.pendingAt }
     const judged = judge(theirs.shape, base, words, remote, times)
     const held = judged.resolution === null
-    core.classified.push({ id: into, base, local: words, remote, times, held, ...(judged.merged === undefined ? {} : { merged: judged.merged }) })
+    core.classified.push({
+      id: into,
+      base,
+      local: words,
+      remote,
+      times,
+      held,
+      ...(judged.merged === undefined ? {} : { merged: judged.merged }),
+    })
 
     if (judged.resolution === null) {
       const against = { t: 'merge', base, local: words, from: mine } as const
       const holding: Holding = {
-        row: { id: into, remote: againstBytes(against), remote_sv: new Uint8Array(), device: core.by.get(into) ?? null, at: core.world.now() },
+        row: {
+          id: into,
+          remote: againstBytes(against),
+          remote_sv: new Uint8Array(),
+          device: core.by.get(into) ?? null,
+          at: core.world.now(),
+        },
         against,
       }
       changes.push(...core.holdChanges(holding))
@@ -460,7 +501,11 @@ function pushable(core: Core, entry: EntryRow): boolean {
 }
 
 /** Answers how many documents went up, or null when the account did not answer. */
-async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Promise<number | null> {
+async function pushDocs(
+  core: Core,
+  space: SpaceState,
+  alive: () => boolean,
+): Promise<number | null> {
   const due = [...space.entries.values()].filter((entry) => pushable(core, entry))
   let pushed = 0
 
@@ -508,7 +553,10 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
       } else if ('moved' in one) {
         doc.land()
         if (!core.isHeld(one.id)) {
-          changes.push(...rejoin(core, space, doc, one.moved, one.seq, one.at, core.by.get(one.id) ?? null).changes)
+          changes.push(
+            ...rejoin(core, space, doc, one.moved, one.seq, one.at, core.by.get(one.id) ?? null)
+              .changes,
+          )
           if (!core.isHeld(one.id)) changes.push(...(await project(core, space, entry, doc)))
         }
       } else if ('epoch' in one) {
@@ -534,7 +582,13 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
  *  device's, and the new document's. The document becomes the account's, and this
  *  device's edits go in as operations or, when they overlap too much, wait for the
  *  modal as another program's edit to the file would. */
-async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc, epoch: number): Promise<Change[]> {
+async function newEpoch(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  doc: Doc,
+  epoch: number,
+): Promise<Change[]> {
   const reply = await ask(core, space, 'pull', { docs: [{ id: doc.id, epoch, sv: EMPTY_SV }] })
   const answer = reply === null ? null : pullResponseOf(reply)
   const whole = answer?.docs.find((one) => one.id === doc.id)
@@ -548,11 +602,25 @@ async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc
 
   const times = { local: doc.pendingAt, remote: core.world.now() }
   const judged = judge(doc.shape, base, local, remote, times)
-  core.classified.push({ id: doc.id, base, local, remote, times, held: judged.resolution === null, ...(judged.merged === undefined ? {} : { merged: judged.merged }) })
+  core.classified.push({
+    id: doc.id,
+    base,
+    local,
+    remote,
+    times,
+    held: judged.resolution === null,
+    ...(judged.merged === undefined ? {} : { merged: judged.merged }),
+  })
   if (judged.resolution === null) {
     const against = { t: 'file', base, local } as const
     return core.holdChanges({
-      row: { id: doc.id, remote: againstBytes(against), remote_sv: new Uint8Array(), device: core.by.get(doc.id) ?? null, at: core.world.now() },
+      row: {
+        id: doc.id,
+        remote: againstBytes(against),
+        remote_sv: new Uint8Array(),
+        device: core.by.get(doc.id) ?? null,
+        at: core.world.now(),
+      },
       against,
     })
   }
@@ -563,4 +631,3 @@ async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc
   changes.push(...core.docChanges(doc), ...(await project(core, space, entry, doc)))
   return changes
 }
-

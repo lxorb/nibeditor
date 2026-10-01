@@ -13,7 +13,13 @@
  *  is not there any more is never read as a reason to delete anything: a space renamed in
  *  Explorer is gone from here too, and it is the workspace that says what became of it. */
 
-import { scanSpace, type SpaceChange, type SpaceNews, unwatchSpaces, watchSpaces } from '../space-watch'
+import {
+  scanSpace,
+  type SpaceChange,
+  type SpaceNews,
+  unwatchSpaces,
+  watchSpaces,
+} from '../space-watch'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
@@ -24,7 +30,10 @@ const BATCH = 100
 
 /** Whether a path is the app's own (a dotted file or folder) rather than the person's. */
 function hidden(path: string): boolean {
-  return path.replace(/\\/g, '/').split('/').some((part) => part.startsWith('.'))
+  return path
+    .replace(/\\/g, '/')
+    .split('/')
+    .some((part) => part.startsWith('.'))
 }
 
 /** Whether a path is something the engine keeps: a folder, or a document. */

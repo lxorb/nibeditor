@@ -3,11 +3,12 @@
  *  cannot come back, then the random walks on the unkind network, all against the kit's
  *  reference account. The same scripts against the Worker's own routes and rooms are in
  *  services/sync/test/sync2-engine.test.ts, and ten thousand seeds are
- *  `pnpm --filter @nib/desktop sim:long`. */
+ *  `pnpm --filter @nib/desktop sim:long` (walks/walk.ts). */
 
 import { describe, expect, test } from 'vitest'
 import { CALM, markersIn, type Report, simulate, type Step } from '@nib/sync-core/sim'
 import { EngineDevice } from './sim-device'
+import { walked } from './walks/walk'
 
 /** Waits long enough for everything in the air to land. */
 const settle: Step = { t: 'wait', ticks: 40 }
@@ -207,23 +208,11 @@ describe('scripted roads, the engine as every device', () => {
   })
 })
 
-
 describe('random walks, the engine as every device', () => {
-  /** What a CI run walks beside the rest of the suite; `SIM_SEEDS` and `SIM_FROM` walk
-   *  others, as the long run does. */
-  const SEEDS = Number(process.env.SIM_SEEDS ?? 300)
-  const FROM = Number(process.env.SIM_FROM ?? 1)
+  /** What a CI run walks beside the rest of the suite; the long run is walks/walk.ts. */
+  const SEEDS = 300
 
   test(`${String(SEEDS)} seeds hold every check`, async () => {
-    const failed: string[] = []
-    for (let seed = FROM; seed < FROM + SEEDS; seed++) {
-      const report = await simulate({
-        seed,
-        device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
-      })
-      if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
-      if (failed.length >= 5) break
-    }
-    expect(failed).toEqual([])
+    expect(await walked(1, SEEDS)).toEqual([])
   }, 600_000)
 })

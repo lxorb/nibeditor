@@ -14,14 +14,7 @@
  *  Yjs update inside a record is bytes and not a list of numbers, and read back through
  *  a check: a row is unknown until it has been looked at. */
 
-import {
-  frame,
-  type CreateOp,
-  type KeepRequest,
-  type Op,
-  opOf,
-  unframe,
-} from '@nib/sync-core/wire'
+import { frame, type CreateOp, type KeepRequest, type Op, opOf, unframe } from '@nib/sync-core/wire'
 import type { MetaRow } from './store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

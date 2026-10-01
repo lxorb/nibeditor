@@ -66,19 +66,25 @@ export async function testDevice(making: Making): Promise<TestDevice> {
       list: (at) => {
         const listed: { path: string; dir: boolean }[] = []
         for (const folder of disk.folders) {
-          if (folder.startsWith(`${at}/`)) listed.push({ path: folder.slice(at.length + 1), dir: true })
+          if (folder.startsWith(`${at}/`))
+            listed.push({ path: folder.slice(at.length + 1), dir: true })
         }
         for (const file of disk.files.keys()) {
-          if (file.startsWith(`${at}/`)) listed.push({ path: file.slice(at.length + 1), dir: false })
+          if (file.startsWith(`${at}/`))
+            listed.push({ path: file.slice(at.length + 1), dir: false })
         }
-        return Promise.resolve(listed.sort((a, b) => a.path.split('/').length - b.path.split('/').length))
+        return Promise.resolve(
+          listed.sort((a, b) => a.path.split('/').length - b.path.split('/').length),
+        )
       },
       async ancestor(id, hash) {
         const headers = { authorization: `Bearer ${making.token}` }
         const listing = await fetch(new Request(`${base}/v1/notes/${id}/versions`, { headers }))
         const { versions } = (await listing.json()) as { versions: { at: number }[] }
         for (const version of versions) {
-          const one = await fetch(new Request(`${base}/v1/notes/${id}/versions/${String(version.at)}`, { headers }))
+          const one = await fetch(
+            new Request(`${base}/v1/notes/${id}/versions/${String(version.at)}`, { headers }),
+          )
           const { content } = (await one.json()) as { content: string }
           if ((await sha256(content)) === hash) return content
         }

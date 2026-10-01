@@ -99,6 +99,8 @@ export class Core {
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
   private writing: Promise<unknown> = Promise.resolve()
+  /** The last write the store refused, kept for the next one. */
+  private refused: Change[] = []
   private counter = 0
 
   private constructor(
@@ -155,12 +157,23 @@ export class Core {
     return core
   }
 
-  /** Writes changes down, in order, all or nothing each. */
+  /** Writes changes down, in order, all or nothing each. What the store refused - a full
+   *  disk, a browser over its quota - goes in front of the next write, so a refusal
+   *  loses nothing a later write can carry (road 7 of section 1). */
   commit(changes: readonly Change[]): Promise<void> {
-    if (!changes.length) return this.writing.then(() => undefined)
-    const next = this.writing.then(() => this.store.write(changes))
+    if (!changes.length && !this.refused.length) return this.writing.then(() => undefined)
+    const next = this.writing.then(async () => {
+      const batch = [...this.refused, ...changes]
+      this.refused = []
+      try {
+        await this.store.write(batch)
+      } catch (error) {
+        this.refused = batch
+        throw error
+      }
+    })
     this.writing = next.catch(() => undefined)
-    return next.then(() => undefined)
+    return next
   }
 
   /** A number that has never been handed out on this device: op and push ids. Kept in
@@ -281,7 +294,15 @@ export class Core {
 
   /** A document this device has just made, or taken from the account. */
   made(id: string, shape: Shape, epoch: number, confirmed?: Uint8Array, seq = 0): Doc {
-    const doc = Doc.fresh(id, shape, epoch, this.freshClient(), () => this.world.now(), confirmed, seq)
+    const doc = Doc.fresh(
+      id,
+      shape,
+      epoch,
+      this.freshClient(),
+      () => this.world.now(),
+      confirmed,
+      seq,
+    )
     this.generations.set(id, this.generation)
     this.adopt(doc)
     return doc

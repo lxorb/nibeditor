@@ -52,7 +52,7 @@ export async function project(
     return entry.written_hash === digest ? [] : await wrote(core, entry, text)
   }
 
-  if (was !== null && was.trim()) await core.world.disk.keep(full, was)
+  if (was?.trim()) await core.world.disk.keep(full, was)
   await core.world.disk.write(full, text)
   entry.local_path = path
   return await wrote(core, entry, text)

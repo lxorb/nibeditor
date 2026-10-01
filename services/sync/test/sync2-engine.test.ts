@@ -41,7 +41,7 @@ afterEach(() => {
   made = []
 })
 
-const account: Options['account'] = (_clock, seeded) => {
+const account: NonNullable<Options['account']> = (_clock, seeded) => {
   const one = new WorkerAccount(seeded)
   made.push(one)
   return one

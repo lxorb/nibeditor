@@ -66,7 +66,8 @@ function diskOf(telling: Telling): Disk {
       // somebody might want back.
       if (kind === 'file') {
         const words = await invoke<string>('read_note', { path }).catch(() => null)
-        if (words?.trim()) await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
+        if (words?.trim())
+          await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
       await invoke('trash_item', { path, kind: kind === 'folder' ? 'folder' : 'note' })
       await telling.gone(path, kind)
@@ -107,7 +108,12 @@ export function appWorld(token: () => string | null, telling: Telling): World {
   const os = platform()
   return {
     disk: diskOf(telling),
-    account: accountOver({ base: BASE, token, device: deviceName, fetch: (request) => fetch(request) }),
+    account: accountOver({
+      base: BASE,
+      token,
+      device: deviceName,
+      fetch: (request) => fetch(request),
+    }),
     name: deviceName(),
     now: () => Date.now(),
     random: () => (crypto.getRandomValues(new Uint32Array(1))[0] ?? 0) / 0x100000000,
@@ -123,7 +129,8 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       // Newest first, and only so far back: the words v1 last agreed on are recent.
       for (const version of versions.slice(0, 20)) {
         const body = await api.noteVersion(session, id, version.at).catch(() => null)
-        if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash) return body.content
+        if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash)
+          return body.content
         if (body && (await sha256(body.content)) === hash) return body.content
       }
       return null

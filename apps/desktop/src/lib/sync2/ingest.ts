@@ -56,7 +56,15 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   const judged = judge(doc.shape, ancestor, file, ours, times)
   const held = judged.resolution === null
   if (doc.shape !== 'link') {
-    core.classified.push({ id: entry.id, base: ancestor, local: file, remote: ours, times, held, ...(judged.merged === undefined ? {} : { merged: judged.merged }) })
+    core.classified.push({
+      id: entry.id,
+      base: ancestor,
+      local: file,
+      remote: ours,
+      times,
+      held,
+      ...(judged.merged === undefined ? {} : { merged: judged.merged }),
+    })
   }
 
   if (judged.resolution === null) {

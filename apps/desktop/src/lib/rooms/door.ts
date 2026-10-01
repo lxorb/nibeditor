@@ -273,7 +273,9 @@ export class RoomDoor {
       this.greeted = false
       this.settled = false
     }
-    this.socket.send(this.meeting && carrying ? syncStep1Of(carrying.confirmedSv()) : syncStep1(this.doc))
+    this.socket.send(
+      this.meeting && carrying ? syncStep1Of(carrying.confirmedSv()) : syncStep1(this.doc),
+    )
 
     // A room that was asleep has forgotten who is here, and this device has not:
     // saying it again is what puts the others' view of us back.

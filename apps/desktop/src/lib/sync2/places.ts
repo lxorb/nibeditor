@@ -45,11 +45,16 @@ export function joined(folder: string, name: string): string {
 /** Names Windows will not hold, whatever their extension. */
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i
 
+/** What Windows holds in no name, beside the control characters. */
+const FORBIDDEN = '<>:"\\|?*'
+
 /** How a name is spelled on this disk: as the account writes it, unless this platform
  *  cannot hold it. */
-export function localName(name: string, platform: World['platform']): string {
+function localName(name: string, platform: World['platform']): string {
   if (platform === 'windows') {
-    let out = name.replace(/[<>:"\\|?*\u0000-\u001f]/g, '_')
+    let out = Array.from(name, (char) =>
+      char < ' ' || FORBIDDEN.includes(char) ? '_' : char,
+    ).join('')
     if (RESERVED.test(out)) out = `_${out}`
     return out.replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
   }
@@ -293,7 +298,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
 
   for (const [id, want] of wanted) {
     const entry = space.entries.get(id)
-    if (!entry || entry.kind !== 'folder' || entry.local_path) continue
+    if (entry?.kind !== 'folder' || entry.local_path) continue
     await how.disk.mkdir(full(want))
     entry.local_path = want
     moved.add(entry)

@@ -122,14 +122,10 @@ async function v1Cursor(): Promise<number> {
 
 /** The device, its first v2 pass with the mirror given, and one pass after it. `cursor`
  *  is where v1's last pass left it: the mirror's cursor. */
-async function migrated(
-  files: Record<string, string>,
-  notes: Record<string, Tracked>,
-  cursor = 0,
-) {
+async function migrated(files: Record<string, string>, notes: Record<string, Tracked>, cursor = 0) {
   const kit = await engine()
   const device = await kit.testDevice({
-    fetch: (request) => app.fetch(request, env),
+    fetch: async (request) => await app.fetch(request, env),
     token,
     files,
   })
@@ -145,7 +141,12 @@ async function migrated(
   const passed = await device.engine.pass(space)
   expect(passed?.finished).toBe(true)
   await rooms.settle()
-  return { kit, device, asked, file: (path: string) => device.disk.files.get(`${device.root}/${path}`) }
+  return {
+    kit,
+    device,
+    asked,
+    file: (path: string) => device.disk.files.get(`${device.root}/${path}`),
+  }
 }
 
 describe('a device moving to v2', () => {
@@ -189,7 +190,12 @@ describe('a device moving to v2', () => {
     const note = await v1Note('Plan.md', 'First line.\n\nSecond line.\n')
     // The version the account kept of it: one every five minutes, and this one is old.
     await keepVersionNow(env, note.id, 'First line.\n\nSecond line.\n', 'one')
-    await v1Write(note.id, 'Plan.md', 'First line, edited elsewhere.\n\nSecond line.\n', note.version)
+    await v1Write(
+      note.id,
+      'Plan.md',
+      'First line, edited elsewhere.\n\nSecond line.\n',
+      note.version,
+    )
     const { file } = await migrated(
       { 'Plan.md': 'First line.\n\nSecond line, edited here.\n' },
       { 'Plan.md': { ...note, hash: await sha256('First line.\n\nSecond line.\n') } },

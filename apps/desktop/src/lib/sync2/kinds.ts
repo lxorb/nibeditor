@@ -18,14 +18,13 @@ import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
 import { divergePlane } from '@nib/sync-core/plane-diverge'
 import { seedPlane, seedUpdate } from '@nib/sync-core/seed'
 import { textops } from '@nib/sync-core/textops'
-import type { EntryKind } from '@nib/sync-core/wire'
 import * as Y from 'yjs'
 
 export type Shape = 'words' | 'plane' | 'link'
 
 /** The shape of an entry's document, or null for an entry that has none: a folder, and
  *  a file that is a blob. */
-export function shapeOf(kind: EntryKind | string): Shape | null {
+export function shapeOf(kind: string): Shape | null {
   switch (kind) {
     case 'note':
       return 'words'
@@ -40,7 +39,7 @@ export function shapeOf(kind: EntryKind | string): Shape | null {
 }
 
 /** Whether an entry of this kind has a document. */
-export function holdsDocument(kind: EntryKind | string): boolean {
+export function holdsDocument(kind: string): boolean {
   return shapeOf(kind) !== null
 }
 
