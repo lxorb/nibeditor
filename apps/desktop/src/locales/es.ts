@@ -515,6 +515,7 @@ export const es: Dictionary = {
   Importing: 'Importando',
   'Storing the image': 'Guardando la imagen',
   Syncing: 'Sincronizando',
+  Offline: 'Sin conexión',
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'Error de sincronización',
   '{name} could not be written.': 'No se pudo escribir {name}.',

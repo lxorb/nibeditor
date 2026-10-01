@@ -505,6 +505,7 @@ export const mr: Dictionary = {
   Importing: 'इंपोर्ट होत आहे',
   'Storing the image': 'प्रतिमा ठेवत आहे',
   Syncing: 'सिंक होत आहे',
+  Offline: 'ऑफलाइन',
   '{done} of {total}': '{total} पैकी {done}',
   'Sync failed': 'सिंक अयशस्वी',
   '{name} could not be written.': '{name} लिहिता आले नाही.',

@@ -508,6 +508,7 @@ export const fil: Dictionary = {
   Importing: 'Nag-i-import',
   'Storing the image': 'Itinatago ang imahe',
   Syncing: 'Nagsi-sync',
+  Offline: 'Offline',
   '{done} of {total}': '{done} ng {total}',
   'Sync failed': 'Nabigo ang sync',
   '{name} could not be written.': 'Hindi naisulat ang {name}.',

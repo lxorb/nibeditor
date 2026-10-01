@@ -551,6 +551,7 @@ export const ar: Dictionary = {
   Importing: 'الاستيراد',
   'Storing the image': 'تخزين الصورة',
   Syncing: 'المزامنة',
+  Offline: 'غير متصل',
   '{done} of {total}': '{done} من {total}',
   'Sync failed': 'فشلت المزامنة',
   '{name} could not be written.': 'تعذّرت كتابة {name}.',

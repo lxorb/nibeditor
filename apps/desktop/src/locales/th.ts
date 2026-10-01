@@ -501,6 +501,7 @@ export const th: Dictionary = {
   Importing: 'กำลังนำเข้า',
   'Storing the image': 'กำลังเก็บรูป',
   Syncing: 'กำลังซิงก์',
+  Offline: 'ออฟไลน์',
   '{done} of {total}': '{done} จาก {total}',
   'Sync failed': 'ซิงก์ไม่สำเร็จ',
   '{name} could not be written.': 'เขียน {name} ไม่ได้',

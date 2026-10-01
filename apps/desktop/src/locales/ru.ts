@@ -537,6 +537,7 @@ export const ru: Dictionary = {
   Importing: 'Импортирование',
   'Storing the image': 'Сохранение изображения',
   Syncing: 'Синхронизация',
+  Offline: 'Не в сети',
   '{done} of {total}': '{done} из {total}',
   'Sync failed': 'Сбой синхронизации',
   '{name} could not be written.': 'Не удалось записать {name}.',

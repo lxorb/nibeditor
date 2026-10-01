@@ -26,6 +26,7 @@ import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed } from './pass'
 import { project, wrote } from './project'
+import { againstBytes } from './records'
 import { put, type Change, type LogRow, type SyncStore } from './store'
 import type { World } from './world'
 
@@ -216,13 +217,33 @@ export class Engine implements AskedEngine {
   }
 
   private async wroteDown(path: string, text: string): Promise<void> {
-    const entry = this.entryAt(path)
-    if (!entry) return
+    const placed = this.placed(path)
+    const entry = placed?.space.at(placed.path)
+    if (!placed || !entry) return
     const doc = this.core.docs.get(entry.id)
-    const changes: Change[] = []
-    if (doc?.flush()) changes.push(...this.core.docChanges(doc))
-    changes.push(...(await wrote(this.core, entry, text)))
-    await this.core.commit(changes)
+    // A document joined to the note it is: what was typed is in it already.
+    if (doc?.live && this.core.pinned.has(entry.id)) {
+      const changes: Change[] = []
+      if (doc.flush()) changes.push(...this.core.docChanges(doc))
+      changes.push(...(await wrote(this.core, entry, text)))
+      await this.core.commit(changes)
+      return
+    }
+    // One that is not - a canvas, a note before its document arrived - takes the file's
+    // words the way it takes another program's, three ways against nib's last write.
+    await this.core.commit(await foldIn(this.core, placed.space, entry))
+  }
+
+  /** A note whose words in a tab and in its document both moved past what nib last
+   *  wrote, too far to merge quietly: held, like another program's edit (binding.ts). */
+  holdFile(id: string, base: string, local: string): Promise<void> {
+    const against = { t: 'file', base, local } as const
+    return this.core.commit(
+      this.core.holdChanges({
+        row: { id, remote: againstBytes(against), remote_sv: new Uint8Array(), device: null, at: this.core.world.now() },
+        against,
+      }),
+    )
   }
 
   /** Autosave's pause for the documents no editor holds - words the engine or the

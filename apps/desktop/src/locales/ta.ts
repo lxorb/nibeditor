@@ -504,6 +504,7 @@ export const ta: Dictionary = {
   Importing: 'இறக்குமதி செய்கிறது',
   'Storing the image': 'படத்தைச் சேமிக்கிறது',
   Syncing: 'ஒத்திசைக்கிறது',
+  Offline: 'ஆஃப்லைன்',
   '{done} of {total}': '{total} இல் {done}',
   'Sync failed': 'ஒத்திசைவு தோல்வி',
   '{name} could not be written.': '{name} ஐ எழுத முடியவில்லை.',

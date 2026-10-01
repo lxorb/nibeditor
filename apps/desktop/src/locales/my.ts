@@ -502,6 +502,7 @@ export const my: Dictionary = {
   Importing: 'သွင်းယူနေသည်',
   'Storing the image': 'ပုံသိမ်းနေသည်',
   Syncing: 'ချိန်ကိုက်နေသည်',
+  Offline: 'အော့ဖ်လိုင်း',
   '{done} of {total}': '{total} အထဲ {done}',
   'Sync failed': 'ချိန်ကိုက်မှုမအောင်',
   '{name} could not be written.': '{name} ကို ရေးမရပါ။',

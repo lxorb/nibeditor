@@ -500,6 +500,7 @@ export const yue: Dictionary = {
   Importing: '匯入中',
   'Storing the image': '正在儲存圖片',
   Syncing: '同步中',
+  Offline: '離線',
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '冇辦法寫入 {name}。',

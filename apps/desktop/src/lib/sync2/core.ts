@@ -23,6 +23,7 @@ import {
   numbersRow,
   outgoingBytes,
   outgoingOf,
+  wantKey,
   wantedOf,
   wantedRow,
   type Against,
@@ -31,6 +32,7 @@ import {
   type Wanted,
 } from './records'
 import {
+  clear,
   get,
   put,
   remove,
@@ -179,6 +181,41 @@ export class Core {
 
   // -------------------------------------------------------------------------
   // Spaces and entries
+
+  /** A space this device starts keeping, from the top of its feed. */
+  addSpace(spaceId: string, root: string, role: string | null): Change[] {
+    const row = { space_id: spaceId, root, cursor: 0, role, store: null }
+    this.spaces.set(spaceId, new SpaceState(row, [], [], this.device, this.world))
+    return [put('spaces', row)]
+  }
+
+  /** A space let go of: its tree, its outbox, its documents and what was held of it. */
+  forgetSpace(spaceId: string): Change[] {
+    const space = this.spaces.get(spaceId)
+    if (!space) return []
+    const changes: Change[] = []
+    for (const entry of space.entries.values()) {
+      changes.push(...this.letGoChanges(entry.id))
+      if (this.hasDoc(entry.id)) changes.push(...this.forgetChanges(entry.id))
+    }
+    this.spaces.delete(spaceId)
+    this.wants.delete(spaceId)
+    changes.push(
+      clear('entries', spaceId),
+      clear('outbox', spaceId),
+      remove('spaces', spaceId),
+      remove('meta', wantKey(spaceId)),
+    )
+    return changes
+  }
+
+  /** A space whose folder moved: the same space, under its new root. */
+  rootMoved(spaceId: string, root: string): Change[] {
+    const space = this.spaces.get(spaceId)
+    if (!space) return []
+    space.row = { ...space.row, root }
+    return [put('spaces', { ...space.row })]
+  }
 
   /** The space an entry is in. */
   spaceOf(id: string): SpaceState | null {

@@ -502,6 +502,7 @@ export const ms: Dictionary = {
   Importing: 'Mengimport',
   'Storing the image': 'Menyimpan imej',
   Syncing: 'Menyegerakkan',
+  Offline: 'Luar talian',
   '{done} of {total}': '{done} daripada {total}',
   'Sync failed': 'Penyegerakan gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',

@@ -57,4 +57,10 @@ export interface World {
   foldsCase: boolean
   /** Which platform's rules a name has to keep to on this disk. */
   platform: 'windows' | 'mac' | 'other'
+  /** Everything in a space's folder, relative to its root with `/` between folders:
+   *  what a first v2 pass of a space matches against the account. */
+  list?(root: string): Promise<{ path: string; dir: boolean }[]>
+  /** The words a note had when they hashed to `hash`, from the account's versions, or
+   *  null: the ancestor a v1 device's offline edits are merged against (section 11). */
+  ancestor?(id: string, hash: string): Promise<string | null>
 }

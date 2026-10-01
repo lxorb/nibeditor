@@ -508,6 +508,7 @@ export const ml: Dictionary = {
   Importing: 'ഇംപോർട്ട് ചെയ്യുന്നു',
   'Storing the image': 'ചിത്രം സൂക്ഷിക്കുന്നു',
   Syncing: 'സിങ്ക് ചെയ്യുന്നു',
+  Offline: 'ഓഫ്‌ലൈൻ',
   '{done} of {total}': '{total}ൽ {done}',
   'Sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   '{name} could not be written.': '{name} എഴുതാനായില്ല.',

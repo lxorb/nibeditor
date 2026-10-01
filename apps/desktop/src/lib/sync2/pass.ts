@@ -19,6 +19,7 @@
 import { coalesce } from '@nib/sync-core/outbox'
 import {
   feedPageOf,
+  type FeedItem,
   OPS_BATCH,
   opsResponseOf,
   PULL_BATCH,
@@ -40,6 +41,7 @@ import { project } from './project'
 import { againstBytes, type Merging, outgoingBytes } from './records'
 import { keepLosers, rejoin } from './rejoin'
 import { put, remove, type Change, type EntryRow } from './store'
+import { Refused } from './transport'
 
 /** What a pass did, for the log and the light. */
 export interface Passed {
@@ -47,17 +49,6 @@ export interface Passed {
   pushed: number
   /** Whether it got to the end: false when a request went unanswered. */
   finished: boolean
-}
-
-/** A request the account refused outright, rather than one that went unanswered. */
-export class Refused extends Error {
-  override name = 'Refused'
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message)
-  }
 }
 
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())
@@ -220,7 +211,15 @@ async function refused(core: Core, space: SpaceState, op: Op, why: string): Prom
   return []
 }
 
-async function readFeed(core: Core, space: SpaceState, alive: () => boolean): Promise<boolean> {
+/** Reads the feed from the space's cursor to its end, each page written down with the
+ *  cursor that moved past it. `heard` hears every item, for a first pass that needs
+ *  more of them than the tree keeps. Answers whether it got to the end. */
+export async function readFeed(
+  core: Core,
+  space: SpaceState,
+  alive: () => boolean,
+  heard?: (item: FeedItem) => void,
+): Promise<boolean> {
   for (let page = 0; page < 10_000; page += 1) {
     const reply = await ask(core, space, 'feed', { since: space.row.cursor })
     if (!alive() || reply === null) return false
@@ -230,6 +229,7 @@ async function readFeed(core: Core, space: SpaceState, alive: () => boolean): Pr
     const changes: Change[] = []
     const wanted = core.wanted(space.id)
     for (const item of read.items) {
+      heard?.(item)
       core.by.set(item.id, item.by)
       const had = space.entries.get(item.id)
       if (had && had.seq !== null && had.seq >= item.seq) continue
@@ -454,7 +454,7 @@ async function mergeDays(core: Core, space: SpaceState) {
 // ---------------------------------------------------------------------------
 // 7. Pushes
 
-function pushable(core: Core, space: SpaceState, entry: EntryRow): boolean {
+function pushable(core: Core, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null) return false
   if (core.isHeld(entry.id) || core.carried.has(entry.id)) return false
   return core.hasPending(entry.id)
@@ -462,7 +462,7 @@ function pushable(core: Core, space: SpaceState, entry: EntryRow): boolean {
 
 /** Answers how many documents went up, or null when the account did not answer. */
 async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Promise<number | null> {
-  const due = [...space.entries.values()].filter((entry) => pushable(core, space, entry))
+  const due = [...space.entries.values()].filter((entry) => pushable(core, entry))
   let pushed = 0
 
   for (let at = 0; at < due.length; at += PUSH_BATCH) {

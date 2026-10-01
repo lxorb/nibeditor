@@ -508,6 +508,7 @@ export const kn: Dictionary = {
   Importing: 'ಇಂಪೋರ್ಟ್ ಆಗುತ್ತಿದೆ',
   'Storing the image': 'ಚಿತ್ರ ಸಂಗ್ರಹಿಸುತ್ತಿದೆ',
   Syncing: 'ಸಿಂಕ್ ಆಗುತ್ತಿದೆ',
+  Offline: 'ಆಫ್‌ಲೈನ್',
   '{done} of {total}': '{total}ರಲ್ಲಿ {done}',
   'Sync failed': 'ಸಿಂಕ್ ವಿಫಲವಾಯಿತು',
   '{name} could not be written.': '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ.',

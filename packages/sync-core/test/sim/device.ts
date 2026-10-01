@@ -510,7 +510,7 @@ export class ReferenceDevice implements DeviceAdapter {
    *  sides lost something. */
   private keepLosers(
     id: string,
-    verdict: Pick<Divergence, 'overlaps' | 'settled'>,
+    verdict: { overlaps: Divergence['overlaps']; settled: Divergence['settled'] },
     local: string,
     remote: string,
   ) {

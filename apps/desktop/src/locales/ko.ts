@@ -501,6 +501,7 @@ export const ko: Dictionary = {
   Importing: '가져오는 중',
   'Storing the image': '이미지 저장 중',
   Syncing: '동기화 중',
+  Offline: '오프라인',
   '{done} of {total}': '{total} 중 {done}',
   'Sync failed': '동기화 실패',
   '{name} could not be written.': '{name}을(를) 쓸 수 없었습니다.',

@@ -501,6 +501,7 @@ export const vi: Dictionary = {
   Importing: 'Đang nhập',
   'Storing the image': 'Đang lưu ảnh',
   Syncing: 'Đang đồng bộ',
+  Offline: 'Ngoại tuyến',
   '{done} of {total}': '{done} trên {total}',
   'Sync failed': 'Đồng bộ thất bại',
   '{name} could not be written.': 'Không ghi được {name}.',

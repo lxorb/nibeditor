@@ -508,6 +508,7 @@ export const pa: Dictionary = {
   Importing: 'ਅੰਦਰ ਲਿਆ ਰਿਹਾ ਹੈ',
   'Storing the image': 'ਤਸਵੀਰ ਸਾਂਭ ਰਿਹਾ ਹੈ',
   Syncing: 'ਸਮਕਾਲ ਕਰ ਰਿਹਾ ਹੈ',
+  Offline: 'ਔਫਲਾਈਨ',
   '{done} of {total}': '{total} ਵਿੱਚੋਂ {done}',
   'Sync failed': 'ਸਮਕਾਲ ਨਾਕਾਮ',
   '{name} could not be written.': '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ।',

@@ -503,6 +503,7 @@ export const am: Dictionary = {
   Importing: 'በማምጣት ላይ',
   'Storing the image': 'ምስሉን በማስቀመጥ ላይ',
   Syncing: 'በማመሳሰል ላይ',
+  Offline: 'ከመስመር ውጭ',
   '{done} of {total}': 'ከ{total} {done}',
   'Sync failed': 'ማመሳሰል አልተሳካም',
   '{name} could not be written.': '{name} መጻፍ አልተቻለም።',

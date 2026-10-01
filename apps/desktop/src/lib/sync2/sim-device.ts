@@ -35,10 +35,10 @@ import { HERE } from './docs'
 import { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { MemoryStore } from './memory-store'
-import { Refused } from './pass'
+import { Refused } from './transport'
 import { folderOf, joined, nameOf } from './places'
 import { numbersRow, wantedRow } from './records'
-import { put } from './store'
+import { put, type Change } from './store'
 import type { Disk, World } from './world'
 
 const SPACE = 'sim'
@@ -166,7 +166,7 @@ export class EngineDevice implements DeviceAdapter {
    *  each note the seed of its words at epoch 1, on the disk, and the feed read past it. */
   private async seed(seeded: readonly Seeded[]) {
     const store = this.store.open()
-    const changes = [
+    const changes: Change[] = [
       put('spaces', { space_id: SPACE, root: this.root, cursor: seeded.length, role: 'owner', store: null }),
       put('meta', wantedRow(SPACE, new Map())),
     ]

@@ -42,7 +42,9 @@ vi.mock('../link-index.svelte', () => ({
 }))
 
 const light = { status: 'off', lastError: null as string | null }
-vi.mock('../sync.svelte', () => ({ sync: Object.assign(light, { nudge: () => undefined }) }))
+vi.mock('../sync.svelte', () => ({
+  sync: Object.assign(light, { nudge: () => undefined, wrote: () => undefined }),
+}))
 
 const { Saving } = await import('./saving.svelte')
 const { settleUp } = await import('../parting')
