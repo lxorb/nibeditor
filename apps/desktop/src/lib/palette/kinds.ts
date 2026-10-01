@@ -139,22 +139,74 @@ function candidate(
 /** A site's host, which it is known by as much as by its title. */
 const hostOf = (address: string) => address.split('/')[0] ?? address
 
+/** What a note's row is made of that its entry alone decides: the name it shows, its
+ *  folder, and both folded the way the ranking reads them.
+ *
+ *  Kept per entry, because the palette builds its rows again whenever anything it
+ *  lists changes while it is open - a pass of sync, a file another program wrote, a
+ *  note saved - and on five thousand notes that was fourteen milliseconds of folding
+ *  names that had not changed. The tree is replaced rather than edited (see
+ *  `$state.raw` in workspace.svelte.ts), so an entry that is the same object is the
+ *  same file under the same name, and only what changed is read again. Weak, so a
+ *  space closed takes its readings with it. */
+interface Reading {
+  /** The space the folder was read against. */
+  root: string
+  key: string
+  /** The shown name in lower case, which is what two notes share. */
+  alike: string
+  folder: string | null
+  name: string
+  also: string[]
+}
+
+const readings = new WeakMap<Entry, Reading>()
+
+function readingOf(entry: Entry, root: string): Reading {
+  const kept = readings.get(entry)
+  if (kept?.root === root) return kept
+
+  const shown = shownName(entry.name)
+  const relative = relativeTo(root, entry.path)
+  const reading: Reading = {
+    root,
+    key: noteKey(entry.path),
+    alike: shown.toLowerCase(),
+    folder: folderOf(relative) || null,
+    name: foldName(shown),
+    also: [shownName(relative)].filter(Boolean).map(foldName),
+  }
+  readings.set(entry, reading)
+  return reading
+}
+
 /** How many notes share each name, so a row says its folder only where the name
- *  alone would not do. */
-function sharing(files: readonly Entry[]): (name: string) => boolean {
+ *  alone would not do. Asked with the name as a reading has it: shown, in lower case. */
+function sharing(files: readonly Entry[], root: string): (alike: string) => boolean {
   const named = new Map<string, number>()
   for (const one of files) {
-    const key = shownName(one.name).toLowerCase()
-    named.set(key, (named.get(key) ?? 0) + 1)
+    const { alike } = readingOf(one, root)
+    named.set(alike, (named.get(alike) ?? 0) + 1)
   }
 
-  return (name) => (named.get(shownName(name).toLowerCase()) ?? 0) > 1
+  return (alike) => (named.get(alike) ?? 0) > 1
+}
+
+/** The files with the ones opened lately first, newest first, and the rest in the
+ *  order the space lists them: what a stable sort by recency gives, without sorting
+ *  every file of the space to move a handful to the front. */
+function recentFirst(files: readonly Entry[], place: ReadonlyMap<string, number>): Entry[] {
+  const lately: Entry[] = []
+  const rest: Entry[] = []
+  for (const entry of files) (place.has(entry.path) ? lately : rest).push(entry)
+
+  lately.sort((a, b) => (place.get(a.path) ?? 0) - (place.get(b.path) ?? 0))
+  return [...lately, ...rest]
 }
 
 export function candidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
-  const shared = sharing(world.files)
-  const where = (path: string) => relativeTo(world.root, path)
+  const shared = sharing(world.files, world.root)
   const place = new Map(world.recent.map((path, index) => [path, index]))
   const recency = (path: string) => {
     const at = place.get(path)
@@ -182,35 +234,36 @@ export function candidates(world: World): Candidate<Row>[] {
     const relative = tab.path ? withinSpace(world.root, tab.path) : null
     const folder = relative ? folderOf(relative) || null : null
     out.push(
-      candidate('tab', tab.shown, { kind: 'tab', tab, folder, shared: shared(tab.shown) }, world, {
-        names: tab.url ? [hostOf(addressOf(tab.url))] : [],
-        also: [relative ? shownName(relative) : '', tab.url ? addressOf(tab.url) : ''],
-        lift: (tab.id === world.active ? LIFT.here : 0) + (tab.path ? lifted(tab.path) : 0),
-      }),
+      candidate(
+        'tab',
+        tab.shown,
+        { kind: 'tab', tab, folder, shared: shared(shownName(tab.shown).toLowerCase()) },
+        world,
+        {
+          names: tab.url ? [hostOf(addressOf(tab.url))] : [],
+          also: [relative ? shownName(relative) : '', tab.url ? addressOf(tab.url) : ''],
+          lift: (tab.id === world.active ? LIFT.here : 0) + (tab.path ? lifted(tab.path) : 0),
+        },
+      ),
     )
   }
 
-  // The files, the ones opened lately first so they win every tie.
-  const byRecency = [...world.files].sort(
-    (a, b) => (place.get(a.path) ?? Infinity) - (place.get(b.path) ?? Infinity),
-  )
-  for (const entry of byRecency) {
-    if (open.has(noteKey(entry.path))) continue
+  // The files, the ones opened lately first so they win every tie. Built out of each
+  // entry's reading rather than through `candidate`, which would fold every name again.
+  for (const entry of recentFirst(world.files, place)) {
+    const reading = readingOf(entry, world.root)
+    if (open.has(reading.key)) continue
 
-    out.push(
-      candidate(
-        'note',
-        shownName(entry.name),
-        {
-          kind: 'note',
-          entry,
-          folder: folderOf(where(entry.path)) || null,
-          shared: shared(entry.name),
-        },
-        world,
-        { also: [shownName(where(entry.path))], lift: lifted(entry.path) },
-      ),
-    )
+    out.push({
+      key: reading.key,
+      kind: 'note',
+      name: reading.name,
+      names: [],
+      also: reading.also,
+      lift: lifted(entry.path),
+      use: world.worth(reading.key),
+      item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },
+    })
   }
 
   out.push(...bookmarkCandidates(world))
