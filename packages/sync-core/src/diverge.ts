@@ -82,6 +82,10 @@ export interface Divergence {
    *  side wrote it; the pure merge otherwise. Null when the verdict is `diverged`. */
   resolution: string | null
   broken: Broken | null
+  /** Whether every overlap was settled as its newer side wrote it, or - where that
+   *  would say a passage twice - with both sides' edits made, every deletion and every
+   *  insertion; then both sides' words are kept as versions. */
+  settled: 'newer' | 'both'
 }
 
 /** One side's passage for the modal, with the differing stretches marked. */
@@ -273,21 +277,28 @@ function resolved(
   return best
 }
 
-/** How often each whole word is in a text. */
-function wordCounts(text: string): Map<string, number> {
+/** How many characters the check below compares at a time, white space left out: a
+ *  short word. */
+const RUN = 4
+
+/** How often each run of `RUN` characters is in a text, white space left out, so two
+ *  words a merge set side by side read the way they did apart. */
+function runsOf(text: string): Map<string, number> {
+  const bare = text.replace(/\s+/g, '')
   const counts = new Map<string, number>()
-  for (const word of text.match(/\S+/g) ?? []) counts.set(word, (counts.get(word) ?? 0) + 1)
+  for (let at = 0; at + RUN <= bare.length; at += 1) {
+    const run = bare.slice(at, at + RUN)
+    counts.set(run, (counts.get(run) ?? 0) + 1)
+  }
   return counts
 }
 
-/** Whether a merge holds a word more often than the two sides could have put there
- *  between them: as often as the ancestor had it, plus what each side added. */
-function repeats(base: string, local: string, remote: string, merge: string): boolean {
-  const [b, l, r] = [wordCounts(base), wordCounts(local), wordCounts(remote)]
-  for (const [word, count] of wordCounts(merge)) {
-    const mine = l.get(word) ?? 0
-    const theirs = r.get(word) ?? 0
-    if (count > Math.max(mine + theirs - (b.get(word) ?? 0), mine, theirs)) return true
+/** Whether a merge says something twice that none of `references` says that often. */
+function repeats(references: readonly string[], merge: string): boolean {
+  const known = references.map(runsOf)
+  for (const [run, count] of runsOf(merge)) {
+    if (count < 2) continue
+    if (known.every((one) => count > (one.get(run) ?? 0))) return true
   }
   return false
 }
@@ -344,12 +355,19 @@ export function diverge(
         ]
       : [resolved(base, analysis, settle, merged)]
   let checked = write(() => newer)
-  // A passage the older side moved out of an overlap is still in the newer side's
-  // version of it, and in the older side's new place: the newer side standing would
-  // say it twice. Such a merge is settled as the CRDT settles it, every deletion made
-  // and every insertion kept, which says nothing twice and loses nothing.
-  if (overlaps.length && checked.some((text) => repeats(base, local, remote, text))) {
-    checked = write(() => 'both')
+  // A passage one side moved is, to a diff, a deletion and a retyping, and a side's
+  // version of an overlap can still hold what the other side moved out of it: the
+  // newer side standing would then say that passage twice, and so can a text merge
+  // that keeps both. The CRDT's own merge never does - a moved passage is one deletion
+  // and one insertion there, and the deletion lands on the one copy there is - so it
+  // is the note. Without it in hand, both sides' edits are kept.
+  let settled: Divergence['settled'] = 'newer'
+  if (overlaps.length) {
+    const kept = merged === undefined ? write(() => 'both') : [merged]
+    if (checked.some((text) => repeats([local, remote, ...kept], text))) {
+      checked = kept
+      settled = 'both'
+    }
   }
   const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
@@ -357,7 +375,13 @@ export function diverge(
   const asks = broken !== null || overlaps.some((overlap) => overlap.asks !== null)
   const verdict: Verdict = asks ? 'diverged' : overlaps.length ? 'minor' : 'clean'
 
-  return { verdict, overlaps, resolution: verdict === 'diverged' ? null : resolution, broken }
+  return {
+    verdict,
+    overlaps,
+    resolution: verdict === 'diverged' ? null : resolution,
+    broken,
+    settled,
+  }
 }
 
 /** The longest passage an excerpt shows, in code units, before its context is cut. */

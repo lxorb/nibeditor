@@ -155,13 +155,15 @@ export function judge(
 
   const both = merged ?? mergedOf(base, local, remote)
   const words = diverge(base, local, remote, times, both)
+  // Overlaps settled with both sides' edits made lost something on each side.
+  const each = words.settled === 'both'
   return {
     merged: both,
     verdict: words.verdict,
     resolution: words.resolution,
     lost: {
-      local: words.overlaps.some((one) => one.newer === 'remote'),
-      remote: words.overlaps.some((one) => one.newer === 'local'),
+      local: each || words.overlaps.some((one) => one.newer === 'remote'),
+      remote: each || words.overlaps.some((one) => one.newer === 'local'),
     },
   }
 }

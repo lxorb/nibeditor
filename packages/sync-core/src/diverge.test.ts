@@ -279,6 +279,21 @@ describe('diverge', () => {
     }
   })
 
+  test('a few words two devices each put back over a deletion are said once', () => {
+    // Also found by the engine's runs: both devices kept their own version over a
+    // deletion, so each typed "mk4z we mk2z the" back - one as an insertion, the other
+    // replacing the next word - and the CRDT holds two copies of one passage.
+    const base = '# Ideas\n\nA long paragraph review monday about mk3z plan on\n'
+    const local =
+      '# Ideas\n mk25z monday\nA long paragraph review monday mk4z we mk2z the mk36z we about what comes\n'
+    const remote =
+      '# Ideas\n\nA long paragraph review monday mk4z we mk2z the about mk37z what comes next.\n'
+
+    const result = diverge(base, local, remote, REMOTE_NEWER, crdtMerge(base, local, remote))
+    expect(result.verdict).not.toBe('clean')
+    expect(result.resolution?.split('mk4z').length ?? 2).toBe(2)
+  })
+
   test('property: diverge(B, L, R) and diverge(B, R, L) give the same verdict', () => {
     fc.assert(
       fc.property(note, changes, changes, distinctTimes, (base, mine, theirs, [one, other]) => {

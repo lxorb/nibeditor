@@ -14,7 +14,7 @@
 
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
-import { diverge, type Times } from '../../src/diverge'
+import { type Divergence, diverge, type Times } from '../../src/diverge'
 import { coalesce } from '../../src/outbox'
 import { seedUpdate } from '../../src/seed'
 import { textops } from '../../src/textops'
@@ -496,7 +496,7 @@ export class ReferenceDevice implements DeviceAdapter {
       this.hold({ id, base: ancestor, local: file, remote: ours, times, update: null, seq: 0 })
       return
     }
-    this.keepLosers(id, verdict.overlaps, file, ours)
+    this.keepLosers(id, verdict, file, ours)
     this.edit(id, verdict.resolution)
     this.save()
   }
@@ -506,17 +506,19 @@ export class ReferenceDevice implements DeviceAdapter {
   }
 
   /** The losing side of every minor overlap, kept as a version: the words are in the
-   *  history, never gone. */
+   *  history, never gone. Where the overlaps were settled with both sides' edits, both
+   *  sides lost something. */
   private keepLosers(
     id: string,
-    overlaps: readonly { newer: 'local' | 'remote' }[],
+    verdict: Pick<Divergence, 'overlaps' | 'settled'>,
     local: string,
     remote: string,
   ) {
-    if (overlaps.some((overlap) => overlap.newer === 'remote')) {
+    const both = verdict.settled === 'both'
+    if (both || verdict.overlaps.some((overlap) => overlap.newer === 'remote')) {
       this.store.keeps.push({ id, text: local, device: this.id })
     }
-    if (overlaps.some((overlap) => overlap.newer === 'local')) {
+    if (both || verdict.overlaps.some((overlap) => overlap.newer === 'local')) {
       this.store.keeps.push({ id, text: remote, device: this.id })
     }
   }
@@ -710,7 +712,7 @@ export class ReferenceDevice implements DeviceAdapter {
       if (verdict.resolution === null) {
         this.hold({ id: into, base, local: words, remote: theirs, times, update: null, seq: 0 })
       } else {
-        this.keepLosers(into, verdict.overlaps, words, theirs)
+        this.keepLosers(into, verdict, words, theirs)
         this.edit(into, verdict.resolution)
         this.save()
       }
@@ -798,7 +800,7 @@ export class ReferenceDevice implements DeviceAdapter {
     Y.applyUpdateV2(live, update, REMOTE)
     stored.confirmed = Y.mergeUpdatesV2([stored.confirmed, update])
     stored.seq = seq
-    this.keepLosers(id, verdict.overlaps, local, remote)
+    this.keepLosers(id, verdict, local, remote)
     this.edit(id, verdict.resolution)
     this.save()
   }
