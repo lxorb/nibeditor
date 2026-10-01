@@ -36,8 +36,8 @@ import { fileOfUpdates, judge, seedOf, shapeOf, turn, unixLines } from './kinds'
 import type { SpaceState } from './places'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
-import { wrote } from './project'
-import { put, type Change, type EntryRow } from './store'
+import { project, wrote } from './project'
+import type { Change, EntryRow } from './store'
 import { pullResponseOf, PULL_BATCH, type FeedItem, type Op } from '@nib/sync-core/wire'
 import * as Y from 'yjs'
 
@@ -106,7 +106,11 @@ export async function firstPass(core: Core, space: SpaceState, v1: V1Space | nul
     if (listed.dir || !item || !shapeOf(entry.kind)) continue
     const read = await world.disk.read(world.join(space.row.root, listed.path))
     if (read === null) continue
-    matched.push({ entry, item, file: unixLines(read), tracked: v1?.notes[listed.path] })
+    const file = unixLines(read)
+    // What nib last wrote is the file as v1 left it: the words the next pull is measured
+    // against, so a file v1 merely fell behind on is written over and not read as edits.
+    changes.push(...(await wrote(core, entry, file)))
+    matched.push({ entry, item, file, tracked: v1?.notes[listed.path] })
   }
 
   // The account's words for every note whose file moved: one pull, in batches.
@@ -177,9 +181,6 @@ function seed(core: Core, space: SpaceState, one: Matched, changes: Change[]) {
   // Pulled from nothing: the pull brings whatever came after the seed, as a diff.
   core.wanted(space.id).set(one.entry.id, { docSeq: one.item.docSeq ?? 0, epoch })
   changes.push(...core.docChanges(doc))
-  changes.push(
-    put('written', { id: one.entry.id, text: one.file }),
-  )
 }
 
 /** A file whose words moved while v1 ran, met with the account's document. */
@@ -228,6 +229,8 @@ async function reconcile(
   }
 
   changes.push(...core.docChanges(doc), ...(await wrote(core, one.entry, local)))
+  // The file says what the note now reads, unless the note waits for the question.
+  if (!core.isHeld(one.entry.id)) changes.push(...(await project(core, space, one.entry, doc)))
   return changes
 }
 
