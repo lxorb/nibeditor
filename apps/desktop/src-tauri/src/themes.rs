@@ -7,7 +7,7 @@
 use serde::Serialize;
 use std::ffi::OsStr;
 use std::fs;
-use std::io::{ErrorKind, Write};
+use std::io::{self, ErrorKind, Write};
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
@@ -196,13 +196,33 @@ pub fn read_snippets(app: AppHandle) -> String {
 /// the same moment would both find it missing, and the second would write its
 /// default over whatever the first had already put there.
 fn seed(path: &Path, content: &str) -> Result<(), String> {
-    match fs::File::create_new(path) {
-        Ok(mut file) => file
-            .write_all(content.as_bytes())
-            .map_err(|error| cannot("write", path, &error)),
-        Err(error) if error.kind() == ErrorKind::AlreadyExists => Ok(()),
-        Err(error) => Err(cannot("create", path, &error)),
-    }
+    seeded(path, content, |file, bytes| {
+        file.write_all(bytes)?;
+        file.sync_all()
+    })
+}
+
+/// `seed`, with the write handed in so a write that fails can be tested.
+///
+/// A starter that could not be written whole is taken away again. Left, it would be
+/// there forever - the file exists, so no later ask writes it - and an empty
+/// `snippets.json` is an editor with no snippets and nothing to say why.
+fn seeded(
+    path: &Path,
+    content: &str,
+    write: impl FnOnce(&mut fs::File, &[u8]) -> io::Result<()>,
+) -> Result<(), String> {
+    let mut file = match fs::File::create_new(path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == ErrorKind::AlreadyExists => return Ok(()),
+        Err(error) => return Err(cannot("create", path, &error)),
+    };
+
+    write(&mut file, content.as_bytes()).map_err(|error| {
+        drop(file);
+        let _ = fs::remove_file(path);
+        cannot("write", path, &error)
+    })
 }
 
 /// The app's own settings folder, made if it is not there yet: on a fresh install
@@ -267,8 +287,38 @@ fn humanise(stem: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{humanise, is_a_theme, is_css, is_id};
+    use super::{humanise, is_a_theme, is_css, is_id, seed, seeded, SNIPPETS};
+    use std::io::{self, Write as _};
     use std::path::{Path, PathBuf};
+
+    /// A disk that fills up half way through the starter: what was written goes, and
+    /// the next ask writes the starter whole.
+    #[test]
+    fn a_starter_that_could_not_be_written_is_written_the_next_time() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let path = dir.path().join("snippets.json");
+
+        let failed = seeded(&path, SNIPPETS, |file, bytes| {
+            file.write_all(&bytes[..3])?;
+            Err(io::Error::other("the disk is full"))
+        });
+        assert!(failed.is_err());
+        assert!(!path.exists(), "half a starter was left behind");
+
+        seed(&path, SNIPPETS).expect("the starter");
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), SNIPPETS);
+    }
+
+    /// What the reader wrote is theirs, however little it is.
+    #[test]
+    fn a_starter_is_never_written_over_anything() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let path = dir.path().join("custom.css");
+        std::fs::write(&path, "").expect("a file somebody emptied");
+
+        seed(&path, "/* a starter */").expect("nothing to do");
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "");
+    }
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.
