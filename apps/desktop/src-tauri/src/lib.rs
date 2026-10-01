@@ -802,8 +802,10 @@ mod tests {
     const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
 
     /// What a body that waits says itself, whichever module it is in: the
-    /// filesystem, a subprocess, and the machine's own keychain.
-    const WAITS: [&str; 8] = [
+    /// filesystem, a subprocess, the machine's own keychain, and the system's shell,
+    /// which opens a file or shows it in its folder in its own time - the opener's own
+    /// commands are `async` for that reason.
+    const WAITS: [&str; 9] = [
         "fs::",
         "File::",
         "OpenOptions",
@@ -812,6 +814,7 @@ mod tests {
         "set_password",
         "delete_credential",
         "canonicalize",
+        "tauri_plugin_opener::",
     ];
 
     /// One function of the crate: the name it is called by, and the body it runs.

@@ -495,7 +495,8 @@ pub fn listen(platform: &tauri::webview::PlatformWebview, app: AppHandle, window
 }
 
 /// Everything this run has downloaded, for a window that was reloaded while a
-/// download was on its way, and for a probe.
+/// download was on its way, and for a probe. On the window's thread, like Cancel
+/// below: neither waits on anything but the list's own lock.
 #[tauri::command]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
     held(&app)
@@ -506,7 +507,12 @@ pub fn web_downloads(app: AppHandle) -> Vec<Download> {
 }
 
 /// Opens a downloaded file the way the system opens it, by the id the list gave it.
-#[tauri::command]
+///
+/// Off the window's thread, as the opener's own command is: the system's shell
+/// answers in its own time - an app to start, a network drive to wake, a dialog
+/// asking which app - and the window does not paint while it waits. The same for
+/// showing one in its folder.
+#[tauri::command(async)]
 pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
     let path = held(&app).saved(id)?;
     tauri_plugin_opener::open_path(&path, None::<&str>)
@@ -514,7 +520,7 @@ pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
 }
 
 /// Shows a downloaded file in its folder, selected, by the id the list gave it.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
     let path = held(&app).saved(id)?;
     tauri_plugin_opener::reveal_item_in_dir(&path)
