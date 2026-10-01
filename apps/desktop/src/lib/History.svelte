@@ -160,7 +160,7 @@
        already trapped in here, and a trap with nothing saying what it is trapped in
        is a reader who cannot tell why Tab stopped going anywhere. -->
   <div
-    class="sheet"
+    class="nib-screen is-centred is-steady sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -237,19 +237,13 @@
 {/if}
 
 <style>
+  /* `.nib-screen` in the themes package, at one height whichever version is open
+     (`is-steady`): the versions and the one shown, side by side. */
   .sheet {
-    position: fixed;
-    top: 10vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(46rem, calc(100vw - 3rem));
-    height: 70vh;
+    --screen-width: var(--screen-pair);
+
     z-index: var(--z-sheet);
     display: flex;
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
   }
 

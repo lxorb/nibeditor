@@ -364,7 +364,7 @@
   ></div>
 
   <div
-    class="nib-screen sheet"
+    class="nib-screen is-centred is-steady sheet"
     class:phone={viewport.touch}
     style:height={pageHeight()}
     use:trap
@@ -1264,13 +1264,11 @@
   }
 
   /* The shape is `.nib-screen` in the themes package - the surface, the corner,
-     the shadow and the centring every panel of this kind wears. What is left
-     here is what this one alone is: how wide, how tall, how far down, and the two
-     columns inside it. */
+     the shadow, and the size: in the middle of the window at one height for every
+     pane (`is-centred`, `is-steady`), as wide as a list of panes beside a pane. What
+     is left here is the two columns inside it. */
   .sheet {
-    --screen-width: 56rem;
-    top: 10vh;
-    height: 76vh;
+    --screen-width: var(--screen-panes);
     z-index: var(--z-settings);
     /* Two columns: the list of panes, and the pane. */
     display: grid;

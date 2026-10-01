@@ -159,6 +159,32 @@
   --header-height: var(--titlebar-height);
   --measure: 42rem;
 
+  /* How big a layer in the middle of the window is: a question, a sheet, the
+     palette, the settings. Its width is one of these five and its height is at
+     most `--screen-tall`, both in rem so they follow the reader's text size
+     together, and each held inside the window by `--screen-gutter` on every side.
+     The settings were 56rem across and 76vh down, a unit each way, so a big window
+     made them taller and not wider: a portrait slab on a landscape screen with a
+     short pane at the top of it. Obsidian, Notion and Windows' own Settings hold
+     both sides to a number. See `.nib-screen` in base.css and docs/design.md.
+
+     A question with an answer or two; a sheet of rows; a list to search; two
+     things side by side; and the list of panes beside a pane, which is the list's
+     14rem and a row as long as the settings column ever needs. */
+  --screen-ask: 24rem;
+  --screen-sheet: 28rem;
+  --screen-list: 36rem;
+  --screen-pair: 46rem;
+  --screen-panes: 60rem;
+  /* As tall as a 720-pixel window has room for once the gutter is round it, so the
+     settings' whole list of panes is in view at once on the smallest window a
+     desktop is kept at. */
+  --screen-tall: 44rem;
+  --screen-gutter: var(--space-5);
+  /* Where a layer that grows as somebody types hangs from, so its top edge stays
+     put while the list under it lengthens and shortens. */
+  --screen-top: 16vh;
+
   /* The frame a strip of tabs is cut out of: one step off both the page and the
      bars, so the active tab - which is filled with whichever of those is under it -
      reads as the same surface running up into the frame. How wide a tab is, is

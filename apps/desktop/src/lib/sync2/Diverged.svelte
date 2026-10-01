@@ -107,7 +107,7 @@
 <Sheet
   open={asking.asked !== null}
   title={shown?.name ?? ''}
-  width="46rem"
+  width="var(--screen-pair)"
   onclose={() => asking.dismiss()}
 >
   {#if shown}

@@ -426,11 +426,43 @@ copy of one of them and the copies had already drifted:
   `--radius-lg`: the palette, the sheet a space is shared from, the one small
   modal the app asks its questions in, the sign-in panel, the word a link owes
   whoever followed it. Five components declared the same eight lines; one opened
-  six vh above the others and each picked its own width. How wide is the
-  caller's, as `--screen-width`; how far down is too, because a list of commands
-  wants the room under it that a question does not.
+  six vh above the others and each picked its own width. How big it is, is one
+  rule for all of them; see below.
 
 Where it sits is the caller's. What it is, is the class.
+
+#### How big a layer in the middle of the window is
+
+The settings were 56rem across and 76vh down: a width that follows the reader's
+text size and a height that follows the window. On a 2560 by 1440 window that is
+840 by 1094, a portrait slab with Appearance's few rows at the top of it, while
+the Frame control broke "nibeditor's own" over two lines. Every layer that stands
+in the middle of the window now takes its size from one scale in `tokens.css`,
+the way Obsidian's `--modal-*`, Notion's settings and Windows' own Settings hold
+both sides to a number:
+
+| Token | Width | What |
+| --- | --- | --- |
+| `--screen-ask` | 24rem | a question: the prompt, signing in, joining, the theme picker |
+| `--screen-sheet` | 28rem | a sheet of rows: sharing, publishing, importing, rewriting, the icon picker, choosing a space |
+| `--screen-list` | 36rem | a list to search: the palette |
+| `--screen-pair` | 46rem | two things side by side: the sync question, version history |
+| `--screen-panes` | 60rem | a list of panes beside a pane: the settings, and the theme store a gutter inside them |
+
+- Both sides are rem, and each is held inside the window by `--screen-gutter` on
+  every side. Nothing is a share of the window one way and a fixed size the other.
+- No layer is taller than `--screen-tall` (44rem), which is what a 720-pixel
+  window has room for: every pane of the settings is in view at once there.
+- A layer that grows as somebody types hangs from `--screen-top`, so its top edge
+  stays put while the list under it changes. One whose size does not change while
+  it is up stands in the middle (`.is-centred`), and one with several things to
+  show in one place - panes, versions, themes - is one height whichever is showing
+  (`.is-steady`), so moving between them never resizes it.
+- A phone's layers are sheets from the bottom and pages the size of the screen,
+  each sized by its own rule; the height rules name the desktop.
+- A control's words never wrap where the window has the room: a segmented
+  control's halves are a grid of equal columns, each as wide as the widest word.
+  `test/e2e/modal-size.py` opens all of them at four windows and three scales.
 
 A thing that is a rounded square rather than a control - a space's badge, a face,
 the round button a thumb makes a note with - has a corner of `--radius-third` of its

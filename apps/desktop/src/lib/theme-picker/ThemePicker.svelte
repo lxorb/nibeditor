@@ -399,9 +399,9 @@
 
   /* The surface is `.nib-layer` where it hangs from a point and `.nib-screen` where
      it stands where the palette does, so it is the shape of whichever it was opened
-     like. Its width is its own. */
+     like. Its width is a question's, from the scale in tokens.css. */
   .picker {
-    --picker-width: 24rem;
+    --picker-width: var(--screen-ask);
     --screen-width: var(--picker-width);
 
     position: fixed;
@@ -415,8 +415,6 @@
   }
 
   .picker.nib-screen {
-    top: 16vh;
-    max-height: 72vh;
     transform-origin: top center;
   }
 

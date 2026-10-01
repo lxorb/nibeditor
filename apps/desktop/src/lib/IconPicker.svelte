@@ -279,7 +279,7 @@
   ></div>
 
   <div
-    class="sheet"
+    class="nib-screen sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -419,26 +419,23 @@
 {/if}
 
 <style>
+  /* `.nib-screen` in the themes package: where it hangs, how tall it may get, and a
+     sheet's width of the scale. */
   .sheet {
-    position: fixed;
-    top: 14vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(30rem, calc(100vw - 3rem));
+    --screen-width: var(--screen-sheet);
+
     z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-4);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
   }
 
   /* The window, and inside it a box as tall as every row there is, so the scrollbar
-     tells the truth about a set of two thousand while only a screenful is drawn. */
+     tells the truth about a set of two thousand while only a screenful is drawn. It
+     is what gives way when the sheet reaches the most it may be. */
   .grid {
+    min-height: 0;
     max-height: 46vh;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -581,9 +578,5 @@
     max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
-  }
-
-  :global([data-touch]) .grid {
-    min-height: 0;
   }
 </style>

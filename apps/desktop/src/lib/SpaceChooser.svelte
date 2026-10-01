@@ -37,7 +37,7 @@
   ></div>
 
   <div
-    class="nib-screen card"
+    class="nib-screen is-centred card"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -127,12 +127,11 @@
   }
 
   /* `.nib-screen` in the themes package, in the middle of the window rather than a
-     question's way down it: there is nothing else on screen to leave room for. */
+     question's way down it (`is-centred`): there is nothing else on screen to leave
+     room for. */
   .card {
-    --screen-width: 26rem;
+    --screen-width: var(--screen-sheet);
     z-index: var(--z-screen);
-    top: 50%;
-    translate: -50% -50%;
     padding: var(--space-6) var(--space-5) var(--space-5);
   }
 

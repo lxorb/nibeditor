@@ -48,7 +48,7 @@
      *  only thing it is for out of sight below the fold. */
     foot?: Snippet
     /** Wider than the sheets that hold a form: the sync question puts two versions of
-     *  a passage side by side. */
+     *  a passage side by side. A step of the scale in tokens.css, `--screen-*`. */
     width?: string
     onclose: () => void
     children: Snippet
@@ -103,15 +103,13 @@
 <style>
   /* `.nib-screen` in the themes package draws it: the surface, the corner, the
      hairline, the shadow and the centring that the palette, the prompt, the
-     sign-in panel and the invitation all had a copy of. What is its own is how
-     wide it is and how far down it opens. */
+     sign-in panel and the invitation all had a copy of, and where it hangs and how
+     tall it may be. What is its own is which width of the scale it is. */
   .sheet {
-    --screen-width: 27rem;
+    --screen-width: var(--screen-sheet);
 
-    top: 14vh;
     display: flex;
     flex-direction: column;
-    max-height: 72vh;
     overflow: hidden;
     z-index: var(--z-sheet);
   }

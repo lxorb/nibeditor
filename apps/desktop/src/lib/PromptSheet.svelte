@@ -196,7 +196,7 @@
 <style>
   /* `.nib-screen` in the themes package; see Palette.svelte. */
   .sheet {
-    --screen-width: 22rem;
+    --screen-width: var(--screen-ask);
 
     z-index: var(--z-sheet);
     padding: var(--space-5);

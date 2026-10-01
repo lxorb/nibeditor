@@ -631,14 +631,15 @@
 
   /* The shape is `.nib-screen` in the themes package - the surface, the corner,
      the hairline and the shadow anything that replaces part of the screen wears,
-     and the centring the four of them had a copy of each. What is its own is how
-     wide and how far down: a list of commands starts higher than a question
-     does, because it is a list and needs the room under it. */
+     and the centring the four of them had a copy of each, and how far down it
+     hangs and how tall it may get. What is its own is the list's width of the
+     scale, and the list giving way when the window or that height runs out. */
   .palette {
-    --screen-width: 36rem;
+    --screen-width: var(--screen-list);
 
-    top: 16vh;
     z-index: var(--z-screen);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
@@ -681,6 +682,7 @@
   }
 
   ul {
+    min-height: 0;
     list-style: none;
     margin: 0;
     padding: var(--space-1);
@@ -795,8 +797,6 @@
     translate: none;
     width: 100%;
     max-height: calc(100dvh - var(--keyboard));
-    display: flex;
-    flex-direction: column;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     padding-top: var(--inset-top);
   }
@@ -812,7 +812,6 @@
   /* Room for more of them, now that each is taller, and the last one clears the
      gesture bar. */
   :global([data-touch]) ul {
-    min-height: 0;
     max-height: 60dvh;
     padding-bottom: var(--touch-bottom);
   }

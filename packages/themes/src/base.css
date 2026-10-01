@@ -527,18 +527,42 @@ select option {
    the same eight lines, and the drift was already on screen - one opened six vh
    above the others and each picked its own width.
 
-   How wide is the caller's, as `--screen-width`; how far down is too, because a
-   list of commands wants to start higher than a question does. */
+   How big is one rule for all of them, in tokens.css: the width is the caller's
+   `--screen-width`, which is one of the `--screen-*` steps, and it hangs from
+   `--screen-top`, no taller than `--screen-tall` or than the window leaves. */
 .nib-screen {
   position: fixed;
-  top: 22vh;
+  top: var(--screen-top);
   left: 50%;
   translate: -50% 0;
-  width: min(var(--screen-width, 23rem), calc(100vw - var(--space-7)));
+  width: min(var(--screen-width, var(--screen-ask)), calc(100vw - 2 * var(--screen-gutter)));
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
+}
+
+/* The height on a desktop. A phone's layers are sheets from the bottom and pages the
+   size of the screen, each sized by its own rule, which is why all three of these
+   name the desktop rather than wait to be undone. */
+:root:not([data-touch]) .nib-screen {
+  max-height: min(var(--screen-tall), calc(100dvh - var(--screen-top) - var(--screen-gutter)));
+}
+
+/* A layer whose size does not change while it is up - nothing in it is typed into a
+   list - stands in the middle of the window rather than hanging from a line. */
+:root:not([data-touch]) .nib-screen.is-centred {
+  top: 50%;
+  translate: -50% -50%;
+  max-height: min(var(--screen-tall), calc(100dvh - 2 * var(--screen-gutter)));
+}
+
+/* And one with several things to show in one place - panes, versions, themes - is
+   one height whichever is showing, so moving between them never resizes it and a
+   short pane leaves room under it, the way Obsidian's and Notion's settings do.
+   `--screen-height` for one that has to be shorter than the rest. */
+:root:not([data-touch]) .nib-screen.is-steady {
+  height: min(var(--screen-height, var(--screen-tall)), calc(100dvh - 2 * var(--screen-gutter)));
 }
 
 /* ── Out of anybody's hands ────────────────── */
@@ -1509,10 +1533,19 @@ select:focus-visible,
    A choice that cannot be honoured right now - a scheme the theme in force does
    not have - stays in the row rather than being taken out of it, so the control
    does not change shape as the thing above it is chosen. What it looks like
-   while it cannot be pressed is the one disabled fade above, not a copy here. */
+   while it cannot be pressed is the one disabled fade above, not a copy here.
+
+   A grid of equal halves rather than a row of `flex: 1` ones. A row asked how wide it
+   wanted to be answered with the sum of its words and then shared that out evenly, so
+   the longer word got less than it needed and broke: "nibeditor's own" over two lines
+   in a groove exactly as wide as both words. Equal columns are each as wide as the
+   widest word, so a groove left to its own width is one where no half wraps; where a
+   row is too narrow for that, the halves give way together as they always did. */
 .nib-segmented {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   gap: 2px;
   padding: 3px;
   border-radius: var(--radius-md);
@@ -1576,7 +1609,6 @@ select:focus-visible,
 }
 
 .nib-segmented button {
-  flex: 1;
   min-height: var(--row-height);
   display: flex;
   align-items: center;

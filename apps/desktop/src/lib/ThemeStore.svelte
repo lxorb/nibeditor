@@ -166,7 +166,7 @@
   <!-- Named by whatever heads it, which is the theme being looked at or the
        store itself: the same words, once. -->
   <div
-    class="sheet"
+    class="nib-screen is-centred is-steady sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -390,22 +390,16 @@
     --scrim-ink: 55%;
   }
 
-  /* A little inside the settings sheet it sits on, so the one underneath is
-     still visibly there. */
+  /* `.nib-screen` in the themes package, a gutter inside the settings sheet it sits
+     on on every side, so the one underneath is still visibly there. */
   .sheet {
-    position: fixed;
-    top: 13vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(52rem, calc(100vw - 4rem));
-    height: 68vh;
+    --screen-gutter: calc(2 * var(--space-5));
+    --screen-width: calc(var(--screen-panes) - 2 * var(--space-5));
+    --screen-height: calc(var(--screen-tall) - 2 * var(--space-5));
+
     z-index: var(--z-store);
     display: grid;
     grid-template-rows: auto 1fr;
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
   }
 
