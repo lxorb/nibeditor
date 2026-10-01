@@ -12,7 +12,8 @@ import { log } from '../log'
 import { theme } from '../theme.svelte'
 import { invoke } from '../tauri'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'
-import { review, stamped } from './validate'
+import { stamped } from './stamp'
+import { review } from './validate'
 
 /** How the grid is ordered. Newest first is what a store is looked at for; by
  *  name is what it is come back to. */

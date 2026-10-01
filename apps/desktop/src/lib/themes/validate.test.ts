@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { review, stamped, stampOf } from './validate'
+import { stamped, stampOf } from './stamp'
+import { review } from './validate'
 
 /** The rules a theme from the store is held to. Every one of these is something
  *  a stylesheet from a stranger could do to the app if it were applied as it
