@@ -336,7 +336,7 @@ def the_bar(page: Page) -> None:
     # The bar's own button now writes that colour without being asked.
     select(page, at(page, "A plain"), at(page, "A plain", 7))
     page.wait_for_timeout(300)
-    page.locator('.nib-bar-at button[title="Highlight"]').click()
+    page.locator('.nib-bar-at button[aria-label="Highlight"]').click()
     page.wait_for_timeout(400)
     text = page.evaluate("() => window.nib.state.doc.toString()")
     is_true("==\U0001F534 A plain==" in text, "the button writes the colour that stuck")
