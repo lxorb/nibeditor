@@ -1,0 +1,254 @@
+import { describe, expect, test } from 'vitest'
+import { SharedDoc } from '@nib/editor'
+import { TEXT } from '@nib/rooms'
+import { hash32 } from '@nib/sync-core/seed'
+import { Clock, ReferenceAccount, SEEDED } from '@nib/sync-core/sim'
+import { frame, unframe } from '@nib/sync-core/wire'
+import { attach } from './binding'
+import { HERE } from './docs'
+import { Engine } from './engine'
+import { MemoryDisk } from './memory-disk'
+import { MemoryStore } from './memory-store'
+import { put, type Change } from './store'
+import { numbersRow, wantedRow } from './records'
+import { seedUpdate } from '@nib/sync-core/seed'
+import type { World } from './world'
+import * as Y from 'yjs'
+
+/** The engine's own promises, held to one device with an account in memory (the
+ *  simulator kit's reference one): what a keystroke costs, what a crash loses, when a
+ *  client id turns over, what an open note hears from another device, and that a held
+ *  note neither goes up nor takes anything in (docs/sync-v2.md sections 5.2 to 5.4 and
+ *  9.3). The simulator's ten thousand seeds are sim.test.ts. */
+
+const ROOT = '/device/space'
+const SPACE = 'sim'
+
+interface Device {
+  store: MemoryStore
+  disk: MemoryDisk
+  account: ReferenceAccount
+  routes: string[]
+  online: boolean
+  engine: Engine
+  launch(): Promise<Engine>
+}
+
+/** One device holding the simulator's two seeded notes, the way a migrated one does. */
+async function device(account = new ReferenceAccount(new Clock(), SEEDED), id = 'd0'): Promise<Device> {
+  const store = new MemoryStore(id)
+  const disk = new MemoryDisk()
+  const seeding = store.open()
+  const changes: Change[] = [
+    put('spaces', { space_id: SPACE, root: ROOT, cursor: SEEDED.length, role: 'owner', store: null }),
+    put('meta', wantedRow(SPACE, new Map())),
+  ]
+  SEEDED.forEach((note, index) => {
+    const confirmed = seedUpdate(note.id, 1, note.text)
+    changes.push(
+      put('entries', {
+        id: note.id,
+        space_id: SPACE,
+        kind: 'note',
+        parent: null,
+        name: note.name,
+        local_path: note.name,
+        file_key: null,
+        written_hash: null,
+        mtime: null,
+        size: null,
+        seq: index + 1,
+        deleted: false,
+      }),
+      put('docs', {
+        id: note.id,
+        epoch: 1,
+        // One client id per device per note: two devices sharing one would be two
+        // different operations under one name.
+        client_id: hash32(id, note.id, index),
+        confirmed,
+        confirmed_sv: Y.encodeStateVectorFromUpdateV2(confirmed),
+        pending: null,
+        pending_at: null,
+      }),
+      put('meta', numbersRow(note.id, { seq: 1, pulled: index + 1, pending: false, flight: null })),
+      put('written', { id: note.id, text: note.text }),
+    )
+    disk.files.set(`${ROOT}/${note.name}`, note.text)
+  })
+  await seeding.write(changes)
+  await seeding.cleanExit(true)
+
+  const made: Device = {
+    store,
+    disk,
+    account,
+    routes: [],
+    online: true,
+    engine: null as unknown as Engine,
+    async launch() {
+      const world: World = {
+        disk,
+        account: {
+          ask: async (route, body) => {
+            if (!made.online || route === 'prepare') return null
+            made.routes.push(route)
+            return unframe(await account.handle(id, route, frame(body)))
+          },
+        },
+        name: id,
+        now: () => 1000,
+        random: Math.random,
+        digest: (text) => Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
+        join: (root, path) => `${root}/${path}`,
+        foldsCase: true,
+        platform: 'other',
+      }
+      made.engine = await Engine.start(world, store.open(), { freshens: false })
+      return made.engine
+    },
+  }
+  await made.launch()
+  return made
+}
+
+const PLAN = 'n1'
+
+async function textOn(account: ReferenceAccount, id: string): Promise<string> {
+  return (await account.view()).texts[id] ?? ''
+}
+
+describe('a keystroke', () => {
+  test('writes nothing: no store write, no file, no request', async () => {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const writes = one.store.writes
+    const files = new Map(one.disk.files)
+
+    for (let at = 0; at < 50; at++) doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'x'), HERE)
+
+    expect(one.store.writes).toBe(writes)
+    expect(one.disk.files).toEqual(files)
+    expect(one.routes).toEqual([])
+    // The pause writes it, once.
+    await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    expect(one.store.writes).toBe(writes + 1)
+  })
+})
+
+describe('a crash', () => {
+  test('loses only what was typed since the last pause, and the next launch turns the client over', async () => {
+    const one = await device()
+    let doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'saved '), HERE)
+    await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'lost '), HERE)
+
+    // Gone at once: nothing flushed, the session never said it ended cleanly.
+    one.engine.stop()
+    const again = await one.launch()
+    doc = await again.hold(PLAN)
+
+    expect(doc?.text().startsWith('saved We ship')).toBe(true)
+    expect(doc?.text()).not.toContain('lost')
+    expect(doc?.client).not.toBe(before)
+  })
+
+  test('after a clean quit the client id stays, so a state vector stays one entry a device', async () => {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    await one.engine.quit()
+    one.engine.stop()
+
+    const again = await one.launch()
+    const reopened = await again.hold(PLAN)
+    expect(reopened?.client).toBe(before)
+    expect(reopened?.text().startsWith('kept We ship')).toBe(true)
+  })
+})
+
+describe('an open note', () => {
+  test('opens with its file’s words, and the document joins without changing them', async () => {
+    const one = await device()
+    const note = new SharedDoc(one.disk.files.get(`${ROOT}/Plan.md`) ?? '')
+    let changed = 0
+    note.onChange = () => (changed += 1)
+
+    const part = await attach(one.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
+    expect(part).not.toBeNull()
+    expect(changed).toBe(0)
+    expect(note.text.toString()).toBe(SEEDED[0]?.text)
+    part?.()
+  })
+
+  test('words typed before the document arrived go into it as this device’s', async () => {
+    const one = await device()
+    const note = new SharedDoc(`Typed first. ${SEEDED[0]?.text ?? ''}`)
+    await attach(one.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
+    expect((await one.engine.core.doc(PLAN))?.text()).toBe(note.text.toString())
+  })
+
+  test('another device’s words arrive as the edit they are, and nothing typed here moves', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+
+    const note = new SharedDoc(SEEDED[0]?.text ?? '')
+    const arrived: unknown[] = []
+    const arrive = note.arrived.bind(note)
+    note.arrived = (changes) => {
+      arrived.push(changes)
+      arrive(changes)
+    }
+    await attach(here.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
+
+    const doc = await there.engine.hold(PLAN)
+    doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(doc.live?.getText(TEXT).length ?? 0, 'From there.'), HERE)
+    await there.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    await there.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    expect(note.text.toString()).toBe(`${SEEDED[0]?.text ?? ''}From there.`)
+    // One small edit at the end, not the whole note replaced.
+    expect(arrived).toEqual([[{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }]])
+  })
+})
+
+describe('a held note', () => {
+  test('is never pushed and never takes the account’s words in, until it is answered', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    const rewrite = async (one: Device, words: string) => {
+      const doc = await one.engine.hold(PLAN)
+      const text = doc?.text() ?? ''
+      doc?.live?.transact(() => {
+        doc.live?.getText(TEXT).delete(0, 36)
+        doc.live?.getText(TEXT).insert(0, words)
+      }, HERE)
+      void text
+      await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    }
+
+    await rewrite(there, 'The release goes out on Friday morning whatever the review says ')
+    await there.engine.pass(SPACE)
+    await rewrite(here, 'Let us hold the whole release until every reviewer has signed off ')
+    await here.engine.pass(SPACE)
+    expect(here.engine.core.isHeld(PLAN)).toBe(true)
+
+    const mine = (await here.engine.core.doc(PLAN))?.text()
+    here.routes.length = 0
+    await there.engine.saved(`${ROOT}/Plan.md`, 'ignored')
+    await here.engine.pass(SPACE)
+    expect(here.routes).not.toContain('push')
+    expect((await here.engine.core.doc(PLAN))?.text()).toBe(mine)
+    expect(await textOn(account, PLAN)).toContain('Friday')
+
+    await here.engine.held.answer(PLAN, 'mine')
+    await here.engine.pass(SPACE)
+    expect(await textOn(account, PLAN)).toContain('Let us hold the whole release')
+  })
+})
