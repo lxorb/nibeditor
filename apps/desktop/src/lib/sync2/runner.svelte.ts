@@ -442,7 +442,10 @@ class Runner {
       if (op.op === 'created') {
         const document = op.key ? workspace.documents.find((one) => one.key === op.key) : undefined
         const text = op.kind === 'folder' ? undefined : (document?.latest ?? (await engine.core.world.disk.read(op.path)) ?? '')
-        await engine.created(op.path, op.kind === 'folder', text)
+        // A day's note the append action made starts from nothing, which is what two of
+        // them made apart are merged against.
+        const mergeable = this.mergeables.delete(op.path) ? '' : undefined
+        await engine.created(op.path, op.kind === 'folder', text, mergeable)
         this.rebind()
       } else if (op.op === 'moved') {
         if (op.kind === 'space') {
@@ -459,6 +462,13 @@ class Runner {
     return done.catch((error: unknown) => {
       log('error', `sync: ${op.op} - ${String(error)}`)
     })
+  }
+
+  /** Paths of notes about to be made by the append action: made `mergeable`. */
+  private readonly mergeables = new Set<string>()
+
+  mergeable(path: string) {
+    this.mergeables.add(path)
   }
 
   /** Autosave wrote a note: recorded, and what was typed is one more pending update. */

@@ -119,6 +119,9 @@ const ran: string[] = []
 
 vi.mock('../commands', () => ({ appCommands: () => rows }))
 vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
+// A note the append action makes is said to sync as one that may be merged with the day's
+// note another device made; nothing here is about syncing.
+vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
 const { appendNote, openNote, runCommand } = await import('./acts')
 

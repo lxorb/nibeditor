@@ -144,6 +144,15 @@ export async function newNote(args: Said): Promise<unknown> {
   // opens it, which is the right thing for every other caller.
   const wasShowing = workspace.activeTabId
 
+  // The day's note a shortcut appends to, made here while another device may be making
+  // it too: under sync v2 the account folds two such notes into one rather than
+  // numbering the second (docs/sync-v2.md 5.9). Imported here: syncing reads the
+  // workspace, and the two would import each other.
+  if (append) {
+    const { sync } = await import('../sync.svelte')
+    sync.mergeable(path)
+  }
+
   const folder = folderOf(relative)
   await workspace.createNote(
     folder ? insideSpace(space.root, folder) : space.root,

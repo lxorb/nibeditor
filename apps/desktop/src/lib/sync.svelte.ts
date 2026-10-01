@@ -372,6 +372,13 @@ class Sync {
     else this.nudge()
   }
 
+  /** A note about to be made that means "this note, if it is not there yet": the day's
+   *  note the append action makes. Under v2 the account merges it into one of the same
+   *  name another device made meanwhile; v1 has no such thing. */
+  mergeable(path: string): void {
+    this.v2?.mergeable(path)
+  }
+
   /** Something changed here, so the next pass should not wait out whatever slow
    *  interval the loop had settled into - and should not be pushed back either. A
    *  note saved in the first instant of a launch used to shove the pass that was
