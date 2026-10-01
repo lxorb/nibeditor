@@ -565,7 +565,17 @@ function holds(tail: string): boolean {
  *  (reloading.svelte.ts), both here before a deploy can take a chunk away; what the page
  *  then does about it (reload-when.ts) is fetched at the launch's last turn. What paid
  *  for them is page-setup.ts, 8,977 bytes the settings held in front of the first paint
- *  for three constants: those are paper.ts now, and the measuring waits for a print. */
+ *  for three constants: those are paper.ts now, and the measuring waits for a print.
+ *
+ *  Not raised 2026-10-01, and room made under it instead, from a main at 3,210,163 and
+ *  377 that every lane was fighting over: the launch round left the ceiling where it
+ *  was so that the room is real. The theme gallery's store, its catalogue and the
+ *  reviewer, which App.svelte imported for a drive's handle and so carried into every
+ *  launch, when all a launch reads off a theme file is its stamp (themes/stamp.ts);
+ *  and the table of the service's calls with the shapes they answer with (api/routes.ts,
+ *  forty-two kilobytes), which nothing asks for before somebody is signed in and
+ *  something is sent. `api` keeps its name and its types, and each call waits on the
+ *  table, which is warmed at the last turn. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
 
@@ -882,6 +892,15 @@ describe('what the app evaluates before it draws anything', () => {
     // and warmed at the last turn (see menu.svelte.ts).
     ['/lib/query-block.ts', "a query fence's rows"],
     ['/lib/note-cover.ts', "a note's cover, written"],
+    // The theme gallery's store, the catalogue it reads and the reviewer every theme
+    // from it goes through, which the shell carried for a drive's handle; what a launch
+    // reads off an installed theme is its stamp (themes/stamp.ts). And the table of the
+    // service's calls with the shapes they answer with, fetched by the first call and
+    // warmed at the last turn; see api.ts.
+    ['/lib/themes/store.svelte.ts', "the theme gallery's store"],
+    ['/lib/themes/registry.ts', 'the theme catalogue'],
+    ['/lib/themes/validate.ts', 'the theme reviewer'],
+    ['/lib/api/routes.ts', "the service's calls"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

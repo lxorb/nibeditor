@@ -72,7 +72,6 @@
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
-  import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { saveFront } from './lib/save-place/door'
@@ -506,10 +505,6 @@
         // apps/desktop/test/e2e/phone-bar.py.
         toolbar,
         pull,
-        // The gallery, which a drive cannot reach by pointing: it sits over the
-        // settings sheet, and the launch opens it by itself for a reader whose
-        // system asks for more contrast. See start.ts.
-        themeStore,
         viewport,
         links,
         views,
@@ -527,7 +522,10 @@
     // that pays for them, and awaited by every drive the same way the space is:
     // nothing reaches any of these before the space is open. The agents' stand-in is
     // how a drive sees Settings > Agents in a browser, which has no crate to ask; see
-    // agents/settings/fake.ts.
+    // agents/settings/fake.ts. And the theme gallery, which a drive cannot reach by
+    // pointing either: it sits over the settings sheet. Its store brings the catalogue
+    // and the reviewer every installed theme goes through, and a shell that imported it
+    // for this handle carried both into every launch; see test/weight.test.ts.
     void Promise.all([
       import('./lib/importing.svelte'),
       import('./lib/publishing.svelte'),
@@ -535,16 +533,20 @@
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync2/fake-engine.svelte'),
       import('./lib/agents/settings/fake'),
-    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }]) => {
-      Object.assign((window as unknown as { nibApp: object }).nibApp, {
-        agents: { standIn },
-        ai,
-        importing,
-        publish,
-        rewriting,
-        sync2,
-      })
-    })
+      import('./lib/themes/store.svelte'),
+    ]).then(
+      ([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }, { store }]) => {
+        Object.assign((window as unknown as { nibApp: object }).nibApp, {
+          agents: { standIn },
+          ai,
+          importing,
+          publish,
+          rewriting,
+          sync2,
+          themeStore: store,
+        })
+      },
+    )
   }
 
   /** A canvas and a page note, which have a bar of their own with a way to add. */

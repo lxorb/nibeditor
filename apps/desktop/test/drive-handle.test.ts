@@ -97,7 +97,6 @@ describe('the handle a drive reads the app through', () => {
     'shortcuts',
     'sync',
     'theme',
-    'themeStore',
     'toolbar',
     'viewport',
     'views',
@@ -106,11 +105,15 @@ describe('the handle a drive reads the app through', () => {
     expect(listed).toMatch(new RegExp(`(^|[\\s,])${name},`))
   })
 
-  /** The four that arrive after their module does; see the Promise.all below the
-   *  handle in App.svelte. */
-  test.each(['ai', 'importing', 'publish', 'rewriting'])('%s arrives on it later', (name) => {
-    const later = APP.slice(APP.indexOf('nibApp: {') + listed.length)
-    expect(later).toContain(`Object.assign((window as unknown as { nibApp: object }).nibApp`)
-    expect(later).toMatch(new RegExp(`${name}[,:]`))
-  })
+  /** The ones that arrive after their module does; see the Promise.all below the
+   *  handle in App.svelte. The theme gallery's store is among them, because importing
+   *  it for the handle carried it into every launch's first paint. */
+  test.each(['ai', 'importing', 'publish', 'rewriting', 'themeStore'])(
+    '%s arrives on it later',
+    (name) => {
+      const later = APP.slice(APP.indexOf('nibApp: {') + listed.length)
+      expect(later).toContain(`Object.assign((window as unknown as { nibApp: object }).nibApp`)
+      expect(later).toMatch(new RegExp(`${name}[,:]`))
+    },
+  )
 })

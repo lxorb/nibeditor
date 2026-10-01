@@ -31,6 +31,7 @@
 
 import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
 import { door } from '@nib/markdown/door'
+import { warmCalls } from './api'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
@@ -422,6 +423,9 @@ export async function warmDoors(): Promise<void> {
     // And what a cover row in a note's menu writes, so the file chooser it opens is
     // opened in the press that asked; see `coverEntries` in menu.svelte.ts.
     import('./note-cover'),
+    // The table of the service's calls, so the first sign-in, share or pass of sync
+    // is a request and not a fetch and then a request; see api.ts.
+    warmCalls(),
     // Before a deploy can take it away; see reloading.svelte.ts.
     import('./reload-when'),
     // Where the keyboard was, put back as the window or a layer gives it back.

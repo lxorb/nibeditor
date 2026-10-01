@@ -169,7 +169,7 @@ vi.mock('./tauri', () => ({
 vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
 const { theme } = await import('./theme.svelte')
-const { stamped } = await import('./themes/validate')
+const { stamped } = await import('./themes/stamp')
 
 /** A theme that states both schemes, and one that states a single one. */
 const PAIR = `[data-theme=light] { --bg: #fff; }\n[data-theme=dark] { --bg: #000; }`

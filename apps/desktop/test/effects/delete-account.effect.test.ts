@@ -14,7 +14,12 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import DeleteAccount from '../../src/lib/DeleteAccount.svelte'
 import { account } from '../../src/lib/account.svelte'
-import type { RemoteSpace } from '../../src/lib/api'
+import { type RemoteSpace, warmCalls } from '../../src/lib/api'
+
+// The table of the service's calls, which the app fetches at the launch's last turn
+// and a test fetches here, so the sign-out at the end is a request and not a module
+// load first; see api.ts.
+await warmCalls()
 
 /** jsdom has no animations, and the flow fades in. */
 Element.prototype.animate = () =>

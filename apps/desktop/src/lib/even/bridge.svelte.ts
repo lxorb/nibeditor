@@ -266,7 +266,7 @@ class Bridge {
       // reader's own phrases, because a rebound one is the one they will say.
       settled: (said) => settled(said, modes.glassesWords),
       // The connection, up before there is anything to send through it.
-      warm: () => api.warm(),
+      warm: () => void api.warm(),
       transcribe: (wav) => this.transcribe(wav),
       heard: (heard) => this.heard(heard.said, heard.ended),
       failed: (said) => this.flash(said),

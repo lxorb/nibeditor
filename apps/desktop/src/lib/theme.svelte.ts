@@ -27,7 +27,7 @@ import {
   type ThemeValue,
   valueOf,
 } from './themes/settings'
-import { type Stamp, stampOf } from './themes/validate'
+import { type Stamp, STAMP_LINE, stampOf } from './themes/stamp'
 
 export type Scheme = 'dark' | 'light'
 
@@ -140,10 +140,6 @@ const LIGHT = '(prefers-color-scheme: light)'
  *  to: a theme is chosen, and a system changing its mind does not get to choose
  *  one. See `offerTheContrastTheme`. */
 const MORE = '(prefers-contrast: more)'
-
-/** The line the store writes on the front of a theme it installs. Taken off
- *  before the file is read for what it sets: what it says is a name, not CSS. */
-const STAMP_LINE = /^\s*\/\*!\s*nib-theme\s*\{.*?\}\s*\*\//
 
 /** The app's own settings, a function because their labels follow the language. */
 function appSettings(): ThemeSetting[] {
