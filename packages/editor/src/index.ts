@@ -1,5 +1,6 @@
 export { createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
 export { HeldState, type StateView } from './held'
+export { parsedOnScreen } from './parse-ahead'
 export { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
 export {
   type DocView,
