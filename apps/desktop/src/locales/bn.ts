@@ -92,6 +92,8 @@ export const bn: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'লুকানো ট্যাব',
+  'Keep running': 'চালু রাখুন',
   'Keep open': 'খোলা রাখুন',
   Open: 'খুলুন',
   Rename: 'নাম বদল',

@@ -92,6 +92,8 @@ export const id: Dictionary = {
   'Move to other pane': 'Pindahkan ke panel lain',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab menurut urutan pemakaian',
+  'Hidden tabs': 'Tab tersembunyi',
+  'Keep running': 'Tetap berjalan',
   'Keep open': 'Biarkan terbuka',
   Open: 'Buka',
   Rename: 'Ganti nama',

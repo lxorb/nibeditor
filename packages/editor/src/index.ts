@@ -163,7 +163,7 @@ export {
   setShortcutKeys,
   shortcutEffect,
 } from './shortcuts'
-export { caretLine, placeAt, showLine, topLine } from './scroll'
+export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
 export { ChangeSet, EditorState, StateEffect, Text } from '@codemirror/state'
 export type { StateCommand, Transaction, TransactionSpec } from '@codemirror/state'

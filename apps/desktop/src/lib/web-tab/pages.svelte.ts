@@ -684,7 +684,16 @@ class Pages {
 
     void this.look(tabId)
     clearTimeout(page.parking)
-    page.parking = setTimeout(() => void this.park(tabId), PARKED_AFTER)
+    page.parking = setTimeout(() => void this.rest(tabId), PARKED_AFTER)
+  }
+
+  /** Parks a page nobody has looked at for a while, unless it is playing: Chrome's memory
+   *  saver never takes a tab that is heard, and a song in a space out of sight is one
+   *  somebody kept running on purpose. Asked again after the same wait. */
+  private async rest(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!page?.playing) return this.park(tabId)
+    page.parking = setTimeout(() => void this.rest(tabId), PARKED_AFTER)
   }
 
   /** Parks the page and keeps the tab: the webview goes and everything about where the
@@ -820,7 +829,7 @@ class Pages {
    *  side are two pages somebody is looking at, and a page that went out from under the
    *  reader because a seventh tab was opened somewhere else would be the worst kind of
    *  saving. So the cap is only ever spent on pages nobody can see, and a window with
-   *  more panes than the cap keeps them all. */
+   *  more panes than the cap keeps them all; nor on one playing, which is heard. */
   private bound(tabId: string) {
     this.of(tabId).looked = Date.now()
 
@@ -828,7 +837,9 @@ class Pages {
     const over = running - LIVE_AT_MOST
     if (over <= 0) return
 
-    const hidden = [...this.held.entries()].filter(([, page]) => page.live && !page.shown)
+    const hidden = [...this.held.entries()].filter(
+      ([, page]) => page.live && !page.shown && !page.playing,
+    )
     const oldest = hidden.sort(([, one], [, other]) => one.looked - other.looked)
     for (const [id] of oldest.slice(0, over)) void this.park(id)
   }

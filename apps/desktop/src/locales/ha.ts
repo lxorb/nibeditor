@@ -92,6 +92,8 @@ export const ha: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'Ɓoyayyun shafuka',
+  'Keep running': 'Ci gaba da aiki',
   'Keep open': 'Bar a buɗe',
   Open: 'Buɗe',
   Rename: 'Sauya suna',

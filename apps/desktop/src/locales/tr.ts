@@ -92,6 +92,8 @@ export const tr: Dictionary = {
   'Move to other pane': 'Diğer bölmeye taşı',
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',
+  'Hidden tabs': 'Gizli sekmeler',
+  'Keep running': 'Çalışmaya devam',
   'Keep open': 'Açık tut',
   Open: 'Aç',
   Rename: 'Yeniden adlandır',

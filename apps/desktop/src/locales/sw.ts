@@ -92,6 +92,8 @@ export const sw: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'Vichupo vilivyofichwa',
+  'Keep running': 'Endelea kufanya kazi',
   'Keep open': 'Weka wazi',
   Open: 'Fungua',
   Rename: 'Badilisha jina',

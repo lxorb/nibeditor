@@ -29,6 +29,7 @@
   import { commitSpaceName, newSpace, spaceMenu } from './space-actions'
   import SharedMark from './SharedMark.svelte'
   import SpaceMark from './SpaceMark.svelte'
+  import { spaceSound } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { isShared, sharedWithYou } from './sharing.svelte'
   import { type Space, workspace } from './workspace.svelte'
@@ -217,6 +218,9 @@
                same shape a tab uses for "not written down yet". -->
           {#if isShared(space.root)}
             <SharedMark />
+          {/if}
+          {#if spaceSound.asked}
+            {#await spaceSound.asked then Sound}<Sound id={space.id} />{/await}
           {/if}
         </button>
 

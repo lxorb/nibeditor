@@ -34,8 +34,8 @@ vi.mock('../tauri', () => ({
 
 vi.mock('../account.svelte', () => ({ account: { signedIn: false } }))
 
-const { applySpaceOrder, deleteSpace, loadSpaces, moveSpace, renameSpace } =
-  await import('./spaces')
+const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
+const { deleteSpace, renameSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('../workspace.svelte').Space
 

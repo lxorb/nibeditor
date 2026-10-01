@@ -92,6 +92,8 @@ export const ptPT: Dictionary = {
   'Move to other pane': 'Mover para o outro painel',
   Tabs: 'Separadores',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de utilização',
+  'Hidden tabs': 'Separadores ocultos',
+  'Keep running': 'Continuar a correr',
   'Keep open': 'Manter aberta',
   Open: 'Abrir',
   Rename: 'Renomear',

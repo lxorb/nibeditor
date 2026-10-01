@@ -142,9 +142,11 @@ export interface Session {
   lastRight?: Panel | null
   /** Which panels the build that wrote this knew, so one it did not is homed. */
   known?: Panel[]
+  /** The tab sets of the spaces not on screen, read by workspace/sets.ts. */
+  sets?: unknown
 }
 
-function isPanel(value: unknown): value is Panel {
+export function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
@@ -364,6 +366,7 @@ export function readSession(value: unknown): Session | null {
     ...(isPanel(value.rightPanel) ? { rightPanel: value.rightPanel } : {}),
     ...(isPanel(value.lastRight) ? { lastRight: value.lastRight } : {}),
     ...(Array.isArray(value.known) ? { known: value.known.filter(isPanel) } : {}),
+    ...(value.sets === undefined ? {} : { sets: value.sets }),
     positions: readPositions(value.positions),
     ...(layout ? { layout } : {}),
     ...(drafts ? { tabs: drafts } : {}),

@@ -92,6 +92,8 @@ export const ml: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'മറഞ്ഞിരിക്കുന്ന ടാബുകൾ',
+  'Keep running': 'പ്രവർത്തിക്കട്ടെ',
   'Keep open': 'തുറന്നിരിക്കട്ടെ',
   Open: 'തുറക്കുക',
   Rename: 'പേരുമാറ്റുക',

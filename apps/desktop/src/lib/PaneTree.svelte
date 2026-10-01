@@ -93,22 +93,22 @@
     style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
     style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
   >
-    <!-- A side as an item, not `split.sides[i]`: a pane's teardown reads it once a
-         collapsing split is null, and an item keeps the last side. -->
-    {#each split.sides as side, at (side.id)}
-      {#if at === 1 && kept < 0}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="divider"
-          onpointerdown={(event) => grab(event, split)}
-          ondblclick={() => workspace.panes.equalise(split.id)}
-        ></div>
-      {/if}
+    {#if kept !== 1}
+      <div class="side"><PaneTree frame={split.sides[0]} /></div>
+    {/if}
 
-      {#if kept < 0 || kept === at}
-        <div class="side"><PaneTree frame={side} /></div>
-      {/if}
-    {/each}
+    {#if kept < 0}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="divider"
+        onpointerdown={(event) => grab(event, split)}
+        ondblclick={() => workspace.panes.equalise(split.id)}
+      ></div>
+    {/if}
+
+    {#if kept !== 0}
+      <div class="side"><PaneTree frame={split.sides[1]} /></div>
+    {/if}
   </div>
 {:else if frame.kind === 'pane'}
   <Pane pane={frame} />

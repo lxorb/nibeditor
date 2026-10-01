@@ -92,6 +92,8 @@ export const jv: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'Tab sing didhelikake',
+  'Keep running': 'Tetep mlaku',
   'Keep open': 'Bukak terus',
   Open: 'Bukak',
   Rename: 'Ganti jeneng',

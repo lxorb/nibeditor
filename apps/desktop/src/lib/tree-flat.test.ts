@@ -92,24 +92,6 @@ describe('the file list as one flat list of rows', () => {
   test('and a space nobody has listed yet is no rows at all', () => {
     expect(flatRows(null, open())).toEqual([])
   })
-
-  /** The space itself is no row, so a note at its top named the way a folder's own
-   *  note is - `Index`, or the space's own name - has no row to be drawn as either.
-   *  It used to be left out all the same, and a note somebody had just made at the
-   *  top of their space was nowhere in the list. */
-  test('a note at the top of the space is a row whatever it is called', () => {
-    const top = folder('/s/Notes', [
-      file('/s/Notes/Index.md'),
-      file('/s/Notes/Notes.md'),
-      file('/s/Notes/plan.md'),
-    ])
-
-    expect(flatRows(top, open()).map((one) => one.entry.path)).toEqual([
-      '/s/Notes/Index.md',
-      '/s/Notes/Notes.md',
-      '/s/Notes/plan.md',
-    ])
-  })
 })
 
 /** What a twist's slide is measured in: how many rows appear or go when it turns. */

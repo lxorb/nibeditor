@@ -92,6 +92,8 @@ export const my: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'ဝှက်ထားသော တဘ်များ',
+  'Keep running': 'ဆက်လုပ်ဆောင်ပါ',
   'Keep open': 'ဖွင့်ထား',
   Open: 'ဖွင့်',
   Rename: 'အမည်ပြောင်း',

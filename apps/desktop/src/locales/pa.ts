@@ -92,6 +92,8 @@ export const pa: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'ਲੁਕੀਆਂ ਟੈਬਾਂ',
+  'Keep running': 'ਚੱਲਣ ਦਿਓ',
   'Keep open': 'ਖੁੱਲ੍ਹਾ ਰੱਖੋ',
   Open: 'ਖੋਲ੍ਹੋ',
   Rename: 'ਨਾਂ ਬਦਲੋ',

@@ -92,6 +92,8 @@ export const ptBR: Dictionary = {
   'Move to other pane': 'Mover para o outro painel',
   Tabs: 'Abas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de uso',
+  'Hidden tabs': 'Abas ocultas',
+  'Keep running': 'Continuar rodando',
   'Keep open': 'Manter aberta',
   Open: 'Abrir',
   Rename: 'Renomear',

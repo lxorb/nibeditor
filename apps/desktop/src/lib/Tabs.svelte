@@ -13,7 +13,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { heldMark } from './surfaces.svelte'
+  import { heldMark, soundMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -555,6 +555,9 @@
     const from = arrival(id)
     const duration = dur(210)
 
+    // A space's own set in place of the last: the strip arrives whole, in place.
+    if (workspace.panes.swapping) return risen(x)
+
     // Carried in from another strip: it slides from where it was let go.
     if (from) {
       const rect = node.getBoundingClientRect()
@@ -583,9 +586,22 @@
     }
   }
 
+  /** A space's own set arriving: in where it stands, rising the last few pixels. */
+  const risen = (x = 0) => ({
+    duration: dur(150),
+    easing: quintOut,
+    css: (t: number, u: number) => `opacity: ${t}; transform: translate(${x}px, ${u * 4}px)`,
+  })
+
+  /** A strip that came with a space's set, which arrives with it; its tabs are drawn as
+   *  the strip is and do not arrive one by one. */
+  const together = (_node: Element) => (workspace.panes.swapping ? risen() : { duration: dur(0) })
+
   function leave(node: HTMLElement) {
     const width = widthOf(node)
-    return { duration: dur(210), easing: quintOut, css: (t: number) => `width: ${t * width}px` }
+    // The set put aside goes at once, so no frame shows two sets.
+    const duration = workspace.panes.swapping ? 0 : dur(210)
+    return { duration, easing: quintOut, css: (t: number) => `width: ${t * width}px` }
   }
 
   /* ── A note out of the file list, or a link out of another app ─────── */
@@ -690,7 +706,7 @@
      not been focused, and the key has to reach the drag wherever the keyboard is. -->
 <svelte:window onkeydowncapture={keyed} />
 
-<div class="strip">
+<div class="strip" in:together|global>
   <!-- Where this pane has been. Two arrows, at the head of the strip the way
        every browser puts them, and only in a pane that has been anywhere: a note
        opened and read is not a journey. Each says whether it can go, rather than
@@ -900,20 +916,7 @@
           {#if tab.kind === 'web' && parts.title}
             {@const heard = pages.of(tab.id)}
             {#if heard.playing}
-              <svg
-                class="reading"
-                viewBox="0 0 14 14"
-                role="img"
-                aria-label={heard.muted ? t('Muted') : t('Playing audio')}
-                transition:fade={{ duration: dur(140) }}
-              >
-                <path d="M2.5 5.2h2L7.6 2.8v8.4L4.5 8.8h-2z" />
-                <path
-                  d={heard.muted
-                    ? 'M9.6 5.4l3 3m0-3-3 3'
-                    : 'M9.8 5a2.9 2.9 0 0 1 0 4M11.6 3.4a5.2 5.2 0 0 1 0 7.2'}
-                />
-              </svg>
+              {#await soundMark() then Sound}<Sound muted={heard.muted} />{/await}
             {/if}
           {/if}
           <!-- Not yours: this document is one somebody else shared on its own, and
@@ -1258,7 +1261,8 @@
      list. */
   .reading,
   .label,
-  .here {
+  .here,
+  .tab :global(.sound) {
     margin-inline-start: 6px;
   }
 

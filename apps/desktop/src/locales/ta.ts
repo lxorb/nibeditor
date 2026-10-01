@@ -92,6 +92,8 @@ export const ta: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'மறைந்த தாவல்கள்',
+  'Keep running': 'இயங்கட்டும்',
   'Keep open': 'திறந்தே வை',
   Open: 'திற',
   Rename: 'மறுபெயரிடு',

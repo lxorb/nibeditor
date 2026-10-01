@@ -92,6 +92,8 @@ export const fil: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'Mga nakatagong tab',
+  'Keep running': 'Hayaang tumakbo',
   'Keep open': 'Panatilihing bukas',
   Open: 'Buksan',
   Rename: 'Palitan ang pangalan',

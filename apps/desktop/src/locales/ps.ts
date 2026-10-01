@@ -92,6 +92,8 @@ export const ps: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'پټې ټبونه',
+  'Keep running': 'چلېدو ته پرېږده',
   'Keep open': 'پرانيستې پاتې کول',
   Open: 'پرانيستل',
   Rename: 'نوم بدلول',

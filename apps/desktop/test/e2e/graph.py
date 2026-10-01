@@ -631,21 +631,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(1600)
     shot("reset")
 
-    # The picture beside a note, and the stepper that says how far it reaches. The note
-    # is asked for and then waited for by the app's own word, rather than awaited inside
-    # the evaluation: the graph going from under that await had DevTools report its
-    # promise collected about one run in two (measured 2026-10-01, the note open and the
-    # page fine after it), which failed the drive and nothing else.
+    # The picture beside a note, and the stepper that says how far it reaches.
     page.evaluate(
-        """() => {
+        """async () => {
           const ws = window.nibApp.workspace
           const ink = ws.notes.find((one) => one.name.startsWith('Ink'))
-          if (ink) void ws.openEntry(ink.path, { activate: true })
+          if (ink) await ws.openEntry(ink.path, { activate: true })
+          if (ws.panel !== 'links') ws.showPanel('links')
         }"""
-    )
-    DRIVE.wait_for(page, "window.nibApp.workspace.active?.shown?.startsWith('Ink')", "the Ink note")
-    page.evaluate(
-        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'links') ws.showPanel('links') }"
     )
     page.wait_for_timeout(700)
     picture = page.locator("aside .tools button").last

@@ -24,7 +24,7 @@
   import {
     createEditor,
     editorState,
-    type EditorView,
+    EditorView,
     type FindAsk,
     HeldState,
     type LinkPress,
@@ -32,7 +32,6 @@
     type NoteIndex,
     type NoteOpener,
     noteIndexEffect,
-    placeAt,
     type PreviewNote,
     type StateEffect,
     type StateOptions,
@@ -179,7 +178,7 @@
    *  are measured and change with the width of the window, so the same offset
    *  lands on a different line from one opening to the next. */
   function placeOf(one: Tab): StateEffect<unknown> | null {
-    return one.anchor === undefined ? null : placeAt(one.anchor)
+    return one.anchor === undefined ? null : EditorView.scrollIntoView(one.anchor, { y: 'start' })
   }
 
   /** The modes and the keys as one string, which changes whenever any of them

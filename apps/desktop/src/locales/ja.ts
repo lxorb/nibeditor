@@ -92,6 +92,8 @@ export const ja: Dictionary = {
   'Move to other pane': '別のペインに移動',
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',
+  'Hidden tabs': '非表示のタブ',
+  'Keep running': '実行し続ける',
   'Keep open': '開いたままにする',
   Open: '開く',
   Rename: '名前を変更',

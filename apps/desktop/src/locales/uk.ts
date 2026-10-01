@@ -92,6 +92,8 @@ export const uk: Dictionary = {
   'Move to other pane': 'Перемістити в іншу область',
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab у порядку використання',
+  'Hidden tabs': 'Приховані вкладки',
+  'Keep running': 'Працювати далі',
   'Keep open': 'Залишити відкритою',
   Open: 'Відкрити',
   Rename: 'Перейменувати',

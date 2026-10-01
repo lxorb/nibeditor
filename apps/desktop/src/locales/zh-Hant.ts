@@ -92,6 +92,8 @@ export const zhHant: Dictionary = {
   'Move to other pane': '移到另一個窗格',
   Tabs: '分頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 依使用順序',
+  'Hidden tabs': '隱藏的分頁',
+  'Keep running': '繼續執行',
   'Keep open': '保持開啟',
   Open: '開啟',
   Rename: '重新命名',

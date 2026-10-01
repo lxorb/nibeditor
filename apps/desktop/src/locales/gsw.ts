@@ -92,6 +92,8 @@ export const gsw: Dictionary = {
   'Move to other pane': 'Is anderi Teilfänschter verschiebe',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',
+  'Hidden tabs': 'Versteckti Tabs',
+  'Keep running': 'Wiiterlaufe',
   'Keep open': 'Offe laa',
   Open: 'Ufmache',
   Rename: 'Umbenänne',
