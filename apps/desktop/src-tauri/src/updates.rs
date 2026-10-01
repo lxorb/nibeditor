@@ -52,10 +52,10 @@ const RELEASES: &str = "https://github.com/lxorb/nibeditor/releases/download/";
 /// every time and the claim never changes.
 ///
 /// So the two are held to each other. The address has to be a file on this
-/// project's own release pages, and the file's name has to carry the version the
-/// manifest claimed - a bundle is named `Nib-<version>-<platform>`; see
-/// `scripts/name-assets.mjs`. Between them, the only thing a manifest can offer as
-/// `99.0.0` is a file this project published as `99.0.0`.
+/// project's own release pages, and the file's name has to be the one a bundle of the
+/// version the manifest claimed is given - `Nib-<version>-<platform>`; see `names`.
+/// Between them, the only thing a manifest can offer as `99.0.0` is a file this
+/// project published as `99.0.0`.
 ///
 /// And a version with a pre-release part on it is a build of main, which only the
 /// rolling channel follows: `0.8.1-421` sits above `0.8.0` in semver, so the edge
@@ -69,7 +69,7 @@ fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
         return Err(format!("that version is not served from {RELEASES}"));
     };
 
-    if version.is_empty() || !file.contains(version) {
+    if version.is_empty() || !names(file, version) {
         return Err(format!("{file} is not version {version}"));
     }
 
@@ -78,6 +78,25 @@ fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+/// Whether a bundle's file name is the one this project gives `version`:
+/// `Nib-<version>-<platform>`, the platform beginning with a letter.
+///
+/// The version as the whole of what stands between `Nib-` and the platform, rather
+/// than as something found in the name: `0.1` is inside `Nib-0.10.0-...`, and a
+/// manifest claiming the first over the second's bundle would install whatever
+/// `0.10.0` shipped under a number nothing signed. And the platform a letter,
+/// because a version can have a pre-release after it: a build of main is
+/// `0.8.1-421`, whose bundle `Nib-0.8.1-421-windows-...` begins with the release's
+/// own `Nib-0.8.1-`. A pre-release here is digits and nothing else, which the MSI
+/// bundler holds it to (`scripts/build-version.sh`), and every platform the release
+/// matrix labels a bundle with is a word (`scripts/name-assets.mjs`).
+fn names(file: &str, version: &str) -> bool {
+    file.strip_prefix("Nib-")
+        .and_then(|rest| rest.strip_prefix(version))
+        .and_then(|rest| rest.strip_prefix('-'))
+        .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
 }
 
 /// What the window is told about a new version: the fields the updater plugin's
@@ -207,6 +226,47 @@ mod tests {
                 offered("stable", "99.0.0", address).is_err(),
                 "{address} should not be an update"
             );
+        }
+    }
+
+    /// A version is the whole of what the file name carries between `Nib-` and the
+    /// platform, not something found somewhere in it: `0.1` is inside `0.10.0`, and a
+    /// manifest claiming the first over the second's bundle would walk an install onto
+    /// whatever `0.10.0` shipped under a number nothing signed.
+    #[test]
+    fn a_version_is_the_whole_version_in_the_name() {
+        assert!(offered("stable", "0.1", &bundle("0.10.0")).is_err());
+        assert!(offered("stable", "0.1", &bundle("0.1.0")).is_err());
+        assert!(offered("stable", "0.10", &bundle("0.10.0")).is_err());
+        assert!(offered("stable", "10.0", &bundle("0.10.0")).is_err());
+        assert_eq!(offered("stable", "0.10.0", &bundle("0.10.0")), Ok(()));
+    }
+
+    /// A build of main is the release it is numbered after with a pre-release on it,
+    /// so its bundle's name begins with that release's: `Nib-0.8.1-421-...` starts
+    /// `Nib-0.8.1-`. A manifest claiming the release over the build's bundle is a
+    /// stable install handed an untested build of main.
+    #[test]
+    fn a_release_is_not_the_build_of_main_before_it() {
+        assert!(offered("stable", "0.8.1", &bundle("0.8.1-421")).is_err());
+        assert!(offered(UNSTABLE, "0.8.1", &bundle("0.8.1-421")).is_err());
+        assert!(offered(UNSTABLE, "0.8.1-42", &bundle("0.8.1-421")).is_err());
+        assert_eq!(offered(UNSTABLE, "0.8.1-421", &bundle("0.8.1-421")), Ok(()));
+    }
+
+    /// Every bundle the updater is handed: the Windows installers, the `AppImage`s and
+    /// the Mac archive, each named the way scripts/name-assets.mjs names it.
+    #[test]
+    fn every_platform_the_updater_serves_is_named_the_same_way() {
+        for platform in [
+            "windows-x64-setup.exe",
+            "windows-arm64-setup.exe",
+            "linux-x64.AppImage",
+            "linux-arm64.AppImage",
+            "macos-universal.app.tar.gz",
+        ] {
+            let address = format!("{RELEASES}v0.9.0/Nib-0.9.0-{platform}");
+            assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{platform}");
         }
     }
 
