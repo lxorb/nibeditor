@@ -32,6 +32,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { hiddenTabs } = await import('./hidden-tabs.svelte')
 const { pages } = await import('../web-tab/pages.svelte')
 const { agentMarks } = await import('../agent-marks.svelte')
+// What a freeze is carried out by, fetched with the first one; loaded here so a turn is enough.
+await import('../web-tab/sleeping')
 type Tab = import('../workspace.svelte').Tab
 
 /** A web tab in a pane nobody is showing, its page running or not: as much of a tab as

@@ -163,6 +163,15 @@ def ask(app, code: str, seconds: float = 60) -> object:
     return said
 
 
+#: What each web tab's page is doing, as the window's own store says: on screen, frozen or
+#: running.
+STATE = (
+    "JSON.stringify(Object.fromEntries(nib.pages.each().map(([id, one]) => {"
+    " const tab = nib.workspace.tabs.find((each) => each.id === id);"
+    " return [tab ? tab.name : id, one.onScreen ? 'on screen' : one.frozen ? 'frozen' : 'running'] })))"
+)
+
+
 ACTIVE = "JSON.stringify(nib.workspace.active ? nib.workspace.active.name : null)"
 
 #: Ctrl+Tab, as the window hears it: a key in the app's own document, so nothing outside
@@ -322,6 +331,7 @@ def main() -> int:
         front_index = int(str(front).rsplit(" ", 1)[-1].split(".")[0]) if front else -1
         hidden = [count for index, count in enumerate(ticks) if index != front_index]
         say(f"ticks in 6 s: {ticks} (in front: {front})")
+        say(f"the store says: {ask(app, STATE)}")
         check(sum(hidden) == 0, "the nine out of sight are frozen: none ticks")
         check(ticks[front_index] > 0 if front_index >= 0 else False, "the one in front goes on")
         after = memory(running.pid, "with nine frozen")

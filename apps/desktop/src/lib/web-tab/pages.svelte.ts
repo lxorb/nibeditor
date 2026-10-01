@@ -27,13 +27,11 @@
  *  parks one - the webview goes, the tab keeps everything about itself - and looking at
  *  a parked tab again opens the page where it was, at the place it was at. */
 
-import { agentMarks } from '../agent-marks.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
-import { grants, readAsked, siteOf } from './permissions.svelte'
+import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
-import type { Resting } from './resting'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -63,11 +61,13 @@ function dropDialogs(tab: string): void {
   if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
 }
 
-/** The rules for a page out of sight and the Memory saver setting, fetched with the
- *  first page that goes out of sight. */
-function rules() {
-  return Promise.all([import('./resting'), import('./saver.svelte')])
+/** What becomes of a page out of sight, fetched with the first one; see sleeping.ts. */
+function sleeping() {
+  return import('./sleeping')
 }
+
+/** How far outside the window a page is put while it waits to be hidden; see `aside`. */
+const OUT_OF_THE_WAY = 20_000
 
 /** How long a still picture of a page stands for the page. Under half a second, so
  *  two overlays in a row share one and a page that has scrolled since is
@@ -689,66 +689,50 @@ class Pages {
     page.onScreen = false
     page.looked = Date.now()
 
-    void this.place(tabId, pane, false)
+    if (isDesktop && page.live && page.shooting) void this.aside(tabId, page, pane)
+    else void this.place(tabId, pane, false)
     if (!isDesktop) return
 
     // Counted once the page has said whether something is typed into it.
     void this.look(tabId).then(() => this.rest(tabId))
   }
 
-  /** What becomes of a page out of sight by the rules in resting.ts, and the countdown to
-   *  when they are asked again. */
+  /** A page being photographed as its tab is left, out of the way until the picture has
+   *  landed and hidden then.
+   *
+   *  The press that switches tabs is also the press that photographs the page (see
+   *  `pressed` in WebTab.svelte), and WebView2 hidden halfway through a photograph keeps
+   *  the page from ever freezing: `TrySuspend` answers that it did and the page runs on,
+   *  measured with scripts/no-reload-probe.py. Hidden after the picture it freezes. So
+   *  the page leaves the pane at once - placed far outside the window, which draws none
+   *  of it - and is hidden the moment the picture is in, unless it was shown again. */
+  private async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
+    const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
+    await invoke('web_place', { tab: tabId, pane: away, visible: true }).catch(() => undefined)
+    await page.shooting
+    if (!page.onScreen) await this.place(tabId, pane, false)
+  }
+
   private async rest(tabId: string): Promise<void> {
-    const [{ rest }, { saver }] = await rules()
-    const page = this.held.get(tabId)
-    const one = this.resting().find((each) => each.id === tabId)
-    if (!page || !one?.live || page.onScreen) return
-
-    clearTimeout(page.resting)
-    const { act, again } = rest(one, saver.mode, Date.now())
-    if (act === 'park') return this.park(tabId)
-    if (act === 'freeze') void this.lull(tabId, page, true)
-    if (again !== null) page.resting = setTimeout(() => void this.rest(tabId), again)
+    ;(await sleeping()).rest(this, tabId)
   }
 
-  /** Every page as the rules read it. */
-  private resting(): Resting[] {
-    return [...this.held].map(([id, page]) => {
-      const site = siteOf(page.url)
-      const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
-        grants.said(site, ask) === 'allow'
-      return {
-        id,
-        live: page.live,
-        onScreen: page.onScreen,
-        frozen: page.frozen,
-        looked: page.looked,
-        loading: page.loading,
-        playing: page.playing,
-        heard: page.heard,
-        acting: id in agentMarks.on,
-        calling: allowed('camera') || allowed('microphone'),
-        notifying: allowed('notifications'),
-        edited: page.edited,
-        pinned: page.pinned,
-      }
-    })
-  }
-
-  /** Freezes a page out of sight, whatever it is doing: Hidden tabs' Pause, which pauses
-   *  what it plays first. Never one on screen, which the freeze would hide. */
+  /** Freezes a page out of sight, whatever it is doing: Hidden tabs' Pause. */
   freeze(tabId: string) {
     const page = this.held.get(tabId)
-    if (isDesktop && page?.live && !page.frozen && !page.onScreen) void this.lull(tabId, page, true)
+    if (!isDesktop || !page?.live || page.frozen || page.onScreen) return
+    page.frozen = true
+    void sleeping().then((one) => one.lull(this, tabId, page, true))
   }
 
   /** Lets a frozen page run again, and counts its time out of sight from now. */
-  thaw(tabId: string): Promise<void> {
+  async thaw(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
-    if (!page?.frozen) return page?.lulling ?? Promise.resolve()
+    if (!page?.frozen) return page?.lulling
 
     this.wake(page)
-    const thawed = this.lull(tabId, page, false)
+    page.frozen = false
+    const thawed = (await sleeping()).lull(this, tabId, page, false)
     if (!page.onScreen) void this.rest(tabId)
     return thawed
   }
@@ -765,19 +749,6 @@ class Pages {
   retime() {
     for (const [id, page] of this.held) if (!page.onScreen) void this.rest(id)
     void this.bound()
-  }
-
-  /** A freeze or a thaw, each after the last has landed: a thaw sent behind a freeze
-   *  still on its way would land first, and the freeze would then hide a page on screen. */
-  private lull(tabId: string, page: Page, paused: boolean): Promise<void> {
-    page.frozen = paused
-    page.lulling = page.lulling.then(() =>
-      invoke('web_pause', { tab: tabId, paused }).then(
-        () => undefined,
-        () => undefined,
-      ),
-    )
-    return page.lulling
   }
 
   /** Parks the page and keeps the tab: the webview goes and everything about where the
@@ -903,12 +874,9 @@ class Pages {
     page.looked = Date.now()
   }
 
-  /** Memory saver's cap, kept as one more page is built: see `overCap` in resting.ts.
-   *  **A page in a pane on screen is never parked**, nor one under a menu: two panes
-   *  side by side are two pages somebody is looking at. */
+  /** Memory saver's cap, kept as one more page is built; see sleeping.ts. */
   private async bound(): Promise<void> {
-    const [{ overCap }, { saver }] = await rules()
-    for (const id of overCap(this.resting(), saver.mode, Date.now())) void this.park(id)
+    ;(await sleeping()).bound(this)
   }
 
   /** Somewhere else, in this tab. */

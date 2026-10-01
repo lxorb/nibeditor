@@ -383,7 +383,13 @@ saves the CPU and little memory; WebKit has neither and the engine's own throttl
 hidden page is all there is. One path freezes and wakes every page, `web_pause.rs`, the
 one Hidden tabs' Pause uses: each freeze and wake is sent after the last has landed, so
 Ctrl+Tab coming round to a page while it is being frozen never shows a page the freeze
-then hides.
+then hides. And a page is never hidden halfway through a photograph: the press
+that switches tabs also photographs the page (see `shoot`), and WebView2 hidden mid-way
+through one answers `TrySuspend` with success and leaves the page running, which is what
+the first runs of `scripts/no-reload-probe.py` found. Such a page is put far outside the
+window at once and hidden when the picture is in; a freeze waits for the picture too. If
+the engine does refuse a freeze, the page counts as running and is asked again five
+minutes later.
 
 Five minutes, because front-and-back use is seconds to minutes and waking costs a
 frame: it is where Chrome throttles a hidden page's timers to once a minute and may
@@ -1700,6 +1706,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |
 | `apps/desktop/src/lib/web-tab/resting.ts` | a page out of sight: when it is frozen, and what each strength of Memory saver parks. Pure, tested |
 | `apps/desktop/src/lib/web-tab/saver.svelte.ts` | the Memory saver setting, this device's |
+| `apps/desktop/src/lib/web-tab/sleeping.ts` | those rules carried out on the pages: the freeze sent, one at a time, and the countdown. Fetched with the first page out of sight |
 | `apps/desktop/src/lib/web-tab/sites.ts` | a site muted, and the size a site is drawn at, per device. Tested |
 | `apps/desktop/src/lib/web-tab/mute.ts` | Mute site, in every tab showing it |
 | `apps/desktop/src/lib/web-tab/filling.svelte.ts` | a page holding the whole screen, and the window following it |

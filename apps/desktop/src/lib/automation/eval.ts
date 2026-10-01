@@ -21,11 +21,13 @@ import { links } from '../link-index.svelte'
 import { search } from '../search.svelte'
 import { settings } from '../settings.svelte'
 import { workspace } from '../workspace.svelte'
+import { pages } from '../web-tab/pages.svelte'
 
 /** What a script is handed, as `nib`. The stores a question about the app is
- *  actually about; everything else a page can reach is reachable anyway. */
+ *  actually about; everything else a page can reach is reachable anyway. `pages` is what
+ *  each web tab's page is doing, which a drive asks about rather than the crate. */
 function surface(): Record<string, unknown> {
-  return { workspace, links, search, settings }
+  return { workspace, links, search, settings, pages }
 }
 
 /** Runs `code` and answers what it came to.

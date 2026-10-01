@@ -53,12 +53,20 @@ let looked: Record<string, unknown> | null = null
 /** A freeze or a thaw the crate has not answered yet, while a test holds one. */
 let pausing: Promise<void> | null = null
 
+/** Whether the engine refuses to freeze a page, as WebView2 does one in a call. */
+let refusing = false
+
+/** A photograph the engine has not answered yet, while a test holds one. */
+let photographing: Promise<void> | null = null
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     calls.push({ command, args: args ?? {} })
     if (command === 'web_pause' && pausing) await pausing
+    if (command === 'web_shot' && photographing) await photographing
+    if (command === 'web_pause') return !(refusing && args?.paused === true)
     if (command === 'web_look') {
       if (!looked) throw new Error('that page said nothing')
       return looked
@@ -640,6 +648,8 @@ describe('a page out of sight', () => {
 
   afterEach(async () => {
     pausing = null
+    refusing = false
+    photographing = null
     for (const tab of TABS) pages.forget(tab)
     const { saver } = await import('./saver.svelte')
     saver.set('off')
@@ -781,6 +791,43 @@ describe('a page out of sight', () => {
       .slice(-3)
       .map((one) => `${one.command} ${String(one.args.paused ?? one.args.visible)}`)
     expect(order).toEqual(['web_pause true', 'web_pause false', 'web_place true'])
+  })
+
+  test('a page left while it is being photographed is hidden once the picture is in', async () => {
+    await built('t0')
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    pages.of('t0').shot = null
+    const shooting = pages.shoot('t0')
+    calls.length = 0
+
+    // The press that switches tabs photographed the page on its way.
+    pages.hide('t0', PANE)
+    await settle()
+    const out = calls.filter((one) => one.command === 'web_place')
+    expect(out).toHaveLength(1)
+    expect(out[0]?.args).toMatchObject({ visible: true, pane: { x: -20_000, y: -20_000 } })
+
+    landed()
+    await shooting
+    await settle()
+    expect(last('web_place')).toMatchObject({ tab: 't0', pane: PANE, visible: false })
+  })
+
+  test('a freeze the engine refused leaves the page running, and is asked again later', async () => {
+    await built('t0')
+    refusing = true
+    // Judged as it goes out of sight, once it has said where it is.
+    away('t0', 30)
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+    await settle()
+
+    expect(pages.of('t0').frozen).toBe(false)
+    expect(pages.of('t0').resting).toBeDefined()
+    // Shown again, it is placed and nothing is woken: it was never frozen.
+    calls.length = 0
+    await pages.show('t0', SITE, PANE)
+    expect(commands()).toEqual(['web_place'])
   })
 
   test("Hidden tabs' Pause and the countdown are one freeze: never twice, woken once", async () => {

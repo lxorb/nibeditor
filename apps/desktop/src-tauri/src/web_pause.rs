@@ -22,9 +22,9 @@
 //! same command (lib/web-tab/resting.ts), and wakes it before it is shown. One thing
 //! reaches a page without the window: an agent acting in a reader's tab, whose protocol
 //! calls a frozen page would never answer. `woken` wakes it first, and leaves what it was
-//! playing paused.
+//! playing paused. Only `WebView2` has agents acting in a reader's tab.
 
-use tauri::{AppHandle, Webview};
+use tauri::AppHandle;
 
 /// Pauses whatever the page is playing, marking each element it paused.
 const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-nib-paused', '') } })";
@@ -32,20 +32,32 @@ const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function 
 /// Plays again what `PAUSE` paused, and nothing else.
 const PLAY: &str = "document.querySelectorAll('[data-nib-paused]').forEach(function (one) { one.removeAttribute('data-nib-paused'); one.play().catch(function () {}) })";
 
-/// Pauses a tab's page, or lets it run again.
+/// What the engine said: whether the page is frozen, or running again, now.
+type Said = tauri::async_runtime::Sender<bool>;
+
+/// Pauses a tab's page, or lets it run again, and answers whether the engine did.
+///
+/// The engine may refuse a freeze: `WebView2` leaves a page running that plays, is in a
+/// call or holds a lock, and says so only in its answer. The window then counts the page as
+/// running and asks again later (lib/web-tab/pages.svelte.ts). Async, so the answer is
+/// waited for off the window's thread.
 #[tauri::command]
-pub fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<(), String> {
+pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool, String> {
     let view = crate::web_tabs::found(&app, &tab)?;
     if paused {
         view.hide()
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
-    engine::lull(&view, paused)
+    let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
+    engine::lull(&view, paused, said)?;
+    // An engine that never answered froze nothing.
+    Ok(heard.recv().await.unwrap_or(false))
 }
 
 /// A page an agent is about to act in, woken if it was frozen: nothing it was playing
 /// plays, because the reader did not ask for that.
-pub fn woken(view: &Webview) {
+#[cfg(all(windows, not(feature = "cef")))]
+pub fn woken(view: &tauri::Webview) {
     let _ = engine::wake(view);
 }
 
@@ -56,7 +68,7 @@ mod engine {
     use webview2_com::{ExecuteScriptCompletedHandler, TrySuspendCompletedHandler};
     use windows_core::{Interface as _, HSTRING};
 
-    use super::{PAUSE, PLAY};
+    use super::{Said, PAUSE, PLAY};
 
     /// The sound paused and then the page suspended, or the page resumed and then its
     /// sound played, each step once the one before has answered.
@@ -64,7 +76,7 @@ mod engine {
         unsafe_code,
         reason = "the engine's own suspend is reached through its COM interfaces"
     )]
-    pub fn lull(view: &Webview, paused: bool) -> Result<(), String> {
+    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
         view.with_webview(move |platform| {
             // Safe: the controller is this webview's own, asked on its own thread.
             let Ok(core) = (unsafe { platform.controller().CoreWebView2() }) else {
@@ -76,7 +88,10 @@ mod engine {
 
             if paused {
                 let then = ExecuteScriptCompletedHandler::create(Box::new(move |_, _| {
-                    let done = TrySuspendCompletedHandler::create(Box::new(|_, _| Ok(())));
+                    let done = TrySuspendCompletedHandler::create(Box::new(move |done, frozen| {
+                        let _ = said.try_send(done.is_ok() && frozen);
+                        Ok(())
+                    }));
                     // Safe: answered on the window's thread, on this page's own engine.
                     unsafe { three.TrySuspend(&done) }
                 }));
@@ -86,7 +101,8 @@ mod engine {
             }
 
             // Safe: as above.
-            let _ = unsafe { three.Resume() };
+            let woke = unsafe { three.Resume() };
+            let _ = said.try_send(woke.is_ok());
             let done = ExecuteScriptCompletedHandler::create(Box::new(|_, _| Ok(())));
             // Safe: as above.
             let _ = unsafe { core.ExecuteScript(&HSTRING::from(PLAY), &done) };
@@ -120,16 +136,18 @@ mod engine {
     use serde_json::json;
     use tauri::Webview;
 
-    use super::{PAUSE, PLAY};
+    use super::{Said, PAUSE, PLAY};
 
     /// Both halves over the page's own `DevTools` agent, which runs them in the order they
-    /// are sent; see `tell` in engine/devtools.rs.
+    /// are sent; see `tell` in engine/devtools.rs. The protocol freezes whatever it is
+    /// told to, so the window never asks it about a page that has to go on.
     #[allow(
         clippy::unnecessary_wraps,
+        clippy::needless_pass_by_value,
         reason = "the same answer as the other engines', whose calls can fail"
     )]
-    pub fn lull(view: &Webview, paused: bool) -> Result<(), String> {
-        let said = if paused {
+    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
+        let told = if paused {
             vec![
                 ("Runtime.evaluate", json!({ "expression": PAUSE })),
                 ("Page.setWebLifecycleState", json!({ "state": "frozen" })),
@@ -140,18 +158,8 @@ mod engine {
                 ("Runtime.evaluate", json!({ "expression": PLAY })),
             ]
         };
-        crate::engine::devtools::tell(view, None, said);
-        Ok(())
-    }
-
-    /// The page's lifecycle back to `active`, and nothing played.
-    #[allow(
-        clippy::unnecessary_wraps,
-        reason = "the same answer as the other engines', whose calls can fail"
-    )]
-    pub fn wake(view: &Webview) -> Result<(), String> {
-        let said = vec![("Page.setWebLifecycleState", json!({ "state": "active" }))];
-        crate::engine::devtools::tell(view, None, said);
+        crate::engine::devtools::tell(view, None, told);
+        let _ = said.try_send(true);
         Ok(())
     }
 }
@@ -160,20 +168,17 @@ mod engine {
 mod engine {
     use tauri::Webview;
 
-    use super::{PAUSE, PLAY};
+    use super::{Said, PAUSE, PLAY};
 
-    /// The sound alone: the engine has no freeze to ask for.
-    pub fn lull(view: &Webview, paused: bool) -> Result<(), String> {
-        view.eval(if paused { PAUSE } else { PLAY })
-            .map_err(|error| format!("that page could not be reached: {error}"))
-    }
-
-    /// Nothing to wake: nothing here was frozen.
+    /// The sound alone: the engine has no freeze to ask for, so a page is never frozen.
     #[allow(
-        clippy::unnecessary_wraps,
-        reason = "the same answer as the other engines', whose calls can fail"
+        clippy::needless_pass_by_value,
+        reason = "the same answer as the other engines'"
     )]
-    pub fn wake(_view: &Webview) -> Result<(), String> {
+    pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
+        view.eval(if paused { PAUSE } else { PLAY })
+            .map_err(|error| format!("that page could not be reached: {error}"))?;
+        let _ = said.try_send(!paused);
         Ok(())
     }
 }
