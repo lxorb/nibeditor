@@ -17,7 +17,18 @@
  *  the message goes rather than when it was asked for, so what travels is where
  *  the hand is now. */
 
-import { awarenessUpdate, forget, isCatchUp, receive, syncStep1, syncUpdate } from '@nib/rooms'
+import {
+  awarenessUpdate,
+  forget,
+  isCatchUp,
+  readSync,
+  receive,
+  syncStep1,
+  syncStep1Of,
+  syncStep2Of,
+  syncUpdate,
+} from '@nib/rooms'
+import { NEW_EPOCH, roomNews, ROOM_V2 } from '@nib/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { RoomSocket } from './socket'
@@ -61,6 +72,33 @@ const REBUILT = 1012
  *  words; see `full` in services/sync/src/rooms/state.ts. */
 const TOO_LARGE = 1009
 
+/** Sync v2 (docs/sync-v2.md sections 5.2 to 5.4): the room carries a document the
+ *  engine keeps, rather than one of its own made for the sitting.
+ *
+ *  A document with nothing pending meets the room the ordinary way. One holding edits
+ *  the account has not acknowledged opens with its *confirmed* state vector, so what the
+ *  room sends back is the account's words beyond it and nothing of this device's own;
+ *  reads everything else the room says without applying it; and hands the catch-up to
+ *  the engine to classify (`met`). Only once that says go does it send what it holds -
+ *  the protocol's own answer to the room's question, made then - and join. A held note
+ *  stays out of the room, and nothing the room said is in its document. */
+export interface Carrying {
+  doc: Y.Doc
+  /** This device's id, which the room writes the words down as. */
+  device: string
+  pending(): boolean
+  confirmedSv(): Uint8Array
+  /** The room's catch-up, as y-protocols encodes it: `go` once the engine has taken it
+   *  into the document, `hold` when the note waits for its person. */
+  met(update: Uint8Array): Promise<'go' | 'hold'>
+  /** The room made this much durable at its settle. */
+  acked(seq: number, sv: Uint8Array): void
+  /** The room is starting the document again at a new epoch, and will close. */
+  epoch(epoch: number, base: string): void
+  /** Whether the room is carrying the document live: caught up and connected. */
+  live(on: boolean): void
+}
+
 /** What this device calls itself in a room, and the colour it wears there. Both
  *  names travel; which one is drawn belongs to whoever is looking. See who.ts. */
 export interface Who {
@@ -87,11 +125,13 @@ export interface Opening {
    *  Said once rather than on every keystroke: the room is let go rather than
    *  rejoined, so there is nothing left to refuse. See `TOO_LARGE`. */
   refused: (said: string) => void
+  /** Sync v2: the engine's document, and what the room says to it; see `Carrying`. */
+  carrying?: Carrying
 }
 
 export class RoomDoor {
-  readonly doc = new Y.Doc()
-  readonly awareness = new Awareness(this.doc)
+  readonly doc: Y.Doc
+  readonly awareness: Awareness
 
   /** What this device says about itself. Kept because the person at it can be
    *  renamed while the file is open. */
@@ -108,21 +148,32 @@ export class RoomDoor {
    *  goes: a caret is a position in the text as it now stands. */
   private saying = new Map<string, () => unknown>()
   private timer: ReturnType<typeof setTimeout> | null = null
+  /** Sync v2, a document with pending edits meeting the room: nothing the room says is
+   *  applied, and nothing typed is sent, until the engine has classified; see
+   *  `Carrying`. The room's question and its updates wait here meanwhile. */
+  private meeting = false
+  private asked: Uint8Array | null = null
+  private waiting: Uint8Array[] = []
 
   constructor(private readonly opening: Opening) {
+    this.doc = opening.carrying?.doc ?? new Y.Doc()
+    this.awareness = new Awareness(this.doc)
     this.who = opening.who
-    this.socket = new RoomSocket(opening.noteId, opening.token, {
-      opened: () => this.greet(),
-      heard: (message) => void this.hear(message),
-      closed: (code, said) => this.went(code, said),
-    })
+    const carrying = opening.carrying
+    this.socket = new RoomSocket(
+      opening.noteId,
+      opening.token,
+      {
+        opened: () => this.greet(),
+        heard: (message) => void this.hear(message),
+        closed: (code, said) => this.went(code, said),
+      },
+      carrying ? [ROOM_V2, `nib.device.${carrying.device}`] : [],
+    )
 
     this.awareness.setLocalStateField('who', this.who)
 
-    this.doc.on('update', (update: Uint8Array, origin: unknown) => {
-      // An update that came out of the room is already in the room.
-      if (origin !== ROOM) this.socket.send(syncUpdate(update))
-    })
+    this.doc.on('update', this.sendOut)
 
     this.awareness.on('update', ({ added, updated, removed }: AwarenessChange) => {
       const changed = [...added, ...updated, ...removed]
@@ -148,6 +199,13 @@ export class RoomDoor {
    *  travel, which is exactly what a pass is for. */
   get caughtUp(): boolean {
     return this.settled && this.socket.open
+  }
+
+  /** What this device writes, on its way to the room: everything but what came out of
+   *  it, and nothing while a v2 document is still meeting the room. */
+  private readonly sendOut = (update: Uint8Array, origin: unknown) => {
+    if (origin === ROOM || this.meeting) return
+    this.socket.send(syncUpdate(update))
   }
 
   /** Something this device wants the others to know: where its caret is, where its
@@ -181,7 +239,13 @@ export class RoomDoor {
     this.timer = null
     this.socket.stop()
     this.awareness.destroy()
-    this.doc.destroy()
+    // A document the engine keeps outlives the room; only one made here goes with it.
+    if (this.opening.carrying) {
+      this.doc.off('update', this.sendOut)
+      this.opening.carrying.live(false)
+    } else {
+      this.doc.destroy()
+    }
   }
 
   /** One message a frame at most, with what to say worked out as it goes. */
@@ -199,7 +263,17 @@ export class RoomDoor {
   /** What this device says the moment the socket is up: what it holds, so the room
    *  can send back what it is missing, and who it is. */
   private greet() {
-    this.socket.send(syncStep1(this.doc))
+    const carrying = this.opening.carrying
+    // A v2 document meets the room afresh on every connection: what it holds may have
+    // moved on, from a pass, while the socket was down.
+    if (carrying) {
+      this.meeting = carrying.pending()
+      this.asked = null
+      this.waiting = []
+      this.greeted = false
+      this.settled = false
+    }
+    this.socket.send(this.meeting && carrying ? syncStep1Of(carrying.confirmedSv()) : syncStep1(this.doc))
 
     // A room that was asleep has forgotten who is here, and this device has not:
     // saying it again is what puts the others' view of us back.
@@ -216,7 +290,8 @@ export class RoomDoor {
    *  the socket is stopped, which the socket allows from inside this very call, and
    *  whoever joined the room is asked to join another. */
   private went(code: number, said: string) {
-    if (code === REBUILT) {
+    this.opening.carrying?.live(false)
+    if (code === REBUILT || (this.opening.carrying && code === NEW_EPOCH)) {
       this.socket.stop()
       this.opening.gone()
       return
@@ -243,6 +318,18 @@ export class RoomDoor {
   }
 
   private async hear(message: Uint8Array) {
+    const carrying = this.opening.carrying
+    if (carrying) {
+      const news = roomNews(message)
+      if (news?.t === 'ack') carrying.acked(news.seq, news.sv)
+      if (news?.t === 'epoch') carrying.epoch(news.epoch, news.epochBase)
+      if (news) return
+      if (this.meeting) {
+        await this.meet(carrying, message)
+        return
+      }
+    }
+
     const answer = receive(message, this.doc, this.awareness, ROOM)
     if (answer) this.socket.send(answer)
 
@@ -251,10 +338,53 @@ export class RoomDoor {
     if (this.greeted || !isCatchUp(message)) return
 
     this.greeted = true
+    await this.together()
+  }
+
+  /** The room has said what it holds and this device's copy is brought together with
+   *  it, once. */
+  private async together() {
     await this.opening.caughtUp()
     this.settled = true
+    this.opening.carrying?.live(true)
     this.sayLater()
     this.opening.present()
+  }
+
+  /** What the room says while a v2 document with pending edits meets it. */
+  private async meet(carrying: Carrying, message: Uint8Array) {
+    const sync = readSync(message)
+    if (!sync) {
+      // Who is there, which changes nothing in the document.
+      receive(message, this.doc, this.awareness, ROOM)
+      return
+    }
+    if (sync.kind === 'step1') {
+      this.asked = sync.sv
+      return
+    }
+    if (sync.kind === 'update') {
+      this.waiting.push(sync.update)
+      return
+    }
+    if (this.greeted) return
+    this.greeted = true
+
+    if ((await carrying.met(sync.update)) === 'hold') {
+      // Held for the question: out of the room, and nothing of it read in.
+      this.socket.stop()
+      this.alone()
+      return
+    }
+
+    for (const update of this.waiting) Y.applyUpdate(this.doc, update, ROOM)
+    this.waiting = []
+    this.meeting = false
+    // What the room asked for, answered now: this device's pending edits and whatever
+    // the classification settled, everything the room does not have.
+    if (this.asked) this.socket.send(syncStep2Of(Y.encodeStateAsUpdate(this.doc, this.asked)))
+    this.asked = null
+    await this.together()
   }
 }
 

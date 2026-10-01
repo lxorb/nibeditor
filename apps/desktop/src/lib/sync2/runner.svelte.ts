@@ -27,7 +27,11 @@ import { isRecord, keep, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
+import { isDesktop } from '../tauri'
 import { appWorld, type Telling } from './app-world'
+import { rooms } from '../rooms.svelte'
+import type { NoteDoc } from '../workspace/documents.svelte'
+import * as Y from 'yjs'
 import { asking, type Held } from './asking.svelte'
 import { attach } from './binding'
 import { Engine } from './engine'
@@ -51,6 +55,9 @@ const MIRRORS = 'nib:mirrors'
 
 /** The meta row that says a space's first pass is done. */
 const FIRST = 'first:'
+
+/** How long a path the engine moved or took away is the engine's own to the watcher. */
+const TOUCHED = 5_000
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
   const out = new Map<string, V1Space>()
@@ -89,6 +96,11 @@ class Runner {
   /** Operations the engine made on the disk, which the workspace says back: not heard
    *  as this person's. */
   private readonly own = new Set<string>()
+  /** Paths the engine moved or took away lately, by when that stops mattering: what the
+   *  folder's watcher reports a moment later is the engine's own doing. */
+  private readonly touched = new Map<string, number>()
+  /** Spaces whose first pass is done. */
+  private readonly firsts = new Set<string>()
   /** Open notes joined to their documents, by document key. */
   private readonly bound = new Map<string, { id: string; part: () => void }>()
   private binding = Promise.resolve()
@@ -121,6 +133,8 @@ class Runner {
           answer: async (id, answer) => {
             const copy = await engine.held.answer(id, answer)
             this.nudge()
+            // Answered: the note may be carried by its room again.
+            this.rebind()
             if (copy) this.treeStale()
             return copy
           },
@@ -141,6 +155,17 @@ class Runner {
       document.removeEventListener('visibilitychange', back)
     })
     this.stops.push(this.followOpen())
+    if (isDesktop) {
+      const { watchFolders } = await import('./watching')
+      this.stops.push(
+        watchFolders({
+          engine,
+          own: (path) => this.ownPath(path),
+          ready: (id) => this.firsts.has(id),
+          changed: () => this.nudge(),
+        }),
+      )
+    }
 
     this.status = 'idle'
     this.kick()
@@ -149,6 +174,8 @@ class Runner {
   /** Lets the engine go: signing out, or the account going back to v1. */
   async stop(): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
+    for (const key of this.carried) rooms.uncarry(key)
+    this.carried.clear()
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
@@ -276,6 +303,7 @@ class Runner {
             continue
           }
           await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
+          this.firsts.add(id)
         }
         const passed = await engine.pass(id)
         if (!passed?.finished) offline = true
@@ -301,8 +329,25 @@ class Runner {
   }
 
   private async firstDone(engine: Engine, id: string): Promise<boolean> {
+    if (this.firsts.has(id)) return true
     const [row] = await engine.core.store.read([get('meta', `${FIRST}${id}`)])
+    if (row !== null) this.firsts.add(id)
     return row !== null
+  }
+
+  /** Whether the engine itself moved or took away a path a moment ago, or anything above
+   *  it. */
+  private ownPath(path: string): boolean {
+    const now = Date.now()
+    const at = path.replaceAll('\\', '/')
+    for (const [one, until] of this.touched) {
+      if (until < now) {
+        this.touched.delete(one)
+        continue
+      }
+      if (at === one || at.startsWith(`${one}/`)) return true
+    }
+    return false
   }
 
   private spaceOnScreen(engine: Engine): string | null {
@@ -354,6 +399,9 @@ class Runner {
 
   /** The engine's own operations on the disk, said to the workspace and not heard back. */
   private readonly telling: Telling = {
+    touching: (path) => {
+      this.touched.set(path.replaceAll('\\', '/'), Date.now() + TOUCHED)
+    },
     moved: async (from, to, kind) => {
       this.own.add(`moved:${from}`)
       try {
@@ -498,23 +546,86 @@ class Runner {
 
     for (const [key, one] of this.bound) {
       if (wanted.get(key)?.id === one.id) continue
+      rooms.uncarry(key)
+      this.carried.delete(key)
       one.part()
       this.bound.delete(key)
     }
 
     for (const [key, one] of wanted) {
-      if (this.bound.has(key)) continue
+      if (this.bound.has(key)) {
+        if (!this.carried.has(key)) this.carry(engine, key, one.id, one.note)
+        continue
+      }
       const arrivals = one.note.arrivals
       const holds = () => one.note.arrivals === arrivals && this.bound.get(key)?.id === one.id
       this.bound.set(key, { id: one.id, part: () => undefined })
-      const part = await attach(engine, one.id, one.note, holds)
+      // A document made again under the note - the account's words taken, a new epoch -
+      // is a document its room has never met: the room is joined afresh.
+      const again = () => {
+        rooms.uncarry(key)
+        this.carried.delete(key)
+        this.carry(engine, key, one.id, one.note)
+      }
+      const part = await attach(engine, one.id, one.note, holds, again)
       if (!part || this.bound.get(key)?.id !== one.id) {
         part?.()
         if (this.bound.get(key)?.id === one.id) this.bound.delete(key)
         continue
       }
       this.bound.set(key, { id: one.id, part })
+      this.carry(engine, key, one.id, one.note)
     }
+  }
+
+  /** Open notes whose documents a room is carrying, by document key. */
+  private readonly carried = new Set<string>()
+
+  /** An open note's document, carried live through its room: only one the account
+   *  knows, on the epoch the account is on, and not held for the question. */
+  private carry(engine: Engine, key: string, id: string, note: NoteDoc) {
+    const core = engine.core
+    const doc = core.docs.get(id)
+    const entry = core.entry(id)
+    const space = core.spaceOf(id)
+    if (!doc?.live || !entry || entry.seq === null || !space || core.isHeld(id)) return
+    if (doc.epoch < (core.epochs.get(id) ?? doc.epoch) || !account.token) return
+
+    this.carried.add(key)
+    void rooms.carry(key, {
+      noteId: id,
+      note,
+      gone: () => {
+        this.carried.delete(key)
+        this.kick(space.id)
+      },
+      carrying: {
+        doc: doc.live,
+        device: core.device,
+        pending: () => doc.hasPending,
+        confirmedSv: () => doc.confirmedSv(),
+        met: async (update) => {
+          const met = await engine.meet(id, Y.convertUpdateFormatV1ToV2(update))
+          if (met === 'hold') {
+            // Out of the room until the question is answered; the answer joins it again.
+            queueMicrotask(() => {
+              rooms.uncarry(key)
+              this.carried.delete(key)
+            })
+          }
+          return met
+        },
+        acked: (seq, sv) => void engine.acked(id, seq, sv),
+        epoch: (epoch) => {
+          core.epochs.set(id, epoch)
+          this.kick(space.id)
+        },
+        live: (on) => {
+          if (on) core.carried.add(id)
+          else core.carried.delete(id)
+        },
+      },
+    })
   }
 }
 

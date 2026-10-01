@@ -42,6 +42,9 @@ export class RoomSocket {
     private readonly noteId: string,
     private readonly token: string,
     private readonly wire: Wire,
+    /** What else the socket offers beside its session: sync v2's `nib.v2` and the
+     *  device it is, which a v1 room never hears of. */
+    private readonly offers: readonly string[] = [],
   ) {}
 
   get open(): boolean {
@@ -89,7 +92,7 @@ export class RoomSocket {
     // take the app down with it.
     let socket: WebSocket
     try {
-      socket = new WebSocket(roomUrl(this.noteId), [subprotocol(this.token)])
+      socket = new WebSocket(roomUrl(this.noteId), [subprotocol(this.token), ...this.offers])
     } catch {
       this.again()
       return

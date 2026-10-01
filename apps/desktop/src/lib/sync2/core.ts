@@ -92,6 +92,9 @@ export class Core {
   readonly by = new Map<string, string>()
   /** Documents a live room's socket carries: a pass leaves them to it. */
   readonly carried = new Set<string>()
+  /** The newest epoch the account has said each document is on: a room is joined only by
+   *  a document on it, since operations of two epochs cannot be merged. */
+  readonly epochs = new Map<string, number>()
   readonly classified: Classification[] = []
   readonly events: Partial<CoreEvents> = {}
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */

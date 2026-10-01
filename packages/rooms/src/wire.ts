@@ -31,9 +31,10 @@ export const TEXT = 'note'
 const SYNC = 0
 const AWARENESS = 1
 
-/** The sync message that carries what the other end was missing, and one update
- *  on its way round. Their own numbers, inside a sync message, and `y-protocols`
- *  numbers them. The third, step 1, is a question and writes nothing. */
+/** The sync messages: the question (step 1), what the other end was missing (step 2),
+ *  and one update on its way round. Their own numbers, inside a sync message, as
+ *  `y-protocols` numbers them. */
+const STEP1 = 0
 const STEP2 = 1
 const UPDATE = 2
 
@@ -68,6 +69,49 @@ function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8
 /** "Here is what I have; send me what I am missing." What either end opens with. */
 export function syncStep1(doc: Y.Doc): Uint8Array {
   return framed(SYNC, (encoder) => writeSyncStep1(encoder, doc))
+}
+
+/** "Here is what I have", said with a state vector rather than a document: sync v2's
+ *  device opening with pending edits names its confirmed state, so the room answers
+ *  with what the account holds beyond it and nothing of the device's own. */
+export function syncStep1Of(sv: Uint8Array): Uint8Array {
+  return framed(SYNC, (encoder) => {
+    encoding.writeVarUint(encoder, STEP1)
+    encoding.writeVarUint8Array(encoder, sv)
+  })
+}
+
+/** "Here is what you were missing", sent when this end chooses rather than as the
+ *  protocol's automatic answer: what a v2 device sends once it has classified. */
+export function syncStep2Of(update: Uint8Array): Uint8Array {
+  return framed(SYNC, (encoder) => {
+    encoding.writeVarUint(encoder, STEP2)
+    encoding.writeVarUint8Array(encoder, update)
+  })
+}
+
+/** A sync message read rather than applied: what a v2 device holding pending edits does
+ *  with everything the room says until it has decided whether to meet it. Null for an
+ *  awareness message or bytes that are not this protocol. Updates are y-protocols' own
+ *  encoding (V1). */
+export type SyncMessage =
+  | { kind: 'step1'; sv: Uint8Array }
+  | { kind: 'step2'; update: Uint8Array }
+  | { kind: 'update'; update: Uint8Array }
+
+export function readSync(message: Uint8Array): SyncMessage | null {
+  try {
+    const decoder = decoding.createDecoder(message)
+    if (decoding.readVarUint(decoder) !== SYNC) return null
+    const kind = decoding.readVarUint(decoder)
+    const bytes = decoding.readVarUint8Array(decoder)
+    if (kind === STEP1) return { kind: 'step1', sv: bytes }
+    if (kind === STEP2) return { kind: 'step2', update: bytes }
+    if (kind === UPDATE) return { kind: 'update', update: bytes }
+    return null
+  } catch {
+    return null
+  }
 }
 
 /** One update, on its way to everybody else. */

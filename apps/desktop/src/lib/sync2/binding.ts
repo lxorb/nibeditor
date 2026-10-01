@@ -78,6 +78,8 @@ export async function attach(
   id: string,
   note: Held,
   holds: () => boolean,
+  /** Told when the document under the note was made again, once it is joined anew. */
+  again?: () => void,
 ): Promise<(() => void) | null> {
   const doc = await engine.hold(id)
   if (!doc?.live || !holds()) {
@@ -96,6 +98,7 @@ export async function attach(
     text = fresh.getText(TEXT)
     arrive(note, was, text.toJSON())
     unbind = bind(note.live, text, holds)
+    again?.()
   }
 
   return () => {

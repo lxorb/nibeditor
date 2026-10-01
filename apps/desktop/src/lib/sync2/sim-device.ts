@@ -40,7 +40,7 @@ import { Refused } from './transport'
 import { folderOf, joined, nameOf } from './places'
 import { numbersRow, wantedRow } from './records'
 import { put, type Change } from './store'
-import type { Disk, World } from './world'
+import type { World } from './world'
 
 const SPACE = 'sim'
 

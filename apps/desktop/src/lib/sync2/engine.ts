@@ -26,6 +26,7 @@ import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed } from './pass'
 import { project, wrote } from './project'
+import { rejoin } from './rejoin'
 import { againstBytes } from './records'
 import { put, type Change, type LogRow, type SyncStore } from './store'
 import type { World } from './world'
@@ -276,6 +277,34 @@ export class Engine implements AskedEngine {
 
   // -------------------------------------------------------------------------
   // Documents held open
+
+  /** A room met with this device's pending edits (`Carrying` in rooms/door.ts): its
+   *  catch-up classified exactly as a push answered `moved` is (rejoin.ts). Answers
+   *  whether to meet the room or stay out of it, holding the note. */
+  meet(id: string, update: Uint8Array): Promise<'go' | 'hold'> {
+    return this.core.use(async () => {
+      const doc = this.core.docs.get(id)
+      const space = this.core.spaceOf(id)
+      if (!doc || !space || this.core.isHeld(id)) return 'hold'
+      doc.flush()
+      const by = this.core.by.get(id) ?? null
+      const met = rejoin(this.core, space, doc, update, doc.seq, this.core.world.now(), by)
+      await this.core.commit(met.changes)
+      return met.held ? 'hold' : 'go'
+    })
+  }
+
+  /** A room's acknowledgement at its settle: what it covers of the pending edits is the
+   *  account's now. */
+  acked(id: string, seq: number, sv: Uint8Array): Promise<void> {
+    return this.core.use(async () => {
+      const doc = this.core.docs.get(id)
+      if (!doc) return
+      doc.flush()
+      doc.acked(seq, sv)
+      await this.core.commit(this.core.docChanges(doc))
+    })
+  }
 
   /** A document something is holding open - a tab, a room - live until it lets go. */
   hold(id: string): Promise<Doc | null> {

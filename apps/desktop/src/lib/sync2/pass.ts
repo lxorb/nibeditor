@@ -255,6 +255,7 @@ export async function readFeed(
       space.entries.set(item.id, entry)
       changes.push(put('entries', { ...entry }))
 
+      if (item.epoch !== undefined) core.epochs.set(item.id, item.epoch)
       if (shapeOf(item.kind) && item.docSeq !== undefined) {
         const pulled = core.numbers.get(item.id)?.pulled ?? -1
         if (item.docSeq > pulled || !core.hasDoc(item.id)) {

@@ -17,6 +17,9 @@ import type { Disk, FileKind, World } from './world'
 
 /** What the engine's own changes to the disk owe the rest of the app. */
 export interface Telling {
+  /** A path the engine is about to move or take away: what the folder's watcher will
+   *  report next is the engine's own doing. */
+  touching(path: string): void
   /** A file or folder the engine moved, for everything kept by path. */
   moved(from: string, to: string, kind: FileKind): Promise<void>
   /** One it took away. */
@@ -50,11 +53,14 @@ function diskOf(telling: Telling): Disk {
         () => undefined,
       ),
     async move(from, to, kind) {
+      telling.touching(from)
+      telling.touching(to)
       await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
       await invoke('rename_note', { from, to })
       await telling.moved(from, to, kind)
     },
     async remove(path, kind) {
+      telling.touching(path)
       // To this device's trash, with a version of the words kept first, the way a
       // delete made here keeps one: a note another device deleted is still a note
       // somebody might want back.
