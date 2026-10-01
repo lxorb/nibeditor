@@ -1251,6 +1251,7 @@ export const fil: Dictionary = {
     'Nananatili ang key sa ligtas na imbakan ng device na ito.',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
+  'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',
   'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',
   'That provider is not set up yet.': 'Hindi pa naka-set up ang provider na iyon.',

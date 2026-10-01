@@ -59,11 +59,14 @@ setup-token` and keep it - is exactly the collecting and intermediating the quot
 forbids, and is not built. OpenCode had its Claude Pro and Max support taken out after
 Anthropic's lawyers asked.
 
-The first of the three conditions is a decision about the release, not the code: the
-Claude Code row is behind a build switch, on by default, off with `NIB_CLAUDE_CODE=off`
-(read by `vite.config.ts` as `__CLAUDE_CODE__` and by the crate in `ai_cli.rs`).
-Until Anthropic's Commercial Terms are accepted, every release build sets it off
-(`release.yml`, both desktop jobs); local and development builds keep it on.
+Emil accepted Anthropic's Commercial Terms for nibeditor on 2026-10-01, so every build
+offers the row, releases and `edge` included. What nib keeps to, and why none of the
+above may change: the binary is the reader's own and unmodified, no auth method is
+removed, everybody signs in with their own credentials, and nib never reads a token.
+The terms also ask that a reader be told an answer can be wrong, which Settings > AI
+says under the providers ("AI can be wrong. Check the facts."). The row stays behind a
+build switch, on by default, off with `NIB_CLAUDE_CODE=off` (read by `vite.config.ts` as
+`__CLAUDE_CODE__` and by the crate in `ai_cli.rs`), for a build that must leave it out.
 
 ### ChatGPT: Sign in with ChatGPT, or the reader's own Codex
 

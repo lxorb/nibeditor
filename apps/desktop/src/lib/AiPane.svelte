@@ -483,7 +483,9 @@
   </div>
 {/if}
 
-<!-- The one thing worth a sentence: where a key goes. -->
+<!-- The two things worth a sentence: where a key goes, and that an answer can be
+     wrong. The second is Anthropic's condition for Claude Code inside nib, and true of
+     every provider; see docs/ai.md, Your own plan. -->
 <p class="hint caption">
   {#if keysAreGuarded()}
     {t('Keys stay in the secure store on this device.')}
@@ -491,6 +493,7 @@
     {t('This browser holds the keys in its own storage.')}
   {/if}
 </p>
+<p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
 
 <!-- The account's own key, which is a different key for a different thing. Read
      only here: it is set in Glasses, and it is never shown again anywhere. See

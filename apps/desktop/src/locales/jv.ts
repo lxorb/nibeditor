@@ -1217,6 +1217,7 @@ export const jv: Dictionary = {
   'Keys stay in the secure store on this device.': 'Kunci tetep ing panyimpenan aman piranti iki.',
   'This browser holds the keys in its own storage.':
     'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
+  'AI can be wrong. Check the facts.': 'AI bisa salah. Priksa fakta-faktane.',
   'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',
   'That provider is not set up yet.': 'Panyedhiya kuwi durung disetel.',

@@ -1301,6 +1301,7 @@ export const ru: Dictionary = {
     'Ключи остаются в защищённом хранилище этого устройства.',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
+  'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
   'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',
   'That provider is not set up yet.': 'Этот поставщик ещё не настроен.',

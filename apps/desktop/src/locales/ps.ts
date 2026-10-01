@@ -1232,6 +1232,7 @@ export const ps: Dictionary = {
   'Keys stay in the secure store on this device.':
     'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
+  'AI can be wrong. Check the facts.': 'مصنوعي ځيرکتيا تېروتنه کولی شي. حقايق وڅېړئ.',
   'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
   'That provider is not set up yet.': 'هغه برابرونکی تر اوسه جوړ نه دی.',

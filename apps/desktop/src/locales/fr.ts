@@ -1274,6 +1274,7 @@ export const fr: Dictionary = {
     'Les clés restent dans le coffre sécurisé de cet appareil.',
   'This browser holds the keys in its own storage.':
     'Ce navigateur garde les clés dans son propre stockage.',
+  'AI can be wrong. Check the facts.': 'L’IA peut se tromper. Vérifiez les faits.',
   'Used by the glasses': 'Utilisée par les lunettes',
   'Could not read the models.': 'Impossible de lire les modèles.',
   'That provider is not set up yet.': 'Ce fournisseur n’est pas encore configuré.',

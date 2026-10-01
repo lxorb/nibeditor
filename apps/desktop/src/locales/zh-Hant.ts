@@ -1200,6 +1200,7 @@ export const zhHant: Dictionary = {
   'Add {name}': '新增{name}',
   'Keys stay in the secure store on this device.': '金鑰留在此裝置的安全儲存區中。',
   'This browser holds the keys in its own storage.': '此瀏覽器把金鑰放在自己的儲存空間裡。',
+  'AI can be wrong. Check the facts.': 'AI可能會出錯，請查證事實。',
   'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型清單。',
   'That provider is not set up yet.': '該供應商還沒設定好。',

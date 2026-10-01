@@ -1212,6 +1212,7 @@ export const ko: Dictionary = {
   'Add {name}': '{name} 추가',
   'Keys stay in the secure store on this device.': '키는 이 기기의 보안 저장소에 남습니다.',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
+  'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
   'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',
   'That provider is not set up yet.': '그 공급자는 아직 설정되지 않았습니다.',

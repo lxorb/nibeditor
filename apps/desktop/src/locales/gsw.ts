@@ -1237,6 +1237,7 @@ export const gsw: Dictionary = {
     'Schlüssel bliibe im sichere Speicher vo däm Grät.',
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
+  'AI can be wrong. Check the facts.': 'KI cha sich irre. Fakte prüefe.',
   'Used by the glasses': 'Vo de Brille gnutzt',
   'Could not read the models.': 'D Modäll händ sich nöd läse laa.',
   'That provider is not set up yet.': 'Dä Aabieter isch na nöd iigrichtet.',

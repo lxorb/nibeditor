@@ -1204,6 +1204,7 @@ export const th: Dictionary = {
   'Add {name}': 'เพิ่ม {name}',
   'Keys stay in the secure store on this device.': 'คีย์อยู่ในที่เก็บนิรภัยของอุปกรณ์นี้',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
+  'AI can be wrong. Check the facts.': 'AI อาจผิดพลาดได้ โปรดตรวจสอบข้อเท็จจริง',
   'Used by the glasses': 'แว่นใช้อยู่',
   'Could not read the models.': 'อ่านรายการโมเดลไม่ได้',
   'That provider is not set up yet.': 'ยังไม่ได้ตั้งค่าผู้ให้บริการนั้น',

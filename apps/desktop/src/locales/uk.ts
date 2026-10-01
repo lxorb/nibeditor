@@ -1297,6 +1297,7 @@ export const uk: Dictionary = {
   'Keys stay in the secure store on this device.':
     'Ключі залишаються в захищеному сховищі цього пристрою.',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
+  'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
   'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',
   'That provider is not set up yet.': 'Цей постачальник ще не налаштований.',

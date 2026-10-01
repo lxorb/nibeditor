@@ -1229,6 +1229,7 @@ export const mr: Dictionary = {
   'Add {name}': '{name} जोडा',
   'Keys stay in the secure store on this device.': 'कळा या उपकरणाच्या सुरक्षित साठ्यात राहतात.',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
+  'AI can be wrong. Check the facts.': 'AI चुकू शकते. तथ्ये तपासा.',
   'Used by the glasses': 'चष्मा वापरतो',
   'Could not read the models.': 'मॉडेल वाचता आले नाहीत.',
   'That provider is not set up yet.': 'तो पुरवठादार अद्याप मांडलेला नाही.',

@@ -1244,6 +1244,7 @@ export const ml: Dictionary = {
     'കീകൾ ഈ ഉപകരണത്തിലെ സുരക്ഷിത സ്റ്റോറിൽ ഇരിക്കും.',
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
+  'AI can be wrong. Check the facts.': 'AI-ക്ക് തെറ്റുപറ്റാം. വസ്തുതകൾ പരിശോധിക്കുക.',
   'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
   'That provider is not set up yet.': 'ആ പ്രൊവൈഡർ ഇനിയും സജ്ജമല്ല.',

@@ -1231,6 +1231,7 @@ export const tr: Dictionary = {
   'Keys stay in the secure store on this device.': 'Anahtarlar bu aygıtın güvenli deposunda kalır.',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
+  'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',
   'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
   'That provider is not set up yet.': 'Bu sağlayıcı henüz kurulmadı.',

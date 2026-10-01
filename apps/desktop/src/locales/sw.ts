@@ -1247,6 +1247,7 @@ export const sw: Dictionary = {
     'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
   'That provider is not set up yet.': 'Mtoa huduma huyo hajasanidiwa bado.',

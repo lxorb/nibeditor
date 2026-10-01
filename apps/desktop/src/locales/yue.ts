@@ -1200,6 +1200,7 @@ export const yue: Dictionary = {
   'Add {name}': '新增{name}',
   'Keys stay in the secure store on this device.': '密鑰留喺呢部裝置嘅安全儲存區中。',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
+  'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
   'Used by the glasses': '供眼鏡用',
   'Could not read the models.': '冇辦法讀取模型列表。',
   'That provider is not set up yet.': '嗰個服務商仲未設定好。',

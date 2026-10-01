@@ -1250,6 +1250,7 @@ export const ha: Dictionary = {
     "Maɓallai suna zama a ma'ajin aminci a wannan na'ura.",
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
+  'AI can be wrong. Check the facts.': 'AI na iya yin kuskure. Ka tabbatar da gaskiyar bayanai.',
   'Used by the glasses': 'Tabarau na amfani da shi',
   'Could not read the models.': 'Ba a iya karanta samfuran ba.',
   'That provider is not set up yet.': 'Ba a saita wannan mai bayarwa tukuna.',

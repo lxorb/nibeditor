@@ -1199,6 +1199,7 @@ export const zhHans: Dictionary = {
   'Add {name}': '添加{name}',
   'Keys stay in the secure store on this device.': '密钥保存在此设备的安全存储中。',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
+  'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
   'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',
   'That provider is not set up yet.': '该服务商尚未配置。',

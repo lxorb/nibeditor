@@ -1229,6 +1229,7 @@ export const hi: Dictionary = {
     'कुंजियाँ इस डिवाइस के सुरक्षित भंडार में रहती हैं।',
   'This browser holds the keys in its own storage.':
     'यह ब्राउज़र कुंजियाँ अपने ही भंडार में रखता है।',
+  'AI can be wrong. Check the facts.': 'AI गलत हो सकता है। तथ्यों की जाँच करें।',
   'Used by the glasses': 'चश्मा इसका उपयोग करता है',
   'Could not read the models.': 'मॉडल पढ़े नहीं जा सके।',
   'That provider is not set up yet.': 'वह प्रदाता अभी सेट नहीं हुआ।',

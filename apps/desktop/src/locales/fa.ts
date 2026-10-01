@@ -1231,6 +1231,7 @@ export const fa: Dictionary = {
   'Keys stay in the secure store on this device.': 'کلیدها در انبار امن این دستگاه می‌مانند.',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
   'That provider is not set up yet.': 'آن فراهم‌کننده هنوز برپا نشده.',

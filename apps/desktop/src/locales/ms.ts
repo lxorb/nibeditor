@@ -1222,6 +1222,7 @@ export const ms: Dictionary = {
     'Kunci kekal dalam simpanan selamat peranti ini.',
   'This browser holds the keys in its own storage.':
     'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
+  'AI can be wrong. Check the facts.': 'AI boleh tersilap. Semak faktanya.',
   'Used by the glasses': 'Digunakan cermin mata',
   'Could not read the models.': 'Tidak dapat membaca senarai model.',
   'That provider is not set up yet.': 'Pembekal itu belum disiapkan.',

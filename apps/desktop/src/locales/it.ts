@@ -1272,6 +1272,7 @@ export const it: Dictionary = {
     'Le chiavi restano nell’archivio sicuro di questo dispositivo.',
   'This browser holds the keys in its own storage.':
     'Questo browser conserva le chiavi nella propria memoria.',
+  'AI can be wrong. Check the facts.': 'L’IA può sbagliare. Verificare i fatti.',
   'Used by the glasses': 'Usato dagli occhiali',
   'Could not read the models.': 'Non è stato possibile leggere i modelli.',
   'That provider is not set up yet.': 'Quel fornitore non è ancora configurato.',

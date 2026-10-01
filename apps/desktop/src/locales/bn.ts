@@ -1228,6 +1228,7 @@ export const bn: Dictionary = {
   'Add {name}': '{name} যোগ করুন',
   'Keys stay in the secure store on this device.': 'কী এই ডিভাইসের নিরাপদ ভাণ্ডারে থাকে।',
   'This browser holds the keys in its own storage.': 'এই ব্রাউজার কী নিজের ভাণ্ডারে রাখে।',
+  'AI can be wrong. Check the facts.': 'AI ভুল করতে পারে। তথ্যগুলো যাচাই করুন।',
   'Used by the glasses': 'চশমা ব্যবহার করে',
   'Could not read the models.': 'মডেল পড়া গেল না।',
   'That provider is not set up yet.': 'ওই প্রদানকারী এখনও সাজানো হয়নি।',

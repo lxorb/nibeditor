@@ -1300,6 +1300,7 @@ export const pl: Dictionary = {
     'Klucze zostają w bezpiecznym magazynie tego urządzenia.',
   'This browser holds the keys in its own storage.':
     'Ta przeglądarka trzyma klucze we własnym magazynie.',
+  'AI can be wrong. Check the facts.': 'AI może się mylić. Sprawdzaj fakty.',
   'Used by the glasses': 'Używany przez okulary',
   'Could not read the models.': 'Nie udało się odczytać modeli.',
   'That provider is not set up yet.': 'Ten dostawca nie jest jeszcze skonfigurowany.',

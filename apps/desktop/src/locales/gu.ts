@@ -1224,6 +1224,7 @@ export const gu: Dictionary = {
   'Add {name}': '{name} ઉમેરો',
   'Keys stay in the secure store on this device.': 'કીઓ આ ઉપકરણના સલામત સંગ્રહમાં રહે છે.',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
+  'AI can be wrong. Check the facts.': 'AI ભૂલ કરી શકે છે. હકીકતો ચકાસો.',
   'Used by the glasses': 'ચશ્માં વાપરે છે',
   'Could not read the models.': 'મોડેલ વાંચી શકાયા નહીં.',
   'That provider is not set up yet.': 'એ પ્રદાતા હજી ગોઠવાયો નથી.',

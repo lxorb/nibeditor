@@ -145,9 +145,6 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
-          # No Claude Code in a release until Anthropic's Commercial Terms are accepted;
-          # the page and the crate both read it. See docs/ai.md, Your own plan.
-          NIB_CLAUDE_CODE: 'off'
         run: |
           pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
@@ -206,8 +203,6 @@ jobs:
         shell: bash
     env:
       CEF_DIR: ${{ github.workspace }}/.cef
-      # The frontend and the crate both leave Claude Code out, as the installers do.
-      NIB_CLAUDE_CODE: 'off'
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 

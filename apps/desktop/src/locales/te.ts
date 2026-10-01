@@ -1234,6 +1234,7 @@ export const te: Dictionary = {
   'Add {name}': '{name} జోడించు',
   'Keys stay in the secure store on this device.': 'కీలు ఈ పరికరంలోని సురక్షిత స్టోర్‌లో ఉంటాయి.',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
+  'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
   'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',
   'That provider is not set up yet.': 'ఆ ప్రొవైడర్ ఇంకా ఏర్పాటు కాలేదు.',

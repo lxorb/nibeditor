@@ -1223,6 +1223,7 @@ export const id: Dictionary = {
   'Keys stay in the secure store on this device.': 'Kunci tetap di penyimpanan aman perangkat ini.',
   'This browser holds the keys in its own storage.':
     'Peramban ini menyimpan kunci di penyimpanannya sendiri.',
+  'AI can be wrong. Check the facts.': 'AI bisa salah. Periksa faktanya.',
   'Used by the glasses': 'Dipakai kacamata',
   'Could not read the models.': 'Tidak dapat membaca daftar model.',
   'That provider is not set up yet.': 'Penyedia itu belum disiapkan.',

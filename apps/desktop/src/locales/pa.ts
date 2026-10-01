@@ -1236,6 +1236,7 @@ export const pa: Dictionary = {
     'ਕੁੰਜੀਆਂ ਇਸ ਡਿਵਾਈਸ ਦੇ ਸੁਰੱਖਿਅਤ ਭੰਡਾਰ ਵਿੱਚ ਰਹਿੰਦੀਆਂ ਹਨ।',
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
+  'AI can be wrong. Check the facts.': 'AI ਗਲਤ ਹੋ ਸਕਦਾ ਹੈ। ਤੱਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
   'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',
   'That provider is not set up yet.': 'ਉਹ ਪ੍ਰਦਾਤਾ ਹਾਲੇ ਨਹੀਂ ਲੱਗਾ।',

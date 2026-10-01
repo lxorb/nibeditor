@@ -1213,6 +1213,7 @@ export const am: Dictionary = {
   'Add {name}': '{name} ጨምር',
   'Keys stay in the secure store on this device.': 'ቁልፎች በዚህ መሣሪያ አስተማማኝ ማከማቻ ውስጥ ይቀራሉ።',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
+  'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
   'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',
   'That provider is not set up yet.': 'ያ አቅራቢ እስካሁን አልተዘጋጀም።',

@@ -1218,6 +1218,7 @@ export const ja: Dictionary = {
   'Keys stay in the secure store on this device.': 'キーはこの端末の安全な保管領域に残ります。',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
+  'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
   'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',
   'That provider is not set up yet.': 'このプロバイダはまだ設定されていません。',

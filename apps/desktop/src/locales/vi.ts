@@ -1216,6 +1216,7 @@ export const vi: Dictionary = {
     'Khoá được giữ trong kho bảo mật của thiết bị này.',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
   'That provider is not set up yet.': 'Nhà cung cấp đó chưa được thiết lập.',

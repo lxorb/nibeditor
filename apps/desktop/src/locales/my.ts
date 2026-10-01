@@ -1216,6 +1216,7 @@ export const my: Dictionary = {
     'သော့များ ဤစက်၏ လုံခြုံသောသိမ်းဆည်းမှုတွင် ကျန်နေသည်။',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
+  'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',
   'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
   'That provider is not set up yet.': 'ထိုပေးသူ မစီစဉ်ရသေးပါ။',

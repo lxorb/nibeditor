@@ -1249,6 +1249,7 @@ export const ta: Dictionary = {
     'சாவிகள் இந்தச் சாதனத்தின் பாதுகாப்பான சேமிப்பில் இருக்கும்.',
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
+  'AI can be wrong. Check the facts.': 'AI தவறாகலாம். உண்மைகளைச் சரிபார்க்கவும்.',
   'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',
   'That provider is not set up yet.': 'அந்த வழங்குநர் இன்னும் அமைக்கப்படவில்லை.',

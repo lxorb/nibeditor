@@ -1240,6 +1240,7 @@ export const kn: Dictionary = {
   'Keys stay in the secure store on this device.': 'ಕೀಗಳು ಈ ಸಾಧನದ ಸುರಕ್ಷಿತ ಸಂಗ್ರಹದಲ್ಲಿ ಇರುತ್ತವೆ.',
   'This browser holds the keys in its own storage.':
     'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
+  'AI can be wrong. Check the facts.': 'AI ತಪ್ಪಾಗಬಹುದು. ಸತ್ಯಾಂಶಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
   'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   'That provider is not set up yet.': 'ಆ ಪೂರೈಕೆದಾರ ಇನ್ನೂ ಹೊಂದಿಸಿಲ್ಲ.',

@@ -1323,6 +1323,7 @@ export const ar: Dictionary = {
   'Add {name}': 'إضافة {name}',
   'Keys stay in the secure store on this device.': 'تبقى المفاتيح في المخزن الآمن على هذا الجهاز.',
   'This browser holds the keys in its own storage.': 'يحفظ هذا المتصفح المفاتيح في مخزنه الخاص.',
+  'AI can be wrong. Check the facts.': 'قد يخطئ الذكاء الاصطناعي. تحقّق من الحقائق.',
   'Used by the glasses': 'تستخدمه النظارات',
   'Could not read the models.': 'تعذّرت قراءة الطُرز.',
   'That provider is not set up yet.': 'هذا المزوّد غير مُهيّأ بعد.',

@@ -1230,6 +1230,7 @@ export const ur: Dictionary = {
   'Add {name}': '{name} شامل کریں',
   'Keys stay in the secure store on this device.': 'کلیدیں اس ڈیوائس کے محفوظ ذخیرے میں رہتی ہیں۔',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
+  'AI can be wrong. Check the facts.': 'AI غلط ہو سکتا ہے۔ حقائق کی تصدیق کریں۔',
   'Used by the glasses': 'چشمہ استعمال کرتا ہے',
   'Could not read the models.': 'ماڈل پڑھے نہیں جا سکے۔',
   'That provider is not set up yet.': 'وہ فراہم کنندہ ابھی مرتب نہیں ہوا۔',
