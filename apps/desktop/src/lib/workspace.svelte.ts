@@ -80,7 +80,6 @@ import * as panels from './workspace/panels'
 import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as ahead from './workspace/ahead'
-import { warm } from './search/warm.svelte'
 import { firstScreen } from './first-screen.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
@@ -2147,10 +2146,12 @@ class Workspace {
     if (!samePath(links.rootOf(), root)) {
       void links.build(root)
       // And the search holds the space it is about to be asked about, a turn after
-      // the index; see search/warm.svelte.ts. The papers of the space are the same
-      // question about the files the notes sit beside: what was read of them before
-      // comes back, and what has never been opened is read in idle time.
-      void warm.forSpace(root)
+      // the index; see search/warm.svelte.ts, which is fetched for it rather than
+      // carried into the first paint, since its turn is after that anyway. The papers
+      // of the space are the same question about the files the notes sit beside: what
+      // was read of them before comes back, and what has never been opened is read in
+      // idle time.
+      void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root))
       // Imported here rather than at the top, so that a window which never opens a
       // PDF never loads the module that reads one.
       const listed = this.files
