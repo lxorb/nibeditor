@@ -2,6 +2,7 @@
   import { carried, carrySection, draggedSection, isSectionDrag, landing } from './drag-paths'
   import { dropOnList } from './list-landing.svelte'
   import { movesSection } from './sections'
+  import { untrack } from 'svelte'
   import { fade, fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -450,6 +451,33 @@
     lastPlace = place
   })
 
+  /** What the panel holds, which stays from one space to the next. */
+  let stack = $state<HTMLElement>()
+
+  /** The space whose panel is showing, so the first one arrives without moving. */
+  let arrived = untrack(() => workspace.activeSpaceId)
+
+  // A new space's panel comes in from the side of the switcher it is on. Played on
+  // the panel that is already there rather than on a new one: the panel used to be
+  // rebuilt for every space, every row and every section of it made again for a
+  // frame that only needed their words changed - one task of fifty to eighty
+  // milliseconds per switch on two thousand notes. The file list keeps its rows
+  // and hands each the new space's; see `slotsFor` in row-window.ts.
+  $effect(() => {
+    const id = workspace.activeSpaceId
+    if (id === arrived) return
+    arrived = id
+
+    untrack(() => stack)?.animate(
+      [
+        { transform: `translateY(${16 * untrack(() => direction)}px)`, opacity: 0 },
+        { transform: 'none', opacity: 1 },
+      ],
+      // Ease out, which is cubicOut as a browser spells it.
+      { duration: dur(220), easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' },
+    )
+  })
+
   const size = new SidebarWidth(() => side)
   let aside = $state<HTMLElement>()
   /** How wide it is drawn right now, which is what the handle says it is. Measured
@@ -736,230 +764,227 @@
     </div>
   {/if}
 
-  <!-- Rebuilt for each space, arriving from the side of the switcher the new
-       space is on; and inside that, one panel crossing with the next. The two
-       are stacked rather than in a column, so the one going and the one coming
-       occupy the same place and the list under them does not jump; only their
-       transforms and their opacities change, which is the compositor's work
+  <!-- The same panel for every space, arriving from the side of the switcher the
+       new space is on (see `arriving`); and inside it, one panel crossing with the
+       next. The two are stacked rather than in a column, so the one going and the
+       one coming occupy the same place and the list under them does not jump; only
+       their transforms and their opacities change, which is the compositor's work
        alone. -->
-  {#key workspace.activeSpaceId}
-    <div class="stack" in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}>
-      {#key showing}
-        <!-- Which panel this is holding, because the body crossfades: for a moment
+  <div class="stack" bind:this={stack}>
+    {#key showing}
+      <!-- Which panel this is holding, because the body crossfades: for a moment
              there are two of it on screen and only one of them is the one that is
              arriving. See boxOf in focus.ts. -->
-        <div
-          class="body"
-          data-region={side === 'left' ? 'list' : undefined}
-          data-panel={showing}
-          use:scrollbar={showing}
-          use:pullable
-          in:arrive
-          out:leave
-        >
-          <!-- Which note the panel is held on. Only while it is held, and only
+      <div
+        class="body"
+        data-region={side === 'left' ? 'list' : undefined}
+        data-panel={showing}
+        use:scrollbar={showing}
+        use:pullable
+        in:arrive
+        out:leave
+      >
+        <!-- Which note the panel is held on. Only while it is held, and only
                where holding means anything: the panel is already full of that
                note, so this is the one line that says whose. -->
-          {#if held && holdable}
-            <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
-          {/if}
+        {#if held && holdable}
+          <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
+        {/if}
 
-          {#if showing === 'tree'}
-            {#if listing}
-              <Bookmarks onsearch={runBookmarked} />
+        {#if showing === 'tree'}
+          {#if listing}
+            <Bookmarks onsearch={runBookmarked} />
 
-              <!-- A word in capitals over each group, the way every list worth
+            <!-- A word in capitals over each group, the way every list worth
                reading is cut up; see docs/design.md. -->
-              <p class="nib-section">{t('Files')}</p>
+            <p class="nib-section">{t('Files')}</p>
 
-              <!-- The listing plus a row for every note an account's first pass has
+            <!-- The listing plus a row for every note an account's first pass has
                    named and not fetched yet, which is what makes a fresh sign-in a
                    file list rather than a wait; see `shownTree` in
                    workspace.svelte.ts. -->
-              <Tree tree={listing} />
+            <Tree tree={listing} />
 
-              <!-- A space with nothing in it says what to do about it. Folders can
+            <!-- A space with nothing in it says what to do about it. Folders can
              still be there, which is why this counts files and not rows. Nor is a
              space with notes on their way an empty one. -->
-              {#if !workspace.files.length && !arriving.coming.size}
-                <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
-                >
-              {/if}
+            {#if !workspace.files.length && !arriving.coming.size}
+              <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button>
+            {/if}
 
-              <!-- What the space put away, at the list's foot; see Archive.svelte. -->
-              {#if !__EVEN_PLUGIN__ && workspace.archive.any}
-                {#await archiveSection() then Archive}
-                  <Archive />
-                {/await}
-              {/if}
+            <!-- What the space put away, at the list's foot; see Archive.svelte. -->
+            {#if !__EVEN_PLUGIN__ && workspace.archive.any}
+              {#await archiveSection() then Archive}
+                <Archive />
+              {/await}
+            {/if}
 
-              <!-- The space below the last row still belongs to the space, so it
+            <!-- The space below the last row still belongs to the space, so it
              takes the same menu instead of swallowing the click, and accepts a
              note dropped on it as "out of whatever folder it was in". -->
-              <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-              <div
-                class="rest"
-                data-space-rest
-                class:dropping={rootDrop}
-                oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-                onclick={() => workspace.cancelNaming()}
-                ondragover={overRoot}
-                ondragleave={() => dropTarget.clear()}
-                ondrop={dropOnRoot}
-              ></div>
-            {:else}
-              <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
-            {/if}
-          {:else if showing === 'outline'}
-            <!-- A page note has pages where a note has headings, and they are the
+            <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+            <div
+              class="rest"
+              data-space-rest
+              class:dropping={rootDrop}
+              oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+              onclick={() => workspace.cancelNaming()}
+              ondragover={overRoot}
+              ondragleave={() => dropTarget.clear()}
+              ondrop={dropOnRoot}
+            ></div>
+          {:else}
+            <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
+          {/if}
+        {:else if showing === 'outline'}
+          <!-- A page note has pages where a note has headings, and they are the
                  same thing: the shape of what is open, and a row that goes to a part
                  of it. So the panel shows whichever the thing in front has, in the
                  same place, rather than growing a fourth panel nobody asked for. -->
-            {#if pages.current}
-              <!-- Fetched the first time a page note is in front. It draws its
+          {#if pages.current}
+            <!-- Fetched the first time a page note is in front. It draws its
                    thumbnails with the surface's own ink engine - one picture of a
                    stroke - and that engine is the larger half of the canvas; see
                    surfaces.svelte.ts, where the pages surface itself is. -->
-              {#await pagesNavigator() then PagesNavigator}
-                <PagesNavigator />
-              {/await}
-            {:else if workspace.headings.length}
-              <!-- The same walk and the same one tab stop every list in the app
+            {#await pagesNavigator() then PagesNavigator}
+              <PagesNavigator />
+            {/await}
+          {:else if workspace.headings.length}
+            <!-- The same walk and the same one tab stop every list in the app
                    has; see roving.ts. Enter goes to the heading and hands the
                    keyboard to the note, Space goes to it and stays here, so a note
                    can be read down heading by heading without leaving the outline. -->
-              <ul
-                bind:this={outline}
-                use:roving={{
-                  current: '.is-on',
-                  open: (row) => jump(Number(row.dataset.line ?? 0)),
-                  peek: (row) => {
-                    // Going to a heading hands the note the keyboard, so Space takes
-                    // it straight back: the point of Space is to stay here.
-                    jump(Number(row.dataset.line ?? 0))
-                    row.focus()
-                  },
-                  menu: (row, at) => row.dispatchEvent(at),
-                }}
-              >
-                {#each workspace.headings as heading, index (index)}
-                  <li>
-                    <button
-                      class="nib-row is-short row heading"
-                      class:is-on={index === current}
-                      class:above={dropAt === index && dropAbove}
-                      class:below={dropAt === index && !dropAbove}
-                      data-line={heading.line}
-                      style:--level={heading.level - shallowest}
-                      draggable="true"
-                      onclick={() => jump(heading.line)}
-                      oncontextmenu={(event) =>
-                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
-                      use:longPress={(event) =>
-                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
-                      ondragstart={(event) => startSection(event, index)}
-                      ondragover={(event) => overSection(event, index)}
-                      ondragleave={() => (dropAt = null)}
-                      ondragend={endSection}
-                      ondrop={(event) => dropSection(event, index)}
-                    >
-                      <span class="nib-row-label">{heading.text}</span>
-                    </button>
-                  </li>
-                {/each}
-              </ul>
-            {:else}
-              <p class="empty-text">{t('No headings in this note')}</p>
-            {/if}
+            <ul
+              bind:this={outline}
+              use:roving={{
+                current: '.is-on',
+                open: (row) => jump(Number(row.dataset.line ?? 0)),
+                peek: (row) => {
+                  // Going to a heading hands the note the keyboard, so Space takes
+                  // it straight back: the point of Space is to stay here.
+                  jump(Number(row.dataset.line ?? 0))
+                  row.focus()
+                },
+                menu: (row, at) => row.dispatchEvent(at),
+              }}
+            >
+              {#each workspace.headings as heading, index (index)}
+                <li>
+                  <button
+                    class="nib-row is-short row heading"
+                    class:is-on={index === current}
+                    class:above={dropAt === index && dropAbove}
+                    class:below={dropAt === index && !dropAbove}
+                    data-line={heading.line}
+                    style:--level={heading.level - shallowest}
+                    draggable="true"
+                    onclick={() => jump(heading.line)}
+                    oncontextmenu={(event) =>
+                      menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                    use:longPress={(event) =>
+                      menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                    ondragstart={(event) => startSection(event, index)}
+                    ondragover={(event) => overSection(event, index)}
+                    ondragleave={() => (dropAt = null)}
+                    ondragend={endSection}
+                    ondrop={(event) => dropSection(event, index)}
+                  >
+                    <span class="nib-row-label">{heading.text}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {:else}
+            <p class="empty-text">{t('No headings in this note')}</p>
+          {/if}
 
-            <!-- Under the headings, because they are the same kind of thing: the
+          <!-- Under the headings, because they are the same kind of thing: the
                  shape of the note being read, and a row that jumps within it. Only
                  when the note has any; a heading over nothing is a wall. -->
-            {#if workspace.footnotes.length}
-              <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
-              <ul>
-                {#each workspace.footnotes as note (note.id)}
-                  <li>
-                    <button
-                      class="nib-row is-short row note"
-                      class:is-quiet={!note.used}
-                      onclick={() => jump(note.line)}
-                    >
-                      <span class="nib-row-mark note-id">{note.id}</span>
-                      <span class="nib-row-label">{note.text}</span>
-                    </button>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          {:else if showing === 'footnotes'}
-            <!-- The note's footnotes, on a panel of their own. The same rows the
+          {#if workspace.footnotes.length}
+            <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
+            <ul>
+              {#each workspace.footnotes as note (note.id)}
+                <li>
+                  <button
+                    class="nib-row is-short row note"
+                    class:is-quiet={!note.used}
+                    onclick={() => jump(note.line)}
+                  >
+                    <span class="nib-row-mark note-id">{note.id}</span>
+                    <span class="nib-row-label">{note.text}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        {:else if showing === 'footnotes'}
+          <!-- The note's footnotes, on a panel of their own. The same rows the
                  Outline draws under its headings, plus the one thing a section inside
                  another panel had no room to offer: the definition. A footnote is two
                  things in two places, and this is the panel that reaches both - the row
                  goes to the mark in the words, the sign at its end to what it says at
                  the bottom. The count is in the heading, as it is in the Outline. -->
-            <p class="nib-section">
-              {t('Footnotes')}<span>{workspace.footnotes.length}</span>
-            </p>
-            {#if workspace.footnotes.length}
-              <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
-                {#each workspace.footnotes as note (note.id)}
-                  <li class="footnote">
+          <p class="nib-section">
+            {t('Footnotes')}<span>{workspace.footnotes.length}</span>
+          </p>
+          {#if workspace.footnotes.length}
+            <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
+              {#each workspace.footnotes as note (note.id)}
+                <li class="footnote">
+                  <button
+                    class="nib-row is-short row note"
+                    class:is-quiet={!note.used}
+                    onclick={() => jump(note.line)}
+                    title={note.used ? t('Go to the mark') : t('Nothing points at this one')}
+                  >
+                    <span class="nib-row-mark note-id">{note.id}</span>
+                    <span class="nib-row-label">{note.text}</span>
+                  </button>
+                  {#if note.defined !== null}
                     <button
-                      class="nib-row is-short row note"
-                      class:is-quiet={!note.used}
-                      onclick={() => jump(note.line)}
-                      title={note.used ? t('Go to the mark') : t('Nothing points at this one')}
+                      class="nib-glyph to-definition"
+                      title={t('Go to the definition')}
+                      aria-label={t('Go to the definition')}
+                      onclick={() => jump(note.defined ?? 0)}
                     >
-                      <span class="nib-row-mark note-id">{note.id}</span>
-                      <span class="nib-row-label">{note.text}</span>
+                      <svg viewBox="0 0 13 13"><path d={DOWN_MARK} /></svg>
                     </button>
-                    {#if note.defined !== null}
-                      <button
-                        class="nib-glyph to-definition"
-                        title={t('Go to the definition')}
-                        aria-label={t('Go to the definition')}
-                        onclick={() => jump(note.defined ?? 0)}
-                      >
-                        <svg viewBox="0 0 13 13"><path d={DOWN_MARK} /></svg>
-                      </button>
-                    {/if}
-                  </li>
-                {/each}
-              </ul>
-            {:else}
-              <p class="empty-text">{t('No footnotes in this note')}</p>
-            {/if}
-          {:else if showing === 'properties'}
-            {#await propertiesPanel() then PropertiesPanel}
-              <PropertiesPanel onsearch={runBookmarked} />
-            {/await}
-          {:else if showing === 'agents'}
-            {#await agentsPanel() then AgentsPanel}
-              <AgentsPanel />
-            {/await}
-          {:else if showing === 'ask'}
-            {#await askPanel() then AskPanel}
-              <AskPanel {ongoto} />
-            {/await}
-          {:else if showing === 'links'}
-            {#await linksPanel() then Links}
-              <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
-            {/await}
-          {:else if showing === 'search'}
-            <!-- The one panel with a ranking engine behind it, fetched the first time
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          {:else}
+            <p class="empty-text">{t('No footnotes in this note')}</p>
+          {/if}
+        {:else if showing === 'properties'}
+          {#await propertiesPanel() then PropertiesPanel}
+            <PropertiesPanel onsearch={runBookmarked} />
+          {/await}
+        {:else if showing === 'agents'}
+          {#await agentsPanel() then AgentsPanel}
+            <AgentsPanel />
+          {/await}
+        {:else if showing === 'ask'}
+          {#await askPanel() then AskPanel}
+            <AskPanel {ongoto} />
+          {/await}
+        {:else if showing === 'links'}
+          {#await linksPanel() then Links}
+            <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+          {/await}
+        {:else if showing === 'search'}
+          <!-- The one panel with a ranking engine behind it, fetched the first time
                  the tab is chosen rather than carried into the first paint; see
                  surfaces.svelte.ts. Preloaded once the launch is over, so the tab
                  that is a keystroke away is never a wait. -->
-            {#await searchPanel() then SearchPanel}
-              <SearchPanel {ongoto} />
-            {/await}
-          {/if}
-        </div>
-      {/key}
-    </div>
-  {/key}
+          {#await searchPanel() then SearchPanel}
+            <SearchPanel {ongoto} />
+          {/await}
+        {/if}
+      </div>
+    {/key}
+  </div>
 
   <!-- Who is at this device, the theme and the settings, in a quiet row at the
        bottom of the panel: the three things the column of spaces used to carry
