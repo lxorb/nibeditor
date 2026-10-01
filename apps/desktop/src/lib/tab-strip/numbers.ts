@@ -8,16 +8,6 @@
 
 import { parseCombination, type Platform } from '../keys'
 
-/** How long Alt has to be held on its own before the numbers come.
- *
- *  Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I press
- *  alt."* It was the app's line between a tap and a hold, 350 ms, and a fade after it:
- *  half a second from the key to the numbers. Office's KeyTips come on the press itself,
- *  and a wait a hand notices is one past a tenth of a second or two. A seventh of a second
- *  is under that, and still longer than the gap between Alt and the digit of a practiced
- *  Alt+3, so the numbers never flash at it. */
-export const HOLD_MS = 150
-
 /** The keys, and the place along the strip each goes to. Eight places, the ninth, and
  *  the last, which Alt+0 goes to. */
 const PLACES: readonly (readonly [string, number | 'last'])[] = [
@@ -58,6 +48,10 @@ export function numerals(
 /** A key as the hold reads it. */
 export interface Stroke {
   key: string
+  /** Where it is on the keyboard, which a digit is known by on a layout whose top row
+   *  types something else: an AZERTY `&` is Digit1. */
+  code: string
+  altKey: boolean
   ctrlKey: boolean
   shiftKey: boolean
   metaKey: boolean
@@ -66,34 +60,70 @@ export interface Stroke {
   altGraph: boolean
 }
 
-/** Whether Alt is being held on its own.
+/** A digit on the top row, the keys Alt goes to a tab with. Not the number pad's: Alt and
+ *  those type a character by its code on Windows. */
+function isDigit(stroke: Stroke): boolean {
+  return (
+    /^Digit\d$/.test(stroke.code) || (/^\d$/.test(stroke.key) && !stroke.code.startsWith('Numpad'))
+  )
+}
+
+/** Whether the numbers are up: exactly while Alt is held, on its own or going from tab to
+ *  tab with its digits.
  *
- *  Alt alone starts it. AltGr never does - a German or Swiss keyboard types `@`, `[` and
- *  `{` with it, and Windows says it as Ctrl and Alt - and nor does Alt with Shift, which
- *  is the system's switch between keyboards. Any other key ends it, which is what makes
- *  a quick Alt+3 never show a number and Alt+Tab never leave any behind; so does a press
- *  of the pointer, the wheel, a key let go of and the window losing the keyboard, which
- *  the caller says with `broken`. A held Alt repeats, and a repeat is the same hold -
- *  flagged as one or not, since an engine that did not flag it would otherwise start the
- *  clock again on every repeat, and the numbers would wait for a hand that is not going
- *  to stop repeating. */
+ *  Emil, 2026-10-01: *"It should always display, even if I press and hold Alt and then
+ *  press a number. The only condition should be Alt held."* Alt going down shows them,
+ *  and so does a digit pressed with Alt alone, which catches an Alt that went down where
+ *  the window could not hear it. A digit keeps them, so a hand stepping Alt+1, Alt+2,
+ *  Alt+3 sees where it is going all the way.
+ *
+ *  AltGr never shows them - a German or Swiss keyboard types `@`, `[` and `{` with it,
+ *  and Windows says it as Ctrl and Alt - and nor does Alt with Shift, the system's switch
+ *  between keyboards. Any other key pressed with Alt ends the hold, which is Alt+F4,
+ *  Alt+Tab, Alt and an arrow: the chord is about something else, and a repeat of the
+ *  still held Alt does not bring them back until Alt has been let go of. So does a press
+ *  of the pointer or the wheel (`spent`), and Alt let go of or the window losing the
+ *  keyboard (`released`). A held Alt repeats, and a repeat is the same hold - flagged as
+ *  one or not, since an engine that did not flag it would otherwise start over. */
 export class AltHold {
   holding = false
+  /** Alt is still down, but the hold was used for something else. */
+  private spent = false
 
-  /** A key went down. Answers whether it began a hold, which is when the clock starts. */
+  /** A key went down. Answers whether the numbers are to be put where the tabs are now:
+   *  on a hold beginning, and on a digit, which has just moved the active tab. */
   down(stroke: Stroke): boolean {
-    if (stroke.key === 'Alt' && (stroke.repeat || this.holding)) return false
+    const alone = !stroke.ctrlKey && !stroke.shiftKey && !stroke.metaKey && !stroke.altGraph
 
-    this.holding =
-      stroke.key === 'Alt' &&
-      !stroke.ctrlKey &&
-      !stroke.shiftKey &&
-      !stroke.metaKey &&
-      !stroke.altGraph
-    return this.holding
+    if (stroke.key === 'Alt') {
+      if (stroke.repeat || this.holding || this.spent) return false
+      this.holding = alone
+      this.spent = !alone
+      return this.holding
+    }
+
+    if (stroke.altKey && alone && isDigit(stroke)) {
+      this.holding = true
+      this.spent = false
+      return true
+    }
+
+    // Any other key: with Alt down it is a chord of its own, and the hold is over; with
+    // no Alt down there was none.
+    this.spent = this.spent || this.holding || stroke.altKey
+    this.holding = false
+    return false
   }
 
-  broken(): void {
+  /** A press of the pointer or the wheel, with Alt still down. */
+  used(): void {
+    this.spent = this.spent || this.holding
     this.holding = false
+  }
+
+  /** Alt let go of, or the window gone and with it any word of the release. */
+  released(): void {
+    this.holding = false
+    this.spent = false
   }
 }

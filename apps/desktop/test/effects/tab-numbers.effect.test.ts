@@ -1,11 +1,13 @@
 /** The tabs' numbers while Alt is held, with the clock in the test's hands.
  *
  *  Emil, 2026-09-30: *"while holding alt it should (in a 'dezent' way) also show the
- *  numbers for the different tabs."* What is asked is what a hand would see: nothing
- *  for a quick Alt+3, the numbers after a moment of Alt alone, and none of them once Alt
- *  is let go of, another key is pressed, the pointer presses or the window goes. AltGr
- *  never shows them. A web page's Alt, which the crate tells the window, shows them too.
- *  See lib/tab-strip/numbers.svelte.ts.
+ *  numbers for the different tabs."* And 2026-10-01: *"It should always display, even if
+ *  I press and hold Alt and then press a number. The only condition should be Alt
+ *  held."* What is asked is what a hand would see: the numbers in the frame Alt goes down
+ *  in, kept through the digits that move from tab to tab, and none of them once Alt is let
+ *  go of, a chord of its own is pressed with it, the pointer presses or the window goes.
+ *  AltGr never shows them. A web page's Alt, which the crate tells the window, shows them
+ *  too. See lib/tab-strip/numbers.svelte.ts.
  *
  *  In the jsdom project because the numbers are a component the store mounts. */
 
@@ -34,20 +36,25 @@ if (typeof globalThis.CSS === 'undefined') {
 }
 
 const { numbers } = await import('../../src/lib/tab-strip/numbers.svelte')
-const { HOLD_MS } = await import('../../src/lib/tab-strip/numbers')
 const { replay } = await import('../../src/lib/web-tab/keys')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 type Tab = import('../../src/lib/workspace.svelte').Tab
 
 const NAMES = ['a', 'b', 'c']
 
-let strip: HTMLElement
+/** A frame at sixty a second. */
+const FRAME = 16
+
+/** How far the strip has scrolled: a tab brought to the front by a digit moves it, and
+ *  the numbers have to be read off where the tabs are after that. jsdom lays nothing
+ *  out, so each mark is a hundred pixels along, less the scroll. */
+let scrolled = 0
 
 beforeAll(() => {
   const pane = workspace.panes.focusedId
   // Stand-ins, because a real tab is built round a document read off a disk.
   workspace.tabs = NAMES.map((id) => ({ id, paneId: pane }) as unknown as Tab)
-  strip = document.createElement('div')
+  const strip = document.createElement('div')
   strip.dataset.strip = pane
   for (const id of NAMES) {
     strip.insertAdjacentHTML(
@@ -56,130 +63,197 @@ beforeAll(() => {
     )
   }
   document.body.append(strip)
+
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const tab = this.closest<HTMLElement>('.pick')?.dataset.tab
+    const left = tab ? NAMES.indexOf(tab) * 100 - scrolled : -10_000
+    return DOMRect.fromRect({ x: left, y: 0, width: tab ? 24 : 20_000, height: 24 })
+  })
+  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(
+    () => [DOMRect.fromRect()] as unknown as DOMRectList,
+  )
 })
 
 beforeEach(() => {
-  vi.useFakeTimers()
+  scrolled = 0
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date'],
+  })
 })
 
 afterEach(() => {
-  window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt' }))
-  flushSync()
+  release()
   vi.useRealTimers()
 })
 
 const press = (key: string, more: KeyboardEventInit = {}) =>
-  window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...more }))
+  window.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key,
+      code: /^\d$/.test(key) ? `Digit${key}` : key,
+      bubbles: true,
+      ...more,
+    }),
+  )
+
+function release() {
+  window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt' }))
+  flushSync()
+}
 
 const worn = () => numbers.worn.map((one) => one.label)
+const drawn = () => [...document.querySelectorAll('.numeral')].map((one) => one.textContent)
 
 function wait(ms: number) {
   vi.advanceTimersByTime(ms)
   flushSync()
 }
 
-test('come after Alt has been held a moment, one on each tab, the last wearing 0', () => {
+test('come in the frame Alt goes down in, one on each tab, the last wearing 0', () => {
   press('Alt', { altKey: true })
-  wait(HOLD_MS - 10)
-  expect(worn()).toEqual([])
-
-  wait(20)
+  wait(FRAME)
   expect(worn()).toEqual(['1', '2', '0'])
-  expect([...document.querySelectorAll('.numeral')].map((one) => one.textContent)).toEqual([
-    '1',
-    '2',
-    '0',
-  ])
+  expect(drawn()).toEqual(['1', '2', '0'])
 })
 
-/** Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I
- *  press alt."* Measured from the keydown, with the keyboard repeating the held Alt the
- *  way Windows does - here every 33 ms from the start and unflagged, the worst an engine
- *  can hand over - so a repeat that started the clock again would never let them show. */
-test('are on screen a seventh of a second after Alt goes down, however it repeats', () => {
+/** Emil, 2026-10-01: *"currently it just feels a bit delayed till the numbers appear when
+ *  holding alt."* Measured from the keydown, a millisecond at a time, with the keyboard
+ *  repeating the held Alt the way Windows does and unflagged, the worst an engine can
+ *  hand over. */
+test('are on screen within one frame of Alt going down, however it repeats', () => {
   const began = Date.now()
   let shown: number | null = null
   press('Alt', { altKey: true })
 
-  for (let at = 0; at < 30; at++) {
-    wait(33 / 3)
-    if (shown === null && worn().length) shown = Date.now() - began
-    wait(33 / 3)
-    if (shown === null && worn().length) shown = Date.now() - began
-    press('Alt', { altKey: true })
-    wait(33 / 3)
-    if (shown === null && worn().length) shown = Date.now() - began
+  for (let at = 1; at <= 200 && shown === null; at++) {
+    if (at % 5 === 0) press('Alt', { altKey: true })
+    wait(1)
+    if (worn().length) shown = Date.now() - began
   }
 
   expect(shown).not.toBeNull()
-  expect(shown).toBeLessThanOrEqual(160)
+  expect(shown).toBeLessThanOrEqual(FRAME)
   expect(document.querySelectorAll('.numeral')).toHaveLength(3)
+})
+
+test('stay through three digits, each put where the tabs are once its tab is in front', () => {
+  // What the app's own handler does after this one: brings the tab to the front, and the
+  // strip scrolls to it.
+  const switching = (event: KeyboardEvent) => {
+    if (event.altKey && /^Digit\d$/.test(event.code)) scrolled += 10
+  }
+  window.addEventListener('keydown', switching)
+
+  press('Alt', { altKey: true })
+  wait(FRAME)
+  const first = document.querySelector('.numeral')
+  expect(numbers.worn[0]?.x).toBe(24)
+
+  for (const [at, digit] of ['2', '0', '1'].entries()) {
+    press(digit, { altKey: true })
+    expect(worn(), digit).toEqual(['1', '2', '0'])
+    wait(FRAME)
+    window.dispatchEvent(
+      new KeyboardEvent('keyup', { key: digit, code: `Digit${digit}`, altKey: true }),
+    )
+    flushSync()
+    expect(drawn(), digit).toEqual(['1', '2', '0'])
+    expect(numbers.worn[0]?.x, digit).toBe(24 - 10 * (at + 1))
+  }
+  // The same badges, moved, rather than new ones faded in at every digit.
+  expect(document.querySelector('.numeral')).toBe(first)
+
+  window.removeEventListener('keydown', switching)
+  release()
+  expect(worn()).toEqual([])
 })
 
 test('and go the moment Alt is let go of', () => {
   press('Alt', { altKey: true })
-  wait(HOLD_MS + 10)
+  wait(FRAME)
   expect(worn()).toHaveLength(3)
 
-  window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt' }))
-  flushSync()
+  release()
   expect(worn()).toEqual([])
 })
 
-test('never flash at a quick Alt+3', () => {
+/** The price of no wait, and the one Emil chose: a quick Alt+3 shows them for as long as
+ *  Alt is down, which is the rule - Alt held is the only condition. */
+test('a quick Alt+3 shows them for as long as Alt is down', () => {
   press('Alt', { altKey: true })
-  wait(120)
   press('3', { altKey: true })
-  wait(HOLD_MS * 2)
+  wait(FRAME)
+  expect(worn()).toEqual(['1', '2', '0'])
+  release()
   expect(worn()).toEqual([])
 })
 
-test('never come for AltGr', () => {
+test('never come for AltGr, alone or with a digit', () => {
   press('Control', { ctrlKey: true })
   press('Alt', { ctrlKey: true, altKey: true })
-  wait(HOLD_MS * 2)
+  press('2', { ctrlKey: true, altKey: true })
+  wait(FRAME * 4)
   expect(worn()).toEqual([])
 })
 
-test('go on any other key, a press of the pointer, and the window losing the keyboard', () => {
+test('Alt+F4 puts them away, and the held Alt repeating does not bring them back', () => {
+  press('Alt', { altKey: true })
+  wait(FRAME)
+  expect(worn()).toHaveLength(3)
+
+  press('F4', { altKey: true })
+  flushSync()
+  expect(worn()).toEqual([])
+  press('Alt', { altKey: true, repeat: true })
+  press('Alt', { altKey: true })
+  wait(FRAME * 4)
+  expect(worn()).toEqual([])
+})
+
+test('go on Alt and an arrow, Alt and Shift, the pointer, the wheel and the window going', () => {
   for (const [at, end] of [
     () => press('ArrowLeft', { altKey: true }),
+    () => press('Shift', { altKey: true, shiftKey: true }),
     () => window.dispatchEvent(new PointerEvent('pointerdown')),
+    () => window.dispatchEvent(new WheelEvent('wheel')),
     () => window.dispatchEvent(new FocusEvent('blur')),
   ].entries()) {
+    release()
     press('Alt', { altKey: true })
-    wait(HOLD_MS + 10)
-    expect(worn()).toHaveLength(3)
+    wait(FRAME)
+    expect(worn(), String(at)).toHaveLength(3)
 
     end()
-    flushSync()
+    wait(FRAME)
     expect(worn(), String(at)).toEqual([])
   }
 })
 
-test("come over a web page too, from the page's own Alt the crate tells of", () => {
-  replay({
-    key: 'Alt',
-    code: 'AltLeft',
-    ctrl: false,
-    shift: false,
-    alt: true,
-    repeat: false,
-    down: true,
-  })
-  wait(HOLD_MS + 10)
+test("come over a web page, stay through the digit the crate takes, go at the page's next key", () => {
+  const said = (key: string, code: string, down = true) =>
+    replay({ key, code, ctrl: false, shift: false, alt: true, repeat: false, down })
+
+  // Alt going down in the page, which the page keeps and the window is told of.
+  said('Alt', 'AltLeft')
+  wait(FRAME)
   expect(worn()).toEqual(['1', '2', '0'])
 
-  // And any key the page had while Alt was held, which the crate names for nothing.
-  replay({
-    key: 'Unidentified',
-    code: '',
-    ctrl: false,
-    shift: false,
-    alt: true,
-    repeat: false,
-    down: true,
-  })
+  // Alt and a digit, which the crate takes from the page and says as itself.
+  said('2', 'Digit2')
+  wait(FRAME)
+  expect(worn()).toEqual(['1', '2', '0'])
+
+  // Any other key the page had while Alt was held, which the crate names for nothing.
+  said('Unidentified', '')
+  flushSync()
+  expect(worn()).toEqual([])
+
+  // And the release, told from the page as well.
+  said('Alt', 'AltLeft', false)
+  said('Alt', 'AltLeft')
+  wait(FRAME)
+  expect(worn()).toHaveLength(3)
+  said('Alt', 'AltLeft', false)
   flushSync()
   expect(worn()).toEqual([])
 })

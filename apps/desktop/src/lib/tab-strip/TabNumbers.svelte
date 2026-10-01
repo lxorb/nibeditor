@@ -7,11 +7,20 @@
    *  Never read out: the keys are in the settings' list of shortcuts, and a screen
    *  reader announcing ten numbers on every Alt would be noise. */
 
+  import type { TransitionConfig } from 'svelte/transition'
   import { fade } from 'svelte/transition'
   import { dur } from '../motion'
   import type { Worn } from './numbers.svelte'
 
   const { numbers }: { numbers: { readonly worn: readonly Worn[] } } = $props()
+
+  /** In over `--dur-instant`, from part of the way there rather than from nothing: a fade
+   *  from nothing spends its first frame or two on a badge no eye can see yet, and Emil
+   *  felt the numbers as late (2026-10-01). The first frame they are in is one they show
+   *  in. */
+  function appear(_: Element): TransitionConfig {
+    return { duration: dur(70), css: (t) => `opacity: ${0.5 + 0.5 * t}` }
+  }
 </script>
 
 {#each numbers.worn as one (one.id)}
@@ -19,7 +28,7 @@
     class="numeral"
     style:translate="{one.x}px {one.y}px"
     aria-hidden="true"
-    in:fade={{ duration: dur(70) }}
+    in:appear
     out:fade={{ duration: dur(70) }}>{one.label}</span
   >
 {/each}

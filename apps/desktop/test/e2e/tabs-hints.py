@@ -11,8 +11,9 @@ screen:
   - three tabs picked with Ctrl, dragged along the strip together, carried to the
     other pane together, closed together, and brought back by one Reopen closed tab
     (lib/tab-strip/picking.svelte.ts);
-  - each tab's number while Alt is held a moment, in the light and the dark, none for a
-    quick Alt+3, and none once Alt is let go of (lib/tab-strip/numbers.svelte.ts).
+  - each tab's number while Alt is held, in the light and the dark: on screen within a
+    frame or two of Alt going down, kept through Alt and three digits, gone at Alt+F4
+    and once Alt is let go of (lib/tab-strip/numbers.svelte.ts).
 
 Serves the built web app and drives it headless in the machine's own Chrome. The
 build has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not
@@ -94,19 +95,31 @@ failures: list[str] = []
 
 
 
-#: When the first number was drawn, polled every frame from the moment it is armed; the
-#: time it was armed is what it answers, so the drive can say how long the wait was.
+#: When a number was first on screen, from the Alt that brought it: armed before the
+#: press, it takes the keydown's own time and then looks every frame for a number whose
+#: fade has begun to show, so what it answers is the key to the first visible pixel, less
+#: the one frame the compositor still takes to put that frame up.
 SHOWN = """
 () => {
-  window.__numeralAt = null
-  const look = (now) => {
-    if (document.querySelector('.numeral')) window.__numeralAt = now
-    else requestAnimationFrame(look)
-  }
-  requestAnimationFrame(look)
-  return performance.now()
+  window.__numeral = null
+  addEventListener(
+    'keydown',
+    (event) => {
+      const pressed = event.timeStamp
+      const look = (now) => {
+        const one = document.querySelector('.numeral')
+        if (one && Number(getComputedStyle(one).opacity) > 0) window.__numeral = now - pressed
+        else requestAnimationFrame(look)
+      }
+      requestAnimationFrame(look)
+    },
+    { capture: true, once: true },
+  )
 }
 """
+
+#: The tab in front, by name.
+FRONT = "() => window.nibApp.workspace.tabs.find((one) => one.id === window.nibApp.workspace.activeTabId)?.shown"
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
@@ -442,26 +455,17 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.wait_for_timeout(300)
     count = len(strip(page)[0]["tabs"])
 
-    # A quick Alt+3 goes to the third tab and never shows a number.
+    # Emil, 2026-10-01: "It should always display, even if I press and hold Alt and then
+    # press a number. The only condition should be Alt held." And: "currently it just
+    # feels a bit delayed till the numbers appear when holding alt."
+    page.evaluate(SHOWN)
     page.keyboard.down("Alt")
-    page.keyboard.press("3")
-    page.wait_for_timeout(500)
-    if page.locator(".numeral").count():
-        wrong(f"[{scheme}] a quick Alt+3 flashed the numbers")
-    page.keyboard.up("Alt")
-    page.wait_for_timeout(200)
-
-    # Held a moment: one on each tab of the strip, the last wearing 0, about a seventh of
-    # a second after Alt went down (Emil, 2026-10-01: "it currently takes an eternity").
-    began = page.evaluate(SHOWN)
-    page.keyboard.down("Alt")
-    page.wait_for_timeout(90)
-    if page.locator(".numeral").count():
-        wrong(f"[{scheme}] the numbers came before the hold was a hold")
-    page.wait_for_timeout(510)
-    took = page.evaluate("(began) => window.__numeralAt && window.__numeralAt - began", began)
-    say(f"[{scheme}] the numbers came {round(took or -1)} ms after Alt went down")
-    if not took or took > 300:
+    if not wait_for(page, "window.__numeral !== null", f"[{scheme}] the numbers after Alt", 3):
+        page.keyboard.up("Alt")
+        return
+    took = page.evaluate("() => window.__numeral")
+    say(f"[{scheme}] first visible {round(took)} ms after Alt went down, and a frame to show it")
+    if took > 50:
         wrong(f"[{scheme}] the numbers took {took} ms after Alt went down")
     worn = page.locator(".numeral").all_inner_texts()
     say(f"[{scheme}] worn {worn} on {count} tabs")
@@ -473,10 +477,38 @@ def alt_numbers(page: Page, scheme: str) -> None:
     if SCRATCH:
         shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
 
+    # Three digits with Alt still down: each goes to its tab, and the numbers stay.
+    for digit in ("2", "3", "0"):
+        page.keyboard.press(digit)
+        page.wait_for_timeout(120)
+        front = page.evaluate(FRONT)
+        now = page.locator(".numeral").all_inner_texts()
+        say(f"[{scheme}] Alt+{digit}: {front} in front, worn {now}")
+        if now != wanted:
+            wrong(f"[{scheme}] Alt+{digit} left the numbers at {now}")
+    if page.evaluate(FRONT) != strip(page)[0]["tabs"][-1]:
+        wrong(f"[{scheme}] Alt+0 did not bring the last tab to the front")
+
+    # Alt+F4 is a chord of its own: they go, and the held Alt does not bring them back.
+    page.keyboard.press("F4")
+    page.wait_for_timeout(200)
+    if page.locator(".numeral").count():
+        wrong(f"[{scheme}] the numbers stayed through Alt+F4")
+    page.keyboard.up("Alt")
+    page.wait_for_timeout(200)
+
+    # Held and let go of: gone.
+    page.keyboard.down("Alt")
+    page.wait_for_timeout(150)
+    if page.locator(".numeral").count() != len(wanted):
+        wrong(f"[{scheme}] Alt held again showed {page.locator('.numeral').count()} numbers")
     page.keyboard.up("Alt")
     page.wait_for_timeout(250)
     if page.locator(".numeral").count():
         wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
+    page.locator(tab(NAMES[0])).first.click()
+    page.locator(".cm-content").first.click()
+    page.wait_for_timeout(200)
 
 
 def main() -> int:

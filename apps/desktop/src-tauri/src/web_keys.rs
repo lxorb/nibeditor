@@ -36,7 +36,8 @@
 //! is Alt+Tab's shape, and a Ctrl let go of inside the page is the release that
 //! chooses. So is Alt going down on its own, and whatever key goes down while it is
 //! held, as `Unidentified` and never as the key: the window shows each tab's number
-//! while Alt is held and puts them away at the next key (`told`). Nothing else is said,
+//! while Alt is held, keeps them through Alt and a digit (which is taken, above, and said
+//! as itself) and puts them away at any other key (`told`). Nothing else is said,
 //! so a site cannot be read through this and cannot speak through it either: the event
 //! is the engine's, raised in this process, and nothing in the page can raise it.
 //!
@@ -172,7 +173,8 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
 
 /// A key the page keeps that the window is only told of: Alt going down on its own, and
 /// any key going down while it is held, named for nothing but that. The window shows each
-/// tab's number after Alt has been held a moment and puts them away at the next key (see
+/// tab's number the moment Alt goes down and puts them away at such a key - a digit with
+/// Alt is `meaning`'s, said as itself, and keeps them (see
 /// `lib/tab-strip/numbers.svelte.ts`); the page has both keys, as it always did. `AltGr`
 /// is Ctrl and Alt on Windows and is never said, and Alt with Shift is the system's
 /// switch between keyboards. Asked only of a key `meaning` left to the page.

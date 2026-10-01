@@ -349,21 +349,28 @@ Option and a digit types ¡ ™ £ ¢ ∞ § ¶ • ª º: Cmd and a digit are t
 
 **Held, Alt shows the numbers.** Emil, 2026-09-30: *"while holding alt it should (in a
 'dezent' way) also show the numbers for the different tabs, but not too much overlaying
-with what the tabs are."* Alt held on its own for 150 ms - Office's KeyTips come on the
-press itself, and 350 ms and a fade after it was, in Emil's words, *"an eternity"*
-(2026-10-01); 150 ms is still longer than the gap inside a quick Alt+3, so a hand that
-knows the key never sees them, and a repeat of the held key never starts the wait again
-- puts a small muted number at the corner of each tab's mark in the focused
-pane's strip, the strip the digits count along: the first eight their places, the ninth
-9, and the last tab 0, the key that always means the last, even where its place has a
-number too. A tab past the ninth that is not the last wears nothing. The numbers are the
-keys as they are bound now, so a rebound one shows its own. They go on the release, on
-any other key, on a press of the pointer or the wheel, and when the window loses the
-keyboard, so Alt+Tab leaves none behind; AltGr and Alt with Shift never show them, and
-nothing is taken from the key. Inside a web page the crate tells the window about Alt
-going down and about the next key without taking either from the page, on both engines
-(`told` in web_keys.rs); a terminal shows them too, since it hands Alt and a digit to the
-app rather than to the shell. See `lib/tab-strip/numbers.svelte.ts`.
+with what the tabs are."* Alt held puts a small muted number at the corner of each tab's
+mark in the focused pane's strip, the strip the digits count along: the first eight their
+places, the ninth 9, and the last tab 0, the key that always means the last, even where
+its place has a number too. A tab past the ninth that is not the last wears nothing. The
+numbers are the keys as they are bound now, so a rebound one shows its own.
+
+Alt held is the only condition (Emil, 2026-10-01: *"It should always display, even if I
+press and hold Alt and then press a number"*). They come in the frame Alt goes down in,
+with a fade of `--dur-instant`, as Office's KeyTips come on the press itself: first a
+350 ms wait, then 150 ms, were each a delay a hand noticed (*"currently it just feels a
+bit delayed till the numbers appear"*), and a quick Alt+3 showing them for as long as Alt
+is down is the cheaper of the two. Alt and a digit keeps them, put where the tabs are once
+the digit's tab is in front, so Alt+1, Alt+2, Alt+3 sees where it is going; a digit with
+Alt shows them too where the Alt itself was not heard. They go when Alt is let go of, at
+any other key pressed with it - Alt+F4, Alt+Tab, Alt and an arrow, Shift - after which the
+held Alt does not bring them back until it is let go of, on a press of the pointer or the
+wheel, and when the window loses the keyboard. AltGr never shows them, nor does Alt with
+Shift, and nothing is taken from the key. Inside a web page the crate tells the window
+about Alt going down and about any other key without taking either from the page, and
+takes Alt and a digit and says it as itself, on both engines (`told` and `meaning` in
+web_keys.rs); a terminal shows them too, since it hands Alt and a digit to the app rather
+than to the shell. See `lib/tab-strip/numbers.svelte.ts`.
 
 **Ctrl+T is a browser's key first.** Emil, 2026-09-27: *"Ctrl + T should always open
 a webpage by default. And that should always be the selected option in the modal when

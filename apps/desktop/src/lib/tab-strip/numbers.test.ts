@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { AltHold, HOLD_MS, numerals, type Stroke } from './numbers'
+import { AltHold, numerals, type Stroke } from './numbers'
 
 /** The keys as they ship on Windows: Alt and a digit for the first nine places, and
  *  Alt+0 for the last. */
@@ -55,8 +55,11 @@ describe('the numbers on the tabs', () => {
   })
 })
 
+/** A key pressed with Alt down, as a browser says it: Alt itself has `altKey` too. */
 const stroke = (key: string, more: Partial<Stroke> = {}): Stroke => ({
   key,
+  code: /^\d$/.test(key) ? `Digit${key}` : key,
+  altKey: true,
   ctrlKey: false,
   shiftKey: false,
   metaKey: false,
@@ -65,73 +68,114 @@ const stroke = (key: string, more: Partial<Stroke> = {}): Stroke => ({
   ...more,
 })
 
-describe('Alt held on its own', () => {
-  test('begins with Alt and carries on through its repeats', () => {
-    const hold = new AltHold()
-    hold.down(stroke('Alt'))
-    hold.down(stroke('Alt', { repeat: true }))
-    expect(hold.holding).toBe(true)
-  })
-
-  /** Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I
-   *  press alt."* A held key repeats, and a repeat an engine does not flag as one is the
-   *  same hold: it must not start the clock again, or the numbers wait for the hand to
-   *  stop repeating, which it does not do while Alt is down. */
-  test('a repeat not flagged as one is the same hold, not a new one', () => {
+describe('Alt held', () => {
+  test('shows the numbers the moment it goes down, and carries on through its repeats', () => {
     const hold = new AltHold()
     expect(hold.down(stroke('Alt'))).toBe(true)
-    expect(hold.down(stroke('Alt'))).toBe(false)
     expect(hold.down(stroke('Alt', { repeat: true }))).toBe(false)
     expect(hold.holding).toBe(true)
   })
 
-  /** Office's KeyTips come on the press of Alt itself, and a wait a hand notices is
-   *  one past a tenth of a second or two. A seventh of a second is under that and still
-   *  over the gap a practiced Alt+3 leaves between its two keys, which the effect test
-   *  in test/effects/tab-numbers.effect.test.ts puts at 120 ms. */
-  test('shows the numbers a seventh of a second after Alt goes down', () => {
-    expect(HOLD_MS).toBe(150)
-  })
-
-  test('a quick Alt+3 is over at the digit, before any number could show', () => {
+  /** A held key repeats, and a repeat an engine does not flag as one is the same hold:
+   *  it must not begin it again. */
+  test('a repeat not flagged as one is the same hold, not a new one', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
-    hold.down(stroke('3'))
+    expect(hold.down(stroke('Alt'))).toBe(false)
+    expect(hold.holding).toBe(true)
+  })
+
+  /** Emil, 2026-10-01: *"It should always display, even if I press and hold Alt and then
+   *  press a number. The only condition should be Alt held."* */
+  test('keeps them through Alt and a digit, and puts them where the new tab is', () => {
+    const hold = new AltHold()
+    hold.down(stroke('Alt'))
+    for (const digit of ['3', '1', '0']) {
+      expect(hold.down(stroke(digit)), digit).toBe(true)
+      expect(hold.holding, digit).toBe(true)
+    }
+    // A digit held down repeats, and is still the hold.
+    expect(hold.down(stroke('2', { repeat: true }))).toBe(true)
+    expect(hold.holding).toBe(true)
+  })
+
+  test('a digit with Alt shows them even where the Alt itself was not heard', () => {
+    const hold = new AltHold()
+    expect(hold.down(stroke('4'))).toBe(true)
+    expect(hold.holding).toBe(true)
+  })
+
+  test('a digit is known by its place on a keyboard whose top row types something else', () => {
+    const hold = new AltHold()
+    hold.down(stroke('Alt'))
+    // AZERTY's 1.
+    expect(hold.down(stroke('&', { code: 'Digit1' }))).toBe(true)
+    expect(hold.holding).toBe(true)
+    // The number pad's digits type a character by its code with Alt on Windows.
+    hold.down(stroke('1', { code: 'Numpad1' }))
     expect(hold.holding).toBe(false)
   })
 
-  test('AltGr is never one, however a keyboard names it', () => {
+  test('Alt+F4, Alt+Tab and Alt and an arrow end it, and a repeat of Alt does not bring it back', () => {
+    for (const key of ['F4', 'Tab', 'ArrowLeft', 'd']) {
+      const hold = new AltHold()
+      hold.down(stroke('Alt'))
+      hold.down(stroke('2'))
+      expect(hold.down(stroke(key)), key).toBe(false)
+      expect(hold.holding, key).toBe(false)
+      // Still down, and repeating unflagged: the chord used it.
+      expect(hold.down(stroke('Alt')), key).toBe(false)
+      expect(hold.holding, key).toBe(false)
+
+      // Let go of, the next Alt is a hold again.
+      hold.released()
+      expect(hold.down(stroke('Alt')), key).toBe(true)
+    }
+  })
+
+  test('AltGr never shows them, however a keyboard names it, nor with a digit', () => {
     const hold = new AltHold()
     // Windows says AltGr as Ctrl and Alt; a browser may name it apart.
-    hold.down(stroke('Alt', { ctrlKey: true }))
+    hold.down(stroke('Control', { ctrlKey: true, altKey: false }))
+    expect(hold.down(stroke('Alt', { ctrlKey: true }))).toBe(false)
     expect(hold.holding).toBe(false)
-    hold.down(stroke('AltGraph', { ctrlKey: true, altGraph: true }))
+    // AltGr and 2 is a Swiss `@`.
+    expect(hold.down(stroke('@', { code: 'Digit2', ctrlKey: true }))).toBe(false)
     expect(hold.holding).toBe(false)
-    hold.down(stroke('Alt', { altGraph: true }))
+    hold.released()
+
+    expect(hold.down(stroke('AltGraph', { ctrlKey: true, altGraph: true }))).toBe(false)
+    expect(hold.down(stroke('Alt', { altGraph: true }))).toBe(false)
+    expect(hold.down(stroke('7', { altGraph: true }))).toBe(false)
     expect(hold.holding).toBe(false)
   })
 
-  test('nor is Alt with Shift, the switch between keyboards', () => {
+  test('nor is Alt with Shift, the switch between keyboards, either way round', () => {
     const hold = new AltHold()
+    hold.down(stroke('Shift', { shiftKey: true, altKey: false }))
     hold.down(stroke('Alt', { shiftKey: true }))
     expect(hold.holding).toBe(false)
+    hold.released()
 
     hold.down(stroke('Alt'))
-    hold.down(stroke('Shift'))
+    hold.down(stroke('Shift', { shiftKey: true }))
     expect(hold.holding).toBe(false)
-    // Alt still down and repeating after that is not a hold again.
     hold.down(stroke('Alt', { repeat: true }))
     expect(hold.holding).toBe(false)
   })
 
-  test('Alt+Tab ends it, whether the Tab arrives or only the window going', () => {
+  test('a press of the pointer or the wheel ends it until Alt is let go of', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
-    hold.down(stroke('Tab'))
+    hold.used()
     expect(hold.holding).toBe(false)
+    expect(hold.down(stroke('Alt'))).toBe(false)
+  })
 
-    hold.down(stroke('Alt'))
-    hold.broken()
+  test('keys typed without Alt never begin one', () => {
+    const hold = new AltHold()
+    for (const key of ['a', '3', 'Enter']) hold.down(stroke(key, { altKey: false }))
     expect(hold.holding).toBe(false)
+    expect(hold.down(stroke('Alt'))).toBe(true)
   })
 })
