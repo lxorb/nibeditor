@@ -38,7 +38,8 @@ export function flatRows(tree: Entry | null, isOpen: (path: string) => boolean):
   const walk = (entry: Entry, depth: number) => {
     // A folder note is the row its folder is drawn as rather than a row of its
     // own, so it is left out here and nowhere else has to remember to skip it.
-    const own = folderNote(entry)
+    // Not the space's, which is no row: its `Index` would be drawn nowhere.
+    const own = depth > 0 ? folderNote(entry) : null
 
     for (const child of entry.children) {
       if (own?.path === child.path) continue
