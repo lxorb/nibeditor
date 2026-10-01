@@ -92,6 +92,8 @@ export const ko: Dictionary = {
   'Move to other pane': '다른 창으로 이동',
   Tabs: '탭',
   'Ctrl+Tab in order of use': 'Ctrl+Tab을 사용 순서로',
+  'Hidden tabs': '숨겨진 탭',
+  'Keep running': '계속 실행',
   'Keep open': '계속 열어 두기',
   Open: '열기',
   Rename: '이름 바꾸기',

@@ -92,6 +92,8 @@ export const th: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'แท็บที่ซ่อนอยู่',
+  'Keep running': 'ทำงานต่อไป',
   'Keep open': 'เปิดไว้',
   Open: 'เปิด',
   Rename: 'เปลี่ยนชื่อ',

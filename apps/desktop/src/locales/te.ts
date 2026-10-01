@@ -92,6 +92,8 @@ export const te: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'దాచిన ట్యాబ్‌లు',
+  'Keep running': 'నడుస్తూనే ఉంచు',
   'Keep open': 'తెరిచి ఉంచు',
   Open: 'తెరువు',
   Rename: 'పేరు మార్చు',

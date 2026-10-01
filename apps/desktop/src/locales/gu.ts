@@ -92,6 +92,8 @@ export const gu: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'છુપાયેલા ટૅબ',
+  'Keep running': 'ચાલુ રાખો',
   'Keep open': 'ખુલ્લી રાખો',
   Open: 'ખોલો',
   Rename: 'નામ બદલો',

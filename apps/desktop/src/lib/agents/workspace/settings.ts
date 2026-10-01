@@ -170,7 +170,7 @@ const SETTINGS: Record<string, Setting> = {
       ])
 
       // The space's open pages built again in the store it now keeps, as choosing it
-      // from the space's menu does; see `chooseWebData` in space-actions.ts.
+      // from the space's menu does; see `chooseWebData` in space-choices.ts.
       return async () => {
         webData.set(space.id, choice)
         await pages.restore(space.id)

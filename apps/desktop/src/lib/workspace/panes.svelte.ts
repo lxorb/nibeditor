@@ -43,6 +43,9 @@ export class Panes {
   focusedId = $state('')
   /** The pane filling the window, while one is; see lib/tab-fill. */
   fills = $state<string | null>(null)
+  /** True for the frame in which a space's own set of tabs replaced the last; the strip
+   *  plays its arrival then rather than every tab's. See sets.svelte.ts. */
+  swapping = false
   /** Tab ids, the one last in front first, for Ctrl+Tab in that order; see
    *  recency.ts. Here because every tab coming to the front comes through `activate`. */
   used: string[] = []

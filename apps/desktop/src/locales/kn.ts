@@ -92,6 +92,8 @@ export const kn: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'ಮರೆಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು',
+  'Keep running': 'ಚಾಲನೆಯಲ್ಲಿಡಿ',
   'Keep open': 'ತೆರೆದಿರಿಸಿ',
   Open: 'ತೆರೆಯಿರಿ',
   Rename: 'ಮರುಹೆಸರಿಸಿ',

@@ -92,6 +92,8 @@ export const zhHans: Dictionary = {
   'Move to other pane': '移到另一窗格',
   Tabs: '标签页',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用顺序',
+  'Hidden tabs': '隐藏的标签页',
+  'Keep running': '继续运行',
   'Keep open': '保持打开',
   Open: '打开',
   Rename: '重命名',

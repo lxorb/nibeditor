@@ -92,6 +92,8 @@ export const pl: Dictionary = {
   'Move to other pane': 'Przenieś do drugiego panelu',
   Tabs: 'Karty',
   'Ctrl+Tab in order of use': 'Ctrl+Tab według ostatniego użycia',
+  'Hidden tabs': 'Ukryte karty',
+  'Keep running': 'Niech działają',
   'Keep open': 'Zostaw otwarte',
   Open: 'Otwórz',
   Rename: 'Zmień nazwę',

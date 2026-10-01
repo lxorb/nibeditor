@@ -1,11 +1,13 @@
 import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
-import { DIVIDER, menu, type MenuEntry, trim } from './menu.svelte'
+import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
 import { canPublish, canShare, roleOf, share } from './sharing.svelte'
 import { isDesktop } from './tauri'
-import type { WebData } from './web-tab/web-data'
 import { type Space, workspace } from './workspace.svelte'
+
+/** The rows that open into a choice, fetched with the press; see space-choices.ts. */
+const choices = () => import('./space-choices')
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
  *  so that is the only question. Answers the space, or nothing where the question
@@ -112,8 +114,16 @@ export function spaceMenu(space: Space): MenuEntry[] {
     // Where the space keeps what websites store. Only where a website is a tab with a
     // store of its own behind it; in a browser build the page is the browser's.
     ...(isDesktop
-      ? [{ label: t('Web data'), keep: true, run: () => void showWebData(space) }]
+      ? [
+          {
+            label: t('Web data'),
+            keep: true,
+            run: () => void choices().then((one) => one.showWebData(space)),
+          },
+        ]
       : []),
+    // Whether its tabs are its own, under the row it mirrors; see workspace/sets.ts.
+    { label: t('Tabs'), keep: true, run: () => void choices().then((one) => one.showTabs(space)) },
     DIVIDER,
     // Where a space sits in the list. Left out at the ends rather than offered
     // as a row that does nothing.
@@ -130,44 +140,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
       run: () => void deleteSpace(space),
     },
   ])
-}
-
-/** The three places a space may keep its web data, in the menu that asked, with the
- *  one in force ticked. The same menu rather than a sheet of its own: one word opened
- *  it, and three are the whole of the answer. Fetched with the press rather than
- *  carried, because the space's menu is in front of the first paint and this is not.
- *  See web-tab/web-data.ts. */
-async function showWebData(space: Space) {
-  const [{ WEB_DATA }, { webData }] = await Promise.all([
-    import('./web-tab/web-data'),
-    import('./web-tab/web-data.svelte'),
-  ])
-  const said: Record<WebData, string> = {
-    global: t('Global'),
-    space: t('Space'),
-    site: t('Site'),
-  }
-
-  menu.replace(
-    WEB_DATA.map((choice) => ({
-      label: said[choice],
-      checked: webData.of(space.id) === choice,
-      run: () => void chooseWebData(space, choice),
-    })),
-  )
-}
-
-/** Keeps the space's web data where it was asked to, and builds its open pages again
- *  in that store, so the choice is on screen at once. Nothing is thrown away: the
- *  store it leaves stays on disk, with its logins in it, for the day it is chosen
- *  again. */
-async function chooseWebData(space: Space, choice: WebData) {
-  const { webData } = await import('./web-tab/web-data.svelte')
-  if (webData.of(space.id) === choice) return
-
-  webData.set(space.id, choice)
-  const { pages } = await import('./web-tab/pages.svelte')
-  await pages.restore(space.id)
 }
 
 /** Renaming a space happens where its name is written: the header over the file

@@ -92,6 +92,8 @@ export const hi: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'छिपे हुए टैब',
+  'Keep running': 'चलते रहने दें',
   'Keep open': 'खुला रखें',
   Open: 'खोलें',
   Rename: 'नाम बदलें',

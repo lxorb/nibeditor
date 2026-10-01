@@ -22,6 +22,8 @@ import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
 import { updates } from './updates.svelte'
+import { hiddenTabs } from './workspace/hidden-tabs.svelte'
+import { isHiddenTabs } from './workspace/sets'
 
 /** What every control has, whatever kind it is. */
 interface Common {
@@ -331,6 +333,25 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => tabCycle.byUse,
               set: (on) => tabCycle.setByUse(on),
             },
+            // What a space's own tabs do out of sight: the pages a desktop runs, which a
+            // phone and a browser tab do not. See workspace/hidden-tabs.svelte.ts.
+            ...(isDesktop
+              ? ([
+                  {
+                    kind: 'segmented',
+                    label: t('Hidden tabs'),
+                    words: ['spaces', 'background', 'pause', 'sleep', 'freeze', 'audio'],
+                    options: [
+                      { value: 'run', label: t('Keep running') },
+                      { value: 'pause', label: t('Pause') },
+                      { value: 'ask', label: t('Ask') },
+                    ],
+                    initial: 'ask',
+                    get: () => hiddenTabs.choice,
+                    set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
+                  },
+                ] satisfies Field[])
+              : []),
           ],
         },
         {

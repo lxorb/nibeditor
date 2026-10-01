@@ -92,6 +92,8 @@ export const fr: Dictionary = {
   'Move to other pane': 'Déplacer vers l’autre volet',
   Tabs: 'Onglets',
   'Ctrl+Tab in order of use': 'Ctrl+Tab dans l’ordre d’utilisation',
+  'Hidden tabs': 'Onglets masqués',
+  'Keep running': 'Laisser tourner',
   'Keep open': 'Garder ouvert',
   Open: 'Ouvrir',
   Rename: 'Renommer',

@@ -67,7 +67,8 @@ tree, the tabs and the panes. What has a rule of its own lives in
 | `placing.ts` | The less common halves of a tab with no file, fetched with the first: a web tab kept as a web note, and a closed draft's words in Recently deleted. |
 | `note-text.ts` | The words in a space's notes, read and written without opening them: a replacement, a tag renamed, a task ticked. |
 | `composing.ts` | One note out of another, and two into one. |
-| `spaces.ts` | The list of spaces: which exist, in what order, which is open. |
+| `spaces.ts` | The list of spaces: which exist, in what order, which is open. Making, adopting, renaming and deleting one is `space-changes.ts`, fetched by the first. |
+| `sets.ts`, `sets.svelte.ts` | A space's own tabs: which set a space shows, the switch that swaps them, a set put aside, written and built back. `hidden-tabs.svelte.ts` is what a set out of sight may run. |
 | `undoing.ts` | What each kind of file operation means going back. `undo.svelte.ts` is the stack it reads. |
 | `file-ops.ts` | Every file operation said once, and everything kept by path following it: the open documents and tabs, positions, recents, the per-space stores, the link index, the papers and the account. |
 | `panels.ts` | Which side a panel sits on. Pure: it answers what the three fields would be, and the store writes them. |
@@ -75,8 +76,9 @@ tree, the tabs and the panes. What has a rule of its own lives in
 
 Members of the class are not `private` because those modules read them:
 `documents`, `positions`, `reload`, `retarget`, `persist`, `scheduleSession`,
-`freeName`, `remember`, `asUnsaved`, and the tree-edit trio `entryAt`, `showEntry`,
-`freshEntry`. They are
+`freeName`, `remember`, `asUnsaved`, the tree-edit trio `entryAt`, `showEntry`,
+`freshEntry`, and what a space's own tabs are built from: `opened`, `built`, `layout`,
+`setsRead` and `setsWritten`. They are
 the store's own rather than the app's - nothing outside `lib/workspace` touches
 them.
 

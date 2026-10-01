@@ -369,6 +369,20 @@ what a browser with six tabs in it costs and is the honest price of never reload
 A parked tab keeps its address, its place on the page and its trail, so reviving it is a
 load and not a loss. Closing the tab takes the webview and the trail with it.
 
+**A page playing sound is never parked**, by the clock or by the cap, as Chrome's memory
+saver never takes a tab that is heard: a song in a tab out of sight, or in a space out of
+sight, is one somebody left running on purpose. It is asked again after the same wait.
+
+**A space's own tabs out of sight are Hidden tabs** (Settings, General, Tabs): Keep
+running, Pause, or Ask, which is where it starts. Keep running is the paragraph above.
+Pause stops what the page plays and freezes it - `TrySuspend` on WebView2, the page
+lifecycle's `frozen` on nib's own Chromium, the sound alone on WebKit - and the page runs
+again, as it was and with no reload, the moment its space is shown. A page in a call, or
+capturing the camera, the microphone or the screen, is one the engine will not freeze, as
+Edge's sleeping tabs never do; it goes on running, and the space's row in the switcher
+wears the tab's speaker while it plays. A terminal is never paused. See
+`web_pause.rs`, `workspace/hidden-tabs.svelte.ts` and docs/chrome-tabs.md.
+
 #### Putting a page away is never asked of what the window believes
 
 Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else. For

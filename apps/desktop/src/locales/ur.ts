@@ -92,6 +92,8 @@ export const ur: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'چھپے ہوئے ٹیب',
+  'Keep running': 'چلتے رہنے دیں',
   'Keep open': 'کھلا رکھیں',
   Open: 'کھولیں',
   Rename: 'نام بدلیں',

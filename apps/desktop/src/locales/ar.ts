@@ -92,6 +92,8 @@ export const ar: Dictionary = {
   'Move to other pane': 'النقل إلى الجزء الآخر',
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',
+  'Hidden tabs': 'التبويبات المخفية',
+  'Keep running': 'متابعة التشغيل',
   'Keep open': 'إبقاء مفتوحًا',
   Open: 'فتح',
   Rename: 'إعادة تسمية',

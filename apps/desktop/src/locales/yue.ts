@@ -92,6 +92,8 @@ export const yue: Dictionary = {
   'Move to other pane': '搬去另一個窗格',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
+  'Hidden tabs': '隱藏標籤頁',
+  'Keep running': '繼續運行',
   'Keep open': '保持開啟',
   Open: '開啟',
   Rename: '重新命名',

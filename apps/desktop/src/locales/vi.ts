@@ -92,6 +92,8 @@ export const vi: Dictionary = {
   'Move to other pane': 'Chuyển sang ngăn khác',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',
+  'Hidden tabs': 'Thẻ ẩn',
+  'Keep running': 'Tiếp tục chạy',
   'Keep open': 'Giữ mở',
   Open: 'Mở',
   Rename: 'Đổi tên',

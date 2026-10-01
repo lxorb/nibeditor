@@ -190,6 +190,10 @@ const TRAIL = 30
 
 const unread = (path: string) => import('./unread.svelte').then((one) => one.unread.there(path))
 const closesPinned = () => import('./workspace/closing-pinned').then((one) => one.closesPinned())
+/** A space made, renamed or deleted; see workspace/space-changes.ts. */
+const changes = () => import('./workspace/space-changes')
+/** The spaces' own tab sets, fetched by the first space that keeps one. */
+const sets = () => import('./workspace/sets.svelte').then((one) => one.sets)
 
 /** Which line of a note a followed link lands on: the heading it names, or the
  *  line the block name sits on. Null when the note holds neither, which leaves
@@ -248,7 +252,8 @@ class Workspace {
   tree = $state.raw<Entry | null>(null)
   /** Every tab in the window, whichever pane it sits in. One flat list, because
    *  half of what the app asks is "is this note open" rather than "where": a tab
-   *  says which pane it is in, and a pane's strip is the tabs that name it. */
+   *  says which pane it is in, and a pane's strip is the tabs that name it. A tab
+   *  whose pane is not on screen is in a space's set put aside; see sets.svelte.ts. */
   private strip = $state<Tab[]>([])
 
   get tabs(): Tab[] {
@@ -388,7 +393,7 @@ class Workspace {
   /** One document per file, and the one place a document is made; see
    *  workspace/open.ts. Everything that opens a file goes through it, because two
    *  documents over one file are two notes wearing one name. */
-  private readonly opened = new OpenDocuments(
+  readonly opened = new OpenDocuments(
     () => this.tabs,
     (start) => new NoteDoc(start, (note) => this.saving.edited(note)),
   )
@@ -442,6 +447,11 @@ class Workspace {
   set activeTabId(id: string | null) {
     const tab = id === null ? null : (this.tabs.find((one) => one.id === id) ?? null)
     if (id !== null && !tab) return
+    // In a set out of sight, which comes forward with its space.
+    if (tab && !this.panes.at(tab.paneId)) {
+      void sets().then((one) => one.reveal(tab.id))
+      return
+    }
 
     const paneId = tab?.paneId ?? this.panes.focusedId
     this.panes.focus(paneId)
@@ -698,6 +708,7 @@ class Workspace {
     this.spaces = state.spaces
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
+    this.setsRead = state.sets
     // The sidebar comes back the way it was left, on both sides - unless somebody
     // has already asked for one in the second the window has been up; see
     // `panelChosen`.
@@ -737,6 +748,8 @@ class Workspace {
     // that was, not to the note; a named layout is the one thing that says
     // otherwise, and that is chosen rather than restored. See `applyLayout`.
     for (const tab of this.tabs) tab.reading = false
+    // And the spaces' own sets behind it, at the launch's last turn.
+    if (state.sets !== undefined) void startup.turn('doors').then(sets)
 
     // A phone and a tablet show one document at a time, so a session written on
     // a desktop arrives as the one that had the focus; see `oneDocument`.
@@ -889,10 +902,12 @@ class Workspace {
     // window, and not only for the pane that made it: a second pane showing the
     // same note wants the same document, and a note clicked while this is still
     // reading has to find the one it already read rather than open a second.
-    await this.opened.arranging(() => this.arrange(layout, asked))
+    await this.opened.arranging(async () => this.arrange(await this.built(layout), layout, asked))
   }
 
-  private async arrange(layout: Layout, asked: boolean) {
+  /** An arrangement's panes and their tabs, read back: a session's, a named layout's,
+   *  and a space's own set (workspace/sets.svelte.ts). */
+  async built(layout: Layout): Promise<{ frame: Frame; made: Tab[] }> {
     const showing = emptyMap<string | null>()
     const made: Tab[] = []
 
@@ -912,6 +927,14 @@ class Workspace {
       if (!made.some((tab) => tab.paneId === empty.id)) frame = withoutPane(frame, empty.id)
     }
 
+    return { frame, made }
+  }
+
+  private arrange({ frame, made }: { frame: Frame; made: Tab[] }, layout: Layout, asked: boolean) {
+    // A space's set out of sight stays as it is; see workspace/sets.svelte.ts.
+    const aside = this.tabs.filter((tab) => !this.panes.at(tab.paneId))
+    const open = this.tabs.filter((tab) => !aside.includes(tab))
+
     // What is open, read here rather than at the top: every line above this reads a
     // note, and the window has been up and taking keys the whole time.
     //
@@ -922,10 +945,10 @@ class Workspace {
     // used to be closed again a moment later, and a drive had to hold still for a
     // second and a half to work around it; a note closed in it stays closed, which
     // is why this is read now and not before.
-    const rescued = asked ? this.tabs.filter((tab) => tab.dirty) : [...this.tabs]
+    const rescued = asked ? open.filter((tab) => tab.dirty) : open
     const inFront = asked ? null : this.active
 
-    this.tabs = made
+    this.tabs = [...made, ...aside]
     this.panes.restore(frame, layout.focused)
     if (asked || !this.panelChosen) this.panel = layout.panel
     this.panelChosen = false
@@ -969,12 +992,13 @@ class Workspace {
   }
 
   /** The arrangement as it is written down. What the session holds, and what
-   *  "Save layout" keeps a copy of under a name. */
-  layout(): Layout {
+   *  "Save layout" keeps a copy of under a name; another frame is a space's set out of
+   *  sight. */
+  layout(frame = this.panes.frame, focused = this.panes.focusedId, panel = this.panel): Layout {
     this.flush()
 
     return {
-      frame: frameDraft(this.panes.frame, (pane) => {
+      frame: frameDraft(frame, (pane) => {
         const tabs = this.tabsIn(pane.id)
         // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
         // is a moment's view, like a menu being open, and a launch brings the work back.
@@ -987,8 +1011,8 @@ class Workspace {
           ),
         }
       }),
-      focused: this.panes.focusedId,
-      panel: this.panel,
+      focused,
+      panel,
     }
   }
 
@@ -1044,10 +1068,15 @@ class Workspace {
       ...(this.lastRight ? { lastRight: this.lastRight } : {}),
       positions: this.positions.all,
       closed: this.closed.stack,
+      sets: this.setsWritten(),
     }
 
     writeSession(STORAGE_KEY, state)
   }
+
+  /** The spaces' sets out of sight, as read; sets.svelte.ts writes them once fetched. */
+  setsRead: unknown
+  setsWritten = (): unknown => this.setsRead
 
   /** Writes the session soon rather than now, so a burst of typing costs one
    *  write instead of one per keystroke. */
@@ -1367,7 +1396,7 @@ class Workspace {
     if (!viewport.touch) return
 
     for (const other of this.tabs) {
-      if (other.id !== kept.id) this.close(other.id)
+      if (other.id !== kept.id && this.panes.at(other.paneId)) this.close(other.id)
     }
   }
 
@@ -1379,7 +1408,7 @@ class Workspace {
     if (!viewport.touch) return
 
     this.collapsePanes()
-    const kept = this.active ?? this.tabs[0]
+    const kept = this.active ?? this.tabsIn(this.panes.focusedId)[0]
     if (kept) this.onlyOne(kept)
   }
 
@@ -1465,7 +1494,7 @@ class Workspace {
    *  same rule `open` keeps for a note, so a double click on the row of a website
    *  that is only being previewed keeps it the way it keeps a note. */
   private showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
-    const tab = note && this.tabs.find((one) => one.note === note)
+    const tab = note && this.tabOf(note)
     if (!tab) return null
 
     if (!how.preview) this.keep(tab.id)
@@ -1474,6 +1503,12 @@ class Workspace {
       this.showNote()
     }
     return tab
+  }
+
+  /** The tab showing a document: one on screen before one in a set out of sight. */
+  private tabOf(note: NoteDoc): Tab | undefined {
+    const all = this.tabs.filter((one) => one.note === note)
+    return all.find((one) => this.panes.at(one.paneId)) ?? all[0]
   }
 
   /** A tab an open has just made, put in its pane: in the preview's place when the
@@ -2023,16 +2058,16 @@ class Workspace {
 
   /** A space the account has that this machine does not. */
   async adoptSpace(name: string, fresh = false): Promise<string | null> {
-    return spaces.adoptSpace(this, name, fresh)
+    return (await changes()).adoptSpace(this, name, fresh)
   }
 
   /** Creates a space folder under the one the app owns, and opens it. */
   async addSpace(name: string) {
-    return spaces.addSpace(this, name)
+    return (await changes()).addSpace(this, name)
   }
 
   async renameSpace(id: string, name: string) {
-    await spaces.renameSpace(this, id, name)
+    await (await changes()).renameSpace(this, id, name)
   }
 
   /** Drops the dragged space in front of `beforeId`, or at the end for null.
@@ -2057,17 +2092,17 @@ class Workspace {
 
   /** True as soon as one note on this machine has something written in it. */
   async hasLocalContent(): Promise<boolean> {
-    return spaces.hasLocalContent(this)
+    return (await changes()).hasLocalContent(this)
   }
 
   /** Removes every space on this machine. Only ever called with an explicit yes. */
   async eraseLocalSpaces() {
-    await spaces.eraseLocalSpaces(this)
+    await (await changes()).eraseLocalSpaces(this)
   }
 
   /** Deletes the space's folder, or puts it in this device's trash. */
   async deleteSpace(id: string, keep = false) {
-    await spaces.deleteSpace(this, id, keep)
+    await (await changes()).deleteSpace(this, id, keep)
   }
 
   async loadTree() {
@@ -2247,7 +2282,7 @@ class Workspace {
     // document, and the tab showing it is the tab this open is about. See
     // workspace/open.ts.
     const note = await this.opened.opening(path, () => this.openNote(path, options))
-    const tab = note && this.tabs.find((one) => one.note === note)
+    const tab = note && this.tabOf(note)
     if (!tab) return
 
     // Opening for real what was only being looked at makes it stay.
@@ -2669,6 +2704,11 @@ class Workspace {
     if (this.previewTabId === id) this.previewTabId = null
     this.saving.closed(tab.note)
 
+    // A set out of sight is put right as it comes back; see sets.svelte.ts.
+    if (!this.panes.at(paneId)) {
+      this.persist()
+      return
+    }
     const left = this.tabsIn(paneId)
 
     // The last tab of a pane takes the pane with it, and the pane beside it takes the
@@ -4210,7 +4250,7 @@ class Workspace {
     if (this.panes.count < 2) return
 
     const kept = this.panes.focusedId
-    for (const tab of this.tabs) tab.paneId = kept
+    for (const tab of this.tabs) if (this.panes.at(tab.paneId)) tab.paneId = kept
 
     this.panes.collapse()
     this.persist()

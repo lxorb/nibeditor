@@ -150,6 +150,8 @@ mod web_opens;
 #[cfg(desktop)]
 mod web_page;
 #[cfg(desktop)]
+mod web_pause;
+#[cfg(desktop)]
 mod web_reload;
 #[cfg(desktop)]
 mod web_state;
@@ -335,6 +337,7 @@ macro_rules! desktop_commands {
             web_tabs::web_devtools,
             web_page::web_mute,
             web_page::web_unfill,
+            web_pause::web_pause,
             web_find::web_find,
             web_find::web_find_stop,
             web_tabs::web_shot,

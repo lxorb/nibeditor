@@ -92,6 +92,8 @@ export const it: Dictionary = {
   'Move to other pane': 'Sposta nell’altro riquadro',
   Tabs: 'Schede',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in ordine di utilizzo',
+  'Hidden tabs': 'Schede nascoste',
+  'Keep running': 'Lascia attive',
   'Keep open': 'Mantieni aperta',
   Open: 'Apri',
   Rename: 'Rinomina',

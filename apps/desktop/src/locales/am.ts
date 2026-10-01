@@ -92,6 +92,8 @@ export const am: Dictionary = {
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Hidden tabs': 'የተደበቁ ትሮች',
+  'Keep running': 'መሮጡን ቀጥል',
   'Keep open': 'ክፍት አድርገህ ተው',
   Open: 'ክፈት',
   Rename: 'ስም ቀይር',

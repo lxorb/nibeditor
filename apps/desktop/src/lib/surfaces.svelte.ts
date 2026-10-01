@@ -247,6 +247,13 @@ export const undoToastNotice = latched(() => {
   return import('./UndoToast.svelte')
 })
 
+/** A space's row saying its tabs out of sight are playing, asked for by the spaces' own
+ *  sets once a window has fetched them; see SpaceSound.svelte. */
+export const spaceSound = latched(() => import('./SpaceSound.svelte'))
+
+/** Chrome's speaker on a tab playing sound, fetched with the first sound. */
+export const soundMark = held(() => import('./SoundMark.svelte'))
+
 /** A held note's mark; see sync2/asking.svelte.ts. */
 export const heldMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./sync2/HeldMark.svelte'),

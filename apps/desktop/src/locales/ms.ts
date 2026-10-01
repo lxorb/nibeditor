@@ -92,6 +92,8 @@ export const ms: Dictionary = {
   'Move to other pane': 'Alih ke anak tetingkap lain',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab mengikut urutan penggunaan',
+  'Hidden tabs': 'Tab tersembunyi',
+  'Keep running': 'Terus berjalan',
   'Keep open': 'Biar terbuka',
   Open: 'Buka',
   Rename: 'Namakan semula',

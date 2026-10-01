@@ -92,6 +92,8 @@ export const es: Dictionary = {
   'Move to other pane': 'Mover al otro panel',
   Tabs: 'Pestañas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por orden de uso',
+  'Hidden tabs': 'Pestañas ocultas',
+  'Keep running': 'Seguir activas',
   'Keep open': 'Mantener abierta',
   Open: 'Abrir',
   Rename: 'Renombrar',
