@@ -770,10 +770,12 @@
     const ul = list
     if (!ul) return
 
-    // Where this space was left. Read outside the effect's own reading, or writing
-    // it down on every scroll would run this again and put the list back where the
-    // scroll started from.
-    const root = untrack(() => workspace.activeSpace?.root)
+    // Which space this is, and so where its list was left: the one list serves every
+    // space in turn, so a switch runs this again and puts the new space's rows where
+    // they were. Where it was left is read outside the effect's own reading, or
+    // writing it down on every scroll would run this again and put the list back
+    // where the scroll started from.
+    const root = workspace.activeSpace?.root
 
     const stop = where.follow(ul, rowOf, (box) => {
       if (root !== undefined) workspace.device.setListAt(root, box.scrollTop)
@@ -783,8 +785,9 @@
     if (!box) return stop
 
     if (root !== undefined) {
-      const left = untrack(() => workspace.device.listAt(root))
-      if (left > 0) box.scrollTop = left
+      // At the top too, which is where a space never scrolled was left: the list
+      // it replaces may have been anywhere.
+      box.scrollTop = untrack(() => workspace.device.listAt(root))
       where.refresh()
     }
 
@@ -964,6 +967,29 @@
    *  which is the place that wins. Only a note opened after that is a note being
    *  opened, and only that is worth moving the list for. */
   let opened = false
+
+  /** The space the list is showing. One list serves every space in turn - its rows
+   *  are handed the new space's, not made again (see Sidebar.svelte) - so what it held
+   *  about the last space's rows goes with that space: the row the keyboard was on, a
+   *  name that could not be written, the rows a twist is measured against, and the
+   *  note it last saw, which in the new space is the one already open when it arrived
+   *  and so, like a launch's, not one to move the list for. Before the paint, and so
+   *  before the effects below read any of it. */
+  let listed = untrack(() => workspace.activeSpace?.root)
+
+  $effect.pre(() => {
+    const root = workspace.activeSpace?.root
+    if (root === listed) return
+    listed = root
+
+    standing = null
+    reaching = null
+    wrong = false
+    wasRows = untrack(() => live)
+    wasPaths = wasRows.map((one) => one.entry.path)
+    showing = untrack(() => workspace.active?.path ?? null)
+    opened = true
+  })
 
   $effect(() => {
     const note = workspace.active?.path ?? null
