@@ -361,21 +361,70 @@ to keep the engine warm - behind a cold WebView2 environment as well.
 
 So the rectangle the page was last placed at is kept by the pane rather than
 measured when it is wanted, and the tab's departure hides the page and starts a
-clock. **Parking** is the only thing that closes a webview: half an hour of nobody
-looking, or being the least recently looked at page when a seventh is opened - Chrome's
-own memory saver waits about as long and discards for the same reason. One open page is
-about 180 MB on this machine, so six is a working set at a bit over a gigabyte, which is
-what a browser with six tabs in it costs and is the honest price of never reloading one.
-A parked tab keeps its address, its place on the page and its trail, so reviving it is a
-load and not a loss. Closing the tab takes the webview and the trail with it.
+clock.
 
-**A page playing sound is never parked**, by the clock or by the cap, as Chrome's memory
-saver never takes a tab that is heard: a song in a tab out of sight, or in a space out of
-sight, is one somebody left running on purpose. It is asked again after the same wait.
+#### Out of sight is frozen, never closed
+
+Emil, 2026-10-01: _"When I cycle with Ctrl+Tab through my tabs, some of them fully
+reload every time, but not when I just switch between specific ones. [...] the
+default must be that tabs don't reload."_ They did because of the cap that stood here:
+a seventh running page parked the one looked at longest ago, and going round more than
+six tabs in order parks each one just before it comes round again. Two tabs back and
+forth never reached the cap, which is why some tabs never reloaded.
+
+So **nothing is ever closed for being one too many or out of sight too long**. A page
+out of sight is **frozen** five minutes after it went, which is Edge's sleeping tab and
+Chrome's freezing: its timers and scripts stop, and it keeps its document, its place,
+what was typed into it, its video position and its login. Showing it again wakes it
+before it is placed, in a frame, and nothing loads. On WebView2 that is `TrySuspend`,
+which also hands most of the page's memory back to the system (Edge measures 83 to
+85 per cent per sleeping tab); on nib's own Chromium the page lifecycle's `frozen`, which
+saves the CPU and little memory; WebKit has neither and the engine's own throttling of a
+hidden page is all there is. One path freezes and wakes every page, `web_pause.rs`, the
+one Hidden tabs' Pause uses: each freeze and wake is sent after the last has landed, so
+Ctrl+Tab coming round to a page while it is being frozen never shows a page the freeze
+then hides.
+
+Five minutes, because front-and-back use is seconds to minutes and waking costs a
+frame: it is where Chrome throttles a hidden page's timers to once a minute and may
+freeze one, and the soonest Edge's efficiency mode sleeps a tab. **Never frozen**, as
+Chrome and Edge never freeze one: the page on screen or under a menu, one playing or
+heard in the last five minutes, one loading, one whose site was given the camera or
+the microphone (a call), one allowed to notify (a chat somebody expects to hear from),
+and one an agent is acting in - the crate wakes a frozen reader's tab before an agent's
+first call into it, because a frozen page answers no protocol call. A frozen page keeps
+its web login's lease; the two-minute light upload skips a site whose every page is
+frozen, which has changed nothing, and a full capture wakes the page it reads.
+
+**Memory saver** (Settings, General, Tabs) is the one thing that takes a page down, and
+it is off until chosen. Its three strengths are Chrome's three, held against what a
+page costs here - about 180 MB on this machine - and against Chrome's and Edge's own:
+
+| Memory saver | Parked when out of sight for | or beyond running | Chrome | Edge |
+| --- | --- | --- | --- | --- |
+| Off | never | never | off by default | sleeps tabs, discards only under pressure |
+| Moderate | 6 hours | 16 pages, about 2.9 GB | 6 hours | sleeping tabs after 2 hours |
+| Balanced | 4 hours | 10 pages, about 1.8 GB | 4 hours, recommended | |
+| Maximum | 30 minutes | 6 pages, about 1.1 GB | 2 hours | efficiency mode sleeps after 5 minutes |
+
+Chrome's strengths are time alone, and a day of reading never leaves a page four hours
+out of sight, so a count stands beside the first two; Maximum is what nib did before
+there was a choice. Memory saver never takes the page on screen or any in a pane on
+screen, nor one under a menu, nor any page that is never frozen, nor a pinned one or one
+with something typed into a field and not sent - which the page says each time its tab
+is left (`web_look`) - because Chrome's never does. Changing it judges every page out of
+sight at once. A **parked** tab keeps its address, its place on the page and its trail,
+so reviving it is a load and not a loss; that path is also what a login handed to
+another computer and an engine that has gone come back through. Closing the tab takes
+the webview and the trail with it.
+
+A choice of where a space keeps its web data builds again only the pages whose store
+it changed; one already in the store chosen keeps running.
 
 **A space's own tabs out of sight are Hidden tabs** (Settings, General, Tabs): Keep
-running, Pause, or Ask, which is where it starts. Keep running is the paragraph above.
-Pause stops what the page plays and freezes it - `TrySuspend` on WebView2, the page
+running, Pause, or Ask, which is where it starts. Keep running treats them as any page
+out of sight, frozen after five minutes unless something in it has to go on.
+Pause stops what the page plays and freezes it at once - `TrySuspend` on WebView2, the page
 lifecycle's `frozen` on nib's own Chromium, the sound alone on WebKit - and the page runs
 again, as it was and with no reload, the moment its space is shown. A page in a call, or
 capturing the camera, the microphone or the screen, is one the engine will not freeze, as

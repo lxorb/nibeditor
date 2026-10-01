@@ -50,11 +50,15 @@ let refuse = false
 /** What the page says when it is asked where it has got to. */
 let looked: Record<string, unknown> | null = null
 
+/** A freeze or a thaw the crate has not answered yet, while a test holds one. */
+let pausing: Promise<void> | null = null
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     calls.push({ command, args: args ?? {} })
+    if (command === 'web_pause' && pausing) await pausing
     if (command === 'web_look') {
       if (!looked) throw new Error('that page said nothing')
       return looked
@@ -605,6 +609,257 @@ describe('where a page keeps what the site stores', () => {
     ])
     expect(last('web_open')).toMatchObject({ tab: 'a', store: 'space_w', pane: PANE })
     webData.set('w', 'global')
+  })
+
+  test('a choice that leaves a page in the store it was built in loads nothing again', async () => {
+    const { webData } = await import('./web-data.svelte')
+    webData.set('w', 'space')
+    pages.of('a').space = 'w'
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+    calls.length = 0
+
+    // What an agent writing the same choice again does; see agents/workspace/settings.ts.
+    await pages.restore('w')
+    await settle()
+
+    expect(commands()).not.toContain('web_close')
+    expect(pages.of('a').live).toBe(true)
+    webData.set('w', 'global')
+  })
+})
+
+/** Emil, 2026-10-01: *"When I cycle with Ctrl+Tab through my tabs, some of them fully
+ *  reload every time."* A seventh running page parked the one looked at longest ago. A
+ *  page out of sight is frozen now and comes back as it was; only Memory saver ever
+ *  takes one down. See resting.ts. */
+describe('a page out of sight', () => {
+  const TABS = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7']
+  const MINUTES = 60_000
+
+  afterEach(async () => {
+    pausing = null
+    for (const tab of TABS) pages.forget(tab)
+    const { saver } = await import('./saver.svelte')
+    saver.set('off')
+    await settle()
+  })
+
+  /** A tab whose page has been built, on screen. */
+  async function built(tab: string, url = SITE): Promise<void> {
+    building = null
+    const shown = pages.show(tab, url, PANE)
+    ;(await asked())()
+    await shown
+  }
+
+  /** Out of sight for this long. */
+  function away(tab: string, minutes: number): void {
+    pages.hide(tab, PANE)
+    pages.of(tab).looked = Date.now() - minutes * MINUTES
+  }
+
+  /** Each freeze (true) and thaw (false) the crate was asked for, for one tab. */
+  function lulls(tab: string): unknown[] {
+    return calls
+      .filter((one) => one.command === 'web_pause' && one.args.tab === tab)
+      .map((one) => one.args.paused)
+  }
+
+  async function memorySaver(mode: 'off' | 'moderate' | 'balanced' | 'maximum'): Promise<void> {
+    const { saver } = await import('./saver.svelte')
+    saver.set(mode)
+  }
+
+  test('is never parked for the old cap or the old half hour, unless Memory saver says', async () => {
+    for (const tab of TABS) {
+      await built(tab)
+      away(tab, 600)
+    }
+    pages.retime()
+
+    // Ten hours out of sight, and eight of them: every one frozen, and none closed.
+    await vi.waitFor(() => expect(TABS.map((tab) => lulls(tab))).toEqual(TABS.map(() => [true])))
+    expect(commands()).not.toContain('web_close')
+    expect(TABS.every((tab) => pages.of(tab).live)).toBe(true)
+  })
+
+  test('is frozen five minutes after it went out of sight, and not before', async () => {
+    await built('t0')
+    away('t0', 4)
+    pages.retime()
+    await settle()
+    expect(lulls('t0')).toEqual([])
+
+    pages.of('t0').looked = Date.now() - 5 * MINUTES
+    pages.retime()
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+  })
+
+  test('is never frozen while it plays, was heard a moment ago, may be in a call or may notify', async () => {
+    const { grants, siteOf } = await import('./permissions.svelte')
+    const CALL = 'https://call.example.com/'
+    const CHAT = 'https://chat.example.com/'
+    grants.remember(siteOf(CALL), 'camera', 'allow')
+    grants.remember(siteOf(CHAT), 'notifications', 'allow')
+    await built('t0')
+    await built('t1')
+    await built('t2', CALL)
+    await built('t3', CHAT)
+    await built('t4')
+    pages.of('t0').playing = true
+    pages.of('t1').heard = Date.now() - 2 * MINUTES
+    for (const tab of ['t0', 't1', 't2', 't3', 't4']) away(tab, 30)
+    pages.retime()
+
+    // The one with nothing going on is frozen; the others go on running.
+    await vi.waitFor(() => expect(lulls('t4')).toEqual([true]))
+    expect(['t0', 't1', 't2', 't3'].map((tab) => lulls(tab))).toEqual([[], [], [], []])
+    grants.remember(siteOf(CALL), 'camera', null)
+    grants.remember(siteOf(CHAT), 'notifications', null)
+  })
+
+  test('is never frozen while an agent is acting in it', async () => {
+    const { agentMarks } = await import('../agent-marks.svelte')
+    await built('t0')
+    await built('t1')
+    agentMarks.on = { t0: { agent: 'claude', colour: '#000', paused: false } }
+    away('t0', 30)
+    away('t1', 30)
+    pages.retime()
+
+    await vi.waitFor(() => expect(lulls('t1')).toEqual([true]))
+    expect(lulls('t0')).toEqual([])
+    agentMarks.on = {}
+  })
+
+  test('the page on screen is never frozen, however long it has been looked at', async () => {
+    await built('t0')
+    pages.of('t0').looked = Date.now() - 60 * MINUTES
+    pages.freeze('t0')
+    pages.retime()
+    await settle()
+
+    expect(lulls('t0')).toEqual([])
+  })
+
+  test('comes back as it was: woken before it is placed, never built again', async () => {
+    await built('t0')
+    away('t0', 30)
+    pages.retime()
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+    calls.length = 0
+
+    await pages.show('t0', SITE, PANE)
+
+    expect(commands()).toEqual(['web_pause', 'web_place'])
+    expect(last('web_pause')).toMatchObject({ tab: 't0', paused: false })
+    expect(last('web_place')).toMatchObject({ tab: 't0', visible: true })
+  })
+
+  test('a thaw waits for a freeze still on its way, so the page shown is never hidden', async () => {
+    await built('t0')
+    let answer = (): void => undefined
+    pausing = new Promise<void>((go) => (answer = go))
+    away('t0', 30)
+    pages.retime()
+    await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+
+    // Ctrl+Tab comes round to it while the crate is still freezing it.
+    const showing = pages.show('t0', SITE, PANE)
+    await settle()
+    expect(lulls('t0')).toEqual([true])
+    expect(last('web_place')?.visible).toBe(false)
+
+    pausing = null
+    answer()
+    await showing
+
+    const order = calls
+      .filter((one) => one.command === 'web_pause' || one.command === 'web_place')
+      .slice(-3)
+      .map((one) => `${one.command} ${String(one.args.paused ?? one.args.visible)}`)
+    expect(order).toEqual(['web_pause true', 'web_pause false', 'web_place true'])
+  })
+
+  test("Hidden tabs' Pause and the countdown are one freeze: never twice, woken once", async () => {
+    await built('t0')
+    away('t0', 0)
+    pages.freeze('t0')
+    pages.freeze('t0')
+    pages.of('t0').looked = Date.now() - 30 * MINUTES
+    pages.retime()
+    await settle()
+    await settle()
+    expect(lulls('t0')).toEqual([true])
+
+    await pages.thaw('t0')
+    await pages.show('t0', SITE, PANE)
+    expect(lulls('t0')).toEqual([true, false])
+  })
+
+  describe('with Memory saver on', () => {
+    test('the pages out of sight beyond its count are parked, looked at longest ago first', async () => {
+      await memorySaver('maximum')
+      for (const [at, tab] of TABS.entries()) {
+        await built(tab)
+        away(tab, 20 - at)
+      }
+
+      // Six kept: the two away longest go as the seventh and eighth are built.
+      await vi.waitFor(() =>
+        expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args)).toEqual([
+          { tab: 't0', keep: true },
+          { tab: 't1', keep: true },
+        ]),
+      )
+    })
+
+    test('a page out of sight for its time is parked, keeping its trail', async () => {
+      await memorySaver('maximum')
+      await built('t0')
+      away('t0', 29)
+      pages.retime()
+      await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
+      expect(commands()).not.toContain('web_close')
+
+      pages.of('t0').looked = Date.now() - 31 * MINUTES
+      pages.retime()
+      await vi.waitFor(() => expect(last('web_close')).toEqual({ tab: 't0', keep: true }))
+      expect(pages.of('t0').live).toBe(false)
+    })
+
+    test('never a page on screen, nor one under a menu, however many there are', async () => {
+      await memorySaver('maximum')
+      for (const tab of TABS) await built(tab)
+      // One under a layer of the app's: hidden, and still the tab in front of its pane.
+      await pages.show('t0', SITE, PANE, false)
+      for (const tab of TABS) pages.of(tab).looked = Date.now() - 600 * MINUTES
+      pages.retime()
+      await settle()
+
+      expect(pages.of('t0').shown).toBe(false)
+      expect(commands()).not.toContain('web_close')
+    })
+
+    test('never one with something typed into it, nor a pinned one', async () => {
+      await memorySaver('maximum')
+      looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: true }
+      await built('t0')
+      away('t0', 60)
+      await vi.waitFor(() => expect(pages.of('t0').edited).toBe(true))
+      looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: false }
+      await built('t1')
+      pages.of('t1').pinned = true
+      away('t1', 60)
+      await built('t2')
+      away('t2', 60)
+      pages.retime()
+
+      await vi.waitFor(() => expect(last('web_close')).toEqual({ tab: 't2', keep: true }))
+      expect(calls.filter((one) => one.command === 'web_close')).toHaveLength(1)
+    })
   })
 })
 

@@ -22,6 +22,9 @@ import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
 import { updates } from './updates.svelte'
+import { pages } from './web-tab/pages.svelte'
+import { isSaver } from './web-tab/resting'
+import { saver } from './web-tab/saver.svelte'
 import { hiddenTabs } from './workspace/hidden-tabs.svelte'
 import { isHiddenTabs } from './workspace/sets'
 
@@ -349,6 +352,25 @@ export function preferences(view?: EditorView): Pane[] {
                     initial: 'ask',
                     get: () => hiddenTabs.choice,
                     set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
+                  },
+                  // Off, so no page is ever closed for memory unless somebody asks; out of
+                  // sight it is frozen instead. See web-tab/resting.ts.
+                  {
+                    kind: 'select',
+                    label: t('Memory saver'),
+                    words: ['memory', 'ram', 'discard', 'sleep', 'reload', 'performance'],
+                    options: [
+                      { value: 'off', label: t('Off') },
+                      { value: 'moderate', label: t('Moderate') },
+                      { value: 'balanced', label: t('Balanced') },
+                      { value: 'maximum', label: t('Maximum') },
+                    ],
+                    initial: 'off',
+                    get: () => saver.mode,
+                    set: (value) => {
+                      saver.set(isSaver(value) ? value : 'off')
+                      pages.retime()
+                    },
                   },
                 ] satisfies Field[])
               : []),

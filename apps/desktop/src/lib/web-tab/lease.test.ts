@@ -55,6 +55,8 @@ const NEWS = 'k_news_example_org_0000'
 
 /** What the leases did, in order, where order is the point. */
 let log: string[]
+/** The tab each capture read through, or null for none. */
+let reads: (string | null)[]
 let hub: FakeHub
 let held: Map<string, Page>
 let digest: string
@@ -99,8 +101,9 @@ function makeWorld(): LeaseWorld {
       )
     },
     keyOf: (place) => Promise.resolve(place.site === 'example.com' ? MAIL : NEWS),
-    capture: (lease: Lease, light: boolean) => {
+    capture: (lease: Lease, light: boolean, tab) => {
       log.push(`capture ${light ? 'light' : 'full'} fence ${String(lease.fence)}`)
+      reads.push(tab)
       return Promise.resolve(captured())
     },
     upload: (lease: Lease) => {
@@ -181,6 +184,7 @@ function keyOf(url: string): string {
 beforeEach(() => {
   vi.useFakeTimers()
   log = []
+  reads = []
   hub = new FakeHub()
   held = new Map()
   digest = 'd1'
@@ -480,6 +484,38 @@ describe('what goes up while somebody uses a site', () => {
 
     await vi.advanceTimersByTimeAsync(3 * LIGHT_EVERY)
     expect(log).toEqual([])
+  })
+})
+
+/** A page out of sight is frozen after a while (resting.ts), and keeps its lease: which
+ *  computer runs the site has not changed. */
+describe('a site whose pages are frozen', () => {
+  test('keeps its lease, and sends nothing on the two-minute clock, having changed nothing', async () => {
+    const page = await holding('t1', 'https://mail.example.com/')
+    page.onScreen = false
+    page.frozen = true
+    log = []
+    hub.sent = []
+
+    await vi.advanceTimersByTimeAsync(3 * LIGHT_EVERY)
+    expect(log).toEqual([])
+    expect(hub.sent.map((one) => one.t)).not.toContain('release')
+  })
+
+  test('is read through a page that runs rather than a frozen one', async () => {
+    const frozen = await holding('t1', 'https://mail.example.com/a')
+    frozen.path = '/space/A.url'
+    frozen.frozen = true
+    frozen.looked = Date.now() + 1_000
+    const running = tab('t2', 'https://mail.example.com/b')
+    await leases.admit('t2', running)
+    running.live = true
+    running.path = '/space/B.url'
+    reads = []
+
+    leases.activity(false)
+    await settle()
+    expect(reads).toEqual(['t2'])
   })
 })
 

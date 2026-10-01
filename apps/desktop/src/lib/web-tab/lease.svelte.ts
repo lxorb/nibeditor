@@ -498,11 +498,15 @@ export class Leases {
   private capture(lease: Lease, light: boolean): Promise<Captured> {
     const tabs = this.tabsOf(lease)
     const notes = tabs.flatMap(([, page]) => (page.path ? [page.path] : []))
-    // The web note looked at last, whose sessionStorage goes with the state.
+    // The web note looked at last, whose sessionStorage goes with the state: a running
+    // one before a frozen one, which has to be woken to be read (see web-sync.svelte.ts).
     const tab =
       tabs
         .filter(([, page]) => page.live && page.path !== null)
-        .sort(([, one], [, other]) => other.looked - one.looked)[0]?.[0] ?? null
+        .sort(
+          ([, one], [, other]) =>
+            Number(one.frozen) - Number(other.frozen) || other.looked - one.looked,
+        )[0]?.[0] ?? null
     return this.world.capture(lease, light, tab, notes)
   }
 
@@ -530,11 +534,12 @@ export class Leases {
   }
 
   /** Every couple of minutes while somebody is here: the cookies and localStorage of
-   *  each site this computer is using. */
+   *  each site this computer is using. Not of a site whose every page is frozen, which has
+   *  changed nothing since it froze; it keeps its lease all the same. */
   private keepLight(): void {
     if (!this.active) return
     for (const lease of this.byKey.values()) {
-      const running = this.tabsOf(lease).some(([, page]) => page.live)
+      const running = this.tabsOf(lease).some(([, page]) => page.live && !page.frozen)
       if (lease.status === 'held' && running) this.upload(lease, true)
     }
   }

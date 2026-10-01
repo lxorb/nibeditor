@@ -405,9 +405,11 @@
   })
 
   // Which file this tab is showing, so the store can write down where the reading got
-  // to under the note rather than under this visit to it; see place.ts.
+  // to under the note rather than under this visit to it; see place.ts. And whether it
+  // is pinned, which Memory saver never takes; see resting.ts.
   $effect(() => {
     page.path = tab.path
+    page.pinned = tab.pinned
   })
 
   // Where the reading has got to, in the file. That is what makes reopening the note -

@@ -23,17 +23,17 @@
  *  and it syncs; the place and the trail are this device's, because they are about
  *  this screen.
  *
- *  Memory is bounded, the way Chrome bounds it. A page nobody has looked at for half
- *  an hour is parked - the webview goes, the tab keeps everything about itself - and
- *  so is the least recently looked at page over the cap, so a window left open all
- *  day with thirty sites in it is not thirty browsers. Looking at a parked tab again
- *  opens the page where it was, at the place it was at. */
+ *  A page out of sight is frozen, never closed for it: see resting.ts. Only Memory saver
+ *  parks one - the webview goes, the tab keeps everything about itself - and looking at
+ *  a parked tab again opens the page where it was, at the place it was at. */
 
+import { agentMarks } from '../agent-marks.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
-import { grants, readAsked } from './permissions.svelte'
+import { grants, readAsked, siteOf } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
+import type { Resting } from './resting'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -63,28 +63,11 @@ function dropDialogs(tab: string): void {
   if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
 }
 
-/** How long a parked page's webview goes on running after the tab showing it went
- *  away.
- *
- *  Half an hour, which is what Chrome's own memory saver waits before it discards a
- *  background tab: long enough that coming back to something read this morning is
- *  still instant, short enough that a window left open overnight holds nothing. A
- *  parked page keeps its address, its place and its trail, so coming back is a load
- *  and not a loss. */
-const PARKED_AFTER = 30 * 60 * 1000
-
-/** How many pages may be running at once, beyond which the least recently looked at is
- *  parked.
- *
- *  The cost of a page is a browser's cost, and it was measured rather than guessed:
- *  `scripts/web-switch-probe.py` reads what the webview processes under this launch are
- *  holding, and one open page on this machine is about 180 MB. Six is a working set -
- *  what somebody is reading and the handful they are going back and forth to - at a bit
- *  over a gigabyte, which is what a browser with six tabs in it costs and is the honest
- *  price of never reloading one. A window with thirty web tabs in it is a window
- *  somebody has thirty bookmarks in and is reading one of. The one on screen is never
- *  the one parked. */
-const LIVE_AT_MOST = 6
+/** The rules for a page out of sight and the Memory saver setting, fetched with the
+ *  first page that goes out of sight. */
+function rules() {
+  return Promise.all([import('./resting'), import('./saver.svelte')])
+}
 
 /** How long a still picture of a page stands for the page. Under half a second, so
  *  two overlays in a row share one and a page that has scrolled since is
@@ -121,6 +104,16 @@ export interface Rect {
   height: number
 }
 
+/** Where a page is, its trail, and whether a field in it is typed into; see `web_look`. */
+interface Looked {
+  url: string
+  x: number
+  y: number
+  trail: string[]
+  at: number
+  edited?: boolean
+}
+
 /** Which way a step goes, as the crate names them: `fresh` is Chrome's Ctrl+Shift+R,
  *  the page again past the cache, and `stop` the cross the reload glyph turns into
  *  while a page is coming. */
@@ -140,7 +133,7 @@ interface Wanted {
   /** Why it is out of sight, for the one case where the two answers differ: something
    *  of the app's is over the page, which leaves the tab in front and nothing counting
    *  down for it. A tab that was switched away from is the other, and that one starts
-   *  the countdown to being parked. */
+   *  the countdown to being frozen. */
   covering: boolean
 }
 
@@ -352,12 +345,25 @@ export class Page {
   /** The space whose web data the page was just built again in; see rehome.ts. */
   rehomed = $state<string | null>(null)
 
-  /** When this tab was last looked at, so the least recently looked at is the one
-   *  parked when there are more pages running than a window should hold. */
+  /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
 
-  /** The countdown to being parked, running while nobody is looking at this tab. */
-  parking: ReturnType<typeof setTimeout> | undefined
+  /** The countdown to being frozen or parked, running while nobody is looking at this
+   *  tab; see resting.ts. */
+  resting: ReturnType<typeof setTimeout> | undefined
+
+  /** Whether the engine was asked to freeze the page. Not drawn. */
+  frozen = false
+  /** Every freeze and thaw, one after the other; see `lull`. */
+  lulling = Promise.resolve()
+  /** Whether a field was typed into and not sent, as the page said when it was left. */
+  edited = false
+  /** When it last stopped being heard; see heard.ts. */
+  heard = 0
+  /** Set by the pane, like `path`. */
+  pinned = false
+  /** The store the page was built in; see `restore`. */
+  store: string | null | undefined
 
   /** The page's mark has changed. Empty is a page with none, which leaves the tab
    *  the file's mark again and the file its own. */
@@ -469,6 +475,7 @@ class Pages {
     await this.listen()
 
     if (page.live) {
+      await this.thaw(tabId)
       await this.place(tabId, pane, visible, !visible)
       return
     }
@@ -502,7 +509,7 @@ class Pages {
       handed = true
       page.live = true
       page.openable = true
-      this.bound(tabId)
+      void this.bound()
     } catch {
       // Nothing to hand over: built below like any other.
     } finally {
@@ -556,22 +563,25 @@ class Pages {
     page.pane = pane
 
     try {
+      // Which store the site's cookies and storage go in, which is its space's choice;
+      // see web-data.ts.
+      const store = await (await stores()).store(page.space, page.url)
       await invoke('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
-        // Which store the site's cookies and storage go in, which is its space's
-        // choice; see web-data.ts.
-        store: await (await stores()).store(page.space, page.url),
+        store,
       })
       page.live = true
       page.openable = true
+      page.frozen = false
+      page.store = store
       // A webview the crate has just built is on screen at the rectangle it was built
       // at: nothing has to place it to make that true, and the first thing drawn over
       // the page would otherwise photograph nothing. See `shoot`.
       page.shown = true
-      this.bound(tabId)
+      void this.bound()
     } catch {
       // No webview to be had here. Reported by the pane rather than by a message:
       // it shows the card, which offers the page in the reader's own browser.
@@ -608,8 +618,8 @@ class Pages {
     // so nothing counts down for it - and nothing is photographed either: a page that
     // has this moment been built has nothing on it worth standing in for it.
     else if (wanted.covering) await this.place(tabId, wanted.pane, false)
-    // Out of sight, and counting down to being taken down: the countdown that should
-    // have started when the tab was switched away from found no page to start it on.
+    // Out of sight, and counting down to being frozen: the countdown that should have
+    // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
   }
 
@@ -671,59 +681,133 @@ class Pages {
    *
    *  The page goes out of sight and **goes on running**: a web note is a browser tab,
    *  so coming back to it is not a load. What starts here is the countdown to being
-   *  parked - the one thing that does close a webview - and a note of where the reading
-   *  had got to, which is what makes reopening the note tomorrow land on this page at
-   *  this place. */
+   *  frozen, and a note of where the reading had got to, which is what makes reopening
+   *  the note tomorrow land on this page at this place. */
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
     if (!page) return
     page.onScreen = false
+    page.looked = Date.now()
 
     void this.place(tabId, pane, false)
     if (!isDesktop) return
 
-    void this.look(tabId)
-    clearTimeout(page.parking)
-    page.parking = setTimeout(() => void this.rest(tabId), PARKED_AFTER)
+    // Counted once the page has said whether something is typed into it.
+    void this.look(tabId).then(() => this.rest(tabId))
   }
 
-  /** Parks a page nobody has looked at for a while, unless it is playing: Chrome's memory
-   *  saver never takes a tab that is heard, and a song in a space out of sight is one
-   *  somebody kept running on purpose. Asked again after the same wait. */
+  /** What becomes of a page out of sight by the rules in resting.ts, and the countdown to
+   *  when they are asked again. */
   private async rest(tabId: string): Promise<void> {
+    const [{ rest }, { saver }] = await rules()
     const page = this.held.get(tabId)
-    if (!page?.playing) return this.park(tabId)
-    page.parking = setTimeout(() => void this.rest(tabId), PARKED_AFTER)
+    const one = this.resting().find((each) => each.id === tabId)
+    if (!page || !one?.live || page.onScreen) return
+
+    clearTimeout(page.resting)
+    const { act, again } = rest(one, saver.mode, Date.now())
+    if (act === 'park') return this.park(tabId)
+    if (act === 'freeze') void this.lull(tabId, page, true)
+    if (again !== null) page.resting = setTimeout(() => void this.rest(tabId), again)
+  }
+
+  /** Every page as the rules read it. */
+  private resting(): Resting[] {
+    return [...this.held].map(([id, page]) => {
+      const site = siteOf(page.url)
+      const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
+        grants.said(site, ask) === 'allow'
+      return {
+        id,
+        live: page.live,
+        onScreen: page.onScreen,
+        frozen: page.frozen,
+        looked: page.looked,
+        loading: page.loading,
+        playing: page.playing,
+        heard: page.heard,
+        acting: id in agentMarks.on,
+        calling: allowed('camera') || allowed('microphone'),
+        notifying: allowed('notifications'),
+        edited: page.edited,
+        pinned: page.pinned,
+      }
+    })
+  }
+
+  /** Freezes a page out of sight, whatever it is doing: Hidden tabs' Pause, which pauses
+   *  what it plays first. Never one on screen, which the freeze would hide. */
+  freeze(tabId: string) {
+    const page = this.held.get(tabId)
+    if (isDesktop && page?.live && !page.frozen && !page.onScreen) void this.lull(tabId, page, true)
+  }
+
+  /** Lets a frozen page run again, and counts its time out of sight from now. */
+  thaw(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!page?.frozen) return page?.lulling ?? Promise.resolve()
+
+    this.wake(page)
+    const thawed = this.lull(tabId, page, false)
+    if (!page.onScreen) void this.rest(tabId)
+    return thawed
+  }
+
+  /** The crate woke a frozen page for an agent acting in it; see web_pause.rs. */
+  woken(tabId: string) {
+    const page = this.held.get(tabId)
+    if (!page?.frozen) return
+    page.frozen = false
+    void this.rest(tabId)
+  }
+
+  /** Memory saver changed: every page is judged by it again. */
+  retime() {
+    for (const [id, page] of this.held) if (!page.onScreen) void this.rest(id)
+    void this.bound()
+  }
+
+  /** A freeze or a thaw, each after the last has landed: a thaw sent behind a freeze
+   *  still on its way would land first, and the freeze would then hide a page on screen. */
+  private lull(tabId: string, page: Page, paused: boolean): Promise<void> {
+    page.frozen = paused
+    page.lulling = page.lulling.then(() =>
+      invoke('web_pause', { tab: tabId, paused }).then(
+        () => undefined,
+        () => undefined,
+      ),
+    )
+    return page.lulling
   }
 
   /** Parks the page and keeps the tab: the webview goes and everything about where the
    *  tab is stays, so looking at it again opens the page it was on at the place it was
-   *  at. What a window left open all day costs after half an hour of nobody looking,
-   *  and what the page over the cap costs the moment there is one too many. */
+   *  at. Memory saver's, and a login's that went to another computer. */
   async park(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
 
     await this.look(tabId)
     page.live = false
+    page.frozen = false
     page.loading = false
     page.playing = false
-    clearTimeout(page.parking)
+    clearTimeout(page.resting)
     // The trail stays in the crate, so the arrows over a page that has just been
     // revived are right from the first frame.
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
-  /** Reads where the page has got to and writes it down for this device. Quiet about
-   *  failure: a page that has gone is a page whose place was already written when it
-   *  went. */
+  /** Reads where the page has got to and writes it down for this device, and whether
+   *  something is typed into it. Quiet about failure: a page that has gone is a page
+   *  whose place was already written when it went. */
   private async look(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
-    if (!page?.path) return
-
     const said = await this.whereIs(tabId)
-    if (!said) return
+    if (!page || !said) return
 
+    page.edited = said.edited === true
+    if (!page.path) return
     placeKept(page.path, {
       url: said.url,
       x: said.x,
@@ -733,23 +817,20 @@ class Pages {
     })
   }
 
-  /** Where a live page is, and the trail behind it, or null for a page that has gone
-   *  or will not say.
+  /** Where a live page is, and the trail behind it, or null for a page that has gone,
+   *  is frozen or will not say.
    *
    *  Raced against a clock, because the answer comes out of the page itself: a page
    *  busy in a loop of its own answers nothing, and parking is what takes the memory
    *  back - so a page that will not say where it is is parked without its place rather
-   *  than left running for ever. */
-  private async whereIs(
-    tabId: string,
-  ): Promise<{ url: string; x: number; y: number; trail: string[]; at: number } | null> {
-    if (!isDesktop || !this.held.get(tabId)?.live) return null
+   *  than left running for ever. A frozen one cannot have moved since it said. */
+  private async whereIs(tabId: string): Promise<Looked | null> {
+    const page = this.held.get(tabId)
+    if (!isDesktop || !page?.live || page.frozen) return null
 
     try {
       return await Promise.race([
-        invoke<{ url: string; x: number; y: number; trail: string[]; at: number }>('web_look', {
-          tab: tabId,
-        }),
+        invoke<Looked>('web_look', { tab: tabId }),
         new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
       ])
     } catch {
@@ -817,31 +898,17 @@ class Pages {
   /** This tab has just been looked at: nothing is counting down for it, and it is the
    *  newest thing in the window. */
   private wake(page: Page) {
-    clearTimeout(page.parking)
-    page.parking = undefined
+    clearTimeout(page.resting)
+    page.resting = undefined
     page.looked = Date.now()
   }
 
-  /** Keeps the number of pages running inside the cap, by parking the ones nobody has
-   *  looked at for longest. Called when one more has just been built.
-   *
-   *  **A page on screen is never parked**, whatever the clock says: two panes side by
-   *  side are two pages somebody is looking at, and a page that went out from under the
-   *  reader because a seventh tab was opened somewhere else would be the worst kind of
-   *  saving. So the cap is only ever spent on pages nobody can see, and a window with
-   *  more panes than the cap keeps them all; nor on one playing, which is heard. */
-  private bound(tabId: string) {
-    this.of(tabId).looked = Date.now()
-
-    const running = [...this.held.values()].filter((page) => page.live).length
-    const over = running - LIVE_AT_MOST
-    if (over <= 0) return
-
-    const hidden = [...this.held.entries()].filter(
-      ([, page]) => page.live && !page.shown && !page.playing,
-    )
-    const oldest = hidden.sort(([, one], [, other]) => one.looked - other.looked)
-    for (const [id] of oldest.slice(0, over)) void this.park(id)
+  /** Memory saver's cap, kept as one more page is built: see `overCap` in resting.ts.
+   *  **A page in a pane on screen is never parked**, nor one under a menu: two panes
+   *  side by side are two pages somebody is looking at. */
+  private async bound(): Promise<void> {
+    const [{ overCap }, { saver }] = await rules()
+    for (const id of overCap(this.resting(), saver.mode, Date.now())) void this.park(id)
   }
 
   /** Somewhere else, in this tab. */
@@ -955,10 +1022,13 @@ class Pages {
    *  the space's menu is a choice for the pages built after it - and a tab left in the
    *  store it was opened in would be a setting that did nothing on screen. Each is parked
    *  first, so it comes back on the page and at the place it was at; the one on screen is
-   *  built again where it was, the others as they are next looked at. */
+   *  built again where it was, the others as they are next looked at. A page whose store
+   *  the choice did not change is left running: that is no reason to load it again. */
   async restore(space: string): Promise<void> {
+    const data = await stores()
     const running = [...this.held.entries()].filter(([, page]) => page.live && page.space === space)
     for (const [tabId, page] of running) {
+      if ((await data.store(space, page.url)) === page.store) continue
       const shown = page.shown ? page.pane : null
       await this.park(tabId)
       if (shown && page.url) await this.show(tabId, page.url, shown)
@@ -972,7 +1042,7 @@ class Pages {
     const page = this.held.get(tabId)
     if (!page) return
 
-    clearTimeout(page.parking)
+    clearTimeout(page.resting)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
     this.watch?.closed(tabId)

@@ -300,11 +300,18 @@ const PLACE: &str = r"(function () {
 /// is already JSON, so a script that stringifies its own answer is an answer wrapped
 /// twice and a `Looked` that will not parse. The reader beside this one has always
 /// returned an object for the same reason.
+///
+/// And whether a field holds something typed and not sent, which a page taken down for
+/// memory would lose: Memory saver leaves such a page running, as Chrome's does with a
+/// partly filled form (lib/web-tab/resting.ts).
 const LOOKED: &str = r"(function () {
   try {
-    return { url: location.href, x: window.scrollX || 0, y: window.scrollY || 0 }
+    var edited = Array.prototype.some.call(document.querySelectorAll('input, textarea'), function (one) {
+      return /^(text|search|email|url|tel|password|number|textarea)$/.test(one.type) && one.value !== one.defaultValue
+    })
+    return { url: location.href, x: window.scrollX || 0, y: window.scrollY || 0, edited: edited }
   } catch (error) {
-    return { url: '', x: 0, y: 0 }
+    return { url: '', x: 0, y: 0, edited: false }
   }
 })()";
 
@@ -621,6 +628,8 @@ struct Looked {
     url: String,
     x: f64,
     y: f64,
+    #[serde(default)]
+    edited: bool,
 }
 
 /// What a site has asked for, on its way to the window.
@@ -653,6 +662,7 @@ pub struct Look {
     y: f64,
     trail: Vec<String>,
     at: usize,
+    edited: bool,
 }
 
 /// A page as a clip reads it: where it is, what it calls itself, and the HTML of
@@ -1797,6 +1807,7 @@ pub async fn web_look(
         y: said.y,
         trail,
         at,
+        edited: said.edited,
     })
 }
 

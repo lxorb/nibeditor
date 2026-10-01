@@ -5,14 +5,14 @@
  *  switch to another space or whether it keeps running in the background. The first time
  *  you switch and you haven't decided yet, you should be asked in a modal."*
  *
- *  - **Keep running** is what every browser does with a tab out of sight: the engine
- *    throttles a hidden page's timers and drawing on its own, so a page in another space
+ *  - **Keep running** treats them as any tab out of sight: frozen after five minutes
+ *    unless something in it has to go on (web-tab/resting.ts), so a page in another space
  *    costs the space on screen nothing it would not cost as a background tab, and a call
  *    or a song goes on. The space's row says so with the tab's speaker; see
  *    SpaceSound.svelte.
- *  - **Pause** stops what plays and freezes the page - WebView2's own suspend, the page
- *    lifecycle's freeze on nib's Chromium - and the page comes back as it was the moment
- *    its space is shown again, with no reload. See web_pause.rs. A page in a call, or
+ *  - **Pause** stops what plays and freezes the page at once - WebView2's own suspend, the
+ *    page lifecycle's freeze on nib's Chromium - and the page comes back as it was the
+ *    moment its space is shown again, with no reload. See web_pause.rs. A page in a call, or
  *    capturing the camera, the microphone or the screen, is one the engine will not
  *    freeze, as Chrome and Edge never freeze one; it goes on running.
  *  - **Ask** until the reader has said: the first switch away from a set with a page
@@ -34,7 +34,6 @@
 import { agentMarks } from '../agent-marks.svelte'
 import { key, t } from '../i18n.svelte'
 import { keep, stored } from '../stored'
-import { invoke } from '../tauri'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'
@@ -116,14 +115,16 @@ class Hidden {
     return workspace.tabs.filter((tab) => running(tab) && !workspace.panes.at(tab.paneId))
   }
 
+  /** Through the pages' own freeze, the one a page out of sight in the space on screen
+   *  is given too, so the two never undo each other; see resting.ts. */
   private pause(tab: string) {
     this.paused.add(tab)
-    void invoke('web_pause', { tab, paused: true }).catch(() => undefined)
+    pages.freeze(tab)
   }
 
   private resume(tab: string) {
     this.paused.delete(tab)
-    void invoke('web_pause', { tab, paused: false }).catch(() => undefined)
+    void pages.thaw(tab)
   }
 }
 

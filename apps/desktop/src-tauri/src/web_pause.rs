@@ -17,8 +17,14 @@
 //!   throttling of a page out of sight is the rest.
 //!
 //! Letting it run is the other way round: the page woken, then what it was playing played.
+//!
+//! The window freezes a page that has been out of sight for a while as well, through this
+//! same command (lib/web-tab/resting.ts), and wakes it before it is shown. One thing
+//! reaches a page without the window: an agent acting in a reader's tab, whose protocol
+//! calls a frozen page would never answer. `woken` wakes it first, and leaves what it was
+//! playing paused.
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Webview};
 
 /// Pauses whatever the page is playing, marking each element it paused.
 const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-nib-paused', '') } })";
@@ -35,6 +41,12 @@ pub fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<(), String
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     engine::lull(&view, paused)
+}
+
+/// A page an agent is about to act in, woken if it was frozen: nothing it was playing
+/// plays, because the reader did not ask for that.
+pub fn woken(view: &Webview) {
+    let _ = engine::wake(view);
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
@@ -81,6 +93,26 @@ mod engine {
         })
         .map_err(|error| format!("that page could not be reached: {error}"))
     }
+
+    /// The page resumed, and nothing played. The engine wakes a page by itself on a few
+    /// calls (`Navigate`), not on its protocol's.
+    #[allow(
+        unsafe_code,
+        reason = "the engine's own resume is reached through its COM interfaces"
+    )]
+    pub fn wake(view: &Webview) -> Result<(), String> {
+        view.with_webview(|platform| {
+            // Safe: the controller is this webview's own, asked on its own thread.
+            let Ok(core) = (unsafe { platform.controller().CoreWebView2() }) else {
+                return;
+            };
+            if let Ok(three) = core.cast::<ICoreWebView2_3>() {
+                // Safe: as above.
+                let _ = unsafe { three.Resume() };
+            }
+        })
+        .map_err(|error| format!("that page could not be reached: {error}"))
+    }
 }
 
 #[cfg(feature = "cef")]
@@ -111,6 +143,17 @@ mod engine {
         crate::engine::devtools::tell(view, None, said);
         Ok(())
     }
+
+    /// The page's lifecycle back to `active`, and nothing played.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the same answer as the other engines', whose calls can fail"
+    )]
+    pub fn wake(view: &Webview) -> Result<(), String> {
+        let said = vec![("Page.setWebLifecycleState", json!({ "state": "active" }))];
+        crate::engine::devtools::tell(view, None, said);
+        Ok(())
+    }
 }
 
 #[cfg(all(not(windows), not(feature = "cef")))]
@@ -123,6 +166,15 @@ mod engine {
     pub fn lull(view: &Webview, paused: bool) -> Result<(), String> {
         view.eval(if paused { PAUSE } else { PLAY })
             .map_err(|error| format!("that page could not be reached: {error}"))
+    }
+
+    /// Nothing to wake: nothing here was frozen.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the same answer as the other engines', whose calls can fail"
+    )]
+    pub fn wake(_view: &Webview) -> Result<(), String> {
+        Ok(())
     }
 }
 

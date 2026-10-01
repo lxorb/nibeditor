@@ -61,6 +61,9 @@ export function readFound(value: unknown): Found | null {
 export function heard(page: Page, said: Said): void {
   switch (said.said) {
     case 'sound': {
+      // When it fell quiet, which a page out of sight is not frozen for a while after;
+      // see resting.ts.
+      if (page.playing && !said.playing) page.heard = Date.now()
       page.playing = said.playing
       page.muted = said.muted
       // A page in a tab keeps whatever it was told last, and a tab carries on to other

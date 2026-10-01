@@ -215,8 +215,10 @@ function leaseWorld(approval: Approval): LeaseWorld {
     // account does not know would name leases no other computer can see.
     keyOf: async (place) =>
       approval.keyed ? await webKey.lease(place.store, place.site).catch(() => null) : null,
-    capture: (lease: Lease, light, tab, notes) =>
-      webState.capture(
+    capture: async (lease: Lease, light, tab, notes) => {
+      // A frozen page answers nothing, so the one read is woken first; see `thaw`.
+      if (tab !== null) await pages.thaw(tab)
+      return webState.capture(
         lease.store,
         lease.site,
         [...lease.origins],
@@ -228,7 +230,8 @@ function leaseWorld(approval: Approval): LeaseWorld {
           spaces(),
         ),
         light,
-      ),
+      )
+    },
     upload: async (lease, captured) => {
       const generation = await webKey.current()
       if (generation === null) return null

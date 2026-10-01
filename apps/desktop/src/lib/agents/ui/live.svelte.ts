@@ -9,6 +9,7 @@
 
 import { mount, unmount, untrack } from 'svelte'
 import { agentMarks } from '../../agent-marks.svelte'
+import { pages } from '../../web-tab/pages.svelte'
 import { t } from '../../i18n.svelte'
 import { shortcuts } from '../../shortcuts.svelte'
 import { accelerator } from './accelerator'
@@ -41,11 +42,14 @@ export function started(source: Source = crate): Activity {
 
   unfollow = $effect.root(() => {
     // Which tabs wear a mark: written only when one changed, since the strip and every
-    // web tab read it.
+    // web tab read it. A tab newly acted in had its page woken by the crate, should it
+    // have been frozen out of sight; see web_pause.rs.
     $effect(() => {
       const worn = wornAt(activity.seen, activity.now, (agent) => activity.colourOf(agent))
       untrack(() => {
-        if (!sameMarks(worn, agentMarks.on)) agentMarks.on = worn
+        if (sameMarks(worn, agentMarks.on)) return
+        for (const tab of Object.keys(worn)) if (!(tab in agentMarks.on)) pages.woken(tab)
+        agentMarks.on = worn
       })
     })
 

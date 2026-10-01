@@ -41,12 +41,22 @@ function webTab(id: string, live = true): Tab {
   return { id, kind: 'web', paneId: 'aside' } as Tab
 }
 
-const paused = () =>
-  sent.filter((one) => one.command === 'web_pause').map((one) => [one.args.tab, one.args.paused])
+/** A turn for the pages to send what they were asked: each freeze and thaw goes after
+ *  the one before it has landed; see `lull` in pages.svelte.ts. */
+const sending = () => new Promise<void>((go) => setTimeout(go, 0))
 
-beforeEach(() => {
+/** What reached the crate, as [tab, paused]. */
+async function paused() {
+  await sending()
+  return sent
+    .filter((one) => one.command === 'web_pause')
+    .map((one) => [one.args.tab, one.args.paused])
+}
+
+beforeEach(async () => {
   // Whatever the last test paused runs again, so each starts with nothing paused.
   hiddenTabs.set('run')
+  await sending()
   sent.length = 0
   answers.length = 0
   asked.count = 0
@@ -62,7 +72,7 @@ describe('until somebody has answered', () => {
 
     expect(asked.count).toBe(1)
     expect(hiddenTabs.choice).toBe('pause')
-    expect(paused()).toEqual([['a', true]])
+    expect(await paused()).toEqual([['a', true]])
     expect(localStorage.getItem('nib:hidden-tabs')).toBe('"pause"')
   })
 
@@ -70,7 +80,7 @@ describe('until somebody has answered', () => {
     answers.push(null)
     await hiddenTabs.left([webTab('a')])
     expect(hiddenTabs.choice).toBe('ask')
-    expect(paused()).toEqual([])
+    expect(await paused()).toEqual([])
 
     answers.push(null)
     await hiddenTabs.left([webTab('a')])
@@ -84,7 +94,7 @@ describe('until somebody has answered', () => {
 
     expect(asked.count).toBe(1)
     expect(hiddenTabs.choice).toBe('run')
-    expect(paused()).toEqual([])
+    expect(await paused()).toEqual([])
   })
 
   test('a set with no page running asks nothing', async () => {
@@ -97,25 +107,27 @@ describe('pausing', () => {
   test('the set coming back lets run what was paused in it, and nothing else', async () => {
     hiddenTabs.set('pause')
     await hiddenTabs.left([webTab('a'), webTab('b')])
+    await sending()
     sent.length = 0
 
     hiddenTabs.came([webTab('a'), webTab('c')])
-    expect(paused()).toEqual([['a', false]])
+    expect(await paused()).toEqual([['a', false]])
   })
 
   test('a tab an agent is acting in is left running', async () => {
     hiddenTabs.set('pause')
     agentMarks.on = { a: { agent: 'claude', colour: '#000', paused: false } }
     await hiddenTabs.left([webTab('a'), webTab('b')])
-    expect(paused()).toEqual([['b', true]])
+    expect(await paused()).toEqual([['b', true]])
   })
 
   test('choosing Keep running lets every paused page run again', async () => {
     hiddenTabs.set('pause')
     await hiddenTabs.left([webTab('a')])
+    await sending()
     sent.length = 0
 
     hiddenTabs.set('run')
-    expect(paused()).toEqual([['a', false]])
+    expect(await paused()).toEqual([['a', false]])
   })
 })

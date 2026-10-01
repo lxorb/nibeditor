@@ -250,6 +250,8 @@ fn gate<'a>(
     // is that tab that wears the frame and hears the reader take it back.
     let tab = place.id();
     if !own {
+        // A reader's tab out of sight may be frozen, and a frozen page answers no call.
+        crate::web_pause::woken(view);
         super::reader::acting(app, caller.id(), tab, view);
     }
     let _ = app.emit(
