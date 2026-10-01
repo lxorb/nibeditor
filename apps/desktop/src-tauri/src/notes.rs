@@ -17,9 +17,25 @@ pub mod icloud;
 
 use crate::clock;
 use crate::paths::{
-    cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights, openable,
-    write_atomically,
+    at_most, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights,
+    openable, write_atomically,
 };
+
+/// The most a note may be for nib to read it: 64 MiB.
+///
+/// Not a limit anybody writing notes meets. The account keeps a note to 4 MiB
+/// (`MAX_NOTE_BYTES` in services/sync/src/notes.ts), and the editor stops parsing
+/// one past 512 KiB (`PARSED_AT_MOST` in packages/editor/src/modes.ts); this is
+/// sixteen times the first. What it stops is a file of gigabytes somebody left in a
+/// space - a log, an export, a dump - which read whole is an allocation the app does
+/// not survive, and which would cross to the window as a string of the same size if
+/// it did. The browser build refuses at the same number; see `read_note` in
+/// web/commands.ts.
+pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;
+
+/// What a file past that is refused with: the account's own sentence for a note too
+/// large to keep, so every catalogue carries it already.
+pub const TOO_LARGE: &str = "that note is too large";
 
 /// Reads a note: a file in a space, or one of the app's own two settings files.
 /// nib opens nothing from anywhere else on the disk; see `openable`.
@@ -29,7 +45,17 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
     // A note iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     icloud::fetched(&app, &target)?;
-    fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))
+    words_of(&target)
+}
+
+/// The words of a note: the file whole, when it is small enough to be one and is
+/// text. What `read_note` answers with, and how the search and the link scan read a
+/// space, so that none of the three reads a file of gigabytes whole - the scan least
+/// of all, which reads every note in a space at the launch, before anybody has
+/// opened anything. See `MOST_NOTE_BYTES`.
+pub fn words_of(target: &Path) -> Result<String, String> {
+    let bytes = at_most(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
+    String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))
 }
 
 /// Writes a note atomically, so a crash mid-write can never truncate the note

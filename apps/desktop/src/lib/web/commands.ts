@@ -42,6 +42,24 @@ interface TreeOptions {
 
 const now = () => Date.now()
 
+/** The most a note may be for the app to read it, in bytes of UTF-8, and what a note
+ *  past it is refused with: the desktop's `MOST_NOTE_BYTES` and `TOO_LARGE` in
+ *  notes.rs, which say why the number is this one. The sentence is the account's
+ *  own, so every catalogue already carries it. */
+export const MOST_NOTE_BYTES = 64 * 1024 * 1024
+export const TOO_LARGE = 'that note is too large'
+
+/** Whether a note is past that ceiling, counted the way the desktop counts it.
+ *
+ *  A UTF-16 unit is one byte of UTF-8 at the least and three at the most, so only a
+ *  note between a third of the ceiling and the ceiling itself has to be encoded to
+ *  know: every note anybody writes answers from its length alone. */
+function tooLarge(content: string): boolean {
+  if (content.length > MOST_NOTE_BYTES) return true
+  if (content.length * 3 <= MOST_NOTE_BYTES) return false
+  return new TextEncoder().encode(content).byteLength > MOST_NOTE_BYTES
+}
+
 /** How much of a space one chunk of the link scan reads and reads through before
  *  letting go of the thread, in characters of the files themselves.
  *
@@ -733,6 +751,7 @@ export async function webInvoke<T>(
     case 'read_note': {
       const row = await files.get(normalise(path))
       if (!row) throw new Error('no such note')
+      if (tooLarge(row.content)) throw new Error(TOO_LARGE)
       return row.content as T
     }
 

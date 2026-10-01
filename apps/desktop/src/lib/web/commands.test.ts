@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AssetRow, FileRow, SnapshotRow } from './store'
 
@@ -149,7 +151,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { SCANNED_AT_ONCE, seed, webInvoke } = await import('./commands')
+const { MOST_NOTE_BYTES, SCANNED_AT_ONCE, TOO_LARGE, seed, webInvoke } = await import('./commands')
 const { stamped, stampOf } = await import('../themes/validate')
 const { forgetSeedStore, rememberSeedIn } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
@@ -169,6 +171,33 @@ beforeEach(() => {
   disk.planes.clear()
   localStorage.clear()
   forgetSeedStore()
+})
+
+describe('a note too large to be one', () => {
+  const crate = readFileSync(
+    fileURLToPath(new URL('../../../src-tauri/src/notes.rs', import.meta.url)),
+    'utf8',
+  )
+
+  test('is refused past the ceiling the desktop refuses at, in the same words', () => {
+    expect(MOST_NOTE_BYTES).toBe(64 * 1024 * 1024)
+    expect(crate).toContain('pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;')
+    expect(crate).toContain(`pub const TOO_LARGE: &str = "${TOO_LARGE}";`)
+  })
+
+  test('is counted in bytes, so a note of wide letters is refused before its length is', async () => {
+    const at = (content: string) => {
+      disk.files.set('/Notes/Dump.md', { path: '/Notes/Dump.md', content, created: 1, modified: 1 })
+      return read('/Notes/Dump.md')
+    }
+    // Three bytes each, and a third of the ceiling and one more of them.
+    const wide = '€'.repeat(Math.floor(MOST_NOTE_BYTES / 3) + 1)
+
+    await expect(at('x'.repeat(MOST_NOTE_BYTES + 1))).rejects.toThrow(TOO_LARGE)
+    await expect(at(wide)).rejects.toThrow(TOO_LARGE)
+    expect(await at('x'.repeat(MOST_NOTE_BYTES))).toHaveLength(MOST_NOTE_BYTES)
+    expect(await at('€ and more')).toBe('€ and more')
+  })
 })
 
 describe('versions of a note', () => {

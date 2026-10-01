@@ -14,10 +14,10 @@
 
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::fs;
 use tauri::AppHandle;
 
 use crate::front_matter;
+use crate::notes::words_of;
 use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
 use crate::tags::tags_in;
 
@@ -140,8 +140,10 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     let mut out = Vec::with_capacity(notes.len());
     for path in notes {
         // A note that cannot be read is not a failure of the whole space: the
-        // rest of it still has links worth knowing about.
-        let Ok(body) = fs::read_to_string(&path) else {
+        // rest of it still has links worth knowing about. Nor is a file too large to
+        // be a note, which this pass, run at every launch, must not read whole; see
+        // `MOST_NOTE_BYTES`.
+        let Ok(body) = words_of(&path) else {
             continue;
         };
 
@@ -154,7 +156,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     // icon, and a scan that skipped it would leave a canvas wearing the plain
     // mark until somebody opened it.
     for path in others.iter().filter(|path| is_canvas(path)) {
-        let Ok(body) = fs::read_to_string(path) else {
+        let Ok(body) = words_of(path) else {
             continue;
         };
 
@@ -169,7 +171,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     // an address is not a link out of the graph, and the words of it are the search's
     // business, but the site's own mark is the row's. See shortcut.ts.
     for path in others.iter().filter(|path| is_shortcut(path)) {
-        let body = fs::read_to_string(path).unwrap_or_default();
+        let body = words_of(path).unwrap_or_default();
         out.push(shortcut_note(relative_to(&dir, path), &body));
     }
 

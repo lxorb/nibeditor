@@ -5,14 +5,15 @@
 //! its own, where what it keeps *about* a file goes - the containment check every
 //! note and space command goes through, the two narrow ways past it (the app's own
 //! settings files, and where the reader picked in the system's dialog), what counts
-//! as a note, a PDF or a canvas, the walk that reads a whole space, and the two file
-//! operations that must not leave a mess behind when they fail.
+//! as a note, a PDF or a canvas, the walk that reads a whole space, the read of one
+//! file held to a ceiling, and the two file operations that must not leave a mess
+//! behind when they fail.
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fmt::Display;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
@@ -645,6 +646,34 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
         .replace('\\', "/")
 }
 
+/// A whole file, or None when it holds more than `limit` bytes.
+///
+/// Every reader of a file somebody else put in a space is held to a ceiling of its
+/// own - a note, a PDF in a tab, a picture in an export - and none may be talked past
+/// it: the size is asked of the open file rather than of the path, so the answer is
+/// about the very bytes that are read, and the read stops one byte past the ceiling,
+/// so a file that grows after the question was asked is refused as well rather than
+/// handed back cut short. A note cut short and saved back is a note that lost its end.
+/// How much is too much is each reader's own business, and so is what to say about it.
+pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
+    let file = fs::File::open(target).map_err(|error| cannot("read", target, &error))?;
+    let size = file
+        .metadata()
+        .map_err(|error| cannot("read", target, &error))?
+        .len();
+    if size > limit {
+        return Ok(None);
+    }
+
+    let mut bytes = Vec::with_capacity(usize::try_from(size).unwrap_or_default());
+    file.take(limit.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .map_err(|error| cannot("read", target, &error))?;
+
+    let within = u64::try_from(bytes.len()).is_ok_and(|read| read <= limit);
+    Ok(within.then_some(bytes))
+}
+
 /// Writes a file whole: a temp file beside it takes the content and is flushed to
 /// the disk itself before being renamed over the target. A crash, a full disk or
 /// a pulled cable leaves either the old file or the new one, never half of
@@ -794,13 +823,31 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        a_shareable_folder, drop_highlights, files_in, folded, folder_key, folder_named, free_spot,
-        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged,
-        judged_beyond, judged_space, link_to, move_highlights, same_path, space_root,
+        a_shareable_folder, at_most, drop_highlights, files_in, folded, folder_key, folder_named,
+        free_spot, highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut,
+        judged, judged_beyond, judged_space, link_to, move_highlights, same_path, space_root,
         write_atomically, Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
+
+    /// Every reader is held to a ceiling. A file over it comes back as nothing
+    /// rather than as an error, because what to say about it - a note too large to be
+    /// one, a picture too large for a document, a file too large to open in a tab - is
+    /// each reader's own.
+    #[test]
+    fn reads_a_file_whole_and_stops_at_the_ceiling() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("shot.png");
+        std::fs::write(&target, b"a picture").expect("the file");
+
+        assert_eq!(at_most(&target, 64), Ok(Some(b"a picture".to_vec())));
+        assert_eq!(at_most(&target, 9), Ok(Some(b"a picture".to_vec())));
+        assert_eq!(at_most(&target, 8), Ok(None));
+        // A file that is not there at all is an error: the caller asked about one
+        // it believes is there.
+        assert!(at_most(&dir.path().join("gone.png"), 64).is_err());
+    }
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.

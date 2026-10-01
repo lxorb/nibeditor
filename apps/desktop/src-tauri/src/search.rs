@@ -31,14 +31,13 @@
 use serde::Serialize;
 use std::cmp::Reverse;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
 use tauri::{AppHandle, Emitter};
 
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
-use crate::notes::{stamp_of, Stamp};
+use crate::notes::{stamp_of, words_of, Stamp};
 use crate::paths::{files_in, in_spaces, is_shortcut, relative_to};
 use crate::query::Query;
 use crate::tags::tags_in;
@@ -202,8 +201,9 @@ fn body_of(path: &Path) -> Option<Arc<str>> {
     }
 
     // A note that cannot be read is not a search failure: the rest of the space
-    // still has answers.
-    let body: Arc<str> = Arc::from(fs::read_to_string(path).ok()?);
+    // still has answers. Nor is a file too large to be a note, which is left out
+    // rather than read whole; see `MOST_NOTE_BYTES`.
+    let body: Arc<str> = Arc::from(words_of(path).ok()?);
 
     let mut warm = held();
     warm.read += 1;
@@ -479,7 +479,7 @@ mod tests {
     // A test module is its own scope: everything it touches is named here rather
     // than borrowed from the module above.
     use super::{body_of, held, left_out, Warm};
-    use crate::notes::Stamp;
+    use crate::notes::{Stamp, MOST_NOTE_BYTES};
     use std::collections::HashSet;
     use std::fs;
     use std::path::Path;
@@ -584,6 +584,16 @@ mod tests {
         // And a note that is not there is not an error to report.
         fs::remove_file(&note).expect("the note removed");
         assert!(body_of(&note).is_none());
+
+        // Nor is a file too large to be a note, which is skipped without a byte of it
+        // read: a search that read it whole is an app that could not hold it. Sparse,
+        // so the test writes nothing.
+        let huge = dir.path().join("Dump.md");
+        fs::File::create(&huge)
+            .and_then(|file| file.set_len(MOST_NOTE_BYTES + 1))
+            .expect("a file past the ceiling");
+        assert!(body_of(&huge).is_none());
+        assert_eq!(held().read, read + 1, "the file was read");
     }
 
     #[test]

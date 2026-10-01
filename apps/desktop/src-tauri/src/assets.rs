@@ -7,11 +7,12 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use std::ffi::OsStr;
 use std::fs;
-use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{cannot, folded, free_spot, in_spaces, inside, made, space_root, spaces_dir};
+use crate::paths::{
+    at_most, cannot, folded, free_spot, in_spaces, inside, made, space_root, spaces_dir,
+};
 
 /// Bigger than any picture belongs in a document, and small enough that turning
 /// it into text cannot exhaust the memory of the window asking.
@@ -41,7 +42,7 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
     // A PDF iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     crate::notes::icloud::fetched(&app, &target)?;
-    let Some(bytes) = under(&target, FILE_LIMIT)? else {
+    let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
         return Err(format!("{path} is too large to open"));
     };
 
@@ -53,7 +54,7 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
 #[tauri::command(async)]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = in_spaces(&app, &path)?;
-    let Some(bytes) = under(&target, LIMIT)? else {
+    let Some(bytes) = at_most(&target, LIMIT)? else {
         return Err(format!("{path} is larger than {LIMIT_MB} MB"));
     };
 
@@ -62,32 +63,6 @@ pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
         mime_of(&target),
         encode(&bytes)
     ))
-}
-
-/// A whole file, or None when it holds more than `limit` bytes.
-///
-/// Both readers are held to a ceiling, and neither may be talked past it: the size
-/// is asked of the open file rather than of the path, so the answer is about the
-/// very bytes that are read, and the read is capped again on the way in, so a file
-/// that grows after the question was asked still cannot answer with more than it
-/// was allowed. How much is too much is each reader's own business, and so is what
-/// to say about it.
-fn under(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
-    let file = fs::File::open(target).map_err(|error| cannot("read", target, &error))?;
-    let size = file
-        .metadata()
-        .map_err(|error| cannot("read", target, &error))?
-        .len();
-    if size > limit {
-        return Ok(None);
-    }
-
-    let mut bytes = Vec::with_capacity(usize::try_from(size).unwrap_or_default());
-    file.take(limit)
-        .read_to_end(&mut bytes)
-        .map_err(|error| cannot("read", target, &error))?;
-
-    Ok(Some(bytes))
 }
 
 /// Copies a pasted or dropped picture into the folder the window asked for and
@@ -270,24 +245,8 @@ fn encode(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{asset_dir, encode, mime_of, safe_name, trimmed, under, MAX_NAME};
+    use super::{asset_dir, encode, mime_of, safe_name, trimmed, MAX_NAME};
     use std::path::{Path, PathBuf};
-
-    /// Both readers are held to a ceiling. A file over it comes back as nothing
-    /// rather than as an error, because what to say about it - a picture too large
-    /// for a document, a file too large to open in a tab - is each reader's own.
-    #[test]
-    fn reads_a_file_whole_and_stops_at_the_ceiling() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let target = dir.path().join("shot.png");
-        std::fs::write(&target, b"a picture").expect("the file");
-
-        assert_eq!(under(&target, 64), Ok(Some(b"a picture".to_vec())));
-        assert_eq!(under(&target, 8), Ok(None));
-        // A file that is not there at all is an error: the caller asked about one
-        // it believes sits beside a note.
-        assert!(under(&dir.path().join("gone.png"), 64).is_err());
-    }
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.
