@@ -11,6 +11,7 @@
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import PaneTree from './lib/PaneTree.svelte'
+  import FirstScreen from './lib/FirstScreen.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
@@ -968,6 +969,11 @@
         <div class="panes">
           <Progress />
           <PaneTree frame={workspace.panes.frame} />
+          <!-- The note the window was left on, as it was left, until its editor is up;
+               see first-screen.svelte.ts. Not on a pair of glasses. -->
+          {#if !__EVEN_PLUGIN__}
+            <FirstScreen />
+          {/if}
         </div>
 
         {#if workspace.right.length && !fullscreen.on && !filled}

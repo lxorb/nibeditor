@@ -567,15 +567,23 @@ function holds(tail: string): boolean {
  *  for them is page-setup.ts, 8,977 bytes the settings held in front of the first paint
  *  for three constants: those are paper.ts now, and the measuring waits for a print.
  *
- *  Not raised 2026-10-01, and room made under it instead, from a main at 3,210,163 and
- *  377 that every lane was fighting over: the launch round left the ceiling where it
- *  was so that the room is real. The theme gallery's store, its catalogue and the
- *  reviewer, which App.svelte imported for a drive's handle and so carried into every
- *  launch, when all a launch reads off a theme file is its stamp (themes/stamp.ts);
- *  and the table of the service's calls with the shapes they answer with (api/routes.ts,
- *  forty-two kilobytes), which nothing asks for before somebody is signed in and
- *  something is sent. `api` keeps its name and its types, and each call waits on the
- *  table, which is warmed at the last turn. */
+ *  Not raised 2026-10-01, and room made under it instead, from a main at 3,213,972 and
+ *  379 that every lane was fighting over: the launch round left the ceiling where it
+ *  was so that the room is real. Five things no window shows as it opens: the theme
+ *  gallery's store, its catalogue and the reviewer, which App.svelte imported for a
+ *  drive's handle and so carried into every launch, when all a launch reads off a theme
+ *  file is its stamp (themes/stamp.ts); the table of the service's calls with the shapes
+ *  they answer with (api/routes.ts, forty-two kilobytes), which nothing asks for before
+ *  somebody is signed in and something is sent - `api` keeps its name and its types,
+ *  and each call waits on the table, which is warmed at the last turn; the list of icon
+ *  sets, read at the icons' own turn; the meeting row's questions, fetched with the rest
+ *  of what a menu offers; and the search's hold on the space, fetched at its own turn.
+ *  And in the same round two things came in that have to be here: the note a window
+ *  was left on, drawn before its editor exists (first-screen.svelte.ts,
+ *  FirstScreen.svelte), and the launch's reads handed out as the crate read them ahead
+ *  (workspace/ahead.ts); what keeps the note's first screen is fetched at the last turn.
+ *  Measured 3,139,714 and 375: 75,286 bytes and six modules under the ceiling. The
+ *  production build preloads 1,344,097 bytes in 172 chunks against 1,359,421 in 176. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
 
@@ -905,11 +913,13 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/note-cover.ts', "a note's cover, written"],
     // The theme gallery's store, the catalogue it reads and the reviewer every theme
     // from it goes through, which the shell carried for a drive's handle; what a launch
-    // reads off an installed theme is its stamp (themes/stamp.ts). And the table of the
+    // reads off an installed theme is its stamp (themes/stamp.ts). The table of the
     // service's calls with the shapes they answer with, fetched by the first call and
     // warmed at the last turn; see api.ts. The list of icon sets, read at the icons'
-    // turn (icon-library.svelte.ts), and the meeting row's questions, asked at the last
-    // turn (Sidebar.svelte).
+    // turn (icon-library.svelte.ts); the meeting row's questions, asked at the last turn
+    // (Sidebar.svelte); what keeps the note in front for the next launch to draw,
+    // which has nothing to keep before then (first-screen.svelte.ts); and the search's
+    // hold on the space, whose turn is after the first frame (workspace.svelte.ts).
     ['/lib/themes/store.svelte.ts', "the theme gallery's store"],
     ['/lib/themes/registry.ts', 'the theme catalogue'],
     ['/lib/themes/validate.ts', 'the theme reviewer'],
@@ -917,6 +927,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/icon-sets.ts', 'the list of icon sets'],
     ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
+    ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

@@ -81,6 +81,7 @@ import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as ahead from './workspace/ahead'
 import { warm } from './search/warm.svelte'
+import { firstScreen } from './first-screen.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
@@ -727,6 +728,18 @@ class Workspace {
     await this.loadSpaces()
 
     if (this.activeSpaceId) await this.loadTree()
+
+    // The note that was in front, drawn as it was left, in the frame the list goes out
+    // in: its editor is built after the notes are read. Its words are the ones read
+    // ahead where the crate read them, and one read here where it did not - a phone, a
+    // browser - which is the note the launch reads next anyway. See
+    // first-screen.svelte.ts.
+    await firstScreen.arm(state, async (front) =>
+      front.path === null
+        ? null
+        : ((await ahead.noteAheadPeek(front.path)) ??
+          invoke<string>('read_note', { path: front.path }).catch(() => null)),
+    )
 
     // The one line in the launch that matters most. Everything above is a folder
     // listing and a string of settings; everything below reads a note - the open
