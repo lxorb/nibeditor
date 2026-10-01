@@ -29,11 +29,11 @@ import type { FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
 import { isDesktop } from '../tauri'
 import { appWorld, type Telling } from './app-world'
-import { rooms } from '../rooms.svelte'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import * as Y from 'yjs'
 import { asking, type Held } from './asking.svelte'
 import { attach } from './binding'
+import { carry, uncarry } from './carry'
 import { Engine } from './engine'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Space } from './migrate'
@@ -174,7 +174,7 @@ class Runner {
   /** Lets the engine go: signing out, or the account going back to v1. */
   async stop(): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
-    for (const key of this.carried) rooms.uncarry(key)
+    for (const key of this.carried) uncarry(key)
     this.carried.clear()
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
@@ -556,7 +556,7 @@ class Runner {
 
     for (const [key, one] of this.bound) {
       if (wanted.get(key)?.id === one.id) continue
-      rooms.uncarry(key)
+      uncarry(key)
       this.carried.delete(key)
       one.part()
       this.bound.delete(key)
@@ -564,7 +564,7 @@ class Runner {
 
     for (const [key, one] of wanted) {
       if (this.bound.has(key)) {
-        if (!this.carried.has(key)) this.carry(engine, key, one.id, one.note)
+        if (!this.carried.has(key)) this.enter(engine, key, one.id, one.note)
         continue
       }
       const arrivals = one.note.arrivals
@@ -573,9 +573,9 @@ class Runner {
       // A document made again under the note - the account's words taken, a new epoch -
       // is a document its room has never met: the room is joined afresh.
       const again = () => {
-        rooms.uncarry(key)
+        uncarry(key)
         this.carried.delete(key)
-        this.carry(engine, key, one.id, one.note)
+        this.enter(engine, key, one.id, one.note)
       }
       const part = await attach(engine, one.id, one.note, holds, again)
       if (!part || this.bound.get(key)?.id !== one.id) {
@@ -584,7 +584,7 @@ class Runner {
         continue
       }
       this.bound.set(key, { id: one.id, part })
-      this.carry(engine, key, one.id, one.note)
+      this.enter(engine, key, one.id, one.note)
     }
   }
 
@@ -593,7 +593,7 @@ class Runner {
 
   /** An open note's document, carried live through its room: only one the account
    *  knows, on the epoch the account is on, and not held for the question. */
-  private carry(engine: Engine, key: string, id: string, note: NoteDoc) {
+  private enter(engine: Engine, key: string, id: string, note: NoteDoc) {
     const core = engine.core
     const doc = core.docs.get(id)
     const entry = core.entry(id)
@@ -602,7 +602,7 @@ class Runner {
     if (doc.epoch < (core.epochs.get(id) ?? doc.epoch) || !account.token) return
 
     this.carried.add(key)
-    void rooms.carry(key, {
+    void carry(key, {
       noteId: id,
       note,
       gone: () => {
@@ -619,7 +619,7 @@ class Runner {
           if (met === 'hold') {
             // Out of the room until the question is answered; the answer joins it again.
             queueMicrotask(() => {
-              rooms.uncarry(key)
+              uncarry(key)
               this.carried.delete(key)
             })
           }

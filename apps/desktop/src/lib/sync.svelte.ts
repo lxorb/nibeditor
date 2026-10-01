@@ -9,7 +9,7 @@ import { without } from './records'
 import { log } from './log'
 import { isRecord, keep, stored, storedText } from './stored'
 import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
-import { type Pairing, pairSpaces } from './space-pairing'
+import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
 import { account } from './account.svelte'
 import { startup } from './startup.svelte'
@@ -491,8 +491,9 @@ class Sync {
       return
     }
 
-    // What should happen is worked out on its own and done in space-pairing.ts, which
-    // the v2 engine shares; the mirrors are where this engine keeps a pairing.
+    // Worked out and done in space-pairing.ts, which v2 shares, fetched when a pairing is
+    // due rather than in front of the first paint; the mirrors are where v1 keeps one.
+    const { pairSpaces } = await import('./space-pairing')
     await pairSpaces(token, this.pairing)
 
     this.save()

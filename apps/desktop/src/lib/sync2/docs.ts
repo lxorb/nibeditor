@@ -158,7 +158,6 @@ export class Doc {
   }
 
   private heard(update: Uint8Array, origin: unknown) {
-    if (process.env.SIMDEBUG && this.id === process.env.DOCID) console.log('doc', this.id, this.client, 'heard', String(origin), JSON.stringify(this.live ? fileOf(this.shape, this.live) : '?').slice(0, 140), (Error.stackTraceLimit = 30, new Error().stack?.split(String.fromCharCode(10)).filter((l) => l.includes('sync2')).map((l) => l.trim().split(' ')[1]).join('<')))
     if (origin === HERE || origin === MINE) {
       this.unsaved.push(update)
       this.pendingAt = Math.max(this.pendingAt, this.now())

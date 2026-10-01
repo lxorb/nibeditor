@@ -149,9 +149,7 @@ export class EngineDevice implements DeviceAdapter {
         ask: async (route, body) => {
           const link = this.link
           if (!link || route === 'prepare') return null
-          if (process.env.SIMDEBUG) console.log(this.id, 'ask', route)
           const reply = await link(route, frame(body))
-          if (process.env.SIMDEBUG) console.log(this.id, 'answered', route, reply?.length)
           if (reply === null) return null
           const value = unframe(reply)
           // The account's refusal of one request, as a status the Worker's adapter says.
@@ -333,7 +331,6 @@ export class EngineDevice implements DeviceAdapter {
         const wanted = joined(folderOf(from), action.name)
         const to = nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
         if (to === from) return
-        if (process.env.SIMDEBUG) this.dump(engine, `rename ${target.id} ${from} -> ${to}`)
         await this.disk.move(this.full(from), this.full(to))
         await engine.moved(this.full(from), this.full(to))
         return
@@ -358,7 +355,6 @@ export class EngineDevice implements DeviceAdapter {
         const target = this.chosen(this.live(engine), action.target)
         const path = target ? this.pathOf(engine, target.id) : null
         if (!path) return
-        if (process.env.SIMDEBUG) console.log(this.id, 'delete act', target?.id, path, 'at', this.clock.now)
         await this.disk.remove(this.full(path))
         await engine.removed(this.full(path))
         return
@@ -388,7 +384,6 @@ export class EngineDevice implements DeviceAdapter {
         const ancestor = (await writtenOf(engine.core, id)) ?? doc.text()
         const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
         await this.disk.write(this.full(path), file)
-        if (process.env.SIMDEBUG) console.log(this.id, 'edit-file', id, 'at', this.clock.now)
         await engine.foreign(this.full(path))
 
         return
@@ -403,18 +398,13 @@ export class EngineDevice implements DeviceAdapter {
   // Passes and answers
 
   async pass(link: Link): Promise<void> {
-    if (process.env.SIMDEBUG) console.log(this.id, 'pass asked', !!this.link)
     const engine = await this.ready()
     if (!engine || this.link) return
     const life = this.life
     this.link = link
     try {
       await engine.pause()
-      const passed = await engine.pass(SPACE)
-      if (process.env.SIMDEBUG) console.log(this.id, 'passed', JSON.stringify(passed), JSON.stringify(engine.core.classified))
-    } catch (error) {
-      if (process.env.SIMDEBUG) console.log(this.id, 'pass threw', error)
-      throw error
+      await engine.pass(SPACE)
     } finally {
       if (this.life === life) {
         this.link = null
@@ -489,17 +479,6 @@ export class EngineDevice implements DeviceAdapter {
       }
       return { entries, texts }
     })
-  }
-
-  dump(engine: Engine, said: string) {
-    const space = engine.core.spaces.get(SPACE)
-    if (!space) return
-    const wanted = space.paths()
-    console.log(this.id, said)
-    for (const entry of space.entries.values()) {
-      console.log('   ', entry.id.slice(0, 8), entry.kind, JSON.stringify(entry.name), 'at', JSON.stringify(entry.local_path), 'wants', JSON.stringify(wanted.get(entry.id)), 'seq', entry.seq, entry.deleted ? 'deleted' : '', engine.core.hasDoc(entry.id) ? 'doc' : '', engine.core.hasPending(entry.id) ? 'pending' : '')
-    }
-    console.log('    files', JSON.stringify([...this.disk.files.keys()]))
   }
 
   classified(): Classification[] {

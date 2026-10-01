@@ -161,7 +161,6 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
     if (!answer) throw new Error('the account answered the ops with something else')
 
     const done: Change[] = []
-    if (process.env.SIMDEBUG) console.log(core.device, 'ops', JSON.stringify(sent), '=>', JSON.stringify(answer.results))
     for (const result of answer.results) {
       const one = space.outbox.find((other) => other.record.t === 'op' && other.record.op.op === result.op)
       if (!one || one.record.t !== 'op') continue
@@ -356,7 +355,6 @@ async function pullDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
       }
 
       doc ??= core.made(one.id, shape, wanted.get(one.id)?.epoch ?? 1)
-      if (process.env.SIMDEBUG) console.log(core.device, 'pulled', one.id, one.seq, 'live?', space.isLive(one.id))
       doc.took(one.update, one.seq)
       doc.pulled = Math.max(doc.pulled, wanted.get(one.id)?.docSeq ?? 0)
       wanted.delete(one.id)
@@ -505,11 +503,9 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
       // Deleted here while the push was in the air: nothing of it goes on.
       if (!doc || !entry || !core.current(doc)) continue
       if ('ok' in one) {
-        if (process.env.SIMDEBUG) console.log(core.device, 'pushed ok', one.id, one.seq, JSON.stringify(doc.text()).slice(0, 80))
         doc.confirmFlight(one.seq)
         pushed += 1
       } else if ('moved' in one) {
-        if (process.env.SIMDEBUG) console.log(core.device, 'moved', one.id)
         doc.land()
         if (!core.isHeld(one.id)) {
           changes.push(...rejoin(core, space, doc, one.moved, one.seq, one.at, core.by.get(one.id) ?? null).changes)

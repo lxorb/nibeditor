@@ -21,8 +21,6 @@ import { busy } from './busy.svelte'
 import { sha256 } from './bytes'
 import { without } from './records'
 import { roomKind } from './rooms/kind'
-import type { CarriedRoom } from './rooms/carried'
-import type { Carrying } from './rooms/door'
 import type { PlaneRoom } from './rooms/plane'
 import type { Room } from './rooms/room'
 import { deviceAccent, deviceName, personName } from './rooms/who'
@@ -95,10 +93,8 @@ class Rooms {
    *  without the app being asked what is open all over again. */
   private open: readonly Open[] = []
 
-  /** Sync v2's rooms: each an open note's document the engine keeps, carried live, by
-   *  document key. Apart from the v1 rooms above, which `follow` joins and leaves: the
-   *  engine says which documents to carry (sync2/runner.svelte.ts). */
-  private readonly carriedRooms = new Map<string, { note: NoteDoc; room: CarriedRoom }>()
+  /** Sync v2's rooms, by document key (sync2/carry.ts): reached here as these are. */
+  readonly carried = new Map<string, { live: unknown; room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'> }>()
 
   /** Whether a room now holds the truth of this file, by its id on the account. What
    *  the file sync asks before it writes anything about a note, so it can leave the
@@ -205,50 +201,8 @@ class Rooms {
   /** Everything goes: signing out, or the app closing. */
   clear() {
     this.follow([])
-    for (const key of [...this.carriedRooms.keys()]) this.uncarry(key)
-  }
-
-  /** Sync v2: an open note's document, carried through its room from now on. */
-  async carry(
-    key: string,
-    carried: { noteId: string; note: NoteDoc; carrying: Carrying; gone: () => void },
-  ) {
-    const token = account.token
-    if (!token || this.carriedRooms.has(key)) return
-    const { CarriedRoom } = await import('./rooms/carried')
-    if (this.carriedRooms.has(key) || account.token !== token) return
-
-    const onPeers = (count: number) => {
-      this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
-    }
-    const room = new CarriedRoom({
-      noteId: carried.noteId,
-      token,
-      who: { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() },
-      scheme: theme.current,
-      onPeers,
-      gone: () => {
-        this.uncarry(key)
-        carried.gone()
-      },
-      refused: () => {
-        this.uncarry(key)
-        busy.failed(t('This note is as large as a note in a room may get.'))
-      },
-      holds: () => true,
-      note: carried.note.live,
-      carrying: carried.carrying,
-    })
-    this.carriedRooms.set(key, { note: carried.note, room })
-  }
-
-  /** Lets a carried document's room go; the document stays the engine's. */
-  uncarry(key: string) {
-    const carried = this.carriedRooms.get(key)
-    if (!carried) return
-    carried.room.leave()
-    this.carriedRooms.delete(key)
-    this.present = without(this.present, key)
+    for (const one of this.carried.values()) one.room.leave()
+    this.carried.clear()
   }
 
   /** A pane reporting that its caret moved, on its way to the other devices. Which
@@ -266,10 +220,9 @@ class Rooms {
       const at = view.state.selection.main
       joined.room.moved(at.anchor, at.head)
     }
-    for (const carried of this.carriedRooms.values()) {
-      if (carried.note.live !== shared) continue
+    for (const one of this.carried.values()) {
       const at = view.state.selection.main
-      carried.room.moved(at.anchor, at.head)
+      if (one.live === shared) one.room.moved(at.anchor, at.head)
     }
   }
 
@@ -277,14 +230,14 @@ class Rooms {
    *  room. */
   repaint(scheme: Scheme) {
     for (const joined of this.held.values()) joined.room.repaint(scheme)
-    for (const carried of this.carriedRooms.values()) carried.room.repaint(scheme)
+    for (const one of this.carried.values()) one.room.repaint(scheme)
   }
 
   /** And so does the name over it, which can change while a file is open: a guest
    *  a link let in renaming themselves, or an account choosing a name. */
   rename(person: string | undefined) {
     for (const joined of this.held.values()) joined.room.rename(person)
-    for (const carried of this.carriedRooms.values()) carried.room.rename(person)
+    for (const one of this.carried.values()) one.room.rename(person)
   }
 
   /** Whether there is anything for a room to be about yet. Always, for a note; for

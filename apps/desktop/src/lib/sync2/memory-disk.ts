@@ -16,7 +16,6 @@ export class MemoryDisk implements Disk {
   }
 
   write(path: string, text: string): Promise<void> {
-    if (process.env.SIMDEBUG && !text) console.log('empty write', path, (Error.stackTraceLimit = 30, new Error().stack))
     this.mkdirNow(folderOf(path))
     this.files.set(path, text)
     return Promise.resolve()
@@ -27,7 +26,6 @@ export class MemoryDisk implements Disk {
   }
 
   move(from: string, to: string): Promise<void> {
-    if (process.env.SIMDEBUG) console.log('disk move', from, to)
     this.mkdirNow(folderOf(to))
     for (const [path, text] of [...this.files]) {
       if (path !== from && !path.startsWith(`${from}/`)) continue

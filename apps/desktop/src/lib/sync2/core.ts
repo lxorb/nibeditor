@@ -11,7 +11,6 @@
  *  next request goes out, so a crash at any await loses nothing a step had finished:
  *  the simulator crashes devices at exactly those moments. */
 
-import { excerpt, type Excerpt } from '@nib/sync-core/diverge'
 import type { Times } from '@nib/sync-core/diverge'
 import { Doc } from './docs'
 import { holdsDocument, shapeOf, type Shape } from './kinds'
@@ -413,13 +412,3 @@ export class Core {
 
 const GEN = 'gen:'
 const COUNTER = 'counter'
-
-/** The first contested passage of each side, for the modal. */
-export function passages(
-  base: string,
-  local: string,
-  remote: string,
-  overlaps: Parameters<typeof excerpt>[3],
-): { local: Excerpt; remote: Excerpt } {
-  return excerpt(base, local, remote, overlaps)
-}

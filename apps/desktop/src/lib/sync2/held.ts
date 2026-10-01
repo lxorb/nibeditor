@@ -149,7 +149,6 @@ export class HeldList implements HeldNotes {
     if (!holding || !space || !entry || !doc) return undefined
 
     const against = await this.freshest(space, doc, holding)
-    if (process.env.SIMDEBUG) console.log(core.device, 'answer', id, answer, against.t, JSON.stringify(doc.text()), JSON.stringify(remoteOnly(doc, against)))
     const local = against.t === 'moved' ? doc.text() : against.local
     const remote = remoteOnly(doc, against)
     const changes: Change[] = []

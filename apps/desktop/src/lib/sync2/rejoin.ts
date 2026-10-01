@@ -38,7 +38,6 @@ export function rejoin(
   const times = { local: doc.pendingAt, remote: at }
   const judged = judge(doc.shape, base, local, remote, times, merged)
   const held = judged.resolution === null
-  if (process.env.SIMDEBUG) console.log(core.device, 'rejoin', doc.id, judged.verdict, JSON.stringify({ base, local, remote, merged, resolution: judged.resolution }))
 
   if (doc.shape !== 'link') {
     core.classified.push({ id: doc.id, base, local, remote, times, merged, held })
