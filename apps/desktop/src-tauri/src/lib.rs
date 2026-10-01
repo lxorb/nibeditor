@@ -59,6 +59,7 @@ mod chatgpt;
 )]
 mod apple_text;
 mod assets;
+mod carry;
 mod clock;
 #[cfg(desktop)]
 mod default_browser;

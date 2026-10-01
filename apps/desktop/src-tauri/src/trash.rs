@@ -4,6 +4,10 @@
 //! be put back for fourteen days. The app sweeps what is older.
 //!
 //! This module owns that folder, that manifest, and nothing else.
+//!
+//! Into the trash and back out is a move, and a space linked in from another disk
+//! is on another disk from the trash: there a rename says it cannot, so the move is
+//! a copy and a removal instead, whole or not at all. See carry.rs.
 
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -12,9 +16,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
 
+use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
-    cannot, folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_dir,
+    folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_dir,
     write_atomically, TRASH,
 };
 
@@ -72,9 +77,11 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     made(&slot)?;
 
     let held = slot.join(&name);
-    if let Err(error) = fs::rename(&source, &held) {
-        let _ = fs::remove_dir_all(&slot);
-        return Err(cannot("delete", &source, &error));
+    if let Err(error) = move_whole(&source, &held, "delete") {
+        // The slot only if it is empty: a move that could not put back what it took
+        // leaves its copy there, and that copy is the one whole one; see carry.rs.
+        let _ = fs::remove_dir(&slot);
+        return Err(error);
     }
 
     // A deleted PDF takes its highlights into the same folder, so putting it
@@ -90,11 +97,14 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     };
 
     // An entry that cannot be written down is a note nobody could find again, so
-    // it goes back where it came from instead.
+    // it goes back where it came from instead. And stays in its slot if it cannot
+    // go back: a note in the trash that the list does not show is still a note,
+    // where one taken away with the slot would not be.
     recorded(&dir, entry, || {
-        let _ = fs::rename(&held, &source);
-        move_highlights(&held, &source);
-        let _ = fs::remove_dir_all(&slot);
+        if move_whole(&held, &source, "restore").is_ok() {
+            move_highlights(&held, &source);
+            let _ = fs::remove_dir(&slot);
+        }
     })
 }
 
@@ -216,7 +226,7 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
         made(parent)?;
     }
 
-    fs::rename(&held, &target).map_err(|error| cannot("restore", &target, &error))?;
+    move_whole(&held, &target, "restore")?;
     // The highlights come back under whatever name the PDF landed under, which
     // is not the old one when something has taken its place in the meantime.
     move_highlights(&held, &target);

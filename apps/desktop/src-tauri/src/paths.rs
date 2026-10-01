@@ -137,7 +137,8 @@ pub fn highlights_of(pdf: &Path) -> PathBuf {
 /// them describing a name nothing answers to.
 ///
 /// Quiet about failure on purpose: the PDF has already moved, and a sidecar that
-/// could not follow is a lost set of highlights, not a lost file.
+/// could not follow is a lost set of highlights, not a lost file. Moved the way the
+/// PDF was, so a PDF that went to the trash on another disk takes them with it.
 pub fn move_highlights(from: &Path, to: &Path) {
     if !is_pdf(from) {
         return;
@@ -145,7 +146,7 @@ pub fn move_highlights(from: &Path, to: &Path) {
 
     let source = highlights_of(from);
     if source.exists() {
-        let _ = fs::rename(&source, highlights_of(to));
+        let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
     }
 }
 

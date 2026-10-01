@@ -15,6 +15,7 @@ use tauri::AppHandle;
 #[cfg(any(target_os = "macos", test))]
 pub mod icloud;
 
+use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
     at_most, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights,
@@ -263,7 +264,8 @@ pub(crate) fn move_entry(source: &Path, target: &Path, respelling: bool) -> Resu
         made(parent)?;
     }
 
-    fs::rename(source, target).map_err(|error| cannot("rename", source, &error))
+    // A move into a space on another disk is a copy and a removal; see carry.rs.
+    move_whole(source, target, "rename")
 }
 
 /// Renames an entry to another spelling of its own name by way of a name of its
@@ -317,12 +319,9 @@ pub fn copy_path(app: AppHandle, from: String, to: String) -> Result<(), String>
     copied(&source, &target)
 }
 
-/// The copy itself, with the two paths already judged.
+/// The copy itself, with the two paths already judged. Whole or not at all, and
+/// never over anything; see `copy_whole`.
 fn copied(source: &Path, target: &Path) -> Result<(), String> {
-    if target.exists() {
-        return Err("something already lives there".into());
-    }
-
     // A folder copied into itself would go on finding the copy it is making.
     if target.starts_with(source) {
         return Err(format!("{} cannot be copied into itself", source.display()));
@@ -332,38 +331,12 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
         made(parent)?;
     }
 
-    copy_all(source, target)?;
+    copy_whole(source, target)?;
 
     // A PDF's highlights are part of it, so the copy has them too. A folder's
     // come along with everything else in it.
     copy_highlights(source, target);
     Ok(())
-}
-
-/// One file, or one folder and everything under it.
-///
-/// A link to a folder is not followed: it can lead back to a folder above it, and
-/// a copy that follows it never ends. A link to a file is copied as the file it
-/// leads to, which is what a person copying it sees.
-fn copy_all(source: &Path, target: &Path) -> Result<(), String> {
-    let kind = fs::symlink_metadata(source).map_err(|error| cannot("read", source, &error))?;
-
-    if kind.is_dir() {
-        made(target)?;
-        let entries = fs::read_dir(source).map_err(|error| cannot("read", source, &error))?;
-        for entry in entries.flatten() {
-            copy_all(&entry.path(), &target.join(entry.file_name()))?;
-        }
-        return Ok(());
-    }
-
-    if kind.file_type().is_symlink() && source.is_dir() {
-        return Ok(());
-    }
-
-    fs::copy(source, target)
-        .map(|_| ())
-        .map_err(|error| cannot("copy", source, &error))
 }
 
 /// Makes a folder inside a space, and every folder above it.
@@ -535,6 +508,31 @@ mod tests {
             .expect_err("a taken name to be refused");
         assert!(error.contains("already lives there"), "{error}");
         assert_eq!(fs::read_to_string(dir.path().join("b.md")).expect("b"), "b");
+    }
+
+    /// A folder with a file in it that will not be read: the copy is the whole folder or
+    /// nothing, and a paste that says it worked while leaving the file out is a copy with
+    /// a hole in it nobody was told about.
+    #[test]
+    fn a_copy_that_cannot_finish_leaves_nothing_behind() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Trip");
+        fs::create_dir_all(source.join("assets")).expect("the folders");
+        fs::write(source.join("Trip.md"), "# Trip").expect("a note");
+        fs::write(source.join("assets/map.png"), PNG).expect("a picture");
+        let held = source.join("assets/scan.png");
+        fs::write(&held, PNG).expect("a picture nobody may read");
+        let Some(_held) = crate::carry::unreadable(&held) else {
+            return;
+        };
+
+        let target = dir.path().join("Trip copy");
+        assert!(copied(&source, &target).is_err());
+        assert!(!target.exists(), "half a folder was left behind");
+        assert_eq!(
+            fs::read(source.join("assets/map.png")).expect("the original"),
+            PNG
+        );
     }
 
     #[test]
