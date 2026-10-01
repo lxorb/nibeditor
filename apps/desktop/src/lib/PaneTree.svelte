@@ -93,11 +93,8 @@
     style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
     style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
   >
-    <!-- Each side is handed down as the item of a block rather than as
-         `split.sides[i]`, which a side would read back through its prop after the
-         split had gone: a pane's effects give back what they took as the branch is
-         taken down, by which time a split collapsing to one pane is null here. An
-         item keeps the side it was last drawn for. -->
+    <!-- A side as an item, not `split.sides[i]`: a pane's teardown reads it once a
+         collapsing split is null, and an item keeps the last side. -->
     {#each split.sides as side, at (side.id)}
       {#if at === 1 && kept < 0}
         <!-- svelte-ignore a11y_no_static_element_interactions -->

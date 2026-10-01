@@ -18,18 +18,15 @@ export function caretLine(view: EditorView): number {
   return view.state.doc.lineAt(view.state.selection.main.head).number - 1
 }
 
-/** How a view is put back to read from the line starting at `pos`: that line
- *  against the top, or nothing for the first line, whose place is the top of the
- *  note. `y: 'start'` lays a line against the edge, and the first line against the
- *  edge is a note scrolled past the room over its title - which is how every pane
- *  built again on a note left at its top used to show it. */
+/** A view put back at the line starting at `pos`: against the top, or nothing for
+ *  the first line, whose place is the note's top - `y: 'start'` there scrolls past
+ *  the room over the title. */
 export function placeAt(pos: number): StateEffect<unknown> | null {
   return pos > 0 ? EditorView.scrollIntoView(pos, { y: 'start' }) : null
 }
 
-/** Scrolls so that the line holding `pos` starts at the top, or to the top of the
- *  note for its first line; see `placeAt`. Applied by the view after it has
- *  measured itself, so it needs no frame of its own. */
+/** Scrolls so that the line holding `pos` starts at the top; see `placeAt`. Applied
+ *  by the view after it has measured itself, so it needs no frame of its own. */
 export function showLine(view: EditorView, pos: number) {
   const place = placeAt(
     view.state.doc.lineAt(Math.min(Math.max(0, pos), view.state.doc.length)).from,
