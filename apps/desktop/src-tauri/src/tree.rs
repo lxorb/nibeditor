@@ -1,8 +1,9 @@
 //! The file tree the sidebar draws: one space read into the shape the window
-//! renders, sorted here so that every window agrees on the order.
+//! renders, in one order - folders first, then names - so that two reads of the same
+//! space answer the same. The order the reader chose is the window's to apply over
+//! it (tree-order.ts), and the browser build answers in this same order.
 
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
@@ -46,16 +47,14 @@ pub struct Entry {
 }
 
 /// How the window would like the tree read, which is whatever its own settings
-/// say. All three have a default, so a window that sends nothing still gets a
-/// tree.
+/// say. It has a default, so a window that sends nothing still gets a tree; and a
+/// window from before the order moved to the window, which still sends a key and a
+/// direction, gets the one order the listing has.
 #[derive(Deserialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TreeOptions {
     /// Files and folders beginning with a dot.
     pub show_hidden: bool,
-    /// `name`, `modified` or `created`.
-    pub sort: String,
-    pub descending: bool,
 }
 
 /// Reads a space into a tree of notes and folders.
@@ -195,7 +194,7 @@ fn walk(
         }
     }
 
-    sort_children(&mut children, options);
+    sort_children(&mut children);
 
     let mut here = folder(
         path,
@@ -264,26 +263,11 @@ fn in_the_space(space: &Path, child: &Path) -> bool {
     fs::canonicalize(child).is_ok_and(|real| inside(space, &real))
 }
 
-/// Folders always come first; the chosen key only orders within each group.
-fn sort_children(children: &mut [Entry], options: &TreeOptions) {
-    children.sort_by(|a, b| {
-        let grouped = b.is_dir.cmp(&a.is_dir);
-        if grouped != Ordering::Equal {
-            return grouped;
-        }
-
-        let order = match options.sort.as_str() {
-            "modified" => a.modified.cmp(&b.modified),
-            "created" => a.created.cmp(&b.created),
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        };
-
-        if options.descending {
-            order.reverse()
-        } else {
-            order
-        }
-    });
+/// Folders first, then the names with case folded, the order `tree` in
+/// web/commands.ts answers in. Each name is folded once rather than once per
+/// comparison.
+fn sort_children(children: &mut [Entry]) {
+    children.sort_by_cached_key(|entry| (!entry.is_dir, entry.name.to_lowercase()));
 }
 
 #[cfg(test)]
@@ -323,12 +307,8 @@ mod tests {
         entries.iter().map(|one| one.name.as_str()).collect()
     }
 
-    fn options(sort: &str, descending: bool) -> TreeOptions {
-        TreeOptions {
-            show_hidden: false,
-            sort: sort.into(),
-            descending,
-        }
+    fn options() -> TreeOptions {
+        TreeOptions::default()
     }
 
     #[test]
@@ -340,7 +320,7 @@ mod tests {
             entry("Beta", true, 4),
         ];
 
-        sort_children(&mut children, &options("name", false));
+        sort_children(&mut children);
         assert_eq!(names(&children), ["Alpha", "Beta", "alpha.md", "beta.md"]);
     }
 
@@ -348,20 +328,8 @@ mod tests {
     fn a_name_sorts_the_same_in_either_case() {
         let mut children = vec![entry("b.md", false, 1), entry("A.md", false, 2)];
 
-        sort_children(&mut children, &options("name", false));
+        sort_children(&mut children);
         assert_eq!(names(&children), ["A.md", "b.md"]);
-    }
-
-    #[test]
-    fn the_newest_first_is_the_other_direction() {
-        let mut children = vec![
-            entry("old.md", false, 1),
-            entry("new.md", false, 9),
-            entry("middle.md", false, 5),
-        ];
-
-        sort_children(&mut children, &options("modified", true));
-        assert_eq!(names(&children), ["new.md", "middle.md", "old.md"]);
     }
 
     #[test]
@@ -378,7 +346,7 @@ mod tests {
         std::fs::write(here.join("shot.png"), "").expect("a picture");
         std::fs::write(here.join("Reading").join("Deep.PDF"), "").expect("a nested pdf");
 
-        let top = read(here, &options("name", false));
+        let top = read(here, &options());
         assert_eq!(
             names(&top.children),
             [
@@ -412,7 +380,7 @@ mod tests {
         assert!(link_to(here, &inner.join("up")), "one link back up");
         assert!(link_to(here, &inner.join("over")), "a second link back up");
 
-        let top = read(here, &options("name", false));
+        let top = read(here, &options());
         assert_eq!(names(&top.children), ["Notes"]);
 
         let notes = &top.children[0];
@@ -440,7 +408,7 @@ mod tests {
         std::fs::write(here.join("Unreadable.md"), [0x80, 0x80, 0x80]).expect("a note");
         std::fs::write(here.join("Plain.md"), "icon: rocket\n").expect("a second note");
 
-        let top = read(here, &options("name", false));
+        let top = read(here, &options());
 
         assert_eq!(names(&top.children), ["Plain.md", "Unreadable.md"]);
         for child in &top.children {
@@ -465,7 +433,7 @@ mod tests {
 
         assert!(link_to(&elsewhere, &space.join("out")), "a link out");
 
-        let top = read(&space, &options("name", false));
+        let top = read(&space, &options());
         assert_eq!(names(&top.children), ["out", "Idea.md"]);
 
         let out = &top.children[0];
@@ -488,7 +456,7 @@ mod tests {
 
         assert!(link_to(&inner, &inner.join("itself")), "a link to itself");
 
-        let top = read(here, &options("name", false));
+        let top = read(here, &options());
         let notes = &top.children[0];
         assert_eq!(names(&notes.children), ["itself"]);
         assert!(notes.children[0].children.is_empty(), "read twice");
@@ -505,7 +473,7 @@ mod tests {
         std::fs::write(here.join("Idea.md"), "").expect("a note");
 
         // The folder, the note inside it and the note beside it: three entries.
-        let whole = tree_of(here, &options("name", false), 3).expect("a tree");
+        let whole = tree_of(here, &options(), 3).expect("a tree");
         assert_eq!(names(&whole.children), ["Reading", "Idea.md"]);
 
         // The number the refusal names is the real ceiling; this read was given a
@@ -515,17 +483,27 @@ mod tests {
         // Taken apart by hand rather than with `expect_err`, which would want an
         // `Entry` it can print - and a tree of a space is not something to derive
         // `Debug` on for the sake of one line of one test.
-        let Err(refused) = tree_of(here, &options("name", false), 2) else {
+        let Err(refused) = tree_of(here, &options(), 2) else {
             panic!("a space larger than the tree was read anyway");
         };
         assert!(refused.contains("notes and folders"), "{refused}");
     }
 
+    /// The order the reader chose is the window's to apply, over the listing; see
+    /// tree-order.ts. A window from before that still sends a key and a direction gets
+    /// the one order the listing has, which is the browser build's as well.
     #[test]
-    fn an_unknown_key_sorts_by_name() {
-        let mut children = vec![entry("b.md", false, 9), entry("a.md", false, 1)];
+    fn the_listing_has_one_order_whatever_a_window_sends() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let old = std::fs::File::create(here.join("a.md")).expect("an old note");
+        old.set_modified(std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1))
+            .expect("an old time");
+        std::fs::write(here.join("b.md"), "").expect("a new note");
 
-        sort_children(&mut children, &options("", false));
-        assert_eq!(names(&children), ["a.md", "b.md"]);
+        let asked: TreeOptions =
+            serde_json::from_str(r#"{"showHidden":false,"sort":"modified","descending":true}"#)
+                .expect("what an older window sends");
+        assert_eq!(names(&read(here, &asked).children), ["a.md", "b.md"]);
     }
 }
