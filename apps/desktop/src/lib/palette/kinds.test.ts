@@ -202,6 +202,37 @@ describe('what a row is counted under', () => {
   })
 })
 
+describe('the rows built again while the palette is open', () => {
+  /** What a note's row was read out of, which is the same array for as long as the
+   *  row was not read again. */
+  const readOf = (all: ReturnType<typeof candidates>, path: string) =>
+    all.find((one) => one.item.kind === 'note' && one.item.entry.path === path)?.also
+
+  test('read only the notes whose entries changed', () => {
+    const [plan, lecture, tax] = [file('Plan.md'), file('Uni/Lecture 3.md'), file('Home/Tax.md')]
+    const before = candidates(world({ files: [plan, lecture, tax] }))
+
+    // A tree read again replaces what changed and keeps the rest: here a rename.
+    const renamed = file('Home/Taxes.md')
+    const after = candidates(world({ files: [plan, lecture, renamed] }))
+
+    expect(readOf(after, plan.path)).toBe(readOf(before, plan.path))
+    expect(readOf(after, lecture.path)).toBe(readOf(before, lecture.path))
+    expect(readOf(after, renamed.path)).toEqual(['home/taxes'])
+  })
+
+  test('still say which names two notes share, and the notes used lately still lead', () => {
+    const files = [file('Uni/Plan.md'), file('Home/Tax.md'), file('Plan.md')]
+    candidates(world({ files }))
+
+    const again = candidates(world({ files, recent: [`${ROOT}/Plan.md`, `${ROOT}/Home/Tax.md`] }))
+    const notes = again.flatMap((one) => (one.item.kind === 'note' ? [one.item] : []))
+
+    expect(notes.map((one) => one.entry.name)).toEqual(['Plan.md', 'Tax.md', 'Plan.md'])
+    expect(notes.map((one) => one.shared)).toEqual([true, false, true])
+  })
+})
+
 describe('the headings of the note in front', () => {
   const HEADINGS = [
     { line: 0, text: 'Introduction', level: 1 },
