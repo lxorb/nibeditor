@@ -44,6 +44,7 @@ import { nibSelection } from './selection/layer'
 import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
+import { parseAhead } from './parse-ahead'
 import { documentOf, fromInput, type SharedDoc, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
@@ -205,6 +206,9 @@ export function editorState(options: StateOptions): EditorState {
       // without the language rather than having it taken away a transaction later;
       // see `modeExtensions`.
       modeExtensions(text.length),
+      // The part on screen parsed before it is drawn, wherever the note was opened;
+      // see parse-ahead.ts.
+      parseAhead,
       completionExtensions(),
       // Images are checked first, so a screenshot beats the HTML around it.
       ...(onImage ? [imageHandling(onImage)] : []),
