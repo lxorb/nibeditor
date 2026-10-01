@@ -100,6 +100,9 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- The launch's first reads, asked for as the page arrives rather than once the app
+         has loaded; see src/early.ts. -->
+    <script type="module" src="/src/early.ts"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

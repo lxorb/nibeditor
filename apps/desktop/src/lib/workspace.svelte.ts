@@ -36,7 +36,6 @@ import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import type { Change } from './search/apply'
-import { warm } from './search/warm.svelte'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
@@ -80,6 +79,8 @@ import * as composing from './workspace/composing'
 import * as panels from './workspace/panels'
 import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
+import * as ahead from './workspace/ahead'
+import { warm } from './search/warm.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
@@ -652,6 +653,8 @@ class Workspace {
       await this.readSitting()
     } finally {
       this.restored = true
+      // What the crate read ahead that no question took; see workspace/ahead.ts.
+      ahead.forgetAhead()
     }
   }
 
@@ -832,7 +835,9 @@ class Workspace {
     const path = draft.path
     if (path === null) return null
 
-    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    const text =
+      (await ahead.noteAhead(path)) ??
+      (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
 
     return this.opened.make({
@@ -1047,6 +1052,19 @@ class Workspace {
     }
 
     writeSession(STORAGE_KEY, state)
+
+    // And what the next launch will ask for first, for the crate to read while the
+    // webview starts: this space's tree and the notes a restore reads off the disk,
+    // the one in front first. See workspace/ahead.ts.
+    const reads = this.tabs.filter((tab) => tab.path && !tab.dirty && holdsWords(tab.kind))
+    const front = this.active
+    ahead.plan({
+      root: this.activeSpace?.root ?? null,
+      options: this.treeOptions,
+      notes: [...reads.filter((tab) => tab === front), ...reads.filter((tab) => tab !== front)]
+        .map((tab) => tab.path)
+        .filter((path) => path !== null),
+    })
   }
 
   /** Writes the session soon rather than now, so a burst of typing costs one
@@ -2076,7 +2094,9 @@ class Workspace {
 
     mark('tree asked')
     try {
-      this.tree = await invoke<Entry>('read_tree', { root, options: this.treeOptions })
+      this.tree =
+        (await ahead.treeAhead(root, this.treeOptions)) ??
+        (await invoke<Entry>('read_tree', { root, options: this.treeOptions }))
     } catch {
       this.tree = null
     }

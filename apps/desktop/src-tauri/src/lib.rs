@@ -34,6 +34,9 @@
 
 #[cfg(desktop)]
 mod agents;
+// What a launch reads first, read while the webview starts; see ahead.rs.
+#[cfg(desktop)]
+mod ahead;
 // Claude Code and Codex, run headless on this machine with the reader's own plan; see
 // ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
@@ -282,6 +285,8 @@ macro_rules! desktop_commands {
             launch::take_startup_pages,
             launch::new_window,
             launch::show_window,
+            ahead::launch_ahead,
+            ahead::remember_launch,
             default_browser::default_browser,
             default_browser::make_default_browser,
             engine_switch::engine_state,
@@ -621,6 +626,11 @@ fn ready(
     trace::mark("app built, window created");
 
     let handle = app.handle();
+
+    // What the page will ask for first, read on a thread of its own from here, while
+    // the webview below starts; see ahead.rs.
+    #[cfg(desktop)]
+    ahead::start(handle);
 
     // Before the page can put its menu strip up; see menu_bar.rs.
     #[cfg(target_os = "macos")]

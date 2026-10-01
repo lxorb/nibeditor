@@ -12,6 +12,7 @@
  *  what is open in a pane. */
 
 import { account } from '../account.svelte'
+import { spacesAhead } from './ahead'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
@@ -39,7 +40,10 @@ export interface HoldsSpaces {
 /** Reads the spaces folder. It is the source of truth, so a space added or
  *  removed outside the app simply shows up that way. */
 export async function loadSpaces(ws: HoldsSpaces) {
-  const found = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => [])
+  // Read while the webview started, the first time; see workspace/ahead.ts.
+  const found =
+    (await spacesAhead()) ??
+    (await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => []))
 
   // Ids are kept across a reload so the selected space survives one.
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))
