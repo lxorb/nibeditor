@@ -426,6 +426,11 @@ export async function warmDoors(): Promise<void> {
     // The table of the service's calls, so the first sign-in, share or pass of sync
     // is a request and not a fetch and then a request; see api.ts.
     warmCalls(),
+    // What keeps the note in front for the next launch to draw before its editor is
+    // up; see first-screen.svelte.ts.
+    __EVEN_PLUGIN__
+      ? undefined
+      : import('./first-screen/keep.svelte').then((one) => one.keepFirstScreens()),
     // Before a deploy can take it away; see reloading.svelte.ts.
     import('./reload-when'),
     // Where the keyboard was, put back as the window or a layer gives it back.

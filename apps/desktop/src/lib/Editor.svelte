@@ -1,17 +1,3 @@
-<script lang="ts" module>
-  /** The writing surface rises into place when the app opens. Once only: the
-   *  pane's editor outlives every note it shows, so replaying the entrance would
-   *  mean the second pane arriving as if the app had just started. */
-  let opened = false
-
-  /** True the first time it is asked, and false ever after. */
-  function firstOfTheSession(): boolean {
-    const first = !opened
-    opened = true
-    return first
-  }
-</script>
-
 <script lang="ts">
   /** One pane's editor: the view, and the note that is in it.
    *
@@ -41,6 +27,7 @@
   } from '@nib/editor'
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
+  import { firstScreen } from './first-screen.svelte'
   import { t } from './i18n.svelte'
   import { mark } from './trace'
   import { modes } from './modes.svelte'
@@ -122,7 +109,11 @@
   }
 
   let host: HTMLDivElement
-  const rise = firstOfTheSession()
+  /** The writing surface rises into place when the app opens. Once only: the pane's
+   *  editor outlives every note it shows, so replaying the entrance would mean the second
+   *  pane arriving as if the app had just started - and not at all where the note was
+   *  drawn before its editor, which rose in its place; see first-screen.svelte.ts. */
+  const rise = firstScreen.rise()
   const states = new EditorStates()
   /** The pane's own scrollbar, over the editor's scroller. */
   let bar: OverlayScrollbar | undefined
