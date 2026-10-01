@@ -101,6 +101,7 @@ export function settingValue(field: Field | null): string | null {
       return `${field.get()}${field.unit ?? ''}`
     case 'switch':
     case 'text':
+    case 'picture':
       return null
   }
 }

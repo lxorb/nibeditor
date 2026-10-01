@@ -31,6 +31,12 @@ export interface Look {
   accent: string
   /** The open note's row in the list. */
   open: string
+  /** The wallpaper's picture and its two scrims - their colour, the floor and the Dim
+   *  dial over it - and nothing for any other theme. */
+  picture: string
+  scrim: string
+  floor: string
+  dim: string
 }
 
 /** One custom property as a sheet states it, with what decides whether it wins. */
@@ -192,5 +198,9 @@ export function lookOf(
     line: token('--line'),
     accent: token('--accent'),
     open: token('--surface-selected'),
+    picture: token('--wallpaper-picture'),
+    scrim: token('--wallpaper-scrim'),
+    floor: token('--wallpaper-floor'),
+    dim: token('--nib-dim'),
   }
 }

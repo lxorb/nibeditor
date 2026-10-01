@@ -36,7 +36,7 @@ import { moveTargets, type MoveTarget, movesInto } from './move-targets'
 import { howFor } from './new-tab'
 import { rowName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
-import { folderOf, isMarkdownPath, relativeTo } from './space-paths'
+import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
 import { isDesktop, platform } from './tauri'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
@@ -77,6 +77,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // And the picture across the top of it, which is the other thing the note looks
     // like; see `coverEntries`.
     ...coverEntries(marked.path),
+    ...wallpaperEntry(entry),
     ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
     // On the row's own path, folder and all: a row that holds notes stands for
     // everything under it, so leaving it out leaves out what is nested in it. See
@@ -105,6 +106,21 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),
+  ]
+}
+
+/** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */
+function wallpaperEntry(entry: Entry): MenuEntry[] {
+  if (__EVEN_PLUGIN__ || entry.is_dir || !isPicturePath(entry.name)) return []
+
+  return [
+    {
+      label: t('Use as wallpaper'),
+      run: () =>
+        void import('./wallpaper/wallpaper.svelte').then(({ wallpaper }) =>
+          wallpaper.takeFrom(entry.path),
+        ),
+    },
   ]
 }
 

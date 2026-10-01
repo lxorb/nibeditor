@@ -86,7 +86,8 @@
     gap: var(--space-3);
     flex-wrap: wrap;
     padding: var(--space-6);
-    background: var(--bg);
+    /* The paper, or what the theme says an empty pane stands on; see Pane.svelte. */
+    background: var(--empty-ground, var(--bg));
     overflow: auto;
   }
 

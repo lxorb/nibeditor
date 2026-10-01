@@ -11,6 +11,7 @@
  *  looked at renders nothing at all. */
 
 import { hardBreaks, renderMarkdown } from '@nib/markdown'
+import { isPicturePath } from '../space-paths'
 import { assetUrl, joinPath } from '../tauri'
 import { enginesArrived } from '../engines.svelte'
 import { links } from '../link-index.svelte'
@@ -62,12 +63,10 @@ export function cardHtml(text: string, canvasPath: string | null, trusted: boole
   return html
 }
 
-const PICTURE = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i
-
 /** Whether a file node holds a picture rather than a note. A picture is shown as
  *  itself; anything else is read as markdown. */
 export function isPicture(file: string): boolean {
-  return PICTURE.test(file)
+  return isPicturePath(file)
 }
 
 /** A file node's path as something the webview will load. The path is relative to

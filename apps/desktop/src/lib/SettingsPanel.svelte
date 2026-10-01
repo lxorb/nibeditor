@@ -589,6 +589,34 @@
         onchoose={(value: string) => field.set(value)}
       />
     </div>
+  {:else if field.kind === 'picture'}
+    <!-- A picture, shown as itself: pressing it chooses another, the way a phone's
+         wallpaper is changed by pressing the wallpaper. The cross puts the theme's own
+         field back, and is there only while there is a picture to take away. -->
+    {@const held = field.get()}
+    <div class="nib-setting setting">
+      {@render named(field, where)}
+      <span class="picture">
+        {#if held}
+          <button
+            type="button"
+            class="nib-glyph"
+            title={t('Remove picture')}
+            aria-label={t('Remove picture')}
+            onclick={() => field.set('')}><Cross /></button
+          >
+        {/if}
+        <button
+          type="button"
+          class="thumb"
+          class:field={!held}
+          style:background-image={held ? `url("${held}")` : undefined}
+          title={t('Choose a picture')}
+          aria-label={t('Choose a picture')}
+          onclick={() => field.choose()}
+        ></button>
+      </span>
+    </div>
   {:else if field.kind === 'text'}
     <!-- A line somebody types. The placeholder is what the app answers to with
          nothing typed, so an empty field is the default put back and the reset is
@@ -1872,6 +1900,45 @@
   .sheet.phone .swatched > :global(.swatches) {
     flex-basis: 100%;
     justify-content: flex-start;
+  }
+
+  /* The wallpaper's picture: the shape of a window, the size of a row's control,
+     lifted under the pointer and pressed back down like a card. */
+  .picture {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .thumb {
+    flex: none;
+    width: 64px;
+    aspect-ratio: 16 / 10;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2) center / cover no-repeat;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+    cursor: default;
+    transition:
+      translate var(--dur-fast) var(--ease-out),
+      scale var(--dur-fast) var(--ease-out);
+  }
+
+  /* No picture yet: the field the theme wears without one. */
+  .thumb.field {
+    background-image: var(--wallpaper-field);
+  }
+
+  @media (hover: hover) {
+    .thumb:hover {
+      translate: 0 -1px;
+    }
+  }
+
+  .thumb:active {
+    translate: 0 0;
+    scale: 0.97;
   }
 
   .meter {

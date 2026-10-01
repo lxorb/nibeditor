@@ -340,6 +340,13 @@ export function isMarkdownPath(path: string): boolean {
   return MARKDOWN.test(path)
 }
 
+/** The pictures the app draws, by name. */
+const PICTURE = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i
+
+export function isPicturePath(path: string): boolean {
+  return PICTURE.test(path)
+}
+
 /** How to get from one folder to a file, as a markdown link would write it. A
  *  file in the same folder is named on its own rather than as `./name`, which is
  *  what a person writing the link by hand would do. */

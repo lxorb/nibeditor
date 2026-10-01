@@ -184,7 +184,7 @@ test('shows every theme as a card, with the store last', async () => {
   await opened()
 
   const names = cards().map((one) => one.textContent.trim())
-  expect(names).toEqual(['Default', 'High contrast', 'Rose', 'Browse'])
+  expect(names).toEqual(['Default', 'High contrast', 'Wallpaper', 'Rose', 'Browse'])
 })
 
 test('pointing at a theme puts it on the app and writes nothing down', async () => {
@@ -260,14 +260,15 @@ test('the arrows try each theme in turn, and Enter keeps the one they are on', a
   press('ArrowRight')
   expect(theme.id).toBe('contrast')
   press('ArrowRight')
+  expect(theme.id).toBe('wallpaper')
+  press('ArrowRight')
   expect(theme.id).toBe('file:rose')
   // Three across: down is a row, which from Rose is past the end, so the store -
   // and the store is not a theme, so the kept one is back while the keys are on it.
   press('ArrowDown')
   expect(theme.id).toBe('default')
+  // Up from the store is a row back: the card above it, High contrast.
   press('ArrowUp')
-  expect(theme.id).toBe('default')
-  press('ArrowRight')
   expect(theme.id).toBe('contrast')
   expect(localStorage.getItem('nib:theme')).toBeNull()
 
@@ -346,4 +347,36 @@ test('the scheme and the accent are tried the same way and kept with a click', a
   flushSync()
   expect(theme.scheme).toBe('light')
   expect(theme.accent).toBe('teal')
+})
+
+test('draws the wallpaper with the picture the window would wear, and tries it on the app', async () => {
+  const picture = 'data:image/png;base64,iVBORw0KGgo='
+  localStorage.setItem(
+    'nib:wallpaper',
+    JSON.stringify({
+      picture,
+      blur: 28,
+      dark: { floor: 0.55, ground: '#202630' },
+      light: { floor: 0.5, ground: '#e9ecf2' },
+    }),
+  )
+  theme.rewear('wallpaper')
+  await opened()
+
+  // The card is drawn from the theme's own sheet once it has arrived, picture and all.
+  await expect
+    .poll(() =>
+      card('Wallpaper')
+        ?.querySelector<HTMLElement>('.window')
+        ?.style.getPropertyValue('--mini-picture'),
+    )
+    .toBe(`url("${picture}")`)
+  expect(card('Wallpaper')?.querySelector('.mini')?.classList.contains('pictured')).toBe(true)
+
+  pointAt(card('Wallpaper'))
+  await expect.poll(sheet).toContain(`--wallpaper-picture: url("${picture}")`)
+  expect(localStorage.getItem('nib:theme')).toBeNull()
+
+  leave(grid())
+  await expect.poll(() => theme.id).toBe('default')
 })

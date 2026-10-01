@@ -718,6 +718,12 @@
     background: linear-gradient(transparent var(--titlebar-height), var(--bg) 0);
   }
 
+  /* Nothing open: whatever the theme puts behind the frame, like a browser's new tab. */
+  .pane:has(> :global(.here)),
+  .pane:has(> .head):has(> :global(.here)) {
+    background: var(--empty-ground, var(--bg));
+  }
+
   /* A pane beside another one carries its own strip. The window's single pane
      has none: its tabs are in the titlebar, where a browser puts them.
 

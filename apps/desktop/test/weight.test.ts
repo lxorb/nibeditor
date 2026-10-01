@@ -690,6 +690,16 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/WebTab.svelte', 'the web tab'],
     ['/lib/SettingsPanel.svelte', 'the settings sheet'],
+    // The wallpaper, all of it: its picture rides in the sheet a launch wears early,
+    // so the first frame needs none of this. See lib/wallpaper/sheet.ts.
+    ['/lib/wallpaper/held.ts', "the wallpaper's record"],
+    ['/lib/wallpaper/sheet.ts', "the wallpaper's sheet, picture and all"],
+    ['/lib/wallpaper/wallpaper.svelte.ts', 'the wallpaper store'],
+    ['/lib/wallpaper/render.ts', "the wallpaper's canvas"],
+    ['/lib/wallpaper/pixels.ts', "the wallpaper's blur"],
+    ['/lib/wallpaper/floors.ts', "the wallpaper's scrim"],
+    ['/lib/wallpaper/kept.ts', "the wallpaper's copy"],
+    ['/themes/src/wallpaper.ts', "the wallpaper's sheet"],
     // Nib as the browser: the row that makes it one, behind the settings sheet, and
     // the listener for links from other programs, with the roads in after the space.
     ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],

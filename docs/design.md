@@ -313,6 +313,46 @@ they ask, and `scripts/appearance-e2e.py` and `scripts/glass-probe.py` drive the
 read the frame back off the window rect against the client rect, and the material back
 off DWM, rather than off the app's own opinion of what it did.
 
+**Wallpaper.** A picture of the reader's own behind the frame, the second theme about
+the window rather than the palette, and drawn by the page, so it is offered on every
+platform: Windows, macOS, Linux, the browser and a phone show the same thing, and none of
+them needs a material. Named for what the reader brings rather than for the effect, and
+because a theme called Blur would have a Blur dial under it. The chrome (the bar with
+the tabs, the list, the foot row, and a pane with nothing open, the way a browser's new
+tab shows its background) stands on the picture; every note, PDF, canvas and web page
+keeps its own opaque ground.
+
+The picture is a copy, never a link: chosen through the system's file chooser in
+Settings ▸ Appearance ▸ Picture, or with Use as wallpaper on a picture's row in the file
+list, it is drawn into a canvas at most 960 pixels across and kept in the app's own
+IndexedDB, so the original can move or go (Windows Terminal's `backgroundImage` is a path
+and breaks when the file moves). From that copy the app makes the picture the window
+wears once, when it is chosen and when the Blur dial moves: blurred in three box passes
+and kept as a PNG one pixel per half-blur of the screen, a few kilobytes. Nothing filters
+anything as the app is used, so the picture costs a frame nothing (Vivaldi's blurred
+toolbars are a live `backdrop-filter`); the window only stretches a still picture.
+
+Words never depend on the picture. Two scrims lie over it: a floor, worked out from the
+picture's own least and most of each channel so that `--muted` clears 4.5:1 over every
+colour in it, on the list's layer and on a row under the pointer (`floors.ts`,
+`legibility.ts`), and the Dim dial over that. Two layers at f and d are one at
+f + (1 - f) d, so no position of the dial is unreadable. The open note's row is a pill
+of the accent on the scrim's colour rather than a tint of the picture. Each scheme has
+its own scrim and floor, so switching is instant. Until a picture is chosen the theme
+wears a soft field of the accent, with floors `floors.test.ts` holds to every accent.
+
+The picture rides in the theme's own sheet (`wallpaper/sheet.ts`), so the sheet a launch
+wears before any chunk has arrived (`SHEET_KEY` in `theme.svelte.ts`) is the picture as
+well, and nothing of the theme is in front of the first paint; `test/weight.test.ts`
+holds every wallpaper module out of that graph. `--window-ground` is the picture's mean
+under its floor, so even the frame before any script is its colour. A system asking for
+less transparency gets a floor of 85%, and forced colours take the picture away.
+`apps/desktop/test/e2e/wallpaper.py` measures the result off the screenshots.
+
+The scrim and ink maths in `legibility.ts` is written for the Glass redo as well: the
+ink that reads on a ground (`inkFor`, what `--accent-ink` is for an accent) and the least
+scrim that keeps an ink at AA over a span of colours (`scrimFloor`).
+
 ### Header rows
 
 `--header-height` is `--titlebar-height` (38px), and it is what the title bar,

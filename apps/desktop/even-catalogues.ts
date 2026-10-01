@@ -37,10 +37,17 @@ function parsed(code: string, lang: 'js' | 'ts') {
  *  with nothing put into it, which is how the minifier likes to write one. */
 export function stringsIn(code: string, lang: 'js' | 'ts' = 'js'): Set<string> {
   const found = new Set<string>()
+  // A string that names a property is not words: `Effect["Blur"] = "blur"` is how a
+  // compiled enum in a dependency spells its member, and the minifier then writes it
+  // `e.Blur`, so the build would keep a row the shipped package never asks for.
+  const named = new Set<unknown>()
 
   new Visitor({
+    MemberExpression(node) {
+      if (node.computed) named.add(node.property)
+    },
     Literal(node) {
-      if (typeof node.value === 'string') found.add(node.value)
+      if (typeof node.value === 'string' && !named.has(node)) found.add(node.value)
     },
     TemplateLiteral(node) {
       const [only, ...more] = node.quasis

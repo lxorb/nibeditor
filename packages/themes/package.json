@@ -8,6 +8,7 @@
     ".": "./src/index.css",
     "./contrast": "./src/contrast.ts",
     "./glass": "./src/glass.ts",
+    "./wallpaper": "./src/wallpaper.ts",
     "./raw": "./src/raw.ts",
     "./write": "./src/write.ts",
     "./tokens.css": "./src/tokens.css",

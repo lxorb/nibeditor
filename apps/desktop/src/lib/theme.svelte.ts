@@ -3,6 +3,7 @@ import { everySurface } from '@nib/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
+import { without } from './records'
 import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
 import {
   forget,
@@ -49,6 +50,8 @@ interface ThemeInfo {
   load?: () => Promise<string>
   /** Whether the window wears the platform's material: glass's; see material.ts. */
   translucent?: boolean
+  /** Whether the sheet carries the reader's picture: wallpaper's. */
+  pictured?: boolean
   /** What the store wrote into the file when it installed it, for a theme that
    *  came from there. Absent for a file somebody put in the folder themselves,
    *  which the store has nothing to say about. */
@@ -135,6 +138,15 @@ const GLASS: ThemeInfo = {
   load: () => import('@nib/themes/glass').then((module) => module.glassCss),
 }
 
+/** And wallpaper: the reader's picture, in its sheet (wallpaper/sheet.ts). */
+const WALLPAPER: ThemeInfo = {
+  id: 'wallpaper',
+  name: 'Wallpaper',
+  variants: ['dark', 'light'],
+  pictured: true,
+  load: () => import('./wallpaper/sheet').then((module) => module.wallpaperSheet()),
+}
+
 const LIGHT = '(prefers-color-scheme: light)'
 /** Asked once, at the launch that offers the contrast theme, and never listened
  *  to: a theme is chosen, and a system changing its mind does not get to choose
@@ -214,6 +226,7 @@ class Themes {
     DEFAULT_THEME,
     CONTRAST,
     ...(!__EVEN_PLUGIN__ && hasMaterial() ? [this.withLoaded(GLASS)] : []),
+    ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
     ...this.files,
   ])
 
@@ -534,6 +547,11 @@ class Themes {
     ),
   )
 
+  /** A theme's own dial as last kept, worn or not: what a picker card draws. */
+  keptFor(owner: string, id: string): ThemeValue | undefined {
+    return this.chosen[owner]?.[id]
+  }
+
   /** Turns one dial, and keeps it. */
   set(id: string, value: ThemeValue) {
     const setting = this.settings.find((one) => one.id === id)
@@ -574,6 +592,15 @@ class Themes {
    *  read finishes last would otherwise decide, which is how the window ends up
    *  wearing one theme's stylesheet under another theme's tokens. */
   private applied = 0
+
+  /** Whose sheet is on the page; see `wear`. */
+  private wearing = ''
+
+  /** A fetched built-in's sheet read again: the wallpaper's picture changed. */
+  rewear(id: string, kept = true) {
+    this.loaded = without(this.loaded, id)
+    if (this.id === id) this.apply(kept)
+  }
 
   /** See `SHEET_KEY`. */
   private early: { id: string; css: string } | null = null
@@ -628,7 +655,9 @@ class Themes {
 
     this.inject(css)
     const sheet = css.replace(STAMP_LINE, '')
-    if (sheet !== this.sheet) this.declared = []
+    // A sheet read again keeps its dials until they are read again.
+    if (sheet !== this.sheet && (this.wearing !== this.id || !declares(sheet))) this.declared = []
+    this.wearing = this.id
     this.sheet = sheet
     this.paintSettings()
     this.paintSystemBars()

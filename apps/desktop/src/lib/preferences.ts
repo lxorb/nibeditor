@@ -21,6 +21,8 @@ import { shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
+import { WALLPAPER_THEME } from './wallpaper/held'
+import { wallpaper } from './wallpaper/wallpaper.svelte'
 import { updates } from './updates.svelte'
 import { pages } from './web-tab/pages.svelte'
 import { isSaver } from './web-tab/resting'
@@ -106,6 +108,17 @@ export type Field = Common &
         initial?: string
         get(): string
         set(value: string): void
+      }
+    /** A picture somebody chooses: a thumbnail that opens the file chooser, and a
+     *  cross beside it that takes the picture away. `get` is a `data:` address, or
+     *  nothing for no picture; `set('')` is the cross. Only the wallpaper's. */
+    | {
+        kind: 'picture'
+        /** Left out: a picture somebody chose is not a default a reset puts back. */
+        initial?: string
+        get(): string
+        set(value: string): void
+        choose(): void
       }
     /** A line somebody types. Only where nothing else will do - a spoken command's
      *  own phrase, a page's margin - and never on the glasses, which have nothing to
@@ -813,6 +826,23 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => theme.shown,
               set: (value) => theme.setScheme(asChoice(value)),
             },
+            // The wallpaper's picture, first of what that theme offers: the thing it
+            // is about. The thumbnail is the picture, so the row needs no more words;
+            // see the `picture` kind above.
+            ...(theme.id === WALLPAPER_THEME
+              ? ([
+                  {
+                    kind: 'picture',
+                    label: t('Picture'),
+                    words: ['wallpaper', 'background', 'image', 'photo'],
+                    get: () => wallpaper.held?.picture ?? '',
+                    set: (value: string) => {
+                      if (!value) wallpaper.clear()
+                    },
+                    choose: () => void wallpaper.choose(),
+                  },
+                ] satisfies Field[])
+              : []),
             // And whatever the theme in force offers of its own, under the two
             // rows that chose it and with no heading between: they are the
             // theme's, and where they sit is what says so. A theme with nothing

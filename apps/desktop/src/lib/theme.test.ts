@@ -1,4 +1,5 @@
 import { glassCss } from '@nib/themes/glass'
+import { wallpaperCss } from '@nib/themes/wallpaper'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The theme and the scheme, which are two choices and not one.
@@ -196,7 +197,7 @@ beforeEach(() => {
 })
 
 describe('what the dropdown offers', () => {
-  test('is the three the app ships with, and then what is installed', async () => {
+  test('is the four the app ships with, and then what is installed', async () => {
     installed('rose', 'Rose', PAIR)
     installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
     await theme.reload()
@@ -205,6 +206,7 @@ describe('what the dropdown offers', () => {
       'default',
       'contrast',
       'glass',
+      'wallpaper',
       'file:rose',
       'file:warm-paper',
     ])
@@ -218,7 +220,7 @@ describe('what the dropdown offers', () => {
 
     expect(theme.all.map((one) => one.id)).not.toContain('dark')
     expect(theme.all.map((one) => one.id)).not.toContain('light')
-    expect(theme.all).toHaveLength(3)
+    expect(theme.all).toHaveLength(4)
   })
 
   /** High contrast is a mode in every sense that matters and a theme in the way it is
@@ -448,7 +450,7 @@ describe('a folder that will not answer', () => {
     await theme.reload()
 
     expect(theme.files.map((one) => one.name)).toEqual(['Rose', 'Warm Paper'])
-    expect(theme.all).toHaveLength(5)
+    expect(theme.all).toHaveLength(6)
   })
 
   test('does not write the chosen theme away as though it had been deleted', async () => {
@@ -548,7 +550,13 @@ describe('an installed theme across a restart', () => {
     theme.init()
     await theme.reload()
 
-    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'High contrast', 'Glass', 'Rose'])
+    expect(theme.all.map((one) => one.name)).toEqual([
+      'Default',
+      'High contrast',
+      'Glass',
+      'Wallpaper',
+      'Rose',
+    ])
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
@@ -940,6 +948,113 @@ describe('the glass theme', () => {
     await settled(() => theme.all.find((one) => one.id === 'glass')?.css !== undefined)
 
     expect(theme.all.find((one) => one.id === 'glass')?.css).toBe(glassCss)
+  })
+})
+
+describe('the wallpaper theme', () => {
+  /** What a chosen picture leaves written down; see wallpaper/held.ts. */
+  const HELD = {
+    picture: 'data:image/png;base64,iVBORw0KGgo=',
+    blur: 28,
+    dark: { floor: 0.52, ground: '#202630' },
+    light: { floor: 0.61, ground: '#e9ecf2' },
+  }
+
+  // The store is one for the whole file, and keeps the sheet it fetched last.
+  beforeEach(() => theme.rewear('wallpaper'))
+
+  test('is offered everywhere, since the page draws it rather than the platform', () => {
+    for (const platform of ['windows', 'macos', 'linux', 'android', 'ios']) {
+      host.platform = platform
+      theme.files = [...theme.files]
+      expect(
+        theme.all.some((one) => one.id === 'wallpaper'),
+        platform,
+      ).toBe(true)
+    }
+  })
+
+  test('is fetched rather than carried, and with nothing chosen is its sheet alone', async () => {
+    const found = theme.all.find((one) => one.id === 'wallpaper')
+    expect(found?.path).toBeUndefined()
+    expect(typeof found?.load).toBe('function')
+
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => injected() === wallpaperCss)
+
+    expect(injected()).toBe(wallpaperCss)
+    // The reader's accent stays theirs: the field without a picture is made of it.
+    expect(wallpaperCss).not.toMatch(/--accent\s*:/)
+    expect(theme.accentIsTheme).toBe(false)
+  })
+
+  test('says the picture written down after its own sheet, with both floors', async () => {
+    kept.setItem('nib:wallpaper', JSON.stringify(HELD))
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => injected().includes('--wallpaper-picture:'))
+
+    expect(injected().startsWith(wallpaperCss)).toBe(true)
+    expect(injected()).toContain(`--wallpaper-picture: url("${HELD.picture}");`)
+    expect(injected()).toContain('--wallpaper-floor-dark: 52%;')
+    expect(injected()).toContain('--wallpaper-floor-light: 61%;')
+  })
+
+  test('opens a launch on its picture, before any chunk is in', async () => {
+    kept.setItem('nib:wallpaper', JSON.stringify(HELD))
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => injected().includes('--wallpaper-picture:'))
+
+    const storage = kept
+    stubs()
+    kept = storage
+    vi.stubGlobal('localStorage', kept)
+    theme.id = 'default'
+    theme.init()
+
+    // On the frame the launch paints: the early sheet is the picture as well.
+    expect(injected()).toContain(`url("${HELD.picture}")`)
+  })
+
+  test('wears a new picture when it is read again, and keeps its dials meanwhile', async () => {
+    resolves['--nib-setting-blur'] = 'range Blur 12 60 28 px'
+    resolves['--nib-setting-dim'] = 'range Dim 0 90 10 %'
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => theme.settings.some((one) => one.id === 'dim'))
+
+    kept.setItem('nib:wallpaper', JSON.stringify(HELD))
+    theme.rewear('wallpaper')
+    // The Blur row is under the reader's pointer while this happens.
+    expect(theme.settings.some((one) => one.id === 'blur')).toBe(true)
+    await settled(() => injected().includes('--wallpaper-picture:'))
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'blur', 'dim'])
+  })
+
+  test('is shown by the picker as it would be, and pointing away keeps nothing', async () => {
+    kept.setItem('nib:wallpaper', JSON.stringify(HELD))
+    theme.init()
+    theme.preview('wallpaper', 'dark', 'violet')
+    await settled(() => injected().includes('--wallpaper-picture:'))
+
+    theme.preview('default', 'dark', 'violet')
+    await settled(() => injected() === '')
+    expect(kept.getItem('nib:theme')).not.toBe('wallpaper')
+  })
+
+  test('declares its two dials, which Appearance draws under the Style row', async () => {
+    resolves['--nib-setting-blur'] = 'range Blur 12 60 28 px'
+    resolves['--nib-setting-dim'] = 'range Dim 0 90 10 %'
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => theme.settings.some((one) => one.id === 'dim'))
+
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'blur', 'dim'])
+    theme.set('dim', 35)
+    expect(painted['--nib-dim']).toBe('35%')
+    expect(theme.keptFor('wallpaper', 'dim')).toBe(35)
   })
 })
 

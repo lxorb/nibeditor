@@ -28,6 +28,7 @@
 
 import { dayOf, noteText } from '../import/meta'
 import { safeName, titleFrom } from '../import/names'
+import { isPicturePath } from '../space-paths'
 import type { ImportPlan, Planned } from '../import/plan'
 
 /** One thing that arrived. Exactly one of `text` and `size` is the whole of it:
@@ -45,9 +46,6 @@ export interface Arrived {
   subject: string
   items: SharedItem[]
 }
-
-/** The pictures a note can draw, for a name with no type behind it. */
-const PICTURES = /\.(png|jpe?g|gif|webp|avif|svg|bmp)$/i
 
 /** Text that is a note rather than a file: markdown, and a plain text file, which
  *  is a note somebody has not called one yet. */
@@ -104,7 +102,7 @@ export function arrivedFrom(json: string): Arrived | null {
 /** Whether this is a picture, by what the sender said or by what it is called. */
 export function isPicture(item: SharedItem): boolean {
   if (item.text !== null) return false
-  return item.mime.startsWith('image/') || PICTURES.test(item.name)
+  return item.mime.startsWith('image/') || isPicturePath(item.name)
 }
 
 /** Whether this is a note in its own right rather than something to write about. */

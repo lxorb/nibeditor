@@ -58,12 +58,18 @@
 
     const sheets = [tokens, one.css ?? '', custom]
     return SIDES.filter((side) => one.variants.includes(side)).map((side) =>
-      lookOf(
-        sheets,
-        side,
-        paintsOver(one.css ?? '', accentSetting()) ? {} : accentTokens(theme.accent, side),
-      ),
+      lookOf(sheets, side, {
+        ...(paintsOver(one.css ?? '', accentSetting()) ? {} : accentTokens(theme.accent, side)),
+        ...(one.pictured === true ? dimOf(one.id) : {}),
+      }),
     )
+  }
+
+  /** The wallpaper's Dim dial as it was last set, which the app writes onto the root
+   *  the way it writes the accent. Its picture and floors are in its sheet. */
+  function dimOf(id: string): Record<string, string> {
+    const dim = theme.keptFor(id, 'dim')
+    return typeof dim === 'number' ? { '--nib-dim': `${dim}%` } : {}
   }
 
   /** What was typed, narrowed to, in the order the cards stand in. A word anywhere in
@@ -342,7 +348,11 @@
           }}
           onclick={() => choose(one.id)}
         >
-          <Mini looks={looksOf(one)} desk={one.translucent === true} />
+          <Mini
+            looks={looksOf(one)}
+            desk={one.translucent === true}
+            pictured={one.pictured === true}
+          />
           <span class="name">{t(one.name)}</span>
         </button>
       {/each}

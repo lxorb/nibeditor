@@ -13,13 +13,21 @@
    *
    *  `desk` is glass's: its frame and its list stand on what is behind the window, so
    *  they are drawn over a desk, and the note keeps its paper. A picture of a desk
-   *  rather than the reader's own, which no card can see. */
+   *  rather than the reader's own, which no card can see.
+   *
+   *  `pictured` is the wallpaper's: the reader's own picture - the very one the window
+   *  wears, a few hundred pixels across, out of its sheet - or, with none chosen, the
+   *  accent field, under the frame and the list at the scrim the window lays. */
   import type { Look } from './looks'
 
-  const { looks, desk = false }: { looks: readonly Look[]; desk?: boolean } = $props()
+  const {
+    looks,
+    desk = false,
+    pictured = false,
+  }: { looks: readonly Look[]; desk?: boolean; pictured?: boolean } = $props()
 </script>
 
-<span class="mini" class:desk aria-hidden="true">
+<span class="mini" class:desk class:pictured aria-hidden="true">
   {#each looks as look, index (index)}
     <span
       class="window"
@@ -32,6 +40,10 @@
       style:--mini-line={look.line}
       style:--mini-accent={look.accent}
       style:--mini-open={look.open}
+      style:--mini-picture={look.picture || undefined}
+      style:--mini-scrim={look.scrim}
+      style:--mini-floor={look.floor}
+      style:--mini-dim={look.dim}
     >
       <span class="bar"><span class="tab"></span></span>
       <span class="side">
@@ -180,6 +192,41 @@
   }
 
   .desk .note {
+    background: var(--mini-ground);
+  }
+
+  /* The wallpaper: the picture behind the whole window, the frame and the list under
+     the same two scrims the window lays (see wallpaper.css), and the note on paper.
+     With no picture, the field of the accent the window wears without one. */
+  .pictured .window {
+    background:
+      var(
+          --mini-picture,
+          radial-gradient(
+            110% 90% at 0% 0%,
+            color-mix(in srgb, var(--mini-accent) 40%, transparent),
+            transparent 62%
+          )
+        )
+        center / cover no-repeat,
+      var(--mini-ground);
+  }
+
+  .pictured .bar,
+  .pictured .side {
+    border-color: transparent;
+    background:
+      linear-gradient(
+        color-mix(in srgb, var(--mini-scrim) var(--mini-dim), transparent),
+        color-mix(in srgb, var(--mini-scrim) var(--mini-dim), transparent)
+      ),
+      linear-gradient(
+        color-mix(in srgb, var(--mini-scrim) var(--mini-floor), transparent),
+        color-mix(in srgb, var(--mini-scrim) var(--mini-floor), transparent)
+      );
+  }
+
+  .pictured .note {
     background: var(--mini-ground);
   }
 </style>

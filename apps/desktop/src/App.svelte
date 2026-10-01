@@ -535,16 +535,21 @@
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync2/fake-engine.svelte'),
       import('./lib/agents/settings/fake'),
-    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }]) => {
-      Object.assign((window as unknown as { nibApp: object }).nibApp, {
-        agents: { standIn },
-        ai,
-        importing,
-        publish,
-        rewriting,
-        sync2,
-      })
-    })
+      // The wallpaper, whose picture a drive hands over as bytes.
+      import('./lib/wallpaper/wallpaper.svelte'),
+    ]).then(
+      ([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }, { wallpaper }]) => {
+        Object.assign((window as unknown as { nibApp: object }).nibApp, {
+          agents: { standIn },
+          ai,
+          importing,
+          publish,
+          rewriting,
+          sync2,
+          wallpaper,
+        })
+      },
+    )
   }
 
   /** A canvas and a page note, which have a bar of their own with a way to add. */

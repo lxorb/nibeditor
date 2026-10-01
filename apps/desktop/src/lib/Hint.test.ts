@@ -49,11 +49,13 @@ describe('where the panel draws it', () => {
   })
 
   test('through the snippet every kind of row renders its name with', () => {
-    // Six kinds of row, one name between them: a glyph that landed in five of
-    // them and not the sixth is how one slot becomes two.
+    // Seven kinds of row, one name between them: a glyph that landed in six of
+    // them and not the seventh is how one slot becomes two.
     const kinds = [...panel.matchAll(/field\.kind === '(\w+)'/g)].map((one) => one[1])
-    expect(new Set(kinds)).toEqual(new Set(['switch', 'slider', 'segmented', 'swatches', 'text']))
-    expect([...panel.matchAll(/\{@render named\(field, where\)\}/g)]).toHaveLength(6)
+    expect(new Set(kinds)).toEqual(
+      new Set(['switch', 'slider', 'segmented', 'swatches', 'picture', 'text']),
+    )
+    expect([...panel.matchAll(/\{@render named\(field, where\)\}/g)]).toHaveLength(7)
     expect(panel).toContain('{#snippet named(field: Field, where?: string)}')
   })
 })
