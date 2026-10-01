@@ -187,7 +187,7 @@ describe('a key as a Mac menu row writes it', () => {
 })
 
 /** The palette is Shift twice, and a key equivalent is a chord: its row says the
- *  second key, which is Cmd+P. */
+ *  second key, which is Cmd+P under the VS Code and Notion keyboards. */
 describe('a key a menu row can show', () => {
   const keys: Record<string, string | null> = {
     'app.palette': 'Shift Shift',

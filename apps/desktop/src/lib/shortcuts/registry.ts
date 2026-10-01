@@ -509,13 +509,16 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => settings.show('shortcuts'),
   },
   {
-    // The note on paper. No key: Ctrl+P is the palette's, as in Obsidian and a code
-    // editor. A row in File and in the palette, and anybody may give it one.
+    // The note on paper, on the key every program prints with. It was the palette's
+    // second key until Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut
+    // for opening the search, because we already have Shift Shift"* - and a Ctrl+P
+    // nothing answered would have printed the app's own window. A web tab's page has
+    // it first, as in a browser: web_keys.rs never takes it.
     id: 'app.print',
     label: () => t('Print'),
     category: 'file',
     scope: 'app',
-    key: null,
+    key: 'Mod-p',
     run: () => runPrint(),
   },
   // One row per export there is, in the list's own fixed order, so the settings
@@ -654,7 +657,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
-  // Shift twice, JetBrains' key and Emil's; Ctrl+P second, Ctrl+O third. See tapped.ts.
+  // Shift twice, JetBrains' key and Emil's, and Ctrl+O. See tapped.ts.
   {
     id: 'app.palette',
     label: () => t('Command palette'),
@@ -663,12 +666,14 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Shift Shift',
     run: (context) => context.palette(),
   },
+  // With no key of its own: Shift twice is the palette's, and Ctrl+P is Print. The
+  // keyboards that have the palette on another key put it here; see presets.ts.
   {
     id: 'app.palette.alt',
     label: () => t('Command palette'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-p',
+    key: null,
     alias: true,
     run: (context) => context.palette(),
   },

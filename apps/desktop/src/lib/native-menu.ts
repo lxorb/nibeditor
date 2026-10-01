@@ -409,7 +409,9 @@ function claimer(): (accelerator: string | null) => string | null {
 
 /** The key a row's command has that a key equivalent can be: its own where it is a
  *  chord, else its second key's (`<id>.alt`). The palette is Shift twice, which no
- *  menu can show, so its row in View says Cmd+P. See double-tap.ts. */
+ *  menu can show, so its row in View says the second key a keyboard gives it - Cmd+P
+ *  under VS Code's, Cmd+O under Obsidian's - and nothing under nib's own, where Cmd+P
+ *  is Print. See double-tap.ts. */
 export function chordFor(
   keyFor: (command: string) => string | null,
   command: string,

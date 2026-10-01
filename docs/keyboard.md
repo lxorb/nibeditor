@@ -230,14 +230,15 @@ in the palette, and it can be rebound. What was already there is marked.
 | | |
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
-| Shift Shift, Ctrl+P | the palette: one search over everything - notes and every other file, commands with their keys, the open tabs, bookmarks, the pages this device has visited, and the settings one by one. Shift pressed twice on its own is JetBrains' Search Everywhere key and works over a web page too; Ctrl+P is its second key. Empty, it lists what was used lately, notes and commands together, newest first. See *The palette* below |
+| Shift Shift, Ctrl+O | the palette: one search over everything - notes and every other file, commands with their keys, the open tabs, bookmarks, the pages this device has visited, and the settings one by one. Shift pressed twice on its own is JetBrains' Search Everywhere key and works over a web page too. Ctrl+P was its second key until Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the search, because we already have Shift Shift"*; it prints now, and the VS Code, Notion and Obsidian keyboards keep it on their palette. Empty, it lists what was used lately, notes and commands together, newest first. See *The palette* below |
 | Enter, Shift+Enter in the palette | Enter goes to the top row. A name nothing has ends the list as a new note, and is the top row when nothing else matched (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
 | Ctrl+Enter, Ctrl+Shift+Enter, Ctrl+Alt+Enter in the palette | a note, a page or an open tab's file in a tab of its own behind this one, in front, or (a note) in a pane to the right (Obsidian's chord); the same with a click, and the middle button is Ctrl+click |
 | Shift+Delete in the palette | takes the row out of what is remembered: a page out of the history, a note off the recent ones, anything's count of uses (Chrome's key) |
 | Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
 | `>`, `#`, `:` in the palette | never needed, for a hand that knows them: `>` narrows to the commands, the ones run lately first; `#` lists the headings of the note in front; `:42` goes to its line 42 - VS Code's `>`, `@` and `:` |
 | Ctrl+Shift+P | the same palette narrowed to the commands, for the hand that learned VS Code: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to everything. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
-| Ctrl+O | the palette, a third key after Shift Shift and Ctrl+P: Obsidian's quick switcher, and what a hand reaching to open something finds, since nib opens nothing from outside its spaces. It was Open file, which is gone |
+| Ctrl+O | the palette, a second key after Shift Shift: Obsidian's quick switcher, and what a hand reaching to open something finds, since nib opens nothing from outside its spaces. It was Open file, which is gone |
+| Ctrl+P | print the note, the key every program prints with; Cmd+P on a Mac. A web tab's page has it first, as in a browser (web_keys.rs never takes it), and a terminal hands it to the shell, whose history it walks |
 | Ctrl+S | put it on the disk, which means one thing for each kind of tab. A note with a file writes itself a moment after it changes, so the key writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A tab with no file yet - a new note, plane or page note, or a web tab nobody has kept - is asked where it goes and under what name, in the small layer under its tab; see `save-place/ask.ts`. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
 | Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
@@ -724,7 +725,7 @@ Obsidian and CodeMirror have it the other way round, and so do those two keyboar
 | Ctrl+], Ctrl+[ | indent, outdent |
 | Shift+Alt+Right, Shift+Alt+Left | the selection outwards and back, which Default has already |
 | Ctrl+D | the word, then the next one like it |
-| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar, Deselect tab |
+| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar, Deselect tab, Print |
 
 Ctrl+B stays Bold. It is the sidebar in VS Code, but in a note it is bold, which is what
 VS Code's own markdown extensions do with it too. So the sidebar has no key, and
@@ -743,12 +744,13 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 | Ctrl+G | the graph |
 | Alt+Enter | follow the link |
 | Ctrl+], Ctrl+[ | indent, outdent |
-| no key | the heading levels, find next (F3 stays), Deselect tab, Clear formatting, the canvas's zoom to what is picked |
+| no key | the heading levels, find next (F3 stays), Deselect tab, Clear formatting, the canvas's zoom to what is picked, Print |
 
 **Notion**
 
 | | |
 | --- | --- |
+| Ctrl+P | the palette, which is Notion's search |
 | Ctrl+Shift+1, 2, 3 | headings |
 | Ctrl+Shift+4, 5, 6 | task list, bulleted list, numbered list |
 | Ctrl+Shift+8 | code block |
@@ -757,7 +759,7 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 | Ctrl+\ | show or hide the sidebar |
 | Ctrl+D | duplicate the block |
 | Ctrl+Shift+Up, Ctrl+Shift+Down | move the block |
-| no key | the reading view, Clear formatting, Deselect tab |
+| no key | the reading view, Clear formatting, Deselect tab, Print |
 
 On a Mac, Notion's Cmd+Shift+Up and Down move the block here too, which takes selecting to
 either end of the note away from those keys, as Notion does.

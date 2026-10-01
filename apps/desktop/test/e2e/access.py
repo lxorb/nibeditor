@@ -644,7 +644,7 @@ def drive(browser: Browser, name: str, width: int, height: int,
         say(f"[{name}] --- the layers ---")
         open_panel(window)
 
-        page.keyboard.press("Control+P")
+        page.keyboard.press("Control+O")
         page.wait_for_timeout(600)
         window.look("palette")
         page.keyboard.type(">", delay=40)
@@ -797,7 +797,7 @@ def walk(browser: Browser) -> None:
 
         say("--- every layer hands the keyboard back to what opened it ---")
         for chord, what in [
-            ("Control+P", "the palette"),
+            ("Control+O", "the palette"),
             ("Control+Shift+Slash", "the shortcuts pane"),
             ("Control+Comma", "the settings"),
             ("Control+Shift+Space", "the space switcher"),

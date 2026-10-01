@@ -273,7 +273,7 @@ PRESS_ROW = """
 def run_command(page: Page, words: str) -> None:
     """Through the palette, which is how a reader with a keyboard reaches any of this.
     The same rows the Paragraph menu and the phone's plus show, out of one list."""
-    page.keyboard.press("Control+P")
+    page.keyboard.press("Control+O")
     # Typed once the field is there and has the keyboard, not after a guess at how long
     # that takes: a `>` pressed before it lands goes into the note behind, and the
     # palette then answers `Record` with the note called Recordings. Pressed into, the

@@ -309,7 +309,7 @@ def fresh(
 
 def palette(page: Page, words: str) -> None:
     """A command, from the palette, which is where every row has to be reachable."""
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(350)
     page.keyboard.type(f"> {words}")
     page.wait_for_timeout(450)

@@ -120,7 +120,7 @@ def is_true(claim: bool, what: str) -> None:
 def exported(page: Page, row: str, name: str) -> Path:
     """One export, run the way somebody would run it: the palette, the row's own
     words, Enter. What comes back is saved and handed over as a file."""
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type(f"> {row}")
     page.wait_for_timeout(700)

@@ -170,7 +170,7 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
 
 
 def open_note(page, name: str) -> None:
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(300)
     page.keyboard.type(name)
     page.wait_for_timeout(700)

@@ -454,3 +454,26 @@ describe('the VS Code keyboard', () => {
     expect(keys['app.palette.alt']).toBe('Shift Shift')
   })
 })
+
+/** Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the
+ *  search, because we already have Shift Shift."* Nib's own Ctrl+P prints, as every
+ *  program's does; a keyboard kept for hands from an app whose Ctrl+P is a palette or a
+ *  search keeps it there, and Print has no key under it. */
+describe('Ctrl+P', () => {
+  test.each(['default', 'vim'])('prints under %s, and the palette is not on it', (id) => {
+    const keys = presets.presetById(id)?.keys ?? {}
+    expect(keys['app.print']).toBeUndefined()
+    expect(registry.BY_ID.get('app.print')?.key).toBe('Mod-p')
+    expect(registry.BY_ID.get('app.palette.alt')?.key).toBeNull()
+  })
+
+  test.each([
+    ['vscode', 'app.palette'],
+    ['notion', 'app.palette.alt'],
+    ['obsidian', 'app.commands.alt'],
+  ])('is %s’s own palette there, and Print has none', (id, holder) => {
+    const keys = presets.presetById(id)?.keys ?? {}
+    expect(keys[holder]).toBe('Mod-p')
+    expect(keys['app.print']).toBeNull()
+  })
+})

@@ -283,7 +283,7 @@ SHEET = """() => {
 
 def open_import(page) -> list[str]:
     """The palette's own Import row, pressed."""
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
     page.keyboard.type(">Import")
     page.wait_for_timeout(700)

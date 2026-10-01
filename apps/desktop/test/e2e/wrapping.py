@@ -70,7 +70,7 @@ def drive(browser: Browser) -> None:
     shot(page, "01-written")
 
     # The palette, which is how an export is reached without a menu bar.
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     # Its field holding the keyboard, not a length of time: the palette is fetched
     # the first time it is asked for, and keys typed before it is there go into the
     # note instead.

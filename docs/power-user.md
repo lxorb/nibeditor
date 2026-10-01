@@ -33,7 +33,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | --- | --- | --- | --- | --- | --- | --- |
 | Palette | One search over notes and files, commands, open tabs, bookmarks, visited pages and single settings, no `>` needed; `>`, `#`, `:` narrow | JetBrains, VS Code, Raycast, Chrome | done (agent `one-palette`) | without `>` the palette listed notes only (`lib/palette/notes.ts`) | L | high |
 | Palette | Ranking across kinds: match, exact name, kind, frecency, context; an eval of 58 queries, 98% top-1 | Raycast, Alfred, Firefox | done (agent `one-palette`) | recent notes were the only signal (`fuzzy.ts` `recentFirst`) | M | high |
-| Palette | Shift twice opens it, over a web page too; rebindable to another modifier; Ctrl+P second | JetBrains | done (agent `one-palette`) | no double-tap keys existed (`lib/keys.ts`) | M | high |
+| Palette | Shift twice opens it, over a web page too; rebindable to another modifier; Ctrl+O second (Ctrl+P is Print since 2026-10-01) | JetBrains | done (agent `one-palette`) | no double-tap keys existed (`lib/keys.ts`) | M | high |
 | Palette | Shift+Delete forgets a row; a switch setting flips in place; a setting opens its pane scrolled to it | Chrome, VS Code, JetBrains | done (agent `one-palette`) | none of the three existed | S | med |
 
 ## Batch 2: the quick switcher and palette

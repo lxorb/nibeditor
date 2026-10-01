@@ -11,11 +11,11 @@ The palette's chunk is refused while the launch fetches it, which is the whole o
 simulated failure. Then two stories, each on a page of its own:
 
   - The same build: the site answers with the page that is running. The notices row
-    offers Reload, Ctrl+P still does nothing (Chromium will not fetch that chunk
-    again), and a press on Reload brings a page whose Ctrl+P opens the palette.
+    offers Reload, Ctrl+O still does nothing (Chromium will not fetch that chunk
+    again), and a press on Reload brings a page whose Ctrl+O opens the palette.
   - A newer build: the site answers with a page whose entry is another file. The page
     reloads itself once the hands are off it, and without anybody pressing anything
-    the next Ctrl+P opens the palette.
+    the next Ctrl+O opens the palette.
 
 And nothing is thrown on the way: a failure the page answers is not an error in it.
 
@@ -65,9 +65,9 @@ def lose_the_palette(page: Page) -> dict[str, int]:
 
 
 def press_for_palette(page: Page) -> bool:
-    """Ctrl+P over the note, and whether the palette came up."""
+    """Ctrl+O over the note, and whether the palette came up."""
     page.mouse.click(600, 400)
-    page.keyboard.press("Control+P")
+    page.keyboard.press("Control+O")
     try:
         page.wait_for_function(PALETTE_OPEN, timeout=4000, polling=50)
     except Exception:  # noqa: BLE001 - a timeout is the answer "it did not open"
@@ -91,9 +91,9 @@ def same_build(browser: Browser) -> None:
     shot(page, "same-build-offered")
 
     if press_for_palette(page):
-        wrong("Ctrl+P opened a palette whose chunk never arrived")
+        wrong("Ctrl+O opened a palette whose chunk never arrived")
     else:
-        say("    Ctrl+P does nothing, as Chromium will not fetch the chunk again")
+        say("    Ctrl+O does nothing, as Chromium will not fetch the chunk again")
     if not page.evaluate(SAME_PAGE):
         wrong("the page reloaded by itself under the same build")
 
@@ -102,7 +102,7 @@ def same_build(browser: Browser) -> None:
         page.click(".notices .reload button")
     DRIVE.ready(page)
     if press_for_palette(page):
-        say("    after Reload, Ctrl+P opens the palette")
+        say("    after Reload, Ctrl+O opens the palette")
     else:
         wrong("the palette does not open after Reload")
     page.context.close()
@@ -144,7 +144,7 @@ def newer_build(browser: Browser) -> None:
     if page.evaluate("() => !!document.querySelector('.notices .reload')"):
         wrong("Reload was offered for a newer build rather than done")
     if press_for_palette(page):
-        say("    and Ctrl+P opens the palette")
+        say("    and Ctrl+O opens the palette")
         shot(page, "newer-build-reloaded")
     else:
         wrong("the palette does not open after the reload")

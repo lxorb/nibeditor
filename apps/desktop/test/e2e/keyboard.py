@@ -302,7 +302,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     say(f"[{name}] --- the layers: opened, trapped, closed, and given back ---")
     layers = [
-        ("Control+P", "the palette"),
+        ("Control+O", "the palette"),
         ("Control+Shift+Slash", "the keyboard list in the settings"),
         ("Control+Comma", "the settings"),
         ("Control+Shift+Space", "the space switcher"),

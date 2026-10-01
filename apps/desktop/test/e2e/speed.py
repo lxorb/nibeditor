@@ -844,7 +844,7 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
 
     # The palette, driven by its own key so the keystroke is in the number.
     page.evaluate(WATCH_START)
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_selector(".palette, .quick, [role=listbox]", timeout=20000)
     palette = page.evaluate(PALETTE)
     lane.profile("palette", palette.pop("loaf"))

@@ -610,13 +610,27 @@ describe('the keyboard', () => {
     const { shortcuts } = registry
     let opened = 0
 
-    const ran = shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), {
+    const ran = shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), {
       palette: () => opened++,
       fullscreen: () => undefined,
     })
 
     expect(ran).toBe(true)
     expect(opened).toBe(1)
+  })
+
+  /** Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the
+   *  search, because we already have Shift Shift."* Ctrl+P is Print, the key every
+   *  program prints with, and the palette is never asked for on it. */
+  test('prints on Ctrl+P and never opens the palette there', () => {
+    const { shortcuts } = registry
+    const ctrlP = press('p', { ctrl: true, code: 'KeyP' })
+
+    expect(shortcuts.keyFor('app.print')).toBe('Mod-p')
+    expect(shortcuts.pressed('app.print', ctrlP)).toBe(true)
+    for (const id of ['app.palette', 'app.palette.alt', 'app.palette.open']) {
+      expect(shortcuts.pressed(id, ctrlP), id).toBe(false)
+    }
   })
 
   /** A press a surface has already answered is spent.
@@ -630,12 +644,12 @@ describe('the keyboard', () => {
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
-    const answered = press('p', { ctrl: true, code: 'KeyP', answered: true })
+    const answered = press('o', { ctrl: true, code: 'KeyO', answered: true })
 
     expect(shortcuts.handle(answered, context)).toBe(false)
     expect(opened).toBe(0)
     // And one nothing answered still is.
-    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(true)
+    expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(true)
     expect(opened).toBe(1)
   })
 
@@ -644,20 +658,21 @@ describe('the keyboard', () => {
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
-    // Ctrl+P is the palette's second key; its first is Shift twice, below.
-    shortcuts.set('app.palette.alt', 'Mod-Alt-9')
+    // Ctrl+O is the palette's third key; its first is Shift twice, below.
+    shortcuts.set('app.palette.open', 'Mod-Alt-9')
 
-    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(false)
+    expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(false)
     expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
       true,
     )
     expect(opened).toBe(1)
   })
 
-  /** The palette has two ways in and they are one command each: Ctrl+P on the notes,
-   *  Ctrl+Shift+P on the commands. Emil asked for the second by name - "Ctrl + P is
-   *  very very handy, I really like it. There should be another shortcut that is for
-   *  commands (so you don't have to type > all the time, maybe Ctrl + Shift + P?)".
+  /** The palette has two ways in and they are one command each: Ctrl+O on the notes
+   *  (Ctrl+P until 2026-10-01, which is Print now), Ctrl+Shift+P on the commands. Emil
+   *  asked for the second by name - "Ctrl + P is very very handy, I really like it.
+   *  There should be another shortcut that is for commands (so you don't have to type >
+   *  all the time, maybe Ctrl + Shift + P?)".
    *  What the reader then sees in the field is the palette's own; see
    *  test/effects/palette-commands.effect.test.ts. */
   test('opens the palette on the commands from a chord of its own', () => {
@@ -668,7 +683,7 @@ describe('the keyboard', () => {
       fullscreen: () => undefined,
     }
 
-    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(true)
+    expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(true)
     // Shift and the letter arrive as the capital, which is the same key.
     expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
       true,
@@ -698,9 +713,9 @@ describe('the keyboard', () => {
 
   test('leaves a key nothing is bound to alone', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.palette.alt', null)
+    shortcuts.set('app.palette.open', null)
 
-    const ran = shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), {
+    const ran = shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), {
       palette: () => undefined,
       fullscreen: () => undefined,
     })

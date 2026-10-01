@@ -334,7 +334,7 @@ def one(
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
 
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type(">")
     page.wait_for_timeout(700)

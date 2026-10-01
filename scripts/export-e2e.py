@@ -245,7 +245,7 @@ ROWS = """() =>
 
 
 def open_note(page, name: str) -> None:
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(300)
     page.keyboard.type(name)
     page.wait_for_timeout(700)
@@ -254,7 +254,7 @@ def open_note(page, name: str) -> None:
 
 
 def palette(page, term: str) -> list[str]:
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
     page.keyboard.type(">" + term)
     page.wait_for_timeout(700)
@@ -268,7 +268,7 @@ def run_export(page, key: str, label: str) -> tuple[str, pathlib.Path] | None:
     Each in a folder of its own: two rows hand over a file of the same name - the
     page with its styles and the page without them are both `.html` - and one
     folder would leave only whichever ran last."""
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
     page.keyboard.type(">" + label)
     page.wait_for_timeout(700)

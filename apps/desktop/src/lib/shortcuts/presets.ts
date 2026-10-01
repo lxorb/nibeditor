@@ -46,6 +46,8 @@ const OBSIDIAN: KeyOverrides = {
   'app.palette.alt': 'Mod-o',
   'app.palette.open': null,
   'app.commands.alt': 'Mod-p',
+  // Obsidian has no key that prints.
+  'app.print': null,
   'pane.split-right': 'Mod-\\',
   'pane.split-down': 'Mod-Shift-\\',
   // Ctrl+\ is the split, and Obsidian has nothing that clears formatting.
@@ -89,14 +91,18 @@ OBSIDIAN['canvas.frame'] = null
  *  of the two this machine uses. Ctrl+Shift+7 and 9 are a toggle list and a
  *  sub-page, neither of which Nib has, and are left alone.
  *
- *  Two of Notion's keys land on something of Nib's own: Ctrl+E is inline code
- *  there and the reading view here, and Ctrl+backslash is the sidebar there and
- *  clear formatting here. Notion's action takes the key and Nib's is left without
- *  one. Ctrl+Shift+S, strikethrough there, is free here.
+ *  Three of Notion's keys land on something of Nib's own: Ctrl+E is inline code
+ *  there and the reading view here, Ctrl+backslash is the sidebar there and clear
+ *  formatting here, and Ctrl+P is the search there and Print here. Notion's action
+ *  takes the key and Nib's is left without one. Ctrl+Shift+S, strikethrough there,
+ *  is free here.
  *
  *  Nib's own digits are all on Ctrl+Alt, and its panels are on letters, so
  *  Notion's block types have the whole Ctrl+Shift row to themselves. */
 const NOTION: KeyOverrides = {
+  // Notion's search, which is this palette on the notes, and so not Print.
+  'app.palette.alt': 'Mod-p',
+  'app.print': null,
   'app.sidebar': 'Mod-\\',
   'format.clear': null,
   'format.code': 'Mod-e',
@@ -141,6 +147,8 @@ const VSCODE: KeyOverrides = {
   // double Shift the second: the hand that learned VS Code looks for Ctrl+P.
   'app.palette': 'Mod-p',
   'app.palette.alt': 'Shift Shift',
+  // VS Code prints nothing on Ctrl+P, or anywhere else.
+  'app.print': null,
   // Ctrl+G on every platform, which is VS Code's on a Mac as well, rather than Cmd+G.
   // Find next keeps F3, its second key and VS Code's own.
   'edit.goto-line': 'Ctrl-g',

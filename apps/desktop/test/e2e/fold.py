@@ -382,7 +382,7 @@ def drive_pointer(browser: Browser) -> None:
 
     # Fold everything, from the palette, which is where a command with no chord
     # has to be reachable.
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type("> Fold everything")
     page.wait_for_timeout(600)

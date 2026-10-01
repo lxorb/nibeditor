@@ -2,7 +2,7 @@
   /** One search over everything: the notes and every other file, the open tabs, the
    *  bookmarks, the commands, the pages this device has visited and the settings, in
    *  one list, each row wearing the mark its kind wears everywhere else. Opened with
-   *  Shift twice, Ctrl+P, or Ctrl+Shift+P narrowed to the commands; see the shortcut
+   *  Shift twice, Ctrl+O, or Ctrl+Shift+P narrowed to the commands; see the shortcut
    *  registry.
    *
    *  Emil, 2026-09-30: *"for ctrl + P the search should be kinda global, I don't wanna

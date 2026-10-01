@@ -8,7 +8,7 @@
  *
  *  - the tab and window keys: Ctrl+T (and its held chooser), Ctrl+Shift+T,
  *    Ctrl+Tab, Ctrl+PageUp and PageDown with and without Shift, the numbered tabs;
- *  - the palette on Ctrl+P and Ctrl+Shift+P, and on whichever keys a keyboard gives it
+ *  - the palette on Ctrl+Shift+P, and on whichever keys a keyboard gives it
  *    instead, the settings on Ctrl+comma, full screen, and the tab filling the window;
  *  - F6 and Shift+F6, which is how a keyboard leaves the terminal for the rest of the
  *    window - Tab cannot be, the shell completes with it;

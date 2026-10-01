@@ -106,7 +106,7 @@ def run_row(page: Page, label: str, at: str) -> None:
     """Runs a command by its name in the palette, which is where a command with no
     chord has to be reachable."""
     page.locator(".cm-content").click()
-    page.keyboard.press("Control+p")
+    page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type(f"> {label}", delay=15)
     page.wait_for_timeout(500)
