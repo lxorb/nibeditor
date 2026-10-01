@@ -24,7 +24,7 @@
     SEARCH_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
-  import { canTakeMeetingNotes, meeting, meetingLabel } from './recorder/commands'
+  import { startup } from './startup.svelte'
   import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
@@ -270,15 +270,30 @@
    *  menu, the palette or the quick settings tile. See recorder/commands.ts and
    *  docs/mobile.md. */
   function spaceMenu(): MenuEntry[] {
+    const meetings = recording
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...(canTakeMeetingNotes() ? [{ label: meetingLabel(), run: () => void meeting() }] : []),
+      ...(meetings?.canTakeMeetingNotes()
+        ? [{ label: meetings.meetingLabel(), run: () => void meetings.meeting() }]
+        : []),
     ]
   }
+
+  /** The meeting row's own questions - whether this device can record, and whether the
+   *  account can hear it - which bring the recorder's rows and the providers' question
+   *  with them. Fetched at the launch's last turn with everything else a menu offers,
+   *  rather than carried into the first paint for a menu nobody has opened; see
+   *  test/weight.test.ts. A menu opened in the second before that has no meeting row.
+   *  Plain rather than a rune: a menu is built when it opens, and nothing draws it. */
+  let recording: typeof import('./recorder/commands') | null = null
+  void startup
+    .turn('doors')
+    .then(() => import('./recorder/commands'))
+    .then((one) => (recording = one))
 
   /** What a phone's menu sheet is headed with. Left out entirely when there is
    *  no space to name, since `title: undefined` is not the same as no title. */

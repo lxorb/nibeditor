@@ -763,9 +763,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/import/read.ts', 'the readers behind it'],
     // And the recorder: the microphone, the container it writes, the WAV pieces, the
     // live transcript, the summary, and the pill that is the whole of what the window
-    // says about an open microphone. What is left in the shell is the two rows' own
-    // question - whether this device can record at all - and what they are called; see
-    // recorder/commands.ts.
+    // says about an open microphone. The two rows' own question - whether this device
+    // can record at all - and what they are called went too, on 2026-10-01: the one
+    // menu in the shell that offered them asks for them at the launch's last turn; see
+    // recorder/commands.ts and Sidebar.svelte.
     ['/lib/recorder/recording.svelte.ts', 'the recorder'],
     ['/lib/recorder/microphone.ts', 'the microphone'],
     ['/lib/recorder/transcript.ts', "the transcript's markdown"],
@@ -896,11 +897,16 @@ describe('what the app evaluates before it draws anything', () => {
     // from it goes through, which the shell carried for a drive's handle; what a launch
     // reads off an installed theme is its stamp (themes/stamp.ts). And the table of the
     // service's calls with the shapes they answer with, fetched by the first call and
-    // warmed at the last turn; see api.ts.
+    // warmed at the last turn; see api.ts. The list of icon sets, read at the icons'
+    // turn (icon-library.svelte.ts), and the meeting row's questions, asked at the last
+    // turn (Sidebar.svelte).
     ['/lib/themes/store.svelte.ts', "the theme gallery's store"],
     ['/lib/themes/registry.ts', 'the theme catalogue'],
     ['/lib/themes/validate.ts', 'the theme reviewer'],
     ['/lib/api/routes.ts', "the service's calls"],
+    ['/lib/icon-sets.ts', 'the list of icon sets'],
+    ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
+    ['/lib/recorder/container.ts', 'whether this device can record at all'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -927,8 +933,6 @@ describe('what the app evaluates before it draws anything', () => {
     // And batch 119's doors, for the same reason: what is left of each subsystem when
     // the subsystem itself has gone behind one.
     ['/lib/menu-item.ts', 'what a menu row is, which the app menu walks without it'],
-    ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
-    ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
     ['/lib/shortcuts/preset-ids.ts', 'the names of the keyboards'],
