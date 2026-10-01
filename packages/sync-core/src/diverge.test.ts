@@ -260,6 +260,25 @@ describe('diverge', () => {
     )
   })
 
+  test('a passage the older side moved out of an overlap is said once, not twice', () => {
+    // Found by the engine's simulated runs: the account's side moved "mk18z ship mk8z
+    // on" further along, and the newer side's version of the overlap still held it
+    // where it was. The newer side standing would have said it twice.
+    const base =
+      'We milk mk18z ship mk8z on review plan we review mk16z ship mk20z on mk9z milk review on Monday after the review.\n\n- milk\n'
+    const local =
+      'We milk mk18z ship mk8z on review mk32z plan we review mk16z ship mk20z on mk9z milk review on Monday milk\n'
+    const remote =
+      'We milk plan mk30z plan on after mk18z ship mk8z on mk20z on mk9z milk review after the review.\n\n- milk\n'
+    const merged = crdtMerge(base, local, remote)
+
+    const result = diverge(base, local, remote, LOCAL_NEWER, merged)
+    expect(result.verdict).toBe('minor')
+    for (const word of ['mk18z', 'mk8z', 'mk32z', 'mk30z']) {
+      expect(result.resolution?.split(word).length, word).toBe(2)
+    }
+  })
+
   test('property: diverge(B, L, R) and diverge(B, R, L) give the same verdict', () => {
     fc.assert(
       fc.property(note, changes, changes, distinctTimes, (base, mine, theirs, [one, other]) => {

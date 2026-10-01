@@ -32,6 +32,7 @@ import {
   type Analysis,
   type Edit,
   type Meeting,
+  type Settle,
   sharedPoints,
   type Span,
   type Whose,
@@ -250,7 +251,7 @@ function distance(one: string, other: string): number {
 function resolved(
   base: string,
   analysis: Analysis,
-  settle: (meeting: Meeting) => Whose,
+  settle: (meeting: Meeting) => Settle,
   merged: string,
 ): string {
   const order = new Map<number, Whose>()
@@ -270,6 +271,25 @@ function resolved(
     }
   }
   return best
+}
+
+/** How often each whole word is in a text. */
+function wordCounts(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const word of text.match(/\S+/g) ?? []) counts.set(word, (counts.get(word) ?? 0) + 1)
+  return counts
+}
+
+/** Whether a merge holds a word more often than the two sides could have put there
+ *  between them: as often as the ancestor had it, plus what each side added. */
+function repeats(base: string, local: string, remote: string, merge: string): boolean {
+  const [b, l, r] = [wordCounts(base), wordCounts(local), wordCounts(remote)]
+  for (const [word, count] of wordCounts(merge)) {
+    const mine = l.get(word) ?? 0
+    const theirs = r.get(word) ?? 0
+    if (count > Math.max(mine + theirs - (b.get(word) ?? 0), mine, theirs)) return true
+  }
+  return false
 }
 
 /** Classifies what merging `local` and `remote` against `base` would do, and says
@@ -313,17 +333,24 @@ export function diverge(
   }
   overlaps.sort((a, b) => a.base.from - b.base.from)
 
-  const settle = () => newer
   // Two sides' words at one point may land either way round in the CRDT; without its
   // text to read, the structure is checked both ways, so which side is called local
   // never changes the verdict.
-  const checked =
+  const write = (settle: (meeting: Meeting) => Settle) =>
     merged === undefined
       ? [
           written(base, analysis, { settle }),
           written(base, analysis, { settle, first: () => 'remote' }),
         ]
       : [resolved(base, analysis, settle, merged)]
+  let checked = write(() => newer)
+  // A passage the older side moved out of an overlap is still in the newer side's
+  // version of it, and in the older side's new place: the newer side standing would
+  // say it twice. Such a merge is settled as the CRDT settles it, every deletion made
+  // and every insertion kept, which says nothing twice and loses nothing.
+  if (overlaps.length && checked.some((text) => repeats(base, local, remote, text))) {
+    checked = write(() => 'both')
+  }
   const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
 
