@@ -15,7 +15,15 @@
 import { keep, stored } from '../stored'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
-import { named, typedTo, unvisited, visitKey, visited as arrived, visitsFrom } from './visits'
+import {
+  named,
+  typedTo,
+  unvisited,
+  unvisitedSince,
+  visitKey,
+  visited as arrived,
+  visitsFrom,
+} from './visits'
 import type { Visit } from './visits'
 
 /** A history is kept under a storage key of its own, which is its whole name: the one
@@ -30,6 +38,15 @@ class Visited {
   /** Where each tab was last counted as being, so the engine saying the same page
    *  again - its title arrived, its mark arrived - is not another visit. */
   private readonly counted = new Map<string, string>()
+
+  /** Who is drawing a history, told whenever one changes: the History page. */
+  private readonly watchers = new Set<(book: Book) => void>()
+
+  /** Hears every change to every history; the answer stops hearing. */
+  watch(heard: (book: Book) => void): () => void {
+    this.watchers.add(heard)
+    return () => this.watchers.delete(heard)
+  }
 
   /** The rows, read the first time anything asks. */
   private rows(book: Book): readonly Visit[] {
@@ -49,6 +66,7 @@ class Visited {
 
     this.books.set(book, next)
     keep(book, JSON.stringify(next))
+    for (const heard of this.watchers) heard(book)
   }
 
   /** Reads the list now, because somebody is about to type. */
@@ -88,6 +106,18 @@ class Visited {
   remove(book: Book, url: string) {
     this.write(book, unvisited(this.rows(book), url))
     forget(url)
+  }
+
+  /** Takes out every page last open at or after `since`, and the marks kept for them:
+   *  Delete browsing data's Browsing history; see clearing.ts. Answers the pages taken. */
+  removeSince(book: Book, since: number): string[] {
+    const rows = this.rows(book)
+    const left = unvisitedSince(rows, since)
+    const kept = new Set(left.map((one) => one.url))
+    const gone = rows.filter((one) => !kept.has(one.url)).map((one) => one.url)
+    for (const url of gone) forget(url)
+    this.write(book, left)
+    return gone
   }
 
   /** What a page called itself the last time a tab was on it, or the empty string:

@@ -33,11 +33,13 @@ export function duplicateTab(id: string) {
   copy.page = tab.page
   copy.zoom = tab.zoom
   copy.address = pages.addressOf(tab.id) ?? tab.address
+  copy.inPrivate = tab.inPrivate
 
   if (tab.kind === 'web') {
     const page = pages.of(copy.id)
     page.url = copy.address ?? null
     page.title = pages.of(tab.id).title
+    page.inPrivate = tab.inPrivate
   }
 
   const at = workspace.tabsIn(tab.paneId).indexOf(tab)

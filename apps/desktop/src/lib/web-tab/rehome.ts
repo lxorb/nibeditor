@@ -25,7 +25,9 @@ export async function rehome(
   const page = pages.of(tabId)
   page.space = space
   const url = page.url
-  if (!page.live || url === null || was === space) return
+  // A private page is in no space's store, and built again it would have forgotten
+  // everything; see private.ts.
+  if (!page.live || url === null || was === space || page.inPrivate) return
 
   const [from, to] = await Promise.all([webData.store(was, url), webData.store(space, url)])
   if (from === to) return

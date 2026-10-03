@@ -49,8 +49,8 @@ three lines it always was.
 is extremely annoying and should not be. It should basically reopen the exact same
 page you had open last time when you open that page. So a web note should
 essentially correspond to what is otherwise a browser tab."_ So following a link
-inside the page moves `URL`, a couple of seconds after the reading settles, and
-opening the note tomorrow - or on another machine the space syncs to, because the
+inside the page moves `URL` on the pause a note's own words are written on - written
+before the window goes, too, and as the tab is left - and opening the note tomorrow - or on another machine the space syncs to, because the
 file is what syncs - opens the page that was open. Double-clicking the file in
 Explorer lands there too, which is the behaviour anybody would expect of a shortcut
 to a page they were reading.
@@ -954,7 +954,7 @@ input method's composition. `web-tab/omnibox.ts` decides both halves and
 through it.
 
 The history behind it is `web-tab/visited.ts`: one row per address (the visits, the
-typed visits, when, the title), the five hundred most recently open, in this device's
+typed visits, when, the title), the two thousand most recently open, in this device's
 storage and never on the account. It is not read at launch - the first focus of an
 address field or the first page a tab arrives at reads it.
 
@@ -972,6 +972,9 @@ address field or the first page a tab arrives at reads it.
 | Right, End in the field | takes the rest of the address the field wrote in                                                                                                                                                  |
 | Up, Down in the field   | walks the pages under it; the field reads the row the arrows are on                                                                                                                               |
 | Shift+Delete on a row   | forgets that page, which is how Chrome takes one out of its history                                                                                                                               |
+| Ctrl+H (Cmd+Y on a Mac) | the History page; see "History, Delete browsing data, a private tab"                                                                                                                              |
+| Ctrl+Shift+Delete       | Delete browsing data                                                                                                                                                                              |
+| Ctrl+Shift+N            | a private tab, which is Chrome's key for its Incognito window; New window keeps its row and the palette's, with no key                                                                           |
 | Escape in the field     | takes back what the field offered and closes the list; the second puts the resting face back and lets go of the field                                                                             |
 
 Ctrl+L is the chord CodeMirror selects a line with, and both keep it. That works
@@ -1017,10 +1020,11 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 **The dots hold Chrome's menu, in Chrome's order and Chrome's words**, because Emil
 asked for exactly that: _"Our browser related menu structure should be very similar
 to that of chrome. And in general we don't want to reinvent how a browser works."_
-New tab, Bookmarks, Zoom out / the size / Zoom in, Full screen, Print, Find, Save page,
-Share, Copy link, Open in the browser, Settings - each bent onto what nib has where
-the two differ: a bookmark here is the space's own kept files, Save page is the
-clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
+New tab, New private tab, History, Bookmarks, Delete browsing data, Zoom out / the size /
+Zoom in, Full screen, Print, Find, Save page, Share, Copy link, Open in the browser,
+Settings - each bent onto what nib has where the two differ: Chrome's Incognito window is
+a tab here, a bookmark is the space's own kept files, Save page is the clipper, and Share
+is nib's share sheet. The three zoom rows keep the menu open the
 way a browser's do, which is the one thing a row in this app may now ask for; see
 `keep` in `lib/menu-item.ts`.
 
@@ -1033,6 +1037,86 @@ engine's own behaviour behind every row, and a second copy written in this app w
 be worse at every one of them. Inspect is how the developer tools are reached, as are
 F12 and Ctrl+Shift+I, which is why there is no More tools row. What is still missing against Chrome's menu is
 listed under "What is left".
+
+## History, Delete browsing data, a private tab
+
+What Chrome keeps inside the browser stays inside nib (Emil, 2026-09-13), and these three
+were the ones still missing. Each is Chrome's shape, in Chrome's words, and each one's
+translations are Chromium's own.
+
+**History is a page in a tab, as `chrome://history` is.** Its address is `nib://history`,
+nib's own scheme, which no tab may open as a site: a web tab on it draws the History page
+where a site would be and builds no webview (`web-tab/own-pages.ts`). Ctrl+H (Cmd+Y on a
+Mac, where Cmd+H hides the app), the dots' History row and the palette's Browsing history
+open it - the one already open if there is one, the new tab nobody has sent anywhere if
+that is the tab in front, otherwise a tab of its own beside the one asked from, as
+Chrome's singleton tab does. Typing an address into its field, or pressing a row, sends
+the tab to the site and it is a web tab like any other.
+
+The list is the tab's space's history (`visited.ts`, under the Global, Space or Site rule):
+newest first under the day each page was last open, a time against each row, one search
+field over the titles and the addresses that every word must answer. A press opens the
+page in this tab, Ctrl or the middle button in a tab behind, Shift as well in front. A
+row's cross and Delete take it out, and its own menu has Chrome's three rows: Open in new
+tab, More from this site, Remove from history. Up and Down walk the rows. It is drawn a
+screenful at a time - every row the same height, so which rows are on screen is
+arithmetic (`web-tab/history-list.ts`) - and two thousand rows cost what thirty do.
+
+A page is one row, at the last time it was open: the history is one row per address, which
+is what the address field ranks by. A page read on Monday and again today is under today
+only, where Chrome would list both visits; it is the same page, and the row says when it
+was last there.
+
+**Delete browsing data is Chrome's dialog** - Ctrl+Shift+Delete, the dots, the History
+page's own link, the palette: a time range from the last fifteen minutes to all time
+(Chrome's default, the last hour), Browsing history, Cookies and other site data, Cached
+images and files, and for a space whose web data is kept apart one question more, this
+space's data or every space's. The history goes here: its rows over the range, the marks
+kept for them and the place each web note on one of those pages was left at
+(`web-tab/clearing.ts`). The rest is the engine's own call, store by store, each store
+reached through a page built in it for the clearing and closed again
+(`src-tauri/src/web_clear.rs`):
+
+| engine | call |
+| --- | --- |
+| `WebView2` | `ICoreWebView2Profile2::ClearBrowsingDataInTimeRange`, `ClearBrowsingData` for all time |
+| `WKWebView` | `WKWebsiteDataStore removeDataOfTypes:modifiedSince:` |
+| `WebKitGTK` | `webkit_website_data_manager_clear` over the range |
+| nib's own Chromium | `Storage.clearDataForOrigin` for each site the range visited, every cookie for all time, and the cache |
+
+A space kept per site has a store per site, and the ones cleared are the ones its history
+names. The browser build has no engine of its own behind its pages, so its dialog offers
+the history alone.
+
+**A private tab is Chrome's Incognito window as a tab** (`web-tab/private.ts`): Ctrl+Shift+N
+(docs/backlog.md, Q3), the plus chooser's New private tab, the dots and the palette. Its
+page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
+of the page's own on a Mac and on Linux, a profile with no folder on nib's own Chromium -
+so nothing it stores reaches the disk. And nib writes nothing of it either: no history, no
+favicon, no place on the page, no session that would bring it back after a restart, no
+closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
+parks it, because a page built again would have forgotten everything. A link out of it
+opens privately too. It wears Chrome's own mark, the hat and the glasses, on the tab and
+at the left of its address field.
+
+Closing the last private tab forgets everything: `WebView2` keeps one InPrivate session
+for every private page on its environment and ends it with the last. A Mac's and Linux's
+engine, and nib's own Chromium, give each private page a store of its own, so there two
+private tabs open at once do not share a sign-in.
+
+**The search engine is one row in Settings**, under Browser: Chrome's list for the reader's
+region - Google, which stays the default, Bing, DuckDuckGo, Ecosia, Brave, Startpage,
+Qwant, Yahoo!, and the region's own (Baidu, Naver, Yahoo! JAPAN, Yandex) - and Custom, an
+address with `%s` where the words go. The address field searches on it
+(`web-tab/engines.ts`, `web-tab/search-engine.svelte.ts`); the palette still treats a few
+words as a search for a note.
+
+**A link or a picture dragged out of a page** lands where Chrome's would. On the strip it
+opens as a tab where it was let go (`tab-strip/dropped.ts`). On the file list a link is
+kept as a web note in the folder it was let go over, named after the link's own words
+(`web-tab/dropped-site.ts`), and a picture, which the engine hands over as a file, is
+copied in the way a file from Explorer is. A sentence carries no link and is the drop
+target's own business, as before.
 
 ## A link in a tab of its own
 
@@ -1825,6 +1909,18 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                        |
 | `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
+| `apps/desktop/src/lib/web-tab/own-pages.ts` | nib's own pages in a web tab: History's address and mark. Pure |
+| `apps/desktop/src/lib/web-tab/history-list.ts` | the History page's rows: newest first under each day, the search, which rows are on screen. Pure, tested |
+| `apps/desktop/src/lib/web-tab/WebHistory.svelte` | the History page |
+| `apps/desktop/src/lib/web-tab/history-open.ts` | Ctrl+H: the History tab already open, the new tab in front, or a tab of its own |
+| `apps/desktop/src/lib/web-tab/clearing.ts` | Delete browsing data: the ranges, whose stores and histories, the clearing. Tested |
+| `apps/desktop/src/lib/web-tab/WebClear.svelte` | Delete browsing data's dialog |
+| `apps/desktop/src-tauri/src/web_clear.rs` | a store's site data and cache cleared over a range, through each engine's own call. Unit tested |
+| `apps/desktop/src/lib/web-tab/private.ts` | a private tab, and what it never writes down |
+| `apps/desktop/src/lib/web-tab/engines.ts` | the search engines: Chrome's list for the region, a custom one with `%s`. Pure, tested |
+| `apps/desktop/src/lib/web-tab/search-engine.svelte.ts` | the search engine this device chose. Tested |
+| `apps/desktop/src/lib/web-tab/dropped-site.ts` | a link dragged out of a page onto the file list, kept as a web note. Tested |
+| `scripts/browser-parity-probe.py` | the drive for History, Delete browsing data, a private tab, the search engine and a link dropped on the list |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device, or on the account while web logins travel. Tested |
 | `apps/desktop/src/lib/web-tab/lease.svelte.ts` | a web login as a lease: whether a page may run, handing over, losing it, what goes up and when. Tested; see docs/sync-v2.md 6 |
@@ -1858,7 +1954,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
 | `scripts/no-reload-probe.py` | the drive for Ctrl+Tab round ten pages: loads, the freeze, typed fields, memory, and Memory saver |
 | `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
-| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page |
+| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in nib's bubble and the site's zoom, all still there after the restart |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, what of the app's is on its `window`, whether nib's listeners are in nib's world in every frame, what a page's dialogs give back, and with `--real` Google's editors and the regression sites, read over the `DevTools` protocol. See "What a page is given: nothing" |
 | `scripts/devtools.py` | the `DevTools` protocol with the standard library, for a drive to read a page's own console without pressing anything in it |
@@ -1883,17 +1979,17 @@ versions and goes to the trash like every other document.
 - **Linux packages list nib as a browser only once it has been made one.** The press
   writes its own handler; the desktop entries under `packaging/` still say `%F` and
   markdown, and change with the file types.
-- **The history has no Delete browsing data yet**, because nothing in nib clears a
-  browser's data today; Shift+Delete on a row is the one way out of it. Whatever
-  clears the rest when it exists clears `nib:web-visits` too, and a private tab, when
-  there is one, must not write to it. It is one list per device; a space whose web
-  data is kept apart from the others would want its own list.
-- **Four of Chrome's menu rows are not here, because nothing is behind them yet.**
-  History wants a surface nib does not have - a list of every page a window has been
-  through; Downloads is the glyph in the bar rather than a row, see "Downloads"; Copy
-  and Paste are the page's own context menu already; and More tools' developer tools
-  are reached by Inspect in that same menu and by F12. Each is a row the day the thing
-  behind it exists.
+- **The history is one row per page**, at its last visit, so the History page lists a
+  page under the last day it was open rather than under every day it was. Two thousand
+  pages, this device's.
+- **Two private tabs share a sign-in on Windows only.** A Mac's and Linux's engine and
+  nib's own Chromium make each private page a store of its own.
+- **nib's own Chromium clears site by site.** It has no call that takes a time range, so a
+  range clears the data of each site the history says it visited in it, and the cache
+  whole.
+- **Three of Chrome's menu rows are not here.** Downloads is the glyph in the bar rather
+  than a row, see "Downloads"; Copy and Paste are the page's own context menu already;
+  and More tools' developer tools are reached by Inspect in that same menu and by F12.
 - **A page holding the whole screen, the speaker and the find's marks are `WebView2`'s
   alone.** A Mac and Linux have no event for the first two reachable through wry, and
   their find marks one match at a time; see "The page itself".

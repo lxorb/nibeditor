@@ -134,6 +134,10 @@ export function plainOrigin(url: string): string {
     return url
   }
 
+  // nib's own pages read as their whole address, as `chrome://history` does; see
+  // own-pages.ts.
+  if (parsed.protocol === 'nib:') return url
+
   const host = parsed.host.replace(/^www\./i, '')
   return parsed.protocol === 'http:' ? `http://${host}` : host
 }

@@ -40,7 +40,7 @@ import { type NewKind, workspace } from './workspace.svelte'
 
 /** What a new tab can be: the kinds the file list also makes, and a terminal here or on
  *  another machine, which is a tab and never a file. */
-export type NewKindName = NewKind | 'terminal' | 'remote'
+export type NewKindName = NewKind | 'private' | 'terminal' | 'remote'
 
 export interface NewKindRow {
   kind: NewKindName
@@ -104,6 +104,21 @@ export function newKinds(): NewKindRow[] {
             letter: 'w',
             make: (paneId: string | undefined) => inPane(paneId, () => workspace.openWebsite()),
           },
+          // A private tab, beside the website it is one of: a desktop's alone, where a
+          // web tab is a page of nib's. I for Incognito, Chrome's word for it, since P is
+          // the page note's. See web-tab/private.ts.
+          ...(isDesktop
+            ? [
+                {
+                  kind: 'private' as const,
+                  label: () => t('New private tab'),
+                  mark: 'web' as const,
+                  letter: 'i',
+                  make: (paneId: string | undefined) =>
+                    inPane(paneId, () => workspace.openWebsite(true)),
+                },
+              ]
+            : []),
         ]),
     {
       kind: 'pages',
