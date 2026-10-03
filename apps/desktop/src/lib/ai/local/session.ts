@@ -14,7 +14,7 @@ import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
 
 /** The tools a thread may use: a mode of the sidebar's, or none for words only. */
-export type ToolsOf = 'ask' | 'plan' | 'agent' | null
+type ToolsOf = 'ask' | 'plan' | 'agent' | null
 
 /** nib's effort scale as the crate takes it: `null` is the model's own default. */
 export type Level = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
@@ -32,13 +32,13 @@ export interface Opening {
 }
 
 /** A picture with a message. */
-export interface Picture {
+interface Picture {
   mime: string
   data: string
 }
 
 /** What may be said to a session; see src-tauri/src/ai_cli/say.rs. */
-export type Say =
+type Say =
   | { kind: 'turn'; text: string; images: Picture[] }
   | { kind: 'steer'; text: string }
   | { kind: 'interrupt' }
