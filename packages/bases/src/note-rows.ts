@@ -83,7 +83,12 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
 /** A note's rows from its words alone, where no scan has read it: the account
  *  connector's notes, read off storage. Its tags are the ones its lines carry and its
  *  links every link written, folded the way the link index folds them. */
-export function rowsOfText(space: string, path: string, text: string, stamp: Stamp | null = null): Row[] {
+export function rowsOfText(
+  space: string,
+  path: string,
+  text: string,
+  stamp: Stamp | null = null,
+): Row[] {
   const scanned = scanRows(text)
   const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
   const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
