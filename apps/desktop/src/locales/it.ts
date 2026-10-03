@@ -95,6 +95,7 @@ export const it: Dictionary = {
   'Close all': 'Chiudi tutte',
   'Close all tabs': 'Chiudi tutte le schede',
   'Duplicate tab': 'Duplica scheda',
+  'Deselect all tabs': 'Deseleziona tutte le schede',
   'Deselect tab': 'Deseleziona scheda',
   'Move to other pane': 'Sposta nell’altro riquadro',
   'Move to space': 'Sposta in spazio',

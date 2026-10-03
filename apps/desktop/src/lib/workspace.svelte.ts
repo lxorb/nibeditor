@@ -792,8 +792,15 @@ class Workspace {
    *  document per file is the workspace's own answer now rather than a map this
    *  method passes along. See workspace/open.ts. */
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
+    return (await this.tabsAlong(drafts, paneId)).filter((one) => one !== null)
+  }
+
+  /** The same, one place for each draft: null where a draft could not come back, so an
+   *  index the session counted along the drafts still finds its tab - the one that was
+   *  in front - when a tab before it in the strip has gone. */
+  private async tabsAlong(drafts: Draft[], paneId: string): Promise<(Tab | null)[]> {
     return this.opened.arranging(async () => {
-      const made: Tab[] = []
+      const made: (Tab | null)[] = []
 
       for (const written of drafts) {
         // Spelled as the listing spells it, whatever the sitting wrote down.
@@ -803,6 +810,7 @@ class Workspace {
         // spaces goes quietly: nothing in nib opens that file any more.
         if (draft.path && !(await this.opens(draft.path))) {
           log('info', `restore: ${draft.path} is outside every space, so its tab is not put back`)
+          made.push(null)
           continue
         }
 
@@ -827,14 +835,13 @@ class Workspace {
               })
 
         // Deleted or moved while Nib was away, and no words of its own to keep.
-        if (!note) continue
-        made.push(this.viewOf(note, paneId, draft))
+        made.push(note ? this.viewOf(note, paneId, draft) : null)
       }
 
       // Words that came back without their file having them - a window that was
       // killed before the pause, a tab closed a moment after its last keystroke -
       // go down now. A draft's stay in the session until it is given a place.
-      for (const tab of made) if (tab.note.dirty) this.saving.owed(tab.note)
+      for (const tab of made) if (tab?.note.dirty) this.saving.owed(tab.note)
 
       return made
     })
@@ -929,11 +936,15 @@ class Workspace {
     const made: Tab[] = []
 
     for (const draft of panesOf(layout.frame)) {
-      const tabs = await this.tabsFrom(draft.tabs, draft.id)
+      const along = await this.tabsAlong(draft.tabs, draft.id)
+      const tabs = along.filter((one) => one !== null)
       // Which tab was showing first, since that index counts along the strip as the
-      // arrangement wrote it down; then the kept tabs to the head of it, which is
-      // where a run of them belongs however the entry was written. See pinning.ts.
-      showing.set(draft.id, (tabs[draft.active] ?? tabs[0])?.id ?? null)
+      // arrangement wrote it down - along the drafts, so a tab before it that could
+      // not come back moves nothing - and the one after it where it is the one that
+      // went; then the kept tabs to the head of it, which is where a run of them
+      // belongs however the entry was written. See pinning.ts.
+      const shown = along[draft.active] ?? along.slice(draft.active).find((one) => one !== null)
+      showing.set(draft.id, (shown ?? tabs.at(-1))?.id ?? null)
       made.push(...byPin(tabs))
     }
 
@@ -2453,6 +2464,23 @@ class Workspace {
    *  brings a tab back. */
   deselect(paneId: string = this.panes.focusedId) {
     this.panes.deselect(paneId)
+  }
+
+  /** Ctrl+Shift+D: Ctrl+D in every pane at once, and the same key again brings each
+   *  pane's tab back - the one it showed last - where none of them shows one. Emil,
+   *  2026-10-03. The pane being worked in stays the one being worked in. */
+  deselectAll() {
+    const panes = this.panes.all
+    if (panes.some((one) => one.activeTabId !== null)) {
+      for (const one of panes) this.panes.deselect(one.id)
+      return
+    }
+
+    for (const one of panes) {
+      const strip = this.tabsIn(one.id).map((tab) => tab.id)
+      const back = this.panes.lastOf(strip) ?? strip[0]
+      if (back) this.panes.activate(one.id, back)
+    }
   }
 
   /** Which pane a key or a command is talking about. */

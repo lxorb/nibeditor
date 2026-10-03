@@ -95,6 +95,7 @@ export const es: Dictionary = {
   'Close all': 'Cerrar todas',
   'Close all tabs': 'Cerrar todas las pestañas',
   'Duplicate tab': 'Duplicar pestaña',
+  'Deselect all tabs': 'Deseleccionar todas las pestañas',
   'Deselect tab': 'Deseleccionar pestaña',
   'Move to other pane': 'Mover al otro panel',
   'Move to space': 'Mover a espacio',

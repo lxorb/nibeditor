@@ -95,6 +95,7 @@ export const tr: Dictionary = {
   'Close all': 'Tümünü kapat',
   'Close all tabs': 'Tüm sekmeleri kapat',
   'Duplicate tab': 'Sekmeyi çoğalt',
+  'Deselect all tabs': 'Tüm sekmelerin seçimini kaldır',
   'Deselect tab': 'Sekme seçimini kaldır',
   'Move to other pane': 'Diğer bölmeye taşı',
   'Move to space': 'Alana taşı',

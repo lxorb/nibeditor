@@ -69,9 +69,15 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
  *  on screen, and the two things that live in App.svelte's own state. */
 export interface AppContext {
   view?: EditorView | undefined
-  /** Opens the palette; `'commands'` is a `>` in its field, narrowed to them. */
-  palette(mode?: 'commands'): void
+  /** Opens the palette; `'commands'` is a `>` in its field, narrowed to them. With
+   *  `again`, a palette already up is put away instead: see `tapped`. */
+  palette(mode?: 'commands', again?: boolean): void
   fullscreen(): void
+  /** Asked by a modifier tapped twice rather than by a chord. Shift Shift with the
+   *  palette up puts it away, the way the press that opened a layer closes it again
+   *  (Emil, 2026-10-03); a chord keeps what it does in the palette's own field. See
+   *  tapped.ts. */
+  tapped?: boolean
 }
 
 /** One shortcut, whole: what it is called, where it belongs, which key it
@@ -614,6 +620,18 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-d',
     run: () => workspace.deselect(),
   },
+  // Emil, 2026-10-03: the same in every pane, and the key again brings them all back.
+  // On Ctrl+Shift+D under every keyboard: none of the four binds it - VS Code's Run and
+  // Debug is a view nib has not got - and it is answered in a page and a terminal as
+  // the window answers it; see web_opens.rs and terminal/keys.ts.
+  {
+    id: 'app.deselect-all',
+    label: () => t('Deselect all tabs'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-d',
+    run: () => workspace.deselectAll(),
+  },
   // F2 on a tab, the file list's key, read by the strip itself.
   {
     id: 'tabs.rename',
@@ -666,7 +684,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Shift Shift',
-    run: (context) => context.palette(),
+    run: (context) => context.palette(undefined, context.tapped),
   },
   // With no key of its own: Shift twice is the palette's, and Ctrl+P is Print. The
   // keyboards that have the palette on another key put it here; see presets.ts.
@@ -677,7 +695,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: null,
     alias: true,
-    run: (context) => context.palette(),
+    run: (context) => context.palette(undefined, context.tapped),
   },
   // Ctrl+O as well, which is what a hand reaches for to open something, and what is
   // there to open is in a space: nib opens nothing from outside its spaces. Obsidian's
@@ -690,7 +708,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-o',
     alias: true,
-    run: (context) => context.palette(),
+    run: (context) => context.palette(undefined, context.tapped),
   },
   // Where every editor puts its commands, as Emil asked; Paragraph gave it up.
   {

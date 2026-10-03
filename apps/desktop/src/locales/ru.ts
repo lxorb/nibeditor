@@ -95,6 +95,7 @@ export const ru: Dictionary = {
   'Close all': 'Закрыть все',
   'Close all tabs': 'Закрыть все вкладки',
   'Duplicate tab': 'Дублировать вкладку',
+  'Deselect all tabs': 'Снять выбор со всех вкладок',
   'Deselect tab': 'Снять выбор с вкладки',
   'Move to other pane': 'Переместить в другую область',
   'Move to space': 'Переместить в пространство',

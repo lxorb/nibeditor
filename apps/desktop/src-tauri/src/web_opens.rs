@@ -73,7 +73,9 @@
 //! means is the reader's own binding rather than an ask of the tab's, so it comes back
 //! under an eighth name, `nib-ctrl-d`, and is said to the window as the key it was on
 //! `web_keys.rs`'s own event: played there, it does whatever Ctrl+D does in the app,
-//! which under the VS Code keyboard is nothing at all.
+//! which under the VS Code keyboard is nothing at all. Ctrl+Shift+D, every pane put
+//! down at once, goes the same way under `nib-ctrl-shift-d`: Chrome's own is
+//! Bookmark all tabs, which a page is offered first as well.
 //!
 //! **And Ctrl+0.** The engine's own Ctrl+0 goes back to the zoom the app last set rather
 //! than to a hundred per cent (see `web_page.rs`), so it asks the same way, under
@@ -106,8 +108,9 @@ const FIND: &str = "nib-find";
 const FIND_NEXT: &str = "nib-find-next";
 const FIND_PREVIOUS: &str = "nib-find-previous";
 const ADDRESS: &str = "nib-address";
-/// And the chord it hands back as the key it was.
+/// And the chords it hands back as the keys they were.
 const CTRL_D: &str = "nib-ctrl-d";
+const CTRL_SHIFT_D: &str = "nib-ctrl-shift-d";
 
 /// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
 const ACTUAL: &str = "nib-actual-size";
@@ -269,7 +272,7 @@ pub const SCRIPT: &str = r"(function () {
     else if (ctrl && code === 70 && !back) name = 'nib-find'
     else if (ctrl && code === 76 && !back) name = 'nib-address'
     else if (ctrl && (code === 48 || code === 96) && !back) name = 'nib-actual-size'
-    else if (ctrl && code === 68 && !back) name = 'nib-ctrl-d'
+    else if (ctrl && code === 68) name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
     if (!name) return
@@ -335,7 +338,11 @@ pub const SCRIPT: &str = r"(function () {
 /// reading of that name.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn chord(name: &str) -> Option<Pressed> {
-    (name == CTRL_D).then(|| Pressed::with_ctrl("d", "KeyD"))
+    match name {
+        CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
+        CTRL_SHIFT_D => Some(Pressed::with_ctrl("D", "KeyD", true)),
+        _ => None,
+    }
 }
 
 /// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
@@ -853,6 +860,21 @@ mod tests {
     }
 
     #[test]
+    fn ctrl_shift_d_let_go_by_goes_back_with_its_shift() {
+        let key = chord("nib-ctrl-shift-d").map(|one| serde_json::to_value(one).expect("a key"));
+        let key = key.expect("Ctrl+Shift+D");
+        assert_eq!(key["key"], "D");
+        assert_eq!(key["code"], "KeyD");
+        assert_eq!(key["ctrl"], true);
+        assert_eq!(key["shift"], true);
+        assert_eq!(key["down"], true);
+        assert_eq!(sought("nib-ctrl-shift-d"), None);
+        assert!(chord("nib-ctrl-shift-d ").is_none());
+        // Asked with Shift held, and the plain one without.
+        assert!(SCRIPT.contains("name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'"));
+    }
+
+    #[test]
     fn the_script_asks_by_the_names_read_here() {
         for name in [
             "'nib-find'",
@@ -864,6 +886,7 @@ mod tests {
             "'nib-twice-ctrl'",
             "'nib-twice-alt'",
             "'nib-ctrl-d'",
+            "'nib-ctrl-shift-d'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }

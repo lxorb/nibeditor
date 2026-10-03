@@ -437,6 +437,13 @@ function tabCommands(): Command[] {
       run: () => workspace.deselect(),
     },
     {
+      id: 'deselect-all',
+      label: t('Deselect all tabs'),
+      hint: shortcuts.hint('app.deselect-all'),
+      disabled: !workspace.tabs.some((one) => workspace.panes.at(one.paneId)),
+      run: () => workspace.deselectAll(),
+    },
+    {
       id: 'duplicate-tab',
       label: t('Duplicate tab'),
       hint: shortcuts.hint('app.duplicate-tab'),
@@ -1155,6 +1162,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'new-window',
       label: t('New window'),
+      hint: shortcuts.hint('app.new-window'),
       disabled: !isDesktop,
       run: () => void invoke('new_window').catch(() => undefined),
     },
@@ -1183,7 +1191,12 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.settings'),
       run: () => settings.show(),
     },
-    { id: 'shortcuts', label: t('Shortcuts'), run: () => settings.show('shortcuts') },
+    {
+      id: 'shortcuts',
+      label: t('Shortcuts'),
+      hint: shortcuts.hint('app.keys'),
+      run: () => settings.show('shortcuts'),
+    },
     {
       id: 'history',
       label: t('Version history'),
@@ -1546,7 +1559,12 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: workspace.holdablePanel === null,
       run: () => workspace.holdPanel(workspace.held ? null : (workspace.panelTab?.id ?? null)),
     },
-    { id: 'graph', label: t('Graph'), run: () => workspace.openGraph() },
+    {
+      id: 'graph',
+      label: t('Graph'),
+      hint: shortcuts.hint('app.graph'),
+      run: () => workspace.openGraph(),
+    },
     // Round the regions of the window, and round the spaces. Here as well as on a
     // key, because the palette is where somebody looks for a thing they have not
     // learned the key for yet - and because a browser may take F6 before the app

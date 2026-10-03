@@ -107,7 +107,7 @@
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
    *  on the commands, which is a `>` in its field and a caret after it. */
-  let paletteScreen = $state<{ showCommands(): void }>()
+  let paletteScreen = $state<{ showCommands(): void; dismiss(): void }>()
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
   /** The element holding both layers, which is what the drawer gesture
@@ -774,8 +774,11 @@
   function appContext(): AppContext {
     return {
       view,
-      palette: (mode) => {
-        if (mode === 'commands') void showCommands()
+      palette: (mode, again) => {
+        // Shift Shift over the palette puts it away, as Escape does, and the keyboard
+        // goes back where it was; see `tapped` in the registry.
+        if (again && palette) paletteScreen?.dismiss()
+        else if (mode === 'commands') void showCommands()
         else palette = true
       },
       // The document alone, with the app out of the way and the window's own

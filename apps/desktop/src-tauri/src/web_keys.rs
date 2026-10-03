@@ -88,17 +88,18 @@ impl Pressed {
         self.code == "F11"
     }
 
-    /// A letter pressed with Ctrl alone, once: a chord the page was offered first and
-    /// let go by, said in the same words as the ones here. Ctrl+D is the one, which
-    /// Chrome gives the page first as well; see `web_opens.rs`.
+    /// A letter pressed with Ctrl, and Shift where `shift` says, once: a chord the page
+    /// was offered first and let go by, said in the same words as the ones here.
+    /// Ctrl+D and Ctrl+Shift+D are the two, which Chrome gives the page first as well;
+    /// see `web_opens.rs`.
     #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-    pub const fn with_ctrl(key: &'static str, code: &'static str) -> Self {
+    pub const fn with_ctrl(key: &'static str, code: &'static str, shift: bool) -> Self {
         Self {
             key,
             code,
             held: Held {
                 ctrl: true,
-                shift: false,
+                shift,
                 alt: false,
             },
             repeat: false,
@@ -550,7 +551,8 @@ mod tests {
 
     #[test]
     fn a_chord_let_go_by_is_said_as_one_of_these() {
-        let said = serde_json::to_value(super::Pressed::with_ctrl("d", "KeyD")).expect("a key");
+        let said =
+            serde_json::to_value(super::Pressed::with_ctrl("d", "KeyD", false)).expect("a key");
         assert_eq!(said["key"], "d");
         assert_eq!(said["code"], "KeyD");
         assert_eq!(said["ctrl"], true);

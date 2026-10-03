@@ -95,6 +95,7 @@ export const ar: Dictionary = {
   'Close all': 'إغلاق الكل',
   'Close all tabs': 'إغلاق كل التبويبات',
   'Duplicate tab': 'تكرار التبويب',
+  'Deselect all tabs': 'إلغاء تحديد كل التبويبات',
   'Deselect tab': 'إلغاء تحديد التبويب',
   'Move to other pane': 'النقل إلى الجزء الآخر',
   'Move to space': 'نقل إلى مساحة',

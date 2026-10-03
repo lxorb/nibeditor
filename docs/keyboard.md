@@ -318,6 +318,7 @@ stops nothing, and the app still gets the key.
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the same eight places and the last, as second keys |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+D | **put the tab down**: nothing in front of the pane, every tab still open |
+| Ctrl+Shift+D | **put every pane's tab down**, and the same key again brings each pane's back |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there), a new tab with no file with its words |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
@@ -411,6 +412,15 @@ brings the work back. Chrome, Arc and VS Code have no such key - Chrome always h
 in front, Arc's Cmd+D pins, VS Code's empty group is the nearest thing - so the key is
 Emil's, and the look is the empty pane nib already has. On a Mac, Cmd+W then closes
 nothing, since the window is not empty. See `deselect` in `workspace/panes.svelte.ts`.
+
+**Ctrl+Shift+D is Ctrl+D in every pane at once.** Emil, 2026-10-03. Every pane shows the
+cards and nothing closes; the same key again, while no pane shows a tab, brings each
+pane's back - the one it showed last - and the pane being worked in stays the one being
+worked in. While any pane still shows a tab, the key puts them all down. The same chord
+under every keyboard: none of the four binds it, and VS Code's own Ctrl+Shift+D opens a
+Run and Debug view nib has not got. A page has it first, as it has Ctrl+D; a terminal
+gives it to the app, since a shell cannot tell it from Ctrl+D. See `deselectAll` in
+`workspace.svelte.ts`.
 
 **Full window**
 
@@ -522,7 +532,7 @@ window chords and not its bookmark: Google Sheets fills down with it, Figma and
 Excalidraw duplicate, VS Code on the web selects the next one. When nothing in the page
 took it, the same script asks, and the crate plays it on the window as the key it was,
 so it does whatever Ctrl+D does in the app - Deselect tab, or nothing under the VS Code
-keyboard. The engine tells the host
+keyboard. Ctrl+Shift+D goes the same way, and puts every pane down. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
@@ -543,7 +553,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | --- | --- |
 | Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
 | Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
-| Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it |
+| Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too |
 | Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |

@@ -95,6 +95,7 @@ export const ml: Dictionary = {
   'Close all': 'Close all',
   'Close all tabs': 'Close all tabs',
   'Duplicate tab': 'Duplicate tab',
+  'Deselect all tabs': 'Deselect all tabs',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
   'Move to space': 'സ്പേസിലേക്ക് നീക്കുക',

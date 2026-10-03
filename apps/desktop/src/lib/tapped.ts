@@ -96,7 +96,7 @@ export function runTap(key: Modifier, context: AppContext): boolean {
 export function hear(context: () => AppContext, target: Window = window): () => void {
   const unlisten = listenForTaps(target)
   const unhear = hearTaps((key) => {
-    if (!present.on) runTap(key, context())
+    if (!present.on) runTap(key, { ...context(), tapped: true })
   })
 
   return () => {

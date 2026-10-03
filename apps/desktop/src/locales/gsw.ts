@@ -95,6 +95,7 @@ export const gsw: Dictionary = {
   'Close all': 'Alli zuemache',
   'Close all tabs': 'Alli Tabs zuemache',
   'Duplicate tab': 'Tab verdopple',
+  'Deselect all tabs': 'Alli Tabs abwähle',
   'Deselect tab': 'Tab abwähle',
   'Move to other pane': 'Is anderi Teilfänschter verschiebe',
   'Move to space': 'In Ablag verschiebe',

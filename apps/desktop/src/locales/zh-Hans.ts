@@ -95,6 +95,7 @@ export const zhHans: Dictionary = {
   'Close all': '全部关闭',
   'Close all tabs': '关闭所有标签页',
   'Duplicate tab': '复制标签页',
+  'Deselect all tabs': '取消选择所有标签页',
   'Deselect tab': '取消选择标签页',
   'Move to other pane': '移到另一窗格',
   'Move to space': '移动到空间',
