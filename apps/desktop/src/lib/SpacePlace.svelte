@@ -11,14 +11,26 @@
   import { isNumber } from './space-pick'
   import { workspace } from './workspace.svelte'
 
-  const { place = null, typed = '' }: { place?: number | null; typed?: string } = $props()
+  const {
+    place = null,
+    typed = '',
+    count = null,
+  }: {
+    place?: number | null
+    typed?: string
+    /** How many rows the list numbers, where it is not the spaces: Remote's hosts. */
+    count?: number | null
+  } = $props()
 
   const number = $derived(place === null ? '' : String(place + 1))
   /** How many of the figures were typed: where this number starts. */
   const hit = $derived(isNumber(typed) && number.startsWith(typed) ? typed.length : 0)
 </script>
 
-<span class="place" style:min-width="{String(workspace.spaces.length).length}ch" aria-hidden="true"
+<span
+  class="place"
+  style:min-width="{String(count ?? workspace.spaces.length).length}ch"
+  aria-hidden="true"
   >{#if hit}<b>{number.slice(0, hit)}</b>{/if}{number.slice(hit)}</span
 >
 

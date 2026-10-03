@@ -27,6 +27,20 @@ export interface Spec {
   name: string | null
 }
 
+/** What a shell's id starts with where it is another machine's host: `ssh:pi`, the id
+ *  the crate finds the host by (`host_id` in remote.rs). See remote/hosts.ts. */
+const SSH = 'ssh:'
+
+/** The shell a terminal on a host runs. */
+export function hostShell(id: string): string {
+  return `${SSH}${id}`
+}
+
+/** The host a terminal's shell is, or null for a shell on this machine. */
+export function hostIdOf(shell: string): string | null {
+  return shell.startsWith(SSH) && shell.length > SSH.length ? shell.slice(SSH.length) : null
+}
+
 /** A tab's words as a spec, or null for words that are not one. Read rather than
  *  trusted: they came back out of storage. */
 export function readSpec(text: string): Spec | null {

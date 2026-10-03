@@ -461,6 +461,8 @@ describe('the switch', () => {
       'lib/ShareSheet.svelte',
       // What an agent may do, a switch a scope, in Settings > Agents.
       'lib/agents/settings/AgentDetail.svelte',
+      // A host pinned, in Settings > Remote.
+      'lib/remote/HostDetail.svelte',
       // An extension on or off, in Settings > General > Browser.
       'lib/settings/ExtensionRows.svelte',
     ])

@@ -20,6 +20,7 @@ import { shownName, rowName } from '../note-name'
 import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
 import { frecency as visitWeight, shownAddress } from '../web-tab/omnibox'
 import type { Visit } from '../web-tab/visits'
+import type { Host } from '../remote/hosts'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { TabKind } from '../workspace/documents.svelte'
 import type { Entry } from '../workspace.svelte'
@@ -41,6 +42,8 @@ export interface World {
   commands: readonly Command[]
   pages: readonly Visit[]
   settings: readonly Setting[]
+  /** The machines a remote terminal reaches, where this is a desktop that has any. */
+  hosts: readonly Host[]
   /** How much a key has been used; see frecency.ts. */
   worth: (key: string) => number
   now: number
@@ -97,9 +100,12 @@ export function rowKey(row: Row): string | null {
       return `setting:${row.setting.section}/${row.setting.label}`
     case 'bookmark':
       return `bookmark:${row.mark.kind}:${row.mark.path}#${row.mark.text}`
+    case 'host':
+      return `host:${row.host.id}`
     case 'place':
     case 'make':
     case 'address':
+    case 'connect':
       return null
   }
 }
@@ -289,6 +295,16 @@ export function candidates(world: World): Candidate<Row>[] {
         world,
         { names: [hostOf(address)], also: [address], more: visitWeight(visit, world.now) / 4 },
       ),
+    )
+  }
+
+  // Another machine, found by its name, its other names and where it is.
+  for (const host of world.hosts) {
+    out.push(
+      candidate('host', host.name, { kind: 'host', host }, world, {
+        names: host.also,
+        also: [host.detail ?? '', host.group ?? ''],
+      }),
     )
   }
 

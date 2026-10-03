@@ -1725,4 +1725,12 @@ export const fa: Dictionary = {
   'Did not load': 'بارگیری نشد',
   Permissions: 'مجوزها',
   Options: 'گزینه‌ها',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'راه دور',
+  'Add host': 'افزودن میزبان',
+  Reconnect: 'اتصال دوباره',
+  'Open config': 'باز کردن پیکربندی',
+  'No group': 'بدون گروه',
+  'Not an address': 'نشانی نیست',
+  'Could not connect to {host}': 'اتصال به {host} ممکن نشد',
 }

@@ -1077,6 +1077,14 @@ export function appCommands(view?: EditorView): Command[] {
             ownWindow: true,
             run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
           },
+          // Another machine's, from the host picker; see remote/picker.svelte.ts.
+          {
+            id: 'new-remote',
+            label: t('Remote'),
+            ownWindow: true,
+            run: () =>
+              void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.toggle()),
+          },
         ]
       : []),
     // Only where there is something to convert, which is a space that was written in

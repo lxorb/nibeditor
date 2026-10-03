@@ -1701,4 +1701,12 @@ export const ko: Dictionary = {
   'Did not load': '로드되지 않음',
   Permissions: '권한',
   Options: '옵션',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: '원격',
+  'Add host': '호스트 추가',
+  Reconnect: '다시 연결',
+  'Open config': '구성 파일 열기',
+  'No group': '그룹 없음',
+  'Not an address': '주소가 아닙니다',
+  'Could not connect to {host}': '{host}에 연결할 수 없습니다',
 }

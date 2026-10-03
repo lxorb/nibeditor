@@ -1724,4 +1724,12 @@ export const bn: Dictionary = {
   'Did not load': 'লোড হয়নি',
   Permissions: 'অনুমতি',
   Options: 'বিকল্প',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'রিমোট',
+  'Add host': 'হোস্ট যোগ করুন',
+  Reconnect: 'আবার সংযোগ করুন',
+  'Open config': 'কনফিগ খুলুন',
+  'No group': 'কোনো গ্রুপ নেই',
+  'Not an address': 'এটি ঠিকানা নয়',
+  'Could not connect to {host}': '{host}-এ সংযোগ করা যায়নি',
 }

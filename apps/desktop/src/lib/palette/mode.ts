@@ -7,7 +7,7 @@
  *  its headings, since that is how a heading is written and linked, and `:` and a
  *  number for a line of it. Deleting the mark is the way back to everything. */
 
-export type PaletteMode = 'everything' | 'commands' | 'headings' | 'line'
+export type PaletteMode = 'everything' | 'commands' | 'headings' | 'line' | 'hosts'
 
 const MARKS: Record<string, PaletteMode> = {
   '>': 'commands',
@@ -15,7 +15,13 @@ const MARKS: Record<string, PaletteMode> = {
   ':': 'line',
 }
 
+/** `ssh` and a space: the hosts alone, as a terminal's own command would reach them. */
+const SSH = /^ssh\s+/i
+
 export function modeOf(query: string): { mode: PaletteMode; term: string } {
+  const ssh = SSH.exec(query)
+  if (ssh) return { mode: 'hosts', term: query.slice(ssh[0].length).trim() }
+
   const mode = MARKS[query.charAt(0)]
   return mode ? { mode, term: query.slice(1).trim() } : { mode: 'everything', term: query.trim() }
 }

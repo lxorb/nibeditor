@@ -1805,4 +1805,12 @@ export const ru: Dictionary = {
   'Did not load': 'Не загружено',
   Permissions: 'Разрешения',
   Options: 'Параметры',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Удалённый',
+  'Add host': 'Добавить хост',
+  Reconnect: 'Переподключиться',
+  'Open config': 'Открыть конфигурацию',
+  'No group': 'Без группы',
+  'Not an address': 'Это не адрес',
+  'Could not connect to {host}': 'Не удалось подключиться к {host}',
 }

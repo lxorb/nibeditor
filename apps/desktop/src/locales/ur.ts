@@ -1723,4 +1723,12 @@ export const ur: Dictionary = {
   'Did not load': 'لوڈ نہیں ہوا',
   Permissions: 'اجازتیں',
   Options: 'اختیارات',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'ریموٹ',
+  'Add host': 'ہوسٹ شامل کریں',
+  Reconnect: 'دوبارہ جڑیں',
+  'Open config': 'کنفیگ کھولیں',
+  'No group': 'کوئی گروپ نہیں',
+  'Not an address': 'یہ پتہ نہیں ہے',
+  'Could not connect to {host}': '{host} سے نہیں جڑ سکے',
 }

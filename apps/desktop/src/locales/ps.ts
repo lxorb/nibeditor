@@ -1728,4 +1728,12 @@ export const ps: Dictionary = {
   'Did not load': 'بار نه شو',
   Permissions: 'اجازې',
   Options: 'غوراوي',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'لرې',
+  'Add host': 'کوربه ورزیات کړئ',
+  Reconnect: 'بیا وصل کړئ',
+  'Open config': 'تشکیلات پرانیزئ',
+  'No group': 'هیڅ ډله نه',
+  'Not an address': 'پته نه ده',
+  'Could not connect to {host}': 'له {host} سره وصل نه شو',
 }

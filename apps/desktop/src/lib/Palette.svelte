@@ -15,6 +15,7 @@
   import type { EditorView } from '@nib/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
+  import Server from 'lucide/dist/esm/icons/server.mjs'
   import { appCommands } from './commands'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
@@ -44,11 +45,13 @@
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
+  import { destinationOf, type Host, hostFor, said } from './remote/hosts'
   import { relativeTo } from './space-paths'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme.svelte'
   import { joinPath } from './tauri'
   import { trap } from './trap'
+  import { isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import { shownAddress } from './web-tab/omnibox'
   import { pages } from './web-tab/pages.svelte'
@@ -113,6 +116,17 @@
 
   const root = $derived(workspace.activeSpace?.root ?? null)
 
+  /** The machines a remote terminal reaches: a desktop's alone, read again each time the
+   *  palette opens, since the ssh config may have changed. Fetched, so neither a browser
+   *  nor the glasses' plugin carries any of it. See remote/hosts.svelte.ts. */
+  let hosts = $state.raw<Host[]>([])
+  $effect(() => {
+    if (!open || __EVEN_PLUGIN__ || !isDesktop) return
+    void import('./remote/hosts.svelte').then(({ remote }) =>
+      remote.refresh().then(() => (hosts = remote.hosts)),
+    )
+  })
+
   /** What the stores hold, while the palette is open. The history is read here the
    *  first time, never at launch; see visited.ts. */
   const world = $derived.by((): World | null => {
@@ -130,6 +144,7 @@
       commands,
       pages: browses ? visited.all(webData.history(workspace.activeSpaceId)) : [],
       settings: settingRows,
+      hosts,
       worth: (key) => frecency.worth(key),
       now: Date.now(),
     }
@@ -187,8 +202,19 @@
     return recentFirst(list, lately, (one) => one.key ?? '').map((one) => one.item)
   }
 
+  /** `ssh` and a host: the hosts alone, and the destination typed where no host is it -
+   *  a terminal's own `ssh user@box` - which is kept as a host as it connects. */
+  function hostRows(): Row[] {
+    const list = all.filter((one) => one.kind === 'host')
+    const found = term ? ranked(term, list) : list.map((one) => one.item)
+    const wanted = destinationOf(term)
+    if (!wanted || hostFor(hosts, wanted) || !isDesktop || __EVEN_PLUGIN__) return found
+    return [...found, { kind: 'connect', wanted, said: said(wanted) }]
+  }
+
   const results = $derived.by((): Row[] => {
     if (mode === 'commands') return commandRows()
+    if (mode === 'hosts') return hostRows()
 
     // Every heading of a long note, not the first screenful of them.
     if (mode === 'headings') return ranked(term, headingRows, headingRows.length)
@@ -226,6 +252,10 @@
         return row.address
       case 'place':
         return row.text
+      case 'host':
+        return row.host.name
+      case 'connect':
+        return row.said
     }
   }
 
@@ -248,9 +278,12 @@
         return row.setting.where
       case 'make':
         return row.make.folder || null
+      case 'host':
+        return row.host.detail
       case 'command':
       case 'place':
       case 'address':
+      case 'connect':
         return null
     }
   }
@@ -363,6 +396,8 @@
         void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)
     },
     goto: (line) => ongoto?.(line),
+    openHost: (id) => void import('./remote/open').then(({ openRemote }) => openRemote(id)),
+    connect: (wanted) => void import('./remote/open').then(({ connectTo }) => connectTo(wanted)),
   }
 
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
@@ -592,9 +627,14 @@
                 <svg class="mark drawn" viewBox="0 0 13 13"><path d={OUTLINE_MARK} /></svg>
               {:else if row.kind === 'make'}
                 <span class="mark quiet"><Icon icon={null} fallback={FilePlus} /></span>
+              {:else if row.kind === 'host' || row.kind === 'connect'}
+                {@const colour = row.kind === 'host' ? row.host.colour : null}
+                <span class="mark" style:color={colour ? `var(--canvas-${colour})` : undefined}
+                  ><Icon icon={null} fallback={Server} /></span
+                >
               {/if}
               <span class="nib-row-label"
-                >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' ? term : '') as piece, at (at)}{#if piece.hit}<b
+                >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
                       >{piece.text}</b
                     >{:else}{piece.text}{/if}{/each}</span
               >

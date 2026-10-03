@@ -119,6 +119,7 @@ describe('every layer in the middle of the window', () => {
       'lib/SpaceChooser.svelte',
       'lib/SpacePicker.svelte',
       'lib/ThemeStore.svelte',
+      'lib/remote/HostPicker.svelte',
       'lib/theme-picker/ThemePicker.svelte',
     ])
   })

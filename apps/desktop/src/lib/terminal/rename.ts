@@ -12,7 +12,7 @@
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { shellName, shells } from './shells.svelte'
-import { readSpec, writeSpec } from './spec'
+import { hostIdOf, readSpec, writeSpec } from './spec'
 
 /** The longest name a tab is given: a sentence is not a name, and the strip fades it
  *  long before. */
@@ -36,6 +36,14 @@ export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
 /** What the tab's shell is called, for a name given back: the shell's own, as a new
  *  terminal of it is named (open.ts), or its id where this machine has it no more. */
 async function shellCalled(id: string): Promise<string> {
+  // Another machine is called by its host's name, as Remote named it (remote/open.ts).
+  const host = hostIdOf(id)
+  if (host !== null) {
+    const { remote } = await import('../remote/hosts.svelte')
+    await remote.ready()
+    return remote.byId(host)?.name ?? host
+  }
+
   const found = (await shells.ask()).find((one) => one.id === id)
   return found ? shellName(found) : id
 }

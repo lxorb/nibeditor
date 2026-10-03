@@ -1747,4 +1747,12 @@ export const ml: Dictionary = {
   'Did not load': 'ലോഡ് ആയില്ല',
   Permissions: 'അനുമതികൾ',
   Options: 'ഓപ്ഷനുകൾ',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'റിമോട്ട്',
+  'Add host': 'ഹോസ്റ്റ് ചേർക്കുക',
+  Reconnect: 'വീണ്ടും കണക്റ്റ് ചെയ്യുക',
+  'Open config': 'കോൺഫിഗ് തുറക്കുക',
+  'No group': 'ഗ്രൂപ്പില്ല',
+  'Not an address': 'വിലാസമല്ല',
+  'Could not connect to {host}': '{host}-ലേക്ക് കണക്റ്റ് ചെയ്യാനായില്ല',
 }

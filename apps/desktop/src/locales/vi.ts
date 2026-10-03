@@ -1708,4 +1708,12 @@ export const vi: Dictionary = {
   'Did not load': 'Không tải được',
   Permissions: 'Quyền',
   Options: 'Tùy chọn',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Từ xa',
+  'Add host': 'Thêm máy chủ',
+  Reconnect: 'Kết nối lại',
+  'Open config': 'Mở cấu hình',
+  'No group': 'Không có nhóm',
+  'Not an address': 'Không phải địa chỉ',
+  'Could not connect to {host}': 'Không thể kết nối tới {host}',
 }

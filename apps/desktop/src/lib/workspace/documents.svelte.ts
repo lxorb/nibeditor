@@ -444,9 +444,15 @@ export class Tab {
 
   /** For a terminal: what runs in it now, as its session last looked - the name the
    *  strip calls it by while nobody has named it, and the program in front, whose mark
-   *  it wears. Never written down: a restart starts a fresh shell with nothing in front.
-   *  See terminal/naming.ts. */
-  running = $state<{ name: string | null; program: string | null } | null>(null)
+   *  it wears; for one on another machine, the host and the colour Settings gave it.
+   *  Never written down: a restart starts a fresh shell with nothing in front. See
+   *  terminal/naming.ts and remote/hosts.ts. */
+  running = $state<{
+    name: string | null
+    program: string | null
+    host: string | null
+    colour: string | null
+  } | null>(null)
 
   /** Whether the tab's name is being typed where it is written, in the strip; see
    *  tab-strip/ops.ts. */

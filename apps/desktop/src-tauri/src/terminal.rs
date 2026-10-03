@@ -18,7 +18,9 @@
 //! - a session belongs to the window that started it, and no other window can type into
 //!   it, size it, read it or end it;
 //! - a shell is started by an id this module found (see shells.rs): the window cannot
-//!   name a program, an argument or a variable of its own.
+//!   name a program, an argument or a variable of its own. Another machine is the same:
+//!   a host's id, which the crate finds in the reader's ssh config or among the hosts it
+//!   keeps itself, and the system's `ssh` started for it (remote.rs).
 //!
 //! And none of this is reachable from outside the app: the `nib` command and `nib://`
 //! links reach verbs, and no verb opens or types into a terminal; see docs/terminal.md.
@@ -31,8 +33,10 @@
 
 pub mod history;
 pub(crate) mod process;
+pub mod remote;
 mod session;
 pub mod shells;
+mod ssh_config;
 
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
@@ -202,8 +206,13 @@ pub fn pty_spawn(
         return Err(format!("terminal {id} is already running"));
     }
 
-    let chosen = shells::find(&shell).ok_or_else(|| format!("no shell {shell} here"))?;
-    let launch = chosen.launch(folder.as_deref(), &shells::ThisMachine);
+    // Another machine is a host the crate found, by its id, as a shell is; see remote.rs.
+    let launch = match remote::host_id(&shell) {
+        Some(host) => remote::connect(&webview, host)?,
+        None => shells::find(&shell)
+            .ok_or_else(|| format!("no shell {shell} here"))?
+            .launch(folder.as_deref(), &shells::ThisMachine),
+    };
     let (session, started) = session::Session::open(&launch, cols, rows)?;
     let pid = session.pid();
 

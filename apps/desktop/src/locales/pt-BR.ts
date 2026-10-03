@@ -1760,4 +1760,12 @@ export const ptBR: Dictionary = {
   'Did not load': 'Não carregou',
   Permissions: 'Permissões',
   Options: 'Opções',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remoto',
+  'Add host': 'Adicionar host',
+  Reconnect: 'Reconectar',
+  'Open config': 'Abrir configuração',
+  'No group': 'Sem grupo',
+  'Not an address': 'Não é um endereço',
+  'Could not connect to {host}': 'Não foi possível conectar a {host}',
 }

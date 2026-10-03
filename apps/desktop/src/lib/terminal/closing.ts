@@ -13,10 +13,15 @@ import { key, t } from '../i18n.svelte'
 import { invoke } from '../tauri'
 import type { Tab } from '../workspace.svelte'
 import { ptyOf } from './running'
+import { hostIdOf, readSpec } from './spec'
 
 /** Whether the terminals among `closing` may go. */
 export async function mayEnd(closing: readonly Tab[]): Promise<boolean> {
-  const shells = closing.filter((tab) => tab.kind === 'terminal')
+  // `ssh` is a remote terminal's shell, as Windows Terminal's SSH profiles have it: what
+  // runs there cannot be seen from here, and the tab closes as a shell at its prompt does.
+  const shells = closing.filter(
+    (tab) => tab.kind === 'terminal' && hostIdOf(readSpec(tab.doc)?.shell ?? '') === null,
+  )
   const busy = await Promise.all(
     shells.map(async (tab) => {
       const id = ptyOf(tab.id)

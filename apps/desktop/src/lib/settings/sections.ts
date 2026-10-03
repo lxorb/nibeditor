@@ -11,6 +11,7 @@ import { modes } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
+import { isDesktop } from '../tauri'
 
 export interface Item {
   id: Section
@@ -54,6 +55,8 @@ export const ICONS: Record<string, string> = {
   trash:
     'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
+  // Two servers stacked, the mark a remote terminal's tab wears.
+  remote: 'M3 2.5h10v4.5H3zM3 9h10v4.5H3zM5.5 4.75h.01M5.5 11.25h.01',
 }
 
 /** The panes, in their groups.
@@ -91,6 +94,8 @@ export function sectionGroups(): Item[][] {
       ...(!__EVEN_PLUGIN__ && reach.offered
         ? [{ id: 'agents' as Section, label: t('Agents') }]
         : []),
+      // The machines a remote terminal reaches: a desktop's alone, as a terminal is.
+      ...(!__EVEN_PLUGIN__ && isDesktop ? [{ id: 'remote' as Section, label: t('Remote') }] : []),
       // Only for somebody who has a pair: in the plugin always, and on any other
       // device once the plugin has answered one, which the account remembers.
       // Spread rather than hidden, so the group closes over the gap instead of

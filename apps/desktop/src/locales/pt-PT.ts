@@ -1774,4 +1774,12 @@ export const ptPT: Dictionary = {
   'Did not load': 'Não foi carregada',
   Permissions: 'Permissões',
   Options: 'Opções',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remoto',
+  'Add host': 'Adicionar anfitrião',
+  Reconnect: 'Voltar a ligar',
+  'Open config': 'Abrir configuração',
+  'No group': 'Sem grupo',
+  'Not an address': 'Não é um endereço',
+  'Could not connect to {host}': 'Não foi possível ligar a {host}',
 }

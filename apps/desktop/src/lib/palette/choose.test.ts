@@ -27,6 +27,8 @@ function hands(): { asked: string[]; hands: Hands } {
       showSetting: say('setting'),
       make: say('make'),
       goto: say('goto'),
+      openHost: say('host'),
+      connect: say('connect'),
     },
   }
 }
@@ -186,5 +188,32 @@ describe('choosing the rest', () => {
     choose({ kind: 'make', make: { folder: 'Uni', name: 'Lecture 4.md' } }, key(), with_)
     choose({ kind: 'place', line: 41, text: 'x', depth: 0, hint: '42' }, key(), with_)
     expect(asked).toEqual(['make [{"folder":"Uni","name":"Lecture 4.md"}]', 'goto [41]'])
+  })
+})
+
+describe('another machine', () => {
+  test('a host opens a terminal on it, and a destination typed is connected to', () => {
+    const { asked, hands: hand } = hands()
+    const host = {
+      id: 'pi',
+      name: 'pi',
+      own: false,
+      also: [],
+      detail: null,
+      user: null,
+      hostname: null,
+      port: null,
+      group: null,
+      colour: null,
+      pinned: false,
+      last: null,
+    }
+    const wanted = { user: 'emil', hostname: 'box', port: 2222 }
+
+    expect(choose({ kind: 'host', host }, undefined, hand)).toBe('close')
+    expect(choose({ kind: 'connect', wanted, said: 'emil@box:2222' }, undefined, hand)).toBe(
+      'close',
+    )
+    expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`])
   })
 })

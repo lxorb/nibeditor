@@ -1703,4 +1703,12 @@ export const am: Dictionary = {
   'Did not load': 'አልተጫነም',
   Permissions: 'ፈቃዶች',
   Options: 'አማራጮች',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'ርቀት',
+  'Add host': 'አስተናጋጅ አክል',
+  Reconnect: 'እንደገና አገናኝ',
+  'Open config': 'ውቅረትን ክፈት',
+  'No group': 'ቡድን የለም',
+  'Not an address': 'አድራሻ አይደለም',
+  'Could not connect to {host}': 'ከ{host} ጋር መገናኘት አልተቻለም',
 }

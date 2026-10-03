@@ -1766,4 +1766,12 @@ export const de: Dictionary = {
   'Did not load': 'Nicht geladen',
   Permissions: 'Berechtigungen',
   Options: 'Optionen',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remote',
+  'Add host': 'Host hinzufügen',
+  Reconnect: 'Neu verbinden',
+  'Open config': 'Konfiguration öffnen',
+  'No group': 'Keine Gruppe',
+  'Not an address': 'Keine Adresse',
+  'Could not connect to {host}': 'Keine Verbindung zu {host}',
 }

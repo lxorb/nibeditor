@@ -8,6 +8,7 @@
  *  stand-in that writes down what it was asked. */
 
 import type { OpenHow, Press, TabAsk } from '../new-tab'
+import type { Destination } from '../remote/hosts'
 import { howFor, linkAsk, tabAsk } from '../new-tab'
 import type { Section } from '../settings.svelte'
 import type { NoteToMake } from './new-note'
@@ -27,6 +28,9 @@ export interface Hands {
   showSetting(section: Section, landing: string | null): void
   make(note: NoteToMake): void
   goto(line: number): void
+  /** A terminal on a host, by its id, or on a destination nobody has kept yet. */
+  openHost(id: string): void
+  connect(wanted: Destination): void
 }
 
 /** Whether the palette closes after, stays up, or nothing happened at all. */
@@ -80,6 +84,12 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return 'close'
     case 'place':
       hands.goto(row.line)
+      return 'close'
+    case 'host':
+      hands.openHost(row.host.id)
+      return 'close'
+    case 'connect':
+      hands.connect(row.wanted)
       return 'close'
   }
 }

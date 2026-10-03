@@ -4,6 +4,7 @@
 
 import type { Command } from '../commands'
 import type { FileMark } from '../file-mark'
+import type { Destination, Host } from '../remote/hosts'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { TabKind } from '../workspace/documents.svelte'
 import type { Entry } from '../workspace.svelte'
@@ -47,3 +48,7 @@ export type Row =
   | { kind: 'make'; make: NoteToMake }
   /** An address typed, gone to: Chrome's what-you-typed row. */
   | { kind: 'address'; url: string; address: string }
+  /** Another machine, a terminal on it opened: `pi`, or `ssh pi`. */
+  | { kind: 'host'; host: Host }
+  /** A destination typed after `ssh` that no host has yet, kept and connected to. */
+  | { kind: 'connect'; wanted: Destination; said: string }

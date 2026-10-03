@@ -1764,4 +1764,12 @@ export const fil: Dictionary = {
   'Did not load': 'Hindi na-load',
   Permissions: 'Mga pahintulot',
   Options: 'Mga opsyon',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remote',
+  'Add host': 'Magdagdag ng host',
+  Reconnect: 'Kumonekta muli',
+  'Open config': 'Buksan ang config',
+  'No group': 'Walang grupo',
+  'Not an address': 'Hindi isang address',
+  'Could not connect to {host}': 'Hindi makakonekta sa {host}',
 }

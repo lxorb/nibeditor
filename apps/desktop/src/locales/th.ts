@@ -1689,4 +1689,12 @@ export const th: Dictionary = {
   'Did not load': 'โหลดไม่สำเร็จ',
   Permissions: 'สิทธิ์',
   Options: 'ตัวเลือก',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'ระยะไกล',
+  'Add host': 'เพิ่มโฮสต์',
+  Reconnect: 'เชื่อมต่อใหม่',
+  'Open config': 'เปิดไฟล์กำหนดค่า',
+  'No group': 'ไม่มีกลุ่ม',
+  'Not an address': 'ไม่ใช่ที่อยู่',
+  'Could not connect to {host}': 'เชื่อมต่อกับ {host} ไม่ได้',
 }

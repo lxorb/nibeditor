@@ -65,6 +65,15 @@ export function places(): Place[] {
     })
   }
 
+  // The machines a remote terminal reaches; see remote/RemotePane.svelte.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    all.push({
+      section: 'remote',
+      label: t('Add host'),
+      text: ['SSH', 'ssh config', t('Remote'), t('Open config')],
+    })
+  }
+
   if (account.user) {
     all.push({
       section: 'llm',

@@ -12,7 +12,7 @@ import { identifier } from '../identifier'
 import type { MenuEntry } from '../menu-item'
 import { workspace } from '../workspace.svelte'
 import { type Shell, shellName, shells } from './shells.svelte'
-import { startingFolder, writeSpec } from './spec'
+import { hostIdOf, startingFolder, writeSpec } from './spec'
 
 interface Where {
   /** The folder to start in; where the reader is working when not given. */
@@ -24,6 +24,14 @@ interface Where {
 /** A terminal, in the shell given or the one Settings chose, in the pane that has the
  *  keyboard. */
 export async function openTerminal(shellId?: string, where: Where = {}): Promise<void> {
+  // Another beside a terminal on another machine is another connection to it.
+  const host = shellId === undefined ? null : hostIdOf(shellId)
+  if (host !== null) {
+    const { openRemote } = await import('../remote/open')
+    await openRemote(host, where.beside === undefined ? {} : { beside: where.beside })
+    return
+  }
+
   const list = await shells.ask()
   const shell = list.find((one) => one.id === shellId) ?? shells.chosen
   if (!shell) return

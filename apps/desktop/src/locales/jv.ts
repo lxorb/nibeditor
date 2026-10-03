@@ -1712,4 +1712,12 @@ export const jv: Dictionary = {
   'Did not load': 'Ora kemot',
   Permissions: 'Idin',
   Options: 'Pilihan',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Jarak adoh',
+  'Add host': 'Tambah host',
+  Reconnect: 'Sambung maneh',
+  'Open config': 'Bukak konfigurasi',
+  'No group': 'Tanpa grup',
+  'Not an address': 'Dudu alamat',
+  'Could not connect to {host}': 'Ora bisa nyambung menyang {host}',
 }

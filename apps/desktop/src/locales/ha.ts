@@ -1752,4 +1752,12 @@ export const ha: Dictionary = {
   'Did not load': 'Bai buɗu ba',
   Permissions: 'Izini',
   Options: 'Zaɓuɓɓuka',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Nesa',
+  'Add host': 'Ƙara mai masauki',
+  Reconnect: 'Sake haɗawa',
+  'Open config': 'Buɗe saitin',
+  'No group': 'Babu rukuni',
+  'Not an address': 'Ba adireshi ba ne',
+  'Could not connect to {host}': 'An kasa haɗawa da {host}',
 }

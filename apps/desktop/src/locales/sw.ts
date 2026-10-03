@@ -1753,4 +1753,12 @@ export const sw: Dictionary = {
   'Did not load': 'Hakijapakiwa',
   Permissions: 'Ruhusa',
   Options: 'Chaguo',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Mbali',
+  'Add host': 'Ongeza seva',
+  Reconnect: 'Unganisha tena',
+  'Open config': 'Fungua usanidi',
+  'No group': 'Hakuna kikundi',
+  'Not an address': 'Si anwani',
+  'Could not connect to {host}': 'Imeshindwa kuunganisha na {host}',
 }

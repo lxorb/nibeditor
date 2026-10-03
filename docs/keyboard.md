@@ -384,7 +384,8 @@ holding the Ctrl."* Tapped, it makes a web page and draws nothing. Held, it is A
 shape: after a beat a dialog comes up in the middle of the window with the kinds as
 cards and the website standing, each further T steps one along (Shift+T back), the
 arrows walk them too, and letting Ctrl go makes the one that stands. Each card's letter
-- N, C, W, P, and R for a terminal, since T is the chord's own step - makes it outright,
+- N, C, W, P, R for a terminal, since T is the chord's own step, and S (SSH) for Remote,
+which opens the host picker (docs/terminal.md, _Another machine_) - makes it outright,
 Enter and a click make the one pressed, Escape makes nothing. The terminal's card has a
 chevron in its corner: pressed, or Shift held with R, Enter or a click, it lists the
 other shells instead of starting the default one (see docs/terminal.md). A phone has no web tab, so there the note stands. The palette's New opens the

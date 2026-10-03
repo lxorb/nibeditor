@@ -38,9 +38,9 @@ import { shells } from './terminal/shells.svelte'
 import { viewport } from './viewport.svelte'
 import { type NewKind, workspace } from './workspace.svelte'
 
-/** What a new tab can be: the kinds the file list also makes, and a terminal, which is
- *  a tab and never a file. */
-export type NewKindName = NewKind | 'terminal'
+/** What a new tab can be: the kinds the file list also makes, and a terminal here or on
+ *  another machine, which is a tab and never a file. */
+export type NewKindName = NewKind | 'terminal' | 'remote'
 
 export interface NewKindRow {
   kind: NewKindName
@@ -116,8 +116,20 @@ export function newKinds(): NewKindRow[] {
     // browser has no machine under it, and the glasses' plugin carries none of it. R,
     // because T is the chord's own step, and R is what Run has been on Windows for thirty
     // years. See docs/terminal.md.
-    ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow()] : []),
+    // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
+    ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow(), remoteRow()] : []),
   ]
+}
+
+function remoteRow(): NewKindRow {
+  return {
+    kind: 'remote',
+    label: () => t('Remote'),
+    mark: 'remote',
+    letter: 's',
+    make: (paneId) =>
+      void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId)),
+  }
 }
 
 function terminalRow(): NewKindRow {
