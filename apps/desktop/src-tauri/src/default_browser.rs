@@ -670,16 +670,39 @@ mod tests {
         assert!(!whole(&root, "Nib"));
     }
 
-    /// The shell answers which program opens a scheme, and on no machine running these
-    /// tests is that nib.
+    /// The shell answers which program opens a scheme: the one a scheme of the test's own
+    /// names, and nothing for a scheme nothing registered. Asked of a scheme the test
+    /// writes rather than of `https`, whose answer is the machine's - nib, on a machine
+    /// where somebody made it the default browser.
     #[cfg(windows)]
     #[test]
     fn the_shell_is_asked_which_program_opens_the_web() {
         use super::platform::handler_of;
+        use windows_registry::CURRENT_USER;
 
-        if let Some(id) = handler_of("https") {
-            assert_ne!(id, PROG_ID);
+        /// The test's own scheme, gone with the test, passed or failed.
+        struct Scratch(String);
+        impl Drop for Scratch {
+            fn drop(&mut self) {
+                let _ = CURRENT_USER.remove_tree(format!(r"Software\Classes\{}", self.0));
+            }
         }
+
+        let scheme = format!("nib-test-{}", std::process::id());
+        let scratch = Scratch(scheme.clone());
+        assert_eq!(handler_of(&scheme), None, "a scheme nothing registered");
+
+        let key = CURRENT_USER
+            .create(format!(r"Software\Classes\{scheme}"))
+            .expect("a test scheme");
+        key.set_string("URL Protocol", "").expect("a protocol");
+        key.create(r"shell\open\command")
+            .and_then(|command| command.set_string("", r#""C:\nowhere\nib.exe" "%1""#))
+            .expect("a command");
+        assert_eq!(handler_of(&scheme), Some(scheme.clone()));
+
+        drop(scratch);
+        assert_eq!(handler_of(&scheme), None, "a scheme taken away");
         assert_eq!(handler_of("no-such-scheme-anywhere"), None);
     }
 }
