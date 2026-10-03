@@ -128,6 +128,10 @@ type Args = Record<string, unknown>
 
 const has = (args: Args, name: string) => name in args && args[name] !== undefined
 
+/** A value as the words it says: words and numbers as written, anything else nothing. */
+const words = (value: unknown): string =>
+  typeof value === 'string' ? value : typeof value === 'number' ? String(value) : ''
+
 /** A date argument: `YYYY-MM-DD`, or null to take it off. */
 function dateArg(args: Args, name: string): string | null {
   const value = args[name]
@@ -169,7 +173,7 @@ export function taskChange(args: Args): TaskChange {
   if (has(args, 'text')) change.text = textArg(args.text, 'text')
   if (has(args, 'status')) {
     const status = args.status
-    if (typeof status !== 'string' || [...status].length !== 1 || status === ']') {
+    if (typeof status !== 'string' || Array.from(status).length !== 1 || status === ']') {
       throw new AgentError('bad_arguments', 'status is the one character in the box')
     }
     change.status = status
@@ -177,7 +181,7 @@ export function taskChange(args: Args): TaskChange {
     change.cancelled = status === '-'
   }
   if (has(args, 'time')) {
-    const time = args.time === null || args.time === '' ? null : readTime(String(args.time))
+    const time = args.time === null || args.time === '' ? null : readTime(words(args.time))
     if (time === null && args.time !== null && args.time !== '') {
       throw new AgentError('bad_arguments', 'time is HH:MM, with a zone after it if you like')
     }
@@ -197,7 +201,7 @@ export function taskChange(args: Args): TaskChange {
     const remind =
       said === null || said === ''
         ? []
-        : readRemind(Array.isArray(said) ? said.join(',') : String(said))
+        : readRemind(Array.isArray(said) ? said.map(words).join(',') : words(said))
     if (remind === null) {
       throw new AgentError(
         'bad_arguments',
@@ -208,7 +212,7 @@ export function taskChange(args: Args): TaskChange {
   }
   if (has(args, 'duration')) {
     const said = args.duration
-    const minutes = said === null || said === '' ? null : readDuration(String(said))
+    const minutes = said === null || said === '' ? null : readDuration(words(said))
     if (minutes === null && said !== null && said !== '') {
       throw new AgentError('bad_arguments', 'duration is minutes, or "1h30m"')
     }
@@ -259,7 +263,7 @@ export function newTask(args: Args, read: ReadWords = writtenFields): TaskFields
     Object.fromEntries(Object.entries(said).filter(([key]) => key !== 'text')),
   )
   for (const [key, value] of Object.entries(change)) {
-    if (value === null) delete (task as unknown as Args)[key]
+    if (value === null) Reflect.deleteProperty(task, key)
     else Object.assign(task, { [key]: value })
   }
   return task
