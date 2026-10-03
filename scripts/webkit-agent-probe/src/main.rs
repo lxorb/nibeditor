@@ -196,7 +196,12 @@ fn main() {
     // Every way's samples, by phase.
     let mut sampled: Vec<(usize, &'static str, Log)> = Vec::new();
     event_loop.run(move |event, _, flow| {
-        *flow = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(50));
+        // Linux's toolkit hands a page's answers back only while its loop turns.
+        *flow = if cfg!(target_os = "linux") {
+            ControlFlow::Poll
+        } else {
+            ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(50))
+        };
         let _ = &kept;
         if !matches!(event, Event::NewEvents(_) | Event::MainEventsCleared) {
             return;
@@ -557,7 +562,73 @@ mod platform {
             native_input: Some(Box::new(move |log| native_input(&c, log))),
             picture: Some(Box::new(move |log| picture(&d, log))),
         };
-        vec![(way, Box::new(web) as Box<dyn std::any::Any>)]
+        let (window_way, kept) = own_window(mtm);
+        vec![
+            (way, Box::new(web) as Box<dyn std::any::Any>),
+            (window_way, kept),
+        ]
+    }
+
+    /// A window of its own for the page, borderless, at (-10000, -10000) on no screen,
+    /// ordered behind every other window and never made key: whether a page can outlive
+    /// the reader's window being minimised.
+    fn own_window(mtm: MainThreadMarker) -> (Way, Box<dyn std::any::Any>) {
+        use objc2_app_kit::{NSBackingStoreType, NSWindow, NSWindowStyleMask};
+        let configuration = unsafe { WKWebViewConfiguration::new(mtm) };
+        unsafe {
+            configuration
+                .preferences()
+                .setInactiveSchedulingPolicy(WKInactiveSchedulingPolicy::None);
+        }
+        let rect = NSRect::new(NSPoint::new(AWAY, AWAY), NSSize::new(WIDTH, HEIGHT));
+        let window = unsafe {
+            NSWindow::initWithContentRect_styleMask_backing_defer(
+                mtm.alloc::<NSWindow>(),
+                rect,
+                NSWindowStyleMask::Borderless,
+                NSBackingStoreType::Buffered,
+                false,
+            )
+        };
+        unsafe { window.setReleasedWhenClosed(false) };
+        let web = unsafe {
+            WKWebView::initWithFrame_configuration(
+                mtm.alloc::<WKWebView>(),
+                NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(WIDTH, HEIGHT)),
+                &configuration,
+            )
+        };
+        window.setContentView(Some(&web));
+        window.setFrameOrigin(NSPoint::new(AWAY, AWAY));
+        window.orderBack(None);
+        unsafe {
+            web.loadHTMLString_baseURL(&NSString::from_str(PAGE), None);
+        }
+        let web = Rc::new(web);
+        let (a, b, c, d) = (
+            Rc::clone(&web),
+            Rc::clone(&web),
+            Rc::clone(&web),
+            Rc::clone(&web),
+        );
+        let watched = window.clone();
+        let way = Way {
+            name: "own-window",
+            notes: Log::default(),
+            sample: Box::new(move |log| evaluate(&a, "window.m()", None, log, "sample")),
+            world_press: Some(Box::new(move |log| {
+                evaluate(&b, WORLD_PRESS, Some(&world()), log, "world press")
+            })),
+            native_input: Some(Box::new(move |log| {
+                push(
+                    &log,
+                    json!({ "own window": { "key": watched.isKeyWindow(), "visible": watched.isVisible(), "occlusion visible": watched.occlusionState().0 & 2 != 0, "frame": [watched.frame().origin.x, watched.frame().origin.y] } }),
+                );
+                native_input(&c, log);
+            })),
+            picture: Some(Box::new(move |log| picture(&d, log))),
+        };
+        (way, Box::new((window, web)) as Box<dyn std::any::Any>)
     }
 
     pub fn window_state(window: &tao::window::Window, when: &str) -> Value {
