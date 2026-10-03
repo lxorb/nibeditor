@@ -1109,7 +1109,7 @@ is still off, and an agent's token never reaches it.
 | | an agent's own tab | out of sight, unthrottled | reading, pressing, typing | screenshots | status |
 | --- | --- | --- | --- | --- | --- |
 | **`WebView2`** (Windows) | a shown child outside the window's client area | **measured** (3): 60 frames and 100 ticks a second | the `DevTools` Protocol: `Accessibility.getFullAXTree`, `Input.*` - trusted, inside the page | `Page.captureScreenshot`, 95 to 120 ms | every verb |
-| **nib's own Chromium** (CEF) | a **windowless** browser: Alloy style, off-screen rendering, no native window at all | **measured**: 60 and 100, with the reader's window shown, hidden or minimised | the same protocol, through the browser's own agent (`SendDevToolsMessage` and a message observer) | the same, 105 to 155 ms | every verb, on Windows; a Mac's on a runner |
+| **nib's own Chromium** (CEF) | a **windowless** browser: Alloy style, off-screen rendering, no native window at all | **measured**: 60 and 100, with the reader's window shown, hidden or minimised | the same protocol, through the browser's own agent (`SendDevToolsMessage` and a message observer) | the same, 105 to 155 ms | every verb on Windows; on a Mac the page is never built yet (12.1) |
 | **`WKWebView`** (macOS) | none yet | **measured**: a child outside the window's content runs at the window's own rate while the window is on a screen, and stops with it minimised whatever `inactiveSchedulingPolicy` says | scripts in a `WKContentWorld`; an `NSEvent` sent to the view is trusted | `takeSnapshot`, even minimised | `unsupported_on_this_engine` |
 | **`WebKitGTK`** (Linux) | none yet | **measured**: a `GtkOffscreenWindow` runs at full rate; a child outside the window's content gets no frames | scripts in a script world; script events only | `webkit_web_view_get_snapshot` | `unsupported_on_this_engine` |
 
@@ -1171,6 +1171,12 @@ the probe passing, two runs:
 On runners, `cef.yml` runs `scripts/agent-engines-runner.py` against the engine build of
 Windows (x64) and a Mac (Apple silicon), as the reader's command line: the tab built, its
 rates, a picture, a press and a key. (Linux has no engine build: `docs/browser.md` 10.)
+2026-10-04: on Windows x64 the tab was built in 1.6 s (its twin's profile made), ran at 60.1
+and 100.0, was photographed in 103 ms, and its press and key arrived trusted. On the Mac the
+endpoint answered and `browser_open` did not: the page was never built (20 s), the same
+family as the Mac's web tab that never loads (`docs/browser.md` 0) - a browser asked of
+CEF's UI thread from a task posted there never arrives. Until a Mac is there to find that
+wait, an agent's tab on a Mac's Chromium answers `failed` with that reason.
 
 ### 12.2 `WKWebView` and `WebKitGTK`: measured, not built
 
