@@ -9,11 +9,21 @@
  *
  *  A path as the app holds one or as the space speaks it, since both stores read
  *  both. See file-icon.ts and workspace/folder-icons.svelte.ts for the writing, and
- *  icons.ts for what the value says. */
+ *  icons.ts for what the value says.
+ *
+ *  **By the space the file is in, never by the open one.** The link index is a scan
+ *  of the open space, so a tab, a bookmark or a search hit from another space asked
+ *  it and got nothing: a note wore its chosen icon only while its own space was the
+ *  open one (Emil, 2026-10-03). A path on the disk under another space's root is
+ *  answered from what that file says, read once on its own (marks-elsewhere.svelte.ts),
+ *  and a folder from that space's own map. A path the space speaks, with no root in
+ *  front of it, is the open space's, which is the only space a caller holding one can
+ *  mean. Every mark in the app asks here, so each of them follows. */
 
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
-import { folderOf } from './space-paths'
+import { elsewhere } from './marks-elsewhere.svelte'
+import { folderOf, samePath, withinSpace } from './space-paths'
 import { siteMark } from './web-tab/pages.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -28,8 +38,25 @@ function mapKey(path: string): string {
   return isFolderNote(path) ? folderOf(path) : path
 }
 
+/** The root of the space a path is on the disk in, where that is not the open space;
+ *  null for one the open space speaks for. The longest root that holds it, so a space
+ *  inside another's folder answers for its own files. */
+function awayIn(path: string): string | null {
+  let home: string | null = null
+  for (const space of workspace.spaces) {
+    if (withinSpace(space.root, path) === null) continue
+    if (home === null || space.root.length > home.length) home = space.root
+  }
+
+  const open = links.rootOf() ?? workspace.activeSpace?.root ?? null
+  return home === null || samePath(home, open) ? null : home
+}
+
 export function chosenIcon(path: string): string | null {
-  return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
+  const away = awayIn(path)
+  if (away === null) return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
+
+  return elsewhere.of(path)?.icon ?? workspace.folderIcons.iconOf(mapKey(path), away)
 }
 
 /** A website's own mark, as an address, or null for anything that is not one or has
@@ -37,8 +64,13 @@ export function chosenIcon(path: string): string | null {
  *  address and no file), falling back to the file's `Nib-Icon`. Here beside the chosen
  *  icon so a row asks one façade for what it draws and never the index by name. */
 export function faviconFor(path: string | undefined, url?: string | null): string | null {
-  const address = url ?? (path === undefined ? null : links.shortcutOf(path))
-  return siteMark(null, address, path === undefined ? null : links.faviconOf(path))
+  if (path === undefined) return siteMark(null, url)
+  if (awayIn(path) === null) {
+    return siteMark(null, url ?? links.shortcutOf(path), links.faviconOf(path))
+  }
+
+  const worn = elsewhere.of(path)
+  return siteMark(null, url ?? worn?.address, worn?.favicon)
 }
 
 /** The colour a stroked icon is drawn in, or null for the plain foreground.
@@ -52,5 +84,8 @@ export function faviconFor(path: string | undefined, url?: string | null): strin
  *  Only a stroked icon takes one; an emoji and a coloured drawing have their own
  *  colours. See `readTint` in icons.ts for which names count. */
 export function chosenTint(path: string): string | null {
-  return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
+  const away = awayIn(path)
+  if (away === null) return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
+
+  return elsewhere.of(path)?.iconColor ?? workspace.folderIcons.tintOf(mapKey(path), away)
 }

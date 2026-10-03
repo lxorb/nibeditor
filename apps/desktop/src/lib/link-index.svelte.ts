@@ -62,6 +62,7 @@ import {
   relativePath,
   within,
 } from './space-paths'
+import { elsewhere } from './marks-elsewhere.svelte'
 import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { FileOp } from './workspace/file-ops'
@@ -295,6 +296,9 @@ class Links {
     // sync.svelte.ts.
     const mine = ++this.scans
     this.root = root
+    // What the files outside the open space wear was read against the space open
+    // before this one; see marks-elsewhere.svelte.ts.
+    elsewhere.clear()
     this.scanning = true
     this.notes = []
     this.files = []
@@ -590,7 +594,12 @@ class Links {
    *  see `canvasRead`. */
   noteSaved(path: string, content: string) {
     const relative = this.relative(path)
-    if (!relative) return
+    // A file of another space, which this index is not of: what it wears is kept
+    // beside it, for its tab and its row; see chosen-icon.ts.
+    if (!relative) {
+      elsewhere.saved(path, content)
+      return
+    }
 
     // A file that was written is a file that is there, and whatever is not a note
     // is listed among the files as well - which is where `[[Docs.url]]` is
@@ -769,6 +778,7 @@ class Links {
    *  see workspace/file-ops.ts. A space that moved is read again when it is next
    *  listed, which is what `loadTree` asks for a root this index is not of. */
   follow(op: FileOp): Promise<void> | undefined {
+    elsewhere.forget(op.op === 'moved' ? op.from : op.path)
     if (op.kind === 'space') return undefined
     if (op.op === 'moved') this.notesMoved(op.from, op.to)
     else if (op.op === 'removed') this.noteGone(op.path)

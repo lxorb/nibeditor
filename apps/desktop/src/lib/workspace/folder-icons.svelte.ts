@@ -162,17 +162,16 @@ export class FolderIcons {
    *  Takes a path as the app holds one or as the space speaks it, because the
    *  surfaces that show a folder disagree: a row in the tree knows where the
    *  folder is on the disk, and a bookmark or a Move sheet knows it relative to
-   *  the space. The same two readings `links.iconOf` takes. */
-  iconOf(path: string): string | null {
-    const root = this.root()
+   *  the space. The same two readings `links.iconOf` takes. `root` is the space the
+   *  folder is in, where that is not the open one; see chosen-icon.ts. */
+  iconOf(path: string, root = this.root()): string | null {
     if (root === null) return null
 
     return this.of(root)[relativeTo(root, path)] ?? null
   }
 
   /** The colour that folder's icon is drawn in, or null for the plain foreground. */
-  tintOf(path: string): string | null {
-    const root = this.root()
+  tintOf(path: string, root = this.root()): string | null {
     if (root === null) return null
 
     return this.colorsOf(root)[relativeTo(root, path)] ?? null
