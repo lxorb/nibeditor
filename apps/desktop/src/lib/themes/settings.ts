@@ -96,8 +96,10 @@ export function paintOf(
 
 /** Whether a sheet paints an app setting's tokens itself, which withdraws the setting:
  *  a theme that states `--accent` was chosen from a picture of itself. Read off the
- *  sheet, not the page, which always has an `--accent`. */
+ *  sheet, not the page, which always has an `--accent`. A token said to `inherit` is
+ *  kept rather than painted - glass keeps the reader's accent that way inside a part of
+ *  the frame that wears the other scheme - so it withdraws nothing. */
 export function paintsOver(css: string, setting: ThemeSetting): boolean {
   const tokens = Object.keys(setting.paint(setting.initial, 'dark'))
-  return tokens.some((token) => new RegExp(`${token}\\s*:`).test(css))
+  return tokens.some((token) => new RegExp(`${token}\\s*:(?!\\s*inherit\\b)`).test(css))
 }

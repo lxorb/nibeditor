@@ -4,6 +4,7 @@
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
   import { dragged, isTreeDrag, mayCarryAddress } from './drag-paths'
+  import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
@@ -841,6 +842,8 @@
         class:gone={lifted.includes(tab.id) && drag.out}
         class:settling={settling === tab.id}
         class:onbar={tab.kind === 'web'}
+        data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
+        style:--web-ground={chrome.barOf(tab.id)?.colour}
         style:width="{box.width}px"
         style:transform="translateX({box.x * i18n.factor}px)"
         style:--w="{box.width}px"
@@ -1073,9 +1076,10 @@
     /* What the active tab is filled with: the ground of whatever is directly under
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
-    --tab-ground: var(--bg);
-    /* The fill a hovered tab gets: the active tab's colour, part of the way. */
-    --tab-hover: color-mix(in srgb, var(--tab-ground) 40%, transparent);
+    --tab-ground: var(--paper, var(--bg));
+    /* The fill a hovered tab gets: the active tab's colour, part of the way - or under
+       glass, whose strip may wear the other scheme's words, a lift of those words. */
+    --tab-hover: var(--glass-tab-hover, color-mix(in srgb, var(--tab-ground) 40%, transparent));
     /* Chrome's top corner, and its concave foot at the bottom. */
     --tab-round: var(--radius-md);
     --tab-foot: var(--radius-md);
@@ -1142,9 +1146,10 @@
     pointer-events: none;
   }
 
-  /* A tab over a page has the bar the page brings as its ground. */
+  /* A tab over a page has the bar the page brings as its ground: under glass, the
+     page's own colour. */
   .tab.onbar {
-    --tab-ground: var(--surface);
+    --tab-ground: var(--web-ground, var(--surface));
   }
 
   /* The body: a rounded box from the frame down, a hair inside the tab's own box
@@ -1159,6 +1164,9 @@
 
   .tab.active .fill {
     background: var(--tab-ground);
+    /* Eased with the bar under it when the page's colour changes; glass.css registers
+       the property, so the feet ease with the body. */
+    transition: --tab-ground var(--dur-slow) var(--ease-out);
   }
 
   /* Picked with Ctrl or Shift: the hover's box, held, as Chrome's selected tab, in the

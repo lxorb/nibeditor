@@ -1,4 +1,6 @@
-/* Glass: the theme that is about the window rather than about the palette.
+/* Glass: the theme that is about the window rather than about the palette, and about
+   what is open in it: the frame takes its colour from the page or the note in front;
+   see "What is open" below.
 
    The chrome - the title bar with the tabs in it, the list down the side, the foot
    row - stands on the material the platform composites behind the window: Mica Alt on
@@ -29,9 +31,9 @@
    a white desk, a black one and a busy one, and scripts/glass-probe.py off the packaged
    app's own picture.
 
-   Where the platform has nothing to stand on - which is where the theme is not offered
-   at all, see theme.svelte.ts - the window stands on the palette's own ground and this
-   is a palette like any other.
+   Where the platform has nothing to stand on - a Mac, whose webview is opaque, Linux,
+   a browser and a phone - the window stands on the palette's own ground, and the frame
+   is the colour of what is open over that paper: the same theme without the glass.
 
    ── The words ──
 
@@ -98,10 +100,92 @@
   --glass-wash: 30%;
 }
 
+/* ── What is open ──
+
+   The frame takes its colour from what is in front (see lib/glass in the app): a web
+   page's own colour - its theme colour, else what it paints along its top - and a
+   tone of a note's cover, its icon's colour or the accent. `data-tinted` says the app
+   is following, `--glass-tint` is the colour and `--glass-tinted` how much of it lies
+   over what is behind the window: the material, or where there is none, the paper. Both
+   are worked out so the quietest word on the frame clears four and a half to one over
+   every colour the material can be, so they are never guessed here; until the first
+   answer the theme's own wash stands in.
+
+   Where the colour wants the other scheme's words, the parts of the frame say
+   `data-theme` with it: the title bar, the strips, the side panels, the foot row, and a
+   web bar with the open tab on it, which stand on the page's colour solid. Every token
+   there is then that side's palette, which was measured. What the root worked out from
+   the reader's own palette is worked out again inside, and the accent is kept the
+   reader's: it is a choice, not a colour of the scheme. (A card in the theme store
+   says `data-theme` too, with `data-palette`, and is somebody else's palette.) */
+:root[data-tinted] {
+  /* The note's paper, said at the root, so a tab inside a strip in the other scheme
+     still runs down into the paper it is the tab of. */
+  --paper: var(--bg);
+  --shell-ground: color-mix(
+    in srgb,
+    var(--glass-tint, var(--glass-chrome)) var(--glass-tinted, var(--glass-wash)),
+    var(--bg)
+  );
+  --tab-frame: transparent;
+  --side-bar-bg-color: var(--glass-layer);
+  --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
+  --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+:root[data-tinted][data-translucent] {
+  --shell-ground: color-mix(
+    in srgb,
+    var(--glass-tint, var(--glass-chrome)) var(--glass-tinted, var(--glass-wash)),
+    transparent
+  );
+}
+
+:root[data-tinted] [data-theme]:not([data-palette]) {
+  --accent: inherit;
+  --accent-hover: inherit;
+  --accent-press: inherit;
+  --accent-soft: inherit;
+  --accent-line: inherit;
+  --accent-ink: inherit;
+  --selection: inherit;
+
+  --bg-color: var(--bg);
+  --text-color: var(--text);
+  --side-bar-bg-color: var(--glass-layer);
+  --control-text-color: var(--muted-strong);
+  --meta-content-color: var(--muted-strong);
+  --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
+  --item-hover-text-color: var(--text-strong);
+  --active-file-text-color: var(--text-strong);
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+  --window-border: var(--line);
+  --surface-hover: var(--item-hover-bg-color);
+  --surface-press: var(--press);
+  --surface-picked: var(--surface-3);
+  --tag: var(--accent-hover);
+  --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);
+
+  color: var(--text);
+}
+
+/* The colour the open tab stands on, registered so a page that changes its colour eases
+   the tab's feet with its body and the bar under it, rather than the curves arriving a
+   moment before the rest. */
+@property --tab-ground {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
 /* A system asking for less transparency is answered with none: Windows turns Mica into
    a flat colour by itself, and this makes the page's own chrome flat with it. */
 @media (prefers-reduced-transparency: reduce) {
   :root[data-translucent][data-theme] {
     --glass-wash: 100%;
+  }
+
+  :root[data-tinted][data-theme] {
+    --shell-ground: var(--glass-tint, var(--glass-chrome));
   }
 }

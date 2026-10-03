@@ -36,6 +36,7 @@
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
 
+  import { chrome } from './glass/chrome.svelte'
   import { without } from './graph'
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
@@ -443,7 +444,9 @@
   ondrop={drop}
 >
   {#if stripped}
-    <div class="head" data-chrome="top"><Tabs paneId={pane.id} /></div>
+    <div class="head" data-chrome="top" data-theme={chrome.theme}>
+      <Tabs paneId={pane.id} />
+    </div>
   {/if}
 
   <!-- Under the strip, which is where every editor puts its find bar, and above

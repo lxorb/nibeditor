@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@nib/editor'
   import { countNote, countText } from './counts'
+  import { chrome } from './glass/chrome.svelte'
   import { amount, t } from './i18n.svelte'
   import { modes, VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
@@ -72,6 +73,7 @@
      with a region whose contents are not interactive. See focus.ts. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <footer
+  data-theme={chrome.theme}
   class:looking={looking || held || reading || !!paper}
   class:paper={!!paper}
   data-region="status"

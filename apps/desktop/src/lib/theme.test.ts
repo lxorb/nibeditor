@@ -810,11 +810,11 @@ describe('the glass theme', () => {
     expect(typeof found?.load).toBe('function')
   })
 
-  test('is offered where the window has a material to stand on, and nowhere else', () => {
+  test('is offered on every platform, with a material to stand on or without one', () => {
     for (const [platform, offered] of [
       ['windows', true],
-      ['macos', false],
-      ['linux', false],
+      ['macos', true],
+      ['linux', true],
     ] as const) {
       host.platform = platform
       // The list is derived; asking it again is enough once the platform has moved.
@@ -843,7 +843,8 @@ describe('the glass theme', () => {
     expect(injected()).toBe(glassCss)
     // No accent of its own: glass is a window and not a palette, so the row of
     // swatches stays and the reader's colour shows on it.
-    expect(glassCss).not.toMatch(/--accent\s*:/)
+    // Kept inside a part of the frame in the other scheme, rather than stated.
+    expect(glassCss).not.toMatch(/--accent\s*:(?!\s*inherit)/)
     expect(theme.accentIsTheme).toBe(false)
   })
 

@@ -173,6 +173,8 @@ mod web_state;
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;
+#[cfg(desktop)]
+mod web_tint;
 // Only where a page's input window is a window of another process: the system's own
 // engine on Windows.
 #[cfg(all(windows, not(feature = "cef")))]
@@ -378,6 +380,7 @@ macro_rules! desktop_commands {
             web_find::web_find,
             web_find::web_find_stop,
             web_tabs::web_shot,
+            web_tint::web_tint,
             web_tabs::web_answer,
             web_dialogs::web_dialog_answer,
             downloads::web_downloads,
