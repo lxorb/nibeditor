@@ -121,6 +121,10 @@ class Numbers {
 
   private show() {
     if (!this.hold.holding || viewport.touch) return
+    // Never beside a list of spaces, whose rows wear numbers of their own that a digit
+    // there switches by: two sets of figures on the glass at once would be one too many
+    // to read. See SpacePlace.svelte.
+    if (document.querySelector('[data-spaces-open]')) return
 
     const paneId = workspace.panes.focusedId
     const strip = document.querySelector(`[data-strip="${CSS.escape(paneId)}"]`)

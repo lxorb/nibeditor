@@ -277,6 +277,16 @@ export const heldMark = latched(() =>
  *  See NewKindSheet.svelte and new-kind-sheet.svelte.ts. */
 export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
 
+/** The switcher in the middle of the window, Ctrl+Shift+Space: every space, a digit
+ *  away. Latched and asked for at the launch's last turn, as the dialog above is, since
+ *  the press it answers is a hand that expects the rows under it at once. See
+ *  SpacePicker.svelte and space-picker.svelte.ts. */
+export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
+
+/** And the list a press on a space's mark drops, which is the same rows; warmed with
+ *  the dialog, so the press finds it here. See SpaceMenu.svelte. */
+export const spacesMenu = held(() => import('./SpaceMenu.svelte'))
+
 /** The one question the app asks in a sheet: a name for a new note, a folder to move one
  *  to, one of many answers to pick. Latched and asked for at the same last turn, so the
  *  first question is already mounted; one asked in front of that is fetched and opens as
@@ -402,6 +412,8 @@ export async function warmDoors(): Promise<void> {
     // see above.
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
+    spacePickerDialog.ask(),
+    spacesMenu(),
     paletteDoor.ask(),
     promptSheet.ask(),
     // The menu a right click opens and the bar a selection brings up, which are the

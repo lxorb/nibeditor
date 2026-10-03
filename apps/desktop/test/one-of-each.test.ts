@@ -389,9 +389,12 @@ describe('the badge in front of a name', () => {
       'lib/ShareSheet.svelte',
       'lib/Sheet.svelte',
       'lib/SidebarFoot.svelte',
-      // Also the space in the bar while the list is shut, which is the switcher
-      // itself, bare: the same badge on the same space. See Titlebar.svelte.
-      'lib/SpaceSwitcher.svelte',
+      // A space's own, for the header over the file list, the space in the bar while
+      // the list is shut (the switcher itself, bare; see Titlebar.svelte) and each
+      // space's row.
+      'lib/SpaceBadge.svelte',
+      // New space and a file somebody shared, in the list the switcher drops.
+      'lib/SpaceMenu.svelte',
       // An agent, which wears a person's badge in the colour of its caret.
       'lib/agents/settings/AgentMark.svelte',
       // A program asking to become an agent, as the Share sheet shows a person.
@@ -418,7 +421,8 @@ describe('the badge in front of a name', () => {
       'lib/PromptSheet.svelte',
       'lib/PublishSheet.svelte',
       'lib/ShareSheet.svelte',
-      'lib/SpaceSwitcher.svelte',
+      // The switcher's header and each space's row in either list; see SpaceRow.svelte.
+      'lib/SpaceBadge.svelte',
       // Save's places, which are the Move sheet's; see save-place/places.ts.
       'lib/save-place/SavePlace.svelte',
       // A tab's card, for a page of another space; see tab-strip/card.ts.
