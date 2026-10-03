@@ -62,6 +62,9 @@ mod chatgpt;
 )]
 mod apple_text;
 mod assets;
+// The Mac app's folder carried over from the product's old name; see bundle_name.rs.
+#[cfg(desktop)]
+mod bundle_name;
 mod carry;
 mod clock;
 #[cfg(desktop)]
@@ -434,6 +437,11 @@ pub fn run() {
 /// hundred megabytes of Chromium out of the default build's dependency graph
 /// entirely. See src/engine.rs and docs/browser.md.
 pub fn run_on(builder: tauri::Builder<Engine>) {
+    // Before everything, because a copy under the old folder's name renames it and
+    // starts again from there rather than going on; see bundle_name.rs.
+    #[cfg(target_os = "macos")]
+    bundle_name::carry_over();
+
     // Before the trace, because the gate's clock is the process's and a measurement
     // that starts late is a measurement that flatters. Nothing at all in the default
     // build: the module is behind the `cef` feature.

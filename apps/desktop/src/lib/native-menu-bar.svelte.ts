@@ -72,8 +72,8 @@ export interface MenuBarContext {
 }
 
 /** The app's name, which the Mac writes into its own rows: About nibeditor, Quit
- *  nibeditor. The bold title of the menu itself is the bundle's name, which is
- *  `productName` and stays Nib: the installed app's folder is named by it. */
+ *  nibeditor. The bold title of the menu itself is the bundle's name, `productName`,
+ *  which says the same. */
 const NAME = 'nibeditor'
 
 /** How long a burst of changes is let settle before the strip catches up with it.

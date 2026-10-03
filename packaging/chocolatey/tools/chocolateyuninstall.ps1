@@ -3,15 +3,17 @@ $ErrorActionPreference = 'Stop'
 $packageArgs = @{
   packageName    = $env:ChocolateyPackageName
   fileType       = 'MSI'
-  softwareName   = 'Nib'
+  softwareName   = 'nibeditor'
   silentArgs     = '/qn /norestart'
   validExitCodes = @(0, 3010, 1605, 1614, 1641)
 }
 
 # nibeditor's own NSIS installer registers under the same display name but with
-# a plain key ("Nib") instead of a product GUID. Only the MSI's entry can be
+# a plain key ("nibeditor") instead of a product GUID. Only the MSI's entry can be
 # handed to the Windows Installer, so anything that is not a GUID is left alone.
-[array]$keys = Get-UninstallRegistryKey -SoftwareName $packageArgs.softwareName |
+# An install made before the product was renamed is still listed as Nib.
+[array]$keys = @($packageArgs.softwareName, 'Nib') |
+  ForEach-Object { Get-UninstallRegistryKey -SoftwareName $_ } |
   Where-Object { $_.PSChildName -match '^\{[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}\}$' }
 
 if ($keys.Count -eq 0) {
