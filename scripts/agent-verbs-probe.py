@@ -172,13 +172,13 @@ class Drive(mcp.Drive):
 
     def renamed(self, agent: Any) -> None:
         print("rename and trash: a note by its tab", flush=True)
-        opened = self.result(agent, "workspace_tabs", {"op": "open", "path": "Plan.md"}) or {}
+        opened = self.result(agent, "workspace_tabs", {"op": "open", "path": "Later.md"}) or {}
         tab = opened.get("id", "")
         self.check("opened behind", bool(tab) and opened.get("selected") is False, json.dumps(opened))
         self.result(agent, "workspace_tabs", {"op": "rename", "tab": tab, "name": "Roadmap"})
-        self.check("the file renamed on disk", (self.space / "Roadmap.md").is_file() and not (self.space / "Plan.md").exists())
+        self.check("the file renamed on disk", (self.space / "Roadmap.md").is_file() and not (self.space / "Later.md").exists())
         self.result(agent, "trash_file", {"path": "Roadmap.md"})
-        self.check("trashed, gone from the space", not (self.space / "Roadmap.md").exists())
+        self.check("trashed from a tab behind, gone from the space", not (self.space / "Roadmap.md").exists())
 
     def focus(self, agent: Any, first: str) -> None:
         print("focus: nothing moved until asked", flush=True)
@@ -209,6 +209,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-verbs-probe-"))
     (spaces / SPACE).mkdir()
     (spaces / SPACE / "Plan.md").write_text("# Plan\n\nThe plan.\n", encoding="utf-8")
+    (spaces / SPACE / "Later.md").write_text("# Later\n\nSomeday.\n", encoding="utf-8")
     drive = Drive(exe, options.identifier, spaces)
     front = user32.GetForegroundWindow()
     app: subprocess.Popen[bytes] | None = None

@@ -45,8 +45,12 @@ const WAIT = 2000
 const MOST_WAIT = 30_000
 const QUIET = 300
 
-/** How long a shell started off screen is given to start. */
+/** How long a shell started off screen is given to start, and how long it has to be
+ *  quiet after printing before it is taken to be at its prompt: a shell drops what is
+ *  typed before it is ready to read it (PowerShell's line editor does), and a profile
+ *  can pause between the banner and the prompt. */
 const STARTING = 5000
+const READY_QUIET = 1000
 
 /** Where a terminal is drawn while it starts with nobody looking: a box of a usual
  *  terminal's size, off every screen and invisible, so xterm.js can measure its cells. */
@@ -73,35 +77,36 @@ async function startingOf(tab: Tab): Promise<void> {
   while (!running(tab) && Date.now() < until) await new Promise((go) => setTimeout(go, 50))
 }
 
-/** The tab's shell, started off screen if it has not been. One on screen whose shell
- *  ended is started again the way the reader would, with Enter. */
+/** The tab's shell, started off screen if it has not been, and at its prompt. One on
+ *  screen whose shell ended is started again the way the reader would, with Enter. */
 async function started(tab: Tab): Promise<Session> {
   const session = await sessionFor(tab)
   if (running(tab)) return session
 
-  if (session.host.isConnected) {
-    session.term.input('\r', false)
-    await startingOf(tab)
-    if (!running(tab)) throw new Refused('failed', 'the shell would not start')
-    return session
-  }
+  if (session.host.isConnected) session.term.input('\r', false)
+  else await startedOffScreen(session)
 
+  await startingOf(tab)
+  if (!running(tab)) throw new Refused('failed', 'the shell would not start')
+  await quiet(session.term, STARTING * 2, STARTING, READY_QUIET)
+  return session
+}
+
+/** A shell nobody has drawn, started in a box off every screen. */
+async function startedOffScreen(session: Session): Promise<void> {
   const holder = document.createElement('div')
   holder.style.cssText = OFF_SCREEN
   holder.setAttribute('aria-hidden', 'true')
   document.body.append(holder)
   try {
     await session.attach(holder, false)
-    await startingOf(tab)
+    await startingOf(session.tab)
   } finally {
     // Out of the page again, still running: the pane takes the screen the first time
     // the tab is shown, which is what a terminal behind the tab in front always is.
     if (session.host.parentElement === holder) session.detach()
     holder.remove()
   }
-
-  if (!running(tab)) throw new Refused('failed', 'the shell would not start')
-  return session
 }
 
 /** What a terminal tab is, beside its words. */
@@ -200,16 +205,22 @@ export async function typeTerminal(call: Call): Promise<AgentAnswer> {
   )
 }
 
-/** Until the terminal has printed nothing for a moment, or the wait is over. */
-function quiet(term: Session['term'], patience: number): Promise<void> {
+/** Until the terminal has printed nothing for `rest` since it last printed - or for
+ *  `first` where it prints nothing at all - or the wait is over. */
+function quiet(
+  term: Session['term'],
+  patience: number,
+  first = QUIET * 2,
+  rest = QUIET,
+): Promise<void> {
   return new Promise((settle) => {
     let still: ReturnType<typeof setTimeout> | undefined
     const over = setTimeout(finish, patience)
     const printing = term.onWriteParsed(() => {
       clearTimeout(still)
-      still = setTimeout(finish, QUIET)
+      still = setTimeout(finish, rest)
     })
-    still = setTimeout(finish, QUIET * 2)
+    still = setTimeout(finish, first)
 
     function finish() {
       clearTimeout(over)
