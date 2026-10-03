@@ -7,7 +7,8 @@ import { nameFromTitle, shownName } from '../note-name'
 import { nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { pages } from '../web-tab/pages.svelte'
-import { writeShortcut } from '../web-tab/shortcut'
+import { sameSite, settleShortcuts } from '../web-tab/settle'
+import { readWebFile, writeShortcut } from '../web-tab/shortcut'
 import type { Entry, Space } from '../workspace.svelte'
 import type { ClosedTabs } from './closed.svelte'
 import { type NoteDoc, type Tab, UNTITLED } from './documents.svelte'
@@ -26,6 +27,8 @@ export interface Places {
   remember(path: string): void
   persist(): void
   spaceOf(note: NoteDoc): string | null
+  /** The document a file is open as, or null; see `documentAt` in workspace.svelte.ts. */
+  documentAt(path: string): NoteDoc | null
 }
 
 /** One open of one path at a time; see `opening` in open.ts. */
@@ -54,19 +57,16 @@ export async function keepWeb(
   const was = ws.spaceOf(tab.note)
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
-  const target = joinPath(dir, ws.freeName(dir, named))
+  const page = pages.of(tab.id)
+  const url = page.url ?? tab.address ?? ''
+  const over = await sameNoteAt(ws, joinPath(dir, named), url)
+  const target = over?.path ?? joinPath(dir, ws.freeName(dir, named))
 
   const kept = await claim(target, async () => {
-    const page = pages.of(tab.id)
-    const text = writeShortcut(
-      page.url ?? tab.address ?? '',
-      title,
-      new Date(),
-      undefined,
-      page.kept ?? undefined,
-    )
+    const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
+    const text = over ? settleShortcuts(target, over.text, fresh, true) : fresh
 
-    ws.showEntry(ws.freshEntry(target, false))
+    if (!over) ws.showEntry(ws.freshEntry(target, false))
     await writeFile(target, text)
     await ws.loadTree()
 
@@ -84,6 +84,26 @@ export async function keepWeb(
     void rehome(tab.id, now, ws.spaces.find((one) => one.id === now)?.name ?? '')
   }
   return target
+}
+
+/** The web note already at the name a tab is being kept under, where it is the same
+ *  note: a site the tab is on, and no tab showing it. Saving it again is the newer
+ *  copy of that note, so it is written over, its fields carried across - not a
+ *  `Docs 2.url` beside it, which is a clash file by another name (Emil, 2026-10-03).
+ *  A note at that name on another site is a different note and keeps the stepped
+ *  name. Null for both, and for a name nothing has. */
+async function sameNoteAt(
+  ws: Places,
+  path: string,
+  url: string,
+): Promise<{ path: string; text: string } | null> {
+  if (ws.documentAt(path)) return null
+
+  const text = await invoke<string>('read_note', { path }).catch(() => null)
+  const said = text === null ? null : readWebFile(path, text)
+  if (text === null || !said || !sameSite(said.home ?? said.url, url)) return null
+
+  return { path, text }
 }
 
 /** A draft's words, closed with something in them, into this device's Recently

@@ -17,9 +17,11 @@
  *  about two copies. See conflicts.ts for the three answers and why asking is
  *  quiet rather than a dialog. */
 
+import { isWebTarget } from '@nib/markdown/links'
 import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
 import { forget, isRecord, keep, stored } from '../stored'
+import { invoke } from '../tauri'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'nib:sync-log'
@@ -148,7 +150,22 @@ class Record {
 
     // Under the name a second clash the same day would take too, so whatever is
     // there already is kept as a version on the way past.
-    if (answer === 'both') {
+    //
+    // Except a web note, which is never kept twice: one held from before that rule
+    // settles into the note itself, the newer copy standing. See web-tab/settle.ts.
+    if (answer === 'both' && isWebTarget(path)) {
+      const [{ settleShortcuts }, { writeDown }] = await Promise.all([
+        import('../web-tab/settle'),
+        import('./write-down'),
+      ])
+      const ours = await invoke<string>('read_note', { path }).catch(() => null)
+      if (ours !== null) {
+        const one = settleShortcuts(path, ours, clash.theirs, false)
+        await writeDown(path, one, ours)
+        const { workspace } = await import('../workspace.svelte')
+        workspace.reload(path, one)
+      }
+    } else if (answer === 'both') {
       const [{ conflictPath }, { writeDown }] = await Promise.all([
         import('@nib/markdown/paths'),
         import('./write-down'),

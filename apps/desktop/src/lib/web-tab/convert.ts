@@ -22,7 +22,8 @@ import type { NoteDoc } from '../workspace/documents.svelte'
 import type { Entry, Space } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { keptBody, webTitleOf, webUrlOf } from './note'
-import { writeShortcut } from './shortcut'
+import { sameSite } from './settle'
+import { readWebFile, writeShortcut } from './shortcut'
 
 /** What turning a note into a shortcut needs of the store: the tree it draws the
  *  new row into, and the space it is walking. The optimistic row and the listing
@@ -75,12 +76,22 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const shortcut = `${withoutExtension(path)}.url`
 
   // A name that is taken is a website that has already been converted, or a file
-  // somebody else put there. Either way this one keeps its own name.
-  const free = ws.entryAt(shortcut) ? ws.freeName(folderOf(path), nameOf(shortcut)) : null
+  // somebody else put there. The first is this note already, and it stays the one
+  // file rather than gaining a `Docs 2.url` beside it; anything else keeps this one
+  // under a name of its own.
+  const taken = ws.entryAt(shortcut) !== null
+  const there = taken
+    ? await invoke<string>('read_note', { path: shortcut }).catch(() => null)
+    : null
+  const said = there === null ? null : readWebFile(shortcut, there)
+  const already = said !== null && sameSite(said.home ?? said.url, url)
+  const free = taken && !already ? ws.freeName(folderOf(path), nameOf(shortcut)) : null
   const target = free === null ? shortcut : joinPath(folderOf(path), free)
 
-  ws.showEntry(ws.freshEntry(target, false))
-  await writeFile(target, written)
+  if (!already) {
+    ws.showEntry(ws.freshEntry(target, false))
+    await writeFile(target, written)
+  }
 
   // The note either goes or stays as the words somebody wrote into it, and the index
   // is told whichever it was: a note that stays is still a note `[[its name]]` reaches.

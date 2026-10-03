@@ -2333,6 +2333,31 @@ describe('a new tab', () => {
     expect(written().map((one) => one.path)).toEqual(['/space/Example.url'])
   })
 
+  /** Emil, 2026-10-03: *"Still getting a lot of name-clash files for web notes."* A
+   *  page kept under the name of a web note on the same site, that no tab is showing,
+   *  is that note written again; a `Example 2.url` beside it is a clash file by another
+   *  name. See `keepWeb` in workspace/placing.ts. */
+  test('a website kept under the name of a web note on its own site is that note', async () => {
+    notes['/space/Example.url'] =
+      '[InternetShortcut]\r\nURL=https://www.example.com/\r\nTitle=Example\r\nNib-Added=2026-09-01T00:00:00.000Z\r\nNib-Icon=data:kept\r\n'
+    try {
+      workspace.openWebsite()
+      const tab = workspace.active
+      if (!tab) throw new Error('nothing opened')
+      tab.address = 'https://example.com/b'
+
+      await workspace.save(tab, '/space', 'Example.url')
+
+      expect(tab.path).toBe('/space/Example.url')
+      const wrote = written()[0]!.content
+      expect(wrote).toContain('URL=https://example.com/b')
+      expect(wrote).toContain('Nib-Added=2026-09-01T00:00:00.000Z')
+      expect(wrote).toContain('Nib-Icon=data:kept')
+    } finally {
+      delete notes['/space/Example.url']
+    }
+  })
+
   /** A browser brings back the tabs it had, and so does this: the words of a document
    *  with no file exist in the session and nowhere else. See `draftOf`. */
   test('an untouched one comes back after a restart', async () => {

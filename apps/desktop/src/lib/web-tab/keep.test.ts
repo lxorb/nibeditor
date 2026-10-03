@@ -174,3 +174,30 @@ test('says nothing to the index when there was nothing to write', async () => {
   expect(written).toHaveLength(0)
   expect(told).toHaveLength(0)
 })
+
+/** Two devices draw one favicon into two different pictures, and each wrote its own
+ *  over the other's on every open: a web note syncing back and forth on a change
+ *  nobody could see, and the copies beside it that two writers between two passes
+ *  used to leave. A mark already held as a picture stays until the reading moves. */
+test('a mark already held as a picture is not written over on its own', async () => {
+  const held = `${FILE}Nib-Icon=data:image/png;base64,AAAA\r\n`
+  keepPage({
+    path: PATH,
+    text: held,
+    url: 'https://svelte.dev/docs',
+    icon: 'data:image/png;base64,BBBB',
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(2500)
+  expect(written).toHaveLength(0)
+
+  keepPage({
+    path: PATH,
+    text: held,
+    url: 'https://svelte.dev/docs/svelte/runes',
+    icon: 'data:image/png;base64,BBBB',
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(2500)
+  expect(said()).toContain('Nib-Icon=data:image/png;base64,BBBB')
+})

@@ -18,6 +18,7 @@ import { invoke, joinPath } from './tauri'
 import { type Mirror, newMirror, readMirror, type Tracked, within } from './sync/mirror'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
+import type { Folded } from './sync/web-copies'
 import { workspace } from './workspace.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { samePath } from './space-paths'
@@ -661,7 +662,17 @@ class Sync {
           continue
         }
 
-        const sending = { held: record.held, sent: () => (this.pushed += 1) }
+        const sending = {
+          held: record.held,
+          sent: () => (this.pushed += 1),
+          // An old copy of a web note folded into it: the note open in a tab takes
+          // what it now says, the copy leaves the list. See sync/web-copies.ts.
+          folded: ({ kept, gone }: Folded) => {
+            void this.refresh(kept, joined)
+            void workspace.fileGone(gone, 'file')
+            if (mirror.root === workspace.activeSpace?.root) shown = true
+          },
+        }
         if (await push(mirror, token, joined, sending)) moved = true
 
         // A whole pass has been through this space, so every note in the folder has

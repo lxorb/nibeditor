@@ -190,6 +190,24 @@ describe('a shortcut name already taken', () => {
     expect(target).toBe(`${SPACE}/Svelte docs 2.url`)
     expect(disk.get(`${SPACE}/Svelte docs.url`)).toBe('a shortcut somebody else put here')
   })
+
+  test('the shortcut it would become is that shortcut already, so no second one', async () => {
+    const NOTE = `${SPACE}/Svelte docs.md`
+    const SHORTCUT = `${SPACE}/Svelte docs.url`
+    const there = '[InternetShortcut]\r\nURL=https://www.svelte.dev/docs\r\nTitle=Svelte docs\r\n'
+    const { ws, shown } = store({
+      [NOTE]: urlNote('https://svelte.dev', 'Svelte docs'),
+      [SHORTCUT]: there,
+    })
+
+    const target = await asShortcut(ws, NOTE)
+
+    expect(target).toBe(SHORTCUT)
+    expect(disk.get(SHORTCUT)).toBe(there)
+    expect(disk.has(`${SPACE}/Svelte docs 2.url`)).toBe(false)
+    expect(disk.has(NOTE)).toBe(false)
+    expect(shown).toEqual([])
+  })
 })
 
 describe('converting a whole space', () => {

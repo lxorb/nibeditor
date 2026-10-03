@@ -1200,3 +1200,106 @@ describe('a note deleted on another device', () => {
     expect(fake.calls).toEqual([])
   })
 })
+
+/** A web note is a browser tab written down, and two devices browsing one site write
+ *  it seconds apart. Emil, 2026-10-03: *"Still getting a lot of name-clash files for
+ *  web notes."* So a web note is never kept twice, under any rule: the newer copy
+ *  stands and what only the older one said comes across. See web-tab/settle.ts. */
+describe('a web note both sides changed', () => {
+  const site = (url: string, extra = '') =>
+    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
+  const BASE = site('https://docs.dev/')
+  const HOME = 'Nib-Home=https://docs.dev/\r\n'
+
+  for (const rule of ['both', 'ask', 'newest'] as const) {
+    test(`settles into one file with no copy and nothing held, under ${rule}`, async () => {
+      const { mirror, id } = await paired('Docs.url', BASE)
+      fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/a', HOME))
+      fake.modified.set(`${ROOT}/Docs.url`, 1_000)
+      fake.editRemote(
+        id,
+        site('https://docs.dev/b', `${HOME}Nib-Icon=data:image/png;base64,AA\r\n`),
+        2_000,
+      )
+      const clashes: Clash[] = []
+
+      await pull(mirror, 'token', NOBODY, { rule, clashed: (one) => clashes.push(one) })
+
+      expect(conflicts()).toEqual([])
+      expect(clashes).toEqual([])
+      // The account's copy was written last, so the reading is where it got to.
+      const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
+      expect(settled).toContain('URL=https://docs.dev/b')
+      expect(settled).toContain('Nib-Icon=data:image/png;base64,AA')
+      expect(versions('Docs.url')).toEqual([site('https://docs.dev/a', HOME)])
+    })
+  }
+
+  test('keeps what only the older copy said, and the newer reading', async () => {
+    const { mirror, id } = await paired('Docs.url', BASE)
+    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/a', `${HOME}Nib-Icon=data:mine\r\n`))
+    fake.modified.set(`${ROOT}/Docs.url`, 3_000)
+    fake.editRemote(id, site('https://docs.dev/b', HOME), 2_000)
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
+    expect(settled).toContain('URL=https://docs.dev/a')
+    expect(settled).toContain('Nib-Icon=data:mine')
+    expect(conflicts()).toEqual([])
+    expect(fake.remote.get(id)?.content).toBe(settled)
+  })
+
+  test('made on two devices at one name is one note, not a copy', async () => {
+    const id = fake.addRemote('Docs.url', site('https://docs.dev/there'))
+    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/here', 'Nib-Icon=data:here\r\n'))
+    const mirror = newMirror('s-one', ROOT)
+
+    // The create is refused with the note already there, which pairs the two.
+    await push(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toEqual([])
+    const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
+    expect(settled).toContain('URL=https://docs.dev/here')
+    expect(fake.remote.get(id)?.content).toBe(settled)
+  })
+})
+
+/** The copies earlier passes made of web notes, folded back into them. One that is
+ *  the same note goes - into this device's trash, and off the account - and one that
+ *  points somewhere else is a note of its own and is never touched. See web-copies.ts. */
+describe('a web note’s old copies', () => {
+  const site = (url: string, extra = '') =>
+    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
+  const COPY = 'Docs (from another device 2026-10-01).url'
+
+  test('are folded into the note when they point where it points', async () => {
+    const { mirror } = await paired('Docs.url', site('https://docs.dev/'))
+    const copy = fake.addRemote(COPY, site('https://docs.dev/', 'Nib-Icon=data:theirs\r\n'))
+    await pull(mirror, 'token', NOBODY)
+    const second = `${ROOT}/Docs (from another device 2026-10-01) 2.url`
+    fake.disk.set(second, site('https://docs.dev/'))
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toEqual([])
+    expect(fake.disk.get(`${ROOT}/Docs.url`)).toContain('Nib-Icon=data:theirs')
+    // To the trash, never for good, and off the account so other devices lose it too.
+    expect([...fake.trash.values()].map((one) => one.path).sort()).toEqual(
+      [`${ROOT}/${COPY}`, second].sort(),
+    )
+    expect(fake.remote.get(copy)?.deleted).toBe(true)
+  })
+
+  test('stay when they point somewhere else, or when the note has gone', async () => {
+    const { mirror } = await paired('Docs.url', site('https://docs.dev/'))
+    fake.disk.set(`${ROOT}/${COPY}`, site('https://elsewhere.dev/'))
+    fake.disk.set(`${ROOT}/Gone (from another device 2026-10-01).url`, site('https://gone.dev/'))
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toHaveLength(2)
+    expect(fake.trash.size).toBe(0)
+  })
+})

@@ -63,7 +63,7 @@ export function keepPage(kept: Kept) {
   // the address it points at from the moment the reading leaves it.
   const home = said.home ?? said.url
   const icon = kept.icon ?? said.icon
-  if (said.url === kept.url && (said.icon ?? null) === icon) return
+  if (said.url === kept.url && (said.icon === icon || holdsPicture(said.icon))) return
 
   const held = waiting.get(kept.path)
   if (held) clearTimeout(held)
@@ -75,6 +75,19 @@ export function keepPage(kept: Kept) {
       void write(kept, home, icon)
     }, SETTLES),
   )
+}
+
+/** Whether the file already holds the site's mark as a picture, which a page reporting
+ *  its mark again is no reason to write over.
+ *
+ *  Two devices draw the same favicon into two different `data:` addresses - a size,
+ *  an encoder - and each wrote its own over the other's every time the page opened.
+ *  The file synced back and forth on a change nobody can see, and two devices writing
+ *  one web note between two passes is what used to leave a copy of it beside itself.
+ *  A mark still held as an address, from before marks were kept as pictures, is
+ *  replaced; so is any mark once the reading moves, which writes the file anyway. */
+function holdsPicture(icon: string | null): boolean {
+  return icon?.startsWith('data:') === true
 }
 
 /** Everything waiting, written now: the app is closing a tab, or the note is about to

@@ -15,9 +15,11 @@
  *  paragraph is not something a machine can settle. For a canvas it is a merge,
  *  because a canvas can be settled: everything on it has an id and a time, so
  *  the union of the two keeps every card and every stroke either device drew
- *  and nobody has to go looking for a second file. See canvas-merge.ts. */
+ *  and nobody has to go looking for a second file. See canvas-merge.ts. A web note
+ *  is settled too, the newer copy standing: it is a tab written down, and a copy of
+ *  a bookmark is clutter rather than safety. See web-tab/settle.ts. */
 
-import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
@@ -26,9 +28,11 @@ import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
+import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
+import { type Folded, foldWebCopies } from './web-copies'
 import { writeDown } from './write-down'
 import type { Entry } from '../workspace.svelte'
 
@@ -83,6 +87,29 @@ async function holdsSameWords(local: string, hash: string): Promise<boolean> {
   if (!local.includes('\r')) return false
 
   return (await sha256(local.replace(/\r\n/gu, '\n'))) === hash
+}
+
+/** Two copies of a file that settle into one without a copy beside it, or null for
+ *  a note, whose two copies are somebody's words.
+ *
+ *  A canvas and a page note merge: everything on them has an id and a time, so the
+ *  union keeps every card and stroke either device drew. A web note settles to the
+ *  newer copy with the fields only the older one said; see web-tab/settle.ts. The merge
+ *  is fetched with the first plane that needs it. `theirsNewer` is asked only for a web
+ *  note, the one that cares which side was last. */
+async function settled(
+  path: string,
+  ours: string,
+  theirs: string,
+  theirsNewer: () => Promise<boolean>,
+): Promise<string | null> {
+  if (isCanvasTarget(path) || isPagesTarget(path)) {
+    return (await import('@nib/markdown/canvas-merge')).mergeCanvasFiles(ours, theirs)
+  }
+
+  if (isWebTarget(path)) return settleShortcuts(path, ours, theirs, await theirsNewer())
+
+  return null
 }
 
 /** Whether the copy the account holds was written after the file here.
@@ -311,10 +338,14 @@ export async function pull(
         // The merge itself is fetched by the first plane that needs one: it is the
         // whole JSON Canvas format, and a pass that has only notes in it has nothing
         // to merge. See canvas-merge.ts.
-        const together =
-          isCanvasTarget(remote.path) || isPagesTarget(remote.path)
-            ? (await import('@nib/markdown/canvas-merge')).mergeCanvasFiles(local, content)
-            : null
+        //
+        // A web note is settled too, the newer copy standing with the fields only the
+        // other one said carried across: it is a tab written down, two devices browsing
+        // one site write it seconds apart, and a copy beside it for each of those was
+        // a file list full of them. So under every rule. See web-tab/settle.ts.
+        const together = await settled(remote.path, local, content, () =>
+          theirsIsNewer(target, remote.updatedAt),
+        )
 
         if (together !== null) {
           await writeDown(target, together, local)
@@ -564,6 +595,9 @@ export interface Sending {
   held?: ReadonlySet<string>
   /** One note sent, by its path in the space. What the log counts. */
   sent?: (path: string) => void
+  /** A web note's old copy folded into the note, both as this machine spells them;
+   *  see web-copies.ts. */
+  folded?: (one: Folded) => void
 }
 
 export async function push(
@@ -578,9 +612,15 @@ export async function push(
   const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
   if (!tree) return false
 
-  const listed = flatten(tree)
+  // The copies of web notes earlier passes made, folded back into their notes before
+  // anything is offered: a copy that went is a file that vanished here, which the
+  // loop at the bottom deletes on the account. See web-copies.ts.
+  const everything = flatten(tree)
+  const folded = await foldWebCopies(everything)
+  for (const one of folded) sending.folded?.(one)
+  const listed = everything.filter((one) => !folded.some((fold) => fold.gone === one.path))
   const seen = new Set<string>()
-  let moved = false
+  let moved = folded.length > 0
 
   // A PDF is bytes rather than words, so it goes up as a blob and the space
   // records where in it the file sits; see `pushFiles`.
@@ -878,10 +918,9 @@ async function keepBoth(
   const sent = isString(server.content) ? server.content : ''
   const ours = await invoke<string>('read_note', { path: here })
 
-  if (isCanvasTarget(path) || isPagesTarget(path)) {
-    // Fetched with the first plane that clashes, like the merge above it.
-    const { mergeCanvasFiles } = await import('@nib/markdown/canvas-merge')
-    const together = mergeCanvasFiles(ours, sent)
+  // This device's write is the newer one: it is being made now.
+  const together = await settled(path, ours, sent, () => Promise.resolve(false))
+  if (together !== null) {
     await writeDown(here, together, ours)
     const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
