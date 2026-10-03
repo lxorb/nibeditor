@@ -1799,4 +1799,12 @@ export const uk: Dictionary = {
   'Did not load': 'Не завантажено',
   Permissions: 'Дозволи',
   Options: 'Параметри',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Віддалений',
+  'Add host': 'Додати хост',
+  Reconnect: 'Перепідключитися',
+  'Open config': 'Відкрити конфігурацію',
+  'No group': 'Без групи',
+  'Not an address': 'Це не адреса',
+  'Could not connect to {host}': 'Не вдалося підключитися до {host}',
 }

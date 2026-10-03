@@ -1806,4 +1806,12 @@ export const pl: Dictionary = {
   'Did not load': 'Nie wczytano',
   Permissions: 'Uprawnienia',
   Options: 'Opcje',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Zdalny',
+  'Add host': 'Dodaj hosta',
+  Reconnect: 'Połącz ponownie',
+  'Open config': 'Otwórz konfigurację',
+  'No group': 'Bez grupy',
+  'Not an address': 'To nie jest adres',
+  'Could not connect to {host}': 'Nie można połączyć z {host}',
 }

@@ -1716,4 +1716,12 @@ export const gu: Dictionary = {
   'Did not load': 'લોડ થયું નથી',
   Permissions: 'પરવાનગીઓ',
   Options: 'વિકલ્પો',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'રિમોટ',
+  'Add host': 'હોસ્ટ ઉમેરો',
+  Reconnect: 'ફરી કનેક્ટ કરો',
+  'Open config': 'કૉન્ફિગ ખોલો',
+  'No group': 'કોઈ જૂથ નથી',
+  'Not an address': 'સરનામું નથી',
+  'Could not connect to {host}': '{host} સાથે કનેક્ટ થઈ શક્યું નહીં',
 }

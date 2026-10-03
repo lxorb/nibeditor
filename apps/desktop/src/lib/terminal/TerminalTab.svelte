@@ -8,10 +8,18 @@
    *
    *  The keyboard comes here when the tab comes to the front of the pane that has it. It
    *  comes back when whatever was put over it - the palette, a menu, a question - goes,
-   *  and when the window does, from where the window keeps it; see keyboard-home.ts. */
+   *  and when the window does, from where the window keeps it; see keyboard-home.ts.
+   *
+   *  A terminal on another machine that is not connected - the connection dropped, or a
+   *  restart put it back - has a quiet bar at its foot, Reconnect, which Enter is too;
+   *  the lines it had stay readable above it. See `offline` in sessions.svelte.ts. */
 
   import { onMount, untrack } from 'svelte'
+  import { cubicOut } from 'svelte/easing'
+  import { fly } from 'svelte/transition'
   import FindBar from '../FindBar.svelte'
+  import { t } from '../i18n.svelte'
+  import { dur } from '../motion'
   import type { Tab } from '../workspace.svelte'
   import { sessionOf } from './sessions.svelte'
 
@@ -53,12 +61,19 @@
   {/if}
 
   <div class="place" bind:this={place}></div>
+
+  {#if session.offline}
+    <div class="offline" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <button type="button" onclick={() => session.reconnect()}>{t('Reconnect')}</button>
+    </div>
+  {/if}
 </div>
 
 <style>
   /* The note's ground, edge to edge, so a terminal is a page of the window rather than a
      box inside one. */
   .terminal {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -83,5 +98,43 @@
 
   .place :global(.xterm) {
     height: 100%;
+  }
+
+  /* Over the foot of the screen, out of the way of the lines above it: a floating
+     layer's surface and hairline, and one button in it. */
+  .offline {
+    position: absolute;
+    bottom: var(--space-4);
+    left: 50%;
+    translate: -50% 0;
+    display: flex;
+    padding: var(--space-1);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  .offline button {
+    padding: var(--space-1) var(--space-3);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+    cursor: default;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .offline button:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .offline button:active {
+    background: var(--surface-press);
   }
 </style>

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** The terminal among the kinds a new tab can be, on the desktop that has one.
+/** The terminal among the kinds a new tab can be, on the desktop that has one, and
+ *  Remote beside it.
  *
  *  A test of its own because it is the one kind that depends on the build: the node
  *  project runs as a page with no crate, where a terminal is never offered - which is
@@ -31,7 +32,15 @@ vi.mock('./terminal/open', () => ({
     ]),
 }))
 
+const shownPicker: (string | undefined)[] = []
+vi.mock('./remote/picker.svelte', () => ({
+  hostPicker: { show: (paneId?: string) => void shownPicker.push(paneId) },
+}))
+
 const { newKindMenu, newKinds } = await import('./new-kinds')
+
+const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
+const terminalRow = () => newKindMenu()[newKinds().findIndex((one) => one.kind === 'terminal')]
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 
@@ -41,13 +50,14 @@ afterEach(() => {
 })
 
 describe('a terminal, as a kind a new tab can be', () => {
-  test('is the fifth, after the four the file list also makes', () => {
+  test('is the fifth, after the four the file list also makes, and Remote after it', () => {
     expect(newKinds().map((one) => one.kind)).toEqual([
       'note',
       'canvas',
       'web',
       'pages',
       'terminal',
+      'remote',
     ])
   })
 
@@ -55,12 +65,12 @@ describe('a terminal, as a kind a new tab can be', () => {
    *  years - and no two kinds share one. */
   test('on R, its own letter', () => {
     const letters = newKinds().map((one) => one.letter)
-    expect(letters.at(-1)).toBe('r')
+    expect(terminalKind()?.letter).toBe('r')
     expect(new Set(letters).size).toBe(letters.length)
   })
 
   test('wears the prompt, and is called what the palette calls it', () => {
-    const terminal = newKinds().at(-1)
+    const terminal = terminalKind()
     expect(terminal?.mark).toBe('terminal')
     expect(terminal?.label()).toBe('New terminal')
   })
@@ -76,7 +86,7 @@ describe('a terminal, as a kind a new tab can be', () => {
 
   test('makes the default shell when pressed, in the pane that asked', () => {
     const focused = vi.spyOn(workspace, 'focusPane').mockImplementation(() => undefined)
-    newKinds().at(-1)?.make('a-pane')
+    terminalKind()?.make('a-pane')
 
     expect(opened).toEqual([undefined])
     expect(focused).toHaveBeenCalledWith('a-pane')
@@ -84,7 +94,7 @@ describe('a terminal, as a kind a new tab can be', () => {
 
   /** VS Code's `+ ˅`: the row makes the default, and the others are a chevron away. */
   test('and any other shell a chevron away', async () => {
-    const more = newKindMenu().at(-1)?.more
+    const more = terminalRow()?.more
     expect(more).toBeDefined()
 
     const others = more ? await more() : []
@@ -98,8 +108,24 @@ describe('a terminal, as a kind a new tab can be', () => {
   test('the other kinds have no chevron', () => {
     expect(
       newKindMenu()
-        .slice(0, -1)
+        .filter((_, at) => newKinds()[at]?.kind !== 'terminal')
         .every((row) => row && !('more' in row)),
     ).toBe(true)
+  })
+})
+
+/** Emil, 2026-10-03: Remote is a card of its own beside Terminal, and the terminal's
+ *  chooser keeps only the shells of this machine. */
+describe('Remote, beside it', () => {
+  test('on S, wearing the server, and opening the host picker for the pane that asked', async () => {
+    const remote = newKinds().find((one) => one.kind === 'remote')
+    expect(remote?.letter).toBe('s')
+    expect(remote?.mark).toBe('remote')
+    expect(remote?.label()).toBe('Remote')
+    expect(remote?.others).toBeUndefined()
+
+    remote?.make('a-pane')
+    await vi.waitFor(() => expect(shownPicker).toEqual(['a-pane']))
+    expect(opened).toEqual([])
   })
 })

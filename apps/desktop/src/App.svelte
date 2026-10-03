@@ -49,6 +49,7 @@
     newKindChord,
     newKindDialog,
     spacePickerDialog,
+    hostPickerDialog,
     paletteDoor,
     promptSheet,
     publishSheet,
@@ -1203,6 +1204,11 @@
 {#if spacePickerDialog.asked}
   {#await spacePickerDialog.asked then SpacePicker}
     <SpacePicker />
+  {/await}
+{/if}
+{#if hostPickerDialog.asked}
+  {#await hostPickerDialog.asked then HostPicker}
+    <HostPicker />
   {/await}
 {/if}
 {#if contextMenu.asked}

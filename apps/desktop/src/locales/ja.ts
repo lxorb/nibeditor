@@ -1715,4 +1715,12 @@ export const ja: Dictionary = {
   'Did not load': '読み込まれませんでした',
   Permissions: '権限',
   Options: 'オプション',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'リモート',
+  'Add host': 'ホストを追加',
+  Reconnect: '再接続',
+  'Open config': '設定ファイルを開く',
+  'No group': 'グループなし',
+  'Not an address': 'アドレスではありません',
+  'Could not connect to {host}': '{host} に接続できませんでした',
 }

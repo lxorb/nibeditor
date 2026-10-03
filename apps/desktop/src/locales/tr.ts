@@ -1732,4 +1732,12 @@ export const tr: Dictionary = {
   'Did not load': 'Yüklenmedi',
   Permissions: 'İzinler',
   Options: 'Seçenekler',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Uzak',
+  'Add host': 'Sunucu ekle',
+  Reconnect: 'Yeniden bağlan',
+  'Open config': 'Yapılandırmayı aç',
+  'No group': 'Grup yok',
+  'Not an address': 'Adres değil',
+  'Could not connect to {host}': '{host} sunucusuna bağlanılamadı',
 }

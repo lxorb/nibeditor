@@ -1679,4 +1679,12 @@ export const zhHans: Dictionary = {
   'Did not load': '未加载',
   Permissions: '权限',
   Options: '选项',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: '远程',
+  'Add host': '添加主机',
+  Reconnect: '重新连接',
+  'Open config': '打开配置',
+  'No group': '无分组',
+  'Not an address': '不是地址',
+  'Could not connect to {host}': '无法连接到 {host}',
 }

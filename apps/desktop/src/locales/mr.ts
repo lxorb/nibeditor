@@ -1727,4 +1727,12 @@ export const mr: Dictionary = {
   'Did not load': 'लोड झाले नाही',
   Permissions: 'परवानग्या',
   Options: 'पर्याय',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'रिमोट',
+  'Add host': 'होस्ट जोडा',
+  Reconnect: 'पुन्हा कनेक्ट करा',
+  'Open config': 'कॉन्फिग उघडा',
+  'No group': 'गट नाही',
+  'Not an address': 'पत्ता नाही',
+  'Could not connect to {host}': '{host} शी कनेक्ट करता आले नाही',
 }

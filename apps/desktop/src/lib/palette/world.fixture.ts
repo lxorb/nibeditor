@@ -71,6 +71,7 @@ export function world(more: Partial<World> = {}): World {
     commands: [],
     pages: [],
     settings: [],
+    hosts: [],
     worth: () => 0,
     now: NOW,
     ...more,
@@ -98,5 +99,9 @@ export function named(row: Row): string {
       return `new ${row.make.name}`
     case 'address':
       return `go ${row.address}`
+    case 'host':
+      return `host ${row.host.name}`
+    case 'connect':
+      return `ssh ${row.said}`
   }
 }

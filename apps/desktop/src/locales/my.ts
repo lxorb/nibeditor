@@ -1711,4 +1711,12 @@ export const my: Dictionary = {
   'Did not load': 'မဖွင့်နိုင်ပါ',
   Permissions: 'ခွင့်ပြုချက်များ',
   Options: 'ရွေးချယ်စရာများ',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'အဝေးမှ',
+  'Add host': 'ဟို့စ် ထည့်ရန်',
+  Reconnect: 'ပြန်ချိတ်ဆက်ရန်',
+  'Open config': 'ဖွဲ့စည်းမှုကို ဖွင့်ရန်',
+  'No group': 'အုပ်စုမရှိ',
+  'Not an address': 'လိပ်စာ မဟုတ်ပါ',
+  'Could not connect to {host}': '{host} သို့ ချိတ်ဆက်၍ မရပါ',
 }

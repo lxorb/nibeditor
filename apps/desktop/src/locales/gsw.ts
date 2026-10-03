@@ -1735,4 +1735,12 @@ export const gsw: Dictionary = {
   'Did not load': 'Nöd glade',
   Permissions: 'Berächtigunge',
   Options: 'Optione',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remote',
+  'Add host': 'Host hinzuefüege',
+  Reconnect: 'Nöi verbinde',
+  'Open config': 'Konfiguration öffne',
+  'No group': 'Kei Gruppe',
+  'Not an address': 'Kei Adrässe',
+  'Could not connect to {host}': 'Kei Verbindig zu {host}',
 }

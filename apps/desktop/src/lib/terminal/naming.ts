@@ -177,8 +177,10 @@ export function programMark(program: string | null): TerminalMark | null {
 }
 
 /** The mark a shell wears, by the id the crate gave it: PowerShell's own, Command
- *  Prompt's, and a terminal's for the rest - bash, zsh, fish, a WSL distribution. */
+ *  Prompt's, a server for another machine, and a terminal's for the rest - bash, zsh,
+ *  fish, a WSL distribution. */
 export function shellMark(shell: string): TerminalMark {
+  if (shell.startsWith('ssh:')) return 'ssh'
   if (/^(pwsh|powershell|vs-pwsh:)/.test(shell)) return 'powershell'
   if (/^(cmd|vs-cmd:)/.test(shell)) return 'cmd'
   return 'shell'

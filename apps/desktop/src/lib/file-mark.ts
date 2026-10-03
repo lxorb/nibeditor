@@ -30,6 +30,7 @@ import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Globe from 'lucide/dist/esm/icons/globe.mjs'
 import Image from 'lucide/dist/esm/icons/image.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
+import Server from 'lucide/dist/esm/icons/server.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
@@ -80,7 +81,8 @@ const Workflow: IconNode = [
  *  to be the one mark a name could not earn - a website was a note with `url:` in
  *  its front matter, and the row had to ask the link index what the file said - and
  *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
-export type FileMark = 'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web' | 'terminal'
+export type FileMark =
+  'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web' | 'terminal' | 'remote'
 
 /** The mark a file's name earns it.
  *
@@ -144,4 +146,6 @@ export const MARKS: Record<FileMark, IconNode> = {
   web: Globe,
   // A prompt in a window, one full card like the picture: no file wears it, only a tab.
   terminal: SquareTerminal,
+  // Another machine: the server a remote terminal's tab wears.
+  remote: Server,
 }

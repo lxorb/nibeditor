@@ -1752,4 +1752,12 @@ export const ta: Dictionary = {
   'Did not load': 'ஏற்றப்படவில்லை',
   Permissions: 'அனுமதிகள்',
   Options: 'விருப்பங்கள்',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'தொலைநிலை',
+  'Add host': 'ஹோஸ்ட்டைச் சேர்',
+  Reconnect: 'மீண்டும் இணை',
+  'Open config': 'கட்டமைப்பைத் திற',
+  'No group': 'குழு இல்லை',
+  'Not an address': 'முகவரி அல்ல',
+  'Could not connect to {host}': '{host} உடன் இணைக்க முடியவில்லை',
 }

@@ -294,6 +294,14 @@ export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
  *  SpacePicker.svelte and space-picker.svelte.ts. */
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
+/** Remote's hosts in the middle of the window, fetched with the first press; see
+ *  remote/HostPicker.svelte. */
+export const hostPickerDialog = latched(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no remote in the Even Realities plugin'))
+    : import('./remote/HostPicker.svelte'),
+)
+
 /** And the list a press on a space's mark drops, which is the same rows; warmed with
  *  the dialog, so the press finds it here. See SpaceMenu.svelte. */
 export const spacesMenu = held(() => import('./SpaceMenu.svelte'))

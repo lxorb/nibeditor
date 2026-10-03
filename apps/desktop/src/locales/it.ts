@@ -1783,4 +1783,12 @@ export const it: Dictionary = {
   'Did not load': 'Non caricata',
   Permissions: 'Autorizzazioni',
   Options: 'Opzioni',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Remoto',
+  'Add host': 'Aggiungi host',
+  Reconnect: 'Riconnetti',
+  'Open config': 'Apri configurazione',
+  'No group': 'Nessun gruppo',
+  'Not an address': 'Non è un indirizzo',
+  'Could not connect to {host}': 'Impossibile connettersi a {host}',
 }

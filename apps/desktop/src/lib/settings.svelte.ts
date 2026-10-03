@@ -24,6 +24,7 @@ export type Section =
   | 'glasses'
   | 'ai'
   | 'agents'
+  | 'remote'
   | 'account'
   | 'sync'
   | 'llm'

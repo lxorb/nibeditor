@@ -1,24 +1,29 @@
-/** What has been typed into an open list of spaces, and the wait a number may be in.
+/** What has been typed into an open list - of spaces, of hosts - and the wait a number
+ *  may be in.
  *
  *  No field holds it: the letters show in the rows as the hits they are, and Backspace
- *  takes one back. One of these per open list, the title bar's and the one in the
- *  middle of the window alike, so a key does the same in both. What a key means is
+ *  takes one back. One of these per open list, the title bar's and the ones in the
+ *  middle of the window alike, so a key does the same in each. What a key means is
  *  space-pick.ts; this is the part with a clock. */
 
 import { chorded } from './keys'
 import { read, type Reading, typedBy, typedOn, WAIT } from './space-pick'
 import { type Space, workspace } from './workspace.svelte'
 
-const names = () => workspace.spaces.map((space) => space.name)
-
-export class SpaceTyping {
+export class ListTyping {
   typed = $state('')
-  readonly reading: Reading = $derived(read(this.typed, names()))
+  readonly reading: Reading = $derived.by(() => read(this.typed, this.names()))
 
   private waiting: ReturnType<typeof setTimeout> | undefined
 
-  /** `go` switches to a space, and puts the list away. */
-  constructor(private readonly go: (space: Space) => void) {}
+  /** `names` are the rows in their order, `go` is handed the place of the one chosen.
+   *  `loose` takes typing that finds no row but still means something to the list - a
+   *  host's address nobody has kept - where every other list refuses it. */
+  constructor(
+    private readonly names: () => readonly string[],
+    private readonly go: (at: number) => void,
+    private readonly loose: (typed: string) => boolean = () => false,
+  ) {}
 
   /** A key pressed in the list, ahead of the list's own keys so a letter finds a name
    *  rather than a row that starts with it; spent when it was the list's, since the
@@ -52,7 +57,9 @@ export class SpaceTyping {
     // A space with nothing typed is the list's own key, which opens the row it is on.
     if (character === ' ' && !this.typed) return false
 
-    const next = typedOn(this.typed, character, names())
+    const next =
+      typedOn(this.typed, character, this.names()) ??
+      (this.loose(this.typed + character) ? this.typed + character : null)
     // Refused, and spent: nothing in the list may answer a letter that matched nothing.
     if (next !== null) this.set(next)
     return true
@@ -74,7 +81,20 @@ export class SpaceTyping {
 
   private went(at: number) {
     this.stop()
-    const space = workspace.spaces[at]
-    if (space) this.go(space)
+    if (at >= 0) this.go(at)
+  }
+}
+
+/** The spaces' own: their names, and the space a place is. */
+export class SpaceTyping extends ListTyping {
+  /** `go` switches to a space, and puts the list away. */
+  constructor(go: (space: Space) => void) {
+    super(
+      () => workspace.spaces.map((space) => space.name),
+      (at) => {
+        const space = workspace.spaces[at]
+        if (space) go(space)
+      },
+    )
   }
 }

@@ -35,6 +35,8 @@ import { tabAsk } from '../new-tab'
 import { owes } from '../parting'
 import { SHORTCUTS, shortcuts } from '../shortcuts.svelte'
 import { isNumber, isRecord } from '../stored'
+import { remote } from '../remote/hosts.svelte'
+import { madeNow, markMade } from '../remote/open'
 import { invoke, platform } from '../tauri'
 import { type Tab, workspace } from '../workspace.svelte'
 import {
@@ -55,7 +57,7 @@ import { Front, terminalName } from './naming'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
-import { readSpec, reportedFolder, type Spec, writeSpec } from './spec'
+import { hostIdOf, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 /** How many lines a terminal remembers above its screen: Windows Terminal keeps about
  *  nine thousand, VS Code a thousand. Five thousand is a long build log, at a few
@@ -176,6 +178,11 @@ class Session {
   private readonly unwatch: () => void
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
+  /** For a terminal on another machine: whether it is not connected - dropped, or put
+   *  back by a restart and not yet asked to - which the Reconnect bar over it says. See
+   *  TerminalTab.svelte and `reconnect`. */
+  offline = $state(false)
+
   /** The find bar, when it is up; see TerminalTab.svelte. */
   finding = $state(false)
   query = $state('')
@@ -252,11 +259,15 @@ class Session {
     )
     this.watching.observe(this.host)
 
-    // A rename, a folder the shell said: the name follows the tab's words.
+    // A rename, a folder the shell said, a host given another name or colour in
+    // Settings: the name follows.
     this.unwatch = $effect.root(() => {
       $effect(() => {
         const spec = this.spec()
         const shell = this.tab.name
+        // Read here so a host changed in Settings names the tab again.
+        const host = hostIdOf(spec.shell)
+        if (host !== null) remote.byId(host)
         untrack(() => this.named(spec, shell))
       })
     })
@@ -265,6 +276,15 @@ class Session {
   /** What the strip calls the tab, and the program it wears, out of what is known now;
    *  see naming.ts. Nothing for a tab the reader named: their name is its own name. */
   private named(spec = this.spec(), shell = this.tab.name) {
+    const host = hostIdOf(spec.shell)
+    if (host !== null) {
+      // Another machine is its host's name and colour, whatever runs there: nothing on
+      // this side can see it. See remote/hosts.ts.
+      const about = remote.byId(host)
+      this.running(spec.name ? null : (about?.name ?? shell), null, host, about?.colour ?? null)
+      return
+    }
+
     const program = this.front.program
     const name = spec.name
       ? null
@@ -275,9 +295,25 @@ class Session {
           shell,
           folder: spec.folder,
         })
+    this.running(name, program, null, null)
+  }
 
+  /** What the strip shows, changed only where it changed. */
+  private running(
+    name: string | null,
+    program: string | null,
+    host: string | null,
+    colour: string | null,
+  ) {
     const now = this.tab.running
-    if (now?.name !== name || now.program !== program) this.tab.running = { name, program }
+    const same =
+      now?.name === name && now.program === program && now.host === host && now.colour === colour
+    if (!same) this.tab.running = { name, program, host, colour }
+  }
+
+  /** Whether this terminal reaches another machine rather than a shell on this one. */
+  private get remote(): boolean {
+    return hostIdOf(this.spec().shell) !== null
   }
 
   /** A program's title, which is the tab's name while it runs; see `Front`. */
@@ -290,7 +326,7 @@ class Session {
    *  once every `ASK_EVERY`; never per keystroke, never while the shell is at its
    *  prompt, and never for WSL, whose programs Windows cannot list. */
   private askSoon(after = ASK_AFTER) {
-    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:')) return
+    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.remote) return
 
     const wait = Math.max(after, this.asked + ASK_EVERY - Date.now())
     this.asking = setTimeout(() => {
@@ -370,7 +406,10 @@ class Session {
       (other) => other !== this && other.opened && other.spec().key === spec.key,
     )
     if (twin || !spec.key) {
-      this.respec({ ...spec, key: identifier() })
+      const key = identifier()
+      // A duplicate or a split of a remote terminal is made now, and connects.
+      if (this.remote) markMade(key)
+      this.respec({ ...spec, key })
       return null
     }
 
@@ -388,7 +427,7 @@ class Session {
     }
     if (!history) {
       fitted()
-      void this.start()
+      this.begin()
       return
     }
 
@@ -406,8 +445,34 @@ class Session {
       fitted()
       const under =
         platform() === 'windows' ? restoredAbove(words, this.term.rows) : restoredLine(words)
-      this.term.write(off + under, () => void this.start())
+      this.term.write(off + under, () => this.begin())
     })
+  }
+
+  /** The shell, once the screen it had is back - except another machine's put back by a
+   *  restart, which waits for Reconnect: a window coming back should not knock on every
+   *  machine it once reached before anybody has looked. See remote/open.ts. */
+  private begin() {
+    if (this.remote && !madeNow(this.spec().key)) this.wait()
+    else void this.start()
+  }
+
+  /** Not connected, with the bar saying so and Enter ready to connect. */
+  private wait() {
+    this.exited = -1
+    this.offline = true
+  }
+
+  /** Connects again: the bar's button, and Enter while it is up. Whatever the last
+   *  program there left on goes first, as it does before any new shell. */
+  reconnect() {
+    if (this.pty !== null || !this.drawn) return
+    const host = hostIdOf(this.spec().shell)
+    if (host !== null) remote.connected(host)
+
+    this.term.write(`${tidied(this.left(), false)}\r\n`)
+    void this.start()
+    this.focus()
   }
 
   /** What is switched on in the terminal as it stands. */
@@ -512,6 +577,7 @@ class Session {
     const id = `${this.tab.id}-${this.started}`
     this.pty = id
     this.exited = null
+    this.offline = false
     setPty(this.tab.id, id)
     this.front = new Front(spec.shell.startsWith('wsl:'))
     this.named()
@@ -548,6 +614,13 @@ class Session {
   private async failed(spec: Spec) {
     this.pty = null
     setPty(this.tab.id, null)
+
+    // Another machine is never swapped for a shell on this one.
+    if (this.remote) {
+      this.say(t('Could not connect to {host}', { host: this.tab.shown }))
+      this.wait()
+      return
+    }
 
     await shells.ask()
     const instead = shells.chosen
@@ -626,7 +699,7 @@ class Session {
     if (this.front.worthLooking) this.askSoon(0)
 
     const pty = this.pty
-    if (this.marks || pty === null || this.spec().shell.startsWith('wsl:')) return
+    if (this.marks || pty === null || this.spec().shell.startsWith('wsl:') || this.remote) return
     if (!reporting(this.left())) return
 
     const busy = await invoke<unknown>('pty_busy', { id: pty }).catch(() => true)
@@ -648,6 +721,13 @@ class Session {
       return
     }
 
+    // A connection that dropped: `ssh` has said why, and the bar offers it again. Never
+    // by itself, which Tabby's reconnect taught by looping on a machine that is down.
+    if (this.remote) {
+      this.wait()
+      return
+    }
+
     this.exited = code
     this.say(t('Exited with code {code}', { code }))
   }
@@ -661,7 +741,8 @@ class Session {
    *  Enter to start another. */
   private typed(data: string, binary: boolean) {
     if (this.pty === null) {
-      if (this.exited !== null && data === '\r') {
+      if (this.offline && data === '\r') this.reconnect()
+      else if (this.exited !== null && data === '\r') {
         this.term.write('\r\n')
         void this.start()
       }
@@ -671,8 +752,9 @@ class Session {
     this.outgoing.push({ data, binary })
     void this.send()
 
-    // Enter: whatever was typed runs now, and the shell says where it is.
-    if (binary || !data.includes('\r')) return
+    // Enter: whatever was typed runs now, and the shell says where it is. Nothing on
+    // this side can see what runs on another machine.
+    if (binary || !data.includes('\r') || this.remote) return
     this.front.entered()
     this.askSoon()
     if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)
@@ -719,6 +801,8 @@ class Session {
   /** A shell saying where it is; see `reportedFolder`. Taken, so nothing else reads it. */
   private reported(code: 7 | 9, data: string): boolean {
     if (code === 9 && !data.startsWith('9;')) return false
+    // A folder on another machine is nowhere a shell here could start.
+    if (this.remote) return true
 
     const spec = this.spec()
     const folder = reportedFolder(

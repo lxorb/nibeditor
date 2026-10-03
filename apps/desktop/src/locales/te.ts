@@ -1733,4 +1733,12 @@ export const te: Dictionary = {
   'Did not load': 'లోడ్ కాలేదు',
   Permissions: 'అనుమతులు',
   Options: 'ఎంపికలు',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'రిమోట్',
+  'Add host': 'హోస్ట్‌ను జోడించు',
+  Reconnect: 'మళ్ళీ కనెక్ట్ చేయి',
+  'Open config': 'కాన్ఫిగ్ తెరువు',
+  'No group': 'సమూహం లేదు',
+  'Not an address': 'చిరునామా కాదు',
+  'Could not connect to {host}': '{host}కి కనెక్ట్ చేయలేకపోయాం',
 }

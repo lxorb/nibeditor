@@ -1731,4 +1731,12 @@ export const pa: Dictionary = {
   'Did not load': 'ਲੋਡ ਨਹੀਂ ਹੋਇਆ',
   Permissions: 'ਇਜਾਜ਼ਤਾਂ',
   Options: 'ਵਿਕਲਪ',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'ਰਿਮੋਟ',
+  'Add host': 'ਹੋਸਟ ਜੋੜੋ',
+  Reconnect: 'ਮੁੜ ਕਨੈਕਟ ਕਰੋ',
+  'Open config': 'ਕੌਂਫਿਗ ਖੋਲ੍ਹੋ',
+  'No group': 'ਕੋਈ ਗਰੁੱਪ ਨਹੀਂ',
+  'Not an address': 'ਪਤਾ ਨਹੀਂ ਹੈ',
+  'Could not connect to {host}': '{host} ਨਾਲ ਕਨੈਕਟ ਨਹੀਂ ਹੋ ਸਕਿਆ',
 }

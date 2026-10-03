@@ -1744,4 +1744,12 @@ export const kn: Dictionary = {
   'Did not load': 'ಲೋಡ್ ಆಗಲಿಲ್ಲ',
   Permissions: 'ಅನುಮತಿಗಳು',
   Options: 'ಆಯ್ಕೆಗಳು',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'ರಿಮೋಟ್',
+  'Add host': 'ಹೋಸ್ಟ್ ಸೇರಿಸಿ',
+  Reconnect: 'ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ',
+  'Open config': 'ಕಾನ್ಫಿಗ್ ತೆರೆಯಿರಿ',
+  'No group': 'ಗುಂಪು ಇಲ್ಲ',
+  'Not an address': 'ವಿಳಾಸವಲ್ಲ',
+  'Could not connect to {host}': '{host} ಗೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
 }

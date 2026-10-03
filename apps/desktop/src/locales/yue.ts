@@ -1680,4 +1680,12 @@ export const yue: Dictionary = {
   'Did not load': '載入唔到',
   Permissions: '權限',
   Options: '選項',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: '遠端',
+  'Add host': '加主機',
+  Reconnect: '重新連線',
+  'Open config': '打開設定檔',
+  'No group': '冇群組',
+  'Not an address': '唔係地址',
+  'Could not connect to {host}': '連唔到 {host}',
 }

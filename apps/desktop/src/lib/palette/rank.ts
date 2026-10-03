@@ -42,7 +42,7 @@
 import { foldName } from '@nib/markdown/links'
 import { fuzzyFolded, nearly } from './match'
 
-export type Kind = 'tab' | 'note' | 'bookmark' | 'command' | 'page' | 'heading' | 'setting'
+export type Kind = 'tab' | 'note' | 'bookmark' | 'host' | 'command' | 'page' | 'heading' | 'setting'
 
 /** One thing the palette could show, ready to be scored. */
 export interface Candidate<T> {
@@ -68,6 +68,7 @@ const KIND: Record<Kind, number> = {
   tab: 14,
   note: 10,
   bookmark: 8,
+  host: 6,
   command: 4,
   page: 2,
   heading: 0,
@@ -79,6 +80,7 @@ const SHORT: Record<Kind, number> = {
   tab: 0,
   note: 0,
   bookmark: -4,
+  host: -10,
   command: -14,
   page: -10,
   heading: -30,

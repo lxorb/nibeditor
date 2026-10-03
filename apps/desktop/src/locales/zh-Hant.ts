@@ -1680,4 +1680,12 @@ export const zhHant: Dictionary = {
   'Did not load': '未載入',
   Permissions: '權限',
   Options: '選項',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: '遠端',
+  'Add host': '新增主機',
+  Reconnect: '重新連線',
+  'Open config': '開啟設定檔',
+  'No group': '無群組',
+  'Not an address': '不是位址',
+  'Could not connect to {host}': '無法連線到 {host}',
 }

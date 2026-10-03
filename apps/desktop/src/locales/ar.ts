@@ -1830,4 +1830,12 @@ export const ar: Dictionary = {
   'Did not load': 'لم يتم التحميل',
   Permissions: 'الأذونات',
   Options: 'الخيارات',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'عن بُعد',
+  'Add host': 'إضافة مضيف',
+  Reconnect: 'إعادة الاتصال',
+  'Open config': 'فتح الإعدادات',
+  'No group': 'بلا مجموعة',
+  'Not an address': 'ليس عنوانًا',
+  'Could not connect to {host}': 'تعذّر الاتصال بـ {host}',
 }

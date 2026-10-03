@@ -163,6 +163,95 @@ the thing, drawn on its grid where it has not, all at a file mark's weight and c
 of terminals reads as a strip of tabs, not a row of logos. Fetched with the first terminal in
 the strip (`lib/terminal/TerminalMark.svelte`, `lib/terminal/marks.ts`).
 
+## Another machine
+
+Emil, 2026-10-03: a **Remote** card of its own beside Terminal, a picker of hosts built like
+the space switcher, Shift Shift `ssh pi` or just `pi`, and the result a normal terminal tab
+running the system's own `ssh`. Studied first: Windows Terminal 1.24's SSH profiles, VS Code's
+Remote-SSH explorer, Termius, Tabby, iTerm2 and Warp. What they taught is in the choices below.
+
+**The system's `ssh`, in the pty a shell would have.** Keys, the agent (Windows' own OpenSSH,
+`System32\OpenSSH\ssh.exe`, first - the one its agent service speaks to - then the PATH), a
+`ProxyJump`, a second factor's prompt and `known_hosts` all work the way they do in any other
+terminal, because nothing stands between the reader and `ssh`. nib keeps no password, speaks no
+SSH of its own (Termius and Tabby both do, and both differ from the system's on exactly those
+four), and puts nothing on the other machine (Warp's wrapper is what its users switch off).
+
+**Where hosts come from.** The reader's `~/.ssh/config`, read and never written - VS Code's Add
+host prepends a block to the reader's own file, and the first matching block wins - and hosts
+made in nib, kept in the app's local data folder (`remote/hosts.json`), never synced: which
+machines a person reaches is this computer's business. The config is read again each time a
+list opens, so an edit shows at once (VS Code's explorer needs a reload). What counts as a host
+(`src-tauri/src/terminal/ssh_config.rs`):
+
+- a `Host` line's names, the first of them the host and the rest other names it is found by, so
+  `Host pi raspberry` is one machine and not two (VS Code lists both);
+- never a pattern (`*`, `?`) or a negation (`!`) - settings for many hosts, none to connect to,
+  which Windows Terminal's generator lists - and never a `Match` block;
+- `Include` followed, which VS Code's explorer does not: relative to `~/.ssh`, `~` for home,
+  `*` and `?` in the file's name, sorted as `glob(3)` sorts them, sixteen deep, each file once;
+- `HostName`, `User` and `Port` read for the row to say where it is, the first value winning as
+  it does for `ssh`.
+
+**Groups** come out of how people already lay the file out: a heading - one comment line on its
+own after a blank line, a few words that are not a setting commented out (`## Work ##`, `# Home`)
+- groups the hosts under it until the next; hosts in an included file with no heading of their
+own are grouped by the file's name, `config.d/work` being `work`. Settings can put any host in a
+group of nib's own, which goes before the config's.
+
+**The picker** (`lib/remote/HostPicker.svelte`) is the space switcher's shape: in the middle of
+the window, no field, every host numbered, a digit connecting at once where only one host can
+be meant, letters finding a host by its name, its other names or its address and waiting for
+Enter, Backspace taking one back. The pinned hosts first, then the five connected to most lately
+(newest first), then the rest under their groups' names, a line between; when each was last
+connected to at the row's end, quietly. An address typed that no host has - `emil@10.0.0.5`,
+`box:2222` - is a row of its own, and choosing it keeps it as a host made in nib, the way a
+browser keeps what was typed in its history. A digit is always a host's number, so an address
+that starts with one is typed into Shift Shift or Settings instead. With no hosts at all the
+one row is Add host, which is Settings, Remote. A right click on a host pins it.
+
+**Shift Shift.** Every host is a row of the palette, found by the same names; `ssh` and a
+space narrows the palette to the hosts alone, and `ssh user@box` that no host is offers to
+connect to it, which keeps it (`lib/palette/mode.ts`, `lib/palette/kinds.ts`).
+
+**The tab** is a terminal tab like any other, whose words name the host as its shell:
+`{"shell":"ssh:pi"}`. A host is an id to the window as a shell is: the crate finds `pi` in the
+config or `n-...` among the hosts it keeps, and the program, the arguments and the destination
+are its own - a host made in nib is held to what a destination can be before it is kept and
+again before it is used, and handed to `ssh` after `--`, so nothing the window keeps can be read
+as an option (`src-tauri/src/terminal/remote.rs`). So the strip, the session, Reopen closed
+tab, Duplicate, a split, Open another and Move to space all carry it with nothing of their own.
+It is called by the host's name - a rename still wins - and wears a server in the colour
+Settings gave the host (`Tab.running`'s `host` and `colour`; `lib/terminal/naming.ts`). What a
+remote shell titles itself and what runs there are not asked: nothing on this side can see it,
+and the host is what the tab is.
+
+**A connection that drops** - `ssh` ending with anything but 0 - leaves its lines readable and a
+quiet bar at the foot, **Reconnect**, which Enter is too. Never by itself: Tabby's reconnect
+loops on a machine that is down. `exit` on the other machine is `ssh` ending with 0, and the tab
+closes, as a shell here does. Closing a remote tab never asks, as Windows Terminal's SSH tabs do not: `ssh` is
+its shell, and what runs on the other machine cannot be seen from here (`lib/terminal/closing.ts`).
+
+**After a restart** a remote tab comes back with its last lines, like any terminal, and the same
+Reconnect bar under them: a window that comes back should not knock on every machine it once
+reached before anybody has looked. A remote tab made in this run - by Remote, a duplicate, a
+split - connects as it opens (`madeNow` in `lib/remote/open.ts`).
+
+**Settings, Remote** lists every host in the picker's order: dragged to reorder, or the two
+arrows on each row. A row opens the host: its colour (the canvas's six), its group, its pin; for
+a host made in nib its name and address too, and Remove; for one of the config, Open config,
+which opens the file in the system's text editor (nib never writes it).
+
+**Not now**, written down as the next steps:
+
+- **A remote space over SFTP**: a space whose folder is on another machine, read and written
+  through the same `ssh`, so a note on a server is edited where it is. It needs the file
+  operations, the watcher and the trash to work through a connection that can drop, which is a
+  design of its own.
+- **Agent scopes per host**: an agent's `run_terminal` reaching a host the reader allowed, with
+  the same list and question it has for a local shell. Until then no agent verb reaches a remote
+  terminal.
+
 ## Closing
 
 - **A tab closing** asks only when something besides the idle shell is running - VS
@@ -318,8 +407,8 @@ test/weight.test.ts).
   printed to a terminal to put text on the clipboard.
 - **Shell integration** past the folder and the prompt mark: marks by each command, sticky
   scroll, command decorations.
-- **A colour per tab.** Windows Terminal and VS Code have one; it waits for the remote
-  terminals, whose host is what a colour would say.
+- **A colour per tab.** A remote terminal wears its host's colour (above); a local shell has
+  none, since nothing about it says one.
 - **Paths as links**, and the screen reader mode.
 - **A shell that survives a restart.** iTerm2 runs every session inside a server of its
   own and VS Code every terminal inside a pty host, so a crash or an upgrade reconnects to
@@ -350,6 +439,12 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |
 | `apps/desktop/src/lib/terminal/naming.ts` | what a tab is called and what it wears, out of what runs in it |
 | `apps/desktop/src/lib/terminal/rename.ts` | a name of the reader's own, given and given back |
+| `apps/desktop/src-tauri/src/terminal/remote.rs` | another machine: which host an id names, `ssh` started for it, and the hosts nib keeps |
+| `apps/desktop/src-tauri/src/terminal/ssh_config.rs` | the reader's ssh config, read: hosts, includes, groups |
+| `apps/desktop/src/lib/remote/hosts.ts` | the hosts as one list: the picker's order, an address typed, what Settings changes |
+| `apps/desktop/src/lib/remote/HostPicker.svelte` | Remote's picker in the middle of the window |
+| `apps/desktop/src/lib/remote/RemotePane.svelte` | Settings, Remote |
+| `scripts/remote-probe.py` | a remote terminal driven against `scripts/fake-ssh.py`, never a real machine: the arguments `ssh` is given, the host's name on the tab, a dropped connection and Reconnect |
 | `apps/desktop/src/lib/terminal/history.ts`         | the last lines, between runs: how much, when, and a closed tab's                                                                                                                                                                 |
 | `apps/desktop/src-tauri/src/terminal/history.rs`   | where they are kept, a file per terminal, and how many                                                                                                                                                                           |
 | `apps/desktop/src/lib/terminal/shells.svelte.ts`   | the shells found, and the two settings                                                                                                                                                                                           |

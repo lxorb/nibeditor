@@ -1720,4 +1720,12 @@ export const id: Dictionary = {
   'Did not load': 'Tidak dimuat',
   Permissions: 'Izin',
   Options: 'Opsi',
+  // Remote: another machine's terminal, its host picker and Settings
+  Remote: 'Jarak jauh',
+  'Add host': 'Tambah host',
+  Reconnect: 'Hubungkan ulang',
+  'Open config': 'Buka konfigurasi',
+  'No group': 'Tanpa grup',
+  'Not an address': 'Bukan alamat',
+  'Could not connect to {host}': 'Tidak dapat terhubung ke {host}',
 }
