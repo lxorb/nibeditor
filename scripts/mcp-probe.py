@@ -57,7 +57,16 @@ from typing import Any
 
 import psutil
 
-from probe_app import OFF_SCREEN, close_app, in_view, main_window, refuse_updating, run_probe
+from probe_app import (
+    OFF_SCREEN,
+    close_app,
+    in_physical_pixels,
+    in_view,
+    look,
+    main_window,
+    refuse_updating,
+    run_probe,
+)
 
 #: Where this drive's pages listen; see docs/conventions.md.
 PORT_FROM = 23600
@@ -173,17 +182,20 @@ class Family:
         return found
 
     def _look(self) -> None:
+        # The screen's own pixels, as run_probe's watch reads them: a window is compared
+        # with a screen in one unit.
+        in_physical_pixels()
         while True:
-            for pid in self.members():
-                seen = in_view(pid)
-                if seen:
-                    for one in self.members():
-                        try:
-                            psutil.Process(one).kill()
-                        except psutil.Error:
-                            pass
-                    print(f"PROBE IN VIEW: pid {pid}: {seen}", file=sys.stderr, flush=True)
-                    os._exit(3)
+            members = self.members()
+            seen = in_view(look(members), members)
+            if seen:
+                for one in members:
+                    try:
+                        psutil.Process(one).kill()
+                    except psutil.Error:
+                        pass
+                print(f"PROBE IN VIEW: {seen}", file=sys.stderr, flush=True)
+                os._exit(3)
             time.sleep(0.004)
 
 

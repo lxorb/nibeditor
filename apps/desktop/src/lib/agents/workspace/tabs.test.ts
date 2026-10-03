@@ -154,7 +154,7 @@ const trash = {
       ref: '1',
       kind: 'note',
       name: 'Old.md',
-      detail: '/s/Work/archive',
+      detail: 'Work/archive',
       deletedAt: 5,
       purgeAt: 9,
       source: 'device',

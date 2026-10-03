@@ -113,7 +113,7 @@ class Drive(mcp.Drive):
         self.check("marked as the reader's screen", "<untrusted" in mcp.text(said))
         return (seen.get("selected") or {}).get("id", "")
 
-    def note(self, agent: Any) -> None:
+    def a_note(self, agent: Any) -> None:
         print("note: made behind, read, renamed, saved", flush=True)
         made = self.result(agent, "workspace_tabs", {"op": "new", "kind": "note", "content": "Hello from the agent"}) or {}
         tab = made.get("id", "")
@@ -181,6 +181,9 @@ class Drive(mcp.Drive):
         self.check("trashed from a tab behind, gone from the space", not (self.space / "Roadmap.md").exists())
         gone = self.result(agent, "recently_deleted", {"op": "list"}) or []
         row = next((one for one in gone if one.get("name") == "Roadmap.md"), {})
+        if not row:
+            self.note("this device's trash", json.dumps(mcp.window(self.folder, "list_trash"))[:400])
+            self.note("the spaces", json.dumps(self.result(agent, "list_spaces", {}))[:400])
         self.check("in Recently deleted, with where it was", row.get("from") == SPACE, json.dumps(gone)[:200])
         self.result(agent, "recently_deleted", {"op": "restore", "id": row.get("id", "")})
         self.check("restored where it was", (self.space / "Roadmap.md").is_file())
@@ -226,7 +229,7 @@ def main() -> int:
 
         agent = drive.pair()
         first = drive.context(agent)
-        drive.note(agent)
+        drive.a_note(agent)
         drive.canvas(agent)
         drive.pages(agent)
         drive.web(agent)

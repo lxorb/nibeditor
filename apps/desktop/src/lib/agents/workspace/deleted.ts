@@ -11,7 +11,7 @@
  *  list, and a whole space only for an agent that reaches every space. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { within } from '../../space-paths'
+import { folderOf, insideSpace, within } from '../../space-paths'
 import type { TrashItem } from '../../trash.svelte'
 import { asked } from './asks'
 import { type Call, done, need } from './call'
@@ -28,13 +28,15 @@ function whereOf(call: Call, item: TrashItem): string | null {
     return agent === null || agent.spaces === 'all' ? '' : null
   }
 
-  // The account says the space by name; this device's trash says the folder on disk.
+  // The account says the space by name.
   if (item.source === 'account') {
     const [space = '', ...folder] = item.detail.split(' / ')
     return spaces.some((one) => one.name === space) ? [space, ...folder].join('/') : null
   }
+  // This device's trash says where a thing was from the notes folder, which is the
+  // folder every space of it is in.
   for (const space of spaces) {
-    const inside = within(space.root, item.detail)
+    const inside = within(space.root, insideSpace(folderOf(space.root), item.detail))
     if (inside !== null) return inside ? `${space.name}/${inside}` : space.name
   }
   return null
