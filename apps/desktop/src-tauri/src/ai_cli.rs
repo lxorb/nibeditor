@@ -65,6 +65,7 @@ use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, Webview};
 
+use crate::ai_agent::Builtin;
 pub use args::Tool;
 use args::{Effort, Mode, Shape};
 use codex_app::Host;
@@ -365,41 +366,18 @@ pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// The provider a session's tools are asked as: its id and name in Settings > AI.
-#[derive(Debug, Deserialize)]
-pub struct Agent {
-    id: String,
-    name: String,
-}
-
-/// The built-in grant's id for a provider, as the API loop names it too (`ai_agent.rs`).
-fn grant_id(agent: &Agent) -> Result<String, String> {
-    usable(&agent.id)?;
-    Ok(format!("nib-{}", agent.id))
-}
-
-/// The provider's built-in grant's token for this run of the app: made with the grant
-/// the first time, issued afresh the first time a run asks, kept in memory only.
-fn token_for(app: &AppHandle, agent: &Agent) -> Result<String, String> {
+/// The provider's built-in grant's token for this run of the app: the grant made with
+/// the API loop's own `grant_for` (the same grant, whichever road answers), its token
+/// issued afresh the first time a run asks and kept in memory only.
+fn token_for(app: &AppHandle, agent: &Builtin) -> Result<String, String> {
     static ISSUED: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
     let issued = ISSUED.get_or_init(Mutex::default);
-    let id = grant_id(agent)?;
+    let id = crate::ai_agent::grant_for(app, agent)?.id;
     let mut held = lock(issued);
     if let Some(token) = held.get(&id) {
         return Ok(token.clone());
     }
-    let grants = &crate::agents::state(app).grants;
-    let token = if grants.by_id(app, &id).is_some() {
-        grants.reissue(app, &id)?
-    } else {
-        let client = format!("nib · {}", agent.name.trim());
-        let made = id.clone();
-        grants
-            .mint(app, &client, move |_, client| {
-                crate::agents::grants::Grant::own(made, client)
-            })?
-            .1
-    };
+    let token = crate::agents::state(app).grants.reissue(app, &id)?;
     held.insert(id, token.clone());
     Ok(token)
 }
@@ -444,7 +422,8 @@ fn session_output(
 #[serde(rename_all = "camelCase")]
 pub struct Opening {
     tool: Tool,
-    agent: Agent,
+    /// The provider whose built-in grant the tools are asked as.
+    agent: Builtin,
     /// `None`: words only, no tool.
     #[serde(default)]
     mode: Option<Mode>,

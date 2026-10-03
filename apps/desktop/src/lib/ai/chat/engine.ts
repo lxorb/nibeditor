@@ -10,7 +10,7 @@
  *
  *  The engine writes into the thread it is handed, in place, and says each change
  *  through `on`; the thread store writes the thread down once a send is over. Claude
- *  Code and Codex are engines of their own (lane 2), joined through `localEngines`. */
+ *  Code and Codex are engines of their own (lib/ai/local), joined through `localEngines`. */
 
 import { t } from '../../i18n.svelte'
 import { type LocalKind, isLocal, type Provider, type ProviderKind } from '../providers'
@@ -439,14 +439,28 @@ function spend(thread: Thread, usage: Usage): void {
   }
 }
 
-/** Claude Code's and Codex's engines, which lane 2 builds, each fetched the first time a
- *  thread on that program sends. */
-const localEngines: Partial<Record<LocalKind, () => Promise<Engine>>> = {}
+/** Claude Code's and Codex's engines (lib/ai/local, lane 2), each fetched the first time
+ *  a thread on that program sends, and built for the setup it is asked with. */
+const loadLocal = (kind: LocalKind) => async (setup: Setup) =>
+  (await import('../local/engine')).createLocalEngine(kind, setup)
 
-/** Joins a program's engine to the registry. */
-export function registerLocalEngine(kind: LocalKind, load: () => Promise<Engine>): void {
-  localEngines[kind] = load
+const localEngines: Partial<Record<LocalKind, (setup: Setup) => Promise<Engine>>> = {
+  'claude-code': loadLocal('claude-code'),
+  codex: loadLocal('codex'),
 }
+
+/** Joins a program's engine to the registry, in place of the one it has. */
+export function registerLocalEngine(
+  kind: LocalKind,
+  load: (setup: Setup) => Promise<Engine>,
+): void {
+  localEngines[kind] = load
+  localBuilt.delete(kind)
+}
+
+/** The program engines built for each setup: one a setup and program, since an engine
+ *  holds its threads' sessions. */
+const localBuilt = new Map<LocalKind, WeakMap<Setup, Engine>>()
 
 /** The API engine built for each setup, so the panel and the commands that share a
  *  setup share an engine, and words steered into a running turn reach it. */
@@ -457,7 +471,13 @@ export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engin
   if (isLocal(kind)) {
     const load = localEngines[kind]
     if (!load) throw new Error(t('That provider is not set up yet.'))
-    return await load()
+    const mine = localBuilt.get(kind) ?? new WeakMap<Setup, Engine>()
+    localBuilt.set(kind, mine)
+    const kept = mine.get(setup)
+    if (kept) return kept
+    const engine = await load(setup)
+    mine.set(setup, engine)
+    return engine
   }
   const held = built.get(setup)
   if (held) return held

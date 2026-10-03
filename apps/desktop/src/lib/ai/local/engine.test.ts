@@ -190,7 +190,7 @@ describe('a Claude Code thread', () => {
     expect(opened).toHaveLength(1)
     expect(opened[0]?.opening).toEqual({
       tool: 'claude-code',
-      agent: { id: 'cc', name: 'Claude Code' },
+      agent: { id: 'cc', name: 'Claude Code', readerTabs: true, askFirst: false },
       mode: 'ask',
       model: 'opus',
       effort: 'high',

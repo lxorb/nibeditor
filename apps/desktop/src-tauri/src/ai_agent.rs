@@ -96,8 +96,9 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
 
 /// The provider's built-in grant, made the first time it is asked for. Its token is not
 /// kept: the window's calls are dispatched inside the app, and a client outside it gets
-/// a token of its own.
-fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
+/// a token of its own: the sidebar's Claude Code and Codex get theirs from
+/// `ai_cli::token_for`, which asks this for the grant.
+pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
     if let Some(found) = grants.by_id(app, &id) {

@@ -10,6 +10,7 @@
 import { identifier } from '../../identifier'
 import { Channel } from '../../native'
 import { invoke } from '../../tauri'
+import { EDITS, READER_TABS } from '../chat/choices'
 import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
 
@@ -116,7 +117,9 @@ export async function openSession(
     id,
     opening: {
       tool: opening.tool,
-      agent: opening.agent,
+      // The grant's two choices, as the API loop makes it (lib/ai/chat/tools.ts): whichever
+      // road a provider's thread takes first, the grant is the same.
+      agent: { ...opening.agent, readerTabs: READER_TABS, askFirst: EDITS === 'ask-first' },
       mode: opening.mode,
       model: opening.model,
       effort: opening.effort,
