@@ -51,6 +51,7 @@ const QUIET = 300
  *  can pause between the banner and the prompt. */
 const STARTING = 5000
 const READY_QUIET = 1000
+const PROMPT_WAIT = 20_000
 
 /** Where a terminal is drawn while it starts with nobody looking: a box of a usual
  *  terminal's size, off every screen and invisible, so xterm.js can measure its cells. */
@@ -88,8 +89,17 @@ async function started(tab: Tab): Promise<Session> {
 
   await startingOf(tab)
   if (!running(tab)) throw new Refused('failed', 'the shell would not start')
-  await quiet(session.term, STARTING * 2, STARTING, READY_QUIET)
+  await atPrompt(session.term)
   return session
+}
+
+/** Until a shell just started has printed something - its prompt, after whatever its
+ *  profile prints first - and gone quiet, or the wait is over. A profile that starts
+ *  conda takes seconds before anything shows. */
+async function atPrompt(term: Session['term']): Promise<void> {
+  const until = Date.now() + PROMPT_WAIT
+  do await quiet(term, until - Date.now(), READY_QUIET, READY_QUIET)
+  while (!linesOf(term.buffer.active, 0, 1).text.trim() && Date.now() < until)
 }
 
 /** A shell nobody has drawn, started in a box off every screen. */

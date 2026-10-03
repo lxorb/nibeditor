@@ -139,6 +139,42 @@ vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../../modes.svelte', () => ({ modes: { pagesPaper: 'a4' } }))
+const settings = { show: vi.fn() }
+vi.mock('../../settings.svelte', () => ({ settings }))
+
+const openDocument = vi.fn((_path: string) => Promise.reject(new Error('no PDF here')))
+vi.mock('../../pdf/document', () => ({ openDocument }))
+
+/** Recently deleted: a note of this space, one of a space the agent does not reach. */
+const trash = {
+  error: null as string | null,
+  items: [
+    {
+      id: 'device:1',
+      ref: '1',
+      kind: 'note',
+      name: 'Old.md',
+      detail: '/s/Work/archive',
+      deletedAt: 5,
+      purgeAt: 9,
+      source: 'device',
+    },
+    {
+      id: 'note:2',
+      ref: '2',
+      kind: 'note',
+      name: 'Diary.md',
+      detail: 'Secret',
+      deletedAt: 4,
+      purgeAt: 9,
+      source: 'account',
+    },
+  ],
+  load: vi.fn(() => Promise.resolve()),
+  restore: vi.fn((_item: unknown) => Promise.resolve()),
+}
+vi.mock('../../trash.svelte', () => ({ trash }))
+
 vi.mock('../../scratchpad/pad', () => ({
   scratchpad: { where: () => Promise.resolve('/app/Scratchpad.md') },
 }))
@@ -503,6 +539,52 @@ describe('a note, a canvas and the scratchpad, by their tab', () => {
     expect(drawn.edit).toHaveBeenCalledWith(
       expect.objectContaining({ nodes: [expect.objectContaining({ text: 'Plan' })] }),
     )
+  })
+})
+
+describe('a PDF, Settings and Recently deleted', () => {
+  test('a PDF read by its tab is its file', async () => {
+    tabs.push(tab('pdf1', 'pdf', '/s/Work/paper.pdf'))
+    expect(await call('read_pdf', { tab: 'pdf1' })).toMatchObject({ code: 'failed' })
+    expect(openDocument).toHaveBeenCalledWith('/s/Work/paper.pdf')
+    expect(await call('read_pdf', { tab: 'n1' })).toMatchObject({ code: 'bad_arguments' })
+  })
+
+  test('Settings opens at a section, only with workspace.focus', async () => {
+    expect(await call('workspace_tabs', { op: 'open', view: 'settings' })).toMatchObject({
+      code: 'not_granted',
+    })
+    expect(
+      await call(
+        'workspace_tabs',
+        { op: 'open', view: 'settings', section: 'ai' },
+        agent(focusing),
+      ),
+    ).toMatchObject({ result: { settings: 'ai' } })
+    expect(settings.show).toHaveBeenCalledWith('ai')
+    expect(
+      await call(
+        'workspace_tabs',
+        { op: 'open', view: 'settings', section: 'nope' },
+        agent(focusing),
+      ),
+    ).toMatchObject({ code: 'bad_arguments' })
+  })
+
+  test('the list as far as the grant reaches, and one thing put back', async () => {
+    const only = agent(EVERY, { spaces: ['Work'] })
+    expect(await call('recently_deleted', { op: 'list' }, only)).toMatchObject({
+      result: [{ id: 'device:1', name: 'Old.md', from: 'Work/archive' }],
+    })
+    expect(await call('recently_deleted', { op: 'restore', id: 'note:2' }, only)).toMatchObject({
+      code: 'not_found',
+    })
+    expect(trash.restore).not.toHaveBeenCalled()
+
+    expect(await call('recently_deleted', { op: 'restore', id: 'device:1' }, only)).toMatchObject({
+      result: { restored: true, from: 'Work/archive' },
+    })
+    expect(trash.restore).toHaveBeenCalledWith(trash.items[0])
   })
 })
 

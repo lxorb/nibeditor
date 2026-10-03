@@ -20,6 +20,7 @@ import { documentOf } from '@nib/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo } from '../../space-paths'
 import { isScratchpad } from '../../scratchpad/is'
+import { type Section, settings } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
@@ -211,7 +212,34 @@ function openPage(call: Call, url: string): AgentAnswer {
   return answered(workspace.tabs.find((one) => one.id === id))
 }
 
-/** `open`: a file of a space, a page, the graph or the scratchpad. */
+/** The sections of Settings an agent may open it at, as the sheet names them. */
+const SECTIONS: readonly Section[] = [
+  'general',
+  'editor',
+  'shortcuts',
+  'spelling',
+  'markdown',
+  'appearance',
+  'ai',
+  'agents',
+  'sync',
+  'export',
+]
+
+/** Settings, in front, at a section: a sheet over the window rather than a tab, so it
+ *  is only ever in front, and what is in it is read and written by `read_setting` and
+ *  `write_setting`. */
+function showSettings(call: Call): AgentAnswer {
+  needScope(call, 'workspace.focus', 'Settings')
+  const asked = maybe(call, 'section') ?? 'general'
+  const section = SECTIONS.find((one) => one === asked)
+  if (!section) throw new Refused('bad_arguments', `section is one of ${SECTIONS.join(', ')}`)
+
+  settings.show(section)
+  return done({ settings: section })
+}
+
+/** `open`: a file of a space, a page, the graph, the scratchpad or Settings. */
 async function openSomething(call: Call): Promise<AgentAnswer> {
   const url = maybe(call, 'url')
   if (url !== null) return openPage(call, url)
@@ -231,7 +259,8 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
     await workspace.open(path, back ? { activate: false, beside: true } : {})
     return answered(workspace.tabs.find((one) => one.path === path))
   }
-  if (view !== null) throw new Refused('bad_arguments', 'view is graph or scratchpad')
+  if (view === 'settings') return showSettings(call)
+  if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
 
   const place = placeFor(call, maybe(call, 'space'))
   const relative = judged(need(call, 'path'))

@@ -75,6 +75,7 @@ const WORDS: Readonly<Record<string, string>> = {
   run_terminal: RUNNING,
   read_terminal: READING,
   type_terminal: TYPING,
+  recently_deleted: WRITING,
 }
 
 /** The word for a verb, translated, or null for bookkeeping. */

@@ -14,7 +14,7 @@ a probe build started by `run_probe` (scripts/probe_app.py):
                 allowed program goes and answers what it printed), read again; a program
                 not on the list asks; Ctrl+C alone does not
     rename      a note opened behind and renamed by its tab: the file renamed on disk
-    trash       that note to Recently deleted, gone from the space
+    trash       that note to Recently deleted, gone from the space, and restored
     focus       the selected tab unchanged by all of the above; then focus, with the scope
 
 Every process of the app's family is watched from the moment it exists, as
@@ -179,6 +179,11 @@ class Drive(mcp.Drive):
         self.check("the file renamed on disk", (self.space / "Roadmap.md").is_file() and not (self.space / "Later.md").exists())
         self.result(agent, "trash_file", {"path": "Roadmap.md"})
         self.check("trashed from a tab behind, gone from the space", not (self.space / "Roadmap.md").exists())
+        gone = self.result(agent, "recently_deleted", {"op": "list"}) or []
+        row = next((one for one in gone if one.get("name") == "Roadmap.md"), {})
+        self.check("in Recently deleted, with where it was", row.get("from") == SPACE, json.dumps(gone)[:200])
+        self.result(agent, "recently_deleted", {"op": "restore", "id": row.get("id", "")})
+        self.check("restored where it was", (self.space / "Roadmap.md").is_file())
 
     def focus(self, agent: Any, first: str) -> None:
         print("focus: nothing moved until asked", flush=True)

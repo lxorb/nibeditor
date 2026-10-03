@@ -82,9 +82,13 @@ fn grant_id(provider: &str) -> Result<String, String> {
 }
 
 /// A new built-in grant: Emil's defaults for the reader's own agents (9.1), with the
-/// reader's tabs in reach or not, and asking for every write or not.
+/// reader's tabs in reach or not, and asking for every write or not - and the terminal,
+/// which the sidebar is asked about as much as the notes ("why did the build fail"). It
+/// holds no program it may start without asking, so every command it runs or types into
+/// one of the reader's terminals asks first (9.3); reading a terminal is `context`.
 fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     let mut grant = Grant::own(id, client);
+    grant.scopes.push(Scope::Terminal);
     if !builtin.reader_tabs {
         grant.scopes.retain(|one| *one != Scope::BrowserReader);
     }
@@ -250,6 +254,8 @@ mod tests {
             "create_folder",
             "edit_canvas",
             "workspace_tabs",
+            "read_terminal",
+            "type_terminal",
         ]
         .into_iter()
         .map(str::to_owned)
@@ -301,10 +307,12 @@ mod tests {
         );
         let agent = names(Mode::Agent, &grant);
         assert!(agent.contains("edit_note") && agent.contains("browser_click"));
-        // Emil's defaults leave scripts, settings and the terminal out.
-        assert!(!agent.contains("browser_evaluate") && !agent.contains("run_terminal"));
+        // Emil's defaults leave scripts and settings out; the terminal is in, and asks.
+        assert!(!agent.contains("browser_evaluate") && agent.contains("type_terminal"));
+        assert!(grant.programs.is_empty());
         let ask = names(Mode::Ask, &grant);
         assert!(ask.is_subset(&agent));
+        assert!(ask.contains("read_terminal") && !ask.contains("type_terminal"));
     }
 
     #[test]

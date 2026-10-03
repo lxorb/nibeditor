@@ -455,8 +455,8 @@ mod tests {
     /// What the table costs a model's context, per tool and in all, as characters of the
     /// JSON a client is sent: printed for the record, held under a ceiling so a
     /// description cannot grow without anybody deciding it should. Raised from 24 000
-    /// to 27 000 on 2026-10-03 for every kind of tab (Emil: the agent reaches every tab,
-    /// terminals among them): two tools and the tab verbs' new arguments.
+    /// to 28 000 on 2026-10-03 for every kind of tab (Emil: the agent reaches every tab,
+    /// terminals among them): three tools and the tab verbs' new arguments.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -465,7 +465,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 27_000,
+            total < 28_000,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {
