@@ -10,7 +10,7 @@
 
 import { identifier } from '../identifier'
 import type { MenuEntry } from '../menu-item'
-import { workspace } from '../workspace.svelte'
+import { type Tab, workspace } from '../workspace.svelte'
 import { type Shell, shellName, shells } from './shells.svelte'
 import { startingFolder, writeSpec } from './spec'
 
@@ -19,18 +19,27 @@ interface Where {
   folder?: string | null
   /** The tab it goes beside, rather than at the end of the strip. */
   beside?: string
+  /** False for a terminal made behind the tab in front, which starts its shell the
+   *  first time it is shown or typed into; see lib/agents/workspace/terminal-tab.ts. */
+  activate?: boolean
 }
 
 /** A terminal, in the shell given or the one Settings chose, in the pane that has the
- *  keyboard. */
-export async function openTerminal(shellId?: string, where: Where = {}): Promise<void> {
+ *  keyboard. Answers its tab, or null where there is no shell to start. */
+export async function openTerminal(shellId?: string, where: Where = {}): Promise<Tab | null> {
   const list = await shells.ask()
   const shell = list.find((one) => one.id === shellId) ?? shells.chosen
-  if (!shell) return
+  if (!shell) return null
 
   const folder = where.folder === undefined ? hereFolder() : where.folder
   const text = writeSpec({ shell: shell.id, folder, key: identifier(), name: null })
-  workspace.openUnsaved('terminal', text, shellName(shell), where.beside ?? null)
+  return workspace.openUnsaved(
+    'terminal',
+    text,
+    shellName(shell),
+    where.beside ?? null,
+    where.activate ?? true,
+  )
 }
 
 /** The folder the reader is working in; see `startingFolder`. */

@@ -328,7 +328,7 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
 fn failed(code: &str, message: &str) -> String {
     let next = match code {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
-        "no_such_tab" => "browser_tabs lists the tabs you may use.",
+        "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of nib's.",
         "paused_by_reader" => {
             "The reader is using this tab: leave it alone until they give it back from its mark."
         }

@@ -81,6 +81,8 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   read_setting: null,
   write_setting: 'settings',
   run_terminal: 'terminal',
+  read_terminal: 'context',
+  type_terminal: 'terminal',
 }
 
 /** The window's verbs the crate asks on an agent's behalf. Each is optional: a window

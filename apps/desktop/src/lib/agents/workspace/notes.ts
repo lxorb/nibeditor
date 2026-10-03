@@ -16,22 +16,32 @@ import type { AgentAnswer } from '../../automation/caller'
 import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
-import { workspace } from '../../workspace.svelte'
+import { isScratchpad } from '../../scratchpad/is'
+import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
 import { Refused } from './problem'
+import { createFile, fileKindOf } from './new-files'
+import { namedTab } from './tab-target'
 import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
 
 /** The note a call names, in a space it may reach: its place, and its path as the
- *  space speaks of it, with `.md` where the name has no ending - or `tab`, a tab from
- *  `get_context` holding a note with no file yet, which is its space's though it is
- *  on no disk (workspace/drafts.ts). */
+ *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
+ *  `get_context` lists: one with a file is that file, as though its path were said, and
+ *  one in no space - a note with no file yet (workspace/drafts.ts), the scratchpad - is
+ *  reached by the tab alone. */
 function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {
-  const tab = maybe(call, 'tab')
-  if (tab !== null) return { place: placeFor(call, spaceOfDraft(tab)), relative: '', tab }
+  if (maybe(call, 'tab') !== null) {
+    const named = namedTab(call, ['note'], 'a note')
+    if (named.relative !== null) {
+      return noteOf({ ...call, args: { ...call.args, tab: null, path: named.relative } }, writing)
+    }
+
+    return { place: placeFor(call, spaceOfTab(named.tab)), relative: '', tab: named.tab.id }
+  }
 
   const place = placeFor(call, maybe(call, 'space'))
   const asked = need(call, 'path')
@@ -48,15 +58,12 @@ function noteOf(call: Call, writing: boolean): { place: Place; relative: string;
   return { place, relative }
 }
 
-/** The space of the note with no file in a tab, by id. */
-function spaceOfDraft(id: string): string {
-  const tab = workspace.tabs.find((one) => one.id === id)
-  const space = tab?.kind === 'note' && isDraft(tab.note) ? workspace.spaceOf(tab.note) : null
+/** The space of a note tab in no space's folder: a draft's own, the open one for the
+ *  scratchpad. */
+function spaceOfTab(tab: Tab): string {
+  const space = isDraft(tab.note) || isScratchpad(tab.path) ? workspace.spaceOf(tab.note) : null
   if (space === null) {
-    throw new Refused(
-      'no_such_tab',
-      `tab ${id} holds no note without a file: get_context lists them`,
-    )
+    throw new Refused('no_such_tab', `tab ${tab.id} holds a note outside every space`)
   }
   return space
 }
@@ -215,6 +222,11 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
 export async function createNote(call: Call): Promise<AgentAnswer> {
   if (maybe(call, 'tab') !== null)
     throw new Refused('bad_arguments', 'a new note is made at a path')
+
+  // A canvas, a page note or a web note is a file of its own kind; see new-files.ts.
+  const kind = fileKindOf(call)
+  if (kind !== 'note') return createFile(call, placeFor(call, maybe(call, 'space')), kind, made)
+
   const { place, relative } = noteOf(call, true)
   if ((await workspace.noteText(onDisk(place, relative))) !== null) {
     throw new Refused('exists', `${relative} is already there, and nothing is written over`)
