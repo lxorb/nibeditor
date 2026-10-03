@@ -18,8 +18,8 @@ import { Refused } from './problem'
 import { judgedForWriting, onDisk, type Place } from './spaces'
 
 /** What `create_note` can make. */
-export const FILE_KINDS = ['note', 'canvas', 'pages', 'web'] as const
-export type FileKind = (typeof FILE_KINDS)[number]
+const FILE_KINDS = ['note', 'canvas', 'pages', 'web'] as const
+type FileKind = (typeof FILE_KINDS)[number]
 
 /** The kind a call asks for: what its path ends in, else what it says, else a note. */
 export function fileKindOf(call: Call): FileKind {
