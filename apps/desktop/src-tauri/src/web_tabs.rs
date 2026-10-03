@@ -39,7 +39,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{
-    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Url, Webview, WebviewBuilder,
+    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Url, Webview, WebviewBuilder,
     WebviewUrl,
 };
 
@@ -469,13 +469,16 @@ impl Trail {
     }
 }
 
-/// The app's builder with what web tabs keep in it: the trail of every tab, and - on
+/// The app's builder with what web tabs keep in it: the trail of every tab, every page
+/// following its window as the window is resized (`web_follow.rs`), and - on
 /// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
 /// its tabs' logins to be made to last; see `web_cookies.rs`.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
     #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
-    builder.manage(WebTabs::default())
+    builder
+        .on_window_event(crate::web_follow::heard)
+        .manage(WebTabs::default())
 }
 
 /// Every web tab this app has open: where each of them has been, and which of them
@@ -1687,23 +1690,62 @@ fn say(
 /// opposite reason; see the note above that. A placement is also asked for on every
 /// drag of a pane divider, where a hop onto the async runtime and back would be two
 /// hops for one `SetBounds`.
+///
+/// Two things ride along with the rectangle. `frame` is where the hole sat in the
+/// window's layout, which is what lets the page follow the window's own resize and a
+/// placement measured before a resize land where that layout is now (`web_follow.rs`).
+/// `cut` is what of the page the app's layers are over, taken out of the page instead of
+/// the page hidden (`web_cut.rs`). The answer says whether this build cuts at all; a window
+/// told no hides the page under a layer, with its still picture, as it always has.
 #[tauri::command]
-pub fn web_place(app: AppHandle, tab: String, pane: Pane, visible: bool) -> Result<(), String> {
+pub fn web_place(
+    app: AppHandle,
+    tab: String,
+    pane: Pane,
+    visible: bool,
+    frame: Option<crate::web_follow::Frame>,
+    cut: Option<crate::web_cut::Cut>,
+) -> Result<bool, String> {
     let view = found(&app, &tab)?;
 
-    view.set_bounds(Rect {
-        position: LogicalPosition::new(pane.x, pane.y).into(),
-        size: LogicalSize::new(pane.width, pane.height).into(),
-    })
-    .map_err(|error| format!("that page could not be placed: {error}"))?;
+    // Where the layout the window measured puts the page at the window's size now, which
+    // is where it was measured unless the window has been resized since; see
+    // web_follow.rs.
+    let bounds = crate::web_follow::placed(
+        &view.window(),
+        view.label(),
+        crate::web_follow::Bounds::from(&pane),
+        frame,
+        visible,
+    );
+    view.set_bounds(crate::web_follow::rect_of(bounds))
+        .map_err(|error| format!("that page could not be placed: {error}"))?;
+
+    // What of the page the app's own layers are over, cut out of it rather than the page
+    // hidden; see web_cut.rs. Asked before the page is shown, so a page coming back under
+    // a layer never draws a frame over it.
+    if visible {
+        crate::web_cut::apply(&view, cut.clone(), bounds.width, bounds.height);
+    }
 
     if visible { view.show() } else { view.hide() }
         .map_err(|error| format!("that page could not be shown: {error}"))?;
 
     // A page shown again after a layer that closed over it may be owed the keyboard; see
-    // keyboard.rs.
-    crate::keyboard::placed(&app, &view, visible);
-    Ok(())
+    // keyboard.rs. A page under a layer is not shown to the keyboard: the layer has it.
+    crate::keyboard::placed(&app, &view, visible && cut.is_none());
+    Ok(crate::web_cut::CUTS)
+}
+
+impl From<&Pane> for crate::web_follow::Bounds {
+    fn from(pane: &Pane) -> Self {
+        Self {
+            x: pane.x,
+            y: pane.y,
+            width: pane.width,
+            height: pane.height,
+        }
+    }
 }
 
 /// Sends a tab to an address.
@@ -1937,6 +1979,8 @@ pub async fn web_close(
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
             crate::keyboard::closed(view.label());
+            crate::web_follow::unfollow(view.label());
+            crate::web_cut::uncut(view.label());
             #[cfg(feature = "cef")]
             let_go(view.label());
             if crate::downloads::linger(&closing, &named) {
@@ -2028,6 +2072,8 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
         #[cfg(feature = "cef")]
         let_go(view.label());
         crate::keyboard::closed(view.label());
+        crate::web_follow::unfollow(view.label());
+        crate::web_cut::uncut(view.label());
         let _ = view.close();
     }
 }

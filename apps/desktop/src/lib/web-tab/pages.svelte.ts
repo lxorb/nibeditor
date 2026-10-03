@@ -30,6 +30,8 @@
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
+import type { Cut } from './covers'
+import { Latest } from './latest'
 import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
@@ -104,6 +106,66 @@ export interface Rect {
   height: number
 }
 
+/** Where the hole sat in the window's layout when it was measured: the window's size,
+ *  the area every pane shares and the pane the hole is in. What lets the crate move the
+ *  page in the window's own resize, and put a placement that crossed a resize where its
+ *  layout is now rather than where it was; see src-tauri/src/web_follow.rs. */
+export interface Frame {
+  window: { width: number; height: number }
+  area: Rect
+  pane: Rect
+}
+
+/** What a pane says about its page beside the rectangle: what of the app is over the
+ *  page, and where the hole sits in the layout. */
+export interface Over {
+  cut: Cut | null
+  frame: Frame | null
+}
+
+/** Nothing over the page, and no layout to follow. */
+const NOTHING: Over = { cut: null, frame: null }
+
+/** One placement as the crate is told it. `away` is a page put out of the window while
+ *  its picture is taken, which is no news about where the pane is. */
+interface Placement {
+  pane: Rect
+  visible: boolean
+  frame: Frame | null
+  cut: Cut | null
+  away?: boolean
+}
+
+/** Whether a still picture is on screen yet: decoded, and two frames gone by, the one
+ *  the hole is drawn with it in and the one that puts it on the glass. A page that steps
+ *  behind a picture before then shows the empty pane under the sheet: a pane-sized PNG is
+ *  decoded after it arrives, not as it does, and scripts/web-smooth-probe.py photographed
+ *  that pane empty under the settings without this. */
+async function drawn(picture: string): Promise<boolean> {
+  try {
+    const image = new Image()
+    image.src = picture
+    await image.decode()
+  } catch {
+    // Nothing to decode it with, or not a picture after all: the frames still go by.
+  }
+  await painted()
+  return true
+}
+
+/** Two frames gone by: the one the window draws a change in, and the one that has it on
+ *  the glass. */
+function painted(): Promise<void> {
+  return new Promise<void>((go) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => go()))
+  })
+}
+
+/** Whether the crate cuts the app's layers out of a page rather than hiding it, which
+ *  it says with every placement: the system's engine on Windows does. Until it has said,
+ *  a page under a layer is hidden behind its picture, which every build can do. */
+let cutting = false
+
 /** Where a page is, its trail, and whether a field in it is typed into; see `web_look`. */
 interface Looked {
   url: string
@@ -135,6 +197,8 @@ interface Wanted {
    *  down for it. A tab that was switched away from is the other, and that one starts
    *  the countdown to being frozen. */
   covering: boolean
+  /** What else the pane said; see `Over`. */
+  over: Over
 }
 
 /** A web login another computer is using, over a tab of that site: the computer's name,
@@ -279,6 +343,13 @@ export class Page {
 
   /** What the pane asked for while the page was being built. */
   wanted: Wanted | null = null
+
+  /** Every placement of this page, one in the air at a time; see latest.ts. */
+  placing: Latest<Placement> | null = null
+
+  /** Where the page was last placed and what was over it, while it is under one of the
+   *  app's layers. Not drawn. */
+  under: { pane: Rect; over: Over } | null = null
 
   /** Set while the address field is being typed in, so the page reporting a new
    *  title does not rewrite what somebody is halfway through typing. */
@@ -461,7 +532,13 @@ class Pages {
    *  website except clicking its row goes through a layer, the pane is measured while
    *  that layer is still playing its way out, and the one moment the page was ever
    *  asked for was spent on a hit test. See `look` in WebTab.svelte. */
-  async show(tabId: string, url: string, pane: Rect, visible = true): Promise<void> {
+  async show(
+    tabId: string,
+    url: string,
+    pane: Rect,
+    visible = true,
+    over: Over = NOTHING,
+  ): Promise<void> {
     const page = this.of(tabId)
     this.wake(page)
     page.url ??= url
@@ -476,18 +553,18 @@ class Pages {
 
     if (page.live) {
       await this.thaw(tabId)
-      await this.place(tabId, pane, visible, !visible)
+      await this.place(tabId, pane, visible, !visible, over)
       return
     }
 
     // A page already on its way. Where the pane is now is where it will be put when
     // it arrives; see `place`.
     if (page.opening) {
-      page.wanted = { pane, visible, covering: !visible }
+      page.wanted = { pane, visible, covering: !visible, over }
       return
     }
 
-    await this.build(tabId, page, pane, visible)
+    await this.build(tabId, page, pane, visible, over)
   }
 
   /** An agent's page handed to a tab just made for it, without loading it again
@@ -519,8 +596,8 @@ class Pages {
     const wanted = page.wanted
     page.wanted = null
     if (!wanted) return
-    if (handed) await this.place(tabId, wanted.pane, wanted.visible, wanted.covering)
-    else await this.build(tabId, page, wanted.pane, wanted.visible)
+    if (handed) await this.place(tabId, wanted.pane, wanted.visible, wanted.covering, wanted.over)
+    else await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
   }
 
   /** The webview for a tab, and then whatever happened while it was being built.
@@ -530,7 +607,13 @@ class Pages {
    *  to have been switched away from, or for the tab to have been closed. None of
    *  those used to be possible - the command was answered inline, which is what froze
    *  the window - so all three are answered here now. */
-  private async build(tabId: string, page: Page, pane: Rect, visible: boolean): Promise<void> {
+  private async build(
+    tabId: string,
+    page: Page,
+    pane: Rect,
+    visible: boolean,
+    over: Over = NOTHING,
+  ): Promise<void> {
     page.opening = true
 
     // Out of sight from the frame it arrives in, where something of the app's is over
@@ -538,7 +621,7 @@ class Pages {
     // page built under a menu would be a page in front of it. Said here rather than
     // after the build because the build is what takes the time, and the pane is free to
     // say something else while it happens; the tail below applies whichever came last.
-    if (!visible) page.wanted = { pane, visible, covering: true }
+    if (!visible) page.wanted = { pane, visible, covering: true, over }
 
     // A site whose login another computer is using runs nowhere but there: the pane
     // shows who has it instead. Asked while the page counts as on its way, so the pane's
@@ -613,11 +696,11 @@ class Pages {
     }
 
     if (!wanted) return
-    if (wanted.visible) await this.place(tabId, wanted.pane, true)
+    if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
     // Something of the app's is over the hole. Out of sight and still the tab in front,
     // so nothing counts down for it - and nothing is photographed either: a page that
     // has this moment been built has nothing on it worth standing in for it.
-    else if (wanted.covering) await this.place(tabId, wanted.pane, false)
+    else if (wanted.covering) await this.place(tabId, wanted.pane, false, false, wanted.over)
     // Out of sight, and counting down to being frozen: the countdown that should have
     // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
@@ -633,7 +716,13 @@ class Pages {
    *  **`live` gates showing a page and never hiding one.** It is only the window's
    *  belief, and a page wrongly believed gone was left drawn over the whole app; see
    *  docs/web-tabs.md. Hiding a page that has gone costs one refused call. */
-  async place(tabId: string, pane: Rect, visible: boolean, covering = false): Promise<void> {
+  async place(
+    tabId: string,
+    pane: Rect,
+    visible: boolean,
+    covering = false,
+    over: Over = NOTHING,
+  ): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
 
@@ -642,11 +731,19 @@ class Pages {
     // tab switched away from while its page was on its way must not have the page
     // arrive over the tab that took its place.
     if (page.opening) {
-      page.wanted = { pane, visible, covering }
+      page.wanted = { pane, visible, covering, over }
       return
     }
 
     if (!page.live && visible) return
+
+    // Something of the app's is over the page, and the crate can cut it out of the page:
+    // the page stays on screen round it. See `cover`.
+    if (covering && cutting && page.live && over.cut) {
+      await this.cover(tabId, page, pane, over)
+      return
+    }
+    page.under = null
 
     // Something is about to be drawn over the page, so the page is photographed first -
     // and how long that may hold the overlay up depends on whether there is already a
@@ -659,22 +756,106 @@ class Pages {
       else void this.shoot(tabId)
     }
 
+    await this.put(tabId, page, { pane, visible, frame: over.frame, cut: null })
+  }
+
+  /** The page with the app's layers cut out of it, on screen round them; see
+   *  src-tauri/src/web_cut.rs.
+   *
+   *  A menu, a card or a popover is cut out in its own shape and nothing else of the page
+   *  changes: no picture is needed, so nothing waits for one and nothing goes blank. A
+   *  sheet over its scrim covers all of the page, and the page's still picture is what
+   *  the scrim dims - so until the page has one, only the layers themselves are cut out,
+   *  and the rest follows the moment the picture is in. Never a frame of the sheet
+   *  behind the page, and never a frame of an empty pane under it.
+   *
+   *  The cut waits for the frame that draws the layer. The window is reshaped at once and
+   *  the app draws a layer that has just arrived a frame or two later, so a cut made at
+   *  once showed the empty pane in the layer's shape for those frames - a dark box where
+   *  the menu was about to be. Taking the cut away again does not wait: the page coming
+   *  back over a layer that is leaving is what a layer leaving looks like. */
+  private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
+    if (!over.cut) return
+    const waiting = page.under === null
+    page.under = { pane, over }
+    // Behind a layer that fades in, the pane's own ground shows through the layer for as
+    // long as it is fading; the page's picture is a better thing to show there.
+    if (page.shot === null) void this.shoot(tabId)
+    if (waiting) await painted()
+
+    // Whatever the pane said last while this waited, unless the layers have gone since -
+    // or the tab has.
+    const under = this.held.get(tabId)?.under ?? null
+    if (under === null) return
+    const cut = under.over.cut
+    if (!cut) return
+    const placed = (given: Cut) =>
+      this.put(tabId, page, {
+        pane: under.pane,
+        visible: true,
+        frame: under.over.frame,
+        cut: given,
+      })
+
+    if (cut.all && page.shot === null) {
+      void this.shoot(tabId)
+        .then(() => (page.under === under && page.shot !== null ? drawn(page.shot) : false))
+        .then((shown) => {
+          if (shown && page.under === under) void placed(cut)
+        })
+      await placed({ all: false, hollows: cut.hollows })
+      return
+    }
+
+    // A picture from a while ago stands in at once, and a fresh one lands under the scrim.
+    if (cut.all) void this.shoot(tabId)
+    await placed(cut)
+  }
+
+  /** One placement, behind whatever is in the air; see latest.ts. A refused one is the
+   *  next show's to find out about, so it is not thrown at the caller. */
+  private async put(tabId: string, page: Page, one: Placement): Promise<void> {
+    page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
+    await page.placing.put(one).catch(() => undefined)
+  }
+
+  /** The placement itself, and what the page is now that it has landed. */
+  private async send(tabId: string, page: Page, one: Placement): Promise<void> {
     try {
-      await invoke('web_place', { tab: tabId, pane, visible })
-      // A picture is of one size of page. Shown at another - the notices row came or
-      // went, a divider moved - it would leave a band of empty pane under the next menu,
-      // so it goes and the next cover waits for a fresh one.
-      if (visible && (page.pane?.width !== pane.width || page.pane.height !== pane.height)) {
-        page.shot = null
-      }
-      page.pane = pane
-      page.shown = visible
-    } catch {
+      const cuts = await invoke<boolean | undefined>('web_place', {
+        tab: tabId,
+        pane: one.pane,
+        visible: one.visible,
+        frame: one.frame,
+        cut: one.cut,
+      })
+      cutting = cuts === true
+    } catch (error) {
       // The webview has gone, and the next show opens it again. Only a refused show may
       // conclude that: a page wrongly thought gone is built again, where one wrongly
       // given up on is left over the app.
-      if (visible) page.live = false
+      if (one.visible && !one.away) page.live = false
+      throw error
     }
+    if (one.away) return
+
+    // A picture is of one size of page. Shown at another - the notices row came or
+    // went, a divider moved - it would leave a band of empty pane under the next menu,
+    // so it goes and the next cover waits for a fresh one.
+    if (
+      one.visible &&
+      (page.pane?.width !== one.pane.width || page.pane.height !== one.pane.height)
+    ) {
+      page.shot = null
+    }
+    page.pane = one.pane
+    page.shown = one.visible
+  }
+
+  /** Whether the crate cuts the app's layers out of a page rather than hiding it; see
+   *  `cutting`. */
+  get cuts(): boolean {
+    return cutting
   }
 
   /** The tab is no longer the one showing.
@@ -708,7 +889,7 @@ class Pages {
    *  of it - and is hidden the moment the picture is in, unless it was shown again. */
   private async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
     const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
-    await invoke('web_place', { tab: tabId, pane: away, visible: true }).catch(() => undefined)
+    await this.put(tabId, page, { pane: away, visible: true, frame: null, cut: null, away: true })
     await page.shooting
     if (!page.onScreen) await this.place(tabId, pane, false)
   }

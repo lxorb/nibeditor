@@ -13,8 +13,8 @@
    *  The hole has to follow the pane exactly, so it is measured rather than
    *  guessed: a resize observer for the pane being dragged, the window's own resize,
    *  and a check after anything the app puts over it. A native webview draws above
-   *  every pixel of HTML in the window, so while something of the app's is over the
-   *  page the page is hidden - otherwise a menu would come up behind it. */
+   *  every pixel of HTML in the window, so what of the app's is over the page is cut
+   *  out of it - otherwise a menu would come up behind it. See covers.ts. */
 
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
@@ -37,12 +37,13 @@
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
+  import { ALL, cutOf, layersOver, moving, strangerOver, type Cut } from './covers'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { shownAddress } from './omnibox'
-  import { pages, type Rect, siteMark, type Step } from './pages.svelte'
+  import { type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
   import { seek, shut, sought } from './seek'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
@@ -114,50 +115,48 @@
     }
   }
 
-  /** Whether the page has to be out of sight, because something of the app's is over
-   *  it.
+  /** What of the page the app's own layers are over, or null for none of it.
    *
    *  A native webview draws above every pixel of HTML in the window: nothing of nib's
-   *  can be drawn on top of a page, so while anything is over the note the page is
-   *  hidden and the still picture of it stands in - see `shot` in pages.svelte.ts.
+   *  can be drawn on top of a page. So a layer over the page is cut out of it in its own
+   *  shape, and a sheet's scrim covers all of it, with the still picture of the page
+   *  standing in under the scrim - see covers.ts, and `cover` in pages.svelte.ts.
    *
-   *  Asked once, of the overlay stack, rather than of each kind of overlay in turn:
-   *  every menu, sheet, dropdown, the palette, the theme store and the settings put
-   *  themselves on that stack already, because that is what Escape closes. So a kind
-   *  of overlay nobody has written yet is covered on the day it is written, and there
-   *  is no list here to keep in step with the app. See overlays.ts.
+   *  Asked of the layers on the window rather than of the overlay stack, and of this
+   *  page rather than of the window: a tab's hover card over the strip, a menu over the
+   *  file list, a popover over the other pane leave this page alone. It used to be the
+   *  stack, and anything open anywhere hid every page in the window.
    *
-   *  The document is asked as well, for the few things that are over the page without
-   *  being something Escape closes - a drag preview, a bubble that follows the
-   *  pointer - and at nine points rather than at the middle, because a menu that
-   *  covers a corner of the page is just as much in front of it as one that covers the
-   *  middle. That was the bug: the page went on being drawn over a menu it did not
-   *  happen to cover the centre of, and a menu behind a page is a menu nobody can
-   *  see.
-   *
-   *  And a drag over the panes, whatever the hit test says. A tab carried out of its
+   *  And a drag over the panes, whatever the layers say. A tab carried out of its
    *  strip, or a note out of the file list, puts the drop zones up in every pane, and
    *  the carried tab hangs under the pointer over all of them: a page left in front
    *  hid both, so the tab vanished the moment it left the strip and nobody could see
    *  where it would land. The drag is asked rather than hit-tested because the page
    *  has to go before the zones are there to be hit. */
-  function covered(): boolean {
-    if (page.filling) return false
+  function coverOf(box: Rect): Cut | null {
+    if (page.filling) return null
     // Another tab's page holds the screen, and this one would be drawn over it.
-    if (filling.by !== null) return true
-    if (overlays.depth > 0 || workspace.panes.dragging !== null) return true
+    if (filling.by !== null || workspace.panes.dragging !== null) return ALL
+    if (!hole) return null
+    // Something over the page nothing knows the shape of: a drawer, a deck.
+    if (strangerOver(hole)) return ALL
+    return cutOf(box, layersOver(hole))
+  }
 
-    const box = hole?.getBoundingClientRect()
-    if (!box || !hole) return false
-
-    for (const x of [0.08, 0.5, 0.92]) {
-      for (const y of [0.08, 0.5, 0.92]) {
-        const on = document.elementFromPoint(box.x + box.width * x, box.y + box.height * y)
-        if (on !== null && on !== hole && !hole.contains(on)) return true
-      }
+  /** Where the hole sits in the window's layout: the area every pane shares and this
+   *  pane, at the window's size now. What lets the crate move the page in the window's
+   *  own resize rather than a frame after it; see src-tauri/src/web_follow.rs. */
+  function frameOf(): Frame | null {
+    const window = { width: innerWidth, height: innerHeight }
+    if (page.filling) {
+      const whole = { x: 0, y: 0, ...window }
+      return { window, area: whole, pane: whole }
     }
-
-    return false
+    const area = hole?.closest('[data-panes]')?.getBoundingClientRect()
+    const pane = hole?.closest('[data-pane]')?.getBoundingClientRect()
+    if (!area || !pane) return null
+    const of = (box: DOMRect) => ({ x: box.x, y: box.y, width: box.width, height: box.height })
+    return { window, area: of(area), pane: of(pane) }
   }
 
   let scheduled = 0
@@ -224,20 +223,25 @@
     if (!box) return
 
     last = box
-    const visible = !covered()
+    const cut = coverOf(box)
+    const visible = cut === null
 
     // A layer on its way out is on no list: it took itself off the overlay stack the
     // moment it closed, and nothing says when its own motion has finished. So while
     // the stack is empty and something is still over the hole, look again on the next
     // frame - which is the fifth of a second a layer takes to leave and no frame at all
-    // once it has gone. See LAYER in motion.ts for where the number comes from.
+    // once it has gone. See LAYER in motion.ts for where the number comes from. And a
+    // layer still moving in or out is a shape that has not settled, so the page is cut
+    // round it again on the next frame too.
     if (visible) leaving = 0
     else if (overlays.depth === 0) {
       if (leaving === 0) leaving = Date.now() + LEAVING
       if (Date.now() < leaving) follow()
     }
+    if (!visible && hole && moving(hole)) follow()
 
-    const said = `${box.x},${box.y},${box.width},${box.height},${String(visible)}`
+    const frame = frameOf()
+    const said = JSON.stringify([box, cut, frame?.window])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
@@ -248,7 +252,7 @@
     // the page rather than in an effect of its own, because a tab opened by hand asks for
     // its page in the breath it mounts. See web-data.ts.
     page.space = space
-    void pages.show(tab.id, address, box, visible)
+    void pages.show(tab.id, address, box, visible, { cut, frame })
   }
 
   /** Where this tab points: the address the page is on, else the one the session
@@ -279,7 +283,16 @@
     if (startup.reached('rooms')) asking()
     else void startup.turn('rooms').then(asking)
 
-    const watching = new ResizeObserver(follow)
+    // A change of size is answered in the frame it is laid out in rather than the one
+    // after: the observer runs between the layout and the paint, so the hole is measured
+    // for free and the page is told while the window is still drawing that frame. A
+    // sidebar sliding open is a change of size on every frame of it, and a page a frame
+    // behind each of them is a page that moves in steps. See latest.ts for the order.
+    const watching = new ResizeObserver(() => {
+      if (!ready) return
+      cancelAnimationFrame(scheduled)
+      look()
+    })
     if (hole) watching.observe(hole)
 
     window.addEventListener('resize', follow)
@@ -303,7 +316,7 @@
 
     // Something opened over the note, or the last thing over it closed. Neither is a
     // press - a command from the palette opens the next overlay, and Escape closes one
-    // - so the page cannot wait for a press to find out; see `covered`.
+    // - so the page cannot wait for a press to find out; see `coverOf`.
     const unwatch = overlays.watch(follow)
 
     return () => {
@@ -368,7 +381,7 @@
 
   // A drag over the panes began or ended. Neither is a press this pane hears - the
   // tab lifts ten pixels after its own press, whenever the hand gets there - nor
-  // anything on the overlay stack, so the page is told here; see `covered`.
+  // anything on the overlay stack, so the page is told here; see `coverOf`.
   $effect(() => follow(workspace.panes.dragging))
 
   // A page took the whole screen or gave it back, here or in another pane: the window
@@ -635,8 +648,7 @@
     <!-- What the page said, what a site asked for, and what a site is: one at a time,
          because a question waiting to be answered is the only thing worth reading, and
          the page's own dialog first, because its script is stopped until it is answered.
-         All are on the overlay stack, so the page is out of sight while one is up and
-         the still picture of it stands in; see `covered`. -->
+         Each is cut out of the page under it while it is up; see `coverOf`. -->
     {#if dialog}
       {#key dialog.id}
         <WebDialog {dialog} icon={siteMark(page.icon, page.url)} />
