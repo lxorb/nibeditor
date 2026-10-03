@@ -64,7 +64,6 @@ type Log = Arc<Mutex<Vec<Value>>>;
 /// One way of having a page, and what can be asked of it.
 struct Way {
     name: &'static str,
-    samples: Log,
     notes: Log,
     sample: Box<dyn Fn(Log)>,
     world_press: Option<Box<dyn Fn(Log)>>,
@@ -113,7 +112,6 @@ fn wry_way(
     let sampling = std::rc::Rc::clone(&view);
     let way = Way {
         name,
-        samples: Log::default(),
         notes: Log::default(),
         sample: Box::new(move |log| {
             let _ = sampling.evaluate_script_with_callback("window.m()", move |said| {
@@ -154,7 +152,7 @@ fn main() {
         .build(&event_loop)
         .expect("a window");
 
-    let mut ways = Vec::new();
+    let mut ways: Vec<Way> = Vec::new();
     let mut kept: Vec<Box<dyn std::any::Any>> = Vec::new();
 
     let (front, view) = wry_way("front", &window, (0.0, 0.0), true);
@@ -183,85 +181,153 @@ fn main() {
     ways.push(hidden);
     kept.push(Box::new(view));
 
+    // A second window, shown later and put in front: the reader's window behind
+    // somebody else's.
+    let other = WindowBuilder::new()
+        .with_title("in front")
+        .with_inner_size(tao::dpi::LogicalSize::new(500.0, 400.0))
+        .with_visible(false)
+        .build(&event_loop)
+        .expect("a second window");
+
     let started = Instant::now();
-    let mut step = 0;
+    let mut done: Vec<&'static str> = Vec::new();
     let window_states = Log::default();
+    // Every way's samples, by phase.
+    let mut sampled: Vec<(usize, &'static str, Log)> = Vec::new();
     event_loop.run(move |event, _, flow| {
         *flow = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(50));
         let _ = &kept;
         if !matches!(event, Event::NewEvents(_) | Event::MainEventsCleared) {
             return;
         }
-        let at = started.elapsed();
-        match step {
-            0 if at > Duration::from_secs(4) => {
-                for way in &ways {
-                    (way.sample)(Arc::clone(&way.samples));
-                }
-                step = 1;
+        let at = started.elapsed().as_secs_f64();
+        let mut due = |name: &'static str, when: f64| {
+            if at > when && !done.contains(&name) {
+                done.push(name);
+                true
+            } else {
+                false
             }
-            1 if at > Duration::from_secs(9) => {
-                for way in &ways {
-                    (way.sample)(Arc::clone(&way.samples));
-                }
-                push(
-                    &window_states,
-                    platform::window_state(&window, "before input"),
-                );
-                for way in &ways {
-                    if let Some(press) = &way.world_press {
-                        press(Arc::clone(&way.notes));
-                    }
-                }
-                step = 2;
-            }
-            2 if at > Duration::from_secs(10) => {
-                for way in &ways {
-                    if let Some(input) = &way.native_input {
-                        input(Arc::clone(&way.notes));
-                    }
-                    if let Some(picture) = &way.picture {
-                        picture(Arc::clone(&way.notes));
-                    }
-                }
-                step = 3;
-            }
-            3 if at > Duration::from_secs(12) => {
-                push(
-                    &window_states,
-                    platform::window_state(&window, "after input"),
-                );
-                for way in &ways {
-                    (way.sample)(Arc::clone(&way.samples));
-                }
-                step = 4;
-            }
-            4 if at > Duration::from_secs(14) => {
-                let report: serde_json::Map<String, Value> = ways
+        };
+        let mut sample = |phase: &'static str| {
+            for (index, way) in ways.iter().enumerate() {
+                let log = sampled
                     .iter()
-                    .map(|way| {
-                        let samples = way.samples.lock().unwrap().clone();
-                        let events = samples.last().and_then(|one| one.get("events")).cloned();
-                        (
-                            way.name.to_string(),
-                            json!({
-                                "rates": rates(&samples),
-                                "events the page saw": events,
-                                "notes": way.notes.lock().unwrap().clone(),
-                            }),
-                        )
-                    })
-                    .collect();
-                let out = json!({
-                    "engine": platform::ENGINE,
-                    "os": platform::os(),
-                    "ways": report,
-                    "window": window_states.lock().unwrap().clone(),
-                });
-                println!("{}", serde_json::to_string_pretty(&out).unwrap());
-                *flow = ControlFlow::Exit;
+                    .find(|(one, name, _)| *one == index && *name == phase)
+                    .map(|(_, _, log)| Arc::clone(log))
+                    .unwrap_or_else(|| {
+                        let log = Log::default();
+                        sampled.push((index, phase, Arc::clone(&log)));
+                        log
+                    });
+                (way.sample)(log);
             }
-            _ => {}
+        };
+        if due("shown 1", 4.0) {
+            sample("shown");
+        }
+        if due("shown 2", 9.0) {
+            sample("shown");
+            push(
+                &window_states,
+                platform::window_state(&window, "before input"),
+            );
+            for way in &ways {
+                if let Some(press) = &way.world_press {
+                    press(Arc::clone(&way.notes));
+                }
+            }
+        }
+        if due("input", 10.0) {
+            for way in &ways {
+                if let Some(input) = &way.native_input {
+                    input(Arc::clone(&way.notes));
+                }
+                if let Some(picture) = &way.picture {
+                    picture(Arc::clone(&way.notes));
+                }
+            }
+        }
+        if due("events", 12.0) {
+            push(
+                &window_states,
+                platform::window_state(&window, "after input"),
+            );
+            sample("after input");
+            window.set_minimized(true);
+        }
+        if due("minimised 1", 15.0) {
+            sample("minimised");
+        }
+        if due("minimised 2", 20.0) {
+            sample("minimised");
+            for way in &ways {
+                if let Some(picture) = &way.picture {
+                    picture(Arc::clone(&way.notes));
+                }
+            }
+            window.set_minimized(false);
+            other.set_visible(true);
+            other.set_focus();
+        }
+        if due("behind 1", 24.0) {
+            sample("behind another window");
+        }
+        if due("behind 2", 29.0) {
+            sample("behind another window");
+            push(
+                &window_states,
+                platform::window_state(&window, "behind, before input"),
+            );
+            for way in &ways {
+                if let Some(input) = &way.native_input {
+                    input(Arc::clone(&way.notes));
+                }
+            }
+        }
+        if due("behind events", 31.0) {
+            push(
+                &window_states,
+                platform::window_state(&window, "behind, after input"),
+            );
+            sample("behind, after input");
+        }
+        if due("report", 33.0) {
+            let report: serde_json::Map<String, Value> = ways
+                .iter()
+                .enumerate()
+                .map(|(index, way)| {
+                    let of = |phase: &str| -> Vec<Value> {
+                        sampled
+                            .iter()
+                            .find(|(one, name, _)| *one == index && *name == phase)
+                            .map(|(_, _, log)| log.lock().unwrap().clone())
+                            .unwrap_or_default()
+                    };
+                    let events =
+                        |phase: &str| of(phase).last().and_then(|one| one.get("events")).cloned();
+                    (
+                        way.name.to_string(),
+                        json!({
+                            "shown": rates(&of("shown")),
+                            "minimised": rates(&of("minimised")),
+                            "behind another window": rates(&of("behind another window")),
+                            "events the page saw": events("after input"),
+                            "events, behind another window": events("behind, after input"),
+                            "notes": way.notes.lock().unwrap().clone(),
+                        }),
+                    )
+                })
+                .collect();
+            let out = json!({
+                "engine": platform::ENGINE,
+                "os": platform::os(),
+                "ways": report,
+                "window": window_states.lock().unwrap().clone(),
+            });
+            println!("{}", serde_json::to_string_pretty(&out).unwrap());
+            *flow = ControlFlow::Exit;
         }
     });
 }
@@ -483,7 +549,6 @@ mod platform {
         );
         let way = Way {
             name: "own-none",
-            samples: Log::default(),
             notes: Log::default(),
             sample: Box::new(move |log| evaluate(&a, "window.m()", None, log, "sample")),
             world_press: Some(Box::new(move |log| {
@@ -636,7 +701,6 @@ mod platform {
         let sampling = web.clone();
         let mut way = Way {
             name: "offscreen",
-            samples: Log::default(),
             notes: Log::default(),
             sample: Box::new(move |log| evaluate(&sampling, "window.m()", None, log, "sample")),
             world_press: None,
