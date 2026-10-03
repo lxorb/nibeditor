@@ -173,7 +173,13 @@ export const pagesNavigator = held(() =>
  *  picture, the conversation with the providers behind it, and the front matter. The
  *  right side is shut when a window opens; the links are warmed with the doors. */
 export const linksPanel = held(() => import('./Links.svelte'))
-export const askPanel = held(() => import('./AskPanel.svelte'))
+/** The AI panel, with the thread engine behind it: never the glasses' plugin's, which
+ *  has no right side to ask in and whose package is at its ceiling. */
+export const askPanel = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('desktop only'))
+    : import('./ai/sidebar/ChatPanel.svelte'),
+)
 export const propertiesPanel = held(() => import('./PropertiesPanel.svelte'))
 
 /** The archive at the foot of the file list, once the space has one. Never the glasses'

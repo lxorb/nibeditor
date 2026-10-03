@@ -260,6 +260,10 @@ describe('the bundle a package is made of', () => {
       'engine_fetch',
       'engine_choose',
       'check_update',
+      // The AI panel, its threads and the engine behind them: the glasses' plugin has
+      // no right side to ask in. See surfaces.svelte.ts.
+      'ai_thread_write',
+      'ai_agent_call',
     ]
     const here = commands.filter((name) =>
       files.some((one) => one.name.endsWith('.js') && one.text.includes(name)),

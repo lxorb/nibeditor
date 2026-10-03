@@ -310,6 +310,9 @@ reads it.
 
 ## The Ask panel
 
+Ask is now the first mode of the AI panel (docs/ai-sidebar.md), in the same tab and on
+the same key; what follows is what that mode does, unchanged.
+
 The right side's last tab, or **Ctrl+Shift+A**, which puts the keyboard in its field.
 A question typed there is answered from your notes, beside the note you are reading,
 and every claim the answer makes from a note is cited: a small number after it that
@@ -514,8 +517,8 @@ only the provider knows.
 | `apps/desktop/src/lib/ai/rewrite.ts` | The four verbs, and what each sends |
 | `apps/desktop/src/lib/ai/rewriting.svelte.ts` | One rewrite, start to accepted |
 | `apps/desktop/src/lib/ai/retrieve.ts` | What a question is sent with, and the citations read back |
-| `apps/desktop/src/lib/ai/asking.svelte.ts` | The conversation, and what is kept |
-| `apps/desktop/src/lib/AskPanel.svelte` | The panel it is read in |
+| `apps/desktop/src/lib/ai/chat/` | The thread engine: a conversation with any provider, and where threads are kept |
+| `apps/desktop/src/lib/ai/sidebar/` | The AI panel it is read in, Ask its first mode; see docs/ai-sidebar.md |
 | `apps/desktop/src/lib/recorder/transcribe.ts` | Sound as words, by either road |
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |

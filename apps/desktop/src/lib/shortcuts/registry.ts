@@ -24,6 +24,7 @@ import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
+import { askAgain } from '../ai/sidebar/door'
 import { toggleScratchpad } from '../scratchpad/is'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
@@ -821,7 +822,23 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-a',
-    run: () => revealPanel('ask'),
+    // Pressed again in the panel's field, the thread list (docs/ai-sidebar.md 4.11);
+    // pressed in the list, back to the note, as every panel's key goes.
+    run: () => {
+      if (!askAgain()) revealPanel('ask')
+    },
+  },
+  // The selection into the AI panel's field as `@Note:12-14`, Claude Code's Alt+K: the
+  // words as they are now, which go with the next message whatever is selected then.
+  {
+    id: 'app.ask-selection',
+    label: () => t('Selection to the AI panel'),
+    category: 'view',
+    scope: 'app',
+    key: 'Alt-k',
+    run: () => {
+      if (!__EVEN_PLUGIN__) void import('../ai/sidebar/quote').then((one) => one.quoteSelection())
+    },
   },
   // A question on the side, Claude Code's /btw: a field in the middle of the window
   // with the note's selection, the note or the page in front going along, answered in
@@ -1426,6 +1443,28 @@ const WEB_ENTRIES: Shortcut[] = (
   ...(id.endsWith('.alt') ? { alias: true } : {}),
 }))
 
+/** The AI panel's field (docs/ai-sidebar.md 4.12). Read by the field itself, where the
+ *  focus is, so each is contextual: Ctrl+N there is a new thread and a new note
+ *  everywhere else, Ctrl+O unfolds the rows there and opens the palette elsewhere. */
+const AI_ENTRIES: Shortcut[] = (
+  [
+    ['ai.mode', () => t('Next mode'), 'Shift-Tab'],
+    ['ai.model', () => t('Model and effort'), 'Alt-p'],
+    ['ai.effort', () => t('Next effort'), 'Alt-t'],
+    ['ai.steer', () => t('Send into the running answer'), 'Mod-Enter'],
+    ['ai.stop', () => t('Stop the answer'), 'Escape'],
+    ['ai.unfold', () => t('Open every step'), 'Mod-o'],
+    ['ai.new', () => t('New chat'), 'Mod-n'],
+  ] as const
+).map(([id, label, key]) => ({
+  id,
+  label,
+  category: 'view' as const,
+  scope: 'panel' as const,
+  key,
+  contextual: true,
+}))
+
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
   label: () => t('Delete what is picked'),
@@ -1578,6 +1617,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...CANVAS_ENTRIES,
   ...PAGES_ENTRIES,
   ...WEB_ENTRIES,
+  ...AI_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 

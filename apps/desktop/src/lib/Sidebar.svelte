@@ -119,6 +119,9 @@
   const FRESH_MARK =
     'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
 
+  /** Three lines of a list with a dot before each: the AI panel's threads. */
+  const THREADS_MARK = 'M5 3.5h5.5M5 6.5h5.5M5 9.5h5.5M2.6 3.5h.1M2.6 6.5h.1M2.6 9.5h.1'
+
   /** Whether this side is open. Shut, the panel stays where it is, built and laid
    *  out, and only its column closes over it; see `.column`. */
   const open = $derived(workspace.openOn(side) !== null)
@@ -187,7 +190,13 @@
 
     // The agents' tab only once one has spoken; see agent-marks.svelte.ts.
     return held.flatMap((id) =>
-      PANELS.filter((one) => one.id === id && (id !== 'agents' || agentMarks.heard)),
+      PANELS.filter(
+        (one) =>
+          one.id === id &&
+          (id !== 'agents' || agentMarks.heard) &&
+          // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
+          (id !== 'ask' || !__EVEN_PLUGIN__),
+      ),
     )
   })
 
@@ -810,10 +819,24 @@
       {#if showing === 'ask'}
         <div class="tools">
           <button
+            class="nib-glyph tool"
+            title={shortcuts.tooltip(t('Chats'), 'app.ask')}
+            aria-label={t('Chats')}
+            onclick={() => {
+              if (!__EVEN_PLUGIN__)
+                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.showThreads())
+            }}
+          >
+            <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
+          </button>
+          <button
             class="nib-glyph tool fresh"
             title={t('New chat')}
             aria-label={t('New chat')}
-            onclick={() => void import('./ai/asking.svelte').then((one) => one.asking.clear())}
+            onclick={() => {
+              if (!__EVEN_PLUGIN__)
+                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.newThread())
+            }}
           >
             <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
           </button>

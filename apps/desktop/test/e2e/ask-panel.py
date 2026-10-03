@@ -141,6 +141,15 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
+    def do_GET(self) -> None:  # noqa: N802
+        # The panel asks for the model list as it opens; the one model is the list.
+        raw = json.dumps({"data": [{"id": MODEL}]}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self._cors()
+        self.end_headers()
+        self.wfile.write(raw)
+
     def do_POST(self) -> None:  # noqa: N802
         raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         try:

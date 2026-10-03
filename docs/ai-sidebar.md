@@ -851,7 +851,7 @@ run(context) }`.
 | **1 `ai-chat-engine`** | `lib/ai/chat/` (new), additions to `apps/desktop/src/lib/ai/providers.ts` and `apps/desktop/src/lib/ai/stream.ts` | the types above; the thread store (crate-kept files per space, a `ai_threads` read/write pair in `src-tauri/src/ai_threads.rs`); the API adapter for Anthropic Messages, OpenAI Responses (keys and the ChatGPT plan: `store: false`, `stream: true`, tools in a namespace), chat completions; the tool loop calling the crate as the built-in agent; effort mapping and refusal learning; the model catalogue with capabilities and windows (4.9); usage and the ≈ estimate; compaction (server where offered, own summary otherwise) | unit tests against recorded provider streams and a fake crate: every adapter's text, thinking, tool and usage events, effort refused and stepped, compaction swaps, transcript round-trip; `complete.test.ts` and `seam.test.ts` untouched and green | 1 |
 | **2 `ai-cli-sessions`** | `apps/desktop/src-tauri/src/ai_cli/` (new `session.rs`, `codex_app.rs`; `args.rs`), `apps/desktop/src-tauri/src/ai_cli.rs`, `apps/desktop/src/lib/ai/local/`, `scripts/fake-ai-cli.mjs` | the Claude Code session (stream-json in, `--effort`, `--mcp-config` with `nib mcp` alone and the built-in token, interrupt, idle end, reseed); Codex on the app-server (thread, turn, steer, interrupt, compact, goal, fork, `model/list`, token usage); both as `Engine` adapters; the fake CLI speaking both protocols | cargo tests over the fake through the real spawn, stream, stop and timeout; a test that no argument comes from the window but tool, model, effort, mode and thread; the args table test extended; `cargo test real_claude -- --ignored` read-only; a draft-PR CI before main | 1 |
 | **3 `ai-review`** | `lib/ai/review/` (new), `review/` in the editor package (new), the sidebar agent's grant in `apps/desktop/src-tauri/src/agents/grants.rs` | the built-in grant per provider and its mode views (4.4), **Ask before edits** as `needs_approval` with the change; the changes list, per-change Keep and Undo mapped through later edits, the gutter marks and tints, checkpoints, rewind with its five choices and Redo, edit-and-resend; Follow | unit tests on `test-desk.ts`: undo of one change among the reader's typing and the agent's later edits, rewind across three notes, a created note to Recently deleted, a kept change leaving no mark; grant tests for each mode's tool list | 2 |
-| **4 `ai-sidebar-ui`** | `lib/ai/sidebar/` (new), `apps/desktop/src/lib/AskPanel.svelte` (replaced), `apps/desktop/src/lib/Sidebar.svelte` and `apps/desktop/src/lib/surfaces.svelte.ts` (the slot), keys in `apps/desktop/src/lib/shortcuts/registry.ts`, `apps/desktop/src/locales` | the panel of 4.1: thread header and list with search, messages with parts, folded thinking and tool rows, the changes bar (drawing lane 3's list), queue chips with reorder, the field with chips, `@` menu and `/` menu (drawing lane 5's registry), mode chip, model popover, ring and tray, voice; Continue in the panel from the quick question; Open as a tab; motion; all strings in every catalogue | component tests; a drive `test/e2e/ai-sidebar.py` against the fake provider of `apps/desktop/test/e2e/ai.py`: a send, a stop, a queued and a steered message, a model and effort switch, the ring filling, an edit kept and one undone, a rewind; the Ask drive green in Ask mode; `weight.test.ts` unchanged | 2 |
+| **4 `ai-sidebar-ui`** | `lib/ai/sidebar/` (new), the Ask panel (replaced), `apps/desktop/src/lib/Sidebar.svelte` and `apps/desktop/src/lib/surfaces.svelte.ts` (the slot), keys in `apps/desktop/src/lib/shortcuts/registry.ts`, `apps/desktop/src/locales` | the panel of 4.1: thread header and list with search, messages with parts, folded thinking and tool rows, the changes bar (drawing lane 3's list), queue chips with reorder, the field with chips, `@` menu and `/` menu (drawing lane 5's registry), mode chip, model popover, ring and tray, voice; Continue in the panel from the quick question; Open as a tab; motion; all strings in every catalogue | component tests; a drive `test/e2e/ai-sidebar.py` against the fake provider of `apps/desktop/test/e2e/ai.py`: a send, a stop, a queued and a steered message, a model and effort switch, the ring filling, an edit kept and one undone, a rewind; the Ask drive green in Ask mode; `weight.test.ts` unchanged | 2 |
 | **5 `ai-commands`** | `lib/ai/commands/` (new) | the registry of section 3, table-driven, with synonyms, arguments and availability per provider; custom commands and agent profiles from front matter (4.7); the runners: `/goal` and its evaluator, `/loop`, `/subtask`, `/bg`, `/batch`, `/deep-research`, `/init`, `/memory` and remembering, `/export`, `/usage`, `/status`, `/doctor`, the verbs of 3.5 | a table test that every row of section 3 is registered, no name or synonym is taken twice, every command is available or dimmed with a reason for each of the six provider kinds, and none of 3.7 is registered; the goal loop against a fake engine through met, impossible, budget, no-progress and a fatal error; front-matter commands found, argued and overridden | 2 |
 
 Wave 1 is lanes 1 and 2, side by side: one is the window's TypeScript, the other the
@@ -982,6 +982,42 @@ review never disagree. An engine that keeps a conversation of its own (Claude Co
 forgets it when the turns are cut (`Engine.rewound`) and is reseeded at the next send.
 Like the steps, the review lasts the session: after a restart an old thread rewinds its
 conversation, not its notes.
+
+### 6.7 Lane 4: the panel, and where lanes 3 and 5 plug in
+
+Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
+
+| File | What it owns |
+| --- | --- |
+| `ChatPanel.svelte` | The panel in Ask's slot: the title and its menu, the conversation or the list, the foot |
+| `chat.svelte.ts` | The state: the space's threads, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
+| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, Allow and Don't allow |
+| `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
+| `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
+| `Threads.svelte` | The thread list: search, open, archive, delete |
+| `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
+| `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
+| `seams.ts`, `verbs-of-panel.ts` | Where lanes 3 and 5 plug in, and the `/` rows until lane 5 lands |
+| `prefs.ts`, `migrate.ts`, `door.ts`, `quote.ts` | The mode, the effort per model and the open thread remembered; the Ask panel's conversations made threads once; Ctrl+Shift+A's first-paint door; Alt+K |
+
+**The seams**, found by file name through `import.meta.glob`, which is empty for a file
+that is not there, so the build is whole before either lane lands and nothing changes
+after. Claude Code and Codex need none: `engineFor` (6.4) answers them with the panel's
+one setup.
+
+- **Lane 3**: `lib/ai/review/ChangesBar.svelte`, a component taking `{ thread }`, is
+  drawn over the field. Rewind (Esc Esc), edit-and-resend (Up) and the message's hover
+  clock are lane 3's to add to `Conversation.svelte`'s message.
+- **Lane 5**: `lib/ai/commands/index.ts`, met as 6.5 says: `commands(panel)` asked each
+  time the menu opens, `typed` in the context, the panel's `turn`, `adopt`, `touched`,
+  `ensure`, `text`, `approve` and `voice`, `instructionsFor(thread)` in the setup, the goal
+  chip from `thread.goal` and the running dot from `tasks.of(thread.id)`. Without the file
+  the menu lists the panel's own verbs (`verbs-of-panel.ts`).
+
+Not built here, and why: voice (the recorder's road into a field is its own lane), Open
+as a tab (a thread as a pane needs a tab kind), Continue in the panel from the quick
+question (the quick question stays as it is until the commands' `/btw` lands), and
+Follow (lane 3's).
 
 ---
 

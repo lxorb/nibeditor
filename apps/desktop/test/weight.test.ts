@@ -802,11 +802,15 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/keys.ts', 'where a key is kept'],
     ['/lib/ai/rewriting.svelte.ts', 'the four rewrites'],
     ['/lib/RewriteSheet.svelte', 'the sheet they are read in'],
-    // The right side's two panels and what is behind them: the conversation, the
-    // retrieval that searches the space for it, and a note's front matter as rows.
-    // Fetched when one of their tabs is shown; see surfaces.svelte.ts.
-    ['/lib/AskPanel.svelte', 'the Ask panel'],
-    ['/lib/ai/asking.svelte.ts', 'the conversation'],
+    // The right side's two panels and what is behind them: the AI panel with its
+    // threads and the engine that answers them, the retrieval that searches the space
+    // for Ask, and a note's front matter as rows. Fetched when one of their tabs is
+    // shown; see surfaces.svelte.ts. The panel's one first-paint part is the door
+    // Ctrl+Shift+A asks (ai/sidebar/door.ts), which imports nothing.
+    ['/lib/ai/sidebar/ChatPanel.svelte', 'the AI panel'],
+    ['/lib/ai/sidebar/chat.svelte.ts', 'its threads'],
+    ['/lib/ai/chat/engine.ts', 'the thread engine'],
+    ['/lib/ai/chat/threads.ts', 'where threads are kept'],
     ['/lib/ai/retrieve.ts', 'what a question is sent with'],
     ['/lib/PropertiesPanel.svelte', 'the Properties panel'],
     // And the Links panel with the rows it draws, which moved to the right side with
