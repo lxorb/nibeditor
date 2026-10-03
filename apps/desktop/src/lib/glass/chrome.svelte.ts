@@ -141,20 +141,36 @@ class Chrome {
     if (this.frame !== worn.scheme) this.frame = worn.scheme
     if (JSON.stringify(bars) !== JSON.stringify(this.bars)) this.bars = bars
 
-    const next: Kept = { ...worn, app: this.app, tab, bar: tab === null ? null : (bars[tab] ?? null) }
+    const next: Kept = {
+      ...worn,
+      app: this.app,
+      tab,
+      bar: tab === null ? null : (bars[tab] ?? null),
+    }
     const text = JSON.stringify(next)
-    if (text !== JSON.stringify(kept())) keep(KEY, text)
+    if (text === this.written) return
+    this.written = text
+    keep(KEY, text)
   }
 
   /** Forgets the colour kept for the next launch: the reader left glass. */
   forget(): void {
     forget(KEY)
+    this.written = ''
   }
 
+  /** What was last written down, so the same answer is not written twice. */
+  private written = ''
+
+  /** The colour on the root, touched only when it changes: the root's style is what
+   *  every rule under it is worked out from. */
   private paint(worn: Worn): void {
     const style = document.documentElement.style
-    style.setProperty('--glass-tint', worn.tint)
-    style.setProperty('--glass-tinted', `${Math.round(worn.wash * 100)}%`)
+    const wash = `${Math.round(worn.wash * 100)}%`
+    if (style.getPropertyValue('--glass-tint') !== worn.tint) {
+      style.setProperty('--glass-tint', worn.tint)
+    }
+    if (style.getPropertyValue('--glass-tinted') !== wash) style.setProperty('--glass-tinted', wash)
   }
 }
 
