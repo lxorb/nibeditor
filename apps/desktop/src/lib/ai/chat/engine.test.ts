@@ -85,6 +85,7 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
 /** The fake crate: one read-only tool, and whatever each test makes a call do. */
 const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => Promise<void> | void = () => undefined
+let where = ''
 const tools: Tools = {
   list: () =>
     Promise.resolve({
@@ -98,6 +99,7 @@ const tools: Tools = {
         },
       ],
     }),
+  context: () => Promise.resolve(where),
   call: async (_provider, mode, name, args): Promise<ToolOutput> => {
     calls.push({ name, args, mode })
     await onCall()
@@ -127,6 +129,7 @@ beforeEach(() => {
   always = null
   calls.length = 0
   onCall = () => undefined
+  where = ''
   forgetLearnt()
 })
 
@@ -210,6 +213,30 @@ describe('a call made and answered', () => {
       text: 'claude-sonnet-5',
     })
     expect(sent[1]?.body.model).toBe('claude-sonnet-5')
+  })
+})
+
+describe('where the reader is', () => {
+  test('goes with every message, as nib’s own verbs said it, and stays with it', async () => {
+    answers = [stream('anthropic-2'), stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'ask')
+    where = 'Space: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.'
+    await send(thread, 'What is this note about?')
+    where = 'Space: Birds. In front: Egrets.md.'
+    await send(thread, 'And this one?')
+
+    expect(thread.turns.filter((one) => one.role === 'you').map((one) => one.context)).toEqual([
+      'Space: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.',
+      'Space: Birds. In front: Egrets.md.',
+    ])
+    const second = sent[1]?.body as { messages: { role: string; content: { text?: string }[] }[] }
+    const texts = second.messages
+      .filter((one) => one.role === 'user')
+      .map((one) => one.content.at(-1)?.text)
+    expect(texts).toEqual([
+      '<reader-context>\nSpace: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.\n</reader-context>\n\nWhat is this note about?',
+      '<reader-context>\nSpace: Birds. In front: Egrets.md.\n</reader-context>\n\nAnd this one?',
+    ])
   })
 })
 

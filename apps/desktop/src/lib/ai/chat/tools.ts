@@ -20,6 +20,8 @@ import { record, text, type ToolDef } from './wire'
 export interface Tools {
   list(provider: Provider, mode: Mode): Promise<Listed>
   call(provider: Provider, mode: Mode, name: string, args: unknown): Promise<ToolOutput>
+  /** Where the reader is now: the space, the tab in front, every open tab. */
+  context(provider: Provider): Promise<string>
 }
 
 /** What the crate lists: the tools, and the instructions `nib mcp` gives every outside
@@ -84,6 +86,18 @@ export const crateTools: Tools = {
       instructions: text(listed.instructions),
       tools: tools.map(toolIn).filter((one): one is ToolDef => one !== null),
     }
+  },
+
+  async context(provider) {
+    if (!isDesktop) return ''
+    const said = await invoke<unknown>('ai_agent_context', { agent: agentOf(provider) })
+    return Array.isArray(said)
+      ? said
+          .map(outputIn)
+          .filter((one) => !one.error && one.text)
+          .map((one) => one.text)
+          .join('\n\n')
+      : ''
   },
 
   async call(provider, mode, name, args) {

@@ -170,6 +170,9 @@ export function createApiEngine(setup: Setup): Engine {
     }
 
     const switched = lastModel(thread)
+    // Where the reader is, said by nib's own verbs for every message, so "this", "the
+    // tab I have open" and "this space" mean what they mean on screen.
+    const context = await tools.context(provider).catch(() => '')
     const you: Turn = {
       id: fresh(),
       role: 'you',
@@ -177,6 +180,7 @@ export function createApiEngine(setup: Setup): Engine {
       draft: message,
       parts: [],
       effort: thread.effort,
+      ...(context ? { context } : {}),
     }
     thread.turns.push(you)
     if (!thread.title) thread.title = message.text.trim().split('\n')[0]?.slice(0, 80) ?? ''

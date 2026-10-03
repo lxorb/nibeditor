@@ -15,6 +15,10 @@
 //! reaches. A call to a tool its mode does not list is refused here as well, whatever
 //! the model says.
 //!
+//! Every turn also carries where the reader is - the space, the tab in front, every
+//! open tab - asked by nib through the same two verbs an outside agent would call
+//! (`ai_agent_context`).
+//!
 //! The grant is made with the two choices the window holds (src/lib/ai/chat/choices.ts):
 //! whether the reader's own tabs are in reach (`browser.reader`), and whether every edit
 //! asks first (`confirm` mode). Made once; the reader changes it in Settings > Agents.
@@ -177,6 +181,43 @@ pub fn ai_agent_call(
     Ok(host::rendered(&tool, &args, status, &body))
 }
 
+/// What every turn is sent about where the reader is (docs/ai-sidebar.md 4.2): the
+/// space, the tab in front and every open tab, with their kinds and paths or addresses,
+/// as `get_context` and `workspace_tabs` answer the provider's agent. Asked by nib for
+/// the turn rather than by the model, so in every mode; each verb only as far as the
+/// grant reaches, and written for the model with its marks like any answer.
+const CONTEXT: [(&str, fn() -> Value); 2] = [
+    ("get_context", || json!({})),
+    ("workspace_tabs", || json!({ "op": "list" })),
+];
+
+/// The reader's context for a turn: one answer a verb, as the model reads it.
+#[tauri::command(async)]
+pub fn ai_agent_context(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: Builtin,
+) -> Result<Vec<Value>, String> {
+    crate::agents::from_the_app(&webview)?;
+    let grant = grant_for(&app, &agent)?;
+    let window = window_verbs(&app);
+    let reached: BTreeSet<String> = host::listed(&grant, window.as_ref())
+        .into_iter()
+        .map(|tool| tool.name.clone())
+        .collect();
+    let caller = Caller::Agent(Box::new(grant));
+    Ok(CONTEXT
+        .iter()
+        .filter(|(verb, _)| reached.contains(*verb))
+        .map(|(verb, args)| {
+            let args = args();
+            let asked = json!({ "verb": verb, "args": args, "rest": [] });
+            let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
+            host::rendered(verb, &args, status, &body)
+        })
+        .collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,6 +239,11 @@ mod tests {
             "create_note",
             "write_note",
             "get_context",
+            "move_file",
+            "trash_file",
+            "create_folder",
+            "edit_canvas",
+            "workspace_tabs",
         ]
         .into_iter()
         .map(str::to_owned)
@@ -253,6 +299,36 @@ mod tests {
         assert!(!agent.contains("browser_evaluate") && !agent.contains("run_terminal"));
         let ask = names(Mode::Ask, &grant);
         assert!(ask.is_subset(&agent));
+    }
+
+    #[test]
+    fn agent_can_make_rename_move_and_delete_every_kind() {
+        let grant = made(
+            "nib-anthropic".into(),
+            "nib · Claude",
+            &builtin(true, false),
+        );
+        let agent = names(Mode::Agent, &grant);
+        for verb in [
+            "create_note",
+            "create_folder",
+            "edit_canvas",
+            "move_file",
+            "trash_file",
+            "workspace_tabs",
+            "get_context",
+        ] {
+            assert!(agent.contains(verb), "{verb}");
+        }
+        let ask = names(Mode::Ask, &grant);
+        assert!(!ask.contains("trash_file") && !ask.contains("move_file"));
+    }
+
+    #[test]
+    fn every_turn_asks_where_the_reader_is_by_the_two_verbs_that_say() {
+        let verbs: Vec<&str> = CONTEXT.iter().map(|(verb, _)| *verb).collect();
+        assert_eq!(verbs, ["get_context", "workspace_tabs"]);
+        assert_eq!(CONTEXT[1].1(), json!({ "op": "list" }));
     }
 
     #[test]

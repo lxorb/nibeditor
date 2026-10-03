@@ -67,12 +67,14 @@ function attached(one: Attachment): string {
   return `<attached label="${attribute(one.label)}">\n${one.text}\n</attached>`
 }
 
-/** What the reader's message is sent as: their words, then each chip's. */
-export function userStep(draft: Draft): Extract<Step, { role: 'user' }> {
+/** What the reader's message is sent as: where they were, each chip's words, then
+ *  their own. */
+export function userStep(draft: Draft, context = ''): Extract<Step, { role: 'user' }> {
   const texts = draft.attachments.map(attached).filter(Boolean)
+  const where = context ? [`<reader-context>\n${context}\n</reader-context>`] : []
   return {
     role: 'user',
-    text: [...texts, draft.text].join('\n\n'),
+    text: [...where, ...texts, draft.text].join('\n\n'),
     images: draft.attachments.flatMap((one) => (one.image ? [one.image] : [])),
   }
 }
@@ -173,7 +175,7 @@ export function stepsOf(
         steps.push({ role: 'effort', effort: turn.effort })
       }
       effort = turn.effort ?? effort
-      if (turn.draft) steps.push(userStep(turn.draft))
+      if (turn.draft) steps.push(userStep(turn.draft, turn.context))
     } else if (replays(turn, api, model) && turn.replay) {
       steps.push({ role: 'native', messages: turn.replay.messages })
     } else {

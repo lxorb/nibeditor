@@ -48,6 +48,7 @@ const tools: Tools = {
         },
       ],
     }),
+  context: () => Promise.resolve('Space: Birds. In front: Birds.md.'),
   call: () =>
     Promise.resolve({
       text: 'Herons stand still for a long time. Then they do not.',
