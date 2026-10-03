@@ -38,7 +38,7 @@ const PICTURES = /^(img|video|canvas|iframe|picture|svg|embed|object)$/i
 
 /** What a page in a frame of the app's own origin says it stands on: the same reading
  *  web_tint.rs runs inside a page, in this window's hands. */
-export function readFrame(win: Window): PageSaid {
+function readFrame(win: Window): PageSaid {
   const doc = win.document
   const said = painter(doc)
 
@@ -119,11 +119,12 @@ async function fromStill(tab: string): Promise<string | null> {
   return ground ? hexOf(ground) : null
 }
 
-/** The colour the page in a tab stands on, as `#rrggbb`, or null where it does not say
- *  and its still cannot either. */
-export async function groundOf(tab: string): Promise<string | null> {
+/** The colour the page in a tab stands on, as `#rrggbb`; null where it does not say and
+ *  its still cannot either, and undefined where there was no page to ask - one not open
+ *  yet, or another origin's - which says nothing about what it stands on. */
+export async function groundOf(tab: string): Promise<string | null | undefined> {
   const said = await asked(tab)
-  if (!said) return null
+  if (!said) return undefined
 
   const ground = groundSaid(said)
   if (ground) return hexOf(ground)

@@ -154,6 +154,9 @@ export function follow(): void {
   if (stop || !SIDES) return
   const sides = SIDES
 
+  // Pages already open when glass is put on have landed before anyone was listening.
+  for (const [tab] of pages.each()) landed(tab)
+
   stop = $effect.root(() => {
     $effect(() => {
       if (!chrome.on) return
@@ -178,7 +181,9 @@ export function landed(tab: string): void {
       waiting.delete(tab)
       if (!chrome.on) return
       const written = workspace.tabs.find((one) => one.id === tab)?.address
-      void groundOf(tab).then((ground) => grounds.said(tab, addressOf(tab, written), ground))
+      void groundOf(tab).then((ground) => {
+        if (ground !== undefined) grounds.said(tab, addressOf(tab, written), ground)
+      })
     }, SETTLES),
   )
 }
