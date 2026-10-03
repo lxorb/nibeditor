@@ -80,7 +80,9 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     if rest.is_empty() {
         return Some(None);
     }
-    rest.strip_prefix('_').filter(|one| !one.is_empty()).map(Some)
+    rest.strip_prefix('_')
+        .filter(|one| !one.is_empty())
+        .map(Some)
 }
 
 /// One page an agent acts on, on whichever engine it is.

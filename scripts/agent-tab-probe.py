@@ -26,9 +26,17 @@ What it asks, and how:
   timed.
 * **The reader wins.** An agent acts in the reader's own web tab, and the tab never takes
   the keyboard from it, so the agent is never paused by its own presses (`GotFocus`).
+* **The reader's logins, not their extensions.** An agent tab asked for the reader's store
+  is in its twin (src/agents/engines/mod.rs): a cookie the reader's store holds is there,
+  and the agent's own cookie never reaches the reader's store.
 
     python scripts/agent-tab-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
       --identifier ch.emilvinu.nib.probe.<name>
+
+`--chromium` drives nib's own Chromium (`nib-chromium.exe`, src-tauri/cef), whose agent tabs
+are browsers with no window at all (src/agents/engines/cef.rs). Off-screen rendering is a
+switch CEF reads as it starts, and only a run that starts with an agent paired turns it on,
+so this pairs the agent in a launch of its own and measures in the next.
 
 Prints one JSON document; exits non-zero when a check fails.
 """
@@ -394,6 +402,20 @@ def rates(before: object, after: object) -> dict[str, object]:
     }
 
 
+def pair(cli: "Endpoint", check: "Checks", said: dict[str, object]) -> str:
+    """A client becomes an agent, the reader answering in the window; its token."""
+
+    asked = cli.call("agent_pair", client="Probe Agent")
+    said["pair asked"] = asked
+    check.that("pairing asks", asked.get("status") == "needs_approval", asked)
+    answered = cli.window(f"window.__TAURI_INTERNALS__.invoke('agents_answer', {{ id: {json.dumps(asked.get('approval'))}, allow: true, always: false }})")
+    said["pair answered"] = answered
+    paired = cli.call("agent_pair", client="Probe Agent")
+    token = str(result(paired).get("token", ""))
+    check.that("pairing answers a token once allowed", len(token) == 64, paired)
+    return token
+
+
 class Checks:
     def __init__(self) -> None:
         self.failed: list[str] = []
@@ -414,6 +436,7 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
     parsed.add_argument("--identifier", required=True)
     parsed.add_argument("--out", type=pathlib.Path, default=pathlib.Path(tempfile.gettempdir()))
     parsed.add_argument("--host", action="store_true", help="also measure agent tabs in a hidden and a minimised window")
+    parsed.add_argument("--chromium", action="store_true", help="the build is nib's own Chromium: pair first, measure in the next launch")
     args = parsed.parse_args()
 
     wipe(args.identifier)
@@ -439,6 +462,19 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         close_app(running)
         allow_eval(args.identifier)
         time.sleep(1)
+
+        token = ""
+        if args.chromium:
+            running = run_probe(args.exe, quiet=True)
+            paired_port, secret, _ = endpoint(args.identifier, unlike=first_port)
+            until = time.perf_counter() + 90
+            while time.perf_counter() < until and not main_window(running.pid):
+                time.sleep(0.2)
+            time.sleep(2)
+            token = pair(Endpoint(paired_port, secret), check, said)
+            close_app(running)
+            first_port = paired_port
+            time.sleep(1)
 
         running = run_probe(args.exe, quiet=True)
         port_now, secret, pid = endpoint(args.identifier, unlike=first_port)
@@ -472,15 +508,8 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             check.that(f"{step}: window in front unchanged", now["front"] == before["front"] and not now["front is ours"], now)
             check.that(f"{step}: app focus unchanged", now["app thread focus"] == before["app thread focus"], now)
 
-        # ---- pairing: a client becomes an agent, the reader answers in the window ----
-        asked = cli.call("agent_pair", client="Probe Agent")
-        said["pair asked"] = asked
-        check.that("pairing asks", asked.get("status") == "needs_approval", asked)
-        answered = cli.window(f"window.__TAURI_INTERNALS__.invoke('agents_answer', {{ id: {json.dumps(asked.get('approval'))}, allow: true, always: false }})")
-        said["pair answered"] = answered
-        paired = cli.call("agent_pair", client="Probe Agent")
-        token = str(result(paired).get("token", ""))
-        check.that("pairing answers a token once allowed", len(token) == 64, paired)
+        if not token:
+            token = pair(cli, check, said)
         agent = Endpoint(port_now, token)
         status = agent.call("agent_status")
         said["agent status"] = {"status": status.get("status"), "scopes": result(status).get("grant", {}).get("scopes")}
@@ -502,6 +531,30 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         said["agent tab rates"] = rates(first, second)
         check.that("agent tab not throttled", isinstance(said["agent tab rates"], dict) and said["agent tab rates"].get("rAF per s", 0) > 50, said["agent tab rates"])
         unmoved("open")
+        if reader_tab:
+            # The reader's own page, beside it: an agent's page costs it nothing.
+            mine = cli.call("browser_navigate", tab=reader_tab, url=f"{site}/meter")
+            first = result(cli.call("browser_evaluate", tab=reader_tab, expression="window.m()", world="page")).get("value")
+            time.sleep(4)
+            second = result(cli.call("browser_evaluate", tab=reader_tab, expression="window.m()", world="page")).get("value")
+            said["reader tab rates"] = {"navigate": mine.get("status"), **rates(first, second)}
+            cli.call("browser_navigate", tab=reader_tab, url=f"{site}/user")
+            unmoved("the reader's tab measured")
+
+        # ---- the twin: the reader's logins, and nothing of the agent's back ----
+        if reader_tab:
+            cli.call("browser_evaluate", tab=reader_tab, world="page", expression="document.cookie = 'reader=1; max-age=3600; path=/'")
+            twin = cli.call("browser_open", url=f"{site}/meter")
+            twin_tab = str(result(twin).get("tab", ""))
+            cli.call("browser_wait", tab=twin_tab, **{"for": "load"})
+            seen = result(cli.call("browser_evaluate", tab=twin_tab, world="page", expression="document.cookie")).get("value")
+            cli.call("browser_evaluate", tab=twin_tab, world="page", expression="document.cookie = 'agent=1; max-age=3600; path=/'")
+            back = result(cli.call("browser_evaluate", tab=reader_tab, world="page", expression="document.cookie")).get("value")
+            said["twin"] = {"store": result(twin).get("store"), "twin sees": seen, "reader sees": back, "ms": twin.get("ms")}
+            check.that("the twin has the reader's cookie", "reader=1" in str(seen), said["twin"])
+            check.that("the agent's cookie never reaches the reader", "agent=1" not in str(back), said["twin"])
+            cli.call("browser_close", tab=twin_tab)
+            unmoved("the twin")
 
         if args.host:
             # Where agent tabs could live instead: a window nobody ever sees. Measured by
