@@ -477,6 +477,16 @@ pub fn hold_helper() {
     foreground::hold_helper();
 }
 
+/// Whether nib's own Chromium should start able to make agents' pages, which have no
+/// window (off-screen rendering): only where an agent is paired, since the switch is the
+/// whole process's. `config` is the app's own settings folder. See
+/// agents/engines/cef.rs.
+#[cfg(feature = "cef")]
+#[must_use]
+pub fn agent_pages_wanted(config: &std::path::Path) -> bool {
+    agents::engines::cef::windowless_wanted(config)
+}
+
 /// Starts the app on an engine the binary chose, and exits with a message if the app
 /// could not be built at all.
 ///

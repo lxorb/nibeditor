@@ -151,7 +151,7 @@ pub fn reader_took(app: &AppHandle, tab: &str, agents: &[String]) {
 pub fn stop(app: &AppHandle) -> bool {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     let again = STOPPED.swap(true, Ordering::SeqCst);
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     if again {
         super::tabs::close_all(app, None);
     }
