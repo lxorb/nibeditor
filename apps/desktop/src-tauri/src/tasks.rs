@@ -17,10 +17,18 @@
 ///
 /// Where the box sits is not here, though the twin says it: writing a tick is
 /// the app's own path through a note and never a search's, so the offset would
-/// be a field nothing on this side ever reads.
+/// be a field nothing on this side ever reads. What is in the box and how far the
+/// line is indented are here, because the scan of a space hands every task line on
+/// to the rows the window builds; see `prose` in links.rs.
 pub struct TaskItem {
     /// Whether the box counts as ticked: anything but a space does.
     pub done: bool,
+    /// What is between the brackets, as written: `x`, `/`, `-`, or whatever a
+    /// theme gave a meaning of its own.
+    pub mark: char,
+    /// How far the line is indented, in characters, which is what makes a task a
+    /// sub-task of the one above it.
+    pub indent: usize,
     /// How much of the line is the marker, its indentation and the space after
     /// the box included, which is where the task's own words start.
     pub marker: usize,
@@ -38,6 +46,7 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
     while matches!(bytes.get(at), Some(b' ' | b'\t')) {
         at += 1;
     }
+    let indent = at;
 
     // A bullet, or a number followed by a dot or a bracket.
     match bytes.get(at)? {
@@ -92,6 +101,8 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
 
     Some(TaskItem {
         done: mark != ' ',
+        mark,
+        indent,
         marker: end,
     })
 }
@@ -133,8 +144,22 @@ mod tests {
     fn indentation_is_kept_however_deep() {
         let task = task_at("    - [x] nested").expect("a task");
 
+        assert_eq!(task.indent, 4);
         assert_eq!(task.marker, 10);
         assert_eq!(words("    - [x] nested"), Some("nested"));
+    }
+
+    #[test]
+    fn the_box_says_what_is_in_it_as_written() {
+        for (line, mark) in [
+            ("- [ ] a", ' '),
+            ("- [/] a", '/'),
+            ("- [-] a", '-'),
+            ("- [é] a", 'é'),
+        ] {
+            assert_eq!(task_at(line).expect(line).mark, mark, "{line}");
+        }
+        assert_eq!(task_at("\t- [x] a").expect("a task").indent, 1);
     }
 
     #[test]
