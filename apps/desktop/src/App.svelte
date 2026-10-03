@@ -1206,7 +1206,7 @@
     <NewKindSheet />
   {/await}
 {/if}
-<!-- Another space, from Ctrl+Shift+Space: mounted at the launch's last turn too. -->
+<!-- Another space, from Ctrl+Space: mounted at the launch's last turn too. -->
 {#if spacePickerDialog.asked}
   {#await spacePickerDialog.asked then SpacePicker}
     <SpacePicker />

@@ -294,7 +294,7 @@ export const heldMark = latched(() =>
  *  See NewKindSheet.svelte and new-kind-sheet.svelte.ts. */
 export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
 
-/** The switcher in the middle of the window, Ctrl+Shift+Space: every space, a digit
+/** The switcher in the middle of the window, Ctrl+Space: every space, a digit
  *  away. Latched and asked for at the launch's last turn, as the dialog above is, since
  *  the press it answers is a hand that expects the rows under it at once. See
  *  SpacePicker.svelte and space-picker.svelte.ts. */
