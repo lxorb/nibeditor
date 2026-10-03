@@ -420,10 +420,15 @@ describe('the registry', () => {
     expect(await engineFor('openai', { provider: () => null })).not.toBe(first)
   })
 
-  test('a program’s engine is its own, once it has joined', async () => {
+  test('a program’s engine is its own, built for the setup it is asked with', async () => {
     const setup = { provider: () => null }
-    await expect(engineFor('codex', setup)).rejects.toThrow()
-    registerLocalEngine('codex', () => Promise.resolve(engine))
+    const asked: unknown[] = []
+    registerLocalEngine('codex', (given) => {
+      asked.push(given)
+      return Promise.resolve(engine)
+    })
     expect(await engineFor('codex', setup)).toBe(engine)
+    expect(await engineFor('codex', setup)).toBe(engine)
+    expect(asked).toEqual([setup])
   })
 })

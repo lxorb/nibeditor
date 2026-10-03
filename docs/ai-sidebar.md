@@ -869,13 +869,14 @@ and 5 export and owns none of their logic.
 
 ### 6.4 Where lanes 1 and 2 meet
 
-Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`; neither edits the other's files.
+Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in lane 1's files: the local loaders in `engineFor`, and `grant_for` made `pub(crate)`.
 
 - **The engine.** `createLocalEngine(kind, setup)` in `lib/ai/local/engine.ts` is the
   `Engine` for `claude-code` and `codex`; `setup` is the API engine's `Setup` as far as
-  it is read (`provider(id)`, `instructions(thread)`). `engineFor(kind, setup)` builds it
-  for a local kind with that same setup, through a dynamic import so none of it is in
-  the first paint; the registry's loader takes the setup for that (lane 1's change).
+  it is read (`provider(id)`, `instructions(thread)`). `engineFor(kind, setup)` in
+  `lib/ai/chat/engine.ts` loads it for a local kind through a dynamic import, so none of
+  it is in the first paint, and keeps one per setup and program, since an engine holds
+  its threads' sessions; `registerLocalEngine(kind, load)` takes a loader of a setup.
 - **Events** are the API engine's: `turn` for the reader's message and the model's,
   `part` as each grows (text, thinking, a `tool` row per `nib mcp` call with the verb's
   own name and its answer), `model`, `usage` (the program's own counts; `window` from
@@ -890,9 +891,10 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`; neither edits the othe
   `openSession` in `lib/ai/local/session.ts` and its `goal` saying (`thread/goal/*`,
   Claude Code's `/goal`). Until the engine carries a `goal` method, `/goal` on these two
   runs nib's evaluator loop like every other provider.
-- **The grant.** The crate makes the provider's built-in grant on first use under the
-  same id the API loop uses (`nib-<provider id>`, `ai_agent.rs`) and issues its token for
-  `nib mcp`; lane 3's grant work applies to both roads unchanged.
+- **The grant.** The crate asks `ai_agent::grant_for` for the provider's built-in grant,
+  the one the API loop uses (`nib-<provider id>`, with the same two choices from
+  `lib/ai/chat/choices.ts`), and issues its token for `nib mcp`; lane 3's grant work
+  applies to both roads unchanged.
 
 ---
 
