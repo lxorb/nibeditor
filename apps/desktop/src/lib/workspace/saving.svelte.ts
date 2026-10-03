@@ -15,7 +15,7 @@
  *  both. The workspace holds one of these and hands its calls straight through. */
 
 import { flushTableEdits } from '@nib/editor'
-import { saveRetryDelay } from '../backoff'
+import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
@@ -28,19 +28,6 @@ import { entryAt } from '../tree-edits'
 import type { Entry } from '../workspace.svelte'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
 import { isDraft } from './drafts'
-
-/** How long after the last change a document is written, in milliseconds.
- *
- *  Short, because nothing else keeps the words: a window killed a second after the
- *  typing stopped has lost nothing. Still a pause rather than a keystroke, so a
- *  burst of typing - whose gaps are shorter than this - is one write, and what a
- *  write costs is paid per pause and never per character. */
-const SAVE_DELAY = 400
-
-/** And the longest the first unwritten change waits while the changes never stop:
- *  somebody typing without a pause for a minute is written every couple of
- *  seconds all the same. */
-const SAVE_AT_MOST = 2000
 
 /** Pauses in a row that ended in a refused write before the light says so. One is
  *  a virus scanner holding the file for a moment; three is a file that will not be
