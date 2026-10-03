@@ -1,7 +1,7 @@
 /** The panel's two kinds of number, in the reader's language. */
 
 import { describe, expect, test } from 'vitest'
-import { seconds, tokens } from './numbers'
+import { minutes, seconds, tokens } from './numbers'
 
 describe('a count of tokens', () => {
   test('is as short as it can be said', () => {
@@ -23,6 +23,11 @@ describe('a count of tokens', () => {
 })
 
 describe('a length of time', () => {
+  test('is whole minutes on a goal’s clock', () => {
+    expect(minutes(30_000, 'en')).toBe('0m')
+    expect(minutes(150_000, 'en')).toBe('2m')
+  })
+
   test('is whole seconds and never less than one', () => {
     expect(seconds(300, 'en')).toBe('1s')
     expect(seconds(6_400, 'en')).toBe('6s')

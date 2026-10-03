@@ -24,7 +24,6 @@ import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
-import { askAgain } from '../ai/sidebar/door'
 import { toggleScratchpad } from '../scratchpad/is'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
@@ -36,6 +35,17 @@ import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
+
+/** What Ctrl+Shift+A asks the AI panel before it opens it: whether the press was the
+ *  panel's own (its field had the keyboard, so the press means the thread list). Set by
+ *  the panel while it is on screen; here rather than in a module of the panel's, which
+ *  would be one more file in the first paint. */
+let askAgain: (() => boolean) | null = null
+
+/** The panel's answer to Ctrl+Shift+A, while it is on screen; null as it goes. */
+export function hearAgain(answer: (() => boolean) | null): void {
+  askAgain = answer
+}
 
 /** Where an entry sits in the list. The first five are the app's own menus,
  *  so a reader looking for Bold looks under Format either way. */
@@ -825,7 +835,7 @@ const APP_ENTRIES: Shortcut[] = [
     // Pressed again in the panel's field, the thread list (docs/ai-sidebar.md 4.11);
     // pressed in the list, back to the note, as every panel's key goes.
     run: () => {
-      if (!askAgain()) revealPanel('ask')
+      if (!askAgain?.()) revealPanel('ask')
     },
   },
   // The selection into the AI panel's field as `@Note:12-14`, Claude Code's Alt+K: the

@@ -13,7 +13,8 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
   model is picked by key and answers the next request; Alt+T steps the effort, which
   the chip says and the request carries; Shift+Tab steps the mode;
 - `@` lists the space's notes and a chosen one goes along as a chip;
-- `/` lists the commands, and `/new` starts a new thread;
+- `/` lists the commands, `/status` writes its lines into the thread, `/goal` puts its
+  chip over the field and the chip's cross clears it, and `/new` starts a new thread;
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
 - the ring's tray lists the bands.
@@ -345,6 +346,22 @@ def drive(browser: Browser, scheme: str) -> None:
     if "facing the wind over the verge" not in last_sent():
         wrong("the mentioned note did not go with the message")
 
+    # A command's own lines, and a goal's chip that its cross clears.
+    page.locator(FIELD).click()
+    page.keyboard.type("/status")
+    page.keyboard.press("Enter")
+    waited(page, "document.querySelector('.ask .notice.said')", "the command's lines")
+    Model.words = ['{"verdict": "not_yet", "reason": "still going"}']
+    page.locator(FIELD).click()
+    page.keyboard.type("/goal every bird note names its bird")
+    page.keyboard.press("Enter")
+    waited(page, "document.querySelector('.ask .goal')", "the goal's chip")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}08-goal")
+    page.locator(".ask .goal .drop").click()
+    waited(page, "!document.querySelector('.ask .goal')", "the goal cleared")
+    idle(page)
+
     # Ctrl+Shift+A again: the thread list.
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
@@ -352,7 +369,7 @@ def drive(browser: Browser, scheme: str) -> None:
     titles = page.locator(".ask .threads .row .title").all_inner_texts()
     if not titles or "What does a heron do?" not in titles[0]:
         wrong(f"the thread list does not name the thread: {titles}")
-    shot(page, f"{tag}08-threads")
+    shot(page, f"{tag}09-threads")
     page.keyboard.press("Escape")
 
     # `/new` starts a thread of its own; the list then holds both.
@@ -360,7 +377,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.type("/ne")
     waited(page, "document.querySelector('.ask .suggest .row')", "the command list")
     page.wait_for_timeout(300)
-    shot(page, f"{tag}09-commands")
+    shot(page, f"{tag}10-commands")
     page.keyboard.press("Enter")
     page.wait_for_timeout(250)
     if page.locator(".ask .said").count():
@@ -383,7 +400,7 @@ def drive(browser: Browser, scheme: str) -> None:
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
     page.keyboard.press("Delete")
     waited(page, "document.querySelector('.ask .threads .group')", "the archived group")
-    shot(page, f"{tag}10-archived")
+    shot(page, f"{tag}11-archived")
     page.keyboard.press("Escape")
     page.context.close()
 

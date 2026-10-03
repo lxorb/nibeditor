@@ -1,35 +1,32 @@
 /** The `/` menu's matching, and a command typed whole. */
 
 import { describe, expect, test } from 'vitest'
-import { commandIn, matching, type PanelActions } from './seams'
-import { panelCommands } from './verbs-of-panel'
+import type { PanelCommand } from '../commands/types'
+import { commandIn, matching, rowNamed } from './seams'
 
-const ran: string[] = []
-const panel = new Proxy({} as PanelActions, {
-  get:
-    (_target, name: string) =>
-    (...args: unknown[]) => {
-      ran.push(`${name}(${args.map((one) => JSON.stringify(one)).join(',')})`)
-      return name === 'modelNamed' ? false : undefined
-    },
-})
-const rows = panelCommands(panel)
+function row(name: string, synonyms: string[] = [], description = ''): PanelCommand {
+  return { name, synonyms, description, available: () => true, run: () => undefined }
+}
+
+const rows = [
+  row('new', ['clear', 'reset'], 'a new thread'),
+  row('resume', ['continue'], 'the thread list'),
+  row('add-space', ['add-dir'], 'widen to another space'),
+  row('permissions', ['approve'], 'what the agent may do'),
+  row('rename', [], 'name the thread'),
+]
 
 describe('the `/` menu', () => {
-  test('finds a name by its start, hyphens aside, names before synonyms', () => {
+  test('finds a name by its start, hyphens aside, then synonyms, then description words', () => {
     expect(matching(rows, 'ne').map((one) => one.name)).toEqual(['new'])
+    expect(matching(rows, 'adddir').map((one) => one.name)).toEqual(['add-space'])
     expect(matching(rows, 'reset').map((one) => one.name)).toEqual(['new'])
-    expect(matching(rows, 're').map((one) => one.name)).toEqual([
-      'resume',
-      'rename',
-      'new',
-      'effort',
-    ])
+    expect(matching(rows, 're').map((one) => one.name)).toEqual(['resume', 'rename', 'new'])
+    expect(matching(rows, 'thread').map((one) => one.name)).toEqual(['new', 'resume', 'rename'])
   })
 
-  test('takes no name twice', () => {
-    const words = rows.flatMap((one) => [one.name, ...one.synonyms])
-    expect(new Set(words).size).toBe(words.length)
+  test('lists every row before anything is typed', () => {
+    expect(matching(rows, '')).toHaveLength(rows.length)
   })
 })
 
@@ -40,18 +37,9 @@ describe('a command typed whole', () => {
     expect(commandIn('not /a command')).toBeNull()
   })
 
-  test('runs what the panel’s own control runs', async () => {
-    ran.length = 0
-    const named = (name: string) => rows.find((one) => one.name === name)
-    await named('model')?.run({ args: 'unknown', thread: null, panel })
-    await named('effort')?.run({ args: 'extra', thread: null, panel })
-    await named('plan')?.run({ args: 'tidy the inbox', thread: null, panel })
-    expect(ran).toEqual([
-      'modelNamed("unknown")',
-      'openModels()',
-      'setEffort("xhigh")',
-      'setMode("plan")',
-      'send("tidy the inbox")',
-    ])
+  test('runs its row, and says the synonym it was typed by', () => {
+    expect(rowNamed(rows, 'new')).toEqual({ row: rows[0] })
+    expect(rowNamed(rows, 'approve')).toEqual({ row: rows[3], typed: 'approve' })
+    expect(rowNamed(rows, 'nothing')).toBeNull()
   })
 })

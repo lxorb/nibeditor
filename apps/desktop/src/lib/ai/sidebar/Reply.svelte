@@ -184,6 +184,8 @@
         return t('Stopped')
       case 'no_tools':
         return t('Without tools')
+      case 'command':
+        return part.text
     }
   }
 
@@ -202,6 +204,7 @@
         class="notice"
         class:wrong={block.notice.code === 'error'}
         class:model={block.notice.code === 'model'}
+        class:said={block.notice.code === 'command'}
         in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
       >
         {noticeOf(block.notice)}
@@ -312,6 +315,13 @@
     flex: 1;
     height: 1px;
     background: var(--line);
+  }
+
+  /* A command's own lines (a goal that ended, /status, /usage): already worded, a row
+     a line, and never sent to the model. */
+  .notice.said {
+    color: var(--muted-strong);
+    white-space: pre-wrap;
   }
 
   .notice.wrong {

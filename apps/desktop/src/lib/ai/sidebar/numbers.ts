@@ -32,6 +32,15 @@ export function tokens(count: number, language: string): string {
   }).format(Math.max(0, Math.round(count)))
 }
 
+/** How long something has run, in whole minutes: a goal's clock. */
+export function minutes(ms: number, language: string): string {
+  return formatter(language, {
+    style: 'unit',
+    unit: 'minute',
+    unitDisplay: 'narrow',
+  }).format(Math.max(0, Math.floor(ms / 60_000)))
+}
+
 /** A length of time, in whole seconds, never less than one: a thought that took
  *  0.3 s took a second as far as anybody reading the row is concerned. */
 export function seconds(ms: number, language: string): string {

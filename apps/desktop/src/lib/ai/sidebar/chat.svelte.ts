@@ -31,6 +31,7 @@ import type {
   Draft,
   Effort,
   EngineEvent,
+  Goal,
   Mode,
   ModelInfo,
   Thread,
@@ -38,7 +39,7 @@ import type {
   Turn,
   Usage,
 } from '../chat/types'
-import { noUsage } from '../chat/usage'
+import { added, noUsage } from '../chat/usage'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { threadMarkdown } from './export'
@@ -46,7 +47,7 @@ import { draftOf, type Front } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
 import { effortFor, lastMode, openIn, rememberEffort, rememberMode, rememberOpen } from './prefs'
-import type { PanelActions } from './seams'
+import type { Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
 
@@ -55,6 +56,12 @@ export interface Queued {
   id: string
   text: string
   chips: Mention[]
+  /** What was around the field when it was pressed. */
+  around: Around
+  /** A command's send: its own mode, model, effort and stop. */
+  once?: Once
+  /** A command waiting on how it ends. */
+  settle?: (ended: Ended) => void
 }
 
 /** What the controls under the field show of the open thread. */
@@ -68,6 +75,8 @@ export interface Head {
   fast: boolean
   usage: Usage
   archived: boolean
+  /** Its goal (lane 5's `/goal`), copied so the chip redraws as it moves. */
+  goal: Goal | null
   /** Whether it has been sent anything, and so is kept. */
   kept: boolean
 }
@@ -92,11 +101,12 @@ function headOf(thread: Thread): Head {
     fast: !!thread.fast,
     usage: { ...thread.usage },
     archived: !!thread.archived,
+    goal: thread.goal ? { ...thread.goal, budget: { ...thread.goal.budget } } : null,
     kept: thread.turns.length > 0,
   }
 }
 
-class Chat implements PanelActions {
+class Chat implements Panel {
   /** The space's threads, newest first. */
   heads = $state.raw<ThreadHead[]>([])
   /** The open thread, as the controls show it. */
@@ -226,7 +236,7 @@ class Chat implements PanelActions {
   /** A thread nothing has been sent in follows Settings > AI > Used for > Ask, so a
    *  provider set up or changed while the panel is open is the one it asks. Called from
    *  an effect with the provider, so it reads only the plain thread. */
-  adopt(provider: Provider | null): void {
+  follow(provider: Provider | null): void {
     const thread = this.open
     if (!thread || thread.turns.length || !provider || thread.provider === provider.id) return
     thread.provider = provider.id
@@ -267,6 +277,39 @@ class Chat implements PanelActions {
     this.show(this.fresh())
     rememberOpen(this.space, null)
     this.focus()
+  }
+
+  /** The open thread, shown first where none is: a goal or a fork needs one to live in. */
+  ensure(): Thread {
+    const open = this.open
+    if (open) return open
+    const made = this.fresh()
+    this.show(made)
+    return made
+  }
+
+  /** A thread a command made (a fork, a subtask, a batch's helper): written down, in the
+   *  list, and in front where `open` says. */
+  adopt(thread: Thread, open = false): void {
+    this.live.set(thread.id, thread)
+    if (open) {
+      this.listing = false
+      this.show(thread)
+    }
+    void keepThread(thread)
+      .catch(() => undefined)
+      .then(() => this.refreshHeads())
+  }
+
+  /** A thread a command changed outside a send (its goal moved, a line it added): drawn
+   *  again where it is open, and written down. */
+  touched(thread: Thread): void {
+    this.live.set(thread.id, thread)
+    if (thread === this.open) {
+      this.everything = true
+      this.draw()
+    }
+    if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
 
   showThreads(query = ''): void {
@@ -341,39 +384,77 @@ class Chat implements PanelActions {
   private say(text: string, chips: Mention[], around: Around): void {
     const thread = this.open ?? this.fresh()
     if (!this.open) this.show(thread)
-    if (this.running.includes(thread.id)) {
-      const list = this.queued[thread.id] ?? []
-      this.queued = {
-        ...this.queued,
-        [thread.id]: [...list, { id: crypto.randomUUID(), text, chips }],
-      }
-      return
-    }
-    void this.run(thread, text, chips, around)
+    this.enqueue(thread, { id: crypto.randomUUID(), text, chips, around })
   }
 
-  private async run(thread: Thread, text: string, chips: Mention[], around: Around): Promise<void> {
-    const provider = ai.providers.find((one) => one.id === thread.provider)
-    if (!provider) {
-      this.trouble = t('Add an AI provider in Settings first.')
-      this.text ||= text
+  /** A send in a thread: run at once, or queued behind the one running there. */
+  private enqueue(thread: Thread, send: Queued): void {
+    this.live.set(thread.id, thread)
+    if (this.running.includes(thread.id)) {
+      this.queued = { ...this.queued, [thread.id]: [...(this.queued[thread.id] ?? []), send] }
       return
     }
-    this.trouble = null
+    void this.run(thread, send)
+  }
+
+  /** Words sent in any thread for a command (a goal's next turn, a helper's task), as
+   *  the field sends them, and how that send ended (docs/ai-sidebar.md 6.5). `once` is
+   *  that send's own mode, model and effort, and the signal that stops it alone. */
+  turn(thread: Thread, text: string, once?: Once): Promise<Ended> {
+    return new Promise((settle) => {
+      this.enqueue(thread, {
+        id: crypto.randomUUID(),
+        text,
+        chips: [],
+        around: { front: null, selection: '' },
+        ...(once ? { once } : {}),
+        settle,
+      })
+    })
+  }
+
+  private async run(thread: Thread, send: Queued): Promise<void> {
+    const { text, chips, around, once } = send
+    const provider = ai.providers.find((one) => one.id === thread.provider)
+    if (!provider) {
+      const words = t('Add an AI provider in Settings first.')
+      if (thread === this.open) {
+        this.trouble = words
+        if (!send.settle) this.text ||= text
+      }
+      send.settle?.({ stop: 'error', error: words, turn: null, usage: null })
+      return
+    }
+    if (thread === this.open) this.trouble = null
     const stopper = this.begin(thread, text)
+    const stop = () => stopper.abort()
+    once?.signal?.addEventListener('abort', stop)
+    // A send's own mode, model and effort are the thread's for that send alone.
+    const before = { mode: thread.mode, model: thread.model, effort: thread.effort }
+    Object.assign(thread, {
+      ...(once?.mode ? { mode: once.mode } : {}),
+      ...(once?.model ? { model: once.model } : {}),
+      ...(once?.effort ? { effort: once.effort } : {}),
+    })
+    let ended: Ended
     try {
       const draft: Draft = await draftOf(text, chips, thread.mode, around.front, around.selection)
-      await this.sendDraft(thread, provider, draft, stopper)
+      ended = await this.sendDraft(thread, provider, draft, stopper)
     } catch (error) {
+      const words = message(error, t('The model did not answer.'))
+      ended = { stop: 'error', error: words, turn: null, usage: null }
       if (thread === this.open) {
-        this.trouble = message(error, t('The model did not answer.'))
-        if (!this.text) this.text = text
+        this.trouble = words
+        if (!send.settle && !this.text) this.text = text
       }
     } finally {
+      once?.signal?.removeEventListener('abort', stop)
+      if (once) Object.assign(thread, before)
       await this.finish(thread)
     }
+    send.settle?.(ended)
     // A stop pauses the queue: what was waiting stays, to be sent or taken back.
-    if (!stopper.signal.aborted) this.next(thread, around)
+    if (!stopper.signal.aborted) this.next(thread)
   }
 
   /** A thread starts answering: its stop, its mark in the list, its message drawn. */
@@ -400,34 +481,42 @@ class Chat implements PanelActions {
     await this.refreshHeads()
   }
 
+  /** One send through the engine, and how it ended, in the commands' terms. */
   private async sendDraft(
     thread: Thread,
     provider: Provider,
     draft: Draft,
     stopper: AbortController,
-  ): Promise<void> {
+  ): Promise<Ended> {
     const engine = await engineOf(provider.kind)
-    let error: string | undefined
+    const ended: Ended = { stop: 'end', turn: null, usage: null }
     await engine.send(
       thread,
       draft,
       (event) => {
-        if (event.type === 'done' && event.stop === 'error' && !thread.turns.length)
-          error = event.error
+        if (event.type === 'turn' && event.turn.role === 'model') ended.turn = event.turn
+        else if (event.type === 'usage')
+          ended.usage = ended.usage ? added(ended.usage, event.usage) : event.usage
+        else if (event.type === 'limit') ended.limit = event.limit
+        else if (event.type === 'done') {
+          ended.stop = event.stop
+          if (event.error !== undefined) ended.error = event.error
+        }
         this.heard(thread, event)
       },
       stopper.signal,
     )
     // A send refused before any turn (no provider, no engine) has nowhere to say so but
     // under the thread.
-    if (error) throw new Error(error)
+    if (ended.stop === 'error' && !ended.turn && ended.error) throw new Error(ended.error)
+    return ended
   }
 
-  private next(thread: Thread, around: Around): void {
+  private next(thread: Thread): void {
     const [first, ...rest] = this.queued[thread.id] ?? []
     if (!first) return
     this.queued = { ...this.queued, [thread.id]: rest }
-    void this.run(thread, first.text, first.chips, around)
+    void this.run(thread, first)
   }
 
   /** Words into the running turn (Ctrl+Enter): taken after the call in flight. With
@@ -473,7 +562,9 @@ class Chat implements PanelActions {
     return id ? (this.queued[id] ?? []) : []
   }
 
+  /** Off the queue. A command waiting on it hears that it was stopped. */
   unqueue(id: string): void {
+    this.queue.find((one) => one.id === id)?.settle?.({ stop: 'stopped', turn: null, usage: null })
     this.setQueue(this.queue.filter((one) => one.id !== id))
   }
 
@@ -492,10 +583,13 @@ class Chat implements PanelActions {
     const one = this.queue.find((each) => each.id === id)
     const thread = this.open
     if (!one || !thread) return
+    if (!this.running.includes(thread.id)) {
+      this.setQueue(this.queue.filter((each) => each.id !== id))
+      void this.run(thread, one)
+      return
+    }
     this.unqueue(id)
-    if (this.running.includes(thread.id)) this.steerWords(thread, one.text)
-    else
-      void this.run(thread, one.text, one.chips, this.around?.() ?? { front: null, selection: '' })
+    this.steerWords(thread, one.text)
   }
 
   moveQueued(from: number, to: number): void {

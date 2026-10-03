@@ -998,7 +998,7 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
 | `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
 | `seams.ts`, `verbs-of-panel.ts` | Where lanes 3 and 5 plug in, and the `/` rows until lane 5 lands |
-| `prefs.ts`, `migrate.ts`, `door.ts`, `quote.ts` | The mode, the effort per model and the open thread remembered; the Ask panel's conversations made threads once; Ctrl+Shift+A's first-paint door; Alt+K |
+| `prefs.ts`, `migrate.ts`, `quote.ts` | The mode, the effort per model and the open thread remembered; the Ask panel's conversations made threads once; Alt+K |
 
 **The seams**, found by file name through `import.meta.glob`, which is empty for a file
 that is not there, so the build is whole before either lane lands and nothing changes

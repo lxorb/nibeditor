@@ -10,7 +10,7 @@
    *  what can go along, `/` the commands; a picture pasted or dropped is a chip. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
-  import { t } from '../../i18n.svelte'
+  import { i18n, t } from '../../i18n.svelte'
   import { links } from '../../link-index.svelte'
   import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
@@ -25,9 +25,11 @@
   import MentionMark from './MentionMark.svelte'
   import { type Mention, mentionAt, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
+  import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
-  import { changesBar, commandIn, commandsFor, matching, type PanelCommand } from './seams'
+  import type { PanelCommand } from '../commands/types'
+  import { changesBar, commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
   import { modeWord } from './words'
 
@@ -136,9 +138,12 @@
 
   const found = $derived(mention && hushed !== chat.text ? ranked(candidates(), mention.query) : [])
 
+  /** Whether the `/` menu is open, which is when its rows are asked for: each time,
+   *  since commands written as notes are found in the background (6.5). */
+  const slashing = $derived(slash !== null)
+
   $effect(() => {
-    if (slash === null || commands.length) return
-    void commandsFor(chat).then((rows) => (commands = rows))
+    if (slashing) void commandsFor(chat).then((rows) => (commands = rows))
   })
 
   const commandRows = $derived(
@@ -153,7 +158,9 @@
         return {
           key: one.name,
           label: `/${one.name}`,
-          hint: [one.args, ...one.synonyms.map((word) => `/${word}`)].filter(Boolean).join('  '),
+          hint:
+            one.description ??
+            [one.args, ...one.synonyms.map((word) => `/${word}`)].filter(Boolean).join('  '),
           ...(why === true ? {} : { dim: why }),
         }
       })
@@ -207,7 +214,10 @@
   function pick(index: number, complete = false) {
     const command = commandRows[index]
     if (command) {
-      if (complete) {
+      // Tab, a row that needs its words first (`/goal <condition>`), or one not offered
+      // here: the name into the field, for the reader to go on from.
+      const offered = command.available(chat.provider?.kind ?? 'compatible') === true
+      if (complete || !offered || command.args?.startsWith('<')) {
         chat.text = `/${command.name} `
         place(chat.text.length)
         return
@@ -242,10 +252,15 @@
     const typed = commandIn(chat.text)
     if (!typed) return false
     if (!commands.length) commands = await commandsFor(chat)
-    const row = commands.find((one) => one.name === typed.name || one.synonyms.includes(typed.name))
-    if (row?.available(chat.provider?.kind ?? 'compatible') !== true) return false
+    const named = rowNamed(commands, typed.name)
+    if (named?.row.available(chat.provider?.kind ?? 'compatible') !== true) return false
     chat.text = ''
-    void row.run({ args: typed.args, thread: chat.thread, panel: chat })
+    void named.row.run({
+      args: typed.args,
+      thread: chat.thread,
+      panel: chat,
+      ...(named.typed ? { typed: named.typed } : {}),
+    })
     return true
   }
 
@@ -368,6 +383,29 @@
   })
 
   const bar = changesBar()
+
+  // ── The goal ──────────────────────────────────────────
+
+  /** The goal's chip while it is being worked toward or is paused (6.5): ◎, how long,
+   *  its turns of its budget, its tokens; the last reason a press away. */
+  const goal = $derived(
+    head?.goal && (head.goal.state === 'pursuing' || head.goal.state === 'paused')
+      ? head.goal
+      : null,
+  )
+  let reasoning = $state(false)
+  let now = $state(Date.now())
+
+  $effect(() => {
+    if (!goal) return
+    const clock = setInterval(() => (now = Date.now()), 30_000)
+    return () => clearInterval(clock)
+  })
+
+  async function clearGoal() {
+    const named = rowNamed(await commandsFor(chat), 'goal')
+    await named?.row.run({ args: 'clear', thread: chat.thread, panel: chat })
+  }
 </script>
 
 <svelte:window onpointerdown={outside} />
@@ -381,6 +419,39 @@
       <ChangesBar thread={chat.thread} />
     {/if}
   {/await}
+
+  {#if goal}
+    <div
+      class="goal"
+      class:paused={goal.state === 'paused'}
+      transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
+    >
+      <button
+        class="what"
+        title={goal.condition}
+        aria-expanded={reasoning}
+        onclick={() => (reasoning = !reasoning)}
+      >
+        <span class="mark">◎</span>
+        <span class="condition">{goal.condition}</span>
+        <span class="meta"
+          >{minutes(now - goal.started, i18n.language)} · {goal.turns}/{goal.budget.turns} · {tokens(
+            goal.tokens,
+            i18n.language,
+          )}</span
+        >
+      </button>
+      <button
+        class="drop"
+        aria-label={t('Remove')}
+        title={t('Remove')}
+        onclick={() => void clearGoal()}>×</button
+      >
+    </div>
+    {#if reasoning && goal.reason}
+      <p class="reason">{goal.reason}</p>
+    {/if}
+  {/if}
 
   {#if frontOn || selectionOn || chat.chips.length > 0}
     <div class="chips">
@@ -503,6 +574,70 @@
     gap: 4px;
     padding: var(--space-2) var(--space-1) var(--space-1);
     border-top: 1px solid var(--line);
+  }
+
+  .goal {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding-inline-end: 2px;
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+  }
+
+  .goal.paused {
+    border-color: var(--line);
+    background: var(--surface-2);
+  }
+
+  .goal .what {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px 6px;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-align: start;
+    cursor: default;
+  }
+
+  .goal .mark {
+    flex: none;
+    color: var(--accent);
+  }
+
+  .goal.paused .mark {
+    color: var(--muted);
+  }
+
+  .condition {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .goal .meta {
+    flex: none;
+    margin-inline-start: auto;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reason {
+    margin: 0;
+    padding: 0 6px;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
   }
 
   .chips {

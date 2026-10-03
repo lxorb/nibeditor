@@ -805,8 +805,8 @@ describe('what the app evaluates before it draws anything', () => {
     // The right side's two panels and what is behind them: the AI panel with its
     // threads and the engine that answers them, the retrieval that searches the space
     // for Ask, and a note's front matter as rows. Fetched when one of their tabs is
-    // shown; see surfaces.svelte.ts. The panel's one first-paint part is the door
-    // Ctrl+Shift+A asks (ai/sidebar/door.ts), which imports nothing.
+    // shown; see surfaces.svelte.ts. What Ctrl+Shift+A asks the panel is a variable in
+    // the shortcut registry, which the first paint already holds.
     ['/lib/ai/sidebar/ChatPanel.svelte', 'the AI panel'],
     ['/lib/ai/sidebar/chat.svelte.ts', 'its threads'],
     ['/lib/ai/chat/engine.ts', 'the thread engine'],

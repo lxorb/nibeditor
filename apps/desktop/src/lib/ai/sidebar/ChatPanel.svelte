@@ -14,12 +14,12 @@
   import { onMount, untrack } from 'svelte'
   import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
+  import { hearAgain } from '../../shortcuts/registry'
   import { workspace } from '../../workspace.svelte'
   import { ai } from '../store.svelte'
   import { chat } from './chat.svelte'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
-  import { hearAgain } from './door'
   import Threads from './Threads.svelte'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
@@ -41,7 +41,7 @@
   // A thread not yet sent asks whichever provider Ask is set to now.
   $effect(() => {
     const provider = ai.providerFor('ask')
-    untrack(() => chat.adopt(provider))
+    untrack(() => chat.follow(provider))
   })
 
   function titleMenu(event: MouseEvent) {

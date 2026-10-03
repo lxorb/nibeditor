@@ -1,6 +1,7 @@
 <script lang="ts">
   /** The space's threads (docs/ai-sidebar.md 4.11): newest first, each its title, its
-   *  model and its age, a dot on the ones still answering. Typing searches titles and
+   *  model and its age, a dot on the ones still answering or with work running out of
+   *  sight (a goal, a loop, a helper). Typing searches titles and
    *  words; arrows walk it, Enter opens, Delete archives (and an archived one comes back
    *  with Delete again), Shift+Delete deletes for good, Escape goes back to the open
    *  thread. The archived ones are the list's last group, as Claude Code keeps them. */
@@ -12,6 +13,7 @@
   import { scrollbar } from '../../scrollbar'
   import { when } from '../../when'
   import type { ThreadHead } from '../chat/types'
+  import { tasks } from '../commands/tasks.svelte'
   import { chat } from './chat.svelte'
 
   let field = $state<HTMLInputElement>()
@@ -90,7 +92,8 @@
           onpointermove={() => (lit = index)}
           onclick={() => void chat.openThread(one.id)}
         >
-          {#if chat.running.includes(one.id)}<span class="dot"></span>{/if}
+          {#if chat.running.includes(one.id) || tasks.of(one.id).length}<span class="dot"
+            ></span>{/if}
           <span class="title">{one.title || t('Untitled')}</span>
           <span class="meta">{one.model}</span>
           <span class="age">{when(one.updated, 'short')}</span>
