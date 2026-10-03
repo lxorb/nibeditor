@@ -186,13 +186,22 @@ app.get('/v1/me', async (context) => {
   // name, which is all a guest has and all the other people in a note need.
   if (who.kind === 'guest') return context.json({ guest: presentGuest(who.guest) })
 
-  // Whether the account's web logins travel between its computers, which is a switch
-  // flipped one account at a time (docs/sync-v2.md section 11). Read here and not on
-  // every request's user: the app asks it once, as it starts.
-  const flags = await context.env.DB.prepare('select web_sync from users where id = ?')
+  // Which sync engine the account's devices run, and whether its web logins travel
+  // between its computers: two switches flipped one account at a time (docs/sync-v2.md
+  // section 11). Read here and not on every request's user: the app asks once, as it
+  // starts, and a change takes effect at its next launch.
+  const flags = await context.env.DB.prepare(
+    'select web_sync, sync_version from users where id = ?',
+  )
     .bind(who.user.id)
-    .first<{ web_sync: number }>()
-  return context.json({ user: { ...presentUser(who.user), webSync: flags?.web_sync === 1 } })
+    .first<{ web_sync: number; sync_version: number }>()
+  return context.json({
+    user: {
+      ...presentUser(who.user),
+      webSync: flags?.web_sync === 1,
+      syncVersion: flags?.sync_version === 2 ? 2 : 1,
+    },
+  })
 })
 
 /** The one thing about whoever is here that can be changed: what to call them.
