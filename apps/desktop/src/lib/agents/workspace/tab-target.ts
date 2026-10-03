@@ -17,7 +17,7 @@ import { type Place, placeFor } from './spaces'
 /** A tab, found: the tab itself, the space it is shown in, and its file's path inside
  *  that space - null for a tab with no file there (a draft, the scratchpad, a terminal,
  *  the graph). */
-export interface Named {
+interface Named {
   tab: Tab
   place: Place
   relative: string | null
