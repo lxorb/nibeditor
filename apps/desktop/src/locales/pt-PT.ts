@@ -1637,6 +1637,12 @@ export const ptPT: Dictionary = {
   Engine: 'Motor',
   Relaunch: 'Reiniciar',
   'Chromium did not start': 'O Chromium não arrancou',
+  'No connection': 'Sem ligação',
+  'Not in this release': 'Não está nesta versão',
+  'Needs an update': 'Precisa de atualização',
+  'Signature did not match': 'A assinatura não corresponde',
+  'Disk full': 'Disco cheio',
+  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

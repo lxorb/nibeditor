@@ -1554,6 +1554,12 @@ export const zhHantHK: Dictionary = {
   Engine: '引擎',
   Relaunch: '重新啟動',
   'Chromium did not start': 'Chromium 未能啟動',
+  'No connection': '沒有連線',
+  'Not in this release': '此版本中沒有',
+  'Needs an update': '需要更新',
+  'Signature did not match': '簽名不符',
+  'Disk full': '磁碟已滿',
+  'Could not be installed': '無法安裝',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
   // The archive: a row put away and taken back, and what refuses to delete it

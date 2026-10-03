@@ -1598,6 +1598,12 @@ export const tr: Dictionary = {
   Engine: 'Motor',
   Relaunch: 'Yeniden başlat',
   'Chromium did not start': 'Chromium başlamadı',
+  'No connection': 'Bağlantı yok',
+  'Not in this release': 'Bu sürümde yok',
+  'Needs an update': 'Güncelleme gerekiyor',
+  'Signature did not match': 'İmza eşleşmedi',
+  'Disk full': 'Disk dolu',
+  'Could not be installed': 'Yüklenemedi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
   // The archive: a row put away and taken back, and what refuses to delete it

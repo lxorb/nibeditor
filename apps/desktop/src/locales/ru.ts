@@ -1667,6 +1667,12 @@ export const ru: Dictionary = {
   Engine: 'Движок',
   Relaunch: 'Перезапустить',
   'Chromium did not start': 'Chromium не запустился',
+  'No connection': 'Нет подключения',
+  'Not in this release': 'Нет в этом выпуске',
+  'Needs an update': 'Нужно обновление',
+  'Signature did not match': 'Подпись не совпадает',
+  'Disk full': 'Диск заполнен',
+  'Could not be installed': 'Не удалось установить',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

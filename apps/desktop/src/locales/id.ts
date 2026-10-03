@@ -1591,6 +1591,12 @@ export const id: Dictionary = {
   Engine: 'Mesin',
   Relaunch: 'Luncurkan ulang',
   'Chromium did not start': 'Chromium tidak dapat dimulai',
+  'No connection': 'Tidak ada koneksi',
+  'Not in this release': 'Tidak ada di rilis ini',
+  'Needs an update': 'Perlu pembaruan',
+  'Signature did not match': 'Tanda tangan tidak cocok',
+  'Disk full': 'Disk penuh',
+  'Could not be installed': 'Tidak dapat dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

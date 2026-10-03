@@ -1624,6 +1624,12 @@ export const ptBR: Dictionary = {
   Engine: 'Mecanismo',
   Relaunch: 'Reiniciar',
   'Chromium did not start': 'O Chromium não iniciou',
+  'No connection': 'Sem conexão',
+  'Not in this release': 'Não está nesta versão',
+  'Needs an update': 'Precisa de atualização',
+  'Signature did not match': 'A assinatura não confere',
+  'Disk full': 'Disco cheio',
+  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

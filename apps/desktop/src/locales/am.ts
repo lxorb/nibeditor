@@ -1569,6 +1569,12 @@ export const am: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'ግንኙነት የለም',
+  'Not in this release': 'በዚህ ልቀት ውስጥ የለም',
+  'Needs an update': 'ማዘመን ያስፈልጋል',
+  'Signature did not match': 'ፊርማው አልተዛመደም',
+  'Disk full': 'ዲስኩ ሞልቷል',
+  'Could not be installed': 'መጫን አልተቻለም',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it

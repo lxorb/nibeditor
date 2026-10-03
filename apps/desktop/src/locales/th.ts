@@ -1561,6 +1561,12 @@ export const th: Dictionary = {
   Engine: 'เอนจิน',
   Relaunch: 'เปิดใหม่',
   'Chromium did not start': 'Chromium ไม่เริ่มทำงาน',
+  'No connection': 'ไม่มีการเชื่อมต่อ',
+  'Not in this release': 'ไม่มีในรุ่นนี้',
+  'Needs an update': 'ต้องอัปเดต',
+  'Signature did not match': 'ลายเซ็นไม่ตรงกัน',
+  'Disk full': 'ดิสก์เต็ม',
+  'Could not be installed': 'ติดตั้งไม่ได้',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

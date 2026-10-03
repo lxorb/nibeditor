@@ -334,16 +334,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "$TAG" latest.json --clobber
+          # Every file before the manifest that names it: a fetch never reads a
+          # chromium.json whose archives are not there yet, and the updater is never
+          # offered a version whose installer or Chromium is still on its way.
           if [ -f chromium.json ]; then
-            gh release upload "$TAG" chromium.json --clobber
             find artifacts -type f \( -name 'chromium-runtime-*.tar.gz' -o -name 'nib-chromium-*.tar.gz' \) \
               -exec gh release upload "$TAG" {} --clobber \;
+            gh release upload "$TAG" chromium.json --clobber
           fi
           # The .app.tar.gz is what the updater downloads on a Mac, so it has to
           # be a release asset even though nobody clicks it.
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) \
             -exec gh release upload "$TAG" {} --clobber \;
+          gh release upload "$TAG" latest.json --clobber
 
       # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
       # the release published above never reaches publish.yml's `on: release`.

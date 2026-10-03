@@ -1590,6 +1590,12 @@ export const bn: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'সংযোগ নেই',
+  'Not in this release': 'এই রিলিজে নেই',
+  'Needs an update': 'আপডেট দরকার',
+  'Signature did not match': 'স্বাক্ষর মেলেনি',
+  'Disk full': 'ডিস্ক পূর্ণ',
+  'Could not be installed': 'ইনস্টল করা যায়নি',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
   // The archive: a row put away and taken back, and what refuses to delete it

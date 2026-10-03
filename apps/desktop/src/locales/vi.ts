@@ -1580,6 +1580,12 @@ export const vi: Dictionary = {
   Engine: 'Công cụ',
   Relaunch: 'Khởi chạy lại',
   'Chromium did not start': 'Chromium không khởi động được',
+  'No connection': 'Không có kết nối',
+  'Not in this release': 'Không có trong bản phát hành này',
+  'Needs an update': 'Cần cập nhật',
+  'Signature did not match': 'Chữ ký không khớp',
+  'Disk full': 'Ổ đĩa đầy',
+  'Could not be installed': 'Không thể cài đặt',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

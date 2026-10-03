@@ -1609,6 +1609,12 @@ export const kn: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'ಸಂಪರ್ಕವಿಲ್ಲ',
+  'Not in this release': 'ಈ ಬಿಡುಗಡೆಯಲ್ಲಿ ಇಲ್ಲ',
+  'Needs an update': 'ಅಪ್‌ಡೇಟ್ ಬೇಕು',
+  'Signature did not match': 'ಸಹಿ ಹೊಂದಿಕೆಯಾಗಲಿಲ್ಲ',
+  'Disk full': 'ಡಿಸ್ಕ್ ತುಂಬಿದೆ',
+  'Could not be installed': 'ಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1632,6 +1632,12 @@ export const de: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Neu starten',
   'Chromium did not start': 'Chromium ist nicht gestartet',
+  'No connection': 'Keine Verbindung',
+  'Not in this release': 'Nicht in dieser Version',
+  'Needs an update': 'Braucht ein Update',
+  'Signature did not match': 'Signatur stimmt nicht',
+  'Disk full': 'Festplatte voll',
+  'Could not be installed': 'Konnte nicht installiert werden',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
   // The archive: a row put away and taken back, and what refuses to delete it

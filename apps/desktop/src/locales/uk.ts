@@ -1662,6 +1662,12 @@ export const uk: Dictionary = {
   Engine: 'Рушій',
   Relaunch: 'Перезапустити',
   'Chromium did not start': 'Chromium не запустився',
+  'No connection': 'Немає з’єднання',
+  'Not in this release': 'Немає в цьому випуску',
+  'Needs an update': 'Потрібне оновлення',
+  'Signature did not match': 'Підпис не збігається',
+  'Disk full': 'Диск заповнений',
+  'Could not be installed': 'Не вдалося встановити',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

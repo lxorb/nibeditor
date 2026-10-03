@@ -62,6 +62,8 @@
   /** Whether the key field is open over a key that is already set. There is no
    *  editing a key nothing can read, so replacing one is typing a whole new one. */
   let replacingKey = $state(false)
+  /** Why the engine row's last try did not work, in its own words; see EngineRow. */
+  let engineProblem = $state('')
 
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
@@ -669,8 +671,13 @@
          there is a choice, which is Windows for now; see `systemName`. -->
     {#if systemName(platform())}
       <div class="nib-setting setting">
-        <span class="name">{t('Engine')}</span>
-        <EngineRow />
+        <span class="name">
+          {t('Engine')}
+          {#if engineProblem}<small class="warn" transition:slide={{ duration: dur(160) }}
+              >{t(engineProblem)}</small
+            >{/if}
+        </span>
+        <EngineRow onproblem={(said: string) => (engineProblem = said)} />
       </div>
     {/if}
   </div>
