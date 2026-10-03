@@ -36,13 +36,23 @@ export function whenWarmer(heard: (warmth: Warmth) => void): void {
 /** Asks the worker to read the space and keep it. Opening the worker here is
  *  half the point: the module graph is compiled while nobody is typing. */
 export function warmSpace(root: string): void {
-  open().postMessage({ kind: 'warm', root } satisfies Warm)
+  open()?.postMessage({ kind: 'warm', root } satisfies Warm)
 }
 
-function open(): Worker {
+/** The worker, started if it is not running - or nothing, where the page will not
+ *  start one: no `Worker` at all, or one refused. That is a worker that fell over
+ *  before it began, and is taken the same way: nothing held, no answer to this
+ *  word, and the next question tries again. Nobody awaits the warming, so a throw
+ *  here would be a rejection nobody hears. */
+function open(): Worker | null {
   if (worker) return worker
 
-  const made = new Worker(new URL('./search-worker.ts', import.meta.url), { type: 'module' })
+  let made: Worker
+  try {
+    made = new Worker(new URL('./search-worker.ts', import.meta.url), { type: 'module' })
+  } catch {
+    return null
+  }
   made.onmessage = (event: MessageEvent<unknown>) => {
     if (isAnswer(event.data)) answer(event.data)
   }
@@ -89,8 +99,13 @@ export function searchInWorker(
   const id = ++asked
 
   return new Promise<void>((resolve) => {
+    const running = open()
+    if (!running) {
+      resolve()
+      return
+    }
     waiting.set(id, { onFound, done: resolve })
-    open().postMessage({
+    running.postMessage({
       kind: 'ask',
       id,
       root,
