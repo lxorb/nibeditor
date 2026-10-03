@@ -51,6 +51,20 @@ export function roomDelay(tries: number, spread = Math.random()): number {
   return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
 }
 
+/** How long after the last change a document is written, in milliseconds.
+ *
+ *  Short, because nothing else keeps the words: a window killed a second after the
+ *  typing stopped has lost nothing. Still a pause rather than a keystroke, so a
+ *  burst of typing - whose gaps are shorter than this - is one write, and what a
+ *  write costs is paid per pause and never per character. A web note's address
+ *  follows the page on the same pause; see web-tab/keep.ts. */
+export const SAVE_DELAY = 400
+
+/** And the longest the first unwritten change waits while the changes never stop:
+ *  somebody typing without a pause for a minute is written every couple of
+ *  seconds all the same. */
+export const SAVE_AT_MOST = 2000
+
 /** A note the disk refused, tried again: soon, since most locks let go in a
  *  moment, then doubling to a minute. */
 export function saveRetryDelay(tries: number): number {

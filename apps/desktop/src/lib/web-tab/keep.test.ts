@@ -34,6 +34,8 @@ vi.mock('../link-index.svelte', () => ({
 }))
 
 const { keepPage, keepNow } = await import('./keep')
+const { SAVE_AT_MOST, SAVE_DELAY } = await import('../backoff')
+const { settleUp, written: landed } = await import('../parting')
 
 const PATH = '/Notes/Svelte docs.url'
 const FILE =
@@ -46,9 +48,9 @@ function said(): string {
 }
 
 beforeEach(() => {
+  keepNow(PATH)
   written.length = 0
   told.length = 0
-  keepNow(PATH)
   vi.useFakeTimers()
 })
 
@@ -63,10 +65,12 @@ test('writes the page the reading got to, and keeps where the note points', asyn
   })
 
   // Nothing yet: the reading has to settle first, so a page that redirects twice on
-  // the way in is one write rather than three.
+  // the way in is one write rather than three. The notes' own pause; see backoff.ts.
+  expect(written).toHaveLength(0)
+  await vi.advanceTimersByTimeAsync(SAVE_DELAY - 50)
   expect(written).toHaveLength(0)
 
-  await vi.advanceTimersByTimeAsync(2500)
+  await vi.advanceTimersByTimeAsync(100)
 
   expect(written).toHaveLength(1)
   expect(said()).toContain('URL=https://svelte.dev/docs/svelte/what-are-runes')
@@ -87,7 +91,7 @@ test('a page that moves twice in a moment is one write', async () => {
     icon: null,
     wrote: () => undefined,
   })
-  await vi.advanceTimersByTimeAsync(500)
+  await vi.advanceTimersByTimeAsync(200)
   keepPage({
     path: PATH,
     text: FILE,
@@ -200,4 +204,55 @@ test('a mark already held as a picture is not written over on its own', async ()
   })
   await vi.advanceTimersByTimeAsync(2500)
   expect(said()).toContain('Nib-Icon=data:image/png;base64,BBBB')
+})
+
+/** A reader clicking through links without a pause is still written every couple of
+ *  seconds, the way somebody typing without a pause is. */
+test('a reading that never settles is written at the longest wait a note has', async () => {
+  for (let step = 0; step < 12; step++) {
+    keepPage({
+      path: PATH,
+      text: FILE,
+      url: `https://svelte.dev/page-${step}`,
+      icon: null,
+      wrote: () => undefined,
+    })
+    await vi.advanceTimersByTimeAsync(SAVE_DELAY / 2)
+  }
+
+  expect(written.length).toBeGreaterThanOrEqual(1)
+  expect(written.length).toBeLessThanOrEqual(Math.ceil((12 * SAVE_DELAY) / 2 / SAVE_AT_MOST) + 1)
+})
+
+/** Emil's quit: the window going writes the address now, and waits for it. */
+test('the window going writes what is waiting, and waits for it', async () => {
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/docs/kit',
+    icon: null,
+    wrote: () => undefined,
+  })
+  expect(written).toHaveLength(0)
+
+  settleUp()
+  await landed()
+
+  expect(said()).toContain('URL=https://svelte.dev/docs/kit')
+  // And nothing is written a second time once the pause would have come.
+  await vi.advanceTimersByTimeAsync(2500)
+  expect(written).toHaveLength(1)
+})
+
+test('leaving the tab writes what is waiting for its note', () => {
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/docs/cli',
+    icon: null,
+    wrote: () => undefined,
+  })
+  keepNow(PATH)
+
+  expect(said()).toContain('URL=https://svelte.dev/docs/cli')
 })

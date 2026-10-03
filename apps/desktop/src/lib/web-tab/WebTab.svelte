@@ -41,7 +41,7 @@
   import { filling } from './filling.svelte'
   import { ALL, cutOf, layersOver, moving, strangerOver, type Cut } from './covers'
   import { ALLOW, SANDBOX } from './frame'
-  import { keepPage } from './keep'
+  import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { shownAddress } from './omnibox'
@@ -329,6 +329,9 @@
       clearTimeout(late)
       watching.disconnect()
       unwatch()
+      // The tab is being left or closed: where its reading got to is written now rather
+      // than a pause later. See keep.ts.
+      if (tab.path !== null) keepNow(tab.path)
       window.removeEventListener('resize', follow)
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
