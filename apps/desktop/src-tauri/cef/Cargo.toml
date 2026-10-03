@@ -99,6 +99,7 @@ notify = "8"
 getrandom = "0.3"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+png = "0.18"
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["devtools"] }
 tauri-plugin-dialog = "=3.0.0-alpha.1"
 tauri-plugin-process = "=3.0.0-alpha.1"
@@ -242,7 +243,6 @@ windows = { version = "0.58", features = [
   "Win32_System_SystemInformation",
   "Win32_Graphics_Gdi",
 ] }
-png = "0.18"
 webview2-com = "0.38"
 windows-core = "0.61"
 windows_com = { package = "windows", version = "0.61", features = [
