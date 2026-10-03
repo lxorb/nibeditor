@@ -162,6 +162,11 @@ export function start(): () => void {
     // Answered by reloading.svelte.ts.
   })
 
+  // The rows of every space, for Today, the views and the reminders, at the last turn
+  // of the launch order: the open space's out of the link index's scan, then the rest
+  // one at a time. See rows/rows.svelte.ts.
+  void startup.turn('right').then(() => import('./rows/rows.svelte'))
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {
