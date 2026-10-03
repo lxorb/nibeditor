@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { heldWallpaper, pictureRule, WALLPAPER_KEY } from './held'
+import { DARK_KEY, heldDark, heldFor, heldWallpaper, WALLPAPER_KEY } from './held'
 
 /** What the first frame reads. The entry is somebody else's text as far as this is
  *  concerned - an older build's, a half-written one - and the picture in it goes
@@ -28,9 +28,30 @@ function write(value: unknown) {
 }
 
 describe('what was written down', () => {
-  test('is read back whole', () => {
+  test('is read back whole, an older record with its focal point in the middle', () => {
     write(GOOD)
-    expect(heldWallpaper()).toEqual(GOOD)
+    expect(heldWallpaper()).toEqual({ ...GOOD, focus: [0.5, 0.5] })
+  })
+
+  test('a record made now keeps what the picture holds instead of its floors', () => {
+    const made = {
+      picture: GOOD.picture,
+      blur: 0,
+      tone: '1.00 0.00 ',
+      span: { least: [0, 10, 20], most: [250, 240, 230] },
+      mean: '#808080',
+      size: [1920, 1080],
+      focus: [0.25, 0.75],
+    }
+    write(made)
+    expect(heldWallpaper()).toEqual(made)
+  })
+
+  test('a focal point is held inside the picture, and a span out of range is none', () => {
+    write({ ...GOOD, focus: [-1, 4] })
+    expect(heldWallpaper()?.focus).toEqual([0, 1])
+    write({ picture: GOOD.picture, blur: 0, span: { least: [0, 0, 0], most: [300, 0, 0] } })
+    expect(heldWallpaper()).toBeNull()
   })
 
   test('is nothing when nothing was', () => {
@@ -68,15 +89,14 @@ describe('what was written down', () => {
   })
 })
 
-describe('the rule it is said in', () => {
-  test('names the picture and both sides', () => {
-    const rule = pictureRule(GOOD)
+describe('the dark side', () => {
+  test('wears the picture until it has its own', () => {
+    write(GOOD)
+    expect(heldDark()).toBeNull()
+    expect(heldFor('dark')).toEqual(heldWallpaper())
 
-    expect(rule).toContain(`--wallpaper-picture: url("${GOOD.picture}");`)
-    expect(rule).toContain('--wallpaper-floor-dark: 70%;')
-    expect(rule).toContain('--wallpaper-floor-light: 69%;')
-    expect(rule).toContain('--wallpaper-ground-dark: #171c25;')
-    expect(rule).toContain('--wallpaper-ground-light: #f1f3f6;')
-    expect(rule.startsWith(':root {')).toBe(true)
+    entries.set(DARK_KEY, JSON.stringify({ ...GOOD, blur: 12 }))
+    expect(heldFor('dark')?.blur).toBe(12)
+    expect(heldFor('light')?.blur).toBe(28)
   })
 })

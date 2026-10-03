@@ -17,6 +17,11 @@ export type Rgb = readonly [number, number, number]
 /** WCAG's floor for body text: what every word on the app's own palettes clears. */
 export const AA = 4.5
 
+/** What a word aims for over something sharp - a photograph unblurred, the desk through
+ *  a window with no blur: it has the picture's edges to read past as well as its
+ *  colours, which a ratio between two flat colours does not count. */
+export const SHARP = 6
+
 /** `#rgb`, `#rrggbb`, `rgb()` or `rgba()` with the alpha ignored, which is every
  *  shape a stylesheet or `getComputedStyle` hands this. Null for anything else. */
 export function rgbOf(said: string): Rgb | null {

@@ -1082,7 +1082,9 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    background: var(--surface-2);
+    /* The desk the sheets lie on: see-through under a translucent theme, the sheets
+       themselves paper whatever it is, as a printed page is. */
+    background: var(--content-inner, var(--surface-2));
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;

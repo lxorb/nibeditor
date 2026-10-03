@@ -19,14 +19,26 @@
  *
  *  Pure; see tint.test.ts. */
 
-import { AA, hexOf, type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../legibility'
+import { type PaperInks, paperFloor } from '../content-ground'
+import {
+  AA,
+  hexOf,
+  type Lift,
+  over,
+  type Rgb,
+  rgbOf,
+  scrimFloor,
+  SHARP,
+  type Span,
+} from '../legibility'
 import type { Palette } from '../wallpaper/floors'
 
 export type Scheme = 'dark' | 'light'
 
-/** What the platform put behind the window, as `data-translucent` says it; null for a
- *  window with nothing behind it, which stands on its own paper. */
-export type Material = 'mica' | 'acrylic' | null
+/** What the platform put behind the window, as `data-translucent` says it - `clear` is
+ *  the desk itself with no blur - and null for a window with nothing behind it, which
+ *  stands on its own paper. */
+export type Material = 'mica' | 'acrylic' | 'clear' | null
 
 /** Glass's two sides: `--muted` as the ink, `--text`, `--glass-chrome` as the scrim and
  *  `--glass-layer`, read out of glass.css. */
@@ -39,12 +51,28 @@ export interface Source {
 }
 
 /** What the frame wears: whose palette, its colour and how much of it lies over the
- *  material. */
+ *  material; and the floors under it - the least wash the words allow, which is where
+ *  the Opacity dial's track turns grey, and the least paper a note and a terminal may be
+ *  read on over it (content-ground.ts). */
 export interface Frame {
   scheme: Scheme
   tint: string
   wash: number
+  floor: number
+  paper: number
+  terminal: number
 }
+
+/** Glass's own dials, as fractions: how much of the frame's colour lies over the
+ *  material, and how much of what is open is in that colour. */
+export interface Dials {
+  opacity: number
+  strength: number
+}
+
+/** Where a reader starts: half the frame's colour over the material, and all of what is
+ *  open in it. */
+export const DIALS: Dials = { opacity: 0.5, strength: 1 }
 
 /** What a page's bar and open tab stand on, and whose palette is written on it. */
 export interface Bar {
@@ -52,8 +80,8 @@ export interface Bar {
   scheme: Scheme
 }
 
-/** How much of a page's colour lies over the material: most of it, so the frame reads
- *  as the page's, and enough of the material left to be glass. */
+/** How much of a page's colour lies over the paper of a window with no material: most
+ *  of it, so the frame reads as the page's. Over a material the Opacity dial says. */
 export const PAGE_WASH = 0.8
 
 /** How much of a mark is mixed into the scheme's own chrome: a tone of it, not it -
@@ -62,20 +90,14 @@ export const PAGE_WASH = 0.8
 export const MARK_TONE = 0.22
 const TONES = [MARK_TONE, 0.16, 0.11, 0.06, 0]
 
-/** How much of a mark's tone lies over each material: glass.css's own washes, which
- *  were measured for the frame with no tint at all. A window on its own paper is the
- *  tone itself. */
-const MARK_WASH: Record<Scheme, Record<'mica' | 'acrylic' | 'none', number>> = {
-  dark: { mica: 0.4, acrylic: 0.92, none: 1 },
-  light: { mica: 0.3, acrylic: 0.88, none: 1 },
-}
-
 /** Every colour the material can be, per channel: Mica's flat colours (#202020 and
  *  #0a0a0a dark, #f3f3f3 and #dadada light) and twenty-six levels either way for the
  *  colour a wallpaper lends it, as test/e2e/glass.py measures it; Acrylic is the desk
  *  itself and so anything at all. */
 export function spanUnder(material: Material, scheme: Scheme, paper: Rgb): Span {
-  if (material === 'acrylic') return { least: [0, 0, 0], most: [255, 255, 255] }
+  if (material === 'acrylic' || material === 'clear') {
+    return { least: [0, 0, 0], most: [255, 255, 255] }
+  }
   if (material === 'mica') {
     return scheme === 'dark'
       ? { least: [0, 0, 0], most: [58, 58, 58] }
@@ -104,8 +126,8 @@ function other(scheme: Scheme): Scheme {
 const AIM = AA + 0.1
 
 /** The least scrim under which one side's words read over a span, on every stack. */
-function floorOf(side: Palette, scrim: Rgb, span: Span): number {
-  return Math.max(...stacks(side).map((lifts) => scrimFloor(side.ink, scrim, span, lifts, AIM)))
+function floorOf(side: Palette, scrim: Rgb, span: Span, aim = AIM): number {
+  return Math.max(...stacks(side).map((lifts) => scrimFloor(side.ink, scrim, span, lifts, aim)))
 }
 
 /** What a page's bar stands on: its own colour where the words of one side read on it,
@@ -128,28 +150,63 @@ function carries(side: Palette, colour: Rgb): boolean {
   return floorOf(side, colour, { least: colour, most: colour }) === 0
 }
 
-/** What the frame wears for what is open, over the window's material or its paper. */
+/** What the frame wears for what is open, over the window's material or its paper.
+ *
+ *  `strength` is how much of what is open is in the frame's colour - a page's colour
+ *  mixed toward the chrome of the scheme its words are in, a mark's tone made fainter -
+ *  and `opacity` how much of that colour lies over the material, never under the floor
+ *  that keeps the words reading. Over the desk unblurred the words aim higher. `inks` is
+ *  the paper's, in the reader's own scheme, for the floors a note is read on. */
 export function frameFor(
   source: Source,
   app: Scheme,
   material: Material,
   sides: Sides,
   paper: Rgb,
+  dials: Dials = DIALS,
+  inks: PaperInks | null = null,
 ): Frame {
   const span = spanUnder(material, app, paper)
+  // Over the desk itself unblurred the words aim higher; see `SHARP`.
+  const aim = material === 'clear' ? SHARP + (AIM - AA) : AIM
+  const strength = Math.min(1, Math.max(0, dials.strength))
 
+  let scheme: Scheme
+  let tint: Rgb
+  let stated: number
   if (source.page) {
     const bar = barFor(source.colour, app, sides)
-    const tint = rgbOf(bar.colour) ?? source.colour
-    const floor = floorOf(sides[bar.scheme], tint, span)
-    return { scheme: bar.scheme, tint: bar.colour, wash: Math.max(PAGE_WASH, floor) }
+    scheme = bar.scheme
+    const solid = rgbOf(bar.colour) ?? source.colour
+    tint = rgbOf(hexOf(over(solid, strength, sides[scheme].scrim))) ?? solid
+    stated = material ? dials.opacity : PAGE_WASH
+  } else {
+    // A tone of the mark in the reader's own chrome, and always their own words on it: a
+    // note's frame never turns the other scheme for the colour of an icon.
+    scheme = app
+    const own = sides[app]
+    const tone = TONES.map((amount) =>
+      rgbOf(hexOf(over(source.colour, amount * strength, own.scrim))),
+    )
+    tint = tone.find((one): one is Rgb => one !== null && carries(own, one)) ?? own.scrim
+    stated = material ? dials.opacity : 1
   }
 
-  // A tone of the mark in the reader's own chrome, and always their own words on it: a
-  // note's frame never turns the other scheme for the colour of an icon.
-  const side = sides[app]
-  const tone = TONES.map((amount) => rgbOf(hexOf(over(source.colour, amount, side.scrim))))
-  const tint = tone.find((one): one is Rgb => one !== null && carries(side, one)) ?? side.scrim
-  const wash = MARK_WASH[app][material ?? 'none']
-  return { scheme: app, tint: hexOf(tint), wash: Math.max(wash, floorOf(side, tint, span)) }
+  // A colour the words read on at AA, solid, may still be short of a higher aim: it is
+  // taken toward the side's own chrome the least way that reaches it.
+  const side = sides[scheme]
+  const lift = floorOf(side, side.scrim, { least: tint, most: tint }, aim)
+  if (lift > 0) tint = rgbOf(hexOf(over(side.scrim, lift, tint))) ?? tint
+
+  const floor = floorOf(side, tint, span, aim)
+  const wash = Math.max(Math.min(1, stated), floor)
+  const under: Span = { least: over(tint, wash, span.least), most: over(tint, wash, span.most) }
+  return {
+    scheme,
+    tint: hexOf(tint),
+    wash,
+    floor,
+    paper: inks ? paperFloor(inks, under) : 1,
+    terminal: inks ? paperFloor(inks, under, true) : 1,
+  }
 }

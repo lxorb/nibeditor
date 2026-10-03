@@ -1,21 +1,43 @@
-/** The wallpaper theme's sheet: wallpaper.css, and the reader's picture said after
- *  it. One sheet rather than a sheet and properties on the root, so the sheet the app
- *  keeps for the next launch's first frame (`SHEET_KEY` in theme.svelte.ts) is the
- *  picture as well, and that frame needs nothing of this theme but what every theme
- *  with a door already has. */
+/** The wallpaper theme's sheet: wallpaper.css, and the reader's pictures and dials said
+ *  after it. One sheet rather than a sheet and properties on the root, so the sheet the
+ *  app keeps for the next launch's first frame (`SHEET_KEY` in theme.svelte.ts) is the
+ *  pictures, their floors and the dials as well, and that frame needs nothing of this
+ *  theme but what every theme with a door already has. */
 
 import { wallpaperCss } from '@nib/themes/wallpaper'
-import { type Held, heldWallpaper, pictureRule } from './held'
+import { theme } from '../theme.svelte'
+import { valueOf } from '../themes/settings'
+import { coloursOf, fieldFloors } from './colours'
+import { type Held, heldDark, heldWallpaper, type Scheme, WALLPAPER_THEME } from './held'
+import { type Dials, wallpaperRule } from './look'
+import { dialsOf, wallpaperSettings } from './settings'
 
-/** The picture being shown, while the Blur dial moves faster than it is written down;
+/** Each side's picture being shown while a dial moves faster than it is written down;
  *  undefined for what was written down. */
-let shown: Held | null | undefined
+const shown: Record<Scheme, Held | null | undefined> = { light: undefined, dark: undefined }
 
-export function showPicture(held: Held | null | undefined): void {
-  shown = held
+export function showPicture(scheme: Scheme, held: Held | null | undefined): void {
+  shown[scheme] = held
+}
+
+/** The dials as they stand: what is being tried, else what was kept, else where they
+ *  start - read off the kept drawer too, for a launch whose settings door has not
+ *  opened yet. */
+function dials(): Dials {
+  const values = Object.fromEntries(
+    wallpaperSettings().map((one) => [
+      one.id,
+      valueOf(one, theme.values[one.id] ?? theme.keptFor(WALLPAPER_THEME, one.id)),
+    ]),
+  )
+  return dialsOf(values)
 }
 
 export function wallpaperSheet(): string {
-  const held = shown === undefined ? heldWallpaper() : shown
-  return held ? `${wallpaperCss}\n${pictureRule(held)}` : wallpaperCss
+  const pictures = {
+    light: shown.light === undefined ? heldWallpaper() : shown.light,
+    dark: shown.dark === undefined ? heldDark() : shown.dark,
+  }
+  const rule = wallpaperRule(pictures, dials(), coloursOf(theme.accent), fieldFloors())
+  return `${wallpaperCss}\n${rule}`
 }

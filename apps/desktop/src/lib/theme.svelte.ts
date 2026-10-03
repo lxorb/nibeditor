@@ -3,6 +3,7 @@ import { everySurface } from '@nib/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
+import { startup } from './startup.svelte'
 import { without } from './records'
 import { chrome } from './glass/chrome.svelte'
 import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
@@ -53,6 +54,10 @@ interface ThemeInfo {
   translucent?: boolean
   /** Whether the sheet carries the reader's picture: wallpaper's. */
   pictured?: boolean
+  /** A built-in's own settings, said in code behind the same door as its sheet: more
+   *  than a file may declare, and rows a stylesheet cannot describe. A function, read
+   *  inside `settings`, so a row that depends on the platform follows it. */
+  own?: () => Promise<() => ThemeSetting[]>
   /** What the store wrote into the file when it installed it, for a theme that
    *  came from there. Absent for a file somebody put in the folder themselves,
    *  which the store has nothing to say about. */
@@ -140,6 +145,7 @@ const GLASS: ThemeInfo = {
   variants: ['dark', 'light'],
   translucent: true,
   load: () => import('@nib/themes/glass').then((module) => module.glassCss),
+  own: () => import('./glass/settings').then((module) => module.glassSettings),
 }
 
 /** And wallpaper: the reader's picture, in its sheet (wallpaper/sheet.ts). */
@@ -149,6 +155,7 @@ const WALLPAPER: ThemeInfo = {
   variants: ['dark', 'light'],
   pictured: true,
   load: () => import('./wallpaper/sheet').then((module) => module.wallpaperSheet()),
+  own: () => import('./wallpaper/settings').then((module) => module.wallpaperSettings),
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
@@ -207,6 +214,8 @@ class Themes {
   /** The sheet in force, what it declared, and the fetched built-ins' sheets. */
   private sheet = $state('')
   private declared = $state<ThemeSetting[]>([])
+  /** A built-in's own settings once their door has opened, by the theme they are of. */
+  private owned = $state<{ id: string; list: () => ThemeSetting[] } | null>(null)
   private loaded = $state<Record<string, string>>({})
   /** Whether the material has been asked about this run; see `apply`. */
   private material = false
@@ -522,6 +531,7 @@ class Themes {
   /** The app's settings the theme does not paint itself, then what it declared. */
   readonly settings = $derived<ThemeSetting[]>([
     ...appSettings().filter((one) => !paintsOver(this.sheet, one)),
+    ...(this.owned?.id === this.id ? this.owned.list() : []),
     ...this.declared,
   ])
 
@@ -554,6 +564,25 @@ class Themes {
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
     keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    this.paintSettings()
+    if (setting.reapplies === true) this.apply()
+  }
+
+  /** Whether any dial is showing something other than what was kept: one being dragged.
+   *  The picker's accent, put back as it was kept, is not. */
+  get previewing(): boolean {
+    return Object.entries(this.trying).some(([id, value]) => {
+      const setting = this.settings.find((one) => one.id === id)
+      if (!setting) return false
+      return valueOf(setting, value) !== valueOf(setting, this.chosen[this.drawerOf(setting)]?.[id])
+    })
+  }
+
+  /** Shows a dial where it is being dragged and keeps nothing: the picker's contract,
+   *  for a slider. Letting go is `set`, which keeps it. */
+  try(id: string, value: ThemeValue) {
+    if (this.trying[id] === value) return
+    this.trying = { ...this.trying, [id]: value }
     this.paintSettings()
   }
 
@@ -625,6 +654,9 @@ class Themes {
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }
 
+    // A sharp wallpaper's copy at the screen's size, made once the launch has painted.
+    if (!__EVEN_PLUGIN__ && theme.pictured === true) this.wakeWallpaper()
+
     // Glass follows what is open, and nothing else does; the working out is behind a
     // door only glass opens. See glass/chrome.svelte.ts.
     if (!__EVEN_PLUGIN__) this.followWhatIsOpen(theme.id === GLASS_THEME, kept)
@@ -635,7 +667,10 @@ class Themes {
     if (!__EVEN_PLUGIN__ && isDesktop && (translucent || this.material)) {
       this.material = true
       const dark = this.current === 'dark'
-      void import('./material').then(({ wearMaterial }) => wearMaterial(translucent, dark, kept))
+      const kind = this.materialAsked()
+      void import('./material').then(({ wearMaterial }) =>
+        wearMaterial(translucent, dark, kept, kind),
+      )
     }
 
     this.paintSystemBars()
@@ -643,6 +678,28 @@ class Themes {
     // ground.ts. Off the window rather than off the theme, so a theme file's own
     // colour and a translucent window are both what they really are.
     if (kept) rememberGround()
+  }
+
+  /** Whether the wallpaper's store has been woken this run. */
+  private woken = false
+
+  /** The wallpaper's store, after the launch's own doors: what is worn early is the kept
+   *  picture, and the store makes what only a running app can - a sharp copy at the
+   *  screen's size, and a picture an older build made, again. */
+  private wakeWallpaper() {
+    if (this.woken) return
+    this.woken = true
+    void startup
+      .turn('doors')
+      .then(() => import('./wallpaper/wallpaper.svelte'))
+      .then(({ wallpaper }) => (this.active.pictured === true ? wallpaper.wake() : undefined))
+  }
+
+  /** Which material glass asks the platform for: its Material row, read off the kept
+   *  drawer too for a launch whose settings door has not opened yet. */
+  private materialAsked(): string {
+    const said = this.values.material ?? this.keptFor(GLASS_THEME, 'material')
+    return typeof said === 'string' ? said : 'mica-alt'
   }
 
   /** Glass's frame taking its colour from what is open, or let go of. */
@@ -673,6 +730,17 @@ class Themes {
     if (kept) this.keepSheet(css)
 
     if (declares(sheet)) void this.readDeclarations(sheet)
+    if (this.active.own && this.owned?.id !== this.id) void this.readOwn(this.active)
+  }
+
+  /** A built-in's own settings, once their door arrives; its sheet states the defaults,
+   *  so the frame in between is right. */
+  private async readOwn(theme: ThemeInfo) {
+    if (__EVEN_PLUGIN__ || !theme.own) return
+    const list = await theme.own().catch(() => null)
+    if (!list || this.id !== theme.id) return
+    this.owned = { id: theme.id, list }
+    this.paintSettings()
   }
 
   /** What the next launch wears early; nothing for a theme whose sheet is carried. */

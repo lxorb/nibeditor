@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { blurred, boxesFor, fitted, LARGEST, measured, sideFor } from './pixels'
+import { blurred, boxesFor, fitted, LARGEST, measured, sharpBelow, sideFor, toned } from './pixels'
 
 /** A picture `width` by `height`, every pixel what `paint` says, opaque. */
 function picture(
@@ -98,5 +98,42 @@ describe('what the picture holds', () => {
     expect(least).toEqual([0, 50, 55])
     expect(most).toEqual([200, 100, 255])
     expect(mean).toEqual([100, 75, 155])
+  })
+})
+
+describe('the tone baked into a picture', () => {
+  const sunset = () => picture(2, 1, (x) => (x ? [240, 120, 40] : [20, 60, 200]))
+
+  test('is the picture as it is at full saturation and no tint', () => {
+    const pixels = sunset()
+    toned(pixels, { saturation: 1, tint: 0, colour: [255, 0, 0] })
+    expect(at(pixels, 2, 0, 0)).toEqual([20, 60, 200, 255])
+  })
+
+  test('greys it with no saturation, by the weights CSS greys with', () => {
+    const pixels = sunset()
+    toned(pixels, { saturation: 0, tint: 0, colour: [0, 0, 0] })
+    const [r, g, b] = at(pixels, 2, 1, 0)
+    expect(r).toBe(g)
+    expect(g).toBe(b)
+    expect(r).toBe(Math.round(0.213 * 240 + 0.715 * 120 + 0.072 * 40))
+  })
+
+  test('is the tint itself with all of it, and a mix with some', () => {
+    const pixels = sunset()
+    toned(pixels, { saturation: 1, tint: 1, colour: [124, 107, 245] })
+    expect(at(pixels, 2, 0, 0)).toEqual([124, 107, 245, 255])
+
+    const half = sunset()
+    toned(half, { saturation: 1, tint: 0.5, colour: [0, 0, 0] })
+    expect(at(half, 2, 1, 0)).toEqual([120, 60, 20, 255])
+  })
+})
+
+describe('a picture sharp enough to want the screen’s own size', () => {
+  test('is one blurred by less than the kept size can hold', () => {
+    expect(sharpBelow(2560)).toBeCloseTo(10.67, 1)
+    expect(sideFor(sharpBelow(2560) + 0.5, 2560)).toBeLessThan(LARGEST)
+    expect(sideFor(sharpBelow(2560) - 0.5, 2560)).toBe(LARGEST)
   })
 })

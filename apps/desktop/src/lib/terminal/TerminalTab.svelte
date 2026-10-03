@@ -79,7 +79,9 @@
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-    background: var(--bg);
+    /* See-through under a translucent theme, as far as the colours a program asks for
+       still read: see `--terminal-ground` in glass.css and wallpaper.css. */
+    background: var(--terminal-ground, var(--bg));
   }
 
   .place {

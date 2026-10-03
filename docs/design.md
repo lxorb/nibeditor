@@ -283,8 +283,9 @@ under the built-in theme is given glass once.
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the
 scheme the page is in. The chrome (the bar with the tabs, the list, the foot row) stands
-on it under a wash of the theme's own colour, and every pane paints its own opaque paper,
-so the open tab still runs down into the note. Mica keeps its own brightness whatever
+on it under a wash of the theme's own colour, and every pane paints a paper of its own,
+as see-through as the Content row allows (below), so the open tab still runs down into
+the note. Mica keeps its own brightness whatever
 the wallpaper is, so over it the wash is thin and the material shows; Acrylic is the
 desk itself, so over it the wash is most of the colour, and at that weight every word on
 the chrome still clears 4.5:1 over a white desk and a black one. `data-translucent` on
@@ -321,6 +322,45 @@ working out is behind a door glass alone opens (`glass/follow.svelte.ts`); the f
 of a launch wears the colour it was left on (`glass/chrome.svelte.ts`). Grounds are kept per
 page and origin like favicons, so a tab opened again is its colour before it loads.
 
+**Glass's dials** (Emil, 2026-10-03: *"the blur can't be entirely turned off; the blur
+option is too limited"*). Windows Terminal is the model for what is offered and Arc's theme
+for how little is said: Material (Mica Alt, Mica, Acrylic, No blur - the desk itself,
+unblurred, Terminal's opacity with acrylic off), Opacity from nothing of the frame's
+colour to all of it, Follow the page or one colour of the reader's, Tint (how much of
+what is open is in that colour), Coloured tab (whether the open tab and the web bar take
+the page's colour) and Content. DWM fixes Acrylic's blur, so a blur strength is the
+choice between the materials rather than a dial (window-vibrancy has no radius; its
+`apply_blur` lags on 22621). The material is a desktop's: where nothing is behind the
+window those rows are not drawn. Nothing on the frame ever reads under its floor: the
+Opacity dial's track is grey below the least wash that keeps the quiet grey at AA over
+every colour the material can be - six to one over the unblurred desk, whose edges are
+there to read past too - and the knob stops at its edge (`least` in themes/settings.ts,
+`frameFor` in glass/tint.ts). Over Mica that floor is low and the material shows; over
+Acrylic and No blur, whose desk may hold white and black at once, it is most of the wash,
+which is the honest answer to a desk nobody can see in advance. The crate is asked for
+the material by name and keeps it (`material.txt`), so a launch puts the chosen one
+back before the page has started.
+
+**Content** (Emil, 2026-10-03: *"the glass theme should also apply to the background of
+the terminal or of nib notes"*). Opaque, Tinted, See-through, under glass and the
+wallpaper alike: how far what is behind the frame reaches the surfaces somebody reads
+on. The paper is the page's own `--bg` laid at an alpha (`--content-ground`), so the
+words keep the palette they were measured on; See-through is the least paper under which
+body text clears seven to one and the quiet grey and a link AA over every colour that
+can be under it, Tinted halfway to opaque (content-ground.ts). The pane lays it once and
+what it holds stands on it (`--content-inner`): a note, a canvas, the surround of a PDF
+and of a page note, the graph. A code block, a table and a callout keep fills of their
+own, mixed into `--bg` rather than laid over nothing. The terminal lays the rest of the
+way to a floor of its own on top, with xterm.js pulling a program's colours to 5.5 from
+the paper while it is see-through, so every one of the sixteen reads at AA on the ground
+under it. A web page, a PDF's pages and a page note's sheets paint their own: a page is
+printed paper. The settings and every other sheet stay opaque: they float over content,
+and what would show through is a second layer of words (Windows' own dialogs are solid
+for the same reason). The list and the AI panel are the frame already. Nothing is
+filtered: a see-through paper is one more layer to composite, and
+`apps/desktop/test/e2e/theme-options.py` counts the frames of a long note scrolled and
+typed into on the built-in theme, glass and the wallpaper, all at a median of one frame.
+
 Glass is offered on every platform: Windows puts Mica Alt, Mica or Acrylic under the colour;
 macOS (whose webview is opaque without the private API), Linux, the browser and a phone stand
 it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent anywhere.
@@ -350,8 +390,9 @@ platform: Windows, macOS, Linux, the browser and a phone show the same thing, an
 them needs a material. Named for what the reader brings rather than for the effect, and
 because a theme called Blur would have a Blur dial under it. The chrome (the bar with
 the tabs, the list, the foot row, and a pane with nothing open, the way a browser's new
-tab shows its background) stands on the picture; every note, PDF, canvas and web page
-keeps its own opaque ground.
+tab shows its background) stands on the picture; a note, a canvas and a terminal stand on
+a paper of their own, as see-through as the Content row allows, and a web page always
+paints its own.
 
 The picture is a copy, never a link: chosen through the system's file chooser in
 Settings ▸ Appearance ▸ Picture, or with Use as wallpaper on a picture's row in the file
@@ -363,10 +404,25 @@ and kept as a PNG one pixel per half-blur of the screen, a few kilobytes. Nothin
 anything as the app is used, so the picture costs a frame nothing (Vivaldi's blurred
 toolbars are a live `backdrop-filter`); the window only stretches a still picture.
 
+**The wallpaper's dials.** Blur from 0, a picture as sharp as it was taken, to 60;
+Dim; Saturation; Tint toward the accent or another swatch; Grain; Fit (Fill, Fit, Tile,
+Centre) about a focal point dragged on the thumbnail; Empty panes; Content (above). The
+light and the dark side each have a thumbnail, and the dark side wears the light side's
+picture until it is given one of its own, as a Mac's dynamic desktop does. Blur,
+saturation and tint are baked into the picture when the dial moves - at most once a frame
+while it is dragged, kept when it is let go of (`try` and `set` in theme.svelte.ts) -
+and grain is a tile of noise drawn once. Under a light blur the kept picture is too small
+to hold what is left to see, so once the launch has painted the app lays a copy at the
+screen's own size over it (`sharpBelow` in pixels.ts), made from a copy of the original
+kept up to 3200 pixels across. The dials are said in code behind the theme's door
+(`own` in theme.svelte.ts) rather than declared in its sheet, which a file may do six
+times and which cannot say a floor.
+
 Words never depend on the picture. Two scrims lie over it: a floor, worked out from the
-picture's own least and most of each channel so that `--muted` clears 4.5:1 over every
-colour in it, on the list's layer and on a row under the pointer (`floors.ts`,
-`legibility.ts`), and the Dim dial over that. Two layers at f and d are one at
+picture's own least and most of each channel, with its grain, so that `--muted` clears
+4.5:1 over every colour in it - rising to 6:1 as the blur goes to none, since a sharp
+picture has its edges to read past as well - on the list's layer and on a row under the
+pointer (`look.ts`, `floors.ts`, `legibility.ts`), and the Dim dial over that. Two layers at f and d are one at
 f + (1 - f) d, so no position of the dial is unreadable. The open note's row is a pill
 of the accent on the scrim's colour rather than a tint of the picture. Each scheme has
 its own scrim and floor, so switching is instant. Until a picture is chosen the theme

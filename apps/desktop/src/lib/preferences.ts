@@ -31,6 +31,24 @@ import { saver } from './web-tab/saver.svelte'
 import { hiddenTabs } from './workspace/hidden-tabs.svelte'
 import { isHiddenTabs } from './workspace/sets'
 
+/** One side's picture in the wallpaper's row; see the `picture` kind. */
+export interface PictureSide {
+  /** What a pointer resting on it says: the side's name. */
+  label: string
+  /** The side the app is in now, which wears the ring. */
+  current: boolean
+  /** A `data:` address, or nothing for the theme's own field. */
+  picture(): string
+  /** Whether this side has a picture of its own rather than the other side's. */
+  own(): boolean
+  /** Where the picture's focal point is, as two fractions. */
+  focus(): [number, number]
+  choose(): void
+  remove(): void
+  /** The focal point moved; `kept` once the drag lets go. */
+  place(x: number, y: number, kept: boolean): void
+}
+
 /** What every control has, whatever kind it is. */
 interface Common {
   label: string
@@ -82,7 +100,12 @@ export type Field = Common &
         step: number
         unit?: string
         initial?: number
+        /** The least the dial may be turned to now; see `least` in themes/settings.ts. */
+        least?: () => number
         get(): number
+        /** Shown while the knob is dragged and kept nowhere; `set` is letting go. A
+         *  slider without one keeps every position it passes. */
+        preview?(value: number): void
         set(value: number): void
       }
     | {
@@ -110,16 +133,18 @@ export type Field = Common &
         get(): string
         set(value: string): void
       }
-    /** A picture somebody chooses: a thumbnail that opens the file chooser, and a
-     *  cross beside it that takes the picture away. `get` is a `data:` address, or
-     *  nothing for no picture; `set('')` is the cross. Only the wallpaper's. */
+    /** The pictures somebody chose: a thumbnail per side of the theme, which opens
+     *  the file chooser when pressed and moves the picture's focal point when dragged,
+     *  and a cross on one that has a picture of its own. Only the wallpaper's. */
     | {
         kind: 'picture'
         /** Left out: a picture somebody chose is not a default a reset puts back. */
         initial?: string
+        /** The picture the side in force wears, as a `data:` address or nothing; `set('')`
+         *  takes it away. What a row that is only read - a search, the glasses - sees. */
         get(): string
         set(value: string): void
-        choose(): void
+        sides: PictureSide[]
       }
     /** A line somebody types. Only where nothing else will do - a spoken command's
      *  own phrase, a page's margin - and never on the glasses, which have nothing to
@@ -204,7 +229,9 @@ function themeField(setting: ThemeSetting): Field {
       step: setting.step,
       unit: setting.unit,
       initial: setting.initial,
+      ...(setting.least ? { least: setting.least } : {}),
       get: () => Number(get() ?? setting.initial),
+      preview: (value) => theme.try(setting.id, value),
       set: (value) => theme.set(setting.id, value),
     }
   }
@@ -234,16 +261,51 @@ function themeField(setting: ThemeSetting): Field {
     }
   }
 
-  const options = setting.options.map((one) => ({ value: one.value, label: t(one.label) }))
+  const options = setting.options.map((one) => ({
+    value: one.value,
+    label: t(one.label),
+    ...(one.disabled ? { disabled: true } : {}),
+  }))
 
   return {
     ...common,
-    kind: options.length > 3 ? 'select' : 'segmented',
+    kind: options.length > 3 && !setting.own ? 'select' : 'segmented',
     options,
     initial: setting.initial,
     get: () => String(get() ?? setting.initial),
     set: (value) => theme.set(setting.id, value),
   }
+}
+
+/** The wallpaper's pictures, light first: the side the app is not in shows what it
+ *  would wear, which is this side's picture until it is given one of its own. */
+function pictureField(): Field {
+  const sides = (['light', 'dark'] as const).map((scheme): PictureSide => ({
+    label: t(SCHEME_NAMES[scheme]),
+    current: theme.current === scheme,
+    picture: () => wallpaper.of(scheme)?.picture ?? '',
+    own: () => wallpaper.owns(scheme),
+    focus: () => wallpaper.of(scheme)?.focus ?? [0.5, 0.5],
+    choose: () => void wallpaper.choose(scheme),
+    remove: () => wallpaper.clear(scheme),
+    place: (x, y, kept) => wallpaper.place(scheme, x, y, kept),
+  }))
+
+  return {
+    kind: 'picture',
+    label: t('Picture'),
+    words: ['wallpaper', 'background', 'image', 'photo', 'focal point'],
+    get: () => wallpaper.of(theme.current)?.picture ?? '',
+    set: (value) => {
+      if (!value) wallpaper.clear(theme.current)
+    },
+    sides,
+  }
+}
+
+/** A built-in theme's own rows that are there right now. */
+function ownFields(): Field[] {
+  return theme.settings.filter((one) => one.own === true && (one.when?.() ?? true)).map(themeField)
 }
 
 /** The panes that are only about settings. The account and the LLM connector are
@@ -850,31 +912,28 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => theme.shown,
               set: (value) => theme.setScheme(asChoice(value)),
             },
-            // The wallpaper's picture, first of what that theme offers: the thing it
-            // is about. The thumbnail is the picture, so the row needs no more words;
-            // see the `picture` kind above.
-            ...(theme.id === WALLPAPER_THEME
-              ? ([
-                  {
-                    kind: 'picture',
-                    label: t('Picture'),
-                    words: ['wallpaper', 'background', 'image', 'photo'],
-                    get: () => wallpaper.held?.picture ?? '',
-                    set: (value: string) => {
-                      if (!value) wallpaper.clear()
-                    },
-                    choose: () => void wallpaper.choose(),
-                  },
-                ] satisfies Field[])
-              : []),
             // And whatever the theme in force offers of its own, under the two
             // rows that chose it and with no heading between: they are the
             // theme's, and where they sit is what says so. A theme with nothing
             // to offer adds nothing, so the group is the same two rows it has
             // always been. See themes/settings.ts.
-            ...theme.settings.map(themeField),
+            ...theme.settings.filter((one) => one.own !== true).map(themeField),
           ],
         },
+
+        // A built-in's own dials - glass's material, the wallpaper's picture - in a
+        // card of the theme's name: there are more of them than a row under Style can
+        // carry, and the name is the heading they already have. The picture first,
+        // which is what the wallpaper is about; the thumbnails are the pictures, so
+        // the row needs no more words.
+        ...(theme.settings.some((one) => one.own === true)
+          ? [
+              {
+                title: t(theme.active.name),
+                fields: [...(theme.id === WALLPAPER_THEME ? [pictureField()] : []), ...ownFields()],
+              },
+            ]
+          : []),
 
         // The window itself: who draws its frame. Desktop only, because a browser tab
         // has none - and on a phone the system draws everything. Nib's own frame stays

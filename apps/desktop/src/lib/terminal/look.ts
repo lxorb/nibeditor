@@ -14,6 +14,7 @@
  *  name, and a canvas reads whatever CSS can. */
 
 import type { ITheme } from '@xterm/xterm'
+import { TERMINAL_CONTRAST } from '../content-ground'
 
 /** The tokens, in xterm.js's order of the sixteen: the six canvas colours stand in for
  *  red, green, yellow, magenta and cyan, and the syntax blue for blue. */
@@ -48,6 +49,28 @@ function mix(
   return resolve(`color-mix(in srgb, ${a} ${part}%, ${b})`, a)
 }
 
+/** Whether a translucent theme has made the note's paper see-through, which the
+ *  terminal's ground follows: `--content-alpha` under glass and wallpaper, and nothing
+ *  under every other theme. */
+function seeThrough(style: CSSStyleDeclaration): boolean {
+  const said = style.getPropertyValue('--content-alpha').trim()
+  return said.endsWith('%') && Number.parseFloat(said) < 100
+}
+
+/** How far xterm.js pulls a program's colours from the paper: AA, or a step past it
+ *  while the paper is see-through, which leaves room for the ground under it to drift
+ *  as far as the theme's floors let it (see content-ground.ts). */
+export function terminalContrast(root: Element = document.documentElement): number {
+  return seeThrough(getComputedStyle(root)) ? TERMINAL_CONTRAST : 4.5
+}
+
+/** A colour with no alpha at all, as `rgba()`: the terminal draws no ground of its own
+ *  and stands on the pane's, while xterm.js still measures contrast against this one. */
+function clear(colour: string): string {
+  const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(opaque(colour).slice(at, at + 2), 16))
+  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, 0)`
+}
+
 /** The terminal's colours, off the page as it is painted right now. */
 export function terminalTheme(root: Element = document.documentElement): ITheme {
   const style = getComputedStyle(root)
@@ -74,7 +97,7 @@ export function terminalTheme(root: Element = document.documentElement): ITheme 
   )
 
   return {
-    background,
+    background: seeThrough(style) ? clear(background) : background,
     foreground,
     cursor: accent,
     cursorAccent: background,

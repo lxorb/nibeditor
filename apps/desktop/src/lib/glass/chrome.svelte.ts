@@ -24,11 +24,15 @@ export interface Ground {
   scheme: Scheme
 }
 
-/** What the frame wears; see tint.ts. */
+/** What the frame wears; see tint.ts. `paper` is how much paper a note stands on, the
+ *  Content row's level over its floor, and `terminal` what a terminal lays over that to
+ *  reach its own; absent in what an older build kept, which is the paper as it was. */
 export interface Worn {
   scheme: Scheme
   tint: string
   wash: number
+  paper?: number
+  terminal?: number
 }
 
 /** What the next launch opens on: the frame, and the bar of the tab that was open. */
@@ -39,6 +43,19 @@ interface Kept extends Worn {
 }
 
 const KEY = 'nib:glass-chrome'
+
+/** Every token the frame's answer is painted as on the root. */
+const PAINTED = [
+  '--glass-tint',
+  '--glass-tinted',
+  '--content-alpha',
+  '--terminal-alpha',
+  '--content-inner',
+] as const
+
+function percent(fraction: number): string {
+  return `${Math.round(fraction * 100)}%`
+}
 
 function isScheme(value: unknown): value is Scheme {
   return value === 'dark' || value === 'light'
@@ -58,6 +75,8 @@ function kept(): Kept | null {
     scheme: said.scheme,
     tint: said.tint,
     wash: said.wash,
+    ...(isNumber(said.paper) ? { paper: said.paper } : {}),
+    ...(isNumber(said.terminal) ? { terminal: said.terminal } : {}),
     tab: isString(said.tab) ? said.tab : null,
     bar: isGround(said.bar) ? said.bar : null,
   }
@@ -74,6 +93,9 @@ class Chrome {
   bars = $state<Record<string, Ground>>({})
   /** What the platform put behind the window, as the root says it; see material.ts. */
   material = $state<string | null>(null)
+  /** The least wash the frame's words allow over what is behind it now, from 0 to 1:
+   *  where the Opacity dial's track turns grey. */
+  floor = $state(0)
   private standing: MutationObserver | null = null
 
   /** `data-theme` for a part of the frame: the frame's scheme where it is not the
@@ -140,8 +162,7 @@ class Chrome {
     this.bars = {}
     const root = document.documentElement
     delete root.dataset.tinted
-    root.style.removeProperty('--glass-tint')
-    root.style.removeProperty('--glass-tinted')
+    for (const token of PAINTED) root.style.removeProperty(token)
   }
 
   /** What the frame wears now, and each page's bar; `tab` is the one in front, whose
@@ -178,11 +199,18 @@ class Chrome {
    *  every rule under it is worked out from. */
   private paint(worn: Worn): void {
     const style = document.documentElement.style
-    const wash = `${Math.round(worn.wash * 100)}%`
-    if (style.getPropertyValue('--glass-tint') !== worn.tint) {
-      style.setProperty('--glass-tint', worn.tint)
+    const said: Record<(typeof PAINTED)[number], string> = {
+      '--glass-tint': worn.tint,
+      '--glass-tinted': percent(worn.wash),
+      '--content-alpha': percent(worn.paper ?? 1),
+      '--terminal-alpha': percent(worn.terminal ?? 1),
+      // What stands on the pane's paper paints none of its own while that is
+      // see-through; `initial` is no value, so its own comes back.
+      '--content-inner': (worn.paper ?? 1) < 1 ? 'transparent' : 'initial',
     }
-    if (style.getPropertyValue('--glass-tinted') !== wash) style.setProperty('--glass-tinted', wash)
+    for (const token of PAINTED) {
+      if (style.getPropertyValue(token) !== said[token]) style.setProperty(token, said[token])
+    }
   }
 }
 

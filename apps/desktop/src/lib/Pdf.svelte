@@ -837,8 +837,10 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: auto;
-    /* The pages are a stack of sheets on a surface, not paper on paper. */
-    background: var(--surface);
+    /* The pages are a stack of sheets on a surface, not paper on paper. Under a
+       translucent theme the surface is the see-through paper and the sheets stay the
+       PDF's own, which is printed paper. */
+    background: var(--content-inner, var(--surface));
   }
 
   .column {

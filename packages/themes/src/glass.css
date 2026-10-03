@@ -3,12 +3,15 @@
    see "What is open" below.
 
    The chrome - the title bar with the tabs in it, the list down the side, the foot
-   row - stands on the material the platform composites behind the window: Mica Alt on
-   Windows 11, Acrylic on Windows 10. The writing surface does not: a note is what
-   somebody reads for hours, so every pane paints its own paper (see Pane.svelte), and a
-   tab that is open runs down into that paper exactly as it does in every other theme.
-   It is the layering Windows 11 asks of an app on Mica and the one Finder and Notes
-   have on a Mac: the material behind the frame, the content on a surface of its own.
+   row - stands on the material the platform composites behind the window: Mica Alt,
+   Mica, Acrylic or the desk itself unblurred, as the Material row says, under a wash
+   as thick as the Opacity row and the words allow. The writing surface stands on a
+   paper of its own (see Pane.svelte), laid over the frame as thinly as the Content row
+   asks and body text allows, and a tab that is open runs down into that paper exactly
+   as it does in every other theme. It is the layering Windows 11 asks of an app on Mica
+   and the one Finder and Notes have on a Mac - the material behind the frame, the
+   content on a surface of its own - with how much of one shows through the other left
+   to the reader. A web page always paints its own page.
 
    The window wears the material only under this theme; see material.ts in the app.
 
@@ -24,10 +27,11 @@
    the material shows, the way Terminal's tab row and Explorer's side do.
 
    Acrylic - and a Mac's vibrancy, the day its webview can be seen through - is the
-   desk itself, blurred, and a desk may be a white photograph under the dark side or a
-   black one under the light. So on those the wash is most of the colour, enough that
-   the worst desk there is, unblurred, still leaves every word on the chrome at four and
-   a half to one. apps/desktop/test/e2e/glass.py reads the ratios back off the page over
+   desk itself, blurred, and Clear is the desk unblurred; a desk may be a white
+   photograph under the dark side or a black one under the light. So on those the wash
+   is most of the colour, enough that the worst desk there is, unblurred, still leaves
+   every word on the chrome at four and a half to one - six over Clear, whose desk is
+   sharp. The Opacity row can thicken the wash and never thin it past that. apps/desktop/test/e2e/glass.py reads the ratios back off the page over
    a white desk, a black one and a busy one, and scripts/glass-probe.py off the packaged
    app's own picture.
 
@@ -39,7 +43,9 @@
 
    The two quiet greys are a level stronger than the built-in's, and so is the body
    text: a caption on a washed surface is the first thing to go, and on light Mica Alt
-   the built-in's quiet grey is under four and a half to one before any wash at all. */
+   the built-in's quiet grey is under four and a half to one before any wash at all.
+   The light side's quiet grey is a step darker again, so that over the desk with no
+   blur, where words aim for six to one, a row under the pointer can still reach it. */
 
 :root,
 [data-theme='dark'] {
@@ -67,7 +73,7 @@
   --glass-wash: 88%;
   --glass-layer: rgb(255 255 255 / 0.4);
 
-  --muted: #4c5563;
+  --muted: #454e5c;
   --muted-strong: #363f4d;
   --text: #13161b;
   --text-strong: #05070a;
@@ -79,6 +85,13 @@
    wash is said once, there, and the frame and the list only say what they add. */
 :root[data-translucent] {
   --shell-ground: color-mix(in srgb, var(--glass-chrome) var(--glass-wash), transparent);
+  /* What a note, a terminal and a canvas are read on: the paper over the frame's colour
+     over the material, at the alpha the Content row and the floors allow (see tint.ts and
+     content-ground.ts in the app), so the words keep the palette they were measured on.
+     A link takes a third of the strongest ink, so it is not what holds the paper opaque. */
+  --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha, 100%), transparent);
+  --terminal-ground: color-mix(in srgb, var(--bg) var(--terminal-alpha, 100%), transparent);
+  --content-link: color-mix(in srgb, var(--accent) 70%, var(--text-strong));
   --tab-frame: transparent;
   --side-bar-bg-color: var(--glass-layer);
   /* A row under the pointer is a lift of whatever it is on rather than a colour of
@@ -134,6 +147,7 @@
 }
 
 :root[data-tinted][data-translucent] {
+  --paper: var(--content-ground);
   --shell-ground: color-mix(
     in srgb,
     var(--glass-tint, var(--glass-chrome)) var(--glass-tinted, var(--glass-wash)),
@@ -187,5 +201,11 @@
 
   :root[data-tinted][data-theme] {
     --shell-ground: var(--glass-tint, var(--glass-chrome));
+  }
+
+  /* And the note is on its paper, whatever the Content row says. */
+  :root[data-translucent][data-theme] {
+    --content-ground: var(--bg);
+    --terminal-ground: var(--bg);
   }
 }

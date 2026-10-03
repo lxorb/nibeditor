@@ -705,8 +705,11 @@
 <style>
   /* The paper whatever the pane shows is written on. The window's ground was the paper
      while a window could only be opaque; under glass it is the platform's material, so
-     the words stand on something of their own. A pane with its own strip is paper under
-     the strip only, since the strip is the frame. */
+     the words stand on something of their own - see-through as far as the theme's
+     Content row asks and the words allow (`--content-ground`, glass.css and
+     wallpaper.css). Laid once, here: what the pane holds stands on it rather than
+     painting a paper of its own, or two thin papers would be one thick one. A pane with
+     its own strip is paper under the strip only, since the strip is the frame. */
   .pane {
     position: relative;
     flex: 1;
@@ -714,11 +717,14 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
+    background: var(--content-ground, var(--bg));
   }
 
   .pane:has(> .head) {
-    background: linear-gradient(transparent var(--titlebar-height), var(--bg) 0);
+    background: linear-gradient(
+      transparent var(--titlebar-height),
+      var(--content-ground, var(--bg)) 0
+    );
   }
 
   /* Nothing open: whatever the theme puts behind the frame, like a browser's new tab. */
@@ -832,7 +838,7 @@
   }
 
   .column.is-active .spine {
-    background: var(--bg);
+    background: var(--content-ground, var(--bg));
     color: var(--text-strong);
   }
 

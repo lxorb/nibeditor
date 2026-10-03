@@ -89,6 +89,41 @@ pub fn see_through(app: &AppHandle) -> bool {
         .is_some_and(|said| clear(said.trim()))
 }
 
+/// Where the material glass last asked for is kept, beside the ground: the launch that
+/// puts the material back before the page has started puts back that one.
+const MATERIAL: &str = "material.txt";
+
+/// The material kinds glass may ask for, the only words the file is read as.
+const KINDS: [&str; 4] = ["mica-alt", "mica", "acrylic", "clear"];
+
+/// Writes down which material glass asked for, once a choice of it is kept. A word the
+/// crate does not know is refused rather than written: the file is read before anything
+/// else has started.
+#[tauri::command(async)]
+pub fn remember_material(app: AppHandle, kind: String) -> Result<(), String> {
+    if !KINDS.contains(&kind.as_str()) {
+        return Err("that is not a material".into());
+    }
+
+    let path = config_dir(&app)?.join(MATERIAL);
+    if let Some(parent) = path.parent() {
+        made(parent)?;
+    }
+
+    write_atomically(&path, kind.as_bytes())
+}
+
+/// The material glass last asked for, or nothing for a file that is not there or not one
+/// of them, which is Mica Alt.
+pub fn material(app: &AppHandle) -> Option<String> {
+    let said = std::fs::read_to_string(config_dir(app).ok()?.join(MATERIAL)).ok()?;
+    kind_of(said.trim())
+}
+
+fn kind_of(said: &str) -> Option<String> {
+    KINDS.contains(&said).then(|| said.to_string())
+}
+
 /// `rgba(…, 0)`, the one colour a browser resolves a transparent ground to.
 fn clear(said: &str) -> bool {
     said.strip_prefix("rgba(")
@@ -132,7 +167,7 @@ fn colour_of(said: &str) -> Option<Color> {
 
 #[cfg(test)]
 mod tests {
-    use super::{clear, colour_of};
+    use super::{clear, colour_of, kind_of};
     use tauri::utils::config::Color;
 
     #[test]
@@ -172,6 +207,17 @@ mod tests {
             "transparent",
         ] {
             assert!(!clear(said), "{said}");
+        }
+    }
+
+    /// The material is read as one of the four words glass says and nothing else.
+    #[test]
+    fn only_a_material_glass_offers_is_read() {
+        for said in ["mica-alt", "mica", "acrylic", "clear"] {
+            assert_eq!(kind_of(said).as_deref(), Some(said));
+        }
+        for said in ["", "Mica", "blur", "mica-alt ", "../x"] {
+            assert_eq!(kind_of(said), None, "{said}");
         }
     }
 

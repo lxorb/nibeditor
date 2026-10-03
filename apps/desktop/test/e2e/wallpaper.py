@@ -8,8 +8,8 @@ screenshot rather than off the app's own opinion of what it painted: the quietes
 the chrome writes in, against the lightest (dark side) or darkest (light side) pixel
 of the frame where no word is.
 
-And the rest of what the theme promises: the note keeps its paper, nothing filters
-anything on a frame, the Blur dial makes the picture again, the picture is on the
+And the rest of what the theme promises: the note keeps its paper with Content at
+Opaque (theme-options.py drives the other levels), nothing filters anything on a frame, the Blur dial makes the picture again, the picture is on the
 first frame of the next launch, and the theme with no picture wears its accent field.
 
 Run it from the repository root:
@@ -207,6 +207,10 @@ def drive(browser: Any) -> None:
 
         page.evaluate("() => window.nibApp.theme.select('wallpaper')")
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
+        # The paper as it always was, which is what this drive measures; how far the
+        # picture reaches the note is theme-options.py's.
+        wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "the theme's dials")
+        page.evaluate("() => window.nibApp.theme.set('content', 'opaque')")
         page.wait_for_timeout(300)
         keep_shot(page, f"field-{scheme}")
         measure(page, f"{scheme}, the accent field")
@@ -236,15 +240,15 @@ def drive(browser: Any) -> None:
 
         # The dial: the picture is made again at another blur, and kept once it rests.
         if scheme == "dark":
-            before = page.evaluate("() => window.nibApp.wallpaper.held.picture.length")
+            before = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
             page.evaluate("() => window.nibApp.theme.set('blur', 56)")
-            wait_for(page, "window.nibApp.wallpaper.held?.blur === 56", "the picture made at the new blur")
+            wait_for(page, "window.nibApp.wallpaper.held.main?.blur === 56", "the picture made at the new blur")
             wait_for(
                 page,
                 "JSON.parse(localStorage.getItem('nib:wallpaper')).blur === 56",
                 "the new blur kept once the dial rests",
             )
-            after = page.evaluate("() => window.nibApp.wallpaper.held.picture.length")
+            after = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
             say(f"blur 28 -> 56: the kept picture went from {before} to {after} characters")
             keep_shot(page, "dark-blur-56")
             measure(page, "dark, dark picture at blur 56")

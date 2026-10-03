@@ -2031,7 +2031,8 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    background: var(--bg);
+    /* The note's paper, or under a see-through one the pane's, which it stands on. */
+    background: var(--content-inner, var(--bg));
     /* The plane is the thing being touched, so a drag on it must not start a
        text selection or the browser's own panning.
 

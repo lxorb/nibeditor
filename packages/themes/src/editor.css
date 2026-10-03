@@ -134,9 +134,11 @@
    pointer into a hand and the click into a jump (links.ts). */
 /* The highlighter paints a bare address in the muted tone it gives a link's
    target; here the address is the link, so the accent reaches inside. */
+/* `--content-link` is a translucent theme's: the accent with some of the strongest
+   ink in it, so a link is not what holds a see-through paper opaque. */
 .nib-link,
 .nib-link * {
-  color: var(--accent);
+  color: var(--content-link, var(--accent));
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
   text-decoration-thickness: 1px;
@@ -998,7 +1000,7 @@
 }
 
 .nib-table tbody tr:hover td {
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
 }
 
 .nib-table th:focus,
@@ -1828,7 +1830,10 @@
    should read as until somebody styles it. */
 .cm-line.nib-callout {
   border-inline-start-color: var(--callout-accent, var(--blockquote-border-color));
-  background: color-mix(in srgb, var(--callout-accent, transparent) 7%, transparent);
+  /* Mixed into the paper rather than laid over it, so a callout keeps a fill of its own
+     where the paper is see-through under a translucent theme; on an opaque paper it is
+     the same colour either way. The table's row and an embed below do the same. */
+  background: color-mix(in srgb, var(--callout-accent, var(--bg)) 7%, var(--bg));
   padding-inline-end: var(--space-3);
 }
 
@@ -2299,7 +2304,7 @@
   margin: 0.6em 0 1.2em;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
   overflow: hidden;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
