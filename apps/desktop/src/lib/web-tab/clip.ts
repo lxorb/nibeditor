@@ -1,15 +1,17 @@
 /** Clipping the page a web tab is showing.
  *
  *  Where the HTML comes from, which is the only part that differs by build. On a
- *  desktop the page is a webview of its own and the crate reads it with a script, in
- *  the document as the reader sees it: a selection if there is one, the article if
- *  there is not. In a browser the page is in a frame belonging to somebody else's
- *  origin and its words cannot be read at all, so a clip there is the address and
- *  the title - a link card, which is what the glyph says it will be before anybody
- *  presses it.
+ *  desktop the page is a webview of its own and the crate has it write itself down,
+ *  in nib's own world where the engine has one: the document as the reader sees it,
+ *  or what they selected (`web_tabs/reader.js`). In a browser the page is in a frame
+ *  belonging to somebody else's origin and its words cannot be read at all, so a clip
+ *  there is the address and the title - a link card, which is what the glyph says it
+ *  will be before anybody presses it.
  *
- *  What the note itself says is note.ts, through the same converter the clipper
- *  extension uses. Where it is written is the workspace's, which knows the space. */
+ *  What the note itself says is note.ts: the clipper extension's own extractor finds
+ *  the article in what the page wrote down, and its converter and its note shape do
+ *  the rest, so the same page clips to the same note from here and from the
+ *  extension. Where it is written is the workspace's, which knows the space. */
 
 import { workspace } from '../workspace.svelte'
 import { plainOrigin } from './address'

@@ -200,7 +200,7 @@ id (80b9de44) landed; two faults are left.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
-| Mozilla's Readability moves out of `apps/clipper/src/lib/extract.ts` into the markdown package so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
+| Mozilla's Readability moves out of the clipper into the markdown package (`packages/markdown/src/article.ts`) so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
 | The clipper's fortieth catalogue: `yue` still answers Hong Kong written Chinese | batches, fixer C2, 2026-09-14 | 40 catalogues, the same negotiation as the app | S | low | none |
 | Apple Notes tables, drawings and scans are counted, not converted | batches #95, 2026-09-12 | tables as markdown tables, drawings and scans as pictures where the database holds them | M | low | none |
 

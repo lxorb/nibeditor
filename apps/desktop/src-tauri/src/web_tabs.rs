@@ -315,80 +315,10 @@ const LOOKED: &str = r"(function () {
   }
 })()";
 
-/// The page, read for a clip, in the site's own document.
-///
-/// It reads what is on screen rather than what the server sent: a page that writes
-/// itself with a script has already written itself. Every address comes back
-/// resolved, because the note this becomes is read from a folder and not from the
-/// site.
-///
-/// `__SELECTION__` takes what somebody has selected. Without one it takes the
-/// article: the element a page says holds its writing, or the longest candidate,
-/// and otherwise the body with the furniture cut out of it. Turning the HTML into
-/// markdown is the window's, through the same converter the clipper uses; see
-/// `lib/web-tab/clip.ts`.
-const READER: &str = r"(function () {
-  const OUT =
-    'nav,header,footer,aside,form,dialog,button,[role=navigation],[role=banner],[role=contentinfo],[aria-hidden=true]'
-  const PICKS = ['article', 'main', '[role=main]', '#content', '.post', '.entry-content']
-  const ENOUGH = 200
-
-  function absolute(root) {
-    for (const one of root.querySelectorAll('[href]')) {
-      try {
-        one.setAttribute('href', one.href)
-      } catch (error) {
-        one.removeAttribute('href')
-      }
-    }
-    for (const one of root.querySelectorAll('[src]')) {
-      try {
-        one.setAttribute('src', one.src)
-      } catch (error) {
-        one.removeAttribute('src')
-      }
-    }
-    return root
-  }
-
-  function selected() {
-    const range = window.getSelection()
-    if (!range || range.isCollapsed || range.rangeCount === 0) return null
-
-    const held = document.createElement('div')
-    for (let index = 0; index < range.rangeCount; index += 1) {
-      held.append(range.getRangeAt(index).cloneContents())
-    }
-    return (held.textContent || '').trim() ? held : null
-  }
-
-  function article() {
-    let best = null
-    for (const pick of PICKS) {
-      for (const found of document.querySelectorAll(pick)) {
-        const length = (found.textContent || '').trim().length
-        if (!best || length > best.length) best = { node: found, length: length }
-      }
-    }
-
-    if (best && best.length > ENOUGH) return best.node.cloneNode(true)
-
-    const whole = document.body.cloneNode(true)
-    for (const furniture of whole.querySelectorAll(OUT)) furniture.remove()
-    return whole
-  }
-
-  const title = (document.title || '').trim()
-
-  try {
-    const part = (__SELECTION__ ? selected() : null) || article()
-    const page = absolute(part)
-
-    return { url: location.href, title: title, html: (page.innerHTML || '').slice(0, __LONGEST__) }
-  } catch (error) {
-    return { url: location.href, title: title, html: '' }
-  }
-})()";
+/// The page, read for a clip: a snapshot of the document as the reader sees it, or of
+/// what they selected, which the window runs the clipper's own extractor over. See
+/// `web_tabs/reader.js`, which says what it writes and why the page's half is small.
+const READER: &str = include_str!("web_tabs/reader.js");
 
 /// Where a page has been in one tab, and where along it the tab is.
 ///
@@ -853,7 +783,7 @@ fn address(url: &str) -> Result<Url, String> {
 /// The reader script, told whether it is after a selection.
 pub(crate) fn reader(selection: bool) -> String {
     READER
-        .replace("__SELECTION__", if selection { "true" } else { "false" })
+        .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
@@ -1934,15 +1864,87 @@ pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
 
 /// The page, read for a clip.
 ///
-/// The script runs in the site's document and the answer comes back through the
-/// engine's own callback rather than through the app's IPC, which is what lets a
-/// page be read without the page being given anything to call.
+/// In nib's own world where the engine offers one - `WebView2`'s and nib's Chromium's,
+/// through the protocol (see `web_worlds.rs`) - so a page that has wrapped `cloneNode`,
+/// `querySelectorAll` or `getSelection` neither sees the read nor changes what it
+/// answers. In the page's own world otherwise, and wherever that world would not
+/// answer: a clip read a little less privately is better than no clip.
+///
+/// Either way the answer comes back through the engine and never through the app's IPC,
+/// which is what lets a page be read without the page being given anything to call.
 #[tauri::command]
 pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Clipped, String> {
     let view = found(&app, &tab)?;
+    let script = reader(selection);
+
+    if let Some(said) = in_our_world(&view, &script).await {
+        if let Ok(clipped) = serde_json::from_value::<Clipped>(said) {
+            return Ok(clipped);
+        }
+    }
+
+    in_the_page(&view, script).await
+}
+
+/// The reader's answer from nib's world in the page, or `None` where this engine has no
+/// such world or it did not answer.
+#[cfg(feature = "cef")]
+async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
+    let (view, script) = (view.clone(), script.to_string());
+    tauri::async_runtime::spawn_blocking(move || crate::web_worlds::value(&view, &script))
+        .await
+        .ok()
+        .flatten()
+}
+
+/// The reader's answer from nib's world in the page, through `WebView2`'s protocol.
+#[cfg(all(windows, not(feature = "cef")))]
+#[allow(
+    unsafe_code,
+    reason = "a page's world is reached through WebView2's COM interfaces"
+)]
+async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
+    let (sending, mut waiting) = tauri::async_runtime::channel::<Option<String>>(1);
+    let script = script.to_string();
+
+    view.with_webview(move |platform| {
+        // Safe: the controller is this page's, asked on the window's own thread, which is
+        // where `with_webview` runs this.
+        match unsafe { platform.controller().CoreWebView2() } {
+            Ok(core) => crate::web_worlds::evaluate(&core, script, move |answer| {
+                let _ = sending.try_send(answer);
+            }),
+            Err(_) => {
+                let _ = sending.try_send(None);
+            }
+        }
+    })
+    .ok()?;
+
+    let answer = waiting.recv().await.flatten()?;
+    serde_json::from_str::<serde_json::Value>(&answer)
+        .ok()?
+        .pointer("/result/value")
+        .cloned()
+}
+
+/// The two `WebKit` engines put nib's scripts in a world of nib's own as the page is
+/// built, and offer no way to run one there afterwards through what wry hands out; see
+/// `web_worlds.rs`. A clip there is read in the page's world.
+#[cfg(all(not(windows), not(feature = "cef")))]
+#[allow(
+    clippy::unused_async,
+    reason = "the same call as on the engines that do wait for a world"
+)]
+async fn in_our_world(_view: &Webview, _script: &str) -> Option<serde_json::Value> {
+    None
+}
+
+/// The reader's answer from the page's own world, through the engine's script callback.
+async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> {
     let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
 
-    view.eval_with_callback(reader(selection), move |answer| {
+    view.eval_with_callback(script, move |answer| {
         // One page, one answer: a full channel is an answer already sent.
         let _ = sending.try_send(answer);
     })
@@ -3253,8 +3255,21 @@ mod tests {
 
     #[test]
     fn the_reader_says_whether_it_wants_the_selection() {
-        assert!(reader(true).contains("(true ? selected()"));
-        assert!(reader(false).contains("(false ? selected()"));
+        assert!(reader(true).contains("'yes' === 'yes'"));
+        assert!(reader(false).contains("'no' === 'yes'"));
         assert!(!reader(false).contains("__LONGEST__"));
+        assert!(!reader(true).contains("__SELECTION__"));
+    }
+
+    /// What the window reads a snapshot by: the doctype in front, and the mark on the
+    /// root a selection wears (packages/markdown/src/snapshot.ts). And no field's value,
+    /// the rule an agent's markup is held to, since an agent reads articles with this.
+    #[test]
+    fn the_reader_writes_the_marks_the_window_reads_it_by() {
+        let said = reader(true);
+        assert!(said.contains("`<!DOCTYPE html>${root.outerHTML}`"));
+        assert!(said.contains("data-nib-selection"));
+        assert!(said.contains("input[type=password]"));
+        assert!(said.contains("removeAttribute('value')"));
     }
 }

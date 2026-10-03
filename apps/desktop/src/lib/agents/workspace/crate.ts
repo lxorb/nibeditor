@@ -8,6 +8,7 @@
 import type { Said } from '../../automation/args'
 import { said } from '../../automation/args'
 import { READER } from '../../automation/caller'
+import { articleOf } from '../../web-tab/note'
 import type { StoreSaid } from '../verbs'
 import { placeFor } from './spaces'
 import { readerTabs } from './tabs'
@@ -22,11 +23,18 @@ async function storeFor(args: Said): Promise<StoreSaid> {
   return { space: place.space.name, store: await webData.store(place.space.id, url) }
 }
 
-/** A page's HTML as the markdown a clip of it would say. */
+/** A page's HTML as the markdown a clip of it would say: a snapshot the clip's reader
+ *  wrote is read for its article first, the way the clip button reads it. */
 async function markdown(args: Said): Promise<string> {
-  const { htmlToMarkdown } = await import('@nib/markdown/from-html')
   const html = typeof args.html === 'string' ? args.html : ''
-  return html.trim() ? htmlToMarkdown(html).trim() : ''
+  if (!html.trim()) return ''
+
+  const url = said(args, 'url') ?? ''
+  const [read, { htmlToMarkdown }] = await Promise.all([
+    articleOf({ url, title: '', html }),
+    import('@nib/markdown/from-html'),
+  ])
+  return read.html.trim() ? htmlToMarkdown(read.html).trim() : ''
 }
 
 export async function answerTheCrate(name: string, args: Said): Promise<unknown> {
