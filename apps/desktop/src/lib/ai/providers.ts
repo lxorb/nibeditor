@@ -167,6 +167,23 @@ export function askUrl(provider: Provider): string {
   return `${apiRoot(provider)}/chat/completions`
 }
 
+/** Where a conversation goes, which for an OpenAI key is the Responses API rather than
+ *  the completions route a one-shot question takes: reasoning, its summaries and its
+ *  encrypted carry-over between turns are the Responses API's alone. A compatible server
+ *  copies the completions route and is asked there. See chat/. */
+export function conversationUrl(provider: Provider): string {
+  if (provider.kind === 'anthropic') return `${apiRoot(provider)}/messages`
+  if (provider.kind === 'openai' || provider.kind === 'chatgpt') {
+    return `${apiRoot(provider)}/responses`
+  }
+  return `${apiRoot(provider)}/chat/completions`
+}
+
+/** Where OpenAI compacts a conversation into the items that stand for it. */
+export function compactUrl(provider: Provider): string {
+  return `${apiRoot(provider)}/responses/compact`
+}
+
 /** Where sound goes to come back as words.
  *
  *  OpenAI's own route, and the one every server that speaks the OpenAI shape and

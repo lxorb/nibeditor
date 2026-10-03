@@ -56,3 +56,29 @@ export function sseJson(payload: string): unknown {
     return null
   }
 }
+
+/** Every event of a stream, parsed, as it arrives: what a conversation reads, where the
+ *  one-shot request only wants the words. A payload that is not JSON is skipped, as
+ *  above. The reader is let go however the loop over it ends, a stop included: a reader
+ *  left open holds the socket. */
+export async function* sseEvents(body: ReadableStream<Uint8Array>): AsyncGenerator {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let held = ''
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      const chunk = done ? decoder.decode() + '\n' : decoder.decode(value, { stream: true })
+      const { payloads, rest } = sseLines(held, chunk)
+      held = rest
+      for (const payload of payloads) {
+        const event = sseJson(payload)
+        if (event !== null) yield event
+      }
+      if (done) return
+    }
+  } finally {
+    reader.cancel().catch(() => undefined)
+  }
+}

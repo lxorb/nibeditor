@@ -296,9 +296,24 @@ fn answer(
         }
     };
 
-    let Ok(mut asked) = serde_json::from_str::<serde_json::Value>(&request.body) else {
+    let Ok(asked) = serde_json::from_str::<serde_json::Value>(&request.body) else {
         return say(&mut stream, 400, &refused("that body is not JSON"));
     };
+    let (status, body) = dispatch(app, &caller, asked, eval);
+    say(&mut stream, status, &body)
+}
+
+/// What the endpoint answers one request from a caller it let in: the status and the
+/// body. The road every verb takes, whoever asks: the command line and `nib mcp` over the
+/// socket, and the AI sidebar's own agent from inside the app (`ai_agent.rs`), so an agent
+/// in the sidebar is answered exactly as an outside one is - the same crate verbs, the
+/// same window verbs and grant check, the same log.
+pub(crate) fn dispatch(
+    app: &AppHandle,
+    caller: &crate::agents::Caller,
+    mut asked: serde_json::Value,
+    eval: bool,
+) -> (u16, String) {
     // Owned, because the value is written into a moment later and a borrow of it
     // would still be alive.
     let verb = asked
@@ -306,7 +321,7 @@ fn answer(
         .and_then(|one| one.as_str())
         .map(str::to_owned);
     let Some(verb) = verb else {
-        return say(&mut stream, 400, &refused("say which verb"));
+        return (400, refused("say which verb"));
     };
 
     // The browser's verbs, and the agents' own, are answered here without the window:
@@ -315,27 +330,26 @@ fn answer(
     let args = asked.get("args").cloned().unwrap_or_default();
     if let Some(read) = crate::agents::verbs::Verb::read(&verb, args.clone()) {
         let answered = match read {
-            Ok(one) => crate::agents::answer(app, &caller, one, args),
+            Ok(one) => crate::agents::answer(app, caller, one, args),
             Err(why) => {
                 crate::agents::verbs::Answer::error(crate::agents::verbs::Code::BadArguments, why)
             }
         };
         let text = serde_json::to_string(&answered).unwrap_or_else(|_| refused("no answer"));
-        return say(&mut stream, 200, &text);
+        return (200, text);
     }
 
     if verb == "eval" && !eval {
-        return say(
-            &mut stream,
+        return (
             403,
-            &refused("eval is off: set \"eval\": true in the endpoint file to turn it on"),
+            refused("eval is off: set \"eval\": true in the endpoint file to turn it on"),
         );
     }
 
     // An agent reaches only the window's agent verbs, and the window is told who is
     // asking so its dispatcher can check the grant; an agent never reaches `eval`.
-    if let Err(why) = crate::agents::may_ask_the_window(&caller, &verb) {
-        return say(&mut stream, 403, &refused(&why));
+    if let Err(why) = crate::agents::may_ask_the_window(caller, &verb) {
+        return (403, refused(&why));
     }
     let agent = matches!(caller, crate::agents::Caller::Agent(_));
     if let (Some(told), Some(body)) = (caller.told(), asked.as_object_mut()) {
@@ -354,11 +368,11 @@ fn answer(
             ),
         };
         let tab = args.get("tab").and_then(serde_json::Value::as_str);
-        crate::agents::logged(app, &caller, &verb, tab, args.clone(), &answered, started);
+        crate::agents::logged(app, caller, &verb, tab, args.clone(), &answered, started);
     }
     match outcome {
-        Ok(answered) => say(&mut stream, 200, &answered),
-        Err(reason) => say(&mut stream, 503, &refused(&reason)),
+        Ok(answered) => (200, answered),
+        Err(reason) => (503, refused(&reason)),
     }
 }
 
