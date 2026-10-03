@@ -1,7 +1,8 @@
-"""Ctrl+Shift+Space: every space in the middle of the window, a digit away.
+"""Ctrl+Space: every space in the middle of the window, a digit away.
 
-Emil, 2026-10-03: a key opens a centred modal just for switching to another space; each
-row wears a number; a digit switches as soon as only one space can be meant, without
+Emil, 2026-10-04: Ctrl+Space opens it, as Ctrl+Shift+Space still does, and no row wears a
+number until a digit is typed or Alt is held. Emil, 2026-10-03: a key opens a centred
+modal just for switching to another space; a digit switches as soon as only one space can be meant, without
 Enter; letters find a space by its name and need Enter; there is no visible field, the
 typed letters are the hits in the rows; the key again closes it, and the tabs' Alt
 numbers never show beside it. What this presses and looks at, in the light and the dark,
@@ -32,12 +33,12 @@ ROWS = """() => [...document.querySelectorAll('.picker .nib-row')].map((one) => 
 ])"""
 
 
-def key(page: Page) -> None:
-    page.keyboard.press("Control+Shift+Space")
+def key(page: Page, chord: str = "Control+Space") -> None:
+    page.keyboard.press(chord)
 
 
-def opened(page: Page, scheme: str, what: str) -> None:
-    key(page)
+def opened(page: Page, scheme: str, what: str, chord: str = "Control+Space") -> None:
+    key(page, chord)
     wait_for(page, UP, f"[{scheme}] the switcher for {what}")
     page.wait_for_timeout(250)
 
@@ -71,16 +72,23 @@ def switching(page: Page, scheme: str) -> None:
     if page.locator(".picker input, .picker textarea, .picker [contenteditable]").count():
         wrong(f"[{scheme}] the switcher has a field")
     rows = page.evaluate(ROWS)
-    if [one[0] for one in rows] != [str(at + 1) for at in range(len(names))]:
-        wrong(f"[{scheme}] the rows are not numbered 1 to {len(names)}: {rows}")
+    if any(one[0] is not None for one in rows):
+        wrong(f"[{scheme}] a row wears a number before Alt or a digit: {rows}")
+    DRIVE.shot(page, f"{scheme}-01-open")
     page.keyboard.down("Alt")
     page.wait_for_timeout(200)
     tabs = page.locator(".numeral").count()
+    rows = page.evaluate(ROWS)
+    DRIVE.shot(page, f"{scheme}-01-alt")
     page.keyboard.up("Alt")
-    say(f"[{scheme}] Alt held over the switcher: {tabs} tab numbers")
+    say(f"[{scheme}] Alt held over the switcher: {tabs} tab numbers, rows {[one[0] for one in rows]}")
     if tabs:
         wrong(f"[{scheme}] the tabs' Alt numbers showed beside the space numbers")
-    DRIVE.shot(page, f"{scheme}-01-open")
+    if [one[0] for one in rows] != [str(at + 1) for at in range(len(names))]:
+        wrong(f"[{scheme}] Alt did not number the rows 1 to {len(names)}: {rows}")
+    page.wait_for_timeout(200)
+    if any(one[0] is not None for one in page.evaluate(ROWS)):
+        wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
 
     # Letters: the name is found, its letters bold, and nothing happens until Enter.
     page.keyboard.type("re")
@@ -130,15 +138,43 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] 12 went to {page.evaluate(HERE)!r}, not {names[11]}")
 
-    # The key again puts it away; so does Escape.
+    # Alt and a digit goes too.
+    opened(page, scheme, "Alt and a digit")
+    page.keyboard.press("Alt+4")
+    gone(page, scheme, "on Alt+4")
+    if page.evaluate(HERE) != names[3]:
+        wrong(f"[{scheme}] Alt+4 went to {page.evaluate(HERE)!r}, not {names[3]}")
+    opened(page, scheme, "two digits again")
+    page.keyboard.press("1")
+    page.keyboard.press("2")
+    gone(page, scheme, "on 12 again")
+
+    # The key again puts it away, both keys; so does Escape.
     opened(page, scheme, "the key again")
     key(page)
     gone(page, scheme, "on the key again")
+    opened(page, scheme, "the second key", "Control+Shift+Space")
+    key(page, "Control+Shift+Space")
+    gone(page, scheme, "on the second key again")
     opened(page, scheme, "Escape")
     page.keyboard.press("Escape")
     gone(page, scheme, "on Escape")
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
+
+    # From the space's own mark in the title bar, which a press left the keyboard on:
+    # Ctrl+Space is the switcher there too, never a click on the mark.
+    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    mark = page.locator("[data-space-drop='switcher']").first
+    if mark.count():
+        mark.focus()
+        opened(page, scheme, "from the title bar's mark")
+        if page.locator(".nib-layer.spaces").count():
+            wrong(f"[{scheme}] Ctrl+Space on the mark dropped the title bar's list")
+        page.keyboard.press("Escape")
+        gone(page, scheme, "from the mark")
+    else:
+        say(f"[{scheme}] no title-bar mark to stand on; skipped")
 
 
 def drive(browser: Browser) -> None:
@@ -150,4 +186,4 @@ def drive(browser: Browser) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Ctrl+Shift+Space switches space by number and by name"))
+    raise SystemExit(DRIVE.run(drive, "Ctrl+Space switches space by number and by name"))

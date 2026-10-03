@@ -983,18 +983,33 @@ const APP_ENTRIES: Shortcut[] = [
   {
     // The switcher in the middle of the window, and away again: a digit for a space's
     // number, a name and Enter. On the space bar, because that is where the word is
-    // written. Kept off Ctrl and a digit, which are the tabs as in every browser (Arc
-    // spends them on its spaces), and off Ctrl+K, which is a site's own palette: free
-    // in every system, a page is offered it first (Sheets selects all with it) and a
-    // terminal hands it over. See space-picker.svelte.ts and docs/keyboard.md. Fetched
-    // with the dialog, which the launch's last turn has already done by the first press.
+    // written: Ctrl+Space (Emil, 2026-10-04), which no browser binds. Kept off Ctrl and
+    // a digit, which are the tabs as in every browser (Arc spends them on its spaces),
+    // and off Ctrl+K, which is a site's own palette. A page is offered it first (Sheets
+    // selects a column with it, Colab and VS Code on the web complete), an input method
+    // that toggles on it takes it before the window, and a terminal keeps it for the
+    // shell, which reads it as NUL; Ctrl+Shift+Space below is the switcher there. A Mac
+    // has Ctrl+Space for the input source and Cmd+Space for Spotlight, so there it is
+    // Cmd+Shift+Space alone. See space-picker.svelte.ts and docs/keyboard.md.
     id: 'space.switcher',
     label: () => t('Spaces'),
     category: 'view',
     scope: 'app',
+    key: 'Mod-Space',
+    mac: 'Mod-Shift-Space',
+    run: toggleSpacePicker,
+  },
+  {
+    // Its first key, kept: the one a terminal hands over, since a shell has no use for
+    // the Shift. On a Mac it is the only key, above.
+    id: 'space.switcher.alt',
+    label: () => t('Spaces'),
+    category: 'view',
+    scope: 'app',
     key: 'Mod-Shift-Space',
-    run: () =>
-      void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle()),
+    mac: null,
+    alias: true,
+    run: toggleSpacePicker,
   },
   {
     // The space drawn as a map of its links. No key out of the box - it opens
@@ -1278,7 +1293,8 @@ const PANEL_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   // The selection from the keyboard, the way Explorer and VS Code build one: Shift and
-  // an arrow take the next row too, Ctrl+Space puts the row in or takes it out. The
+  // an arrow take the next row too, VS Code's Ctrl+Shift+Enter puts the row in or takes
+  // it out (Explorer's Ctrl+Space is the space switcher, from a list too). The
   // clipboard, undo, redo and a new note are the app's own keys read in the list; see
   // `fileKey` in Tree.svelte.
   {
@@ -1302,10 +1318,7 @@ const PANEL_ENTRIES: Shortcut[] = [
     label: () => t('Select or deselect'),
     category: 'panel',
     scope: 'panel',
-    key: 'Ctrl-Space',
-    // No key on a Mac, whose Ctrl+Space switches the input source; a row is picked
-    // there with Cmd and a click, as in Finder.
-    mac: null,
+    key: 'Mod-Shift-Enter',
     contextual: true,
   },
   // No key: Ctrl+D puts the tab down, in the list as everywhere else. The row's menu
@@ -1521,6 +1534,12 @@ CANVAS_ENTRIES.push({
   contextual: true,
   alias: true,
 })
+
+/** The switcher in the middle of the window, up or away. Fetched with the dialog, which
+ *  the launch's last turn has already done by the first press. */
+function toggleSpacePicker() {
+  void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
+}
 
 // Both fetched as the launch ends; see `warmDoors`.
 const tabOps = () => import('../tab-strip/ops')

@@ -1,9 +1,10 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The switcher in the middle of the window, Ctrl+Shift+Space.
+/** The switcher in the middle of the window, Ctrl+Space and Ctrl+Shift+Space.
  *
- *  Emil, 2026-10-03: a digit switches as soon as only one space can be meant, without
+ *  Emil, 2026-10-04: no number by every space until a digit is typed or Alt is held, and
+ *  Ctrl+Space opens it. Emil, 2026-10-03: a digit switches as soon as only one space can be meant, without
  *  Enter; letters find a space by its name and need Enter; there is no field anywhere,
  *  the letters show as hits in the rows and Backspace edits them; the key again puts it
  *  away; a space shared only to be read is there, and marked. This mounts the dialog and
@@ -91,36 +92,61 @@ async function opened() {
 }
 
 /** A key, pressed wherever the keyboard is in the dialog. */
-async function press(key: string, code = '') {
+async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   const at = dialog()?.contains(document.activeElement) ? document.activeElement : dialog()
-  at?.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true }))
+  at?.dispatchEvent(
+    new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }),
+  )
   flushSync()
   await tick()
   flushSync()
 }
 
+/** Each row's number, where it wears one. */
+const numbers = () => rows().map((one) => one.querySelector('.place')?.textContent ?? null)
+
 async function type(text: string) {
   for (const character of text) await press(character)
 }
 
-test('it has no field: every space is a numbered row, and nothing can be typed into', async () => {
+test('it has no field and no numbers: every space is a row, and nothing can be typed into', async () => {
   await opened()
 
   expect(dialog()).not.toBe(null)
   expect(dialog()?.classList.contains('is-centred')).toBe(true)
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
   expect(names()).toEqual(FOUR)
-  expect(rows().map((one) => one.querySelector('.place')?.textContent)).toEqual([
-    '1',
-    '2',
-    '3',
-    '4',
-  ])
+  expect(numbers()).toEqual([null, null, null, null])
   // Only for switching: no New space and no space's own menu in it.
   expect(dialog()?.querySelector('.more')).toBe(null)
   expect(dialog()?.textContent).not.toContain('New space')
   // The space you are in is where the keyboard starts.
   expect(document.activeElement).toBe(rows()[0])
+})
+
+test('Alt held shows the numbers, its release takes them away, and Alt and a digit goes', async () => {
+  await opened()
+
+  await press('Alt', 'AltLeft', { altKey: true })
+  expect(numbers()).toEqual(['1', '2', '3', '4'])
+
+  dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }))
+  flushSync()
+  await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
+
+  await press('Alt', 'AltLeft', { altKey: true })
+  dispatchEvent(new Event('blur'))
+  flushSync()
+  await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
+
+  // AltGr, which Windows says as Ctrl and Alt, is typing and shows nothing.
+  await press('Alt', 'AltRight', { altKey: true, ctrlKey: true })
+  expect(numbers()).toEqual([null, null, null, null])
+
+  await press('Alt', 'AltLeft', { altKey: true })
+  await press('2', 'Digit2', { altKey: true })
+  expect(shown).toHaveBeenCalledWith('journal')
+  expect(spacePicker.open).toBe(false)
 })
 
 test('a digit switches at once, without Enter', async () => {
@@ -169,11 +195,13 @@ test('with ten or more, a digit another could extend waits, and a second one goe
   vi.useFakeTimers()
   await press('1', 'Digit1')
   expect(shown).not.toHaveBeenCalled()
-  expect(rows().map((one) => one.querySelector('.place')?.textContent)).toEqual([
+  // The numbers come with the first digit, the typed part bold.
+  expect(numbers()).toEqual(['1', '10', '11', '12'])
+  expect(rows().map((one) => one.querySelector('.place b')?.textContent)).toEqual([
     '1',
-    '10',
-    '11',
-    '12',
+    '1',
+    '1',
+    '1',
   ])
   await press('2', 'Digit2')
   expect(shown).toHaveBeenCalledWith('space-12')
@@ -184,7 +212,10 @@ test('with ten or more, a digit another could extend waits, and a second one goe
   expect(shown).toHaveBeenLastCalledWith('space-1')
 })
 
-test('the key again puts it away, as Escape does', async () => {
+test.each([
+  ['Ctrl+Space', false],
+  ['Ctrl+Shift+Space', true],
+])('%s again puts it away, as Escape does', async (_, shiftKey) => {
   await opened()
   expect(overlays.depth).toBe(1)
 
@@ -194,7 +225,7 @@ test('the key again puts it away, as Escape does', async () => {
     key: ' ',
     code: 'Space',
     ctrlKey: true,
-    shiftKey: true,
+    shiftKey,
     bubbles: true,
     cancelable: true,
   })

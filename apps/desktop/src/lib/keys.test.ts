@@ -337,6 +337,25 @@ describe('the space bar', () => {
     // And the bare key is not it, which is what a list opens a row with.
     expect(matchesCombination('Mod-Shift-Space', press(' ', { code: 'Space' }), 'win')).toBe(false)
   })
+
+  /** Its first key since Emil asked, 2026-10-04, and never what an input method made of
+   *  it: a Chinese IME turns itself on and off with Ctrl+Space and the page is told only
+   *  `Process`, so that keyboard keeps its switch and the space switcher is on the Shift. */
+  test('answers Ctrl+Space, and never an input method’s', () => {
+    const chord = press(' ', { ctrlKey: true, code: 'Space' })
+    expect(matchesCombination('Mod-Space', chord, 'win')).toBe(true)
+    expect(matchesCombination('Mod-Space', chord, 'linux')).toBe(true)
+    expect(
+      matchesCombination('Mod-Space', press(' ', { ctrlKey: true, shiftKey: true }), 'win'),
+    ).toBe(false)
+    expect(
+      matchesCombination('Mod-Space', press('Process', { ctrlKey: true, code: 'Space' }), 'win'),
+    ).toBe(false)
+    expect(
+      matchesCombination('Mod-Space', { ...chord, isComposing: true } as typeof chord, 'win'),
+    ).toBe(false)
+    expect(showCombination('Mod-Space', 'win')).toBe('Ctrl+Space')
+  })
 })
 
 /** Whether a press belongs to the widget the keyboard is in or to the window.

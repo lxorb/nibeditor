@@ -909,6 +909,27 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('space.switcher')).toBeTruthy()
   })
 
+  /** Emil, 2026-10-04: Ctrl+Space opens the switcher, and Ctrl+Shift+Space still does.
+   *  A Mac keeps Ctrl+Space for the input source and Cmd+Space for Spotlight, so there
+   *  it stays on Cmd+Shift+Space alone. The file list's own toggle moved off it to VS
+   *  Code's Ctrl+Shift+Enter, so the switcher opens from a list as well. */
+  test('opens the switcher on Ctrl+Space and Ctrl+Shift+Space', () => {
+    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
+    const switcher = found('space.switcher')
+    const alt = found('space.switcher.alt')
+    for (const platform of ['win', 'linux'] as const) {
+      expect(defaultKeyFor(switcher, platform)).toBe('Mod-Space')
+      expect(defaultKeyFor(alt, platform)).toBe('Mod-Shift-Space')
+    }
+    expect(defaultKeyFor(switcher, 'mac')).toBe('Mod-Shift-Space')
+    expect(defaultKeyFor(alt, 'mac')).toBeNull()
+    expect(alt.alias).toBe(true)
+    expect(alt.label()).toBe(switcher.label())
+    for (const platform of PLATFORMS) {
+      expect(defaultKeyFor(found('tree.toggle'), platform)).toBe('Mod-Shift-Enter')
+    }
+  })
+
   test('and the list of every key there is', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
   })

@@ -36,9 +36,9 @@ describe('on Windows and Linux', () => {
       // Every pane's tab put down, where Ctrl+D alone is the shell's end of input: a shell
       // cannot tell the two apart, so the app losing it would gain the shell nothing.
       ['D', ctrlShift, 'app.deselect-all'],
-      // The space switcher: a shell reads Ctrl+Shift+Space as Ctrl+Space, its own mark,
+      // The space switcher's second key: a shell reads Ctrl+Shift+Space as Ctrl+Space,
       // and the app's chord has the Shift.
-      [' ', ctrlShift, 'space.switcher'],
+      [' ', ctrlShift, 'space.switcher.alt'],
     ] as const) {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }
@@ -57,6 +57,9 @@ describe('on Windows and Linux', () => {
       ['d', null],
       // End of input to a shell, and Deselect tab everywhere else.
       ['d', 'app.deselect-tab'],
+      // NUL to a shell - Emacs's mark, PowerShell's menu of completions - and the space
+      // switcher everywhere else, which a terminal reaches on Ctrl+Shift+Space.
+      [' ', 'space.switcher'],
     ] as const) {
       expect(routeKey(press(key, ctrl), 'win', command, false), key).toBe('shell')
     }

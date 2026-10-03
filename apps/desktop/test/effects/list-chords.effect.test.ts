@@ -92,12 +92,15 @@ afterEach(() => {
   workspace.panel = null
 })
 
-test('a list hands Ctrl+Shift+Space on, and the space switcher opens', async () => {
+test.each([
+  ['Ctrl+Space', false],
+  ['Ctrl+Shift+Space', true],
+])('a list hands %s on, and the space switcher opens', async (_, shiftKey) => {
   const peek = vi.fn()
   const { row, stop } = list({ peek })
   row.focus()
 
-  const event = pressOn(row, ' ', { ctrlKey: true, shiftKey: true, code: 'Space' })
+  const event = pressOn(row, ' ', { ctrlKey: true, shiftKey, code: 'Space' })
 
   // The list left it alone: it is not the list's Space.
   expect(peek).not.toHaveBeenCalled()

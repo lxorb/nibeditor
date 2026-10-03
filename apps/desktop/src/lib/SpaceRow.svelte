@@ -3,8 +3,9 @@
    *  menu and the switcher in the middle of the window draw the same row, so there is
    *  one switcher in two places and not two of them.
    *
-   *  In front, the space's number (SpacePlace.svelte). What was typed shows as the hits
-   *  it is, the palette's own bold, since no field holds it; see space-pick.ts.
+   *  In front, the space's mark, which wears the space's number at its corner once a
+   *  digit is typed or while Alt is held (SpacePlace.svelte). What was typed shows as the
+   *  hits it is, the palette's own bold, since no field holds it; see space-pick.ts.
    *
    *  At the end, what a space has to add about itself: somebody else can reach it, or -
    *  in the place of that - it is somebody else's to write and yours only to read; and
@@ -24,8 +25,9 @@
     space,
     place,
     typed = '',
+    held = false,
     on = false,
-  }: { space: Space; place: number; typed?: string; on?: boolean } = $props()
+  }: { space: Space; place: number; typed?: string; held?: boolean; on?: boolean } = $props()
 
   const name = $derived(
     isNumber(typed) ? [{ text: space.name, hit: false }] : pieces(space.name, typed),
@@ -33,8 +35,7 @@
   const reads = $derived(roleOf(space.root) === 'read')
 </script>
 
-<SpacePlace {place} {typed} />
-<SpaceBadge {space} {on} />
+<SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
 <span class="nib-row-label"
   >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
       >{:else}{piece.text}{/if}{/each}</span
