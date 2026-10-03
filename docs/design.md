@@ -750,9 +750,13 @@ says it once for all three kinds of icon, and nothing else should have to.
 Where a space is named, it is named with its badge: the switcher's rows, the
 header over the file list, and the title bar while the list is shut. One pairing,
 so a space is one object whether the panel is out or away. The header and the rows
-are one badge written once - the `badge` snippet in `SpaceSwitcher.svelte`, which
-both render - so the space you are in cannot come to wear on the header something
-its own row does not. The title bar is that same switcher, bare: the badge and no
+are one badge written once - `SpaceBadge.svelte`, which both render - so the space
+you are in cannot come to wear on the header something its own row does not. The rows
+are one row written once too, `SpaceRow.svelte`, which the dropped list and the
+switcher Ctrl+Shift+Space stands in the middle of the window both draw: the number in
+front (muted figures in a slot of their own, never the raised badge a tab's Alt
+number is), the badge, the name with what was typed in bold, and the shared mark -
+an eye instead where the space is somebody else's and yours only to read. The title bar is that same switcher, bare: the badge and no
 name, because the badge already says which space it is and the tabs want the room,
 and a press on it drops the same list from the bar's bottom edge at the panel's
 width. The name is in its tooltip and in what a screen reader hears. Changing space crosses the header's mark into the next one

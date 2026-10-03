@@ -109,11 +109,15 @@ describe('what a space offers', () => {
   /** One list of entries, reached from the row in the switcher, from a right
    *  click on it and from a held finger. */
   test('through the one menu the switcher opens, however it is asked for', () => {
-    const switcher = read('lib/SpaceSwitcher.svelte')
+    const switcher = read('lib/SpaceMenu.svelte')
+    // The rows are the list's, which hands every gesture to the menu it is given.
+    const rows = read('lib/SpaceList.svelte')
 
     expect(switcher).toContain('menu.show(event, spaceMenu(space)')
-    expect(switcher).toContain('oncontextmenu={(event) => about(event, space)}')
-    expect(switcher).toContain('use:longPress={(event) => about(event, space)}')
+    expect(switcher).toContain('<SpaceList {typing} {choose} {about} />')
+    expect(rows).toContain('oncontextmenu={(event) => about?.(event, space)}')
+    expect(rows).toContain('use:longPress={(event) => about?.(event, space)}')
+    expect(rows).toContain('<RowMore onclick={(event: MouseEvent) => about(event, space)} />')
   })
 })
 

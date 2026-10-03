@@ -75,7 +75,10 @@
 //! `web_keys.rs`'s own event: played there, it does whatever Ctrl+D does in the app,
 //! which under the VS Code keyboard is nothing at all. Ctrl+Shift+D, every pane put
 //! down at once, goes the same way under `nib-ctrl-shift-d`: Chrome's own is
-//! Bookmark all tabs, which a page is offered first as well.
+//! Bookmark all tabs, which a page is offered first as well. Ctrl+Shift+Space, the space
+//! switcher, under `nib-ctrl-shift-space`: no browser binds it, but Google Sheets selects
+//! everything with it and VS Code on the web shows a call's parameters, so a page that
+//! uses it keeps it.
 //!
 //! **And Ctrl+0.** The engine's own Ctrl+0 goes back to the zoom the app last set rather
 //! than to a hundred per cent (see `web_page.rs`), so it asks the same way, under
@@ -111,6 +114,7 @@ const ADDRESS: &str = "nib-address";
 /// And the chords it hands back as the keys they were.
 const CTRL_D: &str = "nib-ctrl-d";
 const CTRL_SHIFT_D: &str = "nib-ctrl-shift-d";
+const CTRL_SHIFT_SPACE: &str = "nib-ctrl-shift-space";
 
 /// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
 const ACTUAL: &str = "nib-actual-size";
@@ -286,6 +290,7 @@ pub const SCRIPT: &str = r"(function () {
     else if (ctrl && code === 76 && !back) name = 'nib-address'
     else if (ctrl && (code === 48 || code === 96) && !back) name = 'nib-actual-size'
     else if (ctrl && code === 68) name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'
+    else if (ctrl && code === 32 && back) name = 'nib-ctrl-shift-space'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
     if (!name) return
@@ -388,6 +393,7 @@ pub fn chord(name: &str) -> Option<Pressed> {
     match name {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
         CTRL_SHIFT_D => Some(Pressed::with_ctrl("D", "KeyD", true)),
+        CTRL_SHIFT_SPACE => Some(Pressed::with_ctrl(" ", "Space", true)),
         _ => None,
     }
 }
@@ -924,6 +930,25 @@ mod tests {
     }
 
     #[test]
+    fn ctrl_shift_space_let_go_by_goes_back_as_the_space_switcher() {
+        let key =
+            chord("nib-ctrl-shift-space").map(|one| serde_json::to_value(one).expect("a key"));
+        let key = key.expect("Ctrl+Shift+Space");
+        assert_eq!(key["key"], " ");
+        assert_eq!(key["code"], "Space");
+        assert_eq!(key["ctrl"], true);
+        assert_eq!(key["shift"], true);
+        assert_eq!(key["alt"], false);
+        assert_eq!(key["down"], true);
+        assert_eq!(sought("nib-ctrl-shift-space"), None);
+        assert!(chord("nib-ctrl-space").is_none());
+        // Only with Shift held: Ctrl+Space alone is the page's, and a CJK keyboard's own.
+        assert!(
+            SCRIPT.contains("else if (ctrl && code === 32 && back) name = 'nib-ctrl-shift-space'")
+        );
+    }
+
+    #[test]
     fn the_script_asks_by_the_names_read_here() {
         for name in [
             "'nib-find'",
@@ -937,6 +962,7 @@ mod tests {
             "'nib-ctrl-d'",
             "'nib-ctrl-shift-d'",
             "'nib-install-extension'",
+            "'nib-ctrl-shift-space'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }

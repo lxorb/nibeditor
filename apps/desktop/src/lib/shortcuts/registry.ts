@@ -19,7 +19,7 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
-import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
+import { revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
@@ -917,14 +917,20 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => stepSpace(1),
   },
   {
-    // The header's own menu, from anywhere: which space this is, the others, and
-    // making one. On the space bar, because that is where the word is written.
+    // The switcher in the middle of the window, and away again: a digit for a space's
+    // number, a name and Enter. On the space bar, because that is where the word is
+    // written. Kept off Ctrl and a digit, which are the tabs as in every browser (Arc
+    // spends them on its spaces), and off Ctrl+K, which is a site's own palette: free
+    // in every system, a page is offered it first (Sheets selects all with it) and a
+    // terminal hands it over. See space-picker.svelte.ts and docs/keyboard.md. Fetched
+    // with the dialog, which the launch's last turn has already done by the first press.
     id: 'space.switcher',
     label: () => t('Spaces'),
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-Space',
-    run: () => openSpaces(),
+    run: () =>
+      void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle()),
   },
   {
     // The space drawn as a map of its links. No key out of the box - it opens
