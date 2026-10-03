@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { carry, isFileDrop, landing } from './drag-paths'
+import { carry, isFileDrop, isLinkDrop, landing } from './drag-paths'
 
 /** A transfer as a browser hands one over: the types while the drag is under way,
  *  the data once it lands. */
@@ -48,6 +48,20 @@ describe('a drop on the file list', () => {
 
     expect(isFileDrop(files)).toBe(true)
     expect(landing(drop(files), 'win')).toBe('copy')
+  })
+
+  /** A link out of a page becomes a web note; a picture out of a page is a file. */
+  test('keeps a link dragged out of a page, and a picture as the file it carries', () => {
+    const link = transfer(['text/uri-list', 'text/html', 'text/plain'])
+    expect(isLinkDrop(link)).toBe(true)
+    expect(landing(drop(link), 'win')).toBe('copy')
+
+    const picture = transfer(['text/uri-list', 'text/html', 'Files'])
+    expect(isLinkDrop(picture)).toBe(false)
+    expect(isFileDrop(picture)).toBe(true)
+
+    // A sentence carries no link list, and leaves the page as nothing.
+    expect(isLinkDrop(transfer(['text/plain', 'text/html']))).toBe(false)
   })
 
   test('and takes nothing else', () => {
