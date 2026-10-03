@@ -1,10 +1,12 @@
 /** The two questions anything asks about an address before writing it down.
  *
- *  Its own file because both halves of the extension ask them and neither may
- *  reach the other's imports: the reader resolves what a page's markup wrote,
- *  and the worker checks what arrived over a message. Asking them in one place
- *  is also what keeps the answers the same, and a scheme that is read one way
- *  here and another way there is how a filter gets walked past. */
+ *  Its own file because two things that must not reach each other's imports ask
+ *  them: the article extractor (`article.ts`) resolves what a page's markup wrote,
+ *  and the clipper's service worker checks what arrived over a message - and a
+ *  worker that imported the extractor would carry Readability for two lines.
+ *  Asking them in one place is also what keeps the answers the same, and a scheme
+ *  that is read one way here and another way there is how a filter gets walked
+ *  past. */
 
 /** Schemes a browser runs instead of fetching. `@nib/markdown` drops them again
  *  when it renders, which is the line that matters for a published page; a note

@@ -6,8 +6,8 @@
  *  shapes below, and a message that does not fit is a message that never
  *  happened. */
 
-import { absolute, runsCode } from './addresses'
-import type { Origin } from './extract'
+import { absolute, runsCode } from '@nib/markdown/addresses'
+import type { Origin } from '@nib/markdown/article'
 import type { Filled } from './interpret/values'
 import { type Kind, KINDS } from './kinds'
 import { isRecord, isString, listOf } from './stored'

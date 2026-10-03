@@ -202,7 +202,7 @@ const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: 
 /// markup (a prefilled password, a card number) has nothing read back whatever the
 /// converter makes of a field. Words typed into a field are never in markup at all,
 /// which writes attributes, not a field's live value; nor in `innerText`, the text
-/// shape.
+/// shape. The clip's reader (`web_tabs/reader.js`) holds its snapshot to the same rule.
 const UNVALUED: &str = r"const unvalued = (root) => {
   for (const one of root.querySelectorAll('input[type=password]')) one.remove()
   for (const one of root.querySelectorAll('input[value]')) one.removeAttribute('value')
@@ -226,25 +226,12 @@ static WHOLE: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// The article as the clip button reads it - the very script, `web_tabs::reader` - with
-/// its markup unvalued: parsed into a template, which runs nothing and fetches nothing,
-/// and written out again. For `browser_read` as an article and for a clip, which are
-/// the same words.
-static CLIPPED: LazyLock<String> = LazyLock::new(|| {
-    [
-        "(() => {\n",
-        UNVALUED,
-        "\n  const read = ",
-        &crate::web_tabs::reader(false),
-        r"
-  const held = document.createElement('template')
-  held.innerHTML = String(read.html || '')
-  unvalued(held.content)
-  return { url: read.url, title: read.title, html: held.innerHTML }
-})()",
-    ]
-    .concat()
-});
+/// The article as the clip button reads it - the very script, `web_tabs::reader`, which
+/// leaves out every field's value by the same rule as `UNVALUED` - for `browser_read` as
+/// an article and for a clip, which are the same words. It answers a snapshot of the
+/// document; the window finds the article in it with the clipper's own extractor (see
+/// packages/markdown/src/article.ts `readSnapshot`), on the way to the markdown.
+static CLIPPED: LazyLock<String> = LazyLock::new(|| crate::web_tabs::reader(false));
 
 /// Whether the document has stopped changing: resolves once nothing moved for `still`
 /// milliseconds, or at `most`.
@@ -2091,9 +2078,9 @@ mod tests {
 
     #[test]
     fn a_clip_is_the_clip_buttons_own_script_and_no_field_value() {
-        assert!(CLIPPED.contains(&crate::web_tabs::reader(false)));
-        assert!(CLIPPED.contains("unvalued(held.content)"));
+        assert_eq!(*CLIPPED, crate::web_tabs::reader(false));
         assert!(CLIPPED.contains("input[type=password]"));
+        assert!(CLIPPED.contains("removeAttribute('value')"));
         assert!(WHOLE.contains("unvalued(document.body"));
     }
 

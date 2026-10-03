@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { frontMatter } from '../note'
-import type { Origin } from '../extract'
+import type { Origin } from '@nib/markdown/article'
 import { objectIn, readFilled } from './values'
 import type { Template } from './templates'
 

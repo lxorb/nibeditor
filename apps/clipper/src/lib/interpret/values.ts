@@ -32,7 +32,7 @@ export interface Filled {
 const LONGEST = 300
 
 /** A member of a list is a word or a short phrase. The same ceiling the page's own
- *  tags get in `extract.ts`. */
+ *  tags get in `@nib/markdown/article`. */
 const LONGEST_ITEM = 60
 const MOST_ITEMS = 8
 
