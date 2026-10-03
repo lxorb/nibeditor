@@ -61,11 +61,14 @@ Function NibFindOldInstall
   StrCpy $NibOldAsked "1"
 
   ReadRegStr $NibOldDir SHCTX "${NIB_OLD_UNINSTKEY}" "InstallLocation"
+  ; Its caller's $R9 is given back: the install hook keeps a folder in it.
+  Push $R9
   StrCpy $R9 $NibOldDir 1
   StrCmp $R9 '"' 0 nib_find_unquoted
     StrCpy $NibOldDir $NibOldDir "" 1
     StrCpy $NibOldDir $NibOldDir -1
   nib_find_unquoted:
+  Pop $R9
   StrCmp $NibOldDir "" nib_find_done
   IfFileExists "$NibOldDir\uninstall.exe" nib_find_found
     StrCpy $NibOldDir ""

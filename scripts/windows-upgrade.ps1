@@ -61,7 +61,7 @@ Add-Type -Namespace Nib -Name Shell -MemberDefinition @'
 public static extern uint AssocQueryString(uint flags, uint what, string assoc, string extra, System.Text.StringBuilder found, ref uint size);
 '@
 
-# What the shell opens a scheme with: its ProgID (20) or the command it runs (1).
+# The ProgID the shell opens a scheme with.
 function Handler([string]$scheme, [uint32]$what) {
   $found = New-Object System.Text.StringBuilder 1024
   $size = [uint32]1024
@@ -99,8 +99,8 @@ function Show([string]$when) {
       Where-Object { $_.Name -match '^(Nib|nibeditor)' } |
       ForEach-Object { $s = Shortcut $_.FullName; Write-Host "shortcut $($_.FullName) -> $($s.Target) [$($s.Id)]" }
   }
-  Write-Host "http: $(Handler 'http' 20) $(Handler 'http' 1)"
-  Write-Host "https: $(Handler 'https' 20) $(Handler 'https' 1)"
+  Write-Host "http: $(Handler 'http' 20)"
+  Write-Host "https: $(Handler 'https' 20)"
 }
 
 $programs = [Environment]::GetFolderPath('Programs')
@@ -197,8 +197,9 @@ $link = Value "$hkcu\Classes\NibURL\shell\open\command"
 Check 'the ProgID starts the program with a link' ((Starts $link) -eq $exe -and $link -like '* --url "%1"')
 if ($chosen) {
   foreach ($scheme in 'http', 'https') {
+    # The ProgID the shell resolves the scheme to, through the sealed choice; that the
+    # ProgID starts this program is checked above.
     Check "nib is still the default for $scheme" ((Handler $scheme 20) -eq 'NibURL')
-    Check "and $scheme starts the program" ((Starts (Handler $scheme 1)) -eq $exe)
   }
 }
 

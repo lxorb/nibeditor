@@ -781,7 +781,8 @@ mod tests {
 
         let id = std::process::id();
         let scratch = Scratch(
-            format!(r"Software\nib-tests\old-name-{id}"),
+            // Not under the other test's key, which that test takes away whole.
+            format!(r"Software\nib-tests-old-name-{id}"),
             std::env::temp_dir().join(format!("nib-old-name-{id}.exe")),
         );
         // With the right to delete under it, which a hive's own handle always has.
