@@ -65,8 +65,13 @@ vi.mock('../../tauri', async (original) => ({
 
 const { createLocalEngine } = await import('./engine')
 
-const CLAUDE: Provider = { id: 'cc', kind: 'claude-code', name: 'Claude Code', model: '' }
-const CODEX: Provider = { id: 'cx', kind: 'codex', name: 'Codex', model: '' }
+const CLAUDE: Provider & { kind: 'claude-code' } = {
+  id: 'cc',
+  kind: 'claude-code',
+  name: 'Claude Code',
+  model: '',
+}
+const CODEX: Provider & { kind: 'codex' } = { id: 'cx', kind: 'codex', name: 'Codex', model: '' }
 
 function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
   return {
