@@ -1681,4 +1681,12 @@ export const th: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ส่วนขยาย',
+  'Add extension': 'เพิ่มส่วนขยาย',
+  'Manage extensions': 'จัดการส่วนขยาย',
+  'Paste a Chrome Web Store link': 'วางลิงก์ Chrome เว็บสโตร์',
+  'Did not load': 'โหลดไม่สำเร็จ',
+  Permissions: 'สิทธิ์',
+  Options: 'ตัวเลือก',
 }

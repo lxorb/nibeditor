@@ -1766,4 +1766,12 @@ export const ptPT: Dictionary = {
   'Quick question': 'Pergunta rápida',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Adicionar à nota',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Extensões',
+  'Add extension': 'Adicionar extensão',
+  'Manage extensions': 'Gerir extensões',
+  'Paste a Chrome Web Store link': 'Cole uma ligação da Chrome Web Store',
+  'Did not load': 'Não foi carregada',
+  Permissions: 'Permissões',
+  Options: 'Opções',
 }

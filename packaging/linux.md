@@ -30,10 +30,9 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 ## What Tauri's .deb gives us, and what it gets wrong
 
 ```
-Package: nibeditor (Conflicts and Replaces: nib, its name up to 0.11)
 Depends: libwebkit2gtk-4.1-0, libgtk-3-0
 usr/bin/nib
-usr/share/applications/nibeditor.desktop (Nib.desktop up to 0.11)
+usr/share/applications/Nib.desktop
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
 ```
 

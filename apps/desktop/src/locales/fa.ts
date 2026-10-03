@@ -1717,4 +1717,12 @@ export const fa: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'افزونه‌ها',
+  'Add extension': 'افزودن افزونه',
+  'Manage extensions': 'مدیریت افزونه‌ها',
+  'Paste a Chrome Web Store link': 'پیوند فروشگاه وب Chrome را جای‌گذاری کنید',
+  'Did not load': 'بارگیری نشد',
+  Permissions: 'مجوزها',
+  Options: 'گزینه‌ها',
 }

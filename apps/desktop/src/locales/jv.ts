@@ -1704,4 +1704,12 @@ export const jv: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Ekstensi',
+  'Add extension': 'Tambah ekstensi',
+  'Manage extensions': 'Atur ekstensi',
+  'Paste a Chrome Web Store link': 'Tempel link Chrome Web Store',
+  'Did not load': 'Ora kemot',
+  Permissions: 'Idin',
+  Options: 'Pilihan',
 }

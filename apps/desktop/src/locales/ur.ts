@@ -1715,4 +1715,12 @@ export const ur: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ایکسٹینشنز',
+  'Add extension': 'ایکسٹینشن شامل کریں',
+  'Manage extensions': 'ایکسٹینشنز کا نظم کریں',
+  'Paste a Chrome Web Store link': 'Chrome ویب اسٹور کا لنک چسپاں کریں',
+  'Did not load': 'لوڈ نہیں ہوا',
+  Permissions: 'اجازتیں',
+  Options: 'اختیارات',
 }

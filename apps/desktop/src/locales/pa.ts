@@ -1723,4 +1723,12 @@ export const pa: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ਐਕਸਟੈਂਸ਼ਨਾਂ',
+  'Add extension': 'ਐਕਸਟੈਂਸ਼ਨ ਸ਼ਾਮਲ ਕਰੋ',
+  'Manage extensions': 'ਐਕਸਟੈਂਸ਼ਨਾਂ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ',
+  'Paste a Chrome Web Store link': 'Chrome ਵੈੱਬ ਸਟੋਰ ਦਾ ਲਿੰਕ ਪੇਸਟ ਕਰੋ',
+  'Did not load': 'ਲੋਡ ਨਹੀਂ ਹੋਇਆ',
+  Permissions: 'ਇਜਾਜ਼ਤਾਂ',
+  Options: 'ਵਿਕਲਪ',
 }

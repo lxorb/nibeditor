@@ -1719,4 +1719,12 @@ export const mr: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'विस्तार',
+  'Add extension': 'विस्तार जोडा',
+  'Manage extensions': 'विस्तार व्यवस्थापित करा',
+  'Paste a Chrome Web Store link': 'Chrome वेब स्टोअरची लिंक पेस्ट करा',
+  'Did not load': 'लोड झाले नाही',
+  Permissions: 'परवानग्या',
+  Options: 'पर्याय',
 }

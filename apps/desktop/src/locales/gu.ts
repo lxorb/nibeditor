@@ -1708,4 +1708,12 @@ export const gu: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'એક્સ્ટેન્શન',
+  'Add extension': 'એક્સ્ટેન્શન ઉમેરો',
+  'Manage extensions': 'એક્સ્ટેન્શન મેનેજ કરો',
+  'Paste a Chrome Web Store link': 'Chrome વેબ સ્ટોરની લિંક પેસ્ટ કરો',
+  'Did not load': 'લોડ થયું નથી',
+  Permissions: 'પરવાનગીઓ',
+  Options: 'વિકલ્પો',
 }

@@ -1744,4 +1744,12 @@ export const ha: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Ƙarin shirye-shirye',
+  'Add extension': 'Ƙara ƙarin shiri',
+  'Manage extensions': 'Sarrafa ƙarin shirye-shirye',
+  'Paste a Chrome Web Store link': 'Liƙa hanyar haɗi daga Chrome Web Store',
+  'Did not load': 'Bai buɗu ba',
+  Permissions: 'Izini',
+  Options: 'Zaɓuɓɓuka',
 }

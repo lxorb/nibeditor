@@ -1720,4 +1720,12 @@ export const ps: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'غځونې',
+  'Add extension': 'غځونه زیاته کړئ',
+  'Manage extensions': 'غځونې اداره کړئ',
+  'Paste a Chrome Web Store link': 'د Chrome ویب پلورنځي لینک ونښلوئ',
+  'Did not load': 'بار نه شو',
+  Permissions: 'اجازې',
+  Options: 'غوراوي',
 }

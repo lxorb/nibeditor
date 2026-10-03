@@ -11,6 +11,7 @@
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import EngineRow from './settings/EngineRow.svelte'
+  import ExtensionRows from './settings/ExtensionRows.svelte'
   import { systemName } from './settings/engine'
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
@@ -681,6 +682,14 @@
       </div>
     {/if}
   </div>
+  <!-- The extensions web tabs run, where the engine runs any: Windows, on both of its
+       engines. See settings/ExtensionRows.svelte. -->
+  {#if platform() === 'windows'}
+    <h3>{t('Extensions')}</h3>
+    <div class="card">
+      <ExtensionRows />
+    </div>
+  {/if}
 {/snippet}
 
 <!-- The words the reader has said are words. Written out here rather than as

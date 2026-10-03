@@ -62,9 +62,6 @@ mod chatgpt;
 )]
 mod apple_text;
 mod assets;
-// The Mac app's folder carried over from the product's old name; see bundle_name.rs.
-#[cfg(desktop)]
-mod bundle_name;
 mod carry;
 mod clock;
 #[cfg(desktop)]
@@ -79,6 +76,8 @@ mod endpoint;
 mod engine;
 #[cfg(desktop)]
 mod engine_switch;
+#[cfg(desktop)]
+mod extensions;
 #[cfg(desktop)]
 mod foreground;
 mod front_matter;
@@ -333,6 +332,17 @@ macro_rules! desktop_commands {
             terminal::history::terminal_history_forget,
             updates::check_update,
             web_tabs::web_open,
+            // Chrome and Edge extensions in web tabs; see extensions.rs.
+            extensions::extensions_list,
+            extensions::extensions_install,
+            extensions::extensions_set,
+            extensions::extensions_remove,
+            extensions::extensions_update,
+            extensions::extensions_page,
+            extensions::extensions_named,
+            extensions::popup::extension_popup_open,
+            extensions::popup::extension_popup_place,
+            extensions::popup::extension_popup_close,
             web_tabs::web_place,
             keyboard::keyboard_watch,
             keyboard::keyboard_here,
@@ -437,11 +447,6 @@ pub fn run() {
 /// hundred megabytes of Chromium out of the default build's dependency graph
 /// entirely. See src/engine.rs and docs/browser.md.
 pub fn run_on(builder: tauri::Builder<Engine>) {
-    // Before everything, because a copy under the old folder's name renames it and
-    // starts again from there rather than going on; see bundle_name.rs.
-    #[cfg(target_os = "macos")]
-    bundle_name::carry_over();
-
     // Before the trace, because the gate's clock is the process's and a measurement
     // that starts late is a measurement that flatters. Nothing at all in the default
     // build: the module is behind the `cef` feature.

@@ -9,17 +9,16 @@ $ErrorActionPreference = 'Stop'
 # (CPMR0073) and treats anything it cannot read as a download with no checksum.
 # The release workflow rewrites all four literals when it publishes.
 #
-# The asset name stays "Nib-": every build of main from before the product was
-# renamed reads no other name. softwareName is what the MSI registers in
-# Add/Remove Programs, which is the product's name, nibeditor. The MSI replaces
-# one made under the old name, Nib, in place: it keeps that one's upgrade code.
+# The asset name and softwareName below stay "Nib": that is the product name the
+# bundle carries and what it registers in Add/Remove Programs, whatever the app
+# is called on the website.
 $packageArgs = @{
   packageName    = $env:ChocolateyPackageName
   fileType       = 'MSI'
   url            = 'https://github.com/lxorb/nibeditor/releases/download/v0.11.0/Nib-0.11.0-windows-x64.msi'
   checksum       = '1087F908D12FD7DEBB0F6EB9359E369150E26B8AE46B2A0596510489D126BD5A'
   checksumType   = 'sha256'
-  softwareName   = 'nibeditor'
+  softwareName   = 'Nib'
   silentArgs     = '/qn /norestart'
   validExitCodes = @(0, 3010, 1641)
 }

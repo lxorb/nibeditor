@@ -1744,4 +1744,12 @@ export const ta: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'நீட்டிப்புகள்',
+  'Add extension': 'நீட்டிப்பைச் சேர்',
+  'Manage extensions': 'நீட்டிப்புகளை நிர்வகி',
+  'Paste a Chrome Web Store link': 'Chrome இணைய அங்காடி இணைப்பை ஒட்டவும்',
+  'Did not load': 'ஏற்றப்படவில்லை',
+  Permissions: 'அனுமதிகள்',
+  Options: 'விருப்பங்கள்',
 }

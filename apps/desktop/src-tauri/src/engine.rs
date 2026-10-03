@@ -167,8 +167,14 @@ pub(crate) fn web_store<R: Runtime>(
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
+    // Extensions run in every store a reader's tab can be in and in none of an agent's.
+    // An environment option, and every page on one data folder must be built with the
+    // same options, which is why it is decided here, by store, and nowhere else. See
+    // extensions.rs.
     #[cfg(windows)]
-    let builder = builder.additional_browser_args(BROWSER_ARGS);
+    let builder = builder
+        .additional_browser_args(BROWSER_ARGS)
+        .browser_extensions_enabled(crate::extensions::in_store(store));
 
     #[cfg(any(windows, target_os = "linux"))]
     let builder = builder.data_directory(match store {

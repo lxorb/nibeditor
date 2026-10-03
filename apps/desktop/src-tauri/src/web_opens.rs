@@ -54,7 +54,7 @@
 //! `nib://web-passed`, and never become a window, since `about:blank` is not an address
 //! a tab may open. Any page can ask by those names, and all it can get is its own tab's
 //! find opened or stepped through, or its own address field - which is what its keys
-//! already get it. A name is never a command: there are seven, and nothing else is read.
+//! already get it. A name is never a command: there are eight, and nothing else is read.
 //!
 //! **A modifier tapped twice, the same way.** Shift pressed twice on its own opens nib's
 //! palette wherever the keyboard is (see `lib/double-tap.ts`), and a page never tells
@@ -115,6 +115,9 @@ const CTRL_SHIFT_D: &str = "nib-ctrl-shift-d";
 /// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
 const ACTUAL: &str = "nib-actual-size";
 
+/// And the store's own install button, pressed on an extension's page; see `SCRIPT`.
+const INSTALL: &str = "nib-install-extension";
+
 /// And a modifier tapped twice on its own.
 const TWICE_SHIFT: &str = "nib-twice-shift";
 const TWICE_CTRL: &str = "nib-twice-ctrl";
@@ -142,6 +145,9 @@ pub enum Passed {
     CtrlTwice,
     #[serde(rename = "alt-alt")]
     AltTwice,
+    /// The store's own "Add to Chrome" or "Get", pressed: nib installs the extension the
+    /// page is about (extensions.rs).
+    Install,
 }
 
 impl Passed {
@@ -228,6 +234,13 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// can stop one on its way, so a letter the page swallowed still ends a tap; and the
 /// ask waits for the last release to have gone past the page, so a Shift the page took
 /// for itself does not open anything.
+///
+/// And on a store's page for an extension, its own install button - "Add to Chrome" on
+/// the Chrome Web Store, whose words always name Chrome, and Edge Add-ons' "Get", by its
+/// id - is taken before the store's own script hears it, and asks under
+/// `nib-install-extension`: neither engine installs from a store for a host, and nib does
+/// (extensions.rs). All a page gets by asking is the store page it is on installed, which
+/// the bar's own Add does too.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
@@ -332,7 +345,41 @@ pub const SCRIPT: &str = r"(function () {
     asking = null
     if (key && !event.defaultPrevented) open('about:blank', twice[key])
   })
+  var here = typeof location === 'object' ? location : null
+  if (here && /^(chromewebstore\.google\.com|microsoftedge\.microsoft\.com)$/.test(here.hostname) &&
+    /\/detail\//.test(here.pathname)) {
+    addEventListener('click', function (event) {
+      if (!event.isTrusted || event.button !== 0) return
+      var button = event.target instanceof Element ? event.target.closest('button') : null
+      if (!button) return
+      var said = button.innerText || ''
+      if (!/^getOrRemoveButton/.test(button.id) && !(/chrome/i.test(said) && !/enterprise/i.test(said))) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      open('about:blank', 'nib-install-extension')
+    }, true)
+  }
 })()";
+
+/// Where the store's own install button is taken, in `SCRIPT`, and where that part ends.
+const STORE_PART: &str = "  var here = typeof location";
+const STORE_END: &str = "    }, true)\n  }\n";
+
+/// `script` without the part that takes the store's own install button: nib's own
+/// Chromium's, whose store installs for itself (extensions.rs). Pure, so it has a test.
+#[cfg_attr(
+    not(feature = "cef"),
+    allow(dead_code, reason = "only nib's own Chromium leaves it out")
+)]
+fn without_store_button(script: &str) -> String {
+    let Some(start) = script.find(STORE_PART) else {
+        return script.to_owned();
+    };
+    let end = script[start..]
+        .find(STORE_END)
+        .map_or(start, |at| start + at + STORE_END.len());
+    format!("{}{}", &script[..start], &script[end..])
+}
 
 /// The key a window asked for under `name` hands back, or `None`. Pure, and the only
 /// reading of that name.
@@ -357,6 +404,7 @@ pub fn sought(name: &str) -> Option<Passed> {
         TWICE_SHIFT => Some(Passed::ShiftTwice),
         TWICE_CTRL => Some(Passed::CtrlTwice),
         TWICE_ALT => Some(Passed::AltTwice),
+        INSTALL => Some(Passed::Install),
         _ => None,
     }
 }
@@ -646,7 +694,7 @@ pub const BINDING: &str = "nibAsked";
 /// there, which opens the link as a tab in front rather than not at all.
 #[cfg(feature = "cef")]
 pub fn script() -> String {
-    SCRIPT.replacen(
+    without_store_button(SCRIPT).replacen(
         "var open = window.open.bind(window)",
         concat!(
             "var open = typeof nibAsked === 'function'",
@@ -811,7 +859,7 @@ mod tests {
     }
 
     #[test]
-    fn seven_names_ask_for_nib_s_answer_and_nothing_else_does() {
+    fn eight_names_ask_for_nib_s_answer_and_nothing_else_does() {
         assert_eq!(sought("nib-find"), Some(Passed::Find));
         assert_eq!(sought("nib-find-next"), Some(Passed::Next));
         assert_eq!(sought("nib-find-previous"), Some(Passed::Previous));
@@ -819,7 +867,8 @@ mod tests {
         assert_eq!(sought("nib-twice-shift"), Some(Passed::ShiftTwice));
         assert_eq!(sought("nib-twice-ctrl"), Some(Passed::CtrlTwice));
         assert_eq!(sought("nib-twice-alt"), Some(Passed::AltTwice));
-        // A name is one of the seven exactly, or a window.
+        assert_eq!(sought("nib-install-extension"), Some(Passed::Install));
+        // A name is one of the eight exactly, or a window.
         for name in [
             "",
             "_blank",
@@ -887,9 +936,30 @@ mod tests {
             "'nib-twice-alt'",
             "'nib-ctrl-d'",
             "'nib-ctrl-shift-d'",
+            "'nib-install-extension'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }
+    }
+
+    /// On nib's own Chromium the store's own button installs, so nothing takes it there;
+    /// everything else in the script is the same.
+    #[test]
+    fn chromium_leaves_the_store_s_button_to_the_store() {
+        let left = super::without_store_button(SCRIPT);
+        assert!(!left.contains("nib-install-extension"));
+        assert!(!left.contains("chromewebstore"));
+        assert!(left.contains("'nib-ctrl-d'") && left.contains("'nib-twice-shift'"));
+        assert!(left.trim_end().ends_with("})()"));
+        assert_eq!(
+            SCRIPT.len() - left.len(),
+            SCRIPT.find(super::STORE_PART).map_or(0, |start| {
+                SCRIPT[start..]
+                    .find(super::STORE_END)
+                    .expect("the part ends")
+                    + super::STORE_END.len()
+            })
+        );
     }
 
     /// Ctrl+0 is answered in the crate and never reaches the window as an ask, since the
@@ -924,7 +994,7 @@ mod tests {
     }
 
     #[test]
-    fn an_ask_reaches_the_window_as_one_of_seven_words_for_its_tab() {
+    fn an_ask_reaches_the_window_as_one_of_eight_words_for_its_tab() {
         let said = |key| {
             serde_json::to_value(Ask {
                 tab: "t1".into(),
@@ -939,6 +1009,7 @@ mod tests {
         assert_eq!(said(Passed::ShiftTwice)["key"], "shift-shift");
         assert_eq!(said(Passed::CtrlTwice)["key"], "ctrl-ctrl");
         assert_eq!(said(Passed::AltTwice)["key"], "alt-alt");
+        assert_eq!(said(Passed::Install)["key"], "install");
         assert_eq!(said(Passed::Find)["tab"], "t1");
     }
 }

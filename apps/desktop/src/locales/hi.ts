@@ -1716,4 +1716,12 @@ export const hi: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'एक्सटेंशन',
+  'Add extension': 'एक्सटेंशन जोड़ें',
+  'Manage extensions': 'एक्सटेंशन प्रबंधित करें',
+  'Paste a Chrome Web Store link': 'Chrome वेब स्टोर का लिंक चिपकाएं',
+  'Did not load': 'लोड नहीं हुआ',
+  Permissions: 'अनुमतियां',
+  Options: 'विकल्प',
 }

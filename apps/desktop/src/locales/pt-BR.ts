@@ -1752,4 +1752,12 @@ export const ptBR: Dictionary = {
   'Quick question': 'Pergunta rápida',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Adicionar à nota',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Extensões',
+  'Add extension': 'Adicionar extensão',
+  'Manage extensions': 'Gerenciar extensões',
+  'Paste a Chrome Web Store link': 'Cole um link da Chrome Web Store',
+  'Did not load': 'Não carregou',
+  Permissions: 'Permissões',
+  Options: 'Opções',
 }

@@ -1725,4 +1725,12 @@ export const te: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ఎక్స్‌టెన్షన్‌లు',
+  'Add extension': 'ఎక్స్‌టెన్షన్ జోడించు',
+  'Manage extensions': 'ఎక్స్‌టెన్షన్‌లను నిర్వహించు',
+  'Paste a Chrome Web Store link': 'Chrome వెబ్ స్టోర్ లింక్‌ను అతికించండి',
+  'Did not load': 'లోడ్ కాలేదు',
+  Permissions: 'అనుమతులు',
+  Options: 'ఎంపికలు',
 }

@@ -16,7 +16,7 @@ cask "nib" do
   auto_updates true
   depends_on macos: ">= :ventura"
 
-  app "nibeditor.app"
+  app "Nib.app"
 
   uninstall quit: "ch.emilvinu.nib"
 
@@ -30,7 +30,7 @@ cask "nib" do
   ]
 
   caveats <<~EOS
-    nibeditor is not notarized by Apple, so Gatekeeper refuses the quarantined copy
+    Nib is not notarized by Apple, so Gatekeeper refuses the quarantined copy
     Homebrew installs by default. Install it without the quarantine flag:
 
       brew install --cask --no-quarantine lxorb/tap/nib

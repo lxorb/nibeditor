@@ -80,15 +80,8 @@ fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// The words a bundle's file name begins with: the product's name until 0.11, which
-/// every release is still published under because every build of main from before
-/// this one reads nothing else, and the name it was given then, which a release may
-/// switch to once no install still runs one of those.
-const PREFIXES: [&str; 2] = ["Nib-", "nibeditor-"];
-
 /// Whether a bundle's file name is the one this project gives `version`:
-/// `Nib-<version>-<platform>` (or `nibeditor-`; see `PREFIXES`), the platform
-/// beginning with a letter.
+/// `Nib-<version>-<platform>`, the platform beginning with a letter.
 ///
 /// The version as the whole of what stands between `Nib-` and the platform, rather
 /// than as something found in the name: `0.1` is inside `Nib-0.10.0-...`, and a
@@ -100,12 +93,10 @@ const PREFIXES: [&str; 2] = ["Nib-", "nibeditor-"];
 /// bundler holds it to (`scripts/build-version.sh`), and every platform the release
 /// matrix labels a bundle with is a word (`scripts/name-assets.mjs`).
 fn names(file: &str, version: &str) -> bool {
-    PREFIXES.iter().any(|prefix| {
-        file.strip_prefix(prefix)
-            .and_then(|rest| rest.strip_prefix(version))
-            .and_then(|rest| rest.strip_prefix('-'))
-            .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
-    })
+    file.strip_prefix("Nib-")
+        .and_then(|rest| rest.strip_prefix(version))
+        .and_then(|rest| rest.strip_prefix('-'))
+        .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
 }
 
 /// What the window is told about a new version: the fields the updater plugin's
@@ -193,7 +184,7 @@ pub async fn check_update<R: Runtime>(
 
 #[cfg(test)]
 mod tests {
-    use super::{endpoints, offered, EDGE, PREFIXES, RELEASES, UNSTABLE};
+    use super::{endpoints, offered, EDGE, RELEASES, UNSTABLE};
     use tauri::Url;
 
     /// The address of one bundle on a release page, as the manifest writes it.
@@ -274,25 +265,8 @@ mod tests {
             "linux-arm64.AppImage",
             "macos-universal.app.tar.gz",
         ] {
-            for prefix in PREFIXES {
-                let address = format!("{RELEASES}v0.9.0/{prefix}0.9.0-{platform}");
-                assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{address}");
-            }
-        }
-    }
-
-    /// Either name, and only a name: a bundle called anything else, or the name with a
-    /// version run into it, is not one this project published.
-    #[test]
-    fn a_bundle_is_named_by_either_name_and_nothing_else() {
-        for file in [
-            "nib-0.9.0-windows-x64-setup.exe",
-            "Nibeditor0.9.0-windows-x64-setup.exe",
-            "evil-nibeditor-0.9.0-windows-x64-setup.exe",
-            "nibeditor-0.9.0windows-x64-setup.exe",
-        ] {
-            let address = format!("{RELEASES}v0.9.0/{file}");
-            assert!(offered("stable", "0.9.0", &address).is_err(), "{file}");
+            let address = format!("{RELEASES}v0.9.0/Nib-0.9.0-{platform}");
+            assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{platform}");
         }
     }
 

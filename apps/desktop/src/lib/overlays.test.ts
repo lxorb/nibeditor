@@ -183,6 +183,8 @@ describe('what hides a web page', () => {
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
     'lib/web-tab/WebDownloads.svelte': 'bubble',
+    'lib/web-tab/WebExtensionPopup.svelte': "an extension's popup, under its button",
+    'lib/web-tab/WebExtensions.svelte': 'bubble',
     'lib/web-tab/WebSite.svelte': 'bubble',
   }
 

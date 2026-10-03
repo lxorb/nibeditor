@@ -13,8 +13,7 @@ import { describe, expect, test } from 'vitest'
  *
  *  What still says Nib on purpose is an identifier, and changing one breaks an
  *  install somebody already has: the folder the notes live in (`Documents/Nib`),
- *  the folder an install from before the rename keeps (`AppData\Local\Nib`, and
- *  `Nib.app` until it renames itself; see src-tauri/src/bundle_name.rs), the
+ *  the installed app's own folder and bundle (`AppData\Local\Nib`, `Nib.app`), the
  *  keys a `.url` shortcut carries (`Nib-Icon`), and the welcome note an older
  *  version wrote, which has to be recognised word for word. Those are told apart
  *  below by where the word sits, or named one by one. */

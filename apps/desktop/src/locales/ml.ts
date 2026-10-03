@@ -1739,4 +1739,12 @@ export const ml: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'എക്സ്റ്റൻഷനുകൾ',
+  'Add extension': 'എക്സ്റ്റൻഷൻ ചേർക്കുക',
+  'Manage extensions': 'എക്സ്റ്റൻഷനുകൾ നിയന്ത്രിക്കുക',
+  'Paste a Chrome Web Store link': 'Chrome വെബ് സ്റ്റോർ ലിങ്ക് ഒട്ടിക്കുക',
+  'Did not load': 'ലോഡ് ആയില്ല',
+  Permissions: 'അനുമതികൾ',
+  Options: 'ഓപ്ഷനുകൾ',
 }

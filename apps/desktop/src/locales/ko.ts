@@ -1693,4 +1693,12 @@ export const ko: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: '확장 프로그램',
+  'Add extension': '확장 프로그램 추가',
+  'Manage extensions': '확장 프로그램 관리',
+  'Paste a Chrome Web Store link': 'Chrome 웹 스토어 링크 붙여넣기',
+  'Did not load': '로드되지 않음',
+  Permissions: '권한',
+  Options: '옵션',
 }

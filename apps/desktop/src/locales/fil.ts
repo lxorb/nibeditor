@@ -1756,4 +1756,12 @@ export const fil: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Mga extension',
+  'Add extension': 'Magdagdag ng extension',
+  'Manage extensions': 'Pamahalaan ang mga extension',
+  'Paste a Chrome Web Store link': 'I-paste ang link mula sa Chrome Web Store',
+  'Did not load': 'Hindi na-load',
+  Permissions: 'Mga pahintulot',
+  Options: 'Mga opsyon',
 }

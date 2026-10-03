@@ -1695,4 +1695,12 @@ export const am: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ቅጥያዎች',
+  'Add extension': 'ቅጥያ አክል',
+  'Manage extensions': 'ቅጥያዎችን አስተዳድር',
+  'Paste a Chrome Web Store link': 'የChrome ድር መደብር አገናኝ ለጥፍ',
+  'Did not load': 'አልተጫነም',
+  Permissions: 'ፈቃዶች',
+  Options: 'አማራጮች',
 }

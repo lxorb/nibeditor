@@ -80,12 +80,10 @@ jobs:
       - name: Tauri's own .desktop entry
         run: |
           dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
-          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop since.
-          entry=$(ls x/usr/share/applications/*.desktop | head -1)
-          cat "$entry"
+          cat x/usr/share/applications/Nib.desktop
           # Not a gate: this is the file the packaging replaces, and it is
           # expected to be thin. Reported so a regression stays visible.
-          desktop-file-validate "$entry" && echo 'valid' || echo 'invalid'
+          desktop-file-validate x/usr/share/applications/Nib.desktop && echo 'valid' || echo 'invalid'
           file x/usr/bin/nib
           objdump -p x/usr/bin/nib | grep NEEDED
 

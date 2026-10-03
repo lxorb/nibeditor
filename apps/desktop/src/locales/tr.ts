@@ -1724,4 +1724,12 @@ export const tr: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Uzantılar',
+  'Add extension': 'Uzantı ekle',
+  'Manage extensions': 'Uzantıları yönet',
+  'Paste a Chrome Web Store link': 'Chrome Web Mağazası bağlantısı yapıştırın',
+  'Did not load': 'Yüklenmedi',
+  Permissions: 'İzinler',
+  Options: 'Seçenekler',
 }

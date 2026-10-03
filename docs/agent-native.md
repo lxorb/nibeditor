@@ -970,9 +970,8 @@ arguments before anything of Tauri starts, and `mcp` is a loop over stdin and st
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
 as `nib screenshot` finds them). It starts in a few milliseconds and opens no webview. If
 nib is not running it starts it minimised and waits for the endpoint. So the installed app
-is the whole of it: `claude mcp add nib -- "%LOCALAPPDATA%\nibeditor\nib.exe" mcp` (an
-install from before the product was renamed keeps `%LOCALAPPDATA%\Nib`, so a line
-pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
+is the whole of it: `claude mcp add nib -- "%LOCALAPPDATA%\Nib\nib.exe" mcp`, which
+Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
 (`docs/automation.md`); not a fixed HTTP port, which something else can be sitting on. A
 client that only speaks HTTP can be given the endpoint's own `/mcp` later; nothing here
 depends on it.

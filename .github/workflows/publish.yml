@@ -176,30 +176,17 @@ jobs:
           repository: lxorb/homebrew-tap
           token: ${{ secrets.PACKAGING_TOKEN }}
 
-      # The cask as this release has it, rather than as the tap last had it: a line
-      # other than the version and the digest can change with a release, the way the
-      # app's folder was renamed to nibeditor.app.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        with:
-          ref: ${{ env.TAG }}
-          path: source
-          sparse-checkout: packaging/homebrew
-          persist-credentials: false
-
       - name: Bump nib
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp source/packaging/homebrew/nib.rb Casks/nib.rb
-          rm -r source
-
           dmg="Nib-$VERSION-macos-universal.dmg"
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "$dmg"
           sha=$(sha256sum "dl/$dmg" | cut -d' ' -f1)
           rm -r dl
 
           # The cask builds its own URL out of the version, so only these two
-          # lines change on the way.
+          # lines ever change.
           sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/nib.rb
           sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/nib.rb
           grep -E '^  (version|sha256) ' Casks/nib.rb

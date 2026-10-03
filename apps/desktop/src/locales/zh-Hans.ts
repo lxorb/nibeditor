@@ -1671,4 +1671,12 @@ export const zhHans: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: '扩展程序',
+  'Add extension': '添加扩展程序',
+  'Manage extensions': '管理扩展程序',
+  'Paste a Chrome Web Store link': '粘贴 Chrome 应用商店链接',
+  'Did not load': '未加载',
+  Permissions: '权限',
+  Options: '选项',
 }
