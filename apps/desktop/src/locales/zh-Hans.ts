@@ -517,6 +517,7 @@ export const zhHans: Dictionary = {
   Importing: '导入中',
   'Storing the image': '正在保存图片',
   Syncing: '同步中',
+  Offline: '离线',
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失败',
   '{name} could not be written.': '无法写入 {name}。',

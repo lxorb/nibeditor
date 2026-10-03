@@ -522,6 +522,7 @@ export const ur: Dictionary = {
   Importing: 'امپورٹ',
   'Storing the image': 'تصویر محفوظ ہو رہی ہے',
   Syncing: 'سنک ہو رہا ہے',
+  Offline: 'آف لائن',
   '{done} of {total}': '{total} میں سے {done}',
   'Sync failed': 'سنک ناکام',
   '{name} could not be written.': '{name} لکھا نہیں جا سکا۔',

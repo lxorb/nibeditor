@@ -535,6 +535,7 @@ export const ptPT: Dictionary = {
   Importing: 'A importar',
   'Storing the image': 'A guardar a imagem',
   Syncing: 'A sincronizar',
+  Offline: 'Offline',
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'A sincronização falhou',
   '{name} could not be written.': 'Não foi possível escrever {name}.',

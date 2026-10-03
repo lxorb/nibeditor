@@ -522,6 +522,7 @@ export const ps: Dictionary = {
   Importing: 'واردول',
   'Storing the image': 'انځور زېرمه کول',
   Syncing: 'همغږي کول',
+  Offline: 'آفلاین',
   '{done} of {total}': '{done} له {total}',
   'Sync failed': 'همغږي پاتې راغله',
   '{name} could not be written.': '{name} ونه ليکل شو.',

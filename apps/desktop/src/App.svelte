@@ -431,8 +431,10 @@
     // A file somebody shared on its own has no file here for the mirror to know
     // about, and its room is the whole of how its words travel: it says its own
     // id, with no hash, because there is no copy on this machine to compare.
+    // Under sync v2 a note's room is its document's socket, which the engine joins
+    // itself; see sync2/runner.svelte.ts.
     const open =
-      account.syncable && startup.reached('rooms')
+      account.syncable && startup.reached('rooms') && sync.version === 1
         ? workspace.openNotes.map((one) => ({
             ...one,
             tracked: one.note.shared
@@ -816,6 +818,7 @@
     const status = sync.status
     if (status === 'syncing') said.say(t('Syncing'))
     else if (status === 'error') said.say(sync.lastError ?? t('Sync failed'))
+    else if (status === 'offline') said.say(t('Offline'))
   })
 </script>
 

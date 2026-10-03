@@ -21,6 +21,10 @@ export interface Account {
    *  one account at a time, answered by `/v1/me` alone; see lib/sync2/connect.svelte.ts
    *  and docs/sync-v2.md section 11. */
   webSync?: boolean
+  /** Which sync engine the account's devices run: 1 for every account until it is
+   *  moved, 2 once it is. Read as the app starts; see sync.svelte.ts and
+   *  docs/sync-v2.md section 11. */
+  syncVersion?: number
 }
 
 /** What this account may do in a space: its own, one somebody shared to write

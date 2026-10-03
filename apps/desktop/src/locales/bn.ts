@@ -522,6 +522,7 @@ export const bn: Dictionary = {
   Importing: 'ইমপোর্ট হচ্ছে',
   'Storing the image': 'ছবি রাখা হচ্ছে',
   Syncing: 'সিংক হচ্ছে',
+  Offline: 'অফলাইন',
   '{done} of {total}': '{total}-এর {done}',
   'Sync failed': 'সিংক ব্যর্থ',
   '{name} could not be written.': '{name} লেখা গেল না।',

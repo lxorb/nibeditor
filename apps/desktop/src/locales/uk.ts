@@ -553,6 +553,7 @@ export const uk: Dictionary = {
   Importing: 'Імпортування',
   'Storing the image': 'Збереження зображення',
   Syncing: 'Синхронізація',
+  Offline: 'Не в мережі',
   '{done} of {total}': '{done} з {total}',
   'Sync failed': 'Збій синхронізації',
   '{name} could not be written.': 'Не вдалося записати {name}.',

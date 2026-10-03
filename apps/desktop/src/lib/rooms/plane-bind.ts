@@ -61,6 +61,9 @@ export class PlaneBinding {
     private readonly surface: PlaneSurface,
     /** Whether the surface is still on the file this binding was made for. */
     private readonly holds: () => boolean,
+    /** Whose the join's merge is. Nobody's in a v1 room; this device's under sync v2,
+     *  where what the file held that the document did not is pending like any edit. */
+    private readonly joinedBy: string = JOINED,
   ) {
     this.watched = rootsOf(doc)
 
@@ -105,7 +108,7 @@ export class PlaneBinding {
       this.write(EMPTY, mine)
     } else {
       const theirs = readPlane(this.doc)
-      this.write(theirs, merged(mine, theirs))
+      this.write(theirs, unchanged(merged(mine, theirs), theirs))
     }
 
     for (const map of this.watched) map.observeDeep(this.heard)
@@ -160,7 +163,25 @@ export class PlaneBinding {
   }
 
   private write(before: Canvas, after: Canvas) {
-    this.doc.transact(() => pushPlane(this.doc, before, after), JOINED)
+    this.doc.transact(() => pushPlane(this.doc, before, after), this.joinedBy)
+  }
+}
+
+/** A merge with every object the document already holds as it holds it taken back to
+ *  the document's own, so joining writes only what differs: the merge hands back our
+ *  copy of a card both sides have word for word, and a copy is a write. */
+function unchanged(together: Canvas, theirs: Canvas): Canvas {
+  const held = new Map<string, unknown>()
+  for (const thing of [...theirs.nodes, ...theirs.edges, ...theirs.ink]) held.set(thing.id, thing)
+  const same = <T extends { id: string }>(thing: T): T => {
+    const one = held.get(thing.id)
+    return one !== undefined && JSON.stringify(one) === JSON.stringify(thing) ? (one as T) : thing
+  }
+  return {
+    ...together,
+    nodes: together.nodes.map(same),
+    edges: together.edges.map(same),
+    ink: together.ink.map(same),
   }
 }
 

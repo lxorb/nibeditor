@@ -454,8 +454,9 @@ export class Saving {
     this.ws.persist()
 
     // Imported here rather than at the top: syncing reads the workspace, and the
-    // two would import each other.
+    // two would import each other. Under sync v2 this write is also the moment what
+    // was typed becomes a pending update; see sync2/engine.ts.
     const { sync } = await import('../sync.svelte')
-    sync.nudge()
+    sync.wrote(path, content)
   }
 }

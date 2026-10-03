@@ -39,6 +39,7 @@
   function syncTitle(): string {
     if (sync.status === 'syncing') return t('Syncing')
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
+    if (sync.status === 'offline') return t('Offline')
     return shortcuts.tooltip(t('Settings'), 'app.settings')
   }
 
@@ -139,11 +140,13 @@
 
     <!-- Syncing happens on its own and mostly wants no attention, so its only
          ambient sign is a mark on the button that leads to it: lit while a pass
-         is running, red when the last one failed. -->
+         is running, red when the last one failed, and hollow while the account
+         cannot be reached - which is nothing having gone wrong, so never red. -->
     <button
       class="nib-glyph act"
       class:syncing={sync.status === 'syncing'}
       class:failed={sync.status === 'error'}
+      class:offline={sync.status === 'offline'}
       title={syncTitle()}
       aria-label={t('Settings')}
       aria-busy={sync.status === 'syncing'}
@@ -279,7 +282,8 @@
   /* A dot in the corner, not a badge: it is there to be noticed out of the
      corner of an eye and otherwise ignored. */
   .act.syncing::after,
-  .act.failed::after {
+  .act.failed::after,
+  .act.offline::after {
     content: '';
     position: absolute;
     inset-inline-end: 2px;
@@ -296,6 +300,12 @@
 
   .act.failed::after {
     background: var(--danger);
+  }
+
+  /* Hollow: everything is kept here and goes up when the account is back. */
+  .act.offline::after {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--muted);
   }
 
   @keyframes breathe {

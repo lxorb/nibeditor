@@ -522,6 +522,7 @@ export const hi: Dictionary = {
   Importing: 'इंपोर्ट हो रहा है',
   'Storing the image': 'छवि रखी जा रही है',
   Syncing: 'सिंक हो रहा है',
+  Offline: 'ऑफ़लाइन',
   '{done} of {total}': '{total} में {done}',
   'Sync failed': 'सिंक विफल',
   '{name} could not be written.': '{name} लिखा नहीं जा सका।',

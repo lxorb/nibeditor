@@ -522,6 +522,7 @@ export const tr: Dictionary = {
   Importing: 'İçe aktarılıyor',
   'Storing the image': 'Resim saklanıyor',
   Syncing: 'Eşitleniyor',
+  Offline: 'Çevrimdışı',
   '{done} of {total}': '{total} içinde {done}',
   'Sync failed': 'Eşitleme başarısız',
   '{name} could not be written.': '{name} yazılamadı.',

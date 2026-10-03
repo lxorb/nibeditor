@@ -527,6 +527,7 @@ export const de: Dictionary = {
   Importing: 'Wird importiert',
   'Storing the image': 'Bild wird gespeichert',
   Syncing: 'Wird synchronisiert',
+  Offline: 'Offline',
   '{done} of {total}': '{done} von {total}',
   'Sync failed': 'Synchronisierung fehlgeschlagen',
   '{name} could not be written.': '{name} konnte nicht geschrieben werden.',

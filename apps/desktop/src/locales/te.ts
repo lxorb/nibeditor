@@ -521,6 +521,7 @@ export const te: Dictionary = {
   Importing: 'ఇంపోర్ట్ అవుతోంది',
   'Storing the image': 'చిత్రం నిల్వ అవుతోంది',
   Syncing: 'సింక్ అవుతోంది',
+  Offline: 'ఆఫ్‌లైన్',
   '{done} of {total}': '{total}లో {done}',
   'Sync failed': 'సింక్ విఫలమైంది',
   '{name} could not be written.': '{name} రాయలేకపోయింది.',

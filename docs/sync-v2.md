@@ -554,7 +554,8 @@ coordinates, and looks at the edits that meet:
   gives, which is the same on every device. Both appended to the list. Unless they share
   more than 16 characters of whole words: that is one passage written or put back twice
   (two devices that each answered Keep for the same deleted paragraph), and keeping both
-  would say it twice, so they are an overlap like any other.
+  would say it twice, so they are an overlap like any other - except where one side's words
+  hold the other's whole, when the fuller one stands and nothing is asked.
 - **Overlapping edits**: spans that intersect, or an insertion strictly inside a span the
   other side replaced. Their size is the characters of both replacements plus the ancestor
   text they cover.
@@ -1443,6 +1444,88 @@ Files that do not exist yet are named from their package: `lib/` is the app's
 
 `sync.svelte.ts` chooses the engine at start from `account.user.syncVersion`; the rooms
 store (`rooms.svelte.ts`) becomes the engine's socket layer for open documents.
+
+**As built** (lane `sync-client-engine`, `lib/sync2/`), one responsibility a file:
+
+| file | what |
+| --- | --- |
+| `world.ts` | everything the engine reaches: the disk, the account, a clock, randomness, a digest. `app-world.ts` is the window's (the crate's commands; the web build answers the same ones), `sim-device.ts` the simulator's, `test-device.ts` the Worker tests' |
+| `engine.ts`, `core.ts` | the engine's doors, and everything it holds in memory and in the store behind one commit queue. A write the store refuses goes in front of the next one, so a full disk loses nothing a later write can carry (road 7) |
+| `docs.ts`, `records.ts` | a document (confirmed, pending, what was typed since the pause, its client id), and the engine's own rows |
+| `places.ts`, `create.ts` | the tree shown here (the account's entries with the outbox applied), local names, the disk brought to it; creates, moves and deletes made into ops |
+| `pass.ts`, `transport.ts` | the pass of 5.12, and the routes of section 7 over HTTP: no answer stops a pass quietly, a refusal is said |
+| `kinds.ts`, `rejoin.ts`, `held.ts` | the shapes (words, plane, link) and what `diverge` says of each; the meeting of pending with the account's moves; the held notes and the three answers |
+| `classify.ts`, `classify-worker.ts` | where a meeting is classified: in a worker for a note past 64 KB, on the page otherwise; `rejoin` classifies again on the page when the note was typed in while the worker was at it |
+| `files.ts` | every file that is not a document (5.8): bytes up before their `create`, replacements against the bytes replaced, fetched when the account names new ones, held for the question when both sides replaced one |
+| `project.ts`, `ingest.ts`, `watching.ts` | a document onto its file; a file changed by another program folded in three ways; the space watcher and the launch scan |
+| `migrate.ts` | section 11 step 2, and `mirrorsFrom` for the way back |
+| `binding.ts`, `carry.ts` | an open note, canvas or page note joined to its document, and the document carried live through its room (`rooms/carried.ts`) |
+| `runner.svelte.ts` | the engine in the window: when it passes, the file operations, the light, the question |
+
+What the build settled that the above leaves open:
+
+- **The store.** Beside 9.2's tables the engine keeps, in `meta`: `doc:<id>` (the
+  document's numbers: `seq`, `pulled`, whether anything is pending, the push in the air),
+  `gen:<id>` (which session's client id it has), `clients` and `counter`, `want:<space>`
+  (every entry's document version and epoch as the feed last said them) and `first:<space>`
+  (the first pass is done). An outbox row's `op` is a framed record: an op and whether it
+  has gone, a `keep`, or a `merge` (5.9); a held row's `remote` is what it is held against:
+  the account's update, a file, or a merge. `pending` is a framed list of updates, at most
+  32, the rest merged into one.
+- **Client ids.** One a document a device, random, kept across clean exits and turned over
+  after an unclean one. It is set after the document is read, never before: Yjs gives a
+  document a new id when it applies an update carrying its own.
+- **`diverge`** says `settled: 'newer' | 'both'`. `both` is an overlap whose newer side would
+  say a passage twice (one the older side moved, words both put back over a deletion): the
+  document's own merge is taken, and both sides are kept as versions. `merge3` reads two
+  insertions of the same passage at one point as one.
+- **Unsaved tabs** are not the engine's until they are saved: a draft never reaches the
+  account, a room or the link index, and saving it is the `created` file operation, which
+  makes the id, the document and the `create` in that moment.
+- **Rooms** under v2 offer `nib.v2` and `nib.device.<id>`. A document with pending edits opens
+  its room with its confirmed state vector, and what the room says is read without being
+  applied until the engine has met it (`rejoin`), the way an HTTP `moved` is. The room's
+  `ACK` moves the pushed updates to confirmed, and `EPOCH` (with 4001) starts a three-way
+  merge against the confirmed text. App.svelte joins v1's rooms only under v1.
+- **Choosing the engine.** `sync.svelte.ts` keeps the account's last word in
+  `nib:sync-version`, so an offline launch never starts v1 over files v2 has been keeping;
+  the runner is fetched at the launch's `rooms` turn. An account moved back to 1 has its
+  `nib:mirrors` written from the store first, every note with the hash the account holds,
+  so v1 meets each as one it knows.
+- **The light** is hollow when the account cannot be reached; the pass log is the store's
+  `log` table.
+- **Canvases and page notes** are joined to their documents by the binding a canvas's room
+  uses (`PlaneBinding`), whose join is the merge two canvas files get and is this device's
+  edit where the plane held something the document did not; a carried plane room adds the
+  hands. Undo stays the document's, as in a v1 room.
+- **Web notes** settle as v1's do since 2026-10-03: the newer copy stands with what only the
+  older says carried across (`web-tab/settle.ts`), nothing is asked and nothing is a
+  version.
+- **Two insertions at one point**, where one holds the other's words whole - a line one
+  device wrote that the other wrote too and went on from - are not asked about: the fuller
+  one stands (`fuller` in diverge.ts). Found by `conflict.py --v2`.
+- **Files that are not documents** (`files.ts`) travel up to 64 MB each, fetched as soon as
+  they are listed; there is no cloud mark and no fetching on open yet, since the workspace
+  has no evicted-file surface to draw one, and nothing above 64 MB travels (R2 multipart
+  is on the Worker, not used here). Their two hashes live in `file_key` (the account's)
+  and `written_hash` (this disk's); a held file is the `blob` record of the held table, and
+  its three answers are the notes' with bytes: Keep theirs sends this disk's copy to the
+  device's trash, Keep both moves it to `Name (Device).ext`. The launch scan stamps each
+  file's time and size, so a file is hashed again only when it changed.
+- **The drives**: `conflict.py --v2` runs its six ways of being away with no rule to
+  choose, and `offline-days.py` holds one browser offline across forty notes; both pass.
+  `scripts/sync-engine-probe.py` is the same in two packaged probe apps.
+
+Measured against 9.3 (2026-10-01, Snapdragon X Elite, the engine against the simulator's
+account in memory, so the network is not in these): first paint 3,210,064 bytes of own
+source against 3,213,972 before the engine (v1's pairing is fetched when a pairing is due);
+a keystroke 0.014 ms median, 0.2 ms p99 in a 100 KB note, no store write, no file write, no
+request; the pause on a 100 KB note one store write and one file write in 3 ms; a 100 KB
+note's document joined to its editor in under a millisecond; a pass after a week away with
+all 300 notes changed on both sides 211 ms of engine time over 14 requests (two feeds, twelve
+pushes of 50); ten thousand simulator seeds in 139 s on four cores. In the browser drive
+`offline-days.py`, the machine that came back after forty notes were written on both sides
+settled in 15.6 s, over the loopback and with every note asked about only where planted.
 
 ### 9.2 The sync store
 

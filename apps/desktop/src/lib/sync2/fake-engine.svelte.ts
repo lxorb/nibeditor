@@ -1,7 +1,7 @@
 /** A v2 engine that holds whatever notes it is handed and does as it is told, for the
  *  tests of the question and for the drives that photograph it.
  *
- *  The real one (the engine's lib/sync2/held.svelte.ts) meets the same interface -
+ *  The real one (the engine's lib/sync2/held.ts) meets the same interface -
  *  `Engine` in asking.svelte.ts, which is section 13.1 of docs/sync-v2.md - so what is
  *  proved against this is what the app does once that one is connected instead. A
  *  drive reaches it as `window.nibApp.sync2`; see App.svelte. */

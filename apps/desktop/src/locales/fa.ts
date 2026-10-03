@@ -522,6 +522,7 @@ export const fa: Dictionary = {
   Importing: 'در حال درون‌آوری',
   'Storing the image': 'در حال انباشت تصویر',
   Syncing: 'در حال همگام‌سازی',
+  Offline: 'آفلاین',
   '{done} of {total}': '{done} از {total}',
   'Sync failed': 'همگام‌سازی نشد',
   '{name} could not be written.': '{name} نوشته نشد.',

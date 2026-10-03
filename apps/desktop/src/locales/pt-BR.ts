@@ -531,6 +531,7 @@ export const ptBR: Dictionary = {
   Importing: 'Importando',
   'Storing the image': 'Salvando a imagem',
   Syncing: 'Sincronizando',
+  Offline: 'Off-line',
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'Falha na sincronização',
   '{name} could not be written.': 'Não foi possível gravar {name}.',

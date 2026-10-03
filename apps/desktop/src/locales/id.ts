@@ -519,6 +519,7 @@ export const id: Dictionary = {
   Importing: 'Mengimpor',
   'Storing the image': 'Menyimpan gambar',
   Syncing: 'Menyinkronkan',
+  Offline: 'Luring',
   '{done} of {total}': '{done} dari {total}',
   'Sync failed': 'Sinkronisasi gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',

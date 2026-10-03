@@ -519,6 +519,7 @@ export const ja: Dictionary = {
   Importing: 'インポート中',
   'Storing the image': '画像を保存中',
   Syncing: '同期中',
+  Offline: 'オフライン',
   '{done} of {total}': '{total} 件中 {done} 件',
   'Sync failed': '同期に失敗しました',
   '{name} could not be written.': '{name} を書き込めませんでした。',

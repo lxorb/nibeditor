@@ -88,10 +88,18 @@ class Rooms {
 
   private readonly held = new Map<string, Joined>()
   /** The canvas surfaces on screen, by document key; see `drawing`. */
-  private readonly planes = new Map<string, PlaneSurface>()
+  readonly planes = new Map<string, PlaneSurface>()
+  /** Told when one arrives or goes: sync v2 joins a plane to its document then. */
+  drawn: (() => void) | null = null
   /** What was last followed, so a surface arriving after its file can be joined
    *  without the app being asked what is open all over again. */
   private open: readonly Open[] = []
+
+  /** Sync v2's rooms, by document key (sync2/carry.ts): reached here as these are. */
+  readonly carried = new Map<
+    string,
+    { live: unknown; room: Pick<Room, 'moved' | 'repaint' | 'rename' | 'leave'> }
+  >()
 
   /** Whether a room now holds the truth of this file, by its id on the account. What
    *  the file sync asks before it writes anything about a note, so it can leave the
@@ -191,6 +199,7 @@ class Rooms {
   drawing(key: string, surface: PlaneSurface | null) {
     if (surface) this.planes.set(key, surface)
     else this.planes.delete(key)
+    this.drawn?.()
 
     this.follow(this.open)
   }
@@ -198,6 +207,8 @@ class Rooms {
   /** Everything goes: signing out, or the app closing. */
   clear() {
     this.follow([])
+    for (const one of this.carried.values()) one.room.leave()
+    this.carried.clear()
   }
 
   /** A pane reporting that its caret moved, on its way to the other devices. Which
@@ -215,18 +226,24 @@ class Rooms {
       const at = view.state.selection.main
       joined.room.moved(at.anchor, at.head)
     }
+    for (const one of this.carried.values()) {
+      const at = view.state.selection.main
+      if (one.live === shared) one.room.moved(at.anchor, at.head)
+    }
   }
 
   /** A caret's colour depends on the scheme, so a theme change reaches every
    *  room. */
   repaint(scheme: Scheme) {
     for (const joined of this.held.values()) joined.room.repaint(scheme)
+    for (const one of this.carried.values()) one.room.repaint(scheme)
   }
 
   /** And so does the name over it, which can change while a file is open: a guest
    *  a link let in renaming themselves, or an account choosing a name. */
   rename(person: string | undefined) {
     for (const joined of this.held.values()) joined.room.rename(person)
+    for (const one of this.carried.values()) one.room.rename(person)
   }
 
   /** Whether there is anything for a room to be about yet. Always, for a note; for

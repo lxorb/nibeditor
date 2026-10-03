@@ -7,10 +7,12 @@ import { api, ApiError } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
-import { isRecord, keep, stored } from './stored'
+import { isRecord, keep, stored, storedText } from './stored'
 import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
-import { planSpaces } from './space-plan'
+import type { Pairing } from './space-pairing'
+import { untrack } from 'svelte'
 import { account } from './account.svelte'
+import { startup } from './startup.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
@@ -25,7 +27,16 @@ import { samePath } from './space-paths'
 
 export const STORAGE_KEY = 'nib:mirrors'
 
-export type Status = 'off' | 'idle' | 'syncing' | 'error'
+/** `offline` is v2's: the account cannot be reached, which the light says hollow and
+ *  never red. */
+export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
+
+/** Which engine this device ran last, by the account's word: what a launch goes by
+ *  until the account has answered, so an offline launch never starts v1 over the files
+ *  v2 has been keeping. */
+const VERSION = 'nib:sync-version'
+
+type Runner = (typeof import('./sync2/runner.svelte'))['runner']
 
 class Sync {
   status = $state<Status>('off')
@@ -73,8 +84,97 @@ class Sync {
    *  anything from has a cursor of nought for as long as it exists. */
   private seen = false
 
+  /** The mirrors, as space-pairing.ts reads and writes a pairing. */
+  private readonly pairing: Pairing = {
+    pairs: () =>
+      Object.values(this.mirrors).map((one) => ({
+        root: one.root,
+        spaceId: one.spaceId,
+        shared: one.shared,
+      })),
+    pair: (root, spaceId, shared) => {
+      this.mirrors[root] = newMirror(spaceId, root, shared)
+    },
+    unpair: (root) => {
+      this.mirrors = without(this.mirrors, root)
+    },
+    share: (root, shared) => {
+      const mirror = this.mirrors[root]
+      if (mirror) mirror.shared = shared
+    },
+  }
+
+  /** Which engine runs this session (docs/sync-v2.md section 11): v2 where the account
+   *  says so, chosen at start and kept until the next one. */
+  version = $state<1 | 2>(1)
+  /** v2's runner, once it is fetched; see sync2/runner.svelte.ts. */
+  private v2: Runner | null = null
+
+  /** v2's runner while it runs: what a drive reads the held notes off. */
+  get engine(): Runner | null {
+    return this.v2
+  }
+  private unmirror: (() => void) | null = null
+
+  /** Whether this session runs v2: the account's word, or, before it has spoken, the
+   *  word it gave last. Never a guest, who has no account, nor the glasses' plugin. */
+  private wantsV2(): boolean {
+    if (__EVEN_PLUGIN__ || account.guest) return false
+    const said = account.user?.syncVersion ?? Number(storedText(VERSION))
+    return said === 2
+  }
+
   start() {
     this.generation++
+    if (account.user) keep(VERSION, String(account.user.syncVersion ?? 1))
+    if (this.wantsV2()) {
+      this.startV2()
+      return
+    }
+    this.startV1()
+  }
+
+  /** v2, after the first paint: the runner fetched at the launch's `rooms` turn and
+   *  started once the account is known. An account that has gone back to v1 meanwhile
+   *  is handed back: the mirrors are written from the sync store first, so v1 meets
+   *  every note as one it knows (section 11's rollback). Never in the glasses' plugin,
+   *  whose package must not carry the engine at all. */
+  private startV2() {
+    if (__EVEN_PLUGIN__) return
+    const mine = this.generation
+    this.version = 2
+    arriving.settled()
+    void (async () => {
+      await startup.turn('rooms')
+      const { runner } = await import('./sync2/runner.svelte')
+      await known()
+      if (mine !== this.generation || !account.user) return
+      keep(VERSION, String(account.user.syncVersion ?? 1))
+      if (account.user.syncVersion !== 2) {
+        await runner.rollBack()
+        if (mine !== this.generation) return
+        this.version = 1
+        this.startV1()
+        return
+      }
+      this.v2 = runner
+      this.unmirror = $effect.root(() => {
+        $effect(() => {
+          const status = runner.status
+          const error = runner.lastError
+          const at = runner.lastSyncedAt
+          untrack(() => {
+            this.status = status
+            this.lastError = error
+            this.lastSyncedAt = at
+          })
+        })
+      })
+      await runner.start()
+    })()
+  }
+
+  private startV1() {
     const held = this.load(account.user?.id ?? null)
     this.mirrors = held.mirrors
     this.seen = held.seen
@@ -105,11 +205,18 @@ class Sync {
    *  pass while the first is going, so whoever drives one pass at a time has to be
    *  able to tell that the last one is over. */
   get passing(): boolean {
-    return this.running
+    return this.v2 ? this.v2.passing : this.running
   }
 
   stop() {
     this.generation++
+    if (this.v2) {
+      const runner = this.v2
+      this.v2 = null
+      this.unmirror?.()
+      this.unmirror = null
+      void runner.stop()
+    }
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
 
@@ -149,6 +256,7 @@ class Sync {
    *  moment as its notes' paths change, so no note is ever at a path the account
    *  has no id for; a note or a folder moving is told to the account. */
   follow(op: FileOp): Promise<void> | undefined {
+    if (this.v2) return this.v2.follow(op)
     if (op.op !== 'moved') return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
 
@@ -220,18 +328,22 @@ class Sync {
    *  gesture lets go of it instead: the membership ends, and the space carries
    *  on being everybody else's. */
   async forget(root: string) {
-    const mirror = this.mirrors[root]
-    if (!mirror) return
+    const spaceId = this.remoteIdFor(root)
+    if (spaceId === null) return
+    const role = account.spaces.find((one) => one.id === spaceId)?.role
+    const theirs = this.v2 ? role !== undefined && role !== 'owner' : !!this.mirrors[root]?.shared
 
-    this.mirrors = without(this.mirrors, root)
-    this.save()
+    if (this.v2) {
+      await this.v2.forget(root)
+    } else {
+      this.mirrors = without(this.mirrors, root)
+      this.save()
+    }
 
     const token = account.token
     if (!token) return
 
-    const letting = mirror.shared
-      ? api.leaveSpace(token, mirror.spaceId)
-      : api.deleteSpace(token, mirror.spaceId)
+    const letting = theirs ? api.leaveSpace(token, spaceId) : api.deleteSpace(token, spaceId)
 
     await letting.catch(() => undefined)
   }
@@ -241,10 +353,10 @@ class Sync {
    *  and the account keeps the colour beside the icon. */
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
-    const mirror = this.mirrors[root]
-    if (!token || !mirror) return
+    const spaceId = this.remoteIdFor(root)
+    if (!token || spaceId === null) return
 
-    await api.setSpaceIcon(token, mirror.spaceId, icon, tint).catch(() => undefined)
+    await api.setSpaceIcon(token, spaceId, icon, tint).catch(() => undefined)
     await account.loadSpaces().catch(() => undefined)
   }
 
@@ -255,12 +367,24 @@ class Sync {
    *  their own business and the account would refuse it anyway. */
   async pushBookmarks(root: string) {
     const token = account.token
-    const mirror = this.mirrors[root]
-    if (!token || !mirror || this.reads(mirror.spaceId)) return
+    const spaceId = this.remoteIdFor(root)
+    if (!token || spaceId === null || this.reads(spaceId)) return
 
-    await api
-      .saveBookmarks(token, mirror.spaceId, workspace.bookmarks.of(root))
-      .catch(() => undefined)
+    await api.saveBookmarks(token, spaceId, workspace.bookmarks.of(root)).catch(() => undefined)
+  }
+
+  /** Autosave wrote a note. Under v2 that write is also the moment what was typed
+   *  becomes a pending update in the sync store; v1 reads the file at its next pass. */
+  wrote(path: string, content: string): void {
+    if (this.v2) void this.v2.wrote(path, content)
+    else this.nudge()
+  }
+
+  /** A note about to be made that means "this note, if it is not there yet": the day's
+   *  note the append action makes. Under v2 the account merges it into one of the same
+   *  name another device made meanwhile; v1 has no such thing. */
+  mergeable(path: string): void {
+    this.v2?.mergeable(path)
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
@@ -269,6 +393,10 @@ class Sync {
    *  due at once two seconds out, and a hand that kept typing kept shoving it. The
    *  rule is `nudgeDelay`, in backoff.ts beside the interval it answers to. */
   nudge() {
+    if (this.v2) {
+      this.v2.nudge()
+      return
+    }
     if (!this.timer) return
 
     this.quiet = 0
@@ -332,6 +460,7 @@ class Sync {
   /** One pass: pairs every local space with a remote one, then syncs. What
    *  the loop does on every tick, on its own so it can be driven by hand. */
   async pass(): Promise<boolean> {
+    if (this.v2) return await this.v2.passNow()
     // Read before anything is asked of the account, so that whatever the pass
     // runs into, the one thing somebody is waiting behind is lifted; a pass that
     // threw on its way through is a pass with nothing more coming.
@@ -370,106 +499,10 @@ class Sync {
       return
     }
 
-    // What should happen is worked out on its own, away from the doing, so it
-    // can be tested against a plain pair of lists - see `space-plan.ts`.
-    const plan = planSpaces({
-      local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
-      remote: account.spaces.map((space) => ({
-        id: space.id,
-        name: space.name,
-        shared: space.role !== 'owner',
-      })),
-      mirrors: Object.values(this.mirrors).map((one) => ({
-        root: one.root,
-        spaceId: one.spaceId,
-        shared: one.shared,
-      })),
-      deleted: account.deletedSpaces,
-    })
-
-    // Removals come first. Adopting runs after, and adopting reuses a folder
-    // of the same name if it finds one - which would be the very folder about
-    // to be deleted. Deleting a space and making a new one of the same name
-    // has to settle in a single pass, not leave a gap.
-    for (const root of plan.remove) {
-      const space = workspace.spaces.find((one) => one.root === root)
-      // To this device's trash, never for good. The account's Recently deleted
-      // holds only what the account was given, and the folder may hold more:
-      // words typed offline, a picture that never travels, and - for a space
-      // somebody stopped sharing - the only copy left of what was read here.
-      this.mirrors = without(this.mirrors, root)
-      if (space) await workspace.deleteSpace(space.id, true)
-    }
-
-    // Missing without a marker: not uploaded yet as far as anyone can tell, so
-    // the mirror goes and the next pass sends the folder up again.
-    for (const root of [...plan.detach, ...plan.drop]) {
-      this.mirrors = without(this.mirrors, root)
-    }
-
-    const mine = (id: string) => account.spaces.find((one) => one.id === id)?.role !== 'owner'
-
-    for (const { root, spaceId } of plan.pair) {
-      this.mirrors[root] = newMirror(spaceId, root, mine(spaceId))
-    }
-
-    // A guest has no account for a folder to become a space in. What a link
-    // lent them is the whole of what syncing is about for them, and the notes
-    // already on this machine are their own: those stay here.
-    if (account.user) {
-      for (const space of plan.upload) {
-        const { space: remote } = await api.createSpace(token, space.name)
-        this.mirrors[space.root] = newMirror(remote.id, space.root)
-      }
-    }
-
-    for (const space of plan.adopt) {
-      // A folder of its own where a folder of that name is already here and
-      // already answers for something - and always, for a space somebody
-      // shared, which has no claim on anything on this machine.
-      const taken =
-        mine(space.id) ||
-        workspace.spaces.some((one) => one.name === space.name && !!this.mirrors[one.root])
-
-      const root = await workspace.adoptSpace(space.name, taken)
-      if (root) this.mirrors[root] = newMirror(space.id, root, mine(space.id))
-    }
-
-    // The icon and the bookmarks belong to the space, so they travel with it.
-    // Whatever the account holds wins: it is the one copy every machine can
-    // see. The exception is the first time an account meets a space on this
-    // machine, where whatever was bookmarked here joins the account's list
-    // instead of being replaced by it - and is sent straight back up.
-    const accountId = account.user?.id ?? null
-    for (const remote of account.spaces) {
-      const mirror = Object.values(this.mirrors).find((one) => one.spaceId === remote.id)
-      if (!mirror) continue
-
-      // The colour rides with the icon, and a listing with no word about it at all is
-      // a service older than the column: then this machine's colour is the one there
-      // is, and it is this machine's to send. Only for a space of this account's -
-      // the icon and its colour are the owner's, so somebody else's would be
-      // refused.
-      const unsaid = workspace.applyIcon(mirror.root, remote.icon ?? null, remote.tint)
-      if (unsaid && remote.role === 'owner') {
-        await this.pushIcon(mirror.root, remote.icon ?? null, unsaid)
-      }
-
-      // Kept current, because a space that stops being shared - or starts -
-      // changes what happens when it later goes missing from the listing.
-      mirror.shared = remote.role !== 'owner'
-
-      // Whatever this machine had bookmarked in a space it may only read is
-      // its own business: the account would refuse the list, and asking on
-      // every pass is a refusal on every pass.
-      if (accountId === null || remote.role === 'read') continue
-      const merged = workspace.bookmarks.adopt(mirror.root, remote.bookmarks, accountId)
-      if (merged) await api.saveBookmarks(token, remote.id, merged).catch(() => undefined)
-    }
-
-    // The account already lists spaces in the order it holds them, so adopting
-    // that order is what makes a second machine look like the first.
-    workspace.applySpaceOrder(account.spaces.map((space) => space.name))
+    // Worked out and done in space-pairing.ts, which v2 shares, fetched when a pairing is
+    // due rather than in front of the first paint; the mirrors are where v1 keeps one.
+    const { pairSpaces } = await import('./space-pairing')
+    await pairSpaces(token, this.pairing)
 
     this.save()
   }
@@ -481,7 +514,7 @@ class Sync {
     if (!token) return
 
     const order = workspace.spaces
-      .map((space) => this.mirrors[space.root]?.spaceId)
+      .map((space) => this.remoteIdFor(space.root))
       .filter((id): id is string => !!id)
 
     if (!order.length) return
@@ -497,6 +530,7 @@ class Sync {
   /** The remote space a local folder mirrors, if any. Publishing needs it, and
    *  so does everything that asks what may be done in a space. */
   remoteIdFor(root: string): string | null {
+    if (this.v2) return this.v2.remoteIdFor(root)
     return this.mirrors[root]?.spaceId ?? null
   }
 
@@ -512,6 +546,7 @@ class Sync {
    *  a note with no id has no room, and a note whose hash nobody knows has nothing
    *  to be compared against. See rooms.svelte.ts, which asks. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
+    if (this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       const held = relative === null ? undefined : mirror.notes[relative]
@@ -615,6 +650,7 @@ class Sync {
   /** One full pass: take what the server has, then offer what we have.
    *  Answers whether anything actually moved, which is what paces the loop. */
   async run(): Promise<boolean> {
+    if (this.v2) return await this.v2.passNow()
     if (this.running || !account.token) return false
 
     const token = account.token
@@ -919,6 +955,22 @@ function withoutCaches(mirrors: Record<string, Mirror>): Record<string, Mirror> 
   }
 
   return out
+}
+
+/** Resolves once the account has said who this is - or that nobody is. */
+function known(): Promise<void> {
+  if (account.user || !account.token) return Promise.resolve()
+  return new Promise((resolve) => {
+    const stop = $effect.root(() => {
+      $effect(() => {
+        if (!account.user && account.token) return
+        untrack(() => {
+          queueMicrotask(() => stop())
+          resolve()
+        })
+      })
+    })
+  })
 }
 
 export const sync = new Sync()

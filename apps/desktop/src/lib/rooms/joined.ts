@@ -7,7 +7,7 @@
  *  What differs - what the document holds, how the two copies are brought together
  *  and how the others are drawn - is each kind's own, in room.ts and plane.ts. */
 
-import { RoomDoor, type Who } from './door'
+import { type Carrying, RoomDoor, type Who } from './door'
 
 /** What any room is joined on behalf of. */
 export interface Entering {
@@ -27,6 +27,8 @@ export interface Entering {
   /** Whether what is open above is still on the file this room was joined for; see
    *  `Joining.holds` in room.ts, which says why at length. */
   holds: () => boolean
+  /** Sync v2: the engine's document, which the room carries; see door.ts. */
+  carrying?: Carrying
 }
 
 export abstract class JoinedRoom {
@@ -48,6 +50,7 @@ export abstract class JoinedRoom {
       present: () => this.showPresent(),
       gone: () => entering.gone(),
       refused: (said) => entering.refused(said),
+      ...(entering.carrying ? { carrying: entering.carrying } : {}),
     })
   }
 

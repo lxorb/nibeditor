@@ -525,6 +525,7 @@ export const sw: Dictionary = {
   Importing: 'Inaingiza',
   'Storing the image': 'Inahifadhi picha',
   Syncing: 'Inasawazisha',
+  Offline: 'Nje ya mtandao',
   '{done} of {total}': '{done} ya {total}',
   'Sync failed': 'Usawazishaji umeshindikana',
   '{name} could not be written.': '{name} haikuandikwa.',

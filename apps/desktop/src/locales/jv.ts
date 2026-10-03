@@ -519,6 +519,7 @@ export const jv: Dictionary = {
   Importing: 'Ngimpor',
   'Storing the image': 'Nyimpen gambar',
   Syncing: 'Nyelarasake',
+  Offline: 'Offline',
   '{done} of {total}': '{done} saka {total}',
   'Sync failed': 'Panyelarasan gagal',
   '{name} could not be written.': '{name} ora bisa ditulis.',

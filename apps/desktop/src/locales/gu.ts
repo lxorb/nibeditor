@@ -522,6 +522,7 @@ export const gu: Dictionary = {
   Importing: 'આયાત કરે છે',
   'Storing the image': 'ચિત્ર સંઘરે છે',
   Syncing: 'સમન્વય કરે છે',
+  Offline: 'ઑફલાઇન',
   '{done} of {total}': '{total}માંથી {done}',
   'Sync failed': 'સમન્વય નિષ્ફળ',
   '{name} could not be written.': '{name} લખાઈ નહીં.',

@@ -522,6 +522,7 @@ export const gsw: Dictionary = {
   Importing: 'Wird importiert',
   'Storing the image': 'Bild wird gspicheret',
   Syncing: 'Wird synchronisiert',
+  Offline: 'Offline',
   '{done} of {total}': '{done} vo {total}',
   'Sync failed': 'Synchronisierig het nod klappt',
   '{name} could not be written.': '{name} het sich nöd schriibe laa.',
