@@ -1779,4 +1779,17 @@ export const am: Dictionary = {
   'No group': 'ቡድን የለም',
   'Not an address': 'አድራሻ አይደለም',
   'Could not connect to {host}': 'ከ{host} ጋር መገናኘት አልተቻለም',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'እና ከዚያ በኋላ ያለ {count}',
+    other: 'እና ከዚያ በኋላ ያሉ {count}',
+  },
+  'Restore notes and conversation': 'ማስታወሻዎችን እና ውይይቱን መልስ',
+  'Restore conversation': 'ውይይቱን መልስ',
+  'Restore notes': 'ማስታወሻዎችን መልስ',
+  'Summarize from here': 'ከዚህ ጀምሮ አጠቃልል',
+  'Summarize up to here': 'እስከዚህ ድረስ አጠቃልል',
+  'Pages, terminals and moves are not undone': 'ገጾች፣ ተርሚናሎች እና ማንቀሳቀሶች አይቀለበሱም',
+  Rewind: 'ወደ ኋላ መልስ',
 }

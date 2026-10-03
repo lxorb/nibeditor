@@ -1859,4 +1859,19 @@ export const it: Dictionary = {
   'No group': 'Nessun gruppo',
   'Not an address': 'Non è un indirizzo',
   'Could not connect to {host}': 'Impossibile connettersi a {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    many: 'e {count} dopo',
+    one: 'e {count} dopo',
+    other: 'e {count} dopo',
+  },
+  'Restore notes and conversation': 'Ripristina note e conversazione',
+  'Restore conversation': 'Ripristina conversazione',
+  'Restore notes': 'Ripristina note',
+  'Summarize from here': 'Riassumi da qui',
+  'Summarize up to here': 'Riassumi fino a qui',
+  'Pages, terminals and moves are not undone':
+    'Pagine, terminali e spostamenti non vengono annullati',
+  Rewind: 'Riavvolgi',
 }

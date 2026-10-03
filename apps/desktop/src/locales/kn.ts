@@ -1820,4 +1820,18 @@ export const kn: Dictionary = {
   'No group': 'ಗುಂಪು ಇಲ್ಲ',
   'Not an address': 'ವಿಳಾಸವಲ್ಲ',
   'Could not connect to {host}': '{host} ಗೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',
+    other: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',
+  },
+  'Restore notes and conversation': 'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಸಂಭಾಷಣೆ ಮರುಸ್ಥಾಪಿಸಿ',
+  'Restore conversation': 'ಸಂಭಾಷಣೆ ಮರುಸ್ಥಾಪಿಸಿ',
+  'Restore notes': 'ಟಿಪ್ಪಣಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
+  'Summarize from here': 'ಇಲ್ಲಿಂದ ಸಾರಾಂಶ',
+  'Summarize up to here': 'ಇಲ್ಲಿಯವರೆಗೆ ಸಾರಾಂಶ',
+  'Pages, terminals and moves are not undone':
+    'ಪುಟಗಳು, ಟರ್ಮಿನಲ್‌ಗಳು ಮತ್ತು ಸರಿಸುವಿಕೆಗಳು ರದ್ದಾಗುವುದಿಲ್ಲ',
+  Rewind: 'ಹಿಂದಕ್ಕೆ',
 }

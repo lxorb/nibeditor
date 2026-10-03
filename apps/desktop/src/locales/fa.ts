@@ -1801,4 +1801,17 @@ export const fa: Dictionary = {
   'No group': 'بدون گروه',
   'Not an address': 'نشانی نیست',
   'Could not connect to {host}': 'اتصال به {host} ممکن نشد',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'و {count} مورد پس از آن',
+    other: 'و {count} مورد پس از آن',
+  },
+  'Restore notes and conversation': 'بازگرداندن یادداشت‌ها و گفتگو',
+  'Restore conversation': 'بازگرداندن گفتگو',
+  'Restore notes': 'بازگرداندن یادداشت‌ها',
+  'Summarize from here': 'خلاصه از اینجا',
+  'Summarize up to here': 'خلاصه تا اینجا',
+  'Pages, terminals and moves are not undone': 'صفحه‌ها، ترمینال‌ها و جابه‌جایی‌ها برنمی‌گردند',
+  Rewind: 'بازگشت',
 }

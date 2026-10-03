@@ -11,6 +11,7 @@ import {
   rectangularSelection,
 } from '@codemirror/view'
 import { remoteCarets } from './carets'
+import { reviewMarks } from './review/marks'
 import { completionExtensions } from './completion'
 import { external } from './external'
 import { blockHandles } from './block/handle'
@@ -167,6 +168,7 @@ export function editorState(options: StateOptions): EditorState {
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
+      reviewMarks(),
       // The selection, as one block with its corners smoothed; see
       // selection/layer.ts. Carries the view's own caret with it.
       nibSelection(),

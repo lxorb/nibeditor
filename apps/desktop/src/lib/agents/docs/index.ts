@@ -23,7 +23,15 @@ import { isScratchpad } from '../../scratchpad/is'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { type Desk, located, type NoteAt } from './desk'
-import { editNote, type NoteEdited, undoAgent, undoAt, writeNote } from './edit'
+import {
+  editNote,
+  type NoteEdited,
+  putBackAt,
+  undoAgent,
+  undoAt,
+  undoSomeAt,
+  writeNote,
+} from './edit'
 import type { Agent } from './presence'
 import { type NoteRead, readNote } from './read'
 
@@ -32,6 +40,8 @@ export type { NoteAt } from './desk'
 export type { NoteEdited } from './edit'
 export type { NoteRead } from './read'
 export { DocError, type Problem } from './problem'
+export { onTracks, trackedAgents, tracksOf } from './edit'
+export type { Span } from './track'
 
 /** What an agent can do with notes. */
 export interface NoteDocs {
@@ -97,4 +107,37 @@ export async function undoAgentIn(agent: Agent, path: string): Promise<{ undone:
   }
 
   return { undone: 0 }
+}
+
+/** The note at `path`, a path on this disk or a draft's `unsaved:` key, as the
+ *  space it is in names it; null for one that is not there. */
+function locatedAt(path: string) {
+  if (path.startsWith('unsaved:')) {
+    const key = path.slice('unsaved:'.length)
+    const tab = workspace.tabs.find((one) => one.kind === 'note' && one.note.key === key)
+    return tab ? located(desk, { path: '', tab: tab.id }) : null
+  }
+  for (const space of workspace.spaces) {
+    const relative = withinSpace(space.root, path)
+    if (relative !== null) return located(desk, { path: relative, space: space.id })
+  }
+  return null
+}
+
+/** Some of one agent's edits of the note at `path` taken back (the review's Undo, a
+ *  rewind): the ids that went. */
+export async function undoSomeIn(
+  agent: Agent,
+  path: string,
+  ids: ReadonlySet<string>,
+  token?: string,
+): Promise<string[]> {
+  const note = locatedAt(path)
+  return note ? undoSomeAt(desk, agent, note, ids, token) : []
+}
+
+/** What a rewind took back of one agent's edits of the note at `path`, put back. */
+export async function putBackIn(agent: Agent, path: string, token: string): Promise<string[]> {
+  const note = locatedAt(path)
+  return note ? putBackAt(desk, agent, note, token) : []
 }

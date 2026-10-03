@@ -1756,4 +1756,14 @@ export const zhHant: Dictionary = {
   'No group': '無群組',
   'Not an address': '不是位址',
   'Could not connect to {host}': '無法連線到 {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': '以及之後的 {count} 處',
+  'Restore notes and conversation': '還原筆記和對話',
+  'Restore conversation': '還原對話',
+  'Restore notes': '還原筆記',
+  'Summarize from here': '從這裡開始摘要',
+  'Summarize up to here': '摘要到這裡',
+  'Pages, terminals and moves are not undone': '網頁、終端機和移動不會復原',
+  Rewind: '倒轉',
 }

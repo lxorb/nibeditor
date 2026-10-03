@@ -1829,4 +1829,17 @@ export const sw: Dictionary = {
   'No group': 'Hakuna kikundi',
   'Not an address': 'Si anwani',
   'Could not connect to {host}': 'Imeshindwa kuunganisha na {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'na {count} baada yake',
+    other: 'na {count} baada yake',
+  },
+  'Restore notes and conversation': 'Rejesha madokezo na mazungumzo',
+  'Restore conversation': 'Rejesha mazungumzo',
+  'Restore notes': 'Rejesha madokezo',
+  'Summarize from here': 'Fupisha kuanzia hapa',
+  'Summarize up to here': 'Fupisha hadi hapa',
+  'Pages, terminals and moves are not undone': 'Kurasa, terminali na uhamisho havitenduliwi',
+  Rewind: 'Rudisha nyuma',
 }

@@ -1840,4 +1840,17 @@ export const fil: Dictionary = {
   'No group': 'Walang grupo',
   'Not an address': 'Hindi isang address',
   'Could not connect to {host}': 'Hindi makakonekta sa {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'at {count} pagkatapos nito',
+    other: 'at {count} pagkatapos nito',
+  },
+  'Restore notes and conversation': 'Ibalik ang mga note at usapan',
+  'Restore conversation': 'Ibalik ang usapan',
+  'Restore notes': 'Ibalik ang mga note',
+  'Summarize from here': 'Ibuod mula rito',
+  'Summarize up to here': 'Ibuod hanggang dito',
+  'Pages, terminals and moves are not undone': 'Hindi naa-undo ang mga page, terminal at paglipat',
+  Rewind: 'I-rewind',
 }

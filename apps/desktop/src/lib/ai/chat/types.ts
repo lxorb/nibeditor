@@ -271,6 +271,9 @@ export interface Engine {
   /** Words for the running turn, delivered after the call in flight. */
   steer(thread: Thread, text: string): Promise<void>
   compact(thread: Thread, focus?: string): Promise<void>
+  /** The thread's turns were cut (a rewind, an edited message): an engine that keeps a
+   *  conversation of its own forgets it, so the next send starts from the thread's. */
+  rewound?(thread: Thread): void
 }
 
 /** What a checkpoint holds (lane 3): every note the thread touched, as it stood before

@@ -1808,4 +1808,17 @@ export const tr: Dictionary = {
   'No group': 'Grup yok',
   'Not an address': 'Adres değil',
   'Could not connect to {host}': '{host} sunucusuna bağlanılamadı',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 've sonrasındaki {count}',
+    other: 've sonrasındaki {count}',
+  },
+  'Restore notes and conversation': 'Notları ve konuşmayı geri yükle',
+  'Restore conversation': 'Konuşmayı geri yükle',
+  'Restore notes': 'Notları geri yükle',
+  'Summarize from here': 'Buradan itibaren özetle',
+  'Summarize up to here': 'Buraya kadar özetle',
+  'Pages, terminals and moves are not undone': 'Sayfalar, terminaller ve taşımalar geri alınmaz',
+  Rewind: 'Geri sar',
 }

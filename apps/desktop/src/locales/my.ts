@@ -1787,4 +1787,15 @@ export const my: Dictionary = {
   'No group': 'အုပ်စုမရှိ',
   'Not an address': 'လိပ်စာ မဟုတ်ပါ',
   'Could not connect to {host}': '{host} သို့ ချိတ်ဆက်၍ မရပါ',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'နှင့် ၎င်းနောက် {count} ခု',
+  'Restore notes and conversation': 'မှတ်စုများနှင့် စကားဝိုင်းကို ပြန်ယူရန်',
+  'Restore conversation': 'စကားဝိုင်းကို ပြန်ယူရန်',
+  'Restore notes': 'မှတ်စုများကို ပြန်ယူရန်',
+  'Summarize from here': 'ဤနေရာမှ အကျဉ်းချုပ်ရန်',
+  'Summarize up to here': 'ဤနေရာအထိ အကျဉ်းချုပ်ရန်',
+  'Pages, terminals and moves are not undone':
+    'စာမျက်နှာ၊ တာမီနယ်နှင့် ရွှေ့ခြင်းများကို ပြန်မဖျက်ပါ',
+  Rewind: 'နောက်ပြန်ရစ်ရန်',
 }

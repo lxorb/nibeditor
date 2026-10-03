@@ -1799,4 +1799,17 @@ export const ur: Dictionary = {
   'No group': 'کوئی گروپ نہیں',
   'Not an address': 'یہ پتہ نہیں ہے',
   'Could not connect to {host}': '{host} سے نہیں جڑ سکے',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'اور اس کے بعد کا {count}',
+    other: 'اور اس کے بعد کے {count}',
+  },
+  'Restore notes and conversation': 'نوٹس اور گفتگو بحال کریں',
+  'Restore conversation': 'گفتگو بحال کریں',
+  'Restore notes': 'نوٹس بحال کریں',
+  'Summarize from here': 'یہاں سے خلاصہ',
+  'Summarize up to here': 'یہاں تک خلاصہ',
+  'Pages, terminals and moves are not undone': 'صفحات، ٹرمینل اور منتقلیاں کالعدم نہیں ہوتیں',
+  Rewind: 'پیچھے جائیں',
 }

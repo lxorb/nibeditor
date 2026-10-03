@@ -953,6 +953,36 @@ other's files.
   `Goal`. `/login` and `/logout` type the program's own `auth login` / `auth logout` (Codex
   `login` / `logout`) into a terminal tab, through `lib/ai/local/signin.ts`.
 
+### 6.6 The review's seam (lane 3)
+
+What the panel (lane 4) and the commands (lane 5) meet the review at. Every piece is in
+`lib/ai/review/` and is found by name through `import.meta.glob`, so neither lane has to
+change a line once it lands, and none of it is in the first paint.
+
+| piece | who draws or calls it | with | does |
+| --- | --- | --- | --- |
+| `ChangesBar.svelte` | the panel, over the field | `thread` (the live thread the engine writes into, `chat.thread`), `panel` (the chat store) | the bar, the list of changes (`/diff`), the rewind sheet and Redo; nothing while nothing waits |
+| `Branches.svelte` | the panel, under each of the reader's messages | `thread`, `turn` (the message's id), `panel` | `‹ 2/3 ›` where the message was edited; nothing elsewhere |
+| `Asked.svelte` | the panel, in a tool row whose state is `asking` | `part` | the diff the write would make (Ask before edits) |
+| `index.ts` `openRewind(thread, panel, turn?)` | Esc Esc on an empty field; the clock on a message's hover (with its `turn`) | | opens the rewind sheet in the bar |
+| `index.ts` `lastMessage(thread)` | Up on an empty field | | the message an edit changes |
+| `index.ts` `editMessage(thread, turn, text, panel)` | the pencil on a message, sent | | rewinds notes and conversation to before it, keeps what followed as a branch, sends `text` |
+| `index.ts` `askFirst(provider)`, `setAskFirst(provider, on)` | `/permissions` | | the built-in grant's `confirm` mode: Ask before edits, or Apply and review |
+| `commands.ts` `rewind(context)`, `changes(context)` | `/rewind`, `/diff` | the command's `{ thread, panel }` | the sheet; the list |
+
+`panel` is anything with `send(text)`, a writable `text` (the field) and `touched(thread)`,
+which draws a thread changed outside a send again and writes it down: a rewind cuts its
+turns, and Redo and a branch put turns back. Lane 5's `Panel` already has this shape.
+
+Underneath: an edit's thread is the one that was answering for its provider when it was
+made (`lib/ai/chat/sends.ts`, written by `engineFor`); its checkpoint is the reader's latest
+message before it. Undo is a selective take out of the agent's own steps
+(`Steps.take` in `lib/agents/docs/steps.ts`), so the palette's "Undo edits by" and the
+review never disagree. An engine that keeps a conversation of its own (Claude Code, Codex)
+forgets it when the turns are cut (`Engine.rewound`) and is reseeded at the next send.
+Like the steps, the review lasts the session: after a restart an old thread rewinds its
+conversation, not its notes.
+
 ---
 
 ## Sources

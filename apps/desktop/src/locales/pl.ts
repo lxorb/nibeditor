@@ -1882,4 +1882,19 @@ export const pl: Dictionary = {
   'No group': 'Bez grupy',
   'Not an address': 'To nie jest adres',
   'Could not connect to {host}': 'Nie można połączyć z {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    few: 'i {count} po niej',
+    many: 'i {count} po niej',
+    one: 'i {count} po niej',
+    other: 'i {count} po niej',
+  },
+  'Restore notes and conversation': 'Przywróć notatki i rozmowę',
+  'Restore conversation': 'Przywróć rozmowę',
+  'Restore notes': 'Przywróć notatki',
+  'Summarize from here': 'Podsumuj od tego miejsca',
+  'Summarize up to here': 'Podsumuj do tego miejsca',
+  'Pages, terminals and moves are not undone': 'Strony, terminale i przeniesienia nie są cofane',
+  Rewind: 'Przewiń wstecz',
 }

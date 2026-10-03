@@ -1784,4 +1784,15 @@ export const vi: Dictionary = {
   'No group': 'Không có nhóm',
   'Not an address': 'Không phải địa chỉ',
   'Could not connect to {host}': 'Không thể kết nối tới {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'và {count} sau đó',
+  'Restore notes and conversation': 'Khôi phục ghi chú và cuộc trò chuyện',
+  'Restore conversation': 'Khôi phục cuộc trò chuyện',
+  'Restore notes': 'Khôi phục ghi chú',
+  'Summarize from here': 'Tóm tắt từ đây',
+  'Summarize up to here': 'Tóm tắt đến đây',
+  'Pages, terminals and moves are not undone':
+    'Trang, terminal và việc di chuyển không được hoàn tác',
+  Rewind: 'Tua lại',
 }

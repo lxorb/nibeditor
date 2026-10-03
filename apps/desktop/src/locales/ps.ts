@@ -1804,4 +1804,17 @@ export const ps: Dictionary = {
   'No group': 'هیڅ ډله نه',
   'Not an address': 'پته نه ده',
   'Could not connect to {host}': 'له {host} سره وصل نه شو',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'او {count} له هغه وروسته',
+    other: 'او {count} له هغه وروسته',
+  },
+  'Restore notes and conversation': 'یادښتونه او خبرې بېرته راوړئ',
+  'Restore conversation': 'خبرې بېرته راوړئ',
+  'Restore notes': 'یادښتونه بېرته راوړئ',
+  'Summarize from here': 'له دې ځایه لنډیز',
+  'Summarize up to here': 'تر دې ځایه لنډیز',
+  'Pages, terminals and moves are not undone': 'پاڼې، ټرمینلونه او لېږدونې بېرته نه اخیستل کېږي',
+  Rewind: 'شاته',
 }

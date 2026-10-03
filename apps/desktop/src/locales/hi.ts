@@ -1800,4 +1800,17 @@ export const hi: Dictionary = {
   'No group': 'कोई समूह नहीं',
   'Not an address': 'यह पता नहीं है',
   'Could not connect to {host}': '{host} से कनेक्ट नहीं हो सका',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'और उसके बाद का {count}',
+    other: 'और उसके बाद के {count}',
+  },
+  'Restore notes and conversation': 'नोट और बातचीत वापस लाएँ',
+  'Restore conversation': 'बातचीत वापस लाएँ',
+  'Restore notes': 'नोट वापस लाएँ',
+  'Summarize from here': 'यहाँ से सारांश',
+  'Summarize up to here': 'यहाँ तक सारांश',
+  'Pages, terminals and moves are not undone': 'पेज, टर्मिनल और स्थानांतरण पूर्ववत नहीं होते',
+  Rewind: 'पीछे जाएँ',
 }

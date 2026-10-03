@@ -491,6 +491,14 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         live.session.say({ kind: 'compact', focus: focus ?? '' }).catch(done)
       })
     },
+    rewound(thread) {
+      // The program remembers turns the thread no longer has: it is ended, and the
+      // next send opens a session seeded from what the thread says now.
+      const live = sessions.get(thread.id)
+      if (!live || running.has(thread.id)) return
+      sessions.delete(thread.id)
+      void live.session.close()
+    },
   }
 }
 

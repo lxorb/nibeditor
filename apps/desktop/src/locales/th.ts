@@ -1765,4 +1765,14 @@ export const th: Dictionary = {
   'No group': 'ไม่มีกลุ่ม',
   'Not an address': 'ไม่ใช่ที่อยู่',
   'Could not connect to {host}': 'เชื่อมต่อกับ {host} ไม่ได้',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'และอีก {count} รายการหลังจากนั้น',
+  'Restore notes and conversation': 'กู้คืนโน้ตและบทสนทนา',
+  'Restore conversation': 'กู้คืนบทสนทนา',
+  'Restore notes': 'กู้คืนโน้ต',
+  'Summarize from here': 'สรุปตั้งแต่ตรงนี้',
+  'Summarize up to here': 'สรุปถึงตรงนี้',
+  'Pages, terminals and moves are not undone': 'หน้าเว็บ เทอร์มินัล และการย้ายจะไม่ถูกเลิกทำ',
+  Rewind: 'ย้อนกลับ',
 }

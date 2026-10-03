@@ -1803,4 +1803,17 @@ export const mr: Dictionary = {
   'No group': 'गट नाही',
   'Not an address': 'पत्ता नाही',
   'Could not connect to {host}': '{host} शी कनेक्ट करता आले नाही',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'आणि त्यानंतरचे {count}',
+    other: 'आणि त्यानंतरचे {count}',
+  },
+  'Restore notes and conversation': 'नोंदी आणि संभाषण पुनर्संचयित करा',
+  'Restore conversation': 'संभाषण पुनर्संचयित करा',
+  'Restore notes': 'नोंदी पुनर्संचयित करा',
+  'Summarize from here': 'इथून सारांश',
+  'Summarize up to here': 'इथपर्यंत सारांश',
+  'Pages, terminals and moves are not undone': 'पाने, टर्मिनल आणि हलवणे पूर्ववत होत नाहीत',
+  Rewind: 'मागे जा',
 }

@@ -20,6 +20,7 @@ import { compactThread } from './compact'
 import { completions } from './completions'
 import { within } from './effort'
 import { learn, learnt } from './learned'
+import { watching } from './sends'
 import { Refused, wasStopped } from './request'
 import { responses } from './responses'
 import { type Adjusted, round } from './round'
@@ -475,13 +476,14 @@ export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engin
     localBuilt.set(kind, mine)
     const kept = mine.get(setup)
     if (kept) return kept
-    const engine = await load(setup)
+    // Every send written down as it starts and ends, for the review (sends.ts).
+    const engine = watching(await load(setup))
     mine.set(setup, engine)
     return engine
   }
   const held = built.get(setup)
   if (held) return held
-  const engine = createApiEngine(setup)
+  const engine = watching(createApiEngine(setup))
   built.set(setup, engine)
   return engine
 }

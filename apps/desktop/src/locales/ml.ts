@@ -1823,4 +1823,17 @@ export const ml: Dictionary = {
   'No group': 'ഗ്രൂപ്പില്ല',
   'Not an address': 'വിലാസമല്ല',
   'Could not connect to {host}': '{host}-ലേക്ക് കണക്റ്റ് ചെയ്യാനായില്ല',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',
+    other: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',
+  },
+  'Restore notes and conversation': 'കുറിപ്പുകളും സംഭാഷണവും പുനഃസ്ഥാപിക്കുക',
+  'Restore conversation': 'സംഭാഷണം പുനഃസ്ഥാപിക്കുക',
+  'Restore notes': 'കുറിപ്പുകൾ പുനഃസ്ഥാപിക്കുക',
+  'Summarize from here': 'ഇവിടെനിന്ന് സംഗ്രഹിക്കുക',
+  'Summarize up to here': 'ഇവിടെവരെ സംഗ്രഹിക്കുക',
+  'Pages, terminals and moves are not undone': 'പേജുകൾ, ടെർമിനലുകൾ, നീക്കങ്ങൾ പഴയപടിയാകില്ല',
+  Rewind: 'പിന്നോട്ട്',
 }

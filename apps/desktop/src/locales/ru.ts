@@ -1881,4 +1881,19 @@ export const ru: Dictionary = {
   'No group': 'Без группы',
   'Not an address': 'Это не адрес',
   'Could not connect to {host}': 'Не удалось подключиться к {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    few: 'и ещё {count} после неё',
+    many: 'и ещё {count} после неё',
+    one: 'и ещё {count} после неё',
+    other: 'и ещё {count} после неё',
+  },
+  'Restore notes and conversation': 'Восстановить заметки и разговор',
+  'Restore conversation': 'Восстановить разговор',
+  'Restore notes': 'Восстановить заметки',
+  'Summarize from here': 'Сжать отсюда',
+  'Summarize up to here': 'Сжать до этого места',
+  'Pages, terminals and moves are not undone': 'Страницы, терминалы и перемещения не отменяются',
+  Rewind: 'Перемотать назад',
 }

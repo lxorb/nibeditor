@@ -1828,4 +1828,18 @@ export const ta: Dictionary = {
   'No group': 'குழு இல்லை',
   'Not an address': 'முகவரி அல்ல',
   'Could not connect to {host}': '{host} உடன் இணைக்க முடியவில்லை',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'மற்றும் அதன் பின் {count}',
+    other: 'மற்றும் அதன் பின் {count}',
+  },
+  'Restore notes and conversation': 'குறிப்புகளையும் உரையாடலையும் மீட்டமை',
+  'Restore conversation': 'உரையாடலை மீட்டமை',
+  'Restore notes': 'குறிப்புகளை மீட்டமை',
+  'Summarize from here': 'இங்கிருந்து சுருக்கு',
+  'Summarize up to here': 'இதுவரை சுருக்கு',
+  'Pages, terminals and moves are not undone':
+    'பக்கங்கள், டெர்மினல்கள், நகர்த்தல்கள் செயல்தவிர்க்கப்படாது',
+  Rewind: 'பின்செல்',
 }

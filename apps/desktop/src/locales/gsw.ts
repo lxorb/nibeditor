@@ -1811,4 +1811,18 @@ export const gsw: Dictionary = {
   'No group': 'Kei Gruppe',
   'Not an address': 'Kei Adrässe',
   'Could not connect to {host}': 'Kei Verbindig zu {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'und {count} dänah',
+    other: 'und {count} dänah',
+  },
+  'Restore notes and conversation': 'Notize und Gspröch widerherstelle',
+  'Restore conversation': 'Gspröch widerherstelle',
+  'Restore notes': 'Notize widerherstelle',
+  'Summarize from here': 'Ab da zämefasse',
+  'Summarize up to here': 'Bis da zämefasse',
+  'Pages, terminals and moves are not undone':
+    'Siite, Terminals und Verschiebige wärde nöd zrugggnoh',
+  Rewind: 'Zruggspuele',
 }

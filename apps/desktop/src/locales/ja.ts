@@ -1791,4 +1791,14 @@ export const ja: Dictionary = {
   'No group': 'グループなし',
   'Not an address': 'アドレスではありません',
   'Could not connect to {host}': '{host} に接続できませんでした',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'とその後の {count} 件',
+  'Restore notes and conversation': 'ノートと会話を復元',
+  'Restore conversation': '会話を復元',
+  'Restore notes': 'ノートを復元',
+  'Summarize from here': 'ここから要約',
+  'Summarize up to here': 'ここまで要約',
+  'Pages, terminals and moves are not undone': 'ページ、ターミナル、移動は元に戻りません',
+  Rewind: '巻き戻す',
 }

@@ -22,6 +22,9 @@ const DEFAULTS = {
   timedOut: 'Timed out after {seconds} s',
   outputTruncated: 'Only the first {count} lines are kept',
   dismiss: 'Dismiss',
+  /** Over a change an agent made, which the reader has not kept yet. */
+  keep: 'Keep',
+  undo: 'Undo',
   /** The chevron in the margin, and the mark a fold leaves behind. */
   fold: 'Fold',
   unfold: 'Unfold',

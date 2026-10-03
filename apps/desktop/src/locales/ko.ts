@@ -1777,4 +1777,14 @@ export const ko: Dictionary = {
   'No group': '그룹 없음',
   'Not an address': '주소가 아닙니다',
   'Could not connect to {host}': '{host}에 연결할 수 없습니다',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': '및 그 뒤 {count}개',
+  'Restore notes and conversation': '노트와 대화 복원',
+  'Restore conversation': '대화 복원',
+  'Restore notes': '노트 복원',
+  'Summarize from here': '여기부터 요약',
+  'Summarize up to here': '여기까지 요약',
+  'Pages, terminals and moves are not undone': '페이지, 터미널, 이동은 되돌리지 않습니다',
+  Rewind: '되감기',
 }

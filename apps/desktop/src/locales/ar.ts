@@ -1906,4 +1906,21 @@ export const ar: Dictionary = {
   'No group': 'بلا مجموعة',
   'Not an address': 'ليس عنوانًا',
   'Could not connect to {host}': 'تعذّر الاتصال بـ {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    few: 'و{count} تعديلات بعده',
+    many: 'و{count} تعديلات بعده',
+    one: 'وتعديل {count} بعده',
+    other: 'و{count} تعديلات بعده',
+    two: 'و{count} تعديلات بعده',
+    zero: 'و{count} تعديلات بعده',
+  },
+  'Restore notes and conversation': 'استعادة الملاحظات والمحادثة',
+  'Restore conversation': 'استعادة المحادثة',
+  'Restore notes': 'استعادة الملاحظات',
+  'Summarize from here': 'لخّص من هنا',
+  'Summarize up to here': 'لخّص حتى هنا',
+  'Pages, terminals and moves are not undone': 'لا يُتراجع عن الصفحات والطرفيات والنقل',
+  Rewind: 'إرجاع',
 }

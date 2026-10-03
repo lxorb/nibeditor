@@ -1792,4 +1792,17 @@ export const gu: Dictionary = {
   'No group': 'કોઈ જૂથ નથી',
   'Not an address': 'સરનામું નથી',
   'Could not connect to {host}': '{host} સાથે કનેક્ટ થઈ શક્યું નહીં',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'અને તેના પછીનું {count}',
+    other: 'અને તેના પછીના {count}',
+  },
+  'Restore notes and conversation': 'નોંધો અને વાતચીત પાછી લાવો',
+  'Restore conversation': 'વાતચીત પાછી લાવો',
+  'Restore notes': 'નોંધો પાછી લાવો',
+  'Summarize from here': 'અહીંથી સારાંશ',
+  'Summarize up to here': 'અહીં સુધીનો સારાંશ',
+  'Pages, terminals and moves are not undone': 'પેજ, ટર્મિનલ અને ખસેડવું પૂર્વવત્ થતું નથી',
+  Rewind: 'પાછળ જાઓ',
 }

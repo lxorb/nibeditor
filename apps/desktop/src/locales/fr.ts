@@ -1862,4 +1862,19 @@ export const fr: Dictionary = {
   'No group': 'Aucun groupe',
   'Not an address': 'Pas une adresse',
   'Could not connect to {host}': 'Impossible de se connecter à {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    many: 'et {count} après',
+    one: 'et {count} après',
+    other: 'et {count} après',
+  },
+  'Restore notes and conversation': 'Restaurer les notes et la conversation',
+  'Restore conversation': 'Restaurer la conversation',
+  'Restore notes': 'Restaurer les notes',
+  'Summarize from here': 'Résumer à partir d’ici',
+  'Summarize up to here': 'Résumer jusqu’ici',
+  'Pages, terminals and moves are not undone':
+    'Les pages, terminaux et déplacements ne sont pas annulés',
+  Rewind: 'Revenir en arrière',
 }

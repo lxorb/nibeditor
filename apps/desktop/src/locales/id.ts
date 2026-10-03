@@ -1796,4 +1796,14 @@ export const id: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Bukan alamat',
   'Could not connect to {host}': 'Tidak dapat terhubung ke {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'dan {count} sesudahnya',
+  'Restore notes and conversation': 'Pulihkan catatan dan percakapan',
+  'Restore conversation': 'Pulihkan percakapan',
+  'Restore notes': 'Pulihkan catatan',
+  'Summarize from here': 'Ringkas dari sini',
+  'Summarize up to here': 'Ringkas sampai sini',
+  'Pages, terminals and moves are not undone': 'Halaman, terminal, dan pemindahan tidak diurungkan',
+  Rewind: 'Mundurkan',
 }

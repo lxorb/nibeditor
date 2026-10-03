@@ -1788,4 +1788,14 @@ export const jv: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Dudu alamat',
   'Could not connect to {host}': 'Ora bisa nyambung menyang {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'lan {count} sawisé',
+  'Restore notes and conversation': 'Balèkaké cathetan lan obrolan',
+  'Restore conversation': 'Balèkaké obrolan',
+  'Restore notes': 'Balèkaké cathetan',
+  'Summarize from here': 'Ringkes saka kéné',
+  'Summarize up to here': 'Ringkes nganti kéné',
+  'Pages, terminals and moves are not undone': 'Kaca, terminal lan pamindhahan ora diwurungaké',
+  Rewind: 'Mundur',
 }

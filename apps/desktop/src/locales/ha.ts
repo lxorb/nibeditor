@@ -1828,4 +1828,17 @@ export const ha: Dictionary = {
   'No group': 'Babu rukuni',
   'Not an address': 'Ba adireshi ba ne',
   'Could not connect to {host}': 'An kasa haɗawa da {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'da {count} bayansa',
+    other: 'da {count} bayansa',
+  },
+  'Restore notes and conversation': 'Mayar da bayanai da tattaunawa',
+  'Restore conversation': 'Mayar da tattaunawa',
+  'Restore notes': 'Mayar da bayanai',
+  'Summarize from here': 'Taƙaita daga nan',
+  'Summarize up to here': 'Taƙaita har zuwa nan',
+  'Pages, terminals and moves are not undone': 'Ba a soke shafuka, tashoshi da motsawa',
+  Rewind: 'Koma baya',
 }

@@ -1800,4 +1800,17 @@ export const bn: Dictionary = {
   'No group': 'কোনো গ্রুপ নেই',
   'Not an address': 'এটি ঠিকানা নয়',
   'Could not connect to {host}': '{host}-এ সংযোগ করা যায়নি',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'এবং এর পরের {count}টি',
+    other: 'এবং এর পরের {count}টি',
+  },
+  'Restore notes and conversation': 'নোট ও কথোপকথন ফিরিয়ে আনুন',
+  'Restore conversation': 'কথোপকথন ফিরিয়ে আনুন',
+  'Restore notes': 'নোট ফিরিয়ে আনুন',
+  'Summarize from here': 'এখান থেকে সারসংক্ষেপ',
+  'Summarize up to here': 'এখান পর্যন্ত সারসংক্ষেপ',
+  'Pages, terminals and moves are not undone': 'পেজ, টার্মিনাল ও সরানো পূর্বাবস্থায় ফেরে না',
+  Rewind: 'পিছিয়ে যান',
 }

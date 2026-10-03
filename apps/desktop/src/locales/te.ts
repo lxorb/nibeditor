@@ -1809,4 +1809,17 @@ export const te: Dictionary = {
   'No group': 'సమూహం లేదు',
   'Not an address': 'చిరునామా కాదు',
   'Could not connect to {host}': '{host}కి కనెక్ట్ చేయలేకపోయాం',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'మరియు దాని తర్వాతి {count}',
+    other: 'మరియు దాని తర్వాతి {count}',
+  },
+  'Restore notes and conversation': 'నోట్‌లు మరియు సంభాషణను పునరుద్ధరించు',
+  'Restore conversation': 'సంభాషణను పునరుద్ధరించు',
+  'Restore notes': 'నోట్‌లను పునరుద్ధరించు',
+  'Summarize from here': 'ఇక్కడి నుండి సారాంశం',
+  'Summarize up to here': 'ఇక్కడి వరకు సారాంశం',
+  'Pages, terminals and moves are not undone': 'పేజీలు, టెర్మినల్‌లు, తరలింపులు రద్దు కావు',
+  Rewind: 'వెనక్కి',
 }

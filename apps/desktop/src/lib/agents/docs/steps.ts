@@ -14,9 +14,43 @@
  *  Yjs's `UndoManager` with the agent as its tracked origin is the same thing, and it
  *  is what these become under sync v2; see docs/agent-native.md 8.10. Pure. */
 
-import type { ChangeSet, Heard, Text } from '@nib/editor'
+import { ChangeSet, type Heard, type Text } from '@nib/editor'
 
 type ChangeDesc = ChangeSet['desc']
+
+/** A span of words, in the offsets of one text. */
+interface Range {
+  from: number
+  to: number
+}
+
+/** Where a change wrote, in the words after it: what it put in, and a point where it
+ *  only took words out. */
+function written(change: ChangeSet): Range[] {
+  const ranges: Range[] = []
+  change.iterChangedRanges((_fromA, _toA, from, to) => ranges.push({ from, to }))
+  return ranges
+}
+
+/** A span carried through a change after it. */
+function mapped(range: Range, change: ChangeSet): Range {
+  const from = change.mapPos(range.from, 1)
+  return { from, to: Math.max(from, change.mapPos(range.to, -1)) }
+}
+
+/** Whether a change rewrites any of the words in `ranges`, in the words before it: it
+ *  takes out or replaces some of them, or writes into the middle of them. Writing
+ *  right beside them is not rewriting them. */
+function touches(change: ChangeSet, ranges: readonly Range[]): boolean {
+  let met = false
+  change.iterChangedRanges((from, to) => {
+    for (const range of ranges) {
+      if (from === to ? range.from < from && from < range.to : from < range.to && range.from < to)
+        met = true
+    }
+  })
+  return met
+}
 
 interface Step {
   /** The marks the edits carried into the reader's history, which say when the
@@ -118,6 +152,69 @@ export class Steps {
 
     for (const id of ids) this.undone.add(id)
     return total ? { changes: total, ids } : null
+  }
+
+  /** The ids of every step there is to take back, oldest first. */
+  get ids(): string[] {
+    return this.steps.flatMap((step) => [...step.ids])
+  }
+
+  /** Some of the steps taken back and the rest left standing, as one change against
+   *  `words` (what the note says now), and forgotten: the review's Undo of one change,
+   *  and a rewind of one thread's edits among another's.
+   *
+   *  Done the way a history would do it by hand: every step down to the lowest one
+   *  asked for is taken back, then each one above it that was not asked for is put
+   *  back again, carried through what was taken out underneath it. A step put back
+   *  that touches the words a taken one wrote depends on it - it rewrote them - and
+   *  is taken too rather than put back on top of nothing; the ids answered say which
+   *  went. Where nothing touches, this is each taken step's inverse carried through
+   *  everything since, so every later word, the reader's and the agent's, stays. */
+  take(wanted: ReadonlySet<string>, words: Text): { changes: ChangeSet; ids: string[] } | null {
+    const lowest = this.steps.findIndex((step) => step.ids.some((id) => wanted.has(id)))
+    if (lowest === -1) return null
+
+    // Down to the lowest asked for, each with the words it takes back from.
+    const popped: { step: Step; at: Text }[] = []
+    let doc = words
+    let total = ChangeSet.empty(words.length)
+    while (this.steps.length > lowest) {
+      const top = this.pop()
+      if (!top) break
+      popped.push({ step: top, at: doc })
+      total = total.compose(top.changes)
+      doc = top.changes.apply(doc)
+    }
+
+    // Back up again, oldest first. `toNow` turns the words as they were with this
+    // step in place into what they are now; `hot` is where taken steps wrote, in the
+    // same words.
+    const taken: string[] = []
+    const again: { ids: readonly string[]; changes: ChangeSet; before: Text }[] = []
+    let toNow = ChangeSet.empty(doc.length)
+    let hot: { from: number; to: number }[] = []
+    let now = doc
+    for (const { step, at } of popped.reverse()) {
+      const forward = step.changes.invert(at)
+      const asked = step.ids.some((id) => wanted.has(id))
+      if (asked || touches(forward, hot)) {
+        taken.push(...step.ids)
+        hot = [...hot.map((range) => mapped(range, forward)), ...written(forward)]
+        toNow = step.changes.compose(toNow)
+        continue
+      }
+
+      const carried = forward.map(toNow)
+      again.push({ ids: step.ids, changes: carried, before: now })
+      total = total.compose(carried)
+      now = carried.apply(now)
+      toNow = toNow.map(forward, true)
+      hot = hot.map((range) => mapped(range, forward))
+    }
+
+    for (const one of again) this.push(one.ids, one.changes, one.before)
+    for (const id of taken) this.undone.add(id)
+    return { changes: total, ids: taken }
   }
 
   private pop(): Step | null {

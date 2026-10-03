@@ -1756,4 +1756,14 @@ export const yue: Dictionary = {
   'No group': '冇群組',
   'Not an address': '唔係地址',
   'Could not connect to {host}': '連唔到 {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': '同之後嘅 {count} 個',
+  'Restore notes and conversation': '還原筆記同對話',
+  'Restore conversation': '還原對話',
+  'Restore notes': '還原筆記',
+  'Summarize from here': '由呢度開始摘要',
+  'Summarize up to here': '摘要到呢度',
+  'Pages, terminals and moves are not undone': '網頁、終端機同移動唔會復原',
+  Rewind: '倒帶',
 }

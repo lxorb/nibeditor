@@ -83,9 +83,35 @@ function trackOf(agent: Agent, path: string): Track {
 
   const made = new Track(agent.id, (edits) => {
     touch(path, agent, edits)
+    for (const listener of listeners) listener(agent.id, path)
   })
   tracks.set(key, made)
   return made
+}
+
+/** Whoever wants to know when an agent's edits of a note change: one made, some taken
+ *  back, the reader's Ctrl+Z of one. The review (lib/ai/review) is. */
+const listeners = new Set<(agent: string, path: string) => void>()
+
+/** Listens; answers the way to stop. */
+export function onTracks(listener: (agent: string, path: string) => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+/** Every agent with edits of its own this session. */
+export function trackedAgents(): string[] {
+  return [...new Set([...tracks.keys()].map((key) => key.slice(0, key.indexOf('\n'))))]
+}
+
+/** One agent's tracks, by the path of the note each is of: what the review reads. */
+export function tracksOf(agent: string): Map<string, Track> {
+  const prefix = keyOf(agent, '')
+  const found = new Map<string, Track>()
+  for (const [key, track] of tracks) {
+    if (key.startsWith(prefix)) found.set(key.slice(prefix.length), track)
+  }
+  return found
 }
 
 /** Turns an agent's edits, against the words as they are at the moment of applying,
@@ -361,5 +387,58 @@ export async function undoAt(desk: Desk, agent: Agent, note: Located): Promise<{
 
     await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
     return { undone: back.count }
+  })
+}
+
+/** Some of one agent's edits of a note taken back, as one step, mapped through
+ *  everything since: the review's Undo of a change, and a rewind. Answers the ids
+ *  that went, a later edit that rewrote their words among them. `token` names the
+ *  take so `putBackAt` can undo it (a rewind's Redo). */
+export async function undoSomeAt(
+  desk: Desk,
+  agent: Agent,
+  note: Located,
+  ids: ReadonlySet<string>,
+  token?: string,
+): Promise<string[]> {
+  const key = keyOf(agent.id, note.path)
+  const track = tracks.get(key)
+  if (!track?.steps.size) return []
+
+  return inTurn(key, async () => {
+    const open = openNote(desk, note)
+    if (open) return track.undoSomeOpen(open, ids, token)
+
+    const words = await wordsOf(desk, note)
+    const back = track.undoSomeClosed(words, ids, token)
+    if (!back) return []
+
+    await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
+    return back.ids
+  })
+}
+
+/** What `undoSomeAt` took back under `token`, put back. Answers the ids that came
+ *  back. */
+export async function putBackAt(
+  desk: Desk,
+  agent: Agent,
+  note: Located,
+  token: string,
+): Promise<string[]> {
+  const key = keyOf(agent.id, note.path)
+  const track = tracks.get(key)
+  if (!track?.holds(token)) return []
+
+  return inTurn(key, async () => {
+    const open = openNote(desk, note)
+    if (open) return track.putBackOpen(open, token)
+
+    const words = await wordsOf(desk, note)
+    const back = track.putBackClosed(words, token)
+    if (!back) return []
+
+    await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
+    return back.ids
   })
 }

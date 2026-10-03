@@ -1850,4 +1850,18 @@ export const ptPT: Dictionary = {
   'No group': 'Sem grupo',
   'Not an address': 'Não é um endereço',
   'Could not connect to {host}': 'Não foi possível ligar a {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    many: 'e {count} depois',
+    one: 'e {count} depois',
+    other: 'e {count} depois',
+  },
+  'Restore notes and conversation': 'Restaurar notas e conversa',
+  'Restore conversation': 'Restaurar conversa',
+  'Restore notes': 'Restaurar notas',
+  'Summarize from here': 'Resumir a partir daqui',
+  'Summarize up to here': 'Resumir até aqui',
+  'Pages, terminals and moves are not undone': 'Páginas, terminais e movimentos não são anulados',
+  Rewind: 'Recuar',
 }

@@ -1755,4 +1755,14 @@ export const zhHans: Dictionary = {
   'No group': '无分组',
   'Not an address': '不是地址',
   'Could not connect to {host}': '无法连接到 {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': '以及之后的 {count} 处',
+  'Restore notes and conversation': '恢复笔记和对话',
+  'Restore conversation': '恢复对话',
+  'Restore notes': '恢复笔记',
+  'Summarize from here': '从这里开始总结',
+  'Summarize up to here': '总结到这里',
+  'Pages, terminals and moves are not undone': '网页、终端和移动不会撤销',
+  Rewind: '回退',
 }

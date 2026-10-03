@@ -1807,4 +1807,17 @@ export const pa: Dictionary = {
   'No group': 'ਕੋਈ ਗਰੁੱਪ ਨਹੀਂ',
   'Not an address': 'ਪਤਾ ਨਹੀਂ ਹੈ',
   'Could not connect to {host}': '{host} ਨਾਲ ਕਨੈਕਟ ਨਹੀਂ ਹੋ ਸਕਿਆ',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    one: 'ਅਤੇ ਉਸ ਤੋਂ ਬਾਅਦ ਦਾ {count}',
+    other: 'ਅਤੇ ਉਸ ਤੋਂ ਬਾਅਦ ਦੇ {count}',
+  },
+  'Restore notes and conversation': 'ਨੋਟ ਅਤੇ ਗੱਲਬਾਤ ਵਾਪਸ ਲਿਆਓ',
+  'Restore conversation': 'ਗੱਲਬਾਤ ਵਾਪਸ ਲਿਆਓ',
+  'Restore notes': 'ਨੋਟ ਵਾਪਸ ਲਿਆਓ',
+  'Summarize from here': 'ਇੱਥੋਂ ਸਾਰ',
+  'Summarize up to here': 'ਇੱਥੇ ਤੱਕ ਸਾਰ',
+  'Pages, terminals and moves are not undone': 'ਪੰਨੇ, ਟਰਮੀਨਲ ਅਤੇ ਹਿਲਾਉਣਾ ਅਣਕੀਤੇ ਨਹੀਂ ਹੁੰਦੇ',
+  Rewind: 'ਪਿੱਛੇ ਜਾਓ',
 }

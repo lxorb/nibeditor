@@ -1875,4 +1875,19 @@ export const uk: Dictionary = {
   'No group': 'Без групи',
   'Not an address': 'Це не адреса',
   'Could not connect to {host}': 'Не вдалося підключитися до {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': {
+    few: 'і ще {count} після неї',
+    many: 'і ще {count} після неї',
+    one: 'і ще {count} після неї',
+    other: 'і ще {count} після неї',
+  },
+  'Restore notes and conversation': 'Відновити нотатки й розмову',
+  'Restore conversation': 'Відновити розмову',
+  'Restore notes': 'Відновити нотатки',
+  'Summarize from here': 'Стиснути звідси',
+  'Summarize up to here': 'Стиснути до цього місця',
+  'Pages, terminals and moves are not undone': 'Сторінки, термінали й переміщення не скасовуються',
+  Rewind: 'Перемотати назад',
 }

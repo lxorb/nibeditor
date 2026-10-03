@@ -1796,4 +1796,14 @@ export const ms: Dictionary = {
   'No group': 'Tiada kumpulan',
   'Not an address': 'Bukan alamat',
   'Could not connect to {host}': 'Tidak dapat menyambung ke {host}',
+  // The review of the AI sidebar's changes: how many more an undo took, and the
+  // rewind sheet's rows
+  'and {count} after it': 'dan {count} selepasnya',
+  'Restore notes and conversation': 'Pulihkan nota dan perbualan',
+  'Restore conversation': 'Pulihkan perbualan',
+  'Restore notes': 'Pulihkan nota',
+  'Summarize from here': 'Ringkaskan dari sini',
+  'Summarize up to here': 'Ringkaskan hingga sini',
+  'Pages, terminals and moves are not undone': 'Halaman, terminal dan pemindahan tidak dibuat asal',
+  Rewind: 'Undur',
 }
