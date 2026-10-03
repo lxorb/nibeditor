@@ -1,5 +1,16 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, test } from 'vitest'
-import { absolutise, clean, extract, linkTitle, pageTags, pageTitle, widestOf } from './extract'
+import {
+  absolutise,
+  clean,
+  extract,
+  linkTitle,
+  pageTags,
+  pageTitle,
+  readSnapshot,
+  widestOf,
+} from './article'
+import { SELECTED } from './snapshot'
 
 const PAGE = 'https://site.example/section/page.html'
 
@@ -362,5 +373,55 @@ describe('what to clip', () => {
     )
 
     expect(extract(page, 'page', PAGE).html).toContain('https://cdn.example/assets/photo.jpg')
+  })
+})
+
+describe('a page a web tab wrote down', () => {
+  const ARTICLE = `<article><h1>Heading</h1>${'<p>Words worth keeping, said at length. </p>'.repeat(12)}</article>`
+
+  test('is read for its article, like a live page', () => {
+    const read = readSnapshot(
+      `<!DOCTYPE html><html><head><title>Tab title</title><meta name="keywords" content="one, two"></head><body><nav>Menu</nav>${ARTICLE}</body></html>`,
+      PAGE,
+    )
+
+    expect(read.kind).toBe('page')
+    expect(read.html).toContain('Words worth keeping')
+    expect(read.html).not.toContain('Menu')
+    expect(read.tags).toEqual(['one', 'two'])
+  })
+
+  test('is the selection when the page marked one, with the page’s own title and tags', () => {
+    const read = readSnapshot(
+      `<!DOCTYPE html><html ${SELECTED}><head><title>Tab title</title><meta property="article:tag" content="Kept"></head><body><p>Only <a href="x.html">this</a>.</p></body></html>`,
+      PAGE,
+    )
+
+    expect(read).toMatchObject({ kind: 'selection', title: 'Tab title', tags: ['Kept'] })
+    expect(read.html).toBe('<p>Only <a href="https://site.example/section/x.html">this</a>.</p>')
+  })
+
+  test('resolves against the base the page wrote, or its address where it wrote none', () => {
+    const named = readSnapshot(
+      `<!DOCTYPE html><html ${SELECTED}><head><base href="https://cdn.example/docs/"></head><body><a href="a.html">a</a></body></html>`,
+      PAGE,
+    )
+    expect(named.html).toContain('https://cdn.example/docs/a.html')
+
+    const none = readSnapshot(
+      `<!DOCTYPE html><html ${SELECTED}><head></head><body><a href="a.html">a</a></body></html>`,
+      PAGE,
+    )
+    expect(none.html).toContain('https://site.example/section/a.html')
+  })
+
+  test('runs nothing the page wrote', () => {
+    const marked = window as unknown as { ran?: boolean }
+    readSnapshot(
+      `<!DOCTYPE html><html><head><script>window.ran = true</script></head><body><img src="x" onerror="window.ran = true">${ARTICLE}</body></html>`,
+      PAGE,
+    )
+
+    expect(marked.ran).toBeUndefined()
   })
 })

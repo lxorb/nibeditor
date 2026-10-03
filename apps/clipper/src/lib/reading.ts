@@ -9,7 +9,7 @@
  *  This is also the seam the tests take hold of: a saved page parsed by jsdom
  *  goes in, and the markdown a note would contain comes out. */
 
-import { extract } from './extract'
+import { extract } from '@nib/markdown/article'
 import type { Kind } from './kinds'
 import { toMarkdown } from './markdown'
 import type { Clip } from './messages'

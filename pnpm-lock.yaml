@@ -50,9 +50,6 @@ importers:
 
   apps/clipper:
     dependencies:
-      '@mozilla/readability':
-        specifier: ^0.6.0
-        version: 0.6.0
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
@@ -395,6 +392,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@mozilla/readability':
+        specifier: ^0.6.0
+        version: 0.6.0
       katex:
         specifier: ^0.18.5
         version: 0.18.5
@@ -414,9 +414,15 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
     devDependencies:
+      '@types/jsdom':
+        specifier: ^30.0.0
+        version: 30.0.0
       '@types/turndown':
         specifier: ^5.0.6
         version: 5.0.6
+      jsdom:
+        specifier: ^28.0.1
+        version: 28.1.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

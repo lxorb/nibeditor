@@ -1,7 +1,7 @@
 /** A page into a note: `capture_to_note` (docs/agent-native.md 5.4).
  *
  *  The clipper's own road for a page. `clip` is the markdown the clip button writes
- *  (web-tab/note.ts `clipNote`), with `source:`, `title:` and `date:` as it writes
+ *  (web-tab/note.ts `clipNote`), with `source:`, `title:` and `clipped:` as it writes
  *  them; `screenshot` is a picture of the page and `pdf` the page printed on the
  *  reader's own paper, each kept beside the note as the note's own file and embedded
  *  the way a pasted picture is; `link` is the address. Into a new note named after the

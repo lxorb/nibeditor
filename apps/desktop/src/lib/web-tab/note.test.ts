@@ -60,7 +60,7 @@ describe('the note a clip is', () => {
 
     expect(frontMatterValue(note, 'source')).toBe('https://example.com/post')
     expect(frontMatterValue(note, 'title')).toBe('A post')
-    expect(frontMatterValue(note, 'date')).toBe('2026-09-12T08:30:00.000Z')
+    expect(frontMatterValue(note, 'clipped')).toBe('2026-09-12T08:30:00.000Z')
     expect(note).toContain('\n# A post\n')
     expect(note).toContain('## A heading')
     expect(note).toContain('Some **words**.')
