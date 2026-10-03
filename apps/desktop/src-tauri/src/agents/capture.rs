@@ -74,7 +74,7 @@ fn no_paper() -> Answer {
 }
 
 /// The page read through the engine, where the engine can be asked.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     use super::verbs::Captured;
 
@@ -130,7 +130,7 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
 
 /// Every other engine: no honest way yet (section 12). The window clips a reader's tab
 /// the clip button's way there, and takes no picture it could not paint over.
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(not(any(windows, feature = "cef")))]
 fn taken(_app: &AppHandle, _caller: &Caller, _tab: &str, _asked: Asked) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,

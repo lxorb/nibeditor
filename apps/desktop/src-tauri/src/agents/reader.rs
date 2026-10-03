@@ -9,6 +9,11 @@
 //!   measures it on every run - so a `GotFocus` on a page an agent is acting in is always
 //!   the reader. The agent's next call there answers `paused_by_reader`, and nothing
 //!   gives the tab back but the reader's press on the agent's mark (`agents_resume`).
+//!   nib's own Chromium has no such event for a page the runtime built, so there the
+//!   window's own answer to which page has the keyboard is asked ten times a second
+//!   while an agent acts in one of the reader's tabs (Windows); where nothing can say it
+//!   (nib's own Chromium on a Mac or Linux) the reader's tabs are not an agent's to act
+//!   in at all, since the reader could not take one back.
 //! - **No key through the protocol.** A reader's tab has the page-first keys and the
 //!   browser's chords listening; a key pressed into it through the protocol is a key
 //!   those hand to the window, which then takes the keyboard back to itself - a probe did
@@ -21,8 +26,9 @@ use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
 use serde_json::json;
-use tauri::{AppHandle, Manager as _, Webview};
+use tauri::{AppHandle, Manager as _};
 
+use super::engines::View;
 use super::grants::Spaces;
 use super::verbs::{window, ReaderTab};
 
@@ -69,20 +75,24 @@ fn pages(app: &AppHandle) -> Vec<ReaderTab> {
         .collect()
 }
 
+/// Whether this engine can hear the reader take one of their tabs back (7.3), without
+/// which an agent never acts in one.
+pub const HEARS_THE_READER: bool = cfg!(windows);
+
 /// The page of a reader's tab, if the tab has one.
-pub fn page(app: &AppHandle, tab: &str) -> Option<Webview> {
+pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
     let label = crate::web_tabs::label_of(tab);
     // The page that holds the shared session open is under the same prefix and is
     // nobody's tab (see `session::anchor` in web_tabs.rs); nib's own window never is.
     if label == "web-session" || !(label.starts_with("web-") || label.starts_with("agent-")) {
         return None;
     }
-    app.get_webview(&label)
+    super::engines::view(app, &label)
 }
 
 /// Notes an agent acting on a reader's tab, and starts following the tab's keyboard
 /// the first time any agent does.
-pub fn acting(app: &AppHandle, agent: &str, tab: &str, view: &Webview) {
+pub fn acting(app: &AppHandle, agent: &str, tab: &str, view: &View) {
     let first = {
         let mut all = ACTING.lock().unwrap_or_else(PoisonError::into_inner);
         let all = all.get_or_insert_with(HashMap::new);
@@ -109,13 +119,15 @@ fn agents_on(tab: &str) -> Vec<String> {
 }
 
 /// Follows the keyboard of a reader's tab: taking it pauses every agent acting there.
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the webview's focus is WebView2's own controller event, reached through COM"
 )]
-fn follow_focus(app: &AppHandle, tab: &str, view: &Webview) {
+fn follow_focus(app: &AppHandle, tab: &str, view: &View) {
     use webview2_com::FocusChangedEventHandler;
 
+    let View::Webview(view) = view;
     let (app, tab) = (app.clone(), tab.to_string());
     let _ = view.with_webview(move |platform| {
         let pausing = app.clone();
@@ -129,6 +141,39 @@ fn follow_focus(app: &AppHandle, tab: &str, view: &Webview) {
         // the handler for as long as the webview lives.
         unsafe {
             let _ = platform.controller().add_GotFocus(&got, &raw mut token);
+        }
+    });
+}
+
+/// Follows the keyboard of a reader's tab on nib's own Chromium, where no event says it:
+/// which page of the window has the keyboard, asked on the window's thread (the only one
+/// that can answer) ten times a second, for as long as an agent acts in the tab. The
+/// moment it becomes this tab's page is the reader taking it.
+#[cfg(feature = "cef")]
+fn follow_focus(app: &AppHandle, tab: &str, view: &View) {
+    let Some(webview) = view.webview() else {
+        return;
+    };
+    let (app, tab) = (app.clone(), tab.to_string());
+    let (window, label) = (webview.window().label().to_string(), view.label());
+    std::thread::spawn(move || {
+        let mut had = false;
+        while !agents_on(&tab).is_empty() {
+            let (said, answer) = std::sync::mpsc::sync_channel(1);
+            let asked = window.clone();
+            let _ = app.run_on_main_thread(move || {
+                let _ = said.try_send(crate::keyboard::page_holding(&asked));
+            });
+            let has = answer
+                .recv_timeout(Duration::from_secs(1))
+                .ok()
+                .flatten()
+                .is_some_and(|holding| holding == label);
+            if has && !had {
+                took_the_keyboard(&app, &tab);
+            }
+            had = has;
+            std::thread::sleep(Duration::from_millis(100));
         }
     });
 }

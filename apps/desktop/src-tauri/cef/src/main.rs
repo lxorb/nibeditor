@@ -179,6 +179,12 @@ fn main() {
         if debugged {
             allow_debugging(&path);
         }
+        // An agent's own tab is a browser with no window, which CEF can make only when
+        // told so as it starts; and only where an agent is paired, since the switch is
+        // the whole process's (see agents/engines/cef.rs).
+        if path.parent().is_some_and(nib_lib::agent_pages_wanted) {
+            engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
+        }
         engine = engine.root_cache_path(path);
     }
     engine = engine.remote_debugging(debugging);

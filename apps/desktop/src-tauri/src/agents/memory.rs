@@ -22,6 +22,7 @@ pub fn too_much() -> Option<String> {
 }
 
 /// The working sets of every process below the app's own, together.
+#[cfg(windows)]
 pub fn engine_bytes() -> u64 {
     let own = std::process::id();
     let all = crate::terminal::process::processes();
@@ -40,6 +41,7 @@ pub fn engine_bytes() -> u64 {
 }
 
 /// One process's working set, in bytes; nothing for a process that cannot be asked.
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a process's memory is Win32's own question and has no safe wrapper"
@@ -68,6 +70,13 @@ fn working_set(pid: u32) -> u64 {
             0
         }
     }
+}
+
+/// Elsewhere (nib's own Chromium on a Mac or Linux) the ceiling is not asked yet: the
+/// engine counts as nothing, so no tab is refused for memory there.
+#[cfg(not(windows))]
+pub fn engine_bytes() -> u64 {
+    0
 }
 
 #[cfg(test)]
