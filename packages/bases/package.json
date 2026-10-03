@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./agent": "./src/agent/index.ts",
     "./answer": "./src/answer.ts",
     "./language": "./src/language/index.ts",
     "./occurrence": "./src/occurrence.ts",
