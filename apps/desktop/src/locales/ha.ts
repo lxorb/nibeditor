@@ -1134,8 +1134,8 @@ export const ha: Dictionary = {
     'Bayanan kula {count} suna bayan kalmar sirri da Notes kawai zai iya buɗewa',
   '{count} notes are in Recently Deleted, and stay there':
     'Bayanan kula {count} suna cikin Wanda aka share kwanan nan kuma za su zauna can',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'Zane da shafukan da aka leƙa {count} hotuna ne da Notes ke zana da kansa',
+  '{count} drawings and scans have no picture on this Mac':
+    'Zane da leƙe {count} ba su da hoto a wannan Mac',
   '{count} tables inside notes do not come over':
     'Teburori {count} cikin bayanan kula ba sa shigowa',
   '{count} attachments are in iCloud rather than on this Mac':

@@ -1100,8 +1100,8 @@ export const zhHant: Dictionary = {
     '{count} 則筆記加了密碼，只有「備忘錄」能開啟',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記在「最近刪除」中，仍留在那裡',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} 幅圖畫與掃描頁是「備忘錄」自行繪製的圖片',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} 幅圖畫與掃描在這台 Mac 上沒有圖片',
   '{count} tables inside notes do not come over': '筆記內的 {count} 個表格不會轉入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 個附件在 iCloud 上，而不在這台 Mac 上',

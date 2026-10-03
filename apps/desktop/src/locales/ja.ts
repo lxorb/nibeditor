@@ -1115,8 +1115,8 @@ export const ja: Dictionary = {
     '{count} 件のメモはパスワードで保護され、メモ以外では開けません',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 件のメモは最近削除した項目にあり、そこに残ります',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} 件の手書きとスキャンはメモ自身が描く絵です',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} 件の手書きとスキャンは、この Mac に画像がありません',
   '{count} tables inside notes do not come over': 'メモの中の {count} 件の表は入りません',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 件の添付は iCloud にあり、この Mac にはありません',

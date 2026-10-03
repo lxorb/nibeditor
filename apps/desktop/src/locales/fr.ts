@@ -1150,8 +1150,8 @@ export const fr: Dictionary = {
     '{count} notes sont protégées par un mot de passe que seul Notes peut ouvrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notes sont dans Supprimés récemment et y restent',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} dessins et pages numérisées sont des images que Notes dessine lui-même',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} dessins et numérisations n’ont pas d’image sur ce Mac',
   '{count} tables inside notes do not come over': '{count} tableaux dans des notes n’arrivent pas',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} pièces jointes sont dans iCloud et non sur ce Mac',

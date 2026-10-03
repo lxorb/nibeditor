@@ -19,6 +19,7 @@
 //! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
 //! for a raised and a lowered run, `- [x]` for a ticked box.
 
+use std::collections::HashMap;
 use std::io::Read;
 
 use flate2::read::{GzDecoder, ZlibDecoder};
@@ -217,7 +218,9 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             out.push_str(&words);
         } else {
             out.push_str(&prefix(run, line.soft, counted));
-            out.push_str(words.trim_start());
+            // Not the line breaks: those are an attachment that is a block of its own,
+            // a table or a scan, asking for the blank line a block needs above it.
+            out.push_str(words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n'));
         }
 
         out.push('\n');
@@ -447,6 +450,343 @@ fn tidy(markdown: &str) -> String {
     }
 
     out.trim().to_string()
+}
+
+// ── Tables and scans ──────────────────────────────────────────────────
+
+/// A table inside a note, as a markdown table, or None for bytes that are not one.
+///
+/// A table is not on the note's row. It is an attachment with a row of its own, whose
+/// `ZMERGEABLEDATA1` is a gzipped `MergableDataProto`: the document Notes merges when two
+/// devices edit the same table at once. So nothing in it is where it is drawn. There is a
+/// list of objects, and every reference is an index into it; the rows and the columns are
+/// two ordered sets of identifiers, each saying where an identifier sits; and the cells
+/// are a dictionary from a column's identifier to a dictionary from a row's identifier to
+/// a note of its own - which is a `Body` like any other, so its words are written the way
+/// a note's are. This is Obsidian's importer's reading (`convert-table.ts`), field for
+/// field.
+///
+/// The first row is the header, because markdown's table has one and Notes' does not:
+/// that is what every table somebody makes in Notes looks like anyway. A cell's line
+/// breaks become `<br>` and its pipes are escaped, so a row stays one row. Notes cannot
+/// merge two cells, so there is nothing to flatten.
+pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
+    let bytes = inflate(data)?;
+    let store = Store::of(&bytes)?;
+    let root = store.objects.iter().find_map(|one| {
+        one.map
+            .as_ref()
+            .filter(|map| store.type_is(map.kind, TABLE_TYPE))
+    })?;
+
+    let (mut rows, mut columns, mut cells) = (None, None, None);
+    for (key, value) in &root.entries {
+        let object = value.object.and_then(|at| store.objects.get(at));
+        match store.key(*key) {
+            Some(ROWS) => rows = object.and_then(|one| store.places(one)),
+            Some(COLUMNS) => columns = object.and_then(|one| store.places(one)),
+            Some(CELLS) => cells = object,
+            _ => {}
+        }
+    }
+
+    let ((rows, height), (columns, width)) = (rows?, columns?);
+    if height == 0 || width == 0 {
+        return None;
+    }
+
+    let mut grid = vec![vec![String::new(); width]; height];
+    for (column, held) in &cells?.dictionary {
+        let Some(across) = store
+            .target(column)
+            .and_then(|id| columns.get(&id).copied())
+        else {
+            continue;
+        };
+        let Some(column) = held.object.and_then(|at| store.objects.get(at)) else {
+            continue;
+        };
+
+        for (row, cell) in &column.dictionary {
+            let Some(down) = store.target(row).and_then(|id| rows.get(&id).copied()) else {
+                continue;
+            };
+            let body = cell
+                .object
+                .and_then(|at| store.objects.get(at))
+                .and_then(|one| one.note.as_ref());
+            if let (Some(body), Some(slot)) = (
+                body,
+                grid.get_mut(down).and_then(|line| line.get_mut(across)),
+            ) {
+                *slot = cell_words(body, parts);
+            }
+        }
+    }
+
+    Some(grid_markdown(&grid))
+}
+
+/// The pages a scan holds, in order: the identifier of each page's own image attachment,
+/// whose file the database says where to find. A scan is a gallery in `ZMERGEABLEDATA1`,
+/// like a table, and each of its objects that is a map names one page as its first
+/// entry's string; see Obsidian's importer, `convert-scan.ts`.
+pub fn gallery(data: &[u8]) -> Vec<String> {
+    let Some(store) = inflate(data).and_then(|bytes| Store::of(&bytes)) else {
+        return Vec::new();
+    };
+
+    store
+        .objects
+        .into_iter()
+        .filter_map(|one| one.map?.entries.into_iter().next()?.1.text)
+        .filter(|id| !id.is_empty())
+        .collect()
+}
+
+/// The type the root of a table's document has.
+const TABLE_TYPE: &str = "com.apple.notes.ICTable";
+/// The root's three keys: where each row sits, where each column sits, and the cells.
+const ROWS: &str = "crRows";
+const COLUMNS: &str = "crColumns";
+const CELLS: &str = "cellColumns";
+
+/// The most rows or columns a table is read with. Notes stops long before this; a set
+/// claiming millions is a blob somebody wrote by hand, and a grid that size would be the
+/// import running out of memory rather than a table.
+const MOST_CELLS: usize = 1024;
+
+/// One cell's words, on one line.
+fn cell_words(body: &Body, parts: &mut dyn Parts) -> String {
+    markdown(body, parts)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("<br>")
+        .replace('|', "\\|")
+}
+
+/// The grid as a markdown table, the first row its header.
+fn grid_markdown(grid: &[Vec<String>]) -> String {
+    let mut out = Vec::with_capacity(grid.len() + 1);
+
+    for (at, cells) in grid.iter().enumerate() {
+        out.push(format!("| {} |", cells.join(" | ")));
+        if at == 0 {
+            out.push(format!("|{}", " --- |".repeat(cells.len())));
+        }
+    }
+
+    out.join("\n")
+}
+
+/// A reference in the merged document: a number, a string, or an index into its list
+/// of objects.
+#[derive(Default)]
+struct Id {
+    number: Option<u64>,
+    text: Option<String>,
+    object: Option<usize>,
+}
+
+/// A map in the document: its type, as an index into the types, and its entries, each
+/// an index into the keys and a reference.
+struct Map {
+    kind: usize,
+    entries: Vec<(usize, Id)>,
+}
+
+/// One object of the document: the parts of one a table or a scan is made of.
+#[derive(Default)]
+struct Object {
+    map: Option<Map>,
+    dictionary: Vec<(Id, Id)>,
+    /// An ordered set's identifiers in the order they are drawn.
+    order: Vec<Vec<u8>>,
+    /// And which identifier each element of the set is.
+    placed: Vec<(Id, Id)>,
+    note: Option<Body>,
+}
+
+/// A merged document, read: its objects, and the three lists they index into.
+#[derive(Default)]
+struct Store {
+    objects: Vec<Object>,
+    keys: Vec<String>,
+    types: Vec<String>,
+    uuids: Vec<Vec<u8>>,
+}
+
+impl Store {
+    /// A `MergableDataProto`: field 2 holds the object, whose field 3 holds the data.
+    fn of(bytes: &[u8]) -> Option<Self> {
+        let data = held(held(bytes, 2)?, 3)?;
+        let mut store = Self::default();
+
+        for (number, value) in Fields::new(data) {
+            if let Value::Bytes(said) = value {
+                match number {
+                    3 => store.objects.push(object_of(said)),
+                    4 => store.keys.push(text_of(said)),
+                    5 => store.types.push(text_of(said)),
+                    6 => store.uuids.push(said.to_vec()),
+                    _ => {}
+                }
+            }
+        }
+
+        Some(store)
+    }
+
+    fn key(&self, at: usize) -> Option<&str> {
+        self.keys.get(at).map(String::as_str)
+    }
+
+    fn type_is(&self, at: usize, name: &str) -> bool {
+        self.types.get(at).is_some_and(|one| one == name)
+    }
+
+    /// The identifier a reference ends at: the object it names is a map whose first
+    /// entry is an index into the identifiers.
+    fn target(&self, reference: &Id) -> Option<Vec<u8>> {
+        let object = self.objects.get(reference.object?)?;
+        let first = &object.map.as_ref()?.entries.first()?.1;
+        let at = usize::try_from(first.number?).ok()?;
+        self.uuids.get(at).cloned()
+    }
+
+    /// Where each row or column sits, by its identifier, and how many there are.
+    fn places(&self, object: &Object) -> Option<(HashMap<Vec<u8>, usize>, usize)> {
+        let count = object.order.len();
+        if count > MOST_CELLS {
+            return None;
+        }
+
+        let mut places = HashMap::new();
+        for (key, value) in &object.placed {
+            let (Some(key), Some(value)) = (self.target(key), self.target(value)) else {
+                continue;
+            };
+            if let Some(at) = object.order.iter().position(|one| *one == key) {
+                places.insert(value, at);
+            }
+        }
+
+        Some((places, count))
+    }
+}
+
+/// One `MergeableDataObjectEntry`.
+fn object_of(bytes: &[u8]) -> Object {
+    let mut object = Object::default();
+
+    for (number, value) in Fields::new(bytes) {
+        let Value::Bytes(said) = value else { continue };
+        match number {
+            6 => object.dictionary = elements_of(said),
+            10 => object.note = Some(note_of(said)),
+            13 => object.map = Some(map_of(said)),
+            16 => ordered_of(said, &mut object),
+            _ => {}
+        }
+    }
+
+    object
+}
+
+/// An index out of the blob, or one that indexes nothing where it does not fit.
+fn index(said: u64) -> usize {
+    usize::try_from(said).unwrap_or(usize::MAX)
+}
+
+/// A `MergeableDataObjectMap`.
+fn map_of(bytes: &[u8]) -> Map {
+    let mut map = Map {
+        kind: usize::MAX,
+        entries: Vec::new(),
+    };
+
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (1, Value::Number(said)) => map.kind = index(said),
+            (3, Value::Bytes(entry)) => {
+                let mut key = usize::MAX;
+                let mut id = Id::default();
+                for (number, value) in Fields::new(entry) {
+                    match (number, value) {
+                        (1, Value::Number(at)) => key = index(at),
+                        (2, Value::Bytes(inside)) => id = id_of(inside),
+                        _ => {}
+                    }
+                }
+                map.entries.push((key, id));
+            }
+            _ => {}
+        }
+    }
+
+    map
+}
+
+/// An `ObjectID`.
+fn id_of(bytes: &[u8]) -> Id {
+    let mut id = Id::default();
+
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (2, Value::Number(said)) => id.number = Some(said),
+            (4, Value::Bytes(said)) => id.text = Some(text_of(said)),
+            (6, Value::Number(said)) => id.object = usize::try_from(said).ok(),
+            _ => {}
+        }
+    }
+
+    id
+}
+
+/// A `Dictionary`: its elements, each a key and a value.
+fn elements_of(bytes: &[u8]) -> Vec<(Id, Id)> {
+    let mut elements = Vec::new();
+
+    for (number, value) in Fields::new(bytes) {
+        let (1, Value::Bytes(element)) = (number, value) else {
+            continue;
+        };
+        let (mut key, mut value) = (Id::default(), Id::default());
+        for (number, inside) in Fields::new(element) {
+            match (number, inside) {
+                (1, Value::Bytes(said)) => key = id_of(said),
+                (2, Value::Bytes(said)) => value = id_of(said),
+                _ => {}
+            }
+        }
+        elements.push((key, value));
+    }
+
+    elements
+}
+
+/// An `OrderedSet`: its ordering's array of identifiers, and its ordering's contents,
+/// which say which identifier each element is.
+fn ordered_of(bytes: &[u8], object: &mut Object) {
+    let Some(ordering) = held(bytes, 1) else {
+        return;
+    };
+
+    if let Some(array) = held(ordering, 1) {
+        for (number, value) in Fields::new(array) {
+            if let (2, Value::Bytes(attachment)) = (number, value) {
+                if let Some(uuid) = held(attachment, 2) {
+                    object.order.push(uuid.to_vec());
+                }
+            }
+        }
+    }
+
+    if let Some(contents) = held(ordering, 2) {
+        object.placed = elements_of(contents);
+    }
 }
 
 // ── The protobuf ──────────────────────────────────────────────────────
@@ -954,6 +1294,190 @@ mod tests {
 
         assert!(said.len() < 200, "{} characters of indent", said.len());
         assert!(said.trim_start().starts_with("- "), "{said}");
+    }
+
+    // ── Tables and scans ──
+
+    /// An `ObjectID` naming one object of the document.
+    fn object(at: u64) -> Vec<u8> {
+        number(6, at)
+    }
+
+    /// A dictionary element from one object to another.
+    fn element(key: u64, value: u64) -> Vec<u8> {
+        let mut inner = bytes(1, &object(key));
+        inner.extend(bytes(2, &object(value)));
+        bytes(1, &inner)
+    }
+
+    /// A map of the given type, its entries each a key and an `ObjectID`.
+    fn map(kind: u64, entries: &[(u64, Vec<u8>)]) -> Vec<u8> {
+        let mut inner = number(1, kind);
+        for (key, id) in entries {
+            let mut entry = number(1, *key);
+            entry.extend(bytes(2, id));
+            inner.extend(bytes(3, &entry));
+        }
+        bytes(13, &inner)
+    }
+
+    /// An ordered set: the identifiers in their order, and each element pointing at
+    /// the object that names its identifier.
+    fn ordered(order: &[&[u8]], elements: &[(u64, u64)]) -> Vec<u8> {
+        let mut array = Vec::new();
+        for (at, uuid) in order.iter().enumerate() {
+            let mut attachment = number(1, u64::try_from(at).unwrap_or(0));
+            attachment.extend(bytes(2, uuid));
+            array.extend(bytes(2, &attachment));
+        }
+        let mut contents = Vec::new();
+        for (key, value) in elements {
+            contents.extend(element(*key, *value));
+        }
+        let mut ordering = bytes(1, &array);
+        ordering.extend(bytes(2, &contents));
+        bytes(16, &bytes(1, &ordering))
+    }
+
+    fn dictionary(elements: &[(u64, u64)]) -> Vec<u8> {
+        let mut inner = Vec::new();
+        for (key, value) in elements {
+            inner.extend(element(*key, *value));
+        }
+        bytes(6, &inner)
+    }
+
+    /// A cell: a note of its own, with one run over all of it saying what it is.
+    fn cell(text: &str, marks: &[Vec<u8>]) -> Vec<u8> {
+        let length = u64::try_from(text.encode_utf16().count()).unwrap_or(0);
+        let mut inner = bytes(2, text.as_bytes());
+        inner.extend(run(length, marks));
+        bytes(10, &inner)
+    }
+
+    /// A merged document, the way a table's or a scan's row carries it.
+    fn merged(objects: &[Vec<u8>], keys: &[&str], types: &[&str], uuids: &[&[u8]]) -> Vec<u8> {
+        let mut data = Vec::new();
+        for one in objects {
+            data.extend(bytes(3, one));
+        }
+        for one in keys {
+            data.extend(bytes(4, one.as_bytes()));
+        }
+        for one in types {
+            data.extend(bytes(5, one.as_bytes()));
+        }
+        for one in uuids {
+            data.extend(bytes(6, one));
+        }
+        zipped(&bytes(2, &bytes(3, &data)))
+    }
+
+    /// Two rows and two columns, the columns stored the other way round from how they
+    /// are drawn, which is what a column dragged to the front leaves behind.
+    fn shopping() -> Vec<u8> {
+        let (r0, r1, c0, c1): (&[u8], &[u8], &[u8], &[u8]) =
+            (b"row-0", b"row-1", b"col-0", b"col-1");
+        let uuid = |at: u64| map(1, &[(3, number(2, at))]);
+
+        let objects = vec![
+            // 0: the table, and where its three parts are.
+            map(0, &[(0, object(1)), (1, object(2)), (2, object(3))]),
+            // 1: the rows, in order; 2: the columns, the second first.
+            ordered(&[r0, r1], &[(4, 4), (5, 5)]),
+            ordered(&[c1, c0], &[(6, 6), (7, 7)]),
+            // 3: the cells, by column.
+            dictionary(&[(6, 8), (7, 9)]),
+            // 4 to 7: the four identifiers.
+            uuid(0),
+            uuid(1),
+            uuid(2),
+            uuid(3),
+            // 8 and 9: each column's cells, by row.
+            dictionary(&[(4, 10), (5, 11)]),
+            dictionary(&[(4, 12), (5, 13)]),
+            // 10 to 13: the cells themselves.
+            cell("Item", &[]),
+            cell("Milk", &[number(5, 1)]),
+            cell("How much", &[]),
+            cell("2 | two\nlitres", &[]),
+        ];
+
+        merged(
+            &objects,
+            &["crRows", "crColumns", "cellColumns", "UUIDIndex"],
+            &["com.apple.notes.ICTable", "com.apple.CRDT.NSUUID"],
+            &[r0, r1, c0, c1],
+        )
+    }
+
+    #[test]
+    fn a_table_is_a_markdown_table_with_its_columns_where_they_are_drawn() {
+        let said = super::table(&shopping(), &mut Named).expect("a table");
+
+        assert_eq!(
+            said,
+            "| How much | Item |\n| --- | --- |\n| 2 \\| two<br>litres | **Milk** |"
+        );
+    }
+
+    /// A table is a block: whatever line it sat on in Notes, it arrives with a blank
+    /// line on either side, which is what markdown needs to see a table at all.
+    #[test]
+    fn a_table_in_a_note_stands_apart_from_the_lines_around_it() {
+        struct Tabled;
+        impl Parts for Tabled {
+            fn attachment(&mut self, _id: &str, _uti: &str) -> Option<String> {
+                Some("\n\n| a |\n| --- |\n| b |\n\n".to_string())
+            }
+        }
+
+        let body = decode(&note(
+            "Before\n\u{fffc}\nAfter",
+            &[
+                run(7, &[]),
+                run(1, &[bytes(12, &attachment("t1", "com.apple.notes.table"))]),
+                run(6, &[]),
+            ],
+        ))
+        .expect("a note");
+
+        assert_eq!(
+            markdown(&body, &mut Tabled),
+            "Before\n\n| a |\n| --- |\n| b |\n\nAfter"
+        );
+    }
+
+    #[test]
+    fn bytes_that_are_not_a_table_are_no_table() {
+        assert!(super::table(b"not gzip", &mut Named).is_none());
+
+        // A merged document with no table at its root, which is what a scan is.
+        let scan = merged(
+            &[map(0, &[(0, Vec::new())])],
+            &["self"],
+            &["com.apple.notes.gallery"],
+            &[],
+        );
+        assert!(super::table(&scan, &mut Named).is_none());
+    }
+
+    #[test]
+    fn a_scan_names_its_pages_in_order() {
+        let page = |id: &str| {
+            let mut said = Vec::new();
+            said.extend(bytes(4, id.as_bytes()));
+            map(0, &[(0, said)])
+        };
+        let scan = merged(
+            &[page("PAGE-1"), page("PAGE-2")],
+            &["self"],
+            &["gallery"],
+            &[],
+        );
+
+        assert_eq!(super::gallery(&scan), vec!["PAGE-1", "PAGE-2"]);
+        assert!(super::gallery(b"nothing").is_empty());
     }
 
     fn attachment(id: &str, uti: &str) -> Vec<u8> {

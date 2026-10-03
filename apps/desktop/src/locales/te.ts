@@ -1125,8 +1125,8 @@ export const te: Dictionary = {
     '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Notes మాత్రమే తెరుస్తుంది',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} నోట్లు ఇటీవల తొలగించినవిలో ఉన్నాయి, అక్కడే ఉంటాయి',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} గీతలు, స్కాన్ చేసిన పేజీలు Notes తానే గీసే బొమ్మలు',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} గీతలు, స్కాన్ చేసిన పేజీలకు ఈ Mac లో బొమ్మ లేదు',
   '{count} tables inside notes do not come over': 'నోట్ల లోపలి {count} పట్టికలు రావు',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} జోడింపులు ఈ Mac లో కాక iCloud లో ఉన్నాయి',

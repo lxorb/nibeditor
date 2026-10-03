@@ -1135,8 +1135,8 @@ export const fil: Dictionary = {
     '{count} tala ang nasa likod ng password na Notes lang ang makakabukas',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} tala ang nasa Kanina lang tinanggal, at doon mananatili',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} guhit at na-scan na pahina ay mga larawang iginuhit mismo ng Notes',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} guhit at scan ang walang larawan sa Mac na ito',
   '{count} tables inside notes do not come over':
     '{count} talahanayan sa loob ng tala ang hindi pumapasok',
   '{count} attachments are in iCloud rather than on this Mac':

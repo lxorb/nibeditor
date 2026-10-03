@@ -1132,8 +1132,8 @@ export const sw: Dictionary = {
     'Madokezo {count} yako nyuma ya nenosiri ambalo Notes pekee huweza kufungua',
   '{count} notes are in Recently Deleted, and stay there':
     'Madokezo {count} yako katika Vilivyofutwa hivi karibuni na yanasalia huko',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'Michoro na kurasa zilizoskanwa {count} ni picha ambazo Notes huchora yenyewe',
+  '{count} drawings and scans have no picture on this Mac':
+    'Michoro na skani {count} hazina picha kwenye Mac hii',
   '{count} tables inside notes do not come over': 'Majedwali {count} ndani ya madokezo hayavuki',
   '{count} attachments are in iCloud rather than on this Mac':
     'Viambatisho {count} viko kwenye iCloud badala ya kwenye Mac hii',

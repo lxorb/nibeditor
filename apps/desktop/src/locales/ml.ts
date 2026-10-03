@@ -1133,8 +1133,8 @@ export const ml: Dictionary = {
     '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Notes മാത്രം തുറക്കും',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} കുറിപ്പുകൾ അടുത്തിടെ മായ്ച്ചവയിലാണ്, അവിടെത്തന്നെ നിൽക്കും',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} വരകളും സ്കാൻ ചെയ്ത താളുകളും Notes തന്നെ വരയ്ക്കുന്ന ചിത്രങ്ങളാണ്',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} വരകൾക്കും സ്കാനുകൾക്കും ഈ Mac-ൽ ചിത്രമില്ല',
   '{count} tables inside notes do not come over': 'കുറിപ്പുകൾക്കുള്ളിലെ {count} പട്ടികകൾ വരില്ല',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} അനുബന്ധങ്ങൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',

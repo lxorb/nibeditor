@@ -1108,8 +1108,8 @@ export const am: Dictionary = {
     '{count} ማስታወሻዎች Notes ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ማስታወሻዎች በቅርቡ የጠፋ ውስጥ ናቸውና እዚያ ይቀራሉ',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} ሥዕሎችና የተቃኙ ገጾች Notes ራሱ የሚሥላቸው ምስሎች ናቸው',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} ሥዕሎችና ቅኝቶች በዚህ Mac ላይ ምስል የላቸውም',
   '{count} tables inside notes do not come over': 'በማስታወሻዎች ውስጥ ያሉ {count} ሰንጠረዞች አይሻገሩም',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} አባሪዎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
