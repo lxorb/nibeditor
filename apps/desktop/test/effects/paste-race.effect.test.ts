@@ -1,5 +1,5 @@
-import { afterEach, expect, test, vi } from 'vitest'
-import { createEditor, type EditorView, SharedDoc } from '@nib/editor'
+import { afterEach, expect, test } from 'vitest'
+import { createEditor, type EditorView, loadLineCommands, SharedDoc } from '@nib/editor'
 
 /** A paste answered a moment late, and a pane that moved on in that moment.
  *
@@ -11,7 +11,15 @@ import { createEditor, type EditorView, SharedDoc } from '@nib/editor'
  *  while the note it was pasted into never got it. A paste belongs to the note it was
  *  made in.
  *
- *  In the jsdom project because a paste is a DOM event on the editor. */
+ *  In the jsdom project because a paste is a DOM event on the editor.
+ *
+ *  Each test waits for the fetch itself rather than for a while: the paste is written
+ *  when the rule lands, and the rule is one promise every caller shares, so whatever
+ *  awaits it after the paste resumes after the paste was written. A wait by the clock
+ *  was a race with the first transform of the rule, which a loaded machine lost. */
+
+/** Until the rule the paste waits for has landed, and the paste with it. */
+const landed = () => loadLineCommands()
 
 /** A paste scrolls to where it landed, which measures text; jsdom has no layout. */
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
@@ -47,9 +55,8 @@ test('an address pasted over words is linked in that note though the pane moved 
   // The pane is handed the next note before the rule that writes the link has landed.
   second.join(view)
 
-  await vi.waitFor(() => {
-    expect(first.text.toString()).toBe('Read the [field notes](https://example.com/notes) today.')
-  })
+  await landed()
+  expect(first.text.toString()).toBe('Read the [field notes](https://example.com/notes) today.')
   expect(second.text.toString()).toBe('A different note entirely.')
   expect(view.state.doc.toString()).toBe('A different note entirely.')
 })
@@ -65,8 +72,7 @@ test('a paste that lands on the note it was made in is written where the caret i
 
   paste(view, 'https://example.com/notes')
 
-  await vi.waitFor(() => {
-    expect(note.text.toString()).toBe('Read the [field notes](https://example.com/notes) today.')
-  })
+  await landed()
+  expect(note.text.toString()).toBe('Read the [field notes](https://example.com/notes) today.')
   expect(view.state.doc.toString()).toBe(note.text.toString())
 })
