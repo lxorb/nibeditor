@@ -195,6 +195,10 @@ pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String,
 
 /// Every version folder of `id` but `keep`, and anything an install cut short left.
 #[cfg(not(feature = "cef"))]
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
+)]
 pub fn prune(root: &Path, id: &str, keep: &str) {
     let Ok(entries) = fs::read_dir(root.join(id)) else {
         return;
@@ -208,6 +212,10 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
 
 /// An extension's folders, all of them.
 #[cfg(not(feature = "cef"))]
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
+)]
 pub fn forget(root: &Path, id: &str) {
     if super::link::is_id(id) {
         let _ = fs::remove_dir_all(root.join(id));
