@@ -188,21 +188,14 @@ pub fn ai_agent_call(
 
 /// What every turn is sent about where the reader is (docs/ai-sidebar.md 4.2): the
 /// space, the tab in front and every open tab, with their kinds and paths or addresses,
-/// as `get_context` and `workspace_tabs` answer the provider's agent. Asked by nib for
-/// the turn rather than by the model, so in every mode; each verb only as far as the
-/// grant reaches, and written for the model with its marks like any answer.
-const CONTEXT: [&str; 2] = ["get_context", "workspace_tabs"];
+/// as `get_context` answers the provider's agent. Asked by nib for the turn rather than
+/// by the model, so in every mode; only as far as the grant reaches, and written for the
+/// model with its marks like any answer. One verb: `get_context` lists every tab, so a
+/// `workspace_tabs` list beside it would say each one twice.
+const CONTEXT: &str = "get_context";
 
-/// What each of them is asked with: the tabs listed, and nothing opened or closed.
-fn context_args(verb: &str) -> Value {
-    if verb == "workspace_tabs" {
-        json!({ "op": "list" })
-    } else {
-        json!({})
-    }
-}
-
-/// The reader's context for a turn: one answer a verb, as the model reads it.
+/// The reader's context for a turn, as the model reads it: nothing where the grant does
+/// not reach it.
 #[tauri::command(async)]
 pub fn ai_agent_context(
     webview: tauri::Webview,
@@ -217,15 +210,15 @@ pub fn ai_agent_context(
         .map(|tool| tool.name.clone())
         .collect();
     let caller = Caller::Agent(Box::new(grant));
-    Ok(CONTEXT
-        .iter()
-        .filter(|verb| reached.contains(**verb))
+    Ok(Some(CONTEXT)
+        .filter(|verb| reached.contains(*verb))
         .map(|verb| {
-            let args = context_args(verb);
+            let args = json!({});
             let asked = json!({ "verb": verb, "args": args, "rest": [] });
             let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
             host::rendered(verb, &args, status, &body)
         })
+        .into_iter()
         .collect())
 }
 
@@ -340,10 +333,9 @@ mod tests {
     }
 
     #[test]
-    fn every_turn_asks_where_the_reader_is_by_the_two_verbs_that_say() {
-        assert_eq!(CONTEXT, ["get_context", "workspace_tabs"]);
-        assert_eq!(context_args("workspace_tabs"), json!({ "op": "list" }));
-        assert_eq!(context_args("get_context"), json!({}));
+    fn every_turn_asks_where_the_reader_is_once() {
+        // `get_context` lists every tab; a `workspace_tabs` list beside it said them twice.
+        assert_eq!(CONTEXT, "get_context");
     }
 
     #[test]
