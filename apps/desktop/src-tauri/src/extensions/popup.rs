@@ -10,12 +10,16 @@
 //! **Sized the way Chromium sizes one.** The page is laid out at the smallest size first
 //! and asked how wide and tall it then is, which is the page's own idea of its width -
 //! a popup sets one, almost always - and asked again at that width for its height, and
-//! again a moment later, because most popups draw themselves after they load.
+//! again and again for as long as it is open, as Chromium resizes a popup whenever what it
+//! lays out changes: most popups draw themselves after they load, on a busy machine well
+//! after (a bubble left at its smallest, a square of 27 pixels, on 2026-10-03), and some
+//! grow once they are used.
 //!
 //! **One at a time, and never past what opened it.** A second press closes the first, as
 //! does Escape inside the popup, the page asking to close itself, and anything the window
 //! decides (a press outside, the tab going away); see lib/web-tab/WebExtensionPopup.svelte.
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -44,8 +48,38 @@ const FLUID: f64 = 380.0;
 /// Below this, a page that came back as narrow as it was laid out has no width of its own.
 const NO_WIDTH: f64 = 100.0;
 
-/// When the page is asked its size again after it has loaded, in milliseconds since.
+/// When the page is asked its size after it has loaded, in milliseconds since: quickly
+/// while it draws itself, then every `AGAIN_EVERY` until it closes.
 const ASKED_AT: [u64; 4] = [0, 150, 500, 1200];
+
+/// How often an open popup is asked its size once it has loaded, in milliseconds: one
+/// question a second, and only while a popup is open.
+const AGAIN_EVERY: u64 = 1000;
+
+/// Which measuring is the popup's own: each page load starts one, and an older one stops.
+static MEASURING: AtomicU64 = AtomicU64::new(0);
+
+/// How long to wait before the `ask`th question, in milliseconds.
+fn wait_before(ask: usize) -> u64 {
+    match (
+        ask.checked_sub(1).and_then(|at| ASKED_AT.get(at)),
+        ASKED_AT.get(ask),
+    ) {
+        (_, None) => AGAIN_EVERY,
+        (None, Some(&first)) => first,
+        (Some(&before), Some(&at)) => at - before,
+    }
+}
+
+/// A new measuring, which every older one gives way to.
+fn measuring() -> u64 {
+    MEASURING.fetch_add(1, Ordering::SeqCst) + 1
+}
+
+/// Whether `which` is still the measuring that counts.
+fn still(which: u64) -> bool {
+    MEASURING.load(Ordering::SeqCst) == which
+}
 
 /// Where the window wants the popup, in its own coordinates.
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -245,21 +279,23 @@ fn heard(app: &AppHandle, platform: &tauri::webview::PlatformWebview) {
     }
 }
 
-/// Asks the page how large it is, a few times as it draws itself, and grows the popup to
-/// it. From a thread of its own: every answer comes back on the window's thread.
+/// Asks the page how large it is as it draws itself and for as long as it is open, and
+/// grows the popup to it. From a thread of its own: every answer comes back on the
+/// window's thread.
 fn measure(app: &AppHandle, view: &Webview) {
+    let mine = measuring();
     let mut shown = (pixels(SMALLEST), pixels(SMALLEST));
-    let mut slept = 0;
-    for at in ASKED_AT {
-        std::thread::sleep(Duration::from_millis(at.saturating_sub(slept)));
-        slept = at;
-        if app.get_webview(LABEL).is_none() {
+    for ask in 0.. {
+        std::thread::sleep(Duration::from_millis(wait_before(ask)));
+        // Closed, or another page loaded in it, whose own measuring goes on from here.
+        if app.get_webview(LABEL).is_none() || !still(mine) {
             return;
         }
         // The width at the height it has, then the height at that width: a page laid
         // out narrower than it wants is taller than it will be.
+        // A question the page did not answer in time is asked again next time round.
         let Some((width, _)) = laid_out(view) else {
-            return;
+            continue;
         };
         let width = if width < NO_WIDTH { FLUID } else { width };
         let width = pixels(width.clamp(SMALLEST, WIDEST)).max(shown.0);
@@ -268,7 +304,7 @@ fn measure(app: &AppHandle, view: &Webview) {
             std::thread::sleep(Duration::from_millis(30));
         }
         let Some((_, height)) = laid_out(view) else {
-            return;
+            continue;
         };
         let wanted = (width, pixels(height.clamp(SMALLEST, TALLEST)).max(shown.1));
         if wanted == shown {
@@ -359,4 +395,29 @@ fn evaluated(view: &Webview) -> Option<String> {
 #[cfg(not(any(windows, feature = "cef")))]
 fn evaluated(_view: &Webview) -> Option<String> {
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_popup_is_asked_its_size_for_as_long_as_it_is_open() {
+        // Quickly while it loads, as before.
+        assert_eq!(
+            (0..4).map(wait_before).collect::<Vec<_>>(),
+            [0, 150, 350, 700]
+        );
+        // And then on and on, a popup that draws itself late on a busy machine or grows
+        // once it is used - Bitwarden unlocked - included.
+        assert!((4..1000).all(|ask| wait_before(ask) == AGAIN_EVERY));
+    }
+
+    #[test]
+    fn a_newer_measuring_ends_the_older() {
+        let first = measuring();
+        assert!(still(first));
+        let second = measuring();
+        assert!(!still(first) && still(second));
+    }
 }
