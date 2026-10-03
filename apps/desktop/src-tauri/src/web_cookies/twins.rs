@@ -16,8 +16,17 @@
 //! - it has no partition, and it lasts;
 //! - a partitioned cookie in the same store has its name, its domain and its path;
 //! - it ends four hundred days after a moment the old `keep` could have written it -
-//!   between the day that `keep` landed and a margin after the day it was replaced,
-//!   for a build of those days that is still running somewhere.
+//!   between the moment that `keep` landed and the moment it was replaced.
+//!
+//! **Not a day after it was replaced**, which is what the window first said: a margin of
+//! two months, for a build of those three days still running. But a site may set the
+//! same cookie twice on purpose - partitioned, and unpartitioned beside it for a browser
+//! that still allows third-party cookies. Cloudflare's challenge frame does exactly that.
+//! The new `keep` gives the unpartitioned one its four hundred days, as it should, and
+//! inside the margin that made it a twin: taken away after the next page, in the middle
+//! of the challenge. Emil, 2026-10-03: *"Cloudflare says: there was a problem with
+//! verification, please reload and try again, every time I want to log in."* So the
+//! window closes where the old `keep` went, and a cookie written after that is the site's.
 //!
 //! Looked for on every keep rather than on one, because the partitioned cookie a twin
 //! is known by may not be there yet: it was a session cookie, gone at the last quit, and
@@ -32,9 +41,10 @@ use crate::web_state::cookies::{Cookie, KEPT_FOR};
 /// 15:46:49 UTC, in seconds since 1970.
 const MADE_FROM: f64 = 1_790_524_009.0;
 
-/// The latest a twin can have been written: 2026-12-01 00:00 UTC, two months after the
-/// COM `keep` was replaced, for a build of those three days that is still running.
-const MADE_UNTIL: f64 = 1_796_083_200.0;
+/// The latest a twin can have been written: the moment the COM `keep` was replaced,
+/// 2026-09-30 05:14:39 UTC (2214141d). Anything written after it is the site's own cookie
+/// made to last by the new `keep`; see the top of this file.
+const MADE_UNTIL: f64 = 1_790_745_279.0;
 
 /// The twins among a store's cookies.
 pub(super) fn of(all: &[Cookie]) -> impl Iterator<Item = &Cookie> {
@@ -143,6 +153,19 @@ pub(super) mod tests {
             let all = [partitioned.clone(), one];
             assert_eq!(of(&all).count(), 0, "{:?}", all[1]);
         }
+    }
+
+    /// A site that sets one cookie both partitioned and not - Cloudflare's challenge frame
+    /// does - keeps both once the new `keep` has made the unpartitioned one last: it is
+    /// the site's, and taking it away broke the challenge.
+    #[test]
+    fn a_cookie_the_site_set_twice_and_keep_made_last_is_not_a_twin() {
+        let now = MADE_UNTIL + 3.0 * 24.0 * 60.0 * 60.0;
+        let all = [
+            cookie("__cf_bm", Some("https://login.example"), None),
+            cookie("__cf_bm", None, Some(now + KEPT_FOR)),
+        ];
+        assert_eq!(of(&all).count(), 0);
     }
 
     /// The partitioned cookie itself is never a twin, whatever its expiry.
