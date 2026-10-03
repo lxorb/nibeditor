@@ -38,6 +38,7 @@ import { readSetting, writeSetting } from './settings'
 import { reachable } from './spaces'
 import { getContext, workspaceTabs } from './tabs'
 import { runTerminal } from './terminal'
+import { readTerminal, typeTerminal } from './terminal-tab'
 import { createFolder, listNotes, moveFile, trashFile } from './tree'
 import { listVersions, restoreVersion } from './versions'
 
@@ -84,6 +85,8 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   read_setting: readSetting,
   write_setting: writeSetting,
   run_terminal: runTerminal,
+  read_terminal: readTerminal,
+  type_terminal: typeTerminal,
 }
 
 /** Every verb here, by name: the dispatcher's agent rows, which a test holds to this. */

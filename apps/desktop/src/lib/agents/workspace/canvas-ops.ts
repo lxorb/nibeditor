@@ -12,6 +12,8 @@ import {
   type Side,
 } from '../../canvas/format'
 import { connected, movedBy, removed, withLabel, withNode, withText } from '../../canvas/edits'
+import { settled } from '@nib/markdown/pages'
+import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from './problem'
 
 /** A canvas as an agent reads it: JSON Canvas's two lists, and how much ink. */
@@ -59,15 +61,33 @@ function sidesBetween(from: CanvasNode, to: CanvasNode): [Side, Side] {
   return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom']
 }
 
+/** The page an operation puts something on, for a page note, or null where it names
+ *  none. A canvas has no pages to name. */
+function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
+  if (op.page === undefined) return null
+  if (!hasPages(canvas)) throw new Refused('bad_arguments', 'a canvas has no pages')
+
+  return pageIn(canvas, op.page)
+}
+
+/** What an agent may say as an operation, in the words a refusal lists them in. */
+const OPS =
+  'add_card, edit_text, move, connect, remove, and in a page note add_page, remove_page, move_page'
+
 /** The operations on a canvas, applied one after the other, and the ids of what they
  *  made. Pure: the objects nobody named come back as the very same objects, which is
- *  what the surface, the stamp and the room all rely on to tell what changed. */
+ *  what the surface, the stamp and the room all rely on to tell what changed.
+ *
+ *  A page note takes the page operations too (pages-ops.ts), and a card's `page`,
+ *  which measures its `x` and `y` from that page's corner. */
 export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: string[] } {
   if (!Array.isArray(ops) || !ops.length) {
     throw new Refused('bad_arguments', 'ops is a list of at least one operation')
   }
 
-  let now = canvas
+  // A page note in the column the reader sees it in, which a page's `x` and `y` are
+  // measured from; a canvas comes back as itself.
+  let now = settled(canvas)
   const made: string[] = []
 
   for (const op of ops) {
@@ -76,14 +96,17 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
 
     switch (op.op) {
       case 'add_card': {
-        const at = freePlace(now)
+        const page = pageNamed(now, op)
+        const at = page
+          ? placeOnPage(now, page, numberOf(op, 'x'), numberOf(op, 'y'))
+          : freePlace(now)
         const colour = textOf(op, 'color') ?? textOf(op, 'colour')
         const card: CanvasNode = {
           id: freshId(),
           type: 'text',
           text: textOf(op, 'text') ?? '',
-          x: Math.round(numberOf(op, 'x') ?? at.x),
-          y: Math.round(numberOf(op, 'y') ?? at.y),
+          x: Math.round(page ? at.x : (numberOf(op, 'x') ?? at.x)),
+          y: Math.round(page ? at.y : (numberOf(op, 'y') ?? at.y)),
           width: Math.max(20, Math.round(numberOf(op, 'width') ?? DEFAULT_WIDTH)),
           height: Math.max(20, Math.round(numberOf(op, 'height') ?? DEFAULT_HEIGHT)),
           ...(colour ? { color: colour } : {}),
@@ -110,8 +133,12 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
 
       case 'move': {
         const node = nodeIn(now, id)
-        const x = numberOf(op, 'x')
-        const y = numberOf(op, 'y')
+        const page = pageNamed(now, op)
+        const corner = page
+          ? placeOnPage(now, page, numberOf(op, 'x') ?? 0, numberOf(op, 'y') ?? 0)
+          : null
+        const x = corner ? corner.x : numberOf(op, 'x')
+        const y = corner ? corner.y : numberOf(op, 'y')
         const dx = x === null ? (numberOf(op, 'dx') ?? 0) : x - node.x
         const dy = y === null ? (numberOf(op, 'dy') ?? 0) : y - node.y
         now = movedBy(now, [node.id], dx, dy)
@@ -138,15 +165,21 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
         if (id === null || !there)
           throw new Refused('not_found', `there is no ${String(id)} on the canvas`)
 
-        now = removed(now, [id])
+        // A page goes with what is written on it, and never the last one.
+        const page = now.nodes.find((node) => node.id === id)?.type === 'page'
+        now = page
+          ? (pageOperation(now, { op: 'remove_page', id })?.canvas ?? now)
+          : removed(now, [id])
         break
       }
 
-      default:
-        throw new Refused(
-          'bad_arguments',
-          'op is one of add_card, edit_text, move, connect, remove',
-        )
+      default: {
+        const paged = hasPages(now) ? pageOperation(now, op) : null
+        if (!paged) throw new Refused('bad_arguments', `op is one of ${OPS}`)
+
+        now = paged.canvas
+        if (paged.made) made.push(paged.made)
+      }
     }
   }
 

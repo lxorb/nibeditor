@@ -23,6 +23,9 @@ interface Agent {
   mode: 'unsupervised' | 'confirm'
   /** The programs `run_terminal` starts without asking. */
   programs: readonly string[]
+  /** What it says about each site (9.2): a denied one is opened in no tab of the
+   *  reader's either. */
+  sites: Readonly<Record<string, string>>
 }
 
 /** The reader, or an agent. */
@@ -54,6 +57,13 @@ export function callerOf(told: unknown): Caller {
       // Anything but the one word that asks for less is the mode that asks for more.
       mode: grant.mode === 'unsupervised' ? 'unsupervised' : 'confirm',
       programs: texts(grant.programs),
+      sites: isRecord(grant.sites)
+        ? Object.fromEntries(
+            Object.entries(grant.sites).filter(
+              (pair): pair is [string, string] => typeof pair[1] === 'string',
+            ),
+          )
+        : {},
     },
   }
 }

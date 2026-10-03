@@ -81,7 +81,7 @@ const tabs = [
     paneId: 'p1',
     pinned: false,
     shown: 'Plan',
-    note: { live: { readerAt: null } },
+    note: { live: { readerAt: null }, shared: null },
   },
   {
     id: 't2',
@@ -90,7 +90,7 @@ const tabs = [
     paneId: 'p1',
     pinned: true,
     shown: 'Pinned',
-    note: { live: { readerAt: null } },
+    note: { live: { readerAt: null }, shared: null },
   },
   {
     id: 'w1',
@@ -99,7 +99,7 @@ const tabs = [
     paneId: 'p2',
     pinned: false,
     shown: 'Docs',
-    note: { live: { readerAt: null } },
+    note: { live: { readerAt: null }, shared: null },
   },
 ]
 
@@ -117,6 +117,9 @@ const workspace = {
   tabs,
   panes: { focusedId: 'p1' },
   activeTabId: 't1',
+  previewTabId: null,
+  outside: (path: string) =>
+    !['/s/Work/', '/s/Home/', '/s/Secret/'].some((root) => path.startsWith(root)),
   get active() {
     return tabs[0]
   },
@@ -662,7 +665,7 @@ describe('the reader tabs', () => {
     expect(await call('get_context', {})).toMatchObject({
       result: {
         space: 'Work',
-        front: { id: 't1', path: 'Plan.md' },
+        selected: { id: 't1', path: 'Plan.md', selected: true, front: true },
         selection: null,
         typing: false,
       },

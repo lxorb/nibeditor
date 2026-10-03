@@ -189,11 +189,15 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
     }
   }
 
-  // A file in a tab goes with its tab, and a tab closing is the reader's screen changing.
+  // A file in a tab goes with its tab, and a tab closing in front of the reader is their
+  // screen changing; one behind it only leaves the strip.
   const shown = workspace.tabs.some(
-    (tab) => tab.path !== null && (tab.path === path || tab.path.startsWith(`${path}/`)),
+    (tab) =>
+      tab.path !== null &&
+      workspace.showing(tab.paneId)?.id === tab.id &&
+      (tab.path === path || tab.path.startsWith(`${path}/`)),
   )
-  if (shown) needScope(call, 'workspace.focus', 'a file open in a tab')
+  if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
 
   const question = await asked(call, null, `Move ${relative} to Recently deleted`)
   if (question) return question

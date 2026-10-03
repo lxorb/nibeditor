@@ -219,6 +219,15 @@ with the crate's rename and that index's rewrite rather than through the tree th
 window shows. A space the grant does not reach does not exist: it is in no list, and
 naming it is "there is no space called" like a name nobody has.
 
+Every tab of the reader's is reached by its id as well as by its path, so "the tab in
+front" is one id whatever it holds (`lib/agents/workspace/tab-target.ts`): a note's verbs
+take a note tab - one with a file, a draft, the scratchpad - a canvas's take a canvas or
+page note tab drawn and never saved, `read_terminal` and `type_terminal` take a terminal,
+and the browser's verbs take a web tab. `get_context` lists them all, with the selected
+one and what is selected in it. `workspace_tabs` makes, opens, renames and saves them
+behind the tab in front, the way a browser opens a tab with Ctrl held; only
+`workspace.focus` changes what the reader is looking at.
+
 An agent is answered in the contract's three shapes (`src-tauri/src/agents/verbs.rs`),
 with `ok` beside them for the endpoint's log: done, with `untrusted` naming where the
 words came from when that is outside the reader's own notes; `needs_approval`, for what

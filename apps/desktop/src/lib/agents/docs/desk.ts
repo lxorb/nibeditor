@@ -43,7 +43,8 @@ export interface Desk {
   backlinksOf(path: string): unknown[]
   /** Keeps a version of a note, saying who it was kept for. */
   snapshot(path: string, content: string, source: string): Promise<void>
-  /** The note with no file yet in a tab, by the tab's id, or null. */
+  /** The note in a tab that is in no space - one with no file yet, or the scratchpad -
+   *  by the tab's id, or null. */
   draftIn(tab: string): NoteDoc | null
   /** Which scheme a caret's colour is for. */
   scheme(): 'dark' | 'light'
@@ -54,7 +55,8 @@ export interface Desk {
 export interface NoteAt {
   path: string
   space?: string
-  /** A tab holding a note with no file yet, in place of a path; see workspace/drafts.ts. */
+  /** A tab holding a note in no space - one with no file yet (workspace/drafts.ts) or
+   *  the scratchpad - in place of a path. */
   tab?: string
 }
 
@@ -91,7 +93,12 @@ export function located(desk: Desk, at: NoteAt): Located {
 
   if (at.tab !== undefined) {
     const draft = desk.draftIn(at.tab)
-    if (!draft) throw new DocError('no_such_note', at.tab, `tab ${at.tab} holds no unsaved note`)
+    if (!draft)
+      throw new DocError(
+        'no_such_note',
+        at.tab,
+        `tab ${at.tab} holds no unsaved note and not the scratchpad`,
+      )
     // Its key stands for a path: what a note is known by in the edits and the undo.
     return { space, relative: '', path: `unsaved:${draft.key}`, draft }
   }
