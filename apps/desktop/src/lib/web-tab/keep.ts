@@ -5,8 +5,8 @@
  *  it. That is extremely annoying and should not be. It should basically reopen the
  *  exact same page you had open last time when you open that page."*
  *
- *  So `URL` is where the tab is, written a couple of seconds after the reading
- *  settles, and `Nib-Home` keeps the address the note points at - what somebody typed
+ *  So `URL` is where the tab is, written on the same pause a note's words are written
+ *  on (`SAVE_DELAY` in backoff.ts) and before the window goes, and `Nib-Home` keeps the address the note points at - what somebody typed
  *  into the bar or made the note with - for the one row that offers it back. The file
  *  is what syncs, so this is the half of a tab's state that reaches another machine;
  *  the place on the page and the trail behind it are this device's and live beside it.
@@ -20,17 +20,13 @@
  *  Quiet about a write that fails. A shortcut that could not be written is a note that
  *  opens where it opened yesterday, which is what it did before any of this. */
 
+import { SAVE_AT_MOST, SAVE_DELAY } from '../backoff'
 import { links } from '../link-index.svelte'
+import { owes, writing } from '../parting'
 import { invoke } from '../tauri'
+import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
 import { readWebFile, writeShortcut } from './shortcut'
-
-/** How long the reading has to settle before the file is written.
- *
- *  Two seconds. A page that redirects twice on the way in is one write rather than
- *  three, and a reader clicking through a set of links leaves one file behind rather
- *  than a version of it per click. */
-const SETTLES = 2000
 
 /** What one web note's file needs to be brought up to date. Named rather than
  *  positional because four strings in a row is four chances to swap two. */
@@ -47,9 +43,21 @@ export interface Kept {
   wrote: (text: string) => void
 }
 
-/** The write each note is waiting on, so a page that moves twice in a second writes
- *  once. Keyed by path: two tabs on the same file are one file. */
-const waiting = new Map<string, ReturnType<typeof setTimeout>>()
+/** The write each note is waiting on, so a page that moves twice in a moment writes
+ *  once. Keyed by path: two tabs on the same file are one file.
+ *
+ *  The notes' own pause, Emil's rule of 2026-09-14: the address is the document's and
+ *  follows the reading the way the words follow the typing - a page that redirects on
+ *  the way in moves faster than the pause, so it is still one write - and a reader
+ *  clicking through a set of links without stopping is written every couple of seconds
+ *  all the same. */
+const waiting = new Map<string, { later: Later; write: () => void }>()
+
+// A window closing runs no timer: what is waiting is written as it goes, and the window
+// waits for it the way it waits for a note. See parting.ts.
+owes(() => {
+  for (const path of [...waiting.keys()]) keepNow(path)
+})
 
 /** The reading has moved on. The file follows, once it stops moving. */
 export function keepPage(kept: Kept) {
@@ -66,15 +74,19 @@ export function keepPage(kept: Kept) {
   if (said.url === kept.url && (said.icon === icon || holdsPicture(said.icon))) return
 
   const held = waiting.get(kept.path)
-  if (held) clearTimeout(held)
+  const write = () => {
+    waiting.delete(kept.path)
+    writing(writeFile(kept, home, icon))
+  }
+  if (held) {
+    held.write = write
+    held.later()
+    return
+  }
 
-  waiting.set(
-    kept.path,
-    setTimeout(() => {
-      waiting.delete(kept.path)
-      void write(kept, home, icon)
-    }, SETTLES),
-  )
+  const one = { later: afterQuiet(() => one.write(), SAVE_DELAY, SAVE_AT_MOST), write }
+  waiting.set(kept.path, one)
+  one.later()
 }
 
 /** Whether the file already holds the site's mark as a picture, which a page reporting
@@ -90,17 +102,15 @@ function holdsPicture(icon: string | null): boolean {
   return icon?.startsWith('data:') === true
 }
 
-/** Everything waiting, written now: the app is closing a tab, or the note is about to
- *  be left. A settled write nobody is waiting for is a page the reader has already
- *  moved on from. */
+/** What is waiting for this note, written now: the window is going, or the tab. */
 export function keepNow(path: string) {
   const held = waiting.get(path)
   if (!held) return
-  clearTimeout(held)
-  waiting.delete(path)
+  held.later.cancel()
+  held.write()
 }
 
-async function write(kept: Kept, home: string | null, icon: string | null): Promise<void> {
+async function writeFile(kept: Kept, home: string | null, icon: string | null): Promise<void> {
   const said = readWebFile(kept.path, kept.text)
   const title = said?.title ?? ''
   const added = said?.added
