@@ -33,7 +33,7 @@ const KEEP =
   'Summarize this conversation so it can be continued from the summary alone. Keep every note path, page address, decision, change made and still to make, and the reader’s latest open request, in their own words where they matter. Do not call tools; reply with the summary only.'
 
 /** The instructions for a summary, with the reader's focus. */
-export function summaryPrompt(focus?: string): string {
+function summaryPrompt(focus?: string): string {
   return focus?.trim() ? `${KEEP}\nFocus on: ${focus.trim()}` : KEEP
 }
 

@@ -9,8 +9,6 @@
 import type { Limit } from '../local/heard'
 import type { Provider, ProviderKind } from '../providers'
 
-export type { Limit } from '../local/heard'
-
 /** What the agent may do in a thread: read and cite, read and write a plan, or act. */
 export type Mode = 'ask' | 'plan' | 'agent'
 
@@ -128,7 +126,9 @@ export interface Draft {
 /** The provider's own record of a turn, kept so it is sent back exactly as it came:
  *  Claude's thinking blocks and their signatures, OpenAI's encrypted reasoning. Only
  *  ever sent back to the same kind of API and the same model; any other gets the turn
- *  rebuilt from its parts. */
+ *  rebuilt from its parts.
+ *
+ *  @public */
 export interface Replay {
   api: Api
   model: string
@@ -159,10 +159,14 @@ export interface Turn {
   replay?: Replay
 }
 
-/** Where a goal stands (4.8), in Claude Code's and Codex's words. */
+/** Where a goal stands (4.8), in Claude Code's and Codex's words.
+ *
+ *  @public */
 export type GoalState = 'pursuing' | 'paused' | 'met' | 'impossible' | 'budget_limited' | 'cleared'
 
-/** One goal per thread (lane 5 runs it). */
+/** One goal per thread (lane 5 runs it).
+ *
+ *  @public */
 export interface Goal {
   condition: string
   state: GoalState
@@ -263,13 +267,17 @@ export interface Engine {
 }
 
 /** What a checkpoint holds (lane 3): every note the thread touched, as it stood before
- *  the reader's message `turn`. */
+ *  the reader's message `turn`.
+ *
+ *  @public */
 export interface Checkpoint {
   turn: string
   notes: { path: string; rev: number; steps: number }[]
 }
 
-/** One row of the command registry (lane 5). `available` answers true, or why not. */
+/** One row of the command registry (lane 5). `available` answers true, or why not.
+ *
+ *  @public */
 export interface Command<Context = unknown> {
   name: string
   synonyms: string[]

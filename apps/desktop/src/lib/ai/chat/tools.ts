@@ -24,7 +24,7 @@ export interface Tools {
 
 /** What the crate lists: the tools, and the instructions `nib mcp` gives every outside
  *  agent's model - what the untrusted marks mean, what `needs_approval` asks of it. */
-export interface Listed {
+interface Listed {
   instructions: string
   tools: ToolDef[]
 }

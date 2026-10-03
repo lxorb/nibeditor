@@ -28,6 +28,10 @@ vi.mock('../../tauri', () => ({
       case 'ai_thread_delete':
         disk.delete(key)
         return null
+      case 'ai_threads_forget':
+        for (const at of [...disk.keys()])
+          if (at.startsWith(`${String(args.space)}/`)) disk.delete(at)
+        return null
       default:
         throw new Error(command)
     }
@@ -37,6 +41,7 @@ vi.mock('../../tauri', () => ({
 const {
   branchThread,
   deleteThread,
+  forgetSpace,
   headOf,
   keepThread,
   listThreads,
@@ -120,6 +125,16 @@ describe('a thread kept', () => {
     expect(heads.map((one) => one.title)).toEqual(['Egrets', 'Herons'])
     expect(heads[0]?.words).toBe('What is in Birds.md? Herons stand still. And then?')
     expect(await listThreads('space-2')).toEqual([])
+  })
+
+  test('goes with its space, and no other space’s does', async () => {
+    const here = had()
+    const there = { ...had(), id: 'there', space: 'space-2' }
+    await writeThread(here)
+    await writeThread(there)
+    await forgetSpace('space-1')
+    expect(await listThreads('space-1')).toEqual([])
+    expect(await readThread('space-2', 'there')).not.toBeNull()
   })
 
   test('is gone once deleted', async () => {
