@@ -144,9 +144,14 @@ export class RowsStore {
     const key = pathKey(relative, held.root)
     const now = this.host.now()
     this.edit(held, key, (before) => {
-      const ctime = before?.[0]?.file.ctime || now
+      // A creation time the scan never knew is the moment it was first written here.
+      const known = before?.[0]?.file.ctime ?? 0
+      const ctime = known > 0 ? known : now
       const stamp = { size: content.length, mtime: now, ctime }
-      return rowsOf(held.name, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
+      return rowsOf(
+        held.name,
+        readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
+      )
     })
   }
 
@@ -190,7 +195,7 @@ export class RowsStore {
   private edit(held: Held, key: string, next: (before: Row[] | undefined) => Row[] | null) {
     const change = (files: Map<string, Row[]>) => {
       const rows = next(files.get(key))
-      if (rows === null || !rows.length) files.delete(key)
+      if (!rows?.length) files.delete(key)
       else files.set(key, rows)
     }
     if (held.reading) held.since.push(change)
@@ -228,7 +233,11 @@ export class RowsStore {
   private rename(held: Held, name: string) {
     const removed = this.flat(held)
     held.name = name
-    for (const [key, rows] of held.files) held.files.set(key, rows.map((row) => ({ ...row, space: name })))
+    for (const [key, rows] of held.files)
+      held.files.set(
+        key,
+        rows.map((row) => ({ ...row, space: name })),
+      )
     held.flat = null
     this.tell({ root: held.root, space: name, path: null, removed, added: this.flat(held) })
   }

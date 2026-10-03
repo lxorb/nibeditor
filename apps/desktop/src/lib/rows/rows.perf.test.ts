@@ -11,8 +11,11 @@ import { type Host, RowsStore } from './store'
  *  suite runs beside other files, and a pass descheduled halfway says nothing. The shape
  *  is what is held: a save costs the note that was saved and nothing of the space, and
  *  every row of a note shares the note's one `file` and one `note`. Measured on the
- *  reference machine as this was written: the space made into rows in about 120 ms of a
- *  test worker, one note's rows read again after a save in about 0.05 ms. */
+ *  reference machine as this was written: the space made into rows in 115 to 160 ms of a
+ *  test worker, in breaths of 250 notes; one note's rows read again after a save in
+ *  0.06 ms (median of fifty); and 11.5 MB of heap for the 15,000 rows, measured with
+ *  `--expose-gc`, of which the engine's task fields are 6.2, the notes' `file.*` 1.8,
+ *  their front matter 1.1 and the rows themselves 1.3. */
 
 vi.mock('@nib/markdown/task-line', { spy: true })
 

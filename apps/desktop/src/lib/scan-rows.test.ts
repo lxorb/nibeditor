@@ -8,7 +8,9 @@ describe('what a note gives the rows of its space', () => {
       '# Home\n- [ ] Water the plants 📅 2026-10-04\n## Kitchen\n  - [/] Descale\n# Bank\n1. [x] Call ✅ 2026-10-01\n',
     )
 
-    expect(tasks.map((one) => [one.line, one.indent, one.mark, one.text, one.section.join(' > ')])).toEqual([
+    expect(
+      tasks.map((one) => [one.line, one.indent, one.mark, one.text, one.section.join(' > ')]),
+    ).toEqual([
       [1, 0, ' ', 'Water the plants 📅 2026-10-04', 'Home'],
       [3, 2, '/', 'Descale', 'Home > Kitchen'],
       [5, 0, 'x', 'Call ✅ 2026-10-01', 'Bank'],
