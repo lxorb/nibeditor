@@ -18,8 +18,8 @@ pub mod icloud;
 use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
-    at_most, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights,
-    openable, write_atomically,
+    at_most, at_most_stamped, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made,
+    move_highlights, openable, write_atomically,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -58,6 +58,15 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
 pub fn words_of(target: &Path) -> Result<String, String> {
     let bytes = at_most(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
     String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))
+}
+
+/// The words of a note and what its file says about itself, its size and times, off
+/// the one open: the scan of a space wants both for every note, and a second look at
+/// each path would be a second pass over the disk.
+pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
+    let (bytes, meta) = at_most_stamped(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
+    let words = String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))?;
+    Ok((words, meta))
 }
 
 /// Writes a note atomically, so a crash mid-write can never truncate the note

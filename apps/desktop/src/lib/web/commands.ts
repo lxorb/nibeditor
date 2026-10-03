@@ -5,6 +5,7 @@ import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
+import { scanRows } from '../scan-rows'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
@@ -539,7 +540,12 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
       if (!read(row.path)) continue
 
       if (isMarkdown(row.path)) {
-        notes.push(scanNote(relative(row.path), row.content))
+        // With what the rows of the space ride on, as the crate's scan carries it.
+        notes.push({
+          ...scanNote(relative(row.path), row.content),
+          ...scanRows(row.content),
+          stamp: { size: row.content.length, mtime: row.modified, ctime: row.created },
+        })
         continue
       }
 
