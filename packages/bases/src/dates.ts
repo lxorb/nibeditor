@@ -284,3 +284,9 @@ export function relative(ms: number, now: number): string {
 
   return ms <= now ? `${words} ago` : `in ${words}`
 }
+
+/** Today on this machine's wall clock, as `YYYY-MM-DD`: the day a box ticked now is
+ *  done on. */
+export function todayOf(now: Date = new Date()): string {
+  return isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())
+}
