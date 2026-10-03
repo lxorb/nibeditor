@@ -92,31 +92,52 @@ refuses, so the webview only ever holds the hour's access token; the crate refre
 one refresh at a time, and **Sign out** revokes it. See `src-tauri/src/chatgpt.rs`.
 
 **Codex** is the other road, and the same shape as Claude Code: the reader's own Codex
-CLI, `codex exec --json` with the question on stdin, signed in with `codex login` in a
-terminal tab, its state from `codex login status`. It answers a message at a time rather
-than word by word, which is how `exec` prints.
+CLI, signed in with `codex login` in a terminal tab, its state from `codex login status`.
+It runs as `codex app-server`, one per window, the JSON-RPC protocol OpenAI's own IDE
+extension speaks: a question is a thread with no tool, answered word by word and closed;
+a sidebar thread is a thread that stays (docs/ai-sidebar.md 5.2).
 
 ### What a program is run with
 
-Fixed in the crate (`src-tauri/src/ai_cli/args.rs`); the page names a tool, a model and a
-question, never an argument:
+Fixed in the crate (`src-tauri/src/ai_cli/args.rs`); the page names a tool, a model, an
+effort, a mode and a thread, and sends words, never an argument or a protocol message
+(`src-tauri/src/ai_cli/say.rs` lists everything it may say):
 
-- **Claude Code**: no tools (`--tools ""`), none of the reader's MCP servers
+- **Claude Code, a question**: no tools (`--tools ""`), none of the reader's MCP servers
   (`--strict-mcp-config`), nothing written to its history (`--no-session-persistence`),
   and where the installed version has them, `--safe-mode` (no hooks, plugins or
   `CLAUDE.md`, sign-in and model as always) and `--permission-prompts none`. nib's own
   one-line system prompt replaces the coding agent's.
-- **Codex**: `--sandbox read-only`, the shell tool, web search and MCP servers off,
-  `AGENTS.md` unread, `--ephemeral` and `--ignore-user-config` where it has them.
-- Both: started with no console window and none of nib's handles, in an empty folder of
-  the app's own (never a space), for at most five minutes, and ended with everything
-  they started - a job object on Windows, a process group elsewhere - on a stop, when
-  their window goes and when nib quits. A reload leaves a running answer to finish or
-  time out unread.
+- **Claude Code, a sidebar thread**: the same, kept open with turns on stdin
+  (`--input-format stream-json`), with one tool: `nib mcp` (`--mcp-config`), only the
+  mode's verbs allowed and the rest left out (`--allowedTools`, `--disallowedTools`),
+  everything else refused without asking (`--permission-mode dontAsk`). `--restricted`
+  in place of `--safe-mode`, which drops the `--mcp-config` server too (measured on
+  2.1.280), and the reader's `CLAUDE.md` files off by `CLAUDE_CODE_DISABLE_CLAUDE_MDS`.
+  A message that starts with `/` goes with a space in front, so the reader's words are
+  never one of Claude Code's commands.
+- **Codex**: `app-server`, read-only and asking nobody (`sandbox_mode`,
+  `approval_policy`), the shell tool, web search and MCP servers off, `AGENTS.md`
+  unread, nothing in its history; each thread ephemeral, with nib's instructions, and
+  for a sidebar thread `nib mcp` alone with the mode's verbs (`enabled_tools`), sent on
+  stdin. The crate is the app-server's only client: every request is written there,
+  and every request the app-server makes of its client (an approval, an elicitation, a
+  token refresh) is answered no.
+- **The tool's token**: `nib mcp` proves itself with the token of the sidebar's built-in
+  grant ("nib · Claude Code" in Settings > Agents), issued afresh once per run of the
+  app, kept in memory, and handed over in the program's environment (`NIB_MCP_TOKEN`),
+  never on a command line or in a file. It stands in for pairing, so the reader's own
+  pairing of their own Claude Code is never read or touched.
+- All: started with no console window and none of nib's handles, in an empty folder of
+  the app's own (never a space), and ended with everything they started - a job object
+  on Windows, a process group elsewhere - on a stop, when their window goes and when nib
+  quits. A question runs at most five minutes; a session ends after ten minutes with
+  nothing said either way, and the next message starts it again from nib's transcript.
+  A reload leaves a running answer to finish or time out unread.
 
-The Ask panel hands a question the passages it found itself, so no feature needs a
-program to read the notes. One that ever does gets nib's own MCP server (`nib mcp`) with
-the grant Settings > Agents gives it, never a folder.
+The Ask panel hands a question the passages it found itself, so no question needs a
+program to read the notes. The sidebar's agent reads them with nib's own MCP server
+(`nib mcp`) under the grant Settings > Agents gives it, never a folder.
 
 ### Honest about whose plan it is
 

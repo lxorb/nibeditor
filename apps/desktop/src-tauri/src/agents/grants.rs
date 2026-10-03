@@ -384,6 +384,22 @@ impl Grants {
         })?
     }
 
+    /// A fresh token for a grant that has one already, which stops working: for the AI
+    /// sidebar's own agents, whose token lives in the app's memory for one run and is
+    /// handed to `nib mcp` there (`src/ai_cli.rs`), so last run's is worth nothing.
+    pub fn reissue(&self, app: &AppHandle, id: &str) -> Result<String, String> {
+        let token = fresh_token()?;
+        let path = file(app)?;
+        self.with(app, |kept| {
+            let Some(one) = kept.iter_mut().find(|one| one.grant.id == id) else {
+                return Err("there is no such agent".to_string());
+            };
+            one.token = hashed(&token);
+            write(&path, kept)
+        })??;
+        Ok(token)
+    }
+
     /// One grant changed in place, and kept.
     pub fn change(
         &self,
