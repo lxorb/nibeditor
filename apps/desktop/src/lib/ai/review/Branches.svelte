@@ -65,8 +65,4 @@
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
-  .nib-glyph:disabled {
-    opacity: 0.4;
-  }
 </style>

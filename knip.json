@@ -19,7 +19,8 @@
         "src/even.ts",
         "presenter.html",
         "src/presenter.ts",
-        "src/site/site.ts"
+        "src/site/site.ts",
+        "src/lib/ai/review/index.ts"
       ],
       "ignoreDependencies": ["katex", "axe-core"]
     },

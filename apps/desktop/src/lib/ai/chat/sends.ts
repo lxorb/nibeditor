@@ -11,7 +11,7 @@ import type { Engine, Thread } from './types'
 
 /** One send: the thread, the provider it asked, from when to when (null while it is
  *  still running). */
-export interface Send {
+interface Send {
   thread: string
   provider: string
   from: number

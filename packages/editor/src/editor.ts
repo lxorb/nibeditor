@@ -1,7 +1,7 @@
 import { history } from '@codemirror/commands'
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
-import { EditorState, Prec, type Text } from '@codemirror/state'
+import { EditorState, type Extension, Prec, type Text } from '@codemirror/state'
 import {
   crosshairCursor,
   dropCursor,
@@ -11,7 +11,6 @@ import {
   rectangularSelection,
 } from '@codemirror/view'
 import { remoteCarets } from './carets'
-import { reviewMarks } from './review/marks'
 import { completionExtensions } from './completion'
 import { external } from './external'
 import { blockHandles } from './block/handle'
@@ -131,6 +130,16 @@ export interface EditorOptions extends StateOptions {
   parent: HTMLElement
 }
 
+/** Extensions a part of the app fetched after the first paint asks every editor to
+ *  carry from then on - the AI review's marks (review/marks.ts) - so nothing of them is
+ *  in front of the first paint. An editor already open is given one by that part
+ *  itself, through its document. */
+const carried: Extension[] = []
+
+export function carryIntoEditors(extension: Extension): void {
+  if (!carried.includes(extension)) carried.push(extension)
+}
+
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
   const { openLink, openNote, nameBlock, writeLink, shared, selection, folds } = options
@@ -168,7 +177,8 @@ export function editorState(options: StateOptions): EditorState {
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
-      reviewMarks(),
+      // What a part of the app fetched later draws in every note: the review's marks.
+      ...carried,
       // The selection, as one block with its corners smoothed; see
       // selection/layer.ts. Carries the view's own caret with it.
       nibSelection(),

@@ -65,12 +65,10 @@
           <span class="nib-row-label">{titleOf(note.path)}</span>
           <Tally added={note.added} removed={note.removed} />
         </button>
-        <button class="nib-row is-short act" onclick={() => void review.undo(note.changes)}
+        <button class="nib-chip is-quiet" onclick={() => void review.undo(note.changes)}
           >{t('Undo')}</button
         >
-        <button class="nib-row is-short act keep" onclick={() => review.keep(note.changes)}
-          >{t('Keep')}</button
-        >
+        <button class="nib-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
       </div>
       {#each note.changes as change (change.id)}
         <div class="line change">
@@ -87,12 +85,10 @@
             >
             <Tally added={change.added} removed={change.removed} />
           </button>
-          <button class="nib-row is-short act" onclick={() => void review.undo([change])}
+          <button class="nib-chip is-quiet" onclick={() => void review.undo([change])}
             >{t('Undo')}</button
           >
-          <button class="nib-row is-short act keep" onclick={() => review.keep([change])}
-            >{t('Keep')}</button
-          >
+          <button class="nib-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
         </div>
       {/each}
     </div>
@@ -127,15 +123,6 @@
     flex: 1;
     width: auto;
     min-width: 0;
-  }
-
-  .act {
-    flex: none;
-    width: auto;
-  }
-
-  .keep {
-    color: var(--success);
   }
 
   .is-gone {

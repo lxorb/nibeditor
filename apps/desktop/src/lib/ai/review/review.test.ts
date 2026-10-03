@@ -1,4 +1,5 @@
-import { EditorState, reviewMarks, reviewMarksOf, type TransactionSpec } from '@nib/editor'
+import { EditorState, type TransactionSpec } from '@nib/editor'
+import { reviewMarks, reviewMarksOf } from '@nib/editor/review'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Thread, Turn } from '../chat/types'
@@ -11,6 +12,7 @@ const fake = vi.hoisted(() => ({
   desk: null as unknown as ReturnType<typeof import('../../agents/docs/test-desk').deskWith>,
   documents: [] as NoteDoc[],
   removed: [] as string[],
+  opened: [] as string[],
 }))
 
 vi.mock('../../workspace.svelte', () => ({
@@ -25,7 +27,12 @@ vi.mock('../../workspace.svelte', () => ({
       fake.desk.disk.delete(path)
       return Promise.resolve()
     },
-    open: () => Promise.resolve(),
+    open: (path: string) => {
+      fake.opened.push(path)
+      return Promise.resolve()
+    },
+    activeSpace: { id: 's1', name: 'Space', root: '/space' },
+    active: null,
     loadTree: () => Promise.resolve(),
     goto: null,
   },
@@ -255,5 +262,22 @@ describe('a change', () => {
     expect(fake.desk.panes['u.md']?.text).toBe('alpha OMEGA')
     expect(review.said).toBe('and 1 after it')
     expect(review.changes(thread)).toHaveLength(1)
+  })
+})
+
+describe('Follow', () => {
+  test('brings a note the thread edits to the front, only while it is on', async () => {
+    fake.desk = deskWith({ 'f.md': 'one', 'g.md': 'two' })
+    fake.documents = []
+    fake.opened = []
+    const thread = aThread()
+
+    await message(thread, 'quiet', [{ path: 'f.md', at: { quote: 'one' }, replace: 'ONE' }])
+    expect(fake.opened).toEqual([])
+
+    review.toggleFollow(thread)
+    await message(thread, 'loud', [{ path: 'g.md', at: { quote: 'two' }, replace: 'TWO' }])
+    expect(fake.opened).toEqual(['/space/g.md'])
+    review.toggleFollow(thread)
   })
 })

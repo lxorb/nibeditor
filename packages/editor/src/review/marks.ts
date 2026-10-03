@@ -252,9 +252,12 @@ const style = EditorView.baseTheme({
   '.cm-review-offer .is-keep': { color: 'var(--success)' },
 })
 
-/** Everything a view needs to show the review's marks. */
+/** Everything a view needs to show the review's marks: one value, so a view handed it
+ *  twice carries it once. */
+const extension: Extension = [field, offer, style]
+
 export function reviewMarks(): Extension {
-  return [field, offer, style]
+  return extension
 }
 
 /** The changes a view is showing, for a test. */

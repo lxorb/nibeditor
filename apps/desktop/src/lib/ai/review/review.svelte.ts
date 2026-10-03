@@ -13,16 +13,17 @@
  *  it is in the first paint. */
 
 import { SvelteSet } from 'svelte/reactivity'
+import { carryIntoEditors, type SharedDoc, StateEffect } from '@nib/editor'
 import {
   type ReviewMark,
+  reviewMarks,
   setReviewActions,
   setReviewMarks,
   setReviewSource,
-  type SharedDoc,
-} from '@nib/editor'
+} from '@nib/editor/review'
 import { onTracks, putBackIn, trackedAgents, tracksOf, undoSomeIn } from '../../agents/docs'
 import { plural } from '../../i18n.svelte'
-import { insideSpace, nameOf } from '../../space-paths'
+import { insideSpace, nameOf, withinSpace } from '../../space-paths'
 import { dur } from '../../motion'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
@@ -97,20 +98,29 @@ class Review {
   redo = $state.raw<Redo | null>(null)
   /** A few words the bar says for a moment: "and 1 after it". */
   said = $state<string | null>(null)
+  /** The threads whose edits bring their note to the front as they land (Follow, Zed's
+   *  word; off unless the reader turns it on). */
+  readonly following = new SvelteSet<string>()
 
   private marked = new WeakSet<NoteDoc>()
   private readonly draw = onceAFrame(() => this.pushMarks())
   private saidTimer: ReturnType<typeof setTimeout> | undefined
 
   constructor() {
-    onTracks(() => {
+    onTracks((agent, path) => {
       this.version++
       this.draw()
+      this.follow(agent, path)
     })
     onSend((thread) => {
       if (this.redo?.thread === thread) this.forgetRedo()
     })
     setReviewSource((doc) => this.marksOfDoc(doc))
+    // The marks are fetched with the review: every editor made from now on carries
+    // them, and every note open now is handed them.
+    carryIntoEditors(reviewMarks())
+    for (const note of workspace.documents)
+      note.live.announce([StateEffect.appendConfig.of(reviewMarks())])
     setReviewActions((id, keep) => {
       const change = this.edits().find((one) => one.id === id)
       if (!change) return
@@ -210,6 +220,24 @@ class Review {
         path: change.path,
         line: note.live.text.lineAt(Math.min(from, note.live.text.length)).number - 1,
       }
+  }
+
+  /** Follow on or off for a thread. */
+  toggleFollow(thread: Pick<Thread, 'id'>): void {
+    if (this.following.has(thread.id)) this.following.delete(thread.id)
+    else this.following.add(thread.id)
+  }
+
+  /** A note an agent just wrote in, brought to the front where the thread answering
+   *  for it follows: only in the space in front, so an agent working in another space
+   *  never moves the reader there (docs/agent-native.md 8.6). */
+  private follow(agent: string, path: string): void {
+    const provider = providerOf(agent)
+    if (!this.following.size || provider === null || path.startsWith('unsaved:')) return
+    const thread = answeringAt(provider, Date.now())
+    const root = workspace.activeSpace?.root
+    if (!thread || !this.following.has(thread) || !root || withinSpace(root, path) === null) return
+    if (workspace.active?.path !== path) void workspace.open(path)
   }
 
   // ── Marks in the notes ─────────────────────────────────

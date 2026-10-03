@@ -11,7 +11,7 @@
 import type { Thread, Turn } from '../chat/types'
 
 /** Every tail a message has had, and the one shown. */
-export interface Fork {
+interface Fork {
   tails: Turn[][]
   at: number
 }

@@ -16,7 +16,7 @@ const KEEP =
   'Summarize this part of a conversation so it can be continued from the summary alone. Keep every note path, page address, decision, change made and still to make, and the reader’s requests, in their own words where they matter. Reply with the summary only.'
 
 /** Some turns as plain words: the reader's messages and the answers' words. */
-export function transcriptOf(turns: readonly Turn[]): string {
+function transcriptOf(turns: readonly Turn[]): string {
   const lines: string[] = []
   for (const turn of turns) {
     if (turn.role === 'you') {

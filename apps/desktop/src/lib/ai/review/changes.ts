@@ -12,7 +12,7 @@
 import type { Thread, Turn } from '../chat/types'
 
 /** Where one edit is in its note now: what it put in, and what it took out there. */
-export interface Spot {
+interface Spot {
   from: number
   to: number
   removed: string

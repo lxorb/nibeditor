@@ -30,3 +30,13 @@ export function editMessage(
 ): Promise<void> {
   return review.edit(thread, turn, text, panel)
 }
+
+/** Follow, the eye on the thread's menu: whether the notes the thread edits come to the
+ *  front as it edits them, and the switch. */
+export function following(thread: Thread): boolean {
+  return review.following.has(thread.id)
+}
+
+export function toggleFollow(thread: Thread): void {
+  review.toggleFollow(thread)
+}

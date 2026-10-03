@@ -53,15 +53,13 @@
         >
         <Tally {added} {removed} />
       </button>
-      <button class="nib-row is-short act" onclick={() => void review.undo(all)}>{t('Undo')}</button
-      >
-      <button class="nib-row is-short act keep" onclick={() => review.keep(all)}>{t('Keep')}</button
-      >
+      <button class="nib-chip is-quiet" onclick={() => void review.undo(all)}>{t('Undo')}</button>
+      <button class="nib-chip" onclick={() => review.keep(all)}>{t('Keep')}</button>
     {:else}
       <span class="what"></span>
     {/if}
     {#if redo}
-      <button class="nib-row is-short act" onclick={() => void review.putBack(thread, panel)}
+      <button class="nib-chip is-quiet" onclick={() => void review.putBack(thread, panel)}
         >{t('Redo')}</button
       >
     {/if}
@@ -82,16 +80,6 @@
     flex: 1;
     width: auto;
     min-width: 0;
-  }
-
-  .act {
-    flex: none;
-    width: auto;
-    justify-content: center;
-  }
-
-  .keep {
-    color: var(--success);
   }
 
   .mark {
