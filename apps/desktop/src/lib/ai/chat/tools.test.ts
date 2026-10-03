@@ -21,7 +21,7 @@ const CLAUDE = { id: 'anthropic', kind: 'anthropic' as const, name: 'Claude', mo
 const SCREEN = '<untrusted source="the reader’s screen">\nBirds\n</untrusted>'
 
 describe('the crate is asked', () => {
-  test('where the reader is, as the two verbs answered it, leaving out what failed', async () => {
+  test('where the reader is, as the crate answered it, leaving out what failed', async () => {
     answer = [
       { content: [{ type: 'text', text: SCREEN }], isError: false },
       { content: [{ type: 'text', text: 'not granted' }], isError: true },
