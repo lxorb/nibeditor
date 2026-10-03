@@ -56,6 +56,11 @@ class Grounds {
     return null
   }
 
+  /** Whether a tab's page has said anything where it is now, colour or none. */
+  heard(tab: string, address: string | null): boolean {
+    return this.live[tab]?.at === address
+  }
+
   /** What a tab's page said, at its address; null for a page that said nothing. */
   said(tab: string, address: string | null, colour: string | null): void {
     this.live = { ...this.live, [tab]: { at: address, colour } }

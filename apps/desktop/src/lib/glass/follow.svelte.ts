@@ -16,6 +16,7 @@ import { accentColour } from '../accents'
 import { chosenTint } from '../chosen-icon'
 import { hexOf, type Rgb, rgbOf } from '../legibility'
 import { links } from '../link-index.svelte'
+import { isDesktop } from '../tauri'
 import { theme } from '../theme.svelte'
 import { paletteOf } from '../wallpaper/floors'
 import { pages, siteMark } from '../web-tab/pages.svelte'
@@ -105,6 +106,20 @@ function addressOf(tab: string, written: string | undefined): string | null {
   return pages.addressOf(tab) ?? written ?? null
 }
 
+/** Each tab's read, waiting for its page to settle. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
+const waiting = new Map<string, ReturnType<typeof setTimeout>>()
+/** Which tab and address the effect has asked to be read, so it asks once. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
+const askedFor = new Set<string>()
+
+function askOnce(tab: string, address: string | null): void {
+  const key = `${tab} ${address ?? ''}`
+  if (askedFor.has(key)) return
+  askedFor.add(key)
+  landed(tab)
+}
+
 /** What is in front, as the colour the frame takes. */
 function sourceOf(): Source {
   const tab = workspace.active
@@ -113,10 +128,15 @@ function sourceOf(): Source {
 
   if (tab?.kind === 'web') {
     const address = addressOf(tab.id, tab.address)
+    const page = pages.of(tab.id)
+    // A page in front that has finished loading and not been read where it is - one
+    // that landed before glass was listening, or whose landing went unheard - is read
+    // now, once for each address. A browser's frame says so itself as it loads.
+    if (isDesktop && !page.loading && !grounds.heard(tab.id, address)) askOnce(tab.id, address)
+
     const ground = grounds.of(tab.id, address)
     if (ground) return { colour: ground, page: true }
 
-    const page = pages.of(tab.id)
     const mark = markColour(siteMark(page.icon, address))
     return { colour: mark ?? accent, page: false }
   }
@@ -168,9 +188,6 @@ export function follow(): void {
     })
   })
 }
-
-// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
-const waiting = new Map<string, ReturnType<typeof setTimeout>>()
 
 /** A page has landed or moved: its ground is read once it has settled. */
 export function landed(tab: string): void {
