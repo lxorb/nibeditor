@@ -136,12 +136,13 @@ export default tseslint.config(
     // covers it and the rules that need types cannot see it. The plain rules
     // still apply. See apps/desktop/public/sw.js for why it is written that way. The web
     // state scripts are the same kind of thing: page scripts the crate runs in a site's
-    // own page, never modules of the app; see src-tauri/src/web_state.rs. And the frame
-    // script, a classic script every sandboxed frame carries inline; see
-    // packages/editor/src/frame-script.js.
+    // own page, never modules of the app; see src-tauri/src/web_state.rs, and so is the
+    // swipe's, src-tauri/src/web_swipe.js. And the frame script, a classic script every
+    // sandboxed frame carries inline; see packages/editor/src/frame-script.js.
     files: [
       'apps/desktop/public/*.js',
       'apps/desktop/src-tauri/src/web_state/scripts/*.js',
+      'apps/desktop/src-tauri/src/web_swipe.js',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,

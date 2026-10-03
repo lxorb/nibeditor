@@ -6,20 +6,21 @@
   // listener is passive and only reads.
 
   // How near the side of the screen a finger has to land to be a swipe and not a pan.
-  var SIDE = 24
+  const SIDE = 24
   // A wheel's notch, which a touchpad's scroll never comes in whole multiples of.
-  var NOTCH = 120
-  var SLACK = 0.5
+  const NOTCH = 120
+  const SLACK = 0.5
 
   // Taken now, so a page that replaces its own `window.open` replaces nothing of this.
-  var open = window.open.bind(window)
+  const open = window.open.bind(window)
 
   // Through the binding where nib's world has one (nib's own Chromium), and otherwise
   // as a window asked for under a name that says it, which the crate reads and never
   // opens (`WebView2`); see web_swipe.rs.
   function say(said) {
-    var words = JSON.stringify(said)
-    if (typeof nibSwiped === 'function') nibSwiped(words)
+    const words = JSON.stringify(said)
+    const bound = globalThis.nibSwiped
+    if (typeof bound === 'function') bound(words)
     else open('about:blank', 'nib-swipe:' + words)
   }
 
@@ -28,28 +29,28 @@
   // the app. A scroll container that keeps its overscroll (`overscroll-behavior-x: contain`
   // or `none`) takes both, which is how a page says no swipe here.
   function takes(from) {
-    var left = false
-    var right = false
-    var root = document.scrollingElement || document.documentElement
-    for (var at = from instanceof Element ? from : root; at; at = at.parentElement) {
-      var style = getComputedStyle(at)
-      var rooted = at === root
-      var overflow = style.overflowX
+    let left = false
+    let right = false
+    const root = document.scrollingElement || document.documentElement
+    for (let at = from instanceof Element ? from : root; at; at = at.parentElement) {
+      const style = getComputedStyle(at)
+      const rooted = at === root
+      let overflow = style.overflowX
       // The root that says nothing scrolls the way its body says.
       if (rooted && overflow === 'visible' && document.body)
         overflow = getComputedStyle(document.body).overflowX
-      var container = rooted || (overflow !== 'visible' && overflow !== 'clip')
-      var keeps =
+      const container = rooted || (overflow !== 'visible' && overflow !== 'clip')
+      const keeps =
         container &&
         (style.overscrollBehaviorX === 'contain' || style.overscrollBehaviorX === 'none')
-      var sideways = rooted
+      const sideways = rooted
         ? overflow !== 'hidden' && overflow !== 'clip'
         : /auto|scroll|overlay/.test(overflow)
-      var range = at.scrollWidth - at.clientWidth
+      const range = at.scrollWidth - at.clientWidth
       if (sideways && range > SLACK) {
-        var rtl = style.direction === 'rtl'
-        var least = rtl ? -range : 0
-        var most = rtl ? 0 : range
+        const rtl = style.direction === 'rtl'
+        const least = rtl ? -range : 0
+        const most = rtl ? 0 : range
         if (at.scrollLeft > least + SLACK) left = true
         if (at.scrollLeft < most - SLACK) right = true
       }
@@ -63,17 +64,17 @@
   }
 
   // A frame's worth of scroll, said once: a touchpad reports faster than a page draws.
-  var heard = null
-  var waiting = 0
+  let heard = null
+  let waiting = 0
 
   function flush() {
     waiting = 0
-    var one = heard
+    const one = heard
     heard = null
     if (!one) return
     // Asked after every handler in the page has had the scroll: one that took it for
     // itself - a map, a slideshow - keeps it.
-    var taken = one.events.some(function (event) {
+    const taken = one.events.some(function (event) {
       return event.defaultPrevented
     })
     say({
@@ -93,7 +94,7 @@
       if (event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) return
       // A tilted wheel turns in notches; Chrome never swipes on a mouse.
       if (event.wheelDeltaX && event.wheelDeltaX % NOTCH === 0) return
-      var free = takes(event.target)
+      const free = takes(event.target)
       if (!heard) heard = { dx: 0, dy: 0, t: 0, l: false, r: false, events: [] }
       heard.dx += event.deltaX
       heard.dy += event.deltaY
@@ -107,16 +108,16 @@
   )
 
   // A finger from the side of the screen, in the page itself and not a frame in it.
-  var finger = null
+  let finger = null
 
   addEventListener(
     'touchstart',
     function (event) {
       finger = null
       if (!event.isTrusted || event.touches.length !== 1 || window !== window.top) return
-      var touch = event.touches[0]
+      const touch = event.touches[0]
       if (touch.clientX > SIDE && touch.clientX < innerWidth - SIDE) return
-      var free = takes(event.target)
+      const free = takes(event.target)
       finger = { x: touch.clientX, y: touch.clientY, l: free[0], r: free[1] }
     },
     { capture: true, passive: true },
@@ -127,7 +128,7 @@
     function (event) {
       if (!finger || !event.isTrusted) return
       if (event.touches.length !== 1) return lift(event)
-      var touch = event.touches[0]
+      const touch = event.touches[0]
       // A finger moving right scrolls towards the left, as two fingers on a pad do.
       say({
         k: 't',
