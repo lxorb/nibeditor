@@ -194,7 +194,9 @@ function turnIn(value: unknown): Turn | null {
     : []
   // The parts are checked one by one above; the rest of a turn (its draft, the provider's
   // own record of it) is handed back as it was written, which is what it is kept for.
-  return { ...(value as unknown as Turn), parts, at: isNumber(value.at) ? value.at : 0 }
+  const turn = { ...(value as unknown as Turn), parts, at: isNumber(value.at) ? value.at : 0 }
+  if (!isString(turn.context)) delete turn.context
+  return turn
 }
 
 /** A thread read from a file, or null for one that is not a thread. */

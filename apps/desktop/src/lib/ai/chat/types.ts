@@ -149,6 +149,10 @@ export interface Turn {
   draft?: Draft
   /** Sent into a running turn (Ctrl+Enter) rather than after it. */
   steered?: boolean
+  /** Where the reader was when a `you` turn was sent - the space, the tab in front,
+   *  every open tab - as nib's own verbs said it, marks and all. Sent with the message,
+   *  and kept with it, so a later request carries the same words. */
+  context?: string
   /** A `model` turn's parts. */
   parts: Part[]
   /** Which provider and model answered a `model` turn, and at what effort. */
