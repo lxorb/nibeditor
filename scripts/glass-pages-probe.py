@@ -94,8 +94,10 @@ JSON.stringify((() => {
     probe.remove()
     return (said.match(/[\\d.]+/g) || []).slice(0, 3).map(Number)
   }
+  const shown = (selector) =>
+    [...document.querySelectorAll(selector)].find((one) => one.getClientRects().length > 0)
   const part = (label, selector, where) => {
-    const one = document.querySelector(selector)
+    const one = shown(selector)
     if (!one) return null
     const box = one.getBoundingClientRect()
     if (!box.width || !box.height) return null
@@ -106,7 +108,8 @@ JSON.stringify((() => {
   return {
     scale: devicePixelRatio,
     tint: document.documentElement.style.getPropertyValue('--glass-tint'),
-    bar: document.querySelector('.webbar')?.style.getPropertyValue('--web-ground') || '',
+    bar: shown('.webbar')?.style.getPropertyValue('--web-ground') || '',
+    at: shown('.webbar input')?.value || '',
     frame: document.querySelector('header[data-chrome=top]')?.dataset.theme || '',
     parts: [
       part('the title bar', 'header[data-chrome=top] .drag', 'middle'),
@@ -124,33 +127,52 @@ def opened(held: dict, name: str) -> None:
         glass.wrong(f"{name} would not open: {answer.get('error')}")
 
 
-def read(held: dict, app_pid: int, scheme: str, name: str) -> None:
-    until = time.monotonic() + 15
+#: The edges of the band Mica can be, per scheme, painted where the material would be
+#: composited: a window that is not in front has no Mica in its own picture, so the
+#: frame's wash is read over these instead, as glass-probe.py reads it.
+BANDS = {"dark": ["#000000", "rgb(58,58,58)"], "light": ["rgb(192,192,192)", "#ffffff"]}
+
+
+def parts(held: dict, host: str) -> dict:
+    """The frame once the page in front is the one asked for and has said its colour."""
+    until = time.monotonic() + 20
     said: dict = {}
     while time.monotonic() < until:
         said = json.loads(str(glass.ran(held, PARTS) or "{}"))
-        if said.get("bar"):
-            break
+        if host in said.get("at", "").lower() and said.get("bar"):
+            # A page of a site seen before wears the site's last colour at once, and its
+            # own a moment after it has landed and been read.
+            time.sleep(3.0)
+            return json.loads(str(glass.ran(held, PARTS) or "{}"))
         time.sleep(0.4)
+    return said
+
+
+def read(held: dict, app_pid: int, scheme: str, name: str, host: str) -> None:
+    said = parts(held, host)
     label = f"[{scheme}, {name}]"
-    if not said.get("bar"):
-        glass.say(f"     {label} the page said no colour (frame {said.get('tint')})")
+    if host not in said.get("at", "").lower() or not said.get("bar"):
+        glass.say(f"     {label} the page said no colour (at {said.get('at')!r}, frame {said.get('tint')})")
         return
-    time.sleep(0.6)
-    picture = Image.open(glass.photographed(app_pid, f"{scheme}-{name}")).convert("RGB")
     glass.say(f"     {label} bar {said['bar']}, frame {said['tint']}, frame words {said['frame'] or scheme}")
     scale = said.get("scale", 1)
-    for part, x, y, ink in said.get("parts", []):
-        at = (int(x * scale), int(y * scale))
-        if not (0 <= at[0] < picture.width and 0 <= at[1] < picture.height):
-            continue
-        ground = picture.getpixel(at)
-        seen = glass.ratio(tuple(int(one) for one in ink), ground)
-        line = f"{label} {part}: quiet words {seen}:1 on {ground}"
-        if seen >= FLOOR:
-            glass.say(f"ok   {line}")
-        else:
-            glass.wrong(line)
+    for desk in BANDS[scheme]:
+        glass.ran(held, glass.DESK.format(desk=desk, material="mica"))
+        time.sleep(0.5)
+        tag = desk.replace("#", "").replace("rgb(", "").replace(")", "").replace(",", "-")
+        picture = Image.open(glass.photographed(app_pid, f"{scheme}-{name}-{tag}")).convert("RGB")
+        for part, x, y, ink in said.get("parts", []):
+            at = (int(x * scale), int(y * scale))
+            if not (0 <= at[0] < picture.width and 0 <= at[1] < picture.height):
+                continue
+            ground = picture.getpixel(at)
+            seen = glass.ratio(tuple(int(one) for one in ink), ground)
+            line = f"{label} over {desk}, {part}: quiet words {seen}:1 on {ground}"
+            if seen >= FLOOR:
+                glass.say(f"ok   {line}")
+            else:
+                glass.wrong(line)
+    glass.ran(held, glass.UNDESK)
 
 
 def main() -> int:
@@ -189,7 +211,9 @@ def main() -> int:
                     glass.pressed(held, "theme:glass", settle=1.5)
                     for name in sites:
                         opened(held, name)
-                        read(held, app.pid, scheme, name)
+                        # The address field says the site and the page's title, and each
+                        # page here names itself after its file.
+                        read(held, app.pid, scheme, name, name)
             finally:
                 glass.ended(app)
     finally:
