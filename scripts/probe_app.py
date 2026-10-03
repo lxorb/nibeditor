@@ -87,6 +87,16 @@ IN_VIEW_EXIT = 3
 STARTF_USESHOWWINDOW = 0x0001
 SW_SHOWNOACTIVATE = 4
 
+#: `SetErrorMode`: none of the system's own boxes - "has stopped working", "there is no
+#: disk in the drive", "cannot find the file" - for the probe or anything under it. The
+#: system raises them, not the probe, so no hook inside the app can hold them off the
+#: screen; and a process starts with the error mode of the one that started it, which is
+#: the drive. What Chromium's own test runner sets (base/test/test_suite.cc).
+SEM_FAILCRITICALERRORS = 0x0001
+SEM_NOGPFAULTERRORBOX = 0x0002
+SEM_NOOPENFILEERRORBOX = 0x8000
+NO_ERROR_BOXES = SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX
+
 #: `SetWindowPos`: keep the place, the order and the keyboard.
 SWP_NOMOVE = 0x0002
 SWP_NOZORDER = 0x0004
@@ -130,6 +140,8 @@ if user32 is not None and kernel32 is not None:
     kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
     kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+    kernel32.SetErrorMode.argtypes = [wintypes.UINT]
+    kernel32.SetErrorMode.restype = wintypes.UINT
     kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE, *[ctypes.POINTER(wintypes.FILETIME)] * 4]
 
 
@@ -258,6 +270,7 @@ def run_probe(
     if not environment.get("NIB_SPACES_DIR"):
         raise SystemExit("a probe is launched with NIB_SPACES_DIR in a temp folder, never without")
 
+    without_error_boxes()
     shown = subprocess.STARTUPINFO()
     shown.dwFlags |= STARTF_USESHOWWINDOW
     shown.wShowWindow = SW_SHOWNOACTIVATE
@@ -273,6 +286,14 @@ def run_probe(
     )
     threading.Thread(target=_watch, args=(app,), name="off-screen watch", daemon=True).start()
     return app
+
+
+def without_error_boxes() -> None:
+    """Gives the drive, and so every process it starts from now on, an error mode that
+    raises none of the system's boxes; see `NO_ERROR_BOXES`. What the drive had stays."""
+
+    assert kernel32 is not None
+    kernel32.SetErrorMode(kernel32.SetErrorMode(NO_ERROR_BOXES) | NO_ERROR_BOXES)
 
 
 def _started_bare(argv: list[str], **how: Any) -> subprocess.Popen[bytes]:

@@ -420,8 +420,12 @@ def main() -> int:
             title = page_says(target, "document.title") if target else None
             react = page_says(target, "typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__") if target else None
             dark = page_says(target, "document.documentElement.getAttribute('data-darkreader-scheme') || (document.querySelector('style.darkreader') ? 'style' : null)") if target else None
+            # Whether the ad script came off the network. The title cannot say: a blocker
+            # may answer the request with a harmless stand-in of its own, as uBlock Origin
+            # Lite does for this one on WebView2, and the stand-in fires `onload` too.
+            fetched = page_says(target, "performance.getEntriesByType('resource').some((one) => one.name.includes('googlesyndication'))") if target else None
             everything = targets(web_port)
-            report["(page)"] = {"title": title, "react hook": react, "dark reader": dark, "worlds": ran}
+            report["(page)"] = {"title": title, "ad script fetched": fetched, "react hook": react, "dark reader": dark, "worlds": ran}
             for name in chosen:
                 one = report[name]
                 ident = str(one.get("id") or "")

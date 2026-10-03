@@ -387,6 +387,9 @@ windows = { version = "0.58", features = [
   # for the palette has the keyboard, and a key was just pressed, which a double tap is
   # taken on (web_opens.rs).
   "Win32_UI_WindowsAndMessaging",
+  # Every window a probe's process makes, on any of its threads, told to it as it is
+  # made, so that none is ever on a screen; see foreground.rs.
+  "Win32_UI_Accessibility",
   "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
   # The shape of a web tab's page, with the app's layers over it cut out of it rather
@@ -428,9 +431,13 @@ tempfile = "3"
 
 # A window class of a test's own, which Windows describes with a brush: the tests in
 # web_wheel.rs build the windows a wheel over a page passes through. The tests' only,
-# so the app never compiles the drawing half of the crate.
+# so the app never compiles the drawing half of the crate. And a desktop of a test's
+# own, which nobody sees, for the windows foreground.rs's tests show; see there.
 [target.'cfg(target_os = "windows")'.dev-dependencies]
-windows = { version = "0.58", features = ["Win32_Graphics_Gdi"] }
+windows = { version = "0.58", features = [
+  "Win32_Graphics_Gdi",
+  "Win32_System_StationsAndDesktops",
+] }
 
 [profile.release]
 codegen-units = 1

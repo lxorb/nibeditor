@@ -451,6 +451,14 @@ pub fn run() {
     run_on(tauri::Builder::default());
 }
 
+/// What a process nib's own Chromium starts beside the app - its GPU process, a
+/// utility - does first: hold every window it makes off the screen, where the run is a
+/// probe's. See foreground.rs.
+#[cfg(desktop)]
+pub fn hold_helper() {
+    foreground::hold_helper();
+}
+
 /// Starts the app on an engine the binary chose, and exits with a message if the app
 /// could not be built at all.
 ///

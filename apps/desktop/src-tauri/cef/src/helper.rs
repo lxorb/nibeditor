@@ -51,6 +51,11 @@ pub fn is_helper() -> bool {
     std::env::args().any(|arg| arg.starts_with("--type="))
 }
 
+/// Whether this helper is a page's renderer: the one kind that never makes a window.
+pub fn is_renderer() -> bool {
+    std::env::args().any(|arg| arg == "--type=renderer")
+}
+
 /// Runs this process as the helper Chromium started it as, and returns when it is done.
 pub fn run() {
     let args = args::Args::new();

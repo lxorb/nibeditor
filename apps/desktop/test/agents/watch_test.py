@@ -225,5 +225,28 @@ class TheLoop(unittest.TestCase):
         self.assertIsNotNone(leaving)
 
 
+@unittest.skipUnless(sys.platform == "win32", "the error mode is Windows'")
+class TheSystemsBoxes(unittest.TestCase):
+    """A probe and every process under it start with none of the system's own boxes,
+    which no hook inside the app can hold off a screen: the system raises them."""
+
+    def test_the_drive_hands_its_probes_an_error_mode_without_them(self) -> None:
+        assert probe_app.kernel32 is not None
+        probe_app.without_error_boxes()
+        now = probe_app.kernel32.GetErrorMode()
+        self.assertEqual(now & probe_app.NO_ERROR_BOXES, probe_app.NO_ERROR_BOXES)
+
+    def test_before_the_probe_is_started(self) -> None:
+        said: list[str] = []
+        with (
+            mock.patch.object(probe_app, "refuse_updating", lambda exe: None),
+            mock.patch.object(probe_app, "without_error_boxes", lambda: said.append("mode")),
+            mock.patch.object(probe_app, "_started_bare", lambda argv, **how: said.append("start") or FakeApp(0)),
+            mock.patch.object(probe_app.threading, "Thread"),
+        ):
+            probe_app.run_probe(pathlib.Path("nib.exe"), env={"NIB_SPACES_DIR": "x"})
+        self.assertEqual(said, ["mode", "start"])
+
+
 if __name__ == "__main__":
     unittest.main()

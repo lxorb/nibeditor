@@ -475,6 +475,18 @@ cannot be, by construction:
   Chromium's included, whose windows are that thread's - and every top-level window is
   `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW` with no taskbar button from the moment it
   is made, whatever tao or winit write over it later.
+- **Never on a screen, whoever made the window.** A window Chromium makes for itself,
+  on a thread of its own, asks nobody where to go: on 2026-10-03 a probe started with an
+  extension that would not load raised Chromium's native "Load error" box, centred on
+  the primary screen. Under the switch the process hooks the making of every window on
+  every thread (an in-context event hook), and every top-level window is born or sent
+  to the corner a minimised window is parked in, and held there through every move and
+  show that would put a pixel of it on a screen. nib's own Chromium's GPU process and
+  utilities do the same, and the engine is started with `--noerrdialogs` and
+  `--disable-hang-monitor`, so the dialogs it can be talked out of are never raised.
+  The boxes the system raises for a process - "has stopped working", a missing disk -
+  are not the process's windows; `run_probe` starts every probe with an error mode
+  that raises none of them, as Chromium's own test runner does.
 - **Asking for the keyboard answers nothing.** `raised` and `keyboard_to` in
   placement.rs are the crate's only ways to bring a window forward or hand a webview the
   keyboard, the page reaches them only as `take_keyboard` and `raise_window`, and all
@@ -508,6 +520,13 @@ tests in foreground.rs and placement.rs, and the windows themselves. On main a p
 window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it and every
 other top-level window of the process, tao's and the single-instance plugin's included,
 are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
+
+Measured 2026-10-03, nib's own Chromium started with `--load-extension` of a folder with
+no manifest, every window of the family looked at every twenty milliseconds: before the
+hook, the load error's box was on the primary screen 254 ms and one second into two
+launches; with the hook but the switches not yet reaching Chromium (the runtime takes a bare switch only with its dashes), five launches of five raised it, and in
+every look it was at -32000,-32000; with both on, twenty launches of twenty logged the
+error, raised no box, and had nothing on a screen.
 
 ## The launch
 

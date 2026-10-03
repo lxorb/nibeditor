@@ -52,7 +52,7 @@ fn sandbox() -> SandboxPolicy {
 ///
 /// `NIB_CEF_ARGS=enable-logging=stderr,v=1`: comma separated, each one a `key=value` pair
 /// or a bare key, in the order they are written. It is how the next thing a run needs to
-/// be asked gets asked without a rebuild.
+/// be asked gets asked without a rebuild. A bare key is handed on as `bare` spells it.
 fn switches(written: &str) -> Vec<(String, Option<String>)> {
     written
         .split(',')
@@ -60,9 +60,17 @@ fn switches(written: &str) -> Vec<(String, Option<String>)> {
         .filter(|one| !one.is_empty())
         .map(|one| match one.split_once('=') {
             Some((key, value)) => (key.to_owned(), Some(value.to_owned())),
-            None => (one.to_owned(), None),
+            None => (bare(one), None),
         })
         .collect()
+}
+
+/// A switch with no value, the way the runtime takes one: with its dashes. Without them
+/// it reaches Chromium as an argument rather than a switch - an address to open - and
+/// Chromium never sees the switch at all. Chromium drops the dashes off the name it
+/// keeps, so `--x` is the switch `x` was meant to be.
+fn bare(name: &str) -> String {
+    format!("--{}", name.trim_start_matches('-'))
 }
 
 /// The port a probe reads the pages through, named in `NIB_CEF_DEBUG_PORT`.
@@ -149,6 +157,11 @@ fn off_screen() -> bool {
 
 fn main() {
     if helper::is_helper() {
+        // A probe's GPU process or utility holds its windows off the screen as the app
+        // holds its own. Not a renderer, which makes none; see foreground.rs.
+        if !helper::is_renderer() {
+            nib_lib::hold_helper();
+        }
         helper::run();
         return;
     }
@@ -174,10 +187,24 @@ fn main() {
     // nobody can see as hidden: it stops painting it and stops its animation frames, and
     // nib's own interface waits on those as it starts. So a run sent away paints anyway,
     // which is what a window on a screen does.
+    //
+    // And a probe raises none of the dialogs Chromium can be talked out of: an extension
+    // that will not load (`--load-extension`, a probe's switch) is otherwise a native
+    // message box with no parent, centred on the primary screen, which a probe put there
+    // twice on 2026-10-03; and a page that stops answering is otherwise a "Page
+    // unresponsive" dialog. The error is still in the log. Whatever window it raises
+    // anyway is held off the screen; see src/foreground.rs.
     if off_screen() {
         engine = engine
             .disable_features(["CalculateNativeWinOcclusion"])
-            .command_line_arg::<_, String>("disable-backgrounding-occluded-windows", None);
+            .command_line_args::<_, String>(
+                [
+                    "disable-backgrounding-occluded-windows",
+                    "noerrdialogs",
+                    "disable-hang-monitor",
+                ]
+                .map(|name| (bare(name), None)),
+            );
     }
 
     nib_lib::run_on(tauri::Builder::default().runtime(engine));
@@ -194,9 +221,14 @@ mod tests {
             switches("enable-logging=stderr, no-sandbox ,,v=1"),
             vec![
                 ("enable-logging".to_owned(), Some("stderr".to_owned())),
-                ("no-sandbox".to_owned(), None),
+                ("--no-sandbox".to_owned(), None),
                 ("v".to_owned(), Some("1".to_owned())),
             ]
+        );
+        assert_eq!(
+            switches("--noerrdialogs"),
+            vec![("--noerrdialogs".to_owned(), None)],
+            "a key written with its dashes keeps two"
         );
         assert!(
             switches("").is_empty(),

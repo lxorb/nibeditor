@@ -33,6 +33,20 @@
 //!   Alt+Tab or the window in front closing never lands on it and there is no taskbar
 //!   button to press. Held there through every restyle, because tao and winit both write
 //!   a window's whole extended style afresh on every change of their own.
+//! - **No top-level window of the process is ever on a screen, whichever thread made
+//!   it.** Not only the app's own: a window Chromium makes for itself, on a thread of its
+//!   own, asks nobody where to go. On 2026-10-03 a probe started with an extension that
+//!   would not load raised Chromium's "Load error" message box - a native dialog with no
+//!   parent, centred on the primary screen - and it stood there until the watch ended
+//!   the probe, twice. So the process hooks the making of every window on every one of
+//!   its threads (an in-context event hook, which runs on the thread that made the window
+//!   before it can be shown), and every top-level window is held off every screen from
+//!   then on: any move or show that would put a pixel of it on a screen is sent to the
+//!   corner a minimised window is parked in instead, before it happens. A dialog that
+//!   centres itself, a menu, a tooltip and a window put back where it was all go there.
+//!   nib's own Chromium's other processes - the GPU's, a utility's - hold theirs the same
+//!   way (`hold_helper`); its switches keep the dialogs it can be talked out of from being
+//!   raised at all (see src-tauri/cef).
 //!
 //! And the app's own ways of asking for the keyboard do nothing under the switch; see
 //! `raised` and `keyboard_to` in placement.rs. A drive that types into a probe does it
@@ -65,9 +79,37 @@ pub fn hold() -> bool {
     if crate::placement::asked_away() {
         let locked = held::lock();
         held::on_this_thread();
+        held::on_every_thread(0);
         return locked;
     }
     false
+}
+
+/// Holds every window of one of nib's own Chromium's other processes off the screen,
+/// where the run is a probe's: what `hold` does for the app's windows, for the windows a
+/// GPU process or a utility makes. Called first thing in such a process. A renderer is
+/// never asked: it makes no window, and a sandbox may refuse it the window manager.
+pub fn hold_helper() {
+    #[cfg(windows)]
+    if crate::placement::asked_away() {
+        held::on_every_thread(0);
+    }
+}
+
+/// The corner a probe's window is held in: where Windows parks a minimised window, well
+/// past any desk of monitors. The system clamps it nearer, and nearer is still past them.
+#[cfg(any(windows, test))]
+const PARKED: i32 = -32_000;
+
+/// Where a top-level window going to `to` is let go: there, unless any of it would be on a
+/// screen, and the parked corner if so.
+#[cfg(any(windows, test))]
+fn kept_off(to: (i32, i32), on_a_screen: bool) -> (i32, i32) {
+    if on_a_screen {
+        (PARKED, PARKED)
+    } else {
+        to
+    }
 }
 
 /// The extended style a probe's top-level window is held to, from the one it asked for.
@@ -86,13 +128,19 @@ fn top_level(style: u32, for_messages: bool) -> bool {
 
 #[cfg(windows)]
 mod held {
-    use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
-    use windows::Win32::System::Threading::GetCurrentThreadId;
+    use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, RECT, WPARAM};
+    use windows::Win32::Graphics::Gdi::{MonitorFromRect, MONITOR_DEFAULTTONULL};
+    use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows::Win32::System::Threading::{GetCurrentProcessId, GetCurrentThreadId};
+    use windows::Win32::UI::Accessibility::{SetWinEventHook, HWINEVENTHOOK};
     use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
     use windows::Win32::UI::WindowsAndMessaging::{
-        CallNextHookEx, GetWindowLongW, LockSetForegroundWindow, SetWindowLongW, SetWindowsHookExW,
-        CBT_CREATEWNDW, GWL_EXSTYLE, HCBT_ACTIVATE, HCBT_CREATEWND, HHOOK, HWND_MESSAGE, LSFW_LOCK,
-        STYLESTRUCT, WH_CBT, WINDOW_EX_STYLE, WM_NCCREATE, WM_NCDESTROY, WM_STYLECHANGING,
+        CallNextHookEx, GetAncestor, GetDesktopWindow, GetWindowLongW, GetWindowRect,
+        LockSetForegroundWindow, SetWindowLongW, SetWindowPos, SetWindowsHookExW, CBT_CREATEWNDW,
+        CHILDID_SELF, EVENT_OBJECT_CREATE, EVENT_OBJECT_SHOW, GA_PARENT, GWL_EXSTYLE,
+        HCBT_ACTIVATE, HCBT_CREATEWND, HHOOK, HWND_MESSAGE, LSFW_LOCK, OBJID_WINDOW, STYLESTRUCT,
+        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WH_CBT, WINDOWPOS, WINDOW_EX_STYLE,
+        WINEVENT_INCONTEXT, WM_NCCREATE, WM_NCDESTROY, WM_STYLECHANGING, WM_WINDOWPOSCHANGING,
     };
 
     /// This file's subclass among a window's others; tao's and wry's are theirs.
@@ -122,6 +170,143 @@ mod held {
         };
     }
 
+    /// Every top-level window any thread of this process makes from now on - or the one
+    /// thread named, where `thread` is not 0 - is held back and off every screen: an event
+    /// hook told of each window as it is made, on the thread that made it and before that
+    /// thread can show it, which is where a window's own procedure can be put in front of
+    /// the rest. For the process's whole life, unless the caller unhooks what it is handed.
+    #[allow(unsafe_code, reason = "setting an event hook is a Win32 call")]
+    pub fn on_every_thread(thread: u32) -> Option<HWINEVENTHOOK> {
+        // Safe: an in-context hook on this process alone, whose procedure is in this very
+        // module, which is never unloaded; and no pointers of ours.
+        unsafe {
+            let module = GetModuleHandleW(None).ok()?;
+            let hook = SetWinEventHook(
+                EVENT_OBJECT_CREATE,
+                EVENT_OBJECT_SHOW,
+                module,
+                Some(made),
+                GetCurrentProcessId(),
+                thread,
+                WINEVENT_INCONTEXT,
+            );
+            (!hook.is_invalid()).then_some(hook)
+        }
+    }
+
+    /// A window of this process made, gone or shown. Made or shown, a top-level one is
+    /// held: back, and off every screen.
+    #[allow(
+        unsafe_code,
+        reason = "an event hook is a callback the system calls with a window it names"
+    )]
+    unsafe extern "system" fn made(
+        _hook: HWINEVENTHOOK,
+        event: u32,
+        window: HWND,
+        object: i32,
+        child: i32,
+        _thread: u32,
+        _time: u32,
+    ) {
+        let itself = object == OBJID_WINDOW.0 && u32::try_from(child) == Ok(CHILDID_SELF);
+        if !itself || !(event == EVENT_OBJECT_CREATE || event == EVENT_OBJECT_SHOW) {
+            return;
+        }
+        if !top_level_now(window) {
+            return;
+        }
+        // Safe: a window of this process, alive as its own event is told. A subclass is
+        // only ever set from the window's own thread, which is where an in-context event
+        // runs, and is refused, harmlessly, from anywhere else.
+        unsafe {
+            let _ = SetWindowSubclass(window, Some(holding), SUBCLASS, 0);
+            let now = u32::from_ne_bytes(GetWindowLongW(window, GWL_EXSTYLE).to_ne_bytes());
+            let _ = SetWindowLongW(
+                window,
+                GWL_EXSTYLE,
+                i32::from_ne_bytes(super::kept_back(now).to_ne_bytes()),
+            );
+        }
+        let mut now = RECT::default();
+        // Safe: the window above, and a rectangle of this frame's own to write.
+        if unsafe { GetWindowRect(window, &raw mut now) }.is_err() {
+            return;
+        }
+        let to = super::kept_off((now.left, now.top), on_a_screen(&now));
+        if to != (now.left, now.top) {
+            // Safe: the window above, moved and nothing else.
+            let _ = unsafe {
+                SetWindowPos(
+                    window,
+                    HWND::default(),
+                    to.0,
+                    to.1,
+                    0,
+                    0,
+                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                )
+            };
+        }
+    }
+
+    /// Whether a window is one of its own on the desktop now - not inside another, and
+    /// not one kept for messages alone - which is what may be on a screen.
+    #[allow(unsafe_code, reason = "asking a window's parent is a Win32 call")]
+    fn top_level_now(window: HWND) -> bool {
+        // Safe: no pointers; a window gone has no parent to answer.
+        unsafe { GetAncestor(window, GA_PARENT) == GetDesktopWindow() }
+    }
+
+    /// Whether any pixel of a rectangle, in the pixels the asking thread reads, is on any
+    /// screen.
+    #[allow(
+        unsafe_code,
+        reason = "asking which screen a rectangle is on is a Win32 call"
+    )]
+    fn on_a_screen(rectangle: &RECT) -> bool {
+        if rectangle.right <= rectangle.left || rectangle.bottom <= rectangle.top {
+            return false;
+        }
+        // Safe: a rectangle of the caller's, read and not kept.
+        !unsafe { MonitorFromRect(rectangle, MONITOR_DEFAULTTONULL) }.is_invalid()
+    }
+
+    /// A move, a resize or a show about to happen to a held window, changed before it
+    /// happens so that none of the window lands on a screen.
+    #[allow(unsafe_code, reason = "reading where a window is now is a Win32 call")]
+    fn kept_away(window: HWND, going: &mut WINDOWPOS) {
+        if !top_level_now(window) {
+            return;
+        }
+        let mut now = RECT::default();
+        // Safe: the window whose own procedure is running, and a rectangle of this frame's.
+        if unsafe { GetWindowRect(window, &raw mut now) }.is_err() {
+            return;
+        }
+        let (left, top) = if going.flags.contains(SWP_NOMOVE) {
+            (now.left, now.top)
+        } else {
+            (going.x, going.y)
+        };
+        let (width, height) = if going.flags.contains(SWP_NOSIZE) {
+            (now.right - now.left, now.bottom - now.top)
+        } else {
+            (going.cx, going.cy)
+        };
+        let lands = RECT {
+            left,
+            top,
+            right: left.saturating_add(width),
+            bottom: top.saturating_add(height),
+        };
+        let to = super::kept_off((left, top), on_a_screen(&lands));
+        if to != (left, top) {
+            (going.x, going.y) = to;
+            going.flags &= !SWP_NOMOVE;
+        }
+    }
+
     #[allow(
         unsafe_code,
         reason = "a window hook is a callback the system calls with pointers it owns"
@@ -141,6 +326,9 @@ mod held {
                         if super::top_level(style, making.hwndParent == HWND_MESSAGE) {
                             making.dwExStyle =
                                 WINDOW_EX_STYLE(super::kept_back(making.dwExStyle.0));
+                            // Born off every screen, rather than moved off one once made.
+                            making.x = super::PARKED;
+                            making.y = super::PARKED;
                             let _ =
                                 SetWindowSubclass(HWND(wparam.0 as _), Some(holding), SUBCLASS, 0);
                         }
@@ -154,7 +342,8 @@ mod held {
     }
 
     /// A held window's own procedure, in front of the rest: its extended style set as it
-    /// is made, and kept on every change anybody makes to it afterwards.
+    /// is made and kept on every change anybody makes to it afterwards, and every move
+    /// that would put it on a screen sent off them instead.
     #[allow(
         unsafe_code,
         reason = "a subclass procedure is a callback the system calls with pointers it owns"
@@ -174,6 +363,13 @@ mod held {
             // before they are set.
             if let Some(changing) = unsafe { (lparam.0 as *mut STYLESTRUCT).as_mut() } {
                 changing.styleNew = super::kept_back(changing.styleNew);
+            }
+        }
+        if message == WM_WINDOWPOSCHANGING {
+            // Safe: for `WM_WINDOWPOSCHANGING` the system passes where the window is about
+            // to go, ours to change before it goes there.
+            if let Some(going) = unsafe { (lparam.0 as *mut WINDOWPOS).as_mut() } {
+                kept_away(window, going);
             }
         }
         if message == WM_NCDESTROY {
@@ -202,7 +398,9 @@ mod held {
 
 #[cfg(test)]
 mod tests {
-    use super::{kept_back, top_level, APP_WINDOW, CHILD, NO_ACTIVATE, TOOL_WINDOW};
+    use super::{
+        kept_back, kept_off, top_level, APP_WINDOW, CHILD, NO_ACTIVATE, PARKED, TOOL_WINDOW,
+    };
 
     #[test]
     fn a_window_is_held_back_whatever_style_it_asked_for() {
@@ -244,6 +442,13 @@ mod tests {
             let at = lib[start..].find(later).expect(later);
             assert!(held < at, "{later} comes before the process is held back");
         }
+    }
+
+    #[test]
+    fn a_window_that_would_be_on_a_screen_is_parked_and_any_other_left_alone() {
+        assert_eq!(kept_off((100, 200), true), (PARKED, PARKED));
+        assert_eq!(kept_off((-5000, 40), false), (-5000, 40));
+        assert_eq!(kept_off((PARKED, PARKED), false), (PARKED, PARKED));
     }
 
     #[test]
@@ -361,5 +566,230 @@ mod tests {
                 activated,
             }
         }
+    }
+
+    /// A real native dialog with no parent - the kind Chromium raised on 2026-10-03 - made
+    /// on a thread other than the one that set the hook: the system centres it on the
+    /// primary screen, and on a thread that is held it is never on any screen, neither as
+    /// it is shown nor when it is moved back onto one from outside. On a desktop of the
+    /// test's own, which no screen ever shows, so the run without the hook - the proof
+    /// that the system would have put it there - is in front of nobody either.
+    #[cfg(windows)]
+    #[test]
+    fn a_dialog_any_thread_raises_is_never_on_a_screen() {
+        let plain = a_message_box_watched(false);
+        assert!(plain.seen, "the plain dialog never appeared");
+        assert!(
+            plain.on_a_screen,
+            "the system kept the dialog off the screens by itself; the test proves nothing"
+        );
+
+        let held = a_message_box_watched(true);
+        assert!(held.seen, "the held dialog never appeared");
+        assert!(!held.on_a_screen, "the held dialog was on a screen");
+    }
+
+    /// What a watch saw of one message box: whether it was there at all, and whether any
+    /// of it was ever on a screen.
+    #[cfg(windows)]
+    struct Watched {
+        seen: bool,
+        on_a_screen: bool,
+    }
+
+    /// A parentless message box raised on a desktop of the test's own, by a thread that is
+    /// held where `holding` says so, and watched from outside until it is closed: moved
+    /// back where the system would centre it, from another thread, as it first shows.
+    #[cfg(windows)]
+    #[allow(
+        unsafe_code,
+        reason = "a message box, a move and a close are Win32 calls"
+    )]
+    fn a_message_box_watched(holding: bool) -> Watched {
+        use std::sync::mpsc;
+        use std::time::{Duration, Instant};
+
+        use windows::core::w;
+        use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
+        use windows::Win32::System::StationsAndDesktops::{CloseDesktop, HDESK};
+        use windows::Win32::System::Threading::GetCurrentThreadId;
+        use windows::Win32::UI::Accessibility::UnhookWinEvent;
+        use windows::Win32::UI::WindowsAndMessaging::{
+            MessageBoxW, PostMessageW, SetWindowPos, MB_OK, SWP_NOACTIVATE, SWP_NOSIZE,
+            SWP_NOZORDER, WM_CLOSE,
+        };
+
+        let desktop = own_desktop(holding);
+        let (told, thread) = mpsc::channel();
+        let (go, going) = mpsc::channel::<()>();
+        let maker = on_desktop(desktop, move || {
+            // Safe: no pointers.
+            told.send(unsafe { GetCurrentThreadId() }).expect("told");
+            going.recv().expect("go");
+            // Safe: a box with no parent, closed by the watch below.
+            unsafe {
+                MessageBoxW(
+                    None,
+                    w!("An extension could not be loaded."),
+                    w!("Load error"),
+                    MB_OK,
+                );
+            }
+        });
+        let raising = thread.recv().expect("the maker's thread");
+        // An event hook hears the desktop of the thread that set it, so the hook is set
+        // from a thread on the test's desktop too, which keeps it until the watch is done.
+        let (hooked, hearing) = mpsc::channel();
+        let (done, ending) = mpsc::channel::<()>();
+        let hooking = on_desktop(desktop, move || {
+            let hook = holding.then(|| super::held::on_every_thread(raising).expect("the hook"));
+            hooked.send(()).expect("hooked");
+            ending.recv().expect("done");
+            if let Some(hook) = hook {
+                // Safe: the hook set above, let go once.
+                let _ = unsafe { UnhookWinEvent(hook) };
+            }
+        });
+        hearing.recv().expect("hooked");
+        go.send(()).expect("go");
+
+        let mut watched = Watched {
+            seen: false,
+            on_a_screen: false,
+        };
+        let mut first: Option<Instant> = None;
+        let until = Instant::now() + Duration::from_secs(10);
+        while Instant::now() < until && !maker.is_finished() {
+            for (window, on_a_screen) in shown(desktop, raising) {
+                let window = HWND(window as _);
+                watched.seen = true;
+                watched.on_a_screen |= on_a_screen;
+                let since = *first.get_or_insert_with(|| {
+                    // Put back where the system would centre it, from outside its thread.
+                    // Safe: the dialog, moved and nothing else.
+                    let _ = unsafe {
+                        SetWindowPos(
+                            window,
+                            HWND::default(),
+                            100,
+                            100,
+                            0,
+                            0,
+                            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                        )
+                    };
+                    Instant::now()
+                });
+                if since.elapsed() > Duration::from_millis(400) {
+                    // Safe: asks the dialog to close, as its own close button does.
+                    let _ = unsafe { PostMessageW(window, WM_CLOSE, WPARAM(0), LPARAM(0)) };
+                }
+            }
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        maker.join().expect("the maker");
+        done.send(()).expect("done");
+        hooking.join().expect("the hooker");
+        // Safe: the desktop made for this run, closed once nothing is on it.
+        let _ = unsafe { CloseDesktop(HDESK(desktop as _)) };
+        watched
+    }
+
+    /// A desktop of the test's own, as a number a thread can be handed: no screen ever
+    /// shows it, so whatever a thread on it shows is in front of nobody.
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "making a desktop is a Win32 call")]
+    fn own_desktop(which: bool) -> isize {
+        use windows::core::PCWSTR;
+        use windows::Win32::System::StationsAndDesktops::{CreateDesktopW, DESKTOP_CONTROL_FLAGS};
+
+        /// `GENERIC_ALL`, for a desktop the test made and closes itself.
+        const EVERYTHING: u32 = 0x1000_0000;
+
+        let name: Vec<u16> = format!(
+            "nib-foreground-test-{}-{}",
+            std::process::id(),
+            u8::from(which)
+        )
+        .encode_utf16()
+        .chain([0])
+        .collect();
+        // Safe: a name that outlives the call; the desktop is the caller's to close.
+        let desktop = unsafe {
+            CreateDesktopW(
+                PCWSTR(name.as_ptr()),
+                None,
+                None,
+                DESKTOP_CONTROL_FLAGS(0),
+                EVERYTHING,
+                None,
+            )
+        }
+        .expect("a desktop of the test's own");
+        desktop.0 as isize
+    }
+
+    /// Runs `work` on a new thread on that desktop, before the thread has a window.
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "moving a thread to a desktop is a Win32 call")]
+    fn on_desktop(
+        desktop: isize,
+        work: impl FnOnce() + Send + 'static,
+    ) -> std::thread::JoinHandle<()> {
+        use windows::Win32::System::StationsAndDesktops::{SetThreadDesktop, HDESK};
+
+        std::thread::spawn(move || {
+            // Safe: a thread with no window and no hook yet.
+            unsafe { SetThreadDesktop(HDESK(desktop as _)) }.expect("on the test's desktop");
+            work();
+        })
+    }
+
+    /// The visible windows one thread has on that desktop, each with whether any of it is
+    /// on a screen.
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "listing a desktop's windows is a Win32 call")]
+    fn shown(desktop: isize, thread: u32) -> Vec<(isize, bool)> {
+        use windows::Win32::Foundation::{BOOL, HWND, LPARAM, RECT};
+        use windows::Win32::Graphics::Gdi::{MonitorFromRect, MONITOR_DEFAULTTONULL};
+        use windows::Win32::System::StationsAndDesktops::{EnumDesktopWindows, HDESK};
+        use windows::Win32::UI::WindowsAndMessaging::{
+            GetWindowRect, GetWindowThreadProcessId, IsWindowVisible,
+        };
+
+        unsafe extern "system" fn each(window: HWND, found: LPARAM) -> BOOL {
+            // Safe: `found` is the vector below, alive for the whole enumeration.
+            unsafe { (*(found.0 as *mut Vec<isize>)).push(window.0 as isize) };
+            BOOL(1)
+        }
+
+        let mut found: Vec<isize> = Vec::new();
+        // Safe: the desktop, and the vector the callback writes into, both alive until
+        // this returns.
+        let _ = unsafe {
+            EnumDesktopWindows(
+                HDESK(desktop as _),
+                Some(each),
+                LPARAM(&raw mut found as isize),
+            )
+        };
+        found
+            .into_iter()
+            .filter_map(|one| {
+                let window = HWND(one as _);
+                // Safe: windows the system just listed, asked and not kept.
+                unsafe {
+                    if GetWindowThreadProcessId(window, None) != thread
+                        || !IsWindowVisible(window).as_bool()
+                    {
+                        return None;
+                    }
+                    let mut place = RECT::default();
+                    GetWindowRect(window, &raw mut place).ok()?;
+                    let on = !MonitorFromRect(&raw const place, MONITOR_DEFAULTTONULL).is_invalid();
+                    Some((one, on))
+                }
+            })
+            .collect()
     }
 }
