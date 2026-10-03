@@ -198,7 +198,8 @@ mod tests {
         folder(&profile.path().join(id).join("4.9.0_0"));
         let newest = folder(&profile.path().join(id).join("4.9.0_1"));
 
-        let all = [json!({ "id": id, "version": "4.9.0", "enabled": true, "edge": false, "path": null })];
+        let all =
+            [json!({ "id": id, "version": "4.9.0", "enabled": true, "edge": false, "path": null })];
         let found = entries(&all, profile.path());
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].1, newest);
