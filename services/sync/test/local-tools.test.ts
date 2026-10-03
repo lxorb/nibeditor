@@ -1,18 +1,22 @@
 /** The local server's tools beside this connector's.
  *
- *  `nib mcp`, the app's own binary speaking MCP on the reader's machine, has the six tools
- *  this connector has under the same names, so a prompt or a skill written against one
- *  works against the other (docs/agent-native.md 10). What that takes is held here, from
+ *  `nib mcp`, the app's own binary speaking MCP on the reader's machine, has the eleven
+ *  tools this connector has under the same names, six of notes and five of to-dos and
+ *  bases, so a prompt or a skill written against one works against the other
+ *  (docs/agent-native.md 10, docs/tasks.md 5.15). What that takes is held here, from
  *  the connector's side: every argument this connector takes, the local tool takes under
  *  the same name and type, and never needs an argument this one does not. The local tool
  *  may take more, and may need less - the open space stands in for `space` there. Its
- *  table is apps/desktop/src-tauri/src/mcp/tools.json; the answers' words are held in
- *  src-tauri/src/mcp/shared.rs. */
+ *  table is apps/desktop/src-tauri/src/mcp/tools.json; the six notes' answers' words are held
+ *  in src-tauri/src/mcp/shared.rs, and the five others answer the same JSON on both. */
 
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { TOOLS } from '../src/mcp/tools'
+import { TASK_TOOLS } from '../src/mcp/tasks'
+import { TOOLS as NOTE_TOOLS } from '../src/mcp/tools'
+
+const TOOLS = [...NOTE_TOOLS, ...TASK_TOOLS]
 
 interface Schema {
   type?: string
@@ -56,11 +60,11 @@ describe('the local server beside the connector', () => {
     },
   )
 
-  test('the six are every name the two share', () => {
+  test('the eleven are every name the two share', () => {
     const theirs = new Set(TOOLS.map((tool) => tool.name))
     const shared = local.filter((tool) => theirs.has(tool.name)).map((tool) => tool.name)
 
     expect(shared.sort()).toEqual([...theirs].sort())
-    expect(shared).toHaveLength(6)
+    expect(shared).toHaveLength(11)
   })
 })
