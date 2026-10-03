@@ -298,6 +298,7 @@ fn pixels(length: f64) -> u32 {
 }
 
 /// What the page asks of its own document: how wide and how tall it lays out.
+#[cfg(any(windows, feature = "cef"))]
 const ASK: &str = "JSON.stringify([Math.max(document.documentElement.scrollWidth, document.body ? document.body.scrollWidth : 0), Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0)])";
 
 /// The page's own size, from the engine this build runs on.
