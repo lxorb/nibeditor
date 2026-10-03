@@ -101,6 +101,7 @@ export const fil: Dictionary = {
   'Move to space': 'Ilipat sa espasyo',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'Mag-swipe sa pagitan ng mga pahina',
   'Hidden tabs': 'Mga nakatagong tab',
   'Memory saver': 'Pagtitipid sa memory',
   Moderate: 'Katamtaman',

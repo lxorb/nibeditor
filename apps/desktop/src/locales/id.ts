@@ -101,6 +101,7 @@ export const id: Dictionary = {
   'Move to space': 'Pindahkan ke ruang',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab menurut urutan pemakaian',
+  'Swipe between pages': 'Usap di antara halaman',
   'Hidden tabs': 'Tab tersembunyi',
   'Memory saver': 'Penghemat memori',
   Moderate: 'Sedang',

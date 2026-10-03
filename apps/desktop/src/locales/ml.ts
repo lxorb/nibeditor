@@ -101,6 +101,7 @@ export const ml: Dictionary = {
   'Move to space': 'സ്പേസിലേക്ക് നീക്കുക',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'പേജുകൾക്കിടയിൽ സ്വൈപ്പ് ചെയ്യുക',
   'Hidden tabs': 'മറഞ്ഞിരിക്കുന്ന ടാബുകൾ',
   'Memory saver': 'മെമ്മറി സേവർ',
   Moderate: 'മിതമായ',

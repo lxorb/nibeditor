@@ -101,6 +101,7 @@ export const it: Dictionary = {
   'Move to space': 'Sposta in spazio',
   Tabs: 'Schede',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in ordine di utilizzo',
+  'Swipe between pages': 'Scorri tra le pagine',
   'Hidden tabs': 'Schede nascoste',
   'Memory saver': 'Risparmio memoria',
   Moderate: 'Moderato',

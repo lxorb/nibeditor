@@ -101,6 +101,7 @@ export const my: Dictionary = {
   'Move to space': 'အလုပ်ခွင်သို့ရွှေ့',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'စာမျက်နှာများကြား ပွတ်ဆွဲရန်',
   'Hidden tabs': 'ဝှက်ထားသော တဘ်များ',
   'Memory saver': 'မှတ်ဉာဏ် ချွေတာခြင်း',
   Moderate: 'အလယ်အလတ်',

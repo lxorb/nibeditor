@@ -144,14 +144,18 @@ fn attached_frame(event: &str) -> Option<String> {
 }
 
 /// What a frame is sent once it is attached, in order, which is the order its session
-/// runs them in: its page domain on, nib's scripts registered in nib's world, its own
-/// frames followed the same way, and then let go. The last is sent whatever became of
-/// the others, because a frame held at its start and never let go is a frame that never
-/// loads.
+/// runs them in: its page domain on, the function a swipe is said through given to nib's
+/// world (`web_swipe.rs`), nib's scripts registered in nib's world, its own frames followed
+/// the same way, and then let go. The last is sent whatever became of the others, because
+/// a frame held at its start and never let go is a frame that never loads.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
-fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
+fn in_frame(scripts: &str) -> [(&'static str, String); 5] {
     [
         ("Page.enable", "{}".to_string()),
+        (
+            "Runtime.addBinding",
+            crate::web_swipe::binding().to_string(),
+        ),
         (
             "Page.addScriptToEvaluateOnNewDocument",
             registering(scripts),
@@ -268,6 +272,16 @@ mod engine {
                 count
             });
 
+        // The function a swipe is said through, in nib's world from its first document;
+        // a binding the engine refused leaves the scripts asking nothing. See
+        // web_swipe.rs.
+        if !scripts.is_empty() {
+            let _ = waited(
+                &core,
+                "Runtime.addBinding",
+                &crate::web_swipe::binding().to_string(),
+            );
+        }
         let ours = scripts.is_empty() || registered(&core, scripts);
         let frames = scripts.is_empty() || following(&core, scripts);
         Cleared {
@@ -546,18 +560,25 @@ mod engine {
         json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
     }
 
-    /// Hears what nib's world in the page asks through its binding, for as long as the
-    /// page is open, and hands each call to `web_opens`.
+    /// Hears what nib's world in the page asks through its bindings, for as long as the
+    /// page is open, and hands each call to `web_opens` or `web_swipe`.
     pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
         let (app, tab, window) = (app.clone(), tab.to_string(), window.to_string());
         let _ = devtools::hear(view, move |method, _session, params| {
-            if method != "Runtime.bindingCalled"
-                || params.get("name").and_then(Value::as_str) != Some(crate::web_opens::BINDING)
-            {
+            if method != "Runtime.bindingCalled" {
                 return;
             }
-            if let Some(payload) = params.get("payload").and_then(Value::as_str) {
-                crate::web_opens::heard_on_chromium(&app, &window, &tab, payload);
+            let Some(payload) = params.get("payload").and_then(Value::as_str) else {
+                return;
+            };
+            match params.get("name").and_then(Value::as_str) {
+                Some(crate::web_opens::BINDING) => {
+                    crate::web_opens::heard_on_chromium(&app, &window, &tab, payload);
+                }
+                Some(crate::web_swipe::BINDING) => {
+                    crate::web_swipe::heard(&app, &window, &tab, payload);
+                }
+                _ => {}
             }
         });
     }
@@ -603,6 +624,11 @@ mod engine {
         // The binding first, so nib's world has it from its first document on; a binding
         // the engine refused leaves the scripts in place all the same, asking nothing.
         let _ = called(view, "Runtime.addBinding", &binding().to_string());
+        let _ = called(
+            view,
+            "Runtime.addBinding",
+            &crate::web_swipe::binding().to_string(),
+        );
         let ours = scripts.is_empty()
             || (enabled
                 && called(
@@ -880,12 +906,15 @@ mod tests {
             methods,
             [
                 "Page.enable",
+                "Runtime.addBinding",
                 "Page.addScriptToEvaluateOnNewDocument",
                 "Target.setAutoAttach",
                 "Runtime.runIfWaitingForDebugger",
             ]
         );
-        let registered: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
+        let bound: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
+        assert_eq!(bound["executionContextName"], WORLD);
+        let registered: serde_json::Value = serde_json::from_str(&sent[2].1).expect("json");
         assert_eq!(registered["worldName"], WORLD);
     }
 

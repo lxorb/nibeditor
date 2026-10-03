@@ -858,7 +858,8 @@ pub(crate) fn reader(selection: bool) -> String {
 }
 
 /// nib's own scripts for a page: on `WebView2` a link pressed for a tab of its own and
-/// the keys a page lets go by (see `web_opens.rs`), and - for a tab being revived - the
+/// the keys a page lets go by (see `web_opens.rs`), a swipe over it (`web_swipe.rs`),
+/// and - for a tab being revived - the
 /// place the reading was left at. Empty for a page that needs none of them.
 ///
 /// They run in nib's own world, where the page can neither see them nor trip over them;
@@ -872,10 +873,17 @@ fn opening(place: Option<Place>, url: &str) -> String {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
+    // And on Windows' two engines, what a swipe over the page says; see web_swipe.rs.
     #[cfg(all(windows, not(feature = "cef")))]
-    let mut scripts = vec![crate::web_opens::SCRIPT.to_string()];
+    let mut scripts = vec![
+        crate::web_opens::SCRIPT.to_string(),
+        crate::web_swipe::script().to_string(),
+    ];
     #[cfg(feature = "cef")]
-    let mut scripts = vec![crate::web_opens::script()];
+    let mut scripts = vec![
+        crate::web_opens::script(),
+        crate::web_swipe::script().to_string(),
+    ];
     #[cfg(all(not(windows), not(feature = "cef")))]
     let mut scripts: Vec<String> = Vec::new();
 
@@ -1504,6 +1512,10 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
         // Its `alert`, `confirm` and `prompt`, in nib's own card; see web_dialogs.rs.
         crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
+        // A swipe over it, said to the window; see web_swipe.rs. nib's own Chromium hears
+        // it with the rest of its binding's calls, in `web_worlds::asking`.
+        #[cfg(all(windows, not(feature = "cef")))]
+        crate::web_swipe::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
 
         #[cfg(not(feature = "cef"))]
@@ -3153,13 +3165,18 @@ mod tests {
     }
 
     /// On `WebView2` a page opened for the first time is handed the keys and the middle
-    /// button, in nib's own world, and nothing else; see `web_worlds.rs`.
+    /// button, and what a swipe over it says, in nib's own world, and nothing else; see
+    /// `web_worlds.rs`.
     #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn a_page_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
             opening(None, "https://a.example/page"),
-            format!("{};\n", crate::web_opens::SCRIPT)
+            format!(
+                "{};\n{};\n",
+                crate::web_opens::SCRIPT,
+                crate::web_swipe::script()
+            )
         );
     }
 
@@ -3171,8 +3188,10 @@ mod tests {
             opening(None, "https://a.example/page"),
             format!(
                 "{};
+{};
 ",
-                crate::web_opens::script()
+                crate::web_opens::script(),
+                crate::web_swipe::script()
             )
         );
     }

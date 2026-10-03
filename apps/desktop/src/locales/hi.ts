@@ -101,6 +101,7 @@ export const hi: Dictionary = {
   'Move to space': 'स्पेस में ले जाएँ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'पेजों के बीच स्वाइप करें',
   'Hidden tabs': 'छिपे हुए टैब',
   'Memory saver': 'मेमोरी सेवर',
   Moderate: 'मध्यम',

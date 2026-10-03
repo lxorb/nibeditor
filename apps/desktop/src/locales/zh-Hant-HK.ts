@@ -101,6 +101,7 @@ export const zhHantHK: Dictionary = {
   'Move to space': '移到空間',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
+  'Swipe between pages': '在頁面之間掃動',
   'Hidden tabs': '隱藏的標籤頁',
   'Memory saver': '記憶體節省',
   Moderate: '適中',

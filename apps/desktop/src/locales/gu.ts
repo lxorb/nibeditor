@@ -101,6 +101,7 @@ export const gu: Dictionary = {
   'Move to space': 'જગ્યામાં ખસેડો',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'પૃષ્ઠો વચ્ચે સ્વાઇપ કરો',
   'Hidden tabs': 'છુપાયેલા ટૅબ',
   'Memory saver': 'મેમરી સેવર',
   Moderate: 'મધ્યમ',

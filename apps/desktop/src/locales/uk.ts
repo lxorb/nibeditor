@@ -101,6 +101,7 @@ export const uk: Dictionary = {
   'Move to space': 'Перемістити до простору',
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab у порядку використання',
+  'Swipe between pages': 'Гортання між сторінками',
   'Hidden tabs': 'Приховані вкладки',
   'Memory saver': 'Економія пам’яті',
   Moderate: 'Помірний',

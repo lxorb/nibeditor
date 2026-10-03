@@ -101,6 +101,7 @@ export const te: Dictionary = {
   'Move to space': 'స్పేస్‌కి తరలించు',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'పేజీల మధ్య స్వైప్ చేయండి',
   'Hidden tabs': 'దాచిన ట్యాబ్‌లు',
   'Memory saver': 'మెమరీ సేవర్',
   Moderate: 'మధ్యస్థం',

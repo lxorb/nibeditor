@@ -101,6 +101,7 @@ export const tr: Dictionary = {
   'Move to space': 'Alana taşı',
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',
+  'Swipe between pages': 'Sayfalar arasında kaydır',
   'Hidden tabs': 'Gizli sekmeler',
   'Memory saver': 'Bellek tasarrufu',
   Moderate: 'Orta',

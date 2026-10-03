@@ -101,6 +101,7 @@ export const ur: Dictionary = {
   'Move to space': 'اسپیس میں منتقل کریں',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'صفحات کے درمیان سوائپ کریں',
   'Hidden tabs': 'چھپے ہوئے ٹیب',
   'Memory saver': 'میموری سیور',
   Moderate: 'معتدل',

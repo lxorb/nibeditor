@@ -102,6 +102,7 @@ export const de: Dictionary = {
   'Move to space': 'In Bereich verschieben',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Strg+Tab in Nutzungsreihenfolge',
+  'Swipe between pages': 'Zwischen Seiten wischen',
   'Hidden tabs': 'Versteckte Tabs',
   'Memory saver': 'Arbeitsspeicher sparen',
   Moderate: 'Moderat',

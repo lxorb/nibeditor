@@ -101,6 +101,7 @@ export const th: Dictionary = {
   'Move to space': 'ย้ายไปยังพื้นที่',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'ปัดระหว่างหน้า',
   'Hidden tabs': 'แท็บที่ซ่อนอยู่',
   'Memory saver': 'ประหยัดหน่วยความจำ',
   Moderate: 'ปานกลาง',

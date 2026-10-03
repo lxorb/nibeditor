@@ -101,6 +101,7 @@ export const ps: Dictionary = {
   'Move to space': 'ځای ته خوځول',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'د پاڼو ترمنځ ښویول',
   'Hidden tabs': 'پټې ټبونه',
   'Memory saver': 'د حافظې سپما',
   Moderate: 'منځنی',

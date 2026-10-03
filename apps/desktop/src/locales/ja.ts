@@ -101,6 +101,7 @@ export const ja: Dictionary = {
   'Move to space': 'スペースへ移動',
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',
+  'Swipe between pages': 'ページ間をスワイプ',
   'Hidden tabs': '非表示のタブ',
   'Memory saver': 'メモリセーバー',
   Moderate: '控えめ',

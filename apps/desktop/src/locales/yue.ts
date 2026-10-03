@@ -101,6 +101,7 @@ export const yue: Dictionary = {
   'Move to space': '移到空間',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
+  'Swipe between pages': '喺頁面之間掃',
   'Hidden tabs': '隱藏標籤頁',
   'Memory saver': '慳記憶體',
   Moderate: '適中',

@@ -101,6 +101,7 @@ export const gsw: Dictionary = {
   'Move to space': 'In Ablag verschiebe',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',
+  'Swipe between pages': 'Zwüsche Siite wüsche',
   'Hidden tabs': 'Versteckti Tabs',
   'Memory saver': 'Arbeitsspeicher spare',
   Moderate: 'Moderat',
