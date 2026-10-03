@@ -97,6 +97,7 @@ export const vi: Dictionary = {
   'Duplicate tab': 'Nhân bản tab',
   'Deselect tab': 'Bỏ chọn tab',
   'Move to other pane': 'Chuyển sang ngăn khác',
+  'Move to space': 'Chuyển tới không gian',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',
   'Hidden tabs': 'Thẻ ẩn',

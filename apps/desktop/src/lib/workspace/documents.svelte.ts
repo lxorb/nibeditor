@@ -109,9 +109,9 @@ export class NoteDoc {
 
   /** The space a document with no file was opened in, by id: where it is saved to,
    *  whose search it is in and whose web data its page is built in, kept across a
-   *  switch to another space. A file's space is the one holding it; see `spaceOf` in
-   *  workspace.svelte.ts. */
-  readonly home: string | null
+   *  switch to another space and changed by Move to space. A file's space is the one
+   *  holding it; see `spaceOf` in workspace.svelte.ts. */
+  home = $state<string | null>(null)
 
   /** The words the file held when this document took it on, until the first
    *  write of the sitting has kept them as a version. What going back to how a

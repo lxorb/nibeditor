@@ -97,6 +97,7 @@ export const zhHantHK: Dictionary = {
   'Duplicate tab': '複製標籤頁',
   'Deselect tab': '取消選取標籤頁',
   'Move to other pane': '移到另一個窗格',
+  'Move to space': '移到空間',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
   'Hidden tabs': '隱藏的標籤頁',

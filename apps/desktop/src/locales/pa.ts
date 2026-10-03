@@ -97,6 +97,7 @@ export const pa: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'ਥਾਂ ਵਿੱਚ ਭੇਜੋ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'ਲੁਕੀਆਂ ਟੈਬਾਂ',

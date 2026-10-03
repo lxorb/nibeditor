@@ -8,7 +8,7 @@
  *  | --- | --- |
  *  | the page | Reload, Copy link and Mute site, on a web tab only |
  *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
- *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list |
+ *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list, Move to space |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane, Full window |
  *
@@ -38,6 +38,7 @@ import { closeAfterLabel } from '../workspace/closing-around'
 import { isUnsaved } from '../workspace/drafts'
 import { askPlace } from '../save-place/door'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
+import { spaceEntry } from './to-space'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
 /** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
@@ -317,6 +318,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
       run: () => pinMany(tabs),
     },
     ...bookmarkAll(paths),
+    ...spaceEntry(tabs),
     DIVIDER,
     {
       label: t('Close'),
@@ -389,6 +391,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...shellEntries(tab),
     ...tabEntries(tab),
     ...inListEntry(tab),
+    ...spaceEntry([tab]),
     // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
     DIVIDER,

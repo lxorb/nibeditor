@@ -97,6 +97,7 @@ export const ptBR: Dictionary = {
   'Duplicate tab': 'Duplicar aba',
   'Deselect tab': 'Desmarcar aba',
   'Move to other pane': 'Mover para o outro painel',
+  'Move to space': 'Mover para espaço',
   Tabs: 'Abas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de uso',
   'Hidden tabs': 'Abas ocultas',

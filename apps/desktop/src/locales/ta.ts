@@ -97,6 +97,7 @@ export const ta: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'இடத்துக்கு நகர்த்து',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'மறைந்த தாவல்கள்',

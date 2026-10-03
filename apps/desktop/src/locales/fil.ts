@@ -97,6 +97,7 @@ export const fil: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'Ilipat sa espasyo',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'Mga nakatagong tab',

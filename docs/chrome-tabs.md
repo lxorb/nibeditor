@@ -135,6 +135,41 @@ asked, which is what every space was before, so nothing moves because the row ex
 
 See `workspace/sets.ts` for the rules and `workspace/sets.svelte.ts` for the store.
 
+### Move to space
+
+**Any tab moves to another space: Move to space in its menu (a pick of tabs too), in the
+palette, or the tab carried onto the space switcher**, which opens under it after 450 ms,
+as a folder opens under a held file, and lights the space it would land in. Emil,
+2026-10-03: *"It should be possible to move a tab to another space (e.g. relevant for
+terminal tabs that you can't just close and reopen without losing progress)."*
+
+- **The same tab.** Nothing closes and opens again: a terminal is the same shell, its
+  process and its screen; a page keeps its place; an unsaved note keeps its words and its
+  undo. It joins the end of the strip in front in the other space's own set, or of the
+  shared set where that space is Global, in front of its pane; between two Global spaces
+  nothing moves on screen.
+- **The window stays.** Edge opens the workspace a tab is moved to and loads all of it,
+  and that is the complaint its users have; the tab is waiting when the space is next
+  shown. The set it left falls back to the tab used before, as after a close.
+- **What makes the tab that space's goes with it.** A file in a space - a note, a web
+  note, a plane, a deck of pages, a PDF - moves to the other space's root, with its links
+  and its Undo, and every view of it follows. Arc's Move to space carries a pinned tab -
+  the space's saved thing - out of one sidebar into the other, and Edge's takes the tab
+  out of the workspace it was in; the saved thing here is the file, and a tab whose file
+  stayed behind would be sent back the next time its space's tabs went Global. A tab with
+  no file is given the other space as its home: saved there, searched there, a terminal's
+  last lines kept under it (docs/terminal.md). A file in no space and a note shared on its
+  own move as the tab alone. A file of that name already there stays, and so does its tab.
+- **A page's web data is its new space's**, as a web note's is the space holding it.
+  Where the two spaces share a store the page goes on as it was - Chrome moving a tab
+  between two windows of a profile; where they do not, it is built again in the new one
+  on the address it was on, and the line under the bar says so for four seconds of being
+  seen, as a web tab saved into such a space does (`web-tab/rehome.ts`). Arc asks first;
+  nib says it after, as everywhere else.
+- **Never** into a space that may not be written in, nor a file out of one.
+
+See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for the move.
+
 ## Motion
 
 | Rule | Chrome | Source | nib |

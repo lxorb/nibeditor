@@ -341,6 +341,17 @@
     }
   })
 
+  // The line that the page was built again in another space's web data, for four seconds
+  // of being seen: a tab moved out of sight is told when it is next looked at. See rehome.ts.
+  $effect(() => {
+    const said = page.rehomed
+    if (said === null) return
+    const gone = setTimeout(() => {
+      if (page.rehomed === said) page.rehomed = null
+    }, 4000)
+    return () => clearTimeout(gone)
+  })
+
   // An agent began acting here or let go: the page moves in by the frame or back out.
   $effect(() => follow(worn !== null))
 

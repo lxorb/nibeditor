@@ -97,6 +97,7 @@ export const ur: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'اسپیس میں منتقل کریں',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'چھپے ہوئے ٹیب',

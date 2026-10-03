@@ -97,6 +97,7 @@ export const it: Dictionary = {
   'Duplicate tab': 'Duplica scheda',
   'Deselect tab': 'Deseleziona scheda',
   'Move to other pane': 'Sposta nell’altro riquadro',
+  'Move to space': 'Sposta in spazio',
   Tabs: 'Schede',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in ordine di utilizzo',
   'Hidden tabs': 'Schede nascoste',

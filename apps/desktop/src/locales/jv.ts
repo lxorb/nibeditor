@@ -97,6 +97,7 @@ export const jv: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'Pindhah menyang papan',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'Tab sing didhelikake',

@@ -97,6 +97,7 @@ export const ja: Dictionary = {
   'Duplicate tab': 'タブを複製',
   'Deselect tab': 'タブの選択を解除',
   'Move to other pane': '別のペインに移動',
+  'Move to space': 'スペースへ移動',
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',
   'Hidden tabs': '非表示のタブ',

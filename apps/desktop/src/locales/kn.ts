@@ -97,6 +97,7 @@ export const kn: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'ಸ್ಪೇಸ್‌ಗೆ ಸರಿಸಿ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'ಮರೆಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು',

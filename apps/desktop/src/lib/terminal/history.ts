@@ -159,6 +159,23 @@ export function dropHistory(place: Place, last: History | null): void {
   )
 }
 
+/** A terminal moved to another space: its lines go with it, written under the new space
+ *  before the old file goes, in the key's own turn - so a write already on its way to the
+ *  old place lands first and moves with the rest, and the next one finds the new place.
+ *  Nothing is lost if the read finds nothing: there was nothing to move. */
+export function moveHistory(from: Place, to: Place): void {
+  if (!from.key || from.space === to.space) return
+  void inTurn(from.key, async () => {
+    const found = readHistory(
+      await invoke<unknown>('terminal_history_read', { space: from.space, key: from.key }),
+    )
+    if (found) {
+      await invoke('terminal_history_write', { space: to.space, key: to.key, history: found })
+    }
+    await invoke('terminal_history_forget', { space: from.space, key: from.key })
+  })
+}
+
 /** Every history there is, forgotten: Restore history turned off. After whatever was
  *  already on its way, which would otherwise land in the folder just emptied. */
 export function forgetHistories(): void {

@@ -97,6 +97,7 @@ export const tr: Dictionary = {
   'Duplicate tab': 'Sekmeyi çoğalt',
   'Deselect tab': 'Sekme seçimini kaldır',
   'Move to other pane': 'Diğer bölmeye taşı',
+  'Move to space': 'Alana taşı',
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',
   'Hidden tabs': 'Gizli sekmeler',

@@ -98,6 +98,7 @@ export const de: Dictionary = {
   'Duplicate tab': 'Tab duplizieren',
   'Deselect tab': 'Tab abwählen',
   'Move to other pane': 'In anderes Teilfenster verschieben',
+  'Move to space': 'In Bereich verschieben',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Strg+Tab in Nutzungsreihenfolge',
   'Hidden tabs': 'Versteckte Tabs',

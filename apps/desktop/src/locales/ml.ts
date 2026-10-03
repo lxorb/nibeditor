@@ -97,6 +97,7 @@ export const ml: Dictionary = {
   'Duplicate tab': 'Duplicate tab',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
+  'Move to space': 'സ്പേസിലേക്ക് നീക്കുക',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
   'Hidden tabs': 'മറഞ്ഞിരിക്കുന്ന ടാബുകൾ',

@@ -97,6 +97,7 @@ export const zhHans: Dictionary = {
   'Duplicate tab': '复制标签页',
   'Deselect tab': '取消选择标签页',
   'Move to other pane': '移到另一窗格',
+  'Move to space': '移动到空间',
   Tabs: '标签页',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用顺序',
   'Hidden tabs': '隐藏的标签页',

@@ -97,6 +97,7 @@ export const ko: Dictionary = {
   'Duplicate tab': '탭 복제',
   'Deselect tab': '탭 선택 해제',
   'Move to other pane': '다른 창으로 이동',
+  'Move to space': '공간으로 이동',
   Tabs: '탭',
   'Ctrl+Tab in order of use': 'Ctrl+Tab을 사용 순서로',
   'Hidden tabs': '숨겨진 탭',

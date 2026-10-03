@@ -97,6 +97,7 @@ export const gsw: Dictionary = {
   'Duplicate tab': 'Tab verdopple',
   'Deselect tab': 'Tab abwähle',
   'Move to other pane': 'Is anderi Teilfänschter verschiebe',
+  'Move to space': 'In Ablag verschiebe',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',
   'Hidden tabs': 'Versteckti Tabs',

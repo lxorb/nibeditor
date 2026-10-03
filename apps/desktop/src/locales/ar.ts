@@ -97,6 +97,7 @@ export const ar: Dictionary = {
   'Duplicate tab': 'تكرار التبويب',
   'Deselect tab': 'إلغاء تحديد التبويب',
   'Move to other pane': 'النقل إلى الجزء الآخر',
+  'Move to space': 'نقل إلى مساحة',
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',
   'Hidden tabs': 'التبويبات المخفية',

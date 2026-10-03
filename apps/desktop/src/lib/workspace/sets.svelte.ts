@@ -256,6 +256,67 @@ class Sets {
     ws.tabs = byPin([...ws.tabs.filter((tab) => !tabs.includes(tab)), ...tabs])
   }
 
+  /** Tabs moved to another space's set: its own, or the shared one where that space is
+   *  Global. Each tab is the same tab - a shell keeps running and a page keeps its place -
+   *  and only the set it is in changes. They go to the end of the strip in front in that
+   *  set, the last of them in front, which is where Chrome puts a tab moved to another
+   *  window; the set they left falls back to the tab used before, as after a close. What
+   *  went out of sight is hidden as a switch hides it. See workspace/space-move.ts. */
+  async adopt(tabs: readonly Tab[], space: string): Promise<void> {
+    const ws = workspace
+    const key = setKey(space, ownTabs)
+    await this.built(key)
+
+    const moving = tabs.filter((tab) => this.keyOf(tab) !== key)
+    if (!moving.length) return
+    const shown = moving.filter((tab) => ws.panes.at(tab.paneId))
+    const left = new Set(moving.map((tab) => this.keyOf(tab)))
+
+    if (ws.previewTabId !== null && moving.some((tab) => tab.id === ws.previewTabId)) {
+      ws.previewTabId = null
+    }
+    if (ws.heldTabId !== null && moving.some((tab) => tab.id === ws.heldTabId)) {
+      ws.heldTabId = null
+    }
+
+    const set = this.aside[key]
+    if (key === this.on) {
+      this.carry(moving, ws.panes.focusedId)
+    } else if (set) {
+      const into = paneIn(set.frame, set.focused) ?? panesIn(set.frame)[0]
+      if (into) {
+        this.carry(moving, into.id)
+        into.activeTabId = moving.at(-1)?.id ?? into.activeTabId
+      }
+    } else {
+      this.aside = { ...this.aside, [key]: this.fresh(moving, 'tree') }
+    }
+
+    for (const one of left) {
+      if (one === this.on) this.retidyOn()
+      else if (one !== null) this.retidy(one)
+    }
+    ws.persist()
+
+    if (!isDesktop || !shown.length) return
+    const hidden = await hiddenTabs()
+    await hidden.left(shown.filter((tab) => !ws.panes.at(tab.paneId)))
+  }
+
+  /** Which set a tab is in: the one on screen, one put aside, or none. */
+  private keyOf(tab: Tab): string | null {
+    return workspace.panes.at(tab.paneId) ? this.on : this.setOf(tab)
+  }
+
+  /** The set on screen with its frame put right, the full window let go where its pane
+   *  went with it. */
+  private retidyOn() {
+    const ws = workspace
+    const frame = this.tidy(ws.panes.frame)
+    ws.panes.restore(frame, ws.panes.focusedId)
+    if (ws.panes.fills !== null && !paneIn(frame, ws.panes.fills)) ws.panes.fills = null
+  }
+
   /** A space's tabs made its own, or given back to the shared set; the row in the space's
    *  menu. Nothing is closed either way: an unsaved note or a terminal is a tab, and a
    *  tab only ever moves. */

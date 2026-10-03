@@ -97,6 +97,7 @@ export const fr: Dictionary = {
   'Duplicate tab': 'Dupliquer l’onglet',
   'Deselect tab': 'Désélectionner l’onglet',
   'Move to other pane': 'Déplacer vers l’autre volet',
+  'Move to space': 'Déplacer vers un espace',
   Tabs: 'Onglets',
   'Ctrl+Tab in order of use': 'Ctrl+Tab dans l’ordre d’utilisation',
   'Hidden tabs': 'Onglets masqués',

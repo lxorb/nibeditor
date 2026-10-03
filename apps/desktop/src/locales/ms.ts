@@ -97,6 +97,7 @@ export const ms: Dictionary = {
   'Duplicate tab': 'Salin dua tab',
   'Deselect tab': 'Nyahpilih tab',
   'Move to other pane': 'Alih ke anak tetingkap lain',
+  'Move to space': 'Alihkan ke ruang',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab mengikut urutan penggunaan',
   'Hidden tabs': 'Tab tersembunyi',

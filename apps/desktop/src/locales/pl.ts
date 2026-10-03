@@ -97,6 +97,7 @@ export const pl: Dictionary = {
   'Duplicate tab': 'Duplikuj kartę',
   'Deselect tab': 'Odznacz kartę',
   'Move to other pane': 'Przenieś do drugiego panelu',
+  'Move to space': 'Przenieś do przestrzeni',
   Tabs: 'Karty',
   'Ctrl+Tab in order of use': 'Ctrl+Tab według ostatniego użycia',
   'Hidden tabs': 'Ukryte karty',

@@ -144,6 +144,7 @@
   <button
     class={bare ? 'nib-glyph bare' : 'name'}
     class:open
+    data-space-drop="switcher"
     title={shortcuts.tooltip(bare ? called : name, 'space.switcher')}
     aria-label={bare ? called : undefined}
     aria-haspopup="menu"
@@ -204,6 +205,7 @@
         <button
           class="nib-row"
           class:is-on={space.id === workspace.activeSpaceId}
+          data-space-drop={space.id}
           role="menuitem"
           onclick={() => choose(space)}
           oncontextmenu={(event) => about(event, space)}
@@ -534,5 +536,11 @@
 
   button:focus-visible {
     outline-offset: -1px;
+  }
+
+  /* A carried tab would land here; see tab-strip/space-drop.ts. */
+  button:global(.is-drop) {
+    box-shadow: inset 0 0 0 1px var(--accent);
+    background: var(--accent-soft);
   }
 </style>

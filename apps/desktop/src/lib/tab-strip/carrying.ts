@@ -1,9 +1,9 @@
 /** A tab carried out of its strip: where it would land, the drop zones kept in step
- *  with it, the file list's row it would be saved into when it has no file, and the
- *  slide home when it is let go of over nothing. Only ever wanted once
- *  a tab has been lifted, so it is fetched with the first press on a tab, with the chip
- *  drawn under the pointer (TabChip.svelte), rather than carried into the first paint;
- *  see Tabs.svelte, which is the strip's own half. */
+ *  with it, the file list's row it would be saved into when it has no file, the space in
+ *  the switcher it would move to, and the slide home when it is let go of over nothing.
+ *  Only ever wanted once a tab has been lifted, so it is fetched with the first press on
+ *  a tab, with the chip drawn under the pointer (TabChip.svelte), rather than carried
+ *  into the first paint; see Tabs.svelte, which is the strip's own half. */
 
 import { dropTarget, targetFor } from '../drop-target.svelte'
 import { i18n } from '../i18n.svelte'
@@ -14,6 +14,7 @@ import type { Landing } from '../workspace/panes.svelte'
 import { zoneAt } from '../workspace/zones'
 import type { Bounds } from './layout'
 import { keyOf, stripOf, type TabDrag } from './drag.svelte'
+import { droppedOnSpace, overSpaces } from './space-drop'
 
 /** Where a tab carried out of the strip of `paneId` would land: at a place in another
  *  pane's strip, or in or against a side of a pane. Nothing in the middle of its own
@@ -77,16 +78,19 @@ function unsaved(tabId: string) {
 
 /** The carried tab is at `point`, or over something else where that is null. */
 export function overList(tabId: string, point: { x: number; y: number } | null): void {
+  overSpaces(tabId, point)
   const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
   if (folder !== null) dropTarget.over(folder)
   else if (dropTarget.folder !== null) dropTarget.clear()
 }
 
-/** Let go of: saved into the row that was lit, where there was one. */
+/** Let go of: moved to the space whose row was lit, or saved into the row of the list that
+ *  was, where there was one. */
 export function droppedOnList(tabId: string): void {
   const folder = dropTarget.folder
   const tab = unsaved(tabId)
   dropTarget.clear()
+  if (droppedOnSpace(tabId)) return
   if (folder !== null && tab) void workspace.save(tab, folder)
 }
 

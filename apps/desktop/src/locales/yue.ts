@@ -97,6 +97,7 @@ export const yue: Dictionary = {
   'Duplicate tab': '複製標籤頁',
   'Deselect tab': '取消揀選標籤頁',
   'Move to other pane': '搬去另一個窗格',
+  'Move to space': '移到空間',
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
   'Hidden tabs': '隱藏標籤頁',

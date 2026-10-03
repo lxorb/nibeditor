@@ -41,6 +41,7 @@ const {
   keepHistory,
   LINES,
   MOST,
+  moveHistory,
   moveLegacy,
   restoredAbove,
   restoredLine,
@@ -174,6 +175,42 @@ describe('a tab closed', () => {
 
     expect(await historyOf({ space: null, key: 't2' })).toBeNull()
     expect(await historyOf({ space: null, key: 't3' })).toEqual(screen('x', 3))
+  })
+})
+
+describe('a terminal moved to another space', () => {
+  test('takes its lines to that space, and the old file goes', async () => {
+    keepHistory(place, screen('build log'))
+    moveHistory(place, { space: 's2', key: 'k1' })
+    await written()
+
+    expect(files.get('s2/k1')).toEqual(screen('build log'))
+    expect(files.has('s1/k1')).toBe(false)
+    expect(await historyOf({ space: 's2', key: 'k1' })).toEqual(screen('build log'))
+  })
+
+  test('after the write that was already on its way, and before the next', async () => {
+    let release: () => void = () => undefined
+    holding = new Promise((done) => (release = done))
+    keepHistory(place, screen('older'))
+    moveHistory(place, { space: 's2', key: 'k1' })
+    keepHistory({ space: 's2', key: 'k1' }, screen('newer', 2))
+    release()
+    await written()
+
+    expect(files.get('s2/k1')).toEqual(screen('newer', 2))
+    expect(files.has('s1/k1')).toBe(false)
+  })
+
+  test('from no space to one, and nothing at all where there were no lines', async () => {
+    moveHistory({ space: null, key: 'k9' }, { space: 's2', key: 'k9' })
+    await written()
+
+    expect(files.size).toBe(0)
+    expect(said.map((one) => one.command)).toEqual([
+      'terminal_history_read',
+      'terminal_history_forget',
+    ])
   })
 })
 

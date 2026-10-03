@@ -62,6 +62,26 @@ describe('a web tab saved into another space', () => {
     expect(page.rehomed).toBeNull()
   })
 
+  test('reads the store from where the page was, even once the page was told the new space', async () => {
+    // A moved tab's page may hear its new space before the move says where it came from.
+    page.space = 'h'
+
+    await rehome('tab', 'h', 'Home', 'w')
+
+    expect(steps).toEqual(['park tab', 'show tab https://mail.example.com/inbox'])
+    expect(page.rehomed).toBe('Home')
+  })
+
+  test('a page out of sight is built again when it is next looked at, and says so then', async () => {
+    page.shown = false
+
+    await rehome('tab', 'h', 'Home')
+
+    expect(steps).toEqual(['park tab'])
+    expect(page.rehomed).toBe('Home')
+    page.shown = true
+  })
+
   test('is only told its space when no page is running, which is built there next', async () => {
     page.live = false
 

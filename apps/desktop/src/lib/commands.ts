@@ -91,6 +91,7 @@ import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
+import { samePath } from './space-paths'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
@@ -358,6 +359,9 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 
+/** Move to space, fetched with the press; see tab-strip/to-space.ts. */
+const toSpace = () => import('./tab-strip/to-space')
+
 /** Fetched as the launch ends; see `warmDoors`. */
 const tabOps = () => import('./tab-strip/ops')
 
@@ -444,6 +448,16 @@ function tabCommands(): Command[] {
       disabled: !tab || !workspace.canRenameFromTab(tab),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
+    // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
+    ...(tab && workspace.spaces.length > 1
+      ? [
+          {
+            id: 'move-to-space',
+            label: t('Move to space'),
+            run: () => void toSpace().then((one) => one.askSpace([id])),
+          },
+        ]
+      : []),
   ]
 }
 
@@ -920,13 +934,23 @@ function moveCommand(): Command | null {
   })
   if (!targets.length) return null
 
+  // Into another space the tab goes with the note, as Move to space takes it; see
+  // workspace/space-move.ts.
+  const moved = (into: string) => {
+    const space = workspace.spaces.find((one) => samePath(one.root, into))
+    if (space && space.id !== workspace.activeSpaceId) {
+      return toSpace().then((one) => one.toSpace([note.id], space.id))
+    }
+    return workspace.moveMany([path], into)
+  }
+
   return {
     id: 'move-note',
     label: t('Move this note'),
     run: () =>
       void prompt
         .find({ title: t('Move to'), options: [...targets] })
-        .then((into) => (into ? workspace.moveMany([path], into) : undefined)),
+        .then((into) => (into ? moved(into) : undefined)),
   }
 }
 

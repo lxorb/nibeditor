@@ -1,4 +1,4 @@
-/** A web tab saved into another space: its page belongs to that space now, and so to
+/** A web tab saved or moved into another space: its page belongs to that space now, and so to
  *  its web data, the way a `.url` file's page always belongs to the space holding the
  *  file. Where that is another store than the one the page was built in, it is built
  *  again there, where it was and on the page it was on - Arc's answer for a tab moved
@@ -14,12 +14,15 @@
 import { pages } from './pages.svelte'
 import { webData } from './web-data.svelte'
 
-/** How long the line stays: long enough to read a short sentence. */
-const SAID_FOR = 4000
-
-export async function rehome(tabId: string, space: string | null, name: string): Promise<void> {
+/** `was` is the space the page was built for, read before whatever moved the tab could
+ *  have told the page its new one. */
+export async function rehome(
+  tabId: string,
+  space: string | null,
+  name: string,
+  was = pages.of(tabId).space,
+): Promise<void> {
   const page = pages.of(tabId)
-  const was = page.space
   page.space = space
   const url = page.url
   if (!page.live || url === null || was === space) return
@@ -31,8 +34,7 @@ export async function rehome(tabId: string, space: string | null, name: string):
   await pages.park(tabId)
   if (shown) await pages.show(tabId, url, shown)
 
+  // Said for a moment once the tab is seen, which a tab moved out of sight is not yet;
+  // see WebTab.svelte.
   page.rehomed = name
-  setTimeout(() => {
-    if (page.rehomed === name) page.rehomed = null
-  }, SAID_FOR)
 }

@@ -97,6 +97,7 @@ export const zhHant: Dictionary = {
   'Duplicate tab': '複製分頁',
   'Deselect tab': '取消選取分頁',
   'Move to other pane': '移到另一個窗格',
+  'Move to space': '移到空間',
   Tabs: '分頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 依使用順序',
   'Hidden tabs': '隱藏的分頁',

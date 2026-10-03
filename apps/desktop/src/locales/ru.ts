@@ -97,6 +97,7 @@ export const ru: Dictionary = {
   'Duplicate tab': 'Дублировать вкладку',
   'Deselect tab': 'Снять выбор с вкладки',
   'Move to other pane': 'Переместить в другую область',
+  'Move to space': 'Переместить в пространство',
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab в порядке использования',
   'Hidden tabs': 'Скрытые вкладки',

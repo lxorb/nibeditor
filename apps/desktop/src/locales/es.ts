@@ -97,6 +97,7 @@ export const es: Dictionary = {
   'Duplicate tab': 'Duplicar pestaña',
   'Deselect tab': 'Deseleccionar pestaña',
   'Move to other pane': 'Mover al otro panel',
+  'Move to space': 'Mover a espacio',
   Tabs: 'Pestañas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por orden de uso',
   'Hidden tabs': 'Pestañas ocultas',
