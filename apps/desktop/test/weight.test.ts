@@ -567,7 +567,7 @@ function holds(tail: string): boolean {
  *  for them is page-setup.ts, 8,977 bytes the settings held in front of the first paint
  *  for three constants: those are paper.ts now, and the measuring waits for a print.
  *
- *  Not raised 2026-10-01, and room made under it instead, from a main at 3,213,972 and
+ *  Not raised 2026-10-01, and room made under it instead, from a main at 3,214,658 and
  *  379 that every lane was fighting over: the launch round left the ceiling where it
  *  was so that the room is real. Five things no window shows as it opens: the theme
  *  gallery's store, its catalogue and the reviewer, which App.svelte imported for a
@@ -582,7 +582,7 @@ function holds(tail: string): boolean {
  *  was left on, drawn before its editor exists (first-screen.svelte.ts,
  *  FirstScreen.svelte), and the launch's reads handed out as the crate read them ahead
  *  (workspace/ahead.ts); what keeps the note's first screen is fetched at the last turn.
- *  Measured 3,139,714 and 375: 75,286 bytes and six modules under the ceiling. The
+ *  Measured 3,141,378 and 375: 73,622 bytes and six modules under the ceiling. The
  *  production build preloads 1,344,097 bytes in 172 chunks against 1,359,421 in 176. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
@@ -928,6 +928,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
+    ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
