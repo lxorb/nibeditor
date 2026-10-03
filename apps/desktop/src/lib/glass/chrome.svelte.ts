@@ -72,8 +72,9 @@ class Chrome {
   frame = $state<Scheme | null>(null)
   /** Each web tab's bar, for a page that has said what it stands on. */
   bars = $state<Record<string, Ground>>({})
-  /** What the platform put behind the window; see material.ts. */
+  /** What the platform put behind the window, as the root says it; see material.ts. */
   material = $state<string | null>(null)
+  private standing: MutationObserver | null = null
 
   /** `data-theme` for a part of the frame: the frame's scheme where it is not the
    *  reader's, and nothing otherwise, so the frame is the app's own palette. */
@@ -110,7 +111,16 @@ class Chrome {
     this.on = true
     const root = document.documentElement
     root.dataset.tinted = ''
-    this.material = root.dataset.translucent ?? null
+    // What the window stands on is said on the root (material.ts, and ground.ts at
+    // launch), and followed from there, so the wash is worked out over what is said.
+    const stands = () => {
+      this.material = root.dataset.translucent ?? null
+    }
+    stands()
+    if (typeof MutationObserver === 'function') {
+      this.standing = new MutationObserver(stands)
+      this.standing.observe(root, { attributes: true, attributeFilter: ['data-translucent'] })
+    }
     const last = kept()
     if (last?.app !== app) return
 
@@ -124,6 +134,8 @@ class Chrome {
     if (!this.on) return
 
     this.on = false
+    this.standing?.disconnect()
+    this.standing = null
     this.frame = null
     this.bars = {}
     const root = document.documentElement
