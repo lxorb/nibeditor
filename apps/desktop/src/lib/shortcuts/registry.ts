@@ -326,14 +326,29 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => chooseNewKind(),
   },
   {
+    // No key since the private tab took Chrome's for it (docs/backlog.md, Q3): Ctrl+N is
+    // a new note here, so New window keeps its row and the palette's, and a reader may
+    // give it a key.
     id: 'app.new-window',
     label: () => t('New window'),
     category: 'file',
     scope: 'app',
-    key: 'Mod-Shift-n',
+    key: null,
     run: () => void invoke('new_window').catch(() => undefined),
     // A phone has the one window and no command for another: its bar offered a
     // button that did nothing. The palette's row is greyed on the same condition.
+    desktop: true,
+  },
+  {
+    // Chrome's Ctrl+Shift+N, a new Incognito window, is a private tab here: a page that
+    // writes nothing down and forgets everything with its last tab; see
+    // web-tab/private.ts. A desktop's alone, which is where a web tab is a page of nib's.
+    id: 'app.new-private',
+    label: () => t('New private tab'),
+    category: 'file',
+    scope: 'app',
+    key: 'Mod-Shift-n',
+    run: () => void import('../web-tab/private').then(({ openPrivate }) => openPrivate()),
     desktop: true,
   },
   // Obsidian's Random note. No key out of the box, as there; see random-note.ts.
@@ -426,6 +441,28 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Mod-Alt-i',
     contextual: true,
     alias: true,
+  },
+  {
+    // Chrome's History, Ctrl+H, and Cmd+Y on a Mac, where Cmd+H hides the app. Read by the
+    // bar where a page is, like the address key, so a note keeps Ctrl+H for Replace. In a
+    // page it is the page's first, as in Chrome; see web_opens.rs.
+    id: 'web.history',
+    label: () => t('History'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-h',
+    mac: 'Mod-y',
+    contextual: true,
+  },
+  {
+    // Chrome's Delete browsing data, Ctrl+Shift+Delete; Cmd+Shift+Backspace on a Mac.
+    id: 'web.clear-data',
+    label: () => t('Delete browsing data'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-Shift-Delete',
+    mac: 'Mod-Shift-Backspace',
+    contextual: true,
   },
   {
     // Chrome's Mute site has no key; a reader may give it one.

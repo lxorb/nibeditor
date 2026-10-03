@@ -947,6 +947,10 @@
           {#if isDraft(tab.note) && !tab.pinned && parts.title}
             <UnsavedDot pressable />
           {/if}
+          <!-- A private tab wears Chrome's mark for one; see web-tab/private.ts. -->
+          {#if tab.inPrivate}
+            {#await import('./web-tab/PrivateMark.svelte') then Private}<Private.default />{/await}
+          {/if}
           <!-- Chrome's speaker, struck through on a muted site. -->
           {#if tab.kind === 'web' && parts.title}
             {@const heard = pages.of(tab.id)}

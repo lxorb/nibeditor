@@ -1879,4 +1879,30 @@ export const gsw: Dictionary = {
   'Pages, terminals and moves are not undone':
     'Siite, Terminals und Verschiebige wärde nöd zrugggnoh',
   Rewind: 'Zruggspuele',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'Suchmaschine',
+  History: 'Verlauf',
+  'Search history': 'Suchverlauf',
+  'Delete browsing data': 'Browserdaten löschen',
+  Today: 'Heute',
+  Yesterday: 'Gestern',
+  'More from this site': 'Mehr von dieser Website',
+  'Remove from history': 'Aus Verlauf entfernen',
+  'Browsing history': 'Browserverlauf',
+  'Cookies and other site data': 'Cookies und andere Websitedaten',
+  'Cached images and files': 'Bilder und Dateien im Cache',
+  'Time range': 'Zeitraum',
+  'Last 15 minutes': 'Letzte 15 Minuten',
+  'Last hour': 'Letzte Stunde',
+  'Last 24 hours': 'Letzte 24 Stunden',
+  'Last 7 days': 'Letzte 7 Tage',
+  'Last 4 weeks': 'Letzte 4 Wochen',
+  'All time': 'Gesamte Zeit',
+  'Delete data': 'Daten löschen',
+  'Delete browsing data…': 'Browserdaten löschen…',
+  'New private tab': 'Neue private Tab',
+  'All spaces': 'Alli Bereich',
+  'the data could not be deleted': 'D Date händ nöd chönne glöscht werde',
 }

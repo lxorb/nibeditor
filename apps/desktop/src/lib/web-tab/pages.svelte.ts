@@ -434,6 +434,10 @@ export class Page {
   heard = 0
   /** Set by the pane, like `path`. */
   pinned = false
+  /** A private tab's page: the engine's private mode, and nothing of it written down -
+   *  no history, no mark, no place - and never parked, which would end its session. Set
+   *  as the tab is made and never after; see private.ts. */
+  inPrivate = false
   /** The store the page was built in; see `restore`. */
   store: string | null | undefined
 
@@ -627,7 +631,7 @@ class Pages {
     // A site whose login another computer is using runs nowhere but there: the pane
     // shows who has it instead. Asked while the page counts as on its way, so the pane's
     // next look waits for this answer rather than asking again. See lease.svelte.ts.
-    if (this.watch && !(await this.watch.admit(tabId, page))) {
+    if (this.watch && !page.inPrivate && !(await this.watch.admit(tabId, page))) {
       page.opening = false
       page.wanted = null
       return
@@ -645,17 +649,20 @@ class Pages {
     const trail = here?.trail ?? []
 
     page.pane = pane
+    // The address this build is for. A new tab's first build has none and is refused,
+    // and an address typed while that refusal is on its way is a page to build next.
+    const tried = page.url
 
     try {
       // Which store the site's cookies and storage go in, which is its space's choice;
       // see web-data.ts.
-      const store = await (await stores()).store(page.space, page.url)
+      const store = page.inPrivate ? null : await (await stores()).store(page.space, page.url)
       await invoke('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
-        store,
+        profile: { store, private: page.inPrivate },
       })
       page.live = true
       page.openable = true
@@ -672,14 +679,21 @@ class Pages {
       // The label is cleared first: the crate refuses a second page under a label that
       // has one, and a page nothing places any more is drawn over the whole app.
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
-      page.openable = false
+      if (page.url === tried) page.openable = false
     } finally {
       page.opening = false
     }
 
     const wanted = page.wanted
     page.wanted = null
-    if (!page.live) return
+    if (!page.live) {
+      // Sent somewhere while the last address was being refused: built there now, rather
+      // than left on a card nothing would ask again. A new tab typed into the moment it
+      // opened was that card.
+      const moved = page.url !== tried && page.openable && this.held.get(tabId) === page
+      if (moved && wanted) await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
+      return
+    }
 
     // The tab was closed while its page was being built. Nothing is left to place it,
     // and a page nothing places is a browser running behind the window.
@@ -964,7 +978,7 @@ class Pages {
     if (!page || !said) return
 
     page.edited = said.edited === true
-    if (!page.path) return
+    if (!page.path || page.inPrivate) return
     placeKept(page.path, {
       url: said.url,
       x: said.x,
@@ -1091,7 +1105,7 @@ class Pages {
     if (!page.live) return
 
     // Another site may be another computer's login; see `build`.
-    if (this.watch && !(await this.watch.admit(tabId, page))) {
+    if (this.watch && !page.inPrivate && !(await this.watch.admit(tabId, page))) {
       await this.park(tabId)
       return
     }
@@ -1166,6 +1180,8 @@ class Pages {
 
   /** A page the tab has been to, in the history of the tab's space; see visited.ts. */
   private async saw(tabId: string, url: string, title: string): Promise<void> {
+    // A private tab writes no history; see private.ts.
+    if (this.held.get(tabId)?.inPrivate) return
     const space = this.held.get(tabId)?.space ?? null
     const [visited, webData] = await Promise.all([history(), stores()])
     visited.saw(webData.history(space), tabId, url, title)
@@ -1180,7 +1196,9 @@ class Pages {
    *  the choice did not change is left running: that is no reason to load it again. */
   async restore(space: string): Promise<void> {
     const data = await stores()
-    const running = [...this.held.entries()].filter(([, page]) => page.live && page.space === space)
+    const running = [...this.held.entries()].filter(
+      ([, page]) => page.live && page.space === space && !page.inPrivate,
+    )
     for (const [tabId, page] of running) {
       if ((await data.store(space, page.url)) === page.store) continue
       const shown = page.shown ? page.pane : null
@@ -1350,7 +1368,8 @@ class Pages {
 
       page.marked(said.icon)
       const at = page.at ?? page.url
-      if (said.icon) void import('./favicons').then((one) => one.saw(at, said.icon))
+      if (said.icon && !page.inPrivate)
+        void import('./favicons').then((one) => one.saw(at, said.icon))
     })
     // Sound, full screen, zoom and find; see heard.ts.
     await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))

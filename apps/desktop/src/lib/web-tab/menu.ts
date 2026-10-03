@@ -8,7 +8,10 @@
  *  | Chrome | here |
  *  | --- | --- |
  *  | New tab | a web tab with nowhere to go yet, which is what the address field is for |
+ *  | New Incognito window | a private tab: Chrome's window of its own is a tab here |
+ *  | History | nib's History page, in a tab of its own, as Chrome's is |
  *  | Bookmarks | the space's own web notes, which is what a bookmark is here |
+ *  | Delete browsing data | Chrome's dialog, over the engine's own call |
  *  | Zoom | the engine's own zoom, on Chrome's own ladder of steps |
  *  | Find | nib's find bar, over the engine's own find |
  *  | Save page | the clipper: the page, written into the space as a note |
@@ -31,6 +34,7 @@ import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { openExternal } from '../tauri'
+import { isWebAddress } from './address'
 import type { Page } from './pages.svelte'
 
 /** The sizes a page can be drawn at, as multipliers.
@@ -81,6 +85,12 @@ export function trailSteps(
 export interface WebActions {
   /** A web tab with nowhere to go yet. */
   newTab: () => void
+  /** A private tab, where the build has one. */
+  newPrivate?: (() => void) | undefined
+  /** The History page. */
+  history: () => void
+  /** Delete browsing data. */
+  clearData: () => void
   /** The space's web notes, which is what a bookmark is here. */
   bookmarks: () => void
   zoom: (factor: number) => void
@@ -98,12 +108,28 @@ export interface WebActions {
  *  because the middle of the three zoom rows says so. */
 export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntry[] {
   const url = page.url
-  const has = url !== null
+  // nib's own pages are no site: nothing to zoom, print, save or share.
+  const has = url !== null && isWebAddress(url)
 
   return [
     { label: t('New tab'), run: actions.newTab },
+    ...(actions.newPrivate
+      ? [
+          {
+            label: t('New private tab'),
+            hint: shortcuts.hint('app.new-private'),
+            run: actions.newPrivate,
+          },
+        ]
+      : []),
     DIVIDER,
+    { label: t('History'), hint: shortcuts.hint('web.history'), run: actions.history },
     { label: t('Bookmarks'), run: actions.bookmarks },
+    {
+      label: t('Delete browsing data…'),
+      hint: shortcuts.hint('web.clear-data'),
+      run: actions.clearData,
+    },
     DIVIDER,
     // Chrome's zoom is three controls on one line and the menu stays up while they are
     // used. A menu here is rows, so it is three rows that keep the menu open - and the
