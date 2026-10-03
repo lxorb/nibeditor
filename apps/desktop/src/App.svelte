@@ -104,6 +104,16 @@
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
+  /** Whether each side's panel is built. Once it has been open it stays built, shut
+   *  or not, and the launch's last turn builds it shut where it never was: opening
+   *  it is then a column sliding open over rows already laid out, never a panel made
+   *  in the frame it was asked for. See the column in Sidebar.svelte. Latched, so a
+   *  side never goes back to unbuilt. */
+  const built = { left: false, right: false }
+  const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('doors')))
+  const keptRight = $derived(
+    (built.right ||= workspace.rightPanel !== null || startup.reached('doors')),
+  )
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
    *  on the commands, which is a `>` in its field and a caret after it. */
@@ -894,7 +904,7 @@
         style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
         ontransitionend={(event) => drawer.arrived(event)}
       >
-        {#if workspace.panel}
+        {#if keptLeft}
           <Sidebar ongoto={goto} onmovesection={moveSectionTo} />
         {/if}
       </div>
@@ -999,7 +1009,7 @@
             style:--settle={rightDrawer.settle === null ? undefined : `${rightDrawer.settle}ms`}
             ontransitionend={(event) => rightDrawer.arrived(event)}
           >
-            {#if workspace.rightPanel}
+            {#if keptRight}
               <Sidebar side="right" ongoto={goto} onmovesection={moveSectionTo} />
             {/if}
           </div>

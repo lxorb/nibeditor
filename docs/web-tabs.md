@@ -639,7 +639,9 @@ A sidebar sliding open is then one placement per frame the app draws, with the p
 step with it. Snapping the page once instead was the other choice, and it was measured
 out: the steps left are the app's own frames, a 70 to 400 ms GPU task in the app's
 compositor (`CrGpuMain`) as the sidebar mounts or goes - with a note in front as much as a
-page - which a snap would not remove, and between those frames the page keeps up.
+page - which a snap would not remove, and between those frames the page keeps up. The panel
+is no longer built or thrown away by the slide: it is kept, and only the column it stands in
+opens over it (see `.column` in Sidebar.svelte and `scripts/sidebar-smooth-drive.py`).
 
 **A layer is cut out of the page, not the page hidden for it.** Anything open anywhere
 used to hide every page in the window behind its still picture: a tab's hover card over

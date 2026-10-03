@@ -267,3 +267,28 @@ describe('the space in the header', () => {
     expect(html).not.toContain('📓')
   })
 })
+
+/** Emil: the sidebar opened and shut in steps, "CHUCK CHUCK". The panel was built in
+ *  the frame it was opened in and thrown away when it shut, and its own width was what
+ *  slid, so every row was laid out again on every frame. Now it is built once and kept,
+ *  and only the column it stands in opens and closes over it; see `.column`. */
+describe('a shut side', () => {
+  test('keeps its panel, rows and all, behind a closed column nothing can reach', () => {
+    open('A claim[^1].\n\n[^1]: the first\n')
+    workspace.panel = 'footnotes'
+    workspace.closePanel()
+    const html = render(Sidebar, { props: { side: 'left' as const } }).body
+
+    expect(html).toMatch(/class="column[^"]*\bshut\b[^"]*"[^>]*\binert\b/)
+    expect(html).toContain('<aside')
+  })
+
+  test('and an open one is the same column, open and reachable', () => {
+    open('# Head\n')
+    const html = drawn('tree')
+
+    expect(html).toMatch(/class="column[^"]*"/)
+    expect(html).not.toMatch(/class="column[^"]*\bshut\b/)
+    expect(html).not.toMatch(/class="column[^"]*"[^>]*\binert\b/)
+  })
+})
