@@ -16,7 +16,7 @@
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
-import { taskHash } from '@nib/bases'
+import { taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { writeList, writeProperty } from '@nib/markdown/property-edits'
 import { writeTask } from '@nib/markdown/task-edits'
@@ -68,16 +68,37 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
     const at = taskLine(after, row.anchor)
     if (at === null) return null
 
+    const { done, ...rest } = change.task
     const line = after.slice(at.from, at.to)
-    const edits = writeTask(line, change.task).map((edit) => ({
+    const edits = writeTask(line, rest).map((edit) => ({
       from: edit.from + at.from,
       to: edit.to + at.from,
       insert: edit.insert,
     }))
     after = appliedEdits(after, edits)
+    if (done != null) after = ticked(after, at.from, done)
   }
 
   return after
+}
+
+/** The note with the task whose line starts at `from` ticked, or opened again. Ticking
+ *  is the engine's (`tick`): the done date, the open sub-tasks under it, and a recurring
+ *  task's next occurrence above it, as one write; see occurrence.ts in @nib/bases. A
+ *  task already as asked is left as it is. */
+function ticked(text: string, from: number, done: boolean): string {
+  const end = text.indexOf('\n', from)
+  const line = text.slice(from, end === -1 ? text.length : end).replace(/\r$/, '')
+  const fields = readTask(line)
+  if (!fields || fields.done === done) return text
+
+  const today = todayOf()
+  // A cancelled task done after all is ticked where it stands, nothing else moving.
+  if (done && fields.cancelled) {
+    const edits = writeTask(line, { done: true, completed: today, cancelledOn: null })
+    return appliedEdits(text, edits.map((edit) => ({ ...edit, from: edit.from + from, to: edit.to + from })))
+  }
+  return appliedEdits(text, tick(text, text.slice(0, from).split('\n').length - 1, today))
 }
 
 /** Where the task an anchor names is now: the line it was on if its words are still

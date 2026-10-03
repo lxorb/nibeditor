@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@nib/editor'
 
 /** Writing across a space without opening it, driven by a stand-in store.
@@ -202,11 +202,29 @@ describe("a note's words as they stand", () => {
 describe('a task ticked from a row', () => {
   const NOTE = `${SPACE}/todo.md`
 
+  // Ticking writes today's date, so today is held still.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test('reads the line again rather than trusting the row', async () => {
     const { ws } = space({ [NOTE]: '# to do\n\n- [ ] wash up\n- [x] done\n' })
 
     expect(await toggleTaskAt(ws, NOTE, 2)).toBe(true)
-    expect(disk.get(NOTE)).toBe('# to do\n\n- [x] wash up\n- [x] done\n')
+    expect(disk.get(NOTE)).toBe('# to do\n\n- [x] wash up ✅ 2026-10-07\n- [x] done\n')
+  })
+
+  test('and a recurring one comes back above, in the same write', async () => {
+    const { ws } = space({ [NOTE]: '- [ ] gym 🔁 every week 📅 2026-10-05\n' })
+
+    expect(await toggleTaskAt(ws, NOTE, 0)).toBe(true)
+    expect(disk.get(NOTE)).toBe(
+      '- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05 ✅ 2026-10-07\n',
+    )
   })
 
   test('and clears one that is ticked', async () => {
