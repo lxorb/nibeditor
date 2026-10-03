@@ -1,0 +1,36 @@
+# What an agent's tab could be on the system's engine of a Mac and of Linux, measured
+# before anything is built on it (docs/agent-native.md 12). Not part of the app: a page
+# out of sight in each of the ways the engine allows, measured for its rates, its
+# picture, its isolated world and its input, printed as one JSON document.
+# .github/workflows/agent-engines.yml runs it on a Mac and on Linux.
+#
+# The same wry and tao the app is built on, at the app's versions, so what is measured is
+# what the app would get.
+
+[package]
+name = "webkit-agent-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "AGPL-3.0-only"
+
+# A workspace of its own: nothing of this reaches the app's lock file.
+[workspace]
+
+[dependencies]
+wry = "=0.55.1"
+tao = "=0.35.3"
+serde_json = "1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+block2 = "0.6"
+objc2-foundation = "0.3"
+objc2-app-kit = "0.3"
+objc2-web-kit = "0.3"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
+javascriptcore-rs = "=1.1.2"
+gtk = "0.18"
+cairo-rs = "0.18"

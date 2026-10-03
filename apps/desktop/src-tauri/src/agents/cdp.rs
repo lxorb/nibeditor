@@ -715,7 +715,12 @@ pub fn follow_view(view: &View, label: &str) {
         let hearing = move |method: &str, session: Option<&str>, params: &Value| {
             if EVENTS.contains(&method) {
                 let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
-                heard_event(&mut held, method, session.unwrap_or_default(), params.clone());
+                heard_event(
+                    &mut held,
+                    method,
+                    session.unwrap_or_default(),
+                    params.clone(),
+                );
             }
         };
         match view {
@@ -783,7 +788,8 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         "Page.frameStartedNavigating" => {
             let main = held.main_frame.as_deref();
             let ours = session.is_empty()
-                && main.is_none_or(|main| event.get("frameId").and_then(Value::as_str) == Some(main));
+                && main
+                    .is_none_or(|main| event.get("frameId").and_then(Value::as_str) == Some(main));
             let same = matches!(
                 event.get("navigationType").and_then(Value::as_str),
                 Some("sameDocument" | "historySameDocument")
