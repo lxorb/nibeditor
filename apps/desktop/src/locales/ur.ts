@@ -1726,6 +1726,7 @@ export const ur: Dictionary = {
   Conversation: 'گفتگو',
   'Next message': 'اگلا پیغام',
   'Compact now': 'ابھی مختصر کریں',
+  Follow: 'پیروی کریں',
   Searched: 'تلاش کیا',
   Listed: 'فہرست بنائی',
   Checked: 'جانچا',

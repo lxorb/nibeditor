@@ -1748,6 +1748,7 @@ export const ml: Dictionary = {
   Conversation: 'സംഭാഷണം',
   'Next message': 'അടുത്ത സന്ദേശം',
   'Compact now': 'ഇപ്പോൾ ചുരുക്കുക',
+  Follow: 'പിന്തുടരുക',
   Searched: 'തിരഞ്ഞു',
   Listed: 'പട്ടികയാക്കി',
   Checked: 'പരിശോധിച്ചു',

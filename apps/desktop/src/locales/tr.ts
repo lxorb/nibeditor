@@ -1735,6 +1735,7 @@ export const tr: Dictionary = {
   Conversation: 'Konuşma',
   'Next message': 'Sonraki mesaj',
   'Compact now': 'Şimdi sıkıştır',
+  Follow: 'Takip et',
   Searched: 'Arandı',
   Listed: 'Listelendi',
   Checked: 'Denetlendi',

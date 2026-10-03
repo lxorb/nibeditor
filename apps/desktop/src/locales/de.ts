@@ -1769,6 +1769,7 @@ export const de: Dictionary = {
   Conversation: 'Unterhaltung',
   'Next message': 'Nächste Nachricht',
   'Compact now': 'Jetzt verdichten',
+  Follow: 'Folgen',
   Searched: 'Gesucht',
   Listed: 'Aufgelistet',
   Checked: 'Geprüft',

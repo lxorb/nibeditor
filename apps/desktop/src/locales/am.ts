@@ -1706,6 +1706,7 @@ export const am: Dictionary = {
   Conversation: 'ውይይት',
   'Next message': 'ቀጣይ መልዕክት',
   'Compact now': 'አሁን አመቅ',
+  Follow: 'ተከተል',
   Searched: 'ፈለገ',
   Listed: 'ዘረዘረ',
   Checked: 'አረጋገጠ',

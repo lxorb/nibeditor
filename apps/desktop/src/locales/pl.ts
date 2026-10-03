@@ -1808,6 +1808,7 @@ export const pl: Dictionary = {
   Conversation: 'Rozmowa',
   'Next message': 'Następna wiadomość',
   'Compact now': 'Kompaktuj teraz',
+  Follow: 'Śledź',
   Searched: 'Wyszukano',
   Listed: 'Wylistowano',
   Checked: 'Sprawdzono',

@@ -1688,6 +1688,7 @@ export const zhHans: Dictionary = {
   Conversation: '对话内容',
   'Next message': '下一条消息',
   'Compact now': '立即压缩',
+  Follow: '跟随',
   Searched: '已搜索',
   Listed: '已列出',
   Checked: '已检查',

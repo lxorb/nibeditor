@@ -1719,6 +1719,7 @@ export const gu: Dictionary = {
   Conversation: 'વાતચીત',
   'Next message': 'આગળનો સંદેશ',
   'Compact now': 'હમણાં સંક્ષિપ્ત કરો',
+  Follow: 'અનુસરો',
   Searched: 'શોધ્યું',
   Listed: 'યાદી બનાવી',
   Checked: 'તપાસ્યું',

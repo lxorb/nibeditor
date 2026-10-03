@@ -1806,6 +1806,7 @@ export const ru: Dictionary = {
   Conversation: 'Беседа',
   'Next message': 'Следующее сообщение',
   'Compact now': 'Сжать сейчас',
+  Follow: 'Следовать',
   Searched: 'Найдено',
   Listed: 'Перечислено',
   Checked: 'Проверено',

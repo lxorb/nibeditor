@@ -1731,6 +1731,7 @@ export const ps: Dictionary = {
   Conversation: 'خبرې اترې',
   'Next message': 'بل پیغام',
   'Compact now': 'اوس لنډ کړئ',
+  Follow: 'تعقیب',
   Searched: 'ولټول',
   Listed: 'لېست یې کړ',
   Checked: 'وکتل',

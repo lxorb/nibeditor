@@ -1727,6 +1727,7 @@ export const hi: Dictionary = {
   Conversation: 'बातचीत',
   'Next message': 'अगला संदेश',
   'Compact now': 'अभी संक्षिप्त करें',
+  Follow: 'साथ चलें',
   Searched: 'खोजा',
   Listed: 'सूची बनाई',
   Checked: 'जाँचा',

@@ -1688,6 +1688,7 @@ export const yue: Dictionary = {
   Conversation: '對話內容',
   'Next message': '下一個訊息',
   'Compact now': '即刻壓縮',
+  Follow: '跟住',
   Searched: '搵過',
   Listed: '列咗',
   Checked: '睇過',

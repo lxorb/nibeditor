@@ -1718,6 +1718,7 @@ export const jv: Dictionary = {
   Conversation: 'Obrolan',
   'Next message': 'Pesen sabanjure',
   'Compact now': 'Padhetake saiki',
+  Follow: 'Tututi',
   Searched: 'Digoleki',
   Listed: 'Didhaptar',
   Checked: 'Dipriksa',

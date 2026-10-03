@@ -50,6 +50,7 @@ import { effortFor, lastMode, openIn, rememberEffort, rememberMode, rememberOpen
 import type { Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
+import { editMessage, lastMessage, openRewind } from '../review'
 
 /** A message waiting behind a running turn. */
 export interface Queued {
@@ -370,7 +371,42 @@ class Chat implements Panel {
     if (!text && !chips.length) return
     this.text = ''
     this.chips = []
+    const edited = this.editing
+    const thread = this.open
+    if (edited && thread) {
+      // An old message changed: the notes and the conversation go back to before it,
+      // what followed is kept as a branch, and the words are sent in its place.
+      this.editing = null
+      void editMessage(thread, edited, text, this)
+      return
+    }
     this.say(text, chips, around)
+  }
+
+  /** The reader's message being changed in the field, by its id (Up, or its pencil). */
+  editing = $state<string | null>(null)
+
+  /** A message into the field to change and send again: the one named, else the last
+   *  (Up on an empty field). */
+  startEdit(turn?: string): void {
+    const thread = this.open
+    if (!thread || this.running.includes(thread.id)) return
+    const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
+    if (!message?.draft) return
+    this.editing = message.id
+    this.text = message.draft.text
+    this.focus()
+  }
+
+  cancelEdit(): void {
+    this.editing = null
+    this.text = ''
+  }
+
+  /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
+  rewind(turn?: string): void {
+    const thread = this.open
+    if (thread) openRewind(thread, this, turn)
   }
 
   /** `send` for the commands: words, with what the field's chips say now. */

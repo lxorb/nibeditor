@@ -17,6 +17,7 @@
   import { hearAgain } from '../../shortcuts/registry'
   import { workspace } from '../../workspace.svelte'
   import { ai } from '../store.svelte'
+  import { following, toggleFollow } from '../review'
   import { chat } from './chat.svelte'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
@@ -45,8 +46,13 @@
   })
 
   function titleMenu(event: MouseEvent) {
+    const thread = chat.thread
     menu.show(event, [
       { label: t('Rename'), asks: true, run: () => void chat.rename() },
+      // Follow (Zed's word): the notes the thread edits come to the front as it edits.
+      ...(thread
+        ? [{ label: t('Follow'), checked: following(thread), run: () => toggleFollow(thread) }]
+        : []),
       { label: t('Branch'), run: () => chat.branch() },
       { label: t('Save as a note'), run: () => void chat.exportThread() },
       { label: t('Archive'), run: () => chat.archive() },

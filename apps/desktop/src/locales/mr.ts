@@ -1730,6 +1730,7 @@ export const mr: Dictionary = {
   Conversation: 'संभाषण',
   'Next message': 'पुढील संदेश',
   'Compact now': 'आता संक्षिप्त करा',
+  Follow: 'मागोवा घ्या',
   Searched: 'शोधले',
   Listed: 'यादी केली',
   Checked: 'तपासले',

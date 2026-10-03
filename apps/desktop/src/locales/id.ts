@@ -1725,6 +1725,7 @@ export const id: Dictionary = {
   Conversation: 'Percakapan',
   'Next message': 'Pesan berikutnya',
   'Compact now': 'Padatkan sekarang',
+  Follow: 'Ikuti',
   Searched: 'Dicari',
   Listed: 'Didaftar',
   Checked: 'Diperiksa',

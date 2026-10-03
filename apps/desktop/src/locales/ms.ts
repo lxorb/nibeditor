@@ -1725,6 +1725,7 @@ export const ms: Dictionary = {
   Conversation: 'Perbualan',
   'Next message': 'Mesej seterusnya',
   'Compact now': 'Padatkan sekarang',
+  Follow: 'Ikut',
   Searched: 'Dicari',
   Listed: 'Disenaraikan',
   Checked: 'Disemak',

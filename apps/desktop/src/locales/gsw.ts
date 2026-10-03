@@ -1738,6 +1738,7 @@ export const gsw: Dictionary = {
   Conversation: 'Unterhaltig',
   'Next message': 'Nächschti Nachricht',
   'Compact now': 'Jetzt verdichte',
+  Follow: 'Folge',
   Searched: 'Gsuecht',
   Listed: 'Ufglischtet',
   Checked: 'Prüeft',

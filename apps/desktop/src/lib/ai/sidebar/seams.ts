@@ -1,32 +1,17 @@
-/** Where the lanes after the panel meet it (docs/ai-sidebar.md 6.5 and 6.6).
+/** Where the commands meet the panel (docs/ai-sidebar.md 6.5).
  *
- *  - **The commands** (lane 5): `lib/ai/commands/index.ts`, `commands(panel)`, asked each
- *    time the `/` menu opens, since commands written as notes are found in the
- *    background and arrive in the next menu.
- *  - **The changes bar** (lane 3): `lib/ai/review/ChangesBar.svelte`, drawn over the field
- *    with the open thread, once it exists. Found by name through `import.meta.glob`,
- *    which is empty for a file that is not there, so the build is whole before that lane
- *    lands and needs no line changed after.
+ *  The commands (lane 5): `lib/ai/commands/index.ts`, `commands(panel)`, asked each time
+ *  the `/` menu opens, since commands written as notes are found in the background and
+ *  arrive in the next menu.
  *
- *  Both are fetched the first time the panel needs them. */
+ *  The review (lane 3) is drawn by the panel's own components, straight from
+ *  `lib/ai/review` (6.6). */
 
-import type { Component } from 'svelte'
 import type { Panel, PanelCommand } from '../commands/types'
-import type { Thread } from '../chat/types'
-
-const CHANGES = import.meta.glob<{ default: Component<{ thread: Thread }> }>(
-  '../review/ChangesBar.svelte',
-)
 
 /** The rows of the `/` menu, as they are now. */
 export async function commandsFor(panel: Panel): Promise<readonly PanelCommand[]> {
   return (await import('../commands/index')).commands(panel)
-}
-
-/** Lane 3's bar, or null where it has not landed. */
-export async function changesBar(): Promise<Component<{ thread: Thread }> | null> {
-  const load = Object.values(CHANGES)[0]
-  return load ? (await load()).default : null
 }
 
 const bare = (word: string) => word.toLowerCase().replace(/-/g, '')

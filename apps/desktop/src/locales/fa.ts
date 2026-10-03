@@ -1728,6 +1728,7 @@ export const fa: Dictionary = {
   Conversation: 'گفتگو',
   'Next message': 'پیام بعدی',
   'Compact now': 'الان فشرده کن',
+  Follow: 'دنبال کردن',
   Searched: 'جستجو کرد',
   Listed: 'فهرست کرد',
   Checked: 'بررسی کرد',

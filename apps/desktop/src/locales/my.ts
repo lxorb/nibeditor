@@ -1716,6 +1716,7 @@ export const my: Dictionary = {
   Conversation: 'စကားဝိုင်း',
   'Next message': 'နောက်စာ',
   'Compact now': 'ယခု ချုံ့ရန်',
+  Follow: 'လိုက်ကြည့်ရန်',
   Searched: 'ရှာခဲ့',
   Listed: 'စာရင်းပြုခဲ့',
   Checked: 'စစ်ဆေးခဲ့',

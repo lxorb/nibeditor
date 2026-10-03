@@ -1754,6 +1754,7 @@ export const sw: Dictionary = {
   Conversation: 'Mazungumzo',
   'Next message': 'Ujumbe unaofuata',
   'Compact now': 'Fupisha sasa',
+  Follow: 'Fuata',
   Searched: 'Ilitafuta',
   Listed: 'Iliorodhesha',
   Checked: 'Ilikagua',

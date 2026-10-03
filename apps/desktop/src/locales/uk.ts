@@ -1801,6 +1801,7 @@ export const uk: Dictionary = {
   Conversation: 'Розмова',
   'Next message': 'Наступне повідомлення',
   'Compact now': 'Стиснути зараз',
+  Follow: 'Стежити',
   Searched: 'Знайдено',
   Listed: 'Перелічено',
   Checked: 'Перевірено',

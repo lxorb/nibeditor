@@ -1762,6 +1762,7 @@ export const ptBR: Dictionary = {
   Conversation: 'Conversa',
   'Next message': 'Próxima mensagem',
   'Compact now': 'Compactar agora',
+  Follow: 'Acompanhar',
   Searched: 'Pesquisou',
   Listed: 'Listou',
   Checked: 'Verificou',

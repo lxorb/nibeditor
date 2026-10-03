@@ -1746,6 +1746,7 @@ export const kn: Dictionary = {
   Conversation: 'ಸಂಭಾಷಣೆ',
   'Next message': 'ಮುಂದಿನ ಸಂದೇಶ',
   'Compact now': 'ಈಗ ಸಂಕ್ಷೇಪಿಸಿ',
+  Follow: 'ಅನುಸರಿಸಿ',
   Searched: 'ಹುಡುಕಿತು',
   Listed: 'ಪಟ್ಟಿ ಮಾಡಿತು',
   Checked: 'ಪರಿಶೀಲಿಸಿತು',

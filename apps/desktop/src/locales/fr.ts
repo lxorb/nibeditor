@@ -1788,6 +1788,7 @@ export const fr: Dictionary = {
   Conversation: 'Conversation',
   'Next message': 'Prochain message',
   'Compact now': 'Compacter maintenant',
+  Follow: 'Suivre',
   Searched: 'Recherché',
   Listed: 'Listé',
   Checked: 'Vérifié',

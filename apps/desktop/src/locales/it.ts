@@ -1785,6 +1785,7 @@ export const it: Dictionary = {
   Conversation: 'Conversazione',
   'Next message': 'Prossimo messaggio',
   'Compact now': 'Compatta ora',
+  Follow: 'Segui',
   Searched: 'Cercato',
   Listed: 'Elencato',
   Checked: 'Controllato',

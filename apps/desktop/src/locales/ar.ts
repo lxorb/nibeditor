@@ -1829,6 +1829,7 @@ export const ar: Dictionary = {
   Conversation: 'المحادثة',
   'Next message': 'الرسالة التالية',
   'Compact now': 'اضغط الآن',
+  Follow: 'متابعة',
   Searched: 'بحث',
   Listed: 'سرد',
   Checked: 'تحقق',

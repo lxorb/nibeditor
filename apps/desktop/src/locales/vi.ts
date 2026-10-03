@@ -1714,6 +1714,7 @@ export const vi: Dictionary = {
   Conversation: 'Hội thoại',
   'Next message': 'Tin nhắn tiếp theo',
   'Compact now': 'Thu gọn ngay',
+  Follow: 'Theo dõi',
   Searched: 'Đã tìm',
   Listed: 'Đã liệt kê',
   Checked: 'Đã kiểm tra',

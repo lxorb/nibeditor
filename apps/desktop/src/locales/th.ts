@@ -1695,6 +1695,7 @@ export const th: Dictionary = {
   Conversation: 'บทสนทนา',
   'Next message': 'ข้อความถัดไป',
   'Compact now': 'บีบอัดเดี๋ยวนี้',
+  Follow: 'ติดตาม',
   Searched: 'ค้นหาแล้ว',
   Listed: 'แสดงรายการแล้ว',
   Checked: 'ตรวจแล้ว',

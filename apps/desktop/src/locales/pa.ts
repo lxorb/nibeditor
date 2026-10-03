@@ -1734,6 +1734,7 @@ export const pa: Dictionary = {
   Conversation: 'ਗੱਲਬਾਤ',
   'Next message': 'ਅਗਲਾ ਸੁਨੇਹਾ',
   'Compact now': 'ਹੁਣੇ ਸੰਖੇਪ ਕਰੋ',
+  Follow: 'ਪਿੱਛੇ ਚੱਲੋ',
   Searched: 'ਖੋਜਿਆ',
   Listed: 'ਸੂਚੀ ਬਣਾਈ',
   Checked: 'ਜਾਂਚਿਆ',

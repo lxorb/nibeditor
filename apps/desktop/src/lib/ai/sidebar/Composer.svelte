@@ -30,7 +30,8 @@
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
   import type { PanelCommand } from '../commands/types'
-  import { changesBar, commandIn, commandsFor, matching, rowNamed } from './seams'
+  import ChangesBar from '../review/ChangesBar.svelte'
+  import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
   import { modeWord } from './words'
 
@@ -312,6 +313,22 @@
       })
     }
     if (event.key === 'Enter' && !event.shiftKey) return run(() => void submit())
+    const empty = !chat.text.trim()
+    // Up on an empty field: the last message, to change and send again.
+    if (event.key === 'ArrowUp' && empty && !event.altKey && !event.ctrlKey && !event.metaKey)
+      return run(() => chat.startEdit())
+    // Escape: out of an edit; on an empty field of a thread with messages, twice is the
+    // rewind sheet, so the first is held for the second rather than leaving the panel.
+    if (event.key === 'Escape' && chat.editing) return run(() => chat.cancelEdit())
+    if (event.key === 'Escape' && empty && head?.kept) {
+      const now = Date.now()
+      if (now - escaped < 500) {
+        escaped = 0
+        return run(() => chat.rewind())
+      }
+      escaped = now
+      return run(() => undefined)
+    }
   }
 
   function onInput() {
@@ -383,7 +400,12 @@
     if (chat.focusAsked) requestAnimationFrame(() => field?.focus())
   })
 
-  const bar = changesBar()
+  /** The open thread itself, the live one the engine writes into, for the review's bar:
+   *  asked again whenever the panel draws another thread. */
+  const thread = $derived(chat.head ? chat.thread : null)
+
+  /** When Escape was last pressed on an empty field, for Esc Esc. */
+  let escaped = 0
 
   // ── The goal ──────────────────────────────────────────
 
@@ -415,11 +437,21 @@
 <div class="foot" onkeydown={footKey}>
   <Queue />
 
-  {#await bar then ChangesBar}
-    {#if ChangesBar && chat.thread}
-      <ChangesBar thread={chat.thread} />
-    {/if}
-  {/await}
+  {#if thread}
+    <ChangesBar {thread} panel={chat} />
+  {/if}
+
+  {#if chat.editing}
+    <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
+      <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
+      <button
+        class="drop"
+        aria-label={t('Cancel')}
+        title={t('Cancel')}
+        onclick={() => chat.cancelEdit()}><Cross small /></button
+      >
+    </div>
+  {/if}
 
   {#if goal}
     <div
@@ -580,6 +612,25 @@
     gap: 4px;
     padding: var(--space-2) var(--space-1) var(--space-1);
     border-top: 1px solid var(--line);
+  }
+
+  .editing {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 2px 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .editing svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linejoin: round;
   }
 
   .goal {

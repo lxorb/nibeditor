@@ -1736,6 +1736,7 @@ export const te: Dictionary = {
   Conversation: 'సంభాషణ',
   'Next message': 'తదుపరి సందేశం',
   'Compact now': 'ఇప్పుడే కుదించండి',
+  Follow: 'అనుసరించు',
   Searched: 'వెతికింది',
   Listed: 'జాబితా చేసింది',
   Checked: 'తనిఖీ చేసింది',

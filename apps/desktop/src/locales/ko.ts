@@ -1706,6 +1706,7 @@ export const ko: Dictionary = {
   Conversation: '대화',
   'Next message': '다음 메시지',
   'Compact now': '지금 압축',
+  Follow: '따라가기',
   Searched: '검색함',
   Listed: '나열함',
   Checked: '확인함',

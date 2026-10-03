@@ -1688,6 +1688,7 @@ export const zhHantHK: Dictionary = {
   Conversation: '對話內容',
   'Next message': '下一則訊息',
   'Compact now': '立即壓縮',
+  Follow: '跟隨',
   Searched: '已搜尋',
   Listed: '已列出',
   Checked: '已檢查',

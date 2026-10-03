@@ -14,6 +14,7 @@
   import { workspace } from '../../workspace.svelte'
   import { insideSpace } from '../../space-paths'
   import type { Part } from '../chat/types'
+  import Asked from '../review/Asked.svelte'
   import { chat } from './chat.svelte'
   import { seconds } from './numbers'
   import { bareName, objectOf, verbOf } from './verbs'
@@ -82,6 +83,7 @@
   {#if part.kind === 'tool' && part.state === 'asking' && part.result?.approval}
     <div class="ask">
       {#if part.result.text}<p>{part.result.text}</p>{/if}
+      <Asked {part} />
       <button class="nib-button" disabled={answering} onclick={() => void answer(true)}
         >{t('Allow')}</button
       >

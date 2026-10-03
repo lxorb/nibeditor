@@ -14,6 +14,7 @@
   import { settings } from '../../settings.svelte'
   import { chat } from './chat.svelte'
   import { sourcesFor } from './citations'
+  import Branches from '../review/Branches.svelte'
   import Reply from './Reply.svelte'
 
   const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } =
@@ -23,6 +24,8 @@
   let atEnd = true
 
   const turns = $derived(chat.turns)
+  /** The open thread itself, the live one, for the review's arrows under a message. */
+  const thread = $derived(chat.head ? chat.thread : null)
   const id = $derived(chat.head?.id ?? '')
   const running = $derived(chat.running.includes(id))
   const pending = $derived(chat.pending[id])
@@ -86,6 +89,34 @@
         {#each attachedOf(index) as label (label)}
           <span class="went">{label}</span>
         {/each}
+        {#if thread && !turn.steered}
+          <Branches {thread} turn={turn.id} panel={chat} />
+          {#if !running}
+            <!-- Change it and send again, or go back to before it: claude.ai's pencil
+                 and Claude Code's checkpoint, over the message's corner while it is
+                 pointed at. -->
+            <span class="tools">
+              <button
+                class="nib-glyph tool"
+                title={t('Edit')}
+                aria-label={t('Edit')}
+                onclick={() => chat.startEdit(turn.id)}
+              >
+                <svg viewBox="0 0 13 13"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
+              </button>
+              <button
+                class="nib-glyph tool"
+                title={t('Rewind')}
+                aria-label={t('Rewind')}
+                onclick={() => chat.rewind(turn.id)}
+              >
+                <svg viewBox="0 0 13 13"
+                  ><path d="M2.4 6.5a4.1 4.1 0 1 0 1.2-2.9M2.4 2v2.6H5M6.5 4.4v2.3l1.6 1" /></svg
+                >
+              </button>
+            </span>
+          {/if}
+        {/if}
       </div>
     {:else}
       <Reply
@@ -147,6 +178,48 @@
     font-weight: var(--weight-strong);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+  }
+
+  .said {
+    position: relative;
+  }
+
+  .tools {
+    position: absolute;
+    top: -8px;
+    inset-inline-end: 0;
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .said:hover .tools,
+  .tools:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  :global([data-touch]) .tools {
+    position: static;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .tool {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+  }
+
+  .tool svg {
+    stroke-width: 1.3;
   }
 
   /* Sent into a running turn: the same message, its rule in the accent, as the arrow

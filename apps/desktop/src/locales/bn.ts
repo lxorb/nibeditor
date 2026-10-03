@@ -1727,6 +1727,7 @@ export const bn: Dictionary = {
   Conversation: 'কথোপকথন',
   'Next message': 'পরের বার্তা',
   'Compact now': 'এখন সংক্ষিপ্ত করুন',
+  Follow: 'অনুসরণ',
   Searched: 'খুঁজেছে',
   Listed: 'তালিকা করেছে',
   Checked: 'যাচাই করেছে',

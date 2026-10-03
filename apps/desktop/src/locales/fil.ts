@@ -1766,6 +1766,7 @@ export const fil: Dictionary = {
   Conversation: 'Usapan',
   'Next message': 'Susunod na mensahe',
   'Compact now': 'Paikliin ngayon',
+  Follow: 'Sundan',
   Searched: 'Hinanap',
   Listed: 'Inilista',
   Checked: 'Sinuri',

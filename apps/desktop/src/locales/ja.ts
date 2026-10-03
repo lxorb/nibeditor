@@ -1721,6 +1721,7 @@ export const ja: Dictionary = {
   Conversation: '会話',
   'Next message': '次のメッセージ',
   'Compact now': '今すぐ圧縮',
+  Follow: '追従',
   Searched: '検索',
   Listed: '一覧',
   Checked: '確認',

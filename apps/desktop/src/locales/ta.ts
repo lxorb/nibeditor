@@ -1753,6 +1753,7 @@ export const ta: Dictionary = {
   Conversation: 'உரையாடல்',
   'Next message': 'அடுத்த செய்தி',
   'Compact now': 'இப்போது சுருக்கு',
+  Follow: 'பின்தொடர்',
   Searched: 'தேடியது',
   Listed: 'பட்டியலிட்டது',
   Checked: 'சரிபார்த்தது',

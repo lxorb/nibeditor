@@ -1755,6 +1755,7 @@ export const ha: Dictionary = {
   Conversation: 'Tattaunawa',
   'Next message': 'Saƙo na gaba',
   'Compact now': 'Taƙaita yanzu',
+  Follow: 'Bi',
   Searched: 'An bincika',
   Listed: 'An jera',
   Checked: 'An duba',

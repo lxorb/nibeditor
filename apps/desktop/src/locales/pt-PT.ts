@@ -1775,6 +1775,7 @@ export const ptPT: Dictionary = {
   Conversation: 'Conversa',
   'Next message': 'Mensagem seguinte',
   'Compact now': 'Compactar agora',
+  Follow: 'Acompanhar',
   Searched: 'Pesquisou',
   Listed: 'Listou',
   Checked: 'Verificou',
