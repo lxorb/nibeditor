@@ -340,7 +340,8 @@ async function newTab(call: Call): Promise<AgentAnswer> {
 
 /** `rename`: a tab's name. A file's is a rename of the file, every link rewritten and
  *  one step to undo, through the same move `move_file` makes; an unsaved note's is the
- *  name it will be offered when it is saved. A page's title is the page's. */
+ *  name it will be offered when it is saved; a terminal's is the strip's own rename,
+ *  kept through a restart (terminal/rename.ts). A page's title is the page's. */
 async function renameTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   const name = need(call, 'name').trim()
@@ -355,15 +356,20 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
     return moveFile({ ...call, args: { path: relative, to } })
   }
 
-  if (!isDraft(tab.note)) {
+  if (!isDraft(tab.note) && tab.kind !== 'terminal') {
     throw new Refused('by_hand', `tab ${tab.id} is a ${tab.kind} tab, named by what it shows`)
   }
 
   const question = await asked(call, null, `Rename ${tab.shown} to ${name}`)
   if (question) return question
 
-  tab.note.name = name
-  workspace.scheduleSession()
+  if (tab.kind === 'terminal') {
+    const { renameTerminal } = await import('../../terminal/rename')
+    await renameTerminal(tab, name)
+  } else {
+    tab.note.name = name
+    workspace.scheduleSession()
+  }
   return answered(tab)
 }
 
