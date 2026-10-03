@@ -35,7 +35,7 @@ count forms for its language, loses a placeholder or holds an em dash.
 The words Chrome itself draws - the tile on `chrome://extensions`, the listing in
 the store, the shortcut list - are `public/_locales`' business instead, because
 Chrome's own mechanism is the only one those surfaces have and it picks by the
-browser's interface language. Thirty-one of the thirty-nine are languages Chrome
+browser's interface language. Thirty-one of the forty are languages Chrome
 has an interface in; the rest get the whole of the extension in their own language
 and Chrome's tile beside it in English. The same test holds the two halves to the
 same languages.

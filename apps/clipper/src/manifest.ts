@@ -9,7 +9,7 @@
  *  Chrome's interface is translated into, which is thirty-one of the catalogues.
  *
  *  Everything the extension itself draws is translated through those catalogues
- *  instead - all thirty-nine of them, chosen on the options page rather than by
+ *  instead - all forty of them, chosen on the options page rather than by
  *  the browser; see `lib/translate.ts`. `src/lib/i18n.test.ts` holds the two
  *  halves to the same languages. */
 

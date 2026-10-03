@@ -5,6 +5,8 @@ import { de } from '../locales/de'
 import { fr } from '../locales/fr'
 import { gsw } from '../locales/gsw'
 import { ja } from '../locales/ja'
+import { yue } from '../locales/yue'
+import { zhHantHK } from '../locales/zh-Hant-HK'
 import { i18n } from './i18n.svelte'
 import { LABELS } from './kinds'
 import { PROBLEMS } from './problems'
@@ -12,7 +14,7 @@ import { TEMPLATE_PROBLEMS } from './interpret/templates'
 import { CATALOGUE_IDS, catalogueFor, type Dictionary, type Forms, LANGUAGES } from './translate'
 
 /** Every catalogue on disk, read the way the pages read them. Loaded as a set
- *  rather than named one by one: thirty-nine imports would go stale the first
+ *  rather than named one by one: forty imports would go stale the first
  *  time somebody added a language, which is the thing this file is here to
  *  catch. */
 const LOADED = import.meta.glob<Record<string, unknown>>('../locales/*.ts', { eager: true })
@@ -167,7 +169,10 @@ describe('the folder, the list and the loader', () => {
       expect(CATALOGUE_IDS, id).toContain(id)
     }
 
-    expect(CATALOGUE_IDS.length).toBeGreaterThanOrEqual(39)
+    // Forty, since Cantonese, as in the app: written differently enough from
+    // standard written Chinese to be its own catalogue rather than a region of one.
+    expect(CATALOGUE_IDS).toContain('yue')
+    expect(CATALOGUE_IDS.length).toBeGreaterThanOrEqual(40)
   })
 })
 
@@ -193,7 +198,18 @@ describe('following the browser', () => {
     expect(catalogueFor('zh-TW')).toBe('zh-Hant')
     expect(catalogueFor('zh-MO')).toBe('zh-Hant')
     expect(catalogueFor('zh-HK')).toBe('zh-Hant-HK')
-    expect(catalogueFor('yue')).toBe('zh-Hant-HK')
+  })
+
+  /** Cantonese is a language rather than a region of Chinese, and it has a
+   *  catalogue of its own, negotiated the way the app negotiates it. A browser
+   *  asking for `yue` used to be answered in Hong Kong's written Chinese, which is
+   *  not what it asked for; `zh-HK` above still is. */
+  test('and Cantonese as a language of its own', () => {
+    expect(catalogueFor('yue')).toBe('yue')
+    expect(catalogueFor('yue-HK')).toBe('yue')
+    expect(catalogueFor('yue-Hant-HK')).toBe('yue')
+    // The legacy tag, which is what an older system sends for the same language.
+    expect(catalogueFor('zh-yue')).toBe('yue')
   })
 
   test('spells Portuguese the way the region does', () => {
@@ -384,6 +400,45 @@ describe('the catalogues between them', () => {
     }
   })
 
+  /** Cantonese written as Cantonese, rather than as standard written Chinese in
+   *  Traditional characters with a word changed here and there - the app's own rule
+   *  for its `yue`, on the extension's sixty rows. A catalogue without these words
+   *  would be the Hong Kong one under another name. */
+  test('Cantonese is written Cantonese, not standard written Chinese', () => {
+    const said = Object.values(yue)
+      .flatMap((value) => forms(value))
+      .join('\n')
+
+    // The attributive, the copula, the negator and "there is none", and the words
+    // that are Cantonese and nothing else: this, that, the pronoun, the perfective,
+    // the progressive, "pick", "thing".
+    for (const word of ['嘅', '係', '唔', '冇', '呢個', '嗰', '佢', '咗', '緊', '揀', '嘢']) {
+      expect(said.includes(word), word).toBe(true)
+    }
+
+    // The other way round: the words standard written Chinese uses where Cantonese
+    // has its own.
+    for (const [english, value] of Object.entries(yue)) {
+      for (const written of forms(value)) {
+        for (const standard of ['沒有', '這', '那', '它', '的', '什麼', '無法', '不']) {
+          expect(written, english).not.toContain(standard)
+        }
+      }
+    }
+  })
+
+  /** Its own catalogue has to say something of its own: a row-for-row copy of the
+   *  Hong Kong one would be a language in the picker that changes nothing. The one
+   *  and two word rows - 儲存, 帳戶 - are spelled the same in both, so a third. */
+  test('and says something different from Hong Kong’s written Chinese', () => {
+    const rows = Object.keys(yue).filter((english) => english in zhHantHK)
+    const differ = rows.filter(
+      (english) => JSON.stringify(yue[english]) !== JSON.stringify(zhHantHK[english]),
+    )
+
+    expect(differ.length / rows.length).toBeGreaterThan(0.3)
+  })
+
   /** Japanese punctuation is full width. A question asked with an ASCII mark sits
    *  half a character narrow beside the sentence it ends. */
   test('Japanese asks its questions with a full-width mark', () => {
@@ -554,8 +609,8 @@ describe('the words Chrome draws', () => {
   ])
 
   /** Which catalogue each folder is the Chrome name for. Chrome has no interface
-   *  in Swiss German, Hausa, Javanese, Burmese, Punjabi, Pashto, Urdu or Hong
-   *  Kong Chinese, so those readers get the whole of the extension in their own
+   *  in Swiss German, Hausa, Javanese, Burmese, Punjabi, Pashto, Urdu, Hong Kong
+   *  Chinese or Cantonese, so those readers get the whole of the extension in their own
    *  language and Chrome's tile beside it in English. */
   const AS_CATALOGUE: Record<string, string> = {
     pt_BR: 'pt-BR',
