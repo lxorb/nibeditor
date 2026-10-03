@@ -85,6 +85,15 @@ describe('what somebody typed', () => {
     // One word with no dot is a word: a browser searches for `svelte` too.
     expect(webAddress('svelte')).toBe('https://www.google.com/search?q=svelte')
   })
+
+  test('on the engine the reader chose', () => {
+    expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe(
+      'https://duckduckgo.com/?q=a%20%26%20b',
+    )
+    // An address is an address whichever engine searches words.
+    expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
+    expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
+  })
 })
 
 describe('the origin, plainly', () => {
