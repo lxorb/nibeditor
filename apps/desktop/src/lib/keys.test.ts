@@ -351,9 +351,7 @@ describe('the space bar', () => {
     expect(
       matchesCombination('Mod-Space', press('Process', { ctrlKey: true, code: 'Space' }), 'win'),
     ).toBe(false)
-    expect(
-      matchesCombination('Mod-Space', { ...chord, isComposing: true } as typeof chord, 'win'),
-    ).toBe(false)
+    expect(matchesCombination('Mod-Space', { ...chord, isComposing: true }, 'win')).toBe(false)
     expect(showCombination('Mod-Space', 'win')).toBe('Ctrl+Space')
   })
 })
