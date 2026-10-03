@@ -26,6 +26,10 @@ import { dominant } from './colours'
 import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'
 import { groundOf } from './reading'
+import { alphaFor, layered, linkOf, type PaperInks } from '../content-ground'
+import { contentOf } from '../content-setting'
+import { PAPER, schemeTokens } from '../scheme-tokens'
+import { ACCENT_COLOUR, dialsOf, glassValues } from './settings'
 import { barFor, frameFor, type Material, type Sides, type Source } from './tint'
 
 /** How long after a page's last news it is read: a page lands, then names itself, then
@@ -91,7 +95,7 @@ function coverIn(pane: string, path: string): string | null {
 
 /** What the window stands on behind the frame. */
 function materialOf(said: string | null): Material {
-  return said === 'mica' || said === 'acrylic' ? said : null
+  return said === 'mica' || said === 'acrylic' || said === 'clear' ? said : null
 }
 
 /** The paper the window is painted with where nothing is behind it. */
@@ -120,11 +124,41 @@ function askOnce(tab: string, address: string | null): void {
   landed(tab)
 }
 
-/** What is in front, as the colour the frame takes. */
+/** The paper's inks in the reader's own scheme, which is the scheme a note is in: glass's
+ *  stronger greys, and the app's own paper and link. Read once per scheme and accent. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
+const inked = new Map<string, PaperInks>()
+function inksOf(sides: Sides): PaperInks {
+  const app = chrome.app
+  const key = `${app} ${theme.accent}`
+  const held = inked.get(key)
+  if (held) return held
+  const side = sides[app]
+  const read = schemeTokens(app, ['--bg', '--text-strong'])
+  const accent = rgbOf(accentColour(theme.accent, app)) ?? side.text
+  const inks = {
+    bg: read['--bg'] ?? PAPER[app],
+    text: side.text,
+    muted: side.ink,
+    link: linkOf(accent, read['--text-strong'] ?? side.text),
+  }
+  inked.set(key, inks)
+  return inks
+}
+
+/** What is in front, as the colour the frame takes: what is open, or - with the frame
+ *  not following - the reader's own colour, as strong as a page's. */
 function sourceOf(): Source {
   const tab = workspace.active
   const app = chrome.app
   const accent = rgbOf(accentColour(theme.accent, app)) ?? [124, 107, 245]
+
+  const values = glassValues()
+  if (values.follow === false) {
+    const chosen = String(values.colour ?? ACCENT_COLOUR)
+    const colour = chosen === ACCENT_COLOUR ? accent : rgbOf(accentColour(chosen, app))
+    return { colour: colour ?? accent, page: true }
+  }
 
   if (tab?.kind === 'web') {
     const address = addressOf(tab.id, tab.address)
@@ -156,9 +190,11 @@ function sourceOf(): Source {
   return { colour: accent, page: false }
 }
 
-/** Every web tab whose page has said what it stands on, with its bar. */
+/** Every web tab whose page has said what it stands on, with its bar: none while the
+ *  tab is not to take the page's colour. */
 function barsOf(sides: Sides): Record<string, Ground> {
   const bars: Record<string, Ground> = {}
+  if (glassValues().tab === false) return bars
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
     const ground = grounds.of(tab.id, addressOf(tab.id, tab.address))
@@ -180,11 +216,33 @@ export function follow(): void {
   stop = $effect.root(() => {
     $effect(() => {
       if (!chrome.on) return
-      const worn = frameFor(sourceOf(), chrome.app, materialOf(chrome.material), sides, paper())
+      const material = materialOf(chrome.material)
+      const frame = frameFor(
+        sourceOf(),
+        chrome.app,
+        material,
+        sides,
+        paper(),
+        dialsOf(glassValues()),
+        material ? inksOf(sides) : null,
+      )
+      // The Content row's level over the floors; paper on paper is the paper itself.
+      const level = material ? contentOf(glassValues().content) : 'opaque'
+      const laid = alphaFor(level, frame.paper)
+      const worn = {
+        scheme: frame.scheme,
+        tint: frame.tint,
+        wash: frame.wash,
+        paper: laid,
+        terminal: layered(alphaFor(level, frame.terminal), laid),
+      }
       const bars = barsOf(sides)
       const tab = workspace.active?.id ?? null
       // What was worn last is compared rather than followed.
-      untrack(() => chrome.wear(worn, bars, tab))
+      untrack(() => {
+        chrome.floor = frame.floor
+        chrome.wear(worn, bars, tab)
+      })
     })
   })
 }

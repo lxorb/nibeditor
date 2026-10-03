@@ -51,7 +51,7 @@ import {
   restoredLine,
 } from './history'
 import { type Route, routeKey } from './keys'
-import { findColours, monospace, terminalTheme } from './look'
+import { findColours, monospace, terminalContrast, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
@@ -200,7 +200,7 @@ class Session {
       cursorStyle: 'bar',
       cursorWidth: 2,
       cursorInactiveStyle: 'outline',
-      minimumContrastRatio: 4.5,
+      minimumContrastRatio: terminalContrast(),
       rightClickSelectsWord: false,
       theme: terminalTheme(),
       ...(conpty ? { windowsPty: conpty } : {}),
@@ -503,8 +503,11 @@ class Session {
   }
 
   /** The colours and the type, again, for a theme that has changed. */
-  repaint(theme: ITheme, family: string) {
+  repaint(theme: ITheme, family: string, contrast: number) {
     this.term.options.theme = theme
+    if (this.term.options.minimumContrastRatio !== contrast) {
+      this.term.options.minimumContrastRatio = contrast
+    }
     if (this.term.options.fontFamily !== family) {
       this.term.options.fontFamily = family
       this.fit()
@@ -1048,12 +1051,13 @@ function watch() {
     frame = requestAnimationFrame(() => {
       const theme = terminalTheme()
       const family = monospace()
+      const contrast = terminalContrast()
       // The page's style moves for other reasons too - the zoom, the keyboard on a
       // tablet - and a terminal repainted for nothing is a frame spent for nothing.
-      const now = JSON.stringify([theme, family])
+      const now = JSON.stringify([theme, family, contrast])
       if (now === painted) return
       painted = now
-      for (const one of sessions.values()) one.repaint(theme, family)
+      for (const one of sessions.values()) one.repaint(theme, family, contrast)
     })
   }
   const page = new MutationObserver(repaint)

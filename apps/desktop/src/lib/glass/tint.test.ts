@@ -1,9 +1,11 @@
 import { glassCss } from '@nib/themes/glass'
 import { describe, expect, test } from 'vitest'
-import { AA, type Rgb, over, ratio, rgbOf } from '../legibility'
+import { linkOf, type PaperInks } from '../content-ground'
+import { AA, type Rgb, over, ratio, rgbOf, SHARP } from '../legibility'
 import { paletteOf } from '../wallpaper/floors'
 import {
   barFor,
+  DIALS,
   frameFor,
   type Material,
   MARK_TONE,
@@ -21,7 +23,7 @@ const sides: Sides = { dark, light }
 
 const PAPER: Record<Scheme, Rgb> = { dark: [14, 16, 19], light: [251, 252, 253] }
 const SCHEMES: Scheme[] = ['dark', 'light']
-const MATERIALS: Material[] = ['mica', 'acrylic', null]
+const MATERIALS: Material[] = ['mica', 'acrylic', 'clear', null]
 
 function rgb(hex: string): Rgb {
   const found = rgbOf(hex)
@@ -92,7 +94,7 @@ describe("a page's bar", () => {
 })
 
 describe('the frame', () => {
-  test('is mostly the page, over the material', () => {
+  test('is the page over the material, and mostly the page on paper', () => {
     const frame = frameFor(
       { colour: SITES['white Google']!, page: true },
       'dark',
@@ -102,7 +104,10 @@ describe('the frame', () => {
     )
     expect(frame.tint).toBe('#ffffff')
     expect(frame.scheme).toBe('light')
-    expect(frame.wash).toBeGreaterThanOrEqual(PAGE_WASH)
+    expect(frame.wash).toBeGreaterThanOrEqual(frame.floor)
+
+    const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', null, sides, PAPER.dark)
+    expect(paper.wash).toBeGreaterThanOrEqual(PAGE_WASH)
   })
 
   test('keeps every word at AA over every colour the material can be, for every site', () => {
@@ -166,5 +171,87 @@ describe('the frame', () => {
         }
       }
     }
+  })
+})
+
+/** The paper's inks in each scheme, as follow.svelte.ts reads them. */
+const INKS: Record<Scheme, PaperInks> = {
+  dark: {
+    bg: PAPER.dark,
+    text: dark.text,
+    muted: dark.ink,
+    link: linkOf([124, 107, 245], [255, 255, 255]),
+  },
+  light: {
+    bg: PAPER.light,
+    text: light.text,
+    muted: light.ink,
+    link: linkOf([91, 75, 224], [5, 7, 10]),
+  },
+}
+
+describe("glass's own dials", () => {
+  const sources = [
+    ...Object.values(SITES).map((colour) => ({ colour, page: true })),
+    { colour: [124, 107, 245] as Rgb, page: false },
+    { colour: [255, 255, 0] as Rgb, page: false },
+  ]
+
+  test('hold every word at its aim at every end of Opacity and Tint, over every material', () => {
+    for (const source of sources) {
+      for (const app of SCHEMES) {
+        for (const material of MATERIALS) {
+          for (const opacity of [0, 0.5, 1]) {
+            for (const strength of [0, 1]) {
+              const frame = frameFor(
+                source,
+                app,
+                material,
+                sides,
+                PAPER[app],
+                { opacity, strength },
+                INKS[app],
+              )
+              const what = `${source.colour.join(',')}, ${app}, ${String(material)}, ${opacity}, ${strength}`
+              expect(frame.wash, what).toBeGreaterThanOrEqual(frame.floor)
+              if (material) expect(frame.wash, what).toBeGreaterThanOrEqual(opacity)
+              const span = spanUnder(material, app, PAPER[app])
+              const aim = material === 'clear' ? SHARP : AA
+              for (const under of [span.least, span.most]) {
+                const ground = over(rgb(frame.tint), frame.wash, under)
+                expect(ratio(sides[frame.scheme].ink, ground), what).toBeGreaterThanOrEqual(aim)
+                expect(reads(frame.scheme, ground), what).toBe(true)
+
+                // And the note, on the least paper the Content row may lay over that.
+                const paper = over(INKS[app].bg, frame.paper, ground)
+                expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)
+                expect(ratio(INKS[app].muted, paper), what).toBeGreaterThanOrEqual(AA)
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  test('at full Opacity are the frame’s colour alone, and with no Tint the chrome’s', () => {
+    const page = { colour: SITES['Twitter blue']!, page: true }
+    expect(
+      frameFor(page, 'dark', 'mica', sides, PAPER.dark, { opacity: 1, strength: 1 }).wash,
+    ).toBe(1)
+    const plain = frameFor(page, 'dark', 'mica', sides, PAPER.dark, { opacity: 0.5, strength: 0 })
+    const scheme = barFor(SITES['Twitter blue']!, 'dark', sides).scheme
+    expect(rgb(plain.tint)).toEqual(sides[scheme].scrim.map(Math.round))
+  })
+
+  test('start where glass always started: half the colour, all of what is open', () => {
+    expect(DIALS).toEqual({ opacity: 0.5, strength: 1 })
+  })
+
+  test('over the desk with no blur ask more than over Mica, which keeps its brightness', () => {
+    const mark = { colour: [124, 107, 245] as Rgb, page: false }
+    const mica = frameFor(mark, 'dark', 'mica', sides, PAPER.dark, { opacity: 0, strength: 1 })
+    const clear = frameFor(mark, 'dark', 'clear', sides, PAPER.dark, { opacity: 0, strength: 1 })
+    expect(clear.floor).toBeGreaterThan(mica.floor)
   })
 })

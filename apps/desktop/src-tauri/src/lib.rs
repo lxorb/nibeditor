@@ -314,6 +314,7 @@ macro_rules! desktop_commands {
             chatgpt::chatgpt_sign_out,
             appearance::set_frame,
             appearance::set_translucency,
+            ground::remember_material,
             ground::remember_ground,
             apple_notes::read_apple_notes,
             apple_notes::open_full_disk_access,

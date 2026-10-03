@@ -1,4 +1,5 @@
-/** The platform's material behind the window: Mica Alt on Windows 11, Acrylic on 10.
+/** The platform's material behind the window: Mica Alt, Mica, Acrylic or nothing at all,
+ *  as glass's Material row asks, and whatever comes closest where the platform has less.
  *
  *  Worn by the glass theme and nothing else, and fetched only by it. It was a switch of
  *  its own once, and showed next to nothing: it took the window's ground away and every
@@ -17,7 +18,7 @@ import { forget, keep } from './stored'
 import { invoke, isDesktop } from './tauri'
 
 /** What was last asked, so nothing is asked twice. */
-let worn: { on: boolean; dark: boolean } | null = null
+let worn: { on: boolean; dark: boolean; kind: string } | null = null
 /** What the crate last said the window stands on, and whether an answer is due. */
 let standing: string | null = null
 let pending = false
@@ -38,13 +39,19 @@ function remember(): void {
   if (standing) keep(MATERIAL_KEY, standing)
   else forget(MATERIAL_KEY)
   rememberGround()
+  // Which one was asked for, where the crate reads it before the next page has started.
+  if (standing && worn) void invoke('remember_material', { kind: worn.kind }).catch(() => undefined)
 }
 
-/** On or off, in the page's scheme, which is what Mica is tinted by. */
-export function wearMaterial(on: boolean, dark: boolean, kept: boolean): void {
+/** On or off, in the page's scheme, which is what Mica is tinted by, and which material:
+ *  `mica-alt`, `mica`, `acrylic` or `clear`, the desk itself with no blur. The crate
+ *  answers what it put there, which the root says: `mica` for either Mica, since the
+ *  two keep their brightness alike. A kept choice is also written where the crate reads
+ *  it at the next launch, so the first frame stands on the same material. */
+export function wearMaterial(on: boolean, dark: boolean, kept: boolean, kind = 'mica-alt'): void {
   if (!isDesktop) return
 
-  if (worn?.on === on && worn.dark === dark) {
+  if (worn?.on === on && worn.dark === dark && worn.kind === kind) {
     if (pending) {
       keeping ||= kept
       return
@@ -55,7 +62,7 @@ export function wearMaterial(on: boolean, dark: boolean, kept: boolean): void {
     return
   }
 
-  worn = { on, dark }
+  worn = { on, dark, kind }
   keeping = kept
   const asking = ++asked
 
@@ -77,5 +84,7 @@ export function wearMaterial(on: boolean, dark: boolean, kept: boolean): void {
   }
   // Refused where there is nothing to stand on - Linux, the presenter's window - and
   // glass then stands on its own ground, which is a colour.
-  void invoke<string>('set_translucency', { on: true, dark }).then(answered, () => answered(null))
+  void invoke<string>('set_translucency', { on: true, dark, kind }).then(answered, () =>
+    answered(null),
+  )
 }

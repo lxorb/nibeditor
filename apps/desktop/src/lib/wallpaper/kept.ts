@@ -10,13 +10,16 @@
  *  IndexedDB rather than local storage: a launch reads every entry of local storage
  *  before its first answer, and this is the one thing about the wallpaper the first
  *  frame never needs - that is the small blurred picture in held.ts. One database of
- *  its own with one entry, so nothing else's upgrade is ever this one's business.
+ *  its own, with an entry for the picture and one for the dark side's own, so nothing
+ *  else's upgrade is ever this one's business.
  *  Every failure is nothing kept: the wallpaper still shows what held.ts has, and the
  *  dial asks for the picture again the next time it is chosen. */
 
 const NAME = 'nib-wallpaper'
 const STORE = 'picture'
-const KEY = 'source'
+
+/** The picture's copy, and the dark side's own where it has one. */
+export type Copy = 'source' | 'source-dark'
 
 let open: Promise<IDBDatabase> | null = null
 
@@ -45,9 +48,9 @@ async function asked<T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) =
 }
 
 /** Keeps the copy, in place of whatever was kept. Answers whether it was. */
-export async function keepSource(picture: Blob): Promise<boolean> {
+export async function keepSource(picture: Blob, key: Copy = 'source'): Promise<boolean> {
   try {
-    await asked('readwrite', (store) => store.put(picture, KEY))
+    await asked('readwrite', (store) => store.put(picture, key))
     return true
   } catch {
     return false
@@ -55,18 +58,18 @@ export async function keepSource(picture: Blob): Promise<boolean> {
 }
 
 /** The copy, or null where there is none or the store will not answer. */
-export async function keptSource(): Promise<Blob | null> {
+export async function keptSource(key: Copy = 'source'): Promise<Blob | null> {
   try {
-    const found: unknown = await asked('readonly', (store) => store.get(KEY))
+    const found: unknown = await asked('readonly', (store) => store.get(key))
     return found instanceof Blob ? found : null
   } catch {
     return null
   }
 }
 
-export async function forgetSource(): Promise<void> {
+export async function forgetSource(key: Copy = 'source'): Promise<void> {
   try {
-    await asked('readwrite', (store) => store.delete(KEY))
+    await asked('readwrite', (store) => store.delete(key))
   } catch {
     // Nothing kept is what was asked for.
   }

@@ -6,8 +6,9 @@
 
 import type { Rgb, Span } from '../legibility'
 
-/** The longest side a blurred picture is ever kept at. Past this a picture under
- *  the least blur the dial offers has more detail than the blur leaves in it. */
+/** The longest side a blurred picture is ever kept at. Past this a picture under a
+ *  light blur has more detail than a few kilobytes can hold; under it, the window wears
+ *  a sharp copy as well (see `sharpBelow`). */
 export const LARGEST = 480
 /** And the least: a picture under the most blur on a small screen is a few colour
  *  fields, and below this the fields themselves start to show their edges. */
@@ -23,6 +24,46 @@ const SMALLEST = 64
 export function sideFor(blur: number, screen: number): number {
   const wanted = Math.round((2 * screen) / Math.max(1, blur))
   return Math.min(LARGEST, Math.max(SMALLEST, wanted))
+}
+
+/** The blur under which the kept picture is too small to hold what is left to see, and
+ *  the window lays a copy at the screen's own size over it: where `sideFor` would want
+ *  more than `LARGEST` pixels. */
+export function sharpBelow(screen: number): number {
+  return (2 * screen) / LARGEST
+}
+
+/** What is baked into a picture besides its blur: a saturation (1 is as it is, 0 grey)
+ *  and a tint, an alpha of one colour laid over it. */
+export interface Toning {
+  saturation: number
+  tint: number
+  colour: Rgb
+}
+
+/** The weights CSS's own `saturate()` greys with, so a picture toned here matches what
+ *  the same number would do anywhere else on the page. */
+const GREY = [0.213, 0.715, 0.072] as const
+
+/** The picture with its tone baked in, in place. Saturation first and then the tint, so
+ *  a grey picture tinted is the tint's colour and not a grey one. */
+export function toned(pixels: Uint8ClampedArray, toning: Toning): void {
+  const { saturation, tint, colour } = toning
+  if (saturation === 1 && tint <= 0) return
+
+  // Written out rather than looped over the channels: this runs over every pixel of a
+  // copy the size of the screen.
+  const [tr, tg, tb] = colour
+  const keep = 1 - tint
+  for (let at = 0; at < pixels.length; at += 4) {
+    const r = pixels[at] ?? 0
+    const g = pixels[at + 1] ?? 0
+    const b = pixels[at + 2] ?? 0
+    const grey = GREY[0] * r + GREY[1] * g + GREY[2] * b
+    pixels[at] = (grey + (r - grey) * saturation) * keep + tr * tint
+    pixels[at + 1] = (grey + (g - grey) * saturation) * keep + tg * tint
+    pixels[at + 2] = (grey + (b - grey) * saturation) * keep + tb * tint
+  }
 }
 
 /** The size a picture of `width` by `height` is drawn at so that its longest side is

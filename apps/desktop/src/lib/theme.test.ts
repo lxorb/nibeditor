@@ -127,10 +127,17 @@ const folder = vi.hoisted(() => ({
 interface Host {
   platform: string
   material: string | null
-  asked: { on: boolean; dark: boolean; said?: string | undefined }[]
+  asked: { on: boolean; dark: boolean; said?: string | undefined; kind?: unknown }[]
+  /** What the crate was told to keep for the next launch. */
+  remembered: string[]
 }
 
-const host = vi.hoisted((): Host => ({ platform: 'windows', material: 'mica', asked: [] }))
+const host = vi.hoisted((): Host => ({
+  platform: 'windows',
+  material: 'mica',
+  asked: [],
+  remembered: [],
+}))
 
 vi.mock('./tauri', () => ({
   isDesktop: true,
@@ -139,9 +146,19 @@ vi.mock('./tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'set_translucency') {
       // With what the page was saying as it asked, which is the order that matters.
-      host.asked.push({ on: args.on === true, dark: args.dark === true, said: dataset.translucent })
+      host.asked.push({
+        on: args.on === true,
+        dark: args.dark === true,
+        said: dataset.translucent,
+        ...(args.kind === undefined ? {} : { kind: args.kind }),
+      })
       if (args.on !== true) return Promise.resolve('')
       return host.material ? Promise.resolve(host.material) : Promise.reject(new Error('none'))
+    }
+
+    if (command === 'remember_material') {
+      host.remembered.push(String(args.kind))
+      return Promise.resolve()
     }
 
     if (command === 'list_themes') {
@@ -190,6 +207,7 @@ beforeEach(() => {
   host.platform = 'windows'
   host.material = 'mica'
   host.asked = []
+  host.remembered = []
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
@@ -855,9 +873,33 @@ describe('the glass theme', () => {
     await settled(() => dataset.translucent !== undefined)
 
     // The material first, and the page says so only once the crate has answered.
-    expect(host.asked.at(-1)).toEqual({ on: true, dark: true, said: undefined })
+    expect(host.asked.at(-1)).toEqual({ on: true, dark: true, said: undefined, kind: 'mica-alt' })
     expect(dataset.translucent).toBe('mica')
     expect(kept.getItem('nib:material')).toBe('mica')
+  })
+
+  test('asks for the material its row says, and keeps it for the next launch', async () => {
+    theme.init()
+    theme.setScheme('dark')
+    theme.select('glass')
+    await settled(() => theme.settings.some((one) => one.id === 'material'))
+    await settled(() => dataset.translucent !== undefined)
+
+    theme.set('material', 'clear')
+    await settled(() => host.asked.at(-1)?.kind === 'clear')
+    await settled(() => host.remembered.includes('clear'))
+    expect(theme.keptFor('glass', 'material')).toBe('clear')
+  })
+
+  test('shows its own dials in a card of its own, the opacity with a floor', async () => {
+    theme.init()
+    theme.select('glass')
+    await settled(() => theme.settings.some((one) => one.id === 'opacity'))
+
+    const own = theme.settings.filter((one) => one.own === true).map((one) => one.id)
+    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'colour', 'tab', 'content'])
+    const opacity = theme.settings.find((one) => one.id === 'opacity')
+    expect(opacity?.kind === 'range' && typeof opacity.least).toBe('function')
   })
 
   test('and asks again in the other scheme, which is what Mica is tinted by', async () => {
@@ -952,7 +994,38 @@ describe('the glass theme', () => {
   })
 })
 
+describe('a dial being dragged', () => {
+  test('is shown and kept nowhere, and letting go keeps it', async () => {
+    theme.init()
+    theme.select('wallpaper')
+    await settled(() => theme.settings.some((one) => one.id === 'dim'))
+    const before = kept.getItem('nib:theme-settings')
+
+    theme.try('dim', 55)
+    expect(painted['--nib-dim']).toBe('55%')
+    expect(theme.values.dim).toBe(55)
+    expect(theme.previewing).toBe(true)
+    expect(kept.getItem('nib:theme-settings')).toBe(before)
+
+    theme.set('dim', 55)
+    expect(theme.previewing).toBe(false)
+    expect(theme.keptFor('wallpaper', 'dim')).toBe(55)
+  })
+})
+
 describe('the wallpaper theme', () => {
+  /** Its dials, in the order Appearance draws them. */
+  const DIALS = [
+    'blur',
+    'dim',
+    'saturation',
+    'tint',
+    'tint-colour',
+    'grain',
+    'fit',
+    'empty',
+    'content',
+  ]
   /** What a chosen picture leaves written down; see wallpaper/held.ts. */
   const HELD = {
     picture: 'data:image/png;base64,iVBORw0KGgo=',
@@ -975,16 +1048,17 @@ describe('the wallpaper theme', () => {
     }
   })
 
-  test('is fetched rather than carried, and with nothing chosen is its sheet alone', async () => {
+  test('is fetched rather than carried, and with nothing chosen is its sheet and dials', async () => {
     const found = theme.all.find((one) => one.id === 'wallpaper')
     expect(found?.path).toBeUndefined()
     expect(typeof found?.load).toBe('function')
 
     theme.init()
     theme.select('wallpaper')
-    await settled(() => injected() === wallpaperCss)
+    await settled(() => injected().startsWith(wallpaperCss))
 
-    expect(injected()).toBe(wallpaperCss)
+    expect(injected()).not.toContain('--wallpaper-picture:')
+    expect(injected()).toContain('--nib-dim: 10%;')
     // The reader's accent stays theirs: the field without a picture is made of it.
     expect(wallpaperCss).not.toMatch(/--accent\s*:/)
     expect(theme.accentIsTheme).toBe(false)
@@ -1020,8 +1094,6 @@ describe('the wallpaper theme', () => {
   })
 
   test('wears a new picture when it is read again, and keeps its dials meanwhile', async () => {
-    resolves['--nib-setting-blur'] = 'range Blur 12 60 28 px'
-    resolves['--nib-setting-dim'] = 'range Dim 0 90 10 %'
     theme.init()
     theme.select('wallpaper')
     await settled(() => theme.settings.some((one) => one.id === 'dim'))
@@ -1031,7 +1103,7 @@ describe('the wallpaper theme', () => {
     // The Blur row is under the reader's pointer while this happens.
     expect(theme.settings.some((one) => one.id === 'blur')).toBe(true)
     await settled(() => injected().includes('--wallpaper-picture:'))
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'blur', 'dim'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
   })
 
   test('is shown by the picker as it would be, and pointing away keeps nothing', async () => {
@@ -1045,14 +1117,13 @@ describe('the wallpaper theme', () => {
     expect(kept.getItem('nib:theme')).not.toBe('wallpaper')
   })
 
-  test('declares its two dials, which Appearance draws under the Style row', async () => {
-    resolves['--nib-setting-blur'] = 'range Blur 12 60 28 px'
-    resolves['--nib-setting-dim'] = 'range Dim 0 90 10 %'
+  test('says its dials in code, which Appearance draws in a card of its own', async () => {
     theme.init()
     theme.select('wallpaper')
     await settled(() => theme.settings.some((one) => one.id === 'dim'))
 
-    expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'blur', 'dim'])
+    expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
+    expect(theme.settings.filter((one) => one.own === true).map((one) => one.id)).toEqual(DIALS)
     theme.set('dim', 35)
     expect(painted['--nib-dim']).toBe('35%')
     expect(theme.keptFor('wallpaper', 'dim')).toBe(35)

@@ -332,6 +332,19 @@ def choose(page: Page, theme: str) -> None:
     page.wait_for_timeout(300)
 
 
+def stand(page: Page, desk: str, material: str | None) -> None:
+    """The desk and the material, and the paper as it always was over them, which is
+    what this drive measures; how far the material reaches the note is
+    theme-options.py's."""
+    page.evaluate(STAND_ON, [desk, material])
+    page.wait_for_timeout(300)
+    page.evaluate(
+        "() => window.nibApp.theme.settings.some((one) => one.id === 'content')"
+        " && window.nibApp.theme.set('content', 'opaque')"
+    )
+    page.wait_for_timeout(100)
+
+
 def read_over(page: Page, where: str, unders: list[str]) -> None:
     for under in unders:
         for what, ratio in page.evaluate(MEASURE, [READINGS, under]):
@@ -369,21 +382,18 @@ def drive(browser: Browser, scheme: str) -> None:
 
     for material, desks in DESKS.items():
         side = desks[scheme]
-        page.evaluate(STAND_ON, [side["paint"], material])
-        page.wait_for_timeout(300)
+        stand(page, side["paint"], material)
         read_over(page, f"{scheme} on {material}", side["under"])
         shot(page, f"{scheme}-glass-{material}")
 
     # The busiest desk there is, on the material that shows it: what somebody on
     # Windows 10 or a Mac with a photograph behind the window sees.
-    page.evaluate(STAND_ON, [DESKS["acrylic"]["busy"], "acrylic"])
-    page.wait_for_timeout(300)
+    stand(page, DESKS["acrylic"]["busy"], "acrylic")
     shot(page, f"{scheme}-glass-busy")
 
     # The paper: opaque under the note, and the tab that is open is that same paper
     # running up into the bar.
-    page.evaluate(STAND_ON, [DESKS["mica"][scheme]["paint"], "mica"])
-    page.wait_for_timeout(300)
+    stand(page, DESKS["mica"][scheme]["paint"], "mica")
     shows(
         f"[{scheme}] the note stands on paper of its own",
         page.evaluate("() => getComputedStyle(document.querySelector('.pane')).backgroundColor"),

@@ -1,7 +1,8 @@
 import glass from './glass.css?raw'
 
-/** The glass theme, as text: a palette that is mostly a wash, three settings of its
- *  own, and the handful of rules that give what floats its blur. The app injects it
+/** The glass theme, as text: a palette that is mostly a wash over the platform's
+ *  material, and the rules that let the paper under a note be seen through. Its dials
+ *  are said in code, in glass/settings.ts in the app. The app injects it
  *  the way it injects a theme read from a file, so a built-in theme and an installed
  *  one are applied by one road. See glass.css, and theme.svelte.ts.
  *

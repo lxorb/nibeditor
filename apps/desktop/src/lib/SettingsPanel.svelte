@@ -44,7 +44,7 @@
   import { theme } from './theme.svelte'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
-  import { type Field, preferences, resetPane, resettable } from './preferences'
+  import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
   import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
@@ -187,9 +187,58 @@
     }
   }
 
-  /** Where a slider's thumb sits, for the filled part of its track. */
-  const fraction = (field: Extract<Field, { kind: 'slider' }>) =>
-    ((field.get() - field.min) / (field.max - field.min)) * 100
+  /** Where a value sits along a slider's track, for the filled part and the floor. */
+  const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
+    ((value - field.min) / (field.max - field.min)) * 100
+
+  /** A dial moved: shown while it is held, kept when it is let go of, and never below
+   *  the floor its theme says - the knob stops there, on the greyed part's edge. */
+  function dialled(
+    field: Extract<Field, { kind: 'slider' }>,
+    input: HTMLInputElement,
+    kept: boolean,
+  ) {
+    const least = field.least?.() ?? field.min
+    let value = Number(input.value)
+    if (value < least) {
+      value = least
+      input.value = String(least)
+    }
+    if (kept || !field.preview) field.set(value)
+    else field.preview(value)
+  }
+
+  /** A picture's thumbnail under a press: a drag moves its focal point, a click chooses
+   *  another, the way a phone's lock screen is pressed to change and dragged to place. */
+  function placing(side: PictureSide, press: PointerEvent) {
+    const thumb = press.currentTarget
+    if (!(thumb instanceof HTMLElement) || press.button !== 0) return
+    const start = { x: press.clientX, y: press.clientY }
+    let dragged = false
+    thumb.setPointerCapture(press.pointerId)
+
+    const at = (event: PointerEvent): [number, number] => {
+      const box = thumb.getBoundingClientRect()
+      return [(event.clientX - box.left) / box.width, (event.clientY - box.top) / box.height]
+    }
+    const move = (event: PointerEvent) => {
+      if (!dragged && Math.hypot(event.clientX - start.x, event.clientY - start.y) < 4) return
+      if (!side.picture()) return
+      dragged = true
+      side.place(...at(event), false)
+    }
+    const up = (event: PointerEvent) => {
+      thumb.removeEventListener('pointermove', move)
+      thumb.removeEventListener('pointerup', up)
+      thumb.removeEventListener('pointercancel', up)
+      if (event.type === 'pointercancel') return
+      if (dragged) side.place(...at(event), true)
+      else side.choose()
+    }
+    thumb.addEventListener('pointermove', move)
+    thumb.addEventListener('pointerup', up)
+    thumb.addEventListener('pointercancel', up)
+  }
 
   // ── Shortcuts ───────────────────────────────────────────────────
 
@@ -547,20 +596,28 @@
       <span class="nib-switch" class:on={held} aria-hidden="true"></span>
     </div>
   {:else if field.kind === 'slider'}
-    {@const held = field.get()}
+    {@const least = field.least?.() ?? field.min}
+    {@const held = Math.max(field.get(), least)}
     <div class="nib-setting setting sliding">
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
+      <!-- Below its floor the track is grey and the knob stops at the edge of it: the
+           words on the frame would stop reading there, and a dial that quietly did
+           nothing past a point would be a dial that lies. -->
       <input
         class="slider nib-slider"
+        class:floored={least > field.min}
         type="range"
         min={field.min}
         max={field.max}
         step={field.step}
         value={held}
         aria-label={field.label}
-        style:--fill="{fraction(field)}%"
-        oninput={(event) => field.set(Number(event.currentTarget.value))}
+        aria-valuemin={least}
+        style:--fill="{fraction(field, held)}%"
+        style:--least="{fraction(field, least)}%"
+        oninput={(event) => dialled(field, event.currentTarget, false)}
+        onchange={(event) => dialled(field, event.currentTarget, true)}
       />
     </div>
   {:else if field.kind === 'segmented'}
@@ -600,31 +657,47 @@
       />
     </div>
   {:else if field.kind === 'picture'}
-    <!-- A picture, shown as itself: pressing it chooses another, the way a phone's
-         wallpaper is changed by pressing the wallpaper. The cross puts the theme's own
-         field back, and is there only while there is a picture to take away. -->
-    {@const held = field.get()}
+    <!-- A picture per side, shown as itself: pressing one chooses another, the way a
+         phone's wallpaper is changed by pressing the wallpaper, and dragging on it moves
+         the point the window keeps in view. The side the app is in wears the ring; the
+         other shows what it would wear, which is the first picture until it is given one
+         of its own. The cross takes a side's own picture away. -->
     <div class="nib-setting setting">
       {@render named(field, where)}
-      <span class="picture">
-        {#if held}
-          <button
-            type="button"
-            class="nib-glyph"
-            title={t('Remove picture')}
-            aria-label={t('Remove picture')}
-            onclick={() => field.set('')}><Cross /></button
-          >
-        {/if}
-        <button
-          type="button"
-          class="thumb"
-          class:field={!held}
-          style:background-image={held ? `url("${held}")` : undefined}
-          title={t('Choose a picture')}
-          aria-label={t('Choose a picture')}
-          onclick={() => field.choose()}
-        ></button>
+      <span class="pictures">
+        {#each field.sides as side (side.label)}
+          {@const held = side.picture()}
+          {@const [x, y] = side.focus()}
+          <span class="picture" class:current={side.current}>
+            <button
+              type="button"
+              class="thumb"
+              class:field={!held}
+              style:background-image={held ? `url("${held}")` : undefined}
+              style:background-position="{x * 100}% {y * 100}%"
+              title={side.label}
+              aria-label="{t('Choose a picture')}: {side.label}"
+              onpointerdown={(event) => placing(side, event)}
+              onkeydown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                side.choose()
+              }}
+            >
+              {#if held}<span class="focus" style:left="{x * 100}%" style:top="{y * 100}%"
+                ></span>{/if}
+            </button>
+            {#if side.own()}
+              <button
+                type="button"
+                class="nib-glyph drop"
+                title={t('Remove picture')}
+                aria-label="{t('Remove picture')}: {side.label}"
+                onclick={() => side.remove()}><Cross /></button
+              >
+            {/if}
+          </span>
+        {/each}
       </span>
     </div>
   {:else if field.kind === 'text'}
@@ -1975,15 +2048,31 @@
     justify-content: flex-start;
   }
 
-  /* The wallpaper's picture: the shape of a window, the size of a row's control,
-     lifted under the pointer and pressed back down like a card. */
-  .picture {
+  /* The part of a dial's track its floor keeps it off: grey rather than the accent, so
+     the knob resting at its edge says why it will not go further. */
+  .slider.floored::-webkit-slider-runnable-track {
+    background:
+      linear-gradient(var(--line-strong), var(--line-strong)) var(--dir-start) / var(--least) 100%
+        no-repeat,
+      linear-gradient(var(--accent), var(--accent)) var(--dir-start) / var(--fill) 100% no-repeat,
+      var(--surface-3);
+  }
+
+  /* The wallpaper's pictures: each the shape of a window and the size of a row's
+     control, lifted under the pointer and pressed back down like a card. */
+  .pictures {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
+  }
+
+  .picture {
+    position: relative;
+    display: flex;
   }
 
   .thumb {
+    position: relative;
     flex: none;
     width: 64px;
     aspect-ratio: 16 / 10;
@@ -1993,14 +2082,60 @@
     background: var(--surface-2) center / cover no-repeat;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
     cursor: default;
+    touch-action: none;
     transition:
       translate var(--dur-fast) var(--ease-out),
-      scale var(--dur-fast) var(--ease-out);
+      scale var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  /* The side the app is in: the ring a chosen swatch wears. */
+  .current .thumb {
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
   }
 
   /* No picture yet: the field the theme wears without one. */
   .thumb.field {
     background-image: var(--wallpaper-field);
+  }
+
+  /* The focal point, a ring the picture shows through. */
+  .focus {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 1.5px #fff,
+      0 0 0 2.5px rgb(0 0 0 / 0.35);
+    pointer-events: none;
+  }
+
+  /* A side's own picture is taken away from its corner, there under the pointer. */
+  .drop {
+    position: absolute;
+    top: -8px;
+    inset-inline-end: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .picture:hover .drop,
+  .drop:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .drop {
+      opacity: 1;
+    }
   }
 
   @media (hover: hover) {

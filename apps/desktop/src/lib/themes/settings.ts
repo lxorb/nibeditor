@@ -11,7 +11,12 @@
  *
  *  `--nib-setting-blur` is answered as `--nib-blur`, written onto the root element, so
  *  it outranks the sheet it came from; the sheet states its own default beside the
- *  declaration, so a theme looks as its author drew it before any dial is touched. */
+ *  declaration, so a theme looks as its author drew it before any dial is touched.
+ *
+ *  A theme the app ships with may say its settings in code instead, behind the same
+ *  door its sheet is behind (`own` in theme.svelte.ts): glass and wallpaper offer more
+ *  than a file may, and some of it - a dial's floor, a row that is there only while
+ *  another says so - is not something a stylesheet can declare. */
 
 import type { Scheme } from '../theme.svelte'
 
@@ -34,6 +39,16 @@ interface Common {
   /** The app's own rather than a theme's: inherited by every theme that does not
    *  paint over it, and filed under the app, so it follows the reader across themes. */
   shared?: boolean
+  /** A built-in theme's own, drawn in a card of the theme's name rather than among the
+   *  rows that chose it; see `own` in theme.svelte.ts. */
+  own?: boolean
+  /** Whether the row is there right now: a fixed colour only while the frame is not
+   *  following the page. Read where the row is drawn, never where the settings are
+   *  listed, so it may read the values without the list depending on itself. */
+  when?: () => boolean
+  /** Whether a new value has to be worn again rather than painted: what the platform
+   *  puts behind the window is not a custom property. */
+  reapplies?: boolean
   /** Every custom property a value writes: the accent is six tokens, not one. */
   paint(value: ThemeValue, scheme: Scheme): Record<string, string>
 }
@@ -41,8 +56,23 @@ interface Common {
 export type ThemeSetting = Common &
   (
     | { kind: 'colour'; options: Swatch[]; initial: string }
-    | { kind: 'choice'; options: { value: string; label: string }[]; initial: string }
-    | { kind: 'range'; min: number; max: number; step: number; unit: string; initial: number }
+    | {
+        kind: 'choice'
+        options: { value: string; label: string; disabled?: boolean }[]
+        initial: string
+      }
+    | {
+        kind: 'range'
+        min: number
+        max: number
+        step: number
+        unit: string
+        initial: number
+        /** The least the dial may be turned to right now, where words would stop
+         *  reading under it: the part of the track below is greyed and the knob stops
+         *  there. What is kept is what was asked; what is worn is never below this. */
+        least?: () => number
+      }
     | { kind: 'switch'; initial: boolean }
   )
 

@@ -1,17 +1,26 @@
-/** The wallpaper as last written down: the small blurred picture and its two sides,
- *  read and checked. The picture goes into the theme's sheet (sheet.ts), so the sheet
- *  a launch wears early is already the picture; choosing and blurring are
- *  wallpaper.svelte.ts. */
+/** The wallpaper as last written down: each side's small blurred picture and what it
+ *  holds, read and checked. The pictures go into the theme's sheet (sheet.ts), so the
+ *  sheet a launch wears early is already the pictures; choosing and blurring are
+ *  wallpaper.svelte.ts.
+ *
+ *  One picture serves both sides until the dark side is given one of its own, the way
+ *  a Mac's dynamic desktop has a light and a dark picture: `WALLPAPER_KEY` is the
+ *  picture, and `DARK_KEY` the dark side's own where there is one. */
 
+import type { Rgb, Span } from '../legibility'
 import { isNumber, isRecord, isString, parsed, storedText } from '../stored'
 
-/** The theme's id, which is also the drawer its two dials are kept in. */
+/** The theme's id, which is also the drawer its dials are kept in. */
 export const WALLPAPER_THEME = 'wallpaper'
 export const WALLPAPER_KEY = 'nib:wallpaper'
+export const DARK_KEY = 'nib:wallpaper-dark'
 
-/** One side: the least scrim under which the chrome reads (floors.ts), and the colour
- *  the window comes to under it, for the frame before any script. */
-export interface Side {
+export type Scheme = 'dark' | 'light'
+
+/** One side, as an older build wrote it: the scrim the chrome needed over the picture
+ *  and the colour the window came to under it. Read for a picture made before the
+ *  picture's own colours were kept, until it is made again. */
+interface Side {
   floor: number
   ground: string
 }
@@ -19,10 +28,22 @@ export interface Side {
 export interface Held {
   /** The blurred picture as a `data:` address. */
   picture: string
-  /** The blur it was made at. */
+  /** The blur it was made at, and the tone - saturation and tint - baked into it. */
   blur: number
-  dark: Side
-  light: Side
+  tone?: string
+  /** The colours in what the window shows (pixels.ts), so a floor can be worked out
+   *  again for a grain or a side without touching a pixel. Absent in an older record. */
+  span?: Span
+  /** The picture's average colour, what a fitted picture is framed in. */
+  mean?: string
+  /** The picture's own size in CSS pixels, for Tile and Centre. */
+  size?: [number, number]
+  /** Its focal point, as two fractions: what Fill keeps in view as the window's shape
+   *  changes, and where Centre and Fit put it. */
+  focus: [number, number]
+  /** Each side as an older build wrote it; a picture made now keeps its span instead. */
+  dark?: Side
+  light?: Side
 }
 
 /** Only base64 raster: the address goes into a stylesheet. */
@@ -35,9 +56,30 @@ function sideOf(said: unknown): Side | null {
   return { floor: said.floor, ground: said.ground }
 }
 
-/** The entry as last read: a theme is applied on every scheme change and every card
- *  pointed at, and the picture is tens of kilobytes to parse. */
-let read: { text: string | null; held: Held | null } | null = null
+function rgb(said: unknown): Rgb | null {
+  if (!Array.isArray(said) || said.length !== 3) return null
+  return said.every((one) => isNumber(one) && one >= 0 && one <= 255)
+    ? (said as unknown as Rgb)
+    : null
+}
+
+function spanOf(said: unknown): Span | undefined {
+  if (!isRecord(said)) return undefined
+  const least = rgb(said.least)
+  const most = rgb(said.most)
+  return least && most ? { least, most } : undefined
+}
+
+function pairOf(said: unknown, low: number, high: number): [number, number] | null {
+  if (!Array.isArray(said) || said.length !== 2) return null
+  const [x, y] = said as unknown[]
+  if (!isNumber(x) || !isNumber(y)) return null
+  return [Math.min(high, Math.max(low, x)), Math.min(high, Math.max(low, y))]
+}
+
+/** Each entry as last read: a theme is applied on every scheme change and every card
+ *  pointed at, and a picture is tens of kilobytes to parse. */
+const read = new Map<string, { text: string | null; held: Held | null }>()
 
 function heldIn(text: string | null): Held | null {
   const said = parsed(text)
@@ -46,25 +88,42 @@ function heldIn(text: string | null): Held | null {
 
   const dark = sideOf(said.dark)
   const light = sideOf(said.light)
-  return dark && light ? { picture: said.picture, blur: said.blur, dark, light } : null
+  const span = spanOf(said.span)
+  if (!span && (!dark || !light)) return null
+
+  const size = pairOf(said.size, 1, 1 << 15)
+  return {
+    picture: said.picture,
+    blur: said.blur,
+    ...(isString(said.tone) ? { tone: said.tone } : {}),
+    ...(span ? { span } : {}),
+    ...(isString(said.mean) && COLOUR.test(said.mean) ? { mean: said.mean } : {}),
+    ...(size ? { size } : {}),
+    focus: pairOf(said.focus, 0, 1) ?? [0.5, 0.5],
+    ...(dark && light ? { dark, light } : {}),
+  }
 }
 
-/** What was written down, or null for nothing or anything not quite this. */
+function heldAt(key: string): Held | null {
+  const text = storedText(key)
+  const last = read.get(key)
+  if (last?.text === text) return last.held
+  const held = heldIn(text)
+  read.set(key, { text, held })
+  return held
+}
+
+/** The picture, or null for nothing or anything not quite this. */
 export function heldWallpaper(): Held | null {
-  const text = storedText(WALLPAPER_KEY)
-  if (read?.text !== text) read = { text, held: heldIn(text) }
-  return read.held
+  return heldAt(WALLPAPER_KEY)
 }
 
-/** The picture and its two sides as a rule, said after the theme's own so the
- *  sheet's defaults give way to it; see wallpaper.css. */
-export function pictureRule(held: Held): string {
-  const lines = [
-    `--wallpaper-picture: url("${held.picture}");`,
-    ...(['dark', 'light'] as const).flatMap((side) => [
-      `--wallpaper-floor-${side}: ${Math.round(held[side].floor * 100)}%;`,
-      `--wallpaper-ground-${side}: ${held[side].ground};`,
-    ]),
-  ]
-  return `:root {\n${lines.map((line) => `  ${line}\n`).join('')}}\n`
+/** The dark side's own picture, or null where it wears the other. */
+export function heldDark(): Held | null {
+  return heldAt(DARK_KEY)
+}
+
+/** What a side wears: its own picture, else the one picture. */
+export function heldFor(scheme: Scheme): Held | null {
+  return (scheme === 'dark' ? heldDark() : null) ?? heldWallpaper()
 }

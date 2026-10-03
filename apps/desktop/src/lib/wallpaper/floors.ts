@@ -10,7 +10,7 @@
  *  Pure; the colours come in, so the page and the tests answer the same question.
  *  See floors.test.ts. */
 
-import { type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../legibility'
+import { AA, type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../legibility'
 
 /** One side of the theme, as the colours the floor depends on. */
 export interface Palette {
@@ -51,6 +51,11 @@ function tokenIn(block: string, name: string): string {
   return new RegExp(String.raw`${name}\s*:\s*([^;]+);`).exec(block)?.[1]?.trim() ?? ''
 }
 
+/** One colour a side of a sheet states, or null. */
+export function sheetColour(css: string, scheme: 'dark' | 'light', name: string): Rgb | null {
+  return rgbOf(tokenIn(blockOf(css, scheme), name))
+}
+
 /** Which of a sheet's tokens are the scrim and the layer: wallpaper's own, or glass's,
  *  whose chrome colour is the scrim its tint is laid over the material as. */
 export interface Names {
@@ -79,9 +84,10 @@ export function paletteOf(
   return { ink, text, scrim, layer: { colour: layer, alpha } }
 }
 
-/** The floor for one side over a picture whose colours lie in `span`. */
-export function floorFor(palette: Palette, span: Span): number {
+/** The floor for one side over a picture whose colours lie in `span`, for the quietest
+ *  word to clear `aim`: AA, or more over a sharp picture (see `aimFor` in look.ts). */
+export function floorFor(palette: Palette, span: Span, aim = AA): number {
   return Math.max(
-    ...stacks(palette).map((lifts) => scrimFloor(palette.ink, palette.scrim, span, lifts)),
+    ...stacks(palette).map((lifts) => scrimFloor(palette.ink, palette.scrim, span, lifts, aim)),
   )
 }
