@@ -47,7 +47,7 @@ export const ROWS: readonly Row[] = [
   row('conversation', 'archive', [], key('Archive the thread')),
   row('conversation', 'delete', [], key('Delete the thread')),
   row('conversation', 'stop', [], key('Stop everything it runs')),
-  row('conversation', 'tasks', ['ps', 'bashes'], key('Background work')),
+  row('conversation', 'jobs', ['ps', 'bashes'], key('Background work')),
   row('conversation', 'focus', [], key('Fold tools and thinking')),
   row('conversation', 'help', [], key('Commands and keys')),
 
@@ -94,6 +94,8 @@ export const ROWS: readonly Row[] = [
   row('words', 'diff', ['changes'], key('What it changed')),
 
   // 3.6 Account and app
+  row('app', 'tasks', [], key('To-dos'), '[filter|words]'),
+  row('app', 'today', ['plan-day'], key('Plan my day'), '[wishes]'),
   row('app', 'status', [], key('Status')),
   row('app', 'usage', ['cost', 'stats', 'rate-limit-options'], key('Usage')),
   row('app', 'login', [], key('Sign in')),

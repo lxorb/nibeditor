@@ -130,6 +130,7 @@ const NOTICES: readonly NoticeCode[] = [
   'stopped',
   'no_tools',
   'command',
+  'tasks',
 ]
 const STATES: readonly ToolState[] = ['running', 'ok', 'error', 'asking']
 

@@ -29,6 +29,7 @@
   import { chat } from './chat.svelte'
   import type { Source } from './citations'
   import PartRow from './PartRow.svelte'
+  import TaskRows from './TaskRows.svelte'
 
   const {
     turn,
@@ -186,6 +187,8 @@
         return t('Without tools')
       case 'command':
         return part.text
+      case 'tasks':
+        return ''
     }
   }
 
@@ -199,6 +202,8 @@
   {#each blocks as block (block.at)}
     {#if block.kind === 'words'}
       <Answer html={drawn(block.text)} onfollow={follow} />
+    {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
+      <TaskRows said={block.notice.text} />
     {:else if block.kind === 'notice'}
       <p
         class="notice"
