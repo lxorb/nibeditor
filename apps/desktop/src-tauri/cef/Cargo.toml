@@ -54,6 +54,8 @@ needless_pass_by_value = "allow"
 # The library is the app's, whose Rust is older than this build's: `Duration::from_hours`
 # and `from_mins` are newer than the app's `rust-version`, so the app writes seconds.
 duration_suboptimal_units = "allow"
+# Rust 1.99's `assert_is_empty`, allowed for the app's reason; see ../Cargo.toml.
+assert_is_empty = "allow"
 
 # **The pins**, and the only ones: every Tauri crate the engine build takes, and CEF.
 # Published crates, all of one release of Tauri 3 - `tauri` and the runtime on their

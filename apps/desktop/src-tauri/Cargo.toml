@@ -49,6 +49,10 @@ pedantic = { level = "warn", priority = -1 }
 # A command's arguments arrive deserialised and owned; that is the signature Tauri
 # generates against, and taking them by reference is not an option.
 needless_pass_by_value = "allow"
+# Rust 1.99's: an `assert!(x.is_empty())` written as `assert_eq!` with a typed empty
+# array. The tests read as the sentence they are, and the answer on a failure is one
+# `dbg!` away; nearly two hundred of them turned red the day the runners' stable moved.
+assert_is_empty = "allow"
 
 [features]
 # Which engine the app's webviews run on. Off, and off in everything that ships:
