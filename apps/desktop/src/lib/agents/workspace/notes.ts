@@ -33,7 +33,10 @@ import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } 
  *  `get_context` lists: one with a file is that file, as though its path were said, and
  *  one in no space - a note with no file yet (workspace/drafts.ts), the scratchpad - is
  *  reached by the tab alone. */
-function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {
+export function noteOf(
+  call: Call,
+  writing: boolean,
+): { place: Place; relative: string; tab?: string } {
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
     if (named.relative !== null) {
@@ -68,7 +71,7 @@ function spaceOfTab(tab: Tab): string {
   return space
 }
 
-function at({ place, relative, tab }: { place: Place; relative: string; tab?: string }) {
+export function at({ place, relative, tab }: { place: Place; relative: string; tab?: string }) {
   return { path: relative, space: place.space.id, ...(tab === undefined ? {} : { tab }) }
 }
 

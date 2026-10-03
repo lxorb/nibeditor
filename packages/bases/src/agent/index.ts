@@ -3,6 +3,7 @@
  *  here, and only reading and writing the notes is each server's own
  *  (docs/tasks.md 5.15). Its own entry, `@nib/bases/agent`. */
 
+export { readBase, writeBase } from '../base-file'
 export { editedBase, noteName, rowPlace, withProperties } from './bases'
 export { editedTask, type Edited, movedTask, taskIn } from './edit'
 export {

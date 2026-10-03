@@ -456,7 +456,9 @@ mod tests {
     /// JSON a client is sent: printed for the record, held under a ceiling so a
     /// description cannot grow without anybody deciding it should. Raised from 24 000
     /// to 28 000 on 2026-10-03 for every kind of tab (Emil: the agent reaches every tab,
-    /// terminals among them): three tools and the tab verbs' new arguments.
+    /// terminals among them): three tools and the tab verbs' new arguments. Raised to
+    /// 31 000 on 2026-10-04 for the to-dos and bases (Emil: "my agent in here can
+    /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -465,7 +467,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 28_000,
+            total < 31_000,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {
