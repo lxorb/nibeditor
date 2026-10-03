@@ -277,9 +277,8 @@ else, so every surface painted over it and what showed of the desk was the width
 hairline - Obsidian's "Translucent window" has the same forum thread about it. Windows 11
 apps and a Mac's Finder and Notes have no such switch either: the material is part of
 the app's look, and the system's own Transparency effects or Reduce transparency turns
-it off everywhere. So the glass theme is the translucent one, and it is offered where
-there is a material to stand on, which is Windows; a reader who had the row on under
-the built-in theme is given glass once.
+it off everywhere. So the glass theme is the translucent one; a reader who had the row on
+under the built-in theme is given glass once.
 
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the
@@ -294,6 +293,38 @@ fixed so the words never stand on nothing: on, the material first and the attrib
 when the crate has answered; off, the attribute first. See `material.ts`,
 `packages/themes/src/glass.css` and `apps/desktop/test/e2e/glass.py`.
 
+**Glass follows what is open** (Emil, 2026-10-01: *"it should be based on what's currently
+open, e.g. the website"*). The frame takes its colour from the tab in front, two ways. A web
+page's own colour is Safari's: its `theme-color` (its `media` honoured), else what it paints
+along its top edge, read off the page's document at three points (`web_tint.rs`; in a
+browser, `readFrame` on a frame of the app's own origin), else - where the top is a picture
+or the points disagree - the top rows of the still the window already took as the page
+landed. The frame is that colour over the material, and the web bar and the open tab are it
+solid, so tab, bar and page are one surface: the active web tab does take the page's colour,
+as Safari's compact tab does, because in nib the bar between the tab and the page takes it
+too, and a neutral tab over a coloured bar would cut the one surface in two. A mark is Chrome's
+and Arc's: a note's cover, its icon's colour, a site's favicon while its page has said
+nothing, else the accent, as a tone mixed into the scheme's own chrome, so a note's frame
+stays calm. Nib's spaces have no colour of their own, so there is no space step.
+
+Words always read. The frame wears whichever scheme's words read on the colour - `data-theme`
+on the title bar, the strips, the side panels, the foot row and the web bar, so every token
+there is a measured palette and the accent stays the reader's (`--accent: inherit`). A page's
+colour is moved toward that side's chrome by the least scrim that makes `--muted` clear AA
+with a row's lift on it (`barFor`: white, black and yellow pages need none; a loud red turns
+a darker red), and the frame's wash is never under the floor that holds AA over every colour
+the material can be (`frameFor`, `scrimFloor`). `glass/tint.test.ts` holds both to a set of
+sites and marks, and `test/e2e/glass-pages.py` measures the screenshots. Colour work happens
+when a page lands or moves, a quarter of a second after the last news, and on a tab switch -
+never on a frame; `main`, the bar and the tab ease to the new colour over `--dur-slow`. The
+working out is behind a door glass alone opens (`glass/follow.svelte.ts`); the first frame
+of a launch wears the colour it was left on (`glass/chrome.svelte.ts`). Grounds are kept per
+page and origin like favicons, so a tab opened again is its colour before it loads.
+
+Glass is offered on every platform: Windows puts Mica Alt, Mica or Acrylic under the colour;
+macOS (whose webview is opaque without the private API), Linux, the browser and a phone stand
+it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent anywhere.
+
 Two tokens carry it. `--window-ground` is `--bg` in every window there has ever been,
 and `transparent` over the material; `html` and `body` are painted with it.
 `--shell-ground` is what `main` stands on, the same colour unless a theme lays a wash
@@ -305,8 +336,8 @@ every pixel, which is exactly what it painted before. A launch whose window last
 the material puts it back before the page has started (`see_through` in `ground.rs`), so
 the first frame is the material and not the desk through an empty window. On macOS
 transparency is behind Tauri's `macos-private-api`, which is not turned on, so the page
-is drawn on an opaque webview and glass is not offered there; that is a decision about
-the App Store rather than about this feature.
+is drawn on an opaque webview and glass there is its colour on the paper; that is a
+decision about the App Store rather than about this feature.
 
 `apps/desktop/src-tauri/src/appearance.rs` is both commands, `window-vibrancy` is what
 they ask, and `scripts/appearance-e2e.py` and `scripts/glass-probe.py` drive them: they

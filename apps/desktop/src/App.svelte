@@ -26,6 +26,7 @@
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
   import { fullscreen } from './lib/fullscreen.svelte'
+  import { chrome } from './lib/glass/chrome.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
@@ -898,6 +899,7 @@
       <div
         class="panels"
         data-chrome="start"
+        data-theme={chrome.theme}
         inert={viewport.drawer && !workspace.panel}
         class:open={!!workspace.panel}
         class:held={drawer.held}
@@ -1003,6 +1005,7 @@
           <div
             class="panels right"
             data-chrome="end"
+            data-theme={chrome.theme}
             inert={viewport.drawer && !workspace.rightPanel}
             class:open={!!workspace.rightPanel}
             class:held={rightDrawer.held}

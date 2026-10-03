@@ -92,6 +92,11 @@ describe('a theme that paints a setting’s tokens itself', () => {
     expect(paintsOver("[data-theme='dark'] { --bg: #000; }", accent)).toBe(false)
   })
 
+  test('as does one that keeps them where they are, which states no colour', () => {
+    expect(paintsOver('.frame[data-theme] { --accent: inherit; }', accent)).toBe(false)
+    expect(paintsOver('.frame { --accent: inherit; --accent-soft: red; }', accent)).toBe(true)
+  })
+
   test('which is any one of them and not all of them', () => {
     // A theme that moved the wash and not the colour has still had an opinion
     // about how the accent looks on it.

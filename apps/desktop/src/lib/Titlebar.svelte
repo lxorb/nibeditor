@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { EditorView } from '@nib/editor'
   import AppMenu from './AppMenu.svelte'
+  import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
@@ -84,7 +85,7 @@
      its tab, so there is no separate title; a phone and a tablet hold one
      document, so the name is the middle of the row and the whole of the app is
      behind the dots at the end of it. -->
-<header class:lights={cornered} data-chrome="top">
+<header class:lights={cornered} data-chrome="top" data-theme={chrome.theme}>
   <!-- The application itself, at the top left corner of the screen, which is
        where it was when there was a column of spaces to put it above. A phone
        reaches it through the three dots at the other end of this same row

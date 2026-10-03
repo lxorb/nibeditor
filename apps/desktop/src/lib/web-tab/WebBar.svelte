@@ -67,8 +67,15 @@
     ontyping,
     onzoom,
     extending = null,
+    ground,
+    theme,
   }: {
     page: Page
+    /** What the page stands on, under glass: the bar takes it, so the tab, the bar and
+     *  the page are one surface; see glass/tint.ts. */
+    ground?: { colour: string } | undefined
+    /** The scheme whose words read on that colour, where it is not the window's. */
+    theme?: 'dark' | 'light' | undefined
     reads: boolean
     focused: boolean
     book: string
@@ -213,7 +220,12 @@
   })
 </script>
 
-<div class="webbar">
+<div
+  class="webbar"
+  class:grounded={ground !== undefined}
+  data-theme={theme}
+  style:--web-ground={ground?.colour}
+>
   <!-- Back and forward. A right click or a held finger on either lists the pages that
        way, the way Chrome's do. -->
   <button
@@ -387,8 +399,16 @@
     align-items: center;
     gap: var(--space-1);
     padding: var(--space-1) var(--space-2);
-    background: var(--surface);
+    background: var(--web-ground, var(--surface));
     border-bottom: 1px solid var(--line);
+    transition:
+      background-color var(--dur-slow) var(--ease-out),
+      border-color var(--dur-slow) var(--ease-out);
+  }
+
+  /* On its page's own colour there is nothing to draw a line between. */
+  .webbar.grounded {
+    border-bottom-color: transparent;
   }
 
   /* The site's mark sits against the field rather than in the row of arrows, so the

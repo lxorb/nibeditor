@@ -27,6 +27,7 @@
  *  parks one - the webview goes, the tab keeps everything about itself - and looking at
  *  a parked tab again opens the page where it was, at the place it was at. */
 
+import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
@@ -1361,6 +1362,7 @@ class Pages {
       if (!page) return
 
       const was = page.loading
+      const moved = said.url !== '' && said.url !== page.at
       page.loading = said.loading
       // A load beginning is a page arriving, and the mark it settles on is the one the
       // file keeps.
@@ -1392,6 +1394,8 @@ class Pages {
         page.shot = null
         void this.shoot(said.tab)
       }
+      // And what the page stands on, which glass's frame takes; see glass/chrome.svelte.ts.
+      if ((was || moved) && !said.loading) landed(said.tab)
       // A link can lead to another site, and so to another web login; and a page that
       // has finished loading is a moment worth keeping its login at. See lease.svelte.ts.
       this.watch?.moved(said.tab, page, was && !said.loading)

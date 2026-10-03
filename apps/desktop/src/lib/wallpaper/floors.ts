@@ -51,14 +51,27 @@ function tokenIn(block: string, name: string): string {
   return new RegExp(String.raw`${name}\s*:\s*([^;]+);`).exec(block)?.[1]?.trim() ?? ''
 }
 
+/** Which of a sheet's tokens are the scrim and the layer: wallpaper's own, or glass's,
+ *  whose chrome colour is the scrim its tint is laid over the material as. */
+export interface Names {
+  scrim: string
+  layer: string
+}
+
+const WALLPAPER: Names = { scrim: '--wallpaper-scrim', layer: '--wallpaper-layer' }
+
 /** One side's palette read out of the theme's own sheet, so the sheet is the one
  *  place its colours are written. Null where the sheet does not say one of them. */
-export function paletteOf(css: string, scheme: 'dark' | 'light'): Palette | null {
+export function paletteOf(
+  css: string,
+  scheme: 'dark' | 'light',
+  names: Names = WALLPAPER,
+): Palette | null {
   const block = blockOf(css, scheme)
   const ink = rgbOf(tokenIn(block, '--muted'))
   const text = rgbOf(tokenIn(block, '--text'))
-  const scrim = rgbOf(tokenIn(block, '--wallpaper-scrim'))
-  const layerSaid = tokenIn(block, '--wallpaper-layer')
+  const scrim = rgbOf(tokenIn(block, names.scrim))
+  const layerSaid = tokenIn(block, names.layer)
   const layer = rgbOf(layerSaid)
   const alpha = Number(/\/\s*([\d.]+)\s*\)$/.exec(layerSaid)?.[1] ?? 1)
   if (!ink || !text || !scrim || !layer || !Number.isFinite(alpha)) return null

@@ -12,6 +12,7 @@
  *  own brightness and Acrylic does not, and glass.css leans on that. At launch the
  *  attribute is already said, from what was written down; see `standAsBefore`. */
 
+import { chrome } from './glass/chrome.svelte'
 import { MATERIAL_KEY, rememberGround } from './ground'
 import { forget, keep } from './stored'
 import { invoke, isDesktop } from './tauri'
@@ -32,6 +33,8 @@ function say(kind: string | null): void {
   const said = document.documentElement.dataset
   if (kind) said.translucent = kind
   else delete said.translucent
+  // And glass's frame, whose wash is worked out over what is behind it.
+  chrome.material = kind
 }
 
 function remember(): void {

@@ -4,6 +4,7 @@ import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
 import { without } from './records'
+import { chrome } from './glass/chrome.svelte'
 import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
 import {
   forget,
@@ -125,7 +126,10 @@ const GLASS_THEME = 'glass'
 
 /** Whether glass has a material to stand on: Windows, today. A browser and a phone have
  *  no window of their own, Linux no one answer, and a Mac's webview is opaque until
- *  Tauri's private API is on. Still worn by id, which is how a drive shows it. */
+ *  Tauri's private API is on. Glass is offered everywhere all the same, because what it
+ *  is now is the frame taking its colour from what is open, which needs no material;
+ *  where there is one, the colour lies over it. This decides only who had the old
+ *  Translucency switch. */
 function hasMaterial(): boolean {
   return isDesktop && platform() === 'windows'
 }
@@ -221,19 +225,12 @@ class Themes {
   readonly all = $derived<ThemeInfo[]>([
     DEFAULT_THEME,
     CONTRAST,
-    ...(!__EVEN_PLUGIN__ && hasMaterial() ? [this.withLoaded(GLASS)] : []),
+    ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
     ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
     ...this.files,
   ])
 
-  /** The list, and glass where it is not listed. */
-  private readonly known = $derived<ThemeInfo[]>(
-    __EVEN_PLUGIN__ || this.all.some((one) => one.id === GLASS_THEME)
-      ? this.all
-      : [...this.all, this.withLoaded(GLASS)],
-  )
-
-  readonly active = $derived(this.known.find((one) => one.id === this.id) ?? DEFAULT_THEME)
+  readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
 
   /** The scheme that was asked for, by name or through the system. */
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
@@ -435,7 +432,7 @@ class Themes {
     // A theme file may have been deleted while it was selected. Only ever
     // decided on a folder that answered: until one has, a theme the storage
     // names is one not found yet rather than one that is gone.
-    if (!this.known.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
+    if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing
     // to apply and whatever it declared was nobody's yet.
@@ -628,6 +625,10 @@ class Themes {
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }
 
+    // Glass follows what is open, and nothing else does; the working out is behind a
+    // door only glass opens. See glass/chrome.svelte.ts.
+    if (!__EVEN_PLUGIN__) this.followWhatIsOpen(theme.id === GLASS_THEME, kept)
+
     // The material, behind a door every theme but glass never opens, and on a preview
     // too, so the picker shows glass as glass; see material.ts.
     const translucent = theme.translucent === true
@@ -642,6 +643,18 @@ class Themes {
     // ground.ts. Off the window rather than off the theme, so a theme file's own
     // colour and a translucent window are both what they really are.
     if (kept) rememberGround()
+  }
+
+  /** Glass's frame taking its colour from what is open, or let go of. */
+  private followWhatIsOpen(glass: boolean, kept: boolean) {
+    if (!glass) {
+      chrome.sleep()
+      if (kept) chrome.forget()
+      return
+    }
+
+    chrome.wake(this.current)
+    void import('./glass/follow.svelte').then((one) => one.follow())
   }
 
   /** The sheet on the page, then what needs it there: its declarations, the dials, the

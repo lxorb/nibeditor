@@ -20,6 +20,7 @@
   import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
   import { fullscreen } from '../fullscreen.svelte'
+  import { chrome, landed } from '../glass/chrome.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { dur } from '../motion'
@@ -637,6 +638,8 @@
   <div class="head" class:roomy={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
+      ground={chrome.barOf(tab.id)}
+      theme={chrome.barTheme(tab.id)}
       {focused}
       {book}
       reads={isDesktop}
@@ -799,8 +802,12 @@
       {/if}
     </div>
   {:else if page.framing === 'frame' && address}
+    <!-- Glass reads what a page of the app's own origin stands on as it loads; see
+         glass/reading.ts. -->
     <iframe
       class="framed"
+      data-web-tab={tab.id}
+      onload={() => landed(tab.id)}
       class:acted={worn !== null}
       class:resting={worn?.paused}
       style:--agent={worn?.colour}
