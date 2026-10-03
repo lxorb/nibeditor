@@ -135,6 +135,27 @@ describe('a frame put right after its tabs changed out of sight', () => {
     expect(first?.activeTabId).toBe('b')
   })
 
+  /** Ctrl+D showed nothing in that pane as the set was left, and it comes back so. */
+  test('a pane put down stays down while it still has tabs', () => {
+    const frame: Frame = {
+      kind: 'split',
+      id: 's',
+      along: 'row',
+      fraction: 0.5,
+      sides: [pane('left', null), pane('right', 'c')],
+    }
+    const strips: Record<string, string[]> = { left: ['a', 'b'], right: ['c'] }
+    const [left, right] = panesIn(
+      tidied(
+        frame,
+        (id) => strips[id] ?? [],
+        () => 'b',
+      ),
+    )
+    expect(left?.activeTabId).toBeNull()
+    expect(right?.activeTabId).toBe('c')
+  })
+
   test('the focus stays where its pane still is, and goes to the first where it went', () => {
     const frame = two()
     expect(focusIn(frame, 'right')).toBe('right')

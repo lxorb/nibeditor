@@ -83,9 +83,10 @@ export function sharedHome(
 
 /** A set's frame after its tabs have changed out of sight: a pane with no tab left goes
  *  and its neighbour takes the room, as one does on screen, and a pane whose tab in
- *  front went shows the one it had in front last, else its first. The last pane stays,
- *  empty, since a window always has one. `strip` lists a pane's tabs in order; `last`
- *  picks the one in front last among them. */
+ *  front went shows the one it had in front last, else its first. A pane put down with
+ *  Ctrl+D stays down: it showed nothing as the set was left, and a set comes back as it
+ *  was left. The last pane stays, empty, since a window always has one. `strip` lists a
+ *  pane's tabs in order; `last` picks the one in front last among them. */
 export function tidied(
   frame: Frame,
   strip: (paneId: string) => readonly string[],
@@ -98,7 +99,7 @@ export function tidied(
 
   for (const one of panesIn(out)) {
     const tabs = strip(one.id)
-    if (one.activeTabId !== null && tabs.includes(one.activeTabId)) continue
+    if (one.activeTabId === null ? tabs.length > 0 : tabs.includes(one.activeTabId)) continue
     one.activeTabId = last(tabs) ?? tabs[0] ?? null
   }
 
