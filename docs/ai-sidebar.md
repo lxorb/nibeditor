@@ -767,18 +767,24 @@ names a tool, a model, an effort, a mode and a thread, never a flag. What change
 
 - **Claude Code** runs as a session: `-p --input-format stream-json --output-format
   stream-json --verbose --include-partial-messages`, `--effort` where the version has it,
-  `--mcp-config` naming `nib mcp` alone, `--tools ""`, `--strict-mcp-config`,
-  `--no-session-persistence`, `--safe-mode`, `--permission-prompts none`, nib's system
-  line. Turns are written to stdin; `/model`, `/effort`, `/fast` and `/compact` are written
-  as messages (they work headless, [headless][cc-headless]); a stop is an interrupt. A
-  thread reopened after the program ended is seeded from nib's transcript. Unmodified,
-  signed in by the reader, no token read: everything `docs/ai.md` requires stays true.
+  `--mcp-config` naming `nib mcp` alone, `--tools ""`, `--strict-mcp-config`, the mode's
+  verbs in `--allowedTools` and the rest in `--disallowedTools`, `--permission-mode
+  dontAsk`, `--permission-prompts none`, `--no-session-persistence`, `--restricted`, nib's
+  system line per mode, and `CLAUDE_CODE_DISABLE_CLAUDE_MDS`. Not `--safe-mode`: measured
+  on 2.1.280 it drops the `--mcp-config` server as well. Turns are written to stdin; a
+  model change, a stop, the window's fill and the model list are the SDK's control
+  requests (`set_model`, `interrupt`, `get_context_usage`, `list_models`), `/effort`,
+  `/compact` and `/goal` are written as messages ([headless][cc-headless]); `/fast` is
+  not, since Claude Code says "Fast mode is not available in the Agent SDK". A thread
+  reopened after the program ended is seeded from nib's transcript. Unmodified, signed in
+  by the reader, no token read: everything `docs/ai.md` requires stays true.
 - **Codex** moves from `exec` to `app-server` over stdio: `initialize`, then
   `thread/start` with the read-only sandbox, `mcp_servers` holding `nib` alone, the shell
   tool off and the reader's config ignored; `turn/start` per message with `model` and
   `effort`; `turn/steer`, `turn/interrupt`, `thread/compact/start`, `thread/goal/*`,
-  `thread/fork`, `model/list`. Approval requests the app-server raises are refused (nib's
-  own asks happen at nib's verbs).
+  `thread/fork`, `model/list`, `serviceTier: "priority"` for Fast. Approval requests the
+  app-server raises are refused (nib's own asks happen at nib's verbs). The app-server
+  has no `--ignore-user-config`, so the reader's config is overridden key by key (`-c`).
 - Both stay on the job object or process group, the empty folder of nib's own, and the
   stop, as today; a session idle for ten minutes is ended and reseeded on the next message.
 
@@ -860,6 +866,33 @@ and 5 export and owns none of their logic.
    where an outside agent does not. Fine?
 4. **Threads on this device only**, never synced. Or synced like notes (they hold the words
    of every note they read)?
+
+### 6.4 Where lanes 1 and 2 meet
+
+Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`; neither edits the other's files.
+
+- **The engine.** `createLocalEngine(kind, setup)` in `lib/ai/local/engine.ts` is the
+  `Engine` for `claude-code` and `codex`; `setup` is the API engine's `Setup` as far as
+  it is read (`provider(id)`, `instructions(thread)`). `engineFor(kind, setup)` builds it
+  for a local kind with that same setup, through a dynamic import so none of it is in
+  the first paint; the registry's loader takes the setup for that (lane 1's change).
+- **Events** are the API engine's: `turn` for the reader's message and the model's,
+  `part` as each grows (text, thinking, a `tool` row per `nib mcp` call with the verb's
+  own name and its answer), `model`, `usage` (the program's own counts; `window` from
+  Claude Code's `modelUsage` or Codex's `modelContextWindow`), `limit`, and `done` once.
+  Notices it writes: `model`, `compacted`, `stopped`, `error`.
+- **Models.** `models(provider)` asks the program (`list_models`, `model/list`). Claude
+  Code's window is known only for a `[1m]` name until the first answer says it; Codex's
+  only after one; `fast` is false for Claude Code.
+- **Steer**: Codex's `turn/steer` into the running turn; Claude Code reads a message
+  sent mid-turn after the turn, so its answer is a model turn of its own.
+- **Below the engine**, for lane 5 where it needs the program's own `/goal`:
+  `openSession` in `lib/ai/local/session.ts` and its `goal` saying (`thread/goal/*`,
+  Claude Code's `/goal`). Until the engine carries a `goal` method, `/goal` on these two
+  runs nib's evaluator loop like every other provider.
+- **The grant.** The crate makes the provider's built-in grant on first use under the
+  same id the API loop uses (`nib-<provider id>`, `ai_agent.rs`) and issues its token for
+  `nib mcp`; lane 3's grant work applies to both roads unchanged.
 
 ---
 
