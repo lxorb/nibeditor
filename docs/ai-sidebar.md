@@ -997,27 +997,29 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | `Threads.svelte` | The thread list: search, open, archive, delete |
 | `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
 | `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
-| `seams.ts`, `verbs-of-panel.ts` | Where lanes 3 and 5 plug in, and the `/` rows until lane 5 lands |
+| `seams.ts` | The `/` menu: lane 5's rows asked as it opens, matched as the reader types |
 | `prefs.ts`, `migrate.ts`, `quote.ts` | The mode, the effort per model and the open thread remembered; the Ask panel's conversations made threads once; Alt+K |
 
-**The seams**, found by file name through `import.meta.glob`, which is empty for a file
-that is not there, so the build is whole before either lane lands and nothing changes
-after. Claude Code and Codex need none: `engineFor` (6.4) answers them with the panel's
-one setup.
+**Where the other lanes meet it.** Claude Code and Codex need nothing of the panel:
+`engineFor` (6.4) answers them with its one setup.
 
-- **Lane 3**: `lib/ai/review/ChangesBar.svelte`, a component taking `{ thread }`, is
-  drawn over the field. Rewind (Esc Esc), edit-and-resend (Up) and the message's hover
-  clock are lane 3's to add to `Conversation.svelte`'s message.
+- **Lane 3**, met as 6.6 says: `ChangesBar` over the field with the live thread and the
+  panel, `Branches` under each of the reader's messages, `Asked` in a call that asked;
+  Esc Esc on an empty field and the clock on a message open the rewind sheet, Up on an
+  empty field and the pencil on a message put it in the field to send again
+  (`editMessage`), and Follow is a row of the thread's menu.
 - **Lane 5**: `lib/ai/commands/index.ts`, met as 6.5 says: `commands(panel)` asked each
   time the menu opens, `typed` in the context, the panel's `turn`, `adopt`, `touched`,
-  `ensure`, `text`, `approve` and `voice`, `instructionsFor(thread)` in the setup, the goal
-  chip from `thread.goal` and the running dot from `tasks.of(thread.id)`. Without the file
-  the menu lists the panel's own verbs (`verbs-of-panel.ts`).
+  `ensure`, `text` and `approve` (not `voice`, below), `instructionsFor(thread)` in the
+  setup, the goal chip from `thread.goal` and the running dot from `tasks.of(thread.id)`.
 
 Not built here, and why: voice (the recorder's road into a field is its own lane), Open
-as a tab (a thread as a pane needs a tab kind), Continue in the panel from the quick
-question (the quick question stays as it is until the commands' `/btw` lands), and
-Follow (lane 3's).
+as a tab (a thread as a pane needs a tab kind), and Continue in the panel from the quick
+question (the quick question stays as it is, beside `/btw`).
+
+The drive `apps/desktop/test/e2e/ai-sidebar.py` walks all of it against a fake provider,
+in the light and the dark, and then the whole flow in one thread: Ask, an agent's edits
+kept and undone, a rewind, a message edited and sent again.
 
 ---
 

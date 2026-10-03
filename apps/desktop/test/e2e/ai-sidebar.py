@@ -17,7 +17,12 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
   chip over the field and the chip's cross clears it, and `/new` starts a new thread;
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
-- the ring's tray lists the bands.
+- the ring's tray lists the bands;
+- and the whole of it in one thread: Ask answers, Agent mode edits a note as the
+  provider's agent while its answer runs, the changes bar keeps one edit and undoes the
+  other, the clock on a message rewinds notes and conversation to before it, and Up
+  on the empty field sends an edited message again, which leaves arrows between the
+  two branches.
 
 A fake OpenAI-compatible server answers, a word at a time, with reasoning before the
 words and its counts at the end. No key, no network, no bill.
@@ -39,7 +44,9 @@ from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
-DRIVE = Drive(__file__)
+# A dev server of its own, since the flow below edits a note as the provider's agent
+# through the window's own interface, which only a dev server answers by its path.
+DRIVE = Drive(__file__, dev=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -140,9 +147,20 @@ async (base) => {
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
   ai.setDefault(made.id)
-  return ai.ready
+  return made.id
 }
 """
+
+EDIT = """
+async ([provider, quote, replace]) => {
+  const docs = await import('/src/lib/agents/docs/index.ts')
+  await docs.notes.editNote({ id: `nib-${provider}`, name: 'Fake' }, { path: 'Herons.md' }, [
+    { at: { quote }, replace },
+  ])
+}
+"""
+
+NOTE_TEXT = "() => window.nibApp.workspace.active?.note?.latest ?? ''"
 
 WHERE = """
 () => {
@@ -405,12 +423,113 @@ def drive(browser: Browser, scheme: str) -> None:
     page.context.close()
 
 
+def running(page: Page) -> bool:
+    return waited(page, "document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to start")
+
+
+def flow(browser: Browser) -> None:
+    """Ask, then an agent's edits kept and undone, a rewind, and a message sent again."""
+    page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
+    DRIVE.open(page)
+    DRIVE.seed(page, HERONS)
+    provider = page.evaluate(SETUP, MODEL_ORIGIN)
+    DRIVE.open_note(page, "Herons")
+    page.evaluate("() => window.nib.focus()")
+    page.keyboard.press("Control+Shift+A")
+    waited(page, f"document.querySelector('{FIELD}')", "the field")
+
+    # Ask.
+    Model.thoughts = []
+    Model.words = ["It ", "stands ", "still ", "[1]."]
+    Model.pause = 0
+    type_and_send(page, "What does a heron do?")
+    waited(page, "document.querySelector('.ask .answer a[href=\"#cite-1\"]')", "a cited answer")
+    idle(page)
+
+    # Agent mode, and two edits made as the provider's agent while the answer runs.
+    page.locator(FIELD).click()
+    page.keyboard.press("Shift+Tab")
+    page.keyboard.press("Shift+Tab")
+    if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
+        wrong("Shift+Tab twice did not reach Agent")
+    Model.words = [f"done{one} " for one in range(25)]
+    Model.pause = 0.08
+    type_and_send(page, "Shout the heron's verbs")
+    running(page)
+    page.evaluate(EDIT, [provider, "strikes", "STRIKES"])
+    page.evaluate(EDIT, [provider, "stands still", "STANDS STILL"])
+    idle(page)
+    waited(page, "document.querySelector('.ask .bar .what')", "the changes bar")
+    page.wait_for_timeout(300)
+    shot(page, "flow/01-changes")
+    page.locator(".ask .bar .what").click()
+    waited(page, "document.querySelectorAll('.ask .changes .change').length === 2", "two changes listed")
+    shot(page, "flow/02-listed")
+    page.locator(".ask .changes .change").first.locator(".nib-chip:not(.is-quiet)").click()
+    page.wait_for_timeout(300)
+    page.locator(".ask .changes .change").first.locator(".nib-chip.is-quiet").click()
+    page.wait_for_timeout(600)
+    text = page.evaluate(NOTE_TEXT)
+    kept = ["STRIKES" in text, "STANDS STILL" in text]
+    say(f"after Keep and Undo the note says {text!r}")
+    if kept.count(True) != 1:
+        wrong(f"one change was not kept and the other undone: {kept}")
+    waited(page, "!document.querySelector('.ask .bar .what')", "the bar to empty")
+
+    # A third edit, then the clock on that message rewinds notes and conversation.
+    Model.words = [f"loud{one} " for one in range(20)]
+    type_and_send(page, "Name the bird loudly")
+    running(page)
+    page.evaluate(EDIT, [provider, "A heron", "A HERON"])
+    idle(page)
+    said = page.locator(".ask .said").count()
+    page.locator(".ask .said").last.hover()
+    page.locator(".ask .said").last.locator('.tools button[aria-label="Rewind"]').click()
+    waited(page, "document.querySelector('.ask .rewind')", "the rewind sheet")
+    page.wait_for_timeout(300)
+    shot(page, "flow/03-rewind")
+    page.locator(".ask .rewind .nib-row", has_text="Restore notes and conversation").click()
+    waited(page, f"document.querySelectorAll('.ask .said').length === {said - 1}", "the message rewound")
+    page.wait_for_timeout(400)
+    if "A HERON" in page.evaluate(NOTE_TEXT):
+        wrong("the rewind did not take the note's edit back")
+
+    # The rewound message is back in the field, to send again or let go.
+    back = page.locator(FIELD).input_value()
+    if back != "Name the bird loudly":
+        wrong(f"the rewound message is not back in the field: {back!r}")
+
+    # Up on the empty field: the last message, changed, and sent again.
+    Model.words = ["Again."]
+    Model.pause = 0
+    page.locator(FIELD).fill("")
+    page.locator(FIELD).click()
+    page.keyboard.press("ArrowUp")
+    waited(page, "document.querySelector('.ask .editing')", "the message to edit")
+    field = page.locator(FIELD).input_value()
+    if field != "Shout the heron's verbs":
+        wrong(f"Up did not put the last message in the field: {field!r}")
+    page.keyboard.press("End")
+    page.keyboard.type(" quietly")
+    page.keyboard.press("Enter")
+    idle(page)
+    page.wait_for_timeout(400)
+    if "quietly" not in last_sent():
+        wrong("the edited message was not sent")
+    if page.locator(".ask .branches").count() < 1:
+        wrong("an edited message has no arrows to the other branch")
+    shot(page, "flow/04-resent")
+    page.context.close()
+
+
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
-    return DRIVE.verdict("the AI panel sends, stops, queues, steers, switches and lists")
+        say("--- the whole flow ---")
+        flow(browser)
+    return DRIVE.verdict("the AI panel sends, stops, queues, steers, switches, lists, reviews, rewinds and resends")
 
 
 if __name__ == "__main__":
