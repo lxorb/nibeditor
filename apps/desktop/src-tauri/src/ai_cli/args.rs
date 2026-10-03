@@ -261,7 +261,11 @@ fn claude_base(input: bool, partial: bool) -> Vec<String> {
     if partial {
         args.push("--include-partial-messages".to_owned());
     }
-    args.extend(["--tools", "", "--strict-mcp-config"].map(str::to_owned).to_vec());
+    args.extend(
+        ["--tools", "", "--strict-mcp-config"]
+            .map(str::to_owned)
+            .to_vec(),
+    );
     args
 }
 
