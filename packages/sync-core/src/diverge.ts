@@ -32,6 +32,7 @@ import {
   type Analysis,
   type Edit,
   type Meeting,
+  type Settle,
   sharedPoints,
   type Span,
   type Whose,
@@ -81,6 +82,10 @@ export interface Divergence {
    *  side wrote it; the pure merge otherwise. Null when the verdict is `diverged`. */
   resolution: string | null
   broken: Broken | null
+  /** Whether every overlap was settled as its newer side wrote it, or - where that
+   *  would say a passage twice - with both sides' edits made, every deletion and every
+   *  insertion; then both sides' words are kept as versions. */
+  settled: 'newer' | 'both'
 }
 
 /** One side's passage for the modal, with the differing stretches marked. */
@@ -250,7 +255,7 @@ function distance(one: string, other: string): number {
 function resolved(
   base: string,
   analysis: Analysis,
-  settle: (meeting: Meeting) => Whose,
+  settle: (meeting: Meeting) => Settle,
   merged: string,
 ): string {
   const order = new Map<number, Whose>()
@@ -272,6 +277,32 @@ function resolved(
   return best
 }
 
+/** How many characters the check below compares at a time, white space left out: a
+ *  short word. */
+const RUN = 4
+
+/** How often each run of `RUN` characters is in a text, white space left out, so two
+ *  words a merge set side by side read the way they did apart. */
+function runsOf(text: string): Map<string, number> {
+  const bare = text.replace(/\s+/g, '')
+  const counts = new Map<string, number>()
+  for (let at = 0; at + RUN <= bare.length; at += 1) {
+    const run = bare.slice(at, at + RUN)
+    counts.set(run, (counts.get(run) ?? 0) + 1)
+  }
+  return counts
+}
+
+/** Whether a merge says something twice that none of `references` says that often. */
+function repeats(references: readonly string[], merge: string): boolean {
+  const known = references.map(runsOf)
+  for (const [run, count] of runsOf(merge)) {
+    if (count < 2) continue
+    if (known.every((one) => count > (one.get(run) ?? 0))) return true
+  }
+  return false
+}
+
 /** Classifies what merging `local` and `remote` against `base` would do, and says
  *  what the note should read when nobody has to be asked. `merged` is the CRDT's
  *  merge of the two, when the caller has it. */
@@ -285,14 +316,17 @@ export function diverge(
   const newer: Whose = times.local > times.remote ? 'local' : 'remote'
   const analysis = analyse(base, local, remote)
 
-  const overlaps: Overlap[] = analysis.meetings.map((meeting: Meeting) => ({
-    base: meeting.base,
-    local: spanIn(meeting.base, analysis.local),
-    remote: spanIn(meeting.base, analysis.remote),
-    size: meeting.size,
-    newer,
-    asks: meeting.size > CONTESTED ? 'size' : null,
-  }))
+  const overlaps: Overlap[] = analysis.meetings.map((meeting: Meeting) => {
+    const full = fuller(meeting)
+    return {
+      base: meeting.base,
+      local: spanIn(meeting.base, analysis.local),
+      remote: spanIn(meeting.base, analysis.remote),
+      size: meeting.size,
+      newer: full ?? newer,
+      asks: full === null && meeting.size > CONTESTED ? 'size' : null,
+    }
+  })
 
   for (const span of rewrittenBlocks(base, analysis)) {
     const meeting = overlaps.find(
@@ -313,24 +347,62 @@ export function diverge(
   }
   overlaps.sort((a, b) => a.base.from - b.base.from)
 
-  const settle = () => newer
   // Two sides' words at one point may land either way round in the CRDT; without its
   // text to read, the structure is checked both ways, so which side is called local
   // never changes the verdict.
-  const checked =
+  const write = (settle: (meeting: Meeting) => Settle) =>
     merged === undefined
       ? [
           written(base, analysis, { settle }),
           written(base, analysis, { settle, first: () => 'remote' }),
         ]
       : [resolved(base, analysis, settle, merged)]
+  let checked = write((meeting) => fuller(meeting) ?? newer)
+  // A passage one side moved is, to a diff, a deletion and a retyping, and a side's
+  // version of an overlap can still hold what the other side moved out of it: the
+  // newer side standing would then say that passage twice, and so can a text merge
+  // that keeps both. The CRDT's own merge never does - a moved passage is one deletion
+  // and one insertion there, and the deletion lands on the one copy there is - so it
+  // is the note. Without it in hand, both sides' edits are kept.
+  let settled: Divergence['settled'] = 'newer'
+  if (overlaps.length) {
+    const kept = merged === undefined ? write(() => 'both') : [merged]
+    if (checked.some((text) => repeats([local, remote, ...kept], text))) {
+      checked = kept
+      settled = 'both'
+    }
+  }
   const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
 
   const asks = broken !== null || overlaps.some((overlap) => overlap.asks !== null)
   const verdict: Verdict = asks ? 'diverged' : overlaps.length ? 'minor' : 'clean'
 
-  return { verdict, overlaps, resolution: verdict === 'diverged' ? null : resolution, broken }
+  return {
+    verdict,
+    overlaps,
+    resolution: verdict === 'diverged' ? null : resolution,
+    broken,
+    settled,
+  }
+}
+
+/** The side whose words hold the other's whole, where two insertions at one point are
+ *  one passage written twice and one of them has more: a line one device wrote that
+ *  the other wrote too and went on from, or the same words put back over a deletion
+ *  with more after them. That side is the note whichever is newer, and nothing is
+ *  asked, since nothing the other side wrote is missing from it. */
+function fuller(meeting: Meeting): Whose | null {
+  const [mine] = meeting.local
+  const [theirs] = meeting.remote
+  if (meeting.local.length !== 1 || meeting.remote.length !== 1 || !mine || !theirs) return null
+  if (mine.from !== mine.to || theirs.from !== theirs.to) return null
+  const here = mine.insert.trim()
+  const there = theirs.insert.trim()
+  if (!here || !there) return null
+  if (there.includes(here)) return 'remote'
+  if (here.includes(there)) return 'local'
+  return null
 }
 
 /** The longest passage an excerpt shows, in code units, before its context is cut. */

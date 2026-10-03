@@ -7,8 +7,11 @@ import {
   forget,
   isCatchUp,
   isEdit,
+  readSync,
   receive,
   syncStep1,
+  syncStep1Of,
+  syncStep2Of,
   syncUpdate,
   TEXT,
   unattended,
@@ -186,5 +189,18 @@ describe('which messages would write', () => {
     // messages are dropped by being called edits.
     expect(isEdit(new Uint8Array([0]))).toBe(true)
     expect(isEdit(new Uint8Array())).toBe(true)
+  })
+})
+
+describe('the sync messages a v2 device reads before it applies them', () => {
+  test('a state vector, the answer, and an update read back as themselves', () => {
+    const sv = new Uint8Array([1, 2, 3])
+    const update = new Uint8Array([4, 5, 6, 7])
+
+    expect(readSync(syncStep1Of(sv))).toEqual({ kind: 'step1', sv })
+    expect(readSync(syncStep2Of(update))).toEqual({ kind: 'step2', update })
+    expect(readSync(syncUpdate(update))).toEqual({ kind: 'update', update })
+    expect(readSync(new Uint8Array([1, 2]))).toBeNull()
+    expect(readSync(new Uint8Array([0, 9]))).toBeNull()
   })
 })

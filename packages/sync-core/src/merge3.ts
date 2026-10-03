@@ -96,17 +96,36 @@ function shared(one: string, other: string): number {
  *  about a line. */
 const ONE_PASSAGE = 16
 
+/** The fewest characters one side's words may be for them to count as a passage the
+ *  other side wrote too, when the other side's words hold them whole: two short words. */
+const HELD_WHOLE = 8
+
+/** Whether two sides' words at one point are one passage written twice: more than a
+ *  line of words in common, or the one wholly inside the other - two devices that each
+ *  put back the same few words over a deletion, one of them with more after it. */
+function samePassage(one: string, other: string): boolean {
+  if (shared(one, other) > ONE_PASSAGE) return true
+  const [shorter, longer] = one.trim().length <= other.trim().length ? [one, other] : [other, one]
+  const words = shorter.trim()
+  return words.length >= HELD_WHOLE && longer.includes(words)
+}
+
 /** Whether an edit of one side and an edit of the other overlap. Two insertions at
- *  one point do not, and both are kept (both appended to the list) - unless they share
- *  more than a line of words, which is the same passage put back or written twice, and
- *  keeping both would say it twice. An insertion at the very edge of a span the other
- *  side replaced does not overlap either: it is beside the replacement, not in it. */
+ *  one point do not, and both are kept (both appended to the list) - unless they are
+ *  one passage written twice (`samePassage`), the same passage put back or written
+ *  twice, and keeping both would say it twice. An insertion at the very edge of a span
+ *  the other side replaced does not overlap either: it is beside the replacement, not
+ *  in it - unless, again, it is the replacement's own words written twice. */
 function meets(one: Edit, other: Edit): boolean {
   if (isInsertion(one) && isInsertion(other)) {
-    return one.from === other.from && shared(one.insert, other.insert) > ONE_PASSAGE
+    return one.from === other.from && samePassage(one.insert, other.insert)
   }
-  if (isInsertion(one)) return other.from < one.from && one.from < other.to
-  if (isInsertion(other)) return one.from < other.from && other.from < one.to
+  const [insertion, span] = isInsertion(one) ? [one, other] : [other, one]
+  if (isInsertion(insertion)) {
+    if (span.from < insertion.from && insertion.from < span.to) return true
+    const edge = insertion.from === span.from || insertion.from === span.to
+    return edge && samePassage(insertion.insert, span.insert)
+  }
   return one.from < other.to && other.from < one.to
 }
 
