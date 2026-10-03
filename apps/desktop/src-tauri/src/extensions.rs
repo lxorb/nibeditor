@@ -64,8 +64,8 @@ static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 /// Writes down why an extension did not load.
 #[cfg_attr(
-    feature = "cef",
-    allow(dead_code, reason = "only nib's own installs can fail to load")
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
 )]
 fn went_wrong(id: &str, why: &str) {
     let mut problems = PROBLEMS.lock().unwrap_or_else(PoisonError::into_inner);
@@ -75,8 +75,8 @@ fn went_wrong(id: &str, why: &str) {
 
 /// An extension that loaded has nothing wrong with it any more.
 #[cfg_attr(
-    feature = "cef",
-    allow(dead_code, reason = "only nib's own installs can fail to load")
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
 )]
 fn went_right(id: &str) {
     PROBLEMS
