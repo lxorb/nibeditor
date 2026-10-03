@@ -186,6 +186,28 @@ function pictureLines(held: Held | null, fit: Fit): string[] {
   ]
 }
 
+/** The pictures alone, with the floors an older build wrote beside them: what is said
+ *  where the colours to work floors out from cannot be read at all - a sheet without
+ *  its palette - rather than no picture. */
+export function picturesRule(pictures: { light: Held | null; dark: Held | null }): string {
+  const floors = (['dark', 'light'] as const).flatMap((scheme) => {
+    const held = scheme === 'dark' ? (pictures.dark ?? pictures.light) : pictures.light
+    const side = held?.[scheme]
+    return side
+      ? [
+          `--wallpaper-floor-${scheme}: ${percent(side.floor)};`,
+          `--wallpaper-ground-${scheme}: ${side.ground};`,
+        ]
+      : []
+  })
+  return block(':root', [...pictureLines(pictures.light, 'fill'), ...floors])
+}
+
+/** Lines of custom properties as one rule. */
+function block(selector: string, lines: string[]): string {
+  return `${selector} {\n${lines.map((line) => `  ${line}\n`).join('')}}\n`
+}
+
 /** The pictures and their floors as a rule, said after the theme's own so the sheet's
  *  defaults give way to it; see wallpaper.css. */
 export function wallpaperRule(
@@ -216,9 +238,8 @@ export function wallpaperRule(
     )
   }
 
-  const lines = (list: string[]) => list.map((line) => `  ${line}\n`).join('')
   const dark = pictures.dark
-    ? `:root[data-theme='dark'] {\n${lines(pictureLines(pictures.dark, dials.fit))}}\n`
+    ? block(":root[data-theme='dark']", pictureLines(pictures.dark, dials.fit))
     : ''
-  return `:root {\n${lines(root)}}\n${dark}`
+  return `${block(':root', root)}${dark}`
 }

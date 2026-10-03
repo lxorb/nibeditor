@@ -26,12 +26,13 @@ const GLASS = 'glass'
 /** The fixed colour's own swatch for "the accent, whichever it is", first in the row. */
 export const ACCENT_COLOUR = 'accent'
 
-const MATERIALS = [
-  { value: 'mica-alt', label: 'Mica Alt' },
-  { value: 'mica', label: 'Mica' },
-  { value: 'acrylic', label: 'Acrylic' },
-  { value: 'clear', label: 'No blur' },
-] as const
+/** Each material the row offers, by the word the crate is asked with. */
+const MATERIALS = {
+  'mica-alt': 'Mica Alt',
+  mica: 'Mica',
+  acrylic: 'Acrylic',
+  clear: 'No blur',
+} as const
 
 /** Whether there is a material to choose: Windows, today (see `hasMaterial` in
  *  theme.svelte.ts), or a window the root says stands on one. */
@@ -67,7 +68,7 @@ export function glassSettings(): ThemeSetting[] {
             own: true,
             reapplies: true,
             kind: 'choice',
-            options: MATERIALS.map((one) => ({ value: one.value, label: t(one.label) })),
+            options: Object.entries(MATERIALS).map(([value, name]) => ({ value, label: t(name) })),
             initial: 'mica-alt',
             paint: () => ({}),
           },
