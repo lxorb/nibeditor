@@ -108,7 +108,10 @@ struct Page {
 
 impl Page {
     fn host(&self) -> Option<BrowserHost> {
-        self.host.lock().unwrap_or_else(PoisonError::into_inner).clone()
+        self.host
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 
     fn say(&self, text: String) {
@@ -176,10 +179,7 @@ impl Windowless {
         method: &str,
         params: &Value,
     ) -> Result<cdp::Answering, String> {
-        let host = self
-            .page
-            .host()
-            .ok_or("the page has closed")?;
+        let host = self.page.host().ok_or("the page has closed")?;
         let id = NEXT.fetch_add(1, Ordering::Relaxed);
         let mut message = json!({ "id": id, "method": method, "params": params });
         if let Some(session) = session {
@@ -299,7 +299,10 @@ pub fn build(
         };
         let mut ready = Ready::new(Arc::new(Mutex::new(Some(Arc::clone(&making)))));
         if request_context_create_context(Some(&settings), Some(&mut ready)).is_none() {
-            finished(&making, Err("the page's profile could not be opened".into()));
+            finished(
+                &making,
+                Err("the page's profile could not be opened".into()),
+            );
         }
     });
     if !posted {
@@ -371,7 +374,10 @@ fn browser_settings() -> BrowserSettings {
 /// script registered with it off is kept and never run.
 fn quietened(page: &Windowless) {
     page.tell("Page.enable", &json!({}));
-    page.tell("Page.setInterceptFileChooserDialog", &json!({ "enabled": true }));
+    page.tell(
+        "Page.setInterceptFileChooserDialog",
+        &json!({ "enabled": true }),
+    );
     page.tell(
         "Page.addScriptToEvaluateOnNewDocument",
         &json!({ "source": quiet::STUBS, "runImmediately": true }),
@@ -390,7 +396,10 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     host.set_audio_muted(1);
     let mut observer = Listening::new(Arc::clone(page));
     let observing = host.add_dev_tools_message_observer(Some(&mut observer));
-    *page.observing.lock().unwrap_or_else(PoisonError::into_inner) = observing;
+    *page
+        .observing
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner) = observing;
     *page.host.lock().unwrap_or_else(PoisonError::into_inner) = Some(host);
 
     let handle = Windowless {
@@ -433,7 +442,10 @@ fn closed(page: &Page) {
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .take();
-    page.host.lock().unwrap_or_else(PoisonError::into_inner).take();
+    page.host
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .take();
     page.dialog
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -550,7 +562,14 @@ fn settle(page: &Arc<Page>, number: Option<u64>, accept: bool, text: Option<Stri
 }
 
 /// Holds a dialog for the agent, and answers it the safe way if nobody does.
-fn hold(page: &Arc<Page>, kind: DialogKind, message: String, default: String, url: String, callback: JsdialogCallback) {
+fn hold(
+    page: &Arc<Page>,
+    kind: DialogKind,
+    message: String,
+    default: String,
+    url: String,
+    callback: JsdialogCallback,
+) {
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
     *page.dialog.lock().unwrap_or_else(PoisonError::into_inner) = Some((number, callback));
     quiet::hold(
@@ -1143,6 +1162,24 @@ wrap_load_handler! {
                 if let Some(tab) = tabs::find(&self.page.owner.agent, &self.page.owner.tab) {
                     tabs::said(&self.page.app, &tab);
                 }
+            }
+        }
+
+        fn on_load_error(
+            &self,
+            _browser: Option<&mut Browser>,
+            frame: Option<&mut Frame>,
+            _error_code: Errorcode,
+            error_text: Option<&CefString>,
+            failed_url: Option<&CefString>,
+        ) {
+            // A sign-in box this style of browser never shows: the engine answers it with
+            // no credentials itself, and the agent hears why here.
+            if frame.is_some_and(|frame| frame.is_main() != 0) && text(error_text).contains("AUTH") {
+                self.page.say(format!(
+                    "nib refused the site's sign-in box at {}: ask the reader with browser_takeover",
+                    text(failed_url)
+                ));
             }
         }
     }

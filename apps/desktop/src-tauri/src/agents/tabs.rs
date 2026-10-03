@@ -414,7 +414,11 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     let twin = super::engines::view(app, &label).ok_or("the page was never built")?;
     super::twin::carry(app, reader, &twin);
     if let Some(address) = address {
-        cdp::call(&twin, "Page.navigate", &serde_json::json!({ "url": address.as_str() }))?;
+        cdp::call(
+            &twin,
+            "Page.navigate",
+            &serde_json::json!({ "url": address.as_str() }),
+        )?;
     }
     Ok(())
 }

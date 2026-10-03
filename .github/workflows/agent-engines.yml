@@ -1,0 +1,83 @@
+name: agent-engines
+
+# What an agent's tab can be on the system's engine of a Mac and of Linux, measured on a
+# machine of each kind (docs/agent-native.md 12): scripts/webkit-agent-probe puts a page
+# out of sight every way the engine offers and prints its rates, its picture, its
+# isolated world and its input as one JSON document, which lands in the run's summary.
+# Nobody is at a runner, so a window on its screen is nobody's.
+
+on:
+  pull_request:
+    paths:
+      - scripts/webkit-agent-probe/**
+      - .github/workflows/agent-engines.yml
+  workflow_dispatch:
+
+concurrency:
+  group: agent-engines-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            name: wkwebview
+          - runner: ubuntu-latest
+            name: webkitgtk
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: scripts/webkit-agent-probe
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      - name: The toolkit
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev xvfb
+
+      - name: The probe
+        run: cargo build --release
+
+      - name: Measure
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run -a ./target/release/webkit-agent-probe > ../../${{ matrix.name }}.json
+          else
+            ./target/release/webkit-agent-probe > ../../${{ matrix.name }}.json
+          fi
+          cat ../../${{ matrix.name }}.json
+
+      - name: The table
+        if: always()
+        run: |
+          {
+            echo "## ${{ matrix.name }}"
+            echo
+            echo '```json'
+            cat ../../${{ matrix.name }}.json 2>/dev/null || echo 'no answer'
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: agent-engines-${{ matrix.name }}
+          path: ${{ matrix.name }}.json
+          if-no-files-found: warn
+          retention-days: 14

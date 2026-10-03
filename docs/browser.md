@@ -1031,7 +1031,8 @@ grown to the size the page lays itself out at, at most 800 by 600, as Chromium s
 (extensions/popup.rs). The puzzle lists every extension, pins and unpins, and takes a pasted
 Chrome Web Store or Edge Add-ons link. An extension's options page opens as a tab. Settings >
 General > Browser > Extensions has the rows: on or off, what it may do in Chromium's own
-words, Options, Remove. Agent tabs in an agent's own store never run one.
+words, Options, Remove. An agent's tab never runs one: it is in its own store, or in the twin of
+the reader's (docs/agent-native.md 6.3), and neither has any.
 
 **On `WebView2`, nib installs.** The engine takes an unpacked folder and nothing else
 (`AddBrowserExtension`, behind the environment option `AreBrowserExtensionsEnabled`, which
@@ -1063,9 +1064,7 @@ the store's install does not reach.
 
 **What does not work, and why.** A popup is a page of its own and not the browser's action
 popup, so an extension that asks for "the active tab" from its popup is told about the popup:
-a per-site toggle or a fill button in a popup may act on nothing. And an agent's tab in the reader's
-own store is in the reader's profile, where the reader's extensions run: the engine has no
-per-page switch, and a separate profile would not be signed in. Agents' own stores have none.
+a per-site toggle or a fill button in a popup may act on nothing.
 
 **On the account.** `users.settings` on the account is already a validated JSON
 object of the settings that follow a person from machine to machine - migration

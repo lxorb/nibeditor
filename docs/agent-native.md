@@ -486,7 +486,7 @@ denied site and the stop answer exactly as they do for a press.
   (`untrusted`), because the note is named after what the page calls itself.
 - **The log** has the call once, as `capture_to_note`, filed by the crate's own code:
   a refused print is `error (password_field)`, not the window failing.
-- **Where the engine has no road** (CEF for now, a Mac, Linux), a reader's tab is clipped
+- **Where the engine has no road** (the system's engine on a Mac and on Linux), a reader's tab is clipped
   the clip button's way and nothing is photographed or printed that could not be painted
   over; a reader's page put away to give the memory back is clipped as its address, as
   the button clips it. A reader's tab behind another one has no picture.
@@ -568,10 +568,28 @@ risk at its worst (9.6). So:
   global, the space's own or the site's, as `web-data.ts` decides), `agent` (a store of the
   agent's own, `web-stores/agent_<id>`, signed out until the agent or the reader signs in
   there, kept across runs), or `space` (another space's store, with that space granted).
+- **Never the reader's extensions** (Emil, 2026-10-03). An extension is installed into a
+  profile and neither engine has a per-page switch, so a page in the reader's own store
+  runs every extension they installed - a password manager filling in the agent's page,
+  an ad blocker changing what it reads, anything with `<all_urls>` reading what it reads.
+  So `reader` and `space` mean that store's **twin**: a profile of its own
+  (`agent__twin`, `agent__twin_<store>`) with extensions off, handed every cookie of the
+  reader's store - partitioned ones in their partition - each time an agent's page is
+  built there, and nothing ever handed back (`src-tauri/src/agents/twin.rs`). Signed in
+  where the reader is, with none of their extensions near it; what a cookie does not carry
+  (a login kept only in `localStorage` or `IndexedDB`) is signed out, and a site that
+  rotates its session on every use can sign the reader out when the agent uses the copy -
+  Playwright's `storageState` has the same two edges. Emil has not chosen between this and
+  **blocking**, where an agent's tab is never in the reader's store and opens in its own,
+  signed out, saying so in the answer; `engines::READER_STORE` is the switch, the twin is
+  the default, and `NIB_AGENT_READER_STORE=blocked` turns one run to the other. Measured
+  (`agent-tab-probe.py`, both engines): a cookie the reader's tab set is in the twin's
+  page, and the agent's own cookie never reaches the reader's tab.
 - A site can be set to **agent store only** in the agent's grant (mail, banking), and the
   grant's default can be flipped for a cautious agent.
-- On `WebView2` an agent store is a user data folder of its own, so a browser process of
-  its own while one of its tabs is open (about 100 MB), and nothing after. That same fact
+- On `WebView2` an agent store, and a twin, is a user data folder of its own, so a browser
+  process of its own while one of its tabs is open (about 100 MB), and nothing after. On
+  nib's own Chromium each is a profile in the one browser process. That same fact
   is the one place an agent's pages could have switches of their own - but nothing in
   section 3 needs one.
 
