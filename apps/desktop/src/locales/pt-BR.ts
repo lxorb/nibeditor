@@ -101,6 +101,7 @@ export const ptBR: Dictionary = {
   'Move to space': 'Mover para espaço',
   Tabs: 'Abas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de uso',
+  'Swipe between pages': 'Passar o dedo entre páginas',
   'Hidden tabs': 'Abas ocultas',
   'Memory saver': 'Economia de memória',
   Moderate: 'Moderado',

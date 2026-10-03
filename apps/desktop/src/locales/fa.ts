@@ -101,6 +101,7 @@ export const fa: Dictionary = {
   'Move to space': 'جابه‌جایی به فضا',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'کشیدن بین صفحه‌ها',
   'Hidden tabs': 'زبانه‌های پنهان',
   'Memory saver': 'صرفه‌جویی در حافظه',
   Moderate: 'متوسط',

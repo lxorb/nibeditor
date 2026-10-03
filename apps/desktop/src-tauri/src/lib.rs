@@ -172,6 +172,8 @@ mod web_state;
 #[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
+mod web_swipe;
+#[cfg(desktop)]
 mod web_tabs;
 #[cfg(desktop)]
 mod web_tint;

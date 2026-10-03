@@ -101,6 +101,7 @@ export const pl: Dictionary = {
   'Move to space': 'Przenieś do przestrzeni',
   Tabs: 'Karty',
   'Ctrl+Tab in order of use': 'Ctrl+Tab według ostatniego użycia',
+  'Swipe between pages': 'Przesuwanie między stronami',
   'Hidden tabs': 'Ukryte karty',
   'Memory saver': 'Oszczędzanie pamięci',
   Moderate: 'Umiarkowany',

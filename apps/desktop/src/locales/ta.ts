@@ -101,6 +101,7 @@ export const ta: Dictionary = {
   'Move to space': 'இடத்துக்கு நகர்த்து',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'பக்கங்களுக்கு இடையே ஸ்வைப் செய்',
   'Hidden tabs': 'மறைந்த தாவல்கள்',
   'Memory saver': 'நினைவகச் சேமிப்பு',
   Moderate: 'மிதமான',

@@ -30,6 +30,7 @@
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
+  import { swiping } from '../back-swipe/shown.svelte'
   import { findBar } from '../surfaces.svelte'
   import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
@@ -387,6 +388,11 @@
   // tab lifts ten pixels after its own press, whenever the hand gets there - nor
   // anything on the overlay stack, so the page is told here; see `coverOf`.
   $effect(() => follow(workspace.panes.dragging))
+
+  // A swipe's arrow moved, came or went. It is drawn over the page and moves with the
+  // fingers, so the page is cut round it on every step and is whole again once it has
+  // gone; see back-swipe/SwipeArrow.svelte and `coverOf`.
+  $effect(() => follow(swiping.turn))
 
   // A page took the whole screen or gave it back, here or in another pane: the window
   // follows, and so does where this page is placed. See filling.svelte.ts.

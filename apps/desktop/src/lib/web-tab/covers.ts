@@ -43,8 +43,10 @@ export interface Layer {
   scrim: boolean
 }
 
-/** The shapes the theme package gives every layer that floats; see base.css. */
-const FLOATING = '.nib-layer, .nib-bubble, .nib-screen'
+/** The shapes the theme package gives every layer that floats (see base.css), and the
+ *  arrow a swipe brings in over a page, which is round and moves with the fingers; see
+ *  back-swipe/SwipeArrow.svelte. */
+const FLOATING = '.nib-layer, .nib-bubble, .nib-screen, .nib-swipe'
 const SCRIMS = '.nib-scrim'
 
 function meets(one: Rect, other: Rect): boolean {

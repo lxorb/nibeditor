@@ -489,5 +489,8 @@ export async function warmDoors(): Promise<void> {
     import('./reload-when'),
     // Where the keyboard was, put back as the window or a layer gives it back.
     import('./keyboard-home'),
+    // Two fingers sideways, or one from a pane's side, for back and forward; see
+    // back-swipe/swipes.ts. Not in the glasses' plugin, which is a phone's.
+    __EVEN_PLUGIN__ ? undefined : import('./back-swipe/swipes').then((one) => one.listen()),
   ])
 }

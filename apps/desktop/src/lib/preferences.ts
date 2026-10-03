@@ -15,8 +15,9 @@ import { recovery } from './recovery.svelte'
 import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
-import { isDesktop } from './tauri'
+import { isDesktop, isMobile } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
+import { swipeChoice } from './back-swipe/choice.svelte'
 import { shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
@@ -349,6 +350,29 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => tabCycle.byUse,
               set: (on) => tabCycle.setByUse(on),
             },
+            // Two fingers sideways for back and forward, as in every browser; off for a
+            // hand that keeps doing it by accident. Not on a phone, whose side of the
+            // screen is the system's own back. See back-swipe/swipes.ts.
+            ...(isMobile
+              ? []
+              : ([
+                  {
+                    kind: 'switch',
+                    label: t('Swipe between pages'),
+                    words: [
+                      'swipe',
+                      'gesture',
+                      'touchpad',
+                      'trackpad',
+                      'back',
+                      'forward',
+                      'history',
+                    ],
+                    initial: true,
+                    get: () => swipeChoice.on,
+                    set: (on) => swipeChoice.set(on),
+                  },
+                ] satisfies Field[])),
             // What a space's own tabs do out of sight: the pages a desktop runs, which a
             // phone and a browser tab do not. See workspace/hidden-tabs.svelte.ts.
             ...(isDesktop

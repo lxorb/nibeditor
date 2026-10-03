@@ -101,6 +101,7 @@ export const bn: Dictionary = {
   'Move to space': 'স্পেসে সরান',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'পৃষ্ঠাগুলির মধ্যে সোয়াইপ',
   'Hidden tabs': 'লুকানো ট্যাব',
   'Memory saver': 'মেমরি সেভার',
   Moderate: 'মাঝারি',

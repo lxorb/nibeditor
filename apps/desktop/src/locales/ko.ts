@@ -101,6 +101,7 @@ export const ko: Dictionary = {
   'Move to space': '공간으로 이동',
   Tabs: '탭',
   'Ctrl+Tab in order of use': 'Ctrl+Tab을 사용 순서로',
+  'Swipe between pages': '페이지 간 쓸어넘기기',
   'Hidden tabs': '숨겨진 탭',
   'Memory saver': '메모리 절약',
   Moderate: '보통',

@@ -101,6 +101,7 @@ export const zhHans: Dictionary = {
   'Move to space': '移动到空间',
   Tabs: '标签页',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用顺序',
+  'Swipe between pages': '在页面之间轻扫',
   'Hidden tabs': '隐藏的标签页',
   'Memory saver': '内存节省',
   Moderate: '适中',

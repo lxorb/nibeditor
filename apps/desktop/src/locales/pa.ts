@@ -101,6 +101,7 @@ export const pa: Dictionary = {
   'Move to space': 'ਥਾਂ ਵਿੱਚ ਭੇਜੋ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'ਪੰਨਿਆਂ ਵਿਚਕਾਰ ਸਵਾਈਪ ਕਰੋ',
   'Hidden tabs': 'ਲੁਕੀਆਂ ਟੈਬਾਂ',
   'Memory saver': 'ਮੈਮਰੀ ਸੇਵਰ',
   Moderate: 'ਦਰਮਿਆਨਾ',

@@ -101,6 +101,7 @@ export const ha: Dictionary = {
   'Move to space': 'Matsar zuwa wuri',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'Goge tsakanin shafuka',
   'Hidden tabs': 'Ɓoyayyun shafuka',
   'Memory saver': 'Mai adana ƙwaƙwalwa',
   Moderate: 'Matsakaici',

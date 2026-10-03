@@ -101,6 +101,7 @@ export const vi: Dictionary = {
   'Move to space': 'Chuyển tới không gian',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',
+  'Swipe between pages': 'Vuốt giữa các trang',
   'Hidden tabs': 'Thẻ ẩn',
   'Memory saver': 'Tiết kiệm bộ nhớ',
   Moderate: 'Vừa phải',

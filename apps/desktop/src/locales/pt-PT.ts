@@ -101,6 +101,7 @@ export const ptPT: Dictionary = {
   'Move to space': 'Mover para espaço',
   Tabs: 'Separadores',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de utilização',
+  'Swipe between pages': 'Deslizar entre páginas',
   'Hidden tabs': 'Separadores ocultos',
   'Memory saver': 'Poupança de memória',
   Moderate: 'Moderado',

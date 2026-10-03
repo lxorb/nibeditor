@@ -101,6 +101,7 @@ export const ar: Dictionary = {
   'Move to space': 'نقل إلى مساحة',
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',
+  'Swipe between pages': 'التمرير بين الصفحات',
   'Hidden tabs': 'التبويبات المخفية',
   'Memory saver': 'توفير الذاكرة',
   Moderate: 'معتدل',

@@ -101,6 +101,7 @@ export const jv: Dictionary = {
   'Move to space': 'Pindhah menyang papan',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'Usap ing antarane kaca',
   'Hidden tabs': 'Tab sing didhelikake',
   'Memory saver': 'Penghemat memori',
   Moderate: 'Sedheng',

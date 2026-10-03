@@ -101,6 +101,7 @@ export const am: Dictionary = {
   'Move to space': 'ወደ ሌላ ቦታ አንቀሳቅስ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'በገጾች መካከል ማንሸራተት',
   'Hidden tabs': 'የተደበቁ ትሮች',
   'Memory saver': 'ማህደረ ትውስታ ቆጣቢ',
   Moderate: 'መካከለኛ',

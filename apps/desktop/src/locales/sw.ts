@@ -101,6 +101,7 @@ export const sw: Dictionary = {
   'Move to space': 'Hamisha kwa nafasi',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'Telezesha kati ya kurasa',
   'Hidden tabs': 'Vichupo vilivyofichwa',
   'Memory saver': 'Kiokoa kumbukumbu',
   Moderate: 'Wastani',

@@ -101,6 +101,7 @@ export const kn: Dictionary = {
   'Move to space': 'ಸ್ಪೇಸ್‌ಗೆ ಸರಿಸಿ',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',
+  'Swipe between pages': 'ಪುಟಗಳ ನಡುವೆ ಸ್ವೈಪ್ ಮಾಡಿ',
   'Hidden tabs': 'ಮರೆಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು',
   'Memory saver': 'ಮೆಮೊರಿ ಸೇವರ್',
   Moderate: 'ಮಧ್ಯಮ',
