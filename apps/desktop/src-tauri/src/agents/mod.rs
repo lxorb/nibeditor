@@ -22,83 +22,88 @@
 //! is made on the first request that names an agent verb or carries an agent's token,
 //! and an installation nobody pairs an agent with never makes it (11).
 //!
-//! **One engine for now.** Everything that drives a page is `WebView2`'s; every other
-//! engine answers `unsupported_on_this_engine` from the same verbs (section 12), and the
-//! parts that are only reading and deciding - the policy, the snapshot's shape, the keys
-//! - are built and tested everywhere.
+//! **Two engines drive a page, and the verbs are the same on both.** `WebView2` and nib's
+//! own Chromium both speak the `DevTools` Protocol, and `engines` hands every verb the
+//! page on whichever it is; the system's engines on a Mac and on Linux answer
+//! `unsupported_on_this_engine` from the same verbs (section 12, and `engines` for why).
+//! The parts that are only reading and deciding - the policy, the snapshot's shape, the
+//! keys - are built and tested everywhere.
 
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2's verbs read a grant's spaces")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs reads a grant's spaces")
 )]
 pub mod grants;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "most answers are WebView2's to give")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "most answers are given by an engine with agent tabs")
 )]
 pub mod verbs;
 
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2's verbs ask about a tab")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs asks about a tab")
 )]
 mod approvals;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 reads a page to capture")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs reads a page to capture")
 )]
 mod capture;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 presses keys into a page")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs presses keys into a page")
 )]
 mod keys;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 opens agent tabs")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs opens agent tabs")
 )]
 pub(crate) mod leases;
 mod limits;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 types into a page")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs types into a page")
 )]
 mod log;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has a page to judge")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs has a page to judge")
 )]
 mod policy;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has a tree to write")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs has a tree to write")
 )]
 mod snapshot;
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has a tab to pause on")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs has a tab to pause on")
 )]
 mod stop;
 
+pub mod engines;
 pub mod shell;
 pub mod watch;
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod browser;
-// The one door to the DevTools Protocol on a `WebView2` page; web state uses it too
-// (see web_state/cdp.rs).
-#[cfg(all(windows, not(feature = "cef")))]
+// The one door to the DevTools Protocol on a page of either engine; web state uses it
+// too on `WebView2` (see web_state/cdp.rs).
+#[cfg(any(windows, feature = "cef"))]
 pub(crate) mod cdp;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod memory;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod page;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod quiet;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod reader;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod tabs;
+#[cfg(any(windows, feature = "cef"))]
+mod twin;
 
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
@@ -228,7 +233,7 @@ pub fn logged(
 
 /// One verb, answered.
 fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     tabs::back(caller.id());
     match verb {
         Verb::Status(_) => status(app, caller),
@@ -244,7 +249,7 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
         }
         Verb::Pair(pair) => pair_client(app, caller, &pair),
         Verb::Bye(_) => {
-            #[cfg(all(windows, not(feature = "cef")))]
+            #[cfg(any(windows, feature = "cef"))]
             tabs::bye(caller.id());
             shell::bye(app, caller.id());
             Answer::ok(verbs::Nothing {})
@@ -273,13 +278,13 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
 }
 
 /// The browser's verbs, where the engine can answer them.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
 
 /// Every other engine: no honest way yet (section 12).
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(not(any(windows, feature = "cef")))]
 fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,
@@ -289,8 +294,8 @@ fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer
 
 /// Counts a navigation against the agent's limit, waiting for room.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 navigates an agent's page")
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "only an engine with agent tabs navigates an agent's page")
 )]
 fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     match limits::wait_for_room(
@@ -329,9 +334,9 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
         .grants
         .by_id(app, &grant.id)
         .unwrap_or_else(|| grant.as_ref().clone());
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     let tabs = tabs::of(&grant.id).iter().map(tabs::Tab::listed).collect();
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(any(windows, feature = "cef")))]
     let tabs = Vec::new();
     Answer::ok(verbs::Status {
         paused: stop::stopped_for(&grant.id).then_some(verbs::PausedBy::Stop),
@@ -510,9 +515,9 @@ pub fn agents_test_reader_focus(
     if !test_hooks(&app.config().identifier, cfg!(debug_assertions)) {
         return Err("test hooks are only in debug and probe builds".into());
     }
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     return reader::focus_for_test(&app, &tab);
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(any(windows, feature = "cef")))]
     {
         let _ = (app, tab);
         Err("the reader's tabs are not available on this engine yet".into())
@@ -594,7 +599,7 @@ pub fn agents_ask(
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
     from_the_app(&webview)?;
     let agents = state(&app).grants.all(&app)?;
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     let tabs = agents
         .iter()
         .flat_map(|grant| {
@@ -604,7 +609,7 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
                 .collect::<Vec<_>>()
         })
         .collect();
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(any(windows, feature = "cef")))]
     let tabs = Vec::new();
     let paused = agents
         .iter()
@@ -685,9 +690,9 @@ pub fn agents_adopt(
     tab: String,
 ) -> Result<(), String> {
     from_the_app(&webview)?;
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(any(windows, feature = "cef"))]
     return tabs::adopt(&app, &agent_tab, &tab);
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(any(windows, feature = "cef")))]
     {
         let _ = (app, agent_tab, tab);
         Err("agent tabs are not available on this engine yet".into())

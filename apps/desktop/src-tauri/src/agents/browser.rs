@@ -1,4 +1,6 @@
-//! The browser verbs, answered on `WebView2` (docs/agent-native.md 5.2): which tab, whether
+//! The browser verbs, answered on `WebView2` and nib's own Chromium alike - both speak the
+//! `DevTools` Protocol, and `engines` hands every verb the page whichever it is
+//! (docs/agent-native.md 5.2 and 12): which tab, whether
 //! this agent may act there, what the page says it would be doing, and then the act.
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
@@ -13,9 +15,10 @@ use std::sync::PoisonError;
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use tauri::{AppHandle, Emitter as _, Webview};
+use tauri::{AppHandle, Emitter as _};
 
 use super::approvals::{self, Asking};
+use super::engines::{self, ReaderStore, View};
 use super::grants::{Grant, Scope, SiteRule};
 use super::keys;
 use super::page::{Element, Page};
@@ -131,18 +134,27 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
             }
         }
     }
+    if store == Store::Space && open.space.is_none() {
+        return Answer::error(Code::BadArguments, "store \"space\" needs the space");
+    }
+    // Never the reader's own store, whose pages run the reader's extensions: its twin,
+    // or the agent's own (see `engines`).
+    if store != Store::Agent && engines::reader_store() == ReaderStore::Blocked {
+        store = Store::Agent;
+    }
     let store_name = match store {
         Store::Agent => Some(format!("agent_{}", caller.id())),
         Store::Reader | Store::Space => {
-            if store == Store::Space && open.space.is_none() {
-                return Answer::error(Code::BadArguments, "store \"space\" needs the space");
+            let reader = store_for(app, open.space.as_deref(), &open.url);
+            // The lease is the reader's store's: the twin carries its logins.
+            if let Err(why) =
+                super::leases::lease_needed(reader.as_deref(), &policy::site_of(&host))
+            {
+                return Answer::error(Code::InUseElsewhere, why);
             }
-            store_for(app, open.space.as_deref(), &open.url)
+            Some(engines::twin_of(reader.as_deref()))
         }
     };
-    if let Err(why) = super::leases::lease_needed(store_name.as_deref(), &policy::site_of(&host)) {
-        return Answer::error(Code::InUseElsewhere, why);
-    }
     let most = match caller {
         Caller::Agent(grant) => usize::try_from(grant.limits.tabs).unwrap_or(4),
         Caller::Reader => 4,
@@ -182,7 +194,7 @@ fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> 
 }
 
 /// The tab a verb names, and whether this agent may act there now.
-fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, Webview), Answer> {
+fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), Answer> {
     // An agent's tab the reader was shown is the reader's now, under either id.
     let shown = tabs::shown_as(tab);
     let tab = shown.as_deref().unwrap_or(tab);
@@ -200,6 +212,12 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, Webview)
         || tabs::owner(&format!("{}{tab}", tabs::LABEL)).is_some()
     {
         return Err(not_found());
+    }
+    if !super::reader::HEARS_THE_READER {
+        return Err(Answer::error(
+            Code::UnsupportedOnThisEngine,
+            "the reader's own tabs are not an agent's on this engine: it cannot hear the reader take one back",
+        ));
     }
     if let Caller::Agent(grant) = caller {
         if !matches!(grant.spaces, super::grants::Spaces::All(_))
@@ -223,7 +241,7 @@ fn gate<'a>(
     app: &AppHandle,
     caller: &Caller,
     verb: &str,
-    view: &'a Webview,
+    view: &'a View,
     place: &Place,
     since: u64,
 ) -> Result<Page<'a>, Answer> {
@@ -243,7 +261,7 @@ fn gate<'a>(
             ),
         });
     }
-    let label = view.label().to_string();
+    let label = view.label();
     let own = matches!(place, Place::Own(_));
     // The tab by the id the window knows it under: an agent's tab the reader was shown is
     // the reader's tab now, whichever of its two ids the agent called it by (6.7), and it
@@ -251,7 +269,10 @@ fn gate<'a>(
     let tab = place.id();
     if !own {
         // A reader's tab out of sight may be frozen, and a frozen page answers no call.
-        crate::web_pause::woken(view);
+        #[cfg(all(windows, not(feature = "cef")))]
+        if let Some(webview) = view.webview() {
+            crate::web_pause::woken(webview);
+        }
         super::reader::acting(app, caller.id(), tab, view);
     }
     let _ = app.emit(

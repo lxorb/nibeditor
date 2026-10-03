@@ -205,15 +205,24 @@ pub(crate) fn web_store<R: Runtime>(
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
+    Ok(builder.data_directory(profile(app, store)?))
+}
+
+/// The folder a store's profile is on nib's own Chromium: the user data directory itself
+/// for the store every space shares, which is how the engine is told "the primary
+/// profile", and a profile of its own beside it for a store of its own. An agent's page
+/// is put in a store's profile by this folder too (agents/engines/cef.rs).
+#[cfg(feature = "cef")]
+pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> {
     let root = root(app)?;
-    Ok(builder.data_directory(match store {
+    Ok(match store {
         None => root,
         Some(name) => {
             let dir = root.join(format!("{STORE_PROFILE}{name}"));
             made(&dir)?;
             dir
         }
-    }))
+    })
 }
 
 /// The window the config describes, taken out of it so it is built by our own code

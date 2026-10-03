@@ -26,9 +26,9 @@ use std::time::{Duration, Instant};
 
 use base64::Engine as _;
 use serde_json::{json, Value};
-use tauri::Webview;
 
 use super::cdp::{self, Heard};
+use super::engines::View;
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
@@ -250,8 +250,8 @@ pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
 /// A page an agent is acting on.
 pub struct Page<'a> {
-    /// Its webview.
-    pub view: &'a Webview,
+    /// Its page, on whichever engine.
+    pub view: &'a View,
     /// Its label.
     pub label: String,
     /// Whether it is an agent's own tab rather than the reader's.
@@ -301,10 +301,7 @@ impl Page<'_> {
 
     /// Where the page is.
     pub fn url(&self) -> String {
-        self.view
-            .url()
-            .map(|one| one.to_string())
-            .unwrap_or_default()
+        self.view.url()
     }
 
     /// An element from a ref the agent passed.
