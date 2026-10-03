@@ -550,6 +550,24 @@ and a split. Budget for 5,000 notes and 10,000 tasks on the reference machine: u
 added to the scan, under 4 MB of rows, under 2 ms to update one note's rows after a save.
 `scan-note.perf.test.ts` gains the case.
 
+**As built** (lane 2). The scan's note carries `front` (the lines between the fences, or
+null), `tasks` (`{ line, indent, mark, text, section }`, `text` being everything after
+the box, outside code and front matter, at most 5,000 a note and 2,000 characters a line)
+and `stamp` (`{ size, mtime, ctime }` in milliseconds, off the handle the note was read
+through); `scan-rows.ts` is the browser's twin, and its tests are the crate's cases. The
+rows store is `lib/rows/`: `build.ts` makes a note's rows (`readTask`, `noteValues`,
+`taskHash`; `parent` is the nearest less indented task above under the same heading),
+`store.ts` keeps them per space and file, `write.ts` is the one write path and `inbox.ts`
+the inbox. `rows.svelte.ts` is the app's instance, fetched at the launch order's last turn:
+the open space's rows are the link index's own scan (`links.held()`), the other spaces are
+scanned after it one at a time, every save in any space reaches the rows through
+`links.hearSaves`, and every file operation through `workspace.fileOps`. A change is told
+per file, `{ root, space, path, removed, added }`, and `path` is null when a whole space
+was read, renamed or forgotten. `rows.write(row, { note?, task? })` edits front matter keys
+and task fields through `replaceInNotes`, finding a task's line again by its anchor's hash
+where lines above it moved. An edit made outside nib reaches the rows exactly where it
+reaches the link index, and no other way: the rows add no watcher of their own.
+
 ### 5.4 One engine: rows, queries, views
 
 `@nib/bases` (new package, pure, no DOM) is the one place a question about rows is answered.

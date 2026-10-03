@@ -838,6 +838,14 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/canvas/format.ts', "the app's side of the format"],
     ['/markdown/src/canvas.ts', 'the format itself'],
     ['/markdown/src/canvas-merge.ts', 'the merge two devices settle on'],
+    // The rows of every space, which arrive at the launch order's last turn and read
+    // the link index's scan rather than adding to it: the store, the rows' half of a
+    // note read after a save, and the engine they are parsed with. See docs/tasks.md
+    // 5.3 and rows/rows.svelte.ts.
+    ['/lib/rows/rows.svelte.ts', 'the rows of every space'],
+    ['/lib/rows/store.ts', "the rows' store"],
+    ['/lib/scan-rows.ts', "the rows' half of a note"],
+    ['/bases/src/index.ts', 'the rows engine'],
     // And the pages engine, which a window that opens on a note has no stack of paper
     // to read. The canvas reader under it is not here and cannot be: the link index
     // scans a plane's cards for links and the sync mirror merges two versions of one,
