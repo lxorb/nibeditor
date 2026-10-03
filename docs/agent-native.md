@@ -293,7 +293,7 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
 - **The control after five minutes.** The hidden page's interval came back to 63.8 a
   second after 330 s, with `requestAnimationFrame` still at 0 and the page still hidden.
   Nothing in the design depends on it and it is not explained here.
-- **macOS, Linux and CEF.** Section 12.
+- **macOS, Linux and CEF.** Section 12, measured.
 
 ---
 
@@ -1106,16 +1106,138 @@ is still off, and an agent's token never reaches it.
 
 ## 12. Platforms
 
-| | reading a page | pressing, typing | out of sight, unthrottled | screenshots | status |
+| | an agent's own tab | out of sight, unthrottled | reading, pressing, typing | screenshots | status |
 | --- | --- | --- | --- | --- | --- |
-| **`WebView2`** (Windows) | the DevTools Protocol: `Accessibility.getFullAXTree`, `DOM`, `Runtime` | `Input.dispatchMouseEvent`, `insertText`, `dispatchKeyEvent`: trusted events, inside the page | **measured**: a shown child outside the client area | `Page.captureScreenshot`, 110 ms | the spike; the lanes build on it |
-| **nib's own Chromium** (CEF) | the same protocol, `ExecuteDevToolsMethod` and a message observer | the same | better: a **windowless** browser (Alloy style, off-screen rendering) has no native window at all, so there is nothing that could ever be on screen, with its own frame rate | the same, or the paint callback | after the engine switch; an agent tab can be windowless while the reader's tabs are Chrome style, since CEF mixes styles per browser (`browser.md` 1) |
-| **`WKWebView`** (macOS) | no protocol: a script in a `WKContentWorld` of its own computes the accessibility snapshot (the same logic Playwright's injected `ariaSnapshot` uses) | script-dispatched events, which a page can tell from a person's (`isTrusted` false); trusted input needs `NSEvent`s sent to the view itself, to be measured | a view outside its window's content bounds, with `inactiveSchedulingPolicy` `.none` (macOS 14) so a page WebKit thinks is inactive is not suspended; to be measured, since WebKit still hides such pages ([wry #1246][wry-1246]) | `takeSnapshot`, as the still picture already is | a subset, said as one: some sites refuse untrusted events |
-| **`WebKitGTK`** (Linux) | a script in an isolated world (`webkit_script_world_new`) | script events | an off-screen widget; to be measured | `webkit_web_view_get_snapshot` | the same subset |
+| **`WebView2`** (Windows) | a shown child outside the window's client area | **measured** (3): 60 frames and 100 ticks a second | the `DevTools` Protocol: `Accessibility.getFullAXTree`, `Input.*` - trusted, inside the page | `Page.captureScreenshot`, 95 to 120 ms | every verb |
+| **nib's own Chromium** (CEF) | a **windowless** browser: Alloy style, off-screen rendering, no native window at all | **measured**: 60 and 100, with the reader's window shown, hidden or minimised | the same protocol, through the browser's own agent (`SendDevToolsMessage` and a message observer) | the same, 105 to 155 ms | every verb, on Windows; a Mac's on a runner |
+| **`WKWebView`** (macOS) | none yet | **measured**: a child outside the window's content runs at the window's own rate while the window is on a screen, and stops with it minimised whatever `inactiveSchedulingPolicy` says | scripts in a `WKContentWorld`; an `NSEvent` sent to the view is trusted | `takeSnapshot`, even minimised | `unsupported_on_this_engine` |
+| **`WebKitGTK`** (Linux) | none yet | **measured**: a `GtkOffscreenWindow` runs at full rate; a child outside the window's content gets no frames | scripts in a script world; script events only | `webkit_web_view_get_snapshot` | `unsupported_on_this_engine` |
 
-Windows first, because it is the machine Emil works on and the spike has proven it there.
 Every tool answers `unsupported_on_this_engine` where it has no honest implementation,
 rather than a weaker one pretending.
+
+### 12.1 nib's own Chromium: a page with no window
+
+`src-tauri/src/agents/engines/cef.rs`. An agent's tab is an Alloy-style browser with
+off-screen rendering, which CEF makes without any native window: nothing that could be on a
+screen, in front, or given the keyboard, and nothing the system can call hidden. It paints
+into a buffer nobody reads at a frame rate of its own (60), is told it is shown
+(`WasHidden(false)`), and is laid out at the tab's own size on a screen exactly that size at
+one pixel a CSS pixel, so nothing it asks says anything about the reader's screen. CEF mixes
+styles per browser, so the reader's tabs stay Chrome style beside it. Its `<select>` lists
+are paints of the page too, never windows.
+
+It is driven through the same protocol as `WebView2`'s, sent to the browser's own agent on
+CEF's UI thread and answered through one observer per browser (no port, no socket), so every
+verb in `browser.rs` and `page.rs` runs on it unchanged: `engines::View` is the one handle a
+verb holds a page by, a webview or a windowless browser. Quiet by its own handlers: dialogs
+held for `browser_dialog`, a window the page opens made another windowless agent tab with
+its opener kept, permissions refused, downloads into the agent's folder under the ceiling,
+the file chooser intercepted (and refused should one get past), a sign-in box and a client
+certificate refused and said, no context menu, no sound, and a site the agent may not visit
+stopped before it loads. A reader's tab on this engine is driven through
+`engine/devtools.rs`; nothing tells the crate when it takes the keyboard, so while an agent
+acts in one, which page of the window holds the keyboard is asked ten times a second, and
+the moment it is that tab's is the reader taking it back (Windows; on a Mac and Linux the
+reader's tabs are not an agent's on this engine, since nothing could hear them taken back).
+
+**Only for somebody who uses agents.** Off-screen rendering is a switch CEF reads once, as it
+starts, for the whole process, and its own documentation says it can cost browsers that never
+render off screen. So it is on only in a run that starts with an agent paired
+(`<config>/agents.json` names one); the first agent paired in a run gets its pages from the
+next launch, and `browser_open` tells it so. **Show** (6.7) cannot move a page with no window
+into the pane: the reader's tab loads the address again and the agent acts on there, under
+either id.
+
+Measured 2026-10-03 by `scripts/agent-tab-probe.py --chromium` through `run_probe`, on this
+machine (Snapdragon X Elite, Windows 11, CEF 152 for arm64, a probe build), every check of
+the probe passing, two runs:
+
+| | the windowless agent tab | `WebView2`'s, same probe, same day |
+| --- | --- | --- |
+| `browser_open`, a twin's cookies handed over first | 394 ms (1.6 s the first run, the twin's profile made) | 748 ms |
+| `requestAnimationFrame`, a 10 ms interval, a second | **60.0 to 60.1, 99.1 to 100.1**, visible | 60.0, 100.0 |
+| with the reader's window hidden, minimised | 59.9 and 99.8, 59.9 and 100.1, visible | 60.2 and 99.1, 60.1 and 100.0 |
+| the reader's own tab beside it | 59.8 to 59.9, 99.9 to 100.0 | 60.1, 99.9 |
+| keys through the engine | 145 to 150 ms each, every one trusted, Enter submits | the same |
+| a frame from another origin | its button `f1e8`, pressed in 160 ms | the same |
+| `alert`, `confirm`, `prompt`, `beforeunload` | each held and answered, about 200 ms | the same |
+| a popup | another agent tab, `window.opener` kept, the token posted back | the same |
+| a screenshot, 1280 by 800 | 105 to 155 ms; an element 44 to 57 ms | 95 to 120 ms (one of 30 s, after the window was hidden and shown) |
+| agent pixels in a picture of the whole window | **0** | 0 |
+| the window in front, the app thread's focus | never changed | never changed |
+| engine processes and working set | 9 processes and 705 MB before, 14 and 1557 MB with the tabs | 13 and 963 MB, 27 and 2059 MB |
+
+On runners, `cef.yml` runs `scripts/agent-engines-runner.py` against the engine build of
+Windows (x64) and a Mac (Apple silicon), as the reader's command line: the tab built, its
+rates, a picture, a press and a key. (Linux has no engine build: `docs/browser.md` 10.)
+
+### 12.2 `WKWebView` and `WebKitGTK`: measured, not built
+
+`scripts/webkit-agent-probe` puts the same page out of sight every way each engine offers,
+on a runner (`.github/workflows/agent-engines.yml`), and reads its rates, a picture, a press
+from an isolated world and, on a Mac, a click and a key as `NSEvent`s sent to the view.
+2026-10-03, macOS 26.6 and Ubuntu 24.04 (WebKitGTK under Xvfb); frames and ticks a second:
+
+| the page | shown | the window minimised | behind another window | |
+| --- | --- | --- | --- | --- |
+| Mac: a child in sight (the control) | 60, 76 | 0, 1, hidden | 59, 78 | |
+| Mac: a child outside the window's content | **60, 72** | 0, 1, hidden | 59, 73 | picture 1280 by 800, minimised too |
+| Mac: the same, `inactiveSchedulingPolicy = .none` set after it was built (read back as set) | 60, 73 | 0, 1, hidden | 59, 74 | |
+| Mac: a `WKWebView` made with `.none` from the start, outside the content | 60, 74 | 0, 1, hidden | 59, 74 | |
+| Mac: a borderless window of its own at (-10000, -10000), never key | 0, 1, hidden | 0, 1, hidden | 0, 1, hidden | the system counts it occluded |
+| Mac: a child the engine is told is hidden (the control) | 0, 0.4, hidden | | | |
+| Linux: a child in sight (the control) | 62, 83 | 62, 83 | 62, 83 | |
+| Linux: a child outside the window's content | **0, 83**, visible | 0, 83 | 0, 83 | picture 1280 by 800 |
+| Linux: a `GtkOffscreenWindow` | **62, 83**, visible | 62, 83 | 62, 83 | picture 1280 by 800 |
+| Linux: a child told it is hidden (the control) | 0, 1, hidden | | | |
+
+(The runner's timers top out near 75 to 83 ticks a second for the control as well; Xvfb has
+no window manager, so its "minimised" changes nothing.)
+
+What that says:
+
+- **A Mac page is alive only while the reader's window is on a screen.** Outside the window's
+  content it runs exactly as the window does, but minimising the window stops every page in
+  it, and `inactiveSchedulingPolicy` - which governs a page WebKit thinks is *inactive* - does
+  nothing for one it thinks is *hidden*: set late or from the start, the same zero. A window
+  of the page's own off every screen is occluded and stops at once. So on a Mac an agent's
+  page would be the reader's window's, and pause whenever the reader minimises nib.
+- **On Linux the page belongs in an off-screen window**, where it runs at full rate whatever
+  the reader's window does; as a child placed outside the window it gets no frames.
+- **Isolated worlds work on both**: a script in a `WKContentWorld` or a script world reads and
+  presses the page and cannot see a single global of the page's own. Its press is a
+  script's (`isTrusted` false), which some sites refuse.
+- **On a Mac, `NSEvent`s sent to the view itself are trusted** (`isTrusted` true for the click
+  and the key), outside the window's content and from an off-screen window alike, and the key
+  window did not change. On the runner nib's window was the key window throughout, so that is
+  not yet proof that it holds for a window behind somebody else's.
+- **Pictures work everywhere it was asked**: 1280 by 800, out of sight, and on a Mac with the
+  window minimised.
+
+**Why no verb runs there yet.** Keeping the page alive and driving it is shown possible. What
+is not built is keeping it quiet: on both engines everything a page uses to reach a person is
+the engine's delegate, which wry holds for the app's webviews - on a Mac an `<input
+type=file>` opens a file panel (`runOpenPanel`), a camera request is a system prompt
+(`requestMediaCapture`), `alert` returns at once unseen, a window the page opens is wry's to
+make - and `WebKitGTK`'s `run-file-chooser`, `permission-request`, `script-dialog` and `create`
+signals the same. An agent's page needs a delegate of nib's own on each (as `cef.rs` has
+handlers of its own) before it can be opened without one of those reaching the reader, and
+then the subset: the accessibility snapshot as a script in the isolated world (the logic of
+Playwright's `ariaSnapshot`, Apache-2.0), presses and keys as `NSEvent`s on a Mac and as
+script events on Linux (said in the answer: `isTrusted` false), pictures, navigation, waits,
+`evaluate`; and no console, network log, file upload or drag, which have no road without a
+protocol. Until then each browser verb answers `unsupported_on_this_engine` and says where
+the browser runs.
+
+### 12.3 The reader's logins, never their extensions
+
+6.3: an agent's tab in `reader` or `space` is in that store's twin, on both engines that
+drive pages - a profile of its own with extensions off and the reader's cookies handed in -
+or, with the switch at `blocked`, in the agent's own store. Measured on both by
+`agent-tab-probe.py`: the cookie the reader's tab set is in the twin's page, and the agent's
+own cookie never reaches the reader's tab. `WKWebView` and `WebKitGTK` run no extensions,
+so they would need no twin.
 
 ---
 
