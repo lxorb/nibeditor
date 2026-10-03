@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Row } from '@nib/bases'
 import { readTask } from '@nib/markdown/task-line'
 import { rowsOf } from './build'
@@ -89,6 +89,13 @@ function holding(text: string, open?: string) {
 
 beforeEach(() => {
   sent.length = 0
+  // Ticking writes today's date, so today is held still.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('a property written from a view', () => {
@@ -143,6 +150,26 @@ describe('a task field written from a view', () => {
     expect(changed('# Plan\n- [ ] Something else\n', row, { task: { done: true } })).toBeNull()
   })
 
+  test('ticks the way the engine ticks: the done date, and a recurring task comes back above', () => {
+    const plants = '- [ ] Water the plants 🔁 every 3 days 📅 2026-10-06\n'
+    expect(changed(plants, taskRow(plants, 'Water the plants'), { task: { done: true } })).toBe(
+      '- [ ] Water the plants 🔁 every 3 days 📅 2026-10-09\n' +
+        '- [x] Water the plants 🔁 every 3 days 📅 2026-10-06 ✅ 2026-10-07\n',
+    )
+  })
+
+  test('opens a done task again, its done date taken off', () => {
+    const done = '- [x] Go ✅ 2026-10-01\n'
+    expect(changed(done, taskRow(done, 'Go'), { task: { done: false } })).toBe('- [ ] Go\n')
+  })
+
+  test('a field and the tick in one change', () => {
+    const go = '- [ ] Go\n'
+    expect(changed(go, taskRow(go, 'Go'), { task: { done: true, priority: 1 } })).toBe(
+      '- [x] Go 🔺 ✅ 2026-10-07\n',
+    )
+  })
+
   test('keeps the line break a Windows file wrote', () => {
     const crlf = text.replace(/\n/g, '\r\n')
     const row = taskRow(text, 'Call the bank')
@@ -167,8 +194,8 @@ describe('the write itself', () => {
     expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(
       true,
     )
-    expect(note?.text).toBe('- [x] Go\nwords typed since\n')
-    expect(disk.get(PATH)).toBe('- [x] Go\nwords typed since\n')
+    expect(note?.text).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
+    expect(disk.get(PATH)).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
   })
 
   test('a change the note already says writes nothing', async () => {

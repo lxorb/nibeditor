@@ -124,19 +124,14 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   const task = taskAt(before.slice(from, next === undefined ? before.length : next - 1))
   if (!task) return false
 
-  const at = from + task.box + 1
-  const insert = task.done ? ' ' : 'x'
+  // Ticked the way every box is: the done date, the open sub-tasks, and a recurring
+  // task's next occurrence above it, as one thing to undo. The engine is fetched with
+  // the first tick rather than carried by the first paint.
+  const { tick, todayOf } = await import('@nib/bases')
+  const edits = tick(before, line, todayOf())
+  if (!edits.length) return false
 
-  await replaceInNotes(ws, [
-    {
-      path,
-      before,
-      after: before.slice(0, at) + insert + before.slice(at + 1),
-      edits: [{ from: at, to: at + 1, insert }],
-      back: [{ from: at, to: at + 1, insert: before.slice(at, at + 1) }],
-    },
-  ])
-
+  await replaceInNotes(ws, [changeOf(path, before, edits)])
   return true
 }
 
