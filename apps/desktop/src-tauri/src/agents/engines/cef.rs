@@ -66,11 +66,13 @@ const FRAME_RATE: i32 = 60;
 static WINDOWLESS: OnceLock<bool> = OnceLock::new();
 
 /// Whether a run should start CEF able to make windowless browsers: when an agent is
-/// paired with this installation, which is when `<config>/agents.json` names one. Asked
-/// once by the engine's binary before CEF starts; the answer is this run's.
+/// paired with this installation, which is when `<config>/agents.json` names one, or when
+/// the run is a measurement that says so (`NIB_AGENT_PAGES=1`). Asked once by the
+/// engine's binary before CEF starts; the answer is this run's.
 pub fn windowless_wanted(config: &Path) -> bool {
     *WINDOWLESS.get_or_init(|| {
-        std::fs::read_to_string(config.join("agents.json")).is_ok_and(|text| paired(&text))
+        std::env::var_os("NIB_AGENT_PAGES").is_some_and(|said| said == "1")
+            || std::fs::read_to_string(config.join("agents.json")).is_ok_and(|text| paired(&text))
     })
 }
 
