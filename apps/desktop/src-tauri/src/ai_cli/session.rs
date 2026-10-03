@@ -291,8 +291,7 @@ mod tests {
             goal_line(goal).map(|line| parsed(&line)["message"]["content"][0]["text"].clone())
         };
         let set = GoalSay::Set {
-            objective: "tests
-pass".into(),
+            objective: "tests\npass".into(),
             budget: Some(9),
         };
         assert_eq!(text(&set), Ok(json!("/goal tests pass")));
