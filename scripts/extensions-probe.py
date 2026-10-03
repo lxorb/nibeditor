@@ -238,6 +238,11 @@ def windows_of(pid: int) -> list[int]:
 #: probe runs it; `WebView2` picks its own and writes it into the store's folder.
 CHROMIUM_PORT = 0
 
+#: How long a terminated app is given to be gone. nib's own Chromium takes its browser,
+#: renderers and GPU process down with it, and on a machine busy building that has taken
+#: over thirty seconds (2026-10-03), the process still listed with no program behind it.
+GONE = 120
+
 #: The unpacked folders nib's own Chromium is started with, for `--load`.
 PRELOADED: list[str] = []
 
@@ -360,7 +365,7 @@ def main() -> int:
     try:
         running, app = launch(args.exe, args.identifier)
         running.terminate()
-        running.wait(timeout=30)
+        running.wait(timeout=GONE)
         allow_eval(args.identifier)
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.at)
@@ -503,7 +508,7 @@ def main() -> int:
         if running is not None:
             running.terminate()
             try:
-                running.wait(timeout=30)
+                running.wait(timeout=GONE)
             except subprocess.TimeoutExpired:
                 running.kill()
         shutil.rmtree(root, ignore_errors=True)
