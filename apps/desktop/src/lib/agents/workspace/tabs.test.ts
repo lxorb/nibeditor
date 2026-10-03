@@ -183,6 +183,9 @@ const openTerminal = vi.fn((shell: string, _where: unknown) => {
 })
 vi.mock('../../terminal/open', () => ({ openTerminal }))
 
+const renameTerminal = vi.fn((_tab: unknown, _name: string) => Promise.resolve())
+vi.mock('../../terminal/rename', () => ({ renameTerminal }))
+
 /** Which tabs have a shell running. */
 const running = new Set<string>()
 vi.mock('../../terminal/running', () => ({
@@ -414,9 +417,8 @@ describe('naming and saving', () => {
       result: { id: 'd1' },
     })
     expect(tabs[1]?.note.name).toBe('Ideas')
-    expect(await call('workspace_tabs', { op: 'rename', tab: 't1', name: 'Server' })).toMatchObject(
-      { code: 'by_hand' },
-    )
+    await call('workspace_tabs', { op: 'rename', tab: 't1', name: 'Server' })
+    expect(renameTerminal).toHaveBeenCalledWith(tabs[3], 'Server')
     expect(await call('workspace_tabs', { op: 'rename', tab: 'd1', name: 'a/b' })).toMatchObject({
       code: 'bad_arguments',
     })
