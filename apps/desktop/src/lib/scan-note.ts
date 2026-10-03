@@ -10,6 +10,7 @@ import { COVER_KEY } from '@nib/markdown/cover'
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
+import type { ScannedTask, Stamp } from './scan-rows'
 import { tagsIn } from './search/tags'
 import { readWebFile } from './web-tab/shortcut'
 
@@ -80,6 +81,14 @@ export interface ScannedNote {
    *  surface that draws the banner reads it out of the note. See cover.ts in
    *  @nib/markdown. */
   cover: string | null
+  /** The rows of a space ride on the same pass (docs/tasks.md 5.3): the front matter
+   *  as written, the task lines with the headings above them, and the file's size and
+   *  times. What the crate's scan and the browser's carry for every note; a note read
+   *  again after a save leaves them out, because the rows read that save themselves
+   *  (see scan-rows.ts) and the index has no use for them. */
+  front?: string | null
+  tasks?: ScannedTask[]
+  stamp?: Stamp | null
 }
 
 export interface SpaceLinks {

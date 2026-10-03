@@ -14,12 +14,15 @@
 
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fs::Metadata;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 
 use crate::front_matter;
-use crate::notes::words_of;
+use crate::notes::{words_of, words_stamped};
 use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
 use crate::tags::tags_in;
+use crate::tasks::task_at;
 
 /// How much of a line is worth keeping as the context a result is read in. The
 /// same as a search hit shows, so the two panels read alike.
@@ -40,6 +43,44 @@ const LONGEST_LINK: usize = 1000;
 /// space at once. A note arrives from a share, a room or a folder somebody synced,
 /// so the ceiling is what stops one of them from being the whole index.
 const MOST_LINKS: usize = 5000;
+
+/// How many task lines one note is read for, for the reason `MOST_LINKS` gives: a
+/// note of a hundred thousand boxes is a file somebody generated, and the scan holds
+/// every note of every space at once.
+const MOST_TASKS: usize = 5000;
+
+/// How much of a task line is kept, in characters. A task is a sentence and its
+/// fields; a line longer than this is a paragraph that happens to open with a box,
+/// and the rows keep what a row can show.
+const LONGEST_TASK: usize = 2000;
+
+/// One task line of a note, raw. The rows of a space are built from these in the
+/// window, which reads the fields with the one parser it has (`@nib/bases`), so the
+/// crate and the window cannot disagree about what a date or a priority is. See
+/// docs/tasks.md 5.3. The twin of `ScannedTask` in scan-rows.ts.
+#[derive(Serialize)]
+pub struct Task {
+    /// The line it is on, counting from zero.
+    line: usize,
+    /// How far it is indented, in characters: a sub-task is indented under its task.
+    indent: usize,
+    /// What is between the brackets, as written.
+    mark: char,
+    /// Everything after the box, fields and all, as written.
+    text: String,
+    /// The headings above it, outermost first: the section it is filed under.
+    section: Vec<String>,
+}
+
+/// What a note's file says about itself, for the rows' `file.size`, `file.mtime` and
+/// `file.ctime`. Milliseconds since the epoch; a disk that keeps no creation time
+/// answers the modification time for it.
+#[derive(Serialize, Clone, Copy)]
+pub struct Stamp {
+    size: u64,
+    mtime: u64,
+    ctime: u64,
+}
 
 /// One link out of a note.
 #[derive(Serialize)]
@@ -119,6 +160,16 @@ pub struct Note {
     /// read, because no list asks it; the surface that draws the banner reads it
     /// out of the note itself. See cover.ts in @nib/markdown.
     cover: Option<String>,
+    /// The note's front matter as written, the lines between the fences, or None for
+    /// a note that opens with anything else. Raw, because the window reads properties
+    /// with the parser it already has (properties.ts in @nib/markdown) and the rows
+    /// are built there; see docs/tasks.md 5.3.
+    front: Option<String>,
+    /// Every task line outside code and the front matter, with the headings above it.
+    tasks: Vec<Task>,
+    /// The file's size and times, for a note the scan read; None for a canvas and a
+    /// website, which are not rows.
+    stamp: Option<Stamp>,
 }
 
 /// A whole space's links.
@@ -143,11 +194,13 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         // rest of it still has links worth knowing about. Nor is a file too large to
         // be a note, which this pass, run at every launch, must not read whole; see
         // `MOST_NOTE_BYTES`.
-        let Ok(body) = words_of(&path) else {
+        let Ok((body, meta)) = words_stamped(&path) else {
             continue;
         };
 
-        out.push(note_at(relative_to(&dir, &path), &body));
+        let mut note = note_at(relative_to(&dir, &path), &body);
+        note.stamp = Some(stamp_of(&meta));
+        out.push(note);
     }
 
     // The canvases too, for the icon each one wears. A canvas is a file rather
@@ -197,13 +250,17 @@ fn note_at(relative: String, body: &str) -> Note {
     let stem = file.rsplit_once('.').map_or(file, |(stem, _)| stem);
     let name = stem.to_string();
 
-    let read = prose(body);
-
     // Where the note's metadata sits, found once for every key read out of it - the
     // icon, its colour, the aliases, `url:` and `cover:`: a note that opens with a
     // fence nothing closes is a note whose whole body the search for that block
     // reads, and a key each would have been one of those each.
     let block = front_matter::block(body);
+    // The lines the block takes hold no task and no section: a `# comment` in YAML
+    // is not a heading anybody files tasks under.
+    let words_from = block
+        .as_ref()
+        .map_or(0, |one| body[..one.end].matches('\n').count() + 1);
+    let read = prose(body, words_from);
     let said = |key: &str| {
         block
             .as_ref()
@@ -228,6 +285,15 @@ fn note_at(relative: String, body: &str) -> Note {
         favicon: None,
         address: None,
         cover: said("cover"),
+        // The last line's break is the fence's, not the block's: the twin of
+        // `frontMatter` in @nib/markdown, which takes one off and no more.
+        front: block.as_ref().and_then(|one| {
+            let lines = body.get(one.from..one.close)?;
+            let lines = lines.strip_suffix('\n').unwrap_or(lines);
+            Some(lines.strip_suffix('\r').unwrap_or(lines).to_string())
+        }),
+        tasks: read.tasks,
+        stamp: None,
     }
 }
 
@@ -337,6 +403,10 @@ fn canvas_note(relative: String, body: &str) -> Note {
         address: None,
         // And a plane has no cover: the whole of it is a picture already.
         cover: None,
+        // Nor rows: the words on a card are a drawing's, not a list anybody keeps.
+        front: None,
+        tasks: Vec::new(),
+        stamp: None,
     }
 }
 
@@ -368,6 +438,9 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         favicon: favicon_of(content),
         address: address_of(content),
         cover: None,
+        front: None,
+        tasks: Vec::new(),
+        stamp: None,
     }
 }
 
@@ -462,25 +535,52 @@ fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
 }
 
 /// What one pass down a note's prose takes out of it: the two things a link can
-/// point at inside it, and the links out of it.
+/// point at inside it, the links out of it, and its task lines.
 struct Prose {
     headings: Vec<String>,
     blocks: Vec<String>,
     links: Vec<Link>,
+    tasks: Vec<Task>,
 }
 
 /// That pass. One rather than three, because all three lists are filled line by
 /// line and in the order the lines come: three were three splittings of every note
 /// in a space into lines and three rounds of fence bookkeeping down each of them,
 /// for one answer.
-fn prose(body: &str) -> Prose {
+///
+/// The task lines ride on it too, for the rows of a space (docs/tasks.md 5.3): a
+/// task is read where a heading is, so the section it is under is the heading path
+/// the walk has just come past. `words_from` is the first line after the front
+/// matter; nothing above it is a task or a section.
+fn prose(body: &str, words_from: usize) -> Prose {
     let mut headings = Vec::new();
     let mut blocks = Vec::new();
     let mut links = Vec::new();
+    let mut tasks = Vec::new();
+    // The headings the walk is under, each with its level, outermost first.
+    let mut section: Vec<(usize, String)> = Vec::new();
 
     prose_lines(body, |index, line| {
-        if let Some(text) = heading_of(line) {
+        if let Some((level, text)) = heading_of(line) {
+            if index >= words_from {
+                while section.last().is_some_and(|(above, _)| *above >= level) {
+                    section.pop();
+                }
+                section.push((level, text.clone()));
+            }
             headings.push(text);
+        }
+
+        if index >= words_from && tasks.len() < MOST_TASKS {
+            if let Some(task) = task_at(line) {
+                tasks.push(Task {
+                    line: index,
+                    indent: task.indent,
+                    mark: task.mark,
+                    text: clipped(&line[task.marker..], LONGEST_TASK).to_string(),
+                    section: section.iter().map(|(_, text)| text.clone()).collect(),
+                });
+            }
         }
         if let Some(id) = block_id_of(line) {
             blocks.push(id);
@@ -529,11 +629,35 @@ fn prose(body: &str) -> Prose {
         headings,
         blocks,
         links,
+        tasks,
     }
 }
 
-/// The words of a heading line, or nothing when the line is not one.
-fn heading_of(line: &str) -> Option<String> {
+/// At most `most` characters of a line, cut on a character rather than a byte.
+fn clipped(text: &str, most: usize) -> &str {
+    text.char_indices()
+        .nth(most)
+        .map_or(text, |(at, _)| &text[..at])
+}
+
+/// A file's size and times as the rows keep them.
+fn stamp_of(meta: &Metadata) -> Stamp {
+    let millis = |time: std::io::Result<SystemTime>| {
+        time.ok()
+            .and_then(|one| one.duration_since(UNIX_EPOCH).ok())
+            .map(|one| u64::try_from(one.as_millis()).unwrap_or(u64::MAX))
+    };
+    let mtime = millis(meta.modified()).unwrap_or_default();
+
+    Stamp {
+        size: meta.len(),
+        mtime,
+        ctime: millis(meta.created()).unwrap_or(mtime),
+    }
+}
+
+/// The level and the words of a heading line, or nothing when the line is not one.
+fn heading_of(line: &str) -> Option<(usize, String)> {
     let trimmed = line.trim_start();
     if line.len() - trimmed.len() > 3 {
         return None;
@@ -550,7 +674,7 @@ fn heading_of(line: &str) -> Option<String> {
     }
 
     // A closing run of hashes is a style of writing a heading, not part of it.
-    Some(rest.trim().trim_end_matches('#').trim().to_string())
+    Some((hashes, rest.trim().trim_end_matches('#').trim().to_string()))
 }
 
 /// The name a line ends by giving its block, if it gives one.
@@ -913,18 +1037,18 @@ fn hex(byte: u8) -> Option<u8> {
 mod tests {
     use super::{
         block_id_of, canvas_note, decode, favicon_of, heading_of, note_at, note_tags, prose,
-        shortcut_note, without_code, Link,
+        shortcut_note, stamp_of, without_code, words_stamped, Link, LONGEST_TASK,
     };
 
     /// The links out of one note, which is one of the three lists the pass down it
     /// fills. Named for what it answers, so a case reads as the note it is about.
     fn links_in(body: &str) -> Vec<Link> {
-        prose(body).links
+        prose(body, 0).links
     }
 
     /// The headings in one note, off the same pass.
     fn headings_in(body: &str) -> Vec<String> {
-        prose(body).headings
+        prose(body, 0).headings
     }
 
     /// One note as the index sees it, which is everything the scan takes out of
@@ -1230,7 +1354,7 @@ mod tests {
     #[test]
     fn what_is_past_the_ceiling_is_the_links_and_nothing_else() {
         let body = format!("{}\n## Later\n", "[[A]] ".repeat(6000));
-        let read = prose(&body);
+        let read = prose(&body, 0);
 
         assert_eq!(read.links.len(), super::MOST_LINKS);
         assert_eq!(read.headings, vec!["Later"]);
@@ -1255,7 +1379,7 @@ mod tests {
 
     #[test]
     fn a_heading_may_be_indented_up_to_three_spaces() {
-        assert_eq!(heading_of("   # Three").as_deref(), Some("Three"));
+        assert_eq!(heading_of("   # Three"), Some((1, "Three".to_string())));
         assert_eq!(heading_of("    # Four"), None);
     }
 
@@ -1341,5 +1465,88 @@ mod tests {
         );
 
         assert!(read.tags.is_empty());
+    }
+
+    /// The task lines a note carries for the rows of its space, with the heading
+    /// path each sits under. The twin of the same case in scan-rows.test.ts.
+    #[test]
+    fn a_note_carries_its_task_lines_and_the_sections_above_them() {
+        let read = note_at(
+            "Errands.md".to_string(),
+            "# Home\n- [ ] Water the plants 📅 2026-10-04\n## Kitchen\n  - [/] Descale\n# Bank\n1. [x] Call ✅ 2026-10-01\n",
+        );
+
+        let tasks: Vec<_> = read
+            .tasks
+            .iter()
+            .map(|one| {
+                (
+                    one.line,
+                    one.indent,
+                    one.mark,
+                    one.text.as_str(),
+                    one.section.join(" > "),
+                )
+            })
+            .collect();
+        assert_eq!(
+            tasks,
+            [
+                (
+                    1,
+                    0,
+                    ' ',
+                    "Water the plants 📅 2026-10-04",
+                    "Home".to_string()
+                ),
+                (3, 2, '/', "Descale", "Home > Kitchen".to_string()),
+                (5, 0, 'x', "Call ✅ 2026-10-01", "Bank".to_string()),
+            ]
+        );
+    }
+
+    /// Code and front matter hold no tasks and no sections, and the front matter
+    /// comes back raw, as the lines between the fences.
+    #[test]
+    fn front_matter_is_raw_and_code_holds_no_tasks() {
+        let read = note_at(
+            "Bug.md".to_string(),
+            "---\nstatus: open\n# a comment\n---\n```\n- [ ] not a task\n```\n- [ ] a task\n",
+        );
+
+        assert_eq!(read.front.as_deref(), Some("status: open\n# a comment"));
+        assert_eq!(read.tasks.len(), 1);
+        assert_eq!(read.tasks[0].line, 7);
+        assert!(read.tasks[0].section.is_empty());
+
+        let plain = note_at("Plain.md".to_string(), "- [ ] one\r\n");
+        assert!(plain.front.is_none());
+        assert_eq!(plain.tasks[0].text, "one");
+
+        let crlf = note_at("Win.md".to_string(), "---\r\na: 1\r\n---\r\n");
+        assert_eq!(crlf.front.as_deref(), Some("a: 1"));
+    }
+
+    /// A line that runs on is kept to what a row can show, cut on a character.
+    #[test]
+    fn a_task_line_is_kept_to_a_length() {
+        let long = format!("- [ ] {}", "é".repeat(LONGEST_TASK + 10));
+        let read = note_at("Long.md".to_string(), &long);
+
+        assert_eq!(read.tasks[0].text.chars().count(), LONGEST_TASK);
+    }
+
+    /// A note's size and times off the one open the scan makes.
+    #[test]
+    fn a_stamp_says_the_size_and_the_times() {
+        let path = std::env::temp_dir().join(format!("nib-stamp-{}.md", std::process::id()));
+        std::fs::write(&path, "- [ ] a").expect("written");
+        let (words, meta) = words_stamped(&path).expect("read");
+        let stamp = stamp_of(&meta);
+        std::fs::remove_file(&path).expect("removed");
+
+        assert_eq!(words, "- [ ] a");
+        assert_eq!(stamp.size, 7);
+        assert!(stamp.mtime > 0 && stamp.ctime > 0);
     }
 }
