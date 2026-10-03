@@ -120,6 +120,21 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 /** jsdom plays no animations, so no layer of a test's is ever on its way in or out. */
 Element.prototype.getAnimations = () => []
 
+/** And no Web Animations API, which a tab's hover card arrives and leaves through. How it
+ *  moves is paint. */
+Element.prototype.animate = () =>
+  ({
+    cancel: () => undefined,
+    finished: Promise.resolve(),
+    // Over as soon as it is asked how it ends, so a card on its way out leaves the document.
+    set onfinish(done: (() => void) | null) {
+      queueMicrotask(() => done?.())
+    },
+  }) as unknown as Animation
+
+/** jsdom has no `CSS` namespace; the card finds the pane it hangs over by `CSS.escape`. */
+Object.defineProperty(globalThis, 'CSS', { value: { escape: (text: string) => text } })
+
 /** What the hit test finds over the hole, or null for a pane with nothing over it.
  *
  *  A layer of the app's that has closed is still in the document while it plays its
@@ -136,6 +151,7 @@ const { overlays } = await import('../../src/lib/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
+const { hovering } = await import('../../src/lib/tab-strip/hover-card.svelte')
 const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
 
 // What the pages store fetches the first time it is asked for something, loaded before
@@ -173,6 +189,9 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // A hover card left up by a test that failed half way puts nothing over the next one.
+  hovering.hush()
+  for (const pane of document.querySelectorAll('body > [data-pane]')) pane.remove()
   target.remove()
   vi.useRealTimers()
 })
@@ -345,6 +364,67 @@ test('a menu over the page is cut out of it, and the page stays', async () => {
   const back = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(back?.args).toMatchObject({ visible: true, cut: null })
 
+  void unmount(app)
+})
+
+/** Emil, 2026-10-03, a picture of a hovered tab: under the strip, where the page should
+ *  have been, black. His build hid every page under a tab's hover card behind its still,
+ *  and a page with no still left the pane empty for as long as the card was up. On an
+ *  engine that cuts, the card is cut out of the page and nothing else of it changes:
+ *  the page is never hidden, never all cut away, and never waits on a photograph. */
+async function hoverOver(tab: import('../../src/lib/workspace.svelte').Tab) {
+  // The pane the page is in, under where the card hangs.
+  const pane = document.createElement('div')
+  pane.setAttribute('data-pane', tab.paneId)
+  pane.setAttribute('data-box', JSON.stringify({ x: 0, y: 0, width: 800, height: 600 }))
+  document.body.append(pane)
+  hovering.enter({ tab, box: { left: 100, right: 300, bottom: 38 }, widest: 238, focused: true })
+  await frames()
+  return () => hovering.hush()
+}
+
+test('a tab’s hover card over the page is cut out of it, and the page never blanks', async () => {
+  cuts = true
+  const { tab, app } = await opened('https://example.com/hovered')
+  pages.of(tab.id).shot = null
+
+  asked.length = 0
+  const done = await hoverOver(tab)
+  expect(document.querySelector('.card')).not.toBeNull()
+
+  const placed = asked.filter((one) => one.command === 'web_place')
+  expect(placed.length).toBeGreaterThan(0)
+  expect(placed.every((one) => one.args.visible === true)).toBe(true)
+  expect(placed.some((one) => (one.args.cut as { all: boolean } | null)?.all === true)).toBe(false)
+  expect(placed.at(-1)?.args.cut).toMatchObject({ all: false })
+
+  asked.length = 0
+  done()
+  await frames()
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
+    visible: true,
+    cut: null,
+  })
+  void unmount(app)
+})
+
+/** An engine that cannot cut hides a page behind its still for the card - and a page the
+ *  engine would not photograph is left in front of the card instead, since behind it there
+ *  would be nothing but an empty pane. */
+test('a hover card never hides a page there is no picture of', async () => {
+  const { tab, app } = await opened('https://example.com/unpictured')
+  pages.of(tab.id).shot = null
+
+  asked.length = 0
+  const done = await hoverOver(tab)
+
+  expect(asked.map((one) => one.command)).toContain('web_shot')
+  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual(
+    [],
+  )
+
+  done()
+  await frames()
   void unmount(app)
 })
 

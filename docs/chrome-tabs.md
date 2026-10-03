@@ -14,7 +14,8 @@ nib's. Source paths are under `chrome/browser/ui/`.
 | Concave foot where the active tab meets the toolbar | radius 12 (`GetBottomCornerRadius`), outside the tab body | `horizontal_tab_style_views.cc` `GetPath` | `--radius-md` |
 | Active tab fill | the toolbar's colour; the path runs 1 DIP into the toolbar, so no line under it | `tab_style.cc`, `kTabstripToolbarOverlap` | the colour of what is under the strip; the bar's hairline stops under it |
 | Underline on the active tab | none | | none (was a 2 px accent line) |
-| Hover fill | a detached rounded rectangle: top 6 down, 6 + 1 short of the bottom, every corner rounded | `GetPath(kHighlight)` | the same box, `--surface-hover` |
+| Hover fill | a detached rounded rectangle: top 6 down, 6 + 1 short of the bottom, every corner rounded, in the header's hover tone (`kColorSysStateHeaderHover`, a tone past the frame) | `GetPath(kHighlight)`, `material_tab_strip_color_mixer.cc` | the same box, 5 from the top and from the bar, in `--tab-hover`: the ink lifted 8% off the frame, which the plus and the steps light in too |
+| Contents | centred in the hover's box: the strip's padding above and below (`GetContentsInsets`), not the active body's middle | `tab_style.cc` | `.pick` padded `--tab-top` above and below, so the middle of the strip, level with the bar's own buttons |
 | Hover in / out | 200 ms, ease-out in, ease-in out | `glow_hover_controller.cc` | `--dur-fast` |
 | Separator | 2 x 16, 2 margin either side, trailing edge of a tab | `tab_style.cc` | 1 x 16 |
 | Separator hides | next to a tab with a fill: active, selected, hovered; faded with the hover | `GetSeparatorOpacity` | active, hovered, picked, dragged |

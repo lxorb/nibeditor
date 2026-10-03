@@ -76,7 +76,7 @@
   .field {
     position: absolute;
     top: var(--tab-top, 5px);
-    bottom: 0;
+    bottom: var(--tab-top, 5px);
     inset-inline: calc(3px + 8px + var(--icon-md) + 6px) calc(3px + 8px + 16px + 4px);
     margin: auto 0;
     height: 1.6em;

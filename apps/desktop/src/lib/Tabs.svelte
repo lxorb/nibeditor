@@ -1077,9 +1077,13 @@
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
     --tab-ground: var(--paper, var(--bg));
-    /* The fill a hovered tab gets: the active tab's colour, part of the way - or under
-       glass, whose strip may wear the other scheme's words, a lift of those words. */
-    --tab-hover: var(--glass-tab-hover, color-mix(in srgb, var(--tab-ground) 40%, transparent));
+    /* What the pointer lights on the frame - a tab, the plus, the two steps: a lift of
+       the ink over whatever the frame is, a tone past it, which is Chrome's header
+       hover. It was the paper 40% of the way, Chrome's old rule, and on a frame one
+       step off the page that was a tone between the two - and paler than the open tab
+       whenever that stood on a page's bar. Under glass, whose strip may wear the other
+       scheme's words, a lift of those words. */
+    --tab-hover: var(--glass-tab-hover, color-mix(in srgb, var(--text) 8%, transparent));
     /* Chrome's top corner, and its concave foot at the bottom. */
     --tab-round: var(--radius-md);
     --tab-foot: var(--radius-md);
@@ -1208,12 +1212,14 @@
     );
   }
 
-  /* Hovered, a tab that is not the active one lights as a floating rounded box,
-     short of the bar underneath: Chrome's hover, faded in and out. */
+  /* Hovered, a tab that is not the active one lights as a rounded box with the active
+     one's top and sides, as far short of the bar underneath as it is of the top of the
+     strip, every corner the top corner: Chrome's hover (`kHighlight`), faded in and out.
+     What the tab says sits in the middle of it; see `.pick`. */
   .tab::before {
     content: '';
     position: absolute;
-    inset: var(--tab-top) 3px 6px;
+    inset: var(--tab-top) 3px;
     border-radius: var(--round);
     background: var(--tab-hover);
     opacity: 0;
@@ -1233,7 +1239,7 @@
     content: '';
     position: absolute;
     inset-inline-end: -0.5px;
-    top: calc(50% + var(--tab-top) / 2 - 8px);
+    top: calc(50% - 8px);
     width: 1px;
     height: 16px;
     background: var(--line-strong);
@@ -1269,16 +1275,19 @@
   }
 
   /* The whole height of the tab takes the press, not only its body: a pointer
-     thrown at the top of the window still lands on a tab. The contents sit in the
-     body, eight in from its sides, and a finger dragging along the strip moves the
-     tab under it rather than scrolling. */
+     thrown at the top of the window still lands on a tab. The contents sit eight in
+     from the body's sides and in the middle of the hover's box, which is the middle of
+     the strip - Chrome's, and the line every other button on the bar is centred on. They
+     sat in the middle of the body once, three pixels low in their own hover and under
+     the bar's buttons. A finger dragging along the strip moves the tab under it rather
+     than scrolling. */
   .pick {
     position: absolute;
     inset: 0 3px;
     display: flex;
     align-items: center;
     min-width: 0;
-    padding: var(--tab-top) 8px 0;
+    padding: var(--tab-top) 8px;
     overflow: hidden;
     white-space: nowrap;
     text-align: start;
@@ -1401,7 +1410,7 @@
   .shut {
     position: absolute;
     inset-inline-end: calc(3px + 8px);
-    top: calc(50% + var(--tab-top) / 2 - 8px);
+    top: calc(50% - 8px);
     width: 16px;
     height: 16px;
     display: grid;
@@ -1452,7 +1461,7 @@
   .new {
     position: absolute;
     inset-inline-start: var(--lead);
-    top: calc(50% + var(--tab-top) / 2 - var(--row-height) / 2);
+    top: calc(50% - var(--row-height) / 2);
     width: var(--row-height);
     height: var(--row-height);
     display: grid;
@@ -1463,7 +1472,7 @@
   }
 
   .new:hover {
-    background: var(--surface-hover);
+    background: var(--tab-hover);
     color: var(--text-strong);
   }
 
@@ -1489,7 +1498,6 @@
     align-items: center;
     flex: none;
     padding-inline-start: var(--space-1);
-    padding-top: var(--tab-top, 5px);
   }
 
   .step {
@@ -1502,7 +1510,7 @@
   }
 
   .step:hover:not(:disabled) {
-    background: var(--surface-hover);
+    background: var(--tab-hover);
     color: var(--text-strong);
   }
 
@@ -1533,7 +1541,7 @@
   }
 
   .link:hover {
-    background: var(--surface-hover);
+    background: var(--tab-hover);
     color: var(--text-strong);
   }
 

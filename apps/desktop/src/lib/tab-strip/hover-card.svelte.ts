@@ -216,7 +216,14 @@ class Hovering {
       .filter((one) => overlaps(one.paneId, box))
     if (under.length === 0) return
 
-    if (!pages.cuts) await Promise.all(under.map((one) => pages.shoot(one.id)))
+    if (!pages.cuts) {
+      await Promise.all(under.map((one) => pages.shoot(one.id)))
+      // A page the engine would not photograph stays in front of the card rather than
+      // stepping back for it: behind it there would be an empty pane - the black Emil
+      // saw under a hovered tab on 2026-10-03 - and the card is a glance, where the page
+      // is the thing being read. Chrome never blanks a page for its card either.
+      if (under.some((one) => pages.of(one.id).shot === null)) return
+    }
     this.uncover = overlays.show(() => this.hush())
   }
 }
