@@ -396,6 +396,8 @@ describe('the badge in front of a name', () => {
       'lib/agents/settings/AgentMark.svelte',
       // A program asking to become an agent, as the Share sheet shows a person.
       'lib/agents/ui/PairingBubble.svelte',
+      // The space a page of another space is from, beside its site in a tab's card.
+      'lib/tab-strip/TabCard.svelte',
       // Another of the person's computers asking for the web logins, the same way.
       'lib/web-tab/WebApprove.svelte',
     ])
@@ -419,6 +421,8 @@ describe('the badge in front of a name', () => {
       'lib/SpaceSwitcher.svelte',
       // Save's places, which are the Move sheet's; see save-place/places.ts.
       'lib/save-place/SavePlace.svelte',
+      // A tab's card, for a page of another space; see tab-strip/card.ts.
+      'lib/tab-strip/TabCard.svelte',
     ])
   })
 })
