@@ -202,6 +202,9 @@ impl Link {
     /// The kept token proved, or the reader asked until they answer. Answers whether the
     /// client is paired; every other end is settled here.
     fn pair(&self, dir: &Path, endpoint: &Endpoint) -> bool {
+        if let Some(token) = handed() {
+            return self.prove_handed(endpoint, token);
+        }
         loop {
             if let Some(kept) = pairing::kept(dir, &self.client) {
                 match grant_of(endpoint, &kept.token) {
@@ -264,6 +267,25 @@ impl Link {
                     return self.ended(Standing::Unreachable(message))
                 }
             }
+        }
+    }
+
+    /// A token the app handed this run (see `handed`), proved and never written down: a
+    /// no is final, since nobody can be asked on the app's own agent's behalf.
+    fn prove_handed(&self, endpoint: &Endpoint, token: String) -> bool {
+        match grant_of(endpoint, &token) {
+            Ok(grant) => {
+                self.change(|held| {
+                    held.kept = Some(Kept {
+                        agent: grant.id.clone(),
+                        token,
+                    });
+                    held.grant = Some(grant);
+                });
+                true
+            }
+            Err(Refusal::Unknown) => self.ended(Standing::Removed),
+            Err(Refusal::Unreachable(why)) => self.ended(Standing::Unreachable(why)),
         }
     }
 
@@ -366,7 +388,7 @@ impl Link {
 
     /// The reader removed this agent: its token is forgotten, and its tools go.
     fn removed(&self) {
-        if let Some(dir) = &self.dir {
+        if let (Some(dir), None) = (&self.dir, handed()) {
             pairing::forget(dir, &self.client);
         }
         self.change(|held| {
@@ -443,6 +465,17 @@ impl Link {
             Standing::Paired => format!("{name} is paired with nib."),
         }
     }
+}
+
+/// The token the app itself handed this run, when it started the client: the AI
+/// sidebar's Claude Code or Codex, whose only tool is `nib mcp` under the sidebar's own
+/// grant (`src/ai_cli.rs`). It comes in the environment, never on a command line, and it
+/// stands in for pairing: the client's own kept file, which is the reader's pairing of
+/// their own Claude Code, is neither read nor written nor forgotten.
+fn handed() -> Option<String> {
+    std::env::var("NIB_MCP_TOKEN")
+        .ok()
+        .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
 
 /// A token proved: the grant it belongs to, or why not.

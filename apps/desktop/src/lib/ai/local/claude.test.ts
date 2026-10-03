@@ -96,3 +96,50 @@ describe('a failure', () => {
     ).toBe('error_during_execution')
   })
 })
+
+describe('a session turn', () => {
+  test('thinks, calls nib’s tools by their own names and hears their answers', () => {
+    const read = claudeReader()
+    expect(
+      read(
+        '{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Hmm."}}}',
+      ).thinking,
+    ).toBe('Hmm.')
+    expect(
+      read(
+        '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"u1","name":"mcp__nib__read_note","input":{"path":"Herons.md"}}]}}',
+      ).tool,
+    ).toEqual({ id: 'u1', name: 'read_note', args: { path: 'Herons.md' } })
+    expect(
+      read(
+        '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"u1","content":[{"type":"text","text":"Herons wade."}]}]}}',
+      ).tool,
+    ).toEqual({ id: 'u1', name: '', done: { text: 'Herons wade.', error: false } })
+  })
+
+  test('counts the request, and learns the window from the result', () => {
+    const read = claudeReader()
+    expect(
+      read(
+        '{"type":"stream_event","event":{"type":"message_start","message":{"model":"claude-opus-5-5","usage":{"input_tokens":20,"cache_read_input_tokens":500,"cache_creation_input_tokens":10,"output_tokens":1}}}}',
+      ).usage,
+    ).toEqual({ input: 530, cached: 500, output: 1 })
+    expect(
+      read('{"type":"stream_event","event":{"type":"message_delta","usage":{"output_tokens":42}}}')
+        .usage,
+    ).toEqual({ input: 530, cached: 500, output: 42 })
+    const end = read(
+      '{"type":"result","subtype":"success","is_error":false,"modelUsage":{"claude-opus-5-5":{"contextWindow":1000000}}}',
+    )
+    expect(end.ended).toBe('end')
+    expect(end.usage).toEqual({ input: 530, cached: 500, output: 42, window: 1000000 })
+  })
+
+  test('a compaction is said, and a failed turn ends in error', () => {
+    const read = claudeReader()
+    expect(read('{"type":"system","subtype":"compact_boundary"}').compacted).toBe(true)
+    expect(read('{"type":"result","subtype":"error_during_execution","is_error":true}').ended).toBe(
+      'error',
+    )
+  })
+})
