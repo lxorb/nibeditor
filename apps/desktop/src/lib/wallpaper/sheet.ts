@@ -9,7 +9,7 @@ import { theme } from '../theme.svelte'
 import { valueOf } from '../themes/settings'
 import { coloursOf, fieldFloors } from './colours'
 import { type Held, heldDark, heldWallpaper, type Scheme, WALLPAPER_THEME } from './held'
-import { type Dials, wallpaperRule } from './look'
+import { type Dials, picturesRule, wallpaperRule } from './look'
 import { dialsOf, wallpaperSettings } from './settings'
 
 /** Each side's picture being shown while a dial moves faster than it is written down;
@@ -38,6 +38,11 @@ export function wallpaperSheet(): string {
     light: shown.light === undefined ? heldWallpaper() : shown.light,
     dark: shown.dark === undefined ? heldDark() : shown.dark,
   }
-  const rule = wallpaperRule(pictures, dials(), coloursOf(theme.accent), fieldFloors())
+  let rule: string
+  try {
+    rule = wallpaperRule(pictures, dials(), coloursOf(theme.accent), fieldFloors())
+  } catch {
+    rule = picturesRule(pictures)
+  }
   return `${wallpaperCss}\n${rule}`
 }
