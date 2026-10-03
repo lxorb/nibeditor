@@ -114,6 +114,55 @@ it had are drawn, so its prompt lands under them: a window put back with ten ter
 it starts none of them and reads none of their files until one is looked at, which keeps
 the launch what it was.
 
+## Its name and its mark
+
+Emil, 2026-10-03: _"I would like to be able to rename terminal tabs too. Usually, e.g. in VS
+Code, they infer their name intelligently, e.g. based on the Claude session. Maybe even the
+icon?"_
+
+A tab says what runs in it, in VS Code's order (`terminal.integrated.tabs.title`):
+
+1. **a name the reader gave it**, until they clear it;
+2. **a title the program running in it set** (OSC 0 or 2) - Claude Code says its
+   conversation's topic that way, vim the file it is in. The glyph Claude Code turns in front
+   of it every second while it works is left off, so the name stands still;
+3. **the program in front, and the folder**: `node · quaestur`;
+4. at the prompt, **the shell and the folder**: `PowerShell · quaestur`, or the shell alone
+   where no folder is known - which is also what a tab put back by a restart says until it is
+   looked at, since nothing runs in it yet.
+
+A title is a program's and never the shell's. Shells set titles too - Command Prompt its own
+path and the command line, bash `user@host: ~` at every prompt, the console the program's
+path as it starts - and PowerShell never takes a program's title back, which is why Windows
+Terminal's tabs go on saying `✳ Claude Code` long after it has gone. So a title counts once a
+program is known to be in front, and goes when the program does: at the next prompt mark, when
+the shell is found in front again, or when the program blanks it on its way out, as Claude Code
+does. In WSL, whose programs Windows cannot list, a title counts from Enter to the next prompt
+mark. See `lib/terminal/naming.ts`.
+
+**What is in front** is the crate's answer (`pty_program`, `src-tauri/src/terminal/process.rs`):
+on Windows the shell's descendants, walking down through shells to the first that is not one -
+VS Code's reading - with an agent a launcher started taking its place (npm's Codex is Node
+starting `codex.exe`); on a Mac and Linux the pty's foreground group, named by `/proc` or
+`proc_pidpath`. It is asked after Enter, after a title nobody owns yet, and once the output
+rests while a program was in front - at most once a second, never per keystroke, never at a
+prompt.
+
+**Renaming** is Windows Terminal's: a double click on the tab (a terminal is never a preview,
+so the double click is free), F2 on it, or Rename in its menu and the palette put a field over
+the name where it is written. Enter or a click away keeps it, Escape leaves it, and an empty
+name gives the tab back to whatever runs in it. A pinned tab, which shows no name, asks in the
+question sheet instead. The name is in the tab's words (`name` in `lib/terminal/spec.ts`), so a
+restart, Reopen closed tab and Move to space carry it; Open another and a split start a fresh,
+unnamed terminal. See `lib/terminal/rename.ts` and `lib/tab-strip/TabNameField.svelte`.
+
+**The mark** is the program in front where it has one of its own - Claude Code, Codex, Node,
+Python, git, SSH, Docker, Vim and Neovim - and the shell's own otherwise: PowerShell's slanted
+prompt, Command Prompt's box, a prompt for bash, zsh, fish and WSL. Lucide's where Lucide has
+the thing, drawn on its grid where it has not, all at a file mark's weight and colour: a strip
+of terminals reads as a strip of tabs, not a row of logos. Fetched with the first terminal in
+the strip (`lib/terminal/TerminalMark.svelte`, `lib/terminal/marks.ts`).
+
 ## Closing
 
 - **A tab closing** asks only when something besides the idle shell is running - VS
@@ -269,8 +318,8 @@ test/weight.test.ts).
   printed to a terminal to put text on the clipboard.
 - **Shell integration** past the folder and the prompt mark: marks by each command, sticky
   scroll, command decorations.
-- **Titles the shell sets.** Command Prompt sets its own path as the title; the tab says
-  the shell's name, as VS Code's does by default.
+- **A colour per tab.** Windows Terminal and VS Code have one; it waits for the remote
+  terminals, whose host is what a colour would say.
 - **Paths as links**, and the screen reader mode.
 - **A shell that survives a restart.** iTerm2 runs every session inside a server of its
   own and VS Code every terminal inside a pty host, so a crash or an upgrade reconnects to
@@ -299,6 +348,8 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
 | `apps/desktop/src/lib/terminal/modes.ts` | what a program left on, switched off where the prompt begins |
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |
+| `apps/desktop/src/lib/terminal/naming.ts` | what a tab is called and what it wears, out of what runs in it |
+| `apps/desktop/src/lib/terminal/rename.ts` | a name of the reader's own, given and given back |
 | `apps/desktop/src/lib/terminal/history.ts`         | the last lines, between runs: how much, when, and a closed tab's                                                                                                                                                                 |
 | `apps/desktop/src-tauri/src/terminal/history.rs`   | where they are kept, a file per terminal, and how many                                                                                                                                                                           |
 | `apps/desktop/src/lib/terminal/shells.svelte.ts`   | the shells found, and the two settings                                                                                                                                                                                           |

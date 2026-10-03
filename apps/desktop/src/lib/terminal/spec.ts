@@ -1,5 +1,5 @@
-/** What a terminal tab is, written down: which shell, the folder it was last in, and the
- *  key its last lines are kept under.
+/** What a terminal tab is, written down: which shell, the folder it was last in, the key
+ *  its last lines are kept under, and the name the reader gave it.
  *
  *  A terminal is a session and not a file, so none of this is ever on disk in a space.
  *  It is the tab's own words, the way a new plane's JSON is: the session keeps the words
@@ -22,6 +22,9 @@ export interface Spec {
   folder: string | null
   /** What the tab's last lines are kept under between runs; made once, with the tab. */
   key: string
+  /** What the reader called it, which every name a program would give it gives way to;
+   *  null while it has none of its own. See naming.ts and rename.ts. */
+  name: string | null
 }
 
 /** A tab's words as a spec, or null for words that are not one. Read rather than
@@ -40,11 +43,15 @@ export function readSpec(text: string): Spec | null {
     shell: value.shell,
     folder: isString(value.folder) && value.folder ? value.folder : null,
     key: isString(value.key) && value.key ? value.key : '',
+    name: isString(value.name) && value.name.trim() ? value.name : null,
   }
 }
 
+/** The words, with no `name` at all for a tab nobody named, so a terminal from before
+ *  names reads the same as one after. */
 export function writeSpec(spec: Spec): string {
-  return JSON.stringify({ shell: spec.shell, folder: spec.folder, key: spec.key })
+  const { shell, folder, key, name } = spec
+  return JSON.stringify(name ? { shell, folder, key, name } : { shell, folder, key })
 }
 
 /** Where a new terminal starts: the folder of the space being worked in, which is where

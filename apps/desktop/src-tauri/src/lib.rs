@@ -338,6 +338,7 @@ macro_rules! desktop_commands {
             terminal::pty_seen,
             terminal::pty_busy,
             terminal::pty_folder,
+            terminal::pty_program,
             terminal::pty_kill,
             terminal::history::terminal_history_read,
             terminal::history::terminal_history_write,

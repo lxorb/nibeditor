@@ -265,6 +265,17 @@ export const spaceSound = latched(() => import('./SpaceSound.svelte'))
 /** Chrome's speaker on a tab playing sound, fetched with the first sound. */
 export const soundMark = held(() => import('./SoundMark.svelte'))
 
+/** What a terminal's tab wears - the program in front, else its shell - fetched with the
+ *  first terminal in the strip; see terminal/TerminalMark.svelte. */
+export const terminalMark = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no terminal in the Even Realities plugin'))
+    : import('./terminal/TerminalMark.svelte'),
+)
+
+/** A tab's name typed where it is written, fetched with the first rename. */
+export const tabNameField = held(() => import('./tab-strip/TabNameField.svelte'))
+
 /** A held note's mark; see sync2/asking.svelte.ts. */
 export const heldMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./sync2/HeldMark.svelte'),

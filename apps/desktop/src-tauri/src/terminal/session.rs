@@ -194,6 +194,12 @@ impl Session {
         process::busy(self.pid, &*self.master)
     }
 
+    /// The program in front of the shell, by name, or None while the shell is; see
+    /// process.rs.
+    pub fn program(&self) -> Option<String> {
+        process::program(self.pid, &*self.master)
+    }
+
     /// Which folder the shell is in, where the system can say; see process.rs.
     pub fn folder(&self) -> Option<String> {
         process::folder(self.pid)

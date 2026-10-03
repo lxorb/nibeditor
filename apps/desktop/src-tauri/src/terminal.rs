@@ -286,6 +286,16 @@ pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
         .with(&owner, &id, Session::busy)
 }
 
+/// What is running in front of the shell, by name, which the tab is named for; nothing
+/// while the shell itself is. See process.rs.
+#[tauri::command(async)]
+pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, String> {
+    let owner = owner(&webview)?;
+    webview
+        .state::<Terminals>()
+        .with(&owner, &id, Session::program)
+}
+
 /// Which folder the shell is in, where the system can say without the shell's help.
 #[tauri::command(async)]
 pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String> {

@@ -59,7 +59,9 @@ const IDLE: [&str; 13] = [
     "git-bash.exe",
 ];
 
-/// Whether anything but a shell runs below `root` in a list of processes.
+/// The programs that start another and are not what anybody would call it by: npm's
+/// Codex is a Node script that starts `codex.exe`. One of these below the program in
+/// front is the one the tab is named for.
 #[cfg_attr(
     not(windows),
     allow(
@@ -67,7 +69,35 @@ const IDLE: [&str; 13] = [
         reason = "only Windows lists processes; the kernel answers elsewhere"
     )
 )]
-pub fn busy_below(root: u32, processes: &[Process]) -> bool {
+const AGENTS: [&str; 2] = ["claude.exe", "codex.exe"];
+
+/// Whether a process is somebody at a prompt rather than something running.
+#[cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        reason = "only Windows lists processes; the kernel answers elsewhere"
+    )
+)]
+fn idle(one: &Process) -> bool {
+    IDLE.contains(&one.name.to_ascii_lowercase().as_str())
+}
+
+/// The first process below `root`, nearest first, that `stop` answers for, walking down
+/// only through the processes `through` lets by.
+#[cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        reason = "only Windows lists processes; the kernel answers elsewhere"
+    )
+)]
+fn first_below(
+    root: u32,
+    processes: &[Process],
+    through: impl Fn(&Process) -> bool,
+    stop: impl Fn(&Process) -> bool,
+) -> Option<&Process> {
     let mut below = vec![root];
     let mut at = 0;
 
@@ -80,14 +110,57 @@ pub fn busy_below(root: u32, processes: &[Process]) -> bool {
             if below.contains(&one.id) {
                 continue;
             }
-            if !IDLE.contains(&one.name.to_ascii_lowercase().as_str()) {
-                return true;
+            if stop(one) {
+                return Some(one);
             }
-            below.push(one.id);
+            if through(one) {
+                below.push(one.id);
+            }
         }
     }
 
-    false
+    None
+}
+
+/// The program in front below `root` in a list of processes: the first that is not a
+/// shell, walking down through shells - VS Code's reading of a Windows terminal - or an
+/// agent that program started. None while only shells run.
+#[cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        reason = "only Windows lists processes; the kernel answers elsewhere"
+    )
+)]
+pub fn front_below(root: u32, processes: &[Process]) -> Option<&Process> {
+    let front = first_below(root, processes, idle, |one| !idle(one))?;
+    let agent = |one: &Process| AGENTS.contains(&one.name.to_ascii_lowercase().as_str());
+    if agent(front) {
+        return Some(front);
+    }
+    Some(first_below(front.id, processes, |_| true, agent).unwrap_or(front))
+}
+
+/// Whether anything but a shell runs below `root` in a list of processes.
+#[cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        reason = "only Windows lists processes; the kernel answers elsewhere"
+    )
+)]
+pub fn busy_below(root: u32, processes: &[Process]) -> bool {
+    first_below(root, processes, idle, |one| !idle(one)).is_some()
+}
+
+/// A program's name as a tab says it: the file's, without Windows' `.exe`.
+fn program_name(file: &str) -> String {
+    let stem = file
+        .len()
+        .checked_sub(4)
+        .filter(|&at| file.is_char_boundary(at) && file[at..].eq_ignore_ascii_case(".exe"))
+        .map_or(file, |at| &file[..at]);
+    stem.to_owned()
 }
 
 /// Whether something besides the shell is running in a terminal.
@@ -104,6 +177,59 @@ pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
         return false;
     };
     i64::from(front) != i64::from(shell)
+}
+
+/// The program in front of the shell, by name, or None while the shell is: what a tab
+/// is named for. See `front_below`.
+#[cfg(windows)]
+pub fn program(shell: Option<u32>, _master: &dyn MasterPty) -> Option<String> {
+    let processes = processes();
+    front_below(shell?, &processes).map(|one| program_name(&one.name))
+}
+
+/// The program in front of the shell, by name: the terminal's foreground group, where
+/// it is somebody else's.
+#[cfg(unix)]
+pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
+    let front = master.process_group_leader()?;
+    if i64::from(front) == i64::from(shell?) {
+        return None;
+    }
+    name_of(u32::try_from(front).ok()?).map(|name| program_name(&name))
+}
+
+/// What a process is called, out of Linux's `/proc`.
+#[cfg(target_os = "linux")]
+fn name_of(pid: u32) -> Option<String> {
+    let name = std::fs::read_to_string(format!("/proc/{pid}/comm")).ok()?;
+    let name = name.trim();
+    (!name.is_empty()).then(|| name.to_owned())
+}
+
+/// What a process is called, out of a Mac's `proc_pidpath`: the last part of the path
+/// of the program it runs.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "proc_pidpath is the kernel's own call and has no safe wrapper"
+)]
+fn name_of(pid: u32) -> Option<String> {
+    let pid = libc::c_int::try_from(pid).ok()?;
+    let mut buffer = vec![0_u8; 4096];
+    let size = u32::try_from(buffer.len()).ok()?;
+
+    // SAFETY: the buffer is as long as the kernel is told, and it writes no more.
+    let written = unsafe { libc::proc_pidpath(pid, buffer.as_mut_ptr().cast(), size) };
+    let written = usize::try_from(written).ok().filter(|&length| length > 0)?;
+
+    let path = String::from_utf8_lossy(&buffer[..written.min(buffer.len())]).into_owned();
+    path.rsplit('/').next().filter(|name| !name.is_empty()).map(str::to_owned)
+}
+
+/// Elsewhere there is no kernel to ask.
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn name_of(_pid: u32) -> Option<String> {
+    None
 }
 
 /// Every process on the machine, from the toolhelp snapshot: the one call Windows has
@@ -256,6 +382,49 @@ mod tests {
             process(23, 22, "node.exe"),
         ];
         assert!(busy_below(20, &listed));
+    }
+
+    #[test]
+    fn the_program_in_front_is_the_first_that_is_not_a_shell() {
+        let listed = [
+            process(20, 10, "pwsh.exe"),
+            process(21, 20, "conhost.exe"),
+            process(22, 20, "cmd.exe"),
+            process(23, 22, "node.exe"),
+            process(24, 23, "esbuild.exe"),
+        ];
+        assert_eq!(front_below(20, &listed).map(|one| one.id), Some(23));
+        assert_eq!(front_below(20, &listed[..3]), None);
+    }
+
+    /// npm's Codex is Node starting `codex.exe`, and Claude Code's `.cmd` is a Command
+    /// Prompt starting `claude.exe`: the tab is named for the agent either way.
+    #[test]
+    fn an_agent_a_launcher_started_is_the_program_in_front() {
+        let codex = [
+            process(20, 10, "pwsh.exe"),
+            process(30, 20, "node.exe"),
+            process(31, 30, "codex.exe"),
+            process(32, 31, "git.exe"),
+        ];
+        assert_eq!(front_below(20, &codex).map(|one| one.id), Some(31));
+
+        let claude = [
+            process(20, 10, "pwsh.exe"),
+            process(40, 20, "cmd.exe"),
+            process(41, 40, "claude.exe"),
+            process(42, 41, "node.exe"),
+        ];
+        assert_eq!(front_below(20, &claude).map(|one| one.id), Some(41));
+    }
+
+    #[test]
+    fn a_program_is_named_without_its_ending() {
+        assert_eq!(program_name("node.exe"), "node");
+        assert_eq!(program_name("Python.EXE"), "Python");
+        assert_eq!(program_name("nvim"), "nvim");
+        assert_eq!(program_name(".exe"), "");
+        assert_eq!(program_name("ä.exe"), "ä");
     }
 
     /// A process that names itself as its own parent - pid 0 on Windows does - is not a

@@ -3462,9 +3462,10 @@ class Workspace {
     this.naming = { path, appending, making: null }
   }
 
-  /** Whether a tab's file has a row in the file list; see tab-strip/ops.ts. */
+  /** Whether a tab's file has a row in the file list, or the tab is a terminal, which is
+   *  renamed where its name is written; see tab-strip/ops.ts. */
   canRenameFromTab(tab: Tab): boolean {
-    return tab.path !== null && this.entryAt(tab.path) !== null
+    return tab.kind === 'terminal' || (tab.path !== null && this.entryAt(tab.path) !== null)
   }
 
   /** A row for something that does not exist yet, waiting for the name that will

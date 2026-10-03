@@ -1,10 +1,11 @@
 /** What a tab's own menu does to a tab beyond closing it: a second tab on the same
- *  thing, the tab carried to another pane, and its file renamed. Here rather than in
+ *  thing, the tab carried to another pane, and its name changed. Here rather than in
  *  the store because none of it is needed before somebody asks, and a tab's menu is
  *  fetched as the launch ends; see `warmDoors`. Whether each can happen is the
  *  store's to answer, since the palette greys its rows on it. */
 
 import { folderNote } from '../folder-notes'
+import { t } from '../i18n.svelte'
 import { folderOf } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
@@ -58,9 +59,16 @@ export function moveToOtherPane(id: string) {
 /** A tab's Rename, and F2 on it: the name field on the file's row in the file list,
  *  with the list brought out and the folders down to it opened. One place a file is
  *  renamed, so the links, a folder that is also a note and a name already taken are
- *  what they are everywhere else. A folder's own note is the folder's row. */
+ *  what they are everywhere else. A folder's own note is the folder's row.
+ *
+ *  A terminal has no row and no file: its name is typed where it is written, in the
+ *  strip, as Windows Terminal's is. See `nameInStrip`. */
 export function renameFromTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
+  if (tab?.kind === 'terminal') {
+    void nameInStrip(tab)
+    return
+  }
   const path = tab?.path
   if (!tab || !path || !workspace.canRenameFromTab(tab)) return
 
@@ -71,4 +79,22 @@ export function renameFromTab(id: string) {
   workspace.showPanel('tree')
   if (folderOf(row) !== workspace.activeSpace?.root) workspace.revealFolder(folderOf(row))
   workspace.startRenaming(row)
+}
+
+/** The field over a terminal's name in the strip, the tab brought to the front so its
+ *  name is on it. A pinned tab is its mark and no name, so it is asked in the question
+ *  sheet instead. See TabNameField.svelte and terminal/rename.ts. */
+async function nameInStrip(tab: Tab) {
+  if (tab.pinned) {
+    const [{ prompt }, { renameTerminal }] = await Promise.all([
+      import('../prompt.svelte'),
+      import('../terminal/rename'),
+    ])
+    const typed = await prompt.ask({ title: t('Rename'), value: tab.shown })
+    if (typed !== null) await renameTerminal(tab, typed)
+    return
+  }
+
+  for (const one of workspace.tabs) one.naming = one === tab
+  workspace.activate(tab.id)
 }

@@ -13,7 +13,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { heldMark, soundMark } from './surfaces.svelte'
+  import { heldMark, soundMark, tabNameField } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -686,8 +686,8 @@
     return () => node.removeEventListener('wheel', turned)
   })
 
-  /** F2 on a tab renames its file, which is the key a file list renames with; see
-   *  `renameFromTab`. */
+  /** F2 on a tab renames it, which is the key a file list renames with: its file, or a
+   *  terminal's own name; see `renameFromTab`. */
   function renameKey(event: KeyboardEvent) {
     if (!shortcuts.pressed('tabs.rename', event) || !(event.target instanceof Element)) return
 
@@ -696,7 +696,16 @@
     if (!tab || !workspace.canRenameFromTab(tab)) return
 
     event.preventDefault()
-    void import('./tab-strip/ops').then((ops) => ops.renameFromTab(tab.id))
+    rename(tab.id)
+  }
+
+  const rename = (id: string) => void import('./tab-strip/ops').then((ops) => ops.renameFromTab(id))
+
+  /** A double click keeps a preview, the way VS Code does it. A terminal is never one,
+   *  so there it renames, as a double click on Windows Terminal's tab does. */
+  function doubled(tab: Tab) {
+    if (tab.kind === 'terminal') rename(tab.id)
+    else workspace.keep(tab.id)
   }
 
   /** Whether a click picks: Ctrl, Cmd on a Mac, or Shift. */
@@ -850,11 +859,11 @@
         <!-- The tab's shape: the rounded body with its feet when it is the one
              being read, nothing on the frame when it is not. -->
         <span class="fill" aria-hidden="true"></span>
-        <!-- A double click keeps a preview, the way VS Code does it. A long press
-             stands in for the right click on a touch screen, and the middle button
-             closes, as it does on every browser's tab. Dragged, it goes along its
-             own strip, into another pane's strip, or against a side of a pane to
-             make one there. -->
+        <!-- A double click keeps a preview, the way VS Code does it, and renames a
+             terminal. A long press stands in for the right click on a touch screen,
+             and the middle button closes, as it does on every browser's tab. Dragged,
+             it goes along its own strip, into another pane's strip, or against a side
+             of a pane to make one there. -->
         <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
@@ -877,7 +886,7 @@
               askPlace(tab.id)
             }
           }}
-          ondblclick={() => workspace.keep(tab.id)}
+          ondblclick={() => doubled(tab)}
           oncontextmenu={(event) => showMenu(event, tab)}
           onauxclick={(event) => {
             if (event.button === 1) closeTab(tab, 'mouse')
@@ -928,7 +937,9 @@
                somebody knows by sight. The name is still what it says to a reader
                who cannot see it, and what the title shows. -->
           {#if !tab.pinned}
-            <span class="label" class:hidden={!parts.title}>{tab.shown}</span>
+            <span class="label" class:hidden={!parts.title} class:naming={tab.naming}
+              >{tab.shown}</span
+            >
           {/if}
           {#if isDraft(tab.note) && !tab.pinned && parts.title}
             <UnsavedDot pressable />
@@ -966,6 +977,10 @@
             </span>
           {/if}
         </button>
+        <!-- The name being typed, over where it is written; see TabNameField.svelte. -->
+        {#if tab.naming && parts.title}
+          {#await tabNameField() then Field}<Field {tab} />{/await}
+        {/if}
         <!-- A pinned tab has no cross: what is kept is not closed by the hand that
              happened to be passing over it. Ctrl+W, the middle button and the row
              in the tab's own menu still close it, which is what Emil asked for and
@@ -1320,6 +1335,11 @@
 
   :global(:root[dir='rtl']) .label {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
+  }
+
+  /* Under the field typing it, holding its place. */
+  .label.naming {
+    visibility: hidden;
   }
 
   /* Italic says the note is only being looked at, and that the next thing

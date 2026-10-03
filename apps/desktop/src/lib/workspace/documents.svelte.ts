@@ -442,6 +442,16 @@ export class Tab {
   page = $state<number | undefined>(undefined)
   zoom = $state<number | undefined>(undefined)
 
+  /** For a terminal: what runs in it now, as its session last looked - the name the
+   *  strip calls it by while nobody has named it, and the program in front, whose mark
+   *  it wears. Never written down: a restart starts a fresh shell with nothing in front.
+   *  See terminal/naming.ts. */
+  running = $state<{ name: string | null; program: string | null } | null>(null)
+
+  /** Whether the tab's name is being typed where it is written, in the strip; see
+   *  tab-strip/ops.ts. */
+  naming = $state(false)
+
   constructor(note: NoteDoc, paneId: string) {
     this.note = $state(note)
     this.paneId = paneId
@@ -468,9 +478,10 @@ export class Tab {
   }
 
   /** What the strip, the tooltip and this tab's own menu call it. See
-   *  NoteDoc.shown: `name` is the file, this is the document. */
+   *  NoteDoc.shown: `name` is the file, this is the document - or, for a terminal,
+   *  what runs in it. */
   get shown(): string {
-    return this.note.shown
+    return this.running?.name ?? this.note.shown
   }
 
   /** The words, as far as the last flush. See NoteDoc above. */

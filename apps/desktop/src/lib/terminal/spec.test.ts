@@ -5,8 +5,15 @@ import { readSpec, reportedFolder, startingFolder, writeSpec } from './spec'
 
 describe('a terminal written down', () => {
   test('reads back as itself', () => {
-    const spec = { shell: 'pwsh', folder: 'C:\\Users\\me\\notes', key: 'k1' }
+    const spec = { shell: 'pwsh', folder: 'C:\\Users\\me\\notes', key: 'k1', name: null }
     expect(readSpec(writeSpec(spec))).toEqual(spec)
+    expect(readSpec(writeSpec({ ...spec, name: 'server' }))).toEqual({ ...spec, name: 'server' })
+  })
+
+  /** A tab nobody named writes what a build before names wrote. */
+  test('with no name where it has none', () => {
+    const words = writeSpec({ shell: 'cmd', folder: null, key: 'k', name: null })
+    expect(JSON.parse(words)).toEqual({ shell: 'cmd', folder: null, key: 'k' })
   })
 
   /** A tab's words come back out of storage, so anything may be there. */
@@ -19,7 +26,9 @@ describe('a terminal written down', () => {
       shell: 'cmd',
       folder: null,
       key: '',
+      name: null,
     })
+    expect(readSpec('{"shell": "cmd", "name": "  "}')?.name).toBeNull()
   })
 })
 

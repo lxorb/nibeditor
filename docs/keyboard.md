@@ -326,7 +326,7 @@ stops nothing, and the app still gets the key.
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
 | Ctrl+Alt+O | the other pane (already there) |
 | Ctrl+Alt+Shift+Right | carry the tab to the other pane, or into a new one beside its own when there is none: split right, taking the tab along rather than a copy. VS Code has it on Ctrl+Alt+Right, which is Split right here |
-| F2, on a tab in the strip | rename its file, on its row in the file list, which comes out for it |
+| F2, on a tab in the strip | rename its file, on its row in the file list, which comes out for it; a terminal is renamed in the strip, where its name is |
 
 The rest of a tab's own menu has no key out of the box and is in the palette and the
 shortcut list so one can be given: close the tabs to the right, close all tabs,

@@ -29,7 +29,7 @@ export async function openTerminal(shellId?: string, where: Where = {}): Promise
   if (!shell) return
 
   const folder = where.folder === undefined ? hereFolder() : where.folder
-  const text = writeSpec({ shell: shell.id, folder, key: identifier() })
+  const text = writeSpec({ shell: shell.id, folder, key: identifier(), name: null })
   workspace.openUnsaved('terminal', text, shellName(shell), where.beside ?? null)
 }
 

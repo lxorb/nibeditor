@@ -70,6 +70,7 @@ vi.mock('@xterm/xterm', () => ({
       typing = listener
     }
     onBinary = () => undefined
+    onTitleChange = () => undefined
     onResize(listener: (size: { cols: number; rows: number }) => void) {
       this.sized = listener
     }

@@ -51,6 +51,7 @@ import {
 import { type Route, routeKey } from './keys'
 import { findColours, monospace, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
+import { Front, terminalName } from './naming'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -79,6 +80,14 @@ const KERNEL_SAYS = ['linux', 'macos']
 /** How long after Enter a shell is asked where it is: long enough for a `cd` to have
  *  happened. See `pty_folder`. */
 const AFTER_ENTER = 500
+
+/** How long after Enter, or a title nobody owns yet, the system is asked what is in
+ *  front: long enough for the program to have started. See `look`. */
+const ASK_AFTER = 300
+
+/** And how often at most, whatever asks: a title said every second, as Claude Code's is
+ *  while it works, is one look a second and never one per title. */
+const ASK_EVERY = 1000
 
 /** Which Windows this is, for xterm.js's ConPTY allowances: the os plugin writes the
  *  version beside the platform, and the build is its third number. */
@@ -157,6 +166,14 @@ class Session {
    *  unnecessary. */
   private marks = false
   private waitingIdle: ReturnType<typeof setTimeout> | undefined
+  /** What is in front of the shell, for the tab's name; made again with each shell. See
+   *  naming.ts. */
+  private front = new Front(false)
+  /** The question of what is in front that is on its way, and when the last was asked. */
+  private asking: ReturnType<typeof setTimeout> | undefined
+  private asked = 0
+  /** Lets go of the watch that names the tab again as its words change; see `named`. */
+  private readonly unwatch: () => void
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
   /** The find bar, when it is up; see TerminalTab.svelte. */
@@ -195,6 +212,7 @@ class Session {
     this.term.attachCustomKeyEventHandler((event) => this.pressed(event))
     this.term.parser.registerOscHandler(7, (data) => this.reported(7, data))
     this.term.parser.registerOscHandler(9, (data) => this.reported(9, data))
+    this.term.onTitleChange((title) => this.titled(title))
     this.searching.onDidChangeResults(({ resultIndex, resultCount }) => {
       this.found = { count: resultCount, at: resultIndex }
     })
@@ -233,12 +251,77 @@ class Session {
       true,
     )
     this.watching.observe(this.host)
+
+    // A rename, a folder the shell said: the name follows the tab's words.
+    this.unwatch = $effect.root(() => {
+      $effect(() => {
+        const spec = this.spec()
+        const shell = this.tab.name
+        untrack(() => this.named(spec, shell))
+      })
+    })
+  }
+
+  /** What the strip calls the tab, and the program it wears, out of what is known now;
+   *  see naming.ts. Nothing for a tab the reader named: their name is its own name. */
+  private named(spec = this.spec(), shell = this.tab.name) {
+    const program = this.front.program
+    const name = spec.name
+      ? null
+      : terminalName({
+          given: null,
+          title: this.front.title,
+          program,
+          shell,
+          folder: spec.folder,
+        })
+
+    const now = this.tab.running
+    if (now?.name !== name || now.program !== program) this.tab.running = { name, program }
+  }
+
+  /** A program's title, which is the tab's name while it runs; see `Front`. */
+  private titled(title: string) {
+    if (this.front.titled(title)) this.askSoon()
+    this.named()
+  }
+
+  /** What is in front of the shell, asked of the system a moment from now, and at most
+   *  once every `ASK_EVERY`; never per keystroke, never while the shell is at its
+   *  prompt, and never for WSL, whose programs Windows cannot list. */
+  private askSoon(after = ASK_AFTER) {
+    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:')) return
+
+    const wait = Math.max(after, this.asked + ASK_EVERY - Date.now())
+    this.asking = setTimeout(() => {
+      this.asking = undefined
+      void this.askFront()
+    }, wait)
+  }
+
+  private async askFront() {
+    const pty = this.pty
+    if (pty === null) return
+
+    this.asked = Date.now()
+    const found = await invoke<unknown>('pty_program', { id: pty }).catch(() => undefined)
+    if (pty !== this.pty || found === undefined) return
+
+    this.front.looked(typeof found === 'string' && found ? found : null)
+    this.named()
   }
 
   /** Where the tab says it is and which shell it runs; the default for words that are
    *  not a terminal's. */
   private spec(): Spec {
-    return readSpec(this.tab.doc) ?? { shell: shells.chosen?.id ?? '', folder: null, key: '' }
+    return (
+      readSpec(this.tab.doc) ?? {
+        shell: shells.chosen?.id ?? '',
+        folder: null,
+        key: '',
+        name: null,
+      }
+    )
   }
 
   /** The tab's words changed to say so, and written down with the rest of the session. */
@@ -369,6 +452,8 @@ class Session {
   end() {
     clearTimeout(this.resting)
     clearTimeout(this.waitingIdle)
+    clearTimeout(this.asking)
+    this.unwatch()
     const place = this.place()
     if (this.drawn || !shells.restoring) {
       dropHistory(place, shells.restoring ? this.snapshot() : null)
@@ -428,6 +513,8 @@ class Session {
     this.pty = id
     this.exited = null
     setPty(this.tab.id, id)
+    this.front = new Front(spec.shell.startsWith('wsl:'))
+    this.named()
 
     const output = new Channel<unknown>()
     output.onmessage = (message) => this.heard(id, message)
@@ -467,7 +554,7 @@ class Session {
     if (!this.fellBack && instead && instead.id !== spec.shell) {
       this.fellBack = true
       this.respec({ ...spec, shell: instead.id })
-      this.tab.name = shellName(instead)
+      if (!spec.name) this.tab.name = shellName(instead)
       void this.start()
       return
     }
@@ -513,6 +600,8 @@ class Session {
     }
 
     this.marks = true
+    this.front.prompted()
+    this.named()
     this.behind = []
     this.term.write(bytes.subarray(0, end), () => {
       const off = tidied(this.left(), pastesItself(this.spec().shell))
@@ -533,6 +622,9 @@ class Session {
    *  cannot see, so a program there would read as the shell. Only the mouse and focus:
    *  the prompt is on the screen by now, and the keys are its line editor's. */
   private async idle() {
+    // A program that was in front may have gone, in a shell that marks no prompts.
+    if (this.front.worthLooking) this.askSoon(0)
+
     const pty = this.pty
     if (this.marks || pty === null || this.spec().shell.startsWith('wsl:')) return
     if (!reporting(this.left())) return
@@ -548,6 +640,8 @@ class Session {
   private exitedWith(code: number) {
     this.pty = null
     setPty(this.tab.id, null)
+    this.front = new Front(false)
+    this.named()
 
     if (code === 0 && workspace.tabs.some((one) => one.id === this.tab.id)) {
       workspace.close(this.tab.id)
@@ -577,9 +671,11 @@ class Session {
     this.outgoing.push({ data, binary })
     void this.send()
 
-    if (!binary && data.includes('\r') && KERNEL_SAYS.includes(platform())) {
-      setTimeout(() => void this.lookWhere(), AFTER_ENTER)
-    }
+    // Enter: whatever was typed runs now, and the shell says where it is.
+    if (binary || !data.includes('\r')) return
+    this.front.entered()
+    this.askSoon()
+    if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)
   }
 
   /** Keystrokes go one call at a time and in order, whatever arrives while a call is in

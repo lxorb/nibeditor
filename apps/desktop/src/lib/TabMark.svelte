@@ -12,9 +12,10 @@
    *  was a row of identical pages. See chosen-icon.ts, which is where the one answer
    *  is, and file-mark.ts for what a kind draws when nothing was chosen.
    *
-   *  What is left here is the three marks a tab has and a row has not. The graph is
-   *  the space's own picture, which the panel that opens it already wears; see
-   *  panel-marks.ts. A website wears the picture its own page found, which is newer
+   *  What is left here is the marks a tab has and a row has not. The graph is the
+   *  space's own picture, which the panel that opens it already wears; see
+   *  panel-marks.ts. A terminal wears the program running in it, or its shell's; see
+   *  terminal/TerminalMark.svelte. A website wears the picture its own page found, which is newer
    *  than anything the file says and is the reason a browser puts the site in this box
    *  rather than the word "web" - and where the page has not found one, the row's own
    *  reading of the file takes over below. While a page is loading the mark turns,
@@ -30,6 +31,7 @@
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from './panel-marks'
+  import { terminalMark } from './surfaces.svelte'
   import { type Page, pages, siteMark } from './web-tab/pages.svelte'
   import { readWebFile } from './web-tab/shortcut'
   import type { Tab } from './workspace.svelte'
@@ -96,6 +98,16 @@
   <span class="mark" aria-hidden="true">
     <img src={found} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
+{:else if tab.kind === 'terminal'}
+  <!-- The program in front, or the shell: see terminal/TerminalMark.svelte. Its kind's
+       drawing until that has arrived, which is the first terminal's own fetch. -->
+  {#await terminalMark()}
+    <FileMark mark="terminal" />
+  {:then Mark}
+    <Mark {tab} />
+  {:catch}
+    <FileMark mark="terminal" />
+  {/await}
 {:else if mark}
   <!-- The file's own mark, drawn by the component the file list draws it with and
        handed the same path: a note that chose a rocket wears the rocket here too, and
