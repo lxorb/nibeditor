@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../keys', () => ({ readKey: () => Promise.resolve('sk-test') }))
 
-const { createApiEngine, MOST_ROUNDS } = await import('./engine')
+const { createApiEngine, engineFor, MOST_ROUNDS, registerLocalEngine } = await import('./engine')
 const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
@@ -382,5 +382,21 @@ describe('compaction', () => {
     expect(asked.messages.map((one) => one.role)).toEqual(['system', 'user', 'user'])
     expect(asked.messages[1]?.content).toContain('A summary of it.')
     expect(asked.messages[2]?.content).toBe('two')
+  })
+})
+
+describe('the registry', () => {
+  test('one API engine a setup, so words steered reach the send they were meant for', async () => {
+    const setup = { provider: () => null }
+    const first = await engineFor('anthropic', setup)
+    expect(await engineFor('compatible', setup)).toBe(first)
+    expect(await engineFor('openai', { provider: () => null })).not.toBe(first)
+  })
+
+  test('a program’s engine is its own, once it has joined', async () => {
+    const setup = { provider: () => null }
+    await expect(engineFor('codex', setup)).rejects.toThrow()
+    registerLocalEngine('codex', () => Promise.resolve(engine))
+    expect(await engineFor('codex', setup)).toBe(engine)
   })
 })

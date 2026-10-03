@@ -42,7 +42,7 @@ import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
 
 /** The API a kind is asked through, or null for a program on this machine. */
-export function apiOf(kind: ProviderKind): Api | null {
+function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'anthropic') return 'anthropic'
   if (kind === 'openai' || kind === 'chatgpt') return 'responses'
   if (kind === 'compatible') return 'completions'
