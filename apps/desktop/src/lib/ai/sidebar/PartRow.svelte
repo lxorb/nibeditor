@@ -182,6 +182,12 @@
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .going .verb {
+      animation: none;
+    }
+  }
+
   .failed .verb {
     color: var(--danger);
   }

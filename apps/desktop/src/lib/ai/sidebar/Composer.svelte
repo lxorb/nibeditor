@@ -11,6 +11,7 @@
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { i18n, t } from '../../i18n.svelte'
+  import Cross from '../../Cross.svelte'
   import { links } from '../../link-index.svelte'
   import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
@@ -445,7 +446,7 @@
         class="drop"
         aria-label={t('Remove')}
         title={t('Remove')}
-        onclick={() => void clearGoal()}>×</button
+        onclick={() => void clearGoal()}><Cross small /></button
       >
     </div>
     {#if reasoning && goal.reason}
@@ -463,7 +464,7 @@
             class="drop"
             aria-label={t('Remove')}
             title={t('Remove')}
-            onclick={() => chat.drop(front.key)}>×</button
+            onclick={() => chat.drop(front.key)}><Cross small /></button
           >
         </span>
       {/if}
@@ -475,7 +476,7 @@
             class="drop"
             aria-label={t('Remove')}
             title={t('Remove')}
-            onclick={() => chat.drop(selectionKey)}>×</button
+            onclick={() => chat.drop(selectionKey)}><Cross small /></button
           >
         </span>
       {/if}
@@ -489,7 +490,12 @@
           transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
         >
           {#if chip.image}
-            <img class="thumb" alt="" src={`data:${chip.image.mime};base64,${chip.image.data}`} />
+            <img
+              class="thumb"
+              alt=""
+              draggable="false"
+              src={`data:${chip.image.mime};base64,${chip.image.data}`}
+            />
           {:else}
             <MentionMark kind={chip.kind} />
           {/if}
@@ -499,7 +505,7 @@
             aria-label={t('Remove')}
             title={t('Remove')}
             onclick={() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip)))}
-            >×</button
+            ><Cross small /></button
           >
         </span>
       {/each}
@@ -701,6 +707,12 @@
     height: 14px;
     border-radius: 2px;
     object-fit: cover;
+  }
+
+  .drop :global(svg) {
+    width: 8px;
+    height: 8px;
+    stroke-width: 1.4;
   }
 
   .drop {

@@ -160,13 +160,21 @@
     color: var(--muted);
   }
 
+  /* A ring rather than a dot: a dot in the accent is a tab saving, and this is a thread
+     at work. */
   .dot {
     flex: none;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
+    border: 1.5px solid var(--accent);
     border-radius: 50%;
-    background: var(--accent);
     animation: breathe calc(var(--dur-slow) * 4) var(--ease-in-out) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot {
+      animation: none;
+    }
   }
 
   @keyframes breathe {

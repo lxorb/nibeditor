@@ -7,6 +7,7 @@
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
   import { fly } from 'svelte/transition'
+  import Cross from '../../Cross.svelte'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { chat } from './chat.svelte'
@@ -55,7 +56,7 @@
           aria-label={t('Remove')}
           onclick={() => chat.unqueue(one.id)}
         >
-          <svg viewBox="0 0 13 13"><path d="M3.5 3.5l6 6M9.5 3.5l-6 6" /></svg>
+          <Cross />
         </button>
       </li>
     {/each}

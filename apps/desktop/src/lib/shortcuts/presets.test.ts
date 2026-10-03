@@ -184,7 +184,14 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     const clashes: string[] = []
 
     const surfaces = registry.SHORTCUTS.filter(
-      (one) => one.contextual && one.scope === 'panel' && !one.id.startsWith('web.'),
+      // The AI panel's field takes its keys only while it has the keyboard and stops
+      // each press it takes, as a web page's keys are the page's: Ctrl+N there is a new
+      // chat and Ctrl+O opens its rows, and the same keys anywhere else are the app's.
+      (one) =>
+        one.contextual &&
+        one.scope === 'panel' &&
+        !one.id.startsWith('web.') &&
+        !one.id.startsWith('ai.'),
     )
     const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
     const shared = new Set(['canvas.duplicate app.deselect-tab'])

@@ -461,6 +461,8 @@ describe('the switch', () => {
       'lib/ShareSheet.svelte',
       // What an agent may do, a switch a scope, in Settings > Agents.
       'lib/agents/settings/AgentDetail.svelte',
+      // Fast, in the AI panel's model popover.
+      'lib/ai/sidebar/ModelPicker.svelte',
       // A host pinned, in Settings > Remote.
       'lib/remote/HostDetail.svelte',
       // An extension on or off, in Settings > General > Browser.
