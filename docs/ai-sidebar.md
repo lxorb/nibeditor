@@ -535,7 +535,10 @@ The sidebar's agent is an agent like any other (`docs/agent-native.md` 9.1): a *
 grant per provider**, named after it ("nib · Claude Code"), listed in Settings > Agents with
 the same scopes, sites, asks and limits, and the same stop. Its default is Emil's default for
 agents (all but `browser.script`, `browser.storage`, `settings`, `terminal`), with
-`browser.reader` on, because the reader is right there.
+`browser.reader` on, because the reader is right there, and `terminal` on with no program on
+its list: "why did the build fail" is a question about the reader's terminal, so it reads one
+(`read_terminal`, under `context`, in every mode) and every command it would run or type into
+one asks first (`ai_agent.rs` `made`; `docs/agent-native.md` 8.9).
 
 The modes are views of that grant, never more than it:
 
