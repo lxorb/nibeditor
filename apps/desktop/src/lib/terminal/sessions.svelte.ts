@@ -82,7 +82,7 @@ const KERNEL_SAYS = ['linux', 'macos']
 const AFTER_ENTER = 500
 
 /** How long after Enter, or a title nobody owns yet, the system is asked what is in
- *  front: long enough for the program to have started. See `look`. */
+ *  front: long enough for the program to have started. See `askSoon`. */
 const ASK_AFTER = 300
 
 /** And how often at most, whatever asks: a title said every second, as Claude Code's is
