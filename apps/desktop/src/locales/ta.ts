@@ -1895,4 +1895,30 @@ export const ta: Dictionary = {
   'Pages, terminals and moves are not undone':
     'பக்கங்கள், டெர்மினல்கள், நகர்த்தல்கள் செயல்தவிர்க்கப்படாது',
   Rewind: 'பின்செல்',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'தேடல் இன்ஜின்',
+  History: 'இதுவரை பார்த்தவை',
+  'Search history': 'தேடல் வரலாறு',
+  'Delete browsing data': 'உலாவிய தரவை நீக்கு',
+  Today: 'இன்று',
+  Yesterday: 'நேற்று',
+  'More from this site': 'இந்தத் தளம் கூடுதலாக வழங்குபவை',
+  'Remove from history': 'வரலாற்றிலிருந்து அகற்று',
+  'Browsing history': 'உலாவல் வரலாறு',
+  'Cookies and other site data': 'குக்கீகள் மற்றும் பிற தளத் தரவு',
+  'Cached images and files': 'தற்காலிகமாகச் சேமிக்கப்பட்ட படங்களும் ஃபைல்களும்',
+  'Time range': 'நேர வரம்பு',
+  'Last 15 minutes': 'கடந்த 15 நிமிடங்கள்',
+  'Last hour': 'கடந்த ஒரு மணிநேரம்',
+  'Last 24 hours': 'கடந்த 24 மணிநேரம்',
+  'Last 7 days': 'கடந்த 7 நாட்கள்',
+  'Last 4 weeks': 'கடந்த 4 வாரங்கள்',
+  'All time': 'இதுவரை அனைத்தும்',
+  'Delete data': 'தரவை நீக்கு',
+  'Delete browsing data…': 'உலாவிய தரவை நீக்கு…',
+  'New private tab': 'புதிய தனிப்பட்ட தாவல்',
+  'All spaces': 'எல்லா ஸ்பேஸ்களும்',
+  'the data could not be deleted': 'தரவை நீக்க முடியவில்லை',
 }

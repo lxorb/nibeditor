@@ -1920,4 +1920,30 @@ export const es: Dictionary = {
   'Pages, terminals and moves are not undone':
     'Las páginas, terminales y movimientos no se deshacen',
   Rewind: 'Rebobinar',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'Buscador',
+  History: 'Historial',
+  'Search history': 'Historial de búsqueda',
+  'Delete browsing data': 'Borrar datos de navegación',
+  Today: 'Hoy',
+  Yesterday: 'Ayer',
+  'More from this site': 'Más entradas de este sitio',
+  'Remove from history': 'Eliminar del historial',
+  'Browsing history': 'Historial de navegación',
+  'Cookies and other site data': 'Cookies y otros datos de sitios',
+  'Cached images and files': 'Archivos e imágenes en caché',
+  'Time range': 'Tiempo',
+  'Last 15 minutes': 'Últimos 15 minutos',
+  'Last hour': 'Última hora',
+  'Last 24 hours': 'Últimas 24 horas',
+  'Last 7 days': 'Últimos 7 días',
+  'Last 4 weeks': 'Últimas 4 semanas',
+  'All time': 'Desde siempre',
+  'Delete data': 'Eliminar datos',
+  'Delete browsing data…': 'Borrar datos de navegación…',
+  'New private tab': 'Nueva pestaña privada',
+  'All spaces': 'Todos los espacios',
+  'the data could not be deleted': 'No se han podido eliminar los datos',
 }

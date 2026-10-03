@@ -36,6 +36,7 @@ function resting(pages: Held): Resting[] {
       notifying: allowed('notifications'),
       edited: page.edited,
       pinned: page.pinned,
+      inPrivate: page.inPrivate,
     }
   })
 }

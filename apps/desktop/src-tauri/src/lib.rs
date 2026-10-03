@@ -143,6 +143,8 @@ mod updates;
 mod uris;
 // Only where there is a cookie store to reach: the system's own engine on Windows and
 // on a Mac.
+#[cfg(desktop)]
+mod web_clear;
 #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
@@ -388,6 +390,7 @@ macro_rules! desktop_commands {
             web_find::web_find_stop,
             web_tabs::web_shot,
             web_tint::web_tint,
+            web_clear::web_clear,
             web_tabs::web_answer,
             web_dialogs::web_dialog_answer,
             downloads::web_downloads,

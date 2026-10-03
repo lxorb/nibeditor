@@ -508,6 +508,13 @@ function webCommands(): Command[] {
       run: () => void import('./web-tab/mute').then((one) => one.muteSite(tab.id, !page.muted)),
     },
     {
+      id: 'web-clear-data',
+      label: t('Delete browsing data'),
+      hint: shortcuts.hint('web.clear-data'),
+      run: () =>
+        void import('./web-tab/clearing-asked.svelte').then((one) => one.clearingAsked.ask(tab.id)),
+    },
+    {
       id: 'web-devtools',
       label: t('Developer tools'),
       hint: shortcuts.hint('web.devtools'),
@@ -1174,6 +1181,23 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.new-window'),
       disabled: !isDesktop,
       run: () => void invoke('new_window').catch(() => undefined),
+    },
+    // A desktop's alone, where a web tab is a page of nib's; see web-tab/private.ts.
+    {
+      id: 'new-private',
+      label: t('New private tab'),
+      hint: shortcuts.hint('app.new-private'),
+      disabled: !isDesktop || viewport.device === 'phone',
+      run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
+    },
+    // Chrome's History, from anywhere: a tab of its own in the space on screen. Named
+    // for what it is, since a note's own history is Version history.
+    {
+      id: 'web-history',
+      label: t('Browsing history'),
+      hint: shortcuts.hint('web.history'),
+      disabled: viewport.device === 'phone',
+      run: () => void import('./web-tab/history-open').then((one) => one.openHistory()),
     },
     {
       id: 'close-window',

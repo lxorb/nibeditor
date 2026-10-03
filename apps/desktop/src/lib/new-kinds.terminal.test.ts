@@ -55,6 +55,7 @@ describe('a terminal, as a kind a new tab can be', () => {
       'note',
       'canvas',
       'web',
+      'private',
       'pages',
       'terminal',
       'remote',

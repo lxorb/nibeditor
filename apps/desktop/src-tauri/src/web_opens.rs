@@ -80,6 +80,11 @@
 //! everything with it and VS Code on the web shows a call's parameters, so a page that
 //! uses it keeps it.
 //!
+//! **Ctrl+H and Ctrl+Shift+Delete, the same way.** Chrome's History and its Delete
+//! browsing data are the page's first in Chrome too - Google Docs replaces on Ctrl+H - and
+//! come back under `nib-ctrl-h` and `nib-ctrl-shift-delete` as the keys they were, which
+//! the bar of the tab answers; see lib/web-tab/bar-keys.ts.
+//!
 //! **And Ctrl+0.** The engine's own Ctrl+0 goes back to the zoom the app last set rather
 //! than to a hundred per cent (see `web_page.rs`), so it asks the same way, under
 //! `nib-actual-size`, and the crate draws the page at a hundred per cent without taking
@@ -115,6 +120,8 @@ const ADDRESS: &str = "nib-address";
 const CTRL_D: &str = "nib-ctrl-d";
 const CTRL_SHIFT_D: &str = "nib-ctrl-shift-d";
 const CTRL_SHIFT_SPACE: &str = "nib-ctrl-shift-space";
+const CTRL_H: &str = "nib-ctrl-h";
+const CTRL_SHIFT_DELETE: &str = "nib-ctrl-shift-delete";
 
 /// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
 const ACTUAL: &str = "nib-actual-size";
@@ -215,8 +222,9 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// the page itself has not already answered. Alt with the main button is the engine's
 /// own download, and the Windows key is not a browser's, so both are left to the engine.
 ///
-/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L, Alt+D and Ctrl+D, and
-/// Ctrl+0 on the row or the number pad, that nothing in the page took ask for nib's
+/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L, Alt+D, Ctrl+D, Ctrl+H,
+/// Ctrl+Shift+Delete, and Ctrl+0 on the row or the number pad, that nothing in the page
+/// took ask for nib's
 /// answer by name, and are taken so the engine does not answer them too. By Windows' key
 /// code, which is what the engine and Chrome read a chord by, so a layout whose letters
 /// are not Latin still has them. Ctrl+Alt types a character on half the keyboards in
@@ -291,6 +299,8 @@ pub const SCRIPT: &str = r"(function () {
     else if (ctrl && (code === 48 || code === 96) && !back) name = 'nib-actual-size'
     else if (ctrl && code === 68) name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'
     else if (ctrl && code === 32 && back) name = 'nib-ctrl-shift-space'
+    else if (ctrl && code === 72 && !back) name = 'nib-ctrl-h'
+    else if (ctrl && code === 46 && back) name = 'nib-ctrl-shift-delete'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
     if (!name) return
@@ -394,6 +404,8 @@ pub fn chord(name: &str) -> Option<Pressed> {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
         CTRL_SHIFT_D => Some(Pressed::with_ctrl("D", "KeyD", true)),
         CTRL_SHIFT_SPACE => Some(Pressed::with_ctrl(" ", "Space", true)),
+        CTRL_H => Some(Pressed::with_ctrl("h", "KeyH", false)),
+        CTRL_SHIFT_DELETE => Some(Pressed::with_ctrl("Delete", "Delete", true)),
         _ => None,
     }
 }
@@ -929,6 +941,32 @@ mod tests {
         assert!(SCRIPT.contains("name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'"));
     }
 
+    /// Chrome's History and Delete browsing data, which a page has first: back as the
+    /// keys they were, the bar's to answer.
+    #[test]
+    fn ctrl_h_and_ctrl_shift_delete_let_go_by_go_back_as_the_keys_they_were() {
+        let history = chord("nib-ctrl-h").map(|one| serde_json::to_value(one).expect("a key"));
+        let history = history.expect("Ctrl+H");
+        assert_eq!(history["key"], "h");
+        assert_eq!(history["code"], "KeyH");
+        assert_eq!(history["ctrl"], true);
+        assert_eq!(history["shift"], false);
+
+        let clear =
+            chord("nib-ctrl-shift-delete").map(|one| serde_json::to_value(one).expect("a key"));
+        let clear = clear.expect("Ctrl+Shift+Delete");
+        assert_eq!(clear["key"], "Delete");
+        assert_eq!(clear["code"], "Delete");
+        assert_eq!(clear["ctrl"], true);
+        assert_eq!(clear["shift"], true);
+
+        assert_eq!(sought("nib-ctrl-h"), None);
+        assert!(chord("nib-ctrl-delete").is_none());
+        assert!(
+            SCRIPT.contains("else if (ctrl && code === 46 && back) name = 'nib-ctrl-shift-delete'")
+        );
+    }
+
     #[test]
     fn ctrl_shift_space_let_go_by_goes_back_as_the_space_switcher() {
         let key =
@@ -963,6 +1001,8 @@ mod tests {
             "'nib-ctrl-shift-d'",
             "'nib-install-extension'",
             "'nib-ctrl-shift-space'",
+            "'nib-ctrl-h'",
+            "'nib-ctrl-shift-delete'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }

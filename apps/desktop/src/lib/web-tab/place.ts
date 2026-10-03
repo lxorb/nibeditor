@@ -98,3 +98,16 @@ export function placeKept(path: string | null, place: Place) {
   // browser with no session does.
   keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(kept)))
 }
+
+/** Forgets every note's place that was on, or had walked through, one of `urls` - or
+ *  every place, for null: Delete browsing data's Browsing history, which a place on a
+ *  page is part of. See clearing.ts. */
+export function placesForgotten(urls: ReadonlySet<string> | null) {
+  const held = all()
+  const left = Object.entries(held).filter(
+    ([, place]) =>
+      urls !== null && !urls.has(place.url) && !(place.trail ?? []).some((one) => urls.has(one)),
+  )
+  if (left.length !== Object.keys(held).length)
+    keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(left)))
+}
