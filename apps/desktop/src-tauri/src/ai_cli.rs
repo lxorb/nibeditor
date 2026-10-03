@@ -298,8 +298,14 @@ mod tests {
     use std::time::Instant;
 
     /// The stand-in for both programs, which Node runs; see scripts/fake-ai-cli.mjs.
+    /// Found upwards from the crate, because this file is compiled by two of them: the
+    /// app's, and the Chromium build's one folder further down (cef/Cargo.toml).
     fn fake_script() -> PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../scripts/fake-ai-cli.mjs")
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .map(|folder| folder.join("scripts").join("fake-ai-cli.mjs"))
+            .find(|script| script.is_file())
+            .expect("scripts/fake-ai-cli.mjs above the crate")
     }
 
     /// Whether Node is here to run it. CI's Rust job sets it up; a machine without it
