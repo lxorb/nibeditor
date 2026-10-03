@@ -99,6 +99,7 @@ describe('the marks a row wears', () => {
     'file',
     'web',
     'terminal',
+    'remote',
   ]
 
   /** And no folder among them: no row in the list is a folder, so there is no
