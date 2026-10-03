@@ -13,6 +13,8 @@
   import EngineRow from './settings/EngineRow.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
   import { systemName } from './settings/engine'
+  import { enginesFor } from './web-tab/engines'
+  import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
@@ -63,6 +65,11 @@
   /** Whether the key field is open over a key that is already set. There is no
    *  editing a key nothing can read, so replacing one is typing a whole new one. */
   let replacingKey = $state(false)
+  /** Custom chosen and no address written for it yet, and whether the last one written
+   *  could not take a search. */
+  let customising = $state(false)
+  let customBad = $state(false)
+
   /** Why the engine row's last try did not work, in its own words; see EngineRow. */
   let engineProblem = $state('')
 
@@ -680,6 +687,45 @@
         </span>
         <EngineRow onproblem={(said: string) => (engineProblem = said)} />
       </div>
+    {/if}
+    <!-- Where a few words typed in the address field go: Chrome's list for the reader's
+         region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
+    <div class="nib-setting setting">
+      <span class="name">{t('Search engine')}</span>
+      <div class="pick">
+        <Select
+          value={customising ? CUSTOM : searchEngine.id}
+          options={[
+            ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
+            { value: CUSTOM, label: t('Custom') },
+          ]}
+          onchange={(value: string) => {
+            customising = value === CUSTOM && !searchEngine.custom
+            searchEngine.choose(value)
+          }}
+          label={t('Search engine')}
+          plain={viewport.touch}
+        />
+      </div>
+    </div>
+    {#if customising || searchEngine.id === CUSTOM}
+      <label class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
+        <span class="name">{t('Address')}</span>
+        <input
+          class="inline"
+          type="url"
+          value={searchEngine.custom}
+          placeholder="https://example.com/search?q=%s"
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          aria-invalid={customBad}
+          onchange={(event) => {
+            customBad = !searchEngine.setCustom(event.currentTarget.value)
+            if (!customBad) customising = false
+          }}
+        />
+      </label>
     {/if}
   </div>
   <!-- The extensions web tabs run, where the engine runs any: Windows, on both of its
@@ -1889,6 +1935,11 @@
 
   .inline::placeholder {
     color: var(--muted);
+  }
+
+  /* An address no search can go to: said in the one colour the app says no in. */
+  .inline[aria-invalid='true'] {
+    border-color: var(--danger);
   }
 
   @media (hover: hover) {
