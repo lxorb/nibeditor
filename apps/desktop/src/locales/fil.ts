@@ -1441,9 +1441,6 @@ export const fil: Dictionary = {
   Record: 'Mag-record',
   Recording: 'Recording',
   'Stop recording': 'Itigil ang pag-record',
-  'Meeting notes': 'Tala ng pulong',
-  Meeting: 'Pulong',
-  'Stop the meeting': 'Tapusin ang pulong',
   Transcribe: 'I-transcribe',
   Transcript: 'Transcript',
   'Transcript ({language})': 'Transcript ({language})',
@@ -1461,14 +1458,6 @@ export const fil: Dictionary = {
     'Masyadong mahaba ang recording na iyon para gawing salita nang minsanan.',
   'That is as much as one recording may hold.': 'Iyon na ang kasya sa isang recording.',
   'Nothing could be heard in that recording.': 'Walang naririnig sa recording na iyon.',
-  'A piece of the transcript is being tried again.':
-    'May bahagi ng transcript na sinusubukan muli.',
-  'The transcript is behind and losing pieces.':
-    'Nahuhuli ang transcript at may nawawalang bahagi.',
-  '{count} pieces of this meeting were lost.': '{count} bahagi ng pulong na ito ang nawala.',
-  'Add an AI provider in settings to summarise.':
-    'Magdagdag ng AI provider sa mga setting para maglagom.',
-  'The summary could not be written.': 'Hindi naisulat ang lagom.',
   // Publishing part two.
   Spreadsheet: 'Spreadsheet',
   'The app’s own': 'Sa app mismo',

@@ -1,24 +1,18 @@
-/** What a recording, a transcript and a summary look like as markdown.
+/** What a recording and its transcript look like as markdown.
  *
- *  All of it pure, and all of it in one file, because the shapes have to agree:
- *  the embed a recording writes at the caret, the transcript a Transcribe row puts
- *  under that embed, the note a meeting starts with, and the summary that lands
- *  above the transcript when the meeting stops. Four writes, one voice.
+ *  All of it pure, and all of it in one file, because the shapes have to agree: the
+ *  embed a recording writes at the caret, and the transcript a Transcribe row puts
+ *  under that embed.
  *
  *  Two decisions worth defending:
  *
- *  1. **A transcript under an embed is a callout; a meeting's transcript is the
- *     note's own body.** They are different things. The first is an annotation in
- *     the middle of somebody's own prose, and a callout is one block with a line
- *     to say whose words are in it - Obsidian folds it, nib folds it, and nothing
- *     of the reader's own writing is now sitting in a paragraph beside a machine's.
- *     The second *is* what the note is for, so it is headings and paragraphs like
- *     any other note, and arrives a piece at a time while somebody is still
- *     talking.
- *  2. **Whatever a model wrote says so, in one quiet line.** The same line in both
- *     places, naming the model rather than "AI": `*Written by whisper*`. It is
- *     italic and it is one line, because the reader came for the words and not for
- *     a disclaimer. */
+ *  1. **A transcript under an embed is a callout.** It is an annotation in the middle
+ *     of somebody's own prose, and a callout is one block with a line to say whose
+ *     words are in it - Obsidian folds it, nib folds it, and nothing of the reader's
+ *     own writing is now sitting in a paragraph beside a machine's.
+ *  2. **Whatever a model wrote says so, in one quiet line.** Naming the model rather
+ *     than "AI": `*Written by whisper*`. It is italic and it is one line, because the
+ *     reader came for the words and not for a disclaimer. */
 
 import { formatWikilink } from '@nib/markdown/links'
 import { t } from '../i18n.svelte'
@@ -107,69 +101,9 @@ function clockOf(at: Date): string {
   return `${hour}${minute}`
 }
 
-/** What a meeting is called: the word and the time it started, so two meetings on
- *  one afternoon are told apart in the file list without either being opened. */
-export function meetingName(at: Date): string {
-  return `${t('Meeting')} ${dayOf(at)} ${clockOf(at)}`
-}
-
-/** And what a note made only to hold a recording is called. The same shape, so the
- *  note and the file beside it read as one thing in the list. */
+/** What a note made only to hold a recording is called: the word and the minute it
+ *  started, the same shape as the file beside it, so the two read as one thing in the
+ *  list. */
 export function recordingNoteName(at: Date): string {
   return `${t('Recording')} ${dayOf(at)} ${clockOf(at)}`
-}
-
-/** The heading the transcript of a meeting stands under. Everything the recorder
- *  writes later is placed by finding this line, so it is written once here and
- *  looked for nowhere else. */
-export function transcriptHeading(language = ''): string {
-  return `## ${heading(language)}`
-}
-
-/** The note a meeting starts with.
- *
- *  The date is there from the first second; the duration cannot be, and is written
- *  into the same block when the recording stops. The transcript heading is last,
- *  because the pieces arrive under it while somebody is still talking and appending
- *  to the end of a note is the one write that cannot land in the middle of a
- *  sentence somebody is typing. */
-export function meetingNote(name: string, at: Date, model: string): string {
-  return [
-    '---',
-    `date: ${dayOf(at)}`,
-    '---',
-    '',
-    `# ${name}`,
-    '',
-    transcriptHeading(),
-    writtenBy(model),
-    '',
-    '',
-  ].join('\n')
-}
-
-/** A piece of a live transcript, as it is appended: its own paragraph.
- *
- *  A paragraph per piece rather than one that grows, because a piece is about
- *  twenty seconds of speech and a paragraph of that size is what the words were
- *  anyway. Whatever the model wrote is passed through as it stands - a model that
- *  labels its speakers `A:` keeps them, one that does not is plain - because
- *  nothing on this path knows who was talking and inventing a speaker would be
- *  worse than not naming one. */
-export function piece(text: string): string {
-  const said = text.trim()
-  return said ? `${said}\n\n` : ''
-}
-
-/** The summary, as it goes above the transcript: whatever the model wrote, under
- *  the one line that says it did.
- *
- *  The model is asked for the two headings and writes them itself; see
- *  services/sync/src/ask/summary.ts. Nothing is parsed out of what it answers - a
- *  summary rewritten by this side to fit a shape is a summary about the shape. */
-export function summaryBlock(text: string, model: string): string {
-  const said = text.trim()
-  if (!said) return ''
-
-  return `${writtenBy(model)}\n\n${said}\n\n`
 }

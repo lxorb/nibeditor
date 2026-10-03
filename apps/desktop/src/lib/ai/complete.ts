@@ -1,8 +1,7 @@
 /** The one place nib asks a model anything.
  *
  *  Every AI surface goes through this: the ```` ```ai ```` block in a note, the four
- *  rewrites on a selection, the Ask panel, a meeting's summary, and whatever comes after
- *  them. One function, so there is one place that knows how a request is made, one place
+ *  rewrites on a selection, the Ask panel, and whatever comes after them. One function, so there is one place that knows how a request is made, one place
  *  a key is read, and one place a failure becomes a sentence somebody can read. Which
  *  provider each of them asks is the store's `providerFor`, the other half of the seam.
  *

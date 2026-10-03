@@ -319,7 +319,6 @@ export function appMenu(context: Context): MenuGroup[] {
           // The microphone, beside the picture: both put something of the reader's own
           // into the note. See recorder/commands.ts.
           'record',
-          'meeting',
           'paragraph.footnote',
           'paragraph.toc',
           'paragraph.front-matter',

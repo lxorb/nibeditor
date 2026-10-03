@@ -961,7 +961,6 @@ The routes, all behind the session guard:
 | `GET /v1/ask/models` | which models this key may choose, kept for a day |
 | `POST /v1/ask` | a question, answered out of the account's own notes |
 | `POST /v1/ask/heard` | a WAV, as words, where the WebView has no recogniser; the account's key where there is one, Workers AI Whisper where there is not |
-| `POST /v1/ask/summary` | a meeting's transcript, as takeaways and open tasks |
 
 `/v1/ask/heard` has a second caller now, and it is not the glasses: the app's own
 recorder sends the pieces of a recording through it, as `?piece=1`. One route because
@@ -973,13 +972,6 @@ two minutes, which is the four-megabyte ceiling in seconds. The answer now carri
 `language` as well as `said`, the tag the turbo model settled on: a transcript in a
 note is headed with it and a spoken command has no use for it. See
 `apps/desktop/src/lib/recorder`.
-
-`/v1/ask/summary` is the sixth route and the same trade as the rest of them: the
-account's OpenAI key is written and never read back, so the only thing that can spend
-it on a meeting is the Worker. It is the *fallback* in the app, though - a reader with
-a provider of their own in the AI pane never reaches it, because that request is made
-by the page with a key on the device; see `apps/desktop/src/lib/recorder/summarise.ts`.
-It counts against the same hourly allowance a question does.
 
 **A guest cannot ask**, and that is not a check in any of them: the session guard
 opens only what `guestMayReach` names, everything account-wide is left out of that

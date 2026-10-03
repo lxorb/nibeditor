@@ -111,14 +111,6 @@ export function wavOf(samples: Float32Array, rate: number): Uint8Array<ArrayBuff
   return bytes
 }
 
-/** Sound the route will take: every channel mixed to one, brought down to 16 kHz,
- *  and written as a WAV. The one function everything that sends audio calls, so
- *  the file path and the live path cannot come to different answers about what the
- *  route is owed. */
-export function spoken(channels: readonly Float32Array[], rate: number): Uint8Array<ArrayBuffer> {
-  return wavOf(resampled(mono(channels), rate, RATE), RATE)
-}
-
 /** How many samples a piece of `seconds` holds at `rate`. */
 function samplesIn(seconds: number, rate: number): number {
   return Math.max(1, Math.round(seconds * rate))

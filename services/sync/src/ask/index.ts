@@ -1,6 +1,6 @@
 /** Everything the glasses' question flow needs, behind the account's session.
  *
- *  Six routes, and the reason they are all here rather than in the plugin is one
+ *  Five routes, and the reason they are all here rather than in the plugin is one
  *  sentence of Emil's about the key: "it stays in the account, but after you set it
  *  you can't read it anymore." A key nothing can read is a key the plugin cannot
  *  send to OpenAI, so the Worker sends it - and once the Worker is making that
@@ -12,7 +12,6 @@
  *    GET    /v1/ask/models   what this key may choose, kept for a day
  *    POST   /v1/ask          a question, answered with the account's own notes
  *    POST   /v1/ask/heard    a WAV, as words; `?piece=1` for one piece of a recording
- *    POST   /v1/ask/summary  a transcript, as takeaways and open tasks
  *
  *  What the plugin sends is a question and nothing else. It holds no key, and
  *  `api.openai.com` is off its manifest's network whitelist: the one origin it may
@@ -32,7 +31,6 @@ import { askAbout, type Effort, EFFORTS } from './asking'
 import { heard, PIECE_SECONDS, shortEnough } from './heard'
 import { forgetKey, keyFor, mayStore, setKey } from './key'
 import { forgetModels, modelsFor } from './models'
-import { MOST_TRANSCRIPT, summarise } from './summary'
 
 /** How long a question may be. A question said out loud in one breath; anything
  *  longer arrived from something other than a person talking. */
@@ -137,8 +135,8 @@ ask.post('/', async (context) => {
  *
  *  Two callers with one shape. The glasses send half a second of somebody saying
  *  "next" and the phone does the same where its WebView has no recogniser of its
- *  own; the recorder sends a piece of something somebody is dictating or a meeting
- *  it is sitting through, in pieces small enough to hold. `?piece=1` says which,
+ *  own; the recorder sends a recording somebody asked to have transcribed, in pieces
+ *  small enough to hold. `?piece=1` says which,
  *  and the only difference it makes is how many seconds are allowed: the model, the
  *  ceiling on the bytes and the account's hourly allowance are the same for both.
  *
@@ -183,44 +181,4 @@ ask.post('/heard', async (context) => {
   // `said` and `language`, and the plugin reads only the first of them: a spoken
   // command has no language to name, and a transcript in a note does.
   return context.json(await heard(context.env, wav, key, like))
-})
-
-/** A transcript, as takeaways and the tasks it left open.
- *
- *  Here rather than in the app for the reason the question flow is here: the key is
- *  here. The account's own model answers, the same one the glasses ask, so an account
- *  chooses a model once and everything that thinks on its behalf uses it. */
-ask.post('/summary', async (context) => {
-  const user = context.get('user')
-  const body = await readBody(context)
-  const text = body.text('text', MOST_TRANSCRIPT)
-  const model = body.text('model', MOST_MODEL)
-  const effort = body.text('effort', 20)
-  if (body.problem) return context.json({ error: body.problem }, 400)
-
-  if (!text?.trim()) return context.json({ error: 'send a transcript' }, 400)
-  if (!model) return context.json({ error: 'choose a model first' }, 400)
-  if (effort !== undefined && !(EFFORTS as readonly string[]).includes(effort)) {
-    return context.json({ error: `effort must be one of ${EFFORTS.join(', ')}` }, 400)
-  }
-
-  const key = await keyFor(context.env, user.id)
-  if (!key) return context.json({ error: 'set an OpenAI key in nibeditor’s settings first' }, 400)
-
-  // The same hourly allowance a question counts against. A summary is one request to
-  // the same endpoint on the same credit, and a second ceiling would be a second
-  // number to keep in step for no reader's benefit.
-  if (!(await mayAsk(context.env, user.id))) {
-    return context.json({ error: 'that is a lot of questions - try again later' }, 429)
-  }
-
-  try {
-    const summary = await summarise(text, { key, model, effort: effort ?? 'low' })
-    return context.json({ summary })
-  } catch (error) {
-    return context.json(
-      { error: error instanceof Error ? error.message : 'the model refused' },
-      502,
-    )
-  }
 })

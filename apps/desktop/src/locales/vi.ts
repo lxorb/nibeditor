@@ -1404,9 +1404,6 @@ export const vi: Dictionary = {
   Record: 'Ghi âm',
   Recording: 'Bản ghi',
   'Stop recording': 'Dừng ghi âm',
-  'Meeting notes': 'Ghi chú cuộc họp',
-  Meeting: 'Cuộc họp',
-  'Stop the meeting': 'Kết thúc cuộc họp',
   Transcribe: 'Gỡ băng',
   Transcript: 'Bản gỡ băng',
   'Transcript ({language})': 'Bản gỡ băng ({language})',
@@ -1424,12 +1421,6 @@ export const vi: Dictionary = {
     'Bản ghi đó quá dài để chuyển thành chữ một lần.',
   'That is as much as one recording may hold.': 'Một bản ghi chỉ chứa được đến vậy.',
   'Nothing could be heard in that recording.': 'Không nghe thấy gì trong bản ghi đó.',
-  'A piece of the transcript is being tried again.': 'Một đoạn bản gỡ băng đang được thử lại.',
-  'The transcript is behind and losing pieces.': 'Bản gỡ băng đang chậm lại và mất đoạn.',
-  '{count} pieces of this meeting were lost.': 'Mất {count} đoạn của cuộc họp này.',
-  'Add an AI provider in settings to summarise.':
-    'Hãy thêm nhà cung cấp AI trong cài đặt để tóm tắt.',
-  'The summary could not be written.': 'Không viết được bản tóm tắt.',
   // Publishing part two.
   Spreadsheet: 'Bảng tính',
   'The app’s own': 'Của chính ứng dụng',

@@ -1433,9 +1433,6 @@ export const ml: Dictionary = {
   Record: 'റെക്കോർഡ് ചെയ്യുക',
   Recording: 'റെക്കോർഡിംഗ്',
   'Stop recording': 'റെക്കോർഡിംഗ് നിർത്തുക',
-  'Meeting notes': 'യോഗക്കുറിപ്പുകൾ',
-  Meeting: 'യോഗം',
-  'Stop the meeting': 'യോഗം അവസാനിപ്പിക്കുക',
   Transcribe: 'എഴുത്താക്കുക',
   Transcript: 'എഴുത്തുരൂപം',
   'Transcript ({language})': 'എഴുത്തുരൂപം ({language})',
@@ -1453,13 +1450,6 @@ export const ml: Dictionary = {
     'ഒറ്റയടിക്ക് വാക്കുകളാക്കാൻ ആ റെക്കോർഡിംഗ് വളരെ നീളമുള്ളതാണ്.',
   'That is as much as one recording may hold.': 'ഒരു റെക്കോർഡിംഗിൽ ഇത്രയേ ഒതുങ്ങും.',
   'Nothing could be heard in that recording.': 'ആ റെക്കോർഡിംഗിൽ ഒന്നും കേട്ടില്ല.',
-  'A piece of the transcript is being tried again.':
-    'എഴുത്തുരൂപത്തിന്റെ ഒരു ഭാഗം വീണ്ടും പരീക്ഷിക്കുന്നു.',
-  'The transcript is behind and losing pieces.': 'എഴുത്തുരൂപം പിന്നിലാണ്, ഭാഗങ്ങൾ നഷ്ടമാകുന്നു.',
-  '{count} pieces of this meeting were lost.': 'ഈ യോഗത്തിന്റെ {count} ഭാഗങ്ങൾ നഷ്ടമായി.',
-  'Add an AI provider in settings to summarise.':
-    'സാരാംശത്തിന് ക്രമീകരണങ്ങളിൽ ഒരു AI ദാതാവിനെ ചേർക്കുക.',
-  'The summary could not be written.': 'സാരാംശം എഴുതാനായില്ല.',
   // Publishing part two.
   Spreadsheet: 'സ്പ്രെഡ്‌ഷീറ്റ്',
   'The app’s own': 'ആപ്പിന്റെ സ്വന്തം',

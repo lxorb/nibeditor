@@ -158,7 +158,7 @@ describe('whether there is anything to ask at all', () => {
 
 /** Before any request has been made, so nothing is remembered yet: which model a server
  *  actually answers with is a thing this module learns, and the name it offers before it
- *  has learned anything is the name a meeting's note is headed with. */
+ *  has learned anything is the name a transcript's callout says wrote it. */
 describe('what the note says wrote it', () => {
   test('is Whisper on the account’s road', () => {
     signedIn()
@@ -238,8 +238,8 @@ describe('a recording with a provider set up', () => {
     expect((await heardPiece(wav)).text).toBe('heard')
     expect(sent.map((one) => one.model)).toEqual(['gpt-4o-mini-transcribe', 'whisper-1'])
 
-    // And the next piece asks for the one that answered, once: a meeting sends a piece
-    // every twenty seconds and must not spend a request finding this out again.
+    // And the next piece asks for the one that answered, once: a long file sends many
+    // pieces and must not spend a request finding this out again.
     sent.length = 0
     await heardPiece(wav)
     expect(sent.map((one) => one.model)).toEqual(['whisper-1'])

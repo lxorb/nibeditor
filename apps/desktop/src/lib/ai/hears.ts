@@ -1,11 +1,10 @@
 /** Whether sound can be turned into words at all, and by whose provider - both asked
  *  without waking the store that knows, or the road that would do it.
  *
- *  A leaf, and it exists for one measured reason. Two rows ask this question the moment a
- *  menu opens - Transcribe on a recording, and Meeting notes - and the modules that build
- *  those rows are in front of the first paint, where the providers deliberately are not:
- *  the store, what a provider is and where a key lives are some fifteen kilobytes for a
- *  window that has not been asked anything yet. One import of `ai.transcriber` put all
+ *  A leaf, and it exists for one measured reason. A row asks this question the moment a
+ *  menu opens - Transcribe on a recording - and the module that builds that row is kept
+ *  light, where the providers are not: the store, what a provider is and where a key
+ *  lives are some fifteen kilobytes for a window that has not been asked anything yet. One import of `ai.transcriber` put all
  *  three there. See test/weight.test.ts, which is what said so.
  *
  *  `canTranscribe` is here for the same reason and it is the bigger half: the editor's

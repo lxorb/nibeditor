@@ -1485,9 +1485,6 @@ export const uk: Dictionary = {
   Record: 'Записати',
   Recording: 'Запис',
   'Stop recording': 'Зупинити запис',
-  'Meeting notes': 'Нотатки зустрічі',
-  Meeting: 'Зустріч',
-  'Stop the meeting': 'Завершити зустріч',
   Transcribe: 'Розшифрувати',
   Transcript: 'Розшифровка',
   'Transcript ({language})': 'Розшифровка ({language})',
@@ -1505,12 +1502,6 @@ export const uk: Dictionary = {
     'Цей запис завеликий, щоб перетворити його на слова за раз.',
   'That is as much as one recording may hold.': 'Стільки вміщує один запис.',
   'Nothing could be heard in that recording.': 'У цьому записі нічого не було чути.',
-  'A piece of the transcript is being tried again.': 'Частину розшифровки повторюють.',
-  'The transcript is behind and losing pieces.': 'Розшифровка відстає й губить куски.',
-  '{count} pieces of this meeting were lost.': 'Втрачено кусків цієї зустрічі: {count}.',
-  'Add an AI provider in settings to summarise.':
-    'Додайте постачальника ШІ в налаштуваннях, щоб отримати підсумок.',
-  'The summary could not be written.': 'Підсумок не вдалося написати.',
   // Publishing part two.
   Spreadsheet: 'Таблиця даних',
   'The app’s own': 'Як у застосунку',

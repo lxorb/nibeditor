@@ -1416,9 +1416,6 @@ export const bn: Dictionary = {
   Record: 'রেকর্ড করুন',
   Recording: 'রেকর্ডিং',
   'Stop recording': 'রেকর্ডিং থামান',
-  'Meeting notes': 'সভার নোট',
-  Meeting: 'সভা',
-  'Stop the meeting': 'সভা শেষ করুন',
   Transcribe: 'লেখায় রূপ দিন',
   Transcript: 'প্রতিলিপি',
   'Transcript ({language})': 'প্রতিলিপি ({language})',
@@ -1436,12 +1433,6 @@ export const bn: Dictionary = {
     'ওই রেকর্ডিং একবারে কথায় বদলানোর জন্য বেশি লম্বা।',
   'That is as much as one recording may hold.': 'একটি রেকর্ডিংয়ে এতটুকুই ধরে।',
   'Nothing could be heard in that recording.': 'ওই রেকর্ডিংয়ে কিছু শোনা গেল না।',
-  'A piece of the transcript is being tried again.': 'প্রতিলিপির একটি অংশ আবার চেষ্টা করা হচ্ছে।',
-  'The transcript is behind and losing pieces.': 'প্রতিলিপি পিছিয়ে আছে ও অংশ হারাচ্ছে।',
-  '{count} pieces of this meeting were lost.': 'এই সভার {count}টি অংশ হারিয়ে গেছে।',
-  'Add an AI provider in settings to summarise.':
-    'সারসংক্ষেপের জন্য সেটিংসে একটি AI প্রদানকারী যোগ করুন।',
-  'The summary could not be written.': 'সারসংক্ষেপ লেখা গেল না।',
   // Publishing part two.
   Spreadsheet: 'স্প্রেডশিট',
   'The app’s own': 'অ্যাপের নিজের',

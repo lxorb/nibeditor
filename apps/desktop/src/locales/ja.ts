@@ -1407,9 +1407,6 @@ export const ja: Dictionary = {
   Record: '録音',
   Recording: '録音',
   'Stop recording': '録音を停止',
-  'Meeting notes': '議事録',
-  Meeting: '会議',
-  'Stop the meeting': '会議を終了',
   Transcribe: '文字にする',
   Transcript: '書き起こし',
   'Transcript ({language})': '書き起こし ({language})',
@@ -1427,12 +1424,6 @@ export const ja: Dictionary = {
     'その録音は長すぎて一度に文字にできません。',
   'That is as much as one recording may hold.': '1つの録音に収められる上限です。',
   'Nothing could be heard in that recording.': 'その録音からは何も聞き取れませんでした。',
-  'A piece of the transcript is being tried again.': '書き起こしの一部を再試行しています。',
-  'The transcript is behind and losing pieces.': '書き起こしが遅れて一部が失われています。',
-  '{count} pieces of this meeting were lost.': 'この会議の {count} 個の部分が失われました。',
-  'Add an AI provider in settings to summarise.':
-    '要約するには設定で AI プロバイダーを追加してください。',
-  'The summary could not be written.': '要約を書けませんでした。',
   // Publishing part two.
   Spreadsheet: '表計算',
   'The app’s own': 'アプリと同じ',

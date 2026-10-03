@@ -1436,9 +1436,6 @@ export const sw: Dictionary = {
   Record: 'Rekodi',
   Recording: 'Rekodi',
   'Stop recording': 'Simamisha kurekodi',
-  'Meeting notes': 'Madokezo ya mkutano',
-  Meeting: 'Mkutano',
-  'Stop the meeting': 'Maliza mkutano',
   Transcribe: 'Nakili maneno',
   Transcript: 'Nakala ya maneno',
   'Transcript ({language})': 'Nakala ya maneno ({language})',
@@ -1457,12 +1454,6 @@ export const sw: Dictionary = {
     'Rekodi hiyo ni ndefu mno kuibadilisha kuwa maneno kwa mara moja.',
   'That is as much as one recording may hold.': 'Hiyo ni kadiri rekodi moja inavyoweza kuwa.',
   'Nothing could be heard in that recording.': 'Hakuna kilichosikika katika rekodi hiyo.',
-  'A piece of the transcript is being tried again.': 'Kipande cha nakala kinajaribiwa tena.',
-  'The transcript is behind and losing pieces.': 'Nakala imechelewa na inakosa vipande.',
-  '{count} pieces of this meeting were lost.': 'Vipande {count} vya mkutano huu vimepotea.',
-  'Add an AI provider in settings to summarise.':
-    'Ongeza mtoa huduma wa AI kwenye mipangilio ili kufupisha.',
-  'The summary could not be written.': 'Muhtasari haukuweza kuandikwa.',
   // Publishing part two.
   Spreadsheet: 'Lahajedwali',
   'The app’s own': 'Ya programu yenyewe',

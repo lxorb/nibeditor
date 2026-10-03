@@ -311,41 +311,18 @@
 
   /** What the space itself offers, wherever in the panel you ask for it.
    *
-   *  The kinds of note to make, and a meeting. A folder is not one of them: a note
-   *  that holds notes is how a space is organised, and that is a note made inside
-   *  another note's row. See folder-notes.ts and docs/tree.md.
-   *
-   *  The plus at the top of this panel is the only one on a phone, which makes this
-   *  the whole of what a thumb can reach without the keyboard: a meeting belongs on
-   *  it, and makes its own note where there is none. A plain recording does not - it
-   *  is not a kind of note, and it goes into the note being written, from the `/`
-   *  menu, the palette or the quick settings tile. See recorder/commands.ts and
-   *  docs/mobile.md. */
+   *  The kinds of note to make. A folder is not one of them: a note that holds notes
+   *  is how a space is organised, and that is a note made inside another note's row.
+   *  See folder-notes.ts and docs/tree.md. */
   function spaceMenu(): MenuEntry[] {
-    const meetings = recording
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...(meetings?.canTakeMeetingNotes()
-        ? [{ label: meetings.meetingLabel(), run: () => void meetings.meeting() }]
-        : []),
     ]
   }
-
-  /** The meeting row's own questions - whether this device can record, and whether the
-   *  account can hear it - which bring the recorder's rows and the providers' question
-   *  with them. Fetched at the launch's last turn with everything else a menu offers,
-   *  rather than carried into the first paint for a menu nobody has opened; see
-   *  test/weight.test.ts. A menu opened in the second before that has no meeting row.
-   *  Plain rather than a rune: a menu is built when it opens, and nothing draws it. */
-  let recording: typeof import('./recorder/commands') | null = null
-  void startup
-    .turn('doors')
-    .then(() => import('./recorder/commands'))
-    .then((one) => (recording = one))
 
   /** What a phone's menu sheet is headed with. Left out entirely when there is
    *  no space to name, since `title: undefined` is not the same as no title. */

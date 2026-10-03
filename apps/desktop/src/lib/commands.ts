@@ -62,14 +62,7 @@ import { canPrint, printNote } from './export/print'
 import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
-import {
-  canRecord,
-  canTakeMeetingNotes,
-  meeting,
-  meetingLabel,
-  record,
-  recordLabel,
-} from './recorder/commands'
+import { canRecord, record, recordLabel } from './recorder/commands'
 import { moveTargets } from './move-targets'
 import { closeAfterLabel } from './workspace/closing-around'
 import { prompt } from './prompt.svelte'
@@ -848,20 +841,13 @@ const BLOCKS: Block[] = [
     ready: (view) => canDictate(view),
     byHand: true,
   },
-  // And the microphone kept as sound, as two rows beside the picture: the same kind
-  // of thing, which is something of the reader's own put into the note rather than
-  // markup written into it. Both read as what they will do next, because one press
-  // starts and the next stops; neither needs a note open, because either will make
-  // one. See recorder/commands.ts, which is what the quick settings tile on Android
-  // calls by these very ids.
+  // And the microphone kept as sound, as a row beside the picture: the same kind of
+  // thing, which is something of the reader's own put into the note rather than
+  // markup written into it. It reads as what it will do next, because one press
+  // starts and the next stops; it needs no note open, because it will make one. See
+  // recorder/commands.ts, which is what the quick settings tile on Android calls by
+  // this very id.
   { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord, byHand: true },
-  {
-    id: 'meeting',
-    label: meetingLabel,
-    apply: () => void meeting(),
-    ready: canTakeMeetingNotes,
-    byHand: true,
-  },
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),
   block('paragraph.toc', () => t('Table of contents'), insertToc),

@@ -641,13 +641,6 @@ export const routes = {
    *  recorder/transcribe.ts, which cuts the pieces, and services/sync/src/ask. */
   askPiece: (token: string, wav: Uint8Array<ArrayBuffer>) => listen(token, wav, '?piece=1'),
 
-  /** A transcript, as takeaways and the tasks it left open.
-   *
-   *  The account's own key and the account's own model, on the Worker, because that
-   *  is the only place the key can be opened. */
-  askSummary: (token: string, text: string, model: string, effort: string) =>
-    request<{ summary: string }>('/v1/ask/summary', { token, body: { text, model, effort } }),
-
   /** Named by its own hash, so a repeat costs one request and no storage. */
   putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {
     const response = await fetch(`${BASE}/v1/blobs/${hash}`, {

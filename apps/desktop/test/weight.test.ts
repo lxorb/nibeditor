@@ -779,12 +779,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/publishing.svelte.ts', "the publish sheet's store"],
     ['/lib/importing.svelte.ts', "the import sheet's store"],
     ['/lib/import/read.ts', 'the readers behind it'],
-    // And the recorder: the microphone, the container it writes, the WAV pieces, the
-    // live transcript, the summary, and the pill that is the whole of what the window
-    // says about an open microphone. The two rows' own question - whether this device
-    // can record at all - and what they are called went too, on 2026-10-01: the one
-    // menu in the shell that offered them asks for them at the launch's last turn; see
-    // recorder/commands.ts and Sidebar.svelte.
+    // And the recorder: the microphone, the container it writes, the transcript's
+    // markdown, and the pill that is the whole of what the window says about an open
+    // microphone. The Record row's own question - whether this device can record at
+    // all - and what it is called went too, on 2026-10-01; see recorder/commands.ts.
     ['/lib/recorder/recording.svelte.ts', 'the recorder'],
     ['/lib/recorder/microphone.ts', 'the microphone'],
     ['/lib/recorder/transcript.ts', "the transcript's markdown"],
@@ -920,8 +918,8 @@ describe('what the app evaluates before it draws anything', () => {
     // reads off an installed theme is its stamp (themes/stamp.ts). The table of the
     // service's calls with the shapes they answer with, fetched by the first call and
     // warmed at the last turn; see api.ts. The list of icon sets, read at the icons'
-    // turn (icon-library.svelte.ts); the meeting row's questions, asked at the last turn
-    // (Sidebar.svelte); what keeps the note in front for the next launch to draw,
+    // turn (icon-library.svelte.ts); the Record row's own questions, asked by the
+    // menus that offer it; what keeps the note in front for the next launch to draw,
     // which has nothing to keep before then (first-screen.svelte.ts); and the search's
     // hold on the space, whose turn is after the first frame (workspace.svelte.ts).
     ['/lib/themes/store.svelte.ts', "the theme gallery's store"],
@@ -929,7 +927,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/themes/validate.ts', 'the theme reviewer'],
     ['/lib/api/routes.ts', "the service's calls"],
     ['/lib/icon-sets.ts', 'the list of icon sets'],
-    ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
+    ['/lib/recorder/commands.ts', 'the row that wakes the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],

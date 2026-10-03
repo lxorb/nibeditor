@@ -1274,19 +1274,13 @@ Features Typora does not have, which are the reason this exists.
       and sent as the 16 kHz mono WAV that route has always taken, in pieces of a
       minute, so the file in the note stays the small modern container the platform
       wrote and the Worker needs no decoder at all
-- [x] `Meeting notes`: the same recording, in a note of its own with `date` and
-      `duration` in its front matter, and the transcript arriving in it every twenty
-      seconds while somebody is still talking. Speakers are named only where the model
-      named them: nothing on this path knows who was talking, and inventing a speaker
-      is worse than not naming one. At stop, a summary - takeaways and the tasks it
-      left open - is written above the transcript by whichever model the reader has:
-      their own provider through `ai.complete` where there is one, the account's OpenAI
-      key through the Worker where there is not. Everything a model wrote says so in
-      one quiet line, and nothing else in the note is touched
+- Meeting notes were here, and went 2026-10-03: Record, Transcribe and `/summarize`
+      cover them. A meeting note already on a disk is a plain note with `date` and
+      `duration` in its front matter, and opens as one
 - [x] Honest about what it costs: a recording stops itself at twenty-four megabytes
       and keeps what it has, a piece of a transcript that fails is tried again on the
-      same curve a room rejoins on, the pill's dot says when one is, and the line at
-      the top of the document says what went wrong in words. Every piece counts against
+      same curve a room rejoins on, and the line at the top of the document says what
+      went wrong in words. Every piece counts against
       the same hourly allowance the glasses spend, and the route holds a piece to two
       minutes and four megabytes so a Worker is never asked to hold more than it has
 

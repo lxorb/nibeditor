@@ -1411,9 +1411,6 @@ export const id: Dictionary = {
   Record: 'Rekam',
   Recording: 'Rekaman',
   'Stop recording': 'Hentikan rekaman',
-  'Meeting notes': 'Catatan rapat',
-  Meeting: 'Rapat',
-  'Stop the meeting': 'Akhiri rapat',
   Transcribe: 'Transkripsikan',
   Transcript: 'Transkrip',
   'Transcript ({language})': 'Transkrip ({language})',
@@ -1431,12 +1428,6 @@ export const id: Dictionary = {
     'Rekaman itu terlalu panjang untuk diubah menjadi kata sekali jalan.',
   'That is as much as one recording may hold.': 'Sebanyak itulah yang dimuat satu rekaman.',
   'Nothing could be heard in that recording.': 'Tidak ada yang terdengar di rekaman itu.',
-  'A piece of the transcript is being tried again.': 'Sepotong transkrip sedang dicoba ulang.',
-  'The transcript is behind and losing pieces.': 'Transkrip tertinggal dan kehilangan potongan.',
-  '{count} pieces of this meeting were lost.': '{count} potongan rapat ini hilang.',
-  'Add an AI provider in settings to summarise.':
-    'Tambahkan penyedia AI di pengaturan untuk meringkas.',
-  'The summary could not be written.': 'Ringkasan tidak dapat ditulis.',
   // Publishing part two.
   Spreadsheet: 'Lembar kerja',
   'The app’s own': 'Milik aplikasi',

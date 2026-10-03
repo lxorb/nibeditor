@@ -1439,9 +1439,6 @@ export const ta: Dictionary = {
   Record: 'பதிவு செய்',
   Recording: 'பதிவு',
   'Stop recording': 'பதிவை நிறுத்து',
-  'Meeting notes': 'கூட்டக் குறிப்புகள்',
-  Meeting: 'கூட்டம்',
-  'Stop the meeting': 'கூட்டத்தை முடி',
   Transcribe: 'எழுத்தாக்கு',
   Transcript: 'எழுத்துவடிவம்',
   'Transcript ({language})': 'எழுத்துவடிவம் ({language})',
@@ -1459,12 +1456,6 @@ export const ta: Dictionary = {
     'ஒரே முறையில் சொற்களாக மாற்ற அந்தப் பதிவு மிக நீளம்.',
   'That is as much as one recording may hold.': 'ஒரு பதிவில் இதுவே அதிகபட்சம்.',
   'Nothing could be heard in that recording.': 'அந்தப் பதிவில் எதுவும் கேட்கவில்லை.',
-  'A piece of the transcript is being tried again.':
-    'எழுத்துவடிவத்தின் ஒரு பகுதி மீண்டும் முயற்சிக்கப்படுகிறது.',
-  'The transcript is behind and losing pieces.': 'எழுத்துவடிவம் பின் தங்கி பகுதிகளை இழக்கிறது.',
-  '{count} pieces of this meeting were lost.': 'இந்தக் கூட்டத்தின் {count} பகுதிகள் இழந்தன.',
-  'Add an AI provider in settings to summarise.': 'சுருக்க அமைப்புகளில் ஒரு AI வழங்குநரைச் சேர்.',
-  'The summary could not be written.': 'சுருக்கத்தை எழுத முடியவில்லை.',
   // Publishing part two.
   Spreadsheet: 'விரிதாள்',
   'The app’s own': 'செயலியின் சொந்தம்',

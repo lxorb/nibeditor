@@ -1425,9 +1425,6 @@ export const gsw: Dictionary = {
   Record: 'Ufnäh',
   Recording: 'Ufnahm',
   'Stop recording': 'Ufnahm beände',
-  'Meeting notes': 'Gsprächsnotize',
-  Meeting: 'Gspräch',
-  'Stop the meeting': 'Gspräch beände',
   Transcribe: 'Transkribiere',
   Transcript: 'Transkript',
   'Transcript ({language})': 'Transkript ({language})',
@@ -1445,12 +1442,6 @@ export const gsw: Dictionary = {
     'Die Ufnahm isch z lang zum sie i eim Zug i Text umwandle.',
   'That is as much as one recording may hold.': 'Meh gaht i ei Ufnahm nöd ine.',
   'Nothing could be heard in that recording.': 'I dere Ufnahm isch nüt z ghööre.',
-  'A piece of the transcript is being tried again.': 'Es Stuck vom Transkript wird nomol probiert.',
-  'The transcript is behind and losing pieces.': 'S Transkript hinkt naa und verliirt Stuck.',
-  '{count} pieces of this meeting were lost.': '{count} Stuck vo dem Gspräch sind verlore gange.',
-  'Add an AI provider in settings to summarise.':
-    'Füeg i de Iistellige en KI-Aabieter dezue zum Zämefasse.',
-  'The summary could not be written.': 'D Zämefassig hät sich nöd schriibe laa.',
   // Publishing part two.
   Spreadsheet: 'Tabälle',
   'The app’s own': 'Das vo de App',

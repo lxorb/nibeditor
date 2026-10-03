@@ -9,14 +9,13 @@ all three are the browser's own machinery:
    is the whole of what is said while it runs: a red dot, the time, a stop.
 2. **Transcribe**, on the embed's own menu, sends that very file through the Worker's
    Whisper route and writes the transcript under the player as a callout.
-3. **Meeting notes** does the same recording in a note of its own, with the transcript
-   arriving every twenty seconds while it runs and a summary above it at the end, and
-   the pill says when a piece failed and is being tried again.
+3. **A meeting note made before 2026-10-03**, when Meeting notes went, opens as the
+   plain note it always was, and nothing anywhere offers to make another.
 
 Chromium is given a microphone that plays a file: `--use-fake-device-for-media-stream`
 with `--use-file-for-fake-audio-capture`, so `getUserMedia` answers with real samples
-and `MediaRecorder` writes a real Opus file. The Worker is not: `/v1/ask/heard` and
-`/v1/ask/summary` are answered here, because what is under test is what the app does
+and `MediaRecorder` writes a real Opus file. The Worker is not: `/v1/ask/heard` is
+answered here, because what is under test is what the app does
 with an answer rather than what Whisper makes of a sine wave. The route itself is held
 to its own contract in services/sync/test/ask.test.ts.
 
@@ -44,12 +43,34 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 
-# What the fake Whisper route answers with, and what a summary comes back as. German,
-# so the language the route reports has somewhere to show up: the callout is headed
-# with it and the transcript heading takes it too.
+# What the fake Whisper route answers with. German, so the language the route reports
+# has somewhere to show up: the callout is headed with it.
 HEARD = "Guten Morgen, wir fangen an."
 LANGUAGE = "de"
-SUMMARY = "## Takeaways\n\n- The fonts are decided\n\n## Open tasks\n\n- [ ] Send the file"
+
+# A meeting note exactly as the recorder wrote one until 2026-10-03: front matter, its
+# own recording, a summary, and the transcript under its heading.
+OLD_MEETING = """---
+date: 2026-09-12
+duration: 4:09
+---
+
+# Meeting 2026-09-12 1432
+
+![[recording-2026-09-12-1432.weba]]
+
+*Written by gpt-6-astra*
+
+## Takeaways
+
+- The fonts are decided
+
+## Transcript (German)
+*Written by whisper*
+
+Guten Morgen, wir fangen an.
+
+"""
 
 NOTE = """# Recordings
 
@@ -70,8 +91,7 @@ async (note) => {
 
 # A session, put straight into the store. Signing in properly is signin.py's drive;
 # what is wanted here is only the one thing transcribing asks for - an account token -
-# and the model the account would have chosen for the glasses, which is the same model
-# a summary is asked of.
+# and the model the account would have chosen for the glasses.
 SIGNED_IN = """
 () => {
   const app = window.nibApp
@@ -168,15 +188,10 @@ class Byok:
 
 
 class Whisper:
-    """The Worker's two routes, answered here.
-
-    `stumble` makes the next request fail once, which is what the pill's own
-    "being tried again" state is for: the piece has to land anyway."""
+    """The Worker's listening route, answered here."""
 
     def __init__(self) -> None:
         self.heard = 0
-        self.summaries = 0
-        self.stumble = False
         self.sizes: list[int] = []
         self.pieces: list[str] = []
 
@@ -186,23 +201,10 @@ class Whisper:
         self.sizes.append(len(body))
         self.pieces.append(route.request.url)
 
-        if self.stumble:
-            self.stumble = False
-            route.fulfill(status=500, content_type="application/json", body='{"error":"nope"}')
-            return
-
         route.fulfill(
             status=200,
             content_type="application/json",
             body=json.dumps({"said": HEARD, "language": LANGUAGE}),
-        )
-
-    def summarise(self, route: Route) -> None:
-        self.summaries += 1
-        route.fulfill(
-            status=200,
-            content_type="application/json",
-            body=json.dumps({"summary": SUMMARY}),
         )
 
 
@@ -231,10 +233,9 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     # and it is written to carry on when the service cannot be reached.
     #
     # The refusal is registered first on purpose: Playwright tries the newest route
-    # first, so the two that answer have to be added after the one that refuses.
+    # first, so the one that answers has to be added after the one that refuses.
     page.route("https://nibeditor.com/**", lambda route: route.abort())
     page.route("**/v1/ask/heard*", whisper.listen)
-    page.route("**/v1/ask/summary", whisper.summarise)
 
     DRIVE.open(page)
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
@@ -307,7 +308,6 @@ def pill(page: Page) -> dict:
       return {
         there: true,
         clock: box.querySelector('.clock')?.textContent ?? '',
-        behind: !!dot && dot.classList.contains('behind'),
         stops: !!box.querySelector('button'),
         said: document.querySelector('.said')?.textContent ?? '',
       }
@@ -527,65 +527,48 @@ def byok(browser: Browser) -> None:
     page.context.close()
 
 
-def meeting(browser: Browser) -> None:
-    say("--- meeting notes ---")
-    page, whisper = fresh(browser)
-    if not page.evaluate(SIGNED_IN):
-        wrong("the drive could not put a session in the store")
+# What the palette offers for the words in its field, read rather than pressed.
+OFFERED = """
+() => [...document.querySelectorAll('[role=option] .nib-row-label')].map((one) => one.textContent.trim())
+"""
 
-    # The first piece fails, so the pill has to say so and the piece has to land anyway.
-    whisper.stumble = True
+# A note put on the disk the way an earlier version left it, and opened.
+OPEN_OLD = """
+async (text) => {
+  const ws = window.nibApp.workspace
+  const path = await ws.noteFrom(text, ws.activeSpace.root)
+  await ws.openEntry(path, { activate: true })
+  return { kind: ws.active?.kind, path: ws.active?.path ?? '' }
+}
+"""
 
-    run_command(page, "Meeting notes")
-    wait_for(page, "document.querySelector('.recording')", "the pill")
-    wait_for(
-        page,
-        "window.nibApp.workspace.active?.doc.includes('## Transcript')",
-        "the meeting note",
-    )
 
-    started = note_says(page)
-    say(f"the meeting note opens:\n{started}")
-    if "date: " not in started:
-        wrong("the meeting note carries no date")
-    if "duration" in started:
-        wrong("the meeting note claims a duration before it has one")
-    shot(page, "meeting-start")
+def old_meeting(browser: Browser) -> None:
+    """A meeting note from before 2026-10-03 opens as a plain note, untouched, and the
+    palette offers nothing that would make another."""
+    say("--- an old meeting note ---")
+    page, _whisper = fresh(browser)
 
-    # One piece is twenty seconds of speech; the drive waits for it to arrive rather
-    # than for a clock, so a slow machine does not fail this.
-    wait_for(
-        page,
-        f"window.nibApp.workspace.active.doc.includes({json.dumps(HEARD)})",
-        "the first piece of transcript",
-        patience=90,
-    )
-    say("a piece of the transcript arrived while the recording was still running")
-
-    behind = pill(page)
-    say(f"the pill said {json.dumps(behind)}")
-    if whisper.heard < 2:
-        wrong(f"the piece that failed was never tried again ({whisper.heard} requests)")
-
-    page.click(".recording button")
-    wait_for(page, "window.nibApp.workspace.active.doc.includes('Takeaways')", "the summary")
-    wait_for(page, "!document.querySelector('.recording')", "the pill to go", patience=60)
-
+    opened = page.evaluate(OPEN_OLD, OLD_MEETING)
+    wait_for(page, "window.nibApp.workspace.active?.doc.includes('## Transcript')", "the old note")
     said = note_says(page)
-    say(f"the meeting note ends up as:\n{said}")
+    say(f"the old meeting note opens as a {opened['kind']}: {opened['path']}")
+    if opened["kind"] != "note":
+        wrong(f"an old meeting note opened as a {opened['kind']}, not a note")
+    if said != OLD_MEETING:
+        wrong(f"the old meeting note was changed on opening:\n{said}")
+    shot(page, "old-meeting")
 
-    if "duration: " not in said:
-        wrong("no duration in the meeting note front matter")
-    if "![[recording-" not in said:
-        wrong("the meeting note does not embed its own recording")
-    if said.index("Takeaways") > said.index("## Transcript"):
-        wrong("the summary was written below the transcript rather than above it")
-    if "*Written by gpt-6-astra*" not in said:
-        wrong("nothing says which model wrote the summary")
-    if whisper.summaries != 1:
-        wrong(f"{whisper.summaries} summaries asked for, not one")
-
-    shot(page, "meeting")
+    page.keyboard.press("Control+O")
+    wait_for(page, "document.querySelector('.palette input')", "the palette's field")
+    page.locator(".palette input").click()
+    page.keyboard.type(">meeting")
+    page.wait_for_timeout(400)
+    rows = page.evaluate(OFFERED)
+    say(f"the palette offers {json.dumps(rows)} for meeting")
+    if any("Meeting" in row for row in rows):
+        wrong(f"the palette still offers a meeting: {rows}")
+    page.keyboard.press("Escape")
     page.context.close()
 
 
@@ -617,6 +600,8 @@ def phone(browser: Browser) -> None:
     say(f"the plus offers {json.dumps(rows)}")
     if "Record" in rows:
         wrong("the phone's plus offers Record, which is not a kind of note")
+    if any("Meeting" in row for row in rows):
+        wrong(f"the phone's plus still offers a meeting: {rows}")
     shot(page, "phone-plus")
     page.keyboard.press("Escape")
     page.evaluate("() => window.nibApp.workspace.closePanel()")
@@ -687,10 +672,10 @@ def main() -> int:
         ) as browser:
             drive(browser)
             byok(browser)
-            meeting(browser)
+            old_meeting(browser)
             phone(browser)
 
-    return DRIVE.verdict("a recording, a transcript and a meeting, on a pointer and a finger")
+    return DRIVE.verdict("a recording, a transcript and an old meeting note, on a pointer and a finger")
 
 
 if __name__ == "__main__":

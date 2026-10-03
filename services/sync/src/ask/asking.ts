@@ -102,12 +102,8 @@ interface Call {
 type Item = Record<string, unknown>
 
 /** The text of a reply, and the calls it wants made. Read field by field, because
- *  this is JSON from somebody else's server.
- *
- *  Exported for the one other thing that talks to the same endpoint: a meeting's
- *  summary, which wants the text and nothing else but has to read it out of the same
- *  shape and refuse on the same error. See summary.ts. */
-export function readReply(body: unknown): { text: string; calls: Call[]; refused: string } {
+ *  this is JSON from somebody else's server. */
+function readReply(body: unknown): { text: string; calls: Call[]; refused: string } {
   const out: { text: string; calls: Call[]; refused: string } = { text: '', calls: [], refused: '' }
   if (typeof body !== 'object' || body === null) return out
 

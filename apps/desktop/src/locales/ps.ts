@@ -1421,9 +1421,6 @@ export const ps: Dictionary = {
   Record: 'ثبتول',
   Recording: 'ثبت',
   'Stop recording': 'ثبت درول',
-  'Meeting notes': 'د غونډې يادښتونه',
-  Meeting: 'غونډه',
-  'Stop the meeting': 'غونډه پای ته رسول',
   Transcribe: 'متن ته اړول',
   Transcript: 'متن',
   'Transcript ({language})': 'متن ({language})',
@@ -1441,12 +1438,6 @@ export const ps: Dictionary = {
     'هغه ثبت د يو ځل کلمو ته اړولو لپاره ډېر اوږد دی.',
   'That is as much as one recording may hold.': 'يو ثبت همدې کچې نيسي.',
   'Nothing could be heard in that recording.': 'په هغه ثبت کې هيڅ ونه اورېدل شو.',
-  'A piece of the transcript is being tried again.': 'د متن يوه ټوټه بيا هڅه کېږي.',
-  'The transcript is behind and losing pieces.': 'متن وروسته پاتې دی او ټوټې بايلي.',
-  '{count} pieces of this meeting were lost.': 'د دې غونډې {count} ټوټې ورکې شوې.',
-  'Add an AI provider in settings to summarise.':
-    'د لنډيز لپاره په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
-  'The summary could not be written.': 'لنډيز ونه ليکل شو.',
   // Publishing part two.
   Spreadsheet: 'د شمېر پاڼه',
   'The app’s own': 'د اپ خپل',

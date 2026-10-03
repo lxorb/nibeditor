@@ -831,11 +831,11 @@ describe('a guest', () => {
   })
 })
 
-/* ── A piece of a recording, and a meeting summarised ──────────────────── */
+/* ── A piece of a recording ──────────────────────────────────────────── */
 
 /** The recorder sends the same WAV the glasses do and asks the same question of the
  *  same models; what differs is the length. A spoken command is a second or two, a
- *  piece of a meeting is twenty, and a route that refused the second at twelve
+ *  piece of a recording is a minute, and a route that refused the second at twelve
  *  seconds would be a route the recorder could not use at all.
  *
  *  See apps/desktop/src/lib/recorder/transcribe.ts, which is what cuts a recording
@@ -924,64 +924,10 @@ describe('a piece of a recording', () => {
   })
 })
 
-describe('a meeting summarised', () => {
-  beforeEach(async () => {
-    await put(KEY)
-  })
-
-  function summary(body: unknown, as = token) {
-    return call(env, '/v1/ask/summary', { token: as, body })
-  }
-
-  test('comes back as the model wrote it, with the account model named', async () => {
-    const sent = fakeAsking([said('## Takeaways\n\n- The fonts are decided\n')])
-
-    const { status, json } = await summary({
-      text: 'so about the fonts. yes. we will use the firmware one.',
-      model: 'gpt-6-astra',
-      effort: 'low',
-    })
-
-    expect(status).toBe(200)
-    expect(json.summary).toBe('## Takeaways\n\n- The fonts are decided')
-    expect(sent[0]?.model).toBe('gpt-6-astra')
-    // One round and no tools: a transcript is the whole of what there is to read.
-    expect(sent).toHaveLength(1)
-    expect(sent[0]?.tools).toBeUndefined()
-  })
-
-  test('needs words, a model, and a key', async () => {
-    fakeAsking([said('never asked')])
-
-    expect((await summary({ text: '   ', model: 'gpt-6-astra' })).status).toBe(400)
-    expect((await summary({ text: 'words', model: '' })).status).toBe(400)
-    expect(
-      (await summary({ text: 'words', model: 'gpt-6-astra', effort: 'sideways' })).status,
-    ).toBe(400)
-
-    await call(env, '/v1/ask/key', { method: 'DELETE', token })
-    const none = await summary({ text: 'words', model: 'gpt-6-astra' })
-    expect(none.status).toBe(400)
-    expect(none.json.error).toContain('OpenAI key')
-  })
-
-  /** The same hourly allowance a question counts against: it is one request to the
-   *  same endpoint on the same credit. */
-  test('counts against the questions the account may ask', async () => {
-    fakeAsking([said('never asked')])
-    env.db
-      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
-      .run('ask', userId(), 60, Date.now() + 60 * 60 * 1000)
-
-    const over = await summary({ text: 'words', model: 'gpt-6-astra' })
-    expect(over.status).toBe(429)
-  })
-
-  test('says what the model refused with', async () => {
-    fakeAsking([{ error: { message: 'this model cannot read that' } }])
-
-    const refused = await summary({ text: 'words', model: 'gpt-6-astra' })
-    expect(refused.status).toBe(502)
-    expect(refused.json.error).toBe('this model cannot read that')
-  })
+/** Meeting notes went on 2026-10-03, and the route that summarised one went with them:
+ *  nothing is offered that the app no longer asks for. */
+test('there is no summary route any more', async () => {
+  await put(KEY)
+  const gone = await call(env, '/v1/ask/summary', { token, body: { text: 'words', model: 'm' } })
+  expect(gone.status).toBe(404)
 })

@@ -98,11 +98,11 @@ describe('which provider a feature asks', () => {
     ai.add('openai')
     ai.update('openai', { model: 'gpt-5' })
     ai.add('codex')
-    ai.use('summary', 'codex')
+    ai.use('rewrite', 'codex')
     ai.remove('codex')
 
     expect(ai.uses).toEqual({})
-    expect(ai.providerFor('summary')?.id).toBe('openai')
+    expect(ai.providerFor('rewrite')?.id).toBe('openai')
   })
 
   test('a program on this machine needs no model to be asked', () => {

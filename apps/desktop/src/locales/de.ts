@@ -1441,9 +1441,6 @@ export const de: Dictionary = {
   Record: 'Aufnehmen',
   Recording: 'Aufnahme',
   'Stop recording': 'Aufnahme beenden',
-  'Meeting notes': 'Gesprächsnotizen',
-  Meeting: 'Gespräch',
-  'Stop the meeting': 'Gespräch beenden',
   Transcribe: 'Transkribieren',
   Transcript: 'Transkript',
   'Transcript ({language})': 'Transkript ({language})',
@@ -1462,14 +1459,6 @@ export const de: Dictionary = {
     'Diese Aufnahme ist zu lang, um sie in einem Zug in Text umzuwandeln.',
   'That is as much as one recording may hold.': 'Mehr passt in eine Aufnahme nicht hinein.',
   'Nothing could be heard in that recording.': 'In dieser Aufnahme war nichts zu hören.',
-  'A piece of the transcript is being tried again.':
-    'Ein Stück des Transkripts wird erneut versucht.',
-  'The transcript is behind and losing pieces.': 'Das Transkript hinkt nach und verliert Stücke.',
-  '{count} pieces of this meeting were lost.':
-    '{count} Stücke dieses Gesprächs sind verloren gegangen.',
-  'Add an AI provider in settings to summarise.':
-    'Füge in den Einstellungen einen KI-Anbieter hinzu, um zusammenzufassen.',
-  'The summary could not be written.': 'Die Zusammenfassung konnte nicht geschrieben werden.',
   // Publishing part two.
   Spreadsheet: 'Tabelle',
   'The app’s own': 'Das der App',

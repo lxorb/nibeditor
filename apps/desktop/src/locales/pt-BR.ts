@@ -1444,9 +1444,6 @@ export const ptBR: Dictionary = {
   Record: 'Gravar',
   Recording: 'Gravação',
   'Stop recording': 'Parar a gravação',
-  'Meeting notes': 'Notas de reunião',
-  Meeting: 'Reunião',
-  'Stop the meeting': 'Encerrar a reunião',
   Transcribe: 'Transcrever',
   Transcript: 'Transcrição',
   'Transcript ({language})': 'Transcrição ({language})',
@@ -1465,13 +1462,6 @@ export const ptBR: Dictionary = {
     'Essa gravação é longa demais para transformar em palavras de uma vez.',
   'That is as much as one recording may hold.': 'Isso é tudo o que cabe em uma gravação.',
   'Nothing could be heard in that recording.': 'Nada pôde ser ouvido nessa gravação.',
-  'A piece of the transcript is being tried again.':
-    'Um pedaço da transcrição está sendo tentado de novo.',
-  'The transcript is behind and losing pieces.': 'A transcrição está atrasada e perdendo pedaços.',
-  '{count} pieces of this meeting were lost.': '{count} pedaços desta reunião foram perdidos.',
-  'Add an AI provider in settings to summarise.':
-    'Adicione um provedor de IA nas configurações para resumir.',
-  'The summary could not be written.': 'Não foi possível escrever o resumo.',
   // Publishing part two.
   Spreadsheet: 'Planilha',
   'The app’s own': 'O do app',

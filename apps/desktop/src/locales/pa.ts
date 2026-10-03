@@ -1424,9 +1424,6 @@ export const pa: Dictionary = {
   Record: 'ਰਿਕਾਰਡ ਕਰੋ',
   Recording: 'ਰਿਕਾਰਡਿੰਗ',
   'Stop recording': 'ਰਿਕਾਰਡਿੰਗ ਰੋਕੋ',
-  'Meeting notes': 'ਮੀਟਿੰਗ ਦੀਆਂ ਨੋਟਾਂ',
-  Meeting: 'ਮੀਟਿੰਗ',
-  'Stop the meeting': 'ਮੀਟਿੰਗ ਮੁਕਾਓ',
   Transcribe: 'ਲਿਖਤ ਵਿੱਚ ਬਦਲੋ',
   Transcript: 'ਲਿਖਤੀ ਰੂਪ',
   'Transcript ({language})': 'ਲਿਖਤੀ ਰੂਪ ({language})',
@@ -1444,12 +1441,6 @@ export const pa: Dictionary = {
     'ਉਹ ਰਿਕਾਰਡਿੰਗ ਇੱਕੋ ਵਾਰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਬਹੁਤ ਲੰਮੀ ਹੈ।',
   'That is as much as one recording may hold.': 'ਇੱਕ ਰਿਕਾਰਡਿੰਗ ਵਿੱਚ ਇੰਨਾ ਹੀ ਸਮਾਉਂਦਾ ਹੈ।',
   'Nothing could be heard in that recording.': 'ਉਸ ਰਿਕਾਰਡਿੰਗ ਵਿੱਚ ਕੁਝ ਸੁਣਿਆ ਨਹੀਂ ਗਿਆ।',
-  'A piece of the transcript is being tried again.':
-    'ਲਿਖਤੀ ਰੂਪ ਦਾ ਇੱਕ ਹਿੱਸਾ ਮੁੜ ਅਜ਼ਮਾਇਆ ਜਾ ਰਿਹਾ ਹੈ।',
-  'The transcript is behind and losing pieces.': 'ਲਿਖਤੀ ਰੂਪ ਪਿੱਛੇ ਹੈ ਤੇ ਹਿੱਸੇ ਗੁਆ ਰਿਹਾ ਹੈ।',
-  '{count} pieces of this meeting were lost.': 'ਇਸ ਮੀਟਿੰਗ ਦੇ {count} ਹਿੱਸੇ ਗੁਆਚ ਗਏ।',
-  'Add an AI provider in settings to summarise.': 'ਸਾਰ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ।',
-  'The summary could not be written.': 'ਸਾਰ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   // Publishing part two.
   Spreadsheet: 'ਸਪਰੈੱਡਸ਼ੀਟ',
   'The app’s own': 'ਐਪ ਦਾ ਆਪਣਾ',

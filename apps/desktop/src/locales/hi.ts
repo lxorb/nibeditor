@@ -1417,9 +1417,6 @@ export const hi: Dictionary = {
   Record: 'रिकॉर्ड करें',
   Recording: 'रिकॉर्डिंग',
   'Stop recording': 'रिकॉर्डिंग रोकें',
-  'Meeting notes': 'बैठक के नोट',
-  Meeting: 'बैठक',
-  'Stop the meeting': 'बैठक समाप्त करें',
   Transcribe: 'लिखित रूप दें',
   Transcript: 'प्रतिलेख',
   'Transcript ({language})': 'प्रतिलेख ({language})',
@@ -1437,13 +1434,6 @@ export const hi: Dictionary = {
     'वह रिकॉर्डिंग एक बार में शब्दों में बदलने के लिए बहुत लंबी है।',
   'That is as much as one recording may hold.': 'एक रिकॉर्डिंग में इतना ही समाता है।',
   'Nothing could be heard in that recording.': 'उस रिकॉर्डिंग में कुछ सुनाई नहीं दिया।',
-  'A piece of the transcript is being tried again.':
-    'प्रतिलेख का एक हिस्सा दोबारा आज़माया जा रहा है।',
-  'The transcript is behind and losing pieces.': 'प्रतिलेख पीछे है और हिस्से खो रहा है।',
-  '{count} pieces of this meeting were lost.': 'इस बैठक के {count} हिस्से खो गए।',
-  'Add an AI provider in settings to summarise.':
-    'सारांश के लिए सेटिंग्स में एक AI प्रदाता जोड़ें।',
-  'The summary could not be written.': 'सारांश लिखा नहीं जा सका।',
   // Publishing part two.
   Spreadsheet: 'स्प्रेडशीट',
   'The app’s own': 'ऐप का अपना',

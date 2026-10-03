@@ -656,14 +656,12 @@ of what is declared: no camera, no storage. Nothing opens the microphone until
 somebody presses Record. The runtime grant is the WebView's own dialog and has not
 been walked on a device yet; it is the one thing in this batch a phone has to confirm.
 
-**Where the command is.** The plus at the top of the list panel is the only one a
-thumb can reach, so a held finger on it offers `Meeting notes` beside New note and
-New canvas where there is anything that can transcribe. `Record` is not there: it is
-not a kind of note, and Emil took it off the plus (2026-09-27). Both make a note of
-their own when there is none, which is what a command pressed in a hurry has to do.
-The same two rows are in the palette and in the Paragraph menu, out of one list, by
-one id each - `record` and `meeting` - and `record` is what the Android quick settings
-tile calls. See `apps/desktop/src/lib/recorder/commands.ts`.
+**Where the command is.** `Record` is in the palette and in the Paragraph menu, out of
+one list, by one id - `record` - which is also what the Android quick settings tile
+calls. It is not on the plus at the top of the list panel: it is not a kind of note,
+and Emil took it off the plus (2026-09-27). It makes a note of its own when there is
+none, which is what a command pressed in a hurry has to do. See
+`apps/desktop/src/lib/recorder/commands.ts`.
 
 **What it looks like while it runs.** One pill, in the middle of the bottom edge: a
 red dot, the time so far, and a stop. It is not inside the status bar's own footer,

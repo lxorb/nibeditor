@@ -1419,9 +1419,6 @@ export const fa: Dictionary = {
   Record: 'ضبط',
   Recording: 'ضبط',
   'Stop recording': 'ایستاندن ضبط',
-  'Meeting notes': 'یادداشت‌های نشست',
-  Meeting: 'نشست',
-  'Stop the meeting': 'پایان نشست',
   Transcribe: 'پیاده‌سازی',
   Transcript: 'متن پیاده‌شده',
   'Transcript ({language})': 'متن پیاده‌شده ({language})',
@@ -1439,12 +1436,6 @@ export const fa: Dictionary = {
     'آن ضبط برای تبدیل یک‌باره به واژه بسیار بلند است.',
   'That is as much as one recording may hold.': 'یک ضبط همین اندازه جا دارد.',
   'Nothing could be heard in that recording.': 'در آن ضبط چیزی شنیده نشد.',
-  'A piece of the transcript is being tried again.': 'پاره‌ای از متن دوباره آزموده می‌شود.',
-  'The transcript is behind and losing pieces.': 'متن عقب افتاده و پاره‌ها را از دست می‌دهد.',
-  '{count} pieces of this meeting were lost.': '{count} پاره از این نشست از دست رفت.',
-  'Add an AI provider in settings to summarise.':
-    'برای چکیده‌سازی در تنظیمات فراهم‌کننده هوش مصنوعی بیفزایید.',
-  'The summary could not be written.': 'چکیده نوشته نشد.',
   // Publishing part two.
   Spreadsheet: 'صفحه‌گسترده',
   'The app’s own': 'مالِ خودِ برنامه',

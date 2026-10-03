@@ -1488,9 +1488,6 @@ export const pl: Dictionary = {
   Record: 'Nagraj',
   Recording: 'Nagranie',
   'Stop recording': 'Zatrzymaj nagrywanie',
-  'Meeting notes': 'Notatki ze spotkania',
-  Meeting: 'Spotkanie',
-  'Stop the meeting': 'Zakończ spotkanie',
   Transcribe: 'Transkrybuj',
   Transcript: 'Transkrypcja',
   'Transcript ({language})': 'Transkrypcja ({language})',
@@ -1509,12 +1506,6 @@ export const pl: Dictionary = {
     'To nagranie jest za długie, by zamienić je na słowa od razu.',
   'That is as much as one recording may hold.': 'Tyle mieści jedno nagranie.',
   'Nothing could be heard in that recording.': 'W tym nagraniu nic nie było słychać.',
-  'A piece of the transcript is being tried again.': 'Fragment transkrypcji jest ponawiany.',
-  'The transcript is behind and losing pieces.': 'Transkrypcja nie nadąża i traci fragmenty.',
-  '{count} pieces of this meeting were lost.': 'Utraconych fragmentów tego spotkania: {count}.',
-  'Add an AI provider in settings to summarise.':
-    'Dodaj dostawcę AI w ustawieniach, aby podsumować.',
-  'The summary could not be written.': 'Nie udało się napisać podsumowania.',
   // Publishing part two.
   Spreadsheet: 'Arkusz kalkulacyjny',
   'The app’s own': 'Ten z aplikacji',

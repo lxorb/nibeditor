@@ -1418,9 +1418,6 @@ export const ur: Dictionary = {
   Record: 'ریکارڈ کریں',
   Recording: 'ریکارڈنگ',
   'Stop recording': 'ریکارڈنگ روکیں',
-  'Meeting notes': 'اجلاس کے نوٹس',
-  Meeting: 'اجلاس',
-  'Stop the meeting': 'اجلاس ختم کریں',
   Transcribe: 'متن میں بدلیں',
   Transcript: 'متن',
   'Transcript ({language})': 'متن ({language})',
@@ -1438,12 +1435,6 @@ export const ur: Dictionary = {
     'وہ ریکارڈنگ ایک ہی بار میں الفاظ میں بدلنے کے لیے بہت طویل ہے۔',
   'That is as much as one recording may hold.': 'ایک ریکارڈنگ میں اتنا ہی سما سکتا ہے۔',
   'Nothing could be heard in that recording.': 'اس ریکارڈنگ میں کچھ سنا نہ گیا۔',
-  'A piece of the transcript is being tried again.': 'متن کا ایک حصہ دوبارہ آزمایا جا رہا ہے۔',
-  'The transcript is behind and losing pieces.': 'متن پیچھے ہے اور حصے کھو رہا ہے۔',
-  '{count} pieces of this meeting were lost.': 'اس اجلاس کے {count} حصے ضائع ہو گئے۔',
-  'Add an AI provider in settings to summarise.':
-    'خلاصہ کرنے کے لیے ترتیبات میں AI فراہم کنندہ شامل کریں۔',
-  'The summary could not be written.': 'خلاصہ لکھا نہ جا سکا۔',
   // Publishing part two.
   Spreadsheet: 'اسپریڈ شیٹ',
   'The app’s own': 'ایپ کا اپنا',

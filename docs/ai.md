@@ -7,13 +7,12 @@ plan, and the requests go from your device straight to it. The account is not in
 the path, the question is not logged, and the key never leaves the machine it was
 typed on.
 
-Five surfaces use it, and they all go through one module:
+Four surfaces use it, and they all go through one module:
 
 - the ```` ```ai ```` block in a note, whose answer is written under it,
 - the four rewrites on a selection,
 - the Ask panel on the right side of the window, which answers questions about
   your notes and says where each answer came from,
-- a meeting's summary, written under its transcript,
 - and a quick question on the side, answered in place over whatever is open.
 
 Each asks the default provider unless Settings > AI > **Used for** gives it one of its
@@ -448,8 +447,8 @@ The model is not the chat model. OpenAI is asked for `gpt-4o-mini-transcribe` an
 the provider itself names, so somebody whose server wants
 `Systran/faster-whisper-small` has a way to say so. A name the server has never heard of
 is the one refusal worth trying the next name for - the list is a guess about somebody
-else's server - and whichever answered is remembered, because a meeting sends a piece
-every twenty seconds and must not spend a request finding that out again. A key refused
+else's server - and whichever answered is remembered, because a long recording sends a
+piece a minute and must not spend a request finding that out again. A key refused
 is said out loud rather than walked past.
 
 `whisper-1` also says which language it heard, under `verbose_json`; the newer models

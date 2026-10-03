@@ -1489,9 +1489,6 @@ export const ru: Dictionary = {
   Record: 'Записать',
   Recording: 'Запись',
   'Stop recording': 'Остановить запись',
-  'Meeting notes': 'Заметки встречи',
-  Meeting: 'Встреча',
-  'Stop the meeting': 'Завершить встречу',
   Transcribe: 'Расшифровать',
   Transcript: 'Расшифровка',
   'Transcript ({language})': 'Расшифровка ({language})',
@@ -1509,12 +1506,6 @@ export const ru: Dictionary = {
     'Эта запись слишком длинная, чтобы превратить её в слова за раз.',
   'That is as much as one recording may hold.': 'Столько вмещает одна запись.',
   'Nothing could be heard in that recording.': 'В этой записи ничего не было слышно.',
-  'A piece of the transcript is being tried again.': 'Часть расшифровки повторяется.',
-  'The transcript is behind and losing pieces.': 'Расшифровка отстаёт и теряет куски.',
-  '{count} pieces of this meeting were lost.': 'Потеряно кусков этой встречи: {count}.',
-  'Add an AI provider in settings to summarise.':
-    'Добавьте поставщика ИИ в настройках, чтобы получить сводку.',
-  'The summary could not be written.': 'Сводку не удалось написать.',
   // Publishing part two.
   Spreadsheet: 'Таблица данных',
   'The app’s own': 'Как в приложении',

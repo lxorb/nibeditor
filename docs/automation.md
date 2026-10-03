@@ -31,7 +31,7 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://command?id=new` | runs one command out of the registry |
 
 `nib://command` takes the ids the palette knows, minus the handful only somebody at
-the keyboard may press: **Record**, **Meeting**, **Dictate**, **Photo** and **Sign
+the keyboard may press: **Record**, **Dictate**, **Photo** and **Sign
 out**. A link is written by anybody and followed by a click, so a microphone, a
 camera and who this machine is signed in as are not things a page on the web gets
 to reach by handing the system an address. The row itself says so - `byHand` in

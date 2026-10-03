@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { mono, pieces, RATE, resampled, spoken, wavOf } from './wav'
+import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
 /** What the Worker's own reader looks for in a WAV, read back out of one this wrote.
  *
@@ -123,18 +123,5 @@ describe('cutting a recording into pieces', () => {
 
     expect(parts.map((one) => one.length)).toEqual([RATE * 20, RATE * 20, RATE * 10])
     expect(parts.reduce((sum, one) => sum + one.length, 0)).toBe(RATE * 50)
-  })
-})
-
-describe('sound the route will take', () => {
-  /** The one function everything that sends audio goes through, so the file path and
-   *  the live path cannot come to different answers about what the route is owed. */
-  test('is one channel at the rate the route listens at, whatever went in', () => {
-    const file = spoken([new Float32Array(48_000), new Float32Array(48_000)], 48_000)
-    const said = header(file)
-
-    expect(said.channels).toBe(1)
-    expect(said.rate).toBe(RATE)
-    expect(said.bytes).toBe(RATE * 2)
   })
 })

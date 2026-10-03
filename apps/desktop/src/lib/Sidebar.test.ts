@@ -7,20 +7,12 @@ import { STARTS_RIGHT } from './workspace/panels'
  *
  *  Rendered on the server, the way Tabs.test does beside it: what is under test is the
  *  markup, and the markup is what a reader gets. The stores are driven by hand and the
- *  three that reach a disk, a network or a `ResizeObserver` are stood in for.
+ *  two that reach a network or a `ResizeObserver` are stood in for.
  *
  *  The hold had no test at all, which is how it came to be offered on a phone while the
  *  code said it was not and the docs said it was not either. */
 
 vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
-vi.mock('./recorder/commands', () => ({
-  canRecord: () => false,
-  canTakeMeetingNotes: () => false,
-  meeting: { running: false },
-  meetingLabel: () => 'Meeting notes',
-  record: { running: false },
-  recordLabel: () => 'Record',
-}))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),

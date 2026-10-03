@@ -1429,9 +1429,6 @@ export const kn: Dictionary = {
   Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
   Recording: 'ಧ್ವನಿಮುದ್ರಣ',
   'Stop recording': 'ಧ್ವನಿಮುದ್ರಣ ನಿಲ್ಲಿಸು',
-  'Meeting notes': 'ಸಭೆಯ ಟಿಪ್ಪಣಿಗಳು',
-  Meeting: 'ಸಭೆ',
-  'Stop the meeting': 'ಸಭೆ ಮುಗಿಸು',
   Transcribe: 'ಬರವಣಿಗೆಗೆ ಇಳಿಸು',
   Transcript: 'ಲಿಪ್ಯಂತರ',
   'Transcript ({language})': 'ಲಿಪ್ಯಂತರ ({language})',
@@ -1449,14 +1446,6 @@ export const kn: Dictionary = {
     'ಒಂದೇ ಸಲಕ್ಕೆ ಪದಗಳಾಗಿ ಮಾಡಲು ಆ ಧ್ವನಿಮುದ್ರಣ ತುಂಬಾ ಉದ್ದ.',
   'That is as much as one recording may hold.': 'ಒಂದು ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಇಷ್ಟೇ ಹಿಡಿಯುತ್ತದೆ.',
   'Nothing could be heard in that recording.': 'ಆ ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಏನೂ ಕೇಳಿಸಲಿಲ್ಲ.',
-  'A piece of the transcript is being tried again.':
-    'ಲಿಪ್ಯಂತರದ ಒಂದು ತುಣುಕನ್ನು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲಾಗುತ್ತಿದೆ.',
-  'The transcript is behind and losing pieces.':
-    'ಲಿಪ್ಯಂತರ ಹಿಂದೆ ಉಳಿದು ತುಣುಕುಗಳನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಿದೆ.',
-  '{count} pieces of this meeting were lost.': 'ಈ ಸಭೆಯ {count} ತುಣುಕುಗಳು ಕಳೆದುಹೋದವು.',
-  'Add an AI provider in settings to summarise.':
-    'ಸಾರ ಬರೆಯಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಒಂದು AI ಪೂರೈಕೆದಾರನನ್ನು ಸೇರಿಸು.',
-  'The summary could not be written.': 'ಸಾರ ಬರೆಯಲಾಗಲಿಲ್ಲ.',
   // Publishing part two.
   Spreadsheet: 'ಸ್ಪ್ರೆಡ್‌ಶೀಟ್',
   'The app’s own': 'ಆ್ಯಪ್‌ನ ಸ್ವಂತ',

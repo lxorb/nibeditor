@@ -36,7 +36,7 @@ beforeEach(() => {
 })
 
 test('a stop pressed while the microphone opens stops it as soon as it is open', async () => {
-  void recorder.start('note')
+  void recorder.start()
   await vi.waitFor(() => expect(opening).not.toBeNull())
 
   // Pressed on the pill before the system has handed the microphone over.
@@ -45,7 +45,7 @@ test('a stop pressed while the microphone opens stops it as soon as it is open',
   opening?.({
     stop: () => {
       stopped.push('stopped')
-      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0, spare: null })
+      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 })
     },
     extension: 'weba',
   })

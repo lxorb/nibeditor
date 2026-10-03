@@ -3,14 +3,9 @@ import {
   dayOf,
   embedFor,
   languageName,
-  meetingName,
-  meetingNote,
-  piece,
   recordingNoteName,
   spanOf,
-  summaryBlock,
   transcriptCallout,
-  transcriptHeading,
   writtenBy,
 } from './transcript'
 
@@ -43,12 +38,11 @@ describe('a date', () => {
 })
 
 describe('what a recording note is called', () => {
-  /** The same shape for both, so the note and the file beside it read as one thing in
-   *  the file list. */
+  /** The same shape as the file beside it, so the two read as one thing in the file
+   *  list. */
   test('is the word, the day and the minute', () => {
     const at = new Date(2026, 8, 12, 14, 32)
 
-    expect(meetingName(at)).toBe('Meeting 2026-09-12 1432')
     expect(recordingNoteName(at)).toBe('Recording 2026-09-12 1432')
   })
 })
@@ -80,63 +74,6 @@ describe('a transcript under an embed', () => {
 
   test('with no language named where the model did not say', () => {
     expect(transcriptCallout('Morning.', '', 'whisper')).toContain('> [!quote] Transcript\n')
-  })
-})
-
-describe('a meeting note', () => {
-  const at = new Date(2026, 8, 12, 14, 32)
-  const note = meetingNote(meetingName(at), at, 'whisper')
-
-  test('opens with the date in its front matter', () => {
-    expect(note.startsWith('---\ndate: 2026-09-12\n---\n')).toBe(true)
-  })
-
-  /** The duration cannot be there from the first second; it is written into the same
-   *  block when the recording stops. */
-  test('and not with a duration, which is not known yet', () => {
-    expect(note).not.toContain('duration')
-  })
-
-  test('is headed with its own name and ends at the transcript', () => {
-    expect(note).toContain('# Meeting 2026-09-12 1432')
-    expect(note.trimEnd().endsWith('*Written by whisper*')).toBe(true)
-  })
-
-  /** Everything written later is placed by finding this line, so the heading the note
-   *  is made with and the one that is looked for have to be the same string. */
-  test('carries the transcript heading the recorder looks for', () => {
-    expect(note).toContain(`${transcriptHeading()}\n`)
-    expect(transcriptHeading()).toBe('## Transcript')
-    expect(transcriptHeading('German')).toBe('## Transcript (German)')
-  })
-})
-
-describe('a piece of a live transcript', () => {
-  test('is its own paragraph', () => {
-    expect(piece('  and then we agreed.  ')).toBe('and then we agreed.\n\n')
-  })
-
-  test('and nothing at all where nothing was heard', () => {
-    expect(piece('   ')).toBe('')
-  })
-
-  /** Nothing on this path knows who was talking, so whatever the model wrote is
-   *  passed through: a model that labels its speakers keeps them, one that does not is
-   *  plain, and a speaker is never invented here. */
-  test('keeps a speaker label the model wrote itself', () => {
-    expect(piece('A: yes.\nB: no.')).toBe('A: yes.\nB: no.\n\n')
-  })
-})
-
-describe('a summary', () => {
-  test('goes under the line that says a model wrote it', () => {
-    expect(summaryBlock('## Takeaways\n\n- Decided\n', 'gpt-6-astra')).toBe(
-      '*Written by gpt-6-astra*\n\n## Takeaways\n\n- Decided\n\n',
-    )
-  })
-
-  test('and is nothing at all where the model wrote nothing', () => {
-    expect(summaryBlock('  ', 'gpt-6-astra')).toBe('')
   })
 })
 

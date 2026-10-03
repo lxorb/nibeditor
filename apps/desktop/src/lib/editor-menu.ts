@@ -501,8 +501,8 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
  *
  *  On the embed's own menu because that is where it is about something: the file the
  *  press landed on, rather than a row in the palette that would have to guess which of
- *  the recordings in a note was meant. The words go under the player through the same
- *  Whisper path a meeting's live transcript goes through; see recorder/commands.ts.
+ *  the recordings in a note was meant. The words go under the player; see
+ *  recorder/commands.ts.
  *
  *  Only where there is something to ask - a provider of the reader's own, or an
  *  account. Left out rather than greyed out: somebody with neither has nothing to press

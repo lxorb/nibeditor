@@ -1,36 +1,19 @@
-/** The microphone, and the two things done with what it hears.
+/** The microphone, and the file written from what it hears.
  *
  *  A recording is written by `MediaRecorder`, into the best container the platform
  *  gives, and that file is what lands beside the note: Opus at 24 kB a minute rather
  *  than a WAV at two megabytes, and a file a phone, a browser and a desktop player
  *  will all open.
  *
- *  A live transcript cannot come out of that same recorder. What `ondataavailable`
- *  hands over while a recording is running is a *piece* of a container - the first
- *  one carries the header and the rest carry none - so no decoder anywhere will read
- *  one on its own, and a route that was sent one would be sent bytes that are not a
- *  file. So the same stream is tapped a second time, as plain samples, and the pieces
- *  a transcript is made of are cut out of those. Two readers of one microphone,
- *  each getting the shape it can actually use.
- *
- *  Nothing here knows about notes, commands or the status bar. It opens a microphone,
- *  it answers with a file when it is stopped, and it calls back with a piece of sound
- *  every so often while it runs. */
+ *  Nothing here knows about notes, commands or the status bar. It opens a microphone
+ *  and answers with a file when it is stopped. */
 
 import { key } from '../i18n.svelte'
 import { bestContainer, extensionOf } from './container'
-import { spoken } from './wav'
-
-/** How much sound one callback carries at the tap. A power of two, as the node
- *  demands, and the largest it takes: the work per callback is a copy, and four times
- *  fewer callbacks is four times less of it. */
-const BLOCK = 16_384
 
 /** How often the file is asked for a piece.
  *
- *  Every five seconds, which is not how often anything is *sent* - that is the
- *  transcript's business - but how often the recorder hands over what it has. A
- *  recorder asked only at the end holds the whole recording in one buffer inside the
+ *  Every five seconds: how often the recorder hands over what it has. A recorder asked only at the end holds the whole recording in one buffer inside the
  *  engine; asked as it goes, the pieces are ours and the ceiling below can be
  *  measured against them. */
 const HANDOVER = 5_000
@@ -60,9 +43,9 @@ async function opened(): Promise<MediaStream> {
   try {
     return await Promise.race([
       navigator.mediaDevices.getUserMedia({
-        // What the browser's own processing is for. A recording of a meeting is a room
-        // and several voices, and the three of these together are the difference between
-        // a transcript and a guess.
+        // What the browser's own processing is for. A recording is often a room and
+        // several voices, and the three of these together are the difference between a
+        // transcript of it later and a guess.
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       }),
       new Promise<never>((_resolve, reject) => {
@@ -92,18 +75,12 @@ export interface Recording {
   /** What a file of this recording is called on disk, from the container the platform
    *  actually chose - which is not always the one it was asked for. */
   extension: string
-  /** Stops it, and answers with the file, how long it ran, and the last few seconds
-   *  of sound that had not filled a piece yet. */
-  stop: () => Promise<{ bytes: ArrayBuffer; seconds: number; spare?: Uint8Array<ArrayBuffer> }>
+  /** Stops it, and answers with the file and how long it ran. */
+  stop: () => Promise<{ bytes: ArrayBuffer; seconds: number }>
 }
 
 /** What a caller wants to hear about while it runs. */
 export interface Listening {
-  /** A piece of sound, as the WAV the transcriber takes. Only while `pieces` is
-   *  asked for; a plain recording taps nothing. */
-  piece?: (wav: Uint8Array<ArrayBuffer>) => void
-  /** How long a piece is, in seconds. */
-  seconds?: number
   /** The recording grew past what one file may be. It has stopped itself. */
   full?: () => void
 }
@@ -126,10 +103,8 @@ export async function record(listening: Listening = {}): Promise<Recording> {
   let full = false
 
   const started = performance.now()
-  const tap = listening.piece ? listen(stream, listening.piece, listening.seconds ?? 20) : null
 
   const close = () => {
-    tap?.close()
     for (const track of stream.getTracks()) track.stop()
   }
 
@@ -160,9 +135,7 @@ export async function record(listening: Listening = {}): Promise<Recording> {
           const kind = recorder.mimeType || type || 'audio/webm'
           void new Blob(chunks, { type: kind })
             .arrayBuffer()
-            .then((bytes) =>
-              resolve({ bytes, seconds: (performance.now() - started) / 1000, ...tap?.last() }),
-            )
+            .then((bytes) => resolve({ bytes, seconds: (performance.now() - started) / 1000 }))
         }
 
         if (recorder.state === 'inactive') {
@@ -175,86 +148,3 @@ export async function record(listening: Listening = {}): Promise<Recording> {
       }),
   }
 }
-
-/** The second reader: plain samples, cut into pieces of `seconds` and handed over as
- *  WAVs the transcriber takes.
- *
- *  A `ScriptProcessorNode` rather than an `AudioWorklet`, deliberately, and it is the
- *  one deprecated thing in this batch. A worklet wants its code at a URL of its own,
- *  and the app runs from three origins - `tauri://localhost`, a fresh port inside the
- *  glasses plugin, its own domain on the web - so the one thing a worklet needs is the
- *  one thing that is different everywhere. The way round that is a `blob:` URL holding
- *  the processor as source, which is exactly the shape the Even store's review already
- *  objects to in this bundle; see vite.even.config.ts. So: the node every one of the
- *  three engines still has, on the main thread, where the work per callback is a copy
- *  of sixteen thousand floats - about a third of a millisecond, which is nothing beside
- *  what it buys. */
-/* eslint-disable @typescript-eslint/no-deprecated -- the paragraph above: a worklet
-   needs its code at a URL, and the only portable URL is a `blob:` one holding source,
-   which the glasses plugin's store review objects to. */
-function listen(
-  stream: MediaStream,
-  piece: (wav: Uint8Array<ArrayBuffer>) => void,
-  seconds: number,
-): { close: () => void; last: () => { spare?: Uint8Array<ArrayBuffer> } } {
-  const context = new AudioContext()
-  const source = context.createMediaStreamSource(stream)
-  const node = context.createScriptProcessor(BLOCK, 1, 1)
-  // Silent: the point is to make the graph pull samples through the node, not to play
-  // the room back into the room, which is a feedback loop and a fright.
-  const quiet = context.createGain()
-  quiet.gain.value = 0
-
-  let held: Float32Array[] = []
-  let count = 0
-  const wanted = Math.round(seconds * context.sampleRate)
-
-  /** Everything held, as one piece, and the buffer emptied. */
-  const taken = (): Float32Array => {
-    const whole = new Float32Array(count)
-    let at = 0
-    for (const block of held) {
-      whole.set(block, at)
-      at += block.length
-    }
-
-    held = []
-    count = 0
-    return whole
-  }
-
-  const wav = (samples: Float32Array): Uint8Array<ArrayBuffer> =>
-    spoken([samples], context.sampleRate)
-
-  node.onaudioprocess = (event) => {
-    // Copied, because the node hands the same buffer back on the next callback.
-    held.push(new Float32Array(event.inputBuffer.getChannelData(0)))
-    count += event.inputBuffer.length
-    if (count < wanted) return
-
-    piece(wav(taken()))
-  }
-
-  source.connect(node)
-  node.connect(quiet)
-  quiet.connect(context.destination)
-
-  return {
-    close: () => {
-      node.onaudioprocess = null
-      source.disconnect()
-      node.disconnect()
-      quiet.disconnect()
-      void context.close().catch(() => undefined)
-    },
-    /** What was left over when it was closed: the last few seconds, which are a
-     *  sentence like any other and would otherwise be the one part of a meeting the
-     *  transcript is missing. */
-    last: () => {
-      // A tenth of a second of a door closing is not a sentence.
-      if (count < context.sampleRate / 10) return {}
-      return { spare: wav(taken()) }
-    },
-  }
-}
-/* eslint-enable @typescript-eslint/no-deprecated */

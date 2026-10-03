@@ -1420,9 +1420,6 @@ export const tr: Dictionary = {
   Record: 'Kaydet',
   Recording: 'Kayıt',
   'Stop recording': 'Kaydı durdur',
-  'Meeting notes': 'Toplantı notları',
-  Meeting: 'Toplantı',
-  'Stop the meeting': 'Toplantıyı bitir',
   Transcribe: 'Yazıya çevir',
   Transcript: 'Döküm',
   'Transcript ({language})': 'Döküm ({language})',
@@ -1440,12 +1437,6 @@ export const tr: Dictionary = {
     'Bu kayıt, bir kerede sözcüklere çevrilemeyecek kadar uzun.',
   'That is as much as one recording may hold.': 'Bir kayıt en çok bu kadar tutar.',
   'Nothing could be heard in that recording.': 'Bu kayıtta hiçbir şey duyulmadı.',
-  'A piece of the transcript is being tried again.': 'Dökümün bir parçası yeniden deneniyor.',
-  'The transcript is behind and losing pieces.': 'Döküm geride kalıyor ve parça kaybediyor.',
-  '{count} pieces of this meeting were lost.': 'Bu toplantının {count} parçası kayboldu.',
-  'Add an AI provider in settings to summarise.':
-    'Özetlemek için ayarlarda bir YZ sağlayıcısı ekleyin.',
-  'The summary could not be written.': 'Özet yazılamadı.',
   // Publishing part two.
   Spreadsheet: 'Hesap tablosu',
   'The app’s own': 'Uygulamanın kendi',

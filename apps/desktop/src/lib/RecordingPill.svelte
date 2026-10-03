@@ -3,7 +3,7 @@
    *  far, and a stop.
    *
    *  Its own component because the recorder behind it is a subsystem - the
-   *  microphone, the container, the WAV pieces, the transcript, the summary - and
+   *  microphone, the container, the file beside the note - and
    *  nothing in it is worth a byte before somebody presses Record. The window asks for
    *  this the moment a recording starts and keeps it afterwards; see surfaces.svelte.ts.
    *
@@ -30,13 +30,13 @@
        which is already where work that failed and carried on says so. See
        Progress.svelte and busy.svelte.ts. -->
   <div class="nib-bar recording" class:saving={!recorder.on}>
-    <span class="dot" class:behind={recorder.retrying || recorder.waiting > 1}></span>
+    <span class="dot"></span>
     <span class="clock">{spanOf(recorder.elapsed)}</span>
     <button
       title={t('Stop recording')}
       aria-label={t('Stop recording')}
       disabled={!recorder.on}
-      onclick={() => recorder.toggle(recorder.kind)}
+      onclick={() => recorder.toggle()}
     >
       <svg viewBox="0 0 12 12"><rect x="3" y="3" width="6" height="6" rx="1" /></svg>
     </button>
@@ -82,14 +82,6 @@
     border-radius: 50%;
     background: var(--danger);
     animation: pill-beat 1.8s var(--ease-in-out) infinite;
-  }
-
-  /* A transcript that is behind, or a piece being sent again: the dot holds still and
-     goes to the accent. Nothing else changes, because the recording itself is fine and
-     a second red thing would read as the recording being in trouble. */
-  .dot.behind {
-    background: var(--accent);
-    animation: none;
   }
 
   .recording.saving .dot {

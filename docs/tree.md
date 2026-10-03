@@ -33,8 +33,8 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | a drag into a note | a link to it at the drop, the caret showing where; several rows are a link a line, a picture is embedded. The middle of the pane is the note's, and only a note that can be written in: the strip and the four edges still open and split, and a note that is read-only opens the row as it always did. See `linkedFiles` in `folder-notes.ts` and `wikilink/drop.ts` in the editor |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
-ask: New note, New canvas and New web note - and a recording or a meeting on a
-phone, where that menu is the plus. Each one puts a row in the tree waiting to be
+ask: New note, New canvas and New web note (not on a phone, where that menu is the
+plus). Each one puts a row in the tree waiting to be
 named and writes nothing until it has a name, which is what Finder, Explorer and VS
 Code all do. A website is named the same way, and what it is named is its title;
 the address is asked for in the tab's bar afterwards. See docs/web-tabs.md. A

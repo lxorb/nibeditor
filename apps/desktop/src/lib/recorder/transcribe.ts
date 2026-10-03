@@ -15,18 +15,15 @@
  *  no. The account is the road for a reader who has chosen no provider, which is most of
  *  them, and it is why transcribing works with no key at all.
  *
- *  Two callers. A meeting hands over a piece every twenty seconds while somebody is
- *  still talking; a Transcribe row hands over a whole file that may be half an hour
- *  long. Both end up sending the same thing - a WAV of 16 kHz mono, in pieces small
- *  enough for one request - and both come back with words and the language the model
- *  heard them in.
+ *  One caller: a Transcribe row, which hands over a whole file that may be half an hour
+ *  long. It is sent as a WAV of 16 kHz mono, in pieces small enough for one request,
+ *  and comes back as words and the language the model heard them in.
  *
  *  **Pieces go one at a time.** Twenty of them at once would be twenty requests
  *  against an hourly allowance the glasses share, from a phone that may be on a
  *  train, and the answers are wanted in order anyway. A failed piece is tried again
  *  on the same curve a room rejoins on, and a piece that will not go after that is
- *  said out loud rather than quietly dropped: the pill shows it, and the transcript
- *  says where the gap is. */
+ *  said out loud rather than quietly dropped. */
 
 import { api } from '../api'
 import { account } from '../account.svelte'
@@ -37,19 +34,10 @@ import { key, message, t } from '../i18n.svelte'
 import { waited } from '../timing'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
-/** How long a piece of a live transcript is.
- *
- *  Twenty seconds. It is the delay between somebody speaking and their words being in
- *  the note, so shorter would be better - but every piece is a request, a model run
- *  and a sentence cut in half at each end, and under about fifteen seconds the cuts
- *  start landing inside sentences often enough to read badly. Twenty is three requests
- *  a minute, which an hour-long meeting spends 180 of an allowance of 600 on. */
-export const LIVE_SECONDS = 20
-
-/** And how long a piece of a file is.
+/** How long a piece of a file is.
  *
  *  Sixty seconds, which is nearly two megabytes of WAV and comfortably inside the
- *  route's four. Nobody is watching the words arrive one piece at a time here, so the
+ *  route's four. Nobody is watching the words arrive one piece at a time, so the
  *  pieces are as long as they may be: a ten-minute recording is ten requests rather
  *  than thirty. */
 const FILE_SECONDS = 60
@@ -59,8 +47,7 @@ const FILE_SECONDS = 60
  *  Twelve megabytes, which is something like twenty-five minutes of Opus. Decoding is
  *  the memory ceiling rather than the request: a file becomes samples before it
  *  becomes pieces, and half an hour of them is a hundred megabytes even at the low
- *  rate this decodes to. A meeting longer than that is transcribed as it goes and
- *  never reaches this at all; a file longer than that is told so plainly. */
+ *  rate this decodes to. A file longer than that is told so plainly. */
 const MOST_DECODED = 12 * 1024 * 1024
 
 /** How many times a piece is tried. Three: a phone changing cell loses one request,
@@ -91,8 +78,8 @@ export const WHISPER = 'whisper'
  *  model the provider itself names - so somebody whose server wants another name has a
  *  way to say it.
  *
- *  Walked once per provider and then remembered: a piece of a meeting every twenty
- *  seconds must not spend a request finding out what it already knows. */
+ *  Walked once per provider and then remembered: every piece of a long file must not
+ *  spend a request finding out what the first one already learned. */
 const MODELS: Record<'openai' | 'compatible', readonly string[]> = {
   openai: ['gpt-4o-mini-transcribe', 'whisper-1'],
   compatible: ['whisper-1'],
@@ -116,12 +103,8 @@ function modelsFor(provider: Provider): string[] {
   return remembered ? [remembered, ...every.filter((one) => one !== remembered)] : every
 }
 
-/** The name to write under a transcript, before a word of it has arrived.
- *
- *  A meeting's note is headed the moment it is made, so this says who is about to write
- *  it: the model a provider will be asked for, or Whisper for the account's road. One
- *  answer for both the meeting's heading and a file's callout, so a note cannot say one
- *  thing and mean another. */
+/** The name to write under a transcript: the model a provider is asked for first, or
+ *  Whisper for the account's road. */
 export function transcribedBy(): string {
   const provider = transcriberNow()
   if (!provider) return WHISPER
@@ -142,8 +125,8 @@ export function transcribedBy(): string {
  *  refused, a server that is not running - is said out loud. */
 async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>): Promise<Words> {
   // Fetched here rather than imported: what a provider is, where its key lives and the
-  // request itself are some fifteen kilobytes, and this module is in front of the first
-  // paint because two menu rows ask it a question. See test/weight.test.ts.
+  // request itself are some fifteen kilobytes, fetched by the press that needs them
+  // rather than with this module. See test/weight.test.ts.
   const { readKey } = await import('../ai/keys')
   const { headersWithoutType, heardUrl, reachable, troubleIn } = await import('../ai/providers')
 
@@ -238,12 +221,7 @@ function parsed(body: string): unknown {
  *
  *  Throws when it will not go: a piece that silently became nothing is a hole in a
  *  transcript that nothing on screen accounts for. */
-export async function heardPiece(
-  wav: Uint8Array<ArrayBuffer>,
-  /** Told each time a try fails, so the pill can say a piece is being tried again
-   *  rather than a transcript quietly falling behind. */
-  failed?: (round: number) => void,
-): Promise<Words> {
+export async function heardPiece(wav: Uint8Array<ArrayBuffer>): Promise<Words> {
   const provider = transcriberNow()
   const token = account.accountToken
   if (!provider && !token) {
@@ -260,7 +238,6 @@ export async function heardPiece(
       return { text: said.said ?? '', language: said.language }
     } catch (error) {
       trouble = error
-      failed?.(round)
       if (round < TRIES) await waited(roomDelay(round))
     }
   }

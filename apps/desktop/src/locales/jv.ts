@@ -1405,9 +1405,6 @@ export const jv: Dictionary = {
   Record: 'Rekam',
   Recording: 'Rekaman',
   'Stop recording': 'Mandhegake rekaman',
-  'Meeting notes': 'Cathetan rapat',
-  Meeting: 'Rapat',
-  'Stop the meeting': 'Pungkasi rapat',
   Transcribe: 'Transkripake',
   Transcript: 'Transkrip',
   'Transcript ({language})': 'Transkrip ({language})',
@@ -1425,12 +1422,6 @@ export const jv: Dictionary = {
     'Rekaman kuwi dawa banget kanggo diowahi dadi tembung sepisanan.',
   'That is as much as one recording may hold.': 'Semono sing bisa dimuat siji rekaman.',
   'Nothing could be heard in that recording.': 'Ing rekaman kuwi ora ana sing keprungu.',
-  'A piece of the transcript is being tried again.': 'Sak bagean transkrip dicoba maneh.',
-  'The transcript is behind and losing pieces.': 'Transkrip keri lan kelangan bagean.',
-  '{count} pieces of this meeting were lost.': '{count} bagean rapat iki ilang.',
-  'Add an AI provider in settings to summarise.':
-    'Tambahake panyedhiya AI ing setelan kanggo ngringkes.',
-  'The summary could not be written.': 'Ringkesan ora bisa ditulis.',
   // Publishing part two.
   Spreadsheet: 'Lembar itungan',
   'The app’s own': 'Duwèkè aplikasi',

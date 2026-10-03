@@ -794,7 +794,7 @@ names a tool, a model, an effort, a mode and a thread, never a flag. What change
 ### 5.3 What stays exactly as it is
 
 The plan rules in `docs/ai.md`; the agent policy, asks, untrusted marks, log and stop in
-`docs/agent-native.md`; `complete()` for the block, the rewrites, the meeting summary and the
+`docs/agent-native.md`; `complete()` for the block, the rewrites and the
 quick question; the Ask behaviour of retrieval with no index and citations; Settings > AI's
 providers. The Ask panel's own drive (`apps/desktop/test/e2e/ask-panel.py`) keeps passing,
 pointed at the new panel in Ask mode.

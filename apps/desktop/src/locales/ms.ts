@@ -1411,9 +1411,6 @@ export const ms: Dictionary = {
   Record: 'Rakam',
   Recording: 'Rakaman',
   'Stop recording': 'Henti rakaman',
-  'Meeting notes': 'Nota mesyuarat',
-  Meeting: 'Mesyuarat',
-  'Stop the meeting': 'Tamatkan mesyuarat',
   Transcribe: 'Transkripkan',
   Transcript: 'Transkrip',
   'Transcript ({language})': 'Transkrip ({language})',
@@ -1432,12 +1429,6 @@ export const ms: Dictionary = {
     'Rakaman itu terlalu panjang untuk ditukar menjadi perkataan sekali gus.',
   'That is as much as one recording may hold.': 'Itulah sebanyak yang dimuat satu rakaman.',
   'Nothing could be heard in that recording.': 'Tiada apa yang didengar dalam rakaman itu.',
-  'A piece of the transcript is being tried again.': 'Sekeping transkrip sedang dicuba semula.',
-  'The transcript is behind and losing pieces.': 'Transkrip ketinggalan dan kehilangan kepingan.',
-  '{count} pieces of this meeting were lost.': '{count} kepingan mesyuarat ini hilang.',
-  'Add an AI provider in settings to summarise.':
-    'Tambah pembekal AI dalam tetapan untuk meringkaskan.',
-  'The summary could not be written.': 'Ringkasan tidak dapat ditulis.',
   // Publishing part two.
   Spreadsheet: 'Hamparan',
   'The app’s own': 'Milik apl',
