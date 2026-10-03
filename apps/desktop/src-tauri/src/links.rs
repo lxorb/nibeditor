@@ -1536,6 +1536,37 @@ mod tests {
         assert_eq!(read.tasks[0].text.chars().count(), LONGEST_TASK);
     }
 
+    /// What the task lines add to a scan of 5,000 notes holding 10,000 tasks: the same
+    /// pass with and without them (a `words_from` past every line reads none). Timed,
+    /// so it is run by hand and in release: `cargo test --release --lib
+    /// links::tests::what_the_rows_add -- --ignored --nocapture`. Measured 2026-10-04 on
+    /// the reference machine: see docs/tasks.md 5.3.
+    #[test]
+    #[ignore = "a measurement, run by hand"]
+    fn what_the_rows_add_to_a_scan() {
+        let notes: Vec<String> = (0..5000)
+            .map(|at| {
+                format!(
+                    "---\nstatus: open\n---\n# Note {at}\nSome words with a [[link]] in them.\n## Errands\n- [ ] Call {at} [time:: 16:00] #admin ⏫ 📅 2026-10-06\n  - [x] Find the card ✅ 2026-10-01\nAnd a closing paragraph of prose that runs on for a while.\n"
+                )
+            })
+            .collect();
+
+        let time = |words_from: usize| {
+            let started = std::time::Instant::now();
+            let found: usize = notes
+                .iter()
+                .map(|body| prose(body, words_from).tasks.len())
+                .sum();
+            (started.elapsed(), found)
+        };
+
+        let (without, none) = time(usize::MAX);
+        let (with, tasks) = time(0);
+        assert_eq!((none, tasks), (0, 10_000));
+        println!("prose over 5,000 notes: {without:?} without tasks, {with:?} with 10,000");
+    }
+
     /// A note's size and times off the one open the scan makes.
     #[test]
     fn a_stamp_says_the_size_and_the_times() {

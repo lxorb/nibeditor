@@ -11,7 +11,7 @@
  *  Its own module rather than a part of scan-note.ts, which the first paint carries:
  *  nothing before the launch order is over asks a note for its tasks. The browser's
  *  scan reads it for every note (web/commands.ts) and the rows for a note just saved
- *  (rows/store.svelte.ts). */
+ *  (rows/store.ts). */
 
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
@@ -52,9 +52,7 @@ export const LONGEST_TASK = 2000
 
 export function scanRows(content: string): ScannedRows {
   const block = frontMatterBlock(content)
-  const front = block
-    ? content.slice(block.body.from, block.body.to).replace(/\r?\n$/, '')
-    : null
+  const front = block ? content.slice(block.body.from, block.body.to).replace(/\r?\n$/, '') : null
   // The block's own lines hold no task and no section.
   const wordsFrom = block ? lineOf(content, block.close) + 1 : 0
 
@@ -93,7 +91,11 @@ export function scanRows(content: string): ScannedRows {
 /** Which line an offset is on. */
 function lineOf(content: string, at: number): number {
   let lines = 0
-  for (let found = content.indexOf('\n'); found !== -1 && found < at; found = content.indexOf('\n', found + 1)) {
+  for (
+    let found = content.indexOf('\n');
+    found !== -1 && found < at;
+    found = content.indexOf('\n', found + 1)
+  ) {
     lines++
   }
   return lines

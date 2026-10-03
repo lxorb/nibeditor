@@ -10,6 +10,7 @@
  *  way a bookmark follows. A space that never renamed its inbox keeps nothing here. */
 
 import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
+import { without } from '../records'
 import { forget, isRecord, isString, keep, stored } from '../stored'
 import { invoke } from '../tauri'
 import type { KeptByPath } from '../workspace/file-ops'
@@ -49,11 +50,10 @@ export function inboxOf(root: string): string {
 
 /** Makes another note the space's inbox; the default again where it is `Inbox.md`. */
 export function setInbox(root: string, relative: string) {
-  const all = read()
-  const key = keyOf(all, root)
-  if (key !== undefined) delete all[key]
-  if (pathKey(relative, root) !== pathKey(INBOX, root)) all[root] = relative
-  write(all)
+  const kept = read()
+  const key = keyOf(kept, root)
+  const all = key === undefined ? kept : without(kept, key)
+  write(pathKey(relative, root) === pathKey(INBOX, root) ? all : { ...all, [root]: relative })
 }
 
 /** The space's inbox as a path on this disk, made empty where there is none yet. */
@@ -83,15 +83,12 @@ export const inboxes: KeptByPath = {
     const key = keyOf(all, from)
     const kept = key === undefined ? undefined : all[key]
     if (key === undefined || kept === undefined) return
-    delete all[key]
-    all[to] = kept
-    write(all)
+    write({ ...without(all, key), [to]: kept })
   },
   forget(root) {
     const all = read()
     const key = keyOf(all, root)
     if (key === undefined) return
-    delete all[key]
-    write(all)
+    write(without(all, key))
   },
 }

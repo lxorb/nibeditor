@@ -18,6 +18,7 @@ vi.mock('../tauri', () => ({
       const held = disk.get(path)
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
+    if (command === 'snapshot_note') sent.push(`keep ${path}`)
     if (command === 'write_note' && typeof args?.content === 'string') {
       disk.set(path, args.content)
       sent.push(`write ${path}`)
@@ -48,6 +49,12 @@ function rowsFor(text: string): Row[] {
   })
 }
 
+const noteRow = (text: string) => {
+  const [found] = rowsFor(text)
+  if (!found) throw new Error('no note row')
+  return found
+}
+
 const taskRow = (text: string, words: string) => {
   const found = rowsFor(text).find((row) => row.task?.text === words)
   if (!found) throw new Error(`no task ${words}`)
@@ -61,7 +68,10 @@ function holding(text: string, open?: string) {
   const note =
     open === undefined
       ? null
-      : new NoteDoc({ kind: 'note', path: PATH, name: 'Plan.md', text: open, dirty: true }, () => undefined)
+      : new NoteDoc(
+          { kind: 'note', path: PATH, name: 'Plan.md', text: open, dirty: true },
+          () => undefined,
+        )
 
   const ws = {
     activeSpace: { id: 's', name: 'Space', root: '/space' },
@@ -82,22 +92,28 @@ beforeEach(() => {
 })
 
 describe('a property written from a view', () => {
-  const note = rowsFor('---\nstatus: open\n---\n# Plan\n')[0] as Row
+  const note = noteRow('---\nstatus: open\n---\n# Plan\n')
 
   test('sets, adds and takes away keys in the front matter', () => {
     const text = '---\nstatus: open\n---\n# Plan\n'
-    expect(changed(text, note, { note: { status: 'done' } })).toBe('---\nstatus: done\n---\n# Plan\n')
-    expect(changed(text, note, { note: { due: { kind: 'date', iso: '2026-10-06' }, done: true } })).toBe(
-      '---\nstatus: open\ndue: 2026-10-06\ndone: true\n---\n# Plan\n',
+    expect(changed(text, note, { note: { status: 'done' } })).toBe(
+      '---\nstatus: done\n---\n# Plan\n',
     )
+    expect(
+      changed(text, note, { note: { due: { kind: 'date', iso: '2026-10-06' }, done: true } }),
+    ).toBe('---\nstatus: open\ndue: 2026-10-06\ndone: true\n---\n# Plan\n')
     expect(changed(text, note, { note: { status: null } })).toBe('# Plan\n')
-    expect(changed(text, note, { note: { tags: ['a', 'b'], project: { kind: 'link', target: 'Thesis' } } })).toBe(
-      "---\nstatus: open\ntags: [a, b]\nproject: '[[Thesis]]'\n---\n# Plan\n",
-    )
+    expect(
+      changed(text, note, {
+        note: { tags: ['a', 'b'], project: { kind: 'link', target: 'Thesis' } },
+      }),
+    ).toBe("---\nstatus: open\ntags: [a, b]\nproject: '[[Thesis]]'\n---\n# Plan\n")
   })
 
   test('opens a block in a note that has none', () => {
-    expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe('---\npriority: 2\n---\n# Plan\n')
+    expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe(
+      '---\npriority: 2\n---\n# Plan\n',
+    )
   })
 })
 
@@ -117,7 +133,9 @@ describe('a task field written from a view', () => {
 
     const after = changed(moved, row, { task: { priority: 1 } }) ?? ''
     expect(readTask(after.split('\n')[4] ?? '')?.priority).toBe(1)
-    expect(taskLine(moved, row.anchor ?? { line: 0, hash: '' })?.from).toBe(moved.indexOf('- [ ] Water'))
+    expect(taskLine(moved, row.anchor ?? { line: 0, hash: '' })?.from).toBe(
+      moved.indexOf('- [ ] Water'),
+    )
   })
 
   test('writes nothing for a task that is no longer there', () => {
@@ -139,14 +157,16 @@ describe('the write itself', () => {
 
     expect(await writeRow(ws, PATH, taskRow(text, 'Go'), { task: { done: true } })).toBe(true)
     expect(readTask(disk.get(PATH) ?? '')?.done).toBe(true)
-    expect(sent).toEqual([`write ${PATH}`, `saved ${PATH}`])
+    expect(sent).toEqual([`keep ${PATH}`, `write ${PATH}`, `saved ${PATH}`])
     expect(undone.last?.kind).toBe('replace')
   })
 
   test('a note open with unsaved words keeps them, and takes the edit in its own document', async () => {
     const { ws, note } = holding('- [ ] Go\n', '- [ ] Go\nwords typed since\n')
 
-    expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(true)
+    expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(
+      true,
+    )
     expect(note?.text).toBe('- [x] Go\nwords typed since\n')
     expect(disk.get(PATH)).toBe('- [x] Go\nwords typed since\n')
   })
@@ -154,7 +174,7 @@ describe('the write itself', () => {
   test('a change the note already says writes nothing', async () => {
     const text = '---\nstatus: open\n---\n'
     const { ws } = holding(text)
-    expect(await writeRow(ws, PATH, rowsFor(text)[0] as Row, { note: { status: 'open' } })).toBe(false)
+    expect(await writeRow(ws, PATH, noteRow(text), { note: { status: 'open' } })).toBe(false)
     expect(sent).toEqual([])
   })
 })
