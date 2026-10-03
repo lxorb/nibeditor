@@ -61,6 +61,15 @@ export function isFileDrop(transfer: DataTransfer | null): boolean {
   return !!transfer?.types.includes('Files') && !isTreeDrag(transfer)
 }
 
+/** Whether a drag carries a link and no file: a link dragged out of a web tab's page or
+ *  another browser, which the file list keeps as a web note. A picture dragged out of a
+ *  page carries itself as a file as well, and is copied in as one; a sentence carries no
+ *  link list, and nothing else leaves a page. See web-tab/dropped-site.ts. */
+export function isLinkDrop(transfer: DataTransfer | null): boolean {
+  const types = transfer?.types ?? []
+  return types.includes('text/uri-list') && mayCarryAddress(types) && !isTreeDrag(transfer)
+}
+
 /** A drop's files, read while it is still happening: the transfer is emptied once
  *  the event is over, and a folder is only an entry until it is walked. */
 export interface CaughtFiles {
@@ -83,7 +92,7 @@ export function landing(
   event: Pick<DragEvent, 'dataTransfer' | 'ctrlKey' | 'altKey'>,
   platform: Platform,
 ): 'move' | 'copy' | null {
-  if (isFileDrop(event.dataTransfer)) return 'copy'
+  if (isFileDrop(event.dataTransfer) || isLinkDrop(event.dataTransfer)) return 'copy'
   if (!isTreeDrag(event.dataTransfer)) return null
 
   return (platform === 'mac' ? event.altKey : event.ctrlKey) ? 'copy' : 'move'
