@@ -549,6 +549,25 @@ place to the system's cascade; see `created_away` in
 that way and ends one that shows up on a screen. It is on the trace as `window
 placement`.
 
+What the page asks for first is read while the webview starts. The page writes down,
+as it changes, the space it is in, how its tree is listed and the notes open in it
+(`launch.json` beside `ground.txt`); the next launch's crate reads all of it on a
+thread of its own before it builds the window, through the same commands the page
+would have called; and `src/early.ts`, an entry with nothing imported that runs the
+moment the page arrives, asks for the whole of it in one round trip. The workspace
+takes each answer only where it is the question it would have asked, once. See
+`apps/desktop/src-tauri/src/ahead.rs` and `apps/desktop/src/lib/workspace/ahead.ts`;
+it is on the trace as `read ahead: spaces`, `read ahead: tree` and `read ahead: N
+notes`, on the crate's side, before the page is requested.
+
+And the note the window was left on is drawn in the first frame, before its editor
+exists: its first screen is kept as the editor's own markup whenever the reader stops
+for a moment, and drawn where the editor will be while the editor is built under it,
+which then takes over lined up to the pixel. Only where what was kept is provably what
+the editor will show. See `apps/desktop/src/lib/first-screen.svelte.ts`; it is on the
+trace as `window: first screen drawn` and `window: first screen handed to the editor`,
+or `window: first screen dropped` where it was not what the editor showed.
+
 ## Speed
 
 Emil's rule, 2026-09-14: nib opens in under a second, on slower devices too, and looks
@@ -565,6 +584,12 @@ fully loaded when it does. What holds it, and how to measure it again:
   note's editor, on a fixed space of a hundred notes, against a line scaled to the
   machine it runs on. Red with a task of eighty reference milliseconds put into the
   search stage's turn, green without it.
+- **The note before its editor**, every night: `apps/desktop/test/e2e/first-screen.py`.
+  A long note left in its middle, the page loaded again four times slower, and three
+  things held: the note's lines were drawn in the launch's first frame, before the
+  editor existed; every line the drawing showed is in the editor that took over, with
+  the same words, within a pixel of the same place and the same height; and a note
+  whose words changed since is not drawn at all.
 - **The launch itself**: `python apps/desktop/test/e2e/launch.py` on a release probe
   build (its docstring says how to make one). Cold is a first launch on a profile the
   webview has never seen, warm is every one after, with a note open in the big space;
@@ -628,6 +653,51 @@ of a big space, 0.2 s slowed. Tried and not kept: dropping the JavaScript side o
 module preloading, which took 87 ms off a first frame at full speed and put 55 back at
 four times slower, where the preloads are what keeps a door's modules from arriving one
 after another.
+
+Measured again 2026-10-01, the same machine, load 11-60 %, 8-11 GB free, five launches
+each rather than seven while a probe could still take the foreground. Before is main at
+ec337dd5; after is that with the round that read the launch ahead, drew the note before
+its editor and parsed what is on screen first. A cold launch is a first launch of all,
+with no session and nothing to read ahead, so only the warm rows can move.
+
+| launch | window shown | page requested | modules | shell | tree read | note drawn | first frame | editor | order done |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold, empty space, before | 331 | 317 | 456 | 498 | 529 | - | 631 | - | 683 |
+| cold, empty space, after | 354 | 331 | 469 | 509 | 544 | - | 646 | - | 696 |
+| warm, empty space, before | 382 | 366 | 515 | 563 | 587 | - | 659 | 692 | 747 |
+| warm, empty space, after | 383 | 364 | 518 | 576 | 588 | - | 664 | 697 | 714 |
+| cold, 5,000 notes, before | 322 | 313 | 440 | 476 | 528 | - | 594 | - | 801 |
+| cold, 5,000 notes, after | 314 | 300 | 425 | 459 | 518 | - | 594 | - | 828 |
+| warm, 5,000 notes, before | 291 | 268 | 399 | 436 | 479 | - | 505 | 574 | 646 |
+| warm, 5,000 notes, after | 308 | 293 | 430 | 469 | 489 | 504 | 538 | 610 | 673 |
+
+| four times slower, warm, the page's own clock | modules | shell | tree read | note drawn | first frame | editor | order done |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| empty space, before | 283 | 422 | 535 | - | 550 | 585 | 688 |
+| empty space, after | 267 | 422 | 452 | - | 492 | 544 | 678 |
+| 5,000 notes, before | 258 | 392 | 534 | - | 554 | 769 | 1190 |
+| 5,000 notes, after | 292 | 426 | 498 | 528 | 551 | 800 | 1046 |
+
+What it says. The webview's start is where it was, as it has to be: nothing the page
+does comes before it. The crate's own reads now finish 25 to 45 ms into a warm launch
+(`read ahead` on the trace), long before the page is asked for, so the listing reaches
+the page in the one round trip it starts as it arrives: four times slower, the tree is
+read 72 ms after the shell rather than 142 over five thousand notes, and 30 rather than
+113 over an empty space. And the note: drawn at 504 ms warm where its editor used to be
+the first thing to show it at 574, and four times slower 102 ms after the shell rather
+than 377, before the first frame and a quarter of a second ahead of its editor, which
+takes over without a line moving (first-screen.py). The drawing costs the frame it is
+in about 8 ms at full speed, counted from the page's request; the rest of that row's
+later first frame is the webview starting later on that run (window shown 308 against
+291). Not tried: making WebView2's
+environment before the crate's own setup, which is 10 to 15 ms of a 270 to 360 ms phase
+on this machine and would mean starting the runtime with exactly the options wry passes
+it, where any difference makes it refuse the window.
+
+What is next. Four times slower, the shell is still 70 ms from the listing over five
+thousand notes: the answer is in, and waits for the thread the app's modules are being
+run on. And a launch's own modules, 260 to 290 ms of the slowed page before anything
+is drawn.
 
 ## Types
 
