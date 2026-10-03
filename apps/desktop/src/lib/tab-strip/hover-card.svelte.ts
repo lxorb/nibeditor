@@ -24,7 +24,7 @@ import { overlays } from '../overlays'
 import { viewport } from '../viewport.svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
-import { type Anchor, REENTRY, showDelay, siteOf, spot, whereOf } from './card'
+import { type Anchor, type From, fromOf, REENTRY, showDelay, siteOf, spot, whereOf } from './card'
 import TabCard from './TabCard.svelte'
 
 /** What the pointer, or the keyboard, is resting on. */
@@ -43,6 +43,8 @@ export interface Shown {
   id: string
   title: string
   where: string
+  /** The space a web tab is from, where that is not the one on screen; see `fromOf`. */
+  from: From | null
   still: string | null
   x: number
   y: number
@@ -178,6 +180,7 @@ class Hovering {
       where: web
         ? siteOf(pages.addressOf(tab.id) ?? tab.address)
         : whereOf(tab.path, workspace.spaces),
+      from: web ? fromOf(tab.path, tab.note.home, workspace.spaces, workspace.activeSpaceId) : null,
       still,
       x: at.x,
       y: at.y,

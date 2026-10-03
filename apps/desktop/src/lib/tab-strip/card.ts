@@ -4,6 +4,7 @@
  *  is tested without a window; hover-card.svelte.ts is what runs it. */
 
 import { withinSpace } from '../space-paths'
+import { ownerOf } from '../workspace/sets'
 import { WIDTH } from './layout'
 
 /** Chrome's wait, before the first card, on a logarithmic scale: 300 ms while the tabs
@@ -78,4 +79,30 @@ export function whereOf(path: string | null, spaces: readonly Place[]): string {
   }
 
   return ''
+}
+
+/** A space as the card names one: what it wears, and what it is called. */
+export interface From {
+  id: string
+  name: string
+}
+
+/** The space a web tab is from, beside its site: the space holding its file for a page
+ *  kept as a web note, the one it was opened in for one nobody kept. Emil, 2026-10-03.
+ *
+ *  Only where that is not the space on screen. Arc marks a tab with its space only
+ *  where it can turn up outside it - its command bar, Little Arc - and never in the
+ *  sidebar, where every tab is the space's own; nib's strip is the same, since a space
+ *  that keeps its own tabs only ever shows its own. So the card says it where it is
+ *  news, a page of another space's in the tabs every Global space shares, and spends
+ *  no words where the answer is the space the reader is already in. */
+export function fromOf(
+  path: string | null,
+  home: string | null,
+  spaces: readonly (Place & From)[],
+  here: string | null,
+): From | null {
+  const owner = ownerOf(path, home, spaces)
+  const space = owner === here ? undefined : spaces.find((one) => one.id === owner)
+  return space ? { id: space.id, name: space.name } : null
 }

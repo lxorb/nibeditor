@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { showDelay, siteOf, spot, whereOf } from './card'
+import { fromOf, showDelay, siteOf, spot, whereOf } from './card'
 import { WIDTH } from './layout'
 
 describe("the card's wait", () => {
@@ -67,5 +67,35 @@ describe('where the card says a file lives', () => {
   test('and nothing for a file in no space', () => {
     expect(whereOf('D:\\Downloads\\x.md', spaces)).toBe('')
     expect(whereOf(null, spaces)).toBe('')
+  })
+})
+
+/** Emil, 2026-10-03: a web tab's card says which space it is from. */
+describe('the space a web tab is from', () => {
+  const spaces = [
+    { id: 'work', name: 'Work', root: '/spaces/Work' },
+    { id: 'home', name: 'Home', root: '/spaces/Home' },
+  ]
+
+  test('is its file’s for a page kept as a web note', () => {
+    expect(fromOf('/spaces/Home/Recipes/Soup.url', null, spaces, 'work')).toEqual({
+      id: 'home',
+      name: 'Home',
+    })
+  })
+
+  test('is the one it was opened in for a page nobody kept', () => {
+    expect(fromOf(null, 'home', spaces, 'work')).toEqual({ id: 'home', name: 'Home' })
+  })
+
+  test('is said only where it is not the space on screen', () => {
+    expect(fromOf('/spaces/Work/Docs.url', null, spaces, 'work')).toBeNull()
+    expect(fromOf(null, 'work', spaces, 'work')).toBeNull()
+  })
+
+  test('is nothing for a page that is no space’s', () => {
+    expect(fromOf(null, null, spaces, 'work')).toBeNull()
+    expect(fromOf('/elsewhere/Page.url', null, spaces, 'work')).toBeNull()
+    expect(fromOf(null, 'gone', spaces, 'work')).toBeNull()
   })
 })

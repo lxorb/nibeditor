@@ -11,6 +11,9 @@ screen:
   - three tabs picked with Ctrl, dragged along the strip together, carried to the
     other pane together, closed together, and brought back by one Reopen closed tab
     (lib/tab-strip/picking.svelte.ts);
+  - a Ctrl press on a tab adds it to the pick and, held, drags the whole pick, and a
+    picked tab wears the picked fill, which the frame can be told from in the light and
+    the dark;
   - each tab's number while Alt is held, in the light and the dark: on screen within a
     frame or two of Alt going down, kept through Alt and three digits, gone at Alt+F4
     and once Alt is let go of (lib/tab-strip/numbers.svelte.ts).
@@ -444,6 +447,70 @@ def several(page: Page) -> None:
     shot(page, "08-reopened")
 
 
+# What a picked tab's body is filled with, and what the frame behind it is.
+FILLS = """
+() => {
+  const one = document.querySelector('.tab.chosen:not(.active)')
+  const frame = document.querySelector('.tabs')
+  const ground = (node) => {
+    for (let at = node; at; at = at.parentElement) {
+      const colour = getComputedStyle(at).backgroundColor
+      if (colour !== 'rgba(0, 0, 0, 0)') return colour
+    }
+    return ''
+  }
+  return {
+    picked: one ? getComputedStyle(one, '::before').backgroundColor : null,
+    shown: one ? getComputedStyle(one, '::before').opacity : null,
+    frame: ground(frame),
+    wanted: getComputedStyle(document.documentElement).getPropertyValue('--surface-picked').trim(),
+  }
+}
+"""
+
+
+def ctrl_drag(browser, scheme: str) -> None:
+    """Chrome's Ctrl press: it adds the tab to the pick and, held, drags the whole pick."""
+    say(f"[{scheme}] a Ctrl press drags the pick")
+    context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
+    page = context.new_page()
+    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space", 40)
+    page.evaluate(SEED, NAMES)
+    page.wait_for_timeout(500)
+
+    page.locator(tab("Beta")).click(modifiers=["Control"])
+    page.mouse.move(5, 500)
+    page.wait_for_timeout(300)
+    fills = page.evaluate(FILLS)
+    say(f"[{scheme}] the picked fill {fills}")
+    # The fill, not its fade: a headless page only moves a transition on when something
+    # asks for a frame, and the picture below is the one that does.
+    if fills["shown"] is None or fills["picked"] == fills["frame"]:
+        wrong(f"[{scheme}] a picked tab cannot be told from the frame: {fills}")
+    shot(page, f"10-picked-{scheme}")
+
+    sx, sy = centre(page, tab("Delta"))
+    start = page.locator(".tabs .tab").first.bounding_box()
+    page.keyboard.down("Control")
+    page.mouse.move(sx, sy)
+    page.mouse.down()
+    page.mouse.move(sx - 30, sy, steps=4)
+    page.mouse.move(start["x"] + 4, sy, steps=12)
+    page.wait_for_timeout(150)
+    page.mouse.up()
+    page.keyboard.up("Control")
+    page.wait_for_timeout(500)
+    now = strip(page)[0]
+    say(f"[{scheme}] after a Ctrl drag {now['tabs']}, picked {now['picked']}")
+    if now["tabs"] != ["Alpha", "Beta", "Delta", "Gamma"]:
+        wrong(f"[{scheme}] the Ctrl press did not drag the pick together: {now['tabs']}")
+    if sorted(now["picked"]) != ["Alpha", "Beta", "Delta"]:
+        wrong(f"[{scheme}] the pick did not survive a Ctrl drag: {now['picked']}")
+    context.close()
+
+
 def alt_numbers(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the numbers while Alt is held")
     page.emulate_media(color_scheme=scheme)
@@ -535,6 +602,8 @@ def main() -> int:
             several(page)
             for scheme in ("light", "dark"):
                 alt_numbers(page, scheme)
+            for scheme in ("light", "dark"):
+                ctrl_drag(browser, scheme)
             browser.close()
     finally:
         server.shutdown()

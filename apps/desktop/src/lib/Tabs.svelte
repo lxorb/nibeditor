@@ -384,27 +384,29 @@
     if (event.button !== 0 || drag.pressing) return
     if (!Chip) void import('./tab-strip/TabChip.svelte').then((one) => (Chip = one.default))
     if (!carry) void import('./tab-strip/carrying').then((one) => (carry = one))
+    if (!picks.loaded) void loadPicking()
 
     const finger = event.pointerType === 'touch'
     if (!finger && picksWith(event)) {
-      // Ctrl or Shift: the pick changes, and the press drags nothing.
+      // Ctrl or Shift: the pick changes on the press, as Chrome's does, and a press
+      // that leaves this tab picked and in front goes on to drag the whole pick. The
+      // first one of a sitting waits for the pick to be fetched, and drags nothing.
       event.preventDefault()
-      void (
-        picks.loaded ? Promise.resolve(picks.loaded) : import('./tab-strip/picking.svelte')
-      ).then((one) => {
-        picks.loaded = one
-        const how = one.pickingOf(event, shortcuts.platform === 'mac')
-        const front = how && one.pick(paneId, tab.id, how)
-        if (front) workspace.activate(front)
-      })
-      return
+      const loaded = picks.loaded
+      if (!loaded) {
+        void loadPicking().then((one) => pickWith(one, event, tab))
+        return
+      }
+      if (pickWith(loaded, event, tab) !== tab.id) return
+      plainOnPick = false
+    } else {
+      // Chrome activates a tab on the press, before anything has moved, so the tab
+      // under a mouse answers at once and the one being dragged is the one open. A
+      // finger's press may be the start of a scroll, so it waits for the tap.
+      plainOnPick = picked.has(tab.id)
+      if (!finger && !plainOnPick) picking?.chosen.clear()
+      if (!finger) workspace.activate(tab.id)
     }
-    // Chrome activates a tab on the press, before anything has moved, so the tab
-    // under a mouse answers at once and the one being dragged is the one open. A
-    // finger's press may be the start of a scroll, so it waits for the tap.
-    plainOnPick = picked.has(tab.id)
-    if (!finger && !plainOnPick) picking?.chosen.clear()
-    if (!finger) workspace.activate(tab.id)
     block = finger ? null : (picking?.Block.of(paneId, tab, sized, widths) ?? null)
 
     const node = event.currentTarget as HTMLElement
@@ -597,7 +599,14 @@
    *  the strip is and do not arrive one by one. */
   const together = (_node: Element) => (workspace.panes.swapping ? risen() : { duration: dur(0) })
 
+  /** A closed tab shrinks to nothing where it stood, drawn as Chrome draws one on its
+   *  way out: no longer the one in front, picked or under the pointer. The tab after it
+   *  is in front from the same frame, and two fills with two pairs of feet for the
+   *  length of the shrink was the flash; the cross it was closed by, still lit under a
+   *  pointer the next one's cross slides in beneath, was the other. */
   function leave(node: HTMLElement) {
+    node.classList.remove('active', 'chosen', 'line')
+    node.classList.add('leaving')
     const width = widthOf(node)
     // The set put aside goes at once, so no frame shows two sets.
     const duration = workspace.panes.swapping ? 0 : dur(210)
@@ -693,6 +702,18 @@
   /** Whether a click picks: Ctrl, Cmd on a Mac, or Shift. */
   const picksWith = (event: MouseEvent) =>
     event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
+
+  /** The pick, fetched with the first press on a tab; see tab-strip/picking.svelte.ts. */
+  const loadPicking = () =>
+    import('./tab-strip/picking.svelte').then((one) => (picks.loaded ??= one))
+
+  /** A press with Ctrl or Shift, picked; answers the tab now in front. */
+  function pickWith(loaded: NonNullable<typeof picks.loaded>, event: MouseEvent, tab: Tab) {
+    const how = loaded.pickingOf(event, shortcuts.platform === 'mac')
+    const front = how && loaded.pick(paneId, tab.id, how)
+    if (front) workspace.activate(front)
+    return front
+  }
 
   /** Chrome's hover card, fetched with the first pointer on a tab; see hover-card.svelte.ts. */
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
@@ -1125,9 +1146,13 @@
     background: var(--tab-ground);
   }
 
-  /* Picked with Ctrl or Shift: the hover's box, held, as Chrome's selected tab. */
+  /* Picked with Ctrl or Shift: the hover's box, held, as Chrome's selected tab, in the
+     fill every list in the app wears for a row picked that way (`.nib-row.is-picked`).
+     The hover's own fill was a wash of the page over the frame, which a pick of tabs
+     was too faint to be seen in, and in the dark not at all. */
   .tab.chosen:not(.active)::before {
     opacity: 1;
+    background: var(--surface-picked);
   }
 
   /* The two feet: where the active tab meets the bar under it, it flares out into
@@ -1196,6 +1221,18 @@
 
   .tab.line::after {
     opacity: 1;
+  }
+
+  /* On its way out; see `leave`. Nothing of it answers the pointer, which belongs to
+     the tab sliding in under it, and its cross goes with the press that closed it
+     rather than riding the shrinking edge over the tab before it. */
+  .tab:global(.leaving) {
+    pointer-events: none;
+  }
+
+  .tab:global(.leaving):hover::before,
+  .tab:global(.leaving) .shut {
+    opacity: 0;
   }
 
   button {
