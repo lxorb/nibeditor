@@ -1473,8 +1473,25 @@ for each session cookie, which hands a cookie over with its partition and takes 
 with it: a partitioned login lasts across a restart too, in its partition. The copies the
 COM manager left are taken away whenever the store is kept again - a lasting cookie with
 no partition, the name, domain and path of a partitioned one in the same store, and an
-expiry four hundred days after a day that manager was in use, and nothing else. See
+expiry four hundred days after a moment that manager was in use, and nothing else. See
 `apps/desktop/src-tauri/src/web_cookies/twins.rs`.
+
+**A cookie a site sets twice is the site's.** Cloudflare's challenge frame sets its cookie
+partitioned and, beside it, unpartitioned, for a browser that still allows third-party
+cookies. The clean-up's window first ran two months past the day the COM manager went, so
+the unpartitioned one, made to last by the new keep, read as a twin and was taken away
+after the next page - in the middle of the challenge. Emil, 2026-10-03: _"Cloudflare
+says: there was a problem with verification, please reload and try again, every time I
+want to log in."_ The window ends where the COM manager went now, and
+`scripts/web-bot-probe.py` sets such a cookie twice and fails if a load takes one away.
+The same drive fails on anything a page could tell a driven browser by -
+`navigator.webdriver`, a DevTools client with the console domain on, nib's globals, a
+window name of nib's - in the page and in a frame from another site, which is where a
+challenge runs. Measured on the probe, both clean: nib attaches the `DevTools` Protocol to
+a reader's page for nib's own world (`Page` and `Target`, never `Runtime.enable`), and an
+agent turns `Runtime` on only for the console it asked for. What a page does see is
+`WebView2`'s own and in every app built on it: `EmbeddedBrowserWebView` on `window` and
+`Microsoft Edge WebView2` among the client hints' brands.
 
 **What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
@@ -1922,6 +1939,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/engines.ts` | the search engines: Chrome's list for the region, a custom one with `%s`. Pure, tested |
 | `apps/desktop/src/lib/web-tab/search-engine.svelte.ts` | the search engine this device chose. Tested |
 | `apps/desktop/src/lib/web-tab/dropped-site.ts` | a link dragged out of a page onto the file list, kept as a web note. Tested |
+| `scripts/web-bot-probe.py` | the drive for a bot check: what a page and a frame from another site can see of nib, and a cookie set twice kept twice |
 | `scripts/browser-parity-probe.py` | the drive for History, Delete browsing data, a private tab, the search engine and a link dropped on the list |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device, or on the account while web logins travel. Tested |
