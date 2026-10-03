@@ -5,6 +5,8 @@
  *  model that wrote it, the plan's limit, the sentence a failure ends in - is written
  *  once. Pure. */
 
+import type { GoalState } from '../chat/types'
+
 /** Where a plan stands, as its program last said. */
 export interface Limit {
   /** `near` when the program warned, `reached` when it refused. */
@@ -61,6 +63,8 @@ export interface Heard {
   trouble?: string
   /** Whether that failure is the program not being signed in. */
   signedOut?: boolean
+  /** Where the program's own goal stands, as it said; see goal.ts. */
+  goal?: GoalState
 }
 
 /** A line as JSON, or null for one that is not. A program prints the odd line that is

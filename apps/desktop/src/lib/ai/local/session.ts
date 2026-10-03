@@ -39,7 +39,7 @@ interface Picture {
 }
 
 /** What may be said to a session; see src-tauri/src/ai_cli/say.rs. */
-type Say =
+export type Say =
   | { kind: 'turn'; text: string; images: Picture[] }
   | { kind: 'steer'; text: string }
   | { kind: 'interrupt' }
