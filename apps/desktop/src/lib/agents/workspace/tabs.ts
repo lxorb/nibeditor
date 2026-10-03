@@ -288,14 +288,14 @@ async function newTab(call: Call): Promise<AgentAnswer> {
     case 'terminal': {
       const { shells } = await import('../../terminal/shells.svelte')
       const list = await shells.ask()
-      const asked = maybe(call, 'shell')
+      const named = maybe(call, 'shell')?.toLowerCase() ?? null
       const shell =
-        asked === null
+        named === null
           ? shells.chosen
-          : list.find((one) => one.id === asked || one.name.toLowerCase() === asked.toLowerCase())
+          : list.find((one) => [one.id, one.name].some((word) => word.toLowerCase() === named))
       if (!shell) {
         const names = list.map((one) => one.name).join(', ')
-        throw new Refused('bad_arguments', `there is no shell ${asked ?? ''}: ${names}`)
+        throw new Refused('bad_arguments', `there is no shell ${named ?? ''}: ${names}`)
       }
 
       const cwd = maybe(call, 'cwd')
