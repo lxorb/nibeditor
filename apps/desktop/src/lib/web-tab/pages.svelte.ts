@@ -723,6 +723,8 @@ class Pages {
     covering = false,
     over: Over = NOTHING,
   ): Promise<void> {
+    // The glasses' plugin places no page, and leaves all of this out of its package.
+    if (__EVEN_PLUGIN__) return
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
 
@@ -775,7 +777,7 @@ class Pages {
    *  the menu was about to be. Taking the cut away again does not wait: the page coming
    *  back over a layer that is leaving is what a layer leaving looks like. */
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
-    if (!over.cut) return
+    if (__EVEN_PLUGIN__ || !over.cut) return
     const waiting = page.under === null
     page.under = { pane, over }
     // Behind a layer that fades in, the pane's own ground shows through the layer for as
@@ -815,12 +817,14 @@ class Pages {
   /** One placement, behind whatever is in the air; see latest.ts. A refused one is the
    *  next show's to find out about, so it is not thrown at the caller. */
   private async put(tabId: string, page: Page, one: Placement): Promise<void> {
+    if (__EVEN_PLUGIN__) return
     page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
     await page.placing.put(one).catch(() => undefined)
   }
 
   /** The placement itself, and what the page is now that it has landed. */
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
+    if (__EVEN_PLUGIN__) return
     try {
       const cuts = await invoke<boolean | undefined>('web_place', {
         tab: tabId,
