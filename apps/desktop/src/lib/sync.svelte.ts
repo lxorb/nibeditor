@@ -38,6 +38,10 @@ const VERSION = 'nib:sync-version'
 
 type Runner = (typeof import('./sync2/runner.svelte'))['runner']
 
+/** Whether this build has sync v2 at all: not the glasses' plugin, whose package must
+ *  carry none of it, so every road to the runner folds away there. */
+const V2 = !__EVEN_PLUGIN__
+
 class Sync {
   status = $state<Status>('off')
   lastError = $state<string | null>(null)
@@ -112,14 +116,14 @@ class Sync {
 
   /** v2's runner while it runs: what a drive reads the held notes off. */
   get engine(): Runner | null {
-    return this.v2
+    return V2 ? this.v2 : null
   }
   private unmirror: (() => void) | null = null
 
   /** Whether this session runs v2: the account's word, or, before it has spoken, the
    *  word it gave last. Never a guest, who has no account, nor the glasses' plugin. */
   private wantsV2(): boolean {
-    if (__EVEN_PLUGIN__ || account.guest) return false
+    if (!V2 || account.guest) return false
     const said = account.user?.syncVersion ?? Number(storedText(VERSION))
     return said === 2
   }
@@ -140,7 +144,7 @@ class Sync {
    *  every note as one it knows (section 11's rollback). Never in the glasses' plugin,
    *  whose package must not carry the engine at all. */
   private startV2() {
-    if (__EVEN_PLUGIN__) return
+    if (!V2) return
     const mine = this.generation
     this.version = 2
     arriving.settled()
@@ -205,12 +209,12 @@ class Sync {
    *  pass while the first is going, so whoever drives one pass at a time has to be
    *  able to tell that the last one is over. */
   get passing(): boolean {
-    return this.v2 ? this.v2.passing : this.running
+    return V2 && this.v2 ? this.v2.passing : this.running
   }
 
   stop() {
     this.generation++
-    if (this.v2) {
+    if (V2 && this.v2) {
       const runner = this.v2
       this.v2 = null
       this.unmirror?.()
@@ -256,7 +260,7 @@ class Sync {
    *  moment as its notes' paths change, so no note is ever at a path the account
    *  has no id for; a note or a folder moving is told to the account. */
   follow(op: FileOp): Promise<void> | undefined {
-    if (this.v2) return this.v2.follow(op)
+    if (V2 && this.v2) return this.v2.follow(op)
     if (op.op !== 'moved') return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
 
@@ -331,9 +335,10 @@ class Sync {
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
     const role = account.spaces.find((one) => one.id === spaceId)?.role
-    const theirs = this.v2 ? role !== undefined && role !== 'owner' : !!this.mirrors[root]?.shared
+    const theirs =
+      V2 && this.v2 ? role !== undefined && role !== 'owner' : !!this.mirrors[root]?.shared
 
-    if (this.v2) {
+    if (V2 && this.v2) {
       await this.v2.forget(root)
     } else {
       this.mirrors = without(this.mirrors, root)
@@ -376,7 +381,7 @@ class Sync {
   /** Autosave wrote a note. Under v2 that write is also the moment what was typed
    *  becomes a pending update in the sync store; v1 reads the file at its next pass. */
   wrote(path: string, content: string): void {
-    if (this.v2) void this.v2.wrote(path, content)
+    if (V2 && this.v2) void this.v2.wrote(path, content)
     else this.nudge()
   }
 
@@ -384,7 +389,7 @@ class Sync {
    *  note the append action makes. Under v2 the account merges it into one of the same
    *  name another device made meanwhile; v1 has no such thing. */
   mergeable(path: string): void {
-    this.v2?.mergeable(path)
+    if (V2) this.v2?.mergeable(path)
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
@@ -393,7 +398,7 @@ class Sync {
    *  due at once two seconds out, and a hand that kept typing kept shoving it. The
    *  rule is `nudgeDelay`, in backoff.ts beside the interval it answers to. */
   nudge() {
-    if (this.v2) {
+    if (V2 && this.v2) {
       this.v2.nudge()
       return
     }
@@ -460,7 +465,7 @@ class Sync {
   /** One pass: pairs every local space with a remote one, then syncs. What
    *  the loop does on every tick, on its own so it can be driven by hand. */
   async pass(): Promise<boolean> {
-    if (this.v2) return await this.v2.passNow()
+    if (V2 && this.v2) return await this.v2.passNow()
     // Read before anything is asked of the account, so that whatever the pass
     // runs into, the one thing somebody is waiting behind is lifted; a pass that
     // threw on its way through is a pass with nothing more coming.
@@ -530,7 +535,7 @@ class Sync {
   /** The remote space a local folder mirrors, if any. Publishing needs it, and
    *  so does everything that asks what may be done in a space. */
   remoteIdFor(root: string): string | null {
-    if (this.v2) return this.v2.remoteIdFor(root)
+    if (V2 && this.v2) return this.v2.remoteIdFor(root)
     return this.mirrors[root]?.spaceId ?? null
   }
 
@@ -546,7 +551,7 @@ class Sync {
    *  a note with no id has no room, and a note whose hash nobody knows has nothing
    *  to be compared against. See rooms.svelte.ts, which asks. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
-    if (this.v2) return this.v2.tracked(path)
+    if (V2 && this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       const held = relative === null ? undefined : mirror.notes[relative]
@@ -650,7 +655,7 @@ class Sync {
   /** One full pass: take what the server has, then offer what we have.
    *  Answers whether anything actually moved, which is what paces the loop. */
   async run(): Promise<boolean> {
-    if (this.v2) return await this.v2.passNow()
+    if (V2 && this.v2) return await this.v2.passNow()
     if (this.running || !account.token) return false
 
     const token = account.token
