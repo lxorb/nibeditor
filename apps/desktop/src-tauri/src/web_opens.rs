@@ -610,6 +610,12 @@ mod heard {
                     })
                     .unwrap_or_default();
 
+                // A swipe over the page, said a frame at a time; see web_swipe.rs. Not a
+                // press, so nothing is asked of who made it beyond what the script asked.
+                if let Some(payload) = crate::web_swipe::named(&name) {
+                    crate::web_swipe::heard(&app, &window, &asking, payload);
+                    return Ok(());
+                }
                 // What the page's keys asked for, said to the window for this tab. The
                 // engine's own answer - wry's, a turn later - denies the window, since
                 // `about:blank` is not an address a tab may open. Only when a person

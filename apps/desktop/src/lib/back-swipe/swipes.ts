@@ -212,18 +212,20 @@ function tabUnder(target: EventTarget | null): { tab: Tab; pane: HTMLElement; at
   return { tab, pane, at: target }
 }
 
-/** Whether a wheel is a touchpad's: in pixels, with no key held, and not a tilted wheel's
- *  notch - Chrome never swipes on a mouse. */
-export function fromTouchpad(event: WheelEvent): boolean {
+/** Whether a wheel is a touchpad's: in pixels, with no key held, and - to start a stream
+ *  - not a tilted wheel's notch: Chrome never swipes on a mouse. Inside a stream a step
+ *  that happens to add up to a whole notch is still the stream's; the engine adds up
+ *  what arrives within a frame. */
+export function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   if (event.deltaMode !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
     return false
   }
   const notch = 'wheelDeltaX' in event ? Number(event.wheelDeltaX) : 0
-  return !(notch !== 0 && notch % 120 === 0)
+  return streaming || !(notch !== 0 && notch % 120 === 0)
 }
 
 function wheeled(event: WheelEvent) {
-  if (!swipeChoice.on || !fromTouchpad(event)) return
+  if (!swipeChoice.on || !fromTouchpad(event, live !== null)) return
   // A stream starts sideways; down alone is only worth hearing inside one.
   if (event.deltaX === 0 && live === null) return
   const under = tabUnder(event.target)

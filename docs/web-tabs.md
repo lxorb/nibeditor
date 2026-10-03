@@ -797,6 +797,68 @@ to the second, and no posted message passes a hook, so the Rust tests beside it 
 part. The doubled notch also started with a lunge - 23 and then 100 pixels in its first two
 frames where Chrome moves 5 and 24.
 
+#### Two fingers sideways go back
+
+Emil, 2026-10-03: _"Swiping (left/right) to go to the previous / redo page."_ Two fingers
+swept to the right over a page go back, to the left go forward, and so does a finger
+brought in from the side of a touchscreen - over a web tab along its pages, over a note tab
+along the notes it has shown, which is what Back and Forward mean there.
+
+It is Chrome's and Edge's gesture, numbers and all (Chromium's
+`overscroll_configuration.cc`, `overscroll_controller.cc` and `gesture_nav_simple.cc`):
+
+- **Only what the page left over.** A sideways scroll a scroller under the fingers can still
+  take is that scroller's - a carousel, a wide table, the stacked tabs' row - and a stream
+  of scroll that began by moving one stays its own to the end, even once it has run out:
+  scroll latching, so a fling along a carousel never turns into Back. A scroller that says
+  `overscroll-behavior-x: contain` or `none` keeps its overscroll, which is the line Google
+  Sheets draws, and a page whose own handler took the wheel - a map - keeps it too.
+- **Sideways on purpose.** 60 pixels sideways (50 for a finger), two and a half times as
+  far as down, before anything shows. Shift, Ctrl and a tilted wheel's whole notches are
+  never a swipe; Chrome never swipes on a mouse.
+- **Shown before it happens.** A circle with an arrow follows the fingers in from the side,
+  fills with the accent once letting go would go, and goes with one burst when it does or
+  slides back out when it does not. It goes at three tenths of the window's longer side
+  less the start (a quarter on a screen), or at any distance for a fling faster than 1100
+  pixels a second. A side with nothing to go to shows no arrow at all.
+- **Off in Settings > General > Tabs**, _Swipe between pages_ (Safari's words for its own
+  switch): Chrome has no such switch, and how to turn its swipe off is one of the things
+  people most often ask about it. Not on a phone, whose sides are the system's back.
+
+**Not `WebView2`'s own.** The engine has Chromium's arrow, behind `IsSwipeNavigationEnabled`,
+and wry leaves it off. It walks the engine's history, and a tab revived after a relaunch has
+none - its trail is the crate's (`Trail` in web_tabs.rs) - so it would do nothing on most
+tabs after a restart and go the wrong way after any step the crate made itself. So the page
+says what it saw and the window decides, the same way as for a note: a script in nib's
+world in every page and frame (`src-tauri/src/web_swipe.js`) hears each sideways scroll,
+asks whether anything in the page would take it, and says it a frame at a time; every
+listener is passive and reads, so the page scrolls as it did. It says it the way nib's
+world already asks for the find: on `WebView2` as a window asked for under a name that
+carries it, which the crate reads and never opens, and on nib's own Chromium through a
+binding only that world has. Not a binding on `WebView2`: the engine puts one in a world
+only while the protocol's runtime domain is on, and turning that on for every page is
+exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `nib://web-swipe`
+(`web_swipe.rs`), the window runs the gesture (`src/lib/back-swipe`), and the step is the
+tab's own Back or Forward, along the same trail the arrows walk.
+
+**The arrow over a page** is cut out of the page in its own round shape, the way a menu is
+(`covers.ts`, `web_cut.rs`), and the page is placed again on each step of the gesture: it
+never moves, hides or goes blank, and is whole again once the arrow has gone. On nib's own
+Chromium, which cuts nothing, a page steps behind its picture for the arrow as it does for
+a menu.
+
+**When the fingers lift.** A page is never told: a touchpad's scroll is wheel events and
+nothing else. So a stream ends when they stop for 120 ms, and at once when they turn into
+the touchpad's own coasting after a flick - a run of steadily shrinking steps, which is
+where Chrome would have seen the fling - so a flick goes back without waiting for the coast
+to run out.
+
+Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers), `edge.test.ts`,
+`test/effects/swipe.effect.test.ts` (the wiring, the arrow, a page's swipe, the setting),
+`test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page
+script in a page), and `scripts/swipe-probe.py`, which posts sideways wheel messages to the
+probe's own window, off every screen, over a note and over a page in a web tab.
+
 ### The browser build: a card, and a frame when asked
 
 A page in a browser can only be shown in a frame, and a great deal of the web
@@ -1728,6 +1790,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_dialogs.rs` | a page's `alert`, `confirm`, `prompt` and leave, held open for the window's card. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
+| `apps/desktop/src-tauri/src/web_swipe.rs`, `web_swipe.js` | a swipe over a page, said by the page through a binding in nib's world and read into numbers for the window. Unit tested; the script in `test/e2e/swipe.py` |
 | `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom, kept as the app's own, and Ctrl+0; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |

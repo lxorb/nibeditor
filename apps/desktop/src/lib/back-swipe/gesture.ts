@@ -45,7 +45,7 @@ export type Source = 'touchpad' | 'touch'
 export const START: Record<Source, number> = { touchpad: 60, touch: 50 }
 
 /** How much of the window's longer side the fingers go, start included, to go. */
-export const SHARE: Record<Source, number> = { touchpad: 0.3, touch: 0.25 }
+const SHARE: Record<Source, number> = { touchpad: 0.3, touch: 0.25 }
 
 /** How much further sideways than down a stream has to go to be a swipe. */
 export const RATIO = 2.5
@@ -111,7 +111,7 @@ export function distance(source: Source, width: number, height: number): number 
 
 /** The side a sideways scroll pushes against: one towards the left overscrolls at the
  *  left edge. */
-export function sideOf(dx: number): Side {
+function sideOf(dx: number): Side {
   return dx < 0 ? 'left' : 'right'
 }
 
