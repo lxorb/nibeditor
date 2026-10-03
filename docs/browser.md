@@ -1054,7 +1054,10 @@ it (measured). The store does offer its own "Add to Chrome" in a Chrome-style br
 Chromium's own prompt and updates behind it - seen, not pressed: a probe cannot press it
 without that prompt in front of somebody. So there a pasted link opens the store's page, the store's button
 installs, and nib reads and changes the engine's own list through `chrome.management` on a
-`chrome://extensions` page nobody sees, in the browsing profile (extensions/chromium.rs). Off
+`chrome://extensions` page nobody sees, in the browsing profile (extensions/chromium.rs). Its
+files are read where Chromium keeps them: the profile's `Extensions` folder for one from a store,
+and, for one loaded unpacked (developer mode, `--load-extension`), the folder it was loaded from,
+which only `chrome.developerPrivate` on the same page says. Off
 keeps an extension's stored data; Remove does not. A store a space keeps apart is a profile
 the store's install does not reach.
 
