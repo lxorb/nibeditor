@@ -75,6 +75,8 @@ import { closeAfterLabel } from './workspace/closing-around'
 import { prompt } from './prompt.svelte'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
+import { askQuickly } from './ai/quick-door'
+import { isScratchpad, toggleScratchpad } from './scratchpad/is'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
@@ -448,8 +450,9 @@ function tabCommands(): Command[] {
       disabled: !tab || !workspace.canRenameFromTab(tab),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
-    // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
-    ...(tab && workspace.spaces.length > 1
+    // Left out with one space, but for the scratchpad, which becomes a note in the one
+    // there is; see tab-strip/to-space.ts, fetched with the press.
+    ...(tab && (workspace.spaces.length > 1 || isScratchpad(tab.path))
       ? [
           {
             id: 'move-to-space',
@@ -1510,6 +1513,18 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Ask'),
       hint: shortcuts.hint('app.ask'),
       run: () => revealPanel('ask'),
+    },
+    {
+      id: 'quick-question',
+      label: t('Quick question'),
+      hint: shortcuts.hint('app.quick-question'),
+      run: () => askQuickly(),
+    },
+    {
+      id: 'scratchpad',
+      label: t('Scratchpad'),
+      hint: shortcuts.hint('app.scratchpad'),
+      run: () => toggleScratchpad(),
     },
     {
       id: 'right-sidebar',

@@ -1710,4 +1710,9 @@ export const pa: Dictionary = {
   'Open on {device}': '{device} ਉੱਤੇ ਖੁੱਲ੍ਹਾ ਹੈ',
   'Use here': 'ਇੱਥੇ ਵਰਤੋ',
   '{device} wants your web logins': '{device} ਤੁਹਾਡੇ ਵੈੱਬ ਲੌਗਇਨ ਚਾਹੁੰਦਾ ਹੈ',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

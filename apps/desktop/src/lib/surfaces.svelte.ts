@@ -224,6 +224,16 @@ export const iconPicker = latched(() => import('./IconPicker.svelte'))
  *  ai/rewriting.svelte.ts. */
 export const rewriteSheet = latched(() => import('./RewriteSheet.svelte'))
 
+/** A question on the side, answered in place: asked for by the store behind it, which
+ *  is fetched with it by the key, the palette row or a web page's double Ctrl. Never the
+ *  glasses' plugin's, whose package is at its ceiling (even/bundle.test.ts). See
+ *  ai/quick.svelte.ts. */
+export const quickSheet = latched(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no quick question in the Even Realities plugin'))
+    : import('./QuickQuestion.svelte'),
+)
+
 /** The red dot, the clock and the stop, which is the whole of what the window says
  *  about an open microphone. Latched rather than drawn while a recording runs, because
  *  the pill is what stays up while what was recorded is still being written down; the

@@ -19,12 +19,14 @@
    *  Fetched the first time the panel is shown, and everything behind it with it - the
    *  providers, the keys, the stream, the retrieval; see surfaces.svelte.ts and
    *  test/weight.test.ts. */
-  import { renderMarkdown } from '@nib/markdown'
   import type { EditorView } from '@nib/editor'
   import { onMount, tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { asking, type Source, type Turn } from './ai/asking.svelte'
+  import Answer from './ai/Answer.svelte'
+  import { answerHtml } from './ai/drawn'
+  import Thinking from './ai/Thinking.svelte'
   import { citationLinks, citedIn, linkedAnswer } from './ai/retrieve'
   import { copyText } from './clipboard'
   import { t } from './i18n.svelte'
@@ -67,23 +69,17 @@
   /** The editor a press acts on: the pane the reader was last writing in. */
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
 
-  /** Pictures, frames and players: what an answer may not load. */
-  const MEDIA = /<(?:img|iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
-
-  /** An answer as the panel draws it: markdown, escaped, its citations links the click
-   *  below answers and its wikilinks resolved the way the reading view resolves them. */
+  /** An answer as the panel draws it: escaped and with nothing to load (ai/drawn.ts),
+   *  its citations links the click below answers and its wikilinks resolved the way
+   *  the reading view resolves them. */
   function drawn(turn: Turn): string {
     const source = citationLinks(turn.text, turn.sources?.length ?? 0)
-    const html = renderMarkdown(source, {
-      escapeHtml: true,
-      resolveLink: (link) => {
-        const found = link.target
-          ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
-          : null
-        return found === null ? null : { href: found }
-      },
+    return answerHtml(source, (link) => {
+      const found = link.target
+        ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
+        : null
+      return found === null ? null : { href: found }
     })
-    return html.replace(MEDIA, '')
   }
 
   /** The notes an answer cited, each once, with the first passage it cited of each. */
@@ -226,15 +222,7 @@
       {:else}
         {@const notes = citedNotes(turn)}
         <div class="answer">
-          <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-          <div
-            class="words"
-            onclick={(event) => follow(event, turn)}
-            onauxclick={(event) => follow(event, turn)}
-          >
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -- the renderer escapes every tag the model wrote; see `drawn` -->
-            {@html drawn(turn)}
-          </div>
+          <Answer html={drawn(turn)} onfollow={(event: MouseEvent) => follow(event, turn)} />
 
           {#if notes.length}
             <div class="sources">
@@ -308,7 +296,7 @@
     {#if waiting}
       <!-- Three dots while the passages are gathered and the first words are on their
            way: something is happening, and nothing needs saying about it. -->
-      <div class="thinking" aria-hidden="true"><span></span><span></span><span></span></div>
+      <Thinking />
     {/if}
 
     {#if asking.trouble}
@@ -425,80 +413,6 @@
     gap: var(--space-2);
   }
 
-  .words {
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-row);
-    line-height: 1.55;
-    overflow-wrap: anywhere;
-  }
-
-  .words :global(:is(p, ul, ol, pre, blockquote, table, h1, h2, h3, h4, h5, h6)) {
-    margin: 0 0 var(--space-2);
-  }
-
-  .words :global(:is(p, ul, ol, pre, blockquote, table):last-child) {
-    margin-bottom: 0;
-  }
-
-  .words :global(:is(h1, h2, h3, h4, h5, h6)) {
-    font-size: inherit;
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
-  }
-
-  .words :global(:is(ul, ol)) {
-    padding-inline-start: 1.3em;
-  }
-
-  .words :global(code) {
-    font-family: var(--font-mono);
-    font-size: 0.92em;
-  }
-
-  .words :global(pre) {
-    padding: var(--space-2);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    overflow-x: auto;
-    white-space: pre;
-  }
-
-  .words :global(a) {
-    color: var(--accent);
-    text-decoration: none;
-    cursor: default;
-  }
-
-  @media (hover: hover) {
-    .words :global(a:hover) {
-      text-decoration: underline;
-    }
-  }
-
-  /* A citation: the passage's number, small and raised, the accent's own chip. */
-  .words :global(a[href^='#cite-']) {
-    display: inline-block;
-    min-width: 1.35em;
-    margin-inline: 1px;
-    padding: 0 0.3em;
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
-    font-size: 0.72em;
-    font-weight: var(--weight-strong);
-    line-height: 1.5;
-    text-align: center;
-    vertical-align: 0.35em;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .words :global(a[href^='#cite-']:hover) {
-      text-decoration: none;
-      background: var(--surface-press);
-    }
-  }
-
   .sources,
   .acts {
     display: flex;
@@ -552,45 +466,6 @@
   .go svg,
   .context svg {
     stroke-width: 1.3;
-  }
-
-  .thinking {
-    display: flex;
-    gap: 4px;
-    padding: var(--space-1) 0;
-  }
-
-  .thinking span {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--muted);
-    animation: pulse calc(var(--dur-slow) * 4) var(--ease-out) infinite;
-  }
-
-  .thinking span:nth-child(2) {
-    animation-delay: calc(var(--dur-slow) * 0.6);
-  }
-
-  .thinking span:nth-child(3) {
-    animation-delay: calc(var(--dur-slow) * 1.2);
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 0.25;
-    }
-    40% {
-      opacity: 1;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .thinking span {
-      animation: none;
-      opacity: 0.6;
-    }
   }
 
   .foot {
@@ -723,7 +598,6 @@
   }
 
   :global([data-touch]) .said,
-  :global([data-touch]) .words,
   :global([data-touch]) .empty-text,
   :global([data-touch]) .wrong,
   :global([data-touch]) textarea {

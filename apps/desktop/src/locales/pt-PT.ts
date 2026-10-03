@@ -1753,4 +1753,9 @@ export const ptPT: Dictionary = {
   'Open on {device}': 'Aberto em {device}',
   'Use here': 'Usar aqui',
   '{device} wants your web logins': '{device} quer os seus inícios de sessão web',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Pergunta rápida',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Adicionar à nota',
 }

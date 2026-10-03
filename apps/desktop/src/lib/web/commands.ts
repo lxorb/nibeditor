@@ -723,6 +723,9 @@ async function writePaperText(path: string, content: string): Promise<void> {
   if (content) await meta.put(paperKey(wanted, content.length), content)
 }
 
+/** Where the scratchpad is kept: the desktop keeps it beside `custom.css`. */
+const SCRATCHPAD = '/.nib/Scratchpad.md'
+
 /** Commands the browser genuinely cannot serve. Each returns the shape that
  *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
@@ -985,6 +988,13 @@ export async function webInvoke<T>(
 
     case 'read_snippets':
       return ((await meta.get('snippets.json')) ?? '{}') as T
+
+    // The one note in no space, made the first time it is asked for. In a dot folder,
+    // which is the app's own rather than a space; see `spaceList`.
+    case 'scratchpad_path': {
+      if (!(await files.get(SCRATCHPAD))) await writeNote(SCRATCHPAD, '')
+      return SCRATCHPAD as T
+    }
 
     case 'new_window':
       window.open(location.href, '_blank')

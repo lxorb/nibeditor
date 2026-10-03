@@ -1695,4 +1695,9 @@ export const gu: Dictionary = {
   'Open on {device}': '{device} પર ખુલ્લું',
   'Use here': 'અહીં વાપરો',
   '{device} wants your web logins': '{device} તમારા વેબ લોગિન માંગે છે',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

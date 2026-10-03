@@ -1699,4 +1699,9 @@ export const ms: Dictionary = {
   'Open on {device}': 'Dibuka di {device}',
   'Use here': 'Guna di sini',
   '{device} wants your web logins': '{device} mahu log masuk web anda',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

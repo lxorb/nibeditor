@@ -1694,4 +1694,9 @@ export const ja: Dictionary = {
   'Open on {device}': '{device} で開いています',
   'Use here': 'ここで使う',
   '{device} wants your web logins': '{device} が Web のログインを求めています',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

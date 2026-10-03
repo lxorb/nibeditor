@@ -170,6 +170,33 @@ terminal tabs that you can't just close and reopen without losing progress)."*
 
 See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for the move.
 
+### The scratchpad
+
+**One note in no space, for pasting and jotting before deciding where it goes.** The
+glyph in the sidebar's foot, Ctrl+Shift+X or **Scratchpad** in the palette open it as a
+tab, and the same again while it is in front goes back to the tab before it. Drafts'
+capture-first page, Apple's Quick Note one gesture away, and VS Code's untitled tab that
+outlives a restart without asking, as one file:
+
+- **A tab, not a panel.** It opens the way Edit custom CSS does, so it is the whole
+  editor, written down a moment after it changes like any note, and put back with the
+  session. Obsidian's scratchpad plugins are a text box in a side panel, and their
+  readers' complaint is that it is not a real editor and not searchable.
+- **The app's own, not a space's.** `Scratchpad.md` beside `custom.css` in the app's
+  settings folder (`scratchpad_path` in themes.rs; `openable` admits it), the same note
+  from every space; the browser build keeps it in a dot folder no space lists. Its name
+  is its file's, the same in every language.
+- **Found from every space**: the Search panel reads it with each search
+  (`search/scratchpad.ts`), and no replacement across a space touches it.
+- **Move to space makes it a note.** Its tab's Move to space - and the palette's, and a
+  drop onto the switcher - writes it into that space's root, named by its first line,
+  opens the note in its place and empties the scratchpad; the space on screen is offered
+  too. It does not travel as a tab, as every other tab does.
+- A quick question's **Add to note** with no note in front lands on its end; see
+  docs/ai.md.
+
+See `scratchpad/is.ts` for which file it is and `scratchpad/pad.ts` for what it does.
+
 ## Motion
 
 | Rule | Chrome | Source | nib |

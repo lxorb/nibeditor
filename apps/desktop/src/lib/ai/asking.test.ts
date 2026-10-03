@@ -59,7 +59,8 @@ vi.mock('../search/space', () => ({
 }))
 
 const { workspace } = await import('../workspace.svelte')
-const { asking, history } = await import('./asking.svelte')
+const { asking } = await import('./asking.svelte')
+const { history } = await import('./history')
 
 beforeEach(() => {
   asked.length = 0

@@ -1668,4 +1668,9 @@ export const th: Dictionary = {
   'Open on {device}': 'เปิดอยู่บน {device}',
   'Use here': 'ใช้ที่นี่',
   '{device} wants your web logins': '{device} ต้องการการเข้าสู่ระบบเว็บของคุณ',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

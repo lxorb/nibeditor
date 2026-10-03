@@ -144,12 +144,13 @@ describe('what a double tap runs', () => {
   test('follows a rebind to another modifier, and is nothing once taken away', () => {
     const opened: string[] = []
 
-    shortcuts.set('app.palette', 'Mod Mod')
+    // Alt, which nothing else is on: Ctrl twice is the quick question's.
+    shortcuts.set('app.palette', 'Alt Alt')
     expect(runTap('Shift', context(opened))).toBe(false)
-    expect(runTap('Control', context(opened))).toBe(true)
+    expect(runTap('Alt', context(opened))).toBe(true)
 
     shortcuts.set('app.palette', null)
-    expect(runTap('Control', context(opened))).toBe(false)
+    expect(runTap('Alt', context(opened))).toBe(false)
     expect(opened).toEqual(['everything'])
   })
 

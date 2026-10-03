@@ -1682,4 +1682,9 @@ export const am: Dictionary = {
   'Open on {device}': 'በ{device} ላይ ክፍት ነው',
   'Use here': 'እዚህ ተጠቀም',
   '{device} wants your web logins': '{device} የድር መግቢያዎችህን ይፈልጋል',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

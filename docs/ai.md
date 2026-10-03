@@ -7,13 +7,14 @@ plan, and the requests go from your device straight to it. The account is not in
 the path, the question is not logged, and the key never leaves the machine it was
 typed on.
 
-Four surfaces use it, and they all go through one module:
+Five surfaces use it, and they all go through one module:
 
 - the ```` ```ai ```` block in a note, whose answer is written under it,
 - the four rewrites on a selection,
 - the Ask panel on the right side of the window, which answers questions about
   your notes and says where each answer came from,
-- and a meeting's summary, written under its transcript.
+- a meeting's summary, written under its transcript,
+- and a quick question on the side, answered in place over whatever is open.
 
 Each asks the default provider unless Settings > AI > **Used for** gives it one of its
 own: a plan for questions about the notes and a fast model on this machine for
@@ -21,12 +22,12 @@ rewrites, say. `ai.providerFor(feature)` in `store.svelte.ts` is that choice, an
 `complete()` is the one request; together they are the seam, and nothing else asks a
 model.
 
-A fifth surface asks a different question of the same providers: a recording, as words.
+A sixth surface asks a different question of the same providers: a recording, as words.
 See **Sound, as words** below.
 
 ## Your own plan
 
-A Claude or ChatGPT plan you already pay for can answer all four, on the desktop app,
+A Claude or ChatGPT plan you already pay for can answer all five, on the desktop app,
 by the roads their makers allow and no other. What each maker says, and so what nib
 does and does not do. **Read this before changing any of it**: the obvious "improvement"
 - reusing the token a CLI keeps, or pasting a setup token into nib - is the one thing
@@ -358,6 +359,36 @@ starts again.
 
 One line, the one the fence says, and a link that opens Settings > AI. No field: a
 field that cannot be asked anything is a field that lies.
+
+## A quick question
+
+Ctrl pressed twice on its own - Cmd twice on a Mac - or **Quick question** in the
+palette: a field in the middle of the window, the palette's shape and place, and the
+answer streamed in place under it. Claude Code's /btw, Raycast's quick AI, Arc's question
+about a page and Notion's space bar are the four it was modelled on: a question on the
+side that never becomes a conversation anybody has to tidy away.
+
+- **What goes along is one thing, chosen, and shown.** The selection in the note in
+  front; else the note in front; else, on a desktop, the page in a web tab in front -
+  its selection, else its article, which is what the clipper reads (`web_clip`). It is
+  a chip under the field, and its cross takes it off for the rest of the thread. A note
+  or a page goes to 4,000 tokens; see `ai/quick.ts`.
+- **A thread while it is up.** Enter asks, Shift+Enter is a new line, and the next
+  question carries the turns before it within the Ask panel's history budget
+  (`ai/history.ts`). Escape, a click outside or the key again put it away, and stop
+  what is arriving; the next press starts again with what is in front then. Nothing is
+  kept: the Ask panel is the conversation that is.
+- **Two things to do with an answer**, as glyphs under it: **Add to note**, on lines of
+  its own under the selection or the caret's line of the note it was asked about, which
+  puts the field away; with no note in front, onto the end of the scratchpad, where a
+  thought with no note yet belongs. And **Copy**.
+- Its own row in Settings > AI > **Used for**, so a fast local model can answer it while
+  a plan answers the Ask panel. With no provider it says the one line and links there.
+- Not in the glasses' plugin, whose package is at its ceiling.
+
+The store is `ai/quick.svelte.ts`, the sheet `QuickQuestion.svelte`, and an answer is
+drawn by `ai/Answer.svelte` and `ai/drawn.ts`, the Ask panel's own: escaped, and with
+nothing to load.
 
 ## Rewriting a selection
 

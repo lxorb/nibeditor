@@ -1712,4 +1712,9 @@ export const te: Dictionary = {
   'Open on {device}': '{device}లో తెరిచి ఉంది',
   'Use here': 'ఇక్కడ ఉపయోగించండి',
   '{device} wants your web logins': '{device} మీ వెబ్ లాగిన్‌లను కోరుతోంది',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

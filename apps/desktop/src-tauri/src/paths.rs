@@ -396,9 +396,9 @@ fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     Ok(target)
 }
 
-/// A file the app opens in a tab: a note in a space, or one of the two settings
-/// files it offers to edit (Edit custom CSS, Edit snippets), which are its own rather
-/// than anybody's documents; see `own_files` in themes.rs. nib opens nothing else
+/// A file the app opens in a tab: a note in a space, or one of the app's own three -
+/// the two settings files it offers to edit (Edit custom CSS, Edit snippets) and the
+/// scratchpad, which are its own rather than anybody's documents; see `own_files` in themes.rs. nib opens nothing else
 /// from anywhere on the disk, so this is what `read_note` and `file_stamp` stand
 /// behind.
 pub fn openable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
@@ -447,7 +447,8 @@ fn judged_beyond(
     Ok(target)
 }
 
-/// Whether a path is one of the app's own two settings files.
+/// Whether a path is one of the app's own files: the two settings files and the
+/// scratchpad.
 fn is_own_file(app: &AppHandle, target: &Path) -> bool {
     crate::themes::own_files(app)
         .iter()

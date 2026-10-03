@@ -39,11 +39,12 @@ function isKind(value: unknown): value is ProviderKind {
 
 /** What a reader asks a model for, each of which may ask a provider of its own: a plan
  *  for questions about the notes and a fast model on this machine for rewrites, say. */
-export type Feature = 'ask' | 'block' | 'rewrite' | 'summary'
+export type Feature = 'ask' | 'quick' | 'block' | 'rewrite' | 'summary'
 
 /** The features, in the order Settings lists them, with the words it lists them by. */
 export const FEATURES: readonly { id: Feature; label: string }[] = [
   { id: 'ask', label: key('Ask') },
+  { id: 'quick', label: key('Quick question') },
   { id: 'block', label: key('AI block') },
   { id: 'rewrite', label: key('Rewrite') },
   { id: 'summary', label: key('Meeting notes') },

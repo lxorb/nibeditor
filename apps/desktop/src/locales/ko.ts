@@ -1680,4 +1680,9 @@ export const ko: Dictionary = {
   'Open on {device}': '{device}에서 열려 있음',
   'Use here': '여기에서 사용',
   '{device} wants your web logins': '{device}에서 웹 로그인을 요청합니다',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }
