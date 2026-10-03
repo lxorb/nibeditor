@@ -658,11 +658,22 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
 /// handed back cut short. A note cut short and saved back is a note that lost its end.
 /// How much is too much is each reader's own business, and so is what to say about it.
 pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
+    Ok(at_most_stamped(target, limit)?.map(|(bytes, _)| bytes))
+}
+
+/// The same read, with what the open file said about itself: its size and its
+/// times, asked of the handle the bytes came through rather than of the path, so a
+/// scan that wants both pays for one open. See `scan_links`, which hands a note's
+/// times on to the rows of a space.
+pub fn at_most_stamped(
+    target: &Path,
+    limit: u64,
+) -> Result<Option<(Vec<u8>, fs::Metadata)>, String> {
     let file = fs::File::open(target).map_err(|error| cannot("read", target, &error))?;
-    let size = file
+    let meta = file
         .metadata()
-        .map_err(|error| cannot("read", target, &error))?
-        .len();
+        .map_err(|error| cannot("read", target, &error))?;
+    let size = meta.len();
     if size > limit {
         return Ok(None);
     }
@@ -673,7 +684,7 @@ pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
         .map_err(|error| cannot("read", target, &error))?;
 
     let within = u64::try_from(bytes.len()).is_ok_and(|read| read <= limit);
-    Ok(within.then_some(bytes))
+    Ok(within.then_some((bytes, meta)))
 }
 
 /// Writes a file whole: a temp file beside it takes the content and is flushed to
