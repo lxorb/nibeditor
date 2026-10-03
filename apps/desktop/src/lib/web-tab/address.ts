@@ -16,8 +16,17 @@
  *  no profile, nothing kept - and that reasoning still stands; it simply is not the
  *  reasoning of the person typing.
  *
- *  Said here once so the app has one search and not a setting nobody would open. */
-export const SEARCH = 'https://www.google.com/search?q='
+ *  The default and the first of Chrome's list, which the reader may change in Settings;
+ *  see engines.ts. `%s` is where the words go, as in Chrome's own custom engines. */
+export const SEARCH = 'https://www.google.com/search?q=%s'
+
+/** Where the words go in a search engine's address. */
+export const WORDS = '%s'
+
+/** The address a few words go to on an engine whose search is `engine`. */
+function searchOn(engine: string, words: string): string {
+  return engine.replaceAll(WORDS, encodeURIComponent(words))
+}
 
 /** Something that could be a host: dotted labels, or `localhost`, either with a
  *  port and a path after it. Deliberately not a guess at every address on the web -
@@ -56,16 +65,9 @@ export function isWebAddress(url: string): boolean {
   )
 }
 
-/** The address something typed means, or null when it means nothing at all.
- *
- *  A host first, because `localhost:1425` reads as a scheme called `localhost` and is
- *  not one - which is the same special case every browser makes. A host is given
- *  `https:`, which is what a browser does and what a page deserves in 2026, and a
- *  host this app refuses is nothing rather than something to search for.
- *
- *  Then a scheme, taken as written, so `http://` pages still open and a
- *  `javascript:` one never does. Anything left is words, and words are a search. */
-export function webAddress(typed: string): string | null {
+/** The address something typed is, or null for words and for nothing: what the palette
+ *  offers to go to, where a few words are a search for a note rather than for the web. */
+export function typedAddress(typed: string): string | null {
   const said = typed.trim()
   if (!said) return null
 
@@ -78,7 +80,29 @@ export function webAddress(typed: string): string | null {
 
   if (SCHEME.test(said)) return isWebAddress(said) ? said : null
 
-  return `${SEARCH}${encodeURIComponent(said)}`
+  return null
+}
+
+/** The address something typed means, or null when it means nothing at all.
+ *
+ *  A host first, because `localhost:1425` reads as a scheme called `localhost` and is
+ *  not one - which is the same special case every browser makes. A host is given
+ *  `https:`, which is what a browser does and what a page deserves in 2026, and a
+ *  host this app refuses is nothing rather than something to search for.
+ *
+ *  Then a scheme, taken as written, so `http://` pages still open and a
+ *  `javascript:` one never does. Anything left is words, and words are a search on
+ *  `engine`, the reader's choice of search engine. */
+export function webAddress(typed: string, engine = SEARCH): string | null {
+  const said = typed.trim()
+  if (!said) return null
+
+  const address = typedAddress(said)
+  if (address !== null) return address
+  // An address this app refuses is nothing rather than something to search for.
+  if (said.startsWith('//') || HOST.test(said) || SCHEME.test(said)) return null
+
+  return searchOn(engine, said)
 }
 
 /** What Ctrl+Enter means in an address field: the word, as a `.com`.
