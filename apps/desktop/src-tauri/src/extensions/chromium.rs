@@ -14,9 +14,13 @@
 //! off without taking away - an uninstall takes an extension's stored data with it, and a
 //! password manager turned off is not a password manager signed out - and removes. So nib
 //! keeps one page of `chrome://extensions` nobody sees, in the browsing profile, and asks
-//! it. The files are read where Chromium unpacked them, `<profile>/Extensions/<id>`.
+//! it. The files are read where Chromium keeps them: `<profile>/Extensions/<id>` for one
+//! from a store, and the folder it was loaded from for one loaded unpacked - developer
+//! mode's Load unpacked, or `--load-extension` - which only `chrome.developerPrivate`,
+//! on the same page, can say. Read from the store's folder alone, an unpacked one had
+//! no files, so no row and no button, though it ran in every page.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
@@ -49,18 +53,24 @@ pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     else {
         return Vec::new();
     };
-    let all = asked(
-        &page,
-        "chrome.management.getAll().then(all => all.filter(one => one.type === 'extension').map(one => ({ id: one.id, version: one.version, enabled: one.enabled, edge: (one.updateUrl || '').includes('edge.microsoft.com') })))",
-    )
-    .and_then(|all| all.as_array().cloned())
-    .unwrap_or_default();
+    let all = asked(&page, LIST)
+        .and_then(|all| all.as_array().cloned())
+        .unwrap_or_default();
+    entries(&all, &profile)
+}
 
+/// Every installed extension the engine listed, with its folder: `<profile>/Extensions`
+/// for one from a store, the folder it was loaded from for one loaded unpacked. One whose
+/// files are nowhere is left out: nothing of it can be drawn.
+fn entries(all: &[Value], profile: &Path) -> Vec<(Kept, PathBuf)> {
     all.iter()
         .filter_map(|one| {
             let id = one["id"].as_str()?.to_owned();
             let version = one["version"].as_str()?.to_owned();
-            let folder = unpacked(&profile.join(&id), &version)?;
+            let folder = match one["path"].as_str().filter(|path| !path.is_empty()) {
+                Some(path) => Some(PathBuf::from(path)).filter(|folder| folder.is_dir()),
+                None => unpacked(&profile.join(&id), &version),
+            }?;
             let kept = Kept {
                 id,
                 store: if one["edge"].as_bool() == Some(true) {
@@ -77,8 +87,14 @@ pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         .collect()
 }
 
+/// What the engine is asked for its list: each extension's id, version, whether it is
+/// on, whether Edge Add-ons keeps it, and, for one loaded unpacked, its folder.
+/// `chrome.developerPrivate` is asked beside `chrome.management` for the folder alone,
+/// and a list without it is still the list.
+const LIST: &str = "Promise.all([chrome.management.getAll(), chrome.developerPrivate ? chrome.developerPrivate.getExtensionsInfo({ includeDisabled: true, includeTerminated: true }).catch(() => []) : []]).then(([all, info]) => all.filter(one => one.type === 'extension').map(one => ({ id: one.id, version: one.version, enabled: one.enabled, edge: (one.updateUrl || '').includes('edge.microsoft.com'), path: (info.find(said => said.id === one.id) || {}).path || null })))";
+
 /// Where Chromium unpacked a version: `<version>_<n>`, the highest `n`.
-fn unpacked(home: &std::path::Path, version: &str) -> Option<PathBuf> {
+fn unpacked(home: &Path, version: &str) -> Option<PathBuf> {
     let prefix = format!("{version}_");
     std::fs::read_dir(home)
         .ok()?
@@ -164,4 +180,57 @@ fn asked(page: &Webview, expression: &str) -> Option<Value> {
         return None;
     }
     said.get("result")?.get("value").cloned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn folder(at: &Path) -> PathBuf {
+        std::fs::create_dir_all(at).expect("a folder");
+        at.to_path_buf()
+    }
+
+    #[test]
+    fn one_from_a_store_is_read_where_chromium_unpacked_it() {
+        let profile = tempfile::tempdir().expect("a profile");
+        let id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
+        folder(&profile.path().join(id).join("4.9.0_0"));
+        let newest = folder(&profile.path().join(id).join("4.9.0_1"));
+
+        let all = [json!({ "id": id, "version": "4.9.0", "enabled": true, "edge": false, "path": null })];
+        let found = entries(&all, profile.path());
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].1, newest);
+        assert_eq!(found[0].0.store, Store::Chrome);
+    }
+
+    #[test]
+    fn one_loaded_unpacked_is_read_where_it_was_loaded_from() {
+        let profile = tempfile::tempdir().expect("a profile");
+        let loaded = tempfile::tempdir().expect("a folder of its own");
+        let id = "ddkjiahejlhfcafbddmgiahcphecmpfh";
+        let all = [json!({
+            "id": id,
+            "version": "2026.1",
+            "enabled": false,
+            "edge": true,
+            "path": loaded.path().to_string_lossy(),
+        })];
+        let found = entries(&all, profile.path());
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].1, loaded.path());
+        assert!(!found[0].0.enabled);
+        assert_eq!(found[0].0.store, Store::Edge);
+    }
+
+    #[test]
+    fn one_whose_files_are_nowhere_is_left_out() {
+        let profile = tempfile::tempdir().expect("a profile");
+        let all = [
+            json!({ "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "version": "1", "enabled": true, "path": null }),
+            json!({ "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "version": "1", "enabled": true, "path": r"C:\nowhere\at\all" }),
+        ];
+        assert!(entries(&all, profile.path()).is_empty());
+    }
 }
