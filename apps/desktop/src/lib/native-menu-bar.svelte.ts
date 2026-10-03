@@ -174,6 +174,7 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
       entryRow('app.new', context),
       entryRow('app.new-kind', context, { label: t('New tab') }),
       entryRow('app.new-window', context),
+      entryRow('app.new-private', context),
     ],
     closing: [
       entryRow('app.close', context, { disabled: !open }),

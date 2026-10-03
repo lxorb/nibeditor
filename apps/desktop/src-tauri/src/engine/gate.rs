@@ -443,7 +443,7 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
         pane,
         revived,
         // The store every space shares, which is the only one this engine has.
-        None,
+        crate::web_tabs::Profile::default(),
     ))?;
 
     Ok(format!("web-{tab}"))
