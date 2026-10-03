@@ -185,6 +185,15 @@ export interface Goal {
   reason?: string
 }
 
+/** What a program's own goal is asked (`Engine.goal`): set with its condition and, where
+ *  the program keeps one, a token budget; resumed with the condition and the words its
+ *  next turn is sent with; paused; cleared. */
+export type GoalTo =
+  | { do: 'set'; condition: string; tokens?: number }
+  | { do: 'resume'; condition: string; text: string }
+  | { do: 'pause' }
+  | { do: 'clear' }
+
 /** The older turns as a summary (5.1): the provider's own block where it compacts, or
  *  nib's own summary where it does not. Turns up to `upTo` are kept for the reader and
  *  no longer sent. */
@@ -268,6 +277,18 @@ export interface Engine {
     on: (event: EngineEvent) => void,
     signal: AbortSignal,
   ): Promise<void>
+  /** The program's own goal (4.8), on a road that has one: Claude Code's `/goal`, Codex's
+   *  `thread/goal/*`. A goal set or resumed runs like a send - each turn the program takes
+   *  toward it drawn through `on`, `done` once at the end - and answers where the goal
+   *  stands then, as far as the program says (`null` where it does not); a pause or a
+   *  clear answers at once. A road without one has no method, and the evaluator loop of
+   *  lib/ai/commands runs instead. */
+  goal?(
+    thread: Thread,
+    to: GoalTo,
+    on: (event: EngineEvent) => void,
+    signal: AbortSignal,
+  ): Promise<GoalState | null>
   /** Words for the running turn, delivered after the call in flight. */
   steer(thread: Thread, text: string): Promise<void>
   compact(thread: Thread, focus?: string): Promise<void>

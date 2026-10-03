@@ -13,7 +13,12 @@
  *  **What a turn becomes.** The program's lines are read by its own reader (claude.ts,
  *  codex.ts) into parts: words, thinking, a row per call of nib's tools with its answer,
  *  and the counts the ring draws, the window learnt from the program where the model
- *  list did not say. A stop interrupts the turn and keeps what arrived. */
+ *  list did not say. A stop interrupts the turn and keeps what arrived.
+ *
+ *  **The program's own goal.** A goal set or resumed is a send whose first words are the
+ *  goal (goal.ts says which), read on past the end of each turn for as long as the
+ *  program goes on with it: every turn it takes is a model turn of its own, under the
+ *  reader's one message. */
 
 import { t } from '../../i18n.svelte'
 import { userStep } from '../chat/transcript'
@@ -22,6 +27,7 @@ import type {
   Effort,
   Engine,
   EngineEvent,
+  GoalState,
   Mode,
   ModelInfo,
   Part,
@@ -34,10 +40,26 @@ import { KIND_NAMES, type LocalKind, type Message, type Provider } from '../prov
 import { PLANS } from './ask'
 import { claudeReader } from './claude'
 import { codexReader } from './codex'
+import {
+  GOAL_CLEARED,
+  goalHeld,
+  goalMessage,
+  goalSaid,
+  goesOn,
+  QUIET,
+  startsItsOwnTurn,
+} from './goal'
 import type { Heard as Read } from './heard'
 import { modelsIn } from './models'
 import { promptFor } from './prompt'
-import { listedModels, type Heard, type Level, openSession, type Session } from './session'
+import {
+  listedModels,
+  type Heard,
+  type Level,
+  openSession,
+  type Say,
+  type Session,
+} from './session'
 import { plans } from './status.svelte'
 import { troubleOf } from './trouble'
 
@@ -72,6 +94,14 @@ interface Running {
    *  own, so the model turn is split at each end rather than at once. */
   pending: number
   steered: (text: string) => void
+}
+
+/** A send that is a goal: what sets it, where the program last said it stands, and the
+ *  goal said after the first turn where a seeded session had to answer that first. */
+interface Pursuit {
+  said: Say
+  state: GoalState | null
+  after: Say | null
 }
 
 /** The level a program is told, or nothing for the model's own default. */
@@ -186,12 +216,14 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
   }
 
-  async function send(
+  /** A send - or, with `pursuit`, a goal - answered: how it ended. */
+  async function run(
     thread: Thread,
     message: Draft,
     on: (event: EngineEvent) => void,
     signal: AbortSignal,
-  ): Promise<void> {
+    pursuit: Pursuit | null = null,
+  ): Promise<Stop> {
     const switched = [...thread.turns].reverse().find((one) => one.role === 'model')?.model
     const you: Turn = {
       id: fresh(),
@@ -230,7 +262,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const words = error instanceof Error ? error.message : String(error)
       say({ kind: 'notice', code: 'error', text: words })
       on({ type: 'done', stop: 'error', error: words })
-      return
+      return 'error'
     }
 
     const read: (line: string) => Read = kind === 'claude-code' ? claudeReader() : codexReader()
@@ -239,13 +271,21 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     let named = false
     let thinkingAt = 0
     let stopping = false
+    /** Between two turns of a goal: the next thing the program says opens a model turn. */
+    let between = false
+    let quiet: ReturnType<typeof setTimeout> | undefined
+    /** Ends the send from outside the lines: a stop between two turns of a goal, which
+     *  no turn is running to say it stopped. */
+    let closing: ((stop: Stop) => void) | null = null
 
     const finished = new Promise<{ stop: Stop; error?: string }>((resolve) => {
       const close = (stop: Stop, error?: string) => {
+        clearTimeout(quiet)
         for (const part of turn.parts)
           if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
         resolve(error === undefined ? { stop } : { stop, error })
       }
+      closing = close
 
       const ended = (how: NonNullable<Read['ended']>) => {
         const flight = running.get(thread.id)
@@ -260,6 +300,24 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         }
         if (stopping || how === 'stopped') {
           close('stopped')
+          return
+        }
+        if (how === 'end' && pursuit?.after) {
+          // A seeded session answered the transcript; the goal is set now.
+          const after = pursuit.after
+          pursuit.after = null
+          between = true
+          live.session.say(after).catch((error: unknown) => {
+            heard.trouble = error instanceof Error ? error.message : String(error)
+            ended('error')
+          })
+          return
+        }
+        if (how === 'end' && pursuit && goesOn(kind) && pursuit.state === 'pursuing') {
+          between = true
+          quiet = setTimeout(() => {
+            close('end')
+          }, QUIET)
           return
         }
         if (how === 'end') {
@@ -280,6 +338,22 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
       const line = (text: string) => {
         const said = read(text)
+        if (said.goal && pursuit) {
+          pursuit.state = said.goal
+          // Codex said the goal is over between two turns: there is no next one.
+          if (between && said.goal !== 'pursuing') {
+            close('end')
+            return
+          }
+        }
+        if (between && (said.text || said.thinking || said.tool)) {
+          between = false
+          clearTimeout(quiet)
+          if (turn.usage) spend(thread, turn.usage)
+          turn = modelTurn(thread)
+          thread.turns.push(turn)
+          on({ type: 'turn', turn })
+        }
         if (said.model && !named) {
           named = true
           on({ type: 'model', model: said.model })
@@ -407,6 +481,13 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
     const stop = () => {
       stopping = true
+      // A goal stopped is a goal held, or the program would start its next turn.
+      if (pursuit) void live.session.say(goalHeld(kind)).catch(() => undefined)
+      // Between two of its turns nothing is running to interrupt or to say it stopped.
+      if (between) {
+        closing?.('stopped')
+        return
+      }
       void live.session.say({ kind: 'interrupt' }).catch(() => undefined)
       // A program that does not say it stopped is ended, and the next send starts over.
       setTimeout(() => {
@@ -420,11 +501,19 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         ? ((await setup.instructions?.(thread).catch(() => '')) ?? '')
         : ''
       const step = userStep(message)
-      const text =
-        opened && (instructions || before.turns.length)
-          ? seeded(before, instructions, step.text)
-          : step.text
-      await live.session.say({ kind: 'turn', text, images: step.images })
+      const seeding = opened && !!(instructions || before.turns.length)
+      const text = seeding ? seeded(before, instructions, step.text) : step.text
+      const turnSaid: Say = { kind: 'turn', text, images: step.images }
+      if (!pursuit) await live.session.say(turnSaid)
+      else if (!startsItsOwnTurn(kind)) {
+        await live.session.say(pursuit.said)
+        await live.session.say(turnSaid)
+      } else if (seeding) {
+        // A goal is set by a message of its own, which cannot carry the conversation:
+        // the session hears the transcript first, and the goal once it has answered.
+        pursuit.after = pursuit.said
+        await live.session.say(turnSaid)
+      } else await live.session.say(pursuit.said)
       if (signal.aborted) stop()
       const end = await finished
       if (end.stop === 'stopped') say({ kind: 'notice', code: 'stopped', text: '' })
@@ -435,10 +524,12 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           ? { type: 'done', stop: end.stop }
           : { type: 'done', stop: end.stop, error: end.error },
       )
+      return end.stop
     } catch (error) {
       const words = error instanceof Error ? error.message : String(error)
       say({ kind: 'notice', code: 'error', text: words })
       on({ type: 'done', stop: 'error', error: words })
+      return 'error'
     } finally {
       signal.removeEventListener('abort', stop)
       running.delete(thread.id)
@@ -453,7 +544,29 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       listed = modelsIn(kind, await listedModels(kind))
       return listed.map((one) => ({ ...one, window: one.window ?? windows.get(one.id) ?? null }))
     },
-    send,
+    async send(thread, message, on, signal) {
+      await run(thread, message, on, signal)
+    },
+    async goal(thread, to, on, signal) {
+      if (to.do === 'pause' || to.do === 'clear') {
+        const live = sessions.get(thread.id)
+        if (live && !live.session.ended)
+          await live.session.say(to.do === 'pause' ? goalHeld(kind) : GOAL_CLEARED)
+        return to.do === 'pause' ? 'paused' : 'cleared'
+      }
+      const pursuit: Pursuit = { said: goalSaid(kind, to), state: 'pursuing', after: null }
+      const stop = await run(
+        thread,
+        { text: goalMessage(kind, to), attachments: [] },
+        on,
+        signal,
+        pursuit,
+      )
+      if (stop === 'stopped') return 'paused'
+      if (stop !== 'end') return null
+      // Claude Code says nothing of where its goal stands, only that it stopped working.
+      return goesOn(kind) ? pursuit.state : null
+    },
     async steer(thread, text) {
       const flight = running.get(thread.id)
       const live = sessions.get(thread.id)

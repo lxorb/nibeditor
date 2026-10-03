@@ -113,13 +113,7 @@ impl Claude {
             Say::Context => {
                 self.control(json!({ "subtype": "get_context_usage" }), Some("context"))
             }
-            Say::Goal { goal } => command(&match goal {
-                GoalSay::Set { objective, .. } => format!("/goal {}", one_line(objective)),
-                GoalSay::Pause => "/goal pause".to_owned(),
-                GoalSay::Resume => "/goal resume".to_owned(),
-                GoalSay::Clear => "/goal clear".to_owned(),
-                GoalSay::Get => return Err("Claude Code says where a goal is as it goes".into()),
-            }),
+            Say::Goal { goal } => goal_line(goal)?,
         };
         self.running
             .write_line(&line)
@@ -184,6 +178,21 @@ fn user(text: &str, images: &[Image]) -> String {
 }
 
 /// One of Claude Code's own commands, typed as a message.
+/// The thread's goal, typed as Claude Code's own `/goal`: set or cleared, and nothing
+/// else. It has no pause and no resume - `/goal pause` would set a goal whose whole
+/// condition is the word "pause" - so the window clears it to hold it and sets it again
+/// to go on (lib/ai/local/goal.ts).
+fn goal_line(goal: &GoalSay) -> Result<String, String> {
+    match goal {
+        GoalSay::Set { objective, .. } => Ok(command(&format!("/goal {}", one_line(objective)))),
+        GoalSay::Clear => Ok(command("/goal clear")),
+        GoalSay::Pause | GoalSay::Resume => {
+            Err("Claude Code's goal is set or cleared, never paused".into())
+        }
+        GoalSay::Get => Err("Claude Code says where a goal is as it goes".into()),
+    }
+}
+
 fn command(line: &str) -> String {
     message(json!([{ "type": "text", "text": line }]))
 }
@@ -274,6 +283,23 @@ mod tests {
 
     fn parsed(line: &str) -> Value {
         serde_json::from_str(line).expect("JSON")
+    }
+
+    #[test]
+    fn a_goal_is_set_or_cleared_and_never_paused() {
+        let text = |goal: &GoalSay| {
+            goal_line(goal).map(|line| parsed(&line)["message"]["content"][0]["text"].clone())
+        };
+        let set = GoalSay::Set {
+            objective: "tests
+pass".into(),
+            budget: Some(9),
+        };
+        assert_eq!(text(&set), Ok(json!("/goal tests pass")));
+        assert_eq!(text(&GoalSay::Clear), Ok(json!("/goal clear")));
+        assert!(text(&GoalSay::Pause).is_err());
+        assert!(text(&GoalSay::Resume).is_err());
+        assert!(text(&GoalSay::Get).is_err());
     }
 
     #[test]

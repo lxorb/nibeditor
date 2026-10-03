@@ -890,10 +890,21 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in
   only after one; `fast` is false for Claude Code.
 - **Steer**: Codex's `turn/steer` into the running turn; Claude Code reads a message
   sent mid-turn after the turn, so its answer is a model turn of its own.
-- **Below the engine**, for lane 5 where it needs the program's own `/goal`:
-  `openSession` in `lib/ai/local/session.ts` and its `goal` saying (`thread/goal/*`,
-  Claude Code's `/goal`). Until the engine carries a `goal` method, `/goal` on these two
-  runs nib's evaluator loop like every other provider.
+- **The program's own goal**, for lane 5's `/goal` runner: `Engine.goal?(thread, to, on,
+  signal)` (`lib/ai/chat/types.ts`), which only these two engines have; where it is
+  missing the runner keeps nib's evaluator loop. `to` is `GoalTo`: `set` with the
+  condition and Codex's token budget, `resume` with the condition and the next turn's
+  words, `pause`, `clear`. A set or a resume runs like a send - the reader's message is
+  the condition, each turn the program takes is a model turn of its own, `done` once -
+  and answers the `GoalState` the program left it in: Codex's own (`complete` is `met`,
+  `budgetLimited` is `budget_limited`, a pause, a block or a usage limit is `paused`),
+  `paused` after a stop (the engine holds the goal so no next turn starts), and `null`
+  where the program does not say - Claude Code, which runs a whole goal as one answer
+  and prints no verdict, so the runner judges that one end itself (its evaluator, once)
+  or calls it ended. A pause or a clear answers at once. Claude Code has no paused goal:
+  a pause clears it there and the runner keeps the condition, and a resume sets it again
+  (`lib/ai/local/goal.ts`). The turns land in `thread.turns`, so the runner counts
+  `goal.turns` and `goal.tokens` from them and draws the same chip on both roads.
 - **The grant.** The crate asks `ai_agent::grant_for` for the provider's built-in grant,
   the one the API loop uses (`nib-<provider id>`, with the same two choices from
   `lib/ai/chat/choices.ts`), and issues its token for `nib mcp`; lane 3's grant work

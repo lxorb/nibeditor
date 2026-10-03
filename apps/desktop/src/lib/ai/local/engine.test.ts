@@ -4,7 +4,7 @@
  *  read, measured on 2.1.280 and generated from the app-server's own protocol. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, EngineEvent, Thread } from '../chat/types'
+import type { Draft, Engine, EngineEvent, GoalTo, Thread } from '../chat/types'
 import type { Provider } from '../providers'
 
 class FakeChannel {
@@ -450,5 +450,199 @@ describe('a question put to Codex', () => {
       messages: [{ role: 'user', content: 'hi' }],
     })
     await expect(asking).rejects.toThrow(/ChatGPT plan is at its limit until 3:05 PM/)
+  })
+})
+
+/** What Codex says of its own goal: `thread/goal/updated` with the goal's status. */
+const codexGoal = (status: string) =>
+  JSON.stringify({
+    method: 'thread/goal/updated',
+    params: {
+      threadId: 'x',
+      turnId: null,
+      goal: { threadId: 'x', objective: 'o', status, tokensUsed: 0, timeUsedSeconds: 0 },
+    },
+  })
+
+/** A goal asked of an engine, with what it said on the way. */
+async function pursue(
+  built: Engine,
+  on: Thread,
+  to: GoalTo,
+  signal = new AbortController().signal,
+) {
+  const events: EngineEvent[] = []
+  if (!built.goal) throw new Error('this engine runs no goal of its own')
+  const state = await built.goal(on, to, (event) => events.push(event), signal)
+  return { state, events }
+}
+
+const words = (on: Thread) =>
+  on.turns.map((one) =>
+    one.role === 'you'
+      ? `you: ${one.draft?.text ?? ''}`
+      : one.parts.map((part) => (part.kind === 'text' ? part.text : part.kind)).join(' '),
+  )
+
+describe('a program’s own goal', () => {
+  test('Codex sets it, starts the work, and goes on turn after turn until it says it is met', async () => {
+    answer = (_, said) => {
+      if (said.kind === 'goal') return [codexGoal('active')]
+      if (said.kind !== 'turn') return []
+      // Codex starts the next turn by itself while the goal is active, and the model
+      // marks it complete inside the last.
+      const last = codexTurn(' Done.')
+      return [
+        ...codexTurn('Filed.'),
+        ...last.slice(0, -1),
+        codexGoal('complete'),
+        ...last.slice(-1),
+      ]
+    }
+    const on = thread(CODEX)
+    const { state, events } = await pursue(engine(CODEX), on, {
+      do: 'set',
+      condition: 'the inbox is filed',
+      tokens: 50_000,
+    })
+
+    expect(state).toBe('met')
+    expect(opened[0]?.said).toEqual([
+      { kind: 'goal', goal: { do: 'set', objective: 'the inbox is filed', budget: 50_000 } },
+      { kind: 'turn', text: 'the inbox is filed', images: [] },
+    ])
+    expect(words(on)).toEqual(['you: the inbox is filed', 'Filed.', ' Done.'])
+    expect(events.filter((one) => one.type === 'done')).toEqual([{ type: 'done', stop: 'end' }])
+  })
+
+  test('Codex resumes it with its own pause undone and the next turn’s words', async () => {
+    answer = (_, said) =>
+      said.kind === 'turn'
+        ? [
+            ...codexTurn('More.').slice(0, -1),
+            codexGoal('budgetLimited'),
+            ...codexTurn('').slice(-1),
+          ]
+        : []
+    const on = thread(CODEX)
+    const { state } = await pursue(engine(CODEX), on, {
+      do: 'resume',
+      condition: 'the inbox is filed',
+      text: 'Keep working toward the goal: the inbox is filed',
+    })
+
+    expect(state).toBe('budget_limited')
+    expect(opened[0]?.said).toEqual([
+      { kind: 'goal', goal: { do: 'resume' } },
+      { kind: 'turn', text: 'Keep working toward the goal: the inbox is filed', images: [] },
+    ])
+  })
+
+  test('a stop holds it, so the program does not start its next turn', async () => {
+    answer = (_, said) =>
+      said.kind === 'turn'
+        ? [codexTurn('Fil')[0] ?? '', codexTurn('Fil')[1] ?? '']
+        : said.kind === 'interrupt'
+          ? [
+              JSON.stringify({
+                method: 'turn/completed',
+                params: { threadId: 'x', turn: { id: 'u', status: 'interrupted' } },
+              }),
+            ]
+          : []
+    const stopper = new AbortController()
+    const on = thread(CODEX)
+    const going = pursue(engine(CODEX), on, { do: 'set', condition: 'c' }, stopper.signal)
+    await vi.waitFor(() => expect(on.turns.at(-1)?.parts).toHaveLength(1))
+    stopper.abort()
+    const { state } = await going
+
+    expect(state).toBe('paused')
+    // Held first, so the turn the interrupt ends is not followed by another.
+    expect(opened[0]?.said.slice(-2)).toEqual([
+      { kind: 'goal', goal: { do: 'pause' } },
+      { kind: 'interrupt' },
+    ])
+  })
+
+  test('a stop between two of its turns holds it at once, and keeps the session', async () => {
+    // A turn, and then nothing yet: Codex is about to start the next one.
+    answer = (_, said) => (said.kind === 'turn' ? codexTurn('Filed.') : [])
+    const stopper = new AbortController()
+    const on = thread(CODEX)
+    const going = pursue(engine(CODEX), on, { do: 'set', condition: 'c' }, stopper.signal)
+    await vi.waitFor(() =>
+      expect(on.turns.at(-1)?.parts).toEqual([{ kind: 'text', text: 'Filed.' }]),
+    )
+    await new Promise((settle) => setTimeout(settle, 20))
+    stopper.abort()
+    const { state, events } = await going
+
+    expect(state).toBe('paused')
+    expect(events.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
+    expect(opened[0]?.said.at(-1)).toEqual({ kind: 'goal', goal: { do: 'pause' } })
+    expect(opened[0]?.closed).toBe(false)
+  })
+
+  test('Codex pauses and clears it in the session, at once', async () => {
+    answer = (_, said) => (said.kind === 'turn' ? codexTurn('ok') : [])
+    const built = engine(CODEX)
+    const on = thread(CODEX)
+    await send(CODEX, on, 'hi', built)
+
+    expect((await pursue(built, on, { do: 'pause' })).state).toBe('paused')
+    expect((await pursue(built, on, { do: 'clear' })).state).toBe('cleared')
+    expect(opened[0]?.said.slice(1)).toEqual([
+      { kind: 'goal', goal: { do: 'pause' } },
+      { kind: 'goal', goal: { do: 'clear' } },
+    ])
+  })
+
+  test('Claude Code’s is its own message, answered as one, and says nothing of where it stands', async () => {
+    answer = (_, said) =>
+      said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : []
+    const built = engine(CLAUDE)
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'hi', built)
+    const { state, events } = await pursue(built, on, {
+      do: 'set',
+      condition: 'tests pass',
+      tokens: 9,
+    })
+
+    expect(state).toBeNull()
+    // No budget: Claude Code keeps none.
+    expect(opened[0]?.said.at(-1)).toEqual({
+      kind: 'goal',
+      goal: { do: 'set', objective: 'tests pass' },
+    })
+    expect(words(on).slice(2)).toEqual(['you: tests pass', 'thinking tool Herons wait.'])
+    expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+
+  test('a Claude Code session that has to be seeded hears the transcript first, then the goal', async () => {
+    answer = (_, said) =>
+      said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : []
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'one', engine(CLAUDE))
+    const { state } = await pursue(engine(CLAUDE), on, { do: 'set', condition: 'tests pass' })
+
+    expect(state).toBeNull()
+    expect(opened[1]?.said.map((one) => one.kind)).toEqual(['turn', 'goal'])
+    expect(String(opened[1]?.said[0]?.text)).toContain('<conversation>')
+    expect(words(on).slice(2)).toEqual([
+      'you: tests pass',
+      'thinking tool Herons wait.',
+      'thinking tool Herons wait.',
+    ])
+  })
+
+  test('Claude Code has no paused goal: a pause clears it there, and nib keeps the condition', async () => {
+    const built = engine(CLAUDE)
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'hi', built)
+
+    expect((await pursue(built, on, { do: 'pause' })).state).toBe('paused')
+    expect(opened[0]?.said.at(-1)).toEqual({ kind: 'goal', goal: { do: 'clear' } })
   })
 })

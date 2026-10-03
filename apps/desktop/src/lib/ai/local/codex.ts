@@ -7,13 +7,15 @@
  *  the turn makes `item/started` and `item/completed` - an `agentMessage` is the answer,
  *  streamed as `item/agentMessage/delta`; a `reasoning` streams its summary as
  *  `item/reasoning/summaryTextDelta`; an `mcpToolCall` is one of nib's tools - then
- *  `thread/tokenUsage/updated` with the counts and the model's window,
+ *  `thread/tokenUsage/updated` with the counts and the model's window, `thread/goal/updated`
+ *  and `thread/goal/cleared` with where the thread's own goal stands,
  *  `account/rateLimits/updated` with where the plan stands, and `turn/completed` with
  *  how the turn ended. A bare `error` says what went wrong on the way.
  *
  *  Each message hands on only the part of its text not handed on before, whether it came
  *  as deltas or whole at its completion, so the answer never says a word twice. */
 
+import type { GoalState } from '../chat/types'
 import { type Counted, eventIn, type Heard, type Limit, saysLimit, saysSignedOut } from './heard'
 
 /** The share of a plan's window past which the plan counts as near its limit. */
@@ -62,6 +64,14 @@ export function codexReader(): (line: string) => Heard {
       case 'thread/compacted':
         return { compacted: true }
 
+      case 'thread/goal/updated': {
+        const goal = goalIn(record(params.goal)?.status)
+        return goal ? { goal } : {}
+      }
+
+      case 'thread/goal/cleared':
+        return { goal: 'cleared' }
+
       case 'thread/tokenUsage/updated': {
         const usage = record(params.tokenUsage)
         return { usage: countsIn(record(usage?.last), usage?.modelContextWindow) }
@@ -85,6 +95,25 @@ export function codexReader(): (line: string) => Heard {
       default:
         return {}
     }
+  }
+}
+
+/** Where Codex's own goal stands, in nib's words: `complete` is met, a limit or a block
+ *  holds it the way a pause does, and `budgetLimited` is its own end. */
+function goalIn(status: unknown): GoalState | null {
+  switch (status) {
+    case 'active':
+      return 'pursuing'
+    case 'complete':
+      return 'met'
+    case 'budgetLimited':
+      return 'budget_limited'
+    case 'paused':
+    case 'blocked':
+    case 'usageLimited':
+      return 'paused'
+    default:
+      return null
   }
 }
 
