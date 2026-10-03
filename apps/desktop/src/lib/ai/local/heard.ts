@@ -16,9 +16,43 @@ export interface Limit {
   untilWords: string | null
 }
 
+/** A call of one of nib's tools, as the program says it started or was answered. */
+export interface ToolHeard {
+  id: string
+  /** The tool's name in `nib mcp`, without the program's prefix (`read_note`). */
+  name: string
+  args?: unknown
+  /** Its answer, once there is one. */
+  done?: { text: string; error: boolean }
+}
+
+/** A request's counts, as far as the program said them; see `Usage` in lib/ai/chat. */
+export interface Counted {
+  /** Everything sent, cached or not. */
+  input?: number
+  cached?: number
+  output?: number
+  reasoning?: number
+  /** The model's window, where the program says. */
+  window?: number
+}
+
+/** How a turn ended, in a session. A stop the engine asked for is told by the engine. */
+export type TurnEnd = 'end' | 'stopped' | 'error'
+
 export interface Heard {
   /** More of the answer. */
   text?: string
+  /** More of the thinking, in words, where the program gives them. */
+  thinking?: string
+  /** A tool call started or answered. */
+  tool?: ToolHeard
+  /** The counts of the request that just ended. */
+  usage?: Counted
+  /** The turn is over. */
+  ended?: TurnEnd
+  /** The older turns became a summary. */
+  compacted?: boolean
   /** Which model is answering. */
   model?: string
   /** Where the plan stands. */
