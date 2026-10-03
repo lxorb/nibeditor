@@ -1178,11 +1178,15 @@ a probe build, read back out of the folder, the tabs and the crate's list.
 
 ## Clipping the page
 
-The Clip glyph writes the page into the space as a note, through the same two
-functions the clipper extension uses: `@nib/markdown/from-html` for the words and
-`writeFrontMatter` for the block above them, with `source:` and `date:` as the
-extension writes them. A page clipped from a tab, the same page clipped from the
-extension and a page pasted into a note come out as the same markdown.
+The Clip glyph writes the page into the space as a note, through the same three
+things the clipper extension uses: the article extractor (`@nib/markdown/article`,
+Mozilla's Readability, which is Firefox's reader mode), the converter
+(`@nib/markdown/from-html`) and the note's shape (`@nib/markdown/clip-note`:
+`source:`, `title:`, `clipped:` and `tags:`, then the title as a heading). A page
+clipped from a tab and the same page clipped from the extension are the same note,
+and `lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
+documentation, Wikipedia with maths and a page of tables. The extractor is fetched
+when somebody clips, never on the way to a window.
 
 What none of the three carries out of a page: a link or a picture whose target no
 surface would follow anyway - `javascript:`, a `data:` document, an SVG standing in
@@ -1192,17 +1196,22 @@ languages that do something rather than show something. Every other language a p
 names is kept, `js` and `mermaid` included: a clipped page of documentation is the
 commonest clip there is. See `THE_APP_S_OWN` in `packages/markdown/src/from-html.ts`.
 
-On a desktop the crate reads the page with a script in the site's own document, so
-what is clipped is what the reader can see rather than what the server sent. What
-somebody has selected wins; with nothing selected it takes the article - the
-element a page says holds its writing, or the longest candidate, and otherwise the
-body with the navigation, the header, the footer and the forms cut out of it. Every
-address comes back resolved, because the note is read from a folder and not from
-the site.
+On a desktop the page writes itself down and the window does the rest. The crate
+runs `src-tauri/src/web_tabs/reader.js` in the page - in nib's own world on
+`WebView2` and nib's Chromium, so a page that has wrapped `cloneNode` or
+`getSelection` neither sees the read nor changes it, and in the page's world on the
+two `WebKit` engines - and it answers a snapshot of the document as the reader sees
+it: what a script wrote into it included, no scripts, styles or field values, the
+page's base resolved, and a doctype in front, which is how the window tells a
+snapshot from a fragment (`@nib/markdown/snapshot`). What somebody has selected
+wins: the snapshot's body is then the selection, and the root says so. The window
+parses the snapshot with `DOMParser`, which runs nothing and fetches nothing, and
+hands it to the extractor. An agent's `capture_to_note` and `browser_read` as an
+article read a page with the same script and the same extractor.
 
-The answer comes back through the engine's own script callback, not through the
-app's IPC. That is what lets a page be read without the page being given anything
-to call.
+The answer comes back through the engine's own script callback or its protocol,
+not through the app's IPC. That is what lets a page be read without the page being
+given anything to call.
 
 **In a browser build a clip is the link.** The frame's document belongs to
 somebody else's origin and cannot be read at all, so the note is the title and the
@@ -1832,10 +1841,11 @@ versions and goes to the trash like every other document.
   itself without a delegate - `alert()` shows nothing, `confirm()` is `false` - and Linux
   draws `WebKitGTK`'s own. A delegate beside the capture prompt's (see `ask` in
   `web_tabs.rs`) is where the card would come from on a Mac.
-- **The clip, the place and a step read the page in its own world.** They are questions
-  asked when somebody presses something, they leave nothing behind, and a page that has
-  wrapped `querySelector` or `history.go` sees them; the site's mark is read in nib's world
-  on `WebView2` and in the page's own elsewhere.
+- **The place and a step read the page in its own world**, and so does the clip on the two
+  `WebKit` engines. They are questions asked when somebody presses something, they leave
+  nothing behind, and a page that has wrapped `querySelector` or `history.go` sees them; the
+  site's mark and the clip are read in nib's world on `WebView2` (and the clip on nib's
+  Chromium too) and in the page's own elsewhere.
 - **A page's still picture is Windows and macOS only.** `CapturePreview` and
   `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what
   wry hands out, so an overlay over a page on Linux still blinks the pane.
@@ -1851,10 +1861,6 @@ versions and goes to the trash like every other document.
 - **A redirect can leave a spare entry in the back trail.** The engine will not
   say whether a navigation was a redirect, and the alternative is a back arrow
   that lies.
-- **The article a clip takes is nib's own pick, not Readability's.** The extension
-  runs Mozilla's extractor, which lives in `apps/clipper`; sharing it would mean
-  moving `extract.ts` into `packages/markdown`, which is worth doing and is not
-  this batch.
 - **A web tab has no reading view, no export and no glasses.** There is nothing to
   render: the document is a window on somebody else's page. Clipping it is how a
   page becomes words this app owns.

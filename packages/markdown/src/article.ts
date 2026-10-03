@@ -1,25 +1,52 @@
-/** A page, reduced to the part worth keeping.
+/** A page, reduced to the part worth keeping: the one article extractor.
  *
- *  Everything here works on a DOM and nothing here knows about markdown: it
- *  runs in the content script against the live page, and in the tests against
- *  saved pages parsed by jsdom, and both get the same answer. What comes out is
- *  an HTML string whose every address is absolute, so the note reads the same
- *  from anywhere.
+ *  Everything here works on a DOM and nothing here knows about markdown. Three
+ *  callers hand it one, and all three get the same answer: the clipper's content
+ *  script the live page, the app a snapshot its web tab's page wrote of itself
+ *  (`readSnapshot`, below), and the tests saved pages parsed by jsdom. So the same
+ *  page clips to the same note from the extension and from a tab. What comes out is
+ *  an HTML string whose every address is absolute, so the note reads the same from
+ *  anywhere.
  *
  *  The article itself is found by Readability, which is the same extractor
  *  Firefox's reader mode uses. When it finds nothing - a page that is a list, a
  *  forum thread, an app - the selection stands in for it, and the body stands in
- *  for that. */
+ *  for that.
+ *
+ *  Never on the way to a first paint: Readability is most of the weight here, and
+ *  the app fetches this when somebody clips. */
 
 import { Readability } from '@mozilla/readability'
 import { absolute, runsCode } from './addresses'
-import { NOT_CONTENT } from './elements'
-import type { Kind } from './kinds'
+import { NEVER } from './from-html'
+import { SELECTED } from './snapshot'
+
+/** The three clips: the article, what is selected, and an address. */
+export type ClipKind = 'page' | 'selection' | 'link'
+
+/** The page's own controls, written inside its article where no extractor tells them
+ *  from the words: a wiki's `[edit]` beside every heading, which in a note is a link to
+ *  a form on somebody else's site sitting in the middle of a heading. */
+const CONTROLS = ['.mw-editsection', '.editsection']
+
+/** What a note never contains, as a selector a DOM can be swept with.
+ *
+ *  The list itself is `NEVER` in `from-html.ts`, where the converter refuses the
+ *  same elements a second time in case one reaches it another way. Here it becomes
+ *  one selector, plus the two things only a DOM can see: a field that is not a task
+ *  list's tick, and whatever the page itself says is decoration rather than
+ *  content. */
+const NOT_CONTENT = [
+  ...NEVER,
+  'input:not([type="checkbox"])',
+  '[aria-hidden="true"]',
+  ...CONTROLS,
+].join(',')
 
 /** Where a clip came from. All the note's front matter needs, and small enough
  *  to travel between the popup and the service worker without the article. */
 export interface Origin {
-  kind: Kind
+  kind: ClipKind
   /** What the note records, and what every address in it resolves against. */
   url: string
   title: string
@@ -370,7 +397,7 @@ function whole(document: Document, base: string): string {
  *  opened on, or the page's own when the popup asked.
  *
  *  `url` is the page. `link` is what was right clicked, if anything was. */
-export function extract(document: Document, kind: Kind, url: string, link?: string): Source {
+export function extract(document: Document, kind: ClipKind, url: string, link?: string): Source {
   const tags = pageTags(document)
 
   if (kind === 'link') {
@@ -390,4 +417,36 @@ export function extract(document: Document, kind: Kind, url: string, link?: stri
 
   const fallback = selected(document, base) || whole(document, base)
   return { kind, url, title: pageTitle(document, url), html: fallback, tags }
+}
+
+/** The snapshot a web tab's page wrote of itself, as the same `Source` a live page
+ *  gives: the selection where the page marked one, the article otherwise, and the
+ *  body where the extractor finds none. See `snapshot.ts`.
+ *
+ *  Parsed by `DOMParser`, which makes a document that runs nothing and fetches
+ *  nothing: no script in it executes and no picture in it is requested, so a page's
+ *  markup is read in the window without being let into it.
+ *
+ *  The page writes its own base into the snapshot, already resolved, because a
+ *  document parsed here would otherwise resolve every relative address against the
+ *  app; where it did not - a snapshot of some other making - the page's address is
+ *  the base, which is what a page with no `<base>` resolves against too. */
+export function readSnapshot(html: string, url: string): Source {
+  const page = new DOMParser().parseFromString(html, 'text/html')
+
+  if (!page.querySelector('base[href]')) {
+    const base = page.createElement('base')
+    base.setAttribute('href', url)
+    page.head.prepend(base)
+  }
+
+  if (!page.documentElement.hasAttribute(SELECTED)) return extract(page, 'page', url)
+
+  return {
+    kind: 'selection',
+    url,
+    title: pageTitle(page, url),
+    html: contentOf(page.body, baseOf(page, url)),
+    tags: pageTags(page),
+  }
 }

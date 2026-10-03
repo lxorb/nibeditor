@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Origin } from './extract'
+import type { Origin } from '@nib/markdown/article'
 import {
   byteLength,
   fileName,

@@ -9,7 +9,6 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.6.0",
     "@nib/markdown": "workspace:*",
     "@nib/themes": "workspace:*"
   },

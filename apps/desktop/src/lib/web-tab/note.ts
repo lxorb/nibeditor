@@ -1,7 +1,7 @@
 /** The two notes a web tab has anything to do with.
  *
  *  **A clip**, which is a note this app composes out of a page: the page's words,
- *  under front matter that says `source:` and `date:`, exactly as the clipper
+ *  under front matter that says `source:` and `clipped:`, exactly as the clipper
  *  extension writes one. A clip is the words as they were rather than a window on the
  *  site, so it is a note and always will be. See clip.ts.
  *
@@ -16,14 +16,8 @@
  *  know about. Until then they cost one front-matter read on a pass that was reading
  *  the file anyway. */
 
-import {
-  frontMatterEdit,
-  frontMatterValue,
-  oneLine,
-  stripFrontMatter,
-  writeFrontMatter,
-} from '@nib/markdown/front-matter'
-import { asWords } from '@nib/markdown/words'
+import type { ClipOrigin } from '@nib/markdown/clip-note'
+import { frontMatterEdit, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
 import { isWebAddress } from './address'
 
 /** The key that made a note a website. */
@@ -93,60 +87,55 @@ export function clipSource(
   return isWebAddress(url) ? url : null
 }
 
-/** The longest a page may name itself. A title is a line above an article, and a
- *  page handing over a paragraph is handing over content in the wrong field. The
- *  clipper's own number, for the same reason. */
-const LONGEST_TITLE = 300
+/** A page as the clip reads it: where it is, what it calls itself, and its HTML. */
+interface Read {
+  url: string
+  title: string
+  html: string
+}
 
-/** What a clip is called when the page offered no title. The name a new note gets,
- *  and deliberately not translated: a file name is a path, and a path that changes
- *  with the language stops matching itself. */
-const UNTITLED = 'Untitled'
+/** What a page's HTML holds worth keeping, and what the page is called and tagged.
+ *
+ *  A web tab's page hands over a snapshot of itself (see
+ *  `@nib/markdown/snapshot`), and the snapshot goes through the extractor the
+ *  clipper extension runs - the article, or the selection the page marked - so a tab
+ *  and the extension clip the same page to the same words. Anything else is already
+ *  the part worth keeping: a page an agent read whole, or the nothing a browser
+ *  build's frame gives, which is a link card.
+ *
+ *  The extractor is Readability and most of a hundred kilobytes, so it is fetched
+ *  here, when a snapshot has arrived to be read, and never on the way to a window. */
+export async function articleOf(page: Read): Promise<ClipOrigin & { html: string }> {
+  const { isSnapshot } = await import('@nib/markdown/snapshot')
+  if (!isSnapshot(page.html)) return { kind: 'page', ...page, tags: [] }
+
+  const { readSnapshot } = await import('@nib/markdown/article')
+  const read = readSnapshot(page.html, page.url)
+
+  return { ...read, title: read.title.trim() || page.title }
+}
 
 /** A page as a note: where it came from, when, and what it said.
  *
- *  `source` and `date`, which is what the clipper writes, so a folder of clips reads
- *  the same whichever of the two saved it. The title is settled once here, so the
- *  front matter, the heading and the file's own name are the same words - the name
- *  comes off the heading; see `workspace.noteFrom`.
+ *  The shape is `@nib/markdown/clip-note`'s, which the clipper extension writes
+ *  through too, after the same extractor (`articleOf`) and the same converter - so a
+ *  folder of clips reads the same whichever of the two saved it, and the same page
+ *  clipped from both is the same note. The title is settled there, so the front
+ *  matter, the heading and the file's own name are the same words - the name comes
+ *  off the heading; see `workspace.noteFrom`.
  *
- *  A page with no words to keep says the one thing it knows, as a link somebody can
- *  follow.
- *
- *  Answered rather than returned, because turning a page's HTML into markdown means
- *  fetching the converter: turndown and the GFM rules over it are thirty kilobytes
- *  that a window opening on a note has no use for, and the three functions above are
- *  read by the file list on every launch while this one is read by a web tab. Clipping
- *  is already a wait - the page has to be asked for its words first - so the fetch
- *  costs the reader nothing. See clip.ts, the only caller. */
-export async function clipNote(
-  page: { url: string; title: string; html: string },
-  when: Date,
-): Promise<string> {
-  const title = oneLine(page.title).slice(0, LONGEST_TITLE).trim() || UNTITLED
-  const { htmlToMarkdown } = await import('@nib/markdown/from-html')
-  const words = page.html.trim() ? htmlToMarkdown(page.html).trim() : ''
-
-  const block = writeFrontMatter([
-    ['source', page.url],
-    ['title', title],
-    ['date', when.toISOString()],
+ *  Answered rather than returned, because turning a page into markdown means
+ *  fetching the extractor and the converter, which a window opening on a note has no
+ *  use for, while the functions above are read by the file list on every launch.
+ *  Clipping is already a wait - the page has to be asked for its words first - so the
+ *  fetch costs the reader nothing. See clip.ts, and an agent's capture. */
+export async function clipNote(page: Read, when: Date): Promise<string> {
+  const [read, { htmlToMarkdown }, { clipNoteText }] = await Promise.all([
+    articleOf(page),
+    import('@nib/markdown/from-html'),
+    import('@nib/markdown/clip-note'),
   ])
 
-  // The heading is the page's own words, and a page names itself: the front matter
-  // quotes what it holds, but a heading is markdown and a note's markup is markup.
-  // See `asWords`, which is what the converter escapes a page's prose with.
-  const heading = `# ${asWords(title)}`
-
-  // Written once. Most pages put their title in an `h1` at the top of the article, and
-  // the converter keeps it because it is part of the page - so a clip carried the same
-  // line twice, this heading and then theirs. Where the article opens by saying what the
-  // page is called, that is the heading; where it opens with something else, both stay,
-  // because the note is titled after the page and the article's heading is the
-  // article's. Compared unescaped, since the converter escapes what it writes.
-  const first = words.split('\n', 1)[0]?.trim() ?? ''
-  const said = first.startsWith('# ') ? first.slice(2).replace(/\\(.)/g, '$1').trim() : null
-  const body = said === title ? words : `${heading}\n\n${words || `<${page.url}>`}`
-
-  return `${block}\n\n${body}\n`
+  const words = read.html.trim() ? htmlToMarkdown(read.html) : ''
+  return clipNoteText(read, words, when)
 }

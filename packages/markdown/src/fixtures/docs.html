@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Streams — Rivulet 3.2 documentation</title>
+    <meta name="keywords" content="streams, async, rivulet" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <nav>
+        <ul>
+          <li><a href="index.html">Getting started</a></li>
+          <li><a href="streams.html">Streams</a></li>
+          <li><a href="sinks.html">Sinks</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div role="main" class="document">
+      <section id="streams">
+        <h1>Streams</h1>
+        <p>
+          A stream is a value that arrives over time. Rivulet gives every stream the same three
+          operations - <code>map</code>, <code>filter</code> and <code>take</code> - and each of
+          them returns another stream rather than doing any work, so nothing runs until something
+          reads.
+        </p>
+
+        <h2>Making one</h2>
+        <p>The shortest stream is a list that has been told it is a stream:</p>
+        <pre><code class="language-ts">import { from } from 'rivulet'
+
+const numbers = from([1, 2, 3]).map((n) =&gt; n * 2)
+for await (const n of numbers) console.log(n)</code></pre>
+
+        <p>From Python the same three lines read almost the same way:</p>
+        <div class="highlight-python notranslate">
+          <div class="highlight">
+            <pre data-language="python">from rivulet import stream
+
+numbers = stream([1, 2, 3]).map(lambda n: n * 2)
+print(list(numbers))</pre>
+          </div>
+        </div>
+
+        <h2>Reading one</h2>
+        <p>
+          Reading is the only thing that does any work. A stream read twice is computed twice; keep
+          the list if you need it again. The shell shows what happens when the reader is slow:
+        </p>
+        <pre class="lang-sh"><code>$ rivulet run --slow-reader example.ts
+waiting for the reader...</code></pre>
+        <p>
+          See <a href="sinks.html#backpressure">backpressure</a> for how a sink slows a stream down.
+        </p>
+      </section>
+    </div>
+
+    <footer><a href="https://rivulet.example/edit/streams">Edit on GitHub</a></footer>
+  </body>
+</html>
