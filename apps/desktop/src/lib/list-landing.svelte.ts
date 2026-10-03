@@ -6,7 +6,7 @@
  *  keeps it: what it holds is paths in a space. A cut row is drawn faint until the
  *  paste moves it; a copy pastes as often as asked. */
 
-import { caughtFiles, dragged, isFileDrop, landing } from './drag-paths'
+import { caughtFiles, dragged, isFileDrop, isLinkDrop, landing } from './drag-paths'
 import { shortcuts } from './shortcuts.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -49,6 +49,17 @@ export function dropOnList(event: DragEvent, folder: string) {
     void import('./import/picking')
       .then(({ filesUnder }) => filesUnder(caught))
       .then((files) => workspace.bringIn(files, folder))
+    return
+  }
+
+  // A link out of a page, kept as a web note where it was let go; read now, while the
+  // drop still holds it. See web-tab/dropped-site.ts.
+  if (transfer && isLinkDrop(transfer) && !__EVEN_PLUGIN__) {
+    const list = transfer.getData('text/uri-list')
+    const html = transfer.getData('text/html')
+    void import('./web-tab/dropped-site').then(({ siteDropped }) =>
+      siteDropped(workspace, folder, list, html),
+    )
     return
   }
 
