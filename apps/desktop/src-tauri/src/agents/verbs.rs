@@ -1375,6 +1375,8 @@ pub mod window {
         ("read_setting", None),
         ("write_setting", Some(Scope::Settings)),
         ("run_terminal", Some(Scope::Terminal)),
+        ("read_terminal", Some(Scope::Context)),
+        ("type_terminal", Some(Scope::Terminal)),
     ];
 
     /// The reader's web tabs with what only the window knows about them: which space,

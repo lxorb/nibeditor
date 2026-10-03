@@ -1246,13 +1246,18 @@ class Workspace {
   /** One document with no file, in a tab of its own. The blank note goes if there is
    *  one, which is what opening anything real does; see `dropScaffolding`. A terminal
    *  is one too, named for its shell and put `beside` the one it was opened from; see
-   *  terminal/open.ts. */
+   *  terminal/open.ts.
+   *
+   *  `activate` false puts it in the strip behind the tab in front, the way a browser
+   *  opens a tab with Ctrl held: what an agent makes for the reader without moving their
+   *  screen (docs/agent-native.md 5.4). Nothing in front changes, so nothing goes. */
   openUnsaved(
-    kind: 'canvas' | 'pages' | 'terminal',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
-  ) {
+    activate = true,
+  ): Tab {
     const file = this.document({
       kind,
       path: null,
@@ -1261,10 +1266,13 @@ class Workspace {
       dirty: false,
       home: this.activeSpaceId,
     })
-    const tab = this.add(new Tab(file, this.panes.focusedId), true, beside)
-    this.showNote()
-    this.dropScaffolding(tab)
+    const tab = this.add(new Tab(file, this.panes.focusedId), activate, beside)
+    if (activate) {
+      this.showNote()
+      this.dropScaffolding(tab)
+    }
     this.persist()
+    return tab
   }
 
   /** A file somebody shared on its own, in a tab of its own.

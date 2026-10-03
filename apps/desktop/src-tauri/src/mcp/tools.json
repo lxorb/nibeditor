@@ -1,7 +1,7 @@
 [
   {
     "name": "get_context",
-    "description": "Where the reader is: the space, the tab in front (kind, path or address, title), the selected text and where it is, the lines on screen, every open tab (an `unsaved` one is a note with no file yet, read and edited by its tab), and whether they are typing right now.",
+    "description": "Where the reader is: the space, every open tab (id, kind, title, path or url, pane, front, pinned, unsaved, preview), the selected tab and what is selected in it (a note's words, caret and lines on screen; a canvas's picked ids; a terminal's selection; a PDF's page), and whether they are typing. Each kind's tools take its tab id: notes, canvases, terminals, and web tabs through browser_ tools.",
     "inputSchema": { "type": "object", "properties": {} },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
@@ -455,7 +455,7 @@
         "path": { "type": "string", "description": "Path inside the space, such as ideas/plan.md" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "include": {
           "type": "array",
@@ -489,11 +489,17 @@
   },
   {
     "name": "read_canvas",
-    "description": "A canvas or page note as JSON Canvas: its cards with their ids, text and places, and the connections.",
+    "description": "A canvas or page note as JSON Canvas: its cards with their ids, text and places, and the connections. A page note also lists its pages in order, and each card's page.",
     "inputSchema": {
       "type": "object",
-      "properties": { "space": { "type": "string" }, "path": { "type": "string" } },
-      "required": ["path"]
+      "properties": {
+        "space": { "type": "string" },
+        "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a canvas or page note tab's id."
+        }
+      }
     },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
@@ -539,7 +545,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "edits": {
           "type": "array",
@@ -586,7 +592,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "content": { "type": "string" },
         "if_rev": { "type": "string" }
@@ -605,7 +611,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "content": { "type": "string" },
         "under": { "type": "string" }
@@ -624,7 +630,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "key": { "type": "string" },
         "value": { "description": "Words, a number, true or false, a list of words, or null." }
@@ -643,7 +649,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
         },
         "at": {
           "type": "object",
@@ -658,13 +664,15 @@
   },
   {
     "name": "create_note",
-    "description": "Make a new note, never over an existing one. `open` shows it to the reader.",
+    "description": "Make a new note, canvas, page note or web note, never over an existing file. The kind is the path's ending (.md, .canvas, .pages, .url) or `kind`. `open` opens it behind the reader's tab.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
-        "content": { "type": "string" },
+        "kind": { "type": "string", "enum": ["note", "canvas", "pages", "web"] },
+        "content": { "type": "string", "description": "A note's words, or a canvas's JSON." },
+        "url": { "type": "string", "description": "A web note's address." },
         "open": { "type": "boolean" }
       },
       "required": ["path"]
@@ -687,28 +695,41 @@
   },
   {
     "name": "edit_canvas",
-    "description": "Change a canvas or page note object by object: add_card, edit_text, move, connect, remove. Merges with what the reader is drawing.",
+    "description": "Change a canvas or page note object by object. Merges with what the reader is drawing. In a page note, `page` (a number from 1) on add_card or move measures x and y from that page's corner, and add_page (after?), remove_page and move_page (to) change the pages.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a canvas or page note tab's id."
+        },
         "ops": {
           "type": "array",
           "items": {
             "type": "object",
-            "description": "{op, id?, text?, x?, y?, width?, height?, from?, to?}: the ids are read_canvas's.",
+            "description": "{op, id?, text?, x?, y?, width?, height?, from?, to?, page?, after?}: the ids are read_canvas's.",
             "properties": {
               "op": {
                 "type": "string",
-                "enum": ["add_card", "edit_text", "move", "connect", "remove"]
+                "enum": [
+                  "add_card",
+                  "edit_text",
+                  "move",
+                  "connect",
+                  "remove",
+                  "add_page",
+                  "remove_page",
+                  "move_page"
+                ]
               }
             },
             "required": ["op"]
           }
         }
       },
-      "required": ["path", "ops"]
+      "required": ["ops"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
@@ -776,14 +797,24 @@
   },
   {
     "name": "workspace_tabs",
-    "description": "The reader's tabs in nib: list them, open a note behind the tab in front, close or split one, or focus one (which needs workspace.focus, as it changes what they look at).",
+    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's; `background` false, focus, split and closing the tab in front need workspace.focus.",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "op": { "type": "string", "enum": ["list", "open", "close", "split", "focus"] },
+        "op": {
+          "type": "string",
+          "enum": ["list", "open", "new", "rename", "save", "close", "split", "focus"]
+        },
+        "tab": { "type": "string", "description": "A tab id from get_context." },
         "space": { "type": "string" },
         "path": { "type": "string" },
-        "tab": { "type": "string", "description": "A tab id from list." },
+        "url": { "type": "string" },
+        "view": { "type": "string", "enum": ["graph", "scratchpad"] },
+        "kind": { "type": "string", "enum": ["note", "canvas", "pages", "web", "terminal"] },
+        "content": { "type": "string" },
+        "shell": { "type": "string" },
+        "cwd": { "type": "string" },
+        "name": { "type": "string" },
         "background": { "type": "boolean" }
       },
       "required": ["op"]
@@ -841,5 +872,53 @@
       "properties": { "command": { "type": "string" }, "cwd": { "type": "string" } },
       "required": ["command"]
     }
+  },
+  {
+    "name": "read_terminal",
+    "description": "What one of the reader's terminal tabs shows: its last lines as words, and whether its shell runs. A tab not shown since a restart answers the lines it came back with.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tab": { "type": "string", "description": "A terminal tab's id from get_context." },
+        "lines": { "type": "integer", "description": "200 when left out." }
+      },
+      "required": ["tab"]
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false }
+  },
+  {
+    "name": "type_terminal",
+    "description": "Type into one of the reader's terminal tabs: one line, then Enter unless `enter` is false, and `keys` pressed after. Answers what it printed until it went quiet. One command whose program is on your allowed list goes; anything else asks the reader first, but Ctrl+C alone.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tab": { "type": "string" },
+        "text": { "type": "string" },
+        "enter": { "type": "boolean" },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Enter",
+              "Tab",
+              "Escape",
+              "Backspace",
+              "Up",
+              "Down",
+              "Right",
+              "Left",
+              "Ctrl+C",
+              "Ctrl+D",
+              "Ctrl+L",
+              "Ctrl+Z"
+            ]
+          }
+        },
+        "wait_ms": { "type": "integer", "description": "2000 when left out." }
+      },
+      "required": ["tab"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": true }
   }
 ]

@@ -192,6 +192,8 @@ const VERBS: Record<string, Verb> = {
   read_setting: needs(null),
   write_setting: needs('settings'),
   run_terminal: needs('terminal'),
+  read_terminal: needs('context'),
+  type_terminal: needs('terminal'),
 
   // What the crate asks the window on an agent's behalf, each optional: the crate has
   // an answer of its own when the window gives none (docs/agent-native.md 13.1). The

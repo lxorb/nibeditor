@@ -350,7 +350,7 @@ words from a page, a download, a PDF or a note in a shared space comes back insi
 
 | tool | what it answers | scope |
 | --- | --- | --- |
-| `get_context` | the space, the tab in front (kind, path or address, title), the selection's text and where it is, the lines on screen, every open tab by id, and whether the reader is typing right now | `context` |
+| `get_context` | the space; every open tab by id with its kind, title, path or address, pane, and whether it is in front, selected, pinned, unsaved, the preview or a running terminal; the selected tab and what is selected inside it in its own terms (a note's words, caret and lines on screen, a canvas's or page note's picked objects, a terminal's selected words, a PDF's page); and whether the reader is typing right now | `context` |
 | `agent_status` | this agent's grant, its mode, its open tabs, its pending approvals, whether it is paused and by what | always |
 
 ### 5.2 The browser
@@ -423,13 +423,13 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `list_notes` | `folder`?, `kind`? | notes, canvases, page notes, PDFs, web notes |
 | `search_notes` | `query` | the search panel's own search, as rows, without opening the panel |
 | `list_backlinks` | `path` | every link in the space that points at it; also `read_note`'s `backlinks` |
-| `read_note` | `path` or `tab`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task. `tab` is a tab `get_context` marks `unsaved`: a new note with no file yet, which is its space's though it is on no disk, read and edited like any open note and kept no version of; the note tools below take it too |
+| `read_note` | `path` or `tab`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task. `tab` is any note tab `get_context` lists: one with a file is that file; one `unsaved` is a new note with no file yet, which is its space's though it is on no disk; and the scratchpad is the same note from every space - the last two read and edited like any open note and kept no version of; the note tools below take it too |
 | `edit_note` | `path`, `edits`: `[{at, replace?, insert_before?, insert_after?, delete?}]` (one of the four), `if_rev`? | anchored edits in one transaction (8.2) |
 | `write_note` | `path`, `content`, `if_rev`? | the whole text, for parity with the account connector (whose argument is `content`, so every note tool here says `content` for words); applied as the smallest edit between what is there and what is sent, as one transaction, so it is an anchored edit like the rest |
 | `append_note` | `path`, `content`, `under`? (a heading) | |
 | `set_property` | `path`, `key`, `value` or `null` | the front matter, through `frontMatterEdit` |
 | `set_task` | `path`, `at`, `done` | ticks or clears one box |
-| `create_note` | `path`, `content`?, `open`?: false | never over an existing note |
+| `create_note` | `path`, `kind`?, `content`?, `url`?, `open`?: false | never over an existing file. A note, or by the path's ending or `kind` a canvas (a blank plane, or the JSON Canvas sent), a page note (a page of the reader's paper) or a web note (a shortcut to `url`) |
 | `list_versions` | `path` | the versions, with who wrote each (8.5) |
 | `restore_version` | `path`, `version` | asks first (9.3) |
 
@@ -438,17 +438,19 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | tool | arguments | what it does |
 | --- | --- | --- |
 | `move_file` | `path`, `to` | rename or move, every link rewritten, as the tree's own rename |
-| `trash_file` | `path` | to Recently deleted, which is undoable, so it is not "deleting for good" |
+| `trash_file` | `path` | to Recently deleted, which is undoable, so it is not "deleting for good"; a file in front of the reader needs `workspace.focus`, since its tab closes, and one in a tab behind it does not |
 | `create_folder` | `path` | |
-| `workspace_tabs` | `op`: `list`, `open`, `close`, `split`, `focus`; `path`, `background`? | opens behind the tab in front unless `focus`, which needs `workspace.focus` because it changes what the reader is looking at |
+| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`? | `open` a file, a page (`url`), the graph or the scratchpad (`view`); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does. Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
 | `bookmarks` | `op`: `list`, `add`, `remove` | |
 | `list_spaces` | - | the spaces this agent may reach |
-| `read_canvas`, `edit_canvas` | `path`; `ops`: `add_card`, `edit_text`, `move`, `connect`, `remove` | a canvas or a page note as JSON Canvas, edited object by object (8.7) |
+| `read_canvas`, `edit_canvas` | `path` or `tab`; `ops`: `add_card`, `edit_text`, `move`, `connect`, `remove`, and in a page note `add_page`, `remove_page`, `move_page` | a canvas or a page note as JSON Canvas, edited object by object, a tab drawn and never saved included; a page note read as its pages and each card's page (8.7) |
 | `read_pdf` | `path`, `pages`? | a PDF's text (`papers.rs`) |
 | `pdf_highlights` | `path`, `op`: `list`, `add` (`quote`, `page`, `colour`, `comment`) | |
 | `read_setting`, `write_setting` | `key`, `value` | an allowlist of keys (8.8); writing asks |
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
+| `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
+| `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
 | `run_command` | `id` | one row of the palette's registry, as `nib commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
@@ -793,7 +795,16 @@ rewrite. Only `workspace_tabs` with `workspace.focus` ever brings another space 
 A canvas and a page note are already a Yjs map of objects by id (`packages/rooms/src/
 plane.ts`), so an agent's canvas edit is an operation on that map, applied through the same
 binding a room uses, and it merges with the reader's own drawing object by object.
-`read_canvas` answers JSON Canvas, which is the file format. A PDF is read through
+`read_canvas` answers JSON Canvas, which is the file format. A page note is the same file
+with pages among its objects (docs/pages.md), so it is read as its pages in order - their
+paper, ruling, a PDF page behind one, how much ink - and every other object with the page it
+starts on, laid out in the column the reader sees. Its pages are the page menu's own three
+operations (`@nib/markdown/pages`): a page put in after another takes that one's size and
+ruling, a page taken out takes what is written on it, and the last page is never taken
+away; a card given a `page` is measured from that page's corner and lands under what the
+page holds when it says no place (`lib/agents/workspace/pages-ops.ts`). A canvas or page
+note drawn in a tab and never saved is reached by the tab, and edited on the surface
+like any drawn one. A PDF is read through
 `papers.rs` and its highlights through `highlights.rs`; an agent's highlight is anchored by
 its quote, like a person's.
 
@@ -805,10 +816,22 @@ the sync, the AI keys, the agents' own grants, or anything in `automation.json`.
 
 ### 8.9 The terminal
 
-When the terminal tab lands (`feat/terminal-tab`), `run_terminal` is its own capability,
-off unless granted, and in unsupervised mode still asks for any command not on the
-agent's list of allowed programs. A terminal is the whole machine, which is more than
-everything else in this document put together.
+`run_terminal` is its own capability, off unless granted, and in unsupervised mode still
+asks for any command not on the agent's list of allowed programs. A terminal is the whole
+machine, which is more than everything else in this document put together.
+
+**The reader's own terminals** are tabs like any other (`lib/agents/workspace/
+terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
+agent reads a terminal's output and JetBrains' asks before every command it types; nib does
+both. `read_terminal` is the screen as words, under `context` because it is what the reader
+sees. `type_terminal` is the reader's shell, so it is `terminal` and asks the same way: one
+line whose program is on the agent's list, ended with Enter and nothing else, goes; a
+second command, a line with no Enter (whose Enter could come in the next call, with no
+command left to judge), and every key but an interrupt ask (`terminal-keys.ts`). A tab made
+behind the one in front, or put back by a restart and not looked at since, has no shell
+until it is shown; typing into one starts it off every screen, at a size of its own, and
+the pane fits it the first time the tab is shown. The answer is what it printed until it
+went quiet for a moment, so an agent rarely has to read again.
 
 ### 8.10 Under sync v2
 
@@ -880,7 +903,7 @@ In both modes, unless the reader turned the category off for that agent:
 | **deleting for good** | a press named `Delete`, `Remove`, `Erase` on a site; emptying Recently deleted; `restore_version` over a note |
 | **signing in** | any password field - by its type, its `autocomplete`, or masked by the page, so a show-password toggle is no way round - or a sign-in form: a takeover (7.3), never typed and never submitted. A press that submits one, Enter in one, and a press named `Sign in` beside a password field answer `password_field` |
 | **settings** | `write_setting` |
-| **the terminal** | any command not on the agent's list |
+| **the terminal** | any command not on the agent's list, in a shell nobody sees or typed into one of the reader's terminals; any key but `Ctrl+C` |
 
 A call that needs asking answers at once, `{"status": "needs_approval", "approval": "a17",
 "summary": "Place order on shop.example"}`, so an unsupervised agent can carry on with
