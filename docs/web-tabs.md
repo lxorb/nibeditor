@@ -1014,7 +1014,9 @@ because a saved page is a local file and nib opens none. On Windows the registra
 (`StartMenuInternet`, the `NibURL` ProgID, `RegisteredApplications`) is written by the
 NSIS installer and the MSI, taken away by their uninstallers, and put back at launch
 when a portable or Scoop copy moved; `src-tauri/src/default_browser.rs` holds all three
-to the same values.
+to the same values. The client is under the product's name, which was Nib up to 0.11:
+an install over one of those, and a launch of a copy no installer ran over, move it to
+the new name and keep the ProgID, which is what the choice Windows sealed names.
 
 A link arrives as a command line on Windows and Linux (`nib.exe --url "%1"`, or a
 second launch handed to the running app) and as the system's "open these" on a Mac.

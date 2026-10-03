@@ -94,7 +94,9 @@ parts:
       # Tauri writes a .desktop entry with no categories, no web handlers and no
       # comment, and files a 256x256 icon under a scale-2 directory. Both are
       # replaced here, the same way the AUR and Flathub packaging does.
-      rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop"
+      # Tauri names its entry after the product: Nib up to 0.11, nibeditor since.
+      rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop" \
+        "${CRAFT_PART_INSTALL}/usr/share/applications/nibeditor.desktop"
       install -d "${CRAFT_PART_INSTALL}/usr/share/applications"
       cat > "${CRAFT_PART_INSTALL}/usr/share/applications/nib.desktop" <<'DESKTOP'
       [Desktop Entry]

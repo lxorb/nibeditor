@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Nib",
+  "productName": "nibeditor",
   "version": "0.11.0",
   "identifier": "ch.emilvinu.nib",
   "build": {
@@ -69,8 +69,18 @@
         "installerHooks": "installer.nsh"
       },
       "wix": {
+        "upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e",
         "fragmentPaths": ["wix/browser.wxs"],
         "componentRefs": ["NibBrowser"]
+      }
+    },
+    "linux": {
+      "deb": {
+        "conflicts": ["nib"],
+        "replaces": ["nib"]
+      },
+      "rpm": {
+        "obsoletes": ["nib"]
       }
     },
     "iOS": {

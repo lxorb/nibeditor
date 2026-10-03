@@ -37,7 +37,9 @@ package() {
 
   install -Dm644 "${srcdir}/nib.desktop" \
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
-  rm -f "${pkgdir}/usr/share/applications/Nib.desktop"
+  # Tauri names its entry after the product: Nib up to 0.11, nibeditor since.
+  rm -f "${pkgdir}/usr/share/applications/Nib.desktop" \
+    "${pkgdir}/usr/share/applications/nibeditor.desktop"
 
   # The file in 256x256@2 is a plain 256x256 image, so it belongs in the
   # unscaled directory; left where it is, every theme lookup scales it wrong.

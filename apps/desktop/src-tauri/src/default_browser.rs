@@ -40,6 +40,15 @@ const SHIPPED: &str = "ch.emilvinu.nib";
 )]
 const PROG_ID: &str = "NibURL";
 
+/// The product's name until 0.11, which the browser's client key and its line in
+/// `RegisteredApplications` are under on a machine that had it. The `ProgID` was never
+/// renamed, because the choice Windows sealed names it; see installer.nsh.
+#[cfg_attr(
+    not(any(windows, test)),
+    allow(dead_code, reason = "only Windows keeps a registry of programs")
+)]
+const OLD_NAME: &str = "Nib";
+
 /// What Default apps says about nib, beside its name.
 #[cfg_attr(
     not(any(windows, test)),
@@ -68,7 +77,8 @@ pub fn make_default_browser(app: AppHandle) -> Result<(), String> {
 
 /// Puts nib back among the browsers when the registration is missing or names a copy
 /// that is gone: a portable copy moved, Scoop's new version in a new folder, an MSI
-/// installed by another person on this machine. On a thread of its own, after the
+/// installed by another person on this machine. And takes away the one under the old
+/// name, which a copy no installer ran over (Scoop's, a portable one) still has. On a thread of its own, after the
 /// window is up, so it costs a launch nothing. Windows only: a Mac's is in the bundle,
 /// and Linux's is written by the press.
 pub fn keep_registered(app: &AppHandle) {
@@ -205,9 +215,10 @@ fn exe_of(command: &str) -> Option<String> {
     not(any(target_os = "linux", test)),
     allow(dead_code, reason = "only Linux names a program by its desktop entry")
 )]
-const ENTRIES: [&str; 4] = [
+const ENTRIES: [&str; 5] = [
     "nib-handler.desktop",
     "nib.desktop",
+    "nibeditor.desktop",
     "ch.emilvinu.nib.desktop",
     "nib_nib.desktop",
 ];
@@ -225,7 +236,7 @@ fn is_ours(entry: &str) -> bool {
 
 #[cfg(windows)]
 mod platform {
-    use super::{exe_of, registration, Value, PROG_ID};
+    use super::{exe_of, registration, Value, OLD_NAME, PROG_ID};
     use std::path::Path;
     use tauri::AppHandle;
     use windows::core::{PCWSTR, PWSTR};
@@ -258,14 +269,42 @@ mod platform {
         .map_err(|error| format!("could not open Settings: {error}"))
     }
 
-    /// Writes the registration for this copy unless one is whole already.
+    /// Writes the registration for this copy unless one is whole already, and forgets
+    /// the one under the old name.
     pub fn repair(name: &str) {
-        if whole(CURRENT_USER, name) {
+        let Ok(exe) = std::env::current_exe() else {
+            return;
+        };
+        let exe = exe.to_string_lossy();
+        if !whole(CURRENT_USER, name) {
+            let _ = write(CURRENT_USER, &registration(name, &exe));
+        }
+        forget_old(CURRENT_USER, name, &exe);
+    }
+
+    /// Takes the client under the old name away when it starts this copy or a program
+    /// that is gone, the way the installer does. One that starts another copy that is
+    /// still there was somebody's choice, and stays.
+    pub(super) fn forget_old(root: &Key, name: &str, exe: &str) {
+        if name == OLD_NAME {
             return;
         }
-        if let Ok(exe) = std::env::current_exe() {
-            let _ = write(CURRENT_USER, &registration(name, &exe.to_string_lossy()));
+        let client = format!(r"Software\Clients\StartMenuInternet\{OLD_NAME}");
+        let Some(old) = root
+            .open(format!(r"{client}\shell\open\command"))
+            .and_then(|key| key.get_string(""))
+            .ok()
+            .and_then(|command| exe_of(&command))
+        else {
+            return;
+        };
+        if !old.eq_ignore_ascii_case(exe) && Path::new(&old).is_file() {
+            return;
         }
+        let _ = root.remove_tree(&client);
+        let _ = root
+            .create(r"Software\RegisteredApplications")
+            .and_then(|key| key.remove_value(OLD_NAME));
     }
 
     /// Whether every value is there and the program it starts still exists. Another
@@ -454,7 +493,7 @@ mod platform {
 
 #[cfg(test)]
 mod tests {
-    use super::{exe_of, is_ours, registration, Value, PROG_ID};
+    use super::{exe_of, is_ours, registration, Value, OLD_NAME, PROG_ID};
 
     const EXE: &str = r"C:\Users\me\AppData\Local\Nib\nib.exe";
 
@@ -525,6 +564,7 @@ mod tests {
     fn a_desktop_entry_is_ours_by_its_known_names() {
         assert!(is_ours("nib-handler.desktop\n"));
         assert!(is_ours("Nib.desktop"));
+        assert!(is_ours("nibeditor.desktop"));
         assert!(is_ours("ch.emilvinu.nib.desktop"));
         assert!(!is_ours("firefox.desktop"));
         assert!(!is_ours("nibbles.desktop"));
@@ -621,6 +661,54 @@ mod tests {
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
     }
 
+    /// An install over one made under the old name takes that name's client away and
+    /// keeps the `ProgID`, and the uninstaller takes away whatever of it is left.
+    #[test]
+    fn the_installer_forgets_the_old_name_and_keeps_the_prog_id() {
+        let script = source("installer.nsh");
+        assert!(script.contains(&format!(r#"!define NIB_OLD_NAME "{OLD_NAME}""#)));
+        for line in [
+            r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${NIB_OLD_NAME}""#,
+            r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${NIB_OLD_NAME}""#,
+            r#"DeleteRegKey SHCTX "${NIB_OLD_UNINSTKEY}""#,
+            r#"DeleteRegKey SHCTX "Software\${MANUFACTURER}\${NIB_OLD_NAME}""#,
+        ] {
+            assert!(script.contains(line), "installer.nsh does not say: {line}");
+        }
+
+        let (install, uninstall) = script
+            .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
+            .expect("an uninstall hook");
+        let install = install
+            .split_once("!macro NSIS_HOOK_POSTINSTALL")
+            .expect("an install hook")
+            .1;
+        for part in [install, uninstall] {
+            assert!(part.contains("!insertmacro NIB_FORGET_OLD_BROWSER"));
+        }
+        assert!(install.contains(r#"!insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS""#));
+        assert!(install.contains(r#"!insertmacro NIB_RENAME_SHORTCUT "$DESKTOP""#));
+    }
+
+    /// The MSI replaces the one made under the old name rather than standing beside it:
+    /// the upgrade code is the one Tauri gave the old name (uuid5 of `Nib.exe.app.x64`,
+    /// read off the 0.11.0 MSI), and the folder it was in is looked for under the old
+    /// name and the publisher the bundle is built with.
+    #[test]
+    fn the_msi_replaces_the_one_under_the_old_name() {
+        let config = source("tauri.conf.json");
+        let fragment = source("wix/browser.wxs");
+        assert!(config.contains(r#""upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e""#));
+
+        let parsed: serde_json::Value = serde_json::from_str(&config).expect("the config");
+        let publisher = parsed["bundle"]["publisher"]
+            .as_str()
+            .expect("a publisher");
+        let key = format!(r#"Key="Software\{publisher}\{OLD_NAME}""#);
+        assert_eq!(fragment.matches(&key).count(), 2, "browser.wxs does not say: {key}");
+        assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
+    }
+
     #[test]
     fn a_mac_bundle_asks_for_the_two_web_schemes() {
         let config = source("tauri.macos.conf.json");
@@ -668,6 +756,61 @@ mod tests {
         // Whole again, for a program that is not there.
         write(&root, &registration("Nib", r"C:\nowhere\nib.exe")).expect("written");
         assert!(!whole(&root, "Nib"));
+    }
+
+    /// The old name's client goes when it starts this copy or a program that is gone,
+    /// and stays when it starts another copy that is there. In a key of the test's own.
+    #[cfg(windows)]
+    #[test]
+    fn the_old_name_is_forgotten_unless_it_is_another_copy() {
+        use super::platform::{forget_old, write};
+        use windows_registry::{Key, CURRENT_USER};
+
+        /// The test's own key and file, gone with the test, passed or failed.
+        struct Scratch(String, std::path::PathBuf);
+        impl Drop for Scratch {
+            fn drop(&mut self) {
+                let _ = CURRENT_USER.remove_tree(&self.0);
+                let _ = std::fs::remove_file(&self.1);
+            }
+        }
+
+        let id = std::process::id();
+        let scratch = Scratch(
+            format!(r"Software\nib-tests\old-name-{id}"),
+            std::env::temp_dir().join(format!("nib-old-name-{id}.exe")),
+        );
+        let root = CURRENT_USER.create(&scratch.0).expect("a test key");
+        let here = std::env::current_exe().expect("this test's own program");
+        let here = here.to_string_lossy();
+        let client = format!(r"Software\Clients\StartMenuInternet\{OLD_NAME}");
+        let there = |root: &Key| {
+            root.open(&client).is_ok()
+                && root
+                    .open(r"Software\RegisteredApplications")
+                    .and_then(|key| key.get_string(OLD_NAME))
+                    .is_ok()
+        };
+
+        // Another copy, still there.
+        std::fs::write(&scratch.1, b"").expect("another copy");
+        let other = scratch.1.to_string_lossy();
+        write(&root, &registration(OLD_NAME, &other)).expect("written");
+        forget_old(&root, "nibeditor", &here);
+        assert!(there(&root), "another copy's was taken");
+
+        // That copy gone.
+        std::fs::remove_file(&scratch.1).expect("the copy removed");
+        forget_old(&root, "nibeditor", &here);
+        assert!(root.open(&client).is_err());
+        assert!(!there(&root));
+
+        // This copy's, which the old name itself never forgets.
+        write(&root, &registration(OLD_NAME, &here)).expect("written");
+        forget_old(&root, OLD_NAME, &here);
+        assert!(there(&root), "the old name forgot itself");
+        forget_old(&root, "nibeditor", &here);
+        assert!(!there(&root));
     }
 
     /// The shell answers which program opens a scheme, and on no machine running these
