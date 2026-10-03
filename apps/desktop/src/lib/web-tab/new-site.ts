@@ -31,14 +31,15 @@ export interface Sites {
   freshEntry(path: string, isFolder: boolean): Entry
 }
 
-/** The shortcut written in `dir`, its row in the list first; answers its path. */
-export async function newSite(ws: Sites, dir: string, named?: string): Promise<string> {
+/** The shortcut written in `dir`, its row in the list first; answers its path. `url` is
+ *  where it points, for a link dropped on the list; nothing for one named first. */
+export async function newSite(ws: Sites, dir: string, named?: string, url = ''): Promise<string> {
   const title = named === undefined ? UNTITLED : shownName(named)
   const path = joinPath(dir, ws.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
 
   ws.showEntry(ws.freshEntry(path, false))
   if (!samePath(dir, ws.activeSpace?.root)) ws.device.expand(dir)
 
-  await writeFile(path, writeShortcut('', title, new Date()))
+  await writeFile(path, writeShortcut(url, title, new Date()))
   return path
 }
