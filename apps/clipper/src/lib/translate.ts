@@ -93,13 +93,14 @@ export const LANGUAGES: readonly Language[] = [
   { id: 'uk', name: 'Українська', machine: true },
   { id: 'ur', name: 'اردو', machine: true },
   { id: 'vi', name: 'Tiếng Việt', machine: true },
+  { id: 'yue', name: '粵語', machine: true },
   { id: 'zh-Hans', name: '简体中文', machine: true },
   { id: 'zh-Hant', name: '繁體中文', machine: true },
   { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
 ]
 
 /** A catalogue is fetched when it is asked for, not at start: a popup opens on
- *  every click, and thirty-nine of them in its first chunk is a hundred kilobytes
+ *  every click, and forty of them in its first chunk is a hundred kilobytes
  *  parsed to read sixty rows.
  *
  *  Written out one by one rather than built from the id, so the bundler can see
@@ -141,6 +142,7 @@ const CATALOGUES: Record<string, () => Promise<Dictionary>> = {
   uk: () => import('../locales/uk').then((module) => module.uk),
   ur: () => import('../locales/ur').then((module) => module.ur),
   vi: () => import('../locales/vi').then((module) => module.vi),
+  yue: () => import('../locales/yue').then((module) => module.yue),
   'zh-Hans': () => import('../locales/zh-Hans').then((module) => module.zhHans),
   'zh-Hant': () => import('../locales/zh-Hant').then((module) => module.zhHant),
   'zh-Hant-HK': () => import('../locales/zh-Hant-HK').then((module) => module.zhHantHK),
@@ -152,7 +154,12 @@ export const CATALOGUE_IDS = Object.keys(CATALOGUES)
 
 /** Tags a system sends for a catalogue filed under another name. Chinese is
  *  asked for by region far more often than by script, and `tl` is what an older
- *  system calls Filipino. */
+ *  system calls Filipino.
+ *
+ *  `zh-HK` is written Chinese as Hong Kong writes it, which is what that tag
+ *  means and what `zh-Hant-HK` holds. Cantonese is a language rather than a
+ *  region of it and has a catalogue of its own under `yue`; the tag here is the
+ *  legacy spelling of that, which an older system sends for the same thing. */
 const ALSO: Record<string, string> = {
   in: 'id',
   pes: 'fa',
@@ -161,7 +168,6 @@ const ALSO: Record<string, string> = {
   // has no catalogue for spells the way Portugal does, which is the rule below.
   pt: 'pt-BR',
   tl: 'fil',
-  yue: 'zh-Hant-HK',
   zh: 'zh-Hans',
   'zh-CN': 'zh-Hans',
   'zh-HK': 'zh-Hant-HK',
@@ -169,6 +175,7 @@ const ALSO: Record<string, string> = {
   'zh-MY': 'zh-Hans',
   'zh-SG': 'zh-Hans',
   'zh-TW': 'zh-Hant',
+  'zh-YUE': 'yue',
 }
 
 /** A tag the way BCP 47 writes one: the language in lower case, a script
