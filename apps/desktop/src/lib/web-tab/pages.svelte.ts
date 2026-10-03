@@ -514,6 +514,12 @@ class Pages {
     return made
   }
 
+  /** The mark a tab's page shows now, or null for a tab with no page or no mark yet.
+   *  Never makes a page, so a row of the file list may ask it; see chosen-icon.ts. */
+  iconOf(tabId: string): string | null {
+    return this.held.get(tabId)?.icon ?? null
+  }
+
   /** What the tab is pointing at, for the session and for the bar. */
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null
@@ -1351,6 +1357,15 @@ class Pages {
       page.marked(said.icon)
       const at = page.at ?? page.url
       if (said.icon) void import('./favicons').then((one) => one.saw(at, said.icon))
+      // And under where the tab's file points, which its row asks once the tab has
+      // closed: a site that moved on within itself - another Slack channel - would leave
+      // the row the mark it had there. See `faviconFor` in chosen-icon.ts.
+      const path = page.path
+      if (said.icon && path) {
+        void Promise.all([import('./favicons'), import('../chosen-icon')]).then(([one, files]) =>
+          one.saw(files.addressOf(path), said.icon),
+        )
+      }
     })
     // Sound, full screen, zoom and find; see heard.ts.
     await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
