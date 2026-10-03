@@ -1111,8 +1111,8 @@ export const vi: Dictionary = {
     '{count} ghi chú nằm sau mật khẩu mà chỉ Notes mở được',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ghi chú nằm trong Đã xoá gần đây và vẫn ở đó',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} hình vẽ và trang quét là ảnh do Notes tự vẽ',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} hình vẽ và bản quét không có ảnh trên Mac này',
   '{count} tables inside notes do not come over': '{count} bảng trong ghi chú không chuyển sang',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} tệp kèm nằm trên iCloud chứ không phải trên Mac này',

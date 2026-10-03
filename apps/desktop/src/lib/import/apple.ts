@@ -130,7 +130,7 @@ function lost(read: AppleNotes): ImportPlan['lost'] {
 
   if (read.drawn) {
     lines.push({
-      text: key('{count} drawings and scanned pages are pictures Notes draws itself'),
+      text: key('{count} drawings and scans have no picture on this Mac'),
       values: { count: read.drawn },
     })
   }

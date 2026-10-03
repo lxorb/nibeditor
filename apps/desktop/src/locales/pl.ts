@@ -1172,8 +1172,8 @@ export const pl: Dictionary = {
     'Notatek za hasłem, które otwiera tylko Notatki: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Notatek w Ostatnio usuniętych, które tam zostają: {count}',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'Rysunków i zeskanowanych stron będących obrazami rysowanymi przez Notatki: {count}',
+  '{count} drawings and scans have no picture on this Mac':
+    'Rysunków i skanów bez obrazu na tym Macu: {count}',
   '{count} tables inside notes do not come over':
     'Tabel wewnątrz notatek, które się nie przenoszą: {count}',
   '{count} attachments are in iCloud rather than on this Mac':

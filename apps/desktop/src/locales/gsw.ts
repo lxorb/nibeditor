@@ -1126,8 +1126,8 @@ export const gsw: Dictionary = {
     '{count} Notize sind hinder eme Passwort, wo nur Notize ufmacht',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notize sind i Zletscht glöscht und bliibed det',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} Zeichnige und Scans sind Bilder, wo Notize sälber malt',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} Zeichnige und Scans händ uf dem Mac kei Bild',
   '{count} tables inside notes do not come over': '{count} Tabelle i Notize chömed nöd mit',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} Aahäng sind i iCloud und nöd uf dem Mac',

@@ -1112,8 +1112,8 @@ export const my: Dictionary = {
     'မှတ်စု {count} ခု Notes သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
   '{count} notes are in Recently Deleted, and stay there':
     'မှတ်စု {count} ခု မကြာမီဖျက်ခဲ့သည်တွင်ရှိ၍ ထိုတွင် ကျန်မည်',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'ပုံဆွဲနှင့် စကင်ဖတ်စာမျက်နှာ {count} ခု Notes ကိုယ်တိုင်ဆွဲသော ပုံများဖြစ်သည်',
+  '{count} drawings and scans have no picture on this Mac':
+    'ပုံဆွဲနှင့် စကင်ဖတ်မှု {count} ခုအတွက် ဤ Mac တွင် ပုံမရှိပါ',
   '{count} tables inside notes do not come over': 'မှတ်စုအတွင်း ဇယား {count} ခု ပါမလာပါ',
   '{count} attachments are in iCloud rather than on this Mac':
     'တွဲဖိုင် {count} ခု ဤ Mac တွင်မဟုတ်ဘဲ iCloud တွင် ရှိသည်',

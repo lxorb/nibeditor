@@ -1121,8 +1121,8 @@ export const fa: Dictionary = {
     '{count} یادداشت پشت گذرواژه‌ای است که تنها Notes می‌گشاید',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} یادداشت در «تازه حذف‌شده» است و همان‌جا می‌ماند',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} نقش و صفحه پویش‌شده تصویرهایی است که Notes خودش می‌کشد',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} نقش و پویش روی این Mac تصویری ندارد',
   '{count} tables inside notes do not come over': '{count} جدول درون یادداشت‌ها نمی‌آید',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} پیوست در iCloud است و نه روی این Mac',

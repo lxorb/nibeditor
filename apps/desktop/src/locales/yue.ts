@@ -1100,8 +1100,7 @@ export const yue: Dictionary = {
     '{count} 則筆記加咗密碼，只有「備忘錄」開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記喺「最近刪除」，仲留喺嗰度',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} 幅圖畫同掃描頁係「備忘錄」自己畫嘅圖片',
+  '{count} drawings and scans have no picture on this Mac': '{count} 幅圖畫同掃描喺呢部 Mac 冇圖片',
   '{count} tables inside notes do not come over': '筆記內嘅 {count} 個表格唔會轉入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 個附件喺 iCloud，唔係喺呢部 Mac',

@@ -1110,8 +1110,8 @@ export const ko: Dictionary = {
     '노트 {count}개가 메모만 열 수 있는 암호 뒤에 있습니다',
   '{count} notes are in Recently Deleted, and stay there':
     '노트 {count}개가 최근 삭제된 항목에 있고 그대로 남습니다',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '그림과 스캔한 페이지 {count}개는 메모가 직접 그리는 이미지입니다',
+  '{count} drawings and scans have no picture on this Mac':
+    '그림과 스캔 {count}개는 이 Mac에 이미지가 없습니다',
   '{count} tables inside notes do not come over': '노트 안의 표 {count}개는 넘어오지 않습니다',
   '{count} attachments are in iCloud rather than on this Mac':
     '첨부 {count}개가 이 Mac이 아니라 iCloud에 있습니다',

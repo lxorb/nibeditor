@@ -1174,8 +1174,8 @@ export const ru: Dictionary = {
     'Заметок под паролем, который открывают только Заметки: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Заметок в «Недавно удалённых», которые там и остаются: {count}',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'Рисунков и отсканированных страниц, которые Заметки рисуют сами: {count}',
+  '{count} drawings and scans have no picture on this Mac':
+    'Рисунков и сканов без изображения на этом Mac: {count}',
   '{count} tables inside notes do not come over':
     'Таблиц внутри заметок, которые не переносятся: {count}',
   '{count} attachments are in iCloud rather than on this Mac':

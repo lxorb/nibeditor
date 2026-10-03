@@ -62,9 +62,10 @@ pub struct Read {
     pub locked: u32,
     /// Notes in Recently Deleted, which stay there.
     pub binned: u32,
-    /// Drawings and scanned pages, which are a picture Notes draws itself.
+    /// Drawings and scanned pages with no picture of them on this Mac: Notes draws one
+    /// for each as it is shown, and one it has not drawn here is not on the disk.
     pub drawn: u32,
-    /// Tables inside notes.
+    /// Tables inside notes that could not be read as one.
     pub tables: u32,
     /// Attachments whose file is in iCloud rather than on this disk.
     pub missing: u32,
@@ -147,14 +148,20 @@ mod mac {
     /// A table inside a note, which is a document of its own in another row.
     const TABLE: &str = "com.apple.notes.table";
 
-    /// What Notes draws rather than stores: a sketch, and a scanned page.
-    const DRAWN: [&str; 5] = [
+    /// A sketch, in the three shapes Notes has stored one in. What it keeps is the
+    /// strokes; the picture of them is the fallback image Notes draws beside the
+    /// database for whatever cannot draw strokes, which is what comes over.
+    const DRAWINGS: [&str; 3] = [
         "com.apple.paper",
         "com.apple.drawing",
         "com.apple.drawing.2",
-        "com.apple.paper.doc.scan",
-        "com.apple.notes.gallery",
     ];
+
+    /// A scan: a gallery of pages, each page a picture attachment of its own.
+    const SCAN: &str = "com.apple.notes.gallery";
+
+    /// A scan somebody has marked up, which Notes keeps as the PDF it made of it.
+    const MARKED_SCAN: &str = "com.apple.paper.doc.scan";
 
     /// What a picture is, for the difference between a note showing a file and a
     /// note linking to one.
@@ -668,24 +675,163 @@ mod mac {
             }
 
             let (name, at) = self.media_row(id)?;
-            let bytes = self.roots.iter().find_map(|root| {
-                let whole = root.join("Media").join(&at);
-                std::fs::read(whole).ok()
-            });
-
-            let Some(bytes) = bytes else {
+            let Some(bytes) = self.on_disk(&[Path::new("Media").join(&at)]) else {
                 self.missing += 1;
                 return None;
             };
 
-            let path = format!("assets/{}", free(&name, &mut self.taken));
+            Some(shown(&self.keep(id, &name, bytes)))
+        }
+
+        /// The bytes of the first of these files that is under one of the accounts'
+        /// folders.
+        fn on_disk(&self, candidates: &[PathBuf]) -> Option<Vec<u8>> {
+            self.roots.iter().find_map(|root| {
+                candidates
+                    .iter()
+                    .find_map(|one| std::fs::read(root.join(one)).ok())
+            })
+        }
+
+        /// An attachment's bytes, written beside the notes once under a name nothing
+        /// else took: where it went.
+        fn keep(&mut self, id: &str, name: &str, bytes: Vec<u8>) -> String {
+            let path = format!("assets/{}", free(name, &mut self.taken));
             self.media.push(Media {
                 path: path.clone(),
                 bytes: STANDARD.encode(bytes),
             });
             self.written.insert(id.to_string(), path.clone());
+            path
+        }
 
-            Some(shown(&path))
+        /// The merged document an attachment's own row holds: a table's cells, or a
+        /// scan's pages.
+        fn merged(&self, id: &str) -> Option<Vec<u8>> {
+            if !self.known.contains("zmergeabledata1") {
+                return None;
+            }
+
+            self.db
+                .query_row(
+                    "SELECT zmergeabledata1 FROM ziccloudsyncingobject WHERE zidentifier = ?1 LIMIT 1",
+                    [id],
+                    |row| row.get::<_, Option<Vec<u8>>>(0),
+                )
+                .ok()
+                .flatten()
+        }
+
+        /// A table, as a markdown table of its own between the lines around it.
+        fn table(&mut self, id: &str) -> Option<String> {
+            let data = self.merged(id)?;
+            let table = apple_text::table(&data, self)?;
+            Some(format!("\n\n{table}\n\n"))
+        }
+
+        /// The picture Notes drew of a sketch: `FallbackImages/<id>/<generation>/` on a
+        /// Mac from macOS 14 on, and a JPEG named after the sketch before that.
+        fn drawing(&mut self, id: &str) -> Option<String> {
+            if let Some(path) = self.written.get(id) {
+                return Some(shown(path));
+            }
+
+            let own = segment(id);
+            if own.is_empty() {
+                return None;
+            }
+            let generation = self
+                .column(id, "zfallbackimagegeneration")
+                .map(|one| segment(&one))
+                .unwrap_or_default();
+
+            let mut candidates = Vec::new();
+            if !generation.is_empty() {
+                candidates.push(
+                    Path::new("FallbackImages")
+                        .join(&own)
+                        .join(&generation)
+                        .join("FallbackImage.png"),
+                );
+            }
+            candidates.push(Path::new("FallbackImages").join(format!("{own}.jpg")));
+            candidates.push(Path::new("FallbackImages").join(format!("{own}.png")));
+
+            let (at, bytes) = candidates
+                .iter()
+                .find_map(|one| Some((one, self.on_disk(std::slice::from_ref(one))?)))?;
+            let extension = at.extension().and_then(|one| one.to_str()).unwrap_or("png");
+            let name = format!("Drawing.{extension}");
+
+            Some(shown(&self.keep(id, &name, bytes)))
+        }
+
+        /// A scan, a picture a page: the page as Notes cropped it where that preview is
+        /// on this Mac, and the page's own photograph where it is not.
+        fn scan(&mut self, id: &str) -> Option<String> {
+            let pages = apple_text::gallery(&self.merged(id)?);
+            let shown: Vec<String> = pages.iter().filter_map(|page| self.page(page)).collect();
+
+            if shown.is_empty() {
+                return None;
+            }
+
+            Some(format!("\n\n{}\n\n", shown.join("\n\n")))
+        }
+
+        /// One page of a scan.
+        fn page(&mut self, id: &str) -> Option<String> {
+            if let Some(path) = self.written.get(id) {
+                return Some(shown(path));
+            }
+
+            let own = segment(id);
+            let size = self
+                .db
+                .query_row(
+                    "SELECT zsizewidth, zsizeheight FROM ziccloudsyncingobject WHERE zidentifier = ?1 LIMIT 1",
+                    [id],
+                    |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?)),
+                )
+                .ok();
+
+            if let (false, Some((Some(width), Some(height)))) = (own.is_empty(), size) {
+                let preview = Path::new("Previews").join(format!(
+                    "{own}-1-{}x{}-0.jpeg",
+                    measure(width),
+                    measure(height)
+                ));
+                if let Some(bytes) = self.on_disk(&[preview]) {
+                    return Some(shown(&self.keep(id, "Scan Page.jpg", bytes)));
+                }
+            }
+
+            self.file(id)
+        }
+
+        /// A scan somebody marked up, as the PDF Notes made of it.
+        fn marked_scan(&mut self, id: &str) -> Option<String> {
+            if let Some(path) = self.written.get(id) {
+                return Some(shown(path));
+            }
+
+            let own = segment(id);
+            let generation = self
+                .column(id, "zfallbackpdfgeneration")
+                .map(|one| segment(&one))
+                .unwrap_or_default();
+            if own.is_empty() {
+                return None;
+            }
+
+            let mut at = Path::new("FallbackPDFs").join(&own);
+            if !generation.is_empty() {
+                at.push(&generation);
+            }
+            at.push("FallbackPDF.pdf");
+
+            let bytes = self.on_disk(&[at])?;
+            Some(shown(&self.keep(id, "Scan.pdf", bytes)))
         }
 
         /// The file name an attachment has, and where under `Media` it sits.
@@ -755,13 +901,24 @@ mod mac {
             }
 
             if uti == TABLE {
-                self.tables += 1;
-                return None;
+                let table = self.table(id);
+                self.tables += u32::from(table.is_none());
+                return table;
             }
 
-            if DRAWN.contains(&uti) {
-                self.drawn += 1;
-                return None;
+            let drawn = if DRAWINGS.contains(&uti) {
+                Some(self.drawing(id))
+            } else if uti == SCAN {
+                Some(self.scan(id))
+            } else if uti == MARKED_SCAN {
+                Some(self.marked_scan(id))
+            } else {
+                None
+            };
+
+            if let Some(drawn) = drawn {
+                self.drawn += u32::from(drawn.is_none());
+                return drawn;
             }
 
             self.file(id)
@@ -779,6 +936,16 @@ mod mac {
         }
 
         format!("[{name}]({path})")
+    }
+
+    /// A width or a height the way Notes writes one into a preview's name: a whole
+    /// number of points with no fraction after it.
+    fn measure(points: f64) -> String {
+        if points.fract().abs() < f64::EPSILON {
+            format!("{points:.0}")
+        } else {
+            points.to_string()
+        }
     }
 
     /// What no file may be called on Windows, which is the strictest of the three
@@ -916,8 +1083,12 @@ mod mac {
                 .expect("the second note");
 
             assert!(note.text.contains("![](assets/photo.png)"), "{}", note.text);
-            assert_eq!(read.media.len(), 1);
-            assert_eq!(read.media[0].path, "assets/photo.png");
+            let photos = read
+                .media
+                .iter()
+                .filter(|one| one.path == "assets/photo.png")
+                .count();
+            assert_eq!(photos, 1);
         }
 
         #[test]
@@ -934,6 +1105,66 @@ mod mac {
                 "{}",
                 note.text
             );
+        }
+
+        fn plans(read: &super::Read) -> &super::Note {
+            read.notes
+                .iter()
+                .find(|note| note.path == "Work/Plans.md")
+                .expect("the note with a table, sketches and scans in it")
+        }
+
+        /// A table is a document of its own on its attachment's row, and arrives as a
+        /// markdown table with its columns where Notes draws them.
+        #[test]
+        fn a_table_arrives_as_a_markdown_table() {
+            let read = read_from(&fixture()).expect("the fixture reads");
+            let note = plans(&read);
+
+            assert!(
+                note.text
+                    .contains("Table\n\n| How much | Item |\n| --- | --- |\n| 2 litres | Milk |"),
+                "{}",
+                note.text
+            );
+            assert_eq!(read.tables, 0);
+        }
+
+        /// A sketch is the picture Notes drew of it; a scan is a picture a page, the
+        /// cropped preview where Notes left one and the page's photograph where it did
+        /// not; a marked-up scan is the PDF Notes made of it.
+        #[test]
+        fn sketches_and_scans_arrive_as_the_pictures_notes_drew() {
+            let read = read_from(&fixture()).expect("the fixture reads");
+            let note = plans(&read);
+
+            for shown in [
+                "![](assets/Drawing.png)",
+                "![](assets/Scan Page.jpg)",
+                "![](assets/page-two.png)",
+                "[Scan.pdf](assets/Scan.pdf)",
+            ] {
+                assert!(note.text.contains(shown), "{shown} in {}", note.text);
+            }
+
+            let written: Vec<&str> = read.media.iter().map(|one| one.path.as_str()).collect();
+            for path in [
+                "assets/Drawing.png",
+                "assets/Scan Page.jpg",
+                "assets/page-two.png",
+                "assets/Scan.pdf",
+            ] {
+                assert!(written.contains(&path), "{path} in {written:?}");
+            }
+        }
+
+        /// A sketch whose picture is not on this Mac is the one thing left to say.
+        #[test]
+        fn a_sketch_with_no_picture_on_this_mac_is_counted() {
+            let read = read_from(&fixture()).expect("the fixture reads");
+
+            assert_eq!(read.drawn, 1);
+            assert!(plans(&read).text.contains("Lost"));
         }
 
         #[test]

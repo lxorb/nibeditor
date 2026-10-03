@@ -1122,8 +1122,8 @@ export const ur: Dictionary = {
     '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Notes کھول سکتا ہے',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} نوٹس حال میں حذف شدہ میں ہیں اور وہیں رہتے ہیں',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} خاکے اور اسکین صفحات وہ تصاویر ہیں جو Notes خود بناتا ہے',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} خاکوں اور اسکین کی اس Mac پر کوئی تصویر نہیں',
   '{count} tables inside notes do not come over': 'نوٹس کے اندر {count} جدول نہیں آتے',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} منسلکات اس Mac کی بجائے iCloud میں ہیں',

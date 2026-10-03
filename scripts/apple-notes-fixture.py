@@ -10,7 +10,10 @@ protobuf in `ZICNOTEDATA.ZDATA`.
 What it holds is one of each thing the reader has to get right: a note in the
 folder Notes starts with, a note in a folder somebody named, a note two folders
 deep, a note behind a password, a note in the bin, a picture, and a link from one
-note to another.
+note to another. And the things Notes keeps as documents and pictures of its own:
+a table, a sketch with the picture Notes drew of it, a scan of two pages - one
+with Notes' cropped preview on the disk and one without - a marked-up scan with
+the PDF Notes made of it, and a sketch whose picture is not on this Mac.
 
 Run it from the repository root after changing what the reader expects:
 
@@ -106,6 +109,102 @@ def note_data(text: str, runs: list[bytes]) -> bytes:
     return gzip.compress(block(2, block(3, inner)), mtime=0)
 
 
+def object_id(*, index: int | None = None, count: int | None = None, text: str | None = None) -> bytes:
+    """An `ObjectID`: an index into the document's objects, a number, or a string."""
+    out = b""
+    if count is not None:
+        out += number(2, count)
+    if text is not None:
+        out += block(4, text.encode())
+    if index is not None:
+        out += number(6, index)
+    return out
+
+
+def custom_map(kind: int, entries: list[tuple[int, bytes]]) -> bytes:
+    """A `MergeableDataObjectMap` of one type, each entry a key and an `ObjectID`."""
+    inner = number(1, kind)
+    for key, value in entries:
+        inner += block(3, number(1, key) + block(2, value))
+    return block(13, inner)
+
+
+def dictionary(pairs: list[tuple[int, int]]) -> bytes:
+    """A `Dictionary` from object to object."""
+    inner = b"".join(
+        block(1, block(1, object_id(index=key)) + block(2, object_id(index=value)))
+        for key, value in pairs
+    )
+    return block(6, inner)
+
+
+def ordered(uuids: list[bytes], pairs: list[tuple[int, int]]) -> bytes:
+    """An `OrderedSet`: the identifiers in the order they are drawn, and which
+    object names each element's identifier."""
+    array = b"".join(
+        block(2, number(1, at) + block(2, uuid)) for at, uuid in enumerate(uuids)
+    )
+    contents = b"".join(
+        block(1, block(1, object_id(index=key)) + block(2, object_id(index=value)))
+        for key, value in pairs
+    )
+    return block(16, block(1, block(1, array) + block(2, contents)))
+
+
+def cell(text: str) -> bytes:
+    """A table's cell, which is a note of its own."""
+    return block(10, block(2, text.encode()) + run(text))
+
+
+def mergeable(objects: list[bytes], keys: list[str], types: list[str], uuids: list[bytes]) -> bytes:
+    """A `MergableDataProto`, gzipped: what a table's or a scan's row carries in
+    `ZMERGEABLEDATA1`."""
+    data = b"".join(block(3, one) for one in objects)
+    data += b"".join(block(4, one.encode()) for one in keys)
+    data += b"".join(block(5, one.encode()) for one in types)
+    data += b"".join(block(6, one) for one in uuids)
+    return gzip.compress(block(2, block(3, data)), mtime=0)
+
+
+def table() -> bytes:
+    """A table of two rows and two columns, its columns stored in the opposite
+    order to the one they are drawn in."""
+    rows = [b"row-0-uuid-00000", b"row-1-uuid-00000"]
+    columns = [b"col-0-uuid-00000", b"col-1-uuid-00000"]
+
+    def uuid(at: int) -> bytes:
+        return custom_map(1, [(3, object_id(count=at))])
+
+    objects = [
+        custom_map(0, [(0, object_id(index=1)), (1, object_id(index=2)), (2, object_id(index=3))]),
+        ordered(rows, [(4, 4), (5, 5)]),
+        ordered([columns[1], columns[0]], [(6, 6), (7, 7)]),
+        dictionary([(6, 8), (7, 9)]),
+        uuid(0),
+        uuid(1),
+        uuid(2),
+        uuid(3),
+        dictionary([(4, 10), (5, 11)]),
+        dictionary([(4, 12), (5, 13)]),
+        cell("Item"),
+        cell("Milk"),
+        cell("How much"),
+        cell("2 litres"),
+    ]
+    return mergeable(
+        objects,
+        ["crRows", "crColumns", "cellColumns", "UUIDIndex"],
+        ["com.apple.notes.ICTable", "com.apple.CRDT.NSUUID"],
+        rows + columns,
+    )
+
+
+def gallery(pages: list[str]) -> bytes:
+    """A scan: each page an object naming the page's own attachment."""
+    objects = [custom_map(0, [(0, object_id(text=page))]) for page in pages]
+    return mergeable(objects, ["self"], ["com.apple.notes.gallery"], [])
+
+
 def png() -> bytes:
     """A real one-pixel PNG, so what the reader hands over is a picture."""
 
@@ -151,6 +250,11 @@ OBJECT_COLUMNS = [
     "ZMEDIA INTEGER",
     "ZFILENAME TEXT",
     "ZGENERATION1 TEXT",
+    "ZMERGEABLEDATA1 BLOB",
+    "ZFALLBACKIMAGEGENERATION TEXT",
+    "ZFALLBACKPDFGENERATION TEXT",
+    "ZSIZEWIDTH REAL",
+    "ZSIZEHEIGHT REAL",
 ]
 
 
@@ -250,6 +354,27 @@ def notes(db: sqlite3.Connection) -> None:
         ),
     )
 
+    # Everything Notes keeps as a document or a picture of its own, one per line.
+    kinds = [
+        ("Table", "att-table", "com.apple.notes.table"),
+        ("Sketch", "att-drawing", "com.apple.paper"),
+        ("Scan", "att-scan", "com.apple.notes.gallery"),
+        ("Marked", "att-marked", "com.apple.paper.doc.scan"),
+        ("Lost", "att-lost", "com.apple.drawing.2"),
+    ]
+    plans = "Plans\n" + "".join(f"{word} {OBJECT}\n" for word, _, _ in kinds)
+    parts = [run("Plans\n", block(2, style(TITLE)))]
+    for word, identifier, uti in kinds:
+        parts += [run(f"{word} "), run(OBJECT, attachment(identifier, uti)), run("\n")]
+    made(
+        db,
+        15,
+        "66666666-2222-3333-4444-555555555555",
+        folder=3,
+        title="Plans",
+        data=note_data(plans, parts),
+    )
+
     made(
         db,
         12,
@@ -318,6 +443,32 @@ def attachments(db: sqlite3.Connection) -> None:
     where = OUT / "Accounts" / ACCOUNT / "Media" / "media-photo"
     where.mkdir(parents=True, exist_ok=True)
     (where / "photo.png").write_bytes(png())
+
+    drawn(db)
+
+
+def drawn(db: sqlite3.Connection) -> None:
+    """The table, the sketch, the two scans and the sketch with no picture, and the
+    pictures Notes drew of them where it drew one."""
+    row(db, 30, "ICAttachment", ZIDENTIFIER="att-table", ZMERGEABLEDATA1=table())
+    row(db, 31, "ICAttachment", ZIDENTIFIER="att-drawing", ZFALLBACKIMAGEGENERATION="gen-1")
+    row(db, 32, "ICAttachment", ZIDENTIFIER="att-scan", ZMERGEABLEDATA1=gallery(["page-one", "page-two"]))
+    row(db, 33, "ICAttachment", ZIDENTIFIER="page-one", ZSIZEWIDTH=1536.0, ZSIZEHEIGHT=2048.0)
+    row(db, 34, "ICMedia", ZIDENTIFIER="media-page-two", ZFILENAME="page-two.png")
+    row(db, 35, "ICAttachment", ZIDENTIFIER="page-two", ZMEDIA=34)
+    row(db, 36, "ICAttachment", ZIDENTIFIER="att-marked", ZFALLBACKPDFGENERATION="gen-2")
+    row(db, 37, "ICAttachment", ZIDENTIFIER="att-lost", ZFALLBACKIMAGEGENERATION="gen-9")
+
+    account = OUT / "Accounts" / ACCOUNT
+    files = {
+        account / "FallbackImages" / "att-drawing" / "gen-1" / "FallbackImage.png": png(),
+        account / "Previews" / "page-one-1-1536x2048-0.jpeg": png(),
+        account / "Media" / "media-page-two" / "page-two.png": png(),
+        account / "FallbackPDFs" / "att-marked" / "gen-2" / "FallbackPDF.pdf": b"%PDF-1.4\n%%EOF\n",
+    }
+    for path, body in files.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
 
 
 def main() -> int:

@@ -1122,8 +1122,8 @@ export const ps: Dictionary = {
     '{count} يادښتونه د پټنوم تر شا دي چې يوازې Notes يې پرانيځي',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} يادښتونه په نوی ړنګ شوي کې دي او هلته پاتې کېږي',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} انځورونه او سکن شوي مخونه هغه انځورونه دي چې Notes پخپله کښي',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} انځورونه او سکنونه پر دې Mac انځور نه لري',
   '{count} tables inside notes do not come over': 'په يادښتونو کې {count} جدولونه نه راځي',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ملګړي په iCloud کې دي نه پر دې Mac',
