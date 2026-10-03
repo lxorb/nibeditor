@@ -56,8 +56,8 @@ Nothing here loosens any of them.
    board is grouped by, a task dragged to another day changes its date. One edit, one undo.
 9. **Reminders fire with nib closed.** Desktop notifications are handed to the system
    scheduler (Windows scheduled toasts, macOS notification triggers), the phone schedules
-   local alarms, and nib can stay in the tray. Push through the Worker is the decision in
-   8.5.
+   local alarms, nib stays in the tray while a reminder exists, and the Worker pushes to
+   a phone that has not opened nib since (8.5).
 10. **The agent works the list.** `nib mcp` and the account connector gain `list_tasks`,
     `add_task`, `update_task`, `query_base`, `add_row` and `edit_base`; the AI sidebar gets
     `/tasks` and `/today` (plan my day), and its background-work command becomes `/jobs`.
@@ -871,7 +871,7 @@ rather than adding a second one.
 | macOS | a notification | a `UNCalendarNotificationTrigger` request, which the system fires with nib quit |
 | Linux | a notification | nothing unless nib is in the tray (8.6); said once in Settings |
 | Android | a notification | **local alarms**: the page hands the list to Kotlin, which sets `AlarmManager` alarms, keeps the list in the app's own storage and sets them again after a reboot. No sync and no credential in Kotlin, so `docs/mobile.md`'s rule against a second sync implementation holds |
-| browser build | a Web Notification while the tab is open | push, if 8.5 says yes |
+| browser build | a Web Notification while the tab is open | push from the Worker (8.5) |
 | Even glasses | the phone's notification, which the Even app shows on the glasses like any other it is allowed to | the same, from the phone's alarm |
 
 **Actions** on every notification that has them: **Done** (ticks it through the same write a
@@ -886,7 +886,7 @@ push from the Worker, which can read notes (notes are not end-to-end encrypted, 
 `docs/sync-v2.md`): it would keep a table of upcoming reminders from the task lines it
 receives and send Web Push and FCM at the time. That is a real piece of work (a Firebase
 project, a service worker route, a cron every minute, and the privacy question of the server
-reading reminder times), so it is decision 8.5 rather than a default.
+reading reminder times), and Emil decided to build it (8.5).
 
 ### 5.11 `.base` files, and nib's key
 
@@ -1164,55 +1164,84 @@ packages/bases, published in the workspace as `@nib/bases`.
 
 ### 7.1 The interfaces the lanes meet at
 
-Written first, by lane 1, in `@nib/bases`'s `types.ts`, before any other lane builds on them;
-the others code against fixtures until it lands.
+Written first, by lane 1: the shapes are in `packages/bases/src/types.ts` (exported from
+`@nib/bases`), the task line's in `packages/markdown/src/task-line.ts` (re-exported by
+`@nib/bases`, because the search and the editor read task lines without the engine). This
+section is the summary; the comments in those files are the contract.
 
 ```ts
-type Value =
-  | null | boolean | number | string
-  | { kind: 'date'; iso: string; time?: string; zone?: string }
-  | { kind: 'duration'; minutes: number }
-  | { kind: 'link'; target: string; display?: string }
-  | Value[] | { [key: string]: Value }
-
+// @nib/markdown/task-line: one line, read the way the Tasks plugin reads it
+type Priority = 1 | 2 | 3 | 4 | 5 | 6   // p1 🔺, p2 ⏫, p3 🔼, 4 none (p4), 5 🔽, 6 ⏬
+type Remind = { before: number } | { time: string } | { at: string; time: string }
 interface TaskFields {
   text: string; status: string; done: boolean; cancelled: boolean
   due?: string; scheduled?: string; start?: string; created?: string
-  completed?: string; cancelledOn?: string; time?: string; duration?: number
-  deadline?: string; remind: Remind[]; priority: 0 | 1 | 2 | 3 | 4 | 5
-  recurrence?: Recurrence; tags: string[]; assignee?: string
-  id?: string; dependsOn: string[]
+  completed?: string; cancelledOn?: string; time?: string; zone?: string
+  duration?: number /* minutes */; deadline?: string; remind: Remind[]
+  priority: Priority; recurrence?: string /* the rule as written */
+  onCompletion?: string; tags: string[] /* no '#' */; assignee?: string
+  id?: string; dependsOn: string[]; block?: string
+  fields: Record<string, string>      // inline fields nib has no name for, kept
 }
+function readTask(line: string): TaskFields | null
+function parseTask(line: string): ParsedTask | null   // the fields and where each is written
 
+// @nib/markdown/task-edits: the smallest edits, offsets into the line
+type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }  // null removes
+function writeTask(line: string, change: TaskChange): TextEdit[]
+function changedTask(line: string, change: TaskChange): string
+function taskLine(fields: TaskFields, prefix?: string): string        // a new line, nib's order
+
+// @nib/bases: types.ts
+type Value = null | boolean | number | string
+  | { kind: 'date'; iso: string; time?: string; zone?: string }
+  | { kind: 'duration'; ms: number; months: number }
+  | { kind: 'link'; target: string; display?: string }
+  | Value[] | { [key: string]: Value }
+interface FileInfo { name; basename; path; folder; ext; size; ctime; mtime  // ms
+  tags: string[]; links: string[]; embeds: string[]; shared?: boolean }
+interface TaskRow extends TaskFields { section: string[]; parent?: number; indent: number }
 interface Row {
-  kind: 'note' | 'task'
-  space: string; path: string
-  anchor?: { line: number; hash: string }
-  file: FileInfo; note: Record<string, Value>
-  task?: TaskFields & { section: string[]; parent?: number; indent: number }
+  kind: 'note' | 'task'; space: string; path: string   // path relative to the space
+  anchor?: { line: number; hash: string }               // hash = taskHash(task.text)
+  file: FileInfo; note: Record<string, Value>; task?: TaskRow
 }
-
+type Filter = string | { and: Filter[] } | { or: Filter[] } | { not: Filter[] }
 interface Base { filters?: Filter; formulas: Record<string, string>
   properties: Record<string, PropertyConfig>; summaries: Record<string, string>
-  views: View[]; nib?: NibBase; kept: unknown }
+  views: View[]; nib: NibBase; kept: Record<string, unknown> }
+interface View { type; name; filters?: Filter; order: string[]; sort: Sort[]
+  groupBy?: Sort; limit?: number; summaries: Record<string, string>
+  nib: NibView; options: Record<string, unknown> }   // options: every other key, kept
+interface Context { today: string; now: string; this?: Row; me?: string; search?: string
+  resolve?(target, from: Row): string | null; row?(path, space): Row | undefined
+  backlinks?(row: Row): string[] }
+interface Group { key: Value; rows: Row[]; summaries: Record<string, Value>; sub?: Group[] }
+interface Answer { groups: Group[]; total: number; summaries: Record<string, Value> }
 
-interface Answer { groups: { key: Value; rows: Row[]; summaries: Record<string, Value>
-  sub?: Answer['groups'] }[]; total: number }
-
+// @nib/bases: functions
+function noteValues(frontMatter: string): Record<string, Value>    // the note, or its block
+function taskHash(text: string): string
 function readBase(yaml: string): Base
-function writeBase(base: Base, before: string): string        // keeps order and unknown keys
-function compile(expression: string): Compiled               // Bases' language
-function fromTodoist(filter: string, lang: string): Filter    // Todoist's language
-function answer(base: Base, view: string, rows: readonly Row[], context: Context): Answer
-function readTask(line: string): TaskFields | null           // in @nib/markdown
-function writeTask(line: string, change: Partial<TaskFields>): Edit[] // the smallest edits
-function nextOccurrence(task: TaskFields, today: string): TaskFields | null
-function parseQuickAdd(text: string, langs: string[], now: Date): QuickAdd // lane 3
+function writeBase(base: Base, before: string): string    // keeps order, quoting, unknown keys
+function compile(expression: string): Compiled            // Bases' language
+function compileFilter(filter: Filter): (row: Row, context: Context) => boolean
+function fromTodoist(filter: string, options?): Filter[]  // one per comma-separated list
+function answer(base: Base, view: string | number, rows: readonly Row[], context: Context): Answer
+function parseRule(text: string): Rule | null            // the Tasks plugin's grammar
+function ruleText(rule: Rule): string
+function nextOccurrence(task: TaskFields, today: string, options?): TaskFields | null
+function tick(note: string, line: number, today: string, options?): TextEdit[]
+                                                          // offsets into the note; one undo
+function builtinView(name: BuiltinName, params): Base    // Inbox, Today, Upcoming, ...
+function readTasksQuery(source: string): { base: Base; unsupported: string[] }
+function parseQuickAdd(text: string, langs: string[], now: Date): QuickAdd   // lane 3
 ```
 
 The rows store (lane 2) is `rows.of(space?)`, `rows.watch(listener)`, and `rows.write(row,
-change)`, the one write path. The reminders store (lane 5) reads `rows.watch` and nothing
-else.
+change)`, the one write path. It builds `Row`s with `readTask`, `noteValues` and
+`taskHash`, writes task fields with `writeTask` and ticks with `tick`; the engine never
+reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 
 ### 7.2 The lanes
 
@@ -1222,7 +1251,7 @@ else.
 | **2 `rows-index`** | `lib/rows/` (new); `apps/desktop/src-tauri/src/links.rs` (the scan's two new fields); `apps/desktop/src/lib/scan-note.ts`; the space's `inbox` setting | task lines and raw front matter on the scan (crate and browser); rows built and kept current through `file-ops.ts` and saves; every space scanned after the launch order; the one write path (`lib/rows/write.ts`) for properties and task fields; the inbox note; the cache only if 5.3's measure says so | cargo tests for the scan's fields; store tests for created, moved, removed, saved and a note open with unsaved words; a perf test with 5,000 notes and 10,000 tasks (scan cost, memory, update time); `weight.test.ts` unchanged; a draft-PR CI for the crate | 1 |
 | **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file) | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only | 2 |
 | **4 `views`** | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones) | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured | 2 |
-| **5 `reminders`** | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push if 8.5 says yes | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list | 2 |
+| **5 `reminders`** | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5) | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list | 2 |
 | **6 `tasks-everywhere`** | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the clipper's "As a task" and the share sheet's | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines | 2 |
 | **7 `database-extras`** | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new) | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts | 3 |
 
@@ -1252,30 +1281,28 @@ lane 6 `docs/agent-native.md` 5.3, `docs/automation.md`, `docs/import.md` and `d
   reader to the system's switch once, the first time a reminder is set, and falls back to
   inexact alarms (within minutes) when it stays off.
 
-## 8. Decisions for Emil
+## 8. Decisions
 
-1. **`#` stays a tag in quick add, and a project is `>Note`.** Todoist users type `#Work`
-   for a project; in a markdown file `#Work` is a tag, and Obsidian agrees. Filters accept
-   both (5.8). Or make `#` a note when a note of that name exists, everywhere?
-2. **Bare dates are due dates (`📅`).** Todoist calls its date "due" and most Obsidian users
-   write `📅`; Tasks' stricter reading (due is a deadline, scheduled is the plan) is offered
-   through `⏳` and `{deadline}`. Or write `⏳` for a bare date, which is more correct and
-   less common?
+Emil decided all eight on 2026-10-03, each as recommended. The design above is written to
+them.
+
+1. **`#` stays a tag in quick add, and a project is `>Note`.** Decided. In a markdown file
+   `#Work` is a tag, and Obsidian agrees; filters accept `#Work` for a note of that name
+   (5.8), because that is where Todoist habits land.
+2. **Bare dates are due dates (`📅`).** Decided. Todoist calls its date "due" and most
+   Obsidian users write `📅`; the stricter reading is there through `⏳` and `{deadline}`.
 3. **`/tasks` means to-dos, background work becomes `/jobs`** (synonyms `/ps`, `/bashes`).
-   Or keep Claude Code's `/tasks` and name the to-do command `/todo`?
-4. **Tasks views span every space** (each row says which space when it is not the open one).
-   Or stay in the open space like everything else?
-5. **Push through the Worker.** Without it a phone that has not opened nib since a task was
-   added on the laptop misses that reminder. With it, the Worker reads reminder times and
-   needs Firebase for Android and Web Push for the browser build. Build it in lane 5, or
-   later?
-6. **nib in the tray.** The global quick add key and reminders on Linux need nib running.
-   On by default when the key is set or a reminder exists (Todoist's way), or opt-in?
-7. **Inbox per space** (`Inbox.md` in each), shown together in the Inbox view. Or one inbox
-   in a space the reader picks?
-8. **Daily notes and templates** were dropped in backlog question Q5 together with Bases.
-   This design brings Bases and templates back; daily notes stay out unless asked (Today is
-   the daily list). Agreed?
+   Decided.
+4. **Tasks views span every space**, each row saying which space when it is not the open
+   one. Decided.
+5. **Push through the Worker.** Decided: built in lane 5. The Worker keeps a table of
+   upcoming reminders from the task lines it receives and sends Web Push and FCM at the
+   time, so a phone that has not opened nib since a task was added elsewhere still rings.
+6. **nib in the tray** by default when the global quick add key is set or a reminder
+   exists (Todoist's way), and off otherwise. Decided.
+7. **An inbox per space** (`Inbox.md` in each), shown together in the Inbox view. Decided.
+8. **Bases and templates are back; daily notes stay out** (Today is the daily list).
+   Decided.
 
 ## Sources
 

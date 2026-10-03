@@ -11,6 +11,7 @@
       "entry": ["scripts/**/*.{ts,js,mjs}"],
       "ignoreDependencies": ["vite"]
     },
+    "packages/bases": {},
     "packages/editor": {},
     "packages/glasses": {},
     "packages/markdown": {},

@@ -39,3 +39,16 @@ export function oneEdit(before: string, after: string): TextEdit | null {
 
   return { from, to: before.length - back, insert: after.slice(from, after.length - back) }
 }
+
+/** The text as several edits leave it. The edits are in the order they sit in the
+ *  text, never overlap, and each one's offsets are into the text before any of them,
+ *  which is the shape CodeMirror takes a change in too. */
+export function appliedEdits(before: string, edits: readonly TextEdit[]): string {
+  let text = ''
+  let at = 0
+  for (const edit of edits) {
+    text += before.slice(at, edit.from) + edit.insert
+    at = edit.to
+  }
+  return text + before.slice(at)
+}

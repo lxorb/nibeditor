@@ -25,6 +25,7 @@ same commands on every push to `main`.
 | --- | --- |
 | `packages/editor` | The CodeMirror 6 live-preview editor: parsing, decorations, widgets, commands. No app concerns. |
 | `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and the clipper share. Pure functions between markdown and HTML. |
+| `packages/bases` | Rows, views and the Bases expression language: a note or a task line as a row, Obsidian's `.base` file read and written, filters, formulas, groups and summaries, recurrence, and Todoist's filter language. Pure, no DOM; see `docs/tasks.md`. The task line itself is `packages/markdown`'s (`task-line.ts`, `task-edits.ts`). |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |

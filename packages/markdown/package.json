@@ -41,6 +41,8 @@
     "./snapshot": "./src/snapshot.ts",
     "./sources": "./src/sources.ts",
     "./tags": "./src/tags.ts",
+    "./task-edits": "./src/task-edits.ts",
+    "./task-line": "./src/task-line.ts",
     "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts",
     "./words": "./src/words.ts"
