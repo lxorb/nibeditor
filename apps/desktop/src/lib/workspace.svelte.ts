@@ -248,7 +248,8 @@ function unfetched(): void {
 /** Whether a tab is worth remembering once closed: not a new tab with nothing in it,
  *  which would put back something nobody ever wrote. See workspace/drafts.ts. */
 function worthReopening(tab: Tab): boolean {
-  return !isDraft(tab.note) || hasWords(tab.note)
+  // A private tab is forgotten the moment it closes; see web-tab/private.ts.
+  return !tab.inPrivate && (!isDraft(tab.note) || hasWords(tab.note))
 }
 
 class Workspace {
@@ -1038,7 +1039,9 @@ class Workspace {
 
     return {
       frame: frameDraft(frame, (pane) => {
-        const tabs = this.tabsIn(pane.id)
+        // A private tab is never written down: a restart does not bring it back, as a
+        // browser's private window does not come back. See web-tab/private.ts.
+        const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate)
         // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
         // is a moment's view, like a menu being open, and a launch brings the work back.
         const shown = pane.activeTabId ?? this.panes.lastOf(tabs.map((tab) => tab.id))
@@ -1770,7 +1773,7 @@ class Workspace {
    *  than with a name: a folder of `Untitled` shortcuts is what asking for a name
    *  first would leave behind. The file list's own gesture asks for the name, because
    *  there the row is the thing being made; see `createWebsite`. */
-  openWebsite() {
+  openWebsite(inPrivate = false) {
     // Nor in the glasses' plugin, whose package has no web tab to draw; see
     // `webSurface` in surfaces.svelte.ts.
     if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
@@ -1784,6 +1787,9 @@ class Workspace {
       home: this.activeSpaceId,
     })
     const tab = new Tab(file, this.panes.focusedId)
+    // A private tab; see web-tab/private.ts.
+    tab.inPrivate = inPrivate
+    pages.of(tab.id).inPrivate = inPrivate
     this.add(tab)
     this.dropScaffolding(tab)
     this.showNote()
@@ -1834,6 +1840,9 @@ class Workspace {
     const page = pages.of(tab.id)
     page.url = url
     page.title = plainOrigin(url)
+    // A link out of a private tab opens privately, as one out of a private window does.
+    tab.inPrivate = from?.inPrivate === true
+    page.inPrivate = tab.inPrivate
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
@@ -1906,7 +1915,8 @@ class Workspace {
    *  name it offers; a note's row is the folder it would become, as a drop on it nests.
    *  Answers the path, or null where nothing was saved. See workspace/drafts.ts. */
   async save(tab: Tab, folder?: string, file?: string): Promise<string | null> {
-    if (!isUnsaved(tab.note) || this.keeping.has(tab.id)) return null
+    // A private tab leaves no web note behind; see web-tab/private.ts.
+    if (!isUnsaved(tab.note) || tab.inPrivate || this.keeping.has(tab.id)) return null
     this.keep(tab.id)
 
     this.keeping.add(tab.id)

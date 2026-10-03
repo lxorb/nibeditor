@@ -1877,4 +1877,30 @@ export const kn: Dictionary = {
   'Pages, terminals and moves are not undone':
     'ಪುಟಗಳು, ಟರ್ಮಿನಲ್‌ಗಳು ಮತ್ತು ಸರಿಸುವಿಕೆಗಳು ರದ್ದಾಗುವುದಿಲ್ಲ',
   Rewind: 'ಹಿಂದಕ್ಕೆ',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'ಹುಡುಕಾಟ ಇಂಜಿನ್',
+  History: 'ಇತಿಹಾಸ',
+  'Search history': 'ಹುಡುಕಾಟ ಇತಿಹಾಸ',
+  'Delete browsing data': 'ಬ್ರೌಸಿಂಗ್ ಡೇಟಾವನ್ನು ಅಳಿಸಿ',
+  Today: 'ಇಂದು',
+  Yesterday: 'ನಿನ್ನೆ',
+  'More from this site': 'ಈ ಸೈಟ್‌ನಿಂದ ಇನ್ನಷ್ಟು',
+  'Remove from history': 'ಇತಿಹಾಸದಿಂದ ತೆಗೆದುಹಾಕಿ',
+  'Browsing history': 'ಬ್ರೌಸಿಂಗ್ ಇತಿಹಾಸ',
+  'Cookies and other site data': 'ಕುಕೀಗಳು ಮತ್ತು ಇತರ ಡೇಟಾ',
+  'Cached images and files': 'ಸಂಗ್ರಹಿಸಲಾಗಿರುವ ಚಿತ್ರಗಳು ಮತ್ತು ಫೈಲ್‌ಗಳು',
+  'Time range': 'ಸಮಯ ವ್ಯಾಪ್ತಿ',
+  'Last 15 minutes': 'ಹಿಂದಿನ 15 ನಿಮಿಷಗಳು',
+  'Last hour': 'ಕಳೆದ ಗಂಟೆ',
+  'Last 24 hours': 'ಕಳೆದ 24 ಗಂಟೆಗಳು',
+  'Last 7 days': 'ಕಳೆದ 7 ದಿನಗಳು',
+  'Last 4 weeks': 'ಕಳೆದ 4 ವಾರಗಳು',
+  'All time': 'ಎಲ್ಲ ಸಮಯ',
+  'Delete data': 'ಡೇಟಾ ಅಳಿಸಿ',
+  'Delete browsing data…': 'ಬ್ರೌಸಿಂಗ್ ಡೇಟಾವನ್ನು ಅಳಿಸಿ…',
+  'New private tab': 'ಹೊಸ ಖಾಸಗಿ ಟ್ಯಾಬ್',
+  'All spaces': 'ಎಲ್ಲಾ ಸ್ಪೇಸ್‌ಗಳು',
+  'the data could not be deleted': 'ಡೇಟಾ ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ',
 }

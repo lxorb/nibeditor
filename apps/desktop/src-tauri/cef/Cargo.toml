@@ -168,6 +168,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSObject",
   "NSOperation",
   "NSProgress",
+  "NSSet",
   "NSString",
   "NSURL",
   "NSURLRequest",
@@ -213,6 +214,7 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKUserScript",
   "WKWebView",
   "WKWebViewConfiguration",
+  "WKWebsiteDataRecord",
   "WKWebsiteDataStore",
 ] }
 

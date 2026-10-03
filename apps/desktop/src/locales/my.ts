@@ -1844,4 +1844,30 @@ export const my: Dictionary = {
   'Pages, terminals and moves are not undone':
     'စာမျက်နှာ၊ တာမီနယ်နှင့် ရွှေ့ခြင်းများကို ပြန်မဖျက်ပါ',
   Rewind: 'နောက်ပြန်ရစ်ရန်',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'ရှာဖွေရေး အင်ဂျင်',
+  History: 'မှတ်တမ်း',
+  'Search history': 'ရှာဖွေမှု မှတ်တမ်း',
+  'Delete browsing data': 'ဖွင့်ကြည့်ထားသည့်မှတ်တမ်းဒေတာ ဖျက်ရန်',
+  Today: 'ယနေ့',
+  Yesterday: 'မနေ့က',
+  'More from this site': 'ဤဆိုဒ်မှ ပိုမို',
+  'Remove from history': 'သမိုင်းမှ ဖယ်ရှားရန်',
+  'Browsing history': 'အသုံးပြုခြင်း မှတ်တမ်း',
+  'Cookies and other site data': 'ကူကီးနှင့် အခြား ဆိုက်ဒ် အချက်အလက်များ',
+  'Cached images and files': 'ကက်ရှ်လုပ်ထားသည့် ပုံများနှင့် ဖိုင်များ',
+  'Time range': 'အချိန်အကန့်အသတ်',
+  'Last 15 minutes': 'ပြီးခဲ့သော ၁၅ မိနစ်',
+  'Last hour': 'နောက်ဆုံးတစ်နာရီ',
+  'Last 24 hours': 'ပြီးခဲ့သည့် ၂၄ နာရီ',
+  'Last 7 days': 'ပြီးခဲ့သည့် ၇ ရက်',
+  'Last 4 weeks': 'ပြီးခဲ့သည့် ၄ ပတ်',
+  'All time': 'အားလုံး',
+  'Delete data': 'ဒေတာဖျက်ရန်',
+  'Delete browsing data…': 'ဖွင့်ကြည့်ထားသည့်မှတ်တမ်းဒေတာ ဖျက်ရန်…',
+  'New private tab': 'တဘ်သီးသန့် အသစ်',
+  'All spaces': 'နေရာအားလုံး',
+  'the data could not be deleted': 'ဒေတာကို ဖျက်၍မရပါ',
 }

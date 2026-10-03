@@ -1840,4 +1840,30 @@ export const vi: Dictionary = {
   'Pages, terminals and moves are not undone':
     'Trang, terminal và việc di chuyển không được hoàn tác',
   Rewind: 'Tua lại',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'Công cụ tìm kiếm',
+  History: 'Nhật ký',
+  'Search history': 'Nhật ký tìm kiếm',
+  'Delete browsing data': 'Xoá dữ liệu duyệt web',
+  Today: 'Hôm nay',
+  Yesterday: 'Hôm qua',
+  'More from this site': 'Thêm từ trang web này',
+  'Remove from history': 'Xoá khỏi nhật ký',
+  'Browsing history': 'Nhật ký duyệt web',
+  'Cookies and other site data': 'Cookie và các dữ liệu khác của trang web',
+  'Cached images and files': 'Tệp và hình ảnh được lưu trong bộ nhớ đệm',
+  'Time range': 'Phạm vi thời gian',
+  'Last 15 minutes': '15 phút qua',
+  'Last hour': '1 giờ qua',
+  'Last 24 hours': '24 giờ qua',
+  'Last 7 days': '7 ngày qua',
+  'Last 4 weeks': '4 tuần qua',
+  'All time': 'Từ trước đến nay',
+  'Delete data': 'Xoá dữ liệu',
+  'Delete browsing data…': 'Xoá dữ liệu duyệt web…',
+  'New private tab': 'Thẻ riêng tư mới',
+  'All spaces': 'Mọi không gian',
+  'the data could not be deleted': 'Không xoá được dữ liệu',
 }
