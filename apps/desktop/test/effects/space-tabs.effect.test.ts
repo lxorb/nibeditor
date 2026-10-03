@@ -39,6 +39,7 @@ const { pane } = await import('../../src/lib/workspace/pane-tree')
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
 const FOOD = '/spaces/Home/Food.md'
+const NOTES = '/spaces/Work/Notes.md'
 
 /** The names of the tabs on screen, pane by pane, in strip order. */
 const onScreen = () =>
@@ -61,6 +62,7 @@ beforeEach(async () => {
   one.files.set(PLAN, '# Plan\n')
   one.files.set(IDEAS, '# Ideas\n')
   one.files.set(FOOD, '# Food\n')
+  one.files.set(NOTES, '# Notes\n')
 
   workspace.spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },
@@ -122,6 +124,37 @@ describe('a space that keeps its own tabs', () => {
     expect(workspace.panes.count).toBe(2)
     expect(workspace.panes.focusedId).toBe(focused)
     expect(workspace.activeTabId).toBe(front)
+  })
+
+  /** Emil, 2026-10-03: a space switched away from and back came back on another note.
+   *  Every pane's tab in front, the pane the keyboard was in and a pane put down with
+   *  Ctrl+D, each exactly as left - with several tabs to a pane, the one in front not
+   *  the last opened, and the focus in the first pane rather than the newest. */
+  test('comes back exactly: each pane’s tab in front, the focused pane, a pane put down', async () => {
+    await sets.choose('work', 'space')
+    await sets.choose('home', 'space')
+    for (const path of [PLAN, IDEAS, NOTES]) await workspace.openEntry(path)
+    workspace.split('row', tabAt(NOTES).id)
+    const [left, right] = workspace.panes.all
+    if (!left || !right) throw new Error('no split')
+    workspace.activate(tabAt(PLAN).id)
+    const fronts = () => workspace.panes.all.map((one) => workspace.showing(one.id)?.name ?? null)
+    expect(fronts()).toEqual(['Plan.md', 'Notes.md'])
+    expect(workspace.panes.focusedId).toBe(left.id)
+
+    for (const way of ['showSpace', 'selectSpace'] as const) {
+      await workspace[way]('home')
+      await workspace.openEntry(FOOD)
+      await workspace[way]('work')
+      expect(fronts(), way).toEqual(['Plan.md', 'Notes.md'])
+      expect(workspace.panes.focusedId, way).toBe(left.id)
+    }
+
+    workspace.deselect(right.id)
+    await workspace.showSpace('home')
+    await workspace.showSpace('work')
+    expect(fronts()).toEqual(['Plan.md', null])
+    expect(workspace.panes.focusedId).toBe(left.id)
   })
 
   test('two spaces that share the set change nothing between them', async () => {
