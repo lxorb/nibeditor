@@ -190,6 +190,9 @@ def main() -> int:
         return subprocess.Popen([str(binary)], env=env, cwd=str(binary.parent),
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    # A run before this one (the gate's) left its port behind; the app writes its own.
+    (config / "automation.json").unlink(missing_ok=True)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     running = None
     try:
         started = time.perf_counter()
