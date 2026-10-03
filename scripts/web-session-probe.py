@@ -31,6 +31,12 @@ closed - starts it over and asks once more.
 
 The widget is `localhost` framed in `127.0.0.1`: the same server, two sites.
 
+And the rest of what a site keeps, which a browser that continues where it left off keeps
+too (Emil, 2026-09-14): an `IndexedDB` record and a service worker the sign-in leaves, a
+permission the reader granted in nib's bubble, and the size the reader zoomed the site to.
+All four are read back after the restart: the first three by the page itself, the zoom
+as the page's own `devicePixelRatio` and as the tab's.
+
 See `session` in apps/desktop/src-tauri/src/web_tabs.rs and docs/web-tabs.md.
 
     pnpm --dir apps/desktop tauri build --no-bundle \
@@ -87,6 +93,10 @@ SID = "NIBSESSION"
 PID = "NIBPERSIST"
 TOKEN = "NIBTOKEN"
 PART = "NIBPART"
+IDB = "NIBIDB"
+
+# The size the reader draws the site at: one step up Chrome's ladder.
+ZOOMED = 1.1
 
 # The widget's partitioned session cookie, as its server sets it inside the app page.
 PARTITIONED = f"part={PART}; Path=/; Secure; SameSite=None; Partitioned"
@@ -138,11 +148,40 @@ __FILLER__
   var pid = value('pid')
   var token = ''
   try { token = localStorage.getItem('token') || '' } catch (error) { token = '' }
+  // The rest of what a site keeps: an IndexedDB record, a service worker, a permission
+  // and the size it is drawn at, each read before the markers are shown.
+  function stored() {
+    return new Promise(function (done) {
+      var open = indexedDB.open('probe', 1)
+      open.onupgradeneeded = function () { open.result.createObjectStore('kept') }
+      open.onerror = function () { done('') }
+      open.onsuccess = function () {
+        var asked = open.result.transaction('kept').objectStore('kept').get('idb')
+        asked.onsuccess = function () { done(asked.result || '') }
+        asked.onerror = function () { done('') }
+      }
+    })
+  }
+  function worker() {
+    return navigator.serviceWorker.getRegistration('/').then(function (one) {
+      return one ? 'registered' : ''
+    }, function () { return '' })
+  }
+  function allowed() {
+    return navigator.permissions.query({ name: 'notifications' }).then(function (one) {
+      return one.state
+    }, function () { return '' })
+  }
+  var rest = Promise.all([stored(), worker(), allowed()])
   window.addEventListener('message', function (event) {
     if (event.origin !== '__WIDGET__') return
-    document.querySelector('article').firstChild.textContent =
-      '\\nRESULT|sid:' + sid + '|pid:' + pid + '|token:' + token + '|part:' + event.data +
-      '|END\\n'
+    var part = event.data
+    rest.then(function (kept) {
+      document.querySelector('article').firstChild.textContent =
+        '\\nRESULT|sid:' + sid + '|pid:' + pid + '|token:' + token + '|part:' + part +
+        '|idb:' + kept[0] + '|sw:' + kept[1] + '|perm:' + kept[2] +
+        '|dpr:' + window.devicePixelRatio + '|END\\n'
+    })
   })
   var frame = document.createElement('iframe')
   frame.src = '__WIDGET__/frame'
@@ -160,13 +199,39 @@ LOGIN = """<!doctype html>
   document.cookie = 'sid=__SID__; path=/'
   document.cookie = 'pid=__PID__; path=/; max-age=99999'
   try { localStorage.setItem('token', '__TOKEN__') } catch (error) {}
+  // An IndexedDB record and a service worker, both written before the page leaves.
+  var written = new Promise(function (done) {
+    var open = indexedDB.open('probe', 1)
+    open.onupgradeneeded = function () { open.result.createObjectStore('kept') }
+    open.onerror = function () { done() }
+    open.onsuccess = function () {
+      var putting = open.result.transaction('kept', 'readwrite')
+      putting.objectStore('kept').put('__IDB__', 'idb')
+      putting.oncomplete = function () { done() }
+      putting.onerror = function () { done() }
+    }
+  })
+  var registered = navigator.serviceWorker.register('/sw.js').then(function () {
+    return navigator.serviceWorker.ready
+  }, function () {})
   window.addEventListener('message', function (event) {
-    if (event.origin === '__WIDGET__') location.replace('/app')
+    if (event.origin !== '__WIDGET__') return
+    Promise.all([written, registered]).then(function () { location.replace('/app') })
   })
   var frame = document.createElement('iframe')
   frame.src = '__WIDGET__/frame-login'
   document.body.appendChild(frame)
 </script>
+"""
+
+# A service worker, which only has to exist to be kept.
+WORKER = "self.addEventListener('fetch', function () {})\n"
+
+# A page that asks for notifications, which nib's bubble answers.
+ASK = """<!doctype html>
+<title>Asking</title>
+<body><p>Asking</p></body>
+<script>Notification.requestPermission()</script>
 """
 
 # The widget, framed: it says which cookie it has. Signing in is the same page, answered
@@ -216,6 +281,7 @@ def serve(port: int) -> Server:
             .replace("__TOKEN__", TOKEN)
             .replace("__WIDGET__", widget(port))
             .replace("__FILLER__", FILLER)
+            .replace("__IDB__", IDB)
             .encode()
         )
 
@@ -226,6 +292,8 @@ def serve(port: int) -> Server:
         "/frame-login": page(FRAME),
         "/own": page(OWN_PAGE),
         "/plant": page(OWN_PAGE),
+        "/ask": page(ASK),
+        "/sw.js": WORKER.encode(),
     }
     # What a response sets besides: the widget's sign-in, and the planted copy.
     cookies = {"/frame-login": PARTITIONED, "/plant": TWIN}
@@ -235,7 +303,8 @@ def serve(port: int) -> Server:
             path = self.path.split("?")[0]
             body = pages.get(path)
             self.send_response(200 if body else 404)
-            self.send_header("content-type", "text/html; charset=utf-8")
+            kind = "text/javascript" if path.endswith(".js") else "text/html; charset=utf-8"
+            self.send_header("content-type", kind)
             if path in cookies:
                 self.send_header("set-cookie", cookies[path])
             # No store, so the page is read afresh each time and never a cache of when
@@ -466,6 +535,23 @@ def logged_in(state: dict[str, str]) -> bool:
     )
 
 
+def kept_the_rest(state: dict[str, str], base: float) -> bool:
+    """Whether the rest of what the site keeps is still there: the IndexedDB record, the
+    service worker, the permission granted, and the page drawn at the size it was zoomed
+    to - which the page reads as its own `devicePixelRatio`, a tenth larger."""
+
+    try:
+        ratio = float(state.get("dpr", "0")) / base
+    except ValueError:
+        ratio = 0.0
+    return (
+        state.get("idb") == IDB
+        and state.get("sw") == "registered"
+        and state.get("perm") == "granted"
+        and abs(ratio - ZOOMED) < 0.02
+    )
+
+
 def apart(state: dict[str, str]) -> bool:
     """Whether the widget's own site, opened on its own, has none of the widget's cookie:
     the partitioned one stayed in its partition, and there is no copy without one."""
@@ -527,6 +613,29 @@ def main() -> int:
         # the login page has handed over to it.
         said["signed in"] = seen(app, tab)
         ok = ok and logged_in(said["signed in"])
+        base = float(said["signed in"].get("dpr", "1") or "1")
+
+        # The site asks for notifications, and the reader allows it in nib's bubble.
+        navigate(tab, f"http://127.0.0.1:{port}/ask")
+        bubble = ".ask .nib-button:not(.is-quiet)"
+        until = time.perf_counter() + 15
+        while time.perf_counter() < until and not app.ask(f"!!document.querySelector('{bubble}')"):
+            time.sleep(0.3)
+        said["the bubble asked"] = app.ask(f"!!document.querySelector('{bubble}')")
+        app.ask(f"document.querySelector('{bubble}')?.click(); true")
+        time.sleep(1)
+
+        # And zooms the site a step, with the key the bar reads while the app has the
+        # keyboard; nib keeps the size by site (web-tab/sites.ts).
+        navigate(tab, f"http://127.0.0.1:{port}/app")
+        time.sleep(3)
+        app.ask(
+            "window.dispatchEvent(new KeyboardEvent('keydown', { key: '=', code: 'Equal',"
+            " ctrlKey: true, bubbles: true, cancelable: true })); true"
+        )
+        time.sleep(1.5)
+        said["zoomed to"] = app.ask(f"nib.pages.of('{tab}').zoom")
+        ok = ok and said["zoomed to"] == ZOOMED
 
         # The widget's own site, on its own. Every page load has kept the logins by now
         # (web_cookies.rs); a keep that wrote the partitioned cookie back without its
@@ -612,6 +721,16 @@ def main() -> int:
         said["after relaunch"] = relaunched
         said["still logged in on relaunch"] = logged_in(relaunched)
         ok = ok and logged_in(relaunched)
+        # IndexedDB, the service worker, the permission and the size, after the restart.
+        # The size is the site's in nib and given to the page once it has loaded, as every
+        # page of a zoomed site is (WebTab.svelte), so the page is read once more after it.
+        navigate(tab, f"http://127.0.0.1:{port}/app")
+        time.sleep(3)
+        relaunched = seen(app, tab)
+        said["after relaunch, loaded again"] = relaunched
+        said["the rest kept on relaunch"] = kept_the_rest(relaunched, base)
+        said["the tab's zoom on relaunch"] = app.ask(f"nib.pages.of('{tab}').zoom")
+        ok = ok and kept_the_rest(relaunched, base) and said["the tab's zoom on relaunch"] == ZOOMED
 
         # And the widget's cookie came back in its partition and nowhere else.
         app.open(f"{OWN}.url")
