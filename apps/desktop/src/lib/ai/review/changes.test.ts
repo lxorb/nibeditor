@@ -45,6 +45,12 @@ describe('a thread’s changes', () => {
     expect(changes.map((one) => one.id)).toEqual(['e1', 'e2'])
   })
 
+  test('take in the helpers it started', () => {
+    const edits = [edit('e1', 12), edit('e3', 45)]
+    const changes = changesOf({ ...thread, helpers: ['t2'] }, edits, answering, new Set())
+    expect(changes.map((one) => one.id)).toEqual(['e1', 'e3'])
+  })
+
   test('each answers the latest message before it, never a steered one', () => {
     expect(answered(thread.turns, 12)).toBe('m1')
     expect(answered(thread.turns, 26)).toBe('m2')

@@ -40,6 +40,7 @@ import {
   type NoteChanges,
   providerOf,
   providersOf,
+  type Reviewed,
 } from './changes'
 import { type Choice, type Made, planFor, type Plan } from './plan'
 import { summarized } from './summary'
@@ -137,12 +138,12 @@ class Review {
   }
 
   /** A thread's changes the reader has not kept, oldest first. */
-  changes(thread: Pick<Thread, 'id' | 'provider' | 'turns'>): Change[] {
+  changes(thread: Reviewed): Change[] {
     return changesOf(thread, this.edits(providersOf(thread).map(agentOf)), answeringAt, this.kept)
   }
 
   /** The same by note. */
-  notes(thread: Pick<Thread, 'id' | 'provider' | 'turns'>): NoteChanges[] {
+  notes(thread: Reviewed): NoteChanges[] {
     return byNote(this.changes(thread))
   }
 

@@ -11,6 +11,7 @@ const { createApiEngine, engineFor, MOST_ROUNDS, registerLocalEngine } = await i
 const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
+const { watching } = await import('./sends')
 
 import type { Provider } from '../providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
@@ -427,8 +428,9 @@ describe('the registry', () => {
       asked.push(given)
       return Promise.resolve(engine)
     })
-    expect(await engineFor('codex', setup)).toBe(engine)
-    expect(await engineFor('codex', setup)).toBe(engine)
+    // The program's own engine, its sends written down for the review (sends.ts).
+    expect(await engineFor('codex', setup)).toBe(watching(engine))
+    expect(await engineFor('codex', setup)).toBe(watching(engine))
     expect(asked).toEqual([setup])
   })
 })

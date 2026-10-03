@@ -84,19 +84,25 @@ export function answered(turns: readonly Turn[], at: number): string | null {
   return found
 }
 
-/** The thread's changes, oldest first: every edit the thread was answering for when it
- *  was made, but those `kept`. */
+/** A thread as the review reads it: with the helper threads a command started from it
+ *  (`/batch`, `/subtask`; lib/ai/commands/helpers.ts), whose changes are its own. */
+export type Reviewed = Pick<Thread, 'id' | 'provider' | 'turns'> & { helpers?: readonly string[] }
+
+/** The thread's changes, oldest first: every edit the thread, or a helper of it, was
+ *  answering for when it was made, but those `kept`. */
 export function changesOf(
-  thread: Pick<Thread, 'id' | 'provider' | 'turns'>,
+  thread: Reviewed,
   edits: readonly Edit[],
   answering: (provider: string, at: number) => string | null,
   kept: ReadonlySet<string>,
 ): Change[] {
+  const threads = new Set([thread.id, ...(thread.helpers ?? [])])
   const changes: Change[] = []
   for (const edit of edits) {
     if (kept.has(edit.id)) continue
     const provider = providerOf(edit.agent)
-    if (provider === null || answering(provider, edit.at) !== thread.id) continue
+    const by = provider === null ? null : answering(provider, edit.at)
+    if (by === null || !threads.has(by)) continue
     changes.push({
       ...edit,
       turn: answered(thread.turns, edit.at),
