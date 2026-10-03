@@ -236,6 +236,15 @@ function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
 
+/** A background fetch nobody waits for that did not arrive: a chunk missing after an
+ *  update, which reloading.svelte.ts answers, or a page going away while it was still
+ *  coming in - a test's environment torn down under a space it had only just listed.
+ *  Either way there is nobody left to tell, so it is let go rather than left as a
+ *  rejection nothing handles. */
+function unfetched(): void {
+  // Answered by reloading.svelte.ts.
+}
+
 /** Whether a tab is worth remembering once closed: not a new tab with nothing in it,
  *  which would put back something nobody ever wrote. See workspace/drafts.ts. */
 function worthReopening(tab: Tab): boolean {
@@ -427,8 +436,10 @@ class Workspace {
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {
       if (op.op === 'moved' && op.kind !== 'space') {
-        void papers().then(({ paperMoved }) => paperMoved(op.from, op.to))
-      } else if (op.op === 'removed') void papers().then(({ paperGone }) => paperGone(op.path))
+        void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
+      } else if (op.op === 'removed') {
+        void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
+      }
     })
   }
 
@@ -2198,11 +2209,11 @@ class Workspace {
       // of the space are the same question about the files the notes sit beside: what
       // was read of them before comes back, and what has never been opened is read in
       // idle time.
-      void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root))
+      void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       // Imported here rather than at the top, so that a window which never opens a
       // PDF never loads the module that reads one.
       const listed = this.files
-      void import('./pdf/extract').then(({ readPapers }) => readPapers(root, listed))
+      void import('./pdf/extract').then(({ readPapers }) => readPapers(root, listed), unfetched)
     }
   }
 
