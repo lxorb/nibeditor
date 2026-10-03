@@ -82,6 +82,7 @@
   import { pull } from './lib/pull.svelte'
   import PullMark from './lib/PullMark.svelte'
   import { type AppContext, runEntry } from './lib/shortcuts/registry'
+  import { writeNew } from './lib/write-new'
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -1024,7 +1025,7 @@
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
       {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
-        <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
+        <button class="fab" aria-label={t('New note')} onclick={writeNew}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/if}

@@ -1194,6 +1194,7 @@ class Workspace {
       home: this.activeSpaceId,
     })
     this.add(new Tab(note, this.panes.focusedId))
+    this.showNote()
     if (doc) void this.placeAtHome(note)
   }
 

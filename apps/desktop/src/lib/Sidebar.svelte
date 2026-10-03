@@ -55,6 +55,7 @@
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
   import { dur } from './motion'
+  import { writeNew } from './write-new'
 
   const {
     side = 'left',
@@ -595,7 +596,7 @@
           class="new"
           title={t('New note')}
           aria-label={t('New note')}
-          onclick={() => void workspace.createNote()}
+          onclick={writeNew}
           oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
           use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
         >
