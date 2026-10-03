@@ -11,7 +11,7 @@
    *  Fetched the first time the panel is shown, and the engine with it; none of it is in
    *  the first paint or in the glasses' plugin. See surfaces.svelte.ts and
    *  test/weight.test.ts. */
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { workspace } from '../../workspace.svelte'
@@ -31,13 +31,17 @@
   const head = $derived(chat.head)
 
   // The space in front is the panel's space: its threads, its open one.
+  // Untracked, so what the store reads while it changes threads is not something this
+  // effect waits on: only the space is.
   $effect(() => {
-    chat.enter(workspace.activeSpaceId ?? '')
+    const space = workspace.activeSpaceId ?? ''
+    untrack(() => chat.enter(space))
   })
 
   // A thread not yet sent asks whichever provider Ask is set to now.
   $effect(() => {
-    chat.adopt(ai.providerFor('ask'))
+    const provider = ai.providerFor('ask')
+    untrack(() => chat.adopt(provider))
   })
 
   function titleMenu(event: MouseEvent) {
