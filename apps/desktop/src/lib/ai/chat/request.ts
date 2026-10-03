@@ -39,7 +39,7 @@ async function keyFor(provider: Provider): Promise<string> {
 }
 
 /** The headers for a request, or a thrown sentence where none should be made. */
-export async function headers(
+async function headers(
   provider: Provider,
   extra: Record<string, string> = {},
 ): Promise<Record<string, string>> {

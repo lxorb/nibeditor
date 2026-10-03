@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs'
 import { sseJson, sseLines } from '../../stream'
 
 /** A recorded stream's text. */
-export function streamText(name: string): string {
+function streamText(name: string): string {
   return readFileSync(new URL(`./${name}.sse`, import.meta.url), 'utf8')
 }
 
