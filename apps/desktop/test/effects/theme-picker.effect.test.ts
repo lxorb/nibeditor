@@ -184,7 +184,7 @@ test('shows every theme as a card, with the store last', async () => {
   await opened()
 
   const names = cards().map((one) => one.textContent.trim())
-  expect(names).toEqual(['Default', 'High contrast', 'Wallpaper', 'Rose', 'Browse'])
+  expect(names).toEqual(['Default', 'High contrast', 'Glass', 'Wallpaper', 'Rose', 'Browse'])
 })
 
 test('pointing at a theme puts it on the app and writes nothing down', async () => {
@@ -260,6 +260,8 @@ test('the arrows try each theme in turn, and Enter keeps the one they are on', a
   press('ArrowRight')
   expect(theme.id).toBe('contrast')
   press('ArrowRight')
+  expect(theme.id).toBe('glass')
+  press('ArrowRight')
   expect(theme.id).toBe('wallpaper')
   press('ArrowRight')
   expect(theme.id).toBe('file:rose')
@@ -267,14 +269,14 @@ test('the arrows try each theme in turn, and Enter keeps the one they are on', a
   // and the store is not a theme, so the kept one is back while the keys are on it.
   press('ArrowDown')
   expect(theme.id).toBe('default')
-  // Up from the store is a row back: the card above it, High contrast.
+  // Up from the store is a row back: the card above it, Glass.
   press('ArrowUp')
-  expect(theme.id).toBe('contrast')
+  expect(theme.id).toBe('glass')
   expect(localStorage.getItem('nib:theme')).toBeNull()
 
   press('Enter')
   expect(picking.open).toBe(false)
-  expect(localStorage.getItem('nib:theme')).toBe('contrast')
+  expect(localStorage.getItem('nib:theme')).toBe('glass')
 })
 
 test('typing narrows the cards and tries the first that answers', async () => {
