@@ -1581,6 +1581,12 @@ export const gu: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'કનેક્શન નથી',
+  'Not in this release': 'આ રિલીઝમાં નથી',
+  'Needs an update': 'અપડેટ જરૂરી છે',
+  'Signature did not match': 'સહી મેળ ખાતી નથી',
+  'Disk full': 'ડિસ્ક ભરાઈ ગઈ',
+  'Could not be installed': 'ઇન્સ્ટોલ થઈ શક્યું નહીં',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
   // The archive: a row put away and taken back, and what refuses to delete it

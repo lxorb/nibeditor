@@ -9,24 +9,44 @@
      it when pressed; choosing the system's engine again stops it too.
 
      What the row can say comes from the crate (src-tauri/src/engine_switch.rs) and what
-     it offers from `beside` in engine.ts. -->
+     it offers from `beside` in engine.ts. A fetch that fails says why in a few words
+     under the row's name (`onproblem`, `said` in engine.ts) and the whole of it in the
+     log. On the rolling build of main the release has often moved on to the next
+     version; where that version is the update already downloaded, its Chromium is
+     fetched instead and Relaunch starts the update, on Chromium. -->
 <script lang="ts">
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
   import { message, t } from '../i18n.svelte'
+  import { log } from '../log'
   import { dur } from '../motion'
-  import { settings } from '../settings.svelte'
   import { segmented } from '../slide'
   import { invoke, platform } from '../tauri'
-  import { beside, systemName, type Engine, type EngineState } from './engine'
+  import { fetchEngineFor, restartToUpdate, stagedVersion } from '../updater'
+  import { updates } from '../updates.svelte'
+  import {
+    beside,
+    isRefused,
+    movedTo,
+    said,
+    systemName,
+    type Engine,
+    type EngineState,
+  } from './engine'
+
+  /** Hands what went wrong last, in the row's own words, to the row's name to show;
+   *  the empty string once there is nothing to say. */
+  const { onproblem }: { onproblem: (problem: string) => void } = $props()
 
   let engines = $state<EngineState | null>(null)
   let fetching = $state(false)
   /** How much of Chromium has arrived, from nought to one. */
   let arrived = $state(0)
+  /** Chromium fetched for the update waiting to be installed, not for this version. */
+  let withUpdate = $state(false)
 
   const system = systemName(platform())
-  const next = $derived(engines ? beside(engines, fetching) : 'nothing')
+  const next = $derived(engines ? beside(engines, fetching, withUpdate) : 'nothing')
 
   /** Which fetch is the one running: stopping it moves this on, so its end is not
    *  taken for a failure. */
@@ -37,12 +57,18 @@
     fetching = true
     arrived = 0
     try {
-      engines = await invoke<EngineState>('engine_fetch')
+      engines = await invoke<EngineState>('engine_fetch').catch(async (error: unknown) => {
+        const version = movedTo(error)
+        if (!version || !(await updateBrings(version))) throw error
+        const fetched = (await fetchEngineFor(version)) as EngineState
+        withUpdate = true
+        return fetched
+      })
     } catch (error) {
       // A fetch that was stopped says nothing; one that failed says why, and the choice
       // goes back to the engine that is running.
       if (mine === fetches && engines) {
-        settings.error = message(error, 'that did not work')
+        fail(error)
         engines = await invoke<EngineState>('engine_choose', { engine: engines.running })
       }
     } finally {
@@ -50,9 +76,28 @@
     }
   }
 
+  /** Whether the update waiting to be installed is `version`, looked for first where
+   *  none has been downloaded yet. */
+  async function updateBrings(version: string): Promise<boolean> {
+    if (stagedVersion() !== version) await updates.check()
+    arrived = 0
+    return stagedVersion() === version
+  }
+
+  function fail(error: unknown) {
+    if (isRefused(error)) {
+      log('error', `engine: ${error.reason}: ${error.detail}`)
+      onproblem(said(error))
+    } else {
+      log('error', `engine: ${String(error)}`)
+      onproblem(message(error, 'that did not work'))
+    }
+  }
+
   async function choose(engine: Engine) {
     if (!engines || engines.chosen === engine) return
-    settings.error = null
+    onproblem('')
+    withUpdate = false
     if (fetching) {
       fetches += 1
       fetching = false
@@ -61,7 +106,7 @@
     try {
       engines = await invoke<EngineState>('engine_choose', { engine })
     } catch (error) {
-      settings.error = message(error, 'that did not work')
+      fail(error)
       return
     }
     if (engine === 'chromium' && !engines.installed) await fetchChromium()
@@ -72,9 +117,8 @@
   }
 
   function relaunch() {
-    void invoke('engine_relaunch').catch((error: unknown) => {
-      settings.error = message(error, 'that did not work')
-    })
+    if (withUpdate) void restartToUpdate()
+    else void invoke('engine_relaunch').catch(fail)
   }
 
   onMount(() => {
@@ -82,9 +126,9 @@
     let unlisten: (() => void) | null = null
 
     void invoke<EngineState>('engine_state')
-      .then((said) => {
-        engines = said
-        if (said.fellBack) settings.error = 'Chromium did not start'
+      .then((state) => {
+        engines = state
+        if (state.fellBack) onproblem('Chromium did not start')
       })
       .catch(() => undefined)
 

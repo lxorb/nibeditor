@@ -1571,6 +1571,12 @@ export const ko: Dictionary = {
   Engine: '엔진',
   Relaunch: '다시 시작',
   'Chromium did not start': 'Chromium이 시작되지 않았습니다',
+  'No connection': '연결 없음',
+  'Not in this release': '이 릴리스에 없음',
+  'Needs an update': '업데이트 필요',
+  'Signature did not match': '서명이 일치하지 않음',
+  'Disk full': '디스크 가득 참',
+  'Could not be installed': '설치할 수 없음',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
   // The archive: a row put away and taken back, and what refuses to delete it

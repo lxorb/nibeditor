@@ -1600,6 +1600,12 @@ export const gsw: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Neu starte',
   'Chromium did not start': 'Chromium isch nöd gstartet',
+  'No connection': 'Kei Verbindig',
+  'Not in this release': 'Nöd i dere Version',
+  'Needs an update': 'Bruucht es Update',
+  'Signature did not match': 'Signatur stimmt nöd',
+  'Disk full': 'Festplatte voll',
+  'Could not be installed': 'Het nöd chöne installiert wärde',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -169,22 +169,20 @@ class Watch:
             time.sleep(0.05)
 
     def _look(self) -> None:
+        # The screens in their own pixels, as `run_probe`'s watch reads them.
+        probe_app.in_physical_pixels()
         lowered: set[int] = set()
         while not self.stopped:
-            lowest(list(self.pids), lowered)
-            for pid in list(self.pids):
-                seen = in_view(pid)
-                if seen:
-                    front = probe_app.user32.GetForegroundWindow()
-                    kind = ctypes.create_unicode_buffer(256)
-                    probe_app.user32.GetClassNameW(front, kind, 256)
-                    self.end()
-                    print(
-                        f"PROBE IN VIEW: {seen} (pid {pid}, {image_of(pid) or 'gone'}, class {kind.value!r},"
-                        f" during {STEP[0]!r}); ended every probe process.",
-                        file=sys.stderr,
-                    )
-                    os._exit(3)
+            pids = list(self.pids)
+            lowest(pids, lowered)
+            seen = in_view(probe_app.look(pids), pids)
+            if seen:
+                self.end()
+                print(
+                    f"PROBE IN VIEW: {'; '.join(seen)} (during {STEP[0]!r}); ended every probe process.",
+                    file=sys.stderr,
+                )
+                os._exit(3)
             time.sleep(probe_app.LOOK_EVERY)
 
     def end(self) -> None:

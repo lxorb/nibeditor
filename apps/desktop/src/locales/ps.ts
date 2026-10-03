@@ -1593,6 +1593,12 @@ export const ps: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'اړیکه نشته',
+  'Not in this release': 'په دې خپرونه کې نشته',
+  'Needs an update': 'تازه کول پکار دي',
+  'Signature did not match': 'لاسلیک سمون نه خوري',
+  'Disk full': 'ډیسک ډک دی',
+  'Could not be installed': 'نصب نه شو',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
   // The archive: a row put away and taken back, and what refuses to delete it

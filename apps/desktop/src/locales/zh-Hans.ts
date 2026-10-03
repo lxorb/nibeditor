@@ -1553,6 +1553,12 @@ export const zhHans: Dictionary = {
   Engine: '引擎',
   Relaunch: '重新启动',
   'Chromium did not start': 'Chromium 未能启动',
+  'No connection': '无连接',
+  'Not in this release': '此版本中没有',
+  'Needs an update': '需要更新',
+  'Signature did not match': '签名不匹配',
+  'Disk full': '磁盘已满',
+  'Could not be installed': '无法安装',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
   // The archive: a row put away and taken back, and what refuses to delete it

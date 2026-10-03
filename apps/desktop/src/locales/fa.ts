@@ -1590,6 +1590,12 @@ export const fa: Dictionary = {
   Engine: 'موتور',
   Relaunch: 'راه‌اندازی دوباره',
   'Chromium did not start': 'Chromium اجرا نشد',
+  'No connection': 'اتصال برقرار نیست',
+  'Not in this release': 'در این نسخه نیست',
+  'Needs an update': 'به‌روزرسانی لازم است',
+  'Signature did not match': 'امضا مطابقت ندارد',
+  'Disk full': 'دیسک پر است',
+  'Could not be installed': 'نصب نشد',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

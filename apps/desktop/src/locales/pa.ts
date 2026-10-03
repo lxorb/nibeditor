@@ -1596,6 +1596,12 @@ export const pa: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'ਕਨੈਕਸ਼ਨ ਨਹੀਂ',
+  'Not in this release': 'ਇਸ ਰਿਲੀਜ਼ ਵਿੱਚ ਨਹੀਂ',
+  'Needs an update': 'ਅੱਪਡੇਟ ਚਾਹੀਦਾ ਹੈ',
+  'Signature did not match': 'ਦਸਤਖ਼ਤ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
+  'Disk full': 'ਡਿਸਕ ਭਰੀ ਹੋਈ',
+  'Could not be installed': 'ਇੰਸਟਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
   // The archive: a row put away and taken back, and what refuses to delete it

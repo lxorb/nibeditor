@@ -1616,6 +1616,12 @@ export const sw: Dictionary = {
   Engine: 'Injini',
   Relaunch: 'Zindua upya',
   'Chromium did not start': 'Chromium haikuanza',
+  'No connection': 'Hakuna muunganisho',
+  'Not in this release': 'Haipo katika toleo hili',
+  'Needs an update': 'Inahitaji sasisho',
+  'Signature did not match': 'Sahihi hailingani',
+  'Disk full': 'Diski imejaa',
+  'Could not be installed': 'Imeshindwa kusakinishwa',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

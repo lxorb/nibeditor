@@ -1592,6 +1592,12 @@ export const mr: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'कनेक्शन नाही',
+  'Not in this release': 'या रिलीझमध्ये नाही',
+  'Needs an update': 'अपडेट हवे',
+  'Signature did not match': 'स्वाक्षरी जुळली नाही',
+  'Disk full': 'डिस्क भरली',
+  'Could not be installed': 'इंस्टॉल करता आले नाही',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
   // The archive: a row put away and taken back, and what refuses to delete it

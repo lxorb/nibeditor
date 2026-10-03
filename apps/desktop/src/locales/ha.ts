@@ -1617,6 +1617,12 @@ export const ha: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'Babu haɗi',
+  'Not in this release': 'Ba ya cikin wannan sakin',
+  'Needs an update': 'Yana buƙatar sabuntawa',
+  'Signature did not match': 'Sa hannu bai dace ba',
+  'Disk full': 'Faifai ya cika',
+  'Could not be installed': 'Ba a iya shigarwa ba',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1583,6 +1583,12 @@ export const jv: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'Ora ana sambungan',
+  'Not in this release': 'Ora ana ing rilis iki',
+  'Needs an update': 'Butuh nganyari',
+  'Signature did not match': 'Tandha tangan ora cocog',
+  'Disk full': 'Disk kebak',
+  'Could not be installed': 'Ora bisa dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

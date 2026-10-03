@@ -1646,6 +1646,12 @@ export const it: Dictionary = {
   Engine: 'Motore',
   Relaunch: 'Riavvia',
   'Chromium did not start': 'Chromium non si è avviato',
+  'No connection': 'Nessuna connessione',
+  'Not in this release': 'Non in questa versione',
+  'Needs an update': 'Serve un aggiornamento',
+  'Signature did not match': 'La firma non corrisponde',
+  'Disk full': 'Disco pieno',
+  'Could not be installed': 'Impossibile installare',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annulla le modifiche di {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

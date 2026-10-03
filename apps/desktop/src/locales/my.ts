@@ -1581,6 +1581,12 @@ export const my: Dictionary = {
   Engine: 'Engine',
   Relaunch: 'Relaunch',
   'Chromium did not start': 'Chromium did not start',
+  'No connection': 'ချိတ်ဆက်မှု မရှိပါ',
+  'Not in this release': 'ဤထုတ်ဝေမှုတွင် မပါပါ',
+  'Needs an update': 'အပ်ဒိတ် လိုအပ်သည်',
+  'Signature did not match': 'လက်မှတ် မကိုက်ညီပါ',
+  'Disk full': 'ဒစ်ခ် ပြည့်နေသည်',
+  'Could not be installed': 'ထည့်သွင်း၍ မရပါ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
   // The archive: a row put away and taken back, and what refuses to delete it

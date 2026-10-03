@@ -30,9 +30,10 @@
 //! does not verify.
 
 use std::fs::File;
-use std::io::{Read as _, Write as _};
+use std::io::{ErrorKind, Read as _, Write as _};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
@@ -54,6 +55,78 @@ const SOURCE: &str = "NIB_ENGINE_SOURCE";
 
 /// The event the window hears the fetch's progress on.
 const PROGRESS: &str = "nib://engine-progress";
+
+/// How long a connection may take to open, and how long a download may go without a
+/// byte, before it counts as no connection rather than a ring that never fills.
+const CONNECT: Duration = Duration::from_secs(20);
+const SILENT: Duration = Duration::from_secs(60);
+
+/// Why a fetch ended without an engine, in the few words the Browser row says it in;
+/// see `said` in settings/engine.ts. The whole of what went wrong goes to the log.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Reason {
+    /// No answer from where the release is, or a download that broke off.
+    Offline,
+    /// The release carries no Chromium, or none for this system.
+    Missing,
+    /// The release's Chromium is for another version of the app - on the rolling build
+    /// of main, the one the next update brings. The window fetches that one instead.
+    Moved,
+    /// A file not signed with the app's own key.
+    Unsigned,
+    /// The disk is full.
+    Full,
+    /// Stopped by the person, which the row says nothing about.
+    Stopped,
+    /// Anything else: a file that could not be written or unpacked.
+    Failed,
+}
+
+/// A fetch that did not end in an engine: why, and the detail for the log.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Refused {
+    pub reason: Reason,
+    /// The version the release's Chromium is for, where it is another one.
+    pub version: Option<String>,
+    pub detail: String,
+}
+
+impl Refused {
+    fn new(reason: Reason, detail: impl Into<String>) -> Self {
+        Self {
+            reason,
+            version: None,
+            detail: detail.into(),
+        }
+    }
+
+    fn failed(detail: String) -> Self {
+        Self::new(Reason::Failed, detail)
+    }
+
+    /// A request that got no file: a release without it, or no answer at all.
+    fn unreached(what: &str, error: &reqwest::Error) -> Self {
+        let reason = if error.status() == Some(reqwest::StatusCode::NOT_FOUND) {
+            Reason::Missing
+        } else {
+            Reason::Offline
+        };
+        Self::new(reason, format!("{what}: {error}"))
+    }
+
+    /// A file that could not be written or read: the disk being full is the one a
+    /// person can do something about, so it is the one said apart.
+    fn disk(what: &str, error: &std::io::Error) -> Self {
+        let reason = if error.kind() == ErrorKind::StorageFull {
+            Reason::Full
+        } else {
+            Reason::Failed
+        };
+        Self::new(reason, format!("{what}: {error}"))
+    }
+}
 
 /// Whether a fetch is running, and whether it was asked to stop.
 #[derive(Default)]
@@ -169,14 +242,14 @@ pub fn verified(path: &Path, signature: &str, key: &str) -> Result<(), String> {
 
 /// Unpacks a `.tar.gz` into a folder, keeping what a Mac bundle needs: its links and
 /// which files may be run.
-fn unpacked(archive: &Path, into: &Path) -> Result<(), String> {
-    let file = File::open(archive).map_err(|error| error.to_string())?;
+fn unpacked(archive: &Path, into: &Path) -> Result<(), Refused> {
+    let file = File::open(archive).map_err(|error| Refused::disk("opening the archive", &error))?;
     let mut tarball = tar::Archive::new(flate2::read::GzDecoder::new(file));
     tarball.set_preserve_permissions(true);
     tarball.set_overwrite(true);
     tarball
         .unpack(into)
-        .map_err(|error| format!("that archive could not be unpacked: {error}"))
+        .map_err(|error| Refused::disk("that archive could not be unpacked", &error))
 }
 
 /// Every file under `from` put at the same place under `to`, as a hard link where the
@@ -224,6 +297,23 @@ fn pruned(engines: &Path, keep: &[&str]) {
     }
 }
 
+/// What a fetch that did not finish leaves behind - an archive half downloaded or not
+/// signed, a folder half unpacked - thrown away, so a failure costs no disk. Finished
+/// folders are not touched: only an archive or a `.partial` folder is ever unfinished.
+fn leftovers(engines: &Path) {
+    let Ok(entries) = std::fs::read_dir(engines) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.ends_with(".tar.gz") {
+            let _ = std::fs::remove_file(entry.path());
+        } else if name.ends_with(".partial") {
+            let _ = std::fs::remove_dir_all(entry.path());
+        }
+    }
+}
+
 /// The folder name a runtime archive is unpacked into.
 pub fn runtime_folder(archive: &Archive) -> String {
     archive.name.trim_end_matches(".tar.gz").to_string()
@@ -244,26 +334,28 @@ async fn downloaded(
     to: &Path,
     before: u64,
     total: u64,
-) -> Result<(), String> {
+) -> Result<(), Refused> {
     let fetching = app.state::<Fetching>();
     let mut response = client
         .get(format!("{base}{}", archive.name))
         .send()
         .await
         .and_then(reqwest::Response::error_for_status)
-        .map_err(|error| format!("Chromium could not be downloaded: {error}"))?;
+        .map_err(|error| Refused::unreached(&archive.name, &error))?;
 
-    let mut file = File::create(to).map_err(|error| error.to_string())?;
+    let mut file =
+        File::create(to).map_err(|error| Refused::disk("saving the download", &error))?;
     let mut done = 0u64;
     while let Some(chunk) = response
         .chunk()
         .await
-        .map_err(|error| format!("the download stopped: {error}"))?
+        .map_err(|error| Refused::new(Reason::Offline, format!("the download stopped: {error}")))?
     {
         if fetching.stopped() {
-            return Err("stopped".to_string());
+            return Err(Refused::new(Reason::Stopped, "stopped"));
         }
-        file.write_all(&chunk).map_err(|error| error.to_string())?;
+        file.write_all(&chunk)
+            .map_err(|error| Refused::disk("saving the download", &error))?;
         done += chunk.len() as u64;
         let _ = app.emit(
             PROGRESS,
@@ -275,8 +367,9 @@ async fn downloaded(
     }
     drop(file);
 
-    let key = crate::engine_switch::fetch::updater_key(app)?;
+    let key = updater_key(app).map_err(Refused::failed)?;
     verified(to, &archive.signature, &key)
+        .map_err(|error| Refused::new(Reason::Unsigned, format!("{}: {error}", archive.name)))
 }
 
 /// The updater's public key, from the app's own config: the key every release is signed
@@ -294,34 +387,27 @@ fn updater_key(app: &AppHandle) -> Result<String, String> {
 
 /// Fetches this version's Chromium build - the runtime too, where the one it needs is
 /// not here yet - and says where it got to.
-async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), String> {
+async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), Refused> {
     let version = places.version.clone();
     let base = source_of(&version);
     let client = reqwest::Client::builder()
+        .connect_timeout(CONNECT)
+        .read_timeout(SILENT)
         .build()
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| Refused::failed(error.to_string()))?;
 
     let manifest: Manifest = client
         .get(format!("{base}chromium.json"))
         .send()
         .await
         .and_then(reqwest::Response::error_for_status)
-        .map_err(|error| format!("this release has no Chromium: {error}"))?
+        .map_err(|error| Refused::unreached("chromium.json", &error))?
         .json()
         .await
-        .map_err(|error| format!("this release's Chromium could not be read: {error}"))?;
-    if manifest.version != version {
-        return Err(format!(
-            "that Chromium is for {}, not {version}",
-            manifest.version
-        ));
-    }
-    let wanted = manifest
-        .platforms
-        .get(&platform())
-        .ok_or("this release has no Chromium for this system")?;
+        .map_err(|error| Refused::new(Reason::Missing, format!("chromium.json: {error}")))?;
+    let wanted = matching(&manifest, &version, &platform())?;
 
-    crate::paths::made(&places.engines)?;
+    crate::paths::made(&places.engines).map_err(Refused::failed)?;
     let runtime = places.engines.join(runtime_folder(&wanted.runtime));
     let needs_runtime = !runtime.join(READY).is_file();
     let total = wanted.app.size
@@ -338,9 +424,11 @@ async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), String> {
         let _ = std::fs::remove_dir_all(&staged);
         unpacked(&archive, &staged)?;
         let _ = std::fs::remove_file(&archive);
-        std::fs::write(staged.join(READY), b"").map_err(|error| error.to_string())?;
+        std::fs::write(staged.join(READY), b"")
+            .map_err(|error| Refused::disk("marking the runtime", &error))?;
         let _ = std::fs::remove_dir_all(&runtime);
-        std::fs::rename(&staged, &runtime).map_err(|error| error.to_string())?;
+        std::fs::rename(&staged, &runtime)
+            .map_err(|error| Refused::disk("putting the runtime in place", &error))?;
     }
 
     let archive = places.engines.join(&wanted.app.name);
@@ -354,19 +442,45 @@ async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), String> {
     let folder = places.chromium();
     let staged = folder.with_extension("partial");
     let _ = std::fs::remove_dir_all(&staged);
-    crate::paths::made(&staged)?;
-    linked(&runtime, &staged)?;
+    crate::paths::made(&staged).map_err(Refused::failed)?;
+    linked(&runtime, &staged).map_err(Refused::failed)?;
     unpacked(&archive, &staged)?;
     let _ = std::fs::remove_file(&archive);
     let _ = std::fs::remove_file(staged.join(READY));
     std::fs::write(staged.join(READY), runtime_folder(&wanted.runtime))
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| Refused::disk("marking the engine", &error))?;
     let _ = std::fs::remove_dir_all(&folder);
-    std::fs::rename(&staged, &folder).map_err(|error| error.to_string())?;
+    std::fs::rename(&staged, &folder)
+        .map_err(|error| Refused::disk("putting the engine in place", &error))?;
 
     let running = app.package_info().version.to_string();
     pruned(&places.engines, &[&places.version, &running]);
     Ok(())
+}
+
+/// This system's two archives from a release's manifest, where it is for `version`.
+///
+/// The rolling build of main is one release, remade by every push, so a version of the
+/// app that is not the newest finds the next one's Chromium there. That is said as
+/// `Moved`, with the version, for the window to fetch the engine of the update instead.
+fn matching<'a>(
+    manifest: &'a Manifest,
+    version: &str,
+    system: &str,
+) -> Result<&'a Platform, Refused> {
+    if manifest.version != version {
+        return Err(Refused {
+            reason: Reason::Moved,
+            version: Some(manifest.version.clone()),
+            detail: format!("that Chromium is for {}, not {version}", manifest.version),
+        });
+    }
+    manifest.platforms.get(system).ok_or_else(|| {
+        Refused::new(
+            Reason::Missing,
+            format!("this release has no Chromium for {system}"),
+        )
+    })
 }
 
 /// Fetches nib's own Chromium for this version of the app - or for `version`, the one an
@@ -374,17 +488,23 @@ async fn fetch_engine(app: &AppHandle, places: &Places) -> Result<(), String> {
 /// unless it is here already, saying how far it has got on `nib://engine-progress`.
 /// Answers the Browser row's state once it is in place.
 #[tauri::command]
-pub async fn engine_fetch(app: AppHandle, version: Option<String>) -> Result<State, String> {
+pub async fn engine_fetch(app: AppHandle, version: Option<String>) -> Result<State, Refused> {
     if !super::OFFERED {
-        return Err("Chromium is not available on this system".into());
+        return Err(Refused::new(
+            Reason::Missing,
+            "Chromium is not offered on this system",
+        ));
     }
-    let mut places = super::places(&app)?;
+    let mut places = super::places(&app).map_err(Refused::failed)?;
     if let Some(version) = version {
         places.version = version;
     }
     let fetching = app.state::<Fetching>();
     if fetching.running.swap(true, Ordering::SeqCst) {
-        return Err("Chromium is already being fetched".into());
+        return Err(Refused::new(
+            Reason::Failed,
+            "Chromium is already being fetched",
+        ));
     }
     fetching.stop.store(false, Ordering::SeqCst);
 
@@ -395,11 +515,15 @@ pub async fn engine_fetch(app: AppHandle, version: Option<String>) -> Result<Sta
     let done = if places.chromium_exe().is_some() {
         Ok(())
     } else {
-        fetch_engine(&app, &places).await
+        fetch_engine(&app, &places)
+            .await
+            .inspect_err(|_| leftovers(&places.engines))
     };
     fetching.running.store(false, Ordering::SeqCst);
     done?;
-    super::places(&app).map(|running| super::row_state(&running))
+    super::places(&app)
+        .map(|running| super::row_state(&running))
+        .map_err(Refused::failed)
 }
 
 /// Stops a fetch that is running. What it had downloaded is thrown away.
@@ -412,7 +536,9 @@ pub fn engine_cancel(app: AppHandle) {
 mod tests {
     use std::io::Write as _;
 
-    use super::{linked, platform, release, runtime_folder, unpacked, Manifest};
+    use super::{
+        linked, matching, platform, release, runtime_folder, unpacked, Manifest, Reason, Refused,
+    };
 
     #[test]
     fn a_version_is_fetched_from_the_release_it_came_from() {
@@ -449,6 +575,66 @@ mod tests {
             "chromium-runtime-152.0.6-windows-aarch64"
         );
         assert_eq!(windows.app.size, 9);
+    }
+
+    #[test]
+    fn a_release_for_another_version_says_which_and_one_without_this_system_says_so() {
+        let said = r#"{
+          "version": "0.9.3-12",
+          "platforms": {
+            "windows-x86_64": {
+              "runtime": { "name": "r.tar.gz", "signature": "c2ln", "size": 1 },
+              "app": { "name": "a.tar.gz", "signature": "c2ln", "size": 1 }
+            }
+          }
+        }"#;
+        let manifest: Manifest = serde_json::from_str(said).expect("read");
+
+        let moved = matching(&manifest, "0.9.3-10", "windows-x86_64").expect_err("moved");
+        assert_eq!(moved.reason, Reason::Moved);
+        assert_eq!(moved.version.as_deref(), Some("0.9.3-12"));
+
+        let missing = matching(&manifest, "0.9.3-12", "windows-aarch64").expect_err("missing");
+        assert_eq!(missing.reason, Reason::Missing);
+
+        assert!(matching(&manifest, "0.9.3-12", "windows-x86_64").is_ok());
+    }
+
+    #[test]
+    fn a_full_disk_is_said_apart_from_any_other_write() {
+        let full = std::io::Error::from(std::io::ErrorKind::StorageFull);
+        assert_eq!(Refused::disk("saving", &full).reason, Reason::Full);
+        let other = std::io::Error::from(std::io::ErrorKind::PermissionDenied);
+        assert_eq!(Refused::disk("saving", &other).reason, Reason::Failed);
+    }
+
+    #[test]
+    fn a_refusal_reaches_the_window_as_a_reason_and_its_detail() {
+        let said = serde_json::to_value(Refused::new(Reason::Offline, "no route")).expect("said");
+        assert_eq!(
+            said,
+            serde_json::json!({ "reason": "offline", "version": null, "detail": "no route" })
+        );
+    }
+
+    #[test]
+    fn a_fetch_that_failed_leaves_no_archive_and_no_half_folder_behind() {
+        let root = tempfile::tempdir().expect("a folder");
+        let engines = root.path();
+        for folder in ["1.0.0", "runtime-a", "1.1.0.partial"] {
+            std::fs::create_dir_all(engines.join(folder)).expect("made");
+        }
+        std::fs::write(engines.join("runtime-b.tar.gz"), b"half").expect("written");
+
+        super::leftovers(engines);
+
+        let mut left: Vec<String> = std::fs::read_dir(engines)
+            .expect("read")
+            .flatten()
+            .map(|one| one.file_name().to_string_lossy().to_string())
+            .collect();
+        left.sort();
+        assert_eq!(left, ["1.0.0", "runtime-a"]);
     }
 
     #[test]
