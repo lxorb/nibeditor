@@ -26,12 +26,15 @@
 //! | `shared` | the six tools the account connector has too, in its words |
 //! | `marks` | the untrusted marks round words from outside |
 //! | `program` | the program the settings pane's copy line names |
+//! | `host` | the same tools and answers, for the AI sidebar's agent inside the app |
 //!
 //! Std and serde only, beside the crate's own types and one Win32 flag (`app.rs`): it
 //! starts in milliseconds and grows no dependency graph of its own.
 
 mod app;
 mod home;
+// The AI sidebar's agent, served from inside the app; see ai_agent.rs.
+pub(crate) mod host;
 mod link;
 mod marks;
 mod pairing;

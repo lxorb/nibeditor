@@ -37,10 +37,15 @@ mod agents;
 // What a launch reads first, read while the webview starts; see ahead.rs.
 #[cfg(desktop)]
 mod ahead;
+// The AI sidebar's agent: nib's own tools under a built-in grant; see ai_agent.rs.
+#[cfg(desktop)]
+mod ai_agent;
 // Claude Code and Codex, run headless on this machine with the reader's own plan; see
 // ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
 mod ai_cli;
+// The AI sidebar's threads, kept on this device; see ai_threads.rs.
+mod ai_threads;
 // A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
 #[cfg(desktop)]
 mod appearance;
@@ -248,6 +253,11 @@ macro_rules! commands {
             space_watch::space_unwatch,
             space_watch::space_scan,
             space_watch::file_identity,
+            ai_threads::ai_threads_list,
+            ai_threads::ai_thread_read,
+            ai_threads::ai_thread_write,
+            ai_threads::ai_thread_delete,
+            ai_threads::ai_threads_forget,
             $($desktop)*
         ]
     };
@@ -279,6 +289,8 @@ macro_rules! desktop_commands {
             agents::shell::agents_shell,
             agents::shell::agents_hold,
             mcp::program::mcp_program,
+            ai_agent::ai_agent_tools,
+            ai_agent::ai_agent_call,
             ai_cli::ai_cli_status,
             ai_cli::ai_cli_ask,
             ai_cli::ai_cli_stop,
