@@ -1133,8 +1133,8 @@ export const ta: Dictionary = {
     '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Notes மட்டுமே திறக்கும்',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} குறிப்புகள் சமீபத்தில் நீக்கியவற்றில் உள்ளன, அங்கேயே இருக்கும்',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} வரைபடங்களும் வருடிய பக்கங்களும் Notes தானே வரையும் படங்கள்',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} வரைபடங்களுக்கும் வருடல்களுக்கும் இந்த Mac இல் படம் இல்லை',
   '{count} tables inside notes do not come over':
     'குறிப்புகளுக்குள் உள்ள {count} அட்டவணைகள் வரவில்லை',
   '{count} attachments are in iCloud rather than on this Mac':

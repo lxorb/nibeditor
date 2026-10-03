@@ -1120,8 +1120,8 @@ export const mr: Dictionary = {
     '{count} नोंदी पासवर्डच्या मागे आहेत, जो फक्त Notes उघडू शकते',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} नोंदी अलीकडे काढलेल्यांत आहेत आणि तिथेच राहतात',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} रेखाटने व स्कॅन केलेली पाने ही Notes स्वतः काढणारी चित्रे आहेत',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} रेखाटने व स्कॅन यांचे या Mac वर चित्र नाही',
   '{count} tables inside notes do not come over': 'नोंदींतील {count} तक्ते येत नाहीत',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} जोडपत्रे या Mac वर नसून iCloud मध्ये आहेत',

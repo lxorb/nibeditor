@@ -1103,8 +1103,8 @@ export const th: Dictionary = {
     'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Notes เปิดได้',
   '{count} notes are in Recently Deleted, and stay there':
     'โน้ต {count} รายการอยู่ในที่ลบเมื่อเร็วๆ นี้ และยังอยู่ที่นั่น',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'ภาพวาดและหน้าที่สแกน {count} รายการเป็นภาพที่ Notes วาดเอง',
+  '{count} drawings and scans have no picture on this Mac':
+    'ภาพวาดและภาพสแกน {count} รายการไม่มีภาพบน Mac เครื่องนี้',
   '{count} tables inside notes do not come over': 'ตาราง {count} ตารางในโน้ตไม่ถูกนำมา',
   '{count} attachments are in iCloud rather than on this Mac':
     'ไฟล์แนบ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',

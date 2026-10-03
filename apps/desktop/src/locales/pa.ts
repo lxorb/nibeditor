@@ -1128,8 +1128,8 @@ export const pa: Dictionary = {
     '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Notes ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ਨੋਟਾਂ ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਵਿੱਚ ਹਨ ਤੇ ਉੱਥੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} ਚਿੱਤਰ ਤੇ ਸਕੈਨ ਕੀਤੇ ਸਫ਼ੇ ਉਹ ਤਸਵੀਰਾਂ ਹਨ ਜੋ Notes ਆਪ ਬਣਾਉਂਦਾ ਹੈ',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} ਚਿੱਤਰਾਂ ਤੇ ਸਕੈਨਾਂ ਦੀ ਇਸ Mac ਉੱਤੇ ਕੋਈ ਤਸਵੀਰ ਨਹੀਂ',
   '{count} tables inside notes do not come over': 'ਨੋਟਾਂ ਅੰਦਰ {count} ਸਾਰਨੀਆਂ ਨਹੀਂ ਆਉਂਦੀਆਂ',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ਨਾਲ ਲੱਗੀਆਂ ਚੀਜ਼ਾਂ ਇਸ Mac ਉੱਤੇ ਨਹੀਂ, iCloud ਵਿੱਚ ਹਨ',

@@ -1117,8 +1117,8 @@ export const ms: Dictionary = {
     '{count} nota berada di sebalik kata laluan yang hanya Notes boleh buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} nota berada dalam Baru dihapuskan dan kekal di sana',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} lukisan dan halaman terpindai ialah imej yang Notes lukis sendiri',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} lukisan dan imbasan tiada imej pada Mac ini',
   '{count} tables inside notes do not come over': '{count} jadual dalam nota tidak sampai',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran berada dalam iCloud, bukan pada Mac ini',
