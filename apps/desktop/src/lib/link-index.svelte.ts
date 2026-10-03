@@ -593,6 +593,7 @@ class Links {
    *  A canvas counts, because the notes its file nodes name are links out of it;
    *  see `canvasRead`. */
   noteSaved(path: string, content: string) {
+    for (const hear of this.hearing) hear(path, content)
     const relative = this.relative(path)
     // A file of another space, which this index is not of: what it wears is kept
     // beside it, for its tab and its row; see chosen-icon.ts.
@@ -630,6 +631,22 @@ class Links {
     this.put(scanNote(relative, content))
     // What was written is what the note says, so an embed of it needs no read.
     this.read.set(relative, content)
+  }
+
+  /** Whoever else reads every file the app writes, in any space: the rows of every
+   *  space (rows/start.svelte.ts), which arrive after the launch order. Every write
+   *  already says itself here, so they hear it here rather than at every writer. */
+  private readonly hearing = new Set<(path: string, content: string) => void>()
+
+  hearSaves(hear: (path: string, content: string) => void): () => void {
+    this.hearing.add(hear)
+    return () => this.hearing.delete(hear)
+  }
+
+  /** The open space's notes as the index holds them: its scan, which the rows of the
+   *  space are made from rather than a second read of every note. */
+  held(): readonly ScannedNote[] {
+    return this.notes
   }
 
   /** A canvas that has just been opened, so the panel can say what it points at
@@ -1215,6 +1232,7 @@ class Links {
 
       await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
       await invoke('write_note', { path: absolute, content: after })
+      for (const hear of this.hearing) hear(absolute, after)
 
       this.notes = this.notes.map((one) =>
         one.path === note.path ? scanNote(note.path, after) : one,
