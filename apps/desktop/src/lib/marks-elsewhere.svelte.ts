@@ -22,7 +22,7 @@ import { invoke } from './tauri'
 import { readWebFile } from './web-tab/shortcut'
 
 /** What one file wears, in the link index's own words for each. */
-export interface Worn {
+interface Worn {
   icon: string | null
   iconColor: string | null
   favicon: string | null

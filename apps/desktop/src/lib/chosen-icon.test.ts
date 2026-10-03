@@ -70,8 +70,9 @@ const { elsewhere } = await import('./marks-elsewhere.svelte')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
 
 function tabAt(path: string) {
-  const doc = new NoteDoc({ kind: 'note', path, name: 'Plan.md', text: '', dirty: false }, () =>
-    Promise.resolve(),
+  const doc = new NoteDoc(
+    { kind: 'note', path, name: 'Plan.md', text: '', dirty: false },
+    () => undefined,
   )
   return new Tab(doc, 'pane')
 }
