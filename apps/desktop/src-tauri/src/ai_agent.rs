@@ -186,10 +186,16 @@ pub fn ai_agent_call(
 /// as `get_context` and `workspace_tabs` answer the provider's agent. Asked by nib for
 /// the turn rather than by the model, so in every mode; each verb only as far as the
 /// grant reaches, and written for the model with its marks like any answer.
-const CONTEXT: [(&str, fn() -> Value); 2] = [
-    ("get_context", || json!({})),
-    ("workspace_tabs", || json!({ "op": "list" })),
-];
+const CONTEXT: [&str; 2] = ["get_context", "workspace_tabs"];
+
+/// What each of them is asked with: the tabs listed, and nothing opened or closed.
+fn context_args(verb: &str) -> Value {
+    if verb == "workspace_tabs" {
+        json!({ "op": "list" })
+    } else {
+        json!({})
+    }
+}
 
 /// The reader's context for a turn: one answer a verb, as the model reads it.
 #[tauri::command(async)]
@@ -208,9 +214,9 @@ pub fn ai_agent_context(
     let caller = Caller::Agent(Box::new(grant));
     Ok(CONTEXT
         .iter()
-        .filter(|(verb, _)| reached.contains(*verb))
-        .map(|(verb, args)| {
-            let args = args();
+        .filter(|verb| reached.contains(**verb))
+        .map(|verb| {
+            let args = context_args(verb);
             let asked = json!({ "verb": verb, "args": args, "rest": [] });
             let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
             host::rendered(verb, &args, status, &body)
@@ -326,9 +332,9 @@ mod tests {
 
     #[test]
     fn every_turn_asks_where_the_reader_is_by_the_two_verbs_that_say() {
-        let verbs: Vec<&str> = CONTEXT.iter().map(|(verb, _)| *verb).collect();
-        assert_eq!(verbs, ["get_context", "workspace_tabs"]);
-        assert_eq!(CONTEXT[1].1(), json!({ "op": "list" }));
+        assert_eq!(CONTEXT, ["get_context", "workspace_tabs"]);
+        assert_eq!(context_args("workspace_tabs"), json!({ "op": "list" }));
+        assert_eq!(context_args("get_context"), json!({}));
     }
 
     #[test]
