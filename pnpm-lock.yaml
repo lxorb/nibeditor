@@ -99,6 +99,9 @@ importers:
       '@iconify-json/flat-color-icons':
         specifier: ^1.2.3
         version: 1.2.3
+      '@nib/bases':
+        specifier: workspace:*
+        version: link:../../packages/bases
       '@nib/editor':
         specifier: workspace:*
         version: link:../../packages/editor
