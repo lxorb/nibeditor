@@ -5,7 +5,7 @@
 //! | --- | --- | --- | --- |
 //! | `WebView2` | a child webview outside the window's client area (`tabs.rs`) | its webview | the `DevTools` Protocol, all of them |
 //! | nib's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
-//! | `WKWebView`, `WebKitGTK` | none: see `webkit.rs` and `gtk.rs` for what was measured and why | - | `unsupported_on_this_engine` |
+//! | `WKWebView`, `WebKitGTK` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | `unsupported_on_this_engine` |
 //!
 //! **The reader's logins, never the reader's extensions.** Emil, 2026-10-03: an agent's
 //! tab never loads the reader's extensions. An extension is installed into a profile, and

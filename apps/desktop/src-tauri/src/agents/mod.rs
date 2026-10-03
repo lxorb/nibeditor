@@ -305,12 +305,23 @@ fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
 
-/// Every other engine: no honest way yet (section 12).
+/// The system's engine on a Mac and on Linux: measured, not built (section 12). Its
+/// pages can be kept out of sight and alive, but every way a page reaches the reader -
+/// a file panel, a camera prompt, a window - is the engine's own delegate there, which
+/// nib does not hold for an agent's page yet; so no verb pretends.
 #[cfg(not(any(windows, feature = "cef")))]
 fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,
-        format!("{} is not available on this engine yet", verb.name()),
+        format!(
+            "{} is not available on {}: an agent's browser runs on Windows and on nib's own Chromium",
+            verb.name(),
+            if cfg!(target_os = "macos") {
+                "WKWebView"
+            } else {
+                "WebKitGTK"
+            }
+        ),
     )
 }
 
