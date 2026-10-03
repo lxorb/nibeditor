@@ -47,10 +47,17 @@ vi.mock('./link-index.svelte', () => ({
   },
 }))
 
+/** The marks open tabs' pages show, by tab. */
+const live: Record<string, string> = {}
+
 vi.mock('./web-tab/pages.svelte', () => ({
-  siteMark: (live: string | null, _url: string | null, written?: string | null) =>
-    live ?? written ?? null,
+  pages: { iconOf: (tab: string) => live[tab] ?? null },
+  siteMark: (shown: string | null, _url: string | null, written?: string | null) =>
+    shown ?? written ?? null,
 }))
+
+/** The tabs open in the window. */
+const tabs: { kind: string; path: string | null; id: string }[] = []
 
 vi.mock('./workspace.svelte', () => ({
   workspace: {
@@ -62,6 +69,7 @@ vi.mock('./workspace.svelte', () => ({
       return { root: index.root }
     },
     folderIcons: { iconOf: () => null, tintOf: () => null },
+    tabs,
   },
 }))
 
@@ -131,6 +139,16 @@ describe('two spaces with a tab each', () => {
   test('a website of another space wears the mark its file wrote down', async () => {
     open('/Work')
 
+    expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
+  })
+
+  test('a website open in a tab wears the mark the tab wears now', async () => {
+    open('/Work')
+    tabs.push({ kind: 'web', path: '/Home/Docs.url', id: 't1' })
+    live.t1 = 'data:image/png;base64,BADGE'
+
+    expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,BADGE')
+    tabs.length = 0
     expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
   })
 
