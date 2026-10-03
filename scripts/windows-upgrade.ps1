@@ -48,12 +48,20 @@ function Value([string]$key, [string]$name = '(default)') {
 
 function Has([string]$key) { Test-Path -LiteralPath $key }
 
+# The program a command starts, as a long path: the MSI writes its own as a short one
+# (C:\PROGRA~1\...), which is the same file.
+function Starts([string]$command) {
+  if ($command -notmatch '^"([^"]+)"') { return $null }
+  $file = Get-Item -LiteralPath $Matches[1] -ErrorAction SilentlyContinue
+  if ($file) { return $file.FullName } else { return $Matches[1] }
+}
+
 Add-Type -Namespace Nib -Name Shell -MemberDefinition @'
 [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
 public static extern uint AssocQueryString(uint flags, uint what, string assoc, string extra, System.Text.StringBuilder found, ref uint size);
 '@
 
-# What the shell opens a scheme with: its ProgID (20) or its program (2).
+# What the shell opens a scheme with: its ProgID (20) or the command it runs (1).
 function Handler([string]$scheme, [uint32]$what) {
   $found = New-Object System.Text.StringBuilder 1024
   $size = [uint32]1024
@@ -86,18 +94,20 @@ function Show([string]$when) {
     ForEach-Object { Get-ItemProperty $_.PSPath } |
     Where-Object { $_.Publisher -eq 'Emil Vinu' } |
     ForEach-Object { Write-Host "HKLM uninstall: $($_.PSChildName) $($_.DisplayName) $($_.DisplayVersion) $($_.InstallLocation)" }
-  foreach ($dir in @($programs, $desktop, $commonPrograms, "$commonPrograms\Nib", "$commonPrograms\nibeditor")) {
+  foreach ($dir in @($programs, $desktop, $commonPrograms, $commonDesktop, "$commonPrograms\Nib", "$commonPrograms\nibeditor", $where)) {
     Get-ChildItem -LiteralPath $dir -Filter '*.lnk' -ErrorAction SilentlyContinue |
       Where-Object { $_.Name -match '^(Nib|nibeditor)' } |
       ForEach-Object { $s = Shortcut $_.FullName; Write-Host "shortcut $($_.FullName) -> $($s.Target) [$($s.Id)]" }
   }
-  Write-Host "http: $(Handler 'http' 20) $(Handler 'http' 2)"
-  Write-Host "https: $(Handler 'https' 20) $(Handler 'https' 2)"
+  Write-Host "http: $(Handler 'http' 20) $(Handler 'http' 1)"
+  Write-Host "https: $(Handler 'https' 20) $(Handler 'https' 1)"
 }
 
 $programs = [Environment]::GetFolderPath('Programs')
 $desktop = [Environment]::GetFolderPath('Desktop')
 $commonPrograms = [Environment]::GetFolderPath('CommonPrograms')
+$commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
+$where = ''
 $oldSetup = (Get-ChildItem $Old -Filter '*-setup.exe' | Select-Object -First 1).FullName
 $oldMsi = (Get-ChildItem $Old -Filter '*.msi' | Select-Object -First 1).FullName
 $newSetup = (Get-ChildItem $New -Filter '*-setup.exe' | Select-Object -First 1).FullName
@@ -117,6 +127,7 @@ if ($Scenario -eq 'msi') {
   Run $oldSetup '/S' | Out-Null
   $dir = "$env:LOCALAPPDATA\Nib"
 }
+$where = $dir
 Check "0.11.0 is installed in $dir" (Test-Path "$dir\nib.exe")
 
 # Settings' own choice, sealed with its hash. The old install wrote NibURL, which is
@@ -152,6 +163,9 @@ if ($Scenario -eq 'msi') {
   Check 'the Start menu entry is nibeditor and starts the program' ($start -and $start.Target -eq $exe)
   Check 'and carries the app id' ($start -and $start.Id -eq 'ch.emilvinu.nib')
   Check 'the old Start menu entry is gone' (-not (Test-Path "$commonPrograms\Nib\Nib.lnk"))
+  Check 'and its folder' (-not (Test-Path "$commonPrograms\Nib"))
+  Check 'the old desktop icon is gone' (-not (Test-Path "$commonDesktop\Nib.lnk"))
+  Check "the old uninstall shortcut in the program's folder is gone" (-not (Test-Path "$want\Uninstall Nib.lnk"))
 } else {
   if ($Scenario -eq 'elsewhere') {
     Check 'the old folder is gone' (-not (Test-Path "$env:LOCALAPPDATA\Nib\nib.exe"))
@@ -177,13 +191,14 @@ if ($Scenario -eq 'msi') {
 # --- the browser
 Check 'the old browser client is gone' (-not (Has "$clients\Nib"))
 Check 'and its line in RegisteredApplications' ($null -eq (Value $registered 'Nib'))
-Check 'the browser client is nibeditor and starts the program' ((Value "$clients\nibeditor\shell\open\command") -eq "`"$exe`"")
+Check 'the browser client is nibeditor and starts the program' ((Starts (Value "$clients\nibeditor\shell\open\command")) -eq $exe)
 Check 'and is listed for Default apps' ((Value $registered 'nibeditor') -eq 'Software\Clients\StartMenuInternet\nibeditor\Capabilities')
-Check 'the ProgID starts the program with a link' ((Value "$hkcu\Classes\NibURL\shell\open\command") -eq "`"$exe`" --url `"%1`"")
+$link = Value "$hkcu\Classes\NibURL\shell\open\command"
+Check 'the ProgID starts the program with a link' ((Starts $link) -eq $exe -and $link -like '* --url "%1"')
 if ($chosen) {
   foreach ($scheme in 'http', 'https') {
     Check "nib is still the default for $scheme" ((Handler $scheme 20) -eq 'NibURL')
-    Check "and $scheme starts the program" ((Handler $scheme 2) -eq $exe)
+    Check "and $scheme starts the program" ((Starts (Handler $scheme 1)) -eq $exe)
   }
 }
 
@@ -200,7 +215,9 @@ Check 'the program is gone' (-not (Test-Path $exe))
 Check 'no Apps & Features entry is left' (-not (Has "$uninstall\Nib") -and -not (Has "$uninstall\nibeditor"))
 Check 'no browser client is left' (-not (Has "$clients\Nib") -and -not (Has "$clients\nibeditor"))
 Check 'nothing in RegisteredApplications' ($null -eq (Value $registered 'Nib') -and $null -eq (Value $registered 'nibeditor'))
-Check 'no shortcut is left' (-not ((Test-Path "$programs\Nib.lnk") -or (Test-Path "$programs\nibeditor.lnk") -or (Test-Path "$commonPrograms\nibeditor\nibeditor.lnk")))
+$left = @("$programs\Nib.lnk", "$programs\nibeditor.lnk", "$desktop\Nib.lnk", "$desktop\nibeditor.lnk",
+  "$commonPrograms\nibeditor\nibeditor.lnk", "$commonDesktop\Nib.lnk", "$commonDesktop\nibeditor.lnk") | Where-Object { Test-Path $_ }
+Check "no shortcut is left $left" (-not $left)
 
 Write-Host "$($wrong.Count) wrong"
 exit $wrong.Count

@@ -440,7 +440,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // Before everything, because a copy under the old folder's name renames it and
     // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]
-    bundle_name::settle();
+    bundle_name::carry_over();
 
     // Before the trace, because the gate's clock is the process's and a measurement
     // that starts late is a measurement that flatters. Nothing at all in the default

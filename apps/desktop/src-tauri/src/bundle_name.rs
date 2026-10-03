@@ -60,7 +60,7 @@ fn brewed(rooms: &[&str]) -> bool {
 /// nothing. Before anything else in the process, so the copy that goes has opened no
 /// window and claimed nothing the copy that starts would be handed.
 #[cfg(target_os = "macos")]
-pub fn settle() {
+pub fn carry_over() {
     use std::process::{Command, Stdio};
 
     // A build under an identifier of its own is a probe or somebody's experiment.

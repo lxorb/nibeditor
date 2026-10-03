@@ -71,7 +71,7 @@
       "wix": {
         "upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e",
         "fragmentPaths": ["wix/browser.wxs"],
-        "componentRefs": ["NibBrowser"]
+        "componentRefs": ["NibBrowser", "NibOldShortcuts"]
       }
     },
     "linux": {

@@ -141,13 +141,14 @@ FunctionEnd
 
 !macro NSIS_HOOK_PREINSTALL
   ; A silent install shows no page, so the old install is looked for here, and the
-  ; folder the template has just made under the new name is given back.
+  ; folder the template has just made under the new name is given back - once it is
+  ; no longer the installer's working folder, which Windows will not remove.
   StrCmp $NibOldAsked "1" nib_pre_asked
     StrCpy $R9 $INSTDIR
     Call NibFindOldInstall
     StrCmp $INSTDIR $R9 nib_pre_asked
-      RMDir $R9
       SetOutPath $INSTDIR
+      RMDir $R9
   nib_pre_asked:
 
   ; The old install somewhere else, because somebody chose another folder on the

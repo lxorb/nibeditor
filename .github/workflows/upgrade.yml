@@ -143,7 +143,8 @@ jobs:
           gh release download "v$OLD" --repo "$GITHUB_REPOSITORY" --dir old \
             --pattern "Nib-$OLD-macos-universal.dmg"
           hdiutil attach -nobrowse -mountpoint /tmp/old old/*.dmg
-          tar -xzf new/app.tgz -C new
+          find new -type f
+          tar -x -z -f "$(find new -name app.tgz | head -1)" -C new
           ls /tmp/old new
 
       - name: Updated in place, then launched

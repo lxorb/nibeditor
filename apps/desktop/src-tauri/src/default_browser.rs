@@ -78,9 +78,9 @@ pub fn make_default_browser(app: AppHandle) -> Result<(), String> {
 /// Puts nib back among the browsers when the registration is missing or names a copy
 /// that is gone: a portable copy moved, Scoop's new version in a new folder, an MSI
 /// installed by another person on this machine. And takes away the one under the old
-/// name, which a copy no installer ran over (Scoop's, a portable one) still has. On a thread of its own, after the
-/// window is up, so it costs a launch nothing. Windows only: a Mac's is in the bundle,
-/// and Linux's is written by the press.
+/// name, which a copy no installer ran over (Scoop's, a portable one) still has. On a
+/// thread of its own, after the window is up, so it costs a launch nothing. Windows
+/// only: a Mac's is in the bundle, and Linux's is written by the press.
 pub fn keep_registered(app: &AppHandle) {
     #[cfg(windows)]
     if ships(app) {
@@ -657,7 +657,7 @@ mod tests {
 
         // And the bundle builds it into the MSI.
         assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs"]"#));
-        assert!(config.contains(r#""componentRefs": ["NibBrowser"]"#));
+        assert!(config.contains(r#""componentRefs": ["NibBrowser", "NibOldShortcuts"]"#));
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
     }
 

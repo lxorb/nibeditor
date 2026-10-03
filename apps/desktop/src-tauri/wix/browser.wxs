@@ -23,6 +23,23 @@
     </Property>
     <SetProperty Id="INSTALLDIR" Value="[NIB_OLD_INSTALLDIR]" After="AppSearch" Sequence="both">NIB_OLD_INSTALLDIR AND NOT INSTALLDIR AND NOT Installed</SetProperty>
 
+    <!-- The old install's shortcuts. The template keeps an upgraded product's
+         shortcuts on purpose (RemoveShortcuts is skipped while one is replaced), so
+         that they survive an update under the same name; under a new one they would
+         stand beside the new shortcuts, starting the same program. -->
+    <DirectoryRef Id="ProgramMenuFolder">
+      <Directory Id="NibOldProgramsFolder" Name="Nib" />
+    </DirectoryRef>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="NibOldShortcuts" Guid="{D41EA00E-B36C-46E1-8F73-33B16D88B785}">
+        <RemoveFile Id="NibOldStartMenu" Directory="NibOldProgramsFolder" Name="Nib.lnk" On="install" />
+        <RemoveFolder Id="NibOldProgramsFolder" Directory="NibOldProgramsFolder" On="install" />
+        <RemoveFile Id="NibOldDesktop" Directory="DesktopFolder" Name="Nib.lnk" On="install" />
+        <RemoveFile Id="NibOldUninstall" Directory="INSTALLDIR" Name="Uninstall Nib.lnk" On="install" />
+        <RegistryValue Root="HKCU" Key="Software\Emil Vinu\nibeditor" Name="Old Shortcuts Removed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="NibBrowser" Guid="{430E18E2-2AB0-4CA7-8815-450321C11811}">
         <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\nibeditor" Type="string" Value="nibeditor" KeyPath="yes" />
