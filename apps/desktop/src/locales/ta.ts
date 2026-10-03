@@ -95,6 +95,7 @@ export const ta: Dictionary = {
   'Close all': 'Close all',
   'Close all tabs': 'Close all tabs',
   'Duplicate tab': 'Duplicate tab',
+  'Deselect all tabs': 'Deselect all tabs',
   'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
   'Move to space': 'இடத்துக்கு நகர்த்து',

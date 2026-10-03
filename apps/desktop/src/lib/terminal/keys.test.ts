@@ -32,6 +32,9 @@ describe('on Windows and Linux', () => {
       ['3', { ctrlKey: true, altKey: true }, 'app.note-3'],
       ['ArrowRight', { ctrlKey: true, altKey: true }, 'pane.split-right'],
       ['E', ctrlShift, 'app.files'],
+      // Every pane's tab put down, where Ctrl+D alone is the shell's end of input: a shell
+      // cannot tell the two apart, so the app losing it would gain the shell nothing.
+      ['D', ctrlShift, 'app.deselect-all'],
     ] as const) {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }

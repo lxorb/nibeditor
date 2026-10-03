@@ -25,6 +25,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
  *  docs/conventions.md. */
 const { hear, hearTaps, heard, listenForTaps, runTap } = await import('./tapped')
 const { shortcuts } = await import('./shortcuts.svelte')
+const { runEntry } = await import('./shortcuts/registry')
 
 beforeEach(() => {
   localStorage.clear()
@@ -178,5 +179,33 @@ describe('the app listening', () => {
 
     stop()
     expect([...listeners.values()].flat()).toEqual([])
+  })
+
+  /** Emil, 2026-10-03: Shift Shift with the palette up closes it. The tap says it is a
+   *  tap; whether a palette is up to close is the window's, which App.svelte answers. */
+  test('says the palette was asked by a tap, which a chord never does', () => {
+    const asked: (boolean | undefined)[] = []
+    const { window, fire } = fakeWindow()
+    const stop = hear(
+      () => ({
+        palette: (_mode?: 'commands', again?: boolean) => asked.push(again),
+        fullscreen: () => undefined,
+      }),
+      window,
+    )
+
+    for (let one = 0; one < 2; one++) {
+      fire('keydown', { key: 'Shift', shiftKey: true })
+      fire('keyup', { key: 'Shift' })
+    }
+    stop()
+    expect(asked).toEqual([true])
+
+    const chord: (boolean | undefined)[] = []
+    runEntry('app.palette.alt', {
+      palette: (_mode?: 'commands', again?: boolean) => chord.push(again),
+      fullscreen: () => undefined,
+    })
+    expect(chord).toEqual([undefined])
   })
 })

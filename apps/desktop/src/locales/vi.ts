@@ -95,6 +95,7 @@ export const vi: Dictionary = {
   'Close all': 'Đóng tất cả',
   'Close all tabs': 'Đóng tất cả tab',
   'Duplicate tab': 'Nhân bản tab',
+  'Deselect all tabs': 'Bỏ chọn tất cả tab',
   'Deselect tab': 'Bỏ chọn tab',
   'Move to other pane': 'Chuyển sang ngăn khác',
   'Move to space': 'Chuyển tới không gian',

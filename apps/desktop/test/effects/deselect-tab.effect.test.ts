@@ -220,3 +220,56 @@ test('is a plane’s Duplicate while something on it is picked, and the tab’s 
   expect(run.keys(store, press(), view)).toBe(true)
   expect(store.canvas.nodes).toHaveLength(2)
 })
+
+/** Ctrl+Shift+D, as the window's own handler is handed it. */
+function ctrlShiftD(): boolean {
+  const event = new KeyboardEvent('keydown', {
+    key: 'D',
+    code: 'KeyD',
+    ctrlKey: true,
+    shiftKey: true,
+    bubbles: true,
+    cancelable: true,
+  })
+
+  return shortcuts.handle(event, { palette: () => undefined, fullscreen: () => undefined })
+}
+
+/** Emil, 2026-10-03: Ctrl+D in every pane at once, and the key again brings them back. */
+test('Ctrl+Shift+D puts every pane down, and again brings each one’s tab back', () => {
+  const { paneId: left, strip } = three()
+  workspace.split('row')
+  const right = workspace.panes.focusedId
+  const showing = workspace.showing(right)?.id
+  shown = mount(Tabs, { target, props: { paneId: left } })
+  flushSync()
+
+  expect(ctrlShiftD()).toBe(true)
+  flushSync()
+  expect(workspace.showing(left)).toBeNull()
+  expect(workspace.showing(right)).toBeNull()
+  expect(target.querySelectorAll('.tab.active')).toHaveLength(0)
+  expect(workspace.tabsIn(left)).toHaveLength(3)
+  expect(workspace.panes.focusedId).toBe(right)
+
+  expect(ctrlShiftD()).toBe(true)
+  flushSync()
+  expect(workspace.showing(left)?.id).toBe(strip[1]?.id)
+  expect(workspace.showing(right)?.id).toBe(showing)
+  expect(target.querySelector('.tab.active')?.getAttribute('data-box')).toBe(strip[1]?.id)
+  expect(workspace.panes.focusedId).toBe(right)
+})
+
+test('Ctrl+Shift+D puts them all down while any one pane still shows a tab', () => {
+  const { paneId: left } = three()
+  workspace.split('row')
+  const right = workspace.panes.focusedId
+
+  ctrlD()
+  expect(workspace.showing(right)).toBeNull()
+  expect(workspace.showing(left)).not.toBeNull()
+
+  ctrlShiftD()
+  expect(workspace.showing(left)).toBeNull()
+  expect(workspace.showing(right)).toBeNull()
+})

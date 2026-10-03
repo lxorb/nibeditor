@@ -95,6 +95,7 @@ export const ptBR: Dictionary = {
   'Close all': 'Fechar todas',
   'Close all tabs': 'Fechar todas as abas',
   'Duplicate tab': 'Duplicar aba',
+  'Deselect all tabs': 'Desmarcar todas as abas',
   'Deselect tab': 'Desmarcar aba',
   'Move to other pane': 'Mover para o outro painel',
   'Move to space': 'Mover para espaço',

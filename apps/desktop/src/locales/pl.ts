@@ -95,6 +95,7 @@ export const pl: Dictionary = {
   'Close all': 'Zamknij wszystkie',
   'Close all tabs': 'Zamknij wszystkie karty',
   'Duplicate tab': 'Duplikuj kartę',
+  'Deselect all tabs': 'Odznacz wszystkie karty',
   'Deselect tab': 'Odznacz kartę',
   'Move to other pane': 'Przenieś do drugiego panelu',
   'Move to space': 'Przenieś do przestrzeni',

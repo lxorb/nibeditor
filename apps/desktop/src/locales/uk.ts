@@ -95,6 +95,7 @@ export const uk: Dictionary = {
   'Close all': 'Закрити всі',
   'Close all tabs': 'Закрити всі вкладки',
   'Duplicate tab': 'Дублювати вкладку',
+  'Deselect all tabs': 'Зняти вибір з усіх вкладок',
   'Deselect tab': 'Зняти вибір із вкладки',
   'Move to other pane': 'Перемістити в іншу область',
   'Move to space': 'Перемістити до простору',

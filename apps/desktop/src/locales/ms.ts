@@ -95,6 +95,7 @@ export const ms: Dictionary = {
   'Close all': 'Tutup semua',
   'Close all tabs': 'Tutup semua tab',
   'Duplicate tab': 'Salin dua tab',
+  'Deselect all tabs': 'Nyahpilih semua tab',
   'Deselect tab': 'Nyahpilih tab',
   'Move to other pane': 'Alih ke anak tetingkap lain',
   'Move to space': 'Alihkan ke ruang',

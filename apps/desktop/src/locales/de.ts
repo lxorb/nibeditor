@@ -96,6 +96,7 @@ export const de: Dictionary = {
   'Close all': 'Alle schließen',
   'Close all tabs': 'Alle Tabs schließen',
   'Duplicate tab': 'Tab duplizieren',
+  'Deselect all tabs': 'Alle Tabs abwählen',
   'Deselect tab': 'Tab abwählen',
   'Move to other pane': 'In anderes Teilfenster verschieben',
   'Move to space': 'In Bereich verschieben',

@@ -321,6 +321,29 @@ describe('Ctrl+D', () => {
     }
   })
 
+  /** Emil, 2026-10-03: Ctrl+Shift+D, every pane at once. None of the four keyboards
+   *  binds the chord to anything of its own, so it is the same key under all of them,
+   *  the ones that give Ctrl+D to another app's habit included. */
+  test.each(['default', 'vim', 'vscode', 'obsidian', 'notion'])(
+    'puts every pane down on Ctrl+Shift+D under %s',
+    (id) => {
+      const keys = presets.presetById(id)?.keys ?? {}
+
+      for (const platform of PLATFORMS) {
+        expect(keyUnder(keys, 'app.deselect-all', platform), platform).toBe('Mod-Shift-d')
+        const others = registry.SHORTCUTS.filter(
+          (one) =>
+            one.id !== 'app.deselect-all' &&
+            keyUnder(keys, one.id, platform)?.toLowerCase() === 'mod-shift-d',
+        )
+        expect(
+          others.map((one) => one.id),
+          platform,
+        ).toEqual([])
+      }
+    },
+  )
+
   /** A command that is only a key would be a command nobody without that key can find. */
   test('is a command of the app’s, which the palette and the list can press', () => {
     const entry = registry.BY_ID.get('app.deselect-tab')

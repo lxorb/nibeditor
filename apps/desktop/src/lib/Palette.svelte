@@ -416,8 +416,9 @@
   }
 
   /** Closed, and forgotten: the next opening starts on an empty field rather
-   *  than on whatever was typed last time. */
-  function dismiss() {
+   *  than on whatever was typed last time. Escape, a tap outside, and the Shift Shift
+   *  that opened it pressed again. */
+  export function dismiss() {
     open = false
     query = ''
   }
