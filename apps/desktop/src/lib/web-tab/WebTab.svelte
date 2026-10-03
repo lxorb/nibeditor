@@ -53,6 +53,7 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
+  import { searchEngine } from './search-engine.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
@@ -663,7 +664,7 @@
       }}
       onhistory={showTrail}
       onaddress={(typed: string, aside: boolean) => {
-        const url = webAddress(typed)
+        const url = webAddress(typed, searchEngine.url)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:

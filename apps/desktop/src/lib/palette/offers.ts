@@ -8,7 +8,6 @@
  *  written out in full, `https://` or `www.` and on, which nobody types looking for a
  *  note. Shift+Enter makes the note whatever else answers; see Palette.svelte. */
 
-import { SEARCH, webAddress } from '../web-tab/address'
 import { visitKey } from '../web-tab/visits'
 import { type NoteToMake, noteToMake } from './new-note'
 import type { Row } from './rows'
@@ -24,11 +23,8 @@ export function makeable(term: string, taken: ReadonlySet<string>): NoteToMake |
 }
 
 /** The address something typed is, and nothing for words: a few words in the palette
- *  are a search for a note, not for the web. */
-export function typedAddress(typed: string): string | null {
-  const url = webAddress(typed)
-  return url?.startsWith(SEARCH) ? null : url
-}
+ *  are a search for a note, not for the web. See web-tab/address.ts. */
+export { typedAddress } from '../web-tab/address'
 
 /** `found` with the two offers where they belong. `address` is what `term` goes to
  *  when it is an address, and `shown` how that reads. */
