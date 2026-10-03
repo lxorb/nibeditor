@@ -291,4 +291,14 @@ describe('a shut side', () => {
     expect(html).not.toMatch(/class="column[^"]*\bshut\b/)
     expect(html).not.toMatch(/class="column[^"]*"[^>]*\binert\b/)
   })
+
+  test('on the right is built on the panel it would open on, never the file list', () => {
+    open('# Head\n')
+    workspace.rightPanel = null
+    workspace.lastRight = null
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+
+    expect(html).toContain(`data-panel="${workspace.nextRight}"`)
+    expect(html).not.toContain('data-panel="tree"')
+  })
 })

@@ -76,7 +76,7 @@ describe('once what is on screen is painted', () => {
 
   test('the turns come in the order the app says they do', async () => {
     const order: string[] = []
-    for (const stage of ['doors', 'rooms', 'icons', 'search', 'index'] as const) {
+    for (const stage of ['right', 'left', 'doors', 'rooms', 'icons', 'search', 'index'] as const) {
       void startup.turn(stage).then(() => order.push(stage))
     }
 
@@ -85,14 +85,14 @@ describe('once what is on screen is painted', () => {
 
     // Asked for backwards, answered forwards: the order is the queue's, not the
     // asking's.
-    expect(order).toEqual(['index', 'search', 'icons', 'rooms', 'doors'])
+    expect(order).toEqual(['index', 'search', 'icons', 'rooms', 'doors', 'left', 'right'])
   })
 
   test('each turn waits for an idle callback of its own', async () => {
     await startup.shown()
     await settle()
 
-    expect(ticks).toEqual(['frame', 'frame', 'idle', 'idle', 'idle', 'idle', 'idle'])
+    expect(ticks).toEqual(['frame', 'frame', ...Array<string>(7).fill('idle')])
   })
 
   test('a stage nobody waits for does not hold up the ones after it', async () => {
@@ -138,8 +138,8 @@ describe('long after the launch', () => {
     await startup.shown()
     await settle()
 
-    // The frames it asked for, and not one more idle callback: five turns, once.
-    expect(ticks.filter((one) => one === 'idle')).toHaveLength(5)
+    // The frames it asked for, and not one more idle callback: seven turns, once.
+    expect(ticks.filter((one) => one === 'idle')).toHaveLength(7)
     expect(ticks.length).toBe(after + 2)
   })
 })

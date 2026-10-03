@@ -126,9 +126,17 @@
   /** The panel showing on this side, which every row below reads instead of
    *  `workspace.panel`: the left side's is that, and the right side's is its
    *  own. Shut, it is the one that was last open, so a closing panel slides away
-   *  with its rows in it and opens again on them, rather than emptying as it goes. */
+   *  with its rows in it and opens again on them, rather than emptying as it goes.
+   *  The right side shut is the one it would open on, `nextRight`, which is the same
+   *  panel once it has been open and its first before then: the launch builds it shut,
+   *  and a right side built on the file list - which never lives there - was a second
+   *  tree made for nothing and torn down by the first press. */
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
-  const showing = $derived.by(() => (lastShown = workspace.openOn(side) ?? lastShown))
+  const showing = $derived.by(() => {
+    const open = workspace.openOn(side)
+    if (open) return (lastShown = open)
+    return side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown
+  })
 
   /** Whether the column has come in. A panel built by the launch is already there;
    *  one built later - opened before the launch had built it, or back after a tab

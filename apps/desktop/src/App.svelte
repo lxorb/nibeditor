@@ -106,14 +106,17 @@
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
-   *  or not, and the launch's last turn builds it shut where it never was: opening
+   *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
-   *  in the frame it was asked for. See the column in Sidebar.svelte. Latched, so a
-   *  side never goes back to unbuilt. */
+   *  in the frame it was asked for. See the column in Sidebar.svelte. A turn for each
+   *  side, see startup.svelte.ts; and none for a right side every panel has left,
+   *  which has nothing it could open on. Latched, so a side never goes back to
+   *  unbuilt. */
   const built = { left: false, right: false }
-  const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('doors')))
+  const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
   const keptRight = $derived(
-    (built.right ||= workspace.rightPanel !== null || startup.reached('doors')),
+    (built.right ||=
+      workspace.rightPanel !== null || (startup.reached('right') && workspace.nextRight !== null)),
   )
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
