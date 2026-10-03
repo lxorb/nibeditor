@@ -4,7 +4,7 @@ import { readSync, receive, syncStep1, TEXT } from '@nib/rooms'
 import { ackFrame, epochFrame, NEW_EPOCH } from '@nib/sync-core/wire'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import type { Carrying } from './door'
+import type { Carrying } from './carried'
 
 /** Sync v2's room carrying the engine's own document (docs/sync-v2.md 5.2 to 5.4), with
  *  the socket stood in for and the test playing the room in the Worker with the same
