@@ -1125,8 +1125,8 @@ export const tr: Dictionary = {
     '{count} not, yalnızca Notlar’ın açabildiği bir parolanın ardındadır',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} not Son Silinenler’dedir ve orada kalır',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} çizim ve taranmış sayfa, Notlar’ın kendi çizdiği resimlerdir',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} çizim ve taramanın bu Mac’te resmi yok',
   '{count} tables inside notes do not come over': 'Notların içindeki {count} tablo geçmez',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ek, bu Mac’te değil iCloud’dadır',

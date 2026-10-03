@@ -1188,8 +1188,8 @@ export const ar: Dictionary = {
     '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Notes',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ملاحظة في المحذوفات حديثاً وتبقى هناك',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} رسم وصفحة ممسوحة هي صور يرسمها Notes بنفسه',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} رسم ومسح ليس لها صورة على هذا الـ Mac',
   '{count} tables inside notes do not come over': '{count} جدول داخل الملاحظات لا ينتقل',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} مرفق في iCloud وليس على هذا الـ Mac',

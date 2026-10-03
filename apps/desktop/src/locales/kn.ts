@@ -1130,8 +1130,8 @@ export const kn: Dictionary = {
     '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Notes ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಲ್ಲಿವೆ, ಅಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} ಚಿತ್ರಗಳು ಮತ್ತು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಪುಟಗಳು Notes ತಾನೇ ಬಿಡಿಸುವ ಚಿತ್ರಗಳು',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} ಚಿತ್ರಗಳು ಮತ್ತು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಪುಟಗಳಿಗೆ ಈ Mac ನಲ್ಲಿ ಚಿತ್ರವಿಲ್ಲ',
   '{count} tables inside notes do not come over': 'ಟಿಪ್ಪಣಿಗಳ ಒಳಗಿನ {count} ಕೋಷ್ಟಕಗಳು ಬರುವುದಿಲ್ಲ',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ಲಗತ್ತುಗಳು ಈ Mac ನಲ್ಲಿ ಅಲ್ಲ, iCloud ನಲ್ಲಿವೆ',

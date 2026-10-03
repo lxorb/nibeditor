@@ -1139,8 +1139,8 @@ export const ptBR: Dictionary = {
     '{count} notas estão atrás de uma senha que só o Notas abre',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas estão em Excluídos recentemente e ficam lá',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} desenhos e páginas digitalizadas são imagens que o Notas desenha',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} desenhos e digitalizações não têm imagem neste Mac',
   '{count} tables inside notes do not come over': '{count} tabelas dentro de notas não vêm',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} anexos estão no iCloud e não neste Mac',

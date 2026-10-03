@@ -1172,8 +1172,8 @@ export const uk: Dictionary = {
     'Нотаток під паролем, який відкривають лише Нотатки: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Нотаток у «Нещодавно видалених», які там і залишаються: {count}',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    'Малюнків і сканованих сторінок, які Нотатки малюють самі: {count}',
+  '{count} drawings and scans have no picture on this Mac':
+    'Малюнків і сканів без зображення на цьому Mac: {count}',
   '{count} tables inside notes do not come over': 'Таблиць у нотатках, що не переносяться: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Вкладень в iCloud, а не на цьому Mac: {count}',

@@ -1120,8 +1120,8 @@ export const bn: Dictionary = {
     '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Notes খুলতে পারে',
   '{count} notes are in Recently Deleted, and stay there':
     '{count}টি নোট সাম্প্রতিক মুছে ফেলায় আছে এবং সেখানেই থাকে',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count}টি আঁকা ও স্ক্যান করা পাতা Notes নিজেই আঁকা ছবি',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count}টি আঁকা ও স্ক্যানের ছবি এই Mac-এ নেই',
   '{count} tables inside notes do not come over': 'নোটের ভিতরে {count}টি টেবিল আসে না',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count}টি সংযুক্তি এই Mac-এ নয়, iCloud-এ আছে',

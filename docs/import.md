@@ -193,10 +193,21 @@ because nib has one highlight. A link from one note to another becomes a wikilin
 the way every other export's links do. A tag or a mention is a run of its own in
 Notes, and arrives as the words it drew.
 
+Three things Notes keeps as documents and pictures of its own come over too, read
+the way Obsidian's importer reads them. A table is a merged document on its own
+row (`ZMERGEABLEDATA1`), and arrives as a markdown table: the first row its
+header, each cell's words written the way a note's are, a line break inside a cell
+as `<br>`. Notes cannot merge cells, so nothing is flattened. A sketch arrives as
+the picture Notes drew of it for whatever cannot draw strokes (`FallbackImages`),
+beside the note like any other picture. A scan arrives as a picture a page - the
+page as Notes cropped it where that preview is on the disk, the page's own
+photograph where it is not - and a scan somebody marked up as the PDF Notes made of
+it.
+
 What does not come over is said before anything is written: notes behind a
 password, which are encrypted with a passphrase nobody here has; notes in Recently
-Deleted, which stay there, the same rule Keep's bin gets; drawings and scanned
-pages, which are a picture Notes draws itself; tables inside notes; and
+Deleted, which stay there, the same rule Keep's bin gets; a sketch or a scan whose
+picture Notes has not drawn on this Mac; a table that could not be read as one; and
 attachments that are in iCloud rather than on the disk.
 
 macOS keeps that folder behind Full Disk Access, so the first read is refused by

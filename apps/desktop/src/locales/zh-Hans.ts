@@ -1099,8 +1099,8 @@ export const zhHans: Dictionary = {
     '{count} 条笔记加了密码，只有「备忘录」能打开',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 条笔记在「最近删除」中，仍留在那里',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} 幅图画与扫描页是「备忘录」自行绘制的图片',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} 幅图画与扫描在这台 Mac 上没有图片',
   '{count} tables inside notes do not come over': '笔记内的 {count} 个表格不会转入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 个附件在 iCloud 上，而不在这台 Mac 上',

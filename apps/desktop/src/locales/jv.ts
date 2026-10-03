@@ -1114,8 +1114,8 @@ export const jv: Dictionary = {
     '{count} cathetan ana ing mburi tembung sandhi sing mung Notes bisa mbukak',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} cathetan ana ing Anyar dibusak lan tetep ing kono',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} gambar lan kaca pindaian iku gambar sing digawe Notes dhewe',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} gambar lan pindaian ora duwe gambar ing Mac iki',
   '{count} tables inside notes do not come over': '{count} tabel ing cathetan ora mlebu',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran ana ing iCloud, dudu ing Mac iki',

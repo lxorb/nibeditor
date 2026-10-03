@@ -1118,8 +1118,8 @@ export const gu: Dictionary = {
     '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Notes ખોલી શકે',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} નોંધ હાલમાં કાઢેલામાં છે અને ત્યાં જ રહે છે',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} ચિત્રો અને સ્કેન કરેલાં પાનાં એ ચિત્રો છે જે Notes પોતે દોરે છે',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} ચિત્રો અને સ્કેનનું આ Mac પર કોઈ ચિત્ર નથી',
   '{count} tables inside notes do not come over': 'નોંધ અંદરનાં {count} કોષ્ટક આવતાં નથી',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} જોડાણ આ Mac પર નહીં, iCloud માં છે',

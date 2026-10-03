@@ -1119,8 +1119,8 @@ export const id: Dictionary = {
     '{count} catatan ada di balik sandi yang hanya Notes bisa buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} catatan ada di Baru dihapus dan tetap di sana',
-  '{count} drawings and scanned pages are pictures Notes draws itself':
-    '{count} gambar dan halaman pindaian adalah gambar yang Notes lukis sendiri',
+  '{count} drawings and scans have no picture on this Mac':
+    '{count} gambar dan pindaian tidak punya gambar di Mac ini',
   '{count} tables inside notes do not come over': '{count} tabel di dalam catatan tidak ikut',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran ada di iCloud, bukan di Mac ini',
