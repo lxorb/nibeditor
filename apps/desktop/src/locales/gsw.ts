@@ -1726,4 +1726,12 @@ export const gsw: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Erwiiterige',
+  'Add extension': 'Erwiiterig hinzuefüege',
+  'Manage extensions': 'Erwiiterige verwalte',
+  'Paste a Chrome Web Store link': 'Link us em Chrome Web Store iifüege',
+  'Did not load': 'Nöd glade',
+  Permissions: 'Berächtigunge',
+  Options: 'Optione',
 }

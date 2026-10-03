@@ -1236,10 +1236,8 @@ def refused(exe: Path, identifier: str | None) -> str:
     under the release identifier, whose launch the running nib would take. A build
     whose identifier nobody said is refused too, since it may be either."""
     local = os.environ.get("LOCALAPPDATA")
-    # The folder an install from before the rename keeps, and a fresh install's.
-    for installed in ("Nib", "nibeditor"):
-        if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
-            return f"{exe} is the installed nib"
+    if local and exe.resolve().is_relative_to((Path(local) / "Nib").resolve()):
+        return f"{exe} is the installed nib"
     if not identifier:
         return f"{exe} names no identifier (NIB_PROBE_IDENTIFIER, or --identifier to the drive)"
     if identifier == RELEASE_IDENTIFIER or not identifier.startswith(RELEASE_IDENTIFIER + "."):

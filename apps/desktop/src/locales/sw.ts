@@ -1744,4 +1744,12 @@ export const sw: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Viendelezi',
+  'Add extension': 'Ongeza kiendelezi',
+  'Manage extensions': 'Dhibiti viendelezi',
+  'Paste a Chrome Web Store link': 'Bandika kiungo cha Chrome Web Store',
+  'Did not load': 'Hakijapakiwa',
+  Permissions: 'Ruhusa',
+  Options: 'Chaguo',
 }

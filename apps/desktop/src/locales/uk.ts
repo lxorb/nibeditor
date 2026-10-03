@@ -1790,4 +1790,12 @@ export const uk: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Розширення',
+  'Add extension': 'Додати розширення',
+  'Manage extensions': 'Керувати розширеннями',
+  'Paste a Chrome Web Store link': 'Вставте посилання з Chrome Web Store',
+  'Did not load': 'Не завантажено',
+  Permissions: 'Дозволи',
+  Options: 'Параметри',
 }

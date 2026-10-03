@@ -2,7 +2,7 @@
 //! is the whole of setting nib up in an agent's client (docs/agent-native.md 10):
 //!
 //! ```text
-//! claude mcp add --scope user nib -- "%LOCALAPPDATA%\nibeditor\nib.exe" mcp
+//! claude mcp add --scope user nib -- "%LOCALAPPDATA%\Nib\nib.exe" mcp
 //! ```
 //!
 //! **Nothing of the app starts.** `main.rs` reads its arguments before Tauri does and

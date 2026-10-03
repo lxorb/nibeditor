@@ -1702,4 +1702,12 @@ export const my: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'တိုးချဲ့မှုများ',
+  'Add extension': 'တိုးချဲ့မှု ထည့်ရန်',
+  'Manage extensions': 'တိုးချဲ့မှုများ စီမံရန်',
+  'Paste a Chrome Web Store link': 'Chrome Web Store လင့်ခ်ကို ကူးထည့်ပါ',
+  'Did not load': 'မဖွင့်နိုင်ပါ',
+  Permissions: 'ခွင့်ပြုချက်များ',
+  Options: 'ရွေးချယ်စရာများ',
 }

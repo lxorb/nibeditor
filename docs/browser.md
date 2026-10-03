@@ -1021,21 +1021,48 @@ extension for other people's browsers.
 
 ### Extensions, and the list on the account
 
-The mechanism is Chromium's and the list is nib's.
+Built 2026-10-03 (src-tauri/src/extensions.rs and its folder), on both engines. What the
+reader sees is one thing; who installs is the engine's question.
 
-**On the device.** `chrome://extensions` is the management surface - enable,
-disable, remove, developer mode, per-extension options, the shortcuts page nib's own
-clipper already links to. nib draws none of it.
+**What the reader sees.** A puzzle glyph in the web bar, with each pinned extension's own
+picture beside it; pressing a picture opens the extension's popup in a bubble under it - its
+own page, `chrome-extension://<id>/<popup>`, in a webview of its own in the tab's store,
+grown to the size the page lays itself out at, at most 800 by 600, as Chromium sizes one
+(extensions/popup.rs). The puzzle lists every extension, pins and unpins, and takes a pasted
+Chrome Web Store or Edge Add-ons link. An extension's options page opens as a tab. Settings >
+General > Browser > Extensions has the rows: on or off, what it may do in Chromium's own
+words, Options, Remove. Agent tabs in an agent's own store never run one.
 
-**Installing.** CEF has no API for this (section 1, hole 1), so nib uses Chromium's
-own mechanism: fetch the CRX and declare it in the preference tree. The CRX comes
-from the Web Store's own update endpoint - `clients2.google.com/service/update2/crx`
-with the extension id, which needs no key and no account - and the declaration is
-Chromium's external-extension mechanism rather than `ExtensionInstallForcelist`,
-because a forced extension is one the reader cannot remove and a reader must be able
-to remove what they installed. Batch 4 proves this path, and if the store's own
-in-page install turns out to work in a Chrome-style browser then that is simply a
-better door to the same room.
+**On `WebView2`, nib installs.** The engine takes an unpacked folder and nothing else
+(`AddBrowserExtension`, behind the environment option `AreBrowserExtensionsEnabled`, which
+`engine::web_store` sets per store - on for every reader's store, off for an agent's). So nib
+fetches the CRX from the store's own update service (`clients2.google.com/service/update2/crx`,
+`edge.microsoft.com/extensionwebstorebase/v1/crx`; no key, no account), checks it the way
+Chromium does - every signature, the developer's key matching the id, and the store's own
+signature, which is what makes Edge's plain-HTTP download safe to take - unpacks it into
+`<config>/extensions/<id>/<version>` with the developer's key written into the manifest so the
+id stays the store's, and hands the folder to every store's profile as a page is first built
+there. A version's folder is never written again: the engine removes an extension whose files
+change. Updates are the same path, every five hours and never at the launch. The store's own
+"Add to Chrome" and Edge's "Get", pressed in a tab, are taken in nib's world before the store's
+script hears them and install the same way; the bar offers Add on such a page too.
+
+**On nib's own Chromium, the store installs.** The one door for a host to install a folder is
+the protocol's `Extensions.loadUnpacked`, and a page's own `DevTools` session is answered "Not
+allowed": only a browser-wide session, which needs a debugging port nib keeps closed, may call
+it (measured). The store does offer its own "Add to Chrome" in a Chrome-style browser, with
+Chromium's own prompt and updates behind it - seen, not pressed: a probe cannot press it
+without that prompt in front of somebody. So there a pasted link opens the store's page, the store's button
+installs, and nib reads and changes the engine's own list through `chrome.management` on a
+`chrome://extensions` page nobody sees, in the browsing profile (extensions/chromium.rs). Off
+keeps an extension's stored data; Remove does not. A store a space keeps apart is a profile
+the store's install does not reach.
+
+**What does not work, and why.** A popup is a page of its own and not the browser's action
+popup, so an extension that asks for "the active tab" from its popup is told about the popup:
+a per-site toggle or a fill button in a popup may act on nothing. And an agent's tab in the reader's
+own store is in the reader's profile, where the reader's extensions run: the engine has no
+per-page switch, and a separate profile would not be signed in. Agents' own stores have none.
 
 **On the account.** `users.settings` on the account is already a validated JSON
 object of the settings that follow a person from machine to machine - migration

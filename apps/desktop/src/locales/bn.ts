@@ -1715,4 +1715,12 @@ export const bn: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'এক্সটেনশন',
+  'Add extension': 'এক্সটেনশন যোগ করুন',
+  'Manage extensions': 'এক্সটেনশন পরিচালনা করুন',
+  'Paste a Chrome Web Store link': 'Chrome ওয়েব স্টোরের লিংক পেস্ট করুন',
+  'Did not load': 'লোড হয়নি',
+  Permissions: 'অনুমতি',
+  Options: 'বিকল্প',
 }

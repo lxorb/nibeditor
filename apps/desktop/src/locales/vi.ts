@@ -1699,4 +1699,12 @@ export const vi: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Tiện ích',
+  'Add extension': 'Thêm tiện ích',
+  'Manage extensions': 'Quản lý tiện ích',
+  'Paste a Chrome Web Store link': 'Dán đường liên kết Cửa hàng Chrome trực tuyến',
+  'Did not load': 'Không tải được',
+  Permissions: 'Quyền',
+  Options: 'Tùy chọn',
 }

@@ -1757,4 +1757,12 @@ export const de: Dictionary = {
   'Quick question': 'Schnelle Frage',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Zur Notiz hinzufügen',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Erweiterungen',
+  'Add extension': 'Erweiterung hinzufügen',
+  'Manage extensions': 'Erweiterungen verwalten',
+  'Paste a Chrome Web Store link': 'Link aus dem Chrome Web Store einfügen',
+  'Did not load': 'Nicht geladen',
+  Permissions: 'Berechtigungen',
+  Options: 'Optionen',
 }

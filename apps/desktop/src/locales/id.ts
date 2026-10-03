@@ -1711,4 +1711,12 @@ export const id: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Ekstensi',
+  'Add extension': 'Tambahkan ekstensi',
+  'Manage extensions': 'Kelola ekstensi',
+  'Paste a Chrome Web Store link': 'Tempel tautan Chrome Web Store',
+  'Did not load': 'Tidak dimuat',
+  Permissions: 'Izin',
+  Options: 'Opsi',
 }

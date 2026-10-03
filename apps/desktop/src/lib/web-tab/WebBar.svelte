@@ -1,6 +1,6 @@
 <script lang="ts">
-  /** The bar over a page: back, forward, reload, the address, a clip, what has been
-   *  downloaded, and the dots.
+  /** The bar over a page: back, forward, reload, the address, a clip, the extensions,
+   *  what has been downloaded, and the dots.
    *
    *  A browser's row, in nib's shapes. The same `.nib-glyph` squares the find bar and
    *  the sidebar's foot are made of, the same `.nib-field` every box you type in is,
@@ -39,6 +39,7 @@
   import { showTab } from '../shortcuts/registry'
   import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
+  import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
@@ -65,6 +66,7 @@
     ondownloads,
     ontyping,
     onzoom,
+    extending = null,
   }: {
     page: Page
     reads: boolean
@@ -85,6 +87,15 @@
     /** A zoom key pressed while the app has the keyboard. Inside the page the engine
      *  answers them itself; see web_page.rs. */
     onzoom: (step: ZoomStep) => void
+    /** The extensions' buttons, where the engine runs extensions; see
+     *  ExtensionButtons.svelte. Null draws none. */
+    extending?: {
+      addable: string | null
+      open: string | null
+      onpress: (id: string, anchor: HTMLElement) => void
+      onlist: (anchor: HTMLElement) => void
+      onadd: () => void
+    } | null
   } = $props()
 
   /** How far the files on their way have got, for the ring round the downloads glyph;
@@ -310,6 +321,10 @@
       {/each}
     </svg>
   </button>
+
+  {#if extending}
+    <ExtensionButtons {...extending} />
+  {/if}
 
   <!-- What has been downloaded, the way Chrome has it: a glyph that is not there until
        the first file is, in the accent with a ring filling round it while anything is on

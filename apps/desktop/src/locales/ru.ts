@@ -1796,4 +1796,12 @@ export const ru: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'Расширения',
+  'Add extension': 'Добавить расширение',
+  'Manage extensions': 'Управление расширениями',
+  'Paste a Chrome Web Store link': 'Вставьте ссылку из Chrome Web Store',
+  'Did not load': 'Не загружено',
+  Permissions: 'Разрешения',
+  Options: 'Параметры',
 }

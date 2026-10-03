@@ -1706,4 +1706,12 @@ export const ja: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: '拡張機能',
+  'Add extension': '拡張機能を追加',
+  'Manage extensions': '拡張機能を管理',
+  'Paste a Chrome Web Store link': 'Chrome ウェブストアのリンクを貼り付け',
+  'Did not load': '読み込まれませんでした',
+  Permissions: '権限',
+  Options: 'オプション',
 }

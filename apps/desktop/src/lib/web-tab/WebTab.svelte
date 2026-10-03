@@ -30,7 +30,7 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
   import { findBar } from '../surfaces.svelte'
-  import { invoke, isDesktop, openExternal } from '../tauri'
+  import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { plainOrigin, webAddress } from './address'
@@ -55,6 +55,9 @@
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
   import WebDownloads from './WebDownloads.svelte'
+  import WebExtensionPopup from './WebExtensionPopup.svelte'
+  import WebExtensions from './WebExtensions.svelte'
+  import { extensions, type Extension } from './extensions.svelte'
   import WebLocked from './WebLocked.svelte'
   import WebSite from './WebSite.svelte'
 
@@ -471,6 +474,64 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
+  /** Whether this engine runs extensions: `WebView2`, and nib's own Chromium, which is
+   *  Windows' alone for now; see src-tauri/src/extensions.rs. */
+  const extending = isDesktop && platform() === 'windows'
+
+  /** Whether the list of extensions under the puzzle is open. */
+  let showingExtensions = $state(false)
+
+  /** How far from the bar's right edge a bubble under an extension's button hangs. */
+  let hangs = $state(0)
+
+  let head = $state<HTMLElement>()
+
+  /** The extension the store page this tab is on is about, if it is not installed yet:
+   *  the bar offers Add for it. */
+  let onStore = $state<string | null>(null)
+  const addable = $derived(
+    onStore !== null && !extensions.list.some((one) => one.id === onStore) ? onStore : null,
+  )
+
+  $effect(() => {
+    const url = page.url
+    if (!extending || !url) {
+      onStore = null
+      return
+    }
+    void extensions.named(url).then((id) => {
+      if (page.url === url) onStore = id
+    })
+  })
+
+  // The list is read with the first web tab, and heard about from then on.
+  onMount(() => {
+    if (extending) void extensions.start()
+    return () => {
+      if (extensions.popped?.tab === tab.id) extensions.close()
+    }
+  })
+
+  /** The distance from the bar's right edge to a button's, so a bubble hangs under it. */
+  function under(anchor: HTMLElement): number {
+    const bar = head?.getBoundingClientRect()
+    const button = anchor.getBoundingClientRect()
+    return bar ? Math.max(0, bar.right - button.right) : 0
+  }
+
+  /** An extension's button, or its row in the list: its popup, or its options page in a
+   *  tab of its own when it has no popup. */
+  async function pressExtension(one: Extension, anchor: HTMLElement | null) {
+    showingExtensions = false
+    if (one.popup) {
+      if (anchor) hangs = under(anchor)
+      extensions.open(one.id, tab.id, page.store)
+      return
+    }
+    const options = await extensions.optionsOf(one.id)
+    if (options) workspace.openPage(options, 'front', tab.id)
+  }
+
   /** The site this tab is on, which is what a permission and the popover are about. */
   const site = $derived(siteOf(page.url))
 
@@ -573,7 +634,7 @@
        this box rather than against the pane, because "under the bar" is what they mean:
        a rectangle the height of the whole pane would put them under the *page*, which is
        off the bottom of the window. -->
-  <div class="head" class:roomy={fullscreen.on}>
+  <div class="head" class:roomy={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
       {focused}
@@ -612,10 +673,12 @@
       onsite={() => {
         showingSite = !showingSite
         showingDownloads = false
+        showingExtensions = false
       }}
       ondownloads={() => {
         showingDownloads = !showingDownloads
         showingSite = false
+        showingExtensions = false
       }}
       ontyping={(on: boolean) => {
         // Of the store rather than through `page`, for the reason the teardown above
@@ -625,6 +688,25 @@
         pages.of(tab.id).typing = on
       }}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
+      extending={extending
+        ? {
+            addable,
+            open: extensions.popped?.tab === tab.id ? extensions.popped.id : null,
+            onpress: (id: string, anchor: HTMLElement) => {
+              const one = extensions.list.find((each) => each.id === id)
+              if (one) void pressExtension(one, anchor)
+            },
+            onlist: (anchor: HTMLElement) => {
+              hangs = under(anchor)
+              showingExtensions = !showingExtensions
+              showingSite = false
+              showingDownloads = false
+            },
+            onadd: () => {
+              if (page.url) void extensions.install(page.url)
+            },
+          }
+        : null}
     />
 
     <!-- A computer new to the account, waiting for one that has the web logins to let it
@@ -659,6 +741,16 @@
       <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
     {:else if showingDownloads}
       <WebDownloads onclose={() => (showingDownloads = false)} />
+    {:else if extensions.popped?.tab === tab.id}
+      {#key extensions.popped.id}
+        <WebExtensionPopup popped={extensions.popped} right={hangs} />
+      {/key}
+    {:else if showingExtensions}
+      <WebExtensions
+        right={hangs}
+        onpress={(one: Extension) => void pressExtension(one, null)}
+        onclose={() => (showingExtensions = false)}
+      />
     {/if}
   </div>
 

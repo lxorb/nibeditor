@@ -722,6 +722,24 @@ pub(crate) fn allowed(url: &Url) -> bool {
     )
 }
 
+/// Whether a tab may be on `url`: the web, or a page of an extension that is installed -
+/// its options page, opened as a tab, and the pages it opens from there. Only for a tab's
+/// own navigation; another program handing nib an address is held to `allowed` alone.
+pub(crate) fn tab_may_open(url: &Url) -> bool {
+    allowed(url) || crate::extensions::ours(url)
+}
+
+/// Opens `url` as a tab beside `tab`, in front: what an extension's popup does with a
+/// link pressed in it or a page of its own it opens; see extensions/popup.rs.
+pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
+    let payload = Opening {
+        tab: tab.to_string(),
+        url: url.to_string(),
+        behind: false,
+    };
+    let _ = app.emit_to(window, OPENED, payload);
+}
+
 /// Opens `url` in a tab beside `tab`, behind it or in front: what the window does with a
 /// window a page asked for, and what nib's own Chromium does with a link pressed for a
 /// tab of its own, which never becomes a window request there; see `web_opens.rs`.
@@ -751,7 +769,7 @@ pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str,
 /// everything else is dropped, which is what the engine would have done with it
 /// had nothing here been listening.
 fn handed_over(url: &Url) -> Option<String> {
-    allowed(url).then(|| url.to_string())
+    tab_may_open(url).then(|| url.to_string())
 }
 
 /// A window a page asked for at a size of its own, as a window: the page that opened
@@ -825,7 +843,7 @@ fn popup(
 /// The address, read and judged, or a reason it is not one.
 fn address(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|error| format!("that is not an address: {error}"))?;
-    if allowed(&parsed) {
+    if tab_may_open(&parsed) {
         Ok(parsed)
     } else {
         Err("a web tab only opens http and https pages".into())
@@ -1160,7 +1178,7 @@ pub async fn web_open(
         // `keyboard_to` in placement.rs.
         .focused(crate::placement::away().is_none())
         .on_navigation(move |to| {
-            let going = allowed(to);
+            let going = tab_may_open(to);
             if going {
                 started(&starting.0, &starting.1);
             }
@@ -1465,6 +1483,10 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // page because both want the one thread this runs on.
         #[cfg(all(windows, not(feature = "cef")))]
         session::keep(store.as_deref(), platform.environment());
+        // The store's extensions, handed to its profile the first time a page is built
+        // there this run; see extensions/webview2.rs.
+        #[cfg(all(windows, not(feature = "cef")))]
+        crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
         // The browser's own chords, which the page is never offered, on a page in any
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());

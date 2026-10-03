@@ -1671,4 +1671,12 @@ export const yue: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: '擴充功能',
+  'Add extension': '加入擴充功能',
+  'Manage extensions': '管理擴充功能',
+  'Paste a Chrome Web Store link': '貼上 Chrome 線上應用程式商店連結',
+  'Did not load': '載入唔到',
+  Permissions: '權限',
+  Options: '選項',
 }

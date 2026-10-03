@@ -1735,4 +1735,12 @@ export const kn: Dictionary = {
   'Quick question': 'Quick question',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Add to note',
+  // Extensions in web tabs: the bar, its bubble and Settings
+  Extensions: 'ವಿಸ್ತರಣೆಗಳು',
+  'Add extension': 'ವಿಸ್ತರಣೆ ಸೇರಿಸಿ',
+  'Manage extensions': 'ವಿಸ್ತರಣೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
+  'Paste a Chrome Web Store link': 'Chrome ವೆಬ್ ಸ್ಟೋರ್ ಲಿಂಕ್ ಅಂಟಿಸಿ',
+  'Did not load': 'ಲೋಡ್ ಆಗಲಿಲ್ಲ',
+  Permissions: 'ಅನುಮತಿಗಳು',
+  Options: 'ಆಯ್ಕೆಗಳು',
 }

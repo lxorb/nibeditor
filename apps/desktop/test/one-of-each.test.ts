@@ -457,6 +457,8 @@ describe('the switch', () => {
       'lib/ShareSheet.svelte',
       // What an agent may do, a switch a scope, in Settings > Agents.
       'lib/agents/settings/AgentDetail.svelte',
+      // An extension on or off, in Settings > General > Browser.
+      'lib/settings/ExtensionRows.svelte',
     ])
   })
 })
@@ -705,7 +707,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the nine that show one wear the class rather than a card of their own', () => {
+  test('and the eleven that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -723,6 +725,9 @@ describe('the bubble a sentence appears in', () => {
       'lib/web-tab/WebAsk.svelte',
       'lib/web-tab/WebDialog.svelte',
       'lib/web-tab/WebDownloads.svelte',
+      // An extension's popup, and the list of them under the puzzle.
+      'lib/web-tab/WebExtensionPopup.svelte',
+      'lib/web-tab/WebExtensions.svelte',
       'lib/web-tab/WebSite.svelte',
     ])
   })
