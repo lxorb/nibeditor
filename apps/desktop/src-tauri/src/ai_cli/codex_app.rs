@@ -94,7 +94,12 @@ impl Host {
     /// Starts `command` (`args::codex_server`), ended once nothing has been said for
     /// `idle`, and introduces nib to it. `nib` is this app's program, which a thread with
     /// tools runs as `nib mcp`; `folder` the empty folder Codex works in.
-    pub fn start(command: Command, idle: Duration, nib: PathBuf, folder: PathBuf) -> io::Result<Self> {
+    pub fn start(
+        command: Command,
+        idle: Duration,
+        nib: PathBuf,
+        folder: PathBuf,
+    ) -> io::Result<Self> {
         let state: Arc<Mutex<State>> = Arc::default();
         let ended = Arc::new(AtomicBool::new(false));
         let writer: Arc<Mutex<Option<Running>>> = Arc::default();
@@ -200,7 +205,13 @@ impl Host {
                 queued: Vec::new(),
             },
         );
-        send(&mut state, &self.running, method, &params, Waiter::Started(id.to_owned()))
+        send(
+            &mut state,
+            &self.running,
+            method,
+            &params,
+            Waiter::Started(id.to_owned()),
+        )
     }
 
     /// What the window said to one of its threads.
@@ -409,7 +420,9 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
             if let Some(nib) = nib_of(&state, params) {
                 if let Some(route) = state.routes.get_mut(&nib) {
                     match method {
-                        "turn/started" => route.turn = params["turn"]["id"].as_str().map(str::to_owned),
+                        "turn/started" => {
+                            route.turn = params["turn"]["id"].as_str().map(str::to_owned);
+                        }
                         "turn/completed" => route.turn = None,
                         _ => {}
                     }
@@ -448,9 +461,12 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     let Some(waiter) = state.waiting.remove(&id) else {
         return;
     };
-    let error = message
-        .get("error")
-        .map(|error| error["message"].as_str().unwrap_or("Codex refused").to_owned());
+    let error = message.get("error").map(|error| {
+        error["message"]
+            .as_str()
+            .unwrap_or("Codex refused")
+            .to_owned()
+    });
     let result = message.get("result").cloned().unwrap_or(Value::Null);
     match waiter {
         Waiter::Init => {
@@ -560,7 +576,11 @@ mod tests {
     fn every_request_of_the_server_s_is_answered_no() {
         let id = json!(7);
         for (method, field, no) in [
-            ("item/commandExecution/requestApproval", "decision", "decline"),
+            (
+                "item/commandExecution/requestApproval",
+                "decision",
+                "decline",
+            ),
             ("item/fileChange/requestApproval", "decision", "decline"),
             ("execCommandApproval", "decision", "denied"),
             ("mcpServer/elicitation/request", "action", "decline"),
@@ -569,7 +589,11 @@ mod tests {
             assert_eq!(answer["id"], 7);
             assert_eq!(answer["result"][field], no, "{method}");
         }
-        for method in ["account/chatgptAuthTokens/refresh", "item/tool/call", "attestation/generate"] {
+        for method in [
+            "account/chatgptAuthTokens/refresh",
+            "item/tool/call",
+            "attestation/generate",
+        ] {
             let answer: Value = serde_json::from_str(&refusal(&id, method)).expect("JSON");
             assert!(answer["error"]["message"].is_string(), "{method}");
             assert!(answer.get("result").is_none());

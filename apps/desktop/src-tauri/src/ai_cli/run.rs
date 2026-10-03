@@ -117,8 +117,10 @@ impl Running {
             .as_mut()
             .ok_or_else(|| io::Error::new(io::ErrorKind::BrokenPipe, "the input is closed"))?;
         input.write_all(line.as_bytes())?;
-        input.write_all(b"
-")?;
+        input.write_all(
+            b"
+",
+        )?;
         input.flush()?;
         drop(held);
         self.0.touch();

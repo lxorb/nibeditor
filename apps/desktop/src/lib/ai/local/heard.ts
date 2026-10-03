@@ -38,7 +38,7 @@ export interface Counted {
 }
 
 /** How a turn ended, in a session. A stop the engine asked for is told by the engine. */
-export type TurnEnd = 'end' | 'stopped' | 'error'
+type TurnEnd = 'end' | 'stopped' | 'error'
 
 export interface Heard {
   /** More of the answer. */

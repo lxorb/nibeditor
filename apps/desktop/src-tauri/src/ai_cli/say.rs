@@ -187,7 +187,10 @@ mod tests {
             assert!(said(odd.clone()).is_err(), "{odd} was taken");
         }
         assert!(said(json!({ "kind": "effort", "effort": null })).is_ok());
-        assert!(said(json!({ "kind": "goal", "goal": { "do": "set", "objective": "file the inbox" } })).is_ok());
+        assert!(said(
+            json!({ "kind": "goal", "goal": { "do": "set", "objective": "file the inbox" } })
+        )
+        .is_ok());
     }
 
     #[test]
