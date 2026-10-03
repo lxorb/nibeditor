@@ -10,7 +10,7 @@
  *
  *  One page at a time, and every other page steps out of the way while one holds the
  *  screen: a second pane's page is a webview too, and would otherwise be drawn over the
- *  video. See `covered` in WebTab.svelte. */
+ *  video. See `coverOf` in WebTab.svelte. */
 
 import { currentWindow } from '../tauri'
 

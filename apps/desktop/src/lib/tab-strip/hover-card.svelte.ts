@@ -11,9 +11,8 @@
  *  under a finger. A tab the keyboard walks to shows its card at once, as Chrome's does.
  *
  *  A native page draws over every pixel of HTML, so a card that would hang over one
- *  photographs the pages on screen first and stands on the overlay stack while it is
- *  up: the pages step behind their stills, exactly as they do for a menu, and come
- *  back as the card goes. Both engines photograph through `pages.shoot`.
+ *  stands on the overlay stack while it is up, and the page under it cuts the card out
+ *  of itself, exactly as it does for a menu; see web-tab/covers.ts.
  *
  *  Fetched with the first pointer to rest on a tab, and not before: nothing of it is
  *  in front of the first paint. Tabs.svelte says where the pointer is. */
@@ -202,19 +201,22 @@ class Hovering {
     this.uncover = null
   }
 
-  /** Where the card would hang over a page, every page on screen is photographed and
-   *  the card goes on the overlay stack, which puts them behind their stills. All of
-   *  them and not only the one under it, because the stack hides every page. */
+  /** Where the card would hang over a page, it goes on the overlay stack, which has the
+   *  page under it look again at what is over it: the card is cut out of the page and the
+   *  page goes on round it (see web-tab/covers.ts). An engine that cannot cut puts the
+   *  page behind its still instead, so there the pages under the card are photographed
+   *  first - only those, because a page the card is not over is left alone. */
   private async cover(box: { left: number; top: number; right: number; bottom: number }) {
     if (this.uncover) return
 
-    const showing = workspace.panes.all
+    const under = workspace.panes.all
       .map((pane) => workspace.tabs.find((one) => one.id === pane.activeTabId))
       .filter((one): one is Tab => one?.kind === 'web')
       .filter((one) => pages.of(one.id).live && pages.of(one.id).shown)
-    if (!showing.some((one) => overlaps(one.paneId, box))) return
+      .filter((one) => overlaps(one.paneId, box))
+    if (under.length === 0) return
 
-    await Promise.all(showing.map((one) => pages.shoot(one.id)))
+    if (!pages.cuts) await Promise.all(under.map((one) => pages.shoot(one.id)))
     this.uncover = overlays.show(() => this.hush())
   }
 }

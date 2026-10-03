@@ -139,9 +139,13 @@ mod uris;
 #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
+mod web_cut;
+#[cfg(desktop)]
 mod web_dialogs;
 #[cfg(desktop)]
 mod web_find;
+#[cfg(desktop)]
+mod web_follow;
 #[cfg(desktop)]
 mod web_handed;
 #[cfg(desktop)]

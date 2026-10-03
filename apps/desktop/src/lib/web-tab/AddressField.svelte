@@ -79,8 +79,8 @@
 
   // The list is over the page, and a web tab's page is a native webview that draws
   // above every pixel of the window's own: so while it is open it is on the overlay
-  // stack, which is what hides the page and puts the still picture of it in its place.
-  // See `covered` in WebTab.svelte.
+  // stack, which has the page look again at what is over it and cut the list out of
+  // itself. See `coverOf` in WebTab.svelte.
   $effect(() => {
     if (!listing) return
     return untrack(() => overlays.show(() => (shut = true)))

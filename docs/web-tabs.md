@@ -323,7 +323,8 @@ window is what all of them wanted.
 **Following the pane.** A resize observer on the hole for a pane being dragged,
 the window's own resize, and a look after any press - and the crate is only told
 when the answer has changed, so a keystroke in a note beside the page costs one
-layout read and no IPC.
+layout read and no IPC. The window's own resize is the crate's to follow; see
+"Glued to the pane" below.
 
 **Hidden when the tab is not showing, and never closed for it.** This is the one
 thing in this file that shipped wrong twice. Emil, 2026-09-13: _"if I switch between
@@ -536,8 +537,9 @@ was written to stop being. They are fixed where they came from:
 
 What is left on the overlay stack is only ever a layer somebody opened over the note -
 a menu, a dropdown, a sheet, a dialog, the address field's suggestions, a bubble under
-the bar, a site's question, a drawer, a deck - and each of those hides the page with its
-still picture standing in, photographed before the page goes. A picture is of one size
+the bar, a site's question, a drawer, a deck - and each of those over the page is cut out
+of it, or hides it with its still picture standing in where the engine cannot cut; see
+"Glued to the pane". A picture is of one size
 of page: once the page is shown at another - the row came or went, a divider moved - it
 is dropped and the next cover waits for a fresh one, or the menu after **Later** stood
 over a picture with a band of empty pane under it. `overlays.test.ts` names
@@ -607,6 +609,65 @@ reader is watching the page appear. On macOS the same picture is `WKWebView`'s o
 out and turned into a PNG through `NSBitmapImageRep`, so the window gets the same `data:`
 address either way. On Linux there is no snapshot to be had through what wry hands out,
 and the hole keeps its own ground there.
+
+#### Glued to the pane
+
+Emil, 2026-10-03: _"web sites display feels very buggy"_ - the page froze where it was
+while the window was resized, opening the sidebar moved it in steps, and while a toast
+showed or something was hovered it was sometimes invisible. Four causes, measured with
+`scripts/web-smooth-probe.py`, which drives the window with messages to its own HWND and
+samples the page's window from outside as fast as it answers.
+
+**One placement in the air.** Every frame of a drag, a resize or a sliding sidebar said
+where the page goes, each as a call of its own, several in the air at once - and nothing
+says calls land in the order they were sent. An older rectangle landing last left the page
+where the pane had been a frame ago, and the pane, having already said its last
+rectangle, never said it again: the freeze. A page now has one placement in the air and
+only the newest behind it (`web-tab/latest.ts`).
+
+**The window's own resize moves the page.** A placement is measured by the app's page,
+which is laid out _after_ the window is resized - a frame or two behind the window's edge
+on every step. So each placement carries where the hole sat in the layout - the panes'
+area and the pane, at the window size it was measured at - and the crate moves every page
+in the window's own `Resized`, the way Electron's `setAutoResize` does: the area keeps its
+distance from every edge and a pane keeps its share of the area. A placement that crossed
+a resize on its way lands where its layout is _now_. See `src-tauri/src/web_follow.rs`.
+
+**Each frame of a layout is told in that frame.** The hole's resize observer runs between
+the layout and the paint, so the page is placed from there rather than a frame later.
+A sidebar sliding open is then one placement per frame the app draws, with the page in
+step with it. Snapping the page once instead was the other choice, and it was measured
+out: the steps left are the app's own frames, a 70 to 400 ms GPU task in the app's
+compositor (`CrGpuMain`) as the sidebar mounts or goes - with a note in front as much as a
+page - which a snap would not remove, and between those frames the page keeps up.
+
+**A layer is cut out of the page, not the page hidden for it.** Anything open anywhere
+used to hide every page in the window behind its still picture: a tab's hover card over
+the strip, a menu over the file list, the address field's suggestions. A page with no
+picture yet - and a picture is thrown away whenever the page changes size, which the
+notices row does as a toast comes and goes - was a blank pane for as long as the layer
+was up. Now each page asks which of the app's layers are over _it_ (`.nib-layer`,
+`.nib-bubble`, `.nib-screen` and `.nib-scrim`, `web-tab/covers.ts`): one beside the page
+leaves it alone, and one over it is cut out of the page's window in its own rounded shape
+(`SetWindowRgn`, `src-tauri/src/web_cut.rs`), so the page stays live round it - scrolling,
+playing, never hidden and so never repainted when the layer goes. A scrim covers the whole
+window, so a sheet over one empties the page's region and the still stands in under the
+dimming, once it is decoded and drawn; until then only the sheet is cut out. A clear scrim
+counts as covering too: it is there to catch the press outside a menu, and a live page
+would take it. The cut waits the two frames the app takes to draw a layer that has just
+arrived; taking it away does not wait. The system engine on Windows only - elsewhere a
+layer over the page hides it behind its still, as before, and a layer beside it no longer
+does.
+
+|                                                       | before                           | after                       |
+| ----------------------------------------------------- | -------------------------------- | --------------------------- |
+| window resized: the page behind the window's edge     | 12 ms median, 49 ms worst        | 0 ms, in the same message   |
+| resize steps the page never caught up with            | 13 to 29 of 81                   | 0                           |
+| sidebar: page moves per slide, while the app keeps up | 6 to 11, gaps to 70 ms           | 12 to 13, one per frame     |
+| a tab's hover card over the page                      | hidden 211 ms, one blank capture | never hidden                |
+| the address field's suggestions                       | hidden 1,314 ms                  | never hidden, cut round     |
+| settings over the page                                | hidden, its still under it       | emptied, its still under it |
+| a toast                                               | never hidden                     | never hidden                |
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running

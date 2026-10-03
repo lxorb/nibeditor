@@ -28,6 +28,10 @@ let holding: Promise<void> | null = null
  *  difference between a page it builds again and a page left drawn over the app. */
 let refuses: string | null = null
 
+/** Whether the crate says it cuts the app's layers out of a page, as the system's engine
+ *  on Windows does, rather than having the window hide the page behind its picture. */
+let cuts = false
+
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
@@ -36,6 +40,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     asked.push({ command, args })
     if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
+    if (command === 'web_place') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
   },
 }))
@@ -86,6 +91,20 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
     }
   }
 
+  // A layer a test has put somewhere of its own.
+  const given = this.getAttribute('data-box')
+  if (given !== null) {
+    const rect = JSON.parse(given) as { x: number; y: number; width: number; height: number }
+    return {
+      ...rect,
+      top: rect.y,
+      left: rect.x,
+      right: rect.x + rect.width,
+      bottom: rect.y + rect.height,
+      toJSON: () => rect,
+    }
+  }
+
   const hole = this.classList.contains('hole')
   const rect = { x: 0, y: hole ? 40 : 0, width: 800, height: hole ? 560 : 600 }
   return {
@@ -97,6 +116,9 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
     toJSON: () => rect,
   }
 }
+
+/** jsdom plays no animations, so no layer of a test's is ever on its way in or out. */
+Element.prototype.getAnimations = () => []
 
 /** What the hit test finds over the hole, or null for a pane with nothing over it.
  *
@@ -145,6 +167,7 @@ beforeEach(() => {
   over = null
   holding = null
   refuses = null
+  cuts = false
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -216,13 +239,22 @@ test('switching away from a web tab keeps the page and switching back does not b
   void unmount(second)
 })
 
-/** A native webview draws above every pixel of HTML in the window, so anything the app
- *  opens over the page has to be answered by hiding the page - and it has to be answered
- *  the moment the overlay opens rather than at the next press, because a palette row
- *  opens the next overlay and Escape closes one. What it used to ask instead was which
- *  element was on top at the middle of the hole, which left a menu over a corner of the
- *  page drawn behind the page. See `covered` in WebTab.svelte and overlays.ts. */
-test('the page is hidden while anything of the app is over it, and comes back when it goes', async () => {
+/** One of the app's layers, as the theme package shapes it, at `box`. */
+function layer(kind: string, box = { x: 100, y: 100, width: 240, height: 200 }): HTMLElement {
+  const made = document.createElement('div')
+  made.className = kind
+  made.setAttribute('data-box', JSON.stringify(box))
+  document.body.append(made)
+  return made
+}
+
+/** A native webview draws above every pixel of HTML in the window, so a layer the app
+ *  opens over the page has to be answered by the page - and it has to be answered the
+ *  moment the overlay opens rather than at the next press, because a palette row opens
+ *  the next overlay and Escape closes one. An engine that cannot cut the layer out of the
+ *  page hides the page, photographed first. See `coverOf` in WebTab.svelte and
+ *  overlays.ts. */
+test('the page is hidden while a layer of the app is over it, and comes back when it goes', async () => {
   await launched()
 
   workspace.openWebsite()
@@ -236,8 +268,9 @@ test('the page is hidden while anything of the app is over it, and comes back wh
   await frames()
   expect(pages.of(tab.id).live).toBe(true)
 
-  // A menu, a sheet, the palette: whatever it is, it is on the overlay stack.
+  // A menu: on the overlay stack, and a `.nib-layer` over the page.
   asked.length = 0
+  const menu = layer('nib-layer')
   const off = overlays.show(() => undefined)
   await frames()
 
@@ -254,11 +287,92 @@ test('the page is hidden while anything of the app is over it, and comes back wh
 
   asked.length = 0
   off()
+  menu.remove()
   await frames()
 
   const shown = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(shown?.args.visible).toBe(true)
 
+  void unmount(app)
+})
+
+/** Emil, 2026-10-03: *"While a toast shows or while hovering things, the website is
+ *  sometimes invisible until he stops."* Anything open anywhere used to hide every page in
+ *  the window: a tab's hover card over the strip, a menu over the file list. A layer that
+ *  is not over the page leaves it alone. */
+test('a layer that is not over the page leaves it alone', async () => {
+  const { app } = await opened('https://example.com/beside')
+
+  asked.length = 0
+  const card = layer('nib-bubble', { x: 820, y: 10, width: 200, height: 120 })
+  const off = overlays.show(() => undefined)
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual(
+    [],
+  )
+  expect(asked.map((one) => one.command)).not.toContain('web_shot')
+
+  off()
+  card.remove()
+  void unmount(app)
+})
+
+/** On an engine that cuts (the system's own on Windows), a menu over the page is cut out
+ *  of it in its own shape: the page stays on screen round it and is never hidden, and the
+ *  menu going puts the whole page back. See web_cut.rs. */
+test('a menu over the page is cut out of it, and the page stays', async () => {
+  cuts = true
+  const { app } = await opened('https://example.com/cut')
+
+  asked.length = 0
+  const menu = layer('nib-layer', { x: 100, y: 140, width: 240, height: 200 })
+  const off = overlays.show(() => undefined)
+  await frames()
+
+  const placed = asked.filter((one) => one.command === 'web_place')
+  expect(placed.every((one) => one.args.visible === true)).toBe(true)
+  expect(placed.at(-1)?.args.cut).toEqual({
+    all: false,
+    hollows: [{ x: 100, y: 100, width: 240, height: 200, radius: 0 }],
+  })
+
+  asked.length = 0
+  off()
+  menu.remove()
+  await frames()
+
+  const back = asked.filter((one) => one.command === 'web_place').at(-1)
+  expect(back?.args).toMatchObject({ visible: true, cut: null })
+
+  void unmount(app)
+})
+
+/** A sheet over its scrim covers all of the page, and the page's picture is what the scrim
+ *  dims. A page with none yet has the sheet cut out of it first - never the sheet behind
+ *  the page, never an empty pane - and all of it once the picture is in. */
+test('a sheet over the page covers all of it once its picture is in', async () => {
+  cuts = true
+  const { tab, app } = await opened('https://example.com/sheet')
+  pages.of(tab.id).shot = null
+
+  asked.length = 0
+  const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
+  const sheet = layer('nib-screen', { x: 200, y: 100, width: 400, height: 300 })
+  const off = overlays.show(() => undefined)
+  await frames()
+
+  const placed = asked.filter((one) => one.command === 'web_place')
+  expect(placed.every((one) => one.args.visible === true)).toBe(true)
+  // The sheet alone first, then all of it: the photograph was asked for in between.
+  const first = placed.findIndex((one) => (one.args.cut as { all: boolean } | null)?.all === false)
+  expect(first).toBeGreaterThanOrEqual(0)
+  expect(asked.map((one) => one.command)).toContain('web_shot')
+
+  off()
+  scrim.remove()
+  sheet.remove()
+  await frames()
   void unmount(app)
 })
 

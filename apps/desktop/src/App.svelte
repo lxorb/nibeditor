@@ -971,7 +971,7 @@
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
-        <div class="panes">
+        <div class="panes" data-panes>
           <Progress />
           <PaneTree frame={workspace.panes.frame} />
           <!-- The note the window was left on, as it was left, until its editor is up;

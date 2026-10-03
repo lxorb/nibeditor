@@ -35,7 +35,8 @@ missing_docs = "warn"
 # own Chromium, the keyboard hook that hears the browser's chords in a web tab's page
 # (web_keys.rs), which the runtime offers no event for. And asking the system when it
 # last had input and which window is in front, on Windows and a Mac, so a web login is
-# not handed away from somebody typing in a page (src/presence.rs). None of
+# not handed away from somebody typing in a page (src/presence.rs). And the shape a
+# web tab's page is cut to round the app's layers over it (src/web_cut.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -388,6 +389,9 @@ windows = { version = "0.58", features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
+  # The shape of a web tab's page, with the app's layers over it cut out of it rather
+  # than the page hidden for them; see web_cut.rs.
+  "Win32_Graphics_Gdi",
 ] }
 # An agent's picture of a page with every filled secret field painted over, so a
 # password's bullets and a card's digits never reach it; see agents/page.rs. Already
