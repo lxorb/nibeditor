@@ -31,12 +31,18 @@
 
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs reads a grant's spaces")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs reads a grant's spaces"
+    )
 )]
 pub mod grants;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "most answers are given by an engine with agent tabs")
+    allow(
+        dead_code,
+        reason = "most answers are given by an engine with agent tabs"
+    )
 )]
 pub mod verbs;
 
@@ -47,12 +53,18 @@ pub mod verbs;
 mod approvals;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs reads a page to capture")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs reads a page to capture"
+    )
 )]
 mod capture;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs presses keys into a page")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs presses keys into a page"
+    )
 )]
 mod keys;
 #[cfg_attr(
@@ -68,17 +80,26 @@ mod limits;
 mod log;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has a page to judge")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has a page to judge"
+    )
 )]
 mod policy;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has a tree to write")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has a tree to write"
+    )
 )]
 mod snapshot;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has a tab to pause on")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has a tab to pause on"
+    )
 )]
 mod stop;
 
@@ -295,7 +316,10 @@ fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer
 /// Counts a navigation against the agent's limit, waiting for room.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs navigates an agent's page")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs navigates an agent's page"
+    )
 )]
 fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     match limits::wait_for_room(

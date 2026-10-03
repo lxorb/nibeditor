@@ -58,7 +58,10 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
         cdp::heard(&twin.label())
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .say("warning", format!("nib could not hand this page the reader's logins: {why}"));
+            .say(
+                "warning",
+                format!("nib could not hand this page the reader's logins: {why}"),
+            );
     }
 }
 
@@ -106,13 +109,15 @@ mod tests {
         let cookies = settable(&answer);
         assert_eq!(cookies.len(), 2, "a cookie with no name is no cookie");
         assert_eq!(cookies[0]["name"], "sid");
-        assert!(cookies[0].get("expires").is_none(), "a session cookie stays one");
+        assert!(
+            cookies[0].get("expires").is_none(),
+            "a session cookie stays one"
+        );
         assert!(cookies[0].get("size").is_none() && cookies[0].get("session").is_none());
         assert_eq!(cookies[0]["httpOnly"], true);
         assert_eq!(cookies[1]["expires"], 1_900_000_000.0);
         assert_eq!(
-            cookies[1]["partitionKey"]["topLevelSite"],
-            "https://shop.example",
+            cookies[1]["partitionKey"]["topLevelSite"], "https://shop.example",
             "a partitioned cookie stays in its partition"
         );
         assert!(settable(&json!({})).is_empty());

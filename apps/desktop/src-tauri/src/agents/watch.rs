@@ -29,7 +29,10 @@ use tauri::AppHandle;
 /// The event the pictures go out on.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has them to picture")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 pub const FRAME_EVENT: &str = "nib://agent-frame";
 
@@ -40,7 +43,10 @@ static WATCHED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
 #[derive(Clone, Serialize)]
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has them to picture")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 struct Frame {
     /// The agent tab's id.
@@ -55,7 +61,10 @@ fn watched() -> std::sync::MutexGuard<'static, Option<HashSet<String>>> {
 
 #[cfg_attr(
     not(any(windows, feature = "cef")),
-    allow(dead_code, reason = "only an engine with agent tabs has them to picture")
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 fn is_watched(tab: &str) -> bool {
     watched().as_ref().is_some_and(|all| all.contains(tab))
