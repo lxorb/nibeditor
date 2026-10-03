@@ -11,7 +11,7 @@ import { isEffort } from '../chat/effort'
 import type { Effort, Thread } from '../chat/types'
 import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
-import { approve, autocompact, copy, exportThread, listTasks, recap } from './conversation'
+import { approve, autocompact, copy, exportThread, listJobs, recap } from './conversation'
 import { foundNow } from './found'
 import { batch, fork, research, subtask } from './helpers'
 import { type Host, hostOf, sendHere } from './host'
@@ -20,6 +20,7 @@ import { goal, loop } from './running'
 import { agents, init, memory, mention, outputStyle, skills } from './space'
 import { ROWS, takenNames } from './table'
 import { tasks } from './tasks.svelte'
+import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
 import { message, t } from '../../i18n.svelte'
@@ -118,9 +119,9 @@ const RUNS: Record<string, Run> = {
     panel.stop()
     if (thread) tasks.stop(thread.id)
   },
-  tasks: (context, host) => {
+  jobs: (context, host) => {
     const thread = threadOf(context)
-    if (thread) listTasks(host, thread)
+    if (thread) listJobs(host, thread)
   },
   focus: ({ panel }) => panel.toggleFolded(),
   help: ({ panel }) => {
@@ -198,6 +199,11 @@ const RUNS: Record<string, Run> = {
   diff: (context) => reviewCommand('changes', context),
 
   // 3.6
+  tasks: async (context, host) => {
+    const thread = threadOf(context)
+    if (thread) await showTasks(host, thread, context.args)
+  },
+  today: ({ args, thread }, host) => planDay(host, thread, args),
   status: (context, host) =>
     report(host, context, status(context.thread, host.panel.provider ?? null)),
   usage: (context, host) =>

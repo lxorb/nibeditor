@@ -297,7 +297,7 @@ names the provider's own road.
 | `/archive` | - | Cx | out of the list, kept | nib | nib | nib |
 | `/delete` | - | Cx | gone for good; asks | nib | nib | nib |
 | `/stop` | - | CC, Cx | the turn and the thread's background work stop (**Esc** stops the turn) | interrupt | `turn/interrupt` | abort |
-| `/tasks` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands | nib | nib | nib |
+| `/jobs` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands. Claude Code's `/tasks` is named `/jobs` here because a task in nib is a box in a note (`docs/tasks.md` 5.15, decision 8.3); `/ps` and `/bashes` still land | nib | nib | nib |
 | `/focus` | - | CC | tool rows and thinking fold away; prompts and answers stay | nib | nib | nib |
 | `/help` | - | everyone | the commands and keys | nib | nib | nib |
 
@@ -358,6 +358,8 @@ reviewable diff, not a reply.
 
 | nib | synonyms | from | what it does in nib | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
+| `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | nib | nib | nib |
+| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Agent mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
 | `/status` | - | CC, Cx | provider, model, effort, account and plan, grant, program version | `claude auth status --json` | `codex login status` | Settings > AI's row |
 | `/usage` | `/cost`, `/stats`, `/rate-limit-options` | CC `/usage` (`/cost`, `/stats`), Cx `/usage` | tokens in this thread and today; a plan's state and reset time; money only where the provider says it | `total_cost_usd`, `rate_limit_event` | rate limits from the app-server | `usage`; OpenRouter's `cost` |
 | `/login` | - | CC | the provider's own sign-in road (`docs/ai.md`, "Your own plan") | `claude auth login` in a terminal tab | `codex login` in a terminal tab | ChatGPT: Continue with ChatGPT; keys: Settings > AI |
@@ -369,7 +371,7 @@ reviewable diff, not a reply.
 | `/vim` | - | Cx (CC took its out) | vim keys in the field, using nib's vim mode | nib | nib | nib |
 | `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | nib | nib | nib |
 
-That is **58 commands** and **42 synonyms**. A custom command (4.7) is one more row, and a
+That is **60 commands** and **43 synonyms**. A custom command (4.7) is one more row, and a
 custom command with a vendor's name wins over nothing but itself: built-ins keep their
 names.
 
@@ -942,8 +944,9 @@ other's files.
     line it added), to draw and write down.
   - `approve(approval, allow)` and `voice(on?)`, for `/approve` and `/voice`.
 - **Its lines** are a notice of their own, code `command` (added to lane 1's `NoticeCode`),
-  in a model turn of their own: a goal that ended, a subtask's answer, `/status`, `/usage`,
-  `/doctor`, `/tasks`, a listing. `text` is already worded, a row a line (`word · value`),
+  in a model turn of their own (and `/tasks`'s rows under code `tasks`, drawn with live
+  boxes): a goal that ended, a subtask's answer, `/status`, `/usage`,
+  `/doctor`, `/jobs`, a listing. `text` is already worded, a row a line (`word · value`),
   never sent to the model. The panel draws it as it is.
 - **The goal chip** draws `thread.goal` (lane 1's `Goal`): ◎, minutes since `started`,
   `turns` of `budget.turns`, `tokens`, `reason` on click; ✕ runs `/goal clear`. A thread's

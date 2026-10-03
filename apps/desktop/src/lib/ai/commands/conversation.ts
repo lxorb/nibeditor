@@ -1,5 +1,5 @@
 /** The commands about the thread itself (docs/ai-sidebar.md 3.1) that are more than one
- *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact`, `/tasks` and
+ *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact`, `/jobs` and
  *  `/approve`. */
 
 import { copyText } from '../../clipboard'
@@ -104,8 +104,8 @@ const GLYPH: Record<TaskKind, string> = {
   fork: '⑂',
 }
 
-/** `/tasks`: the thread's background work, a row each. */
-export function listTasks(host: Host, thread: Thread): void {
+/** `/jobs`: the thread's background work, a row each. */
+export function listJobs(host: Host, thread: Thread): void {
   const now = Date.now()
   const rows = tasks.of(thread.id).map((one) => {
     const minutes = Math.round((now - one.started) / 60_000)

@@ -197,11 +197,11 @@ describe('the menu', () => {
     expect(thread).not.toHaveProperty('style')
   })
 
-  test('says /goal and /tasks as lines in the thread', async () => {
+  test('says /goal and /jobs as lines in the thread', async () => {
     const { panel } = fakePanel(thread)
     const rows = commands(panel)
     await run(rows, 'goal', '', panel)
-    await run(rows, 'tasks', '', panel)
+    await run(rows, 'jobs', '', panel)
     const lines = thread.turns.flatMap((turn) =>
       turn.parts.map((part) => (part.kind === 'notice' ? part.code : '')),
     )
