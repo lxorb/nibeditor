@@ -57,7 +57,7 @@ const LONGEST_TASK: usize = 2000;
 /// One task line of a note, raw. The rows of a space are built from these in the
 /// window, which reads the fields with the one parser it has (`@nib/bases`), so the
 /// crate and the window cannot disagree about what a date or a priority is. See
-/// docs/tasks.md 5.3. The twin of `ScannedTask` in scan-rows.ts.
+/// docs/tasks.md 5.3. The twin of `ScannedTask` in packages/bases/src/scan.ts.
 #[derive(Serialize)]
 pub struct Task {
     /// The line it is on, counting from zero.
@@ -1468,7 +1468,7 @@ mod tests {
     }
 
     /// The task lines a note carries for the rows of its space, with the heading
-    /// path each sits under. The twin of the same case in scan-rows.test.ts.
+    /// path each sits under. The twin of the same case in packages/bases/src/scan.test.ts.
     #[test]
     fn a_note_carries_its_task_lines_and_the_sections_above_them() {
         let read = note_at(

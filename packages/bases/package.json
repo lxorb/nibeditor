@@ -9,6 +9,8 @@
     "./answer": "./src/answer.ts",
     "./language": "./src/language/index.ts",
     "./occurrence": "./src/occurrence.ts",
+    "./rows": "./src/note-rows.ts",
+    "./scan": "./src/scan.ts",
     "./tasks-query": "./src/tasks-query.ts",
     "./types": "./src/types.ts"
   },

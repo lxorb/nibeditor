@@ -5,13 +5,14 @@
  *  outside code, below the front matter, every line a task is with the heading path
  *  the walk has come past. Raw rather than parsed, because the rows parse the fields
  *  with the one reader they have (`@nib/bases`), so the crate and the window cannot
- *  disagree about what a date is. The cases in scan-rows.test.ts are the twins of
- *  the crate's.
+ *  disagree about what a date is. The cases in scan.test.ts are the twins of the
+ *  crate's.
  *
- *  Its own module rather than a part of scan-note.ts, which the first paint carries:
- *  nothing before the launch order is over asks a note for its tasks. The browser's
- *  scan reads it for every note (web/commands.ts) and the rows for a note just saved
- *  (rows/store.ts). */
+ *  Its own entry, `@nib/bases/scan`, with nothing of the engine behind it, rather
+ *  than a part of the app's scan-note.ts, which the first paint carries: nothing
+ *  before the launch order is over asks a note for its tasks. The browser's scan
+ *  reads it for every note (web/commands.ts), the rows for a note just saved
+ *  (rows/store.ts), and the account connector for every note it answers about. */
 
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'

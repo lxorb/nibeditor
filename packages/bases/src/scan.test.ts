@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { LONGEST_TASK, scanRows } from './scan-rows'
+import { LONGEST_TASK, scanRows } from './scan'
 
 /** The twins of the crate's cases in links.rs: the same notes, the same answers. */
 describe('what a note gives the rows of its space', () => {

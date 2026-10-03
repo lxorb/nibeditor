@@ -10,7 +10,7 @@ import { COVER_KEY } from '@nib/markdown/cover'
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
-import type { ScannedTask, Stamp } from './scan-rows'
+import type { ScannedTask, Stamp } from '@nib/bases/scan'
 import { tagsIn } from './search/tags'
 import { readWebFile } from './web-tab/shortcut'
 
@@ -85,7 +85,7 @@ export interface ScannedNote {
    *  as written, the task lines with the headings above them, and the file's size and
    *  times. What the crate's scan and the browser's carry for every note; a note read
    *  again after a save leaves them out, because the rows read that save themselves
-   *  (see scan-rows.ts) and the index has no use for them. */
+   *  (see `@nib/bases/scan`) and the index has no use for them. */
   front?: string | null
   tasks?: ScannedTask[]
   stamp?: Stamp | null
