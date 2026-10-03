@@ -58,11 +58,14 @@ pub fn script() -> &'static str {
 pub const BINDING: &str = "nibSwiped";
 
 /// What the window name a swipe is said under on `WebView2` begins with; the rest is
-/// what the binding would have been handed.
+/// what the binding would have been handed. Nib's own Chromium hears a swipe through
+/// the binding instead, and has no such window.
+#[cfg(any(not(feature = "cef"), test))]
 const NAMED: &str = "nib-swipe:";
 
 /// What a window asked for under `name` says of a swipe, or `None` for any other name.
 /// Pure, and the only reading of that name.
+#[cfg(any(not(feature = "cef"), test))]
 pub fn named(name: &str) -> Option<&str> {
     name.strip_prefix(NAMED)
 }
