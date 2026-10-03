@@ -11,6 +11,7 @@
     "app:build": "tauri build",
     "tauri": "tauri",
     "test": "vitest run",
+    "sim:long": "vitest run --config vitest.long.config.ts",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {

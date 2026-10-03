@@ -19,6 +19,12 @@ Run it from the repository root:
 
     python apps/desktop/test/e2e/conflict.py
 
+With `--v2` the account is moved to sync v2 first (docs/sync-v2.md), where there is no
+rule to choose: the two sides are merged, or held for the question when they rewrote
+the same words. Then no `(from another device` file may exist anywhere, and every
+line must be in the note on both machines and on the account, or - for a note held
+for the question - on the machine that typed it.
+
 It builds the app, applies the migrations, starts the Worker, runs the browsers
 and stops everything again. Nothing it makes outlives it but the screenshots,
 which go beside it under `shots/conflict/`.
@@ -53,9 +59,23 @@ OPENING = "# Plan\n\nthe line both of them start from\n"
 # How long anything is waited for before the drive gives up and says what it saw.
 PATIENCE = 60
 
+#: Sync v2 rather than v1: see the docstring.
+V2 = "--v2" in sys.argv
+
 # The eighteen cases: each rule, each side taken off the network, each way of
-# being away. See `run_case`.
-RULES = ("both", "newest", "ask")
+# being away. See `run_case`. Under v2 there is no rule, so six.
+RULES = ("v2",) if V2 else ("both", "newest", "ask")
+
+#: What says the note is in its room, by the note's id on the account: v1's rooms, or
+#: under v2 the room carrying the engine's document (sync2/carry.ts).
+IN_ROOM = (
+    "(id) => [...window.nibApp.rooms.carried.values()].some((one) => one.room.settled)"
+    if V2
+    else "(id) => window.nibApp.rooms.carries(id)"
+)
+
+#: The name every copy beside a note carries; under v2 there must be none.
+COPY = "(from another device"
 SIDES = ("one", "two")
 WAYS = ("network", "restart", "noroom")
 
@@ -206,7 +226,15 @@ def clashes_here(page: Page, about: str) -> list[str]:
     Where the `ask` rule puts it: the note is left exactly as it is, and the copy is
     held whole in the sync pane until somebody says what to do with it. Read out of
     the device's own storage, which is where the pane reads it; see
-    sync/record.svelte.ts."""
+    sync/record.svelte.ts. Under v2, the notes held for the question, with the other
+    side's words as the question shows them."""
+    if V2:
+        return page.evaluate(
+            """(about) => (window.nibApp.sync.engine?.heldNotes ?? [])
+              .filter((one) => one.name.startsWith(about))
+              .map((one) => String(one.theirs?.excerpt?.text ?? ''))""",
+            about,
+        )
     return page.evaluate(
         """(about) => {
           try {
@@ -355,7 +383,10 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
     pages: dict[str, Page] = {}
     for which in SIDES:
         page = signed_in(browser, token, f"{label}/{which}")
-        page.evaluate("(rule) => window.nibApp.modes.setConflicts(rule)", rule)
+        if not V2:
+            page.evaluate("(rule) => window.nibApp.modes.setConflicts(rule)", rule)
+        elif page.evaluate("() => window.nibApp.sync.version") != 2:
+            failed(f"[{label}/{which}] the account is on v2 and this machine started v1")
         wait_for(
             page,
             f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
@@ -379,7 +410,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         for which, page in pages.items():
             wait_for(
                 page,
-                f"() => window.nibApp.rooms.carries({json.dumps(held)})",
+                f"() => ({IN_ROOM})({json.dumps(held)})",
                 f"[{label}/{which}] the note to join its room",
             )
 
@@ -412,6 +443,13 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
 
     away_line = f"written on machine {away} while away, rule {rule}"
     stays_line = f"written on the other machine, rule {rule}"
+    if V2:
+        # Two lines appended at one point are both kept and nothing is asked - unless
+        # they share more than a line of words, when they are one passage written twice
+        # (docs/sync-v2.md 5.4). v1's two lines are alike enough to be that; these are
+        # two different things two people wrote.
+        away_line = f"Machine {away}, from the train: the platform moved to track nine."
+        stays_line = "Meanwhile at the desk we drafted the budget for spring."
     write_line(gone, f"\n{away_line}\n")
     write_line(stays, f"\n{stays_line}\n")
 
@@ -421,13 +459,13 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         gone.wait_for_timeout(1000)
         say(
             f"[{label}] the note is closed on machine {away}:"
-            f" in its room={gone.evaluate(f'() => window.nibApp.rooms.carries({json.dumps(held)})')}"
+            f" in its room={gone.evaluate(f'() => ({IN_ROOM})({json.dumps(held)})')}"
             f" open={gone.evaluate('() => window.nibApp.workspace.openNotes.length')}"
         )
 
     for which, page in pages.items():
         say(
-            f"[{label}/{which}] while apart: in its room={page.evaluate(f'() => window.nibApp.rooms.carries({json.dumps(held)})')}"
+            f"[{label}/{which}] while apart: in its room={page.evaluate(f'() => ({IN_ROOM})({json.dumps(held)})')}"
             f" words={json.dumps(read_words(page))[:150]}"
         )
 
@@ -511,6 +549,17 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         if line not in words[who] and line not in kept[who]:
             failed(f"[{label}] {what} are gone from machine {who}, which typed them")
 
+        # Under v2: the same everywhere, unless the note is held for the question.
+        if rule == "v2":
+            if waiting["one"] or waiting["two"]:
+                continue
+            if line not in account:
+                failed(f"[{label}] the account lost {what}")
+            for which in SIDES:
+                if line not in words[which]:
+                    failed(f"[{label}] machine {which} lost {what}")
+            continue
+
         # And then what each rule says beyond that. `both` writes the other copy
         # beside the note, so both machines and the account end up holding every line
         # as a note. `ask` holds the copy in the pane until somebody answers, and
@@ -533,6 +582,15 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         say(f"[{label}] the copy beside the note is {copies}")
         if words["one"] != words["two"] and not copies:
             failed(f"[{label}] the two machines disagree and no copy was kept beside the note")
+
+    if rule == "v2":
+        # Two different lines added at the end: nothing to ask about.
+        if waiting["one"] or waiting["two"]:
+            failed(f"[{label}] the question came up over two lines added side by side")
+        copies = [one for one in [*there, *notes_here(gone, about), *notes_here(stays, about)] if COPY in one]
+        if copies:
+            failed(f"[{label}] a copy was made beside the note under v2: {copies}")
+        say(f"[{label}] held for the question: one={len(waiting['one'])} two={len(waiting['two'])}")
 
     if rule == "ask":
         say(f"[{label}] waiting in the pane: one={len(waiting['one'])} two={len(waiting['two'])}")
@@ -563,6 +621,8 @@ def main() -> int:
     with DRIVE.session() as browser:
         worker.start()
         token = worker.account()
+        if V2:
+            worker.sql(f"update users set sync_version = 2 where email = '{EMAIL}'")
 
         # The space, made once by a machine of its own so that every case below
         # starts from an account that already holds it.
@@ -583,7 +643,8 @@ def main() -> int:
         say(f"the space is {space_id} on the account")
         owner.context.close()
 
-        only = sys.argv[1] if len(sys.argv) > 1 else ""
+        words = [one for one in sys.argv[1:] if not one.startswith("--")]
+        only = words[0] if words else ""
         for rule in RULES:
             for away in SIDES:
                 for how in WAYS:
