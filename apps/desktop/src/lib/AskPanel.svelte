@@ -222,7 +222,7 @@
       {:else}
         {@const notes = citedNotes(turn)}
         <div class="answer">
-          <Answer html={drawn(turn)} onfollow={(event) => follow(event, turn)} />
+          <Answer html={drawn(turn)} onfollow={(event: MouseEvent) => follow(event, turn)} />
 
           {#if notes.length}
             <div class="sources">
