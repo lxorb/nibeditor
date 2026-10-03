@@ -12,7 +12,11 @@ const HOME = '/spaces/Home'
 
 /** A note as `scan_links` reads one, rows' fields and all. */
 function scanned(path: string, content: string): ScannedNote {
-  return { ...scanNote(path, content), ...scanRows(content), stamp: { size: content.length, mtime: 1, ctime: 1 } }
+  return {
+    ...scanNote(path, content),
+    ...scanRows(content),
+    stamp: { size: content.length, mtime: 1, ctime: 1 },
+  }
 }
 
 interface Rig {
@@ -20,9 +24,9 @@ interface Rig {
   disk: Map<string, string>
   heard: RowsChange[]
   /** Lets the next scan of a root answer. */
-  answer(root: string): void
+  answer: (root: string) => void
   /** Settles everything in the air. */
-  settled(): Promise<void>
+  settled: () => Promise<void>
 }
 
 /** A store over disks of notes, by absolute path. The open space is `open`, whose
@@ -65,7 +69,7 @@ function rig(disk: Record<string, string>, open: string | null = null): Rig {
     store,
     disk: files,
     heard,
-    answer(root) {
+    answer: (root) => {
       waiting.get(root)?.()
       waiting.delete(root)
     },
@@ -74,7 +78,9 @@ function rig(disk: Record<string, string>, open: string | null = null): Rig {
 }
 
 const tasks = (rows: readonly Row[]) =>
-  rows.filter((row) => row.kind === 'task').map((row) => `${row.space}:${row.path}:${row.task?.text}`)
+  rows
+    .filter((row) => row.kind === 'task')
+    .map((row) => `${row.space}:${row.path}:${row.task?.text}`)
 
 describe('the rows of every space', () => {
   test("the open space's rows are the link index's scan, and the others are read after", async () => {
@@ -132,29 +138,49 @@ describe('the rows of every space', () => {
     await store.follow({ op: 'created', path: `${WORK}/New.md`, kind: 'file', root: WORK })
     expect(tasks(store.of())).toEqual(['Work:New.md:Fresh'])
 
-    store.follow({ op: 'moved', from: `${WORK}/New.md`, to: `${WORK}/Done/Old.md`, kind: 'file', root: WORK })
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/New.md`,
+      to: `${WORK}/Done/Old.md`,
+      kind: 'file',
+      root: WORK,
+    })
     expect(tasks(store.of())).toEqual(['Work:Done/Old.md:Fresh'])
     expect(store.of()[0]?.file).toMatchObject({ name: 'Old.md', basename: 'Old', folder: 'Done' })
 
-    store.follow({ op: 'moved', from: `${WORK}/Done`, to: `${WORK}/Archive`, kind: 'folder', root: WORK })
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Done`,
+      to: `${WORK}/Archive`,
+      kind: 'folder',
+      root: WORK,
+    })
     expect(tasks(store.of())).toEqual(['Work:Archive/Old.md:Fresh'])
 
-    store.follow({ op: 'removed', path: `${WORK}/Archive`, kind: 'folder', root: WORK })
+    void store.follow({ op: 'removed', path: `${WORK}/Archive`, kind: 'folder', root: WORK })
     expect(store.of()).toEqual([])
   })
 
-  test('a note moved to another space is that space\'s now', async () => {
+  test("a note moved to another space is that space's now", async () => {
     const { store, answer, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Go\n' }, WORK)
     store.spacesAre([
       { root: WORK, name: 'Work' },
       { root: HOME, name: 'Home' },
     ])
+    await settled()
     answer(HOME)
     await settled()
 
-    store.follow({ op: 'moved', from: `${WORK}/Plan.md`, to: `${HOME}/Plan.md`, kind: 'file', root: WORK })
+    void store.follow({
+      op: 'moved',
+      from: `${WORK}/Plan.md`,
+      to: `${HOME}/Plan.md`,
+      kind: 'file',
+      root: WORK,
+    })
     expect(tasks(store.of())).toEqual(['Home:Plan.md:Go'])
-    expect(store.rootOf(store.of()[1] as Row)).toBe(HOME)
+    const [, moved] = store.of()
+    expect(moved && store.rootOf(moved)).toBe(HOME)
   })
 
   test('what happens while a space is being read is done again over what it brings back', async () => {
@@ -168,10 +194,16 @@ describe('the rows of every space', () => {
 
     // The read is in the air: a note saved, one deleted, one moved.
     store.saved(`${HOME}/Kept.md`, '- [x] Kept\n')
-    store.follow({ op: 'removed', path: `${HOME}/Gone.md`, kind: 'file', root: HOME })
+    void store.follow({ op: 'removed', path: `${HOME}/Gone.md`, kind: 'file', root: HOME })
     disk.delete(`${HOME}/Old/Moved.md`)
     disk.set(`${HOME}/New/Moved.md`, '- [ ] Moved\n')
-    await store.follow({ op: 'moved', from: `${HOME}/Old`, to: `${HOME}/New`, kind: 'folder', root: HOME })
+    await store.follow({
+      op: 'moved',
+      from: `${HOME}/Old`,
+      to: `${HOME}/New`,
+      kind: 'folder',
+      root: HOME,
+    })
     // The scan read the disk before the moves.
     disk.set(`${HOME}/Gone.md`, '- [ ] Gone\n')
     disk.set(`${HOME}/Old/Moved.md`, '- [ ] Moved\n')
@@ -180,7 +212,9 @@ describe('the rows of every space', () => {
     answer(HOME)
     await settled()
     expect(tasks(store.of()).sort()).toEqual(['Home:Kept.md:Kept', 'Home:New/Moved.md:Moved'])
-    expect(store.of().find((row) => row.path === 'Kept.md' && row.kind === 'task')?.task?.done).toBe(true)
+    expect(
+      store.of().find((row) => row.path === 'Kept.md' && row.kind === 'task')?.task?.done,
+    ).toBe(true)
   })
 
   test('a space renamed keeps its rows under its new name, and one gone takes them', async () => {
@@ -192,7 +226,7 @@ describe('the rows of every space', () => {
     expect(tasks(store.of())).toEqual(['Job:Plan.md:Go'])
     expect(heard.at(-1)?.path).toBeNull()
 
-    store.follow({ op: 'moved', from: WORK, to: '/spaces/Job', kind: 'space', root: null })
+    void store.follow({ op: 'moved', from: WORK, to: '/spaces/Job', kind: 'space', root: null })
     expect(store.at('/spaces/Job/Plan.md')).toHaveLength(2)
 
     store.spacesAre([])
@@ -226,7 +260,7 @@ describe('the rows of every space', () => {
     const { store, settled } = rig(files, WORK)
     // The index's copy of a note saved after its scan carries no rows' fields.
     const host = (store as unknown as { host: Host }).host
-    const open = host.open
+    const open = host.open.bind(host)
     host.open = () => ({ ...open(), notes: () => [scanNote('Plan.md', '- [ ] Saved since\n')] })
 
     store.spacesAre([{ root: WORK, name: 'Work' }])

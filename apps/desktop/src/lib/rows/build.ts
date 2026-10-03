@@ -11,6 +11,12 @@ import { type FileInfo, noteValues, type Row, type TaskRow, taskHash, type Value
 import { readTask } from '@nib/markdown/task-line'
 import type { ScannedTask, Stamp } from '../scan-rows'
 
+/** What a row has none of, shared by every row that has none. Frozen, so a row that
+ *  is given one is given a new list rather than writing into everybody's. */
+const NONE: never[] = []
+Object.freeze(NONE)
+const NO_FIELDS: Record<string, string> = Object.freeze({})
+
 /** What a note gives its rows: the scan's fields (scan-note.ts, scan-rows.ts). */
 export interface NoteRead {
   /** Relative to the space, `/` between folders. */
@@ -46,12 +52,17 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
     const parent = above.at(-1)?.line
     above.push({ indent: scanned.indent, line: scanned.line })
 
-    const task: TaskRow = {
-      ...fields,
+    // The fields' own object, made a row in place rather than copied, and its empty
+    // lists the one shared empty list: ten thousand tasks are ten thousand of these.
+    const task: TaskRow = Object.assign(fields, {
       section: scanned.section,
       indent: scanned.indent,
+      remind: fields.remind.length ? fields.remind : NONE,
+      tags: fields.tags.length ? fields.tags : NONE,
+      dependsOn: fields.dependsOn.length ? fields.dependsOn : NONE,
+      fields: Object.keys(fields.fields).length ? fields.fields : NO_FIELDS,
       ...(parent === undefined ? {} : { parent }),
-    }
+    })
     rows.push({
       kind: 'task',
       space,
@@ -67,7 +78,7 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
 }
 
 /** Bases' `file.*` for one note. */
-export function fileInfo(read: Pick<NoteRead, 'path' | 'stamp' | 'tags' | 'links'>): FileInfo {
+function fileInfo(read: Pick<NoteRead, 'path' | 'stamp' | 'tags' | 'links'>): FileInfo {
   const name = read.path.slice(read.path.lastIndexOf('/') + 1)
   const dot = name.lastIndexOf('.')
   const slash = read.path.lastIndexOf('/')
@@ -81,10 +92,16 @@ export function fileInfo(read: Pick<NoteRead, 'path' | 'stamp' | 'tags' | 'links
     size: read.stamp?.size ?? 0,
     ctime: read.stamp?.ctime ?? 0,
     mtime: read.stamp?.mtime ?? 0,
-    tags: [...read.tags],
-    links: read.links.filter((one) => !one.embed && one.target).map((one) => one.target),
-    embeds: read.links.filter((one) => one.embed && one.target).map((one) => one.target),
+    tags: read.tags.length ? [...read.tags] : NONE,
+    links: targets(read.links, false),
+    embeds: targets(read.links, true),
   }
+}
+
+/** The targets of a note's links, or of its embeds; the shared empty list for none. */
+function targets(links: NoteRead['links'], embeds: boolean): string[] {
+  const out = links.filter((one) => one.embed === embeds && one.target).map((one) => one.target)
+  return out.length ? out : NONE
 }
 
 /** The same rows under another path: a note renamed or moved keeps everything it

@@ -15,12 +15,10 @@
  *  edited since the row was drawn, so the anchor's line is checked by its words' hash
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
-import type { Row, TaskChange, Value } from '@nib/bases'
+import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
 import { taskHash } from '@nib/bases'
-import type { TextEdit } from '@nib/markdown/edits'
-import { oneEdit } from '@nib/markdown/edits'
+import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { writeList, writeProperty } from '@nib/markdown/property-edits'
-import type { PropertyKind } from '@nib/markdown/properties'
 import { writeTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'
 import { changeOf } from '../search/replace'
@@ -62,7 +60,7 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
   for (const [key, value] of Object.entries(change.note ?? {})) {
     const edit = propertyEdit(after, key, value)
     if (edit === undefined) return null
-    if (edit) after = applied(after, [edit])
+    if (edit) after = appliedEdits(after, [edit])
   }
 
   if (change.task && Object.keys(change.task).length) {
@@ -76,7 +74,7 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
       to: edit.to + at.from,
       insert: edit.insert,
     }))
-    after = applied(after, edits)
+    after = appliedEdits(after, edits)
   }
 
   return after
@@ -90,7 +88,7 @@ export function taskLine(
   anchor: { line: number; hash: string },
 ): { from: number; to: number } | null {
   const lines: { from: number; to: number }[] = []
-  for (let from = 0; from <= text.length; ) {
+  for (let from = 0; from <= text.length;) {
     const end = text.indexOf('\n', from)
     const stop = end === -1 ? text.length : end
     lines.push({ from, to: text[stop - 1] === '\r' ? stop - 1 : stop })
@@ -114,44 +112,40 @@ export function taskLine(
 
 /** One property's edit: null where the note already says it, undefined for a value no
  *  front matter line can hold (a map). */
-function propertyEdit(text: string, key: string, value: Value | null): TextEdit | null | undefined {
-  if (Array.isArray(value)) return writeList(text, key, value.map(written))
-  if (value !== null && typeof value === 'object' && !('kind' in value)) return undefined
-  const [said, kind] = value === null ? [null, 'text' as const] : scalar(value)
-  return writeProperty(text, key, said, kind)
+function propertyEdit(text: string, key: string, value: Value): TextEdit | null | undefined {
+  if (value === null) return writeProperty(text, key, null)
+  if (Array.isArray(value)) {
+    return writeList(
+      text,
+      key,
+      value.map((one) => written(one) ?? ''),
+    )
+  }
+  if (typeof value === 'boolean') return writeProperty(text, key, String(value), 'checkbox')
+  if (typeof value === 'number') return writeProperty(text, key, String(value), 'number')
+  const said = written(value)
+  if (said === null) return undefined
+  return writeProperty(text, key, said, hasKind(value, 'date') ? 'date' : 'text')
 }
 
-/** A value as the words and the kind a front matter line writes it with. */
-function scalar(value: Exclude<Value, null | Value[]>): [string, PropertyKind] {
-  if (typeof value === 'boolean') return [String(value), 'checkbox']
-  if (typeof value === 'number') return [String(value), 'number']
-  if (typeof value === 'string') return [value, 'text']
-  if ('kind' in value && value.kind === 'date') return [written(value), 'date']
-  return [written(value), 'text']
+/** Whether a value is one of the shapes that say what they are by `kind`. */
+function hasKind<K extends 'date' | 'duration' | 'link'>(
+  value: Value,
+  kind: K,
+): value is Extract<DateValue | DurationValue | LinkValue, { kind: K }> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && value.kind === kind
 }
 
 /** A value as the words a note writes it in: a link as a wikilink, a date as ISO with
- *  its time, a duration in minutes. */
-function written(value: Value): string {
+ *  its time, a duration in minutes. Null for a map, which a line cannot hold. */
+function written(value: Value): string | null {
   if (value === null) return ''
   if (typeof value !== 'object') return String(value)
-  if (Array.isArray(value)) return value.map(written).join(', ')
-  if (!('kind' in value)) return ''
-  switch (value.kind) {
-    case 'link':
-      return value.display ? `[[${value.target}|${value.display}]]` : `[[${value.target}]]`
-    case 'date':
-      return value.time ? `${value.iso}T${value.time}` : value.iso
-    case 'duration':
-      return `${Math.round(value.ms / 60_000)}m`
-    default:
-      return ''
+  if (Array.isArray(value)) return value.map((one) => written(one) ?? '').join(', ')
+  if (hasKind(value, 'link')) {
+    return value.display ? `[[${value.target}|${value.display}]]` : `[[${value.target}]]`
   }
-}
-
-/** Edits made to a text, given in the coordinates of that text, last first. */
-function applied(text: string, edits: readonly TextEdit[]): string {
-  return [...edits]
-    .sort((one, other) => other.from - one.from)
-    .reduce((now, edit) => now.slice(0, edit.from) + edit.insert + now.slice(edit.to), text)
+  if (hasKind(value, 'date')) return value.time ? `${value.iso}T${value.time}` : value.iso
+  if (hasKind(value, 'duration')) return `${Math.round(value.ms / 60_000)}m`
+  return null
 }
