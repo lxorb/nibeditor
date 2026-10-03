@@ -467,7 +467,7 @@ mod platform {
         }
         let frame = NSRect::new(NSPoint::new(AWAY, AWAY), NSSize::new(WIDTH, HEIGHT));
         let web = unsafe {
-            WKWebView::initWithFrame_configuration(WKWebView::alloc(mtm), frame, &configuration)
+            WKWebView::initWithFrame_configuration(mtm.alloc::<WKWebView>(), frame, &configuration)
         };
         let content: &NSView = unsafe { &*(window.ns_view().cast::<NSView>()) };
         content.addSubview(&web);
@@ -523,12 +523,13 @@ mod platform {
     pub const ENGINE: &str = "WebKitGTK";
 
     pub fn os() -> String {
-        format!(
-            "WebKitGTK {}.{}.{}",
-            webkit2gtk::functions::major_version(),
-            webkit2gtk::functions::minor_version(),
-            webkit2gtk::functions::micro_version()
-        )
+        std::fs::read_to_string("/etc/os-release")
+            .unwrap_or_default()
+            .lines()
+            .find_map(|line| line.strip_prefix("PRETTY_NAME="))
+            .unwrap_or_default()
+            .trim_matches('"')
+            .to_string()
     }
 
     thread_local! {
@@ -563,7 +564,7 @@ mod platform {
             script,
             world,
             None,
-            None::<&gtk::gio::Cancellable>,
+            None::<&webkit2gtk::gio::Cancellable>,
             move |result| {
                 let said = match result {
                     Ok(value) if value.is_string() => {
@@ -586,7 +587,7 @@ mod platform {
         web.snapshot(
             SnapshotRegion::Visible,
             SnapshotOptions::NONE,
-            None::<&gtk::gio::Cancellable>,
+            None::<&webkit2gtk::gio::Cancellable>,
             move |result| {
                 let said = match result {
                     Ok(surface) => match cairo::ImageSurface::try_from(surface) {
