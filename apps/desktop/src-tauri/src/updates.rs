@@ -104,9 +104,7 @@ fn names(file: &str, version: &str) -> bool {
         file.strip_prefix(prefix)
             .and_then(|rest| rest.strip_prefix(version))
             .and_then(|rest| rest.strip_prefix('-'))
-            .is_some_and(|platform| {
-                platform.starts_with(|first: char| first.is_ascii_alphabetic())
-            })
+            .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
     })
 }
 

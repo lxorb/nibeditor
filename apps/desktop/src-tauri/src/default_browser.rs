@@ -667,6 +667,8 @@ mod tests {
     fn the_installer_forgets_the_old_name_and_keeps_the_prog_id() {
         let script = source("installer.nsh");
         assert!(script.contains(&format!(r#"!define NIB_OLD_NAME "{OLD_NAME}""#)));
+        let product = product_name(&source("tauri.conf.json"));
+        assert!(script.contains(&format!(r#"!define NIB_NAME "{product}""#)));
         for line in [
             r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${NIB_OLD_NAME}""#,
             r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${NIB_OLD_NAME}""#,
@@ -701,11 +703,13 @@ mod tests {
         assert!(config.contains(r#""upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e""#));
 
         let parsed: serde_json::Value = serde_json::from_str(&config).expect("the config");
-        let publisher = parsed["bundle"]["publisher"]
-            .as_str()
-            .expect("a publisher");
+        let publisher = parsed["bundle"]["publisher"].as_str().expect("a publisher");
         let key = format!(r#"Key="Software\{publisher}\{OLD_NAME}""#);
-        assert_eq!(fragment.matches(&key).count(), 2, "browser.wxs does not say: {key}");
+        assert_eq!(
+            fragment.matches(&key).count(),
+            2,
+            "browser.wxs does not say: {key}"
+        );
         assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
     }
 
@@ -780,7 +784,15 @@ mod tests {
             format!(r"Software\nib-tests\old-name-{id}"),
             std::env::temp_dir().join(format!("nib-old-name-{id}.exe")),
         );
-        let root = CURRENT_USER.create(&scratch.0).expect("a test key");
+        // With the right to delete under it, which a hive's own handle always has.
+        let root = CURRENT_USER
+            .options()
+            .read()
+            .write()
+            .access(0x0001_0000)
+            .create()
+            .open(&scratch.0)
+            .expect("a test key");
         let here = std::env::current_exe().expect("this test's own program");
         let here = here.to_string_lossy();
         let client = format!(r"Software\Clients\StartMenuInternet\{OLD_NAME}");

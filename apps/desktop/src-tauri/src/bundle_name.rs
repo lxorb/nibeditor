@@ -26,7 +26,7 @@ const NEW: &str = "nibeditor.app";
 
 /// The cask's own folder under each of Homebrew's two homes, Apple silicon's and Intel's.
 #[cfg_attr(
-    not(any(target_os = "macos", test)),
+    not(target_os = "macos"),
     allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
 )]
 const CASKROOMS: [&str; 2] = ["/opt/homebrew/Caskroom/nib", "/usr/local/Caskroom/nib"];
@@ -67,10 +67,7 @@ pub fn settle() {
     if env!("NIB_IDENTIFIER") != "ch.emilvinu.nib" {
         return;
     }
-    let Some((from, to)) = std::env::current_exe()
-        .ok()
-        .and_then(|exe| renamed(&exe))
-    else {
+    let Some((from, to)) = std::env::current_exe().ok().and_then(|exe| renamed(&exe)) else {
         return;
     };
     if to.exists() || brewed(&CASKROOMS) || std::fs::rename(&from, &to).is_err() {

@@ -39,6 +39,9 @@
 ; - A per-machine MSI install under the old name is taken away the way the template
 ;   takes away one under the current name when its NSIS installer replaces it.
 !define NIB_OLD_NAME "Nib"
+; `productName` in tauri.conf.json, written out for the function below, which is read
+; before the template defines it; default_browser.rs holds the two together.
+!define NIB_NAME "nibeditor"
 !define NIB_OLD_UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NIB_OLD_NAME}"
 
 ; Where the install under the old name is, once NibFindOldInstall has looked.
@@ -48,9 +51,11 @@ Var NibOldAsked
 ; Before the first page, so the folder page shows the folder that will be used.
 !define MUI_CUSTOMFUNCTION_GUIINIT NibFindOldInstall
 
-; Finds the install under the old name and makes its folder this install's. Its own
-; Apps & Features entry says where it is, in quotes; one whose uninstaller is gone is
-; no install, and its entry is dropped after the install like any other trace.
+; Finds the install under the old name and makes its folder this install's, unless a
+; folder was asked for (`/D=`) or an install under the new name is remembered: only
+; the template's default for a fresh install is replaced. Its own Apps & Features
+; entry says where the old install is, in quotes; one whose uninstaller is gone is no
+; install, and its entry is dropped after the install like any other trace.
 Function NibFindOldInstall
   StrCmp $NibOldAsked "1" nib_find_done
   StrCpy $NibOldAsked "1"
@@ -66,6 +71,7 @@ Function NibFindOldInstall
     StrCpy $NibOldDir ""
     Goto nib_find_done
   nib_find_found:
+    StrCmp $INSTDIR "$LOCALAPPDATA\${NIB_NAME}" 0 nib_find_done
     StrCpy $INSTDIR $NibOldDir
   nib_find_done:
 FunctionEnd
