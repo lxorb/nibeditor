@@ -223,7 +223,10 @@ fn name_of(pid: u32) -> Option<String> {
     let written = usize::try_from(written).ok().filter(|&length| length > 0)?;
 
     let path = String::from_utf8_lossy(&buffer[..written.min(buffer.len())]).into_owned();
-    path.rsplit('/').next().filter(|name| !name.is_empty()).map(str::to_owned)
+    path.rsplit('/')
+        .next()
+        .filter(|name| !name.is_empty())
+        .map(str::to_owned)
 }
 
 /// Elsewhere there is no kernel to ask.
