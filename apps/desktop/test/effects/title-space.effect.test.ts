@@ -97,6 +97,17 @@ const list = () => target.querySelector('[role="menu"]')
 
 /** Long enough for a list on its way out to have gone: each animation it plays ends
  *  a turn after it starts, and leaving can be more than one; see the stand-in above. */
+/** A press on the mark, and the list it drops once it is here: fetched with the first
+ *  press (see SpaceMenu.svelte), which the launch's last turn has usually done already. */
+async function dropped() {
+  mark()?.click()
+  flushSync()
+  await vi.waitFor(() => {
+    flushSync()
+    expect(list()).not.toBe(null)
+  })
+}
+
 async function settled() {
   for (let turn = 0; turn < 5; turn++) {
     await new Promise((done) => setTimeout(done, 0))
@@ -130,8 +141,7 @@ test('a press on the mark opens the switcher, and a row in it changes space', as
   bar()
 
   expect(list()).toBe(null)
-  mark()?.click()
-  flushSync()
+  await dropped()
 
   // The switcher's own list: every space, and the one you are in picked out.
   expect(list()?.getAttribute('aria-label')).toBe('Spaces')
@@ -151,11 +161,29 @@ test('a press on the mark opens the switcher, and a row in it changes space', as
   expect(list()).toBe(null)
 })
 
+test('the list numbers its spaces, and a digit typed into it goes there', async () => {
+  const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
+  bar()
+
+  await dropped()
+  const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
+  // The same rows as the switcher in the middle of the window; New space keeps the
+  // slot empty, so every badge stands in one column.
+  expect(rows.map((one) => one.querySelector('.place')?.textContent)).toEqual(['1', '2', ''])
+
+  document.activeElement?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: '2', code: 'Digit2', bubbles: true, cancelable: true }),
+  )
+  await settled()
+
+  expect(shown).toHaveBeenCalledWith('journal')
+  expect(list()).toBe(null)
+})
+
 test('a second press puts the list away again', async () => {
   bar()
 
-  mark()?.click()
-  flushSync()
+  await dropped()
   expect(list()).not.toBe(null)
 
   mark()?.click()

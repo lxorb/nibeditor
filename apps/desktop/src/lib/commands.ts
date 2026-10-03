@@ -73,8 +73,9 @@ import {
 import { moveTargets } from './move-targets'
 import { closeAfterLabel } from './workspace/closing-around'
 import { prompt } from './prompt.svelte'
-import { openSpaces, revealPanel, stepRegionFocus } from './focus'
+import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
+import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
 import { isScratchpad, toggleScratchpad } from './scratchpad/is'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
@@ -1585,7 +1586,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'spaces',
       label: t('Spaces'),
       hint: shortcuts.hint('space.switcher'),
-      run: () => openSpaces(),
+      run: () => spacePicker.toggle(),
     },
     {
       id: 'space-next',

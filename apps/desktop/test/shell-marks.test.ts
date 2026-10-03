@@ -90,14 +90,17 @@ describe('a mark that fills the box it was given', () => {
    *  the same object, and it drifts. See docs/design.md. */
   test('and so does the space named over the file list, out of the one badge', () => {
     const switcher = named('lib/SpaceSwitcher.svelte')
+    const badge = named('lib/SpaceBadge.svelte')
+    const row = named('lib/SpaceRow.svelte')
 
-    expect(switcher.text).toMatch(/\{#snippet badge\(/)
-    expect(switcher.text.match(/<SpaceMark /g)).toHaveLength(1)
-    expect(switcher.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
-    // Rendered twice: by the row for each space in the list, and by the mark the
-    // header wears - which the header itself asks for in both of its states, the
-    // name read and the name being typed.
-    expect(switcher.text.match(/\{@render badge\(/g)).toHaveLength(2)
+    expect(badge.text.match(/<SpaceMark /g)).toHaveLength(1)
+    expect(badge.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
+    // Rendered by the row for each space in either list, and by the mark the header
+    // wears - which the header itself asks for in both of its states, the name read
+    // and the name being typed.
+    expect(switcher.text).not.toContain('<SpaceMark ')
+    expect(switcher.text.match(/<SpaceBadge /g)).toHaveLength(1)
+    expect(row.text.match(/<SpaceBadge /g)).toHaveLength(1)
     expect(switcher.text.match(/\{@render mark\(\)/g)).toHaveLength(2)
   })
 
@@ -173,10 +176,14 @@ describe('the mark that says shared', () => {
 
   test('and the switcher says it with the mark instead', () => {
     const switcher = named('lib/SpaceSwitcher.svelte')
+    const row = named('lib/SpaceRow.svelte')
     expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")
     // Both places a space is named in the panel: the row in the list of them, and
-    // the header over the file list, which is that list shut.
-    expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(2)
+    // the header over the file list, which is that list shut. A space that is yours
+    // only to read wears the same mark with an eye in it.
+    expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
+    expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
+    expect(row.text).toContain("<SharedMark icon={Eye} label={t('Read-only')} />")
     // And the dot it used to draw is gone rather than merely unused.
     expect(declarations(switcher.style)).not.toMatch(/\.with\b/)
   })

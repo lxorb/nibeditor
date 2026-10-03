@@ -36,6 +36,9 @@ describe('on Windows and Linux', () => {
       // Every pane's tab put down, where Ctrl+D alone is the shell's end of input: a shell
       // cannot tell the two apart, so the app losing it would gain the shell nothing.
       ['D', ctrlShift, 'app.deselect-all'],
+      // The space switcher: a shell reads Ctrl+Shift+Space as Ctrl+Space, its own mark,
+      // and the app's chord has the Shift.
+      [' ', ctrlShift, 'space.switcher'],
     ] as const) {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }

@@ -17,12 +17,13 @@
  *
  *  So this drives the real path: the real action on a real list, the real registry,
  *  and App.svelte's own rule about a spent press. The command it lands on opens the
- *  tree panel on its way to the sidebar's switcher, and that is what is asserted; see
- *  `openSpaces` in focus.ts. */
+ *  space switcher in the middle of the window, and that is what is asserted; see
+ *  space-picker.svelte.ts. */
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { roving } from '../../src/lib/roving'
 import { shortcuts } from '../../src/lib/shortcuts.svelte'
+import { spacePicker } from '../../src/lib/space-picker.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
 /** What a thing this test does not care about does. */
@@ -91,7 +92,7 @@ afterEach(() => {
   workspace.panel = null
 })
 
-test('a list hands Ctrl+Shift+Space on, and the space switcher opens', () => {
+test('a list hands Ctrl+Shift+Space on, and the space switcher opens', async () => {
   const peek = vi.fn()
   const { row, stop } = list({ peek })
   row.focus()
@@ -100,11 +101,12 @@ test('a list hands Ctrl+Shift+Space on, and the space switcher opens', () => {
 
   // The list left it alone: it is not the list's Space.
   expect(peek).not.toHaveBeenCalled()
-  // And so the window's handler saw an unspent press and ran the command. The
-  // switcher is in the sidebar's header, so the command asks for the tree first.
-  expect(workspace.panel).toBe('tree')
   // The registry stopped it, which is the sign that something answered at all.
   expect(event.defaultPrevented).toBe(true)
+  // And so the window's handler saw an unspent press and ran the command: the
+  // switcher in the middle of the window, fetched with it.
+  await vi.waitFor(() => expect(spacePicker.open).toBe(true))
+  spacePicker.dismiss()
 
   stop()
 })

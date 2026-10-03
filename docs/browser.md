@@ -120,7 +120,7 @@ page has no `ipc`, `isTauri` or `__TAURI_INTERNALS__`, in its world or in nib's.
 | zoom | the engine's own |
 | mute | the browser's own sound off (`set_audio_muted`), not the page's media |
 | the site's mark | read in nib's world |
-| Ctrl+click, the middle button, page-first keys (Ctrl+F, Ctrl+L, Alt+D, F3, Ctrl+D, Ctrl+Shift+D), a modifier tapped twice | nib's script, asking through a binding only nib's world has (`web_opens::BINDING`) |
+| Ctrl+click, the middle button, page-first keys (Ctrl+F, Ctrl+L, Alt+D, F3, Ctrl+D, Ctrl+Shift+D, Ctrl+Shift+Space), a modifier tapped twice | nib's script, asking through a binding only nib's world has (`web_opens::BINDING`) |
 | Ctrl+T, Ctrl+W, Ctrl+Tab and the browser's other chords with the keyboard in a page | a keyboard hook on the app's thread, held to the same `meaning` as `WebView2`'s event (Windows) |
 | cookies, logins, stores per space | a Chromium profile per store (`<config>/chromium/Default`, `store-<name>`), nib's interface in `app` |
 | popups a sign-in asks for | a tab, as every other window a page asks for; a sized popup window is `WebView2`'s alone |

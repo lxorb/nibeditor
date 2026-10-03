@@ -147,11 +147,13 @@ and Right that comes back out - the key pointing the way the mark does. Up and
 down are untouched: a list still runs down the screen. See `steppedKey` in
 `apps/desktop/src/lib/direction.ts`, which is the one place that says so.
 
-The space switcher is a menu that drops out of the panel header, so
-Ctrl+Shift+Space presses that header's own control rather than opening a second
-copy of the list somewhere else - and the list it opens walks with the arrows,
-spells with a letter and gives the keyboard back to the name it came from, like
-every other list here.
+The space switcher has two places and one list. A press on the space's mark drops
+it out of the panel header or the title bar; Ctrl+Shift+Space stands the same rows
+in the middle of the window, where a hand on the keyboard is looking, and the key
+again puts it away. Either way every space wears its number, a digit goes there at
+once, letters find a name and wait for Enter, Backspace takes one back, and the
+arrows walk. There is no field: the typed letters are the hits in the names. See
+`SpaceList.svelte` and `space-pick.ts`.
 
 ### In a list
 
@@ -532,7 +534,8 @@ window chords and not its bookmark: Google Sheets fills down with it, Figma and
 Excalidraw duplicate, VS Code on the web selects the next one. When nothing in the page
 took it, the same script asks, and the crate plays it on the window as the key it was,
 so it does whatever Ctrl+D does in the app - Deselect tab, or nothing under the VS Code
-keyboard. Ctrl+Shift+D goes the same way, and puts every pane down. The engine tells the host
+keyboard. Ctrl+Shift+D goes the same way, and puts every pane down; so does
+Ctrl+Shift+Space, the space switcher, which Google Sheets selects everything with. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
@@ -553,7 +556,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | --- | --- |
 | Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
 | Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
-| Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too |
+| Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too, and Ctrl+Shift+Space opens the space switcher |
 | Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
@@ -572,13 +575,26 @@ anything but its own letter or digit is somebody typing `@` or `{`.
 | --- | --- |
 | Ctrl+Shift+, | the space before |
 | Ctrl+Shift+. | the space after |
-| Ctrl+Shift+Space | the space switcher, from anywhere |
+| Ctrl+Shift+Space | the space switcher in the middle of the window, from anywhere; again to put it away |
+| a digit, in the switcher | that space, at once. With ten or more, `1` waits 600 ms for a second digit, and Enter goes now |
+| letters, in the switcher | the spaces whose name holds them, the best one under the keyboard; Enter goes there |
 
 Discord switches servers with Ctrl+Alt and an arrow, which is the same shape of
 thing. Here both of those arrows are the panes', so the two keys every app uses
 for "the one before" and "the one after" take it instead. The switcher is on the
-space bar because that is where the word is written, and it opens the sidebar
-header's own menu rather than a second copy of it.
+space bar because that is where the word is written. Arc goes to a space with Ctrl
+and its number, which in nib is the tabs, as in every browser; Slack's and
+Discord's switchers are Ctrl+K, which is a site's own palette (GitHub, Linear,
+Notion) and nib's link. Ctrl+Shift+Space is bound by no system - Ctrl+Space is an
+Asian keyboard's switch, Win+Space the layout's, Cmd+Space Spotlight's - a page is
+offered it first, and a terminal hands it over, since a shell reads it as Ctrl+Space.
+
+The digits work the way Vimium's filtered hints do: a number is known before the
+key is pressed, so it goes the moment only one space can be meant. A name never goes
+by itself, which is the one thing Vimium's users asked it to stop doing - a match
+that went the moment it was the last one left took the next keystroke with it. A
+digit or a letter that would leave nothing is refused. While a list of spaces is
+open, the tabs' Alt numbers stay hidden, so only one set of numbers is on screen.
 
 **Undo and redo**
 
