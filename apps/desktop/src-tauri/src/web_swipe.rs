@@ -240,7 +240,7 @@ mod tests {
     /// there is none, and every listener only listens.
     #[test]
     fn the_script_asks_through_the_binding_and_only_listens() {
-        assert!(SCRIPT.contains(&format!("typeof {BINDING} === 'function'")));
+        assert!(SCRIPT.contains(&format!("globalThis.{BINDING}")));
         assert!(SCRIPT.contains(&format!("open('about:blank', '{}' + words)", super::NAMED)));
         assert_eq!(SCRIPT.matches("passive: true").count(), 5);
         assert!(!SCRIPT.contains("preventDefault()"));
