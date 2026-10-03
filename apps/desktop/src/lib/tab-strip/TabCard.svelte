@@ -10,6 +10,7 @@
   import { cubicOut } from 'svelte/easing'
   import { fade, fly } from 'svelte/transition'
   import { dur } from '../motion'
+  import SpaceMark from '../SpaceMark.svelte'
   import type { Shown } from './hover-card.svelte'
 
   const { hovering }: { hovering: { readonly card: Shown | null } } = $props()
@@ -31,7 +32,19 @@
     {#key card.id}
       <div class="words" in:fade={{ duration: dur(120) }}>
         <strong class="name">{card.title}</strong>
-        {#if card.where}<span class="where">{card.where}</span>{/if}
+        {#if card.where || card.from}
+          <!-- The site, and the space a page of another space's is from: its mark and
+               its name, as the switcher wears them. See `fromOf` in card.ts. -->
+          <span class="where">
+            {#if card.where}<span class="site">{card.where}</span>{/if}
+            {#if card.from}
+              <span class="from">
+                <span class="nib-badge mark"><SpaceMark {...card.from} /></span>
+                <span class="site">{card.from.name}</span>
+              </span>
+            {/if}
+          </span>
+        {/if}
       </div>
     {/key}
     {#if card.still}
@@ -79,11 +92,37 @@
   }
 
   .where {
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
     color: var(--muted);
-    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .site {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     unicode-bidi: isolate;
+  }
+
+  /* The space: never squeezed to nothing by a long address, and never more than half
+     the line. */
+  .from {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+    max-width: 50%;
+  }
+
+  /* The space's badge, the switcher's and the title bar's, at the size of a line of the
+     card: its corner and its letter follow the height it is given. */
+  .mark {
+    --row-height-sm: var(--icon-md);
+    font-size: var(--text-xs);
   }
 
   /* Sixteen by nine, from the top of the page, to the card's edges. */

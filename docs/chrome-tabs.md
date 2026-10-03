@@ -203,7 +203,7 @@ See `scratchpad/is.ts` for which file it is and `scratchpad/pad.ts` for what it 
 | --- | --- | --- | --- |
 | Every bounds change | 200 ms, `EASE_OUT` = `1 - (1 - t)^2` | `bounds_animator.h`, `tween.cc`, `tab_container_impl.cc` `AnimateViewTo` | `--dur-base` (210), `--ease-out` |
 | New tab | starts overlap-wide (zero visible) at the previous tab's end, grows to full width while the ones after it slide along | `StartInsertTabAnimation` | grows from 0 |
-| Closed tab | shrinks to overlap-wide (zero visible), then goes | `StartRemoveTabAnimation` | shrinks to 0 |
+| Closed tab | shrinks to overlap-wide (zero visible), then goes; drawn as no longer active from the first frame, the next tab active at once | `StartRemoveTabAnimation` | shrinks to 0, inactive and out of the pointer's way |
 | Reduced motion | `RichAnimationDuration` drops to 0 | `animation.cc` | the `--dur-*` tokens are 0 |
 
 nib moves a tab with `transform` and changes its width on an absolutely placed box,
@@ -293,15 +293,19 @@ so a width change lays out that one tab and nothing beside it.
   widest tab of the strip, and half a second more once every name is whole; the next tab's
   comes at once and the card slides across, 200 ms; back on the strip within 300 ms of leaving
   it, at once; a tab the keyboard arrives at, at once. The name in two lines, where the file
-  lives (its space and folders) or the site's host, and for a web tab that is not the one in
-  front the still of its page. Any press, key, wheel or the window losing the pointer puts it
+  lives (its space and folders) or the site's host - with, for a page of another space than
+  the one on screen, that space's mark and name, Arc's way of marking a tab only where it
+  turns up outside its space - and for a web tab that is not the one in front the still of
+  its page. Any press, key, wheel or the window losing the pointer puts it
   away, and the pressed tab says nothing more until the pointer leaves it; never over a menu,
   during a drag or under a finger. Over a native page it takes a place on the overlay stack,
   so the pages stand behind their stills while it is up. The tab carries no native tooltip.
   See `tab-strip/card.ts` and `tab-strip/hover-card.svelte.ts`.
 - **Several tabs at once are Chrome's pick**: Ctrl (Cmd on a Mac) and a click adds or takes
   out, Shift a run from the last one clicked, both to add a run; the tab in front is always
-  one of them, and anything else bringing a tab to the front puts the pick down. A tab's menu
+  one of them, and anything else bringing a tab to the front puts the pick down. Picked tabs
+  wear the fill every list wears for a picked row (`--surface-picked`), and a Ctrl or Shift
+  press that leaves its tab picked goes on to drag the pick, as Chrome's does. A tab's menu
   on a picked tab acts on all of them (Reload, Duplicate, Pin, Bookmark, Close, Close others,
   to the right, all, Move to other pane) and says how many; Ctrl+W closes the pick. Dragging
   one carries the others of its pinned state as one block, along the strip or into another

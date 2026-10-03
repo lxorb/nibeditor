@@ -136,3 +136,43 @@ test('comes at once for a tab the keyboard arrives at', async () => {
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
+
+/** Emil, 2026-10-03: a web tab's card says which space it is from - its mark and name
+ *  beside the site - where that is not the space on screen. */
+test('says the space a page of another space is from, and nothing for the space on screen', async () => {
+  const { workspace } = await import('../../src/lib/workspace.svelte')
+  workspace.spaces = [
+    { id: 'work', name: 'Work', root: '/spaces/Work' },
+    { id: 'home', name: 'Home', root: '/spaces/Home' },
+  ]
+  workspace.activeSpaceId = 'work'
+  const page = (id: string, path: string | null, home: string | null) =>
+    ({
+      id,
+      shown: 'Soup',
+      kind: 'web',
+      path,
+      address: 'https://www.example.com/soup',
+      note: { home },
+      paneId: 'nowhere',
+    }) as unknown as Tab
+
+  hovering.enter({ tab: page('u', null, 'home'), box: BOX, widest: WIDEST, focused: true })
+  await settle()
+  expect(hovering.card?.where).toBe('example.com')
+  expect(hovering.card?.from).toEqual({ id: 'home', name: 'Home' })
+  expect(document.querySelector('.card .from')?.textContent).toContain('Home')
+
+  hovering.leave('u')
+  await settle()
+  hovering.enter({
+    tab: page('w', '/spaces/Work/Soup.url', null),
+    box: BOX,
+    widest: WIDEST,
+    focused: true,
+  })
+  await settle()
+  expect(hovering.card?.from).toBeNull()
+  expect(document.querySelector('.card .from')).toBeNull()
+  hovering.leave('w')
+})
