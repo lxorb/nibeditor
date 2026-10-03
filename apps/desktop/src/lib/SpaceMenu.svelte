@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** The list a press on a space's mark drops: every space, numbered, with what each
+  /** The list a press on a space's mark drops: every space, a digit away, with what each
    *  offers, New space, and the files other people shared on their own. Fetched with
    *  the first press, so none of it is in front of the first paint; the mark that
    *  opens it, and the header it hangs from, are SpaceSwitcher.svelte.
@@ -19,7 +19,6 @@
   import { arrive, leave, LIST_STEP } from './slide'
   import { newSpace, spaceMenu } from './space-actions'
   import SpaceList from './SpaceList.svelte'
-  import SpacePlace from './SpacePlace.svelte'
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from './space-typing.svelte'
   import { sharedWithYou } from './sharing.svelte'
@@ -101,8 +100,8 @@
   in:arrive={{ y: -LIST_STEP }}
   out:leave={{ y: -LIST_STEP }}
 >
-  <!-- Every space, numbered, the rows the switcher in the middle of the window has
-       too; see SpaceList.svelte. -->
+  <!-- Every space, the rows the switcher in the middle of the window has too; see
+       SpaceList.svelte. -->
   {#if typing}
     <SpaceList {typing} {choose} {about} />
   {/if}
@@ -117,7 +116,6 @@
       void newSpace()
     }}
   >
-    <SpacePlace />
     <span class="nib-badge is-quiet" aria-hidden="true">
       <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
     </span>
@@ -154,7 +152,6 @@
               oncontextmenu={(event) => aboutShared(event, item)}
               use:longPress={(event) => aboutShared(event, item)}
             >
-              <SpacePlace />
               <span class="nib-badge is-quiet" aria-hidden="true">
                 <FileMark mark={fileMark(item.path)} />
               </span>

@@ -800,7 +800,8 @@ def walk(browser: Browser) -> None:
             ("Control+O", "the palette"),
             ("Control+Shift+Slash", "the shortcuts pane"),
             ("Control+Comma", "the settings"),
-            ("Control+Shift+Space", "the space switcher"),
+            ("Control+Space", "the space switcher"),
+            ("Control+Shift+Space", "the space switcher, by its second key"),
         ]:
             into_tree(window)
             from_here = page.evaluate(WHERE)

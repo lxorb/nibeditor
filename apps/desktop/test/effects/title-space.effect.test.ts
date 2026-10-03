@@ -161,15 +161,14 @@ test('a press on the mark opens the switcher, and a row in it changes space', as
   expect(list()).toBe(null)
 })
 
-test('the list numbers its spaces, and a digit typed into it goes there', async () => {
+test('the list wears no numbers, and a digit typed into it still goes there', async () => {
   const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
   bar()
 
   await dropped()
-  const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
-  // The same rows as the switcher in the middle of the window; New space keeps the
-  // slot empty, so every badge stands in one column.
-  expect(rows.map((one) => one.querySelector('.place')?.textContent)).toEqual(['1', '2', ''])
+  // Emil, 2026-10-04: a number by every space was noise. They come with a digit or Alt,
+  // as in the switcher in the middle of the window.
+  expect(list()?.querySelector('.place')).toBe(null)
 
   document.activeElement?.dispatchEvent(
     new KeyboardEvent('keydown', { key: '2', code: 'Digit2', bubbles: true, cancelable: true }),

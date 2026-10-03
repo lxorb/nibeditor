@@ -1044,6 +1044,33 @@ select option {
   stroke-linejoin: round;
 }
 
+/* ── KeyTips ───────────────────────────────── */
+
+/* The number a key would pick, shown only while it can be: a tab's while Alt is held,
+   a space's in a list of spaces while Alt is held or a digit has been typed. Office's
+   KeyTips, a small quiet badge over the corner of the mark it belongs to, so it hides
+   nothing of the name and moves nothing. The muted ink on the raised ground a bubble
+   has, with the bubble's hairline. A row rather than a grid, so the figures typed so
+   far, bold, stay on one line with the rest. Where it stands is the caller's. */
+.nib-keytip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  box-shadow: 0 0 0 1px var(--line-strong);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+}
+
 /* ── Switches ──────────────────────────────── */
 
 /* One thing that is on or off. Three surfaces wanted the same track and the same

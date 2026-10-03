@@ -22,8 +22,8 @@
 //! the page let the key go by. So the page has Ctrl+F, Ctrl+G, F3, Ctrl+L and Alt+D, and
 //! a line of script in it asks for nib's answer when nothing in the page took them; see
 //! `web_opens.rs`. Ctrl+D too, Chrome's bookmark and nib's Deselect tab: Sheets fills
-//! down with it and Figma duplicates. And Ctrl+Shift+Space, nib's space switcher, which
-//! Sheets selects everything with.
+//! down with it and Figma duplicates. And Ctrl+Space and Ctrl+Shift+Space, nib's space
+//! switcher, which Sheets selects a column and everything with.
 //!
 //! **How they get out.** `WebView2` tells the host about every key pressed with Ctrl or
 //! Alt held before the page sees it (`AcceleratorKeyPressed`), and a key the host marks
@@ -91,8 +91,8 @@ impl Pressed {
 
     /// A key pressed with Ctrl, and Shift where `shift` says, once: a chord the page was
     /// offered first and let go by, said in the same words as the ones here. Ctrl+D and
-    /// Ctrl+Shift+D, which Chrome gives the page first as well, and Ctrl+Shift+Space; see
-    /// `web_opens.rs`.
+    /// Ctrl+Shift+D, which Chrome gives the page first as well, and Ctrl+Space with and
+    /// without Shift; see `web_opens.rs`.
     #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
     pub const fn with_ctrl(key: &'static str, code: &'static str, shift: bool) -> Self {
         Self {

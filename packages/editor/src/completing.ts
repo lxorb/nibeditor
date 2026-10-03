@@ -13,8 +13,13 @@
  *  name, the tags a `#` opens - are modules of their own and cost nothing: each takes a
  *  `CompletionContext` and answers, and a type is erased. */
 
-import { autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
-import type { Extension } from '@codemirror/state'
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from '@codemirror/autocomplete'
+import { type Extension, Prec } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
 import { emojiCompletions } from './emoji'
 import { once } from './once'
@@ -39,6 +44,13 @@ import { wikilinkCompletions } from './wikilink/complete'
  *  handed a freshly built popup would throw away the popup that is open. Which is what
  *  it did - the completions drive found a `[[` offering nothing, because the note swap
  *  behind it had reset the state field the popup lives in. */
+/** The library's keys for the popup, without its Ctrl+Space: that is the space switcher
+ *  (Emil, 2026-10-04), and the popup opens by itself on every character that starts
+ *  one. Taken off here rather than given way to, because the library's key spends the
+ *  press whether or not there is anything to offer, and the window's handler never
+ *  sees a press already spent. The Mac's Alt+` and Alt+I stay. */
+const popupKeys = completionKeymap.filter((binding) => binding.key !== 'Ctrl-Space')
+
 export const completing = once((pairs: boolean): Extension => [
   autocompletion({
     override: [
@@ -49,6 +61,8 @@ export const completing = once((pairs: boolean): Extension => [
       tagCompletions,
     ],
     icons: false,
+    defaultKeymap: false,
   }),
+  Prec.highest(keymap.of(popupKeys)),
   ...(pairs ? [closeBrackets(), keymap.of(closeBracketsKeymap)] : []),
 ])

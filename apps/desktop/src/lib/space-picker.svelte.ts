@@ -1,4 +1,5 @@
-/** Whether the switcher in the middle of the window is up: Ctrl+Shift+Space.
+/** Whether the switcher in the middle of the window is up: Ctrl+Space, and
+ *  Ctrl+Shift+Space (Cmd+Shift+Space on a Mac).
  *
  *  Emil, 2026-10-03: a key that opens a modal just for switching to another space, a
  *  digit switching at once and a name with Enter. The rows are the title bar's own

@@ -1,7 +1,7 @@
 <script lang="ts">
-  /** Another space, in the middle of the window: Ctrl+Shift+Space.
+  /** Another space, in the middle of the window: Ctrl+Space, and Ctrl+Shift+Space.
    *
-   *  Every space as the title bar's menu draws it, numbered, and nothing else - no
+   *  Every space as the title bar's menu draws it, and nothing else - no
    *  heading, no field, no New space: this is for going somewhere. A digit goes at once
    *  where only one space can be meant; letters find a space by its name, show where
    *  they landed in it, and wait for Enter. Backspace takes a letter back, Escape and

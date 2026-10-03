@@ -2,7 +2,8 @@
   /** Another machine, in the middle of the window: Remote, from Ctrl+T or the plus.
    *
    *  Built as the space switcher is (SpacePicker.svelte), so a hand that knows one knows
-   *  the other: every host numbered, a digit goes at once where only one can be meant,
+   *  the other: every host a digit away, its number at the corner of its mark once a
+   *  digit is typed or while Alt is held, a digit goes at once where only one can be meant,
    *  letters find a host by its name, its other names or its address and wait for
    *  Enter, Backspace takes one back, the arrows walk, Escape and the scrim put it away.
    *  No heading and no field. The pinned hosts come first, then the ones connected to
@@ -166,8 +167,9 @@
         oncontextmenu={(event) => about(event, host)}
         use:longPress={(event) => about(event, host)}
       >
-        <SpacePlace place={at} {typed} count={placed.length} />
-        <HostMark colour={host.colour} />
+        <SpacePlace place={at} {typed} held={typing.held}
+          ><HostMark colour={host.colour} /></SpacePlace
+        >
         <span class="nib-row-label"
           >{#each isNumber(typed) ? [{ text: host.name, hit: false }] : pieces(host.name, typed) as piece, index (index)}{#if piece.hit}<b
                 >{piece.text}</b
@@ -186,7 +188,6 @@
         bind:this={offerButton}
         onclick={() => hostPicker.connect(offer)}
       >
-        <SpacePlace count={placed.length} />
         <HostMark />
         <span class="nib-row-label">{said(offer)}</span>
       </button>
@@ -194,7 +195,6 @@
 
     {#if empty}
       <button class="nib-row" role="menuitem" onclick={() => hostPicker.manage()}>
-        <SpacePlace count={1} />
         <HostMark />
         <span class="nib-row-label">{t('Add host')}</span>
       </button>

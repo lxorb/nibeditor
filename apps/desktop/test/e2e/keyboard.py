@@ -305,7 +305,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         ("Control+O", "the palette"),
         ("Control+Shift+Slash", "the keyboard list in the settings"),
         ("Control+Comma", "the settings"),
-        ("Control+Shift+Space", "the space switcher"),
+        ("Control+Space", "the space switcher"),
+        ("Control+Shift+Space", "the space switcher, by its second key"),
     ]
     for chord, what in layers:
         into_tree()

@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Every space as a row to switch to, numbered, with what has been typed found in
+  /** Every space as a row to switch to, a digit away, with what has been typed found in
    *  them: the rows the title bar's menu and the switcher in the middle of the window
    *  both are. The list around them, its keys and where it stands are the caller's;
    *  what is typed is a SpaceTyping the caller holds, since it is the caller's list the
@@ -57,7 +57,13 @@
       oncontextmenu={(event) => about?.(event, space)}
       use:longPress={(event) => about?.(event, space)}
     >
-      <SpaceRow {space} place={at} typed={typing.typed} on={space.id === workspace.activeSpaceId} />
+      <SpaceRow
+        {space}
+        place={at}
+        typed={typing.typed}
+        held={typing.held}
+        on={space.id === workspace.activeSpaceId}
+      />
     </button>
 
     <!-- What the space itself offers, where the list offers it. -->

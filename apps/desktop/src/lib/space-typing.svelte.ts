@@ -4,7 +4,12 @@
  *  No field holds it: the letters show in the rows as the hits they are, and Backspace
  *  takes one back. One of these per open list, the title bar's and the ones in the
  *  middle of the window alike, so a key does the same in each. What a key means is
- *  space-pick.ts; this is the part with a clock. */
+ *  space-pick.ts; this is the part with a clock.
+ *
+ *  And whether Alt is held, which is when the rows wear their numbers before a digit is
+ *  typed (Emil, 2026-10-04: a number by every space by default was noise). Alt and a
+ *  digit is that digit here, as it picks a tab by its number everywhere else; see
+ *  SpacePlace.svelte. */
 
 import { chorded } from './keys'
 import { read, type Reading, typedBy, typedOn, WAIT } from './space-pick'
@@ -12,6 +17,8 @@ import { type Space, workspace } from './workspace.svelte'
 
 export class ListTyping {
   typed = $state('')
+  /** Alt is down: the rows show their numbers. */
+  held = $state(false)
   readonly reading: Reading = $derived.by(() => read(this.typed, this.names()))
 
   private waiting: ReturnType<typeof setTimeout> | undefined
@@ -23,20 +30,31 @@ export class ListTyping {
     private readonly names: () => readonly string[],
     private readonly go: (at: number) => void,
     private readonly loose: (typed: string) => boolean = () => false,
-  ) {}
+  ) {
+    // On the window, since Alt let go of while the keyboard is elsewhere - Alt+Tab - is
+    // as much a release as one in the list.
+    addEventListener('keyup', this.release, true)
+    addEventListener('blur', this.release)
+  }
 
   /** A key pressed in the list, ahead of the list's own keys so a letter finds a name
    *  rather than a row that starts with it; spent when it was the list's, since the
    *  app reads its own keys off the window. */
   readonly press = (event: KeyboardEvent): void => {
+    this.held = alone(event) || (this.held && altDigit(event) !== null)
     if (!this.key(event)) return
     event.preventDefault()
     event.stopPropagation()
   }
 
+  private readonly release = (event: Event): void => {
+    if (!(event instanceof KeyboardEvent) || event.key === 'Alt') this.held = false
+  }
+
   /** True when the key was this list's to spend. */
   private key(event: KeyboardEvent): boolean {
-    if (chorded(event) || event.isComposing) return false
+    const digit = altDigit(event)
+    if ((chorded(event) && digit === null) || event.isComposing) return false
 
     if (event.key === 'Backspace') {
       if (!this.typed) return false
@@ -52,7 +70,7 @@ export class ListTyping {
       return true
     }
 
-    const character = typedBy(event.key, event.code, this.typed)
+    const character = digit ?? typedBy(event.key, event.code, this.typed)
     if (character === null) return false
     // A space with nothing typed is the list's own key, which opens the row it is on.
     if (character === ' ' && !this.typed) return false
@@ -65,13 +83,15 @@ export class ListTyping {
     return true
   }
 
-  /** Nothing waiting any more: the list is going. */
+  /** The list is going: nothing waiting, nothing listened to. */
   stop(): void {
     clearTimeout(this.waiting)
+    removeEventListener('keyup', this.release, true)
+    removeEventListener('blur', this.release)
   }
 
   private set(typed: string) {
-    this.stop()
+    clearTimeout(this.waiting)
     this.typed = typed
 
     const { go, waits, best } = this.reading
@@ -80,9 +100,21 @@ export class ListTyping {
   }
 
   private went(at: number) {
-    this.stop()
+    clearTimeout(this.waiting)
     if (at >= 0) this.go(at)
   }
+}
+
+/** Alt going down on its own, which is not AltGr: Windows says that as Ctrl and Alt. */
+function alone(event: KeyboardEvent): boolean {
+  return event.key === 'Alt' && !event.ctrlKey && !event.metaKey
+}
+
+/** The digit Alt and a digit is, by where it is on the keyboard; null for any other
+ *  key. Alt alone with it, so AltGr typing a character is never one. */
+function altDigit(event: KeyboardEvent): string | null {
+  if (!event.altKey || event.ctrlKey || event.metaKey) return null
+  return /^(?:Digit|Numpad)(\d)$/.exec(event.code)?.[1] ?? null
 }
 
 /** The spaces' own: their names, and the space a place is. */

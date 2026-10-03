@@ -784,9 +784,10 @@ so a space is one object whether the panel is out or away. The header and the ro
 are one badge written once - `SpaceBadge.svelte`, which both render - so the space
 you are in cannot come to wear on the header something its own row does not. The rows
 are one row written once too, `SpaceRow.svelte`, which the dropped list and the
-switcher Ctrl+Shift+Space stands in the middle of the window both draw: the number in
-front (muted figures in a slot of their own, never the raised badge a tab's Alt
-number is), the badge, the name with what was typed in bold, and the shared mark -
+switcher Ctrl+Space stands in the middle of the window both draw: the badge, wearing
+the space's number at its corner only once a digit is typed or while Alt is held
+(`.nib-keytip`, the tab's Alt number's own look, so it moves nothing as it comes), the
+name with what was typed in bold, and the shared mark -
 an eye instead where the space is somebody else's and yours only to read. The title bar is that same switcher, bare: the badge and no
 name, because the badge already says which space it is and the tabs want the room,
 and a press on it drops the same list from the bar's bottom edge at the panel's

@@ -1,50 +1,65 @@
 <script lang="ts">
-  /** A space's number at the start of its row: its place in the list, which a digit
-   *  typed into the list switches to. Plain muted figures in a slot of their own, never
-   *  a raised badge - that is what a tab's Alt number is, at the corner of its mark - so
-   *  the two kinds of number can never be read as one another. The figures typed so far
-   *  are drawn as the palette draws a hit, since no field holds them; see space-pick.ts.
+  /** A row's number, at the corner of its mark: its place in the list, which a digit
+   *  typed into the list switches to. Only while it can be used - once a digit is typed,
+   *  or while Alt is held - and never by default: Emil, 2026-10-04, *"there's currently a
+   *  number next to every space, and it's very annoying"*. The tab's Alt number is the
+   *  shape and the look (`.nib-keytip`), over the corner of the mark, so it moves nothing
+   *  in the row as it comes and goes. The tabs' own stay hidden while a list of spaces is
+   *  open, so the two kinds of number are never on screen together.
    *
-   *  Empty, it is the same slot in a row that has no number - New space, a file
-   *  somebody shared - so every badge in the list stands in one column. As wide as the
-   *  longest number in the list. */
+   *  The figures typed so far are drawn as the palette draws a hit, since no field holds
+   *  them; see space-pick.ts. */
+  import type { Snippet } from 'svelte'
+  import { keytipIn, keytipOut } from './keytip'
   import { isNumber } from './space-pick'
-  import { workspace } from './workspace.svelte'
 
   const {
-    place = null,
+    place,
     typed = '',
-    count = null,
+    held = false,
+    children,
   }: {
-    place?: number | null
+    place: number
     typed?: string
-    /** How many rows the list numbers, where it is not the spaces: Remote's hosts. */
-    count?: number | null
+    /** Alt is down. */
+    held?: boolean
+    /** The mark the number stands at the corner of. */
+    children: Snippet
   } = $props()
 
-  const number = $derived(place === null ? '' : String(place + 1))
+  const number = $derived(String(place + 1))
+  const typing = $derived(isNumber(typed))
   /** How many of the figures were typed: where this number starts. */
-  const hit = $derived(isNumber(typed) && number.startsWith(typed) ? typed.length : 0)
+  const hit = $derived(typing && number.startsWith(typed) ? typed.length : 0)
 </script>
 
-<span
-  class="place"
-  style:min-width="{String(count ?? workspace.spaces.length).length}ch"
-  aria-hidden="true"
-  >{#if hit}<b>{number.slice(0, hit)}</b>{/if}{number.slice(hit)}</span
->
+<span class="at">
+  {@render children()}
+  {#if typing || held}
+    <span class="nib-keytip place" aria-hidden="true" in:keytipIn out:keytipOut
+      >{#if hit}<b>{number.slice(0, hit)}</b>{/if}{number.slice(hit)}</span
+    >
+  {/if}
+</span>
 
 <style>
-  /* Closer to the badge than the badge is to the name: the number belongs to the
-     row's start, not to the words. */
-  .place {
+  /* The mark's own box, so the number can stand at its corner. */
+  .at {
+    position: relative;
     flex: none;
-    margin-inline-end: calc(var(--space-1) - var(--row-gap));
-    color: var(--muted);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-    text-align: end;
+    display: flex;
+  }
+
+  /* Its middle just inside the trailing bottom corner, as a tab's is. */
+  .place {
+    position: absolute;
+    inset-inline-end: 0;
+    bottom: 0;
+    transform: translate(40%, 40%);
+  }
+
+  :global(:root[dir='rtl']) .place {
+    transform: translate(-40%, 40%);
   }
 
   b {

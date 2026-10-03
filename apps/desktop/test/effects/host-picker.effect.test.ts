@@ -110,9 +110,11 @@ async function opened() {
   flushSync()
 }
 
-async function press(key: string, code = '') {
+async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   const at = dialog()?.contains(document.activeElement) ? document.activeElement : dialog()
-  at?.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true }))
+  at?.dispatchEvent(
+    new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }),
+  )
   flushSync()
   await tick()
   flushSync()
@@ -130,18 +132,19 @@ async function made() {
   return tab
 }
 
-test('no field: the pinned host, the recent one, then the rest by group, each numbered', async () => {
+test('no field: the pinned host, the recent one, then the rest by group, numbered on Alt', async () => {
   await opened()
 
   expect(dialog()?.classList.contains('is-centred')).toBe(true)
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
   expect(names()).toEqual(['office', 'nas', 'build', 'pi'])
-  expect(rows().map((one) => one.querySelector('.place')?.textContent)).toEqual([
-    '1',
-    '2',
-    '3',
-    '4',
-  ])
+  // No number by default, as in the space switcher: they come with Alt or a digit.
+  const numbers = () => rows().map((one) => one.querySelector('.place')?.textContent ?? null)
+  expect(numbers()).toEqual([null, null, null, null])
+  await press('Alt', 'AltLeft', { altKey: true })
+  expect(numbers()).toEqual(['1', '2', '3', '4'])
+  dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }))
+  await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
   // A group's name over its hosts, and a line where the pinned and recent ones end.
   expect([...(dialog()?.querySelectorAll('.head') ?? [])].map((one) => one.textContent)).toEqual([
     'Home',
