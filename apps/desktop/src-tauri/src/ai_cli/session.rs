@@ -110,10 +110,9 @@ impl Claude {
             // Measured on 2.1.280: "Fast mode is not available in the Agent SDK".
             Say::Fast { .. } => return Err("Claude Code has no fast mode headless".into()),
             Say::Compact { focus } => command(format!("/compact {}", one_line(focus)).trim_end()),
-            Say::Context => self.control(
-                json!({ "subtype": "get_context_usage" }),
-                Some("context"),
-            ),
+            Say::Context => {
+                self.control(json!({ "subtype": "get_context_usage" }), Some("context"))
+            }
             Say::Goal { goal } => command(&match goal {
                 GoalSay::Set { objective, .. } => format!("/goal {}", one_line(objective)),
                 GoalSay::Pause => "/goal pause".to_owned(),
@@ -297,7 +296,10 @@ mod tests {
     #[test]
     fn the_reader_s_slash_is_words_not_a_command() {
         let message = parsed(&user("/clear everything", &[]));
-        assert_eq!(message["message"]["content"][0]["text"], " /clear everything");
+        assert_eq!(
+            message["message"]["content"][0]["text"],
+            " /clear everything"
+        );
         let message = parsed(&user("  /model opus", &[]));
         assert_eq!(message["message"]["content"][0]["text"], " /model opus");
     }
@@ -305,9 +307,15 @@ mod tests {
     #[test]
     fn effort_is_typed_as_claude_code_s_own_command() {
         let line = effort_line(Some(Effort::Xhigh)).expect("line");
-        assert_eq!(parsed(&line)["message"]["content"][0]["text"], "/effort xhigh");
+        assert_eq!(
+            parsed(&line)["message"]["content"][0]["text"],
+            "/effort xhigh"
+        );
         let line = effort_line(None).expect("line");
-        assert_eq!(parsed(&line)["message"]["content"][0]["text"], "/effort auto");
+        assert_eq!(
+            parsed(&line)["message"]["content"][0]["text"],
+            "/effort auto"
+        );
         assert!(effort_line(Some(Effort::Off)).is_err());
     }
 

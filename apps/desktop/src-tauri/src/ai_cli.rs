@@ -158,7 +158,11 @@ impl Asks {
         }
         let hosts: Vec<Arc<Host>> = {
             let mut hosts = lock(&self.hosts);
-            let keys: Vec<HostKey> = hosts.keys().filter(|key| mine(&key.owner)).cloned().collect();
+            let keys: Vec<HostKey> = hosts
+                .keys()
+                .filter(|key| mine(&key.owner))
+                .cloned()
+                .collect();
             keys.iter().filter_map(|key| hosts.remove(key)).collect()
         };
         for host in hosts {
@@ -408,7 +412,12 @@ fn next_opening() -> u64 {
 
 /// Where a session's messages go: the window's channel, and on the end the session let
 /// go of, if it is still this opening.
-fn session_output(app: &AppHandle, id: &str, opening: u64, output: Channel<Value>) -> codex_app::Output {
+fn session_output(
+    app: &AppHandle,
+    id: &str,
+    opening: u64,
+    output: Channel<Value>,
+) -> codex_app::Output {
     let app = app.clone();
     let id = id.to_owned();
     Arc::new(move |message: Message| {
@@ -465,11 +474,26 @@ pub fn ai_cli_open(
     let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
     let app = webview.app_handle().clone();
     let folder = workroom(&app)?;
-    let model = opening.model.as_deref().filter(|one| !one.trim().is_empty());
+    let model = opening
+        .model
+        .as_deref()
+        .filter(|one| !one.trim().is_empty());
     let model = args::checked_model(model)?;
     let token = match opening.mode {
         Some(_) => Some(token_for(&app, &opening.agent)?),
         None => None,
+    };
+
+    // Read off its help, perhaps for the first time this run, before any lock is held.
+    let claude = match tool {
+        Tool::ClaudeCode => Some(claude_command(
+            &program,
+            &folder,
+            &opening,
+            model,
+            token.as_deref(),
+        )?),
+        Tool::Codex => None,
     };
 
     let asks = webview.state::<Asks>();
@@ -480,31 +504,15 @@ pub fn ai_cli_open(
     let number = next_opening();
     let output = session_output(&app, &id, number, output);
 
-    let on = match tool {
-        Tool::ClaudeCode => {
-            let caps = caps_of(&program, &folder);
-            let config = folder.join("nib-mcp.json");
-            if opening.mode.is_some() {
-                let nib = crate::mcp::program::program()?;
-                std::fs::write(&config, args::mcp_config(&nib).to_string())
-                    .map_err(|error| error.to_string())?;
-            }
-            let shape = Shape {
-                mode: opening.mode,
-                model,
-                effort: opening.effort,
-            };
-            let mut command = command(&program, &args::claude_session(shape, &caps, &config)?, &folder);
-            command.envs(args::CLAUDE_SESSION_ENV);
-            if let Some(token) = &token {
-                command.env(args::TOKEN_VAR, token);
-            }
+    let on = match (tool, claude) {
+        (Tool::ClaudeCode, Some(command)) => {
             let output = Arc::clone(&output);
             let claude = Claude::start(command, IDLE, move |message| output(message))
                 .map_err(|error| format!("{} could not be started: {error}", tool.command()))?;
             On::Claude(claude)
         }
-        Tool::Codex => {
+        (Tool::ClaudeCode, None) => return Err("missing".to_owned()),
+        (Tool::Codex, _) => {
             let key = HostKey {
                 owner: owner.clone(),
                 agent: token.as_ref().map(|_| opening.agent.id.clone()),
@@ -524,6 +532,40 @@ pub fn ai_cli_open(
         },
     );
     Ok(())
+}
+
+/// Claude Code's command for a session: its flags, nib's server where the shape has a
+/// mode, and the environment that keeps the reader's `CLAUDE.md` out and hands `nib mcp`
+/// its token.
+fn claude_command(
+    program: &Program,
+    folder: &Path,
+    opening: &Opening,
+    model: Option<&str>,
+    token: Option<&str>,
+) -> Result<Command, String> {
+    let caps = caps_of(program, folder);
+    let config = folder.join("nib-mcp.json");
+    if opening.mode.is_some() {
+        let nib = crate::mcp::program::program()?;
+        std::fs::write(&config, args::mcp_config(&nib).to_string())
+            .map_err(|error| error.to_string())?;
+    }
+    let shape = Shape {
+        mode: opening.mode,
+        model,
+        effort: opening.effort,
+    };
+    let mut command = command(
+        program,
+        &args::claude_session(shape, &caps, &config)?,
+        folder,
+    );
+    command.envs(args::CLAUDE_SESSION_ENV);
+    if let Some(token) = token {
+        command.env(args::TOKEN_VAR, token);
+    }
+    Ok(command)
 }
 
 /// The window's app-server for `key`, started now if it has none running.
@@ -618,7 +660,6 @@ pub fn ai_cli_models(webview: Webview, tool: Tool) -> Result<Value, String> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -1028,8 +1069,13 @@ mod tests {
         if token {
             command.env(args::TOKEN_VAR, "abc123");
         }
-        Host::start(command, IDLE, PathBuf::from("nib.exe"), folder.to_path_buf())
-            .expect("started")
+        Host::start(
+            command,
+            IDLE,
+            PathBuf::from("nib.exe"),
+            folder.to_path_buf(),
+        )
+        .expect("started")
     }
 
     fn route() -> (codex_app::Output, Receiver<Message>) {
