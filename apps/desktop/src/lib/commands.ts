@@ -1421,7 +1421,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'sidebar',
-      label: workspace.panel ? t('Hide sidebar') : t('Show sidebar'),
+      label: workspace.panel ? t('Hide left sidebar') : t('Show left sidebar'),
       hint: shortcuts.hint('app.sidebar'),
       run: () => workspace.toggleSidebar(),
     },
@@ -1489,7 +1489,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'right-sidebar',
-      label: t('Right sidebar'),
+      label: workspace.rightPanel ? t('Hide right sidebar') : t('Show right sidebar'),
       hint: shortcuts.hint('app.right-sidebar'),
       disabled: !workspace.right.length,
       run: () => workspace.toggleSidebar('right'),

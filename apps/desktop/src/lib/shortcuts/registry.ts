@@ -711,7 +711,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     id: 'app.sidebar',
-    label: () => t('Show sidebar'),
+    label: () => t('Left sidebar'),
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-l',

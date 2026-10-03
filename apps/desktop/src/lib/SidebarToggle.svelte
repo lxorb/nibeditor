@@ -27,7 +27,18 @@
   const { side = 'left' }: { side?: PanelSide } = $props()
 
   const open = $derived(!!workspace.openOn(side))
-  const label = $derived(open ? t('Hide sidebar') : t('Show sidebar'))
+  /** Which side it is said in words, since the glyph says it only by which way it
+   *  faces: two buttons both called "Show sidebar" were two buttons nobody could tell
+   *  apart without pressing them. */
+  const label = $derived(
+    side === 'left'
+      ? open
+        ? t('Hide left sidebar')
+        : t('Show left sidebar')
+      : open
+        ? t('Hide right sidebar')
+        : t('Show right sidebar'),
+  )
 </script>
 
 <!-- The glyph is mirrored for the right side and nothing else about it changes:

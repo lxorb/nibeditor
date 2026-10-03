@@ -49,7 +49,7 @@ const PANEL = '<rect x="1" y="2.5" width="12" height="9" rx="1.5" />'
 describe('the button that opens the file list', () => {
   test('is one component, drawn once', () => {
     expect(toggle).toContain(PANEL)
-    expect(toggle).toContain("t('Hide sidebar')")
+    expect(toggle).toContain("t('Hide left sidebar')")
 
     for (const [name, text] of [
       ['lib/Titlebar.svelte', titlebar],
@@ -91,8 +91,10 @@ describe('the button that opens the file list', () => {
    *  what catches the version of this that the markup alone cannot see. */
   test('says which way it is in words rather than by redrawing itself', () => {
     expect(toggle).toContain('aria-pressed={open}')
-    expect(toggle).toContain("t('Hide sidebar')")
-    expect(toggle).toContain("t('Show sidebar')")
+    expect(toggle).toContain("t('Hide left sidebar')")
+    expect(toggle).toContain("t('Show left sidebar')")
+    expect(toggle).toContain("t('Hide right sidebar')")
+    expect(toggle).toContain("t('Show right sidebar')")
 
     const style = toggle.slice(toggle.indexOf('<style>'))
     for (const shifting of [

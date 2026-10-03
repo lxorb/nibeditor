@@ -512,7 +512,7 @@ export function appMenu(context: Context): MenuGroup[] {
               DIVIDER,
             ]),
         {
-          label: t('Show sidebar'),
+          label: t('Left sidebar'),
           ...keyed('app.sidebar'),
           checked: !!workspace.panel,
           run: () => workspace.toggleSidebar(),

@@ -131,7 +131,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['word', '> Export as Word', 1],
   ['settings', '> Settings', 1],
   ['shortcuts', '> Shortcuts', 1],
-  ['sidebar', '> Show sidebar', 1],
+  ['sidebar', '> Show left sidebar', 1],
   ['focus', '> Focus mode', 1],
   ['typewriter', '> Typewriter mode', 1],
   ['zoom in', '> Zoom in', 1],
