@@ -1,0 +1,49 @@
+filters:
+  and:
+    - file.inFolder("Bugs")
+formulas:
+  age: (now() - file.ctime).days
+properties:
+  status:
+    displayName: Status
+views:
+  - type: kanban
+    name: Board
+    groupBy:
+      property: note.status
+      direction: ASC
+    order:
+      - file.name
+      - note.priority
+      - formula.age
+    nib:
+      subGroupBy: note.assignee
+      order:
+        To do: [Bugs/Sync loses a rename.md, Bugs/Glass on Linux.md]
+  - type: table
+    name: All
+    summaries:
+      formula.age: Average
+  - type: calendar
+    name: Due
+    nib:
+      date: note.due
+  - type: list
+    name: Open tasks
+    nib:
+      rows: tasks
+    filters:
+      and:
+        - '!task.done'
+nib:
+  template: "[[Templates/Bug]]"
+  id:
+    property: id
+    prefix: BUG
+  properties:
+    status:
+      options:
+        - { value: To do, group: todo, tone: neutral }
+        - { value: Doing, group: doing, tone: info }
+        - { value: Review, group: doing, tone: warning }
+        - { value: Done, group: done, tone: success }

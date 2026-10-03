@@ -557,7 +557,8 @@ added to the scan, under 4 MB of rows, under 2 ms to update one note's rows afte
 - **A row** is a note or a task. Its columns: `file.*` (Bases' own list), `note.*` (the front
   matter; for a task, its note's), `task.*` for a task (`text`, `status`, `done`, `due`,
   `scheduled`, `start`, `time`, `duration`, `deadline`, `priority`, `recurrence`, `tags`,
-  `assignee`, `section`, `parent`, `line`), and `formula.*`.
+  `assignee`, `section`, `parent`, `line`, and the answers every view asks: `open`, `date`,
+  `at`, `started`, `mine`, `subtask`; the full list is in 7.1), and `formula.*`.
 - **An expression** is Bases' language, parsed once into a tree and compiled to a closure;
   evaluating 10,000 rows is a loop, not a parse.
 - **A filter** is Bases' `and`/`or`/`not` of expressions. Todoist's filter language (5.8)
@@ -1197,6 +1198,7 @@ type Value = null | boolean | number | string
   | { kind: 'date'; iso: string; time?: string; zone?: string }
   | { kind: 'duration'; ms: number; months: number }
   | { kind: 'link'; target: string; display?: string }
+  | { kind: 'image'; src } | { kind: 'icon'; name } | { kind: 'html'; html }  // drawn, not read
   | Value[] | { [key: string]: Value }
 interface FileInfo { name; basename; path; folder; ext; size; ctime; mtime  // ms
   tags: string[]; links: string[]; embeds: string[]; shared?: boolean }
@@ -1223,19 +1225,37 @@ interface Answer { groups: Group[]; total: number; summaries: Record<string, Val
 function noteValues(frontMatter: string): Record<string, Value>    // the note, or its block
 function taskHash(text: string): string
 function readBase(yaml: string): Base
-function writeBase(base: Base, before: string): string    // keeps order, quoting, unknown keys
-function compile(expression: string): Compiled            // Bases' language
+function writeBase(base: Base, before?: string): string   // keeps order, quoting, comments, unknown keys
+function compile(expression: string): Compiled            // Bases' language; .evaluate(row, context, formulas)
 function compileFilter(filter: Filter): (row: Row, context: Context) => boolean
-function fromTodoist(filter: string, options?): Filter[]  // one per comma-separated list
-function answer(base: Base, view: string | number, rows: readonly Row[], context: Context): Answer
+function fromTodoist(filter: string, options?: { lang?; today?; isNote?(name) }): Filter[]
+                                                          // one per comma-separated list
+function answer(base: Base, view: string | number | undefined, rows: readonly Row[],
+                context: Context): Answer                 // compiled once per Base object, kept
+function compileView(base: Base, view?): { view; answer(rows, context): Answer }
+function cellValue(base: Base, property: string, row: Row, context: Context): Value
+function viewOf(base, view); groupName(key: Value): string; rowId(row: Row): string
 function parseRule(text: string): Rule | null            // the Tasks plugin's grammar
-function ruleText(rule: Rule): string
-function nextOccurrence(task: TaskFields, today: string, options?): TaskFields | null
+function ruleText(rule: Rule): string                     // its own words, `until` without `-`
+function nextDate(rule: Rule, start: string, after: string): string | null
+function nextOccurrence(task: TaskFields, today: string, options?: { skipPast?; created? }):
+  TaskFields | null
 function tick(note: string, line: number, today: string, options?): TextEdit[]
-                                                          // offsets into the note; one undo
-function builtinView(name: BuiltinName, params): Base    // Inbox, Today, Upcoming, ...
+                                 // offsets into the note, in order; one undo. Ticks open
+                                 // sub-tasks, writes a recurring task's next block above
+function skip(line: string, today: string): TextEdit[]    // the dates move, nothing ticked
+function finish(line: string, today: string): TextEdit[]  // ticked and the rule taken off
+function builtinView(name: 'inbox' | 'today' | 'upcoming' | 'logbook' | 'project' | 'label'
+  | 'assigned', params?: { inboxes?; note?; tag? }): Base
 function readTasksQuery(source: string): { base: Base; unsupported: string[] }
 function parseQuickAdd(text: string, langs: string[], now: Date): QuickAdd   // lane 3
+
+// what an expression reads beyond Bases' own `file.*`, `note.*`, `formula.*`, `this`:
+//   file.space, file.shared
+//   task.text status done cancelled open due scheduled start created completed cancelledOn
+//   deadline date (due, else scheduled) at (date and time) started time zone duration
+//   remind priority recurrence recurring tags assignee mine id dependsOn section (nearest
+//   heading) headings parent subtask indent line note, and task.hasTag(...)
 ```
 
 The rows store (lane 2) is `rows.of(space?)`, `rows.watch(listener)`, and `rows.write(row,

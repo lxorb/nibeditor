@@ -37,9 +37,22 @@ export interface LinkValue {
   display?: string
 }
 
+/** What a view draws rather than reads: `image()`, `icon()`, `html()`. */
+export type RenderedValue =
+  { kind: 'image'; src: string } | { kind: 'icon'; name: string } | { kind: 'html'; html: string }
+
 /** What a property, a formula or a summary is worth. */
 export type Value =
-  null | boolean | number | string | DateValue | DurationValue | LinkValue | Value[] | ValueRecord
+  | null
+  | boolean
+  | number
+  | string
+  | DateValue
+  | DurationValue
+  | LinkValue
+  | RenderedValue
+  | Value[]
+  | ValueRecord
 
 export interface ValueRecord {
   [key: string]: Value
@@ -164,6 +177,9 @@ export interface NibView {
   colour?: string
   /** Done and cancelled tasks stay in the view. */
   showCompleted?: boolean
+  /** `rows` keeps groups in the order their first row comes, as a note's headings
+   *  are; `value`, the default, orders them by their key. */
+  groupOrder?: 'value' | 'rows'
   /** Groups kept out of sight, by key as text. */
   hidden?: string[]
   locked?: boolean
