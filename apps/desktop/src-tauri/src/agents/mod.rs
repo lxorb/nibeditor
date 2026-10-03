@@ -103,6 +103,7 @@ mod snapshot;
 )]
 mod stop;
 
+#[cfg(any(windows, feature = "cef"))]
 pub mod engines;
 pub mod shell;
 pub mod watch;
