@@ -1690,4 +1690,9 @@ export const my: Dictionary = {
   'Open on {device}': '{device} တွင် ဖွင့်ထားသည်',
   'Use here': 'ဤနေရာတွင် သုံးမည်',
   '{device} wants your web logins': '{device} က သင်၏ ဝဘ် လော့ဂ်အင်များကို လိုချင်သည်',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

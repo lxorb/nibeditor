@@ -139,7 +139,7 @@ def main() -> int:
         page.wait_for_timeout(300)
 
         # A right click on the switch in the panel's foot.
-        switch = page.locator(".foot .acts button").first
+        switch = page.locator(".foot .acts button[aria-disabled]").first
         switch.click(button="right")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         box = page.locator('[role="dialog"][aria-label="Themes"]').bounding_box()

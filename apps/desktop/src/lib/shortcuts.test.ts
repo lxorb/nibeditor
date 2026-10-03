@@ -1053,6 +1053,41 @@ describe('full window', () => {
   })
 })
 
+describe('a question on the side, and the scratchpad', () => {
+  const entry = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)
+
+  test('the question is Ctrl twice, Cmd twice on a Mac, which nothing else is on', () => {
+    for (const platform of PLATFORMS) {
+      expect(defaultKeyFor(entry('app.quick-question')!, platform)).toBe('Mod Mod')
+    }
+    expect(registry.shortcuts.conflicts('app.quick-question', 'Mod Mod')).toEqual([])
+    expect(registry.shortcuts.hint('app.quick-question')).toBe('Ctrl Ctrl')
+  })
+
+  test('the scratchpad is Ctrl+Shift+X, no browser’s and nobody else’s', () => {
+    const key = registry.shortcuts.keyFor('app.scratchpad')
+    expect(key).toBe('Mod-Shift-x')
+    expect(registry.shortcuts.conflicts('app.scratchpad', 'Mod-Shift-x')).toEqual([])
+    for (const platform of PLATFORMS) {
+      expect(BROWSER_KEYS.some((held) => sameCombination(held, key ?? '', platform))).toBe(false)
+      expect(SYSTEM_KEYS[platform].some((held) => sameCombination(held, key ?? '', platform))).toBe(
+        false,
+      )
+    }
+  })
+
+  test('keep their keys under every keyboard that can be chosen', () => {
+    for (const id of ['obsidian', 'vscode', 'notion', 'vim']) {
+      const preset = presetById(id)
+      if (!preset) continue
+      expect(preset.keys['app.quick-question'], id).toBeUndefined()
+      expect(preset.keys['app.scratchpad'], id).toBeUndefined()
+      expect(Object.values(preset.keys), id).not.toContain('Mod-Shift-x')
+      expect(Object.values(preset.keys), id).not.toContain('Mod Mod')
+    }
+  })
+})
+
 describe('a page note’s zoom', () => {
   test('is on the keys the plane’s Fit is on, one modifier over', () => {
     expect(registry.shortcuts.keyFor('pages.zoom.in')).toBe('Mod-Alt-=')

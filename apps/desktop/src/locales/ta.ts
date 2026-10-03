@@ -1731,4 +1731,9 @@ export const ta: Dictionary = {
   'Open on {device}': '{device} இல் திறந்துள்ளது',
   'Use here': 'இங்கே பயன்படுத்து',
   '{device} wants your web logins': '{device} உங்கள் இணைய உள்நுழைவுகளைக் கேட்கிறது',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

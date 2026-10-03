@@ -1658,4 +1658,9 @@ export const zhHantHK: Dictionary = {
   'Open on {device}': '已在 {device} 開啟',
   'Use here': '在此使用',
   '{device} wants your web logins': '{device} 要求你的網頁登入',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

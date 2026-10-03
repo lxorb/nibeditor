@@ -165,6 +165,7 @@ describe('what hides a web page', () => {
     'lib/NewKindSheet.svelte': 'dialog',
     'lib/Palette.svelte': 'dialog',
     'lib/PromptSheet.svelte': 'dialog',
+    'lib/QuickQuestion.svelte': 'dialog',
     'lib/Select.svelte': 'dropdown',
     'lib/SettingsPanel.svelte': 'sheet',
     'lib/Sheet.svelte': 'sheet',

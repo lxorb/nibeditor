@@ -1711,4 +1711,9 @@ export const tr: Dictionary = {
   'Open on {device}': '{device} üzerinde açık',
   'Use here': 'Burada kullan',
   '{device} wants your web logins': '{device} web oturum açma bilgilerinizi istiyor',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

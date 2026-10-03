@@ -23,6 +23,8 @@ import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
+import { askQuickly } from '../ai/quick-door'
+import { toggleScratchpad } from '../scratchpad/is'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
@@ -802,6 +804,31 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-a',
     run: () => revealPanel('ask'),
+  },
+  // A question on the side, Claude Code's /btw: a field in the middle of the window
+  // with the note's selection, the note or the page in front going along, answered in
+  // place and gone with Escape. Ctrl pressed twice on its own, Cmd twice on a Mac, the
+  // shape Claude's own quick entry and JetBrains' Run Anything have: no chord a note,
+  // a shell or a site is using, and heard over a web page by the page's own script and
+  // inside a terminal by the window, so it is free everywhere. See ai/quick.svelte.ts.
+  {
+    id: 'app.quick-question',
+    label: () => t('Quick question'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod Mod',
+    run: () => askQuickly(),
+  },
+  // The one note in no space; pressed again while it is in front, back to the tab
+  // before it. Ctrl+Shift, which a terminal hands the app, and no browser's or any
+  // other app's key nib keeps a keyboard of. See scratchpad/pad.ts.
+  {
+    id: 'app.scratchpad',
+    label: () => t('Scratchpad'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-x',
+    run: () => toggleScratchpad(),
   },
   // No key of its own, as Footnotes has none; a row to put one on.
   {

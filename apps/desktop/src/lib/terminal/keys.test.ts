@@ -28,6 +28,7 @@ describe('on Windows and Linux', () => {
       ['F6', {}, 'app.region-next'],
       ['F11', {}, 'app.fullscreen'],
       ['F11', { shiftKey: true }, 'app.fill-tab'],
+      ['X', ctrlShift, 'app.scratchpad'],
       ['3', { altKey: true }, 'app.note-3.alt'],
       ['3', { ctrlKey: true, altKey: true }, 'app.note-3'],
       ['ArrowRight', { ctrlKey: true, altKey: true }, 'pane.split-right'],

@@ -1702,4 +1702,9 @@ export const ur: Dictionary = {
   'Open on {device}': '{device} پر کھلا ہے',
   'Use here': 'یہاں استعمال کریں',
   '{device} wants your web logins': '{device} آپ کے ویب لاگ اِن چاہتا ہے',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

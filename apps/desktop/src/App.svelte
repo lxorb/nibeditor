@@ -51,6 +51,7 @@
     paletteDoor,
     promptSheet,
     publishSheet,
+    quickSheet,
     recordingPill,
     rewriteSheet,
     settingsSheet,
@@ -1162,6 +1163,11 @@
 {#if rewriteSheet.asked}
   {#await rewriteSheet.asked then RewriteSheet}
     <RewriteSheet />
+  {/await}
+{/if}
+{#if quickSheet.asked}
+  {#await quickSheet.asked then QuickQuestion}
+    <QuickQuestion />
   {/await}
 {/if}
 {#if promptSheet.asked}

@@ -2,7 +2,8 @@
 //! config, plus the two files that are always there - `custom.css`, applied on
 //! top of whichever theme is active, and `snippets.json`. Dropping a file into
 //! that folder is all it takes to install a theme, which is the contract Typora
-//! uses.
+//! uses. The scratchpad lives beside them, as the app's own note rather than a
+//! space's.
 
 use serde::Serialize;
 use std::ffi::OsStr;
@@ -15,6 +16,10 @@ use crate::paths::{cannot, config_dir, folded, inside, made, write_atomically};
 
 /// What `custom.css` says when it is first made.
 const CUSTOM_CSS: &str = "/* Loaded after the active theme. Anything here wins. */\n";
+
+/// What the scratchpad says when it is first made: nothing, so the first key typed
+/// into it is the first thing in it.
+const SCRATCHPAD: &str = "";
 
 /// What `snippets.json` says when it is first made.
 const SNIPPETS: &str = "{\n  \"todo\": \"- [ ] \",\n  \"note\": \"> [!NOTE]\\n> \"\n}\n";
@@ -181,6 +186,16 @@ pub fn snippets_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Where the scratchpad is, making it first if it is not there: the one note that
+/// belongs to no space, beside `custom.css` in the app's own folder, so it is the
+/// same note from every space and outlives any of them. See `lib/scratchpad.svelte.ts` in the window.
+#[tauri::command(async)]
+pub fn scratchpad_path(app: AppHandle) -> Result<String, String> {
+    let path = settings_dir(&app)?.join(SCRATCHPAD_FILE);
+    seed(&path, SCRATCHPAD)?;
+    Ok(path.to_string_lossy().to_string())
+}
+
 /// The snippets as they stand, or an empty set if the file is not readable. The
 /// editor works without them, so this is not worth an error.
 #[tauri::command(async)]
@@ -246,6 +261,9 @@ const CUSTOM_CSS_FILE: &str = "custom.css";
 /// And their snippets.
 const SNIPPETS_FILE: &str = "snippets.json";
 
+/// And the scratchpad, named for what the tab says.
+const SCRATCHPAD_FILE: &str = "Scratchpad.md";
+
 /// `custom.css` sits beside the themes folder rather than in it, so it is not
 /// offered as a theme of its own.
 fn custom_css_file(app: &AppHandle) -> Result<PathBuf, String> {
@@ -257,13 +275,19 @@ fn snippets_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(settings_dir(app)?.join(SNIPPETS_FILE))
 }
 
-/// The two files outside every space that the app opens in a tab of its own, Edit
-/// custom CSS and Edit snippets, because they are the app's own rather than
-/// somebody's documents. Where they are, and nothing more: judging a path is no
+/// The three files outside every space that the app opens in a tab of its own, Edit
+/// custom CSS, Edit snippets and the scratchpad, because they are the app's own
+/// rather than somebody's documents. Where they are, and nothing more: judging a path is no
 /// reason to make a folder. See `openable` in paths.rs.
 pub fn own_files(app: &AppHandle) -> Vec<PathBuf> {
     config_dir(app)
-        .map(|dir| vec![dir.join(CUSTOM_CSS_FILE), dir.join(SNIPPETS_FILE)])
+        .map(|dir| {
+            vec![
+                dir.join(CUSTOM_CSS_FILE),
+                dir.join(SNIPPETS_FILE),
+                dir.join(SCRATCHPAD_FILE),
+            ]
+        })
         .unwrap_or_default()
 }
 
@@ -287,7 +311,7 @@ fn humanise(stem: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{humanise, is_a_theme, is_css, is_id, seed, seeded, SNIPPETS};
+    use super::{humanise, is_a_theme, is_css, is_id, seed, seeded, SCRATCHPAD, SNIPPETS};
     use std::io::{self, Write as _};
     use std::path::{Path, PathBuf};
 
@@ -318,6 +342,23 @@ mod tests {
 
         seed(&path, "/* a starter */").expect("nothing to do");
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), "");
+    }
+
+    /// The scratchpad starts empty, and once something is in it a second ask keeps it.
+    #[test]
+    fn the_scratchpad_starts_empty_and_keeps_what_is_jotted() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let path = dir.path().join("Scratchpad.md");
+
+        seed(&path, SCRATCHPAD).expect("the scratchpad");
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "");
+
+        std::fs::write(&path, "a number to call").expect("a jot");
+        seed(&path, SCRATCHPAD).expect("nothing to do");
+        assert_eq!(
+            std::fs::read_to_string(&path).expect("the file"),
+            "a number to call"
+        );
     }
 
     /// Written the way the platform writes them, so the assertions read the same

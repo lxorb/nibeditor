@@ -1659,4 +1659,9 @@ export const yue: Dictionary = {
   'Open on {device}': '喺 {device} 開咗',
   'Use here': '喺呢度用',
   '{device} wants your web logins': '{device} 想要你嘅網頁登入',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

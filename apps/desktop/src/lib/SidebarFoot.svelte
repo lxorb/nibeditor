@@ -3,9 +3,10 @@
    *  than to any note.
    *
    *  The bottom of the panel, in the same row height its head has, so the list
-   *  of notes sits between two bars that match. Three things and no more: the
+   *  of notes sits between two bars that match. Four things and no more: the
    *  account at the left, where a sidebar names its owner in every app that has
-   *  one; the theme and the settings at the right, where a switch goes. The
+   *  one; the scratchpad, the theme and the settings at the right, where a switch
+   *  goes. The
    *  source link is not here - it is a row in the Help menu.
    *
    *  One component on every device. A drawer is the sidebar, so a phone gets
@@ -22,6 +23,11 @@
   import { t } from './i18n.svelte'
   import { theme } from './theme.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { isScratchpad, toggleScratchpad } from './scratchpad/is'
+  import { workspace } from './workspace.svelte'
+
+  /** Whether the scratchpad is the tab in front, which its glyph wears. */
+  const padInFront = $derived(isScratchpad(workspace.active?.path))
 
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
@@ -85,6 +91,26 @@
   {/if}
 
   <div class="acts">
+    <!-- The scratchpad, the one note in no space: a pad with its rings, lit while it is
+         the tab in front, and pressed again then, back to the tab before it. Not in the
+         glasses' plugin. See scratchpad/pad.ts. -->
+    {#if !__EVEN_PLUGIN__}
+      <button
+        class="nib-glyph act"
+        title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
+        aria-label={t('Scratchpad')}
+        class:is-on={padInFront}
+        aria-pressed={padInFront}
+        onclick={toggleScratchpad}
+      >
+        <svg viewBox="0 0 14 14"
+          ><rect x="2.5" y="2.5" width="9" height="10" rx="1.6" /><path
+            d="M5 1.2v2.6M9 1.2v2.6M4.9 7h4.2M4.9 9.6h2.8"
+          /></svg
+        >
+      </button>
+    {/if}
+
     <!-- Off while the theme in force has only the one scheme: there is no other
          side of it to show, and swapping it for a built-in is not the switch
          anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which

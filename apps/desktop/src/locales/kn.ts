@@ -1723,4 +1723,9 @@ export const kn: Dictionary = {
   'Open on {device}': '{device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
   'Use here': 'ಇಲ್ಲಿ ಬಳಸಿ',
   '{device} wants your web logins': '{device} ನಿಮ್ಮ ವೆಬ್ ಲಾಗಿನ್‌ಗಳನ್ನು ಬಯಸುತ್ತದೆ',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

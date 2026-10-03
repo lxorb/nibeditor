@@ -1687,4 +1687,9 @@ export const vi: Dictionary = {
   'Open on {device}': 'Đang mở trên {device}',
   'Use here': 'Dùng ở đây',
   '{device} wants your web logins': '{device} muốn các thông tin đăng nhập web của bạn',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

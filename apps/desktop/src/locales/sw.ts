@@ -1732,4 +1732,9 @@ export const sw: Dictionary = {
   'Open on {device}': 'Imefunguliwa kwenye {device}',
   'Use here': 'Tumia hapa',
   '{device} wants your web logins': '{device} inaomba kuingia kwako kwenye wavuti',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }

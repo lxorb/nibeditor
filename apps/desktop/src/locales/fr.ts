@@ -1765,4 +1765,9 @@ export const fr: Dictionary = {
   'Open on {device}': 'Ouvert sur {device}',
   'Use here': 'Utiliser ici',
   '{device} wants your web logins': '{device} demande vos connexions web',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Question rapide',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Ajouter à la note',
 }

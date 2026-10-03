@@ -8,6 +8,7 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@nib/editor'
 import { revealPanel } from './focus'
+import { isScratchpad } from './scratchpad/is'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { selectedWords } from './search/seed'
@@ -159,7 +160,9 @@ class Search {
    *  to replace, and guessing at what somebody meant is not a thing to do to
    *  their notes. */
   readonly chosen = $derived(
-    this.found.filter((hit) => hit.tab === undefined && !this.skipped.has(keyOf(hit))),
+    this.found.filter(
+      (hit) => hit.tab === undefined && !isScratchpad(hit.path) && !this.skipped.has(keyOf(hit)),
+    ),
   )
 
   /** Whether a hit will be replaced. */
@@ -257,7 +260,14 @@ class Search {
     const excluded = this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)
     const { unsavedHits } = await import('./search/unsaved')
     const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)
-    if (round === this.round && unsaved.length) this.found = unsaved
+    // The scratchpad answers in every space, and never while a replacement is being
+    // written: it is no space's to replace in. Not in the glasses' plugin, which has
+    // none. See search/scratchpad.ts.
+    const pad =
+      this.replacing || __EVEN_PLUGIN__
+        ? []
+        : await import('./search/scratchpad').then((one) => one.scratchpadHits(this.query, MOST))
+    if (round === this.round && (unsaved.length || pad.length)) this.found = [...unsaved, ...pad]
     await searchSpace(
       root,
       this.query,

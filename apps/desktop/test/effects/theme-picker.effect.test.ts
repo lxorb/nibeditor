@@ -161,7 +161,7 @@ test('and so does the switch of a theme with one side, which cannot flip it', as
   const foot = mount(SidebarFoot, { target })
   flushSync()
 
-  const button = target.querySelector<HTMLElement>('.acts button')
+  const button = target.querySelector<HTMLElement>('.acts button[aria-disabled]')
   expect(button?.getAttribute('aria-disabled')).toBe('true')
   button?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
   await expect.poll(() => picking.open).toBe(true)

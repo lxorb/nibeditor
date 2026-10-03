@@ -252,6 +252,8 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+A | Ask, the conversation about the space |
+| Ctrl Ctrl | **a quick question**, Claude Code's /btw: Ctrl pressed twice on its own (Cmd twice on a Mac), the shape Claude's own quick entry and JetBrains' Run Anything have. No chord a note, a shell or a site uses, so it works everywhere: the window hears it on its capturing turn, a terminal included, and a web page's own script says it too (`nib-twice-ctrl`, web_opens.rs). Pressed again, it goes away. See docs/ai.md |
+| Ctrl+Shift+X | **the scratchpad**, the one note in no space; pressed while it is in front, the tab before it. A terminal hands Ctrl+Shift to the app; a web page keeps it, as every app key but the browser's, and Shift twice reaches its palette row there |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 | Ctrl+Alt+B | show or hide the right side, VS Code's key for its secondary side bar |
 | no key | Show in the file list: the note in front, its rows unfolded and scrolled to. Collapse the file list: every row folded |

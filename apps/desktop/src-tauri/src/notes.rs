@@ -38,7 +38,8 @@ pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;
 /// large to keep, so every catalogue carries it already.
 pub const TOO_LARGE: &str = "that note is too large";
 
-/// Reads a note: a file in a space, or one of the app's own two settings files.
+/// Reads a note: a file in a space, or one of the app's own files (the two settings
+/// files and the scratchpad).
 /// nib opens nothing from anywhere else on the disk; see `openable`.
 #[tauri::command(async)]
 pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {

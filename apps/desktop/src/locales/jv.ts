@@ -1691,4 +1691,9 @@ export const jv: Dictionary = {
   'Open on {device}': 'Kabuka ing {device}',
   'Use here': 'Gunakake ing kene',
   '{device} wants your web logins': '{device} njaluk login web sampeyan',
+  // A quick question on the side, and the scratchpad, whose name is its file's and
+  // so is the same in every language, as its tab says it
+  'Quick question': 'Quick question',
+  Scratchpad: 'Scratchpad',
+  'Add to note': 'Add to note',
 }
