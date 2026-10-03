@@ -751,7 +751,8 @@
       {/if}
     {/each}
 
-    {#if settings.section === 'general' && isDesktop}
+    <!-- A desktop's alone; the glasses' plugin leaves the row and its engine out. -->
+    {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
       {@render browserRow()}
     {/if}
 

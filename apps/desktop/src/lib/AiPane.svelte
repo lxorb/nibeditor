@@ -24,16 +24,12 @@
   import { slide } from 'svelte/transition'
   import { FEATURES, ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
-  import { USAGE } from './ai/chatgpt'
-  import ChatGptMark from './ai/ChatGptMark.svelte'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
-  import { limitSentence } from './ai/local/trouble'
-  import type { Limit } from './ai/local/heard'
+  import PlanRows from './ai/PlanRows.svelte'
   import {
     isLocal,
     KIND_NAMES,
-    type LocalKind,
     offeredKinds,
     type Provider,
     type ProviderKind,
@@ -43,7 +39,7 @@
   import { message, t } from './i18n.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
-  import { invoke, isDesktop, openExternal } from './tauri'
+  import { isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
 
   /** Which providers have a key on this device, by id. Asked once per provider and
@@ -56,31 +52,6 @@
   let asking = $state('')
   /** What went wrong, by provider, in that provider's own words. */
   let trouble = $state<Record<string, string>>({})
-  /** Whether the browser is out signing somebody in to ChatGPT, and which press sent it:
-   *  a second press starts again rather than waiting out a tab somebody closed. */
-  let signingIn = $state(false)
-  let signIns = 0
-
-  /** Where each program is installed from: its maker's own page. */
-  const INSTALL: Record<LocalKind, string> = {
-    'claude-code': 'https://code.claude.com/docs/en/setup',
-    codex: 'https://developers.openai.com/codex/cli',
-  }
-
-  /** Where each plan's use is seen and managed, for the moment it runs out. */
-  const USAGE_OF: Record<LocalKind | 'chatgpt', string> = {
-    'claude-code': 'https://claude.ai/settings/usage',
-    codex: USAGE,
-    chatgpt: USAGE,
-  }
-
-  /** Which plan each kind spends, as its row names it. */
-  const PLAN_OF: Record<LocalKind | 'chatgpt', string> = {
-    'claude-code': 'Claude',
-    codex: 'ChatGPT',
-    chatgpt: 'ChatGPT',
-  }
-
   /** What a base URL looks like, as the address Ollama answers on. An address and
    *  not a sentence, so it is the same in every language; named here rather than
    *  written into the field, because a placeholder written there reads as prose
@@ -93,7 +64,9 @@
   /** Whether a provider's key is on this device, or, for ChatGPT, whether somebody is
    *  signed in: the two are the same question to a request. */
   const ready = (provider: Provider) =>
-    provider.kind === 'chatgpt' ? !!plans.chatgpt : (keyed[provider.id] ?? false)
+    provider.kind === 'chatgpt'
+      ? !__EVEN_PLUGIN__ && !!plans.chatgpt
+      : (keyed[provider.id] ?? false)
 
   /** Which kinds can still be added. One of each but the compatible kind, because
    *  there is one of each API, key, program and plan; as many compatible ones as
@@ -112,6 +85,8 @@
 
   /** Where a plan stands, asked of whoever knows: the program, or the crate. */
   async function ask(kind: ProviderKind) {
+    // The plugin offers neither (see `offeredKinds`), and leaves out what asks them.
+    if (__EVEN_PLUGIN__) return
     if (isLocal(kind)) await plans.check(kind)
     if (kind === 'chatgpt') await plans.checkChatgpt()
   }
@@ -171,6 +146,11 @@
     }
   }
 
+  /** Where a plan's rows say what went wrong: under this provider's card. */
+  const said = (provider: Provider) => (text: string) => {
+    trouble = { ...trouble, [provider.id]: text }
+  }
+
   function add(kind: ProviderKind) {
     ai.add(kind)
     void ask(kind)
@@ -180,149 +160,7 @@
     if (!isLocal(provider.kind) && provider.kind !== 'chatgpt') void drop(provider)
     ai.remove(provider.id)
   }
-
-  /** Claude Code's or Codex's own login, in a terminal tab; the pane closes so the tab
-   *  can be seen, and the program is asked until it says it is signed in. */
-  async function signInTo(kind: LocalKind) {
-    const program = plans.local[kind].program
-    if (!program) return
-    const [{ signIn }, { settings }] = await Promise.all([
-      import('./ai/local/signin'),
-      import('./settings.svelte'),
-    ])
-    settings.open = false
-    await signIn(kind, program)
-    plans.watch(kind)
-  }
-
-  /** Sign in with ChatGPT: the browser, and back. */
-  async function continueWithChatgpt(provider: Provider) {
-    const mine = ++signIns
-    signingIn = true
-    trouble = { ...trouble, [provider.id]: '' }
-    try {
-      await invoke('chatgpt_sign_in')
-      await plans.checkChatgpt()
-      await refresh(provider)
-    } catch (error) {
-      // The crate's own words where OpenAI refused, and ours for a wait that ran out; a
-      // second press giving up the first wait is no failure at all.
-      const said = error instanceof Error ? error.message : String(error)
-      if (said !== 'stopped') {
-        trouble = {
-          ...trouble,
-          [provider.id]:
-            said === 'timed out'
-              ? t('Could not sign in.')
-              : message(new Error(said), t('Could not sign in.')),
-        }
-      }
-    } finally {
-      if (signIns === mine) signingIn = false
-    }
-  }
-
-  async function signOutOfChatgpt(provider: Provider) {
-    await invoke('chatgpt_sign_out').catch((error: unknown) => {
-      trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
-    })
-    plans.chatgptLimit = null
-    await plans.checkChatgpt()
-  }
-
-  /** What a plan's limit is worth saying, or nothing while it is not near. */
-  function limitWords(kind: LocalKind | 'chatgpt', limit: Limit | null): string {
-    if (!limit || limit.state === 'fine') return ''
-    if (limit.state === 'reached') return limitSentence(PLAN_OF[kind], limit)
-    return t('Your {plan} plan is near its limit.', { plan: PLAN_OF[kind] })
-  }
 </script>
-
-<!-- Where a program on this machine stands: not installed, signed out, or whose plan it
-     is signed in with. -->
-{#snippet program(provider: Provider, kind: LocalKind)}
-  {@const plan = plans.local[kind]}
-  <div class="nib-setting setting">
-    <span class="name">{t('Account')}</span>
-    <div class="row">
-      {#if plan.state === 'unknown' && !plan.program}
-        <span class="hint">{t('Asking…')}</span>
-      {:else if plan.state === 'missing'}
-        <span class="hint">{t('Not installed')}</span>
-        <button class="nib-chip" onclick={() => void openExternal(INSTALL[kind])}>
-          {t('Install')}
-        </button>
-        <button class="nib-chip is-quiet" onclick={() => void plans.check(kind)}>
-          {t('Check again')}
-        </button>
-      {:else if plan.state === 'in'}
-        <span class="hint" title={plan.account ?? ''}>
-          {plan.plan === 'API key'
-            ? t('API key')
-            : plan.plan
-              ? t('{plan} plan', { plan: plan.plan })
-              : t('Signed in')}
-        </span>
-      {:else}
-        <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
-          {t('Sign in')}
-        </button>
-      {/if}
-    </div>
-  </div>
-
-  <label class="nib-setting setting">
-    <span class="name">{t('Model')}</span>
-    <input
-      class="nib-field inline"
-      value={provider.model}
-      placeholder={t('Default')}
-      spellcheck="false"
-      autocapitalize="off"
-      autocorrect="off"
-      autocomplete="off"
-      onchange={(event) => ai.update(provider.id, { model: event.currentTarget.value.trim() })}
-    />
-  </label>
-
-  {@render limited(kind, plan.limit)}
-{/snippet}
-
-<!-- The ChatGPT plan's sign-in, as OpenAI asks it to look: its mark, and its words. -->
-{#snippet chatgpt(provider: Provider)}
-  <div class="nib-setting setting">
-    <span class="name">{t('Account')}</span>
-    <div class="row">
-      {#if plans.chatgpt}
-        <span class="hint">{plans.chatgpt.email ?? t('Signed in')}</span>
-        <button class="nib-chip is-quiet" onclick={() => void signOutOfChatgpt(provider)}>
-          {t('Sign out')}
-        </button>
-      {:else if plans.chatgpt === null}
-        {#if signingIn}<span class="hint">{t('Asking…')}</span>{/if}
-        <button class="nib-chip continue" onclick={() => void continueWithChatgpt(provider)}>
-          <ChatGptMark />
-          {t('Continue with ChatGPT')}
-        </button>
-      {:else}
-        <span class="hint">{t('Asking…')}</span>
-      {/if}
-    </div>
-  </div>
-  {@render limited('chatgpt', plans.chatgptLimit)}
-{/snippet}
-
-<!-- A plan near or at its limit, said as the reader's own, with where to see it. -->
-{#snippet limited(kind: LocalKind | 'chatgpt', limit: Limit | null)}
-  {#if limitWords(kind, limit)}
-    <div class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
-      <span class="name hint">{limitWords(kind, limit)}</span>
-      <button class="nib-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}>
-        {t('Manage usage')}
-      </button>
-    </div>
-  {/if}
-{/snippet}
 
 <h3>{t('Providers')}</h3>
 
@@ -374,11 +212,14 @@
         </label>
       {/if}
 
-      {#if isLocal(provider.kind)}
-        {@render program(provider, provider.kind)}
+      <!-- A plan's rows, which only a desktop offers; the plugin leaves them out whole.
+           The two kinds by name rather than `isLocal`: a call in a condition makes it a
+           derived the build cannot see through, and PlanRows would ship after all. -->
+      {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex')}
+        <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
       {:else}
-        {#if provider.kind === 'chatgpt'}
-          {@render chatgpt(provider)}
+        {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
+          <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
         {:else}
           <!-- The key. Shown as set and never shown again: a field that hands a key back
                is a field that can copy one out of somebody else's window. -->
@@ -440,7 +281,7 @@
         <p class="hint bad">{trouble[provider.id]}</p>
       {/if}
     </div>
-    {#if provider.kind === 'chatgpt' && plans.chatgpt}
+    {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
       <!-- OpenAI's own words for it, beside the model it is spent on. -->
       <p class="hint caption">{t('Using ChatGPT plan')}</p>
     {/if}
@@ -566,13 +407,6 @@
     min-height: 30px;
     padding: 0 var(--space-2);
     font-size: var(--text-sm);
-  }
-
-  /* The ChatGPT mark beside its words, as OpenAI's own button has it. */
-  .continue {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
   }
 
   .hint {

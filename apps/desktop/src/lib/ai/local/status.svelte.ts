@@ -93,4 +93,6 @@ class Plans {
   }
 }
 
-export const plans = new Plans()
+// Pure: making it asks nothing yet. Said so the glasses' plugin, which asks no program,
+// can leave it out where nothing reads it.
+export const plans = /* @__PURE__ */ new Plans()

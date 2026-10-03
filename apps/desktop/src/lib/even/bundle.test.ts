@@ -67,6 +67,11 @@ beforeAll(() => {
       cwd: app,
       stdio: 'pipe',
       shell: process.platform === 'win32',
+      // A release builds with nothing set, which Vite takes as production. A test run
+      // has NODE_ENV=test, which this build would inherit and keep: every component
+      // compiled for development, with its file name and its checks in it, 120 KB a
+      // release never ships. That is what this file measured until 2026-10-03.
+      env: { ...process.env, NODE_ENV: 'production' },
     },
   )
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {
@@ -239,6 +244,36 @@ describe('the bundle a package is made of', () => {
     expect(surfaces).toEqual([])
   })
 
+  test('and none of what only a desktop does: its plans, its engine, its updater', () => {
+    // Each came in with a feature of the desktop's and had the plugin carry it: the
+    // Claude Code, Codex and ChatGPT plan rows in Settings > AI with the modules that
+    // ask the programs, the Engine row's Chromium fetch, and the updater that fetches
+    // it. 66,155 bytes between them, and with their words in 24 catalogues. Named by
+    // the crate commands they call, which no minifier renames.
+    const commands = [
+      'ai_cli_status',
+      'ai_cli_ask',
+      'chatgpt_sign_in',
+      'chatgpt_account',
+      'chatgpt_token',
+      'engine_state',
+      'engine_fetch',
+      'engine_choose',
+      'check_update',
+    ]
+    const here = commands.filter((name) =>
+      files.some((one) => one.name.endsWith('.js') && one.text.includes(name)),
+    )
+
+    expect(here).toEqual([])
+  })
+
+  test('is a production build, as a release is', () => {
+    // Svelte names each component's file in a development build; see the hook above.
+    const dev = files.filter((one) => one.text.includes('`src/App.svelte`'))
+    expect(dev.map((one) => one.name)).toEqual([])
+  })
+
   /** Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
    *  plugin right now."* It was not this - the shapes were in the package all along,
    *  and the cause was the storage the chosen name is read from; see
@@ -359,6 +394,12 @@ describe('the bundle a package is made of', () => {
     // door of a pane, so the ink engine, the plane's geometry and the pages engine
     // shipped in a package that opens none of them; they are behind `__EVEN_PLUGIN__`
     // now, like the PDF viewer, and asserted gone by the test above.
+    //
+    // **8,206,937 bytes** on 2026-10-03, and 181,671 under. Every number above was a
+    // development build: the hook inherited the test run's NODE_ENV, and the release
+    // never did. Measured the way a release builds, main at cd609ab6 was 8,273,092,
+    // where this test said 8,393,657 and failed. The other 66,155 are the desktop's
+    // plans, engine and updater, behind `__EVEN_PLUGIN__` and asserted gone above.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 

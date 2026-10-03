@@ -64,7 +64,9 @@ export interface Ask {
  *  said nothing useful. Aborting throws too, with the browser's own `AbortError`,
  *  which callers tell apart with `wasStopped`. */
 export async function complete(ask: Ask): Promise<string> {
-  if (isLocal(ask.provider.kind)) {
+  // The plugin offers no program and no plan (see `offeredKinds`), and leaves both
+  // roads out of its package.
+  if (!__EVEN_PLUGIN__ && isLocal(ask.provider.kind)) {
     const { askLocal } = await import('./local/ask')
     return await askLocal({ ...ask, provider: { ...ask.provider, kind: ask.provider.kind } })
   }
@@ -109,7 +111,7 @@ export async function complete(ask: Ask): Promise<string> {
 /** What a request is authorised with: the key on this device, or a plan's token of the
  *  hour, asked of the crate. */
 async function keyFor(provider: Provider): Promise<string> {
-  if (provider.kind !== 'chatgpt') return await readKey(provider)
+  if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return await readKey(provider)
   const { planToken } = await import('./chatgpt')
   return await planToken()
 }
@@ -137,7 +139,7 @@ async function refusal(response: Response, provider: Provider): Promise<string> 
 /** A ChatGPT plan's refusal in nib's words - its limit, a sign-in gone - or null for
  *  any other provider and any other refusal. */
 async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
-  if (provider.kind !== 'chatgpt') return null
+  if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return null
   const { planRefusal } = await import('./chatgpt')
   return planRefusal(status, body)
 }

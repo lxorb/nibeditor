@@ -58,7 +58,8 @@ function found(value: unknown): Found | null {
  *  handed the older release as an update. It stays on the build it has until a
  *  release passes it. */
 export async function stageUpdate(channel: Channel): Promise<string | null> {
-  if (!isDesktop || staged) return null
+  // The glasses' plugin is updated by the phone's app, and leaves this road out.
+  if (__EVEN_PLUGIN__ || !isDesktop || staged) return null
 
   try {
     const one = found(await invoke<unknown>('check_update', { channel }))
