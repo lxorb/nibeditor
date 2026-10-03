@@ -307,7 +307,7 @@ names the provider's own road.
 | --- | --- | --- | --- | --- | --- | --- |
 | `/model [name]` | `/models` | CC, Cx, Copilot `/models` | the model popover; a name sets it for this thread, **Alt+P** opens it | `/model <name>` into the session (works headless) | `model` on the next `turn/start` | `model` on the next request |
 | `/effort [level\|auto]` | `/reasoning`, `/think` | CC `/effort`; Cx sets it in `/model`; thinking toggles | Auto, Off, Minimal, Low, Medium, High, Extra, Max - only the levels the model has (5.1); **Alt+T** steps through them | `/effort <level>` into the session | `effort` on the next `turn/start` | Claude: `output_config.effort` (a per-message effort where the model has it, so the cache survives); OpenAI and ChatGPT: `reasoning.effort`; compatible: `reasoning_effort` where the model takes it |
-| `/fast [on\|off]` | - | CC, Cx | the provider's faster tier, where it has one | `/fast` into the session | service tier `fast` | Claude key: fast mode where the model lists it; OpenAI key: `service_tier: "priority"`; plan and compatible: dimmed |
+| `/fast [on\|off]` | - | CC, Cx | the provider's faster tier, where it has one | dimmed: Claude Code has no `/fast` headless (6.4) | service tier `fast` | Claude key: fast mode where the model lists it; OpenAI key: `service_tier: "priority"`; plan and compatible: dimmed |
 | `/output-style [style]` | `/personality`, `/style` | CC `/output-style`, Cx `/personality` | how answers read: Default, Concise, Explanatory, Teaching, plus any note with `output-style:` front matter | a fixed style line the crate appends (never text from the page) | `personality` where the model has it, else the same line | a system line |
 
 ### 3.3 Modes and long work
@@ -898,6 +898,60 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in
   the one the API loop uses (`nib-<provider id>`, with the same two choices from
   `lib/ai/chat/choices.ts`), and issues its token for `nib mcp`; lane 3's grant work
   applies to both roads unchanged.
+
+### 6.5 Where lane 5 meets the panel, the review and the sessions
+
+Written by lane 5 against lane 4's seam (`lib/ai/sidebar/seams.ts`); neither edits the
+other's files.
+
+- **The rows.** `commands(panel)` in `lib/ai/commands/index.ts` returns the menu: the 58 rows
+  of section 3 in its order, then the reader's own commands (4.7). The panel asks it **each
+  time the menu opens** rather than once, because note commands are found in the background
+  (a front-matter search of the space, kept until the link index changes) and arrive in the
+  next menu. A row is lane 1's `Command` plus `description` (a few words, translated, which
+  the menu also filters by) and `source` (`nib`, or the note's path).
+- **The context** a row runs with is `{ args, thread, panel, typed }`; `typed` is the name the
+  reader typed where it was a synonym, which `/approve` needs (it is a synonym of
+  `/permissions` that does something of its own).
+- **The panel.** Every `PanelActions` control, plus these, each optional: a command whose
+  half is missing does the most it can without it (`lib/ai/commands/types.ts`, `Panel`).
+  - `text`, read and written: `/help` puts `/` in the field, `/mention` and `/add-space` put
+    `@words` there with the `@` menu open on them.
+  - `provider`: the open thread's provider, or a new thread's.
+  - `ensure()`: the open thread, made first where none is: `/goal`, `/loop`, `/subtask`,
+    `/batch` and the reports need a thread to live in.
+  - `turn(thread, text, once?)`: sends in any thread, open or not, exactly as the field does
+    (queued behind a running turn, drawn as it runs, listed as running), and resolves once
+    that send is over with `{ stop, error?, turn, usage, limit? }`. `once` is `{ mode?, model?,
+    effort?, signal? }`, for that send only: a custom command's overrides, Agent mode for
+    `/init`, `/summarize` and `/review`, and the signal a goal, loop or helper is stopped by.
+    Without it lane 5 sends through `engineFor` itself and writes the thread down after.
+  - `adopt(thread, open?)`: a thread a command made (a fork, a subtask, a batch's helpers)
+    into the list. `touched(thread)`: a thread a command changed outside a send (its goal, a
+    line it added), to draw and write down.
+  - `approve(approval, allow)` and `voice(on?)`, for `/approve` and `/voice`.
+- **Its lines** are a notice of their own, code `command` (added to lane 1's `NoticeCode`),
+  in a model turn of their own: a goal that ended, a subtask's answer, `/status`, `/usage`,
+  `/doctor`, `/tasks`, a listing. `text` is already worded, a row a line (`word · value`),
+  never sent to the model. The panel draws it as it is.
+- **The goal chip** draws `thread.goal` (lane 1's `Goal`): ◎, minutes since `started`,
+  `turns` of `budget.turns`, `tokens`, `reason` on click; ✕ runs `/goal clear`. A thread's
+  background work (goal, loops, subtasks, batches, research, forks) is `tasks.of(thread.id)`
+  in `lib/ai/commands/tasks.svelte.ts`, for the running dot.
+- **What the model is told.** The panel's engine setup appends `instructionsFor(thread)`
+  (`lib/ai/commands/instructions.ts`) to the space's `AGENTS.md`: the agent profile chosen by
+  `/agents`, the style chosen by `/output-style`, and, in Agent mode while memory is on, that a
+  remembered fact is a line under `## Memory` in `AGENTS.md`. The thread keeps `agent`,
+  `style` and `helpers` beside lane 1's fields (the store keeps what it does not check).
+- **Lane 3.** `/rewind` and `/diff` run `rewind(context)` and `changes(context)` from
+  `lib/ai/review/commands.ts`, found by name like the panel finds lane 5, and are dimmed
+  ("Not here yet") until that file exists. A thread's review covers the threads in its
+  `helpers` too, so a `/batch` is one review.
+- **Lane 2.** `/goal` runs nib's evaluator on every provider today, Claude Code and Codex
+  included (6.4). When the local engine carries a `goal` of its own, the runner hands Claude
+  Code's `/goal` and Codex's `thread/goal/*` the condition and reads their state into the same
+  `Goal`. `/login` and `/logout` type the program's own `auth login` / `auth logout` (Codex
+  `login` / `logout`) into a terminal tab, through `lib/ai/local/signin.ts`.
 
 ---
 

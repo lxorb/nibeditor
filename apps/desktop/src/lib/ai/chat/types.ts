@@ -88,6 +88,9 @@ export type NoticeCode =
   | 'stopped'
   /** The server refused tools, so the thread answers without them. */
   | 'no_tools'
+  /** A command's own line (lane 5): a goal that ended, a subtask's answer, `/status`.
+   *  `text` is already worded, in the reader's language; never sent to the model. */
+  | 'command'
 
 /** One piece of a turn, in the order it arrived. */
 export type Part =

@@ -16,10 +16,14 @@ import { invoke, platform } from '../../tauri'
 import { waited } from '../../timing'
 import type { LocalKind } from '../providers'
 
-/** What each program's own login is, after its name. */
+/** What each program's own login and logout are, after its name. */
 const LOGIN: Record<LocalKind, string> = {
   'claude-code': 'auth login',
   codex: 'login',
+}
+const LOGOUT: Record<LocalKind, string> = {
+  'claude-code': 'auth logout',
+  codex: 'logout',
 }
 
 /** How long the shell has to start before the line is given up on. */
@@ -28,13 +32,22 @@ const STARTING = 20_000
 /** The line that runs a program's login, spelled for the shell it is typed into: the
  *  path in double quotes for Command Prompt, in single quotes for a POSIX shell (and
  *  fish, which reads them the same way). */
-export function loginLine(kind: LocalKind, program: string, windows: boolean): string {
+export function loginLine(kind: LocalKind, program: string, windows: boolean, out = false): string {
   const quoted = windows ? `"${program}"` : `'${program.replace(/'/g, `'\\''`)}'`
-  return `${quoted} ${LOGIN[kind]}`
+  return `${quoted} ${(out ? LOGOUT : LOGIN)[kind]}`
 }
 
 /** Opens a terminal running the program's login, and says whether the line was typed. */
 export async function signIn(kind: LocalKind, program: string): Promise<boolean> {
+  return await typeInTerminal(kind, program, false)
+}
+
+/** The same with the program's logout (`/logout`). */
+export async function signOut(kind: LocalKind, program: string): Promise<boolean> {
+  return await typeInTerminal(kind, program, true)
+}
+
+async function typeInTerminal(kind: LocalKind, program: string, out: boolean): Promise<boolean> {
   const [{ openTerminal }, { shells }, { ptyOf }, { workspace }] = await Promise.all([
     import('../../terminal/open'),
     import('../../terminal/shells.svelte'),
@@ -51,7 +64,7 @@ export async function signIn(kind: LocalKind, program: string): Promise<boolean>
   const tab = workspace.activeTabId
   if (!tab) return false
 
-  const line = `${loginLine(kind, program, windows)}\r`
+  const line = `${loginLine(kind, program, windows, out)}\r`
   const started = Date.now()
   while (Date.now() - started < STARTING) {
     const pty = ptyOf(tab)
