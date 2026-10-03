@@ -1,15 +1,18 @@
 /** One note read into rows: a row for the note, and a row for every task line in it.
  *
- *  Pure, and the only place a row is made, so a note read by the first scan of a space
- *  and the same note read again after a save come back as the same rows. The fields are
- *  read by the engine's own readers (`readTask`, `noteValues`, `taskHash` from
- *  `@nib/bases`), never here: the crate and the browser hand over raw lines (see
- *  scan-rows.ts and `scan_links` in links.rs), and this is where they meet the one
- *  parser there is. See docs/tasks.md 5.3. */
+ *  Pure, and the only place a row is made, so a note read by the first scan of a space,
+ *  the same note read again after a save, and the same note read by the account
+ *  connector on the Worker come back as the same rows. The fields are read by the
+ *  engine's own readers (`readTask`, `noteValues`, `taskHash`), never here: the
+ *  crate and the browser hand over raw lines (see scan.ts and `scan_links` in
+ *  links.rs), and this is where they meet the one parser there is. Its own entry,
+ *  `@nib/bases/rows`. See docs/tasks.md 5.3. */
 
-import { type FileInfo, noteValues, type Row, type TaskRow, taskHash, type Value } from '@nib/bases'
-import { readTask } from '@nib/markdown/task-line'
-import type { ScannedTask, Stamp } from '../scan-rows'
+import { findLinks } from '@nib/markdown/links'
+import { readTask, tagsIn } from '@nib/markdown/task-line'
+import { noteValues, taskHash } from './note-values'
+import { type ScannedTask, scanRows, type Stamp } from './scan'
+import type { FileInfo, Row, TaskRow, Value } from './types'
 
 /** What a row has none of, shared by every row that has none. Frozen, so a row that
  *  is given one is given a new list rather than writing into everybody's. */
@@ -17,7 +20,7 @@ const NONE: never[] = []
 Object.freeze(NONE)
 const NO_FIELDS: Record<string, string> = Object.freeze({})
 
-/** What a note gives its rows: the scan's fields (scan-note.ts, scan-rows.ts). */
+/** What a note gives its rows: the scan's fields (the app's scan-note.ts, scan.ts). */
 export interface NoteRead {
   /** Relative to the space, `/` between folders. */
   path: string
@@ -75,6 +78,16 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
   }
 
   return rows
+}
+
+/** A note's rows from its words alone, where no scan has read it: the account
+ *  connector's notes, read off storage. Its tags are the ones its lines carry and its
+ *  links every link written, folded the way the link index folds them. */
+export function rowsOfText(space: string, path: string, text: string, stamp: Stamp | null = null): Row[] {
+  const scanned = scanRows(text)
+  const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
+  const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
+  return rowsOf(space, { path, front: scanned.front, tasks: scanned.tasks, stamp, tags, links })
 }
 
 /** Bases' `file.*` for one note. */

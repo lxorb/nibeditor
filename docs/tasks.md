@@ -554,8 +554,8 @@ added to the scan, under 4 MB of rows, under 2 ms to update one note's rows afte
 null), `tasks` (`{ line, indent, mark, text, section }`, `text` being everything after
 the box, outside code and front matter, at most 5,000 a note and 2,000 characters a line)
 and `stamp` (`{ size, mtime, ctime }` in milliseconds, off the handle the note was read
-through); `scan-rows.ts` is the browser's twin, and its tests are the crate's cases. The
-rows store is `lib/rows/`: `build.ts` makes a note's rows (`readTask`, `noteValues`,
+through); `@nib/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
+rows store is `lib/rows/`: `@nib/bases/rows` makes a note's rows (`readTask`, `noteValues`,
 `taskHash`; `parent` is the nearest less indented task above under the same heading),
 `store.ts` keeps them per space and file, `write.ts` is the one write path and `inbox.ts`
 the inbox. `rows.svelte.ts` is the app's instance, fetched at the launch order's last turn:

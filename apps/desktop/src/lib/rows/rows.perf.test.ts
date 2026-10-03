@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import * as taskLine from '@nib/markdown/task-line'
 import { scanNote, type ScannedNote } from '../scan-note'
-import { scanRows } from '../scan-rows'
+import { scanRows } from '@nib/bases/scan'
 import { type Host, RowsStore } from './store'
 
 /** What the rows of a big space cost: 5,000 notes and 10,000 tasks (docs/tasks.md 5.3).

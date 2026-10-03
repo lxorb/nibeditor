@@ -6,6 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./rows": "./src/note-rows.ts",
+    "./scan": "./src/scan.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

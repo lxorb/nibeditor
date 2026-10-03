@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Row } from '@nib/bases'
 import { readTask } from '@nib/markdown/task-line'
-import { rowsOf } from './build'
+import { rowsOf } from '@nib/bases/rows'
 import { scanNote } from '../scan-note'
-import { scanRows } from '../scan-rows'
+import { scanRows } from '@nib/bases/scan'
 
 /** The one write path: a property of a note and a field of a task, as edits of the
  *  note's words, written the way every write across a space is. */
