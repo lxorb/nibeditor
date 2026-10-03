@@ -21,24 +21,30 @@
 //! console's domain (`Runtime`) is enabled only once an agent asks for the console,
 //! because a page can tell that one is on.
 
+#[cfg(all(windows, not(feature = "cef")))]
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet, VecDeque};
+#[cfg(all(windows, not(feature = "cef")))]
 use std::rc::Rc;
-use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::{sync_channel, Receiver, RecvTimeoutError};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
+#[cfg(all(windows, not(feature = "cef")))]
 use tauri::webview::PlatformWebview;
-use tauri::Webview;
+#[cfg(all(windows, not(feature = "cef")))]
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2, ICoreWebView2DevToolsProtocolEventReceivedEventArgs2, ICoreWebView2_11,
 };
+#[cfg(all(windows, not(feature = "cef")))]
 use webview2_com::{
     CallDevToolsProtocolMethodCompletedHandler, DevToolsProtocolEventReceivedEventHandler,
 };
+#[cfg(all(windows, not(feature = "cef")))]
 use windows_core::{Interface as _, HSTRING, PWSTR};
 
+use super::engines::View;
 use super::verbs::{ConsoleLine, Request};
 
 /// How long one call may take before the caller is told the page did not answer.
@@ -54,66 +60,42 @@ const AWAKE: Duration = Duration::from_secs(60);
 const LONGEST_LINE: usize = 4_000;
 
 /// One call on a page's own session.
-pub fn call(view: &Webview, method: &str, params: &Value) -> Result<Value, String> {
+pub fn call(view: &View, method: &str, params: &Value) -> Result<Value, String> {
     call_in(view, None, method, params, PATIENCE)
 }
 
 /// One call, on a frame's session when one is named, waiting at most `patience`.
 pub fn call_in(
-    view: &Webview,
+    view: &View,
     session: Option<&str>,
     method: &str,
     params: &Value,
     patience: Duration,
 ) -> Result<Value, String> {
-    let (answered, answer) = sync_channel::<Result<String, String>>(1);
-    let asking = (
-        method.to_string(),
-        params.to_string(),
-        session.map(str::to_string),
-    );
-    view.with_webview(move |platform| {
-        let (method, params, session) = asking;
-        send(&platform, session.as_deref(), &method, &params, answered);
-    })
-    .map_err(|error| format!("the page could not be reached: {error}"))?;
-
-    let text = answer
+    asked(view, session, method, params)?
         .recv_timeout(patience)
-        .map_err(|_| format!("{method}: the page did not answer"))??;
-    parsed(method, &text)
+        .map_err(|_| format!("{method}: the page did not answer"))?
 }
 
 /// One call that stops waiting as soon as `give_up` says so: `None` then, the call still
 /// made. For a page that may raise a dialog as it is pressed - the press's own answer only
 /// comes once the dialog is answered, and the dialog is waiting on the agent.
 pub fn call_until(
-    view: &Webview,
+    view: &View,
     session: Option<&str>,
     method: &str,
     params: &Value,
     give_up: impl Fn() -> bool,
 ) -> Result<Option<Value>, String> {
-    let (answered, answer) = sync_channel::<Result<String, String>>(1);
-    let asking = (
-        method.to_string(),
-        params.to_string(),
-        session.map(str::to_string),
-    );
-    view.with_webview(move |platform| {
-        let (method, params, session) = asking;
-        send(&platform, session.as_deref(), &method, &params, answered);
-    })
-    .map_err(|error| format!("the page could not be reached: {error}"))?;
-
+    let answer = asked(view, session, method, params)?;
     let started = Instant::now();
     loop {
         match answer.recv_timeout(Duration::from_millis(25)) {
-            Ok(text) => return parsed(method, &text?).map(Some),
-            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
+            Ok(said) => return said.map(Some),
+            Err(RecvTimeoutError::Disconnected) => {
                 return Err(format!("{method}: the page did not answer"));
             }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+            Err(RecvTimeoutError::Timeout) => {
                 if give_up() {
                     return Ok(None);
                 }
@@ -125,8 +107,64 @@ pub fn call_until(
     }
 }
 
+/// Where a call's answer arrives.
+pub type Answering = Receiver<Result<Value, String>>;
+
+/// Sends one call to the page's engine, from any thread but the window's, and answers
+/// where its answer will arrive.
+fn asked(
+    view: &View,
+    session: Option<&str>,
+    method: &str,
+    params: &Value,
+) -> Result<Answering, String> {
+    match view {
+        #[cfg(all(windows, not(feature = "cef")))]
+        View::Webview(view) => {
+            let (answered, answer) = sync_channel(1);
+            let asking = (
+                method.to_string(),
+                params.to_string(),
+                session.map(str::to_string),
+            );
+            view.with_webview(move |platform| {
+                let (method, params, session) = asking;
+                send(&platform, session.as_deref(), &method, &params, answered);
+            })
+            .map_err(|error| format!("the page could not be reached: {error}"))?;
+            Ok(answer)
+        }
+        // A reader's page on nib's own Chromium: the runtime's own door, which waits on
+        // the caller's thread, so a thread of its own waits here and a caller can give up.
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            let (answered, answer) = sync_channel(1);
+            let (view, session, method, params) = (
+                view.clone(),
+                session.map(str::to_string),
+                method.to_string(),
+                params.clone(),
+            );
+            std::thread::spawn(move || {
+                let said = crate::engine::devtools::call(
+                    &view,
+                    session.as_deref(),
+                    &method,
+                    &params,
+                    PATIENCE,
+                );
+                let _ = answered.try_send(said);
+            });
+            Ok(answer)
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.ask(session, method, params),
+    }
+}
+
 /// Sends one call to the engine, on the window's thread, and the answer to `answered`
 /// whenever it comes.
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
@@ -136,12 +174,13 @@ fn send(
     session: Option<&str>,
     method: &str,
     params: &str,
-    answered: std::sync::mpsc::SyncSender<Result<String, String>>,
+    answered: std::sync::mpsc::SyncSender<Result<Value, String>>,
 ) {
     let late = answered.clone();
+    let named = method.to_string();
     let done = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, json| {
         let _ = late.try_send(match result {
-            Ok(()) => Ok(json),
+            Ok(()) => parsed(&named, &json),
             Err(error) => Err(refusal(&json).unwrap_or_else(|| error.message())),
         });
         Ok(())
@@ -170,9 +209,61 @@ fn send(
     }
 }
 
+/// One call nobody waits for, from any thread: for what a page is told and never answers
+/// back about, a screencast's frame acknowledged.
+pub fn tell(view: &View, method: &'static str, params: &Value) {
+    match view {
+        #[cfg(all(windows, not(feature = "cef")))]
+        View::Webview(view) => {
+            let params = params.clone();
+            let _ = view.with_webview(move |platform| {
+                if let Some(core) = core_of(&platform) {
+                    post(&core, method, &params);
+                }
+            });
+        }
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            crate::engine::devtools::tell(view, None, vec![(method, params.clone())]);
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.tell(method, params),
+    }
+}
+
+/// Hears one of the protocol's events on a page from now on, from any thread: its
+/// parameters, for as long as the page is open.
+pub fn listen(view: &View, event: &'static str, on: impl Fn(Value) + Send + Sync + 'static) {
+    match view {
+        #[cfg(all(windows, not(feature = "cef")))]
+        View::Webview(view) => {
+            let _ = view.with_webview(move |platform| {
+                if let Some(core) = core_of(&platform) {
+                    hear(&core, event, move |_, value| on(value));
+                }
+            });
+        }
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            let _ = crate::engine::devtools::hear(view, move |method, session, params| {
+                if method == event && session.is_none() {
+                    on(params.clone());
+                }
+            });
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.hear(move |method, session, params| {
+            if method == event && session.is_none() {
+                on(params.clone());
+            }
+        }),
+    }
+}
+
 /// One call nobody waits for, on the window's thread: its answer, whatever it is, is
 /// dropped. For what a page is set up with before it loads, where waiting would be
 /// waiting inside the event loop's own turn.
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
     ask(core, method, params, |_| ());
 }
@@ -181,6 +272,7 @@ pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
 /// whenever the engine gives it - or at once, with the reason, where the call could not
 /// be made at all. For work that already runs on the window's thread: `call` would wait
 /// there for an answer that only that same thread can deliver.
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
@@ -223,6 +315,7 @@ pub fn ask(
 }
 
 /// An answer's text as the value it spells: no text at all is `null`.
+#[cfg(all(windows, not(feature = "cef")))]
 fn parsed(method: &str, text: &str) -> Result<Value, String> {
     if text.is_empty() {
         return Ok(Value::Null);
@@ -231,6 +324,7 @@ fn parsed(method: &str, text: &str) -> Result<Value, String> {
 }
 
 /// The sentence in the protocol's own refusal, `{"code": -32000, "message": "..."}`.
+#[cfg(all(windows, not(feature = "cef")))]
 fn refusal(json: &str) -> Option<String> {
     let said: Value = serde_json::from_str(json).ok()?;
     said.get("message")?.as_str().map(str::to_string)
@@ -238,6 +332,7 @@ fn refusal(json: &str) -> Option<String> {
 
 /// Starts hearing one of the protocol's events on a page, on the window's thread. `on`
 /// is handed the frame's session (empty for the page's own) and the event's parameters.
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol's events are WebView2's own, reached through its COM interfaces"
@@ -558,8 +653,26 @@ pub fn labels() -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// The events a page is followed for: what `heard_event` keeps.
+const EVENTS: [&str; 13] = [
+    "Network.requestWillBeSent",
+    "Network.responseReceived",
+    "Network.loadingFinished",
+    "Network.loadingFailed",
+    "Runtime.consoleAPICalled",
+    "Runtime.exceptionThrown",
+    "Log.entryAdded",
+    "Page.fileChooserOpened",
+    "Target.attachedToTarget",
+    "Page.frameStartedNavigating",
+    "Page.loadEventFired",
+    "Input.dragIntercepted",
+    "Target.detachedFromTarget",
+];
+
 /// Starts following what a page says, on the window's thread. Once per webview: the
 /// engine's receivers live as long as it does.
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn follow(core: &ICoreWebView2, label: &str) {
     let page = heard(label);
     if std::mem::replace(
@@ -568,97 +681,135 @@ pub fn follow(core: &ICoreWebView2, label: &str) {
     ) {
         return;
     }
-    let on = |event: &str, run: fn(&mut Heard, &str, Value)| {
+    for event in EVENTS {
         let page = Arc::clone(&page);
         hear(core, event, move |session, value| {
             let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
-            run(&mut held, session, value);
+            heard_event(&mut held, event, session, value);
         });
-    };
-    on("Network.requestWillBeSent", |held, session, event| {
-        held.request_started(session, &event);
-    });
-    on("Network.responseReceived", |held, session, event| {
-        held.responded(session, &event);
-    });
-    on("Network.loadingFinished", |held, session, event| {
-        held.request_ended(session, &event, None);
-    });
-    on("Network.loadingFailed", |held, session, event| {
-        let why = text_at(&event, "errorText");
-        held.request_ended(session, &event, Some(why));
-    });
-    on("Runtime.consoleAPICalled", |held, _, event| {
-        let level = match event.get("type").and_then(Value::as_str) {
-            Some("error" | "assert") => "error",
-            Some("warning") => "warning",
-            Some("info") => "info",
-            Some("debug") => "debug",
-            _ => "log",
-        };
-        held.line(level, spoken(&event), frame_source(&event));
-    });
-    on("Runtime.exceptionThrown", |held, _, event| {
-        let details = event.get("exceptionDetails").cloned().unwrap_or_default();
-        let text = details
-            .pointer("/exception/description")
-            .and_then(Value::as_str)
-            .map_or_else(|| text_at(&details, "text"), str::to_string);
-        let source = Some(format!(
-            "{}:{}",
-            text_at(&details, "url"),
-            details
-                .get("lineNumber")
-                .and_then(Value::as_u64)
-                .unwrap_or_default()
-                + 1
-        ));
-        held.line("error", text, source);
-    });
-    on("Log.entryAdded", |held, _, event| {
-        let entry = event.get("entry").cloned().unwrap_or_default();
-        let level = match entry.get("level").and_then(Value::as_str) {
-            Some("error") => "error",
-            Some("warning") => "warning",
-            Some("verbose") => "debug",
-            _ => "info",
-        };
-        let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
-        held.line(level, text_at(&entry, "text"), source);
-    });
-    on("Page.fileChooserOpened", |held, _, event| {
-        held.chooser = event.get("backendNodeId").and_then(Value::as_u64);
-    });
-    on("Target.attachedToTarget", |held, _, event| {
-        held.attached(&event);
-    });
-    on("Page.frameStartedNavigating", |held, session, event| {
-        let main = held.main_frame.as_deref();
-        let ours = session.is_empty()
-            && main.is_none_or(|main| event.get("frameId").and_then(Value::as_str) == Some(main));
-        let same = matches!(
-            event.get("navigationType").and_then(Value::as_str),
-            Some("sameDocument" | "historySameDocument")
-        );
-        if ours && !same {
-            held.navigations += 1;
-            // What the page before this one had in flight is not this page's to wait for:
-            // a request that became a download never finishes as a request at all.
-            held.in_flight.clear();
-            held.network_moved = Some(Instant::now());
+    }
+}
+
+/// Starts following what a page says, from any thread, on whichever engine it is. Once
+/// per page.
+pub fn follow_view(view: &View, label: &str) {
+    #[cfg(all(windows, not(feature = "cef")))]
+    {
+        let View::Webview(webview) = view;
+        let named = label.to_string();
+        let _ = webview.with_webview(move |platform| {
+            if let Some(core) = core_of(&platform) {
+                follow(&core, &named);
+            }
+        });
+    }
+    #[cfg(feature = "cef")]
+    {
+        let page = heard(label);
+        if std::mem::replace(
+            &mut page.lock().unwrap_or_else(PoisonError::into_inner).followed,
+            true,
+        ) {
+            return;
         }
-    });
-    on("Page.loadEventFired", |held, session, _| {
-        if session.is_empty() {
-            held.loads += 1;
+        let hearing = move |method: &str, session: Option<&str>, params: &Value| {
+            if EVENTS.contains(&method) {
+                let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+                heard_event(
+                    &mut held,
+                    method,
+                    session.unwrap_or_default(),
+                    params.clone(),
+                );
+            }
+        };
+        match view {
+            View::Webview(webview) => {
+                let _ = crate::engine::devtools::hear(webview, hearing);
+            }
+            View::Windowless(windowless) => windowless.hear(hearing),
         }
-    });
-    on("Input.dragIntercepted", |held, _, event| {
-        held.dragged = event.get("data").cloned();
-    });
-    on("Target.detachedFromTarget", |held, _, event| {
-        held.detached(&event);
-    });
+    }
+}
+
+/// One event a page said, kept: `session` is a frame's own, empty for the page's.
+fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
+    match method {
+        "Network.requestWillBeSent" => held.request_started(session, &event),
+        "Network.responseReceived" => held.responded(session, &event),
+        "Network.loadingFinished" => held.request_ended(session, &event, None),
+        "Network.loadingFailed" => {
+            let why = text_at(&event, "errorText");
+            held.request_ended(session, &event, Some(why));
+        }
+        "Runtime.consoleAPICalled" => {
+            let level = match event.get("type").and_then(Value::as_str) {
+                Some("error" | "assert") => "error",
+                Some("warning") => "warning",
+                Some("info") => "info",
+                Some("debug") => "debug",
+                _ => "log",
+            };
+            held.line(level, spoken(&event), frame_source(&event));
+        }
+        "Runtime.exceptionThrown" => {
+            let details = event.get("exceptionDetails").cloned().unwrap_or_default();
+            let text = details
+                .pointer("/exception/description")
+                .and_then(Value::as_str)
+                .map_or_else(|| text_at(&details, "text"), str::to_string);
+            let source = Some(format!(
+                "{}:{}",
+                text_at(&details, "url"),
+                details
+                    .get("lineNumber")
+                    .and_then(Value::as_u64)
+                    .unwrap_or_default()
+                    + 1
+            ));
+            held.line("error", text, source);
+        }
+        "Log.entryAdded" => {
+            let entry = event.get("entry").cloned().unwrap_or_default();
+            let level = match entry.get("level").and_then(Value::as_str) {
+                Some("error") => "error",
+                Some("warning") => "warning",
+                Some("verbose") => "debug",
+                _ => "info",
+            };
+            let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
+            held.line(level, text_at(&entry, "text"), source);
+        }
+        "Page.fileChooserOpened" => {
+            held.chooser = event.get("backendNodeId").and_then(Value::as_u64);
+        }
+        "Target.attachedToTarget" => held.attached(&event),
+        "Target.detachedFromTarget" => held.detached(&event),
+        "Page.frameStartedNavigating" => {
+            let main = held.main_frame.as_deref();
+            let ours = session.is_empty()
+                && main
+                    .is_none_or(|main| event.get("frameId").and_then(Value::as_str) == Some(main));
+            let same = matches!(
+                event.get("navigationType").and_then(Value::as_str),
+                Some("sameDocument" | "historySameDocument")
+            );
+            if ours && !same {
+                held.navigations += 1;
+                // What the page before this one had in flight is not this page's to wait
+                // for: a request that became a download never finishes as a request at all.
+                held.in_flight.clear();
+                held.network_moved = Some(Instant::now());
+            }
+        }
+        "Page.loadEventFired" => {
+            if session.is_empty() {
+                held.loads += 1;
+            }
+        }
+        "Input.dragIntercepted" => held.dragged = event.get("data").cloned(),
+        _ => {}
+    }
 }
 
 /// What a console call printed: each argument as the console would show it.
@@ -713,7 +864,7 @@ pub fn cut(text: String, most: usize) -> String {
 /// Wakes a page's domains for an agent's call, and notes the call: the network log, the
 /// DOM agent, the page's events, and the frames in processes of their own. Frames each
 /// get their network log too, which is what makes `browser_network` whole.
-pub fn awake(view: &Webview, label: &str, own: bool) {
+pub fn awake(view: &View, label: &str, own: bool) {
     let page = heard(label);
     let asleep = {
         let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
@@ -723,21 +874,9 @@ pub fn awake(view: &Webview, label: &str, own: bool) {
     if !asleep {
         return;
     }
-    if !page.lock().unwrap_or_else(PoisonError::into_inner).followed {
-        // A reader's page is followed from the first agent call on it; an agent's own from
-        // before it loads.
-        let following = Arc::clone(&page);
-        let named = label.to_string();
-        let _ = view.with_webview(move |platform| {
-            if let Some(core) = core_of(&platform) {
-                follow(&core, &named);
-            }
-            following
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .followed = true;
-        });
-    }
+    // A reader's page is followed from the first agent call on it; an agent's own from
+    // before it loads.
+    follow_view(view, label);
     for method in ["Page.enable", "DOM.enable", "Network.enable", "Log.enable"] {
         let _ = call(view, method, &json!({}));
     }
@@ -765,7 +904,7 @@ pub fn awake(view: &Webview, label: &str, own: bool) {
 /// Attaches to a reader's page's frames that run in processes of their own, with
 /// sessions of this crate's own: the page's own following of its frames (`web_worlds`)
 /// is left as it is.
-fn attach_existing(view: &Webview) {
+fn attach_existing(view: &View) {
     let Ok(tree) = call(view, "Page.getFrameTree", &json!({})) else {
         return;
     };
@@ -807,7 +946,7 @@ fn attach_existing(view: &Webview) {
 
 /// Turns the console's domain on for a page, once: a page can tell it is on, so it is
 /// on only for an agent that asked for the console.
-pub fn listen_to_console(view: &Webview, label: &str) {
+pub fn listen_to_console(view: &View, label: &str) {
     let page = heard(label);
     let first = !std::mem::replace(
         &mut page
@@ -831,7 +970,6 @@ pub fn listen_to_console(view: &Webview, label: &str) {
 /// Puts to sleep every page nobody has called on for a minute. Called on the agents'
 /// own timer; see `super::tabs`.
 pub fn sleep_idle(app: &tauri::AppHandle) {
-    use tauri::Manager as _;
     for label in labels() {
         let page = heard(&label);
         let sleepy = {
@@ -846,7 +984,7 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
         if !sleepy {
             continue;
         }
-        let Some(view) = app.get_webview(&label) else {
+        let Some(view) = super::engines::view(app, &label) else {
             forget(&label);
             continue;
         };
@@ -863,6 +1001,7 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
 }
 
 /// The platform webview's engine, on the window's thread.
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the engine is reached through WebView2's COM interfaces"

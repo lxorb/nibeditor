@@ -135,6 +135,11 @@ getrandom = "0.3"
 # app installs its own updates, and files are chosen and saved in a dialog. A
 # phone has none of the three.
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+# An agent's picture of a page with every filled secret field painted over, so a
+# password's bullets and a card's digits never reach it; see agents/page.rs. Every
+# desktop, since nib's own Chromium drives a page on each. Already in the lock file, at
+# this version, as what the menu and tray icons are read with.
+png = "0.18"
 # The engine's developer tools, for a web tab's page in the build that ships: F12,
 # Ctrl+Shift+I and the page menu's Inspect, as in a browser. A desktop's only, so a
 # phone's webview is never debuggable from outside, and nib's own window turns them
@@ -396,10 +401,6 @@ windows = { version = "0.58", features = [
   # than the page hidden for them; see web_cut.rs.
   "Win32_Graphics_Gdi",
 ] }
-# An agent's picture of a page with every filled secret field painted over, so a
-# password's bullets and a card's digits never reach it; see agents/page.rs. Already
-# in the lock file, at this version, as what the menu and tray icons are read with.
-png = "0.18"
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
 # against, so the handles it hands out line up.

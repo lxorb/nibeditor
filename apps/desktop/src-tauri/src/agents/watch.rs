@@ -28,8 +28,11 @@ use tauri::AppHandle;
 
 /// The event the pictures go out on.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has agent tabs to picture")
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 pub const FRAME_EVENT: &str = "nib://agent-frame";
 
@@ -39,8 +42,11 @@ static WATCHED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
 /// One picture of a tab.
 #[derive(Clone, Serialize)]
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has agent tabs to picture")
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 struct Frame {
     /// The agent tab's id.
@@ -54,8 +60,11 @@ fn watched() -> std::sync::MutexGuard<'static, Option<HashSet<String>>> {
 }
 
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only WebView2 has agent tabs to picture")
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "only an engine with agent tabs has them to picture"
+    )
 )]
 fn is_watched(tab: &str) -> bool {
     watched().as_ref().is_some_and(|all| all.contains(tab))
@@ -83,19 +92,19 @@ pub fn agents_watch(
 
 /// A page that went - parked, or closed - is a page whose frames nobody hears any more:
 /// the next one built under its label is heard afresh.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 pub fn forget(label: &str) {
     engine::forget(label);
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(any(windows, feature = "cef"))]
 mod engine {
     use std::collections::{HashMap, HashSet};
     use std::sync::{Mutex, PoisonError};
     use std::time::{Duration, Instant};
 
     use serde_json::{json, Value};
-    use tauri::{AppHandle, Emitter as _, Manager as _};
+    use tauri::{AppHandle, Emitter as _};
 
     use super::{is_watched, Frame, FRAME_EVENT};
     use crate::agents::cdp;
@@ -116,7 +125,7 @@ mod engine {
     /// Pictures of one tab, from now on.
     pub fn start(app: &AppHandle, tab: &str) {
         let label = label(tab);
-        let Some(view) = app.get_webview(&label) else {
+        let Some(view) = crate::agents::engines::view(app, &label) else {
             // Parked: no page, so no pictures until the agent brings it back.
             return;
         };
@@ -125,24 +134,18 @@ mod engine {
             .unwrap_or_else(PoisonError::into_inner)
             .get_or_insert_with(HashSet::new)
             .insert(label.clone());
-        let (app, tab) = (app.clone(), tab.to_string());
-        let _ = view.with_webview(move |platform| {
-            let Some(core) = cdp::core_of(&platform) else {
-                return;
-            };
-            if first {
-                let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
-                cdp::hear(&core, "Page.screencastFrame", move |_, frame| {
-                    framed(&app, &tab, &label, &frame);
-                });
-            }
-            cdp::post(&core, "Page.enable", &json!({}));
-            cdp::post(
-                &core,
-                "Page.startScreencast",
-                &json!({ "format": "jpeg", "quality": 60, "maxWidth": 480, "maxHeight": 300 }),
-            );
-        });
+        if first {
+            let (app, tab, label) = (app.clone(), tab.to_string(), label.clone());
+            cdp::listen(&view, "Page.screencastFrame", move |frame| {
+                framed(&app, &tab, &label, &frame);
+            });
+        }
+        cdp::tell(&view, "Page.enable", &json!({}));
+        cdp::tell(
+            &view,
+            "Page.startScreencast",
+            &json!({ "format": "jpeg", "quality": 60, "maxWidth": 480, "maxHeight": 300 }),
+        );
     }
 
     /// Forgets that a page's frames are heard.
@@ -158,12 +161,8 @@ mod engine {
 
     /// No more pictures of one tab.
     pub fn stop(app: &AppHandle, tab: &str) {
-        if let Some(view) = app.get_webview(&label(tab)) {
-            let _ = view.with_webview(|platform| {
-                if let Some(core) = cdp::core_of(&platform) {
-                    cdp::post(&core, "Page.stopScreencast", &json!({}));
-                }
-            });
+        if let Some(view) = crate::agents::engines::view(app, &label(tab)) {
+            cdp::tell(&view, "Page.stopScreencast", &json!({}));
         }
     }
 
@@ -200,23 +199,19 @@ mod engine {
         let (app, label) = (app.clone(), label.to_string());
         std::thread::spawn(move || {
             std::thread::sleep(BETWEEN);
-            if let Some(view) = app.get_webview(&label) {
-                let _ = view.with_webview(move |platform| {
-                    if let Some(core) = cdp::core_of(&platform) {
-                        cdp::post(
-                            &core,
-                            "Page.screencastFrameAck",
-                            &json!({ "sessionId": session }),
-                        );
-                    }
-                });
+            if let Some(view) = crate::agents::engines::view(&app, &label) {
+                cdp::tell(
+                    &view,
+                    "Page.screencastFrameAck",
+                    &json!({ "sessionId": session }),
+                );
             }
         });
     }
 }
 
-/// Every other engine has no agent tabs yet (section 12), and so nothing to picture.
-#[cfg(not(all(windows, not(feature = "cef"))))]
+/// Every other engine has no agent tabs (section 12), and so nothing to picture.
+#[cfg(not(any(windows, feature = "cef")))]
 mod engine {
     use tauri::AppHandle;
 

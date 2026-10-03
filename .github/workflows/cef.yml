@@ -160,6 +160,15 @@ jobs:
             --tabs "$NIB_CEF_TABS" \
             --out gate-out
 
+      # An agent's own tab, the browser with no window (docs/agent-native.md 12), driven
+      # over the endpoint: built, its rates, a picture, a press and a key.
+      - name: An agent's tab
+        if: always()
+        run: |
+          suffix=''
+          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
+          python scripts/agent-engines-runner.py             --binary "apps/desktop/src-tauri/cef/target/release/nib-chromium$suffix"             --engine "$CEF_PATH"             --out gate-out/agent-tab.json
+
       - name: The gate table
         if: always()
         run: |
@@ -169,6 +178,10 @@ jobs:
             cat chromium-out/chromium-*.json 2>/dev/null || true
             echo
             cat gate-out/gate.md 2>/dev/null || echo 'the gate wrote no table'
+            echo
+            echo '```json'
+            cat gate-out/agent-tab.json 2>/dev/null || echo 'no agent tab measured'
+            echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
