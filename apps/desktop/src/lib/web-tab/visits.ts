@@ -12,16 +12,17 @@
  *  visit does to the list; the store that keeps them is visited.ts, and what is made
  *  of them for somebody typing is omnibox.ts.
  *
- *  Bounded, the way everything this device keeps is bounded: the five hundred most
- *  recently open, and the rest forgotten oldest first. That is more sites than anybody
- *  goes back to, and small enough that reading every row on every keystroke costs
- *  nothing anybody could measure. */
+ *  Bounded, the way everything this device keeps is bounded: the two thousand most
+ *  recently open, and the rest forgotten oldest first. That is weeks of reading for the
+ *  History page (WebHistory.svelte), more sites than anybody goes back to, and small
+ *  enough that reading every row on every keystroke costs about a millisecond; see
+ *  omnibox.perf.test.ts. */
 
 import { isNumber, isRecord, isString } from '../stored'
 import { isWebAddress } from './address'
 
 /** How many addresses are kept. */
-export const MOST_VISITS = 500
+export const MOST_VISITS = 2000
 
 /** An address longer than this is a page's state rather than a place - a search with
  *  a query string the length of a paragraph - and nobody types their way back to it. */
@@ -141,4 +142,10 @@ export function typedTo(list: readonly Visit[], url: string, now: number): reado
 export function unvisited(list: readonly Visit[], url: string): readonly Visit[] {
   const key = visitKey(url)
   return list.filter((one) => one.url !== key)
+}
+
+/** The list without the pages last open at or after `since`: Delete browsing data over a
+ *  time range, which Chrome measures by when a page was visited. All time is `since` 0. */
+export function unvisitedSince(list: readonly Visit[], since: number): readonly Visit[] {
+  return since <= 0 ? [] : list.filter((one) => one.last < since)
 }

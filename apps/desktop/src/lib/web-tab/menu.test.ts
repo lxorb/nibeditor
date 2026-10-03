@@ -25,6 +25,9 @@ function page(url: string | null) {
 
 const actions = {
   newTab: () => undefined,
+  newPrivate: () => undefined,
+  history: () => undefined,
+  clearData: () => undefined,
   bookmarks: () => undefined,
   zoom: () => undefined,
   fullScreen: () => undefined,
@@ -43,7 +46,10 @@ function labels(url: string | null, zoom = 1): string[] {
 test('is Chromes own menu, in Chromes own order', () => {
   expect(labels('https://a.example/')).toEqual([
     'New tab',
+    'New private tab',
+    'History',
     'Bookmarks',
+    'Delete browsing data…',
     'Zoom out',
     '100%',
     'Zoom in',
@@ -121,4 +127,15 @@ test('stops at a dozen rows however long the reading was', () => {
   const back = trailSteps(urls, 39, false)
   expect(back).toHaveLength(12)
   expect(back[11]).toEqual({ url: '27', by: 12 })
+})
+
+/** nib's own History page is no site: the rows about a site are there and greyed. */
+test('on the History page nothing about a site is offered', () => {
+  const rows = webRows(page('nib://history'), 1, actions).flatMap((one) =>
+    one === null ? [] : [one],
+  )
+  const named = (label: string) => rows.find((one) => one.label === label)
+  expect(named('Print…')?.disabled).toBe(true)
+  expect(named('Save page')?.disabled).toBe(true)
+  expect(named('History')?.disabled).toBeFalsy()
 })

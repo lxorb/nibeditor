@@ -24,7 +24,7 @@
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { dur } from '../motion'
-  import { tabAsk } from '../new-tab'
+  import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
@@ -41,7 +41,7 @@
   import { filling } from './filling.svelte'
   import { ALL, cutOf, layersOver, moving, strangerOver, type Cut } from './covers'
   import { ALLOW, SANDBOX } from './frame'
-  import { keepPage } from './keep'
+  import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { shownAddress } from './omnibox'
@@ -53,6 +53,9 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
+  import { searchEngine } from './search-engine.svelte'
+  import { HISTORY_MARK, isOwnPage } from './own-pages'
+  import { clearingAsked } from './clearing-asked.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
@@ -198,6 +201,30 @@
    *  while nothing is over it; see `look`. */
   let leaving = 0
 
+  /** A change of size is answered in the frame it is laid out in rather than the one
+   *  after: the observer runs between the layout and the paint, so the hole is measured
+   *  for free and the page is told while the window is still drawing that frame. A
+   *  sidebar sliding open is a change of size on every frame of it, and a page a frame
+   *  behind each of them is a page that moves in steps. See latest.ts for the order. */
+  const watching =
+    typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => {
+          if (!ready) return
+          cancelAnimationFrame(scheduled)
+          look()
+        })
+      : null
+
+  // The hole, watched for as long as it is in the pane: from the mount, and from the
+  // moment a tab on nib's own page is sent to a site, which is when the page is asked for.
+  $effect(() => {
+    const room = hole
+    if (!room || !watching) return
+    watching.observe(room)
+    untrack(() => follow())
+    return () => watching.unobserve(room)
+  })
+
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
    *  dragged reports every pixel. What set it off is taken and not looked at: an
    *  observer and a listener hand it one anyway, and an effect names by it the state
@@ -222,7 +249,7 @@
    *  never changed and the stack was already empty. The tab sat on an empty pane until
    *  the reader clicked something, which is what made the page arrive. */
   function look() {
-    if (!isDesktop || !ready) return
+    if (!isDesktop || !ready || own) return
 
     const box = rect()
     if (!box) return
@@ -265,6 +292,22 @@
    *  a web note is a browser tab and the file says so. See web-tab/keep.ts. */
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
+  /** Whether the tab is on one of nib's own pages - History - which the pane draws
+   *  itself, with no webview behind it; see own-pages.ts. */
+  const own = $derived(isOwnPage(address))
+
+  // nib's own page names itself and wears its own mark, as Chrome's History does; and the
+  // address is held as the page's, so the bar and the strip read it before anything
+  // else has.
+  $effect(() => {
+    if (!own) return
+    untrack(() => {
+      page.url = address
+      page.title = t('History')
+      page.icon = HISTORY_MARK
+    })
+  })
+
   /** Which space the tab is in, and so which history its address field offers from and
    *  adds to and whose web data its page is built in: the space holding its file,
    *  wherever it was opened from, and for a tab with no file the space it was opened
@@ -287,18 +330,6 @@
     }
     if (startup.reached('rooms')) asking()
     else void startup.turn('rooms').then(asking)
-
-    // A change of size is answered in the frame it is laid out in rather than the one
-    // after: the observer runs between the layout and the paint, so the hole is measured
-    // for free and the page is told while the window is still drawing that frame. A
-    // sidebar sliding open is a change of size on every frame of it, and a page a frame
-    // behind each of them is a page that moves in steps. See latest.ts for the order.
-    const watching = new ResizeObserver(() => {
-      if (!ready) return
-      cancelAnimationFrame(scheduled)
-      look()
-    })
-    if (hole) watching.observe(hole)
 
     window.addEventListener('resize', follow)
     // Anything the app opens over the page is opened by a press: after one, look
@@ -327,8 +358,11 @@
     return () => {
       cancelAnimationFrame(scheduled)
       clearTimeout(late)
-      watching.disconnect()
+      watching?.disconnect()
       unwatch()
+      // The tab is being left or closed: where its reading got to is written now rather
+      // than a pause later. See keep.ts.
+      if (tab.path !== null) keepNow(tab.path)
       window.removeEventListener('resize', follow)
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
@@ -614,6 +648,11 @@
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
     newTab: () => workspace.openWebsite(),
+    newPrivate: isDesktop
+      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+      : undefined,
+    history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
+    clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
     // file list, which is where the app already draws them; see Bookmarks.svelte.
     bookmarks: () => workspace.showPanel('tree'),
@@ -660,12 +699,12 @@
       }}
       onhistory={showTrail}
       onaddress={(typed: string, aside: boolean) => {
-        const url = webAddress(typed)
+        const url = webAddress(typed, searchEngine.url)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
-        visited.typed(book, url)
+        if (!page.inPrivate) visited.typed(book, url)
         // Alt+Enter: a tab of its own, in front, and this one left where it was.
         if (aside) {
           workspace.openPage(url, 'front', tab.id)
@@ -697,6 +736,8 @@
         pages.of(tab.id).typing = on
       }}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
+      onbrowser={(which: 'history' | 'clear') =>
+        which === 'history' ? actions.history() : actions.clearData()}
       extending={extending
         ? {
             addable,
@@ -787,7 +828,32 @@
     {/await}
   {/if}
 
-  {#if isDesktop && page.openable}
+  <!-- Delete browsing data, asked of this tab; the sheet moves itself to the window's
+       own layer. See WebClear.svelte. -->
+  {#if clearingAsked.tab === tab.id}
+    {#await import('./WebClear.svelte') then clear}
+      <clear.default
+        {space}
+        spaces={workspace.spaces.map((one) => one.id)}
+        onclose={() => clearingAsked.close()}
+      />
+    {/await}
+  {/if}
+
+  {#if own}
+    <!-- nib's own page, drawn here where a site's would be: History. See own-pages.ts. -->
+    {#await import('./WebHistory.svelte') then history}
+      <history.default
+        {book}
+        {focused}
+        onopen={(url: string, ask: TabAsk) => {
+          if (ask === 'plain') void pages.go(tab.id, url)
+          else workspace.openPage(url, ask, tab.id)
+        }}
+        onclear={() => clearingAsked.ask(tab.id)}
+      />
+    {/await}
+  {:else if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it but the last picture of the page: the page
          itself is a webview over this box, and anything here would be under it. The
          picture is what the pane holds while the webview is out of sight - under a

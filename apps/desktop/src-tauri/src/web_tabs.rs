@@ -1041,6 +1041,33 @@ pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::Platf
     session::keep(store, platform.environment());
 }
 
+/// Which profile a tab's page is built in, as the window says it.
+#[derive(Debug, Default, Deserialize)]
+pub struct Profile {
+    /// The store its cookies and storage go in: the one every space shares, or one its
+    /// space keeps apart; see `web_stores.rs`.
+    store: Option<String>,
+    /// A private tab's page, which keeps nothing anywhere: the engine's own private mode -
+    /// `WebView2`'s `InPrivate` profile on the shared session, a data store of the page's
+    /// own that nothing writes to disk on a Mac and on Linux, a profile with no folder on
+    /// nib's own Chromium - in the store every space shares, which it reads nothing of and
+    /// writes nothing to. See lib/web-tab/private.ts.
+    #[serde(default)]
+    private: bool,
+}
+
+impl Profile {
+    /// The store, checked before anything is built because it is about to become a
+    /// folder name, and whether the page is private.
+    fn checked(&self) -> Result<(Option<String>, bool), String> {
+        if self.private {
+            return Ok((None, true));
+        }
+        let store = crate::web_stores::named(self.store.as_deref())?.map(str::to_string);
+        Ok((store, false))
+    }
+}
+
 /// The webview for one tab, built and attached to the window that asked.
 ///
 /// Async, and the building itself posted to the window's own event loop. Both
@@ -1071,13 +1098,10 @@ pub async fn web_open(
     url: String,
     pane: Pane,
     revived: Revived,
-    store: Option<String>,
+    profile: Profile,
 ) -> Result<(), String> {
     let address = address(&url)?;
-    // Which store the page's cookies and storage go in: the one every space shares, or
-    // one its space keeps apart. Checked before anything is built, because it is about
-    // to become a folder name. See web_stores.rs.
-    let store = crate::web_stores::named(store.as_deref())?.map(str::to_string);
+    let (store, private) = profile.checked()?;
     let label = label_of(&tab);
     let app = webview.app_handle().clone();
 
@@ -1140,7 +1164,8 @@ pub async fn web_open(
     // browsing profile, which is a different Chromium profile from the interface's,
     // under nib's own engine. One call, so this file no longer knows which platform
     // or which engine it is. See src/engine.rs.
-    let builder = crate::engine::web_store(builder, &app, store.as_deref())?;
+    // A private page is in memory and gone with the last of them; see `Profile`.
+    let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
 
     let opening = app.clone();
     let asking = tab.clone();
@@ -1193,7 +1218,7 @@ pub async fn web_open(
     let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
 
     // Where the page has got to, and what it is called, said to the window.
-    let builder = reporting(builder, &app, &tab);
+    let builder = reporting(builder, &app, &tab, private);
 
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
@@ -1260,7 +1285,11 @@ fn reporting(
     builder: WebviewBuilder<crate::Engine>,
     app: &AppHandle,
     tab: &str,
+    private: bool,
 ) -> WebviewBuilder<crate::Engine> {
+    // Only the engines whose cookies are given an expiry have anything to leave alone.
+    #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+    let _ = private;
     let moved = tab.to_string();
     let sending = app.clone();
     // Where the page last said it was, for the title to be reported against.
@@ -1286,8 +1315,11 @@ fn reporting(
 
         // Every step of a sign-in that goes through pages ends here, so this is where
         // a login it left in a session cookie is made to last; see web_cookies.rs.
+        // Never a private page's: what it signed in to ends with it.
         #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
-        let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
+        if !private {
+            let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
+        }
 
         // An engine that cannot say when the page's mark changes is asked for it once
         // the page is there, which is when a browser puts the site's icon on the tab.
@@ -2899,12 +2931,30 @@ mod shot {
 mod tests {
     use super::{
         address, allowed, capture_kinds, handed_over, is_ours, opening, origin_of, origin_written,
-        reader, Place, Trail, WebTabs, BLANK,
+        reader, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
     fn at(url: &str) -> Url {
         Url::parse(url).expect("an address")
+    }
+
+    /// A private page is in the store every space shares, whatever store was asked for,
+    /// and a store asked for is checked before it is a folder.
+    #[test]
+    fn a_private_page_is_in_no_space_s_store() {
+        let read = |said: &str| serde_json::from_str::<Profile>(said).expect("a profile");
+
+        assert_eq!(read(r#"{"store":null}"#).checked(), Ok((None, false)));
+        assert_eq!(
+            read(r#"{"store":"space_s1"}"#).checked(),
+            Ok((Some("space_s1".to_string()), false))
+        );
+        assert_eq!(
+            read(r#"{"store":"space_s1","private":true}"#).checked(),
+            Ok((None, true))
+        );
+        assert!(read(r#"{"store":"../web"}"#).checked().is_err());
     }
 
     /// Who the window's own page will be given the microphone for.

@@ -39,9 +39,10 @@
   import { showTab } from '../shortcuts/registry'
   import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
+  import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
-  import { plainOrigin } from './address'
+  import { isWebAddress, plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
   import { clipSource } from './note'
@@ -66,6 +67,7 @@
     ondownloads,
     ontyping,
     onzoom,
+    onbrowser,
     extending = null,
     ground,
     theme,
@@ -94,6 +96,9 @@
     /** A zoom key pressed while the app has the keyboard. Inside the page the engine
      *  answers them itself; see web_page.rs. */
     onzoom: (step: ZoomStep) => void
+    /** Chrome's History or Delete browsing data, from its key while the app has the
+     *  keyboard. Inside the page the page has them first; see web_opens.rs. */
+    onbrowser: (which: 'history' | 'clear') => void
     /** The extensions' buttons, where the engine runs extensions; see
      *  ExtensionButtons.svelte. Null draws none. */
     extending?: {
@@ -140,6 +145,8 @@
    *  as empty. */
   const resting = $derived.by(() => {
     if (page.url === null) return ''
+    // nib's own page reads as its address, as `chrome://history` does; see own-pages.ts.
+    if (!isWebAddress(page.url)) return page.url
 
     const site = plainOrigin(page.url)
     return page.title ? `${site} - ${page.title}` : site
@@ -184,6 +191,7 @@
 
       event.preventDefault()
       if (said.to === 'address') take()
+      else if (said.to === 'history' || said.to === 'clear') onbrowser(said.to)
       else if (said.to === 'step') onstep(said.step)
       else if (said.to === 'zoom') onzoom(said.step)
       else showTab(said.at)
@@ -297,7 +305,7 @@
     title={t('Site information')}
     aria-label={t('Site information')}
     aria-haspopup="dialog"
-    disabled={page.url === null}
+    disabled={page.url === null || !isWebAddress(page.url)}
     onclick={onsite}
   >
     {#if mark && marked}
@@ -310,6 +318,11 @@
       </svg>
     {/if}
   </button>
+
+  <!-- A private tab says so where the address is, as Chrome's private window does. -->
+  {#if page.inPrivate}
+    <span class="privately"><PrivateMark large /></span>
+  {/if}
 
   <AddressField
     bind:this={field}
@@ -415,6 +428,14 @@
      bar reads as "where you have been" and then "where you are". */
   .site {
     margin-left: var(--space-1);
+  }
+
+  /* The private mark, a quiet glyph and no button: nothing about it is pressed. */
+  .privately {
+    flex: none;
+    display: flex;
+    align-items: center;
+    color: var(--muted-strong);
   }
 
   .mark {

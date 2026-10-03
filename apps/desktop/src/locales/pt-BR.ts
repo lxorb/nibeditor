@@ -1895,4 +1895,30 @@ export const ptBR: Dictionary = {
   'Pages, terminals and moves are not undone':
     'Páginas, terminais e movimentações não são desfeitos',
   Rewind: 'Voltar',
+
+  // The browser's own pages and dialogs: History, Delete browsing data, a private
+  // tab and the search engine. Chrome's words, from Chromium's own translations.
+  'Search engine': 'Mecanismo de pesquisa',
+  History: 'Histórico',
+  'Search history': 'Histórico de pesquisa',
+  'Delete browsing data': 'Excluir dados de navegação',
+  Today: 'Hoje',
+  Yesterday: 'Ontem',
+  'More from this site': 'Mais deste site',
+  'Remove from history': 'Remover do histórico',
+  'Browsing history': 'Histórico de navegação',
+  'Cookies and other site data': 'Cookies e outros dados de sites',
+  'Cached images and files': 'Imagens e arquivos em cache',
+  'Time range': 'Período',
+  'Last 15 minutes': 'Últimos 15 minutos',
+  'Last hour': 'Última hora',
+  'Last 24 hours': 'Últimas 24 horas',
+  'Last 7 days': 'Últimos sete dias',
+  'Last 4 weeks': 'Últimas quatro semanas',
+  'All time': 'Todo o período',
+  'Delete data': 'Excluir dados',
+  'Delete browsing data…': 'Excluir dados de navegação…',
+  'New private tab': 'Nova guia privada',
+  'All spaces': 'Todos os espaços',
+  'the data could not be deleted': 'Não foi possível excluir os dados',
 }

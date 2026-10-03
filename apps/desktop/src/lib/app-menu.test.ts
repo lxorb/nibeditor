@@ -104,15 +104,24 @@ describe('File', () => {
   test('and every row it gave up is still in the palette and on its key', () => {
     const offered = new Set(appCommands().map((one) => one.id))
     const commands = ['new', 'import', 'space', 'settings']
-    for (const id of [...commands, 'close', 'reopen', 'new-window', 'close-window']) {
+    for (const id of [
+      ...commands,
+      'close',
+      'reopen',
+      'new-window',
+      'new-private',
+      'close-window',
+    ]) {
       expect(offered.has(id), id).toBe(true)
     }
 
+    // New window gave Ctrl+Shift+N to the private tab (docs/backlog.md, Q3) and keeps
+    // its row in the palette without a key.
     const keys = [
       'app.new',
       'app.close',
       'app.reopen',
-      'app.new-window',
+      'app.new-private',
       'app.close-window',
       'app.settings',
     ]

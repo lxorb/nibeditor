@@ -14,6 +14,8 @@ const DEFAULTS: Record<string, string> = {
   'web.fresh': 'Mod-Shift-r',
   'web.fresh.alt': 'Mod-F5',
   'web.stop': 'Escape',
+  'web.history': 'Mod-h',
+  'web.clear-data': 'Mod-Shift-Delete',
   'app.zoom-in': 'Mod-=',
   'app.zoom-out': 'Mod--',
   'app.zoom-reset': 'Mod-0',
@@ -55,6 +57,15 @@ describe('a key in front of a page', () => {
       step: 'fresh',
     })
     expect(barKey(press('F5', CTRL), keys)).toEqual({ to: 'step', step: 'fresh' })
+  })
+
+  test("opens Chrome's History on Ctrl+H and its Delete browsing data on Ctrl+Shift+Delete", () => {
+    const keys = bindings()
+    expect(barKey(press('h', CTRL), keys)).toEqual({ to: 'history' })
+    expect(barKey(press('Delete', { ctrlKey: true, shiftKey: true }), keys)).toEqual({
+      to: 'clear',
+    })
+    expect(barKey(press('Delete', CTRL), keys)).toBeNull()
   })
 
   test('goes to the address field on Ctrl+L and Alt+D', () => {

@@ -435,6 +435,11 @@ export class Tab {
    *  written into the session so a restart comes back on the page it was on. */
   address = $state<string | undefined>(undefined)
 
+  /** For a website: a private tab, whose page writes nothing down and is never written
+   *  down itself - not in the session, not on the closed stack, never saved as a web
+   *  note. Set as the tab is made; see web-tab/private.ts. */
+  inPrivate = false
+
   /** For a PDF: the page being read, counting from one, and how far it is zoomed.
    *  Where a note keeps a caret and a scroll, a PDF keeps these, and for the same
    *  reason - reopening it should land where it was left. Per tab, since the same

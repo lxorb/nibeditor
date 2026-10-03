@@ -153,6 +153,29 @@ beforeEach(async () => {
 })
 
 describe('while a page is being built', () => {
+  /** A new tab has no address, and its first build is refused; an address typed while
+   *  that refusal is on its way is built at once rather than left on the card. */
+  test('an address given while a blank tab is being refused is built', async () => {
+    refuse = true
+    const shown = pages.show('a', '', PANE)
+    const refusing = await asked()
+
+    void pages.go('a', SITE)
+    void pages.show('a', SITE, PANE)
+    building = null
+    refusing()
+    const second = await asked()
+    refuse = false
+    second()
+    await shown
+    await settle()
+
+    expect(commands().filter((one) => one === 'web_open')).toHaveLength(2)
+    expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE })
+    expect(pages.of('a').live).toBe(true)
+    expect(pages.of('a').openable).toBe(true)
+  })
+
   test('a second placement asks for no second page', async () => {
     const shown = pages.show('a', SITE, PANE)
     const arrive = await asked()
@@ -583,13 +606,24 @@ describe('a tab closed while its page is in front', () => {
 })
 
 describe('where a page keeps what the site stores', () => {
+  /** A private tab's page is the engine's private mode, in no space's store. */
+  test('a private page is built private, in the store every space shares', async () => {
+    const page = pages.of('a')
+    page.inPrivate = true
+    page.space = 'w'
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: true } })
+  })
+
   test('in the store every space shares, until its space keeps its own', async () => {
     pages.of('a').space = 'w'
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
     await shown
 
-    expect(last('web_open')).toMatchObject({ tab: 'a', store: null })
+    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: false } })
   })
 
   test('a choice made for the space builds its open pages again in the new store', async () => {
@@ -615,7 +649,7 @@ describe('where a page keeps what the site stores', () => {
     expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
       'a',
     ])
-    expect(last('web_open')).toMatchObject({ tab: 'a', store: 'space_w', pane: PANE })
+    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: 'space_w' }, pane: PANE })
     webData.set('w', 'global')
   })
 

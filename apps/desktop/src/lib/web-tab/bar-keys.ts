@@ -27,6 +27,9 @@ export type BarKey =
   | { to: 'tab'; at: number | 'last' }
   /** A rung of the page's zoom, or back to a hundred per cent. */
   | { to: 'zoom'; step: ZoomStep }
+  /** Chrome's History page, and its Delete browsing data. */
+  | { to: 'history' }
+  | { to: 'clear' }
 
 export type ZoomStep = 'in' | 'out' | 'reset'
 
@@ -38,6 +41,9 @@ export function barKey(event: KeyboardEvent, keys: Bindings): BarKey | null {
   // it walks the regions, which is nib's and stays so.
   const f6 = event.key === 'F6' && !event.ctrlKey && !event.shiftKey && !event.altKey
   if (either('web.address') || (f6 && fromPage(event))) return { to: 'address' }
+
+  if (either('web.history')) return { to: 'history' }
+  if (either('web.clear-data')) return { to: 'clear' }
 
   if (either('web.reload')) return { to: 'step', step: 'reload' }
   if (either('web.fresh')) return { to: 'step', step: 'fresh' }
