@@ -11,9 +11,16 @@
   var NOTCH = 120
   var SLACK = 0.5
 
+  // Taken now, so a page that replaces its own `window.open` replaces nothing of this.
+  var open = window.open.bind(window)
+
+  // Through the binding where nib's world has one (nib's own Chromium), and otherwise
+  // as a window asked for under a name that says it, which the crate reads and never
+  // opens (`WebView2`); see web_swipe.rs.
   function say(said) {
-    // Asked for each time: the binding can arrive after the first document has begun.
-    if (typeof nibSwiped === 'function') nibSwiped(JSON.stringify(said))
+    var words = JSON.stringify(said)
+    if (typeof nibSwiped === 'function') nibSwiped(words)
+    else open('about:blank', 'nib-swipe:' + words)
   }
 
   // Whether the content would take a scroll each way, from the element under the

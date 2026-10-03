@@ -13,9 +13,19 @@
 //! So the page says what it saw and the window decides, the same way for a page as for a
 //! note: a script in nib's world in every page and frame (`SCRIPT`, `web_swipe.js`) hears
 //! each sideways scroll and each finger from the side, asks whether anything in the page
-//! would have taken it, and says it through a function only nib's world has (`BINDING`,
-//! the engine's `DevTools` protocol's `Runtime.addBinding` by the world's name). Every
-//! listener there is passive and only reads, so the page scrolls exactly as it did. What
+//! would have taken it, and says it a frame at a time. Every listener there is passive and
+//! only reads, so the page scrolls exactly as it did.
+//!
+//! **How it is said** is each engine's one road back from nib's world. On nib's own
+//! Chromium a function only that world has (`BINDING`, the `DevTools` protocol's
+//! `Runtime.addBinding` by the world's name), as `web_opens.rs` asks there. On `WebView2`
+//! a window asked for under a name that carries it (`NAMED`), which `web_opens.rs` hears
+//! with the rest of the names and the engine never opens - the way that file asks for the
+//! find and the address field. A binding is not that road on `WebView2`: the engine puts
+//! one in a world only while the protocol's runtime domain is on, and turning it on for
+//! every page is the one thing a site that looks for automation looks for. A page can
+//! ask under the name too, from its own world; all it gets is its own tab stepped back
+//! or forward, which `history.back()` already gets it. What
 //! comes back is read here into numbers and nothing else (`Said`) and said to the window
 //! as `nib://web-swipe` for the tab it came from, where apps/desktop/src/lib/back-swipe
 //! draws the arrow and steps the tab's trail through the same Back and Forward its arrows
@@ -26,7 +36,7 @@
 //!
 //! Windows' two engines; a Mac's and Linux's pages have no channel back to the app.
 
-// Elsewhere only the tests and the frame list in web_worlds.rs read any of it.
+// Elsewhere nothing but the tests reads any of it.
 #![cfg_attr(not(windows), allow(dead_code))]
 
 use serde::{Deserialize, Serialize};
@@ -37,17 +47,31 @@ const SCRIPT: &str = include_str!("web_swipe.js");
 
 /// The script as a page is handed it: a function called on the spot and nothing round
 /// it, the shape every one of nib's page scripts has (see `opening` in `web_tabs.rs`).
+/// Prettier writes the file with a semicolon in front, as it writes every statement that
+/// begins with a bracket; `opening` puts its own between the scripts.
 pub fn script() -> &'static str {
-    SCRIPT.trim()
+    SCRIPT.trim().trim_start_matches(';')
 }
 
-/// The function nib's world in a page says a swipe through.
+/// The function nib's world in a page says a swipe through on nib's own Chromium.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const BINDING: &str = "nibSwiped";
+
+/// What the window name a swipe is said under on `WebView2` begins with; the rest is
+/// what the binding would have been handed.
+const NAMED: &str = "nib-swipe:";
+
+/// What a window asked for under `name` says of a swipe, or `None` for any other name.
+/// Pure, and the only reading of that name.
+pub fn named(name: &str) -> Option<&str> {
+    name.strip_prefix(NAMED)
+}
 
 /// The event the window hears a swipe on.
 const SWIPED: &str = "nib://web-swipe";
 
 /// What the protocol is asked to give nib's world, and no other world, the function by.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn binding() -> Value {
     json!({ "name": BINDING, "executionContextName": crate::web_worlds::WORLD })
 }
@@ -128,69 +152,9 @@ pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     }
 }
 
-/// The binding's calls, out of the protocol's event that says one was made: its payload,
-/// when it is this binding's.
-pub fn called(event: &str) -> Option<String> {
-    let said: Value = serde_json::from_str(event).ok()?;
-    if said.get("name")?.as_str()? != BINDING {
-        return None;
-    }
-    said.get("payload")?.as_str().map(str::to_string)
-}
-
-#[cfg(all(windows, not(feature = "cef")))]
-pub use engine::listen;
-
-/// `WebView2`: the binding's calls heard for as long as the page is open, from the page
-/// and from every frame the page's registration follows (`web_worlds.rs`), whose events
-/// the engine hands the same receiver.
-#[cfg(all(windows, not(feature = "cef")))]
-mod engine {
-    use tauri::webview::PlatformWebview;
-    use webview2_com::DevToolsProtocolEventReceivedEventHandler;
-    use windows_core::{HSTRING, PWSTR};
-
-    use super::{called, heard};
-
-    #[allow(
-        unsafe_code,
-        reason = "the DevTools protocol's events are WebView2's own, reached through its COM interfaces"
-    )]
-    pub fn listen(webview: &PlatformWebview, app: tauri::AppHandle, tab: String, window: String) {
-        // Safe: the controller is this window's, and everything below is used on this
-        // thread; the engine holds the handler for as long as the webview lives.
-        unsafe {
-            let Ok(core) = webview.controller().CoreWebView2() else {
-                return;
-            };
-            let Ok(receiver) =
-                core.GetDevToolsProtocolEventReceiver(&HSTRING::from("Runtime.bindingCalled"))
-            else {
-                return;
-            };
-            let handler = DevToolsProtocolEventReceivedEventHandler::create(Box::new(
-                move |_sender, args| {
-                    let Some(args) = args else {
-                        return Ok(());
-                    };
-                    let mut event = PWSTR::null();
-                    args.ParameterObjectAsJson(&raw mut event)?;
-                    let event = webview2_com::take_pwstr(event);
-                    if let Some(payload) = called(&event) {
-                        heard(&app, &window, &tab, &payload);
-                    }
-                    Ok(())
-                },
-            ));
-            let mut token = 0i64;
-            let _ = receiver.add_DevToolsProtocolEventReceived(&handler, &raw mut token);
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{binding, called, read, Swiped, BINDING, SCRIPT};
+    use super::{binding, named, read, Swiped, BINDING, SCRIPT};
 
     fn swiped(kind: &'static str, dx: f64, dy: f64, at: f64, left: bool, right: bool) -> Swiped {
         Swiped {
@@ -253,17 +217,17 @@ mod tests {
     }
 
     #[test]
-    fn only_this_binding_s_calls_are_heard() {
-        let event = |name: &str| {
-            serde_json::json!({ "name": name, "payload": "{\"k\":\"e\",\"t\":1}", "executionContextId": 3 })
-                .to_string()
-        };
+    fn a_swipe_said_as_a_window_name_is_read_off_the_name() {
         assert_eq!(
-            called(&event(BINDING)).as_deref(),
-            Some("{\"k\":\"e\",\"t\":1}")
+            named(r#"nib-swipe:{"k":"e","t":1}"#),
+            Some(r#"{"k":"e","t":1}"#)
         );
-        assert_eq!(called(&event("nibAsked")), None);
-        assert_eq!(called("not json"), None);
+        assert_eq!(named("nib-find"), None);
+        assert_eq!(named("nib-swipe"), None);
+        assert_eq!(named(""), None);
+        let said = named(r#"nib-swipe:{"k":"w","dx":-3,"dy":0,"t":2,"l":false,"r":false}"#)
+            .and_then(|payload| read("t1", payload));
+        assert_eq!(said.map(|one| one.kind), Some("wheel"));
     }
 
     #[test]
@@ -272,11 +236,12 @@ mod tests {
         assert_eq!(binding()["executionContextName"], crate::web_worlds::WORLD);
     }
 
-    /// The script says through the binding by its name, and reads nothing it was not
-    /// handed: every listener only listens.
+    /// The script says through the binding by its name, or under the window name where
+    /// there is none, and every listener only listens.
     #[test]
     fn the_script_asks_through_the_binding_and_only_listens() {
         assert!(SCRIPT.contains(&format!("typeof {BINDING} === 'function'")));
+        assert!(SCRIPT.contains(&format!("open('about:blank', '{}' + words)", super::NAMED)));
         assert_eq!(SCRIPT.matches("passive: true").count(), 5);
         assert!(!SCRIPT.contains("preventDefault()"));
         assert!(!SCRIPT.contains("stopPropagation"));

@@ -1,6 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["spike/**", "apps/desktop/src-tauri/src/web_state/scripts/*.js"],
+  "ignore": [
+    "spike/**",
+    "apps/desktop/src-tauri/src/web_state/scripts/*.js",
+    "apps/desktop/src-tauri/src/web_swipe.js"
+  ],
   "workspaces": {
     ".": {
       "entry": ["scripts/**/*.{ts,js,mjs}"],

@@ -144,18 +144,14 @@ fn attached_frame(event: &str) -> Option<String> {
 }
 
 /// What a frame is sent once it is attached, in order, which is the order its session
-/// runs them in: its page domain on, the function a swipe is said through given to nib's
-/// world (`web_swipe.rs`), nib's scripts registered in nib's world, its own frames followed
-/// the same way, and then let go. The last is sent whatever became of the others, because
-/// a frame held at its start and never let go is a frame that never loads.
+/// runs them in: its page domain on, nib's scripts registered in nib's world, its own
+/// frames followed the same way, and then let go. The last is sent whatever became of
+/// the others, because a frame held at its start and never let go is a frame that never
+/// loads.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
-fn in_frame(scripts: &str) -> [(&'static str, String); 5] {
+fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
     [
         ("Page.enable", "{}".to_string()),
-        (
-            "Runtime.addBinding",
-            crate::web_swipe::binding().to_string(),
-        ),
         (
             "Page.addScriptToEvaluateOnNewDocument",
             registering(scripts),
@@ -272,16 +268,6 @@ mod engine {
                 count
             });
 
-        // The function a swipe is said through, in nib's world from its first document;
-        // a binding the engine refused leaves the scripts asking nothing. See
-        // web_swipe.rs.
-        if !scripts.is_empty() {
-            let _ = waited(
-                &core,
-                "Runtime.addBinding",
-                &crate::web_swipe::binding().to_string(),
-            );
-        }
         let ours = scripts.is_empty() || registered(&core, scripts);
         let frames = scripts.is_empty() || following(&core, scripts);
         Cleared {
@@ -661,15 +647,19 @@ mod engine {
             let Some(session) = attached_frame(&params.to_string()) else {
                 return;
             };
-            let said = std::iter::once(("Runtime.addBinding", binding()))
-                .chain(
-                    in_frame(&scripts)
-                        .into_iter()
-                        .filter_map(|(method, params)| {
-                            Some((method, serde_json::from_str(&params).ok()?))
-                        }),
-                )
-                .collect();
+            let said = [
+                ("Runtime.addBinding", binding()),
+                ("Runtime.addBinding", crate::web_swipe::binding()),
+            ]
+            .into_iter()
+            .chain(
+                in_frame(&scripts)
+                    .into_iter()
+                    .filter_map(|(method, params)| {
+                        Some((method, serde_json::from_str(&params).ok()?))
+                    }),
+            )
+            .collect();
             devtools::tell(&telling, Some(&session), said);
         });
         heard.is_ok() && called(view, "Target.setAutoAttach", &attaching()).is_some()
@@ -906,15 +896,12 @@ mod tests {
             methods,
             [
                 "Page.enable",
-                "Runtime.addBinding",
                 "Page.addScriptToEvaluateOnNewDocument",
                 "Target.setAutoAttach",
                 "Runtime.runIfWaitingForDebugger",
             ]
         );
-        let bound: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
-        assert_eq!(bound["executionContextName"], WORLD);
-        let registered: serde_json::Value = serde_json::from_str(&sent[2].1).expect("json");
+        let registered: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
         assert_eq!(registered["worldName"], WORLD);
     }
 

@@ -1512,10 +1512,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
         // Its `alert`, `confirm` and `prompt`, in nib's own card; see web_dialogs.rs.
         crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
-        // A swipe over it, said to the window; see web_swipe.rs. nib's own Chromium hears
-        // it with the rest of its binding's calls, in `web_worlds::asking`.
-        #[cfg(all(windows, not(feature = "cef")))]
-        crate::web_swipe::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
 
         #[cfg(not(feature = "cef"))]
