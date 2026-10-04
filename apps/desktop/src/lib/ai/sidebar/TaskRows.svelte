@@ -52,7 +52,7 @@
   async function tick(one: Task) {
     const done = !isDone(one)
     ticked = { ...ticked, [one.at]: done }
-    const { tickTask } = await import('../commands/todos')
+    const { tickTask } = await import('../../task-actions')
     if (!(await tickTask(one.at, one.space, done))) ticked = { ...ticked, [one.at]: !done }
   }
 

@@ -21,7 +21,8 @@ vi.mock('../../rows/rows.svelte', () => {
   }
 })
 
-const { planDay, showTasks, tickTask } = await import('./todos')
+const { planDay, showTasks } = await import('./todos')
+const { tickTask } = await import('../../task-actions')
 
 function host(said = '') {
   const ask = vi.fn(() => Promise.resolve(said))
