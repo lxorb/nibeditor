@@ -86,11 +86,11 @@ describe('what a link may ask for', () => {
   /** The whole security surface of the scheme, pinned. A link can be written by
    *  anybody and sent to anybody, so this list growing is a decision rather than a
    *  side effect of adding a verb. */
-  test('is these five actions and nothing else', async () => {
-    const actions = [...(await verbs()), 'command', 'nonsense']
+  test('is these six actions and nothing else', async () => {
+    const actions = [...(await verbs()), 'command', 'add-task', 'nonsense']
     const allowed = actions.filter((one) => verbForAction(one) !== null)
 
-    expect(allowed.sort()).toEqual(['append', 'command', 'new', 'open', 'search'])
+    expect(allowed.sort()).toEqual(['add-task', 'append', 'command', 'new', 'open', 'search'])
   })
 
   test('reads `command` as the row the palette runs', () => {
@@ -107,7 +107,7 @@ describe('what a link may ask for', () => {
     // Every other link verb answers a question about the space - `open` answers the
     // path it landed on - and a link's outcome goes to an address the link itself
     // chose; see `byLink` in verbs.ts.
-    expect(heard).toEqual(['append', 'new'])
+    expect(heard).toEqual(['append', 'new', 'tasks.add'])
     expect(linkHearsFrom('open')).toBe(false)
     // Not even the verbs no link may ask for, so widening one column cannot quietly
     // widen the other.

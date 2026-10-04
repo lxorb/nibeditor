@@ -27,6 +27,7 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://new?path=inbox/Today.md&content=Words&prepend` | adds it at the top instead |
 | `nib://new?name=Idea&content=Words&silent` | writes it without opening it |
 | `nib://append?path=Daily.md&content=Words` | adds the words to the end of that note, and makes it if it is not there |
+| `nib://add-task?text=Call%20mum%20%F0%9F%93%85%202026-10-06` | adds a to-do line to the open space's inbox (`Inbox.md`), or to `space`'s; the words may carry the Tasks plugin's marks, as quick add writes them |
 | `nib://search?query=tag:%23work` | opens the search panel on that query |
 | `nib://command?id=new` | runs one command out of the registry |
 
@@ -58,7 +59,7 @@ below write it.
 
 | Key | When |
 | --- | --- |
-| `x-success` | `nib://new` or `nib://append` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
+| `x-success` | `nib://new`, `nib://append` or `nib://add-task` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
 | `x-error` | one of those did not, or the link named an action that does not exist. `error` is added |
 | `x-cancel` | the app knows what was asked for and will not do it from a link |
 
@@ -66,7 +67,7 @@ below write it.
 nib://new?name=Standup&content=Notes&x-success=https://example.com/done
 ```
 
-**Only `nib://new` and `nib://append` say anything back.** `open`, `search` and
+**Only `nib://new`, `nib://append` and `nib://add-task` say anything back.** `open`, `search` and
 `command` follow no callback at all, neither success nor error, and the log says so when
 a link carried one. Those two are the ones that changed something, and what they answer
 is the path the caller itself wrote plus whether the note was already there. A callback address is written by whoever wrote the link, so whatever a verb
@@ -75,7 +76,8 @@ Said back, that is a question about somebody's space: a hundred of those links, 
 with an `x-success` of its own, is a listing of what a person keeps notes about, from
 a scheme that was only ever allowed to move a window. Success and error are both
 silent for the same reason - told apart, they are that question answered more slowly.
-`new` is the exception because the caller named the note itself, which is the shape
+`new` is the exception because the caller named the note itself (and `add-task` because it
+wrote the line itself, and is answered only the line's anchor in an inbox it did not choose), which is the shape
 x-callback-url exists for: file something from a shortcut and carry on. The column is
 `byLink` in verbs.ts, `'quiet'` or `'back'`, and a test pins which verbs are which.
 
@@ -142,6 +144,10 @@ listen on. Run against the web app it says so rather than failing to connect.
 | `publish status` / `publish now` | whether the space is on the web, and a pass |
 | `window` | where the window is and how big |
 | `screenshot [--out FILE]` | a picture of the window |
+| `tasks list [filter] [--view V]` | to-dos in every space: a view (`inbox`, `today`, `upcoming`, `logbook`, a `.base` path), Todoist's filter language, or both; each row's anchor first (docs/tasks.md 5.15) |
+| `tasks add <text> [--note N] [--under H]` | a to-do line, in the space's inbox unless a note is named |
+| `tasks done <at> [--undo]` | ticks one, writing a recurring task's next line; `--undo` opens it again |
+| `base query <path> [--view V]` | a view of a `.base` file: its groups, rows and summaries |
 | `eval <code>` | runs JavaScript in the window |
 | `verbs` | the app's own list of these |
 
