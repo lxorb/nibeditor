@@ -696,9 +696,9 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
 
   | what | English | German |
   | --- | --- | --- |
-  | day | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `end of month`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Monatsende`, `6. Okt`, `6.10.` |
-  | time | `16:00`, `4pm`, `at 4`, `noon`, `tonight` | `16:00`, `16 Uhr`, `um 4`, `mittags`, `heute Abend` |
-  | repeat | `every day`, `every weekday`, `every other week`, `every 2nd monday`, `every 3 months`, `every!` | `jeden Tag`, `werktags`, `jede zweite Woche`, `jeden 2. Montag`, `alle 3 Monate`, `jeden!` |
+  | day | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `wednesday next week`, `next weekend`, `end of month`, `on the 15th`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Mittwoch nächste Woche`, `nächstes Wochenende`, `Monatsende`, `am 15.`, `6. Okt`, `6.10.` |
+  | time | `16:00`, `4pm`, `at 4`, `noon`, `tonight`, `tomorrow morning at 7` | `16:00`, `16 Uhr`, `um 4`, `um 15.30`, `mittags`, `heute Abend`, `am Abend` |
+  | repeat | `every day`, `every weekday`, `every other week`, `every 2nd week`, `every 2nd monday`, `every first monday`, `every 3 months`, `every morning`, `every!` | `jeden Tag`, `werktags`, `jede zweite Woche`, `jede 2. Woche`, `alle zwei Wochen`, `jeden 2. Montag`, `jeden ersten Montag`, `alle 3 Monate`, `jeden Morgen`, `jeden!` |
   | priority | `p1`...`p4`, `!!!` | the same |
   | where | `>Note`, `>Note /Heading`, `>Folder/Note` | the same |
   | tag | `#tag`, `@tag`, `%tag` | the same |
