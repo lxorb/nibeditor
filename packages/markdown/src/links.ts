@@ -120,6 +120,14 @@ export function isCanvasTarget(target: string): boolean {
   return /\.canvas$/i.test(target.trim())
 }
 
+/** Whether a target names a base: Obsidian's `.base` file, a view of the notes
+ *  and tasks of a space (docs/tasks.md 5.11). A file rather than a note, so
+ *  `[[Bugs.base]]` carries its extension, and `![[Bugs.base#Board]]` names one of
+ *  its views the way a heading is named. */
+export function isBaseTarget(target: string): boolean {
+  return /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
+}
+
 /** Whether a target names a page note: pages of paper written on with a pen, which
  *  Nib keeps in a `.pages` file.
  *
@@ -190,7 +198,7 @@ export function isVideoTarget(target: string): boolean {
  *  block, the editor drawing an inline embed, the renderer writing the markup,
  *  the export deciding what it can carry, and the glasses naming it. Adding a
  *  kind here is what makes it appear on all five. */
-export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas'
+export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas' | 'base'
 
 export function embedKind(target: string): EmbedKind | null {
   if (isImageTarget(target)) return 'image'
@@ -200,14 +208,15 @@ export function embedKind(target: string): EmbedKind | null {
   if (isAudioTarget(target)) return 'audio'
   if (isPdfTarget(target)) return 'pdf'
   if (isCanvasTarget(target)) return 'canvas'
+  if (isBaseTarget(target)) return 'base'
 
   return null
 }
 
 /** Whether a target names a file the app opens in a tab of its own rather than a
- *  note: a PDF, a canvas, a page note, or a website.
+ *  note: a PDF, a canvas, a page note, a website, or a base.
  *
- *  These four behave alike everywhere a link is read. All resolve through the
+ *  These behave alike everywhere a link is read. All resolve through the
  *  files of the space rather than its notes, because a file has no headings and
  *  nothing to be told apart by except its extension; all are followed to the
  *  file itself; and a link to one the space does not hold is a link to nothing,
@@ -217,7 +226,11 @@ export function embedKind(target: string): EmbedKind | null {
  *  whether a target points inside the space at all rather than out at the web. */
 export function isTabFile(target: string): boolean {
   return (
-    isPdfTarget(target) || isCanvasTarget(target) || isPagesTarget(target) || isWebTarget(target)
+    isPdfTarget(target) ||
+    isCanvasTarget(target) ||
+    isPagesTarget(target) ||
+    isWebTarget(target) ||
+    isBaseTarget(target)
   )
 }
 

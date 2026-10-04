@@ -170,6 +170,15 @@ export interface NoteIndex {
    *  (docs/tasks.md 5.7). Absent where the editor stands alone, and a box then ticks as
    *  a character and chips are only drawn. */
   tasks?: TaskHelp | undefined
+  /** Draws a base into a box: a ` ```base ` fence's own words, or the `.base` file an
+   *  `![[Bugs.base#Board]]` names and the view after its `#`. The view is the app's -
+   *  its rows, its layouts and its writes - so the editor hands over a box and gets
+   *  back what takes the view away again (docs/tasks.md 5.11).
+   *
+   *  Here with `drawFile` for the reason it is: a thing the app can do and the editor
+   *  cannot. Absent where the editor stands on its own, and a fence then stays code
+   *  and an embed a card. */
+  mountBase?: ((host: HTMLElement, ask: BaseAsk) => () => void) | undefined
 }
 
 /** A date read off the end of a task's words: where they start, and what they said. */
@@ -191,6 +200,9 @@ export interface TaskHelp {
    *  still on its way. */
   dayAtEnd(text: string): DayTyped | null
 }
+
+/** What a base drawn in a note is: a fence's words, or a base file and one of its views. */
+type BaseAsk = { code: string } | { target: string; view: string | null }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }
 

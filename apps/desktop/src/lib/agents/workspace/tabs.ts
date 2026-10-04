@@ -131,8 +131,10 @@ async function selectionIn(tab: Tab): Promise<unknown> {
     case 'pdf':
       return tab.page === undefined ? null : { page: tab.page }
 
+    // A view's rows are the tasks verbs' to read; a view has no selection of its own.
     case 'web':
     case 'graph':
+    case 'view':
       return null
   }
 }

@@ -58,6 +58,23 @@
    *  reading/drawn.ts. */
   let undrawn: (() => void) | undefined
 
+  /** Every base the page holds - a ` ```base ` fence, an embedded `.base` - drawn as
+   *  its view, the views fetched only for a page that has one. Answers what takes them
+   *  away again. */
+  function basesIn(page: HTMLElement, from: string | null): () => void {
+    if (__EVEN_PLUGIN__ || !page.querySelector('[data-base-code], .embed-file[data-kind="base"]'))
+      return () => undefined
+    let stop: (() => void) | null = null
+    let stopped = false
+    void import('./views/mount').then(({ mountBases }) => {
+      if (!stopped) stop = mountBases(page, from)
+    })
+    return () => {
+      stopped = true
+      stop?.()
+    }
+  }
+
   /** Whether the note holds a ` ```query ` or ` ```tasks ` fence, which is what makes it answer
    *  again when the space changes. A scan of the words rather than a parse: the
    *  fence has to be written out to be one. */
@@ -91,9 +108,20 @@
       // reader reaches it. After the place is put back, so a card the reader
       // landed on is already in view and draws at once.
       undrawn?.()
-      undrawn = surface
+      const papers = surface
         ? inlineFiles(surface, untrack(() => workspace.activeSpace?.root) ?? null)
         : undefined
+      // And a base, fenced or embedded, as its view; see views/mount.ts.
+      const bases = surface
+        ? basesIn(
+            surface,
+            untrack(() => tab.path),
+          )
+        : undefined
+      undrawn = () => {
+        papers?.()
+        bases?.()
+      }
       // The matches were painted onto nodes this render has thrown away, so the
       // find bar would be counting places nothing was showing.
       if (untrack(() => finding)) reveal()

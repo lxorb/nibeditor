@@ -132,6 +132,7 @@ export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
   'chart',
   'query',
   'tasks',
+  'base',
 ])
 
 let diagramSeq = 0
@@ -248,6 +249,40 @@ export class QueryWidget extends NibWidget {
     if (!host.isConnected || html === null || html === undefined) return
 
     host.innerHTML = html
+  }
+}
+
+/** A ` ```base ` fence: Obsidian's base written into the note, drawn where it stands
+ *  as the views draw a base - its rows, editable (docs/tasks.md 5.11).
+ *
+ *  The view is the app's: the rows engine, the layouts and the one write path all
+ *  live there, so the widget is a box the app mounts its view into (`mountBase` on
+ *  the index) and takes away again when the widget goes. Equal while the words and
+ *  the note are the same, so a save elsewhere, which remakes the index, does not
+ *  build the view again: it follows its rows by itself. */
+export class BaseWidget extends NibWidget {
+  constructor(
+    private readonly code: string,
+    private readonly index: NoteIndex,
+  ) {
+    super()
+  }
+
+  override eq(other: BaseWidget) {
+    return other.code === this.code && other.index.path === this.index.path
+  }
+
+  toDOM() {
+    const host = document.createElement('div')
+    host.className = 'nib-base-block'
+    const mounted = this.index.mountBase?.(host, { code: this.code })
+    if (mounted) this.onDestroy(host, mounted)
+    return host
+  }
+
+  /** The view's controls are its own, all of them. */
+  override ignoreEvent() {
+    return true
   }
 }
 

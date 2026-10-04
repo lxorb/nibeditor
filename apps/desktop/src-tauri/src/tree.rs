@@ -10,8 +10,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, in_spaces, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, space_root,
-    spaces_dir, Seen, MAX_DEPTH,
+    cannot, in_spaces, inside, is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut,
+    space_root, spaces_dir, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -171,6 +171,7 @@ fn walk(
                     || is_pdf(&child)
                     || is_canvas(&child)
                     || is_pages(&child)
+                    || is_base(&child)
                     || is_shortcut(&child)
                 {
                     // The notes, the PDFs beside them, the canvases, the stacks

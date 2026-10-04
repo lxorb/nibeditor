@@ -15,7 +15,7 @@ export interface Showing {
   /** Only an editor is given the caret from out here. A canvas, a page note, a paper,
    *  the graph, a page in a web tab and a terminal each take the keyboard themselves,
    *  and already do. */
-  kind: 'note' | 'canvas' | 'pages' | 'pdf' | 'graph' | 'web' | 'terminal'
+  kind: 'note' | 'canvas' | 'pages' | 'pdf' | 'graph' | 'web' | 'terminal' | 'view'
   /** A note being read is a page, and a page has no caret to put anywhere. */
   reading: boolean
 }

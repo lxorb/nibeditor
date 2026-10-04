@@ -88,6 +88,22 @@ export const canvasSurface = held(() =>
 /** The space as a picture: the layout, the painter and the controls over it. */
 export const graphSurface = held(() => import('./Graph.svelte'))
 
+/** A view of rows in a tab - Today, a project, a `.base` file's board - with the rows
+ *  engine and every layout behind it. See docs/tasks.md 5.5. */
+export const viewSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no views in the Even Realities plugin'))
+    : import('./views/ViewTab.svelte'),
+)
+
+/** The Tasks panel: Inbox, Today, Upcoming, the saved views, projects and labels, each
+ *  with its count. Fetched the first time its tab is chosen, and the rows with it. */
+export const tasksPanel = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no Tasks panel in the Even Realities plugin'))
+    : import('./views/TasksPanel.svelte'),
+)
+
 /** Pages of paper, for a note laid out rather than flowed. Never the plugin's, for
  *  the canvas's reason: it opens no page note either. */
 export const pagesSurface = held(() =>

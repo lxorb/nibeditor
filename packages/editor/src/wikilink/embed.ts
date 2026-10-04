@@ -178,9 +178,15 @@ export class EmbedWidget extends NibWidget {
 /** The widget for one embedded note. An embed of a note the space does not hold
  *  still gets a frame, saying so: the markup is there to be corrected, and an
  *  empty space says nothing. */
-export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget | EmbedFileWidget {
+export function embedWidget(
+  state: EditorState,
+  link: LinkSpan,
+): EmbedWidget | EmbedFileWidget | EmbedBaseWidget {
   const index = state.facet(noteIndex)
   const kind = embedKind(link.target)
+
+  // A base is drawn as its view by the app, where there is one to draw it.
+  if (kind === 'base' && index.mountBase) return new EmbedBaseWidget(link, index.path)
 
   // A paper and a plane resolve against the files of the space rather than its
   // notes, the same way a link to one does; see `isTabFile`.
@@ -190,6 +196,41 @@ export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget | E
 
   const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path
   return new EmbedWidget(link, path)
+}
+
+/** `![[Bugs.base]]` and `![[Bugs.base#Board]]`: the base's view, drawn by the app into
+ *  the box (`mountBase` on the index), its rows editable where it stands. Equal while
+ *  it names the same file and view from the same note, so saving another note does
+ *  not build it again. */
+export class EmbedBaseWidget extends NibWidget {
+  constructor(
+    private readonly link: LinkSpan,
+    private readonly from: string | null,
+  ) {
+    super()
+  }
+
+  override eq(other: EmbedBaseWidget) {
+    return (
+      other.link.target === this.link.target &&
+      other.link.heading === this.link.heading &&
+      other.from === this.from
+    )
+  }
+
+  toDOM(view: EditorView) {
+    const host = document.createElement('div')
+    host.className = 'nib-base-block'
+    const mount = view.state.facet(noteIndex).mountBase
+    const mounted = mount?.(host, { target: this.link.target, view: this.link.heading })
+    if (mounted) this.onDestroy(host, mounted)
+    return host
+  }
+
+  /** The view's controls are its own. */
+  override ignoreEvent() {
+    return true
+  }
 }
 
 export class EmbedImageWidget extends NibWidget {

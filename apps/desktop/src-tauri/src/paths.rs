@@ -108,6 +108,16 @@ pub fn is_pages(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
 }
 
+/// Whether a path names a base: Obsidian's `.base` file, a view of a space's notes and
+/// tasks (docs/tasks.md 5.11). YAML, so `read_note` and `write_note` carry it like
+/// any text; the crate only has to agree that it is a file the window lists and
+/// opens, and the mirror sends up, since the mirror walks the tree this crate builds.
+pub fn is_base(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("base"))
+}
+
 /// Whether a path names a website: a shortcut file rather than words.
 ///
 /// `.url` is the Windows Internet Shortcut - an INI file with an address in it,
@@ -837,9 +847,9 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, at_most, drop_highlights, files_in, folded, folder_key, folder_named,
-        free_spot, highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut,
-        judged, judged_beyond, judged_space, link_to, move_highlights, same_path, space_root,
-        write_atomically, Picked,
+        free_spot, highlights_of, inside, is_base, is_canvas, is_markdown, is_pages, is_pdf,
+        is_shortcut, judged, judged_beyond, judged_space, link_to, move_highlights, same_path,
+        space_root, write_atomically, Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1264,6 +1274,9 @@ mod tests {
         assert!(is_pages(Path::new("a/Journal.PAGES")));
         assert!(!is_pages(Path::new("a/Journal.pages.md")));
         assert!(!is_pages(Path::new("a/Journal")));
+        assert!(is_base(Path::new("a/Bugs.base")));
+        assert!(is_base(Path::new("a/Bugs.BASE")));
+        assert!(!is_base(Path::new("a/Bugs.base.md")));
         // The two planes are told apart by their names, whatever is inside them.
         assert!(!is_canvas(Path::new("a/Journal.pages")));
         assert!(!is_markdown(Path::new("a/Journal.pages")));

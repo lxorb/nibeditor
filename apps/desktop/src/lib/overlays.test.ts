@@ -181,6 +181,7 @@ describe('what hides a web page', () => {
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
     'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
+    'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/WebApprove.svelte': 'another computer asking for the web logins, under the bar',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
