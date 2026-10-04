@@ -246,6 +246,10 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+S | put it on the disk, which means one thing for each kind of tab. A note with a file writes itself a moment after it changes, so the key writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A tab with no file yet - a new note, plane or page note, or a web tab nobody has kept - is asked where it goes and under what name, in the small layer under its tab; see `save-place/ask.ts`. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
 | Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
+| Ctrl+Alt+Space | **quick add**: one line over the note, its recognised words drawn as chips, landing in the space's Inbox. Once nib is running the same key opens a small window of its own over every other app (Settings, General, From any app switches that off), and moving the key in Settings moves both. Ctrl+Option+Space on a Mac, where Cmd+Ctrl+Space is the emoji picker. See docs/tasks.md 5.6 |
+| Enter, Shift+Enter, Ctrl+Enter, Escape in quick add | add and keep the field for the next task (Todoist's habit); a second line for the description; add and open the note at the task; put it away. A chip clicked is words again |
+| Q | quick add, where no field has the keyboard: the Tasks panel and a view read it (`tasks.quick-add`), as Todoist's own key |
+| Tab after a date typed at the end of a task | takes the day offered quietly after the caret: the words go and `📅` and the date are written where the Tasks plugin reads them. Anything else leaves the words as typed, and Enter is the next task as always |
 
 **The panels**
 
