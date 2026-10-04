@@ -31,6 +31,8 @@ export type Command =
   | { kind: 'voice'; on: boolean }
   /** Everything after the word "question", to be asked of a model. */
   | { kind: 'question'; asked: string }
+  /** Everything after "task" ("Aufgabe"), to be added to the inbox. */
+  | { kind: 'task'; said: string }
 
 /** The numbers a recogniser writes as words. Up to twenty and then the tens, which
  *  covers every page of a note anybody reads on a pair of glasses; past that it
@@ -253,6 +255,20 @@ const PHRASES: readonly Phrase[] = [
     words: ['question'],
     of: (rest) => (rest ? { kind: 'question', asked: rest } : null),
     label: key('Ask a question'),
+  },
+  {
+    id: 'task',
+    takes: true,
+    words: ['task'],
+    of: (rest) => (rest ? { kind: 'task', said: rest } : null),
+    label: key('Add a task'),
+  },
+  // German's word for one, kept whatever "task" is rebound to (docs/tasks.md 5.18).
+  {
+    id: 'task-de',
+    takes: true,
+    words: ['aufgabe'],
+    of: (rest) => (rest ? { kind: 'task', said: rest } : null),
   },
   { id: 'next', words: ['next'], of: () => ({ kind: 'next' }), label: key('Next page') },
   { id: 'back', words: ['back'], of: () => ({ kind: 'back' }), label: key('Previous page') },

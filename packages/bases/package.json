@@ -12,6 +12,7 @@
     "./occurrence": "./src/occurrence.ts",
     "./rows": "./src/note-rows.ts",
     "./scan": "./src/scan.ts",
+    "./tasks": "./src/agent/light.ts",
     "./tasks-query": "./src/tasks-query.ts",
     "./types": "./src/types.ts"
   },

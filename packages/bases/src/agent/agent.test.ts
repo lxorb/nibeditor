@@ -324,3 +324,27 @@ describe('bases', () => {
     expect(() => editedBase(base, [{ op: 'rename' }])).toThrow(AgentError)
   })
 })
+
+describe('Today without the engine', () => {
+  test('is what the engine answers for Today, row for row', async () => {
+    const { todayTasks } = await import('./today')
+    const many = [
+      ...rows,
+      ...rowsOfText(
+        'Home',
+        'More.md',
+        [
+          '- [ ] Late and urgent 🔺 📅 2026-10-01',
+          '- [ ] Scheduled today [time:: 09:00] ⏳ 2026-10-04',
+          '- [ ] Not started yet 🛫 2026-10-05 📅 2026-10-04',
+          '- [ ] Early [time:: 07:00] 📅 2026-10-04',
+          '- [-] Cancelled 📅 2026-10-04',
+          '- [ ] Later 📅 2026-10-09',
+        ].join('\n'),
+      ),
+    ]
+    const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
+    expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
+    expect(engine).toHaveLength(5)
+  })
+})

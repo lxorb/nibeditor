@@ -23,6 +23,7 @@ const WORDS: Words = {
   settings: 'Settings',
   reset: 'Reset glasses settings',
   done: 'Done',
+  today: 'Today',
 }
 
 const paging = { breakAt: 2, gutter: 0, inner: BODY_INNER, rows: BODY_ROWS }
@@ -40,6 +41,9 @@ const WORLD: World = {
   listening: () => false,
   atSpace: () => '',
   atNote: () => '',
+  today: () => [],
+  freshToday: () => undefined,
+  tick: () => undefined,
 }
 
 class FakeSettings implements Settings {
