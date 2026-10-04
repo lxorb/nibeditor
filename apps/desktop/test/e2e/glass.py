@@ -35,6 +35,7 @@ beside this file under `shots/glass/`, which is ignored.
 
 from __future__ import annotations
 
+import re
 
 from playwright.sync_api import Browser, Page
 
@@ -262,6 +263,15 @@ TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
 finished: set[object] = set()
 
 
+def channels(said: str) -> tuple[int, ...]:
+    """A computed colour as its four channels, however the engine spelled it: the
+    paper is `rgb()` until a dial mixes it, and `color(srgb …)` after."""
+    parts = [float(one) for one in re.findall(r"[\d.]+", said)]
+    scale = 255 if said.startswith("color(") else 1
+    alpha = parts[3] if len(parts) > 3 else 1
+    return (*(round(one * scale) for one in parts[:3]), round(alpha * 255))
+
+
 def shows(what: str, saw: object, wanted: object) -> None:
     if saw == wanted:
         say(f"ok   {what}: {saw!r}")
@@ -396,11 +406,13 @@ def drive(browser: Browser, scheme: str) -> None:
     stand(page, DESKS["mica"][scheme]["paint"], "mica")
     shows(
         f"[{scheme}] the note stands on paper of its own",
-        page.evaluate("() => getComputedStyle(document.querySelector('.pane')).backgroundColor"),
-        page.evaluate(
-            "() => { const probe = document.createElement('span');"
-            " probe.style.color = 'var(--bg)'; document.body.append(probe);"
-            " const said = getComputedStyle(probe).color; probe.remove(); return said }"
+        channels(page.evaluate("() => getComputedStyle(document.querySelector('.pane')).backgroundColor")),
+        channels(
+            page.evaluate(
+                "() => { const probe = document.createElement('span');"
+                " probe.style.color = 'var(--bg)'; document.body.append(probe);"
+                " const said = getComputedStyle(probe).color; probe.remove(); return said }"
+            )
         ),
     )
     shows(
