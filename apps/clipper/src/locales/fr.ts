@@ -80,4 +80,6 @@ export const fr: Dictionary = {
   'sign in first': 'Connectez-vous d’abord',
   'no such space': 'Cet espace n’existe pas',
   'that path is not usable': 'Ce chemin n’est pas utilisable',
+  // A page as a task in the inbox
+  'As a task': 'En tâche',
 }

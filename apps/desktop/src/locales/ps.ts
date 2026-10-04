@@ -1909,4 +1909,15 @@ export const ps: Dictionary = {
   'New private tab': 'نوې شخصي ټب',
   'All spaces': 'ټول ځایونه',
   'the data could not be deleted': 'معلومات ړنګ نه شول',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'کارونه',
+  'Plan my day': 'زما ورځ پلان کړه',
+  'Add a task': 'کار زیات کړه',
+  'Some repeating dates stay as words under their tasks':
+    'ځینې تکرارونه د خپلو کارونو لاندې د متن په توګه پاتې کیږي',
+  'Todoist did not take that token.': 'Todoist هغه ټوکن ونه مانه.',
+  'Todoist could not be reached.': 'Todoist ته رسېدل ونه شول.',
+  'API token': 'د API ټوکن',
+  'Done tasks too': 'بشپړ شوي کارونه هم',
+  'As a task': 'د کار په توګه',
 }

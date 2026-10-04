@@ -1912,4 +1912,15 @@ export const pa: Dictionary = {
   'New private tab': 'ਨਵੀਂ ਨਿੱਜੀ ਟੈਬ',
   'All spaces': 'ਸਾਰੀਆਂ ਸਪੇਸਾਂ',
   'the data could not be deleted': 'ਡਾਟਾ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'ਕੰਮ',
+  'Plan my day': 'ਮੇਰਾ ਦਿਨ ਯੋਜਨਾਬੱਧ ਕਰੋ',
+  'Add a task': 'ਕੰਮ ਜੋੜੋ',
+  'Some repeating dates stay as words under their tasks':
+    'ਕੁਝ ਦੁਹਰਾਅ ਆਪਣੇ ਕੰਮਾਂ ਹੇਠ ਲਿਖਤ ਵਜੋਂ ਰਹਿ ਗਏ',
+  'Todoist did not take that token.': 'Todoist ਨੇ ਉਹ ਟੋਕਨ ਸਵੀਕਾਰ ਨਹੀਂ ਕੀਤਾ।',
+  'Todoist could not be reached.': 'Todoist ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ।',
+  'API token': 'API ਟੋਕਨ',
+  'Done tasks too': 'ਪੂਰੇ ਹੋਏ ਕੰਮ ਵੀ',
+  'As a task': 'ਕੰਮ ਵਜੋਂ',
 }

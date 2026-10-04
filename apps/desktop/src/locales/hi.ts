@@ -1904,4 +1904,15 @@ export const hi: Dictionary = {
   'New private tab': 'नया निजी टैब',
   'All spaces': 'सभी स्पेस',
   'the data could not be deleted': 'डेटा मिटाया नहीं जा सका',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'कार्य',
+  'Plan my day': 'मेरा दिन प्लान करें',
+  'Add a task': 'कार्य जोड़ें',
+  'Some repeating dates stay as words under their tasks':
+    'कुछ दोहराव अपने कार्यों के नीचे पाठ के रूप में रह गए',
+  'Todoist did not take that token.': 'Todoist ने वह टोकन स्वीकार नहीं किया।',
+  'Todoist could not be reached.': 'Todoist तक नहीं पहुँचा जा सका।',
+  'API token': 'API टोकन',
+  'Done tasks too': 'पूरे हुए कार्य भी',
+  'As a task': 'कार्य के रूप में',
 }

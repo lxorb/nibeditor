@@ -1868,4 +1868,15 @@ export const th: Dictionary = {
   'New private tab': 'แท็บส่วนตัวใหม่',
   'All spaces': 'ทุกพื้นที่',
   'the data could not be deleted': 'ลบข้อมูลไม่ได้',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'สิ่งที่ต้องทำ',
+  'Plan my day': 'วางแผนวันของฉัน',
+  'Add a task': 'เพิ่มงาน',
+  'Some repeating dates stay as words under their tasks':
+    'การทำซ้ำบางรายการยังเป็นข้อความใต้งานของมัน',
+  'Todoist did not take that token.': 'Todoist ไม่ยอมรับโทเค็นนั้น',
+  'Todoist could not be reached.': 'ติดต่อ Todoist ไม่ได้',
+  'API token': 'โทเค็น API',
+  'Done tasks too': 'รวมงานที่เสร็จแล้ว',
+  'As a task': 'เป็นงาน',
 }

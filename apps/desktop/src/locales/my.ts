@@ -1891,4 +1891,15 @@ export const my: Dictionary = {
   'New private tab': 'တဘ်သီးသန့် အသစ်',
   'All spaces': 'နေရာအားလုံး',
   'the data could not be deleted': 'ဒေတာကို ဖျက်၍မရပါ',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'လုပ်ရန်များ',
+  'Plan my day': 'ကျွန်ုပ်၏နေ့ကို စီစဉ်ပါ',
+  'Add a task': 'လုပ်ငန်း ထည့်ပါ',
+  'Some repeating dates stay as words under their tasks':
+    'ထပ်ခါထပ်ခါ အချို့ကို ၎င်းတို့၏လုပ်ငန်းအောက်တွင် စာသားအဖြစ် ထားရှိသည်',
+  'Todoist did not take that token.': 'Todoist က ထိုတိုကင်ကို လက်မခံပါ။',
+  'Todoist could not be reached.': 'Todoist ကို ဆက်သွယ်၍ မရပါ။',
+  'API token': 'API တိုကင်',
+  'Done tasks too': 'ပြီးသောလုပ်ငန်းများပါ',
+  'As a task': 'လုပ်ငန်းအဖြစ်',
 }

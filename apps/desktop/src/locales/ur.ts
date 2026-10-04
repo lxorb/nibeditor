@@ -1904,4 +1904,15 @@ export const ur: Dictionary = {
   'New private tab': 'نیا نجی ٹیب',
   'All spaces': 'تمام اسپیسز',
   'the data could not be deleted': 'ڈیٹا حذف نہیں کیا جا سکا',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'کام',
+  'Plan my day': 'میرا دن پلان کریں',
+  'Add a task': 'کام شامل کریں',
+  'Some repeating dates stay as words under their tasks':
+    'کچھ تکرار اپنے کاموں کے نیچے متن کے طور پر رہ گئے',
+  'Todoist did not take that token.': 'Todoist نے وہ ٹوکن قبول نہیں کیا۔',
+  'Todoist could not be reached.': 'Todoist تک رسائی نہیں ہو سکی۔',
+  'API token': 'API ٹوکن',
+  'Done tasks too': 'مکمل کام بھی',
+  'As a task': 'بطور کام',
 }

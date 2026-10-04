@@ -77,4 +77,6 @@ export const yue: Dictionary = {
   'sign in first': '請先登入',
   'no such space': '冇呢個空間',
   'that path is not usable': '嗰個路徑用唔到',
+  // A page as a task in the inbox
+  'As a task': '當任務',
 }

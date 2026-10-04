@@ -81,4 +81,6 @@ export const ar: Dictionary = {
   'sign in first': 'سجّل الدخول أولًا',
   'no such space': 'لا مساحة بهذا الاسم',
   'that path is not usable': 'المسار غير قابل للاستخدام',
+  // A page as a task in the inbox
+  'As a task': 'كمهمة',
 }

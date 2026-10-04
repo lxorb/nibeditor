@@ -79,4 +79,6 @@ export const ptPT: Dictionary = {
   'sign in first': 'iniciar sessão primeiro',
   'no such space': 'não há esse espaço',
   'that path is not usable': 'esse caminho não serve',
+  // A page as a task in the inbox
+  'As a task': 'Como tarefa',
 }

@@ -1913,4 +1913,15 @@ export const tr: Dictionary = {
   'New private tab': 'Yeni gizli sekme',
   'All spaces': 'Tüm alanlar',
   'the data could not be deleted': 'Veriler silinemedi',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Yapılacaklar',
+  'Plan my day': 'Günümü planla',
+  'Add a task': 'Görev ekle',
+  'Some repeating dates stay as words under their tasks':
+    'Bazı tekrarlar görevlerinin altında metin olarak kalır',
+  'Todoist did not take that token.': 'Todoist bu jetonu kabul etmedi.',
+  'Todoist could not be reached.': 'Todoist’e ulaşılamadı.',
+  'API token': 'API jetonu',
+  'Done tasks too': 'Tamamlanan görevler de',
+  'As a task': 'Görev olarak',
 }

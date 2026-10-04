@@ -2015,4 +2015,14 @@ export const ar: Dictionary = {
   'New private tab': 'علامة تبويب خاصة جديدة',
   'All spaces': 'كل المساحات',
   'the data could not be deleted': 'تعذّر حذف البيانات',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'المهام',
+  'Plan my day': 'خطّط يومي',
+  'Add a task': 'أضف مهمة',
+  'Some repeating dates stay as words under their tasks': 'بعض التكرارات بقيت نصًا تحت مهامها',
+  'Todoist did not take that token.': 'لم يقبل Todoist هذا الرمز.',
+  'Todoist could not be reached.': 'تعذّر الوصول إلى Todoist.',
+  'API token': 'رمز API',
+  'Done tasks too': 'والمهام المنجزة أيضًا',
+  'As a task': 'كمهمة',
 }

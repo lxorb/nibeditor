@@ -97,4 +97,6 @@ export const de: Dictionary = {
   'sign in first': 'Melde dich zuerst an',
   'no such space': 'Diesen Bereich gibt es nicht',
   'that path is not usable': 'Dieser Pfad geht nicht',
+  // A page as a task in the inbox
+  'As a task': 'Als Aufgabe',
 }

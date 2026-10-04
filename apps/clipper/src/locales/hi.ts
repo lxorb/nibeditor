@@ -76,4 +76,6 @@ export const hi: Dictionary = {
   'sign in first': 'पहले साइन इन करें',
   'no such space': 'ऐसा कोई स्पेस नहीं',
   'that path is not usable': 'वह पथ काम का नहीं',
+  // A page as a task in the inbox
+  'As a task': 'कार्य के रूप में',
 }

@@ -1907,4 +1907,15 @@ export const fa: Dictionary = {
   'New private tab': 'برگه خصوصی جدید',
   'All spaces': 'همه فضاها',
   'the data could not be deleted': 'داده‌ها حذف نشد',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'کارها',
+  'Plan my day': 'برنامه‌ریزی روزم',
+  'Add a task': 'افزودن کار',
+  'Some repeating dates stay as words under their tasks':
+    'برخی تکرارها به‌صورت متن زیر کارهایشان می‌مانند',
+  'Todoist did not take that token.': 'Todoist آن توکن را نپذیرفت.',
+  'Todoist could not be reached.': 'دسترسی به Todoist ممکن نشد.',
+  'API token': 'توکن API',
+  'Done tasks too': 'کارهای انجام‌شده هم',
+  'As a task': 'به‌عنوان کار',
 }

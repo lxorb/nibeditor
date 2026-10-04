@@ -149,6 +149,7 @@ function linesOf(
   return lines
 }
 
+/** How many rules could not be read again, which the sheet mentions. */
 interface Kept {
   words: number
 }
@@ -198,12 +199,11 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
     files.push({ kind: 'note', path, text: lines.length ? `${lines.join('\n')}\n` : '' })
   }
 
-  const lost: Lost[] = kept.words ? [{ text: WORDS, one: WORD, values: { count: kept.words } }] : []
+  const lost: Lost[] = kept.words ? [{ text: WORDS }] : []
   return { format: 'todoist', files, lost, ...(inbox ? { inbox } : {}) }
 }
 
-const WORDS = key('{count} repeating dates kept as words under their tasks')
-const WORD = key('{count} repeating date kept as words under its task')
+const WORDS = key('Some repeating dates stay as words under their tasks')
 
 // ---- the CSV -------------------------------------------------------------------------
 

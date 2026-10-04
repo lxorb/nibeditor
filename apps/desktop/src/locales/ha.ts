@@ -1935,4 +1935,15 @@ export const ha: Dictionary = {
   'New private tab': 'Sabon shafi na sirri',
   'All spaces': 'Duk wurare',
   'the data could not be deleted': 'Ba a iya goge bayanan ba',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Ayyuka',
+  'Plan my day': 'Tsara ranata',
+  'Add a task': 'Ƙara aiki',
+  'Some repeating dates stay as words under their tasks':
+    'Wasu maimaitawa sun zauna a matsayin rubutu ƙarƙashin ayyukansu',
+  'Todoist did not take that token.': 'Todoist bai karɓi wannan alamar ba.',
+  'Todoist could not be reached.': 'Ba a iya isa Todoist ba.',
+  'API token': 'Alamar API',
+  'Done tasks too': 'Har da ayyukan da aka gama',
+  'As a task': 'A matsayin aiki',
 }

@@ -1959,4 +1959,15 @@ export const es: Dictionary = {
   'New private tab': 'Nueva pestaña privada',
   'All spaces': 'Todos los espacios',
   'the data could not be deleted': 'No se han podido eliminar los datos',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tareas',
+  'Plan my day': 'Planificar mi día',
+  'Add a task': 'Añadir una tarea',
+  'Some repeating dates stay as words under their tasks':
+    'Algunas repeticiones quedan como texto bajo sus tareas',
+  'Todoist did not take that token.': 'Todoist no aceptó ese token.',
+  'Todoist could not be reached.': 'No se pudo conectar con Todoist.',
+  'API token': 'Token de API',
+  'Done tasks too': 'También las tareas hechas',
+  'As a task': 'Como tarea',
 }

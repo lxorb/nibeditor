@@ -1887,4 +1887,15 @@ export const vi: Dictionary = {
   'New private tab': 'Thẻ riêng tư mới',
   'All spaces': 'Mọi không gian',
   'the data could not be deleted': 'Không xoá được dữ liệu',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Việc cần làm',
+  'Plan my day': 'Lên kế hoạch ngày của tôi',
+  'Add a task': 'Thêm việc',
+  'Some repeating dates stay as words under their tasks':
+    'Một số lặp lại được giữ dạng chữ dưới việc của chúng',
+  'Todoist did not take that token.': 'Todoist không chấp nhận token đó.',
+  'Todoist could not be reached.': 'Không kết nối được Todoist.',
+  'API token': 'Token API',
+  'Done tasks too': 'Cả việc đã xong',
+  'As a task': 'Thành việc cần làm',
 }

@@ -74,4 +74,6 @@ export const fa: Dictionary = {
   'sign in first': 'نخست وارد شوید',
   'no such space': 'چنین فضایی نیست',
   'that path is not usable': 'آن مسیر به‌کار نمی‌آید',
+  // A page as a task in the inbox
+  'As a task': 'به‌عنوان کار',
 }

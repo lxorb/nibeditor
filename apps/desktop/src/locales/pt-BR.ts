@@ -1943,4 +1943,15 @@ export const ptBR: Dictionary = {
   'New private tab': 'Nova guia privada',
   'All spaces': 'Todos os espaços',
   'the data could not be deleted': 'Não foi possível excluir os dados',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tarefas',
+  'Plan my day': 'Planejar meu dia',
+  'Add a task': 'Adicionar uma tarefa',
+  'Some repeating dates stay as words under their tasks':
+    'Algumas repetições ficam como texto sob suas tarefas',
+  'Todoist did not take that token.': 'O Todoist não aceitou esse token.',
+  'Todoist could not be reached.': 'Não foi possível acessar o Todoist.',
+  'API token': 'Token de API',
+  'Done tasks too': 'Tarefas concluídas também',
+  'As a task': 'Como tarefa',
 }

@@ -78,4 +78,6 @@ export const bn: Dictionary = {
   'sign in first': 'আগে সাইন ইন করুন',
   'no such space': 'এমন স্পেস নেই',
   'that path is not usable': 'পাথটি ব্যবহারযোগ্য নয়',
+  // A page as a task in the inbox
+  'As a task': 'কাজ হিসেবে',
 }

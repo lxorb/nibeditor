@@ -1880,4 +1880,15 @@ export const ko: Dictionary = {
   'New private tab': '새 비공개 탭',
   'All spaces': '모든 공간',
   'the data could not be deleted': '데이터를 삭제할 수 없습니다',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': '할 일',
+  'Plan my day': '오늘 계획 세우기',
+  'Add a task': '할 일 추가',
+  'Some repeating dates stay as words under their tasks':
+    '일부 반복은 할 일 아래에 텍스트로 남습니다',
+  'Todoist did not take that token.': 'Todoist가 그 토큰을 받지 않았습니다.',
+  'Todoist could not be reached.': 'Todoist에 연결할 수 없습니다.',
+  'API token': 'API 토큰',
+  'Done tasks too': '완료한 할 일도',
+  'As a task': '할 일로',
 }

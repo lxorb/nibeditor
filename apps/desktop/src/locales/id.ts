@@ -1899,4 +1899,15 @@ export const id: Dictionary = {
   'New private tab': 'Tab pribadi baru',
   'All spaces': 'Semua ruang',
   'the data could not be deleted': 'Data tidak dapat dihapus',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tugas',
+  'Plan my day': 'Rencanakan hariku',
+  'Add a task': 'Tambah tugas',
+  'Some repeating dates stay as words under their tasks':
+    'Beberapa pengulangan tetap berupa teks di bawah tugasnya',
+  'Todoist did not take that token.': 'Todoist tidak menerima token itu.',
+  'Todoist could not be reached.': 'Todoist tidak dapat dihubungi.',
+  'API token': 'Token API',
+  'Done tasks too': 'Termasuk tugas selesai',
+  'As a task': 'Sebagai tugas',
 }

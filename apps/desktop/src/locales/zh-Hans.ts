@@ -1858,4 +1858,14 @@ export const zhHans: Dictionary = {
   'New private tab': '新建无痕标签页',
   'All spaces': '所有空间',
   'the data could not be deleted': '无法删除数据',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': '待办',
+  'Plan my day': '规划我的一天',
+  'Add a task': '添加任务',
+  'Some repeating dates stay as words under their tasks': '部分重复规则以文字保留在任务下方',
+  'Todoist did not take that token.': 'Todoist 未接受该令牌。',
+  'Todoist could not be reached.': '无法连接 Todoist。',
+  'API token': 'API 令牌',
+  'Done tasks too': '包括已完成的任务',
+  'As a task': '作为任务',
 }

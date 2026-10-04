@@ -9,6 +9,8 @@
 import { done, failed, working } from './badge'
 import { clip, save } from './clip'
 import { firstOf, refreshSpaces } from '../lib/account'
+import { api, ApiError } from '../lib/api'
+import { type Pressed, taskText } from '../lib/task'
 import { filledQuietly } from '../lib/interpreting'
 import { type Kind, KINDS, LABELS } from '../lib/kinds'
 import { type Answer, type Ask, readAsk } from '../lib/messages'
@@ -46,6 +48,44 @@ async function buildMenus() {
       title: said(LABELS[kind]),
       contexts: WHERE[kind],
     })
+  }
+
+  // The page, the link or the words as a task in the inbox, wherever the menu opens.
+  chrome.contextMenus.create({
+    id: TASK,
+    parentId: PARENT,
+    title: said(AS_A_TASK),
+    contexts: EVERYWHERE,
+  })
+}
+
+const TASK = 'task'
+const AS_A_TASK = 'As a task'
+
+/** A task in the inbox of the space the last clip went to, the badge saying how it went. */
+async function asATask(tabId: number, pressed: Pressed) {
+  const held = await settings()
+  const said = await words(held.language)
+  working(tabId)
+
+  if (!held.token) {
+    failed(tabId, said(PROBLEMS.signIn))
+    return
+  }
+  const spaceId = await targetSpace(held)
+  if (!spaceId) {
+    failed(tabId, said(PROBLEMS.noSpaces))
+    return
+  }
+
+  try {
+    const added = await api.addTask(held.token, spaceId, taskText(pressed))
+    done(tabId, added.path)
+  } catch (error) {
+    failed(
+      tabId,
+      said(error instanceof ApiError && error.status !== 0 ? error.message : PROBLEMS.unreachable),
+    )
   }
 }
 
@@ -124,6 +164,16 @@ chrome.storage.onChanged.addListener((changes) => {
 })
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === TASK && tab?.id !== undefined) {
+    void asATask(tab.id, {
+      title: tab.title ?? '',
+      url: tab.url ?? info.pageUrl ?? '',
+      ...(info.linkUrl ? { link: info.linkUrl } : {}),
+      ...(info.selectionText ? { selection: info.selectionText } : {}),
+    })
+    return
+  }
+
   const kind = KINDS.find((one) => one === info.menuItemId)
   if (!kind || tab?.id === undefined) return
 

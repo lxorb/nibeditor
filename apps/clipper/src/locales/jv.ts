@@ -75,4 +75,6 @@ export const jv: Dictionary = {
   'sign in first': 'mlebu dhisik',
   'no such space': 'ora ana papan kuwi',
   'that path is not usable': 'dalan kuwi ora bisa dipakai',
+  // A page as a task in the inbox
+  'As a task': 'Dadi tugas',
 }

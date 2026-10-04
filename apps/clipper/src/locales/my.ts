@@ -76,4 +76,6 @@ export const my: Dictionary = {
   'sign in first': 'ဦးစွာဝင်ပါ',
   'no such space': 'ထိုနေရာ မရှိပါ',
   'that path is not usable': 'ထိုလမ်းကြောင်း အသုံးမပြုနိုင်ပါ',
+  // A page as a task in the inbox
+  'As a task': 'လုပ်ငန်းအဖြစ်',
 }

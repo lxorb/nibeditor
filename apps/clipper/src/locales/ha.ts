@@ -75,4 +75,6 @@ export const ha: Dictionary = {
   'sign in first': 'shiga da farko',
   'no such space': 'babu irin wannan wurin',
   'that path is not usable': 'ba za a iya amfani da wannan hanyar ba',
+  // A page as a task in the inbox
+  'As a task': 'A matsayin aiki',
 }
