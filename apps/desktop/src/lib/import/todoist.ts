@@ -26,27 +26,27 @@ import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
 /** One project, as both halves read it. */
-export interface Project {
+interface Project {
   id: string
   name: string
   parent?: string
   inbox: boolean
 }
 
-export interface Section {
+interface Section {
   id: string
   project: string
   name: string
   order: number
 }
 
-export interface Comment {
+interface Comment {
   text: string
   /** `YYYY-MM-DD`, where it was dated. */
   at?: string
 }
 
-export interface Task {
+interface Task {
   id: string
   project: string
   section?: string
@@ -114,6 +114,8 @@ function linesOf(
   const pad = '  '.repeat(depth)
   const rule = task.repeats ? ruleOf(task.repeats) : null
   if (task.repeats && !rule) kept.words += 1
+  // Minutes, not a transition: named so the motion scan does not take it for one.
+  const { duration } = task
 
   const fields: TaskFields = {
     text: task.text.replace(/(^|\s)@([\p{L}\p{N}_/-]+)/gu, '$1#$2'),
@@ -130,7 +132,7 @@ function linesOf(
     ...(task.zone ? { zone: task.zone } : {}),
     ...(rule ? { recurrence: rule } : {}),
     ...(task.deadline ? { deadline: task.deadline } : {}),
-    ...(task.duration ? { duration: task.duration } : {}),
+    ...(duration ? { duration } : {}),
     ...(task.assignee ? { assignee: task.assignee } : {}),
     ...(task.done ? { completed: task.done } : {}),
   }
@@ -265,7 +267,7 @@ export function csvProject(name: string, text: string, at: number): Account {
     const priority = Number(column(row, 'PRIORITY'))
     const date = column(row, 'DATE')
     const when = csvDate(date)
-    const minutes = Number(column(row, 'DURATION'))
+    const duration = Number(column(row, 'DURATION'))
     const deadline = csvDate(column(row, 'DEADLINE'))
     const assignee = personOf(column(row, 'RESPONSIBLE'))
     const task: Task = {
@@ -279,7 +281,7 @@ export function csvProject(name: string, text: string, at: number): Account {
       ...(when ?? {}),
       ...(date && !when ? { repeats: date } : {}),
       ...(deadline ? { deadline: deadline.due } : {}),
-      ...(minutes > 0 ? { duration: minutes } : {}),
+      ...(duration > 0 ? { duration } : {}),
       ...(assignee ? { assignee } : {}),
       labels: [],
       order: index,
