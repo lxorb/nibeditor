@@ -1958,4 +1958,13 @@ export const ha: Dictionary = {
   'New private tab': 'Sabon shafi na sirri',
   'All spaces': 'Duk wurare',
   'the data could not be deleted': 'Ba a iya goge bayanan ba',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Jinkirta',
+  Tomorrow: 'Gobe',
+  Reminders: 'Tunatarwa',
+  'Reminders ring while nibeditor is open': 'Tunatarwa na kara yayin da nibeditor ke bude',
+  Automatic: 'Kai tsaye',
+  'At the time': 'A lokacin',
+  'Stay in the tray': 'Zauna a tire',
+  'Exact alarms': 'Ƙararrawa daidai',
 }

@@ -130,7 +130,16 @@
   // registered and never came back goes, and the record proving each domain of
   // somebody's own is read again. See `scheduled` in src/index.ts, which names
   // the five.
-  "triggers": { "crons": ["0 3 * * *"] },
+  //
+  // And each minute, the reminders due by now pushed to the devices that asked for them;
+  // see push/reminders.ts. Push needs keys that are secrets of their own, each service off
+  // until its keys are set (docs/mobile.md, "Push"):
+  //   VAPID_PUBLIC_KEY      a var below once made; the browser build subscribes with it
+  //   wrangler secret put VAPID_PRIVATE_KEY
+  //   wrangler secret put FCM_SERVICE_ACCOUNT     the Firebase service account's JSON key
+  //   wrangler secret put APNS_KEY                the .p8, with APNS_KEY_ID, APNS_TEAM_ID
+  //                                               and APNS_TOPIC as vars
+  "triggers": { "crons": ["0 3 * * *", "* * * * *"] },
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
     { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" },

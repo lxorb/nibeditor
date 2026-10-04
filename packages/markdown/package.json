@@ -43,6 +43,7 @@
     "./tags": "./src/tags.ts",
     "./task-edits": "./src/task-edits.ts",
     "./task-line": "./src/task-line.ts",
+    "./task-reminders": "./src/task-reminders.ts",
     "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts",
     "./words": "./src/words.ts"

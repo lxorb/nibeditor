@@ -1979,4 +1979,13 @@ export const ptPT: Dictionary = {
   'New private tab': 'Novo separador privado',
   'All spaces': 'Todos os espaços',
   'the data could not be deleted': 'Não foi possível eliminar os dados',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Adiar',
+  Tomorrow: 'Amanhã',
+  Reminders: 'Lembretes',
+  'Reminders ring while nibeditor is open': 'Os lembretes tocam enquanto o nibeditor está aberto',
+  Automatic: 'Automático',
+  'At the time': 'À hora',
+  'Stay in the tray': 'Ficar na área de notificação',
+  'Exact alarms': 'Alarmes exatos',
 }

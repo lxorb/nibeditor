@@ -1927,4 +1927,13 @@ export const ur: Dictionary = {
   'New private tab': 'نیا نجی ٹیب',
   'All spaces': 'تمام اسپیسز',
   'the data could not be deleted': 'ڈیٹا حذف نہیں کیا جا سکا',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'اسنوز',
+  Tomorrow: 'کل',
+  Reminders: 'یاددہانیاں',
+  'Reminders ring while nibeditor is open': 'nibeditor کھلا ہونے تک یاددہانیاں بجتی ہیں',
+  Automatic: 'خودکار',
+  'At the time': 'وقت پر',
+  'Stay in the tray': 'ٹرے میں رہیں',
+  'Exact alarms': 'درست الارم',
 }

@@ -2038,4 +2038,13 @@ export const ar: Dictionary = {
   'New private tab': 'علامة تبويب خاصة جديدة',
   'All spaces': 'كل المساحات',
   'the data could not be deleted': 'تعذّر حذف البيانات',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'غفوة',
+  Tomorrow: 'غدًا',
+  Reminders: 'التذكيرات',
+  'Reminders ring while nibeditor is open': 'ترن التذكيرات ما دام nibeditor مفتوحًا',
+  Automatic: 'تلقائي',
+  'At the time': 'في الموعد',
+  'Stay in the tray': 'البقاء في شريط النظام',
+  'Exact alarms': 'منبهات دقيقة',
 }

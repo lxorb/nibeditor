@@ -131,6 +131,10 @@ mod query;
 #[cfg(desktop)]
 mod quick_add;
 mod regex;
+// Reminders handed to the system's own scheduler, and the presses on them; see
+// reminders.rs and docs/tasks.md 5.10. A phone's are the activity's.
+#[cfg(desktop)]
+mod reminders;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
@@ -306,6 +310,11 @@ macro_rules! desktop_commands {
             quick_add::quick_add_key,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
+            agents::shell::tray_keep,
+            reminders::reminders_set,
+            reminders::reminders_taken,
+            reminders::reminders_ring,
+            reminders::reminders_quietly,
             mcp::program::mcp_program,
             ai_agent::ai_agent_tools,
             ai_agent::ai_agent_call,
@@ -736,6 +745,10 @@ fn ready(
     // Links into the app, on every platform: the one the app was launched by, and
     // every one that arrives while it is running.
     uris::watch(handle);
+    // And the presses on what a Mac shows, heard from now so the one that started the
+    // app is not missed; see reminders.rs.
+    #[cfg(desktop)]
+    reminders::start(handle);
     trace::mark("deep links");
 
     // And the socket the `nib` command drives the app through, which only a
@@ -821,6 +834,10 @@ fn ready(
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
+        } else if uris::launched_quietly(handle) {
+            // Started by nothing but a reminder's Done: answered without a window on
+            // screen, from the tray; see reminders.rs.
+            building.visible(false).build()?;
         } else {
             let colour = ground::remembered(handle);
             let at_once = colour.is_some() && !cfg!(target_os = "macos");

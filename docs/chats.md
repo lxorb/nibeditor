@@ -709,7 +709,11 @@ optional presence dot; an optional mark in its corner) is the face of a person i
   payload carries the chat, the sender's name and the first 100 characters, unless Hide
   previews is on. A token that fails is dropped.
 - **One push for nib**: `docs/tasks.md` 5.10 needs the same for reminders; lane 6 builds it
-  once (`push/` in the Worker) and tasks' reminders use it.
+  once (`push/` in the Worker) and tasks' reminders use it. Built first by tasks' lane 5
+  (2026-10-04): `services/sync/src/push` sends to a target of any kind (`push` in
+  `send.ts`, a `Message` with `kind: 'chat'` is all a chat adds), and `push_targets` is
+  in `0044_push.sql`, so the chats migration leaves it out. What is left for this lane is
+  the clients' registration and the desktop-active rule; see docs/mobile.md, *Push*.
 - **Activity** (the Chats panel): mentions of you, replies to you and reactions to your
   messages, newest first, each opening the message; requests from strangers (4.18) on top.
 

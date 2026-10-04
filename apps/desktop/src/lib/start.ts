@@ -15,7 +15,15 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import { GIVE_UP, handBack, handingBack, settleUp, stillWriting, written } from './parting'
+import {
+  GIVE_UP,
+  handBack,
+  handingBack,
+  settleUp,
+  stillWriting,
+  trayKeeper,
+  written,
+} from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
@@ -169,6 +177,12 @@ export function start(): () => void {
   // for the engine they bring.
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
 
+  // And the reminders, which plan over those rows and hand the plan to whatever rings
+  // with nib closed; never the glasses' plugin. See reminders/start.svelte.ts.
+  if (!__EVEN_PLUGIN__) {
+    void startup.turn('right').then(() => import('./reminders/start.svelte'))
+  }
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {
@@ -261,11 +275,13 @@ let going = false
 async function onClose(event: Closing, window: Closable) {
   settle()
 
-  // An agent's pages live in this window: it hides instead, and the tray has Quit
-  // (docs/agent-native.md, open question 6).
-  if (agentMarks.holding && agentMarks.hide) {
+  // An agent's pages live in this window, or the reminders keep nib in the tray: it
+  // hides instead, and the tray has Quit (docs/agent-native.md, open question 6, and
+  // docs/tasks.md decision 6).
+  const hide = agentMarks.holding ? agentMarks.hide : trayKeeper()
+  if (hide) {
     event.preventDefault()
-    if ((await agentMarks.hide()) || going) return
+    if ((await hide()) || going) return
     // Not kept after all: the last agent went a moment ago.
     await go()
     await window.destroy()

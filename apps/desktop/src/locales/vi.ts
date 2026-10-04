@@ -1910,4 +1910,13 @@ export const vi: Dictionary = {
   'New private tab': 'Thẻ riêng tư mới',
   'All spaces': 'Mọi không gian',
   'the data could not be deleted': 'Không xoá được dữ liệu',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Báo lại',
+  Tomorrow: 'Ngày mai',
+  Reminders: 'Lời nhắc',
+  'Reminders ring while nibeditor is open': 'Lời nhắc chỉ đổ chuông khi nibeditor đang mở',
+  Automatic: 'Tự động',
+  'At the time': 'Đúng giờ',
+  'Stay in the tray': 'Ở lại khay hệ thống',
+  'Exact alarms': 'Báo thức chính xác',
 }

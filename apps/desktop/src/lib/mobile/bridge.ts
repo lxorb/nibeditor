@@ -55,6 +55,15 @@ export interface NibSystem {
   secretRead(said: string, name: string): string | null
   secretWrite(said: string, name: string, secret: string): void
   secretForget(said: string, name: string): void
+  /** The reminders' plan and the buttons' words, as JSON: the alarms the phone sets;
+   *  see reminders/platform.ts and Reminders.kt. */
+  reminders(said: string, json: string): void
+  /** Done and presses on a reminder since the page last asked, as JSON, once. */
+  remindersTaken(): string
+  /** Whether the phone rings an alarm at its minute rather than within a few. */
+  exactAlarms(): boolean
+  /** The system's own switch for exact alarms, opened once. */
+  askExactAlarms(): void
 }
 
 /** One method of the bridge, or nothing where there is no activity behind it. */

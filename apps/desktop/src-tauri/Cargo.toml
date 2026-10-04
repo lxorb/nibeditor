@@ -25,8 +25,9 @@ missing_docs = "warn"
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
-# lifecycle.rs), and the kernel's answer to which folder a terminal's shell is in
-# (terminal/process.rs). And the agents' own reach into WebView2 in src/agents: the
+# lifecycle.rs), the kernel's answer to which folder a terminal's shell is in
+# (terminal/process.rs), and the notification centre's delegate for reminders, made
+# and handed its answer through the Objective-C runtime (reminders/macos.rs). And the agents' own reach into WebView2 in src/agents: the
 # DevTools Protocol's calls and events, an agent tab's settings and the events it
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
 # keeping its client's pipes out of the app it starts (src/mcp/app.rs), which the app
@@ -283,6 +284,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "block2",
   "NSArray",
   "NSBundle",
+  "NSCalendar",
   "NSData",
   "NSDate",
   "NSDictionary",
@@ -320,6 +322,23 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSView",
   "NSWindow",
   "NSWorkspace",
+] }
+# A reminder as a notification request the system delivers at its minute with nib quit,
+# with Done and two snoozes; see reminders/macos.rs. Already in the lock file, as
+# something the AppKit bindings are built with.
+objc2-user-notifications = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "bitflags",
+  "UNNotification",
+  "UNNotificationAction",
+  "UNNotificationCategory",
+  "UNNotificationContent",
+  "UNNotificationRequest",
+  "UNNotificationResponse",
+  "UNNotificationSound",
+  "UNNotificationTrigger",
+  "UNUserNotificationCenter",
 ] }
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
@@ -402,6 +421,13 @@ windows = { version = "0.58", features = [
   # The shape of a web tab's page, with the app's layers over it cut out of it rather
   # than the page hidden for them; see web_cut.rs.
   "Win32_Graphics_Gdi",
+  # Reminders put on Windows' own schedule of toasts, which rings them with nib not
+  # running: the notifier, the toast's XML and the moment it rings. See
+  # reminders/toasts.rs.
+  "Foundation",
+  "Foundation_Collections",
+  "Data_Xml_Dom",
+  "UI_Notifications",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built

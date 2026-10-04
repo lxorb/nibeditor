@@ -379,6 +379,8 @@ export interface AccountSettings {
   glassesEffort?: string
   /** Where a pasted picture is written; one of attachments.ts's three. */
   attachments?: string
+  /** The automatic reminder's minutes before a task's time, -1 for none. */
+  remindBefore?: number
   /** The words the reader has said are words, which the checker is turned off
    *  over; see spelling.ts in the editor package. */
   spellWords?: string[]

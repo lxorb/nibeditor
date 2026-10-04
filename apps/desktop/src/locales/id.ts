@@ -1922,4 +1922,13 @@ export const id: Dictionary = {
   'New private tab': 'Tab pribadi baru',
   'All spaces': 'Semua ruang',
   'the data could not be deleted': 'Data tidak dapat dihapus',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Tunda',
+  Tomorrow: 'Besok',
+  Reminders: 'Pengingat',
+  'Reminders ring while nibeditor is open': 'Pengingat berbunyi selama nibeditor terbuka',
+  Automatic: 'Otomatis',
+  'At the time': 'Tepat waktu',
+  'Stay in the tray': 'Tetap di baki sistem',
+  'Exact alarms': 'Alarm tepat',
 }

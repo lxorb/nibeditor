@@ -78,12 +78,21 @@ describe('what Android may copy out of the app', () => {
 })
 
 describe('what the app asks the phone for', () => {
-  test('the microphone, for dictation, and nothing else beyond the network', () => {
+  test('the microphone, for dictation, the reminders, and nothing else beyond the network', () => {
     const asked = [...manifest.matchAll(/uses-permission android:name="([^"]+)"/g)].map(
       (one) => one[1],
     )
 
-    expect(asked).toEqual(['android.permission.INTERNET', 'android.permission.RECORD_AUDIO'])
+    // The reminders' three: showing one, an alarm at its minute, and the alarms set again
+    // after a reboot (Reminders.kt). Never USE_EXACT_ALARM, which is for clocks and
+    // calendars and which a store review refuses an app like this.
+    expect(asked).toEqual([
+      'android.permission.INTERNET',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.SCHEDULE_EXACT_ALARM',
+      'android.permission.RECEIVE_BOOT_COMPLETED',
+    ])
   })
 
   /** Deliberate, and load-bearing: the webview offers the camera for a `capture`

@@ -7,6 +7,7 @@ import { readBody } from './body'
 import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
+import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
 import {
@@ -177,6 +178,8 @@ export async function addNote(
   // same reason: the note is stored, and an index is rebuildable. See
   // blog/words.ts.
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
+  await keepReminders(env, note, content).catch(() => undefined)
 
   return note
 }
@@ -213,6 +216,7 @@ async function placeNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  await keepReminders(env, note, content).catch(() => undefined)
   return note
 }
 
@@ -379,6 +383,7 @@ export async function saveNote(
   // still lands on it. Best effort for the same reason. See blog/paths.ts.
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
+  await keepReminders(env, updated, content).catch(() => undefined)
 
   return updated
 }

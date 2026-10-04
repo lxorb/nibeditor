@@ -1928,4 +1928,13 @@ export const bn: Dictionary = {
   'New private tab': 'নতুন ব্যক্তিগত ট্যাব',
   'All spaces': 'সব স্পেস',
   'the data could not be deleted': 'ডেটা মোছা যায়নি',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'স্নুজ',
+  Tomorrow: 'আগামীকাল',
+  Reminders: 'রিমাইন্ডার',
+  'Reminders ring while nibeditor is open': 'nibeditor খোলা থাকলে রিমাইন্ডার বাজে',
+  Automatic: 'স্বয়ংক্রিয়',
+  'At the time': 'নির্দিষ্ট সময়ে',
+  'Stay in the tray': 'ট্রেতে থাকুন',
+  'Exact alarms': 'নির্ভুল অ্যালার্ম',
 }

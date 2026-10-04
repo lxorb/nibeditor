@@ -121,6 +121,9 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['devices', 'delete from devices where user_id = ?1'],
   ['web_states', 'delete from web_states where user_id = ?1'],
   ['web_chunks', 'delete from web_chunks where user_id = ?1'],
+  // Where its devices were pushed to, and the reminders kept to push them.
+  ['push_targets', 'delete from push_targets where user_id = ?1'],
+  ['push_reminders', 'delete from push_reminders where user_id = ?1'],
   ['users', 'delete from users where id = ?1'],
 ]
 

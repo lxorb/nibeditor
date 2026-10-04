@@ -964,6 +964,51 @@ receives and send Web Push and FCM at the time. That is a real piece of work (a 
 project, a service worker route, a cron every minute, and the privacy question of the server
 reading reminder times), and Emil decided to build it (8.5).
 
+**As built** (lane 5, 2026-10-04):
+
+- **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
+  app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
+  on the wall clock from the task's time on its due (else scheduled) day; a bare time is
+  on that day; an absolute one is its own moment; the automatic one is the account
+  setting `remindBefore` (0, 5, 15, 30, 60, or -1 for off; Settings > General >
+  Reminders), for every task with a day and a time. A floating time is the device's
+  clock, a written zone its own. The id is `reminderId`: FNV-1a 64 over the space, the
+  note, the words' hash and the minute, the same on every device and on the Worker.
+- **The scheduler**: `lib/reminders/plan.ts` (pure, the next 64) and `scheduler.ts` (the
+  store over `rows.watch`, quiet for 400 ms, nothing handed before every space is read,
+  the same plan never handed twice, planned again just after the first reminder passes
+  and at least every six hours). `start.svelte.ts` wires it after the rows, out of the
+  first paint (`weight.test.ts` unchanged).
+- **Windows**: `src-tauri/src/reminders/toasts.rs` puts each on `ToastNotifier`'s schedule
+  under the app's id, tagged with its id in the group `nib.reminders`; the toast
+  (`toast.rs`) is `scenario="reminder"` with the system's own snooze (15 min, 1 h,
+  tomorrow 9:00) and Done as a `nib://reminder` link. Proved by
+  `scripts/reminders-probe.py` on a probe of its own; where Windows refuses the id, the
+  page rings the plan itself while nib runs (7.3's fallback).
+- **macOS**: `reminders/macos.rs`, `UNCalendarNotificationTrigger` requests in one
+  category with Done and two snoozes (15 min, 1 h), the delegate set at launch so a
+  press that started the app is heard; a build that is not a bundle answers no and the
+  page rings. Compiled and linted on the Mac runner only.
+- **Presses**: every Done and press is a `nib://reminder?act=…&id=…&n=…` link (a Mac's
+  delegate hands them over directly). The nonce is made per reminder and kept in
+  `reminders.json` beside the settings for a week after it rang, so no link anybody
+  else writes can tick a task. Done ticks through `rows.write` (`lib/reminders/presses.ts`),
+  finding the line again by the words' hash; a press opens the note at the line. A
+  launch for nothing but a Done comes up without its window and goes again unless the
+  tray keeps it.
+- **Linux and the browser build**: the crate answers no, and the page rings the plan with
+  timers while it runs (`ring.ts`): the notification plugin on Linux, Web Notifications
+  in a browser, each reminder once a run.
+- **The tray** (decision 6): `residency.svelte.ts`, on by default while a reminder waits
+  (and while the quick add key is held, which lane 3 says through `residency.quickAdd`),
+  a switch in Settings, Windows and macOS only. One tray with the agents' (`tray_keep` in
+  `agents/shell.rs`): Open, the stop while agents are connected, Quit.
+- **Android**: `Reminders.kt` and `AlarmList.kt`; see docs/mobile.md, *Alarms*.
+- **The Worker**: `services/sync/src/push` and `0044_push.sql`; see docs/mobile.md,
+  *Push*, for what it sends, what is still the client's (lane 6 of docs/chats.md) and
+  the keys Emil has to make. Dry-run under `wrangler dev --test-scheduled`: a due row in
+  a local D1 was claimed by the minute's cron.
+
 ### 5.11 `.base` files, and nib's key
 
 A base nib writes is a base Obsidian reads. nib's additions go under one key, `nib:`, at the

@@ -1930,4 +1930,13 @@ export const fa: Dictionary = {
   'New private tab': 'برگه خصوصی جدید',
   'All spaces': 'همه فضاها',
   'the data could not be deleted': 'داده‌ها حذف نشد',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'تعویق',
+  Tomorrow: 'فردا',
+  Reminders: 'یادآورها',
+  'Reminders ring while nibeditor is open': 'یادآورها تا وقتی nibeditor باز است به صدا درمی‌آیند',
+  Automatic: 'خودکار',
+  'At the time': 'سر وقت',
+  'Stay in the tray': 'ماندن در سینی سیستم',
+  'Exact alarms': 'هشدارهای دقیق',
 }

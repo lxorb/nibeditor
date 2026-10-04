@@ -19,9 +19,14 @@
 //! **Never in a probe's.** A run whose windows are sent off the screen is a drive's, and
 //! a tray icon or a notification is on the screen of whoever is at the machine: neither
 //! is made there (`placement::away`).
+//!
+//! **The one tray.** Reminders keep nib in the same tray (docs/tasks.md decision 6): the
+//! window asks for it with `tray_keep` while a reminder waits or the reader turned it on,
+//! and the tray is then up with Open and Quit, and the stop as well while an agent is
+//! connected. Closing the window hides it while either wants the tray.
 
 use std::collections::HashMap;
-use std::sync::{Mutex, Once, PoisonError};
+use std::sync::{Mutex, Once, OnceLock, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde::Deserialize;
@@ -100,12 +105,13 @@ struct Shell {
     registered: Option<String>,
     /// Whether the global shortcut plugin is in the app yet.
     shortcuts: bool,
-    /// Whether the notification plugin is.
-    notifying: bool,
     /// The window hidden for the agents, by its label.
     hidden: Option<String>,
     /// Whether closing the window has been said this run.
     told_hidden: bool,
+    /// Whether the window keeps nib in the tray for its own sake: a reminder waiting,
+    /// or the reader's choice (`tray_keep`).
+    kept: bool,
 }
 
 static SHELL: Mutex<Option<Shell>> = Mutex::new(None);
@@ -131,8 +137,7 @@ pub fn start(app: &AppHandle) {
     STARTED.call_once(|| {
         let notifying = app.clone();
         let _ = app.run_on_main_thread(move || {
-            let added = notifying.plugin(tauri_plugin_notification::init()).is_ok();
-            with(|shell| shell.notifying = added);
+            notifications(&notifying);
         });
 
         let hearing = app.clone();
@@ -210,13 +215,46 @@ fn changed(app: &AppHandle) {
 fn settle(app: &AppHandle) {
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
-        let (on, words) = with(|shell| (!shell.said.is_empty(), shell.words.clone()));
-        tray(&handle, on, &words);
-        key(&handle, on);
-        if !on {
+        let (agents, kept, words) =
+            with(|shell| (!shell.said.is_empty(), shell.kept, shell.words.clone()));
+        tray(&handle, agents || kept, agents, &words);
+        key(&handle, agents);
+        if !agents && !kept {
             let_go(&handle);
         }
     });
+}
+
+/// The rows of the tray the window keeps nib in, in the reader's words.
+#[derive(Debug, Deserialize)]
+pub struct TrayWords {
+    show: String,
+    quit: String,
+}
+
+/// Whether the window keeps nib in the tray for its own sake: a reminder is waiting, or
+/// the reader asked for it (docs/tasks.md decision 6). With it, closing the window hides
+/// it, and Quit is in the tray.
+#[tauri::command]
+pub fn tray_keep(
+    webview: tauri::Webview,
+    app: AppHandle,
+    on: bool,
+    words: TrayWords,
+) -> Result<(), String> {
+    super::from_the_app(&webview)?;
+    with(|shell| {
+        shell.kept = on;
+        shell.words.show = words.show;
+        shell.words.quit = words.quit;
+    });
+    settle(&app);
+    Ok(())
+}
+
+/// Whether anything keeps nib in the tray now.
+pub fn in_tray() -> bool {
+    with(|shell| shell.kept || !shell.said.is_empty())
 }
 
 /// The window's words and the stop's key, in the system's own notation.
@@ -250,15 +288,17 @@ pub fn agents_hold(webview: tauri::Webview, app: AppHandle, hide: bool) -> Resul
         return Ok(holds);
     }
     // Nothing to keep it for any more: the window closes the ordinary way.
-    if !holds || connected().is_empty() {
+    if !holds || !in_tray() {
         return Ok(false);
     }
 
     let _ = window.hide();
     let (say, words) = with(|shell| {
         shell.hidden = Some(window.label().to_string());
-        let say = !shell.told_hidden;
-        shell.told_hidden = true;
+        // Said for the agents, whose pages are why it stays; a window kept for the
+        // reader's own reminders goes to the tray the way any tray app's does.
+        let say = !shell.told_hidden && !shell.said.is_empty();
+        shell.told_hidden |= say;
         (say, shell.words.clone())
     });
     if say {
@@ -276,7 +316,7 @@ fn let_go(app: &AppHandle) {
     let handle = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(LET_GO_AFTER);
-        if !connected().is_empty() {
+        if in_tray() {
             return;
         }
         if let Some(window) = handle.get_window(&label) {
@@ -316,11 +356,20 @@ fn news(app: &AppHandle, event: Event) {
     });
 }
 
-/// One system notification.
-fn notify(app: &AppHandle, title: String, body: String) {
+/// Whether the notification plugin is in the app: added the first time anything shows a
+/// notification - an agent's question, a reminder the page rings itself - and never at
+/// launch. On the event loop's thread, which is where a plugin is added at run time.
+pub fn notifications(app: &AppHandle) -> bool {
+    static ADDED: OnceLock<bool> = OnceLock::new();
+    *ADDED.get_or_init(|| app.plugin(tauri_plugin_notification::init()).is_ok())
+}
+
+/// One system notification, where the plugin is in the app and this run is nobody's
+/// probe.
+pub fn notify(app: &AppHandle, title: String, body: String) {
     use tauri_plugin_notification::NotificationExt as _;
 
-    if !with(|shell| shell.notifying) || crate::placement::away().is_some() {
+    if crate::placement::away().is_some() || !notifications(app) {
         return;
     }
     let mut built = app.notification().builder().title(title);
@@ -379,10 +428,11 @@ const STOP: &str = "nib-agents-stop";
 #[cfg(any(windows, target_os = "macos"))]
 const QUIT: &str = "nib-agents-quit";
 
-/// The tray icon while an agent is connected: Open, Stop agents, Quit. A press on the
-/// icon itself is Open, as it is on every tray icon that stands for a window.
+/// The tray icon while an agent is connected or the window keeps nib there: Open, the
+/// stop while there are agents to stop, Quit. A press on the icon itself is Open, as it
+/// is on every tray icon that stands for a window.
 #[cfg(any(windows, target_os = "macos"))]
-fn tray(app: &AppHandle, on: bool, words: &Words) {
+fn tray(app: &AppHandle, on: bool, agents: bool, words: &Words) {
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
     if !on || crate::placement::away().is_some() {
@@ -390,7 +440,7 @@ fn tray(app: &AppHandle, on: bool, words: &Words) {
         return;
     }
 
-    let Ok(menu) = rows(app, words) else {
+    let Ok(menu) = rows(app, words, agents) else {
         return;
     };
     if let Some(tray) = app.tray_by_id(TRAY) {
@@ -431,18 +481,21 @@ fn tray(app: &AppHandle, on: bool, words: &Words) {
 fn rows<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     words: &Words,
+    agents: bool,
 ) -> tauri::Result<tauri::menu::Menu<R>> {
-    use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+    use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem};
 
-    Menu::with_items(
-        app,
-        &[
-            &MenuItem::with_id(app, OPEN, &words.show, true, None::<&str>)?,
-            &MenuItem::with_id(app, STOP, &words.stop, true, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, QUIT, &words.quit, true, None::<&str>)?,
-        ],
-    )
+    let open = MenuItem::with_id(app, OPEN, &words.show, true, None::<&str>)?;
+    let stop = MenuItem::with_id(app, STOP, &words.stop, true, None::<&str>)?;
+    let line = PredefinedMenuItem::separator(app)?;
+    let quit = MenuItem::with_id(app, QUIT, &words.quit, true, None::<&str>)?;
+    let mut items: Vec<&dyn IsMenuItem<R>> = vec![&open];
+    if agents {
+        items.push(&stop);
+    }
+    items.push(&line);
+    items.push(&quit);
+    Menu::with_items(app, &items)
 }
 
 /// The window back, from the tray: shown, and brought forward the way a second launch
@@ -459,7 +512,7 @@ fn open(app: &AppHandle) {
 /// No tray on Linux: the system's tray library is not everywhere, and a desktop without
 /// it would lose the app to a failed load. The window closes the ordinary way there.
 #[cfg(not(any(windows, target_os = "macos")))]
-fn tray(_app: &AppHandle, _on: bool, _words: &Words) {}
+fn tray(_app: &AppHandle, _on: bool, _agents: bool, _words: &Words) {}
 
 #[cfg(test)]
 mod tests {
