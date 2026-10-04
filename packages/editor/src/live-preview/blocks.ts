@@ -28,6 +28,7 @@ import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { noReveal, overlaps } from './reveal'
 import {
+  BaseWidget,
   ChartWidget,
   DiagramWidget,
   MathWidget,
@@ -270,6 +271,8 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // editor on its own, an export, a page somebody else is reading.
           const index = state.facet(noteIndex)
           if (ANSWERED.has(language) && !index.query) return false
+          // A base fence too: its rows are the app's to answer.
+          if (language === 'base' && !index.mountBase) return false
 
           ranges.push(
             Decoration.replace({
@@ -422,6 +425,7 @@ const ANSWERED = new Set(['query', 'tasks'])
 function widgetFor(language: string, code: string, index: NoteIndex) {
   if (language === 'chart') return new ChartWidget(code)
   if (ANSWERED.has(language)) return new QueryWidget(code, index, language)
+  if (language === 'base') return new BaseWidget(code, index)
   return new DiagramWidget(code, language)
 }
 

@@ -15,6 +15,7 @@ describe('the mark a file wears', () => {
   test('a canvas, a paper and a picture each have their own', () => {
     expect(fileMark('Board.canvas')).toBe('canvas')
     expect(fileMark('Deep Learning.pdf')).toBe('pdf')
+    expect(fileMark('Bugs.base')).toBe('base')
     expect(fileMark('shot.png')).toBe('picture')
   })
 
@@ -100,6 +101,7 @@ describe('the marks a row wears', () => {
     'web',
     'terminal',
     'remote',
+    'base',
   ]
 
   /** And no folder among them: no row in the list is a folder, so there is no

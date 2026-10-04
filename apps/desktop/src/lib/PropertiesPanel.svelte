@@ -8,7 +8,8 @@
    *  those, and the choice used to be the whole block back on the page or the YAML. So
    *  the rows are here, beside the note, one press away and out of the words.
    *
-   *  Every control writes through property-edits.ts in @nib/markdown, whose answer is
+   *  Each value is drawn by properties/PropertyValue.svelte, the control a table's cell
+   *  draws too. Every control writes through property-edits.ts in @nib/markdown, whose answer is
    *  one edit of the characters that change and nothing else in the file. It goes into
    *  the note's own document, so it is the note's undo step and every pane showing the
    *  note has it at once; see `edit` in @nib/editor's shared.ts.
@@ -24,8 +25,6 @@
   import {
     removeProperty,
     renameProperty,
-    withItem,
-    withoutItem,
     writeList,
     writeProperty,
   } from '@nib/markdown/property-edits'
@@ -38,7 +37,7 @@
   import { canWriteIn } from './sharing.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
-  import Cross from './Cross.svelte'
+  import PropertyValue from './properties/PropertyValue.svelte'
 
   const {
     onsearch,
@@ -82,15 +81,8 @@
     apply(writeProperty(source(), property.key, value, property.kind))
   }
 
-  function writeItems(key: string, items: string[] | null) {
-    if (items) apply(writeList(source(), key, items))
-  }
-
-  /** A list's field: Enter or leaving it adds what was typed. */
-  function addItem(property: Property, field: HTMLInputElement) {
-    const said = field.value
-    field.value = ''
-    writeItems(property.key, withItem(property, said))
+  function writeItems(key: string, items: string[]) {
+    apply(writeList(source(), key, items))
   }
 
   /** A field commits on Enter as well as on leaving it. */
@@ -98,18 +90,6 @@
     if (event.key !== 'Enter' || event.isComposing) return
     event.preventDefault()
     if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
-  }
-
-  /** The value a date field holds, as the file writes it. */
-  function dated(field: HTMLInputElement): string {
-    return field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
-  }
-
-  /** What a scalar row is edited in. */
-  function fieldType(property: Property): string {
-    if (property.kind === 'number') return 'number'
-    if (property.kind !== 'date') return 'text'
-    return property.value.length > 10 ? 'datetime-local' : 'date'
   }
 
   async function startRenaming(key: string) {
@@ -173,9 +153,6 @@
     insertFrontMatter(view)
     view.focus()
   }
-
-  /** A tag list's chips ask the space about their tag, as a tag does everywhere. */
-  const tagged = (key: string) => /^tags?$/i.test(key)
 </script>
 
 {#if !tab}
@@ -221,77 +198,14 @@
             >
           {/if}
 
-          <span class="value">
-            {#if property.kind === 'list' || property.kind === 'map'}
-              {#each property.items as item (item)}
-                <span class="chip">
-                  {#if tagged(property.key)}
-                    <button class="chip-word" onclick={() => onsearch?.(`tag:${item}`)}
-                      >{item}</button
-                    >
-                  {:else}
-                    {item}
-                  {/if}
-                  {#if writable && property.kind === 'list'}
-                    <button
-                      class="chip-off"
-                      title={t('Remove')}
-                      aria-label={t('Remove')}
-                      onclick={() => writeItems(property.key, withoutItem(property, item))}
-                      ><Cross small /></button
-                    >
-                  {/if}
-                </span>
-              {/each}
-              {#if writable && property.kind === 'list'}
-                <input
-                  class="field add"
-                  placeholder={t('Add')}
-                  aria-label={t('Add')}
-                  onkeydown={(event) => {
-                    if (event.key !== 'Enter' || event.isComposing) return
-                    event.preventDefault()
-                    addItem(property, event.currentTarget)
-                  }}
-                  onblur={(event) => addItem(property, event.currentTarget)}
-                />
-              {/if}
-            {:else if property.kind === 'checkbox'}
-              <input
-                type="checkbox"
-                class="nib-checkbox"
-                checked={property.value.toLowerCase() === 'true'}
-                disabled={!writable}
-                aria-label={property.key}
-                onchange={(event) =>
-                  write(property, event.currentTarget.checked ? 'true' : 'false')}
-              />
-            {:else if PROPERTY_CHOICES[property.key] && writable}
-              {@const choices = PROPERTY_CHOICES[property.key] ?? []}
-              <select
-                class="field"
-                aria-label={property.key}
-                value={property.value}
-                onchange={(event) => write(property, event.currentTarget.value || null)}
-              >
-                {#each choices.includes(property.value) || !property.value ? choices : [property.value, ...choices] as one (one)}
-                  <option value={one}>{one}</option>
-                {/each}
-              </select>
-            {:else}
-              <input
-                class="field"
-                type={fieldType(property)}
-                value={fieldType(property) === 'datetime-local'
-                  ? property.value.replace(' ', 'T')
-                  : property.value}
-                readonly={!writable}
-                aria-label={property.key}
-                onkeydown={commitOnEnter}
-                onchange={(event) => write(property, dated(event.currentTarget) || null)}
-              />
-            {/if}
-          </span>
+          <PropertyValue
+            {property}
+            {writable}
+            choices={PROPERTY_CHOICES[property.key] ?? null}
+            onwrite={(value: string | null) => write(property, value)}
+            onitems={(items: string[]) => writeItems(property.key, items)}
+            {onsearch}
+          />
         </div>
       {/each}
 
@@ -344,16 +258,6 @@
     color: var(--muted);
   }
 
-  .value {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    min-height: var(--row-height);
-    color: var(--text);
-  }
-
   /* A field with no box until a pointer or the keyboard arrives, so the rows go on
      reading as metadata rather than as a form: the note's own controls, drawn the
      same way; see editor.css. */
@@ -372,12 +276,6 @@
       background var(--dur-fast) var(--ease-out);
   }
 
-  .field[type='number'],
-  .field[type='date'],
-  .field[type='datetime-local'] {
-    font-variant-numeric: tabular-nums;
-  }
-
   .rename {
     color: var(--text-strong);
   }
@@ -388,69 +286,9 @@
     }
   }
 
-  .field.add {
-    flex: 1 1 5em;
-    width: auto;
-    color: var(--muted);
-  }
-
   .field.new {
     width: auto;
     margin: 2px var(--row-pad) 0;
-  }
-
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25em;
-    max-width: 100%;
-    padding: 1px var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-row);
-    color: var(--muted-strong);
-    font-size: var(--text-xs);
-    overflow-wrap: anywhere;
-  }
-
-  .chip-word,
-  .chip-off {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    cursor: default;
-  }
-
-  .chip-off {
-    display: grid;
-    place-items: center;
-    line-height: 1;
-    color: var(--muted);
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  /* The small cross a tab closes with, at the size it is on a tab. */
-  .chip-off :global(svg) {
-    width: 8px;
-    height: 8px;
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .chip-word:hover {
-      color: var(--accent);
-    }
-
-    .chip:hover .chip-off {
-      opacity: 1;
-    }
-  }
-
-  .chip-off:focus-visible,
-  :global([data-touch]) .chip-off {
-    opacity: 1;
   }
 
   .adder {

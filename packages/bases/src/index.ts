@@ -5,6 +5,13 @@
  *  See docs/tasks.md. */
 
 export * from './types'
+// What the views (apps/desktop/src/lib/views) and the rows store ask of the engine.
 export { noteValues, scalarValue, taskHash } from './note-values'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
-export { addDays, dayNumber, todayOf, weekday } from './dates'
+export { answer, cellValue, groupName, rowId } from './answer'
+export { readBase, writeBase } from './base-file'
+export { type BuiltinName, type BuiltinParams, builtinView } from './builtins'
+export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
+export { nextDate, parseRule } from './recurrence'
+export { DEFAULT_SUMMARIES } from './summaries'
+export { fromTodoist } from './todoist'

@@ -55,6 +55,7 @@
     pdfSurface,
     readingSurface,
     terminalSurface,
+    viewSurface,
     webSurface,
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
@@ -108,6 +109,7 @@
       tab.kind !== 'pdf' &&
       tab.kind !== 'web' &&
       tab.kind !== 'terminal' &&
+      tab.kind !== 'view' &&
       !tab.reading,
   )
 
@@ -550,6 +552,16 @@
     {#key tab.id}
       {#await webSurface() then WebTab}
         <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'view'}
+    <!-- A view of rows: Today, a project, a base file's board. Keyed like the others; see
+         docs/tasks.md 5.5. -->
+    {#key tab.id}
+      {#await viewSurface() then ViewTab}
+        <ViewTab {tab} />
       {:catch}
         {@render unreachable()}
       {/await}

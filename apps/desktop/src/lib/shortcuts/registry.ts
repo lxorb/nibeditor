@@ -887,6 +887,21 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-b',
     run: () => revealPanel('links'),
   },
+  // Inbox, Today and the rest (docs/tasks.md 5.16). Y, the next letter no chord held:
+  // T is a new tab's and K the palette's in every browser.
+  // The views are the app's alone; the glasses' plugin has no Tasks panel.
+  ...(__EVEN_PLUGIN__
+    ? []
+    : [
+        {
+          id: 'app.tasks',
+          label: () => t('Tasks'),
+          category: 'view',
+          scope: 'app',
+          key: 'Mod-Shift-y',
+          run: () => revealPanel('tasks'),
+        } satisfies Shortcut,
+      ]),
   {
     id: 'app.ask',
     label: () => t('Ask'),

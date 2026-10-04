@@ -927,6 +927,62 @@ those properties and the base's template. In the app first; a published form is 
 properties under the title; calendar defaults to agenda; timeline is not offered under 600
 px. Every drag is a long press then a move, as on the canvas.
 
+**As built** (lane 4). Everything is `lib/views/`, fetched behind doors
+(`viewSurface`, `tasksPanel` in surfaces.svelte.ts, `views/mount` from the link index
+and the reading view), so the first paint carries the panel's tab mark and nothing else.
+
+- **The panel** is `TasksPanel.svelte`, the `'tasks'` panel between Search and Links,
+  on `Mod-Shift-y` (`app.tasks`). Inbox, Today and Upcoming are counted by the engine
+  answering the very bases their tabs open (`panel.ts`), so a count and its rows cannot
+  disagree. Saved views are the open space's `.base` files, each counted by its first
+  view. A project's menu opens it as a board or a calendar. Moved right, it is Today's
+  list. Every add row and Q (`tasks.quick-add`) open quick add (`openQuickAdd` in
+  `add.ts`, `showQuickAdd`) with what the view knows: its note, Today's day, a label's
+  tag, the column's day. A column that stands for a section, a priority or a status is
+  more than quick add's prefill carries, so there the row's own field takes the words
+  and writes them with those fields.
+- **The view tab** is `TabKind` `'view'`; its words are a `ViewSpec` (`spec.ts`): a
+  built-in and what it is about, or, for a `.base` tab, which of its views. A built-in
+  view keeps its changes in the tab (`yaml`) until "Copy to a base" writes a file; a
+  base file's changes are written into it with `writeBase`, every unknown key kept, as
+  one undoable write. One tab per view per pane (`open.ts`). `workspace.documentAt`
+  passes over a view tab, so the file under it is read and written as a closed file.
+  The crate and the browser's tree list `.base` files (`is_base` in paths.rs).
+- **One write path.** A cell, a drop and a key go through `rows.write`; a tick through
+  the engine's `tick`, so a recurring task writes its next occurrence; moving whole
+  lines (Alt+↑/↓, Tab, a drag within a note, onto a heading, into another note) is
+  `lines.ts` and `act.ts`, one write of the notes it touches, and "Reschedule to today"
+  is one write of every overdue note. Ctrl+Z in a view is `undoFileAction`.
+- **What a drop means** is `drop.ts`: one question per grouping. A status column ticks
+  (Done), opens again (To do) or writes the box; a day writes the date the task is
+  placed by; Today's two halves move a task to today; a heading moves the lines; a note
+  property writes the property. A board also keeps its manual order per column
+  (`nib.order`), and a sub-group draws swimlanes.
+- **The layouts** draw the engine's answer and never filter: `ListLayout` (windowed,
+  sub-tasks under parents, the keys of 5.16), `TableLayout` (windowed, Obsidian's
+  `columnSize`, header sort, drag to reorder, summaries, spreadsheet keys, cells in
+  `Cell.svelte` with the Properties panel's own control, `properties/PropertyValue`),
+  `CardsLayout` (Bases' `image`, `imageFit`, `imageAspectRatio`, `cardSize`; a cover on
+  the web is the host's name until the reader opens it), `BoardLayout` (every card one
+  height, each column windowed), `CalendarLayout` (month, week, three days, day; the
+  tray; hours with duration; a pulled edge writes the duration; repeats faded),
+  `UpcomingLayout`, `TimelineLayout` (start to due, or `nib.date` to `nib.end`;
+  dependency arrows from `⛔`), `ChartLayout` (settings under the view's `nib:`). A
+  phone gets `PhoneRows`, `AgendaLayout`, and no timeline.
+- **Builders**: `FilterBuilder` reads Todoist's language into the tree (`fromTodoist`)
+  and the tree into rows of property, operator and value (`filter-rows.ts`); a filter it
+  cannot show stays as written. `ArrangeBuilder` is the sort and the group with its
+  sub-group.
+- **In a note**: the editor's `BaseWidget` and `EmbedBaseWidget` hand a box to
+  `mountBase` on the note index; the reading view leaves a `[data-base-code]` box and the
+  base card, and `mountBases` draws into them. A fence's changes are written back into
+  the fence; `this` is the note.
+- **Measured** (test/e2e/tasks.py, headless Chromium on the Snapdragon X Elite): see
+  the numbers the drive prints for a board of 2,000 cards.
+- **Not built here**: the comments count under a row (the rows carry no description
+  lines), conditional colour, row height and frozen columns (lane 7's view options),
+  Assigned to me in the panel.
+
 ### 5.10 Reminders
 
 What a reminder is: a time, from `[remind::]` or from the due time when the task has one
