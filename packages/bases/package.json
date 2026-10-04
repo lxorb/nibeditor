@@ -9,6 +9,7 @@
     "./agent": "./src/agent/index.ts",
     "./rows": "./src/note-rows.ts",
     "./scan": "./src/scan.ts",
+    "./tasks": "./src/agent/light.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

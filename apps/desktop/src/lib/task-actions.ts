@@ -10,7 +10,7 @@
  *  fetched when first asked for, the engine with it: nothing of it is in the first
  *  paint. */
 
-import type { TaskOut } from '@nib/bases/agent'
+import type { TaskOut } from '@nib/bases/tasks'
 import { changeOf } from './search/replace'
 import { insideSpace } from './space-paths'
 import { workspace } from './workspace.svelte'
@@ -27,7 +27,7 @@ export async function addTask(
   if (root === undefined) return null
   const [{ rows }, { newTask, placeLines }, { taskLine }] = await Promise.all([
     import('./rows/rows.svelte'),
-    import('@nib/bases/agent'),
+    import('@nib/bases/tasks'),
     import('@nib/markdown/task-edits'),
   ])
 
@@ -45,7 +45,7 @@ export async function addTask(
 export async function tickTask(at: string, space: string, done: boolean): Promise<boolean> {
   const [{ rows }, { clockOf, findTask, readAt }] = await Promise.all([
     import('./rows/rows.svelte'),
-    import('@nib/bases/agent'),
+    import('@nib/bases/tasks'),
   ])
   const anchor = readAt(at)
   const row = findTask(
@@ -58,12 +58,20 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
 }
 
 /** Today, open tasks for today and overdue, in every space, as the Today view orders
- *  them; or the list a Todoist filter answers. */
+ *  them; or the list a Todoist filter answers, which takes the engine. Today itself does
+ *  not, so the glasses' package carries none of it (`todayTasks`, docs/even.md). */
 export async function listed(filter?: string): Promise<{ total: number; tasks: TaskOut[] }> {
-  const [{ rows }, { clockOf, listTasks }] = await Promise.all([
-    import('./rows/rows.svelte'),
-    import('@nib/bases/agent'),
-  ])
+  const { rows } = await import('./rows/rows.svelte')
+  if (!filter) {
+    const { clockOf, taskOut, todayTasks } = await import('@nib/bases/tasks')
+    const today = todayTasks(rows.of(), clockOf(new Date()).today)
+    return { total: today.length, tasks: today.slice(0, 50).map(taskOut) }
+  }
+
+  // The glasses ask for Today and nothing else; said as a throw rather than a guard so
+  // the bundler drops the engine from their package. See vite.even.config.ts.
+  if (__EVEN_PLUGIN__) throw new Error('no filters on the glasses')
+  const { clockOf, listTasks } = await import('@nib/bases/agent')
   const names = new Set(
     rows
       .of()
@@ -72,11 +80,7 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
   )
   return listTasks(
     rows.of(),
-    {
-      ...(filter ? { filter } : { view: 'today' }),
-      inboxes: rows.inboxes(),
-      isNote: (name) => names.has(name.toLowerCase()),
-    },
+    { filter, inboxes: rows.inboxes(), isNote: (name) => names.has(name.toLowerCase()) },
     clockOf(new Date()),
   )
 }
