@@ -105,6 +105,7 @@ export const EN: Grammar = {
     { words: ['tomorrow', 'evening'], day: 'tomorrow', time: '19:00' },
     { words: ['tomorrow', 'night'], day: 'tomorrow', time: '19:00' },
   ],
+  partsOfDay: { morning: '09:00', afternoon: '15:00', evening: '19:00', night: '22:00' },
 
   every: new Set(['every', 'each']),
   everyDone: new Set(['every!']),
@@ -126,6 +127,8 @@ export const EN: Grammar = {
   bareDuration: false,
 
   ordinal: /^(\d{1,2})(?:st|nd|rd|th)$/,
+  ordinals: { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 },
+  articles: new Set(['the']),
   monthFirst: false,
 }
 

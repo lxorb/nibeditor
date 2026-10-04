@@ -329,6 +329,111 @@ describe('the whole line', () => {
   })
 })
 
+describe('what a person types in a hurry', () => {
+  test.each([
+    ['Trash every 2nd week', 'every 2 weeks'],
+    ['Trash every 3rd day', 'every 3 days'],
+  ])('%s', (text, recurrence) => {
+    expect(said(en(text))).toEqual({ text: 'Trash', recurrence, due: '2026-10-07' })
+  })
+
+  test.each([
+    ['Müll rausbringen jede 2. Woche', 'every 2 weeks'],
+    ['Müll rausbringen alle zwei Wochen', 'every 2 weeks'],
+    ['Müll rausbringen alle drei Tage', 'every 3 days'],
+  ])('%s', (text, recurrence) => {
+    expect(said(de(text))).toEqual({ text: 'Müll rausbringen', recurrence, due: '2026-10-07' })
+  })
+
+  test.each([
+    ['Run every morning', '09:00'],
+    ['Run every evening', '19:00'],
+  ])('%s', (text, time) => {
+    expect(said(en(text))).toEqual({ text: 'Run', recurrence: 'every day', due: '2026-10-07', time })
+  })
+
+  test.each([
+    ['Laufen jeden Morgen', '09:00'],
+    ['Laufen jeden Abend', '19:00'],
+    ['Laufen jeden Mittag', '12:00'],
+  ])('%s', (text, time) => {
+    expect(said(de(text))).toEqual({ text: 'Laufen', recurrence: 'every day', due: '2026-10-07', time })
+  })
+
+  test('a time said beside every morning is the time', () => {
+    expect(said(de('Laufen jeden Morgen um 7'))).toEqual({
+      text: 'Laufen',
+      recurrence: 'every day',
+      due: '2026-10-07',
+      time: '07:00',
+    })
+  })
+
+  test.each([
+    ['Present every first monday', 'en'],
+    ['Present every 1st monday', 'en'],
+    ['Present jeden ersten Montag', 'de'],
+    ['Present jeden 1. Montag', 'de'],
+  ])('%s', (text, lang) => {
+    expect(said(lang === 'en' ? en(text) : de(text))).toEqual({
+      text: 'Present',
+      recurrence: 'every month on the 1st Monday',
+      due: '2026-11-02',
+    })
+  })
+
+  test.each([
+    ['Clean next weekend', 'en', '2026-10-17'],
+    ['Clean nächstes Wochenende', 'de', '2026-10-17'],
+    ['Clean wednesday next week', 'en', '2026-10-14'],
+    ['Clean Mittwoch nächste Woche', 'de', '2026-10-14'],
+    ['Clean Freitag nächster Woche', 'de', '2026-10-16'],
+    ['Clean on the 15th', 'en', '2026-10-15'],
+    ['Clean by the 5th', 'en', '2026-11-05'],
+    ['Clean am 15.', 'de', '2026-10-15'],
+    ['Clean bis zum 5.', 'de', '2026-11-05'],
+  ])('%s', (text, lang, due) => {
+    expect(said(lang === 'en' ? en(text) : de(text))).toEqual({ text: 'Clean', due })
+  })
+
+  test('a German time with a dot after um', () => {
+    expect(said(de('Bank anrufen um 15.30'))).toEqual({
+      text: 'Bank anrufen',
+      due: '2026-10-07',
+      time: '15:30',
+    })
+    expect(said(de('Zug um 7.05'))).toEqual({ text: 'Zug', due: '2026-10-08', time: '07:05' })
+  })
+
+  test('am Morgen is the morning, not tomorrow', () => {
+    expect(said(de('Laufen am Morgen'))).toEqual({ text: 'Laufen', due: '2026-10-08', time: '09:00' })
+    expect(said(de('Laufen morgen am Abend'))).toEqual({
+      text: 'Laufen',
+      due: '2026-10-08',
+      time: '19:00',
+    })
+  })
+
+  test('a bare hour after a morning is in the morning', () => {
+    expect(said(en('Run tomorrow morning at 7'))).toEqual({
+      text: 'Run',
+      due: '2026-10-08',
+      time: '07:00',
+    })
+    expect(said(de('Brötchen morgen früh um 7'))).toEqual({
+      text: 'Brötchen',
+      due: '2026-10-08',
+      time: '07:00',
+    })
+    expect(said(en('Run tonight at 8')).time).toBe('20:00')
+  })
+
+  test('next weekend from a Saturday is the one after', () => {
+    const saturday = new Date(2026, 9, 10, 10, 0)
+    expect(parseQuickAdd('Clean next weekend', ['en'], saturday).fields.due).toBe('2026-10-17')
+  })
+})
+
 describe('the ambiguous cases stay words', () => {
   test.each([
     'Call Tom',
@@ -359,6 +464,8 @@ describe('the ambiguous cases stay words', () => {
     'Alle Kinder abholen',
     'Morgenroutine planen',
     'Bericht für Anna',
+    'Kapitel 3. lesen',
+    'Am Ende Morgenkaffee',
   ])('%s', (text) => {
     expect(said(de(text))).toEqual({ text })
   })

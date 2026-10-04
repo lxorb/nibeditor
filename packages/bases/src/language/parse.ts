@@ -282,7 +282,7 @@ function foundAt(
   const repeat = repeatAt(words, at, g, clock)
   if (repeat) {
     const text = ruleText(repeat.rule)
-    const { rule, first } = repeat
+    const { rule, first, time } = repeat
     return {
       kind: 'repeat',
       at,
@@ -290,6 +290,8 @@ function foundAt(
       slots: ['repeat'],
       apply(into) {
         into.fields.recurrence = text
+        // A time said beside the rule is the time; `every morning` only gives one.
+        if (time && into.fields.time === undefined) into.fields.time = time
         // The rule's first day where no phrase names one, or the one `starting` names.
         if (into.fields.due === undefined || first) {
           const from = first ?? clock.today

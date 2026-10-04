@@ -9,7 +9,7 @@
 
 import { type Rule, parseRule } from '../recurrence'
 import type { Grammar } from './grammar'
-import { type Clock, dayAt } from './when'
+import { type Clock, dayAt, timeInPart } from './when'
 import { bare, type Word } from './words'
 
 export interface Repeat {
@@ -17,6 +17,8 @@ export interface Repeat {
   rule: Rule
   /** The day `starting` named: the rule's first. */
   first?: string
+  /** The time a part of the day gave it: `every morning`. */
+  time?: string
 }
 
 /** The longest rule the plugin's reader takes, of at most this many words. */
@@ -24,6 +26,11 @@ const MOST_WORDS = 9
 
 const ORDINAL_EN = /^(\d{1,2})(?:st|nd|rd|th)$/
 const DAY_EN = /^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(day)?s?$/
+const UNIT_EN = /^(day|week|month|year)$/
+
+/** An ordinal in figures, the way the plugin writes one: `1st`, `3rd`. */
+const figures = (count: number): string =>
+  `${count}${count % 10 === 1 && count !== 11 ? 'st' : count % 10 === 2 && count !== 12 ? 'nd' : count % 10 === 3 && count !== 13 ? 'rd' : 'th'}`
 
 /** Todoist's words for a rule, in the plugin's: `every 2nd monday` is `every month on
  *  the 2nd monday`, `every last day` is `every month on the last`, `every other monday`
@@ -31,6 +38,10 @@ const DAY_EN = /^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(day)?s?$/
 function pluginWords(words: readonly string[]): string {
   const [every = '', second = '', third = ''] = words
   const rest = words.slice(2).join(' ')
+  // `every 2nd week` is every two weeks, not the second of every month.
+  if (ORDINAL_EN.test(second) && UNIT_EN.test(third) && words.length === 3) {
+    return `${every} ${Number.parseInt(second, 10)} ${third}s`
+  }
   if (ORDINAL_EN.test(second) && DAY_EN.test(third) && words.length === 3) {
     return `${every} month on the ${second} ${third}`
   }
@@ -58,8 +69,10 @@ function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | n
   const most = Math.min(words.length - at, MOST_WORDS)
   for (let count = most; count >= 2 || (count === 1 && g.everyDone.has(key)); count--) {
     const said = words.slice(at, at + count).map((word) => bare(word))
-    // `each` is `every`, which is the word the plugin reads.
+    // `each` is `every`, which is the word the plugin reads; `first` is `1st`.
     if (said[0] === 'each') said[0] = 'every'
+    const nth = g.ordinals[said[1] ?? '']
+    if (nth !== undefined) said[1] = figures(nth)
     const rule = parseRule(pluginWords(said))
     if (rule) return { end: at + count, rule }
   }
@@ -105,23 +118,29 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   let index = at + 1
   const word = () => bare(words[index])
 
-  // `alle 3 Monate`, `jede zweite Woche`.
+  // `alle 3 Monate`, `alle drei Tage`, `jede zweite Woche`, `jede 2. Woche`.
   // Figures with no dot after them: `2.` is the second, not every two.
+  const written = g.ordinal.exec(words[index]?.key ?? '')?.[1]
+  const nth = written === undefined ? g.ordinals[word()] : Number(written)
+  const counted = g.numbers[word()]
+  const unitNext = g.units[bare(words[index + 1])]
   if (/^\d{1,3}$/.test(words[index]?.key ?? '')) {
     rule.every = Number(word())
     index++
   } else if (g.other.has(word())) {
     rule.every = 2
     index++
+  } else if ((counted ?? nth) !== undefined && unitNext && unitNext !== 'minute' && unitNext !== 'hour') {
+    rule.every = counted ?? nth ?? 1
+    index++
   }
 
-  // `jeden 2. Montag`, `jeden letzten Freitag`, `jeden 15.`.
-  const nth = g.ordinal.exec(words[index]?.key ?? '')?.[1]
+  // `jeden 2. Montag`, `jeden ersten Montag`, `jeden letzten Freitag`, `jeden 15.`.
   const last = g.last.has(word())
   if ((nth !== undefined || last) && rule.every === 1) {
     index++
     const day = g.weekdays[word()]
-    const count = last ? -1 : Number(nth)
+    const count = last ? -1 : (nth ?? 1)
     rule.unit = 'month'
     if (day !== undefined) {
       rule.weekdays = [{ day, nth: count }]
@@ -166,6 +185,13 @@ export function repeatAt(
   g: Grammar,
   clock: Clock,
 ): Repeat | null {
+  // `every morning`, `jeden Abend`: every day, at that part of it.
+  const part = g.every.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
+  if (part) {
+    const later = timeInPart(words, at + 2, g, part)
+    return { end: later?.end ?? at + 2, rule: emptyRule(), time: later?.time ?? part }
+  }
+
   const read = g.lang === 'de' ? germanRule(words, at, g) : englishRule(words, at, g)
   if (!read) return null
 
