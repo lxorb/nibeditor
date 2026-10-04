@@ -429,6 +429,20 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `append_note` | `path`, `content`, `under`? (a heading) | |
 | `set_property` | `path`, `key`, `value` or `null` | the front matter, through `frontMatterEdit` |
 | `set_task` | `path`, `at`, `done` | ticks or clears one box |
+| `list_tasks` | `view`? (`inbox`, `today`, `upcoming`, `logbook`, a `.base` path), `filter`? (Todoist's language), `space`?, `limit`? | to-dos in every space the grant reaches, or `space`'s, each with an `at` (`path#line:hash`) the other task tools take back (docs/tasks.md 5.15) |
+| `add_task` | `text`, `fields`?, `note`?, `under`?, `space`? | a line in the space's inbox, or in `note` under the heading `under` (made where missing); `text` may carry the Tasks plugin's marks, `fields` what `update_task` takes |
+| `update_task` | `at`, any of `done`, `status`, `text`, `due`, `time`, `scheduled`, `start`, `deadline`, `priority`, `recurrence`, `remind`, `duration`, `assignee`, `tags`, `move_to` | one edit of the note; `done` ticks the way the Tasks plugin does, a recurring task's next line written above it (`next` in the answer); `""` takes a field off; `move_to` takes the task and what is under it to another note or heading |
+| `query_base` | `path` or `yaml`, `view`? | a view's groups, rows (the columns it shows) and summaries |
+| `add_row` | `base`, `properties`?, `title`?, `view`? | a note made where the base's filters look (`file.inFolder`, `file.hasTag`, `prop == "value"`), from its template |
+| `edit_rows` | `paths`, `properties` | front matter on several notes, an edit each |
+| `edit_base` | `path`, `ops`: `add_view`, `edit_view`, `remove_view`, `set_filter`, `add_formula`, `add_property` | the base written back as the YAML it was, every key no op names kept |
+
+The task tools are the agent's own edits of a note, read off it as it is on screen and
+written with `writeNote`, so the review keeps or undoes them and one undo takes a tick
+and its next occurrence back together. What a call means is `@nib/bases/agent`, which
+the account connector shares (`services/sync/src/mcp/tasks.ts`); the list, add and
+tick the reader's own surfaces use (the AI sidebar, the glasses, the widget, a share)
+are `lib/task-actions.ts`.
 | `create_note` | `path`, `kind`?, `content`?, `url`?, `open`?: false | never over an existing file. A note, or by the path's ending or `kind` a canvas (a blank plane, or the JSON Canvas sent), a page note (a page of the reader's paper) or a web note (a shortcut to `url`) |
 | `list_versions` | `path` | the versions, with who wrote each (8.5) |
 | `restore_version` | `path`, `version` | asks first (9.3) |
@@ -1002,7 +1016,7 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
 | | the local server (`nib mcp`) | the account connector (`services/sync/src/mcp`) |
 | --- | --- | --- |
 | runs | on this machine, while nib runs | on the Worker, always |
-| reaches | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note` |
+| reaches | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note`, and the to-dos and bases: `list_tasks`, `add_task`, `update_task`, `query_base`, `add_row` |
 | sees unsaved words | yes | no |
 | for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where nib is closed |
 | auth | a grant made by the bubble in 9.1 | OAuth or a pasted `nib_` token, as today |
@@ -1020,8 +1034,9 @@ client that only speaks HTTP can be given the endpoint's own `/mcp` later; nothi
 depends on it.
 
 **The two servers share their names and shapes** for what both can do - `list_spaces`,
-`list_notes`, `read_note`, `search_notes`, `list_backlinks` and `write_note` are the
-connector's six, with the same arguments, and the local ones only add to them - so a
+`list_notes`, `read_note`, `search_notes`, `list_backlinks` and `write_note`, and
+`list_tasks`, `add_task`, `update_task`, `query_base` and `add_row`, are the
+connector's eleven, with the same arguments, and the local ones only add to them - so a
 prompt or a skill written against one works against the other, and the local server's
 instructions say to prefer it while nib runs, because it sees the words on screen. Under
 sync v2 a note with a document is written only by its room (`sync-v2.md` 5.3), and the

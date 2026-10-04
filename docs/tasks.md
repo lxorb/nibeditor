@@ -1191,6 +1191,21 @@ its table test reads. Decision 8.3.
 `nib://add-task?text=...`, which the five link verbs gain as their sixth, a write that can
 only add a line to an inbox.
 
+**As built** (lane 6). The verbs are `lib/agents/workspace/tasks.ts` in the window and
+`services/sync/src/mcp/tasks.ts` on the Worker, both over `@nib/bases/agent`: a task
+goes out as the fields it has with `at` (`path#line:hash`), found again in the note as
+it is by the hash nearest its line, and a change is the note written back whole as the
+agent's own edit (`writeNote`, the connector's `write_note`). `edit_rows` and
+`edit_base` are the local server's alone. The seven rows cost the tools table 3,767
+characters, about 950 tokens, and its ceiling went from 28,000 to 31,000. The rows of a
+note are `@nib/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
+one way. `/tasks` draws its rows as a notice with live boxes (`ai/sidebar/TaskRows.svelte`)
+and `/today` is a turn in Agent mode; the reader's own surfaces add, tick and list
+through `lib/task-actions.ts`. `add_task` reads the Tasks plugin's own marks in its
+words (`writtenFields`); quick add's grammar plugs in as `newTask`'s `read` once it is
+on main. The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+takes the words and a space and nothing else.
+
 ### 5.16 Keys
 
 | key | where | what |
@@ -1262,6 +1277,19 @@ says how many of each before anything is written, as the other importers do.
   switch slides like every segmented control; reduced motion makes all of it a cut.
 - **Tokens**: priorities are the six tones (p1 danger, p2 warning, p3 info, p4 none), select
   options take tones by name, nothing brings a colour of its own.
+
+**As built** (lane 6). The phone's share sheet asks once more for words alone: **As a
+task** puts the share's title, linked to where it came from, in the open space's inbox
+(`mobile/shared.ts` `sharedTask`). The Today widget is a second widget beside the notes
+one (`TodayWidget.kt`, `res/layout/widget_today.xml`), drawn from the JSON the page
+already hands over (`mobile/widgets.svelte.ts`, its `today`), read again when the rows
+change; a box opens the app with the task's anchor and the page ticks it through the one
+write path (`mobile/handed.ts`), a row's words open its note, the plus is quick add.
+The clipper's menu has **As a task** under nibeditor, a line in the inbox of the space the
+last clip went to, the page or the link under the cursor linked in it, through the
+Worker's `POST /v1/spaces/:id/tasks` (`services/sync/src/tasks.ts`), which is the
+connector's `add_task` behind the session. On the glasses the modal's fifth row is
+Today and "task ..." / "Aufgabe ..." adds to the inbox (docs/even.md).
 
 ## 6. What nib does not do
 

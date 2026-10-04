@@ -18,7 +18,9 @@ exporter wrote, and a Word file or an ePub for pandoc to read. Drop it in, or
 press the same panel to pick it.
 
 On a Mac there is one more row, because Apple Notes has no export at all: the
-sheet reads the database Notes keeps, and nothing is dropped.
+sheet reads the database Notes keeps, and nothing is dropped. And on every device a
+row for Todoist, whose tasks are read out of the account with a token the reader
+pastes; its CSV exports and a backup's zip of them are dropped like anything else.
 
 **Nobody picks a format.** A reader who exported their notes yesterday knows what
 they exported; what they have in front of them is a file, and every one of these
@@ -147,6 +149,27 @@ because the same file is honestly two things. A recipe list is a table. A readin
 list where every row has a page of notes behind it is forty notes, and a table of
 their titles is worse than useless. So the sheet asks, once, with the answer that
 is right more often already chosen.
+
+**Todoist** (`lib/import/todoist.ts`, docs/tasks.md 5.17), two ways. From the
+account: the sheet's Todoist row takes an API token (Todoist, Settings, Integrations,
+Developer), reads `/api/v1` once (projects, sections, tasks, reminders, the comments of
+every task that has any, collaborators' names, and with **Done tasks too** the last
+three months of done ones, which is as far back as the API answers) and forgets it: the
+field is emptied as the read starts and the token is held by nothing past it. From files:
+a project's CSV export (`TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT, AUTHOR,
+RESPONSIBLE, DATE, ...`, known by that header) or a backup's zip of them, one project a
+file, `Work [2203306141].csv` being the project Work. Either way a project becomes a
+note (a project inside another one a note in that one's folder), a section a heading, a
+task a line in the Tasks plugin's format with its sub-tasks indented under it, its
+description and comments indented under it with their dates (an attachment as a link),
+a label a tag, the priority its emoji (the API counts 4 as p1 and is turned round; the
+CSV counts as people do), the due date with its time (a fixed time in its zone), the
+deadline, the duration, the reminders, the assignee by name, and the rule read again by
+the Tasks plugin's grammar: `every!` is `when done`, `every other week` every two
+weeks. A rule it cannot read stays as words under its task and the sheet says so. The
+Inbox becomes the space's inbox where the space has none yet (rows/inbox.ts), so Todoist's
+inbox is nib's. The token never touches anything but the requests, and the tests read a
+recorded answer, never the API.
 
 **Apple Journal.** Journal's own export, which the app writes under Settings:
 `AppleJournalEntries`, holding `Entries/` with one HTML document per entry and
