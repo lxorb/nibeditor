@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'Hiện Markdown khi viết',
+  Pointer: 'Con trỏ',
+  'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Thêm việc',
   Tomorrow: 'Ngày mai',

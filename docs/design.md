@@ -216,6 +216,11 @@ A component says where the button sits and what its own states mean - the find
 bar's hairline when a step is pressed in, the sidebar button's edge sliding, the
 accent on `is-on`. Nothing else.
 
+The pointer over a button is the arrow, as a desktop app draws it; the hand is for a
+link. Settings > Appearance > Pointing hand on buttons puts the web's hand over
+everything that can be pressed, the way the Claude app offers it: `data-pointer` on
+the root, and one rule in `base.css` that outweighs a component's `cursor: default`.
+
 Where a mark has to stay small and still be aimed at - the `i` after a setting's
 name - what is drawn and what can be hit are two sizes: the glyph grows to
 `--touch-icon` and an invisible `::after` grows the target to `--touch-target`.

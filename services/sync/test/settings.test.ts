@@ -151,6 +151,17 @@ describe('the keyboard an account is on', () => {
   })
 })
 
+describe('the formatting marks kept quiet on an account', () => {
+  test('is on or off', async () => {
+    expect((await patch({ quietMarks: true })).json.settings.quietMarks).toBe(true)
+    expect((await patch({ quietMarks: false })).json.settings.quietMarks).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    expect((await patch({ quietMarks: 'yes' })).status).toBe(400)
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)

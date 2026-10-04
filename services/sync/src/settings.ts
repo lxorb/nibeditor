@@ -257,6 +257,8 @@ const KNOWN: Record<string, Check> = {
       : 'chatHours must be days of the week and two minutes of the day, or null',
   chatPreviews: switched('chatPreviews'),
   chatSound: switched('chatSound'),
+  // Whether the formatting marks stay out of sight while writing, as Notion edits.
+  quietMarks: switched('quietMarks'),
 }
 
 /** How much of any of this an account may hold.

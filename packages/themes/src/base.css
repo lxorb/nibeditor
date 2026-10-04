@@ -59,6 +59,29 @@ button {
   -webkit-touch-callout: none;
 }
 
+/* The pointing hand over whatever can be pressed, for a reader who asked for the web's
+   way in Settings > Appearance (`data-pointer` on the root; see modes.svelte.ts). The
+   arrow is the default, which is how a desktop app draws its controls. Weighted past a
+   component's own `cursor: default`, which is the arrow this switch is about. */
+:root[data-pointer='hand']
+  :is(
+    button,
+    a[href],
+    select,
+    summary,
+    label:has(> input[type='checkbox']),
+    [role='button'],
+    [role='tab'],
+    [role='menuitem'],
+    [role='menuitemcheckbox'],
+    [role='menuitemradio'],
+    [role='option'],
+    [role='switch'],
+    .nib-row
+  ):not(:disabled, [aria-disabled='true']) {
+  cursor: pointer;
+}
+
 /* ── Where the keyboard is ───────────────────────────────────────
    One ring, on everything a key can land on, drawn from one token; see
    `--focus-ring` in tokens.css for what it is and why it is that.

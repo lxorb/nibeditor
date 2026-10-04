@@ -76,6 +76,7 @@ interface Held {
   attachments?: string
   vim?: boolean
   glassesSeen?: boolean
+  quietMarks?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -413,6 +414,29 @@ describe('modal editing', () => {
   })
 })
 
+describe('the formatting marks kept quiet', () => {
+  test('start shown, and are remembered across a restart', async () => {
+    expect(modes.quietMarks).toBe(false)
+    modes.toggleQuietMarks()
+    expect((await restarted()).quietMarks).toBe(true)
+  })
+})
+
+describe('the pointing hand', () => {
+  test('starts off and is said on the root for the stylesheet', async () => {
+    expect(modes.hand).toBe(false)
+    expect(root.dataset.pointer).toBeUndefined()
+
+    modes.toggleHand()
+    expect(root.dataset.pointer).toBe('hand')
+    expect((await restarted()).hand).toBe(true)
+
+    modes = await restarted()
+    modes.toggleHand()
+    expect(root.dataset.pointer).toBeUndefined()
+  })
+})
+
 describe('read-only mode and source mode', () => {
   test('are never both on', () => {
     modes.toggleSource()
@@ -460,6 +484,17 @@ describe('taking over what the account holds', () => {
 
     return { release, settingsCall }
   }
+
+  test('brings the formatting marks kept quiet', async () => {
+    const { release, settingsCall } = heldAnswer({ quietMarks: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.quietMarks).toBe(true)
+  })
 
   test('brings a setting this machine has never chosen', async () => {
     const { release, settingsCall } = heldAnswer({ ligatures: 'code' })

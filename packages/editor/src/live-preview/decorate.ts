@@ -13,7 +13,7 @@ import { askingAt, asksMoved } from '../ai/run'
 import { concealable, hide, meta } from './conceal'
 import { numberEquations } from './blocks'
 import { dragging } from './dragging'
-import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
+import { blockMarkRevealed, lineRevealed, noReveal, overlaps, quietMarks, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
 import { HEADING_LEVEL } from '../headings'
@@ -150,7 +150,7 @@ class Decorator {
       case 'QuoteMark':
         // Block marks follow the caret's line, and swallow the space after them
         // so hiding `# ` does not indent the heading by one column.
-        this.conceal(node.from, this.eatSpace(node.to), lineRevealed(this.state, node.from))
+        this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
         return true
       case 'CodeMark':
         // Both of a fence's ``` show together whenever the caret is anywhere in
@@ -904,6 +904,7 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       const asked = asksMoved(update.startState, update.state)
       const sealed =
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
+        update.startState.facet(quietMarks) !== update.state.facet(quietMarks) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
         // Whether the note's own HTML is markup. Only an inline tag reads it here -

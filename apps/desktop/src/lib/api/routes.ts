@@ -471,6 +471,9 @@ export interface AccountSettings {
    *  the account because it is about how metadata is read rather than about which
    *  machine is reading it; see properties.ts in @nib/markdown. */
   properties?: string
+  /** Whether the formatting marks stay out of sight while writing. How somebody
+   *  likes to write, so the same on every device; see `quietMarks` in modes.svelte.ts. */
+  quietMarks?: boolean
 }
 
 /** What any read can say about the account's OpenAI key.

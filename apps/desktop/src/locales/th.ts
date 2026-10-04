@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'แสดง Markdown ขณะเขียน',
+  Pointer: 'ตัวชี้',
+  'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'เพิ่มงาน',
   Tomorrow: 'พรุ่งนี้',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'Onyesha Markdown unapoandika',
+  Pointer: 'Kielekezi',
+  'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ongeza kazi',
   Tomorrow: 'Kesho',

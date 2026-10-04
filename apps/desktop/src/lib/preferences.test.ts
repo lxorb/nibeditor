@@ -96,6 +96,16 @@ describe('the sentence behind a setting', () => {
   })
 })
 
+describe('the Markdown pane', () => {
+  /** On is the live preview, where a mark shows while the caret is in it; off is
+   *  Notion's and Word's way, which the account carries. */
+  test('shows the markdown while writing unless asked not to', () => {
+    const shown = field('markdown', 'Show markdown while writing')
+    expect(shown.kind).toBe('switch')
+    expect(shown.initial).toBe(true)
+  })
+})
+
 describe('the Appearance pane', () => {
   test('chooses the theme with a dropdown, the built-in first', () => {
     const one = field('appearance', 'Style')
@@ -156,7 +166,19 @@ describe('the Appearance pane', () => {
    *  list rather than because the pane knows what an accent is. See
    *  themes/settings.ts, and `accentSetting` in accents.ts. */
   test('and asks two questions, contrast being a theme rather than a switch', () => {
-    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Style', 'Mode', 'Accent'])
+    expect(pane('appearance').groups[0]?.fields.map((one) => one.label)).toEqual([
+      'Style',
+      'Mode',
+      'Accent',
+    ])
+  })
+
+  /** The arrow over a button is a desktop app's; the hand is a web page's, and the
+   *  Claude app offers the same switch. Off until asked for. */
+  test('and offers the pointing hand, off by default', () => {
+    const hand = fieldsOf('appearance').find((one) => one.label === 'Pointing hand on buttons')
+    expect(hand?.kind).toBe('switch')
+    expect(hand?.initial).toBe(false)
   })
 
   test('and draws the theme’s own settings as a row apiece, in the group that chose it', () => {

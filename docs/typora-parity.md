@@ -276,6 +276,13 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Source code mode `Ctrl+/`
 - [x] Focus mode `F8`
 - [x] Typewriter mode `F9`
+- [x] Markdown kept out of sight while writing, Notion's and Word's way: Settings >
+      Markdown > Show markdown while writing, on the account. Off, a bold word's `**`,
+      a heading's `#`, a quote's `>` and inline code's backticks stay hidden with the
+      caret inside them, and the caret steps over each as one, so Backspace at the
+      start of a heading makes it a paragraph. A link's target, a formula, a fence and
+      a comment still open under the caret: nothing else on screen edits them. See
+      `quietMarks` in live-preview/reveal.ts
 - [x] Fullscreen `F11`
 - [x] Zoom in/out/reset
 - [x] Toggle sidebar `Ctrl+Shift+L`

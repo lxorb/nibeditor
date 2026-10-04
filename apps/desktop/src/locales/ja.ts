@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': '入力中に Markdown を表示',
+  Pointer: 'ポインタ',
+  'Pointing hand on buttons': 'ボタン上で指差しカーソル',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'タスクを追加',
   Tomorrow: '明日',

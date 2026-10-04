@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'Markdown bim Schriibe zeige',
+  Pointer: 'Muuszeiger',
+  'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ufgaab hinzuefüege',
   Tomorrow: 'Morn',
