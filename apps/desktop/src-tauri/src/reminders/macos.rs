@@ -29,8 +29,8 @@ use objc2_user_notifications::{
     UNAuthorizationOptions, UNCalendarNotificationTrigger, UNMutableNotificationContent,
     UNNotification, UNNotificationAction, UNNotificationActionOptions, UNNotificationCategory,
     UNNotificationCategoryOptions, UNNotificationPresentationOptions, UNNotificationRequest,
-    UNNotificationResponse, UNNotificationSound, UNTimeIntervalNotificationTrigger,
-    UNUserNotificationCenter, UNUserNotificationCenterDelegate,
+    UNNotificationResponse, UNNotificationSound, UNNotificationTrigger,
+    UNTimeIntervalNotificationTrigger, UNUserNotificationCenter, UNUserNotificationCenterDelegate,
 };
 use tauri::AppHandle;
 
@@ -133,10 +133,11 @@ fn answered(response: &UNNotificationResponse) {
                 minutes * 60.0,
                 false,
             );
+            let trigger: &UNNotificationTrigger = &trigger;
             let again = UNNotificationRequest::requestWithIdentifier_content_trigger(
                 &NSString::from_str(&format!("{id}-{}", super::now_ms())),
                 &request.content(),
-                Some(&trigger),
+                Some(trigger),
             );
             UNUserNotificationCenter::currentNotificationCenter()
                 .addNotificationRequest_withCompletionHandler(&again, None);
@@ -216,7 +217,8 @@ impl System for Requests {
         content.setTitle(&NSString::from_str(&one.title));
         content.setBody(&NSString::from_str(&one.body));
         content.setCategoryIdentifier(&NSString::from_str(CATEGORY));
-        content.setSound(Some(&UNNotificationSound::defaultSound()));
+        let sound = UNNotificationSound::defaultSound();
+        content.setSound(Some(&*sound));
 
         #[allow(
             clippy::cast_precision_loss,
@@ -232,11 +234,12 @@ impl System for Requests {
         let parts = NSCalendar::currentCalendar().components_fromDate(units, &date);
         let trigger =
             UNCalendarNotificationTrigger::triggerWithDateMatchingComponents_repeats(&parts, false);
+        let trigger: &UNNotificationTrigger = &trigger;
 
         let request = UNNotificationRequest::requestWithIdentifier_content_trigger(
             &NSString::from_str(&one.id),
             &content,
-            Some(&trigger),
+            Some(trigger),
         );
         self.centre
             .addNotificationRequest_withCompletionHandler(&request, None);
