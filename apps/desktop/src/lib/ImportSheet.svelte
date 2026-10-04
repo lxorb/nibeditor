@@ -44,6 +44,7 @@
     // Not an app's name: what arrived is somebody's own paper, and what the row says
     // is what the import will do with it.
     'pdf-pages': key('A PDF, as pages to write on'),
+    todoist: 'Todoist',
   }
 
   let over = $state(false)
@@ -88,6 +89,17 @@
   const ready = $derived(
     importing.stage === 'ready' && !!plan?.files.length && !!importing.root && !importing.error,
   )
+
+  /** A Todoist token, pasted, and whether the done tasks come too. Held by the field
+   *  until it is read and emptied the moment it is: the import never keeps it. */
+  let token = $state('')
+  let withDone = $state(false)
+
+  async function readTodoist() {
+    const pasted = token
+    token = ''
+    await importing.readTodoist(pasted, withDone)
+  }
 
   async function choose() {
     await importing.take(await pickFiles())
@@ -162,6 +174,41 @@
         {/if}
       </div>
     {/if}
+
+    <!-- Todoist, from the account: a token pasted (Settings, Integrations, Developer in
+         Todoist), read once and forgotten. Its CSV exports are dropped above instead. -->
+    <div class="card">
+      <div class="row">
+        <span class="name">{FORMATS.todoist}</span>
+        <input
+          class="field"
+          type="password"
+          bind:value={token}
+          aria-label={t('API token')}
+          autocomplete="off"
+          spellcheck="false"
+          onkeydown={(event) => {
+            if (event.key === 'Enter') void readTodoist()
+          }}
+        />
+        <button
+          class="nib-chip"
+          onclick={() => void readTodoist()}
+          disabled={!token.trim() || importing.stage === 'reading'}
+        >
+          {t('Read')}
+        </button>
+      </div>
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={withDone}
+        onclick={() => (withDone = !withDone)}
+      >
+        <span class="nib-row-label">{t('Done tasks too')}</span>
+        <span class="nib-switch" class:on={withDone} aria-hidden="true"></span>
+      </button>
+    </div>
 
     <p class="note">
       {t(
