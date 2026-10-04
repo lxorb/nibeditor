@@ -217,8 +217,14 @@ export const shareSheet = latched(() => import('./ShareSheet.svelte'))
 export const publishSheet = latched(() => import('./PublishSheet.svelte'))
 
 /** Somebody else's notes on their way in, whichever app wrote them. Asked for the same
- *  way the publish sheet is, by `importing.show`. */
-export const importSheet = latched(() => import('./ImportSheet.svelte'))
+ *  way the publish sheet is, by `importing.show`. Never the glasses' plugin's, which
+ *  offers no import (`importCommand` in commands.ts): a fetch that is only never called
+ *  still puts its chunk in the package, the sheet's own and Todoist's with it. */
+export const importSheet = latched(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no import in the Even Realities plugin'))
+    : import('./ImportSheet.svelte'),
+)
 
 /** The one picker everything that wears an icon asks for one. */
 export const iconPicker = latched(() => import('./IconPicker.svelte'))

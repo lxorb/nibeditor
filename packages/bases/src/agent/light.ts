@@ -5,13 +5,4 @@
 
 export { clockOf } from './clock'
 export { todayTasks } from './today'
-export {
-  AgentError,
-  atOf,
-  findTask,
-  newTask,
-  placeLines,
-  readAt,
-  taskOut,
-  type TaskOut,
-} from './tasks'
+export { AgentError, atOf, findTask, placeLines, readAt, taskOut, type TaskOut } from './tasks'
