@@ -51,15 +51,17 @@ const SLICE = 256 * 1024
  *  they are answering about. */
 const SHOWN = 160
 
-/** Where a tile or a widget row asked to go. */
+/** Where a tile or a widget row asked to go, and the task a Today box asked to tick. */
 interface Asked {
   command: string
   open: string
+  tick: string
+  tickSpace: string
 }
 
 /** Reads what the activity said about the press that started this. */
 export function askedFrom(json: string): Asked {
-  const nothing: Asked = { command: '', open: '' }
+  const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
   if (!json) return nothing
 
   let parsed: unknown
@@ -72,9 +74,12 @@ export function askedFrom(json: string): Asked {
   if (typeof parsed !== 'object' || parsed === null) return nothing
   const held = parsed as Record<string, unknown>
 
+  const words = (value: unknown) => (typeof value === 'string' ? value : '')
   return {
-    command: typeof held.command === 'string' ? held.command : '',
-    open: typeof held.open === 'string' ? held.open : '',
+    command: words(held.command),
+    open: words(held.open),
+    tick: words(held.tick),
+    tickSpace: words(held.tickSpace),
   }
 }
 
@@ -119,8 +124,20 @@ async function take(): Promise<void> {
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
+  if (asked.tick) await ticked(asked.tick, asked.tickSpace)
 
   await taken()
+}
+
+/** A box of the Today widget: the task ticked in its note, through the one write path.
+ *  An anchor is words anything on the phone could have sent, so it is read as one and
+ *  found among the rows of a space the app has, or nothing happens. */
+async function ticked(at: string, space: string): Promise<void> {
+  if (!workspace.spaces.some((one) => one.name === space)) return
+  const { tickTask } = await import('../task-actions')
+  await tickTask(at, space, true).catch((error: unknown) => {
+    log('error', `handed: a task could not be ticked: ${String(error)}`)
+  })
 }
 
 /** The share, from what the activity holds to what the space holds. */

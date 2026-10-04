@@ -23,4 +23,35 @@
         <item name="android:textColor">@color/widget_text</item>
         <item name="android:textSize">16sp</item>
     </style>
+
+    <!-- A row of the Today widget: a box, then the task's words, at a note row's
+         height so a task reads like a note beside it. -->
+    <style name="NibWidgetTask">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingEnd">14dp</item>
+    </style>
+
+    <!-- The box: a 44dp target with the mark in it. -->
+    <style name="NibWidgetBox">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:text">○</item>
+        <item name="android:textColor">@color/widget_muted</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="NibWidgetTaskWords">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 </resources>

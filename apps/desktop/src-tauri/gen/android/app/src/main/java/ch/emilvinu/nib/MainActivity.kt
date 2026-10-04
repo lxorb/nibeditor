@@ -29,6 +29,11 @@ class MainActivity : TauriActivity() {
     /** A note to open, carried in by a widget row. */
     const val EXTRA_OPEN = "ch.emilvinu.nib.open"
 
+    /** A task to tick, by its anchor and its space, carried in by a box of the Today
+     *  widget; see TodayWidget.kt and mobile/handed.ts. */
+    const val EXTRA_TICK = "ch.emilvinu.nib.tick"
+    const val EXTRA_TICK_SPACE = "ch.emilvinu.nib.tick.space"
+
     /** Written onto an intent once it has been read, so a launch that is replayed
      *  - a process killed in the background and restored with the intent it was
      *  started with - does not make the same note twice. */
@@ -56,6 +61,8 @@ class MainActivity : TauriActivity() {
   // own thread, the same way the insets are.
   @Volatile private var command = ""
   @Volatile private var opening = ""
+  @Volatile private var ticking = ""
+  @Volatile private var tickingIn = ""
 
   /** The page, once there is one. Held so an intent that arrives while the app is
    *  already open can say so, and so the recogniser's words have somewhere to go. */
@@ -117,11 +124,16 @@ class MainActivity : TauriActivity() {
 
     val asked = intent.getStringExtra(EXTRA_COMMAND) ?: ""
     val note = intent.getStringExtra(EXTRA_OPEN) ?: ""
+    val tick = intent.getStringExtra(EXTRA_TICK) ?: ""
     if (asked.isNotEmpty()) command = asked
     if (note.isNotEmpty()) opening = note
+    if (tick.isNotEmpty()) {
+      ticking = tick
+      tickingIn = intent.getStringExtra(EXTRA_TICK_SPACE) ?: ""
+    }
 
     val shared = Shared.take(this, intent)
-    return shared || asked.isNotEmpty() || note.isNotEmpty()
+    return shared || asked.isNotEmpty() || note.isNotEmpty() || tick.isNotEmpty()
   }
 
   override fun onWebViewCreate(webView: WebView) {
@@ -284,8 +296,12 @@ class MainActivity : TauriActivity() {
       val json = JSONObject()
       json.put("command", command)
       json.put("open", opening)
+      json.put("tick", ticking)
+      json.put("tickSpace", tickingIn)
       command = ""
       opening = ""
+      ticking = ""
+      tickingIn = ""
       return json.toString()
     }
 

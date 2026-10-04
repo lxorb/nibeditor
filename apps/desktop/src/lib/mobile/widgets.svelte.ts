@@ -18,6 +18,8 @@
 
 import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
+import { insideSpace } from '../space-paths'
+import { afterQuiet } from '../timing'
 import { type Entry, workspace } from '../workspace.svelte'
 import { method } from './bridge'
 
@@ -30,11 +32,40 @@ export interface WidgetRow {
   path: string
 }
 
-/** Everything a widget draws. */
+/** One task of the Today widget: its words, its anchor and space for the box to tick
+ *  it by, and its note's path for the words to open it. */
+export interface TodayRow {
+  text: string
+  at: string
+  space: string
+  path: string
+}
+
+/** Everything a widget draws: the notes widget's rows, and the Today widget's. */
 interface WidgetState {
   title: string
   empty: string
   notes: WidgetRow[]
+  today: { title: string; empty: string; tasks: TodayRow[] }
+}
+
+/** Today as the widget draws it, from what `list_tasks` answers: the first rows, each
+ *  with where its note is on this phone. Pure, like `widgetRows`. */
+export function todayRows(
+  tasks: readonly { text: string; at: string; space: string }[],
+  rootOf: (space: string) => string | undefined,
+  most = MOST,
+): TodayRow[] {
+  return tasks.slice(0, most).map((one) => {
+    const root = rootOf(one.space)
+    const relative = one.at.replace(/#\d+:[0-9a-z]+$/, '')
+    return {
+      text: one.text,
+      at: one.at,
+      space: one.space,
+      path: root ? insideSpace(root, relative) : '',
+    }
+  })
 }
 
 /** The rows, in the order they are drawn: the notes being kept open first, in the
@@ -66,8 +97,8 @@ export function widgetRows(
   return rows
 }
 
-/** What the app would hand over now. */
-function widgetState(): WidgetState {
+/** What the app would hand over now, Today's tasks as they were last read. */
+function widgetState(today: TodayRow[]): WidgetState {
   const kept = workspace.tabs.filter((one) => one.pinned).map((one) => one.path ?? '')
 
   return {
@@ -78,6 +109,8 @@ function widgetState(): WidgetState {
       workspace.notes.filter((one) => !workspace.archive.has(one.path)),
       kept,
     ),
+    // No sentence for an empty Today: an empty list with its plus (docs/tasks.md 5.19).
+    today: { title: t('Today'), empty: '', tasks: today },
   }
 }
 
@@ -91,14 +124,36 @@ export function watchWidgets(): () => void {
   if (!push) return () => undefined
 
   let last = ''
+  let today = $state<TodayRow[]>([])
 
-  return $effect.root(() => {
+  // Today read again when the rows change, once the typing has stopped: a widget
+  // redrawn for every keystroke is a launcher woken for every keystroke.
+  const read = async () => {
+    const { listed } = await import('../task-actions')
+    const tasks = (await listed()).tasks
+    today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.name === space)?.root)
+  }
+  const reread = afterQuiet(() => void read(), 600)
+  let unwatch: () => void = () => undefined
+  void import('../rows/rows.svelte').then(({ rows }) => {
+    unwatch = rows.watch(() => {
+      reread()
+    })
+    void read()
+  })
+
+  const stop = $effect.root(() => {
     $effect(() => {
-      const said = JSON.stringify(widgetState())
+      const said = JSON.stringify(widgetState(today))
       if (said === last) return
 
       last = said
       push(said)
     })
   })
+  return () => {
+    reread.cancel()
+    unwatch()
+    stop()
+  }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Entry } from '../workspace.svelte'
-import { widgetRows } from './widgets.svelte'
+import { todayRows, widgetRows } from './widgets.svelte'
 
 /** Which notes the home screen lists.
  *
@@ -68,5 +68,25 @@ describe('the rows', () => {
     widgetRows(given, [])
 
     expect(given.map((one) => one.name)).toEqual(['Plan.md', 'Diary.md'])
+  })
+})
+
+describe('today', () => {
+  test('the first five, each with where its note is on this phone', () => {
+    const tasks = Array.from({ length: 7 }, (_, at) => ({
+      text: `Task ${String(at)}`,
+      at: `Work/Plan.md#${String(at)}:abc`,
+      space: at === 0 ? 'Gone' : 'Notes',
+    }))
+    const rows = todayRows(tasks, (space) => (space === 'Notes' ? '/Notes' : undefined))
+    expect(rows).toHaveLength(5)
+    expect(rows[1]).toEqual({
+      text: 'Task 1',
+      at: 'Work/Plan.md#1:abc',
+      space: 'Notes',
+      path: '/Notes/Work/Plan.md',
+    })
+    // A space this phone does not have opens nothing.
+    expect(rows[0]?.path).toBe('')
   })
 })

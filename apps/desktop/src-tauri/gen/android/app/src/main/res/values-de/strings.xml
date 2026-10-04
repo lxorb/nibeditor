@@ -11,4 +11,7 @@
     <string name="widget_search">Suchen</string>
     <string name="widget_empty">Noch keine Notizen</string>
     <string name="widget_description">Die zuletzt geschriebenen Notizen, eine neue und die Suche.</string>
+    <string name="widget_today">Heute</string>
+    <string name="widget_add_task">Aufgabe hinzufügen</string>
+    <string name="widget_today_description">Die Aufgaben von heute, jede mit einem Kästchen zum Abhaken.</string>
 </resources>
