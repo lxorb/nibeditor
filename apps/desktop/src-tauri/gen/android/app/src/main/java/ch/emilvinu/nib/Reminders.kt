@@ -125,7 +125,7 @@ object Reminders {
     val waiting =
       try {
         JSONArray(prefs(context).getString(PRESSES, "[]"))
-      } catch (_: Exception) {
+      } catch (unread: Exception) {
         JSONArray()
       }
     waiting.put(
@@ -167,6 +167,14 @@ object Reminders {
         .addAction(0, words.optString("done", "Done"), action(context, ACTION_DONE, alarm))
         .addAction(0, words.optString("snooze", "Snooze"), action(context, ACTION_SNOOZE, alarm))
         .build()
+    // Notifications turned off for the app, or never allowed: nothing to show.
+    if (
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+          PackageManager.PERMISSION_GRANTED
+    ) {
+      return
+    }
     try {
       NotificationManagerCompat.from(context).notify(alarm.id, code, notification)
     } catch (error: SecurityException) {
@@ -263,14 +271,14 @@ object Reminders {
   private fun words(context: Context): JSONObject =
     try {
       JSONObject(prefs(context).getString(WORDS, "{}") ?: "{}")
-    } catch (_: Exception) {
+    } catch (unread: Exception) {
       JSONObject()
     }
 
   private fun held(context: Context): List<Alarm> =
     try {
       alarmsOf(JSONArray(prefs(context).getString(PLAN, "[]") ?: "[]"))
-    } catch (_: Exception) {
+    } catch (unread: Exception) {
       emptyList()
     }
 
@@ -278,7 +286,7 @@ object Reminders {
     val read =
       try {
         JSONObject(prefs(context).getString(RUNG, "{}") ?: "{}")
-      } catch (_: Exception) {
+      } catch (unread: Exception) {
         JSONObject()
       }
     return read.keys().asSequence().associateWith { read.optLong(it) }
@@ -335,7 +343,7 @@ object Reminders {
     val json = intent.getStringExtra(EXTRA_ALARM) ?: return null
     return try {
       alarmsOf(JSONArray(json)).firstOrNull()
-    } catch (_: Exception) {
+    } catch (unread: Exception) {
       null
     }
   }
