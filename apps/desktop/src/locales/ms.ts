@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ms: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Tambah tugasan',
+  Tomorrow: 'Esok',
+  'done {date}': 'selesai {date}',
+  'Next week': 'Minggu depan',
+  'Pick a date…': 'Pilih tarikh…',
+  'Set a time…': 'Tetapkan masa…',
+  'No date': 'Tiada tarikh',
+  'Priority {level}': 'Keutamaan {level}',
+  'At the time': 'Tepat pada masanya',
+  '{count} h': '{count} j',
+  Inbox: 'Peti masuk',
+  Date: 'Tarikh',
+  Priority: 'Keutamaan',
+  Reminder: 'Peringatan',
+  Duration: 'Tempoh',
+  'Smart dates': 'Tarikh pintar',
+  'From any app': 'Dari mana-mana aplikasi',
+  'Every day': 'Setiap hari',
+  'Every weekday': 'Setiap hari bekerja',
+  'Every week': 'Setiap minggu',
+  'Every month': 'Setiap bulan',
+  'Every year': 'Setiap tahun',
   // Files and notes
   Save: 'Simpan',
   'New note': 'Nota baharu',

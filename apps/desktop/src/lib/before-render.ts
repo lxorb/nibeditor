@@ -69,6 +69,9 @@ export type Drawer = (code: string, language: string, scheme: Scheme) => Promise
  *  bargain - heavy, loaded on demand, and needed by a render that cannot wait -
  *  and every surface that renders a whole note already awaits this one call. See
  *  @nib/markdown/engines. */
+/** The fences the space answers: a search, and the Tasks plugin's query block. */
+const ANSWERED = new Set(['query', 'tasks'])
+
 export async function prepareFences(
   source: string,
   scheme: Scheme,
@@ -77,7 +80,7 @@ export async function prepareFences(
     /** What a ` ```query ` fence answers with, where anything can answer. Absent
      *  for an export and for a published page, which have no space to search, and
      *  where such a fence stays the code it is; see query-block.ts. */
-    query?: ((code: string) => Promise<string | null>) | undefined
+    query?: ((code: string, language: string) => Promise<string | null>) | undefined
   } = {},
   draw: Drawer = drawDiagram,
 ): Promise<Fence> {
@@ -98,10 +101,15 @@ export async function prepareFences(
   const asking = options.query
   const answering = asking
     ? blocks
-        .filter((block) => block.language === 'query')
+        .filter((block) => ANSWERED.has(block.language))
         .map(async (block) => {
-          const html = await asking(block.code).catch(() => null)
-          if (html) answers.set(block.code, html)
+          const html = await asking(block.code, block.language).catch(() => null)
+          if (html)
+            answers.set(
+              `${block.language}
+${block.code}`,
+              html,
+            )
         })
     : []
 
@@ -120,8 +128,9 @@ export async function prepareFences(
   ])
 
   return (code, language) => {
-    if (language === 'query') {
-      const rows = answers.get(code)
+    if (ANSWERED.has(language)) {
+      const rows = answers.get(`${language}
+${code}`)
       return rows === undefined ? null : `<figure class="query">${rows}</figure>\n`
     }
 

@@ -349,10 +349,7 @@ fn key(app: &AppHandle, on: bool) {
     }
     let mut held = None;
     if let Some(new) = wanted {
-        let ready = added
-            || app
-                .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-                .is_ok();
+        let ready = added || crate::hotkeys::ready(app);
         with(|shell| shell.shortcuts = ready);
         let stopping = ready
             && app

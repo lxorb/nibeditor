@@ -74,6 +74,12 @@ const DEFAULTS = {
   /** A task's box. The box says whether it is ticked, so its name is what the
    *  tick means: a reader hears "Done, checkbox, not checked". */
   taskDone: 'Done',
+  /** The chip after a ticked task: the day it was done. */
+  taskDoneOn: 'done {date}',
+  /** A task's day, said as a word where it is one; see task-days.ts. */
+  today: 'Today',
+  tomorrow: 'Tomorrow',
+  yesterday: 'Yesterday',
 }
 
 export type LabelKey = keyof typeof DEFAULTS

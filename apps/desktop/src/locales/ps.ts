@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'دنده ورزيات کړئ',
+  Tomorrow: 'سبا',
+  'done {date}': 'بشپړه {date}',
+  'Next week': 'راتلونکې اونۍ',
+  'Pick a date…': 'نېټه وټاکئ…',
+  'Set a time…': 'وخت وټاکئ…',
+  'No date': 'نېټه نشته',
+  'Priority {level}': 'لومړیتوب {level}',
+  'At the time': 'په ټاکلي وخت',
+  '{count} h': '{count} ساعته',
+  Inbox: 'راغلي',
+  Date: 'نېټه',
+  Priority: 'لومړیتوب',
+  Reminder: 'یادونه',
+  Duration: 'موده',
+  'Smart dates': 'هوښیارې نېټې',
+  'From any app': 'له هر اپ څخه',
+  'Every day': 'هره ورځ',
+  'Every weekday': 'هره کاري ورځ',
+  'Every week': 'هره اونۍ',
+  'Every month': 'هره میاشت',
+  'Every year': 'هر کال',
   // Files and notes
   Save: 'خوندول',
   'New note': 'نوې يادښت',

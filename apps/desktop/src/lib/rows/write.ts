@@ -96,7 +96,10 @@ function ticked(text: string, from: number, done: boolean): string {
   // A cancelled task done after all is ticked where it stands, nothing else moving.
   if (done && fields.cancelled) {
     const edits = writeTask(line, { done: true, completed: today, cancelledOn: null })
-    return appliedEdits(text, edits.map((edit) => ({ ...edit, from: edit.from + from, to: edit.to + from })))
+    return appliedEdits(
+      text,
+      edits.map((edit) => ({ ...edit, from: edit.from + from, to: edit.to + from })),
+    )
   }
   return appliedEdits(text, tick(text, text.slice(0, from).split('\n').length - 1, today))
 }

@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'افزودن کار',
+  Tomorrow: 'فردا',
+  'done {date}': 'انجام شد {date}',
+  'Next week': 'هفتهٔ بعد',
+  'Pick a date…': 'انتخاب تاریخ…',
+  'Set a time…': 'تنظیم ساعت…',
+  'No date': 'بدون تاریخ',
+  'Priority {level}': 'اولویت {level}',
+  'At the time': 'سر وقت',
+  '{count} h': '{count} ساعت',
+  Inbox: 'صندوق ورودی',
+  Date: 'تاریخ',
+  Priority: 'اولویت',
+  Reminder: 'یادآوری',
+  Duration: 'مدت',
+  'Smart dates': 'تاریخ‌های هوشمند',
+  'From any app': 'از هر برنامه‌ای',
+  'Every day': 'هر روز',
+  'Every weekday': 'هر روز کاری',
+  'Every week': 'هر هفته',
+  'Every month': 'هر ماه',
+  'Every year': 'هر سال',
   // Files and notes
   Save: 'ذخیره',
   'New note': 'یادداشت تازه',

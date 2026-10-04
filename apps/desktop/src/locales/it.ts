@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Aggiungi attività',
+  Tomorrow: 'Domani',
+  'done {date}': 'fatta {date}',
+  'Next week': 'La settimana prossima',
+  'Pick a date…': 'Scegli una data…',
+  'Set a time…': 'Imposta un orario…',
+  'No date': 'Nessuna data',
+  'Priority {level}': 'Priorità {level}',
+  'At the time': 'All’ora esatta',
+  '{count} h': '{count} h',
+  Inbox: 'Posta in arrivo',
+  Date: 'Data',
+  Priority: 'Priorità',
+  Reminder: 'Promemoria',
+  Duration: 'Durata',
+  'Smart dates': 'Date intelligenti',
+  'From any app': 'Da qualsiasi app',
+  'Every day': 'Ogni giorno',
+  'Every weekday': 'Ogni giorno feriale',
+  'Every week': 'Ogni settimana',
+  'Every month': 'Ogni mese',
+  'Every year': 'Ogni anno',
   // Files and notes
   Save: 'Salva',
   'New note': 'Nuova nota',

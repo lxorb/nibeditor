@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': '加任務',
+  Tomorrow: '聽日',
+  'done {date}': '{date} 完成',
+  'Next week': '下個禮拜',
+  'Pick a date…': '揀日期…',
+  'Set a time…': '設定時間…',
+  'No date': '冇日期',
+  'Priority {level}': '優先次序 {level}',
+  'At the time': '準時',
+  '{count} h': '{count}個鐘',
+  Inbox: '收件匣',
+  Date: '日期',
+  Priority: '優先次序',
+  Reminder: '提醒',
+  Duration: '所需時間',
+  'Smart dates': '智能日期',
+  'From any app': '喺任何 App',
+  'Every day': '每日',
+  'Every weekday': '每個工作日',
+  'Every week': '每個禮拜',
+  'Every month': '每個月',
+  'Every year': '每年',
   // Files and notes
   Save: '儲存',
   'New note': '新增筆記',

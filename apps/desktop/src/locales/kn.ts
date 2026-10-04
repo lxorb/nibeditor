@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'ಕಾರ್ಯ ಸೇರಿಸಿ',
+  Tomorrow: 'ನಾಳೆ',
+  'done {date}': 'ಮುಗಿದಿದೆ {date}',
+  'Next week': 'ಮುಂದಿನ ವಾರ',
+  'Pick a date…': 'ದಿನಾಂಕ ಆರಿಸಿ…',
+  'Set a time…': 'ಸಮಯ ಹೊಂದಿಸಿ…',
+  'No date': 'ದಿನಾಂಕವಿಲ್ಲ',
+  'Priority {level}': 'ಆದ್ಯತೆ {level}',
+  'At the time': 'ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ',
+  '{count} h': '{count} ಗಂ',
+  Inbox: 'ಇನ್‌ಬಾಕ್ಸ್',
+  Date: 'ದಿನಾಂಕ',
+  Priority: 'ಆದ್ಯತೆ',
+  Reminder: 'ಜ್ಞಾಪನೆ',
+  Duration: 'ಅವಧಿ',
+  'Smart dates': 'ಸ್ಮಾರ್ಟ್ ದಿನಾಂಕಗಳು',
+  'From any app': 'ಯಾವುದೇ ಆ್ಯಪ್‌ನಿಂದ',
+  'Every day': 'ಪ್ರತಿದಿನ',
+  'Every weekday': 'ಪ್ರತಿ ಕೆಲಸದ ದಿನ',
+  'Every week': 'ಪ್ರತಿ ವಾರ',
+  'Every month': 'ಪ್ರತಿ ತಿಂಗಳು',
+  'Every year': 'ಪ್ರತಿ ವರ್ಷ',
   // Files and notes
   Save: 'ಉಳಿಸಿ',
   'New note': 'ಹೊಸ ಟಿಪ್ಪಣಿ',

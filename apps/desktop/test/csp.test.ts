@@ -41,6 +41,7 @@ const INDEX = read('../index.html')
 const PAGES: Record<string, string> = {
   'index.html': INDEX,
   'presenter.html': read('../presenter.html'),
+  'quick-add.html': read('../quick-add.html'),
   'even.html': read('../even.html'),
 }
 

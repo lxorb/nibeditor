@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Ongeza kazi',
+  Tomorrow: 'Kesho',
+  'done {date}': 'imekamilika {date}',
+  'Next week': 'Wiki ijayo',
+  'Pick a date…': 'Chagua tarehe…',
+  'Set a time…': 'Weka saa…',
+  'No date': 'Hakuna tarehe',
+  'Priority {level}': 'Kipaumbele {level}',
+  'At the time': 'Kwa wakati huo',
+  '{count} h': '{count} saa',
+  Inbox: 'Kikasha',
+  Date: 'Tarehe',
+  Priority: 'Kipaumbele',
+  Reminder: 'Kikumbusho',
+  Duration: 'Muda',
+  'Smart dates': 'Tarehe mahiri',
+  'From any app': 'Kutoka programu yoyote',
+  'Every day': 'Kila siku',
+  'Every weekday': 'Kila siku ya kazi',
+  'Every week': 'Kila wiki',
+  'Every month': 'Kila mwezi',
+  'Every year': 'Kila mwaka',
   // Files and notes
   Save: 'Hifadhi',
   'New note': 'Dokezo jipya',

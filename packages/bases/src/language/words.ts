@@ -31,7 +31,7 @@ export function wordsOf(text: string): Word[] {
 export const bare = (word: Word | undefined): string => (word?.key ?? '').replace(/\.$/u, '')
 
 /** Whether the words from `at` are this phrase. */
-export function phraseAt(words: readonly Word[], at: number, phrase: readonly string[]): boolean {
+function phraseAt(words: readonly Word[], at: number, phrase: readonly string[]): boolean {
   return phrase.every((one, index) => bare(words[at + index]) === one)
 }
 

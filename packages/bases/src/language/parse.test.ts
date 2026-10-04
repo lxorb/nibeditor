@@ -136,11 +136,7 @@ describe('repeating', () => {
     ['Water plants every mon, fri', 'every week on Monday, Friday', '2026-10-09'],
     ['Water plants every! 3 days', 'every 3 days when done', '2026-10-07'],
     ['Water plants each week', 'every week', '2026-10-07'],
-    [
-      'Water plants every day until dec 24',
-      'every day until December 24, 2026',
-      '2026-10-07',
-    ],
+    ['Water plants every day until dec 24', 'every day until December 24, 2026', '2026-10-07'],
     ['Water plants every monday starting oct 19', 'every week on Monday', '2026-10-19'],
   ])('%s', (text, recurrence, due) => {
     expect(said(en(text))).toEqual({ text: 'Water plants', recurrence, due })
@@ -291,12 +287,11 @@ describe('the whole line', () => {
       recurrence: 'every week on Sunday',
     })
     expect(add.chips.map((chip) => chip.kind)).toEqual(['when', 'tag', 'priority', 'repeat'])
-    expect(add.chips.map((chip) => 'Call mum tomorrow 4pm #family p1 every sunday'.slice(chip.from, chip.to))).toEqual([
-      'tomorrow 4pm',
-      '#family',
-      'p1',
-      'every sunday',
-    ])
+    expect(
+      add.chips.map((chip) =>
+        'Call mum tomorrow 4pm #family p1 every sunday'.slice(chip.from, chip.to),
+      ),
+    ).toEqual(['tomorrow 4pm', '#family', 'p1', 'every sunday'])
   })
 
   test('a German reader typing English is understood too', () => {

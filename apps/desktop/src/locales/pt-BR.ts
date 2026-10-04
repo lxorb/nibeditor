@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Adicionar tarefa',
+  Tomorrow: 'Amanhã',
+  'done {date}': 'feita {date}',
+  'Next week': 'Semana que vem',
+  'Pick a date…': 'Escolher data…',
+  'Set a time…': 'Definir horário…',
+  'No date': 'Sem data',
+  'Priority {level}': 'Prioridade {level}',
+  'At the time': 'Na hora',
+  '{count} h': '{count} h',
+  Inbox: 'Caixa de entrada',
+  Date: 'Data',
+  Priority: 'Prioridade',
+  Reminder: 'Lembrete',
+  Duration: 'Duração',
+  'Smart dates': 'Datas inteligentes',
+  'From any app': 'De qualquer app',
+  'Every day': 'Todo dia',
+  'Every weekday': 'Todo dia útil',
+  'Every week': 'Toda semana',
+  'Every month': 'Todo mês',
+  'Every year': 'Todo ano',
   // Files and notes
   Save: 'Salvar',
   'New note': 'Nova nota',

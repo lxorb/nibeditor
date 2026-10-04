@@ -127,7 +127,7 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   // Ticked the way every box is: the done date, the open sub-tasks, and a recurring
   // task's next occurrence above it, as one thing to undo. The engine is fetched with
   // the first tick rather than carried by the first paint.
-  const { tick, todayOf } = await import('@nib/bases')
+  const { tick, todayOf } = await import('@nib/bases/occurrence')
   const edits = tick(before, line, todayOf())
   if (!edits.length) return false
 

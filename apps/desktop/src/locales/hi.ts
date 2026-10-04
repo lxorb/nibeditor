@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'कार्य जोड़ें',
+  Tomorrow: 'कल',
+  'done {date}': 'पूरा {date}',
+  'Next week': 'अगले सप्ताह',
+  'Pick a date…': 'तारीख चुनें…',
+  'Set a time…': 'समय तय करें…',
+  'No date': 'कोई तारीख नहीं',
+  'Priority {level}': 'प्राथमिकता {level}',
+  'At the time': 'ठीक समय पर',
+  '{count} h': '{count} घं',
+  Inbox: 'इनबॉक्स',
+  Date: 'तारीख',
+  Priority: 'प्राथमिकता',
+  Reminder: 'रिमाइंडर',
+  Duration: 'अवधि',
+  'Smart dates': 'स्मार्ट तारीखें',
+  'From any app': 'किसी भी ऐप से',
+  'Every day': 'हर दिन',
+  'Every weekday': 'हर कार्यदिवस',
+  'Every week': 'हर सप्ताह',
+  'Every month': 'हर महीने',
+  'Every year': 'हर साल',
   // Files and notes
   Save: 'सहेजें',
   'New note': 'नया नोट',

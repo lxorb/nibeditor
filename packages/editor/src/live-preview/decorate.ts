@@ -35,6 +35,7 @@ import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
 import { iframeCard, webCard } from '@nib/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
+import { door } from '@nib/markdown/door'
 import {
   BulletWidget,
   CalloutWidget,
@@ -561,6 +562,24 @@ class Decorator {
     )
 
     if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'nib-task-done')
+    this.taskFields(this.state.doc.lineAt(node.from))
+  }
+
+  /** A task's fields hidden the way marks are and said again as chips after its words,
+   *  the source back with the caret on its line; see task-chips.ts. */
+  private taskFields(line: Line) {
+    const drawn = chipsFor(line.text)?.taskDrawing(line.text)
+    if (!drawn || !chips) return
+
+    const shown = lineRevealed(this.state, line.from)
+    for (const span of drawn.hide) this.conceal(line.from + span.from, line.from + span.to, shown)
+    if (shown || !drawn.chips.length) return
+    this.marks.push(
+      Decoration.widget({
+        widget: new chips.TaskChipsWidget(drawn.chips, line.from),
+        side: 1,
+      }).range(line.to),
+    )
   }
 
   /** A picture stays a picture while the caret is beside it, or selects it;
@@ -780,6 +799,30 @@ class Decorator {
   }
 }
 
+/** The task chips (task-chips.ts), fetched the first time a line on screen has a
+ *  task's field on it: the Tasks plugin's whole grammar is behind them, and a note
+ *  rarely has one. A note drawn before they land is drawn again when they do, the way a
+ *  `:shortcode:` is when the emoji table arrives. */
+let chips: typeof import('./task-chips') | null = null
+const chipsLanded = new Set<() => void>()
+const fetchChips = door(async () => {
+  chips = await import('./task-chips')
+  for (const landed of [...chipsLanded]) landed()
+})
+
+/** Fetches the task chips now: what a test that builds one pass of decorations, with no
+ *  frame after it to draw them in, says first. */
+export const loadTaskChips: () => Promise<void> = fetchChips
+
+/** A field's emoji or a bracket field's `::`: a glance, not a reading. */
+const FIELD = /[📅📆🗓⏳⌛🛫➕✅❌🔺⏫🔼🔽⏬🔁🏁🆔⛔]|::/u
+
+function chipsFor(line: string): typeof chips {
+  if (!FIELD.test(line)) return null
+  if (!chips) void fetchChips()
+  return chips
+}
+
 /** Every line from `from` to `to`, both ends included.
  *
  *  Written once because two walks here want it, and because the end of it is
@@ -819,7 +862,14 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       const built = buildDecorations(view.state, view.visibleRanges)
       this.decorations = built.decorations
       this.atomic = built.atomic
-      this.stopWaiting = onEngines(() => view.dispatch({ effects: enginesLanded.of(null) }))
+      const landed = () => view.dispatch({ effects: enginesLanded.of(null) })
+      const stopEngines = onEngines(landed)
+      // The task chips arrive the same way: a note drawn before them is drawn again.
+      chipsLanded.add(landed)
+      this.stopWaiting = () => {
+        stopEngines()
+        chipsLanded.delete(landed)
+      }
     }
 
     destroy() {

@@ -24,6 +24,7 @@ import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
+import { showQuickAdd } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
@@ -776,6 +777,29 @@ const APP_ENTRIES: Shortcut[] = [
     key: null,
     alias: true,
     run: (context) => context.palette('commands'),
+  },
+  // Quick add, from anywhere in the app; once nib is running the same key opens it over
+  // every other app as well (quick-add/anywhere.ts). Ctrl+Alt+Space on every system: on
+  // a Mac Cmd+Ctrl+Space is the emoji picker and Cmd+Space is Spotlight. See
+  // docs/tasks.md 5.6 and 5.16.
+  {
+    id: 'app.quick-add',
+    label: () => t('Add task'),
+    category: 'file',
+    scope: 'app',
+    key: 'Ctrl-Alt-Space',
+    run: () => showQuickAdd(),
+  },
+  // Todoist's own key, read by the Tasks panel and a view where no field has the
+  // keyboard, which is the only place a bare letter can be a command.
+  {
+    id: 'tasks.quick-add',
+    label: () => t('Add task'),
+    category: 'file',
+    scope: 'panel',
+    key: 'q',
+    contextual: true,
+    alias: true,
   },
   {
     id: 'app.sidebar',

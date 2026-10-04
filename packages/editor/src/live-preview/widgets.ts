@@ -9,6 +9,7 @@ import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
+import { noteIndex } from '../wikilink/notes'
 
 export class BulletWidget extends NibWidget {
   constructor(private readonly depth: number) {
@@ -53,6 +54,14 @@ export class CheckboxWidget extends NibWidget {
       // other: while the note is only being read, the box says what the
       // document says. The stylesheet takes the hover off it to match.
       if (view.state.readOnly) return
+      // Where the app is behind the editor, ticked the way every box is: the done date,
+      // the sub-tasks, a recurring task's next line. See task-tick.ts.
+      const help = view.state.facet(noteIndex).tasks
+      if (help) {
+        const line = view.state.doc.lineAt(this.from).number
+        void import('../task-tick').then(({ tickLines }) => tickLines(view, help, [line]))
+        return
+      }
       view.dispatch({
         changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
       })

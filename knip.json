@@ -25,6 +25,8 @@
         "src/even.ts",
         "presenter.html",
         "src/presenter.ts",
+        "quick-add.html",
+        "src/quick-add.ts",
         "src/site/site.ts",
         "src/lib/ai/review/index.ts"
       ],

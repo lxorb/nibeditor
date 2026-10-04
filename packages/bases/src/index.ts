@@ -7,4 +7,4 @@
 export * from './types'
 export { noteValues, scalarValue, taskHash } from './note-values'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
-export { todayOf } from './dates'
+export { addDays, dayNumber, todayOf, weekday } from './dates'

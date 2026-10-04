@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Ƙara aiki',
+  Tomorrow: 'Gobe',
+  'done {date}': 'an gama {date}',
+  'Next week': 'Mako mai zuwa',
+  'Pick a date…': 'Zaɓi kwanan wata…',
+  'Set a time…': 'Saita lokaci…',
+  'No date': 'Babu kwanan wata',
+  'Priority {level}': 'Fifiko {level}',
+  'At the time': 'A lokacin',
+  '{count} h': '{count} awa',
+  Inbox: 'Akwatin saƙo',
+  Date: 'Kwanan wata',
+  Priority: 'Fifiko',
+  Reminder: 'Tunatarwa',
+  Duration: 'Tsawon lokaci',
+  'Smart dates': 'Kwanan wata masu wayo',
+  'From any app': 'Daga kowace manhaja',
+  'Every day': 'Kowace rana',
+  'Every weekday': 'Kowace ranar aiki',
+  'Every week': 'Kowane mako',
+  'Every month': 'Kowane wata',
+  'Every year': 'Kowace shekara',
   // Files and notes
   Save: 'Ajiye',
   'New note': 'Sabuwar bayanin kula',

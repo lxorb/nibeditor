@@ -1,4 +1,7 @@
 import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
+import type { TextEdit } from '@nib/markdown/edits'
+import type { TaskChange } from '@nib/markdown/task-edits'
+import type { TaskFields } from '@nib/markdown/task-line'
 import type { EditorView } from '@codemirror/view'
 import {
   foldName,
@@ -109,7 +112,8 @@ export interface NoteIndex {
    *  their frame first and fill it in when this lands. */
   read: (path: string) => Promise<string | null>
   /** What a ` ```query ` fence answers with, as HTML the fence can hold: the app
-   *  searches the space, and the rows it draws are the Search panel's own. Null
+   *  searches the space, and the rows it draws are the Search panel's own. Asked with
+   *  `tasks` for the Tasks plugin's query block, which the rows engine answers. Null
    *  where there is nothing to answer from, and absent entirely where the editor is
    *  standing on its own - a fence then stays the code it is.
    *
@@ -117,7 +121,7 @@ export interface NoteIndex {
    *  this is: what the space holds, which changes while the editor is open. The
    *  field this index sits in is replaced when it does, and that is what makes a
    *  fence answer again. */
-  query?: ((code: string) => Promise<string | null>) | undefined
+  query?: ((code: string, language?: string) => Promise<string | null>) | undefined
   /** Something in a query fence was pressed. Handed the press's target rather
    *  than a note and a line, because the app wrote the rows and is the one that
    *  should read them; it answers whether it was one of its own, so the editor can
@@ -161,6 +165,31 @@ export interface NoteIndex {
    *  Absent where the editor stands on its own, and `![[paper.pdf#page=3]]` is then
    *  the card and nothing else. */
   drawFile?: ((card: HTMLElement, file: FileDrawing) => () => void) | undefined
+  /** What the app does for a task line that the editor cannot: tick it the way the
+   *  rows engine does, pick a field from quick add's lists, read a date typed in words
+   *  (docs/tasks.md 5.7). Absent where the editor stands alone, and a box then ticks as
+   *  a character and chips are only drawn. */
+  tasks?: TaskHelp | undefined
+}
+
+/** A date read off the end of a task's words: where they start, and what they said. */
+export interface DayTyped {
+  from: number
+  due: string
+  time?: string
+  /** The day as the hint shows it. */
+  label: string
+}
+
+export interface TaskHelp {
+  /** The edits that tick the task on line `line` (from zero), or open it again;
+   *  offsets into `note`, in order, one undo. */
+  tick(note: string, line: number): Promise<readonly TextEdit[]>
+  /** A chip pressed: its field's choices over `at`, the pick handed to `change`. */
+  pick(field: string, fields: TaskFields, at: DOMRect, change: (change: TaskChange) => void): void
+  /** A day said in words at the end of `text`; null, too, while the reader of one is
+   *  still on its way. */
+  dayAtEnd(text: string): DayTyped | null
 }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }

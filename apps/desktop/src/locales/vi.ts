@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Thêm việc',
+  Tomorrow: 'Ngày mai',
+  'done {date}': 'xong {date}',
+  'Next week': 'Tuần sau',
+  'Pick a date…': 'Chọn ngày…',
+  'Set a time…': 'Đặt giờ…',
+  'No date': 'Không có ngày',
+  'Priority {level}': 'Ưu tiên {level}',
+  'At the time': 'Đúng giờ',
+  '{count} h': '{count} giờ',
+  Inbox: 'Hộp thư đến',
+  Date: 'Ngày',
+  Priority: 'Ưu tiên',
+  Reminder: 'Lời nhắc',
+  Duration: 'Thời lượng',
+  'Smart dates': 'Ngày thông minh',
+  'From any app': 'Từ bất kỳ ứng dụng nào',
+  'Every day': 'Mỗi ngày',
+  'Every weekday': 'Mỗi ngày làm việc',
+  'Every week': 'Mỗi tuần',
+  'Every month': 'Mỗi tháng',
+  'Every year': 'Mỗi năm',
   // Files and notes
   Save: 'Lưu',
   'New note': 'Ghi chú mới',

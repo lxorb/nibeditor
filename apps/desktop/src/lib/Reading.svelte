@@ -58,10 +58,10 @@
    *  reading/drawn.ts. */
   let undrawn: (() => void) | undefined
 
-  /** Whether the note holds a ` ```query ` fence, which is what makes it answer
+  /** Whether the note holds a ` ```query ` or ` ```tasks ` fence, which is what makes it answer
    *  again when the space changes. A scan of the words rather than a parse: the
    *  fence has to be written out to be one. */
-  const asks = $derived(tab.doc.includes('```query'))
+  const asks = $derived(tab.doc.includes('```query') || tab.doc.includes('```tasks'))
 
   /** The note, read outside the reactive graph: flushing brings the words forward
    *  and reading them here as a dependency would set the render off again. */

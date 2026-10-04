@@ -94,6 +94,9 @@ mod fuzzy;
 mod ground;
 mod highlights;
 mod history;
+// The global shortcut plugin, added once for whoever holds a key from any app; see hotkeys.rs.
+#[cfg(desktop)]
+mod hotkeys;
 #[cfg(desktop)]
 mod keyboard;
 mod lane;
@@ -124,6 +127,9 @@ mod placement;
 #[cfg(desktop)]
 mod presence;
 mod query;
+// Quick add from any app: its key and its window; see quick_add.rs.
+#[cfg(desktop)]
+mod quick_add;
 mod regex;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
@@ -297,6 +303,8 @@ macro_rules! desktop_commands {
             agents::watch::agents_watch,
             agents::shell::agents_shell,
             agents::shell::agents_hold,
+            quick_add::quick_add_key,
+            quick_add::quick_add_hide,
             mcp::program::mcp_program,
             ai_agent::ai_agent_tools,
             ai_agent::ai_agent_call,

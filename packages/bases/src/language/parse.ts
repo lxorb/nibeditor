@@ -25,15 +25,7 @@ import { bare, type Word, wordsOf } from './words'
 
 /** What a chip stands for. */
 export type ChipKind =
-  | 'when'
-  | 'repeat'
-  | 'priority'
-  | 'where'
-  | 'tag'
-  | 'assignee'
-  | 'remind'
-  | 'deadline'
-  | 'duration'
+  'when' | 'repeat' | 'priority' | 'where' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
 
 /** A recognised phrase, as a span of the line. */
 export interface Chip {
@@ -169,7 +161,10 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
   }
 
   // The rest read as a phrase of its own, with the `!` taken off its first word.
-  const shown = [{ ...first, raw: first.raw.slice(1), key: first.key.slice(1) }, ...words.slice(at + 1)]
+  const shown = [
+    { ...first, raw: first.raw.slice(1), key: first.key.slice(1) },
+    ...words.slice(at + 1),
+  ]
   const when = whenAt(shown, 0, g, clock, true) ?? timeAt(shown, 0, g, true)
   if (!when) return null
   const end = at + when.end
@@ -218,7 +213,8 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
     // `45m`, `1h30`, `1h30m`, `1.5h`, written as one word.
     const glued = /^(?:(\d+(?:[.,]\d+)?)h)?(?:(\d+)(?:m|min)?)?$/.exec(key)
     if (glued && key !== '' && (glued[1] !== undefined || /m(?:in)?$/.test(key))) {
-      minutes += Math.round(Number((glued[1] ?? '0').replace(',', '.')) * 60) + Number(glued[2] ?? 0)
+      minutes +=
+        Math.round(Number((glued[1] ?? '0').replace(',', '.')) * 60) + Number(glued[2] ?? 0)
       read = true
       index++
       continue
@@ -322,11 +318,8 @@ function foundAt(
 }
 
 /** Whether a span of the line was turned back into words. */
-const kept = (
-  keep: readonly { from: number; to: number }[],
-  from: number,
-  to: number,
-): boolean => keep.some((span) => span.from < to && span.to > from)
+const kept = (keep: readonly { from: number; to: number }[], from: number, to: number): boolean =>
+  keep.some((span) => span.from < to && span.to > from)
 
 /** The fields each phrase fills: its kind's, or the day and the time a `when` named. */
 const slotsOf = (one: Found): readonly string[] => one.slots ?? [one.kind]
