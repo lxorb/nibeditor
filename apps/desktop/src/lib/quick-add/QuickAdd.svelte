@@ -22,7 +22,7 @@
   import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
@@ -245,7 +245,8 @@
     if (event.shiftKey && event.currentTarget === input) {
       event.preventDefault()
       description ??= ''
-      void Promise.resolve().then(() => words?.focus())
+      // The line is drawn on the next turn, and only then can it take the caret.
+      void tick().then(() => words?.focus())
       return
     }
     if (event.shiftKey) return

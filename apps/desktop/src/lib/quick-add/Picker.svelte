@@ -55,7 +55,7 @@
 </script>
 
 <!-- A press anywhere else is the same answer as Escape. -->
-<div class="catch" onpointerdown={onclose}></div>
+<div class="catch" role="presentation" onpointerdown={onclose}></div>
 <ul
   bind:this={list}
   class="nib-layer picker"
