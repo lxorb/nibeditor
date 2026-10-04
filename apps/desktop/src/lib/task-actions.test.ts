@@ -12,14 +12,25 @@ vi.mock('./workspace.svelte', () => ({
   workspace: {
     spaces: [home],
     activeSpace: home,
+    notes: [],
+    recent: [],
     noteText: (path: string) => Promise.resolve(files.get(path) ?? null),
   },
 }))
 
 vi.mock('./workspace/note-text', () => ({
+  noteText: (_ws: unknown, path: string) => Promise.resolve(files.get(path) ?? null),
   replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {
     for (const one of changes) files.set(one.path, one.after)
     return Promise.resolve()
+  },
+}))
+
+vi.mock('./rows/inbox-note', () => ({
+  inboxNote: (root: string) => {
+    const path = `${root}/Inbox.md`
+    if (!files.has(path)) files.set(path, '')
+    return Promise.resolve(path)
   },
 }))
 
@@ -28,11 +39,6 @@ vi.mock('./rows/rows.svelte', () => ({
     of: () =>
       [...files].flatMap(([path, text]) => rowsOfText('Home', path.slice('/s/Home/'.length), text)),
     inboxes: () => [{ space: 'Home', path: 'Inbox.md' }],
-    inbox: (root: string) => {
-      const path = `${root}/Inbox.md`
-      if (!files.has(path)) files.set(path, '')
-      return Promise.resolve(path)
-    },
   },
 }))
 

@@ -20,8 +20,8 @@ import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { writeFile } from '../workspace/write-file'
-import { ensureInbox, inboxes, inboxOf } from './inbox'
+import { inboxes, inboxOf } from './inbox'
+import { inboxNote } from './inbox-note'
 import { type RowsListener, RowsStore } from './store'
 import { type RowChange, writeRow } from './write'
 
@@ -71,11 +71,7 @@ export const rows = {
    *  made the first time it is needed; null where no space is open. */
   async inbox(root = workspace.activeSpace?.root): Promise<string | null> {
     if (root === undefined) return null
-    return ensureInbox(root, async (path) => {
-      await writeFile(path, '')
-      await workspace.loadTree()
-      await workspace.fileCame(path, 'file')
-    })
+    return inboxNote(root)
   },
 
   /** Every space's inbox, relative to it: what the Inbox view filters on. */

@@ -189,7 +189,7 @@ class Bridge {
   private shell: Shell | null = null
   /** Today, as the modal's fifth row puts it up; see today.ts. */
   private readonly todayList = new Today({
-    load: async () => (await (await import('../task-actions')).listed()).tasks,
+    load: async () => (await import('./today-tasks')).todayHere(),
     tick: async (at, space, done) => (await import('../task-actions')).tickTask(at, space, done),
     redraw: () => this.act('draw'),
   })

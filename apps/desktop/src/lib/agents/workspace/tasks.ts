@@ -20,8 +20,10 @@ import {
   listTasks as listed,
   movedTask,
   newTask,
+  quickWords,
   noteName,
-  placeLines,
+  placedEdit,
+  placeIn,
   queryBase as queried,
   readAt,
   readBase,
@@ -162,19 +164,27 @@ function writableNote(call: Call, path: string) {
 
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const place = placeFor(call, maybe(call, 'space'))
-  const fields = (() => {
+  const { rows } = await import('../../rows/rows.svelte')
+  // Quick add's grammar over the words, in the reader's language and English, knowing
+  // the space's notes for `>Note`, as the quick add field reads them.
+  const { i18n } = await import('../../i18n.svelte')
+  const names = rows
+    .of(place.space.name)
+    .filter((row) => row.kind === 'note')
+    .map((row) => row.path.replace(/.md$/i, ''))
+  const read = (() => {
     try {
-      return newTask(call.args)
+      return newTask(call.args, quickWords([i18n.language], new Date(), names))
     } catch (error) {
       refused(error)
     }
   })()
+  const { fields } = read
   // The space's inbox where no note is named, made by the write below if it is not there.
-  const { rows } = await import('../../rows/rows.svelte')
   const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? 'Inbox.md'
-  const path = maybe(call, 'note') ?? inbox
+  const path = maybe(call, 'note') ?? read.note ?? inbox
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
-  const under = maybe(call, 'under') ?? undefined
+  const under = maybe(call, 'under') ?? read.heading
   const line = taskLine(fields)
 
   const question = await asked(call, null, `Add a task to ${note.relative}`)
@@ -182,14 +192,14 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
 
   const hash = taskHash(fields.text)
   if ((await workspace.noteText(onDisk(note.place, note.relative))) === null) {
-    const placed = placeLines('', [line], under)
-    await made(note.place, note.relative, appliedEdits('', [placed.edit]), false)
+    const placed = placeIn('', [line], under)
+    await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), false)
     return done({ at: `${note.relative}#${placed.line}:${hash}`, space: place.space.name })
   }
 
   const placedAt = await rewritten(call, note, (text) => {
-    const placed = placeLines(text, [line], under)
-    return { text: appliedEdits(text, [placed.edit]), said: placed.line }
+    const placed = placeIn(text, [line], under)
+    return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
   })
   return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
 }
@@ -282,13 +292,13 @@ async function moved(
   )
   let line: number
   if ((await workspace.noteText(onDisk(into.place, into.relative))) === null) {
-    const placed = placeLines('', block.lines, heading)
-    await made(into.place, into.relative, appliedEdits('', [placed.edit]), false)
+    const placed = placeIn('', block.lines, heading)
+    await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), false)
     line = placed.line
   } else {
     line = await rewritten(call, into, (text) => {
-      const placed = placeLines(text, block.lines, heading)
-      return { text: appliedEdits(text, [placed.edit]), said: placed.line }
+      const placed = placeIn(text, block.lines, heading)
+      return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
     })
   }
   await notes.writeNote(

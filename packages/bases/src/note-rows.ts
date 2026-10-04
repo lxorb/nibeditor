@@ -9,16 +9,11 @@
  *  `@nib/bases/rows`. See docs/tasks.md 5.3. */
 
 import { findLinks } from '@nib/markdown/links'
-import { readTask, tagsIn } from '@nib/markdown/task-line'
-import { noteValues, taskHash } from './note-values'
+import { tagsIn } from '@nib/markdown/task-line'
+import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
-import type { FileInfo, Row, TaskRow, Value } from './types'
-
-/** What a row has none of, shared by every row that has none. Frozen, so a row that
- *  is given one is given a new list rather than writing into everybody's. */
-const NONE: never[] = []
-Object.freeze(NONE)
-const NO_FIELDS: Record<string, string> = Object.freeze({})
+import { fileInfo, taskRowsOf } from './task-rows'
+import type { FileInfo, Row, Value } from './types'
 
 /** What a note gives its rows: the scan's fields (the app's scan-note.ts, scan.ts). */
 export interface NoteRead {
@@ -36,48 +31,8 @@ export interface NoteRead {
 export function rowsOf(space: string, read: NoteRead): Row[] {
   const file = fileInfo(read)
   const note: Record<string, Value> = read.front === null ? {} : noteValues(read.front)
-  const rows: Row[] = [{ kind: 'note', space, path: read.path, file, note }]
-
-  // The tasks a task may be indented under: the open run of them above it, each less
-  // indented than the next. A heading ends the run, because a task under the next
-  // heading is no sub-task of the last one under this.
-  const above: { indent: number; line: number }[] = []
-  let section = ''
-
-  for (const scanned of read.tasks) {
-    const fields = readTask(`- [${scanned.mark}] ${scanned.text}`)
-    if (!fields) continue
-
-    const under = scanned.section.join('\n')
-    if (under !== section) above.length = 0
-    section = under
-    while ((above.at(-1)?.indent ?? -1) >= scanned.indent) above.pop()
-    const parent = above.at(-1)?.line
-    above.push({ indent: scanned.indent, line: scanned.line })
-
-    // The fields' own object, made a row in place rather than copied, and its empty
-    // lists the one shared empty list: ten thousand tasks are ten thousand of these.
-    const task: TaskRow = Object.assign(fields, {
-      section: scanned.section,
-      indent: scanned.indent,
-      remind: fields.remind.length ? fields.remind : NONE,
-      tags: fields.tags.length ? fields.tags : NONE,
-      dependsOn: fields.dependsOn.length ? fields.dependsOn : NONE,
-      fields: Object.keys(fields.fields).length ? fields.fields : NO_FIELDS,
-      ...(parent === undefined ? {} : { parent }),
-    })
-    rows.push({
-      kind: 'task',
-      space,
-      path: read.path,
-      anchor: { line: scanned.line, hash: taskHash(fields.text) },
-      file,
-      note,
-      task,
-    })
-  }
-
-  return rows
+  const own: Row = { kind: 'note', space, path: read.path, file, note }
+  return [own, ...taskRowsOf(space, read.path, read.tasks, file, note)]
 }
 
 /** A note's rows from its words alone, where no scan has read it: the account
@@ -93,33 +48,6 @@ export function rowsOfText(
   const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
   const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
   return rowsOf(space, { path, front: scanned.front, tasks: scanned.tasks, stamp, tags, links })
-}
-
-/** Bases' `file.*` for one note. */
-function fileInfo(read: Pick<NoteRead, 'path' | 'stamp' | 'tags' | 'links'>): FileInfo {
-  const name = read.path.slice(read.path.lastIndexOf('/') + 1)
-  const dot = name.lastIndexOf('.')
-  const slash = read.path.lastIndexOf('/')
-
-  return {
-    name,
-    basename: dot > 0 ? name.slice(0, dot) : name,
-    path: read.path,
-    folder: slash === -1 ? '' : read.path.slice(0, slash),
-    ext: dot > 0 ? name.slice(dot + 1) : '',
-    size: read.stamp?.size ?? 0,
-    ctime: read.stamp?.ctime ?? 0,
-    mtime: read.stamp?.mtime ?? 0,
-    tags: read.tags.length ? [...read.tags] : NONE,
-    links: targets(read.links, false),
-    embeds: targets(read.links, true),
-  }
-}
-
-/** The targets of a note's links, or of its embeds; the shared empty list for none. */
-function targets(links: NoteRead['links'], embeds: boolean): string[] {
-  const out = links.filter((one) => one.embed === embeds && one.target).map((one) => one.target)
-  return out.length ? out : NONE
 }
 
 /** The same rows under another path: a note renamed or moved keeps everything it

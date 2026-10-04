@@ -17,8 +17,10 @@ import {
   editedTask,
   listTasks,
   newTask,
+  quickWords,
   noteName,
-  placeLines,
+  placedEdit,
+  placeIn,
   queryBase,
   readAt,
   readBase,
@@ -298,11 +300,14 @@ export async function addTaskTo(
   space: Writable,
   args: Args,
 ): Promise<{ at: string; space: string; path: string }> {
-  const fields = newTask(args)
-  const path = notePath(words(args, 'note') ?? 'Inbox.md')
+  // Quick add's grammar over the words, English and German: the account keeps no
+  // language, and those are the two its tables have.
+  const read = newTask(args, quickWords(['en', 'de'], new Date()))
+  const { fields } = read
+  const path = notePath(words(args, 'note') ?? read.note ?? 'Inbox.md')
   const before = (await wordsAt(env, space, path)) ?? ''
-  const placed = placeLines(before, [taskLine(fields)], words(args, 'under'))
-  await written(env, space, path, appliedEdits(before, [placed.edit]))
+  const placed = placeIn(before, [taskLine(fields)], words(args, 'under') ?? read.heading)
+  await written(env, space, path, appliedEdits(before, [placedEdit(placed)]))
   return { at: `${path}#${placed.line}:${taskHash(fields.text)}`, space: space.name, path }
 }
 
@@ -340,8 +345,8 @@ async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   )
   const source = edited.text.slice(0, block.from) + edited.text.slice(block.to)
   const before = into === path ? source : ((await wordsAt(env, space, into)) ?? '')
-  const placed = placeLines(before, block.lines, under)
-  await written(env, space, into, appliedEdits(before, [placed.edit]))
+  const placed = placeIn(before, block.lines, under)
+  await written(env, space, into, appliedEdits(before, [placedEdit(placed)]))
   if (into !== path) await written(env, space, path, source)
   return { ...said, at: `${into}#${placed.line}:${readAt(edited.at).hash}` }
 }

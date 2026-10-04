@@ -7,7 +7,6 @@
  *  in from another program, so every one is read here once and refused in a sentence
  *  the model can act on. Pure: the servers read and write the notes. */
 
-import type { TextEdit } from '@nib/markdown/edits'
 import type { TaskChange } from '@nib/markdown/task-edits'
 import {
   isDate,
@@ -244,19 +243,31 @@ function bare(text: string): TaskFields {
 /** Reads a line of words into a task's fields. The Tasks plugin's own marks and nib's
  *  bracket fields are read as they are written (`Call 📅 2026-10-06 ⏫ #admin`); quick
  *  add's grammar reads the rest when it is handed in. */
-export type ReadWords = (text: string) => TaskFields
+export type ReadWords = (text: string) => Read
+
+/** A line of words, read: the task's fields, and where the words said it goes. */
+export interface Read {
+  fields: TaskFields
+  /** `>Note`, as written. */
+  note?: string
+  /** `/Heading`. */
+  heading?: string
+}
 
 /** The fields written in the words themselves, and nothing guessed. */
-export const writtenFields: ReadWords = (text) => readTask(`- [ ] ${text}`) ?? bare(text)
+export const writtenFields: ReadWords = (text) => ({
+  fields: readTask(`- [ ] ${text}`) ?? bare(text),
+})
 
 /** The task `add_task` writes: its words read by `read`, then every field said on its
  *  own on top of them. */
-export function newTask(args: Args, read: ReadWords = writtenFields): TaskFields {
+export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   const fields =
     args.fields !== null && typeof args.fields === 'object' ? (args.fields as Args) : {}
   const said = { ...fields, ...args }
   const text = textArg(said.text, 'text')
-  const task: TaskFields = { ...read(text) }
+  const words = read(text)
+  const task: TaskFields = { ...words.fields }
   if (!task.text) throw new AgentError('bad_arguments', 'text needs words besides its fields')
 
   const change = taskChange(
@@ -266,83 +277,10 @@ export function newTask(args: Args, read: ReadWords = writtenFields): TaskFields
     if (value === null) Reflect.deleteProperty(task, key)
     else Object.assign(task, { [key]: value })
   }
-  return task
+  return { ...words, fields: task }
 }
 
 // ---- the lines -----------------------------------------------------------------------
-
-const HEADING = /^ {0,3}(#{1,6})[ \t]+(.*?)[ \t#]*$/
-const ITEM = /^\s*(?:[-*+]|\d+[.)])[ \t]/
-
-/** Where new lines go in a note: at the end, or at the end of the section under the
- *  heading `under` (made at the end when the note has none), as one more item of the
- *  list there or as a list of their own after a blank line. Answers the insertion and
- *  the line the first new line is on. */
-export function placeLines(
-  text: string,
-  lines: readonly string[],
-  under?: string,
-): { edit: TextEdit; line: number } {
-  const all = text.split('\n').map((line) => line.replace(/\r$/, ''))
-  let start = 0
-  let end = all.length
-  let block = [...lines]
-
-  if (under) {
-    const wanted = under
-      .trim()
-      .replace(/^#+\s*/, '')
-      .toLowerCase()
-    const at = all.findIndex((line) => HEADING.exec(line)?.[2]?.trim().toLowerCase() === wanted)
-    if (at === -1) {
-      block = [`## ${under.trim().replace(/^#+\s*/, '')}`, '', ...block]
-    } else {
-      const level = HEADING.exec(all[at] ?? '')?.[1]?.length ?? 1
-      start = at
-      const next = all.findIndex((line, index) => {
-        const depth = HEADING.exec(line)?.[1]?.length
-        return index > at && depth !== undefined && depth <= level
-      })
-      end = next === -1 ? all.length : next
-    }
-  }
-
-  let last = end - 1
-  while (last >= start && (all[last] ?? '').trim() === '') last--
-  if (last < 0) {
-    const insert = `${block.join('\n')}\n`
-    return { edit: { from: 0, to: text.trim() === '' ? text.length : 0, insert }, line: 0 }
-  }
-
-  const heading = block.length !== lines.length
-  const tight = !heading && inList(all, last)
-  const from = offsetAfter(text, last)
-  const insert = `\n${tight ? '' : '\n'}${block.join('\n')}`
-  const line = last + (tight ? 1 : 2) + (heading ? 2 : 0)
-  return { edit: { from, to: from, insert }, line }
-}
-
-/** Where line `index` ends in the note, before its line break. */
-function offsetAfter(text: string, index: number): number {
-  let at = -1
-  for (let line = 0; line <= index; line++) {
-    const next = text.indexOf('\n', at + 1)
-    if (next === -1) return text.length
-    at = next
-  }
-  return text[at - 1] === '\r' ? at - 1 : at
-}
-
-/** Whether the line at `index` is a list item or a line indented under one. */
-function inList(all: readonly string[], index: number): boolean {
-  for (let at = index; at >= 0; at--) {
-    const line = all[at] ?? ''
-    if (line.trim() === '') return false
-    if (ITEM.test(line)) return true
-    if (!/^[ \t]/.test(line)) return false
-  }
-  return false
-}
 
 /** The lines a task takes with it when it moves: its own, and every line indented
  *  under it (its description, comments and sub-tasks). Offsets into the note, the

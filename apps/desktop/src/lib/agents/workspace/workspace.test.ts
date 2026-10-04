@@ -1125,7 +1125,7 @@ describe('to-dos and bases', () => {
     docs.writeNote.mockClear()
     await call('update_task', { space: 'Work', at, move_to: { note: 'Plan', under: 'Later' } })
     expect(written()).toEqual([
-      '# Plan\n\n## Later\n\n- [ ] Write the intro 📅 2026-01-02\n',
+      '# Plan\n\n## Later\n- [ ] Write the intro 📅 2026-01-02\n',
       '# Thesis\n- [ ] Read 🔁 every day 📅 2026-01-01\n',
     ])
   })

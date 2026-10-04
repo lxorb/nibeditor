@@ -4,11 +4,11 @@
  *  way (docs/tasks.md 5.15, 5.18).
  *
  *  An agent's verbs do the same through lib/agents/workspace/tasks.ts, as the agent's
- *  own edits with its caret and its review; these are the reader's, written through the
- *  one write path every replacement in a note takes (`replaceInNotes`, `rows.write`),
- *  so each is one thing to undo and syncs like any other edit. Everything here is
- *  fetched when first asked for, the engine with it: nothing of it is in the first
- *  paint. */
+ *  own edits with its caret and its review; these are the reader's, written the way
+ *  quick add writes (quick-add/write.ts) and through the road every replacement in a
+ *  note takes (`replaceInNotes`), so each is one thing to undo and syncs like any other
+ *  edit. Everything here is fetched when first asked for: nothing of it is in the first
+ *  paint, and the glasses carry the add and the tick but not the list. */
 
 import type { TaskOut } from '@nib/bases/tasks'
 import { changeOf } from './search/replace'
@@ -16,33 +16,33 @@ import { insideSpace } from './space-paths'
 import { workspace } from './workspace.svelte'
 import { replaceInNotes } from './workspace/note-text'
 
-/** Adds a line of words as a task: to the space's inbox (made the first time), or to
- *  the note and under the heading named. The words may carry the Tasks plugin's own
- *  marks. Answers where it went, or null where no space is open. */
+/** Adds a line of words as a task, read the way quick add reads them (`tomorrow 4pm
+ *  p1 >Note /Heading`) in the reader's language, and written the way quick add writes
+ *  one: to the note the words name, else the space's inbox, made the first time
+ *  (quick-add/write.ts). Answers where it went, or null where it went nowhere. */
 export async function addTask(
   text: string,
-  options: { root?: string; note?: string; under?: string } = {},
+  options: { root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
+  const said = text.trim()
+  if (!said) return null
+  const [{ parseQuickAdd }, { i18n }, write] = await Promise.all([
+    import('@nib/bases/language'),
+    import('./i18n.svelte'),
+    import('./quick-add/write'),
+  ])
   const root = options.root ?? workspace.activeSpace?.root
   if (root === undefined) return null
-  const [{ rows }, { placeLines }, { taskLine }, { readTask }] = await Promise.all([
-    import('./rows/rows.svelte'),
-    import('@nib/bases/tasks'),
-    import('@nib/markdown/task-edits'),
-    import('@nib/markdown/task-line'),
-  ])
-
-  // The words as written, the Tasks plugin's marks read where they carry any.
-  const said = text.trim()
-  const fields = readTask(`- [ ] ${said}`)
-  if (!said || !fields) return null
-  const line = taskLine(fields)
-  const path = options.note ? insideSpace(root, options.note) : await rows.inbox(root)
-  if (path === null) return null
-  const before = (await workspace.noteText(path)) ?? ''
-  const placed = placeLines(before, [line], options.under)
-  await replaceInNotes(workspace, [changeOf(path, before, [placed.edit])])
-  return { path, line: placed.line }
+  const read = parseQuickAdd(said, [i18n.language], new Date(), { notes: write.noteNames(root) })
+  return write.addTask(
+    {
+      text: read.text || said,
+      fields: read.fields,
+      ...(read.note === undefined ? {} : { note: read.note }),
+      ...(read.heading === undefined ? {} : { heading: read.heading }),
+    },
+    { root },
+  )
 }
 
 /** Ticks a task, or opens it again, as the Tasks plugin does: the done date, its open
@@ -74,9 +74,12 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
 }
 
 /** Today, open tasks for today and overdue, in every space, as the Today view orders
- *  them; or the list a Todoist filter answers, which takes the engine. Today itself does
- *  not, so the glasses' package carries none of it (`todayTasks`, docs/even.md). */
+ *  them; or the list a Todoist filter answers, which takes the engine. */
 export async function listed(filter?: string): Promise<{ total: number; tasks: TaskOut[] }> {
+  // The glasses read Today their own lean way (even/today-tasks.ts) and carry neither
+  // the rows store nor the engine; said as a throw rather than a guard so the bundler
+  // drops both from their package. See vite.even.config.ts.
+  if (__EVEN_PLUGIN__) throw new Error('no rows store on the glasses')
   const { rows } = await import('./rows/rows.svelte')
   if (!filter) {
     const { clockOf, taskOut, todayTasks } = await import('@nib/bases/tasks')
@@ -84,9 +87,6 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
     return { total: today.length, tasks: today.slice(0, 50).map(taskOut) }
   }
 
-  // The glasses ask for Today and nothing else; said as a throw rather than a guard so
-  // the bundler drops the engine from their package. See vite.even.config.ts.
-  if (__EVEN_PLUGIN__) throw new Error('no filters on the glasses')
   const { clockOf, listTasks } = await import('@nib/bases/agent')
   const names = new Set(
     rows

@@ -8,10 +8,11 @@
 
 import { appliedEdits, type TextEdit } from '@nib/markdown/edits'
 import { type TaskChange, writeTask } from '@nib/markdown/task-edits'
-import { rowsOfText } from '../note-rows'
+import { taskRowsOfText } from '../task-rows'
 import { tick } from '../occurrence'
 import type { Row } from '../types'
-import { AgentError, atOf, findTask, placeLines, taskBlock } from './tasks'
+import { placedEdit, placeIn } from './entry'
+import { AgentError, atOf, findTask, taskBlock } from './tasks'
 
 /** Where a line starts in a note. */
 function lineStart(text: string, line: number): number {
@@ -37,7 +38,7 @@ export function taskIn(
   path: string,
   anchor: { line: number; hash: string },
 ): Row {
-  const found = findTask(rowsOfText(space, path, text), anchor)
+  const found = findTask(taskRowsOfText(space, path, text), anchor)
   if (!found?.anchor)
     throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
   return found
@@ -80,7 +81,7 @@ export function editedTask(
   // The task is the one with its words nearest where it was that is as asked; a
   // recurring task's next occurrence is the open one written above it.
   const hash = changed.anchor?.hash ?? ''
-  const same = rowsOfText(space, path, after).filter((one) => one.anchor?.hash === hash)
+  const same = taskRowsOfText(space, path, after).filter((one) => one.anchor?.hash === hash)
   const wanted = done === undefined ? same : same.filter((one) => one.task?.done === done)
   const settled = findTask(wanted.length ? wanted : same, { line, hash }) ?? changed
   const next = done
@@ -91,7 +92,7 @@ export function editedTask(
 
 /** The task on a line of a note. */
 function taskOn(text: string, space: string, path: string, line: number): Row {
-  const found = rowsOfText(space, path, text).find(
+  const found = taskRowsOfText(space, path, text).find(
     (one) => one.kind === 'task' && one.anchor?.line === line,
   )
   if (!found)
@@ -110,8 +111,8 @@ export function movedTask(
   const block = taskBlock(from.text, row.anchor?.line ?? 0)
   const source = from.text.slice(0, block.from) + from.text.slice(block.to)
   const into = to === null ? source : to.text
-  const placed = placeLines(into, block.lines, under ?? to?.under)
-  const target = appliedEdits(into, [placed.edit])
+  const placed = placeIn(into, block.lines, under ?? to?.under)
+  const target = appliedEdits(into, [placedEdit(placed)])
   return to === null
     ? { source: target, target: null, line: placed.line }
     : { source, target, line: placed.line }

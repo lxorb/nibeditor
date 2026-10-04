@@ -6,4 +6,7 @@
 export { clockOf } from './clock'
 export { editedTask } from './edit'
 export { todayTasks } from './today'
-export { AgentError, atOf, findTask, placeLines, readAt, taskOut, type TaskOut } from './tasks'
+export { scannedTaskRows, taskRowsOfText } from '../task-rows'
+export { scanRows } from '../scan'
+export { type Entry, linesOf, placedEdit, placeIn, type Placed, taskOf } from './entry'
+export { AgentError, atOf, findTask, readAt, taskOut, type TaskOut } from './tasks'

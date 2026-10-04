@@ -10,7 +10,7 @@ import {
   listTasks,
   movedTask,
   newTask,
-  placeLines,
+  quickWords,
   queryBase,
   readAt,
   rowPlace,
@@ -18,7 +18,6 @@ import {
   taskOut,
   withProperties,
 } from '.'
-import { appliedEdits } from '@nib/markdown/edits'
 import { taskLine } from '@nib/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
@@ -107,39 +106,23 @@ describe('the arguments', () => {
       priority: 1,
       fields: { duration: 15 },
     })
-    expect(taskLine(fields)).toBe('- [ ] Pay rent [duration:: 15m] #home 🔺 📅 2026-10-31')
+    expect(taskLine(fields.fields)).toBe('- [ ] Pay rent [duration:: 15m] #home 🔺 📅 2026-10-31')
   })
 })
 
-describe('new lines in a note', () => {
-  const placed = (text: string, under?: string) => {
-    const { edit, line } = placeLines(text, ['- [ ] New'], under)
-    const after = appliedEdits(text, [edit])
-    return { after, line: after.split('\n')[line] }
-  }
+describe('words read the way quick add reads them', () => {
+  const read = quickWords(['en'], new Date('2026-10-04T09:00:00'), ['Errands'])
 
-  test('an empty note', () => {
-    expect(placed('')).toEqual({ after: '- [ ] New\n', line: '- [ ] New' })
+  test('the grammar, and where the words say the task goes', () => {
+    const said = read('Call mum tomorrow 4pm p1 >Errands /Later')
+    expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 📅 2026-10-05')
+    expect(said).toMatchObject({ note: 'Errands', heading: 'Later' })
   })
 
-  test('one more item of the list it ends in', () => {
-    expect(placed('- [ ] One\n').after).toBe('- [ ] One\n- [ ] New\n')
-    expect(placed('- [ ] One\n  a comment\n\n').after).toBe('- [ ] One\n  a comment\n- [ ] New\n\n')
-  })
-
-  test('a list of its own after words', () => {
-    expect(placed('Words.').after).toBe('Words.\n\n- [ ] New')
-  })
-
-  test('under a heading, at the end of its section', () => {
-    const { after, line } = placed('# A\n- [ ] One\n\n# B\n- [ ] Two\n', 'a')
-    expect(after).toBe('# A\n- [ ] One\n- [ ] New\n\n# B\n- [ ] Two\n')
-    expect(line).toBe('- [ ] New')
-  })
-
-  test('a heading the note does not have is made at its end', () => {
-    expect(placed('- [ ] One\n', 'Shop').after).toBe('- [ ] One\n\n## Shop\n\n- [ ] New\n')
-    expect(placed('- [ ] One\n', 'Shop').line).toBe('- [ ] New')
+  test("the Tasks plugin's marks written in the words win", () => {
+    const said = read('Pay rent tomorrow 📅 2026-10-31 #home')
+    expect(said.fields.due).toBe('2026-10-31')
+    expect(said.fields.tags).toEqual(['home'])
   })
 })
 
