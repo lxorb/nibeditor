@@ -735,6 +735,46 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   into several tasks shown as rows to keep or drop (Ramble's correction by speech comes free:
   the words are editable before Enter).
 
+**As built** (lane 3). The grammar is `@nib/bases/language`, its own entry so nothing that
+never adds a task loads it: `grammar.ts` is a table's shape, `en.ts` and `de.ts` are the two
+tables, `when.ts` reads a day and a time, `repeat.ts` a rule (English handed to the Tasks
+plugin's own reader after Todoist's ways of saying one are said its way, German built into the
+same `Rule`), and `parse.ts` is `parseQuickAdd(text, langs, now, { keep, notes })`, which
+answers the words, the fields, `>Note` and `/Heading`, and every chip as a span of the line.
+Where two phrases say the same field the last one is it and the earlier stays words; a day and
+a time said apart both count; a time alone is today's, or tomorrow's once today's has gone by;
+a rule with no day gets its first occurrence, `starting` its own. The ambiguous words are held
+to a word in front that asks for a day: `sun`, `sat`, `wed` and every German two-letter day
+(`am Do`, `nächsten Fr`), `Tom` is never tomorrow, a month's name alone is never a date, a
+bare hour only after `at` or `um` (1 to 7 read as the afternoon), and `6/10` reads day first
+except in `en-US`. The tests are a row each of the table above in both languages, and the
+sentences that must stay words.
+
+The app's half is `lib/quick-add/`. `QuickAdd.svelte` is the field: a plain input over a layer
+that draws the same letters, so a chip wears the accent's tint without the field becoming a
+rich-text editor; a press on a chip adds its span to `keep` and it is words again, and the
+spans follow an edit (`field.ts`). The controls row is where, day, priority, reminder and
+duration, each a popover of `pickers.ts`'s rows; a pick takes the words that said the same
+field out of the line. `entry.ts` writes the line (`taskLine`) and the description under it
+and says where it goes (`placeIn`: the end of the note's last list, a list of its own after a
+paragraph, the end of a heading's section, a heading made where there is none); `write.ts`
+resolves the note (`>` names one by path or name, made where it is missing; else the inbox
+through `rows.inbox`) and writes through `replaceInNotes`, one undo. `QuickAddSheet.svelte` is
+it inside the app, at the palette's place; **`showQuickAdd(prefill)` in `surfaces.svelte.ts`
+is the entry lane 4's panel row and a view's add button call**, with `{ note, tags, due }` as
+the view knows them, and the palette's Add task row is the same call. Settings, General has
+Smart dates and From any app.
+
+The global window is `quick-add.html` with `Window.svelte`, a page of its own carrying none of
+the app, made by `src-tauri/src/quick_add.rs` on the first press of the key and hidden rather
+than closed after it. The key is `app.quick-add`, registered by the window that holds the
+`nib-quick-add-answering` lock after the launch order (`anywhere.svelte.ts`); the window asks
+that page for the space's notes and hands it the task over a broadcast channel (`channel.ts`),
+so it is granted nothing and writes nothing itself. The global shortcut plugin is added once
+for it and the agents' stop (`hotkeys.rs`). A probe never registers the reader's key: under
+`NIB_OFF_SCREEN` the key is `NIB_QUICK_ADD_KEY` or none. Neither quick add nor the rows store
+is in the glasses' plugin, whose package had ten kilobytes to spare.
+
 ### 5.7 A task in the editor
 
 The editor draws a task line as words and chips, hiding its fields the way it hides marks:
@@ -763,6 +803,23 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
 - The search's `task:` operators and the ` ```query ` fence keep working and keep their live
   boxes; a ` ```tasks ` fence (the Tasks plugin's) is drawn by the engine as a list view
   instead of as code, so Obsidian's query blocks come alive in nib.
+
+**As built** (lane 3). `packages/editor/src/live-preview/task-chips.ts`, hooked in from
+`decorate.ts` where a box is drawn, hides every field the Tasks plugin or nib writes as a mark
+(dimmed with the caret on the line) and draws the chips after the words; tags stay words, and
+so does an inline field nib has no name for. The module and the grammar behind it are fetched
+the first time a line on screen has a field, and the note is drawn again when they land, as an
+emoji is. Days are `task-days.ts`, shared with quick add. What only the app can do comes in on
+the note index as `tasks` (`TaskHelp`): `tick`, the engine's (`tick` in `@nib/bases`, now
+exported), used by the box, by Ctrl+Enter (`task-tick.ts`, one transaction, so one undo takes
+back the done line and the next occurrence), by `rows.write({ task: { done } })` and by every
+box in search and fence rows (`toggleTaskAt`); `pick`, a chip's choices in the app's menu out
+of quick add's lists, written back as the edit of the characters that change; and `dayAtEnd`,
+quick add's grammar over the words. A typed date is offered as a quiet hint after the caret
+rather than in the completion menu, because a menu answers Enter and Enter at the end of a task
+is the next task; Tab takes it (`task-hint.ts`, arriving with the completions). The
+` ```tasks ` fence is answered by `lib/tasks-block.ts` (`readTasksQuery` and `answer` over the
+open space's rows) in the query fence's own rows and boxes, in the editor and the reading view.
 
 ### 5.8 Filters: Todoist's language on the engine
 
