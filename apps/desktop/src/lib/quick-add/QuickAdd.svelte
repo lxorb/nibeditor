@@ -39,6 +39,7 @@
     smart = true,
     onsubmit,
     onclose,
+    onpicking,
   }: {
     /** The app's language first; English is always read too. */
     langs: readonly string[]
@@ -49,6 +50,8 @@
     smart?: boolean
     onsubmit: (entry: Entry, open: boolean) => void | Promise<void>
     onclose: () => void
+    /** A picker opened or put away: the global window grows to hold it. */
+    onpicking?: (open: boolean) => void
   } = $props()
 
   let text = $state('')
@@ -150,6 +153,9 @@
     if (!(target instanceof HTMLElement)) return
     asking = { rows, at: target.getBoundingClientRect() }
   }
+
+  // Said as it changes, so a window no taller than its field can make room for the list.
+  $effect(() => onpicking?.(asking !== null))
 
   const anchor = () => asking?.at ?? input?.getBoundingClientRect() ?? new DOMRect()
 
