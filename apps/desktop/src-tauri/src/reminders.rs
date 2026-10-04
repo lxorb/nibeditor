@@ -82,6 +82,13 @@ pub struct Words {
     /// The second, an hour.
     pub hour: String,
     /// Nine the next morning.
+    #[cfg_attr(
+        not(windows),
+        allow(
+            dead_code,
+            reason = "a Windows toast's snooze; a Mac's snoozes are fixed"
+        )
+    )]
     pub tomorrow: String,
 }
 
