@@ -53,6 +53,18 @@
   const rows = $derived(historyRows(all, typed))
   const shown = $derived(onScreen(scrolled, height, rowHeight, rows.length))
 
+  // Every search starts at the top of what it found, as Chrome's does: a scroll kept
+  // from far down the whole list showed the oldest of the pages found, the newest out
+  // of sight above them.
+  $effect(() => atTop(typed))
+
+  function atTop(_search: string) {
+    untrack(() => {
+      if (list) list.scrollTop = 0
+      scrolled = 0
+    })
+  }
+
   const CLOCK: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' }
 
   onMount(() => {
