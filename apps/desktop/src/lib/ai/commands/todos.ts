@@ -92,7 +92,8 @@ export async function showTasks(host: Host, thread: Thread, args: string): Promi
       .replace(/^`+|`+$/g, '')
       .split('\n')[0]
       ?.trim()
-    answer = await listed(filter ? filter : asked)
+    // A model that answered nothing leaves the reader's words, refused as they are.
+    answer = await listed(filter?.length ? filter : asked)
   }
   host.line(thread, JSON.stringify(answer), 'tasks')
 }
