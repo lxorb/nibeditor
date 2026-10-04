@@ -29,7 +29,7 @@
  *    agent's row does is lib/agents/workspace, fetched with the first of them.
  *
  *  The names are the command line's spelling, dots and all, because that is the
- *  surface somebody reads in a terminal. The four link actions map onto them; see
+ *  surface somebody reads in a terminal. The six link actions map onto them; see
  *  `BY_LINK` below. */
 
 import {
@@ -119,6 +119,20 @@ const VERBS: Record<string, Verb> = {
   append: { takes: ['path', 'content'], byLink: 'back', run: appendNote },
   search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
+
+  // The to-dos (docs/tasks.md 5.15): the agent's own verbs, asked by the reader's
+  // command line, so a list, a tick and a new line are worked out once. `nib://add-task`
+  // is the sixth thing a link may ask, and the least of them: one line, into a space's
+  // inbox and nowhere else, which is `append` with less room. It hears its anchor back,
+  // which is the line the link itself wrote. Ticking is what `tasks done` is named for
+  // and one undo takes it back, so it asks no `--yes`, as `append` asks none.
+  'tasks.list': { takes: ['filter'], run: (args) => asReader('list_tasks', args) },
+  'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
+  'tasks.done': {
+    takes: ['at'],
+    run: (args) => asReader('update_task', { ...args, done: !yes(args, 'undo') }),
+  },
+  'base.query': { takes: ['path'], run: (args) => asReader('query_base', args) },
 
   // Questions. None of them changes anything, and none is answered to a link
   // either: a link cannot read the answer, so the only thing it could do with one
@@ -213,7 +227,7 @@ const VERBS: Record<string, Verb> = {
 
 /** What each `nib://` action is called in the table. Only where the two differ:
  *  `nib://command` is the link spelling of the row the palette runs. */
-const BY_LINK: Record<string, string> = { command: 'commands.run' }
+const BY_LINK: Record<string, string> = { command: 'commands.run', 'add-task': 'tasks.add' }
 
 /** The verb a link action names, or null for one no link may ask for - which
  *  includes every name that is not a verb at all. */
@@ -329,6 +343,23 @@ async function agentVerb(
 
   if (answer.status === 'ok') return { ok: true, value: answer.result }
   return { ok: false, error: answer.status === 'error' ? answer.message : answer.summary }
+}
+
+/** One of an agent's verbs asked by the reader's own command line or a link, answered
+ *  in the command line's shape: the value, or the refusal's sentence thrown. */
+async function asReader(name: string, args: Said): Promise<unknown> {
+  const { runAgentVerb } = await import('../agents/workspace')
+  const answer = await runAgentVerb(name, args, READER)
+  if (answer.status === 'ok') return answer.result
+  throw new Error(answer.status === 'error' ? answer.message : answer.summary)
+}
+
+/** `tasks add`, and `nib://add-task`: from a link, the words and the space and nothing
+ *  else, so the line can only land in an inbox. */
+function addTask(args: Said, road: Road): Promise<unknown> {
+  if (road !== 'link') return asReader('add_task', args)
+  const space = wordsOf(args, 'space')
+  return asReader('add_task', { text: args.text, ...(space === null ? {} : { space }) })
 }
 
 /** One of the questions the crate asks the window for an agent. */
