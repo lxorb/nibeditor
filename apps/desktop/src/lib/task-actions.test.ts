@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rowsOfText } from '@nib/bases/rows'
+import { todayOf } from '@nib/bases'
 
 /** The reader's own hands on their to-dos: a line added to the inbox, a box ticked the
  *  way the Tasks plugin ticks one, and Today. Against a space of fake files, written
@@ -44,7 +45,9 @@ vi.mock('./rows/rows.svelte', () => ({
 
 const { addTask, listed, tickTask } = await import('./task-actions')
 
-const today = new Date().toISOString().slice(0, 10)
+// The wall clock's day, as a tick writes it: an ISO string is UTC's, a day behind or
+// ahead around midnight.
+const today = todayOf()
 
 beforeEach(() => {
   files.clear()
