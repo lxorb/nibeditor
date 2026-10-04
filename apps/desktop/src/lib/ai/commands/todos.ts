@@ -49,28 +49,10 @@ export interface Listed {
   }[]
 }
 
-/** A list, worked out from the rows every space has. */
+/** A list, with the filter it answers. */
 async function listed(filter: string | undefined): Promise<Listed> {
-  const [{ rows }, { clockOf, listTasks }] = await Promise.all([
-    import('../../rows/rows.svelte'),
-    import('@nib/bases/agent'),
-  ])
-  const names = new Set(
-    rows
-      .of()
-      .filter((row) => row.kind === 'note')
-      .map((row) => row.file.basename.toLowerCase()),
-  )
-  const answer = listTasks(
-    rows.of(),
-    {
-      ...(filter ? { filter } : { view: 'today' }),
-      inboxes: rows.inboxes(),
-      isNote: (name) => names.has(name.toLowerCase()),
-    },
-    clockOf(new Date()),
-  )
-  return { ...(filter ? { filter } : {}), ...answer }
+  const { listed: rowsOf } = await import('../../task-actions')
+  return { ...(filter ? { filter } : {}), ...(await rowsOf(filter)) }
 }
 
 /** `/tasks [filter or words]`. */
@@ -96,22 +78,4 @@ export async function showTasks(host: Host, thread: Thread, args: string): Promi
     answer = await listed(filter?.length ? filter : asked)
   }
   host.line(thread, JSON.stringify(answer), 'tasks')
-}
-
-/** A box in the thread ticked or cleared: the task found again by its anchor in the
- *  rows as they are now and written through the one write path, as a box in a view
- *  is. Answers whether it was found. */
-export async function tickTask(at: string, space: string, done: boolean): Promise<boolean> {
-  const [{ rows }, { clockOf, findTask, readAt }] = await Promise.all([
-    import('../../rows/rows.svelte'),
-    import('@nib/bases/agent'),
-  ])
-  const anchor = readAt(at)
-  const row = findTask(
-    rows.of(space).filter((one) => one.path === anchor.path),
-    anchor,
-  )
-  if (!row) return false
-  const completed = done ? clockOf(new Date()).today : null
-  return rows.write(row, { task: { done, completed } })
 }
