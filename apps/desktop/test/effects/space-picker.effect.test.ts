@@ -243,6 +243,18 @@ test.each([
   expect(shown).not.toHaveBeenCalled()
 })
 
+test("Escape is the layer's: the list does not send the keyboard to the note", async () => {
+  // Opened from the file list or a terminal, the keyboard goes back there as the layer
+  // closes (trap.ts); the list sending it to the note on the way took it from them.
+  await opened()
+  const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+  document.activeElement?.dispatchEvent(escape)
+  expect(escape.defaultPrevented).toBe(false)
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  expect(spacePicker.open).toBe(false)
+})
+
 test('a space shared only to be read is there, and marked', async () => {
   await opened()
 
