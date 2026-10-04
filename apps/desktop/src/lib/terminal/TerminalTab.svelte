@@ -102,6 +102,12 @@
     height: 100%;
   }
 
+  /* xterm.js's own sheet paints the viewport black, under a screen whose ground is the
+     pane's: see-through under glass and the wallpaper, the paper everywhere else. */
+  .place :global(.xterm-viewport) {
+    background-color: transparent;
+  }
+
   /* Over the foot of the screen, out of the way of the lines above it: a floating
      layer's surface and hairline, and one button in it. */
   .offline {
