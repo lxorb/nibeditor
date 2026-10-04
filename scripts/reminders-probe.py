@@ -53,39 +53,59 @@ def say(words: str) -> None:
     print(words, flush=True)
 
 
-def powershell(script: str) -> str:
-    """Windows PowerShell 5.1, which projects WinRT, with its answer as text."""
+#: Windows PowerShell 5.1 projects WinRT, where `CreateToastNotifierWithId` is the
+#: `CreateToastNotifier` overload that takes the id. Lists the id's scheduled toasts one
+#: per line, or with `-Remove` takes every one off.
+SCHEDULE_PS1 = r"""
+param([string]$Id, [switch]$Remove)
+$ErrorActionPreference = 'Stop'
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+$n = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($Id)
+foreach ($t in $n.GetScheduledToastNotifications()) {
+  if ($Remove) { $n.RemoveFromSchedule($t) }
+  else { 'TOAST|' + $t.Group + '|' + $t.Tag + '|' + $t.DeliveryTime.ToUniversalTime().ToString('o') }
+}
+"""
+
+
+def schedule_script() -> pathlib.Path:
+    path = pathlib.Path(tempfile.gettempdir()) / "nib-reminders-probe-schedule.ps1"
+    path.write_text(SCHEDULE_PS1, encoding="utf-8")
+    return path
+
+
+def schedule(remove: bool = False) -> list[str]:
+    """The probe id's scheduled toasts, as `group|tag|delivery in UTC`; or every one of
+    them taken off. Raises where PowerShell could not answer, so a failure to look is
+    never read as nothing left."""
     done = subprocess.run(
-        ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(schedule_script()),
+            "-Id",
+            IDENTIFIER,
+            *(["-Remove"] if remove else []),
+        ],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    return done.stdout.strip() + (f"\n{done.stderr.strip()}" if done.returncode else "")
-
-
-NOTIFIER = (
-    "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications,"
-    " ContentType = WindowsRuntime] > $null; "
-    f"$n = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifierWithId('{IDENTIFIER}'); "
-)
+    if done.returncode != 0:
+        raise RuntimeError(f"the schedule could not be read: {done.stderr.strip()}")
+    return [line[len("TOAST|") :] for line in done.stdout.splitlines() if line.startswith("TOAST|")]
 
 
 def scheduled() -> list[str]:
-    """The toasts on the probe id's schedule, as `group|tag|delivery`."""
-    said = powershell(
-        NOTIFIER
-        + "$n.GetScheduledToastNotifications() | ForEach-Object "
-        + '{ "$($_.Group)|$($_.Tag)|$($_.DeliveryTime.ToString(\'o\'))" }'
-    )
-    return [line for line in said.splitlines() if "|" in line]
+    return schedule()
 
 
 def unschedule() -> None:
-    powershell(
-        NOTIFIER
-        + "$n.GetScheduledToastNotifications() | ForEach-Object { $n.RemoveFromSchedule($_) }"
-    )
+    schedule(remove=True)
 
 
 def register_id() -> None:
@@ -152,19 +172,23 @@ def main() -> int:
             say(f"scheduled: group {group}, tag {tag}, rings {delivery}")
             if len(tag) != 16:
                 failures.append(f"the tag is not a reminder's id: {tag!r}")
-            when = datetime.datetime.fromisoformat(delivery.replace("Z", "+00:00"))
-            off = abs(when.astimezone().replace(tzinfo=None) - at.replace(second=0, microsecond=0))
+            when = datetime.datetime.fromisoformat(delivery[:19]).replace(tzinfo=datetime.timezone.utc)
+            wanted = at.replace(second=0, microsecond=0).astimezone(datetime.timezone.utc)
+            off = abs(when - wanted)
             if off > datetime.timedelta(seconds=1):
                 failures.append(f"it rings at {when}, not at {at:%H:%M}")
     finally:
         if app is not None and app.poll() is None:
             if not close_app(app):
                 app.kill()
-        unschedule()
+        try:
+            unschedule()
+            left = scheduled()
+        except RuntimeError as error:
+            left = [str(error)]
         unregister_id()
-        left = scheduled()
         if left:
-            failures.append(f"toasts left on the schedule: {left}")
+            failures.append(f"toasts may be left on the schedule: {left}")
         else:
             say("cleaned up: nothing left on the probe id's schedule")
         shutil.rmtree(spaces, ignore_errors=True)
