@@ -14,7 +14,9 @@ function host(found = true) {
       ticked.push([at, space, done])
       return Promise.resolve(found)
     },
-    redraw: () => void (drawn += 1),
+    redraw: () => {
+      drawn += 1
+    },
   }
   return { answer, ticked, drawn: () => drawn }
 }
