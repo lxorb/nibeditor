@@ -188,6 +188,18 @@ vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
 const { theme } = await import('./theme.svelte')
 const { stamped } = await import('./themes/stamp')
+// What the store fetches as a theme is worn, fetched before any test rather than by the
+// first that wears one: `settled` below counts turns, and compiling a module cold on a
+// loaded machine took more of them than it allows.
+await Promise.all([
+  import('@nib/themes/glass'),
+  import('./glass/settings'),
+  import('./glass/follow.svelte'),
+  import('./wallpaper/sheet'),
+  import('./wallpaper/settings'),
+  import('./material'),
+  import('./themes/declared'),
+])
 
 /** A theme that states both schemes, and one that states a single one. */
 const PAIR = `[data-theme=light] { --bg: #fff; }\n[data-theme=dark] { --bg: #000; }`

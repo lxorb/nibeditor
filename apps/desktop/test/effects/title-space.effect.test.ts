@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Titlebar from '../../src/lib/Titlebar.svelte'
 import { shortcuts } from '../../src/lib/shortcuts.svelte'
+import { spacesMenu } from '../../src/lib/surfaces.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
@@ -95,19 +96,21 @@ function bar() {
 const mark = () => target.querySelector<HTMLButtonElement>('header .space button')
 const list = () => target.querySelector('[role="menu"]')
 
-/** Long enough for a list on its way out to have gone: each animation it plays ends
- *  a turn after it starts, and leaving can be more than one; see the stand-in above. */
 /** A press on the mark, and the list it drops once it is here: fetched with the first
- *  press (see SpaceMenu.svelte), which the launch's last turn has usually done already. */
+ *  press (see SpaceMenu.svelte), which the launch's last turn has usually done already.
+ *  Waits for that fetch itself, not for a while: compiling the menu on a cold cache
+ *  took longer than `waitFor`'s second on a loaded machine. The markup's `{#await}`
+ *  holds the same promise and was handed it first, so a turn after it the list is in. */
 async function dropped() {
   mark()?.click()
   flushSync()
-  await vi.waitFor(() => {
-    flushSync()
-    expect(list()).not.toBe(null)
-  })
+  await spacesMenu()
+  await settled()
+  expect(list()).not.toBe(null)
 }
 
+/** Long enough for a list on its way out to have gone: each animation it plays ends
+ *  a turn after it starts, and leaving can be more than one; see the stand-in above. */
 async function settled() {
   for (let turn = 0; turn < 5; turn++) {
     await new Promise((done) => setTimeout(done, 0))
