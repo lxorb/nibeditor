@@ -197,16 +197,16 @@ async function ask(arrived: Arrived): Promise<'new' | 'here' | 'task' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
   const fits = arrived.items.every((one) => one.text !== null || isPicture(one))
-  const here = tab?.kind === 'note' && !!view && !view.state.readOnly && fits
+  const into = tab?.kind === 'note' && !!view && !view.state.readOnly && fits ? tab : null
   const words = arrived.items.every((one) => one.text !== null)
-  if (!here && !words) return 'new'
+  if (!into && !words) return 'new'
 
   const chosen = await prompt.choose({
     title: t('Shared'),
     detail: summary(arrived),
     options: [
       { id: 'new', label: t('New note'), primary: true },
-      ...(here && tab ? [{ id: 'here', label: t('Add to {name}', { name: tab.shown }) }] : []),
+      ...(into ? [{ id: 'here', label: t('Add to {name}', { name: into.shown }) }] : []),
       ...(words ? [{ id: 'task', label: t('As a task') }] : []),
     ],
   })
