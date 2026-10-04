@@ -32,9 +32,17 @@ function reachable(node: Element): boolean {
   return node.getClientRects().length > 0
 }
 
+/** Whether a region is on screen and can hold the keyboard. A shut right side keeps
+ *  its box for the slide back in, and is inert and hidden while it waits: a focus put
+ *  there goes nowhere, and F6 stood still on the status bar in front of it. */
+function standing(box: HTMLElement): boolean {
+  if (box.getClientRects().length === 0 || box.closest('[inert]')) return false
+  return getComputedStyle(box).visibility !== 'hidden'
+}
+
 function boxOf(name: Region): HTMLElement | null {
   for (const found of document.querySelectorAll<HTMLElement>(`[data-region="${name}"]`)) {
-    if (found.getClientRects().length === 0) continue
+    if (!standing(found)) continue
     // A panel that crossfades has two of itself on screen for a moment. The one
     // that counts is the one holding what is open now; the other is on its way out,
     // and putting the keyboard in it means putting it nowhere a frame later.
@@ -96,14 +104,15 @@ function entryOf(name: Region, panel?: Panel): HTMLElement | null {
   return box
 }
 
-/** Puts the keyboard in a region. False where it is not on screen, which is what
- *  lets the caller open something and try again. */
+/** Puts the keyboard in a region. False where it is not on screen, or the keyboard did
+ *  not go there, which is what lets the caller open something and try again and F6
+ *  step over it. */
 function focusRegion(name: Region, panel?: Panel): boolean {
   const entry = entryOf(name, panel)
   if (!entry) return false
 
   entry.focus()
-  return true
+  return document.activeElement === entry
 }
 
 /** The note. Every list gives the keyboard back to it, because the note is where
