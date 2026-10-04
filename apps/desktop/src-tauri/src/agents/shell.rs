@@ -349,7 +349,7 @@ fn key(app: &AppHandle, on: bool) {
     }
     let mut held = None;
     if let Some(new) = wanted {
-        let ready = added || crate::hotkeys::ready(app);
+        let ready = added || crate::hotkeys::plugin_added(app);
         with(|shell| shell.shortcuts = ready);
         let stopping = ready
             && app
