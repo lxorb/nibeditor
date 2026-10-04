@@ -13,7 +13,7 @@
  *  | `live` | the store started, and the shell kept up to date |
  *  | `session`, `words` | the audit log as a list, and a verb as a word |
  *  | `source`, `fake` | the crate, and a crate in memory for tests and drives |
- *  | `read`, `accelerator` | the crate's events read, the stop key as the system's |
+ *  | `read` | the crate's events read |
  *  | `ActivityPanel`, `AgentCard`, `Question`, `Thumb` | the panel |
  *  | `PairingBubble`, `TakeoverBar` | the two things asked outside it | */
 
