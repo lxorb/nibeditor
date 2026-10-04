@@ -172,6 +172,7 @@ async function looksLikeApple(sources: readonly Source[]): Promise<boolean> {
 
 /** Todoist's CSV says so in its header, the same on every one. */
 async function looksLikeTodoist(sources: readonly Source[]): Promise<boolean> {
+  if (__EVEN_PLUGIN__) return false
   const { isTodoistCsv } = await import('./todoist')
   const tables = sources.filter((one) => /\.csv$/i.test(one.path)).slice(0, PEEK)
   for (const table of tables) if (isTodoistCsv(await table.text())) return true

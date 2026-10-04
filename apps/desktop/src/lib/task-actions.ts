@@ -25,13 +25,18 @@ export async function addTask(
 ): Promise<{ path: string; line: number } | null> {
   const root = options.root ?? workspace.activeSpace?.root
   if (root === undefined) return null
-  const [{ rows }, { newTask, placeLines }, { taskLine }] = await Promise.all([
+  const [{ rows }, { placeLines }, { taskLine }, { readTask }] = await Promise.all([
     import('./rows/rows.svelte'),
     import('@nib/bases/tasks'),
     import('@nib/markdown/task-edits'),
+    import('@nib/markdown/task-line'),
   ])
 
-  const line = taskLine(newTask({ text }))
+  // The words as written, the Tasks plugin's marks read where they carry any.
+  const said = text.trim()
+  const fields = readTask(`- [ ] ${said}`)
+  if (!said || !fields) return null
+  const line = taskLine(fields)
   const path = options.note ? insideSpace(root, options.note) : await rows.inbox(root)
   if (path === null) return null
   const before = (await workspace.noteText(path)) ?? ''
