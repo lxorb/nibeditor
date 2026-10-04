@@ -114,6 +114,25 @@ def drive(browser: Browser) -> None:
         wrong(f"the second task's fields are not hidden behind its chips: {words!r}")
     shot(page, "03-inbox")
 
+    # The Tasks plugin's own query block, answered by the engine with live boxes.
+    DRIVE.seed(page, "# Board\n\n```tasks\nnot done\nsort by priority\n```\n")
+    DRIVE.open_note(page, "Board")
+    page.evaluate(
+        "() => { const view = window.nib; view.dispatch({ selection: { anchor: 0 } }); view.focus() }"
+    )
+    wait_for(
+        page,
+        "document.querySelectorAll('.nib-query-block input[data-task]').length === 2",
+        "the tasks fence's two rows",
+    )
+    rows = page.evaluate(
+        "() => [...document.querySelectorAll('.nib-query-block .nib-row')].map((one) => one.textContent)"
+    )
+    say(f"the tasks fence: {rows}")
+    if rows != ["Call mum tomorrow", "Pay rent"]:
+        wrong(f"the fence answered {rows}, not the two open tasks by priority")
+    shot(page, "04-tasks-fence")
+
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "quick add wrote two tasks into the Inbox"))

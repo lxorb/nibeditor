@@ -199,4 +199,14 @@ mod tests {
         assert_eq!(allowed(asked, probe.clone(), true), probe);
         assert_eq!(allowed(None, probe, true), None);
     }
+
+    /// `scripts/quick-add-probe.py` presses the probe's key the way the system does, by
+    /// the id the plugin gives it; this is that id.
+    #[test]
+    fn the_probe_key_is_the_id_the_probe_presses() {
+        use std::str::FromStr as _;
+
+        let key = tauri_plugin_global_shortcut::Shortcut::from_str("Control+Alt+Shift+F24");
+        assert_eq!(key.map(|key| key.id()).ok(), Some(0x0209_00b7));
+    }
 }

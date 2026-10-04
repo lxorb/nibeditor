@@ -1,11 +1,6 @@
 import { history, undo } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  Transaction,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import type { TextEdit } from '@nib/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
