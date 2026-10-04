@@ -405,10 +405,11 @@ describe('the bundle a package is made of', () => {
     // where this test said 8,393,657 and failed. The other 66,155 are the desktop's
     // plans, engine and updater, behind `__EVEN_PLUGIN__` and asserted gone above.
     //
-    // **8,286,495 bytes** on 2026-10-04, from 8,380,500 for main at a4f2e3ef8, with
-    // Today and a spoken task on the glasses in it. The import sheet, which the plugin
-    // never opens, is behind `__EVEN_PLUGIN__` now (and Todoist's reader with it), and
-    // Today is answered without the rows engine (`todayTasks`, @nib/bases/tasks).
+    // **8,353,708 bytes** on 2026-10-04 at quick add's bff080134 (about 10 KB under
+    // there), with Today and a spoken task on the glasses in it. The import sheet, which
+    // the plugin never opens, is behind `__EVEN_PLUGIN__` now (and Todoist's reader with
+    // it), and Today is read off the link index's scan and answered without the rows
+    // store or the engine (even/today-tasks.ts, `todayTasks` in @nib/bases/tasks).
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 

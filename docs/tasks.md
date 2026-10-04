@@ -1201,9 +1201,11 @@ characters, about 950 tokens, and its ceiling went from 28,000 to 31,000. The ro
 note are `@nib/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
 one way. `/tasks` draws its rows as a notice with live boxes (`ai/sidebar/TaskRows.svelte`)
 and `/today` is a turn in Agent mode; the reader's own surfaces add, tick and list
-through `lib/task-actions.ts`. `add_task` reads the Tasks plugin's own marks in its
-words (`writtenFields`); quick add's grammar plugs in as `newTask`'s `read` once it is
-on main. The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+through `lib/task-actions.ts`, which writes the way quick add does (`quick-add/write.ts`).
+`add_task` reads its words with quick add's grammar (`quickWords`: the reader's language
+and English in the app, English and German on the Worker), the Tasks plugin's own marks
+written in them winning, and `>Note /Heading` choosing where it goes; every way a task
+comes in places its line with one function (`placeIn`, `@nib/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
 takes the words and a space and nothing else.
 
 ### 5.16 Keys
