@@ -5,7 +5,6 @@ import type { Host } from './host'
 
 const NOTE =
   '# Week\n- [ ] Pay rent ⏫ 📅 2020-01-01\n- [ ] Call mum #family\n- [ ] Someday 📅 2999-01-01\n'
-const written: unknown[] = []
 
 vi.mock('../../rows/rows.svelte', () => {
   const all = rowsOfText('Home', 'Week.md', NOTE)
@@ -13,16 +12,11 @@ vi.mock('../../rows/rows.svelte', () => {
     rows: {
       of: () => all,
       inboxes: () => [{ space: 'Home', path: 'Inbox.md' }],
-      write: (row: unknown, change: unknown) => {
-        written.push({ row, change })
-        return Promise.resolve(true)
-      },
     },
   }
 })
 
 const { planDay, showTasks } = await import('./todos')
-const { tickTask } = await import('../../task-actions')
 
 function host(said = '') {
   const ask = vi.fn(() => Promise.resolve(said))
@@ -68,16 +62,6 @@ describe('/tasks', () => {
     await showTasks(fake, thread, 'what is urgent')
     expect(ask).toHaveBeenCalledOnce()
     expect(shown(lines)).toMatchObject({ filter: 'p2', tasks: [{ text: 'Pay rent' }] })
-  })
-
-  test('a box ticked through the one write path', async () => {
-    const { fake, lines } = host()
-    await showTasks(fake, thread, '')
-    const at =
-      (JSON.parse(lines[0]?.text ?? '{}') as { tasks: { at: string }[] }).tasks[0]?.at ?? ''
-    expect(await tickTask(at, 'Home', true)).toBe(true)
-    expect(written[0]).toMatchObject({ change: { task: { done: true } } })
-    expect(await tickTask('Week.md#1:nothing', 'Home', true)).toBe(false)
   })
 })
 

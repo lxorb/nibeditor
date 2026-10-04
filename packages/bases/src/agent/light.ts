@@ -4,5 +4,6 @@
  *  is held under 8 MiB; everything here is also in `@nib/bases/agent`. */
 
 export { clockOf } from './clock'
+export { editedTask } from './edit'
 export { todayTasks } from './today'
 export { AgentError, atOf, findTask, placeLines, readAt, taskOut, type TaskOut } from './tasks'

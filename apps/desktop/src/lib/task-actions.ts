@@ -45,21 +45,32 @@ export async function addTask(
   return { path, line: placed.line }
 }
 
-/** Ticks a task, or opens it again, found by its anchor among the rows as they are
- *  now, through the one write path. Answers whether it was found. */
+/** Ticks a task, or opens it again, as the Tasks plugin does: the done date, its open
+ *  sub-tasks, and a recurring task's next line written above it, all one edit of the
+ *  note and one undo (`editedTask`). Found by its anchor in the note as it is now.
+ *  Answers whether it was found. */
 export async function tickTask(at: string, space: string, done: boolean): Promise<boolean> {
-  const [{ rows }, { clockOf, findTask, readAt }] = await Promise.all([
-    import('./rows/rows.svelte'),
+  const root = workspace.spaces.find((one) => one.name === space)?.root
+  if (root === undefined) return false
+  const [{ clockOf, editedTask, readAt }, { oneEdit }] = await Promise.all([
     import('@nib/bases/tasks'),
+    import('@nib/markdown/edits'),
   ])
   const anchor = readAt(at)
-  const row = findTask(
-    rows.of(space).filter((one) => one.path === anchor.path),
-    anchor,
-  )
-  if (!row) return false
-  const completed = done ? clockOf(new Date()).today : null
-  return rows.write(row, { task: { done, completed } })
+  const path = insideSpace(root, anchor.path)
+  const before = await workspace.noteText(path)
+  if (before === null) return false
+
+  let after: string
+  try {
+    after = editedTask(before, space, anchor.path, anchor, {}, done, clockOf(new Date()).today).text
+  } catch {
+    // The task is not in the note any more: nothing to tick.
+    return false
+  }
+  const edit = oneEdit(before, after)
+  if (edit) await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  return true
 }
 
 /** Today, open tasks for today and overdue, in every space, as the Today view orders
