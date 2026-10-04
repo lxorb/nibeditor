@@ -21,7 +21,7 @@ const ROOT = 'C:\\Nib\\Work'
 const TREE = { name: 'Work', path: ROOT, is_dir: true, modified: 0, created: 0, children: [] }
 
 const READ = {
-  plan: { root: ROOT, options: { showHidden: false }, notes: [`${ROOT}\\Plan.md`] },
+  plan: { root: ROOT, options: { showHidden: false }, notes: [`${ROOT}\\Plan.md`], web: false },
   spaces: [{ name: 'Work', path: ROOT }],
   tree: TREE,
   notes: { [`${ROOT}\\Plan.md`]: '# Plan' },
@@ -91,7 +91,12 @@ describe('what the next launch asks for first', () => {
   test('is written down when it changes, and only then', async () => {
     arrived(null)
     const ahead = await fresh()
-    const plan = { root: ROOT, options: { showHidden: false }, notes: [`${ROOT}\\Plan.md`] }
+    const plan = {
+      root: ROOT,
+      options: { showHidden: false },
+      notes: [`${ROOT}\\Plan.md`],
+      web: false,
+    }
 
     ahead.plan(plan)
     ahead.plan({ ...plan, notes: [...plan.notes] })

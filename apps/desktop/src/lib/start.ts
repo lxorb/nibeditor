@@ -34,7 +34,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
 import { HANDS_BACK_WITHIN } from './backoff'
 import { waited } from './timing'
-import { mark } from './trace'
+import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
 import { toolbar } from './toolbar.svelte'
@@ -51,6 +51,11 @@ const DAY = 24 * 60 * 60 * 1000
 export function start(): () => void {
   mark('start')
   collectErrors()
+  // A frame the page could not draw for a second is written down with what ran in it,
+  // from the launch's own frames on; set going once the launch is drawn. See stalls.ts.
+  void startup.turn('doors').then(async () => (await import('./stalls')).watchStalls())
+  // And what the launch opened, said beside its phases in the log's line about it.
+  factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
   i18n.restore()
   theme.init()

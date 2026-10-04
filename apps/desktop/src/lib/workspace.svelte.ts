@@ -1129,6 +1129,7 @@ class Workspace {
       notes: [...reads.filter((tab) => tab === front), ...reads.filter((tab) => tab !== front)]
         .map((tab) => tab.path)
         .filter((path) => path !== null),
+      web: this.panes.all.some((pane) => this.showing(pane.id)?.kind === 'web'),
     })
   }
 

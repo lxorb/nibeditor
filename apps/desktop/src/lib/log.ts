@@ -20,12 +20,27 @@ function describe(error: unknown): string {
   }
 }
 
+/** What the engine says when a resize observer changed the layout it was observing,
+ *  which it then delivers on the next frame: harmless, and in a burst it was most of a
+ *  log somebody sent. Said once a run, so it is still seen. */
+const RESIZE_LOOP = 'ResizeObserver loop'
+
 /** Catches what would otherwise vanish into a console nobody is watching. */
 export function collectErrors() {
   if (!isNative) return
 
-  window.addEventListener('error', (event) => log('error', describe(event.error ?? event.message)))
+  let resizeLoopSaid = false
+  window.addEventListener('error', (event) => {
+    const said = describe(event.error ?? event.message)
+    if (said.startsWith(RESIZE_LOOP)) {
+      if (resizeLoopSaid) return
+      resizeLoopSaid = true
+    }
+    log('error', said)
+  })
   window.addEventListener('unhandledrejection', (event) => log('error', describe(event.reason)))
 
-  log('info', 'started')
+  // The page, not the process: the crate says when nib itself started, with its process
+  // number, so a page loaded again is told apart from a launch. See stall.rs.
+  log('info', 'page loaded')
 }
