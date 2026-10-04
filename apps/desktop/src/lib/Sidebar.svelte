@@ -22,6 +22,7 @@
     OUTLINE_MARK,
     PROPERTIES_MARK,
     SEARCH_MARK,
+    TASKS_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
   import { startup } from './startup.svelte'
@@ -37,6 +38,7 @@
     pagesNavigator,
     propertiesPanel,
     searchPanel,
+    tasksPanel,
   } from './surfaces.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
@@ -173,6 +175,8 @@
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
     { id: 'search', label: t('Search'), path: SEARCH_MARK },
+    // The views are the app's alone; the glasses' plugin has no Tasks panel.
+    ...(__EVEN_PLUGIN__ ? [] : [{ id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK }]),
     { id: 'links', label: t('Links'), path: LINKS_MARK },
     { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
     { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
@@ -1035,6 +1039,13 @@
           {:else if showing === 'properties'}
             {#await propertiesPanel() then PropertiesPanel}
               <PropertiesPanel onsearch={runBookmarked} />
+            {/await}
+          {:else if showing === 'tasks'}
+            <!-- Inbox, Today, Upcoming, the saved views, projects and labels; fetched,
+                 with the rows behind them, the first time the tab is chosen. See
+                 docs/tasks.md 5.5. -->
+            {#await tasksPanel() then TasksPanel}
+              <TasksPanel {side} />
             {/await}
           {:else if showing === 'agents'}
             {#await agentsPanel() then AgentsPanel}

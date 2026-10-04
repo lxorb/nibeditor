@@ -141,7 +141,7 @@ export interface Space {
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel =
-  'tree' | 'outline' | 'search' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
+  'tree' | 'outline' | 'search' | 'tasks' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
@@ -491,7 +491,10 @@ class Workspace {
    *  a rename, a replacement run across the space, an undone one. There is one
    *  answer because there is one document per file; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null {
-    return this.opened.at(path)
+    const open = this.opened.at(path)
+    // A view tab over a `.base` file holds which view it is, not the file's words: the
+    // file is read and written past it, as any closed file is. See lib/views/source.ts.
+    return open?.kind === 'view' ? null : open
   }
 
   /** Every open file that has words of its own and a path behind it, once each
@@ -1476,6 +1479,20 @@ class Workspace {
     if (kept) this.onlyOne(kept)
   }
 
+  /** A view of rows - Today, a project, a `.base` file - in a tab of its own, the way
+   *  the graph is one: `words` say which view (lib/views/spec.ts) and `path` is the
+   *  base file it shows, or null for a view nib ships. Whether one is open already is the views'
+   *  question, asked before this; see lib/views/open.ts. */
+  openView(words: string, name: string, path: string | null, how: OpenHow = {}): Tab {
+    const file = this.document({ kind: 'view', path, name, text: words, dirty: false })
+    const tab = new Tab(file, this.panes.focusedId)
+    this.arrive(tab, how)
+    if (how.activate !== false) this.showNote()
+    if (path !== null) this.remember(path)
+    this.persist()
+    return tab
+  }
+
   /** The graph of the whole space, as a tab of its own. One at a time: a second
    *  picture of the same space says the same thing, so asking again brings the
    *  one already there forward. */
@@ -2097,6 +2114,13 @@ class Workspace {
       case 'canvas':
         await this.openCanvas(path, options)
         return
+      case 'view': {
+        // Never the glasses' (openers.ts), and a fetch only never called still ships.
+        if (__EVEN_PLUGIN__) return
+        const { openBaseFile } = await import('./views/open')
+        openBaseFile(path, options)
+        return
+      }
       case 'note':
         await this.open(path, options)
         return

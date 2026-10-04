@@ -889,9 +889,29 @@ class Links {
       // replaced on disk or a plane saved in the tab beside this one is a drawing
       // that has to be made again, and this object being remade is what says so.
       drawFile: (card, file) => this.drawnFile(card, file),
+      mountBase: (host, ask) => this.mountedBase(host, ask, path),
     }
     this.handed.set(key, made)
     return made
+  }
+
+  private mountedBase(
+    host: HTMLElement,
+    ask: { code: string } | { target: string; view: string | null },
+    path: string | null,
+  ): () => void {
+    if (__EVEN_PLUGIN__) return () => undefined
+    const root = this.root
+    const from = path === null || root === null ? null : insideSpace(root, path)
+    let stop: (() => void) | null = null
+    let stopped = false
+    void import('./views/mount').then(({ mountBase }) => {
+      if (!stopped) stop = mountBase(host, ask, from)
+    })
+    return () => {
+      stopped = true
+      stop?.()
+    }
   }
 
   /** One card filled in with the file it names. Nothing to draw for a note opened

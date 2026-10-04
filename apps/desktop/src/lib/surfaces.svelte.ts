@@ -88,6 +88,14 @@ export const canvasSurface = held(() =>
 /** The space as a picture: the layout, the painter and the controls over it. */
 export const graphSurface = held(() => import('./Graph.svelte'))
 
+/** A view tab and the Tasks panel (docs/tasks.md 5.5); never the plugin's. */
+export const viewSurface = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/ViewTab.svelte'),
+)
+export const tasksPanel = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/TasksPanel.svelte'),
+)
+
 /** Pages of paper, for a note laid out rather than flowed. Never the plugin's, for
  *  the canvas's reason: it opens no page note either. */
 export const pagesSurface = held(() =>

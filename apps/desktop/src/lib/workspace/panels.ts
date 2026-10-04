@@ -106,6 +106,7 @@ export const PANELS: readonly Panel[] = [
   'tree',
   'outline',
   'search',
+  'tasks',
   'links',
   'footnotes',
   'properties',
@@ -114,7 +115,7 @@ export const PANELS: readonly Panel[] = [
 ]
 
 /** The panels a window could be arranged with before a session said which it knew. */
-const ARRANGED_BEFORE: readonly Panel[] = PANELS.slice(0, 5)
+const ARRANGED_BEFORE: readonly Panel[] = ['tree', 'outline', 'search', 'links', 'footnotes']
 
 /** The right side a window opens with: the homes when nothing was written down, else
  *  what was written plus any homed there that the build which wrote it never knew. */

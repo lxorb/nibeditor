@@ -219,14 +219,20 @@ function media(link: Wikilink): string | null {
  *  Null for every other kind. */
 function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string | null {
   const kind = embedKind(link.target)
-  if (kind !== 'pdf' && kind !== 'canvas') return null
+  if (kind !== 'pdf' && kind !== 'canvas' && kind !== 'base') return null
 
   const icon = iconMarkup(kind === 'pdf' ? DOCUMENT : PLANE, 'embed-icon')
   const name = anchor(link, options.resolveLink, shownText(link))
 
-  // A plane is one surface and has no pages, so it is never asked which.
+  // A plane is one surface and has no pages, so it is never asked which. A base names
+  // one of its views after the `#`, which the app draws in the card's place.
   const page = kind === 'pdf' ? pageFragment(link.heading) : null
-  const asked = page === null ? '' : ` data-page="${page}"`
+  const asked =
+    page !== null
+      ? ` data-page="${page}"`
+      : kind === 'base' && link.heading
+        ? ` data-view="${escape(link.heading)}"`
+        : ''
 
   return (
     `<figure class="embed embed-file" data-kind="${kind}"` +

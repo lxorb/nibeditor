@@ -48,3 +48,7 @@ export const ASK_MARK =
 /** A frame with a spark in it, an agent at work in a page: the activity panel's tab. */
 export const AGENTS_MARK =
   'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM6.5 4.3c.2 1.2.9 1.9 2.2 2.2-1.3.3-2 1-2.2 2.2-.2-1.2-.9-1.9-2.2-2.2 1.3-.3 2-1 2.2-2.2z'
+
+/** A box with a tick in it: the Tasks panel, a list of things to do. */
+export const TASKS_MARK =
+  'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM4.2 6.6l1.7 1.7 3-3.4'
