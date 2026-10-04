@@ -194,6 +194,7 @@ object WidgetNotes {
       .apply()
 
     NotesWidget.refresh(context)
+    TodayWidget.refresh(context)
   }
 
   fun read(context: Context): String =

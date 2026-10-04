@@ -399,3 +399,38 @@ describe('what a release build shrinks', () => {
     expect(built, 'a debug assembly does not run R8').not.toContain('--debug')
   })
 })
+
+/** Today, the second widget (docs/tasks.md 5.18): the open tasks for today and
+ *  overdue, a box each that ticks it through the app's own write. */
+describe('the Today widget', () => {
+  const today = read(ANDROID, 'res', 'layout', 'widget_today.xml')
+  const kotlin = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+
+  test('is declared, with the provider that describes it', () => {
+    expect(manifest).toContain('android:name=".TodayWidget"')
+    expect(manifest).toContain('android:resource="@xml/widget_today"')
+    expect(read(ANDROID, 'res', 'xml', 'widget_today.xml')).toContain('home_screen')
+  })
+
+  test('has a box and the words for every task the page sends', () => {
+    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
+    const ids = (kind: string, text: string) =>
+      [...text.matchAll(new RegExp(String.raw`nib_today_${kind}_(\d+)`, 'g'))].map((one) =>
+        Number(one[1]),
+      )
+
+    for (const kind of ['row', 'box', 'text']) {
+      expect(ids(kind, today), kind).toEqual([...Array(most).keys()])
+      expect(ids(kind, kotlin), kind).toEqual([...Array(most).keys()])
+    }
+  })
+
+  test('ticks through the page, which reads the anchor the activity hands over', () => {
+    expect(kotlin).toContain('MainActivity.EXTRA_TICK')
+    expect(activity).toContain('json.put("tick", ticking)')
+    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, space, true)')
+    // Redrawn whenever the notes widget is, from the one JSON the page hands over.
+    expect(widgets).toContain('TodayWidget.refresh(context)')
+  })
+})

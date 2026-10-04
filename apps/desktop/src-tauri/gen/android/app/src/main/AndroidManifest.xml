@@ -211,6 +211,20 @@
             </intent-filter>
         </receiver>
 
+        <!-- Today, the second widget: the open tasks for today and overdue, a box
+             each that ticks it through the app. See TodayWidget.kt and
+             res/xml/widget_today.xml. -->
+        <receiver
+            android:name=".TodayWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today" />
+        </receiver>
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"
