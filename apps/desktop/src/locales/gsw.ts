@@ -1942,11 +1942,9 @@ export const gsw: Dictionary = {
   'the data could not be deleted': 'D Date händ nöd chönne glöscht werde',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Schlummere',
-  Tomorrow: 'Morn',
   Reminders: 'Erinnerige',
   'Reminders ring while nibeditor is open': 'Erinnerige lüütet, solang nibeditor offe isch',
   Automatic: 'Automatisch',
-  'At the time': 'Zur Ziit',
   'Stay in the tray': 'Im Infobereich bliibe',
   'Exact alarms': 'Gnaui Wecker',
 }

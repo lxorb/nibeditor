@@ -1950,11 +1950,9 @@ export const kn: Dictionary = {
   'the data could not be deleted': 'ಡೇಟಾ ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'ಸ್ನೂಜ್',
-  Tomorrow: 'ನಾಳೆ',
   Reminders: 'ಜ್ಞಾಪನೆಗಳು',
   'Reminders ring while nibeditor is open': 'nibeditor ತೆರೆದಿರುವಾಗ ಜ್ಞಾಪನೆಗಳು ರಿಂಗ್ ಆಗುತ್ತವೆ',
   Automatic: 'ಸ್ವಯಂಚಾಲಿತ',
-  'At the time': 'ಸಮಯಕ್ಕೆ',
   'Stay in the tray': 'ಟ್ರೇನಲ್ಲಿ ಇರಿ',
   'Exact alarms': 'ನಿಖರ ಅಲಾರಂಗಳು',
 }

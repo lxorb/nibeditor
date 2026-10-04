@@ -1984,12 +1984,10 @@ export const es: Dictionary = {
   'the data could not be deleted': 'No se han podido eliminar los datos',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Posponer',
-  Tomorrow: 'Mañana',
   Reminders: 'Recordatorios',
   'Reminders ring while nibeditor is open':
     'Los recordatorios suenan mientras nibeditor está abierto',
   Automatic: 'Automático',
-  'At the time': 'A la hora',
   'Stay in the tray': 'Quedarse en la bandeja',
   'Exact alarms': 'Alarmas exactas',
 }

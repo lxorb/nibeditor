@@ -1893,11 +1893,9 @@ export const th: Dictionary = {
   'the data could not be deleted': 'ลบข้อมูลไม่ได้',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'เลื่อนปลุก',
-  Tomorrow: 'พรุ่งนี้',
   Reminders: 'การเตือน',
   'Reminders ring while nibeditor is open': 'การเตือนจะดังขณะที่ nibeditor เปิดอยู่',
   Automatic: 'อัตโนมัติ',
-  'At the time': 'ตรงเวลา',
   'Stay in the tray': 'อยู่ในถาดระบบ',
   'Exact alarms': 'การปลุกที่แม่นยำ',
 }

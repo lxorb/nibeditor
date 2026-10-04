@@ -1884,11 +1884,9 @@ export const zhHant: Dictionary = {
   'the data could not be deleted': '無法刪除資料',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
-  Tomorrow: '明天',
   Reminders: '提醒',
   'Reminders ring while nibeditor is open': '提醒僅在 nibeditor 開啟時響起',
   Automatic: '自動',
-  'At the time': '準時',
   'Stay in the tray': '保留在系統匣',
   'Exact alarms': '精確鬧鐘',
 }

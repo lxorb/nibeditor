@@ -2013,11 +2013,9 @@ export const ru: Dictionary = {
   'the data could not be deleted': 'Не удалось удалить данные',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Отложить',
-  Tomorrow: 'Завтра',
   Reminders: 'Напоминания',
   'Reminders ring while nibeditor is open': 'Напоминания звучат, пока nibeditor открыт',
   Automatic: 'Автоматически',
-  'At the time': 'В назначенное время',
   'Stay in the tray': 'Оставаться в трее',
   'Exact alarms': 'Точные будильники',
 }

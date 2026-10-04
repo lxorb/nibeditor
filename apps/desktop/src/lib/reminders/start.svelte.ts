@@ -9,6 +9,7 @@
 import { untrack } from 'svelte'
 import { answer } from '../mobile/bridge'
 import { modes } from '../modes.svelte'
+import { quickAdd } from '../quick-add/asked.svelte'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace } from '../space-paths'
 import { invoke, isDesktop } from '../tauri'
@@ -101,6 +102,11 @@ $effect.root(() => {
       auto = minutes < 0 ? null : minutes
       scheduler.changed()
     })
+  })
+  // The quick add key from any app needs nib running, so it keeps nib in the tray too.
+  $effect(() => {
+    const held = quickAdd.anywhere
+    untrack(() => (residency.quickAdd = held))
   })
   $effect(() => {
     const on = residency.on

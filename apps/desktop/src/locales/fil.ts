@@ -1970,11 +1970,9 @@ export const fil: Dictionary = {
   'the data could not be deleted': 'Hindi ma-delete ang data',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'I-snooze',
-  Tomorrow: 'Bukas',
   Reminders: 'Mga paalala',
   'Reminders ring while nibeditor is open': 'Tumutunog ang mga paalala habang bukas ang nibeditor',
   Automatic: 'Awtomatiko',
-  'At the time': 'Sa oras',
   'Stay in the tray': 'Manatili sa tray',
   'Exact alarms': 'Eksaktong alarma',
 }

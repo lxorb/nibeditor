@@ -1924,11 +1924,9 @@ export const ms: Dictionary = {
   'the data could not be deleted': 'Data tidak dapat dipadamkan',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Tunda',
-  Tomorrow: 'Esok',
   Reminders: 'Peringatan',
   'Reminders ring while nibeditor is open': 'Peringatan berbunyi semasa nibeditor dibuka',
   Automatic: 'Automatik',
-  'At the time': 'Tepat pada masanya',
   'Stay in the tray': 'Kekal dalam dulang',
   'Exact alarms': 'Penggera tepat',
 }

@@ -2007,11 +2007,9 @@ export const uk: Dictionary = {
   'the data could not be deleted': 'Не вдалося видалити дані',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Відкласти',
-  Tomorrow: 'Завтра',
   Reminders: 'Нагадування',
   'Reminders ring while nibeditor is open': 'Нагадування лунають, поки nibeditor відкритий',
   Automatic: 'Автоматично',
-  'At the time': 'У призначений час',
   'Stay in the tray': 'Залишатися в треї',
   'Exact alarms': 'Точні будильники',
 }

@@ -1929,11 +1929,9 @@ export const hi: Dictionary = {
   'the data could not be deleted': 'डेटा मिटाया नहीं जा सका',
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'स्नूज़',
-  Tomorrow: 'कल',
   Reminders: 'रिमाइंडर',
   'Reminders ring while nibeditor is open': 'nibeditor खुला रहने पर रिमाइंडर बजते हैं',
   Automatic: 'स्वचालित',
-  'At the time': 'समय पर',
   'Stay in the tray': 'ट्रे में रहें',
   'Exact alarms': 'सटीक अलार्म',
 }
