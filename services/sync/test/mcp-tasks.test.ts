@@ -194,3 +194,26 @@ describe('bases, with nib closed', () => {
     })
   })
 })
+
+describe("the clipper's task, behind the session", () => {
+  test('a line in the inbox with the page linked, and nobody else may add one', async () => {
+    const made = await call(env, `/v1/spaces/${space}/tasks`, {
+      token,
+      body: { text: '[A page](https://example.com/a)' },
+    })
+    expect(made.status).toBe(201)
+    expect(made.json).toMatchObject({ path: 'Inbox.md', space: 'Work' })
+    expect(await read(await connector(true), 'Inbox.md')).toBe(
+      '- [ ] [A page](https://example.com/a)\n',
+    )
+
+    expect(
+      (await call(env, `/v1/spaces/${space}/tasks`, { token, body: { text: ' ' } })).status,
+    ).toBe(400)
+    const stranger = await signIn(env, 'x@y.dev')
+    expect(
+      (await call(env, `/v1/spaces/${space}/tasks`, { token: stranger, body: { text: 'Sneak' } }))
+        .status,
+    ).toBe(404)
+  })
+})

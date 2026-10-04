@@ -303,7 +303,7 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
  *  sentence to answer with. The to-dos' tools write through here too (tasks.ts). */
 export async function putNote(
   env: Env,
-  space: Space,
+  space: Pick<Space, 'id' | 'user_id'>,
   path: string,
   content: string,
 ): Promise<string | null> {

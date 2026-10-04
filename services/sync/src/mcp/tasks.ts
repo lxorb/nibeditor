@@ -182,7 +182,7 @@ async function rowsOf(
 }
 
 /** One note's words, or null where there is no note at that path. */
-async function wordsAt(env: Env, space: Space, path: string): Promise<string | null> {
+async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
@@ -199,7 +199,7 @@ function notePath(asked: string): string {
   return path
 }
 
-async function written(env: Env, space: Space, path: string, words: string): Promise<void> {
+async function written(env: Env, space: Writable, path: string, words: string): Promise<void> {
   const refused = await putNote(env, space, path, words)
   if (refused !== null) throw new Said(refused)
 }
@@ -284,13 +284,26 @@ async function writableSpace(env: Env, token: TokenRow, args: Args): Promise<Spa
 }
 
 async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
-  const space = await writableSpace(env, token, args)
+  return addTaskTo(env, await writableSpace(env, token, args), args)
+}
+
+/** The space a task goes to, as both the connector and the clipper's route have it. */
+type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
+
+/** A task added to a space the caller may write: to its Inbox.md, or to `note` under
+ *  `under`. The connector's `add_task` and the clipper's "As a task" (tasks.ts) both
+ *  come here. Throws the sentence to answer with where it cannot. */
+export async function addTaskTo(
+  env: Env,
+  space: Writable,
+  args: Args,
+): Promise<{ at: string; space: string; path: string }> {
   const fields = newTask(args)
   const path = notePath(words(args, 'note') ?? 'Inbox.md')
   const before = (await wordsAt(env, space, path)) ?? ''
   const placed = placeLines(before, [taskLine(fields)], words(args, 'under'))
   await written(env, space, path, appliedEdits(before, [placed.edit]))
-  return { at: `${path}#${placed.line}:${taskHash(fields.text)}`, space: space.name }
+  return { at: `${path}#${placed.line}:${taskHash(fields.text)}`, space: space.name, path }
 }
 
 async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
@@ -393,6 +406,12 @@ const RUNS: Record<string, (env: Env, token: TokenRow, args: Args) => Promise<un
   add_row: addRow,
 }
 
+/** A sentence a task tool answered with rather than a task: what the clipper's route
+ *  hands back as its refusal. */
+export function refusalOf(error: unknown): string | null {
+  return error instanceof Said || error instanceof AgentError ? error.message : null
+}
+
 /** Runs one of the five, answering JSON, or a sentence where it cannot. */
 export async function callTaskTool(
   env: Env,
@@ -405,7 +424,8 @@ export async function callTaskTool(
   try {
     return JSON.stringify(await run(env, token, args))
   } catch (error) {
-    if (error instanceof Said || error instanceof AgentError) return error.message
+    const said = refusalOf(error)
+    if (said !== null) return said
     throw error
   }
 }
