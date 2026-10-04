@@ -1884,4 +1884,13 @@ export const am: Dictionary = {
   'New private tab': 'አዲስ የግል ትር',
   'All spaces': 'ሁሉም ቦታዎች',
   'the data could not be deleted': 'ውሂቡ ሊሰረዝ አልቻለም',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'አሸልብ',
+  Tomorrow: 'ነገ',
+  Reminders: 'አስታዋሾች',
+  'Reminders ring while nibeditor is open': 'አስታዋሾች nibeditor ክፍት ሲሆን ይደውላሉ',
+  Automatic: 'ራስ-ሰር',
+  'At the time': 'በሰዓቱ',
+  'Stay in the tray': 'በትሪው ውስጥ ቆይ',
+  'Exact alarms': 'ትክክለኛ ማንቂያዎች',
 }

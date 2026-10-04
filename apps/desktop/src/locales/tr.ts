@@ -1913,4 +1913,13 @@ export const tr: Dictionary = {
   'New private tab': 'Yeni gizli sekme',
   'All spaces': 'Tüm alanlar',
   'the data could not be deleted': 'Veriler silinemedi',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Ertele',
+  Tomorrow: 'Yarın',
+  Reminders: 'Hatırlatıcılar',
+  'Reminders ring while nibeditor is open': 'Hatırlatıcılar nibeditor açıkken çalar',
+  Automatic: 'Otomatik',
+  'At the time': 'Tam zamanında',
+  'Stay in the tray': 'Sistem tepsisinde kal',
+  'Exact alarms': 'Tam zamanlı alarmlar',
 }

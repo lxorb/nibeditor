@@ -1909,4 +1909,13 @@ export const ps: Dictionary = {
   'New private tab': 'نوې شخصي ټب',
   'All spaces': 'ټول ځایونه',
   'the data could not be deleted': 'معلومات ړنګ نه شول',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'ځنډول',
+  Tomorrow: 'سبا',
+  Reminders: 'یادونې',
+  'Reminders ring while nibeditor is open': 'یادونې تر هغه وخته غږېږي چې nibeditor پرانیستی وي',
+  Automatic: 'اتومات',
+  'At the time': 'په وخت',
+  'Stay in the tray': 'په سیستم ټرې کې پاتې شه',
+  'Exact alarms': 'دقیق الارمونه',
 }

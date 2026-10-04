@@ -1880,4 +1880,13 @@ export const ko: Dictionary = {
   'New private tab': '새 비공개 탭',
   'All spaces': '모든 공간',
   'the data could not be deleted': '데이터를 삭제할 수 없습니다',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: '다시 알림',
+  Tomorrow: '내일',
+  Reminders: '리마인더',
+  'Reminders ring while nibeditor is open': 'nibeditor가 열려 있는 동안 리마인더가 울립니다',
+  Automatic: '자동',
+  'At the time': '정시에',
+  'Stay in the tray': '트레이에 상주',
+  'Exact alarms': '정확한 알람',
 }

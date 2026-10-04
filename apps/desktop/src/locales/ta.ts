@@ -1935,4 +1935,14 @@ export const ta: Dictionary = {
   'New private tab': 'புதிய தனிப்பட்ட தாவல்',
   'All spaces': 'எல்லா ஸ்பேஸ்களும்',
   'the data could not be deleted': 'தரவை நீக்க முடியவில்லை',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'உறக்கநிலை',
+  Tomorrow: 'நாளை',
+  Reminders: 'நினைவூட்டல்கள்',
+  'Reminders ring while nibeditor is open':
+    'nibeditor திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
+  Automatic: 'தானியங்கு',
+  'At the time': 'நேரத்தில்',
+  'Stay in the tray': 'ட்ரேயில் இருக்கவும்',
+  'Exact alarms': 'துல்லியமான அலாரங்கள்',
 }

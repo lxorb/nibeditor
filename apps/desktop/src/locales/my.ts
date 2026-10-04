@@ -1891,4 +1891,13 @@ export const my: Dictionary = {
   'New private tab': 'တဘ်သီးသန့် အသစ်',
   'All spaces': 'နေရာအားလုံး',
   'the data could not be deleted': 'ဒေတာကို ဖျက်၍မရပါ',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'ခဏဆိုင်း',
+  Tomorrow: 'မနက်ဖြန်',
+  Reminders: 'သတိပေးချက်များ',
+  'Reminders ring while nibeditor is open': 'nibeditor ဖွင့်ထားစဉ် သတိပေးချက်များ မြည်သည်',
+  Automatic: 'အလိုအလျောက်',
+  'At the time': 'အချိန်တွင်',
+  'Stay in the tray': 'ထရေးတွင် ဆက်ရှိနေရန်',
+  'Exact alarms': 'တိကျသော နှိုးစက်များ',
 }

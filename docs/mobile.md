@@ -175,12 +175,19 @@ test in `test/android.test.ts` that holds the two sides to each other.
 
 ## What the app asks the phone for
 
-Two permissions, and the second is only for dictation:
+Five permissions; the second is only for dictation and the last three only for
+reminders:
 
 | | |
 | --- | --- |
 | `INTERNET` | sync, and the account |
 | `RECORD_AUDIO` | the speech recogniser, asked for the first time somebody turns dictation on |
+| `POST_NOTIFICATIONS` | a reminder that rang, asked the first time a reminder is set (Android 13 on) |
+| `SCHEDULE_EXACT_ALARM` | a reminder at its minute; see *Alarms* below |
+| `RECEIVE_BOOT_COMPLETED` | the alarms set again after a reboot |
+
+Never `USE_EXACT_ALARM`: it is granted without asking, and for that reason the Play
+Store keeps it to alarm clocks and calendars.
 
 **Not the camera**, on purpose, and this one is load-bearing rather than tidy.
 Taking a photograph into a note is `ACTION_IMAGE_CAPTURE`, which the camera app
@@ -253,6 +260,75 @@ two things does. Dismissing the sheet does nothing, which is what dismissing
 always means. A share carrying a file that is neither makes its own note without
 asking, because a file needs a name of its own in the space and the plan is what
 gives it one.
+
+## Alarms
+
+A task's reminder rings on the phone with nib closed (docs/tasks.md 5.10). The page
+plans the next 64 reminders across every space (`src/lib/reminders`) and hands the whole
+plan to the activity whenever it changes (`reminders` on the bridge, behind the frame's
+word); `Reminders.kt` sets an `AlarmManager` alarm for each, keeps the plan in the app's
+own preferences, cancels what a new plan dropped, and sets everything again after a
+reboot, an update, a new time zone or the clock being set (`ReminderReceiver`). Nothing
+here syncs or holds a credential: the phone rings what the page last said, which keeps
+the rule against a second sync implementation.
+
+- **Exact or within minutes.** From Android 14 a new install is not granted
+  `SCHEDULE_EXACT_ALARM`. The first time a reminder is set the reader is asked to show
+  notifications at all (Android 13 on), and the next time, if exact alarms are still
+  off, sent to the system's switch for them, once. Without it an alarm is
+  `setAndAllowWhileIdle`, which the system rings within a few minutes; with it,
+  `setExactAndAllowWhileIdle`. Settings > General > Reminders has the switch as a row.
+- **What rings** is a notification on the `reminders` channel (high importance), with
+  the task's words, its note, **Done** and **Snooze**. Snooze is answered in Kotlin, by
+  an alarm fifteen minutes on. Done and a press on the notification need the page,
+  which owns the one write path: each is queued in the preferences and handed over the
+  next time the page asks (`remindersTaken`) - at once when nib is open
+  (`window.__nibReminders`), and a press opens nib to do it. A Done pressed with nib
+  closed is ticked the next time nib opens; the notification goes at once.
+- **One ring per reminder.** A reminder's id is the one every device and the Worker make
+  for it (`reminderId` in `@nib/markdown/task-reminders`), and the phone remembers the
+  ids it rang for a week (`AlarmList.known`), so a push from the Worker for one the phone
+  already rings stays quiet once the push client is in (below).
+- **Tests**: `AlarmListTest.kt` on the JVM - what a plan sets and cancels, the 64, the
+  request codes, the snooze, a push already known - run by `check.yml`'s android job after
+  the assembly, which is what writes the Gradle files they run in.
+
+## Push
+
+The Worker pushes a reminder to a device that has not opened nib since the task was
+written elsewhere, which is the gap local alarms leave (docs/tasks.md decision 5). One
+module for reminders and chats (`services/sync/src/push`): device targets in
+`push_targets` (`POST /v2/push/targets`, `DELETE /v2/push/targets/:id`, `GET
+/v2/push/key`), reminders kept in `push_reminders` from every note as it is saved, and a
+cron each minute that sends what is due once, to every target of the account, and drops
+a target its service says is gone. Web Push (RFC 8291 and VAPID) to the browser build,
+FCM HTTP v1 to Android as a data message the app decides on, APNs to an iPhone.
+
+Built and tested against recorded answers, and **off until its keys exist**: each service
+answers `off` and is skipped until the Worker has its keys. What Emil has to make, none of
+which is in the repository:
+
+1. **VAPID keys** for Web Push: `npx web-push generate-vapid-keys`. The public key goes in
+   `wrangler.jsonc` as the var `VAPID_PUBLIC_KEY`, the private one is `wrangler secret put
+   VAPID_PRIVATE_KEY`, and optionally `VAPID_SUBJECT` (a `mailto:`; `MAIL_FROM`'s address
+   otherwise).
+2. **A Firebase project** with Cloud Messaging on, the Android app added under
+   `ch.emilvinu.nib`, and a service account key (Project settings > Service accounts >
+   Generate new private key): `wrangler secret put FCM_SERVICE_ACCOUNT` with the JSON
+   file's contents. The app's own `google-services.json` from the same project is what
+   the Android client needs.
+3. **An APNs key** from the Apple developer account this page already waits on (Keys >
+   Apple Push Notifications service): `wrangler secret put APNS_KEY` with the `.p8`, and
+   the vars `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC` (the bundle id) and, for a
+   development build, `APNS_SANDBOX=true`.
+4. `pnpm --filter @nib/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
+   adds the minute's cron.
+
+What is not built yet, and belongs to the client half (docs/chats.md lane 6): the
+browser build's subscription in its service worker, and the Android and iPhone token
+registration with the FCM service that shows a data message unless `Reminders.known`
+says the phone rang it already. Without them no device registers a target, and the
+Worker keeps and sends nothing.
 
 ## The tiles, and the widget
 

@@ -1912,4 +1912,13 @@ export const pa: Dictionary = {
   'New private tab': 'ਨਵੀਂ ਨਿੱਜੀ ਟੈਬ',
   'All spaces': 'ਸਾਰੀਆਂ ਸਪੇਸਾਂ',
   'the data could not be deleted': 'ਡਾਟਾ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'ਸਨੂਜ਼',
+  Tomorrow: 'ਕੱਲ੍ਹ',
+  Reminders: 'ਰੀਮਾਈਂਡਰ',
+  'Reminders ring while nibeditor is open': 'nibeditor ਖੁੱਲ੍ਹਾ ਹੋਣ ਤੇ ਰੀਮਾਈਂਡਰ ਵੱਜਦੇ ਹਨ',
+  Automatic: 'ਸਵੈਚਲਿਤ',
+  'At the time': 'ਸਮੇਂ ਤੇ',
+  'Stay in the tray': 'ਟ੍ਰੇ ਵਿੱਚ ਰਹੋ',
+  'Exact alarms': 'ਸਹੀ ਅਲਾਰਮ',
 }

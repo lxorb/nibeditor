@@ -4,7 +4,8 @@ import { panelDrawable } from './even/panel-words'
 import { glassesGroups, wordFields } from './even/settings'
 import { CATALOGUES_URL, i18n, plural, t } from './i18n.svelte'
 import { languageOptions, machineSaid } from './language-options'
-import { modes } from './modes.svelte'
+import { method } from './mobile/bridge'
+import { modes, REMIND_BEFORE } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { isPlugin } from './plugin'
@@ -12,10 +13,11 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './paper'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
+import { hasTray, residency } from './reminders/residency.svelte'
 import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
-import { isDesktop, isMobile } from './tauri'
+import { isDesktop, isMobile, platform } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { swipeChoice } from './back-swipe/choice.svelte'
 import { shellName, shells, SIZES } from './terminal/shells.svelte'
@@ -356,6 +358,62 @@ function terminalGroup(): Group {
   }
 }
 
+/** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
+ *  desktop that has one, the exact alarms on a phone. One line on Linux, where nothing
+ *  rings with nib closed. See docs/tasks.md 5.10. */
+function remindersGroup(): Group {
+  const exact = method('exactAlarms')
+  const ask = method('askExactAlarms')
+
+  return {
+    title: t('Reminders'),
+    ...(isDesktop && platform() === 'linux'
+      ? { caption: { text: t('Reminders ring while nibeditor is open') } }
+      : {}),
+    fields: [
+      {
+        kind: 'select',
+        label: t('Automatic'),
+        words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
+        options: REMIND_BEFORE.map((minutes) => ({
+          value: String(minutes),
+          label:
+            minutes < 0
+              ? t('Off')
+              : minutes === 0
+                ? t('At the time')
+                : t('{count} min', { count: minutes }),
+        })),
+        initial: '0',
+        get: () => String(modes.remindBefore),
+        set: (value) => modes.setRemindBefore(Number(value)),
+      },
+      ...(hasTray
+        ? ([
+            {
+              kind: 'switch',
+              label: t('Stay in the tray'),
+              words: ['tray', 'background', 'menu bar', 'close', 'quit', 'reminder'],
+              get: () => residency.on,
+              set: (on) => residency.set(on),
+            },
+          ] satisfies Field[])
+        : []),
+      ...(exact && ask
+        ? ([
+            {
+              kind: 'switch',
+              label: t('Exact alarms'),
+              words: ['alarm', 'reminder', 'exact', 'battery'],
+              get: () => exact(),
+              set: () => ask(),
+            },
+          ] satisfies Field[])
+        : []),
+    ],
+  }
+}
+
 /** Built against a live view so a change lands in the editor on screen. */
 export function preferences(view?: EditorView): Pane[] {
   // One moment for every example on the pane, so the options read as one set of
@@ -503,6 +561,10 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+
+        // The automatic reminder, and the tray or the alarms that keep reminders ringing;
+        // never the glasses' plugin, which rings nothing.
+        ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
 
         // Which shell a new terminal opens, how large its type is and whether its lines
         // come back after a restart: this machine's, like the release channel below,

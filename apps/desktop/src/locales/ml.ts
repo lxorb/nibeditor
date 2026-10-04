@@ -1927,4 +1927,14 @@ export const ml: Dictionary = {
   'New private tab': 'പുതിയ സ്വകാര്യ ടാബ്',
   'All spaces': 'എല്ലാ സ്പേസുകളും',
   'the data could not be deleted': 'ഡാറ്റ ഇല്ലാതാക്കാനായില്ല',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'സ്നൂസ്',
+  Tomorrow: 'നാളെ',
+  Reminders: 'ഓർമ്മപ്പെടുത്തലുകൾ',
+  'Reminders ring while nibeditor is open':
+    'nibeditor തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
+  Automatic: 'സ്വയമേവ',
+  'At the time': 'സമയത്ത്',
+  'Stay in the tray': 'ട്രേയിൽ തുടരുക',
+  'Exact alarms': 'കൃത്യമായ അലാറങ്ങൾ',
 }

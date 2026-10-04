@@ -157,6 +157,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "block2",
   "NSArray",
   "NSBundle",
+  "NSCalendar",
   "NSData",
   "NSDate",
   "NSDictionary",
@@ -194,6 +195,20 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSView",
   "NSWindow",
   "NSWorkspace",
+] }
+objc2-user-notifications = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "bitflags",
+  "UNNotification",
+  "UNNotificationAction",
+  "UNNotificationCategory",
+  "UNNotificationContent",
+  "UNNotificationRequest",
+  "UNNotificationResponse",
+  "UNNotificationSound",
+  "UNNotificationTrigger",
+  "UNUserNotificationCenter",
 ] }
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
@@ -242,6 +257,10 @@ windows = { version = "0.58", features = [
   "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
   "Win32_Graphics_Gdi",
+  "Foundation",
+  "Foundation_Collections",
+  "Data_Xml_Dom",
+  "UI_Notifications",
 ] }
 webview2-com = "0.38"
 windows-core = "0.61"

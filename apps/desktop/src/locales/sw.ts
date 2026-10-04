@@ -1935,4 +1935,13 @@ export const sw: Dictionary = {
   'New private tab': 'Kichupo kipya cha faragha',
   'All spaces': 'Nafasi zote',
   'the data could not be deleted': 'Data haikuweza kufutwa',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Ahirisha',
+  Tomorrow: 'Kesho',
+  Reminders: 'Vikumbusho',
+  'Reminders ring while nibeditor is open': 'Vikumbusho hulia nibeditor ikiwa wazi',
+  Automatic: 'Kiotomatiki',
+  'At the time': 'Kwa wakati',
+  'Stay in the tray': 'Baki kwenye trei',
+  'Exact alarms': 'Kengele sahihi',
 }

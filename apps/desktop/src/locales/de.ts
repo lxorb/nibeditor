@@ -1946,4 +1946,13 @@ export const de: Dictionary = {
   'New private tab': 'Neuer privater Tab',
   'All spaces': 'Alle Bereiche',
   'the data could not be deleted': 'Die Daten konnten nicht gelöscht werden',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Schlummern',
+  Tomorrow: 'Morgen',
+  Reminders: 'Erinnerungen',
+  'Reminders ring while nibeditor is open': 'Erinnerungen klingeln, solange nibeditor offen ist',
+  Automatic: 'Automatisch',
+  'At the time': 'Zur Uhrzeit',
+  'Stay in the tray': 'Im Infobereich bleiben',
+  'Exact alarms': 'Genaue Wecker',
 }

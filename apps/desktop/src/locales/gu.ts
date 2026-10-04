@@ -1898,4 +1898,13 @@ export const gu: Dictionary = {
   'New private tab': 'નવું ખાનગી ટૅબ',
   'All spaces': 'બધી સ્પેસ',
   'the data could not be deleted': 'ડેટા ડિલીટ કરી શકાયો નથી',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'સ્નૂઝ',
+  Tomorrow: 'આવતીકાલે',
+  Reminders: 'રિમાઇન્ડર',
+  'Reminders ring while nibeditor is open': 'nibeditor ખુલ્લું હોય ત્યારે રિમાઇન્ડર વાગે છે',
+  Automatic: 'આપમેળે',
+  'At the time': 'સમયે',
+  'Stay in the tray': 'ટ્રેમાં રહો',
+  'Exact alarms': 'ચોક્કસ અલાર્મ',
 }

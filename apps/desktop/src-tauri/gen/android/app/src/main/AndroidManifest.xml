@@ -20,6 +20,18 @@
     -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!--
+      Reminders that ring with nib closed (docs/tasks.md 5.10; see Reminders.kt): leave
+      to show a notification (asked the first time a reminder is set, from Android 13),
+      alarms at the minute where the reader allows them (not granted to a new install
+      from Android 14; the switch is offered once, and an alarm within a few minutes is
+      what rings without it), and the alarms set again after a reboot.
+      USE_EXACT_ALARM is not asked for: it is for clocks and calendars.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
@@ -184,6 +196,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_notes" />
+        </receiver>
+
+        <!-- Each reminder's alarm and its two buttons, and the system saying the alarms
+             were lost: a reboot, an update, a new time zone. See Reminders.kt. -->
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
         </receiver>
 
         <provider

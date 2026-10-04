@@ -1968,4 +1968,13 @@ export const fr: Dictionary = {
   'New private tab': 'Nouvel onglet privé',
   'All spaces': 'Tous les espaces',
   'the data could not be deleted': 'Impossible de supprimer les données',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Répéter',
+  Tomorrow: 'Demain',
+  Reminders: 'Rappels',
+  'Reminders ring while nibeditor is open': 'Les rappels sonnent tant que nibeditor est ouvert',
+  Automatic: 'Automatique',
+  'At the time': 'À l’heure',
+  'Stay in the tray': 'Rester dans la zone de notification',
+  'Exact alarms': 'Alarmes exactes',
 }

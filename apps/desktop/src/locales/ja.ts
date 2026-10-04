@@ -1894,4 +1894,13 @@ export const ja: Dictionary = {
   'New private tab': '新しいプライベート タブ',
   'All spaces': 'すべてのスペース',
   'the data could not be deleted': 'データを削除できませんでした',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'スヌーズ',
+  Tomorrow: '明日',
+  Reminders: 'リマインダー',
+  'Reminders ring while nibeditor is open': 'リマインダーは nibeditor が開いている間に鳴ります',
+  Automatic: '自動',
+  'At the time': '時刻ちょうど',
+  'Stay in the tray': 'トレイに常駐',
+  'Exact alarms': '正確なアラーム',
 }

@@ -1858,4 +1858,13 @@ export const yue: Dictionary = {
   'New private tab': '新增私人分頁',
   'All spaces': '所有空間',
   'the data could not be deleted': '刪除唔到資料',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: '稍後提醒',
+  Tomorrow: '聽日',
+  Reminders: '提醒',
+  'Reminders ring while nibeditor is open': 'nibeditor 開住嘅時候提醒先會響',
+  Automatic: '自動',
+  'At the time': '準時',
+  'Stay in the tray': '留喺系統匣',
+  'Exact alarms': '準確鬧鐘',
 }

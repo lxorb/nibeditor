@@ -6,6 +6,7 @@ import { EFFORTS } from './ask/asking'
 import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
+import { REMIND_BEFORE } from './push/reminders'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
@@ -224,6 +225,9 @@ const KNOWN: Record<string, Check> = {
   // See versions.ts.
   keepVersions: oneOf('keepVersions', KEEP_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
+  // The automatic reminder, in minutes before a task's time, -1 for none. Read by the
+  // push as well as the app, so only the choices the app offers; see push/reminders.ts.
+  remindBefore: oneOf('remindBefore', REMIND_BEFORE),
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in

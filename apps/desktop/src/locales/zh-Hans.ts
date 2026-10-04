@@ -1858,4 +1858,13 @@ export const zhHans: Dictionary = {
   'New private tab': '新建无痕标签页',
   'All spaces': '所有空间',
   'the data could not be deleted': '无法删除数据',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: '稍后提醒',
+  Tomorrow: '明天',
+  Reminders: '提醒',
+  'Reminders ring while nibeditor is open': '提醒仅在 nibeditor 打开时响起',
+  Automatic: '自动',
+  'At the time': '准时',
+  'Stay in the tray': '保留在托盘中',
+  'Exact alarms': '精确闹钟',
 }

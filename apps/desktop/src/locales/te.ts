@@ -1915,4 +1915,13 @@ export const te: Dictionary = {
   'New private tab': 'కొత్త ప్రైవేట్ ట్యాబ్',
   'All spaces': 'అన్ని స్పేస్‌లు',
   'the data could not be deleted': 'డేటాను తొలగించడం సాధ్యం కాలేదు',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'స్నూజ్',
+  Tomorrow: 'రేపు',
+  Reminders: 'రిమైండర్‌లు',
+  'Reminders ring while nibeditor is open': 'nibeditor తెరిచి ఉన్నప్పుడు రిమైండర్‌లు మోగుతాయి',
+  Automatic: 'స్వయంచాలకం',
+  'At the time': 'సమయానికి',
+  'Stay in the tray': 'ట్రేలో ఉండు',
+  'Exact alarms': 'ఖచ్చితమైన అలారాలు',
 }

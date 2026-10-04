@@ -1943,4 +1943,13 @@ export const ptBR: Dictionary = {
   'New private tab': 'Nova guia privada',
   'All spaces': 'Todos os espaços',
   'the data could not be deleted': 'Não foi possível excluir os dados',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Adiar',
+  Tomorrow: 'Amanhã',
+  Reminders: 'Lembretes',
+  'Reminders ring while nibeditor is open': 'Os lembretes tocam enquanto o nibeditor está aberto',
+  Automatic: 'Automático',
+  'At the time': 'Na hora',
+  'Stay in the tray': 'Ficar na bandeja',
+  'Exact alarms': 'Alarmes exatos',
 }

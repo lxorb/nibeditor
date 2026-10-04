@@ -263,6 +263,20 @@ function seed(database: DatabaseSync, who: Person): void {
   )
   run(`insert into web_chunks (user_id, name, size, at) values (?, 'chunk-name', 1, 1)`, who.id)
   run(
+    `insert into push_targets (id, user_id, kind, token, zone, created_at)
+     values (?, ?, 'fcm', ?, 'Europe/Zurich', 1)`,
+    `target-${who.id}`,
+    who.id,
+    `token-${who.id}`,
+  )
+  run(
+    `insert into push_reminders (note_id, id, user_id, space_id, at, title, body, path, hash, line)
+     values (?, '00ff00ff00ff00ff', ?, ?, 1, 'Call', 'Plan', 'a.md', 'h', 0)`,
+    who.note,
+    who.id,
+    who.space,
+  )
+  run(
     `insert into limits (scope, key, count, until) values
        ('lease', ?1 || ':device', 1, 9e15), ('web-up', ?1 || ':site-key', 1, 9e15),
        ('web-key', ?1, 1, 9e15)`,

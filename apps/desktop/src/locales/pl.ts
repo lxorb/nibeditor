@@ -1990,4 +1990,13 @@ export const pl: Dictionary = {
   'New private tab': 'Nowa karta prywatna',
   'All spaces': 'Wszystkie przestrzenie',
   'the data could not be deleted': 'Nie udało się usunąć danych',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Drzemka',
+  Tomorrow: 'Jutro',
+  Reminders: 'Przypomnienia',
+  'Reminders ring while nibeditor is open': 'Przypomnienia dzwonią, gdy nibeditor jest otwarty',
+  Automatic: 'Automatycznie',
+  'At the time': 'O czasie',
+  'Stay in the tray': 'Zostań w zasobniku',
+  'Exact alarms': 'Dokładne alarmy',
 }

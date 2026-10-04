@@ -391,6 +391,13 @@ jobs:
         run: |
           find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print
 
+      # The Kotlin's own tests, on the JVM: the reminders' alarm list (AlarmListTest.kt).
+      # After the assembly, because the Gradle files they run in are the ones the CLI
+      # writes for it.
+      - name: The Kotlin's unit tests
+        working-directory: apps/desktop/src-tauri/gen/android
+        run: ./gradlew :app:testUniversalReleaseUnitTest --console=plain
+
       # R8 writes what it could not resolve here whether or not it goes on to fail,
       # so this is worth reading on a green run too: a rule that is no longer
       # needed and a new dependency's dangling reference both show up in it.

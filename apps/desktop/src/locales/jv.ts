@@ -1891,4 +1891,13 @@ export const jv: Dictionary = {
   'New private tab': 'Tab pribadi anyar',
   'All spaces': 'Kabeh ruang',
   'the data could not be deleted': 'Data ora bisa dibusak',
+  // Reminders: the buttons on one that rang, and the settings that keep them ringing
+  Snooze: 'Tundha',
+  Tomorrow: 'Sesuk',
+  Reminders: 'Pangéling',
+  'Reminders ring while nibeditor is open': 'Pangéling muni nalika nibeditor kabuka',
+  Automatic: 'Otomatis',
+  'At the time': 'Pas wektuné',
+  'Stay in the tray': 'Tetep ing baki',
+  'Exact alarms': 'Alarm pas',
 }

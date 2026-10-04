@@ -40,6 +40,13 @@ pub fn watch(app: &AppHandle) {
     let opened = app.clone();
     app.deep_link().on_open_url(move |event| {
         let urls = said(event.urls());
+        // A reminder's press is the reminders' own, and a Done never brings the window
+        // forward; see reminders.rs.
+        #[cfg(desktop)]
+        let urls: Vec<String> = urls
+            .into_iter()
+            .filter(|url| !crate::reminders::answer_link(&opened, url))
+            .collect();
         if urls.is_empty() {
             return;
         }
@@ -65,6 +72,11 @@ pub fn watch(app: &AppHandle) {
             .flatten()
             .unwrap_or_default(),
     );
+    #[cfg(desktop)]
+    let launched: Vec<String> = launched
+        .into_iter()
+        .filter(|url| !crate::reminders::answer_link(app, url))
+        .collect();
     if launched.is_empty() {
         return;
     }
@@ -74,6 +86,20 @@ pub fn watch(app: &AppHandle) {
             *waiting = launched;
         }
     }
+}
+
+/// Whether the app was started by nothing but a reminder's Done, which is answered
+/// without the window coming up; see reminders.rs.
+#[cfg(desktop)]
+pub fn launched_quietly(app: &AppHandle) -> bool {
+    let launched = said(
+        app.deep_link()
+            .get_current()
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+    );
+    crate::reminders::quiet_launch(&launched)
 }
 
 /// Handed to the window once it is ready; clearing them stops a reload from
