@@ -58,7 +58,14 @@
 
 <main>
   {#key shown}
-    <QuickAdd {langs} {notes} {smart} onsubmit={added} onclose={() => hide()} />
+    <QuickAdd
+      {langs}
+      {notes}
+      {smart}
+      onsubmit={added}
+      onclose={() => hide()}
+      onpicking={(open) => void invoke('quick_add_tall', { tall: open }).catch(() => undefined)}
+    />
   {/key}
 </main>
 

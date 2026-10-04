@@ -305,6 +305,7 @@ macro_rules! desktop_commands {
             agents::shell::agents_hold,
             quick_add::quick_add_key,
             quick_add::quick_add_hide,
+            quick_add::quick_add_tall,
             mcp::program::mcp_program,
             ai_agent::ai_agent_tools,
             ai_agent::ai_agent_call,

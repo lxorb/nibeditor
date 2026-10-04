@@ -166,6 +166,22 @@ fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) 
     let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
 }
 
+/// How tall the window grows while one of its pickers is open: room for the list under
+/// the controls, which a window no taller than its field would cut off.
+const TALL: f64 = 420.0;
+
+/// The window grown to hold an open picker, or back to its field's height.
+#[tauri::command]
+pub fn quick_add_tall(app: AppHandle, webview: Webview, tall: bool) {
+    if webview.label() != LABEL {
+        return;
+    }
+    if let Some(window) = app.get_webview_window(LABEL) {
+        let height = if tall { TALL } else { HEIGHT };
+        let _ = window.set_size(tauri::LogicalSize::new(WIDTH, height));
+    }
+}
+
 /// The window put away: Escape, a task added, or another app taken to. With `raise`,
 /// the window whose page answers comes forward, for a task opened at its line.
 #[tauri::command]

@@ -15,6 +15,8 @@ a keyboard, Ctrl+Alt+Shift+F24, and then:
   probe's second window of the app's class, made off the screen like every other, and
   never in front (the watch in `run_probe` ends the probe if it ever is).
 * **Pressed again, the same window comes back** rather than a second one.
+* **A picker grows the window** to hold its list, and the window is its field's height
+  again once it is put away.
 * **A task typed there lands in the Inbox.** The words are put in its field and Enter
   said through the page's own script over the DevTools protocol, which presses nothing
   and brings nothing forward; the app's window writes the line into `Inbox.md`.
@@ -101,9 +103,12 @@ def press(pid: int) -> None:
     user32.PostMessageW(keeper, WM_HOTKEY, KEY_ID, (VK_F24 << 16) | flags)
 
 
-def typed_in(spaces: pathlib.Path) -> None:
-    """A task typed into the quick add window, and Enter, by the page's own script."""
+def height(hwnd: int) -> int:
+    box = next((one.box for one in look().windows if one.hwnd == hwnd), (0, 0, 0, 0))
+    return box[3] - box[1]
 
+
+def page_of_window() -> Session | None:
     web = pathlib.Path(os.environ["LOCALAPPDATA"]) / IDENTIFIER / "EBWebView"
     page = until(
         lambda: next(
@@ -114,9 +119,32 @@ def typed_in(spaces: pathlib.Path) -> None:
         else None,
         "the quick add window's page",
     )
-    if not page:
+    return Session(page) if page else None
+
+
+def grows(pid: int, hwnd: int) -> None:
+    """The day's picker opened by the page's own script, and the window's height read."""
+
+    session = page_of_window()
+    if not session or not hwnd:
         return
-    session = Session(page)
+    short = height(hwnd)
+    session.value("document.querySelectorAll('.controls .control')[1].click()")
+    tall = until(lambda: height(hwnd) > short and height(hwnd), "the window grown for the picker", 10)
+    print(f"  the window grew from {short} to {tall} for the picker")
+    session.value("document.querySelector('.picker').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
+    back = until(lambda: height(hwnd) == short, "the window back to its field's height", 10)
+    if back:
+        print("  and back to its field's height")
+    session.close()
+
+
+def typed_in(spaces: pathlib.Path) -> None:
+    """A task typed into the quick add window, and Enter, by the page's own script."""
+
+    session = page_of_window()
+    if not session:
+        return
     said = session.call(
         "Runtime.evaluate",
         {
@@ -189,6 +217,7 @@ def main() -> int:
         if len(again) != 1:
             wrong(f"the key made {len(again)} quick add windows, not one window shown again")
 
+        grows(app.pid, opened[0] if opened else 0)
         typed_in(spaces)
     finally:
         if not close_app(app):
