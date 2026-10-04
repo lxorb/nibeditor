@@ -113,7 +113,9 @@ class Fake implements World {
   readonly ticked: string[] = []
   fresh = 0
   today = () => this.todayRows
-  freshToday = () => void (this.fresh += 1)
+  freshToday = () => {
+    this.fresh += 1
+  }
   tick = (id: string) => void this.ticked.push(id)
 }
 
