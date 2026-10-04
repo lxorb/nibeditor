@@ -106,7 +106,7 @@ function needs(scope: Scope | null): Verb {
 }
 
 const VERBS: Record<string, Verb> = {
-  // The five a link can ask for. Opening, searching and running a command change
+  // Five of the six a link can ask for (`tasks.add` is the sixth, below). Opening, searching and running a command change
   // nothing a person could not change back; making a note never writes over one, and
   // appending only ever adds to the end of one. See acts.ts.
   //
