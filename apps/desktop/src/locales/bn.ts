@@ -1935,4 +1935,15 @@ export const bn: Dictionary = {
   Automatic: 'স্বয়ংক্রিয়',
   'Stay in the tray': 'ট্রেতে থাকুন',
   'Exact alarms': 'নির্ভুল অ্যালার্ম',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'কাজ',
+  'Plan my day': 'আমার দিন পরিকল্পনা করুন',
+  'Add a task': 'কাজ যোগ করুন',
+  'Some repeating dates stay as words under their tasks':
+    'কিছু পুনরাবৃত্তি তাদের কাজের নিচে লেখা হিসেবে রয়ে গেছে',
+  'Todoist did not take that token.': 'Todoist ওই টোকেন গ্রহণ করেনি।',
+  'Todoist could not be reached.': 'Todoist-এ পৌঁছানো যায়নি।',
+  'API token': 'API টোকেন',
+  'Done tasks too': 'সম্পন্ন কাজও',
+  'As a task': 'কাজ হিসেবে',
 }

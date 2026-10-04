@@ -80,4 +80,6 @@ export const fil: Dictionary = {
   'sign in first': 'mag-sign in muna',
   'no such space': 'walang ganoong espasyo',
   'that path is not usable': 'hindi magagamit ang path na iyon',
+  // A page as a task in the inbox
+  'As a task': 'Bilang gawain',
 }

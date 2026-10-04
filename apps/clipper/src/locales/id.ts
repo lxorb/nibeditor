@@ -76,4 +76,6 @@ export const id: Dictionary = {
   'sign in first': 'masuk dahulu',
   'no such space': 'tidak ada ruang itu',
   'that path is not usable': 'jalur itu tidak dapat dipakai',
+  // A page as a task in the inbox
+  'As a task': 'Sebagai tugas',
 }

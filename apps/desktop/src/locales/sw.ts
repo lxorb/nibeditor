@@ -1965,4 +1965,15 @@ export const sw: Dictionary = {
   Automatic: 'Kiotomatiki',
   'Stay in the tray': 'Baki kwenye trei',
   'Exact alarms': 'Kengele sahihi',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Kazi',
+  'Plan my day': 'Panga siku yangu',
+  'Add a task': 'Ongeza kazi',
+  'Some repeating dates stay as words under their tasks':
+    'Marudio mengine yanabaki kama maandishi chini ya kazi zao',
+  'Todoist did not take that token.': 'Todoist haikukubali tokeni hiyo.',
+  'Todoist could not be reached.': 'Todoist haipatikani.',
+  'API token': 'Tokeni ya API',
+  'Done tasks too': 'Pamoja na kazi zilizokamilika',
+  'As a task': 'Kama kazi',
 }

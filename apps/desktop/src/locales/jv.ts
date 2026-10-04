@@ -1921,4 +1921,15 @@ export const jv: Dictionary = {
   Automatic: 'Otomatis',
   'Stay in the tray': 'Tetep ing baki',
   'Exact alarms': 'Alarm pas',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tugas',
+  'Plan my day': 'Rancang dinaku',
+  'Add a task': 'Tambah tugas',
+  'Some repeating dates stay as words under their tasks':
+    'Sawetara pambaleni tetep dadi teks ing ngisor tugase',
+  'Todoist did not take that token.': 'Todoist ora nampa token kuwi.',
+  'Todoist could not be reached.': 'Todoist ora bisa dihubungi.',
+  'API token': 'Token API',
+  'Done tasks too': 'Tugas rampung uga',
+  'As a task': 'Dadi tugas',
 }

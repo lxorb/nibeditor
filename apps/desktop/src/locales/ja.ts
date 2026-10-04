@@ -1924,4 +1924,15 @@ export const ja: Dictionary = {
   Automatic: '自動',
   'Stay in the tray': 'トレイに常駐',
   'Exact alarms': '正確なアラーム',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'タスク',
+  'Plan my day': '今日の計画',
+  'Add a task': 'タスクを追加',
+  'Some repeating dates stay as words under their tasks':
+    '一部の繰り返しはタスクの下に文字として残ります',
+  'Todoist did not take that token.': 'Todoist がそのトークンを受け付けませんでした。',
+  'Todoist could not be reached.': 'Todoist に接続できませんでした。',
+  'API token': 'API トークン',
+  'Done tasks too': '完了したタスクも',
+  'As a task': 'タスクとして',
 }

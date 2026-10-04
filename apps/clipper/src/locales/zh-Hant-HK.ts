@@ -73,4 +73,6 @@ export const zhHantHK: Dictionary = {
   'sign in first': '請先登入',
   'no such space': '沒有該空間',
   'that path is not usable': '該路徑無法使用',
+  // A page as a task in the inbox
+  'As a task': '作為任務',
 }

@@ -1955,4 +1955,15 @@ export const kn: Dictionary = {
   Automatic: 'ಸ್ವಯಂಚಾಲಿತ',
   'Stay in the tray': 'ಟ್ರೇನಲ್ಲಿ ಇರಿ',
   'Exact alarms': 'ನಿಖರ ಅಲಾರಂಗಳು',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'ಕೆಲಸಗಳು',
+  'Plan my day': 'ನನ್ನ ದಿನವನ್ನು ಯೋಜಿಸು',
+  'Add a task': 'ಕೆಲಸ ಸೇರಿಸಿ',
+  'Some repeating dates stay as words under their tasks':
+    'ಕೆಲವು ಪುನರಾವರ್ತನೆಗಳು ಅವುಗಳ ಕೆಲಸಗಳ ಕೆಳಗೆ ಪಠ್ಯವಾಗಿ ಉಳಿದಿವೆ',
+  'Todoist did not take that token.': 'Todoist ಆ ಟೋಕನ್ ಅನ್ನು ಸ್ವೀಕರಿಸಲಿಲ್ಲ.',
+  'Todoist could not be reached.': 'Todoist ಅನ್ನು ತಲುಪಲಾಗಲಿಲ್ಲ.',
+  'API token': 'API ಟೋಕನ್',
+  'Done tasks too': 'ಮುಗಿದ ಕೆಲಸಗಳೂ',
+  'As a task': 'ಕೆಲಸವಾಗಿ',
 }

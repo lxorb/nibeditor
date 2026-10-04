@@ -1939,4 +1939,15 @@ export const mr: Dictionary = {
   Automatic: 'स्वयंचलित',
   'Stay in the tray': 'ट्रेमध्ये राहा',
   'Exact alarms': 'अचूक अलार्म',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'कामे',
+  'Plan my day': 'माझा दिवस आखा',
+  'Add a task': 'काम जोडा',
+  'Some repeating dates stay as words under their tasks':
+    'काही पुनरावृत्ती त्यांच्या कामांखाली मजकूर म्हणून राहिल्या',
+  'Todoist did not take that token.': 'Todoist ने तो टोकन स्वीकारला नाही.',
+  'Todoist could not be reached.': 'Todoist पर्यंत पोहोचता आले नाही.',
+  'API token': 'API टोकन',
+  'Done tasks too': 'पूर्ण झालेली कामेही',
+  'As a task': 'काम म्हणून',
 }

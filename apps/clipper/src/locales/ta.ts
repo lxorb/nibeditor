@@ -82,4 +82,6 @@ export const ta: Dictionary = {
   'sign in first': 'முதலில் உள்நுழையவும்',
   'no such space': 'அப்படி ஒரு இடம் இல்லை',
   'that path is not usable': 'அந்தப் பாதை பயன்படுத்த முடியாதது',
+  // A page as a task in the inbox
+  'As a task': 'பணியாக',
 }

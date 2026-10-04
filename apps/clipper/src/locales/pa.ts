@@ -75,4 +75,6 @@ export const pa: Dictionary = {
   'sign in first': 'ਪਹਿਲਾਂ ਸਾਈਨ ਇਨ ਕਰੋ',
   'no such space': 'ਐਸੀ ਥਾਂ ਨਹੀਂ',
   'that path is not usable': 'ਉਹ ਰਾਹ ਵਰਤਣ ਯੋਗ ਨਹੀਂ',
+  // A page as a task in the inbox
+  'As a task': 'ਕੰਮ ਵਜੋਂ',
 }

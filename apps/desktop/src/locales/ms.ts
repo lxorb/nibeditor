@@ -1929,4 +1929,15 @@ export const ms: Dictionary = {
   Automatic: 'Automatik',
   'Stay in the tray': 'Kekal dalam dulang',
   'Exact alarms': 'Penggera tepat',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tugasan',
+  'Plan my day': 'Rancang hari saya',
+  'Add a task': 'Tambah tugasan',
+  'Some repeating dates stay as words under their tasks':
+    'Sesetengah ulangan kekal sebagai teks di bawah tugasannya',
+  'Todoist did not take that token.': 'Todoist tidak menerima token itu.',
+  'Todoist could not be reached.': 'Todoist tidak dapat dihubungi.',
+  'API token': 'Token API',
+  'Done tasks too': 'Tugasan selesai juga',
+  'As a task': 'Sebagai tugasan',
 }

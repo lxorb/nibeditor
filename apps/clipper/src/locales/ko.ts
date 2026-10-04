@@ -74,4 +74,6 @@ export const ko: Dictionary = {
   'sign in first': '먼저 로그인하세요',
   'no such space': '그런 공간이 없습니다',
   'that path is not usable': '그 경로는 쓸 수 없습니다',
+  // A page as a task in the inbox
+  'As a task': '할 일로',
 }

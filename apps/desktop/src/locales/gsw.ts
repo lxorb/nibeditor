@@ -1947,4 +1947,15 @@ export const gsw: Dictionary = {
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bliibe',
   'Exact alarms': 'Gnaui Wecker',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Ufgabe',
+  'Plan my day': 'Mii Tag plane',
+  'Add a task': 'Ufgab dezuetue',
+  'Some repeating dates stay as words under their tasks':
+    'Es paar Widerholige bliibed als Text under ihrne Ufgabe',
+  'Todoist did not take that token.': 'Todoist hät dä Token nöd agnoh.',
+  'Todoist could not be reached.': 'Todoist isch nöd erreichbar gsi.',
+  'API token': 'API-Token',
+  'Done tasks too': 'Au erledigti Ufgabe',
+  'As a task': 'Als Ufgab',
 }

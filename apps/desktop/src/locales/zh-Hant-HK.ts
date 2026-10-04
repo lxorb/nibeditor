@@ -1888,4 +1888,14 @@ export const zhHantHK: Dictionary = {
   Automatic: '自動',
   'Stay in the tray': '保留在系統匣',
   'Exact alarms': '精確鬧鐘',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': '待辦',
+  'Plan my day': '規劃我的一天',
+  'Add a task': '新增任務',
+  'Some repeating dates stay as words under their tasks': '部分重複規則以文字保留在任務下方',
+  'Todoist did not take that token.': 'Todoist 未接受該權杖。',
+  'Todoist could not be reached.': '無法連接 Todoist。',
+  'API token': 'API 權杖',
+  'Done tasks too': '包括已完成的任務',
+  'As a task': '作為任務',
 }

@@ -76,4 +76,6 @@ export const ml: Dictionary = {
   'sign in first': 'ആദ്യം സൈൻ ഇൻ ചെയ്യുക',
   'no such space': 'അങ്ങനെയൊരു സ്പേസില്ല',
   'that path is not usable': 'ആ പാത്ത് ഉപയോഗിക്കാനാകില്ല',
+  // A page as a task in the inbox
+  'As a task': 'ജോലിയായി',
 }

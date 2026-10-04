@@ -1914,4 +1914,14 @@ export const am: Dictionary = {
   Automatic: 'ራስ-ሰር',
   'Stay in the tray': 'በትሪው ውስጥ ቆይ',
   'Exact alarms': 'ትክክለኛ ማንቂያዎች',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'የሚሠሩ',
+  'Plan my day': 'ቀኔን አቅድ',
+  'Add a task': 'ሥራ አክል',
+  'Some repeating dates stay as words under their tasks': 'አንዳንድ ድግግሞሾች ከሥራቸው በታች እንደ ጽሑፍ ቀርተዋል',
+  'Todoist did not take that token.': 'Todoist ያንን ቶከን አልተቀበለም።',
+  'Todoist could not be reached.': 'Todoistን ማግኘት አልተቻለም።',
+  'API token': 'የAPI ቶከን',
+  'Done tasks too': 'የተጠናቀቁ ሥራዎችም',
+  'As a task': 'እንደ ሥራ',
 }

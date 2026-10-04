@@ -74,4 +74,6 @@ export const ur: Dictionary = {
   'sign in first': 'پہلے سائن ان کریں',
   'no such space': 'ایسا اسپیس نہیں',
   'that path is not usable': 'یہ راستہ قابلِ استعمال نہیں',
+  // A page as a task in the inbox
+  'As a task': 'بطور کام',
 }

@@ -2020,4 +2020,15 @@ export const pl: Dictionary = {
   Automatic: 'Automatycznie',
   'Stay in the tray': 'Zostań w zasobniku',
   'Exact alarms': 'Dokładne alarmy',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Zadania',
+  'Plan my day': 'Zaplanuj mój dzień',
+  'Add a task': 'Dodaj zadanie',
+  'Some repeating dates stay as words under their tasks':
+    'Niektóre powtórzenia zostają jako tekst pod zadaniami',
+  'Todoist did not take that token.': 'Todoist nie przyjął tego tokenu.',
+  'Todoist could not be reached.': 'Nie udało się połączyć z Todoist.',
+  'API token': 'Token API',
+  'Done tasks too': 'Także ukończone zadania',
+  'As a task': 'Jako zadanie',
 }

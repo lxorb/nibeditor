@@ -80,4 +80,6 @@ export const ptBR: Dictionary = {
   'sign in first': 'entrar primeiro',
   'no such space': 'não há esse espaço',
   'that path is not usable': 'esse caminho não serve',
+  // A page as a task in the inbox
+  'As a task': 'Como tarefa',
 }

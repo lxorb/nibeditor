@@ -2012,4 +2012,15 @@ export const uk: Dictionary = {
   Automatic: 'Автоматично',
   'Stay in the tray': 'Залишатися в треї',
   'Exact alarms': 'Точні будильники',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Завдання',
+  'Plan my day': 'Спланувати мій день',
+  'Add a task': 'Додати завдання',
+  'Some repeating dates stay as words under their tasks':
+    'Деякі повторення лишилися текстом під своїми завданнями',
+  'Todoist did not take that token.': 'Todoist не прийняв цей токен.',
+  'Todoist could not be reached.': 'Не вдалося з’єднатися з Todoist.',
+  'API token': 'API-токен',
+  'Done tasks too': 'І виконані завдання',
+  'As a task': 'Як завдання',
 }

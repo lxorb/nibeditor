@@ -74,4 +74,6 @@ export const sw: Dictionary = {
   'sign in first': 'ingia kwanza',
   'no such space': 'hakuna nafasi hiyo',
   'that path is not usable': 'njia hiyo haitumiki',
+  // A page as a task in the inbox
+  'As a task': 'Kama kazi',
 }

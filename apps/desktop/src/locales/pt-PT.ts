@@ -1986,4 +1986,15 @@ export const ptPT: Dictionary = {
   Automatic: 'Automático',
   'Stay in the tray': 'Ficar na área de notificação',
   'Exact alarms': 'Alarmes exatos',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Tarefas',
+  'Plan my day': 'Planear o meu dia',
+  'Add a task': 'Adicionar uma tarefa',
+  'Some repeating dates stay as words under their tasks':
+    'Algumas repetições ficam como texto sob as suas tarefas',
+  'Todoist did not take that token.': 'O Todoist não aceitou esse token.',
+  'Todoist could not be reached.': 'Não foi possível contactar o Todoist.',
+  'API token': 'Token de API',
+  'Done tasks too': 'Também as tarefas concluídas',
+  'As a task': 'Como tarefa',
 }

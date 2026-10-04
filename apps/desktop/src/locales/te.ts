@@ -1945,4 +1945,15 @@ export const te: Dictionary = {
   Automatic: 'స్వయంచాలకం',
   'Stay in the tray': 'ట్రేలో ఉండు',
   'Exact alarms': 'ఖచ్చితమైన అలారాలు',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'పనులు',
+  'Plan my day': 'నా రోజును ప్లాన్ చేయి',
+  'Add a task': 'పనిని జోడించు',
+  'Some repeating dates stay as words under their tasks':
+    'కొన్ని పునరావృతాలు వాటి పనుల కింద వచనంగా ఉన్నాయి',
+  'Todoist did not take that token.': 'Todoist ఆ టోకెన్‌ను అంగీకరించలేదు.',
+  'Todoist could not be reached.': 'Todoistను చేరుకోలేకపోయాం.',
+  'API token': 'API టోకెన్',
+  'Done tasks too': 'పూర్తైన పనులు కూడా',
+  'As a task': 'పనిగా',
 }

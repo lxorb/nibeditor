@@ -1888,4 +1888,14 @@ export const yue: Dictionary = {
   Automatic: '自動',
   'Stay in the tray': '留喺系統匣',
   'Exact alarms': '準確鬧鐘',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': '待辦',
+  'Plan my day': '計劃我嘅一日',
+  'Add a task': '加任務',
+  'Some repeating dates stay as words under their tasks': '有啲重複規則會以文字留喺任務下面',
+  'Todoist did not take that token.': 'Todoist 唔接受呢個權杖。',
+  'Todoist could not be reached.': '連唔到 Todoist。',
+  'API token': 'API 權杖',
+  'Done tasks too': '連埋做完嘅任務',
+  'As a task': '當任務',
 }

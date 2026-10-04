@@ -81,4 +81,6 @@ export const ru: Dictionary = {
   'sign in first': 'сначала войдите',
   'no such space': 'такого пространства нет',
   'that path is not usable': 'этот путь не подходит',
+  // A page as a task in the inbox
+  'As a task': 'Как задачу',
 }

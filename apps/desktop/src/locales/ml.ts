@@ -1958,4 +1958,15 @@ export const ml: Dictionary = {
   Automatic: 'സ്വയമേവ',
   'Stay in the tray': 'ട്രേയിൽ തുടരുക',
   'Exact alarms': 'കൃത്യമായ അലാറങ്ങൾ',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'ജോലികൾ',
+  'Plan my day': 'എന്റെ ദിവസം ആസൂത്രണം ചെയ്യുക',
+  'Add a task': 'ജോലി ചേർക്കുക',
+  'Some repeating dates stay as words under their tasks':
+    'ചില ആവർത്തനങ്ങൾ അവയുടെ ജോലികൾക്ക് താഴെ വാചകമായി തുടരുന്നു',
+  'Todoist did not take that token.': 'Todoist ആ ടോക്കൺ സ്വീകരിച്ചില്ല.',
+  'Todoist could not be reached.': 'Todoist-ൽ എത്താനായില്ല.',
+  'API token': 'API ടോക്കൺ',
+  'Done tasks too': 'പൂർത്തിയായ ജോലികളും',
+  'As a task': 'ജോലിയായി',
 }

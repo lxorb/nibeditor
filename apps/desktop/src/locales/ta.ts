@@ -1966,4 +1966,15 @@ export const ta: Dictionary = {
   Automatic: 'தானியங்கு',
   'Stay in the tray': 'ட்ரேயில் இருக்கவும்',
   'Exact alarms': 'துல்லியமான அலாரங்கள்',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'பணிகள்',
+  'Plan my day': 'என் நாளைத் திட்டமிடு',
+  'Add a task': 'பணியைச் சேர்',
+  'Some repeating dates stay as words under their tasks':
+    'சில மீள்நிகழ்வுகள் அவற்றின் பணிகளின் கீழ் உரையாக உள்ளன',
+  'Todoist did not take that token.': 'Todoist அந்த டோக்கனை ஏற்கவில்லை.',
+  'Todoist could not be reached.': 'Todoist-ஐ அணுக முடியவில்லை.',
+  'API token': 'API டோக்கன்',
+  'Done tasks too': 'முடிந்த பணிகளும்',
+  'As a task': 'பணியாக',
 }

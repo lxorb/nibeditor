@@ -75,4 +75,6 @@ export const gsw: Dictionary = {
   'sign in first': 'Mäld di zerscht aa',
   'no such space': 'Die Ablag gits nöd',
   'that path is not usable': 'De Pfad gaht nöd',
+  // A page as a task in the inbox
+  'As a task': 'Als Ufgab',
 }

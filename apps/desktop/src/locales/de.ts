@@ -1976,4 +1976,15 @@ export const de: Dictionary = {
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bleiben',
   'Exact alarms': 'Genaue Wecker',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Aufgaben',
+  'Plan my day': 'Meinen Tag planen',
+  'Add a task': 'Aufgabe hinzufügen',
+  'Some repeating dates stay as words under their tasks':
+    'Einige Wiederholungen bleiben als Text unter ihren Aufgaben',
+  'Todoist did not take that token.': 'Todoist hat diesen Token nicht angenommen.',
+  'Todoist could not be reached.': 'Todoist war nicht erreichbar.',
+  'API token': 'API-Token',
+  'Done tasks too': 'Auch erledigte Aufgaben',
+  'As a task': 'Als Aufgabe',
 }

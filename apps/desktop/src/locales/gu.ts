@@ -1928,4 +1928,15 @@ export const gu: Dictionary = {
   Automatic: 'આપમેળે',
   'Stay in the tray': 'ટ્રેમાં રહો',
   'Exact alarms': 'ચોક્કસ અલાર્મ',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'કાર્યો',
+  'Plan my day': 'મારો દિવસ આયોજિત કરો',
+  'Add a task': 'કાર્ય ઉમેરો',
+  'Some repeating dates stay as words under their tasks':
+    'કેટલાક પુનરાવર્તનો તેમના કાર્યો નીચે લખાણ તરીકે રહ્યાં',
+  'Todoist did not take that token.': 'Todoist એ તે ટોકન સ્વીકાર્યું નહીં.',
+  'Todoist could not be reached.': 'Todoist સુધી પહોંચી શકાયું નહીં.',
+  'API token': 'API ટોકન',
+  'Done tasks too': 'પૂર્ણ થયેલાં કાર્યો પણ',
+  'As a task': 'કાર્ય તરીકે',
 }

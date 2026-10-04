@@ -1975,4 +1975,15 @@ export const fil: Dictionary = {
   Automatic: 'Awtomatiko',
   'Stay in the tray': 'Manatili sa tray',
   'Exact alarms': 'Eksaktong alarma',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Mga gagawin',
+  'Plan my day': 'Planuhin ang araw ko',
+  'Add a task': 'Magdagdag ng gawain',
+  'Some repeating dates stay as words under their tasks':
+    'May ilang pag-ulit na naiwan bilang teksto sa ilalim ng gawain',
+  'Todoist did not take that token.': 'Hindi tinanggap ng Todoist ang token na iyon.',
+  'Todoist could not be reached.': 'Hindi maabot ang Todoist.',
+  'API token': 'API token',
+  'Done tasks too': 'Pati tapos na gawain',
+  'As a task': 'Bilang gawain',
 }

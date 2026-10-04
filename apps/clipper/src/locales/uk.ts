@@ -79,4 +79,6 @@ export const uk: Dictionary = {
   'sign in first': 'спершу увійдіть',
   'no such space': 'такого простору немає',
   'that path is not usable': 'цей шлях не підходить',
+  // A page as a task in the inbox
+  'As a task': 'Як завдання',
 }

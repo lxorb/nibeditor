@@ -2018,4 +2018,15 @@ export const ru: Dictionary = {
   Automatic: 'Автоматически',
   'Stay in the tray': 'Оставаться в трее',
   'Exact alarms': 'Точные будильники',
+  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
+  'To-dos': 'Задачи',
+  'Plan my day': 'Спланировать мой день',
+  'Add a task': 'Добавить задачу',
+  'Some repeating dates stay as words under their tasks':
+    'Некоторые повторы остались текстом под своими задачами',
+  'Todoist did not take that token.': 'Todoist не принял этот токен.',
+  'Todoist could not be reached.': 'Не удалось связаться с Todoist.',
+  'API token': 'API-токен',
+  'Done tasks too': 'И выполненные задачи',
+  'As a task': 'Как задачу',
 }
