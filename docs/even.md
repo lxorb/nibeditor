@@ -568,8 +568,15 @@ which every app is checked for on its root page.
   because every folder in that list is already open and there is nothing a tap on
   one could do; the cursor steps over them, so **every tap the reader makes opens
   something**.
-- **The modal** is four rows: switch space, change note, the microphone, and the
-  settings.
+- **The modal** is five rows: switch space, change note, the microphone, the
+  settings, and Today.
+- **Today** is the open tasks for today and overdue in every space, a box drawn in
+  front of each (`□`, `■` once ticked), eight lines like every list. A tap ticks the
+  task under the cursor in its note; the row stays, its box filled, until the list is
+  left, so a mis-tap is a second tap away. A double tap closes it. It is answered
+  without the rows engine (`todayTasks` in `@nib/bases/tasks`, held to the engine's
+  own Today by a test), which is what keeps the package under 8 MiB; see
+  `even/today.ts` and docs/tasks.md 5.18.
 - **Switch space** is the spaces; a tap confirms **and goes straight into that
   space's notes**. Emil's rule, and the obvious one: nobody switches space to look
   at the note they were already reading.
@@ -903,6 +910,14 @@ Forgiving in the two ways speech is unreliable: punctuation and capitals come of
 numbers are read either way round, and a name is matched by how much of what was
 said landed in it rather than by being right.
 
+### A task
+
+The word "task", or "Aufgabe", turns everything after it into a line in the inbox of
+the space on the glasses: "task call Mum tomorrow" is "call Mum tomorrow" as the
+recogniser wrote it, its capitals kept and its full stop not, through the same
+addition every other way in uses (`lib/task-actions.ts`). The foot says it landed.
+"Task" may be rebound like the other phrases; "Aufgabe" stays whatever it is bound to.
+
 ### The question
 
 The word "question" turns everything after it into a prompt.
@@ -1041,6 +1056,7 @@ API's own, read off the error it answers an invalid one with.
 | `even/session.ts` | which note, which page, and the scroll binding |
 | `even/shell.ts` | which screen, and what a gesture does to it |
 | `even/commands.ts` | what was said, as something to do |
+| `even/today.ts` | Today's rows, a tap's tick, and a task said aloud |
 | `even/voice.ts` | listening, and where an utterance ends |
 | `even/models.ts` | how hard the model is asked to think, and nothing else |
 | `even/key.svelte.ts` | the two facts about the key this machine may know |
