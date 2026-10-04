@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHant: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': '書寫時顯示 Markdown',
+  Pointer: '指標',
+  'Pointing hand on buttons': '按鈕上顯示手形指標',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '新增任務',
   Tomorrow: '明天',

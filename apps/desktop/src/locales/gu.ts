@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'લખતી વખતે માર્કડાઉન બતાવો',
+  Pointer: 'પોઇન્ટર',
+  'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'કાર્ય ઉમેરો',
   Tomorrow: 'આવતીકાલે',

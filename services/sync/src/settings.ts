@@ -237,6 +237,8 @@ const KNOWN: Record<string, Check> = {
   hardBreaks: switched('hardBreaks'),
   linkFormat: wordOf('linkFormat', LINK_FORMATS),
   properties: wordOf('properties', PROPERTIES_MODES),
+  // Whether the formatting marks stay out of sight while writing, as Notion edits.
+  quietMarks: switched('quietMarks'),
 }
 
 /** How much of any of this an account may hold.

@@ -146,6 +146,7 @@ export {
   setLigatures,
   setLineHeight,
   setProperties,
+  setQuietMarks,
   setMeasure,
   remeasure,
   setReadOnlyMode,

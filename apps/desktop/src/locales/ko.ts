@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': '작성 중 마크다운 표시',
+  Pointer: '포인터',
+  'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '할 일 추가',
   Tomorrow: '내일',

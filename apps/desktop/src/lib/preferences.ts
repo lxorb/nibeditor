@@ -810,6 +810,17 @@ export function preferences(view?: EditorView): Pane[] {
           title: t('Syntax'),
           fields: [
             {
+              // Notion's and Word's way round: the words wear their formatting and
+              // the marks never come back while writing. On, which is Typora's and
+              // Obsidian's live preview, where a mark shows while the caret is in it.
+              kind: 'switch',
+              label: t('Show markdown while writing'),
+              words: ['syntax', 'marks', 'wysiwyg', 'rich text'],
+              initial: true,
+              get: () => !modes.quietMarks,
+              set: () => modes.toggleQuietMarks(view),
+            },
+            {
               kind: 'switch',
               label: t('Strict CommonMark'),
               hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
@@ -963,6 +974,22 @@ export function preferences(view?: EditorView): Pane[] {
               },
             ]
           : []),
+
+        {
+          title: t('Pointer'),
+          fields: [
+            {
+              // A desktop app's arrow over its buttons, or a web page's hand. The
+              // arrow stays the default; the Claude app offers the same switch.
+              kind: 'switch',
+              label: t('Pointing hand on buttons'),
+              words: ['cursor', 'mouse', 'hand', 'click'],
+              initial: false,
+              get: () => modes.hand,
+              set: () => modes.toggleHand(),
+            },
+          ],
+        },
 
         // The window itself: who draws its frame. Desktop only, because a browser tab
         // has none - and on a phone the system draws everything. Nib's own frame stays

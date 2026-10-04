@@ -19,7 +19,7 @@ import { isExternal } from './external'
 import { fenceLanguage } from './languages'
 import type { PropertiesMode } from '@nib/markdown/properties'
 import { livePreview } from './live-preview'
-import { noReveal } from './live-preview/reveal'
+import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
 import { propertiesMode } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
@@ -38,6 +38,8 @@ import { vimEffect, vimExtensions } from './vim'
  *  without rebuilding the editor state. */
 const preview = new Compartment()
 const focus = new Compartment()
+/** Whether the formatting marks stay out of sight while writing; see `quietMarks`. */
+const marks = new Compartment()
 const typewriter = new Compartment()
 const punctuation = new Compartment()
 const language = new Compartment()
@@ -293,6 +295,7 @@ export function modeExtensions(length = 0): Extension {
     parseGuard,
     preview.of(previewFor(false)),
     focus.of(focusFor(false)),
+    marks.of(quietMarks.of(false)),
     typewriter.of(typewriterFor(false)),
     punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
@@ -458,6 +461,8 @@ export interface ModeSettings {
   source: boolean
   readOnly: boolean
   focus: boolean
+  /** The formatting marks kept out of sight while writing, as Notion does. */
+  quietMarks: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -503,6 +508,7 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     // the markdown as written is the writer's answer; see setReadOnlyMode.
     readOnly.reconfigure(readOnlyFor(settings.readOnly && !settings.source)),
     focus.reconfigure(focusFor(settings.focus)),
+    marks.reconfigure(quietMarks.of(settings.quietMarks)),
     typewriter.reconfigure(typewriterFor(settings.typewriter)),
     punctuation.reconfigure(punctuationFor(settings.punctuation)),
     equations.reconfigure(numberEquations.of(settings.equationNumbers)),
@@ -583,6 +589,10 @@ export function setReadOnlyMode(view: EditorView, on: boolean) {
 
 export function setFocusMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: focus.reconfigure(focusFor(on)) })
+}
+
+export function setQuietMarks(view: EditorView, on: boolean) {
+  view.dispatch({ effects: marks.reconfigure(quietMarks.of(on)) })
 }
 
 export function setTypewriterMode(view: EditorView, on: boolean) {

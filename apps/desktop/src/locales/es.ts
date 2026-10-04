@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const es: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'Mostrar Markdown al escribir',
+  Pointer: 'Puntero',
+  'Pointing hand on buttons': 'Mano señaladora en los botones',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Añadir tarea',
   Tomorrow: 'Mañana',

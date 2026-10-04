@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': '寫嘢嗰陣顯示 Markdown',
+  Pointer: '指標',
+  'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '加任務',
   Tomorrow: '聽日',

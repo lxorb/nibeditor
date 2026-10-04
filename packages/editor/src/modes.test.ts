@@ -264,6 +264,7 @@ const DEFAULTS: ModeSettings = {
   source: false,
   readOnly: false,
   focus: false,
+  quietMarks: false,
   typewriter: false,
   punctuation: true,
   numbers: false,

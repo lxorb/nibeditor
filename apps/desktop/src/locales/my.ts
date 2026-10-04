@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'ရေးနေစဉ် Markdown ကိုပြပါ',
+  Pointer: 'ညွှန်ပြချက်',
+  'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'လုပ်ငန်း ထည့်ရန်',
   Tomorrow: 'မနက်ဖြန်',

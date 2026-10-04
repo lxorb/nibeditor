@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Settings: markdown shown while writing, and the pointer
+  'Show markdown while writing': 'Tampilaké Markdown nalika nulis',
+  Pointer: 'Penuding',
+  'Pointing hand on buttons': 'Tangan nuding ing tombol',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugas',
   Tomorrow: 'Sesuk',

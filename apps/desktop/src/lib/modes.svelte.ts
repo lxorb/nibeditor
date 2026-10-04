@@ -10,6 +10,7 @@ import {
   setLineHeight,
   setMeasure,
   setProperties,
+  setQuietMarks,
   setReadOnlyMode,
   setRightToLeft,
   setEquationNumbers,
@@ -129,6 +130,7 @@ interface Saved {
   source: boolean
   readOnly: boolean
   focus: boolean
+  quietMarks: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -145,6 +147,7 @@ interface Saved {
   spellWords: string[]
   alwaysOnTop: boolean
   frame: Frame
+  hand: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
   glassesBreak: GlassesBreak
@@ -245,6 +248,12 @@ class Modes {
    *  minute is not a preference. */
   readOnly = $state(false)
   focus = $state(false)
+  /** The formatting marks kept out of sight while writing, so a note edits the way a
+   *  Notion page or a Word document does and the markdown stays the file's business.
+   *  Off, which is Typora's and Obsidian's live preview: a mark comes back while the
+   *  caret is inside it. The account's, because how somebody likes to write is the
+   *  same on every device. See `quietMarks` in the editor package. */
+  quietMarks = $state(false)
   typewriter = $state(false)
   punctuation = $state(false)
   numbers = $state(false)
@@ -288,6 +297,11 @@ class Modes {
    *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that
    *  stand down when the system draws its own. */
   frame = $state<Frame>('nib')
+  /** The pointing hand over everything that can be pressed, as a web page draws it.
+   *  Off, which is how a desktop app draws its buttons: the arrow, with the hand kept
+   *  for a link. This machine's, for the same reason the frame is: it is about the
+   *  pointer on this desk. Said on the root as `data-pointer`; see base.css. */
+  hand = $state(false)
   closeBrackets = $state(true)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
@@ -439,6 +453,8 @@ class Modes {
       this.readOnly = (saved.readOnly === true || saved.reading === true) && !this.source
       this.focus = saved.focus === true
       this.typewriter = saved.typewriter === true
+      this.quietMarks = saved.quietMarks === true
+      this.hand = saved.hand === true
       // `=== true` rather than `!== false`: a reader who never chose keeps the
       // new default, and only one who turned it on keeps it on.
       this.punctuation = saved.punctuation === true
@@ -518,6 +534,7 @@ class Modes {
     // window that came up with nib's frame and grew the system's a moment later is a
     // window that jumped.
     this.applyFrame()
+    this.applyHand()
 
     // Written back without whatever this version has not got; see `stale` above.
     if (stale) this.persist()
@@ -580,6 +597,7 @@ class Modes {
       source: this.source,
       readOnly: this.readOnly,
       focus: this.focus,
+      quietMarks: this.quietMarks,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,
@@ -639,6 +657,24 @@ class Modes {
     this.focus = !this.focus
     this.each(view, (one) => setFocusMode(one, this.focus))
     this.persist()
+  }
+
+  toggleQuietMarks(view?: EditorView) {
+    this.quietMarks = !this.quietMarks
+    this.each(view, (one) => setQuietMarks(one, this.quietMarks))
+    this.persist()
+    this.share({ quietMarks: this.quietMarks })
+  }
+
+  toggleHand() {
+    this.hand = !this.hand
+    this.applyHand()
+    this.persist()
+  }
+
+  private applyHand() {
+    if (this.hand) document.documentElement.dataset.pointer = 'hand'
+    else delete document.documentElement.dataset.pointer
   }
 
   toggleTypewriter(view?: EditorView) {
@@ -1020,6 +1056,13 @@ class Modes {
       }
     }
 
+    const quiet = remote.quietMarks
+    if (typeof quiet === 'boolean' && unheard && quiet !== this.quietMarks) {
+      this.quietMarks = quiet
+      this.each(undefined, (one) => setQuietMarks(one, quiet))
+      this.persist()
+    }
+
     const breaking = remote.hardBreaks
     if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
       this.hardBreaks = breaking
@@ -1259,6 +1302,7 @@ class Modes {
       source: this.source,
       readOnly: this.readOnly,
       focus: this.focus,
+      quietMarks: this.quietMarks,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,
@@ -1289,6 +1333,7 @@ class Modes {
       attachments: this.attachments,
       pagesPaper: this.pagesPaper,
       frame: this.frame,
+      hand: this.hand,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,
