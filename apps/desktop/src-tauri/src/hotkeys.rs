@@ -13,7 +13,7 @@ use tauri::AppHandle;
 static READY: OnceLock<bool> = OnceLock::new();
 
 /// Whether the plugin is in the app, added now where it was not yet.
-pub fn ready(app: &AppHandle) -> bool {
+pub fn plugin_added(app: &AppHandle) -> bool {
     *READY.get_or_init(|| {
         app.plugin(tauri_plugin_global_shortcut::Builder::new().build())
             .is_ok()

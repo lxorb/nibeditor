@@ -48,13 +48,13 @@ static HELD: Mutex<Held> = Mutex::new(Held {
     host: None,
 });
 
-fn with<T>(run: impl FnOnce(&mut Held) -> T) -> T {
-    run(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
+fn with_held<T>(on_held: impl FnOnce(&mut Held) -> T) -> T {
+    on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
 /// The key a run may hold: the page's, or in a probe the one the drive named, and none
 /// where the page asks for none.
-fn allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Option<String> {
+fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Option<String> {
     let asked = asked.filter(|key| !key.trim().is_empty())?;
     if away {
         probe.filter(|key| !key.trim().is_empty())
@@ -72,16 +72,16 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
         return None;
     }
     let probe = std::env::var(PROBE_KEY).ok();
-    let wanted = allowed(key, probe, crate::placement::away().is_some());
-    with(|held| held.host = Some(webview.label().to_owned()));
-    hold(&app, wanted)
+    let wanted = key_allowed(key, probe, crate::placement::away().is_some());
+    with_held(|held| held.host = Some(webview.label().to_owned()));
+    hold_key(&app, wanted)
 }
 
 /// Registers `wanted` in place of the key held, and answers what is held after.
-fn hold(app: &AppHandle, wanted: Option<String>) -> Option<String> {
+fn hold_key(app: &AppHandle, wanted: Option<String>) -> Option<String> {
     use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
 
-    let held = with(|held| held.key.clone());
+    let held = with_held(|held| held.key.clone());
     if held == wanted {
         return held;
     }
@@ -90,12 +90,12 @@ fn hold(app: &AppHandle, wanted: Option<String>) -> Option<String> {
     }
     let mut now = None;
     if let Some(new) = wanted {
-        let taken = crate::hotkeys::ready(app)
+        let taken = crate::hotkeys::plugin_added(app)
             && app
                 .global_shortcut()
                 .on_shortcut(new.as_str(), |app, _, event| {
                     if event.state == ShortcutState::Pressed {
-                        show(app);
+                        bring_up(app);
                     }
                 })
                 .is_ok();
@@ -103,22 +103,22 @@ fn hold(app: &AppHandle, wanted: Option<String>) -> Option<String> {
             now = Some(new);
         }
     }
-    with(|held| held.key.clone_from(&now));
+    with_held(|held| held.key.clone_from(&now));
     now
 }
 
 /// The window, shown over whatever is in front with the keyboard in its field: made the
 /// first time, shown again every time after.
-fn show(app: &AppHandle) {
+fn bring_up(app: &AppHandle) {
     let window = match app.get_webview_window(LABEL) {
         Some(window) => window,
-        None => match made(app) {
+        None => match quick_window(app) {
             Ok(window) => window,
             Err(_) => return,
         },
     };
     if crate::placement::away().is_none() {
-        placed(app, &window);
+        under_pointer(app, &window);
         let _ = window.show();
     }
     crate::placement::raised(&window.as_ref().window());
@@ -126,7 +126,7 @@ fn show(app: &AppHandle) {
 }
 
 /// The window, built hidden: small, on top, no frame, no taskbar button.
-fn made(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
+fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
         .title("nibeditor")
         .inner_size(WIDTH, HEIGHT)
@@ -149,7 +149,7 @@ fn made(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
 
 /// Centred across the screen the pointer is on, a quarter of the way down, where a
 /// launcher's field is.
-fn placed(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
+fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
         return;
@@ -177,7 +177,7 @@ pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
         let _ = window.hide();
     }
     if raise {
-        let host = with(|held| held.host.clone());
+        let host = with_held(|held| held.host.clone());
         if let Some(window) = host.and_then(|label| app.get_window(&label)) {
             crate::placement::raised(&window);
         }
@@ -191,13 +191,13 @@ mod tests {
     #[test]
     fn a_probe_holds_only_the_key_its_drive_named() {
         let asked = Some("Control+Alt+Space".to_owned());
-        assert_eq!(allowed(asked.clone(), None, false), asked);
-        assert_eq!(allowed(Some(String::new()), None, false), None);
-        assert_eq!(allowed(None, None, false), None);
-        assert_eq!(allowed(asked.clone(), None, true), None);
+        assert_eq!(key_allowed(asked.clone(), None, false), asked);
+        assert_eq!(key_allowed(Some(String::new()), None, false), None);
+        assert_eq!(key_allowed(None, None, false), None);
+        assert_eq!(key_allowed(asked.clone(), None, true), None);
         let probe = Some("Control+Alt+Shift+F24".to_owned());
-        assert_eq!(allowed(asked, probe.clone(), true), probe);
-        assert_eq!(allowed(None, probe, true), None);
+        assert_eq!(key_allowed(asked, probe.clone(), true), probe);
+        assert_eq!(key_allowed(None, probe, true), None);
     }
 
     /// `scripts/quick-add-probe.py` presses the probe's key the way the system does, by
