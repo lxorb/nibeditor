@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'ተግባር አክል',
+  Tomorrow: 'ነገ',
+  'done {date}': 'ተጠናቋል {date}',
+  'Next week': 'የሚቀጥለው ሳምንት',
+  'Pick a date…': 'ቀን ምረጥ…',
+  'Set a time…': 'ሰዓት አዘጋጅ…',
+  'No date': 'ቀን የለም',
+  'Priority {level}': 'ቅድሚያ {level}',
+  'At the time': 'በሰዓቱ',
+  '{count} h': '{count} ሰ',
+  Inbox: 'የገቢ ሳጥን',
+  Date: 'ቀን',
+  Priority: 'ቅድሚያ',
+  Reminder: 'ማስታወሻ',
+  Duration: 'የጊዜ ርዝመት',
+  'Smart dates': 'ብልህ ቀኖች',
+  'From any app': 'ከማንኛውም መተግበሪያ',
+  'Every day': 'በየቀኑ',
+  'Every weekday': 'በየሥራ ቀኑ',
+  'Every week': 'በየሳምንቱ',
+  'Every month': 'በየወሩ',
+  'Every year': 'በየዓመቱ',
   // Files and notes
   Save: 'አስቀምጥ',
   'New note': 'አዲስ ማስታወሻ',

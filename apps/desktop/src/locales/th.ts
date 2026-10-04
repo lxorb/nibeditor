@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'เพิ่มงาน',
+  Tomorrow: 'พรุ่งนี้',
+  'done {date}': 'เสร็จ {date}',
+  'Next week': 'สัปดาห์หน้า',
+  'Pick a date…': 'เลือกวันที่…',
+  'Set a time…': 'ตั้งเวลา…',
+  'No date': 'ไม่มีวันที่',
+  'Priority {level}': 'ความสำคัญ {level}',
+  'At the time': 'ตรงเวลา',
+  '{count} h': '{count} ชม.',
+  Inbox: 'กล่องรับเข้า',
+  Date: 'วันที่',
+  Priority: 'ความสำคัญ',
+  Reminder: 'การเตือน',
+  Duration: 'ระยะเวลา',
+  'Smart dates': 'วันที่อัจฉริยะ',
+  'From any app': 'จากแอปใดก็ได้',
+  'Every day': 'ทุกวัน',
+  'Every weekday': 'ทุกวันทำงาน',
+  'Every week': 'ทุกสัปดาห์',
+  'Every month': 'ทุกเดือน',
+  'Every year': 'ทุกปี',
   // Files and notes
   Save: 'บันทึก',
   'New note': 'โน้ตใหม่',

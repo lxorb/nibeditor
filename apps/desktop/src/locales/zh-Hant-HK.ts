@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': '新增任務',
+  Tomorrow: '明天',
+  'done {date}': '{date} 完成',
+  'Next week': '下星期',
+  'Pick a date…': '選擇日期…',
+  'Set a time…': '設定時間…',
+  'No date': '沒有日期',
+  'Priority {level}': '優先次序 {level}',
+  'At the time': '準時',
+  '{count} h': '{count}小時',
+  Inbox: '收件匣',
+  Date: '日期',
+  Priority: '優先次序',
+  Reminder: '提醒',
+  Duration: '所需時間',
+  'Smart dates': '智能日期',
+  'From any app': '從任何應用程式',
+  'Every day': '每天',
+  'Every weekday': '每個工作天',
+  'Every week': '每星期',
+  'Every month': '每月',
+  'Every year': '每年',
   // Files and notes
   Save: '儲存',
   'New note': '新增筆記',

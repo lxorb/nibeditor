@@ -95,7 +95,12 @@ export async function readingHtml(
     // A query fence is answered here, which is the one surface besides the editor
     // that can answer one: the app is around it and the space is on this machine.
     // See query-block.ts for why a published page leaves it as code.
-    prepareFences(note.text, scheme, { query: (code) => queryRowsHtml(code, t('Nothing found')) }),
+    prepareFences(note.text, scheme, {
+      query: async (code, language) =>
+        language === 'tasks' && !__EVEN_PLUGIN__
+          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'))
+          : queryRowsHtml(code, t('Nothing found')),
+    }),
     prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
   ])
 

@@ -121,6 +121,7 @@ export {
   setNoteIndex,
   type SpaceBlock,
   type SpaceTag,
+  type TaskHelp,
 } from './wikilink/notes'
 export { trustedMarkupEffect } from './markup'
 export { type PreviewMount, type PreviewNote } from './wikilink/hover'

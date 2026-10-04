@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Görev ekle',
+  Tomorrow: 'Yarın',
+  'done {date}': 'tamamlandı {date}',
+  'Next week': 'Gelecek hafta',
+  'Pick a date…': 'Tarih seç…',
+  'Set a time…': 'Saat ayarla…',
+  'No date': 'Tarih yok',
+  'Priority {level}': 'Öncelik {level}',
+  'At the time': 'Tam vaktinde',
+  '{count} h': '{count} sa',
+  Inbox: 'Gelen kutusu',
+  Date: 'Tarih',
+  Priority: 'Öncelik',
+  Reminder: 'Hatırlatıcı',
+  Duration: 'Süre',
+  'Smart dates': 'Akıllı tarihler',
+  'From any app': 'Herhangi bir uygulamadan',
+  'Every day': 'Her gün',
+  'Every weekday': 'Her iş günü',
+  'Every week': 'Her hafta',
+  'Every month': 'Her ay',
+  'Every year': 'Her yıl',
   // Files and notes
   Save: 'Kaydet',
   'New note': 'Yeni not',

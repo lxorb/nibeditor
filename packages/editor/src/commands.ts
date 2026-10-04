@@ -9,7 +9,9 @@ import {
 import { type Callout, calloutOf } from '@nib/markdown/callouts'
 import { closesFence } from '@nib/markdown/fences'
 import { taskAt } from '@nib/markdown/tasks'
+import { EditorView } from '@codemirror/view'
 import { inCode } from './code'
+import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { showFrontMatter } from './live-preview/hidden-front-matter'
 import { enclosing } from './nodes'
@@ -225,13 +227,23 @@ function taskable(state: EditorState, line: Line): boolean {
  *  line - words, a bullet, a number, nothing yet - becomes a task, so the next press
  *  ticks it. Shares its key with running a code fence and gives way wherever a box
  *  cannot go, a fence among them; see `taskable`. */
-export const toggleTask: StateCommand = ({ state, dispatch }) => {
+export const toggleTask: StateCommand = (target) => {
+  const { state, dispatch } = target
   const changes: ChangeSpec[] = []
+  // With the app behind the editor, a box is ticked the way every box is - the done
+  // date, the sub-tasks, a recurring task's next line - which is the app's to work out;
+  // see task-tick.ts. Only from a view, which can take the answer when it comes.
+  const help = target instanceof EditorView ? state.facet(noteIndex).tasks : undefined
+  const ticking: number[] = []
 
   for (const line of selectedLines(state)) {
     if (!taskable(state, line)) continue
 
     const task = taskAt(line.text)
+    if (task && help) {
+      ticking.push(line.number)
+      continue
+    }
     if (task) {
       // One character, inside the brackets: see tasks.ts in @nib/markdown, which
       // is what says where they are.
@@ -246,6 +258,10 @@ export const toggleTask: StateCommand = ({ state, dispatch }) => {
     changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
   }
 
+  if (ticking.length && help && target instanceof EditorView) {
+    void import('./task-tick').then(({ tickLines }) => tickLines(target, help, ticking, changes))
+    return true
+  }
   if (!changes.length) return false
 
   const set = state.changes(changes)

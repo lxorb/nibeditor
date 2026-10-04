@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'タスクを追加',
+  Tomorrow: '明日',
+  'done {date}': '{date} 完了',
+  'Next week': '来週',
+  'Pick a date…': '日付を選択…',
+  'Set a time…': '時刻を設定…',
+  'No date': '日付なし',
+  'Priority {level}': '優先度 {level}',
+  'At the time': '予定時刻',
+  '{count} h': '{count} 時間',
+  Inbox: '受信箱',
+  Date: '日付',
+  Priority: '優先度',
+  Reminder: 'リマインダー',
+  Duration: '所要時間',
+  'Smart dates': 'スマート日付',
+  'From any app': 'どのアプリからでも',
+  'Every day': '毎日',
+  'Every weekday': '毎平日',
+  'Every week': '毎週',
+  'Every month': '毎月',
+  'Every year': '毎年',
   // Files and notes
   Save: '保存',
   'New note': '新しいノート',

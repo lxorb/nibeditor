@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': '할 일 추가',
+  Tomorrow: '내일',
+  'done {date}': '{date} 완료',
+  'Next week': '다음 주',
+  'Pick a date…': '날짜 선택…',
+  'Set a time…': '시간 설정…',
+  'No date': '날짜 없음',
+  'Priority {level}': '우선순위 {level}',
+  'At the time': '정시에',
+  '{count} h': '{count}시간',
+  Inbox: '받은 편지함',
+  Date: '날짜',
+  Priority: '우선순위',
+  Reminder: '알림',
+  Duration: '소요 시간',
+  'Smart dates': '스마트 날짜',
+  'From any app': '어느 앱에서나',
+  'Every day': '매일',
+  'Every weekday': '평일마다',
+  'Every week': '매주',
+  'Every month': '매월',
+  'Every year': '매년',
   // Files and notes
   Save: '저장',
   'New note': '새 노트',

@@ -6,7 +6,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./answer": "./src/answer.ts",
     "./language": "./src/language/index.ts",
+    "./occurrence": "./src/occurrence.ts",
+    "./tasks-query": "./src/tasks-query.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

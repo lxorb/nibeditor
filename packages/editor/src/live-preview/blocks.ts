@@ -269,7 +269,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // And a query fence stays code wherever there is no space to search: the
           // editor on its own, an export, a page somebody else is reading.
           const index = state.facet(noteIndex)
-          if (language === 'query' && !index.query) return false
+          if (ANSWERED.has(language) && !index.query) return false
 
           ranges.push(
             Decoration.replace({
@@ -413,11 +413,15 @@ export function buildBlockDecorations(state: EditorState): DecorationSet {
   return buildBlocks(state).decorations
 }
 
+/** The fences the space answers: a search (`query`), and the Tasks plugin's own query
+ *  block (`tasks`), answered by the rows engine as a list of live boxes. */
+const ANSWERED = new Set(['query', 'tasks'])
+
 /** Which widget a drawn fence gets. One place, so the three of them read as the
  *  three kinds they are rather than as a nested question. */
 function widgetFor(language: string, code: string, index: NoteIndex) {
   if (language === 'chart') return new ChartWidget(code)
-  if (language === 'query') return new QueryWidget(code, index)
+  if (ANSWERED.has(language)) return new QueryWidget(code, index, language)
   return new DiagramWidget(code, language)
 }
 

@@ -29,7 +29,9 @@ import {
   resolveRelative,
   type SpaceBlock,
   type SpaceTag,
+  type TaskHelp,
 } from '@nib/editor'
+import { door } from '@nib/markdown/door'
 import {
   blockIdOf,
   blockIds,
@@ -131,6 +133,25 @@ interface Held {
   notes: ScannedNote[]
   files: readonly string[]
 }
+
+/** A task line's help (quick-add/task-help.ts), fetched the first time a line asks: a
+ *  stand-in until then, whose typed date is no date while the grammar is on its way. None
+ *  in the glasses' plugin, whose boxes tick as a character and whose package has no room
+ *  for the engine. */
+function taskLines(): TaskHelp {
+  let help: TaskHelp | null = null
+  const fetchHelp = door(async () => {
+    help = (await import('./quick-add/task-help')).TASK_HELP
+    return help
+  })
+  return {
+    tick: async (note, line) => (await fetchHelp()).tick(note, line),
+    pick: (...asked) => void fetchHelp().then((one) => one.pick(...asked)),
+    dayAtEnd: (text) => (help ? help.dayAtEnd(text) : (void fetchHelp(), null)),
+  }
+}
+
+const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
 
 /** The query fence's rows, once the first fence has asked for them; see `query` in the
  *  space the editor is handed. */
@@ -842,11 +863,21 @@ class Links {
       // Fetched with the first fence that asks rather than carried: most notes have
       // none. A row exists only once its fence has been answered, so by the time one
       // can be pressed the module is here.
-      query: async (code) => {
+      query: async (code, language) => {
+        // The Tasks plugin's block is the rows engine's to answer; see tasks-block.ts.
+        // Its rows are the query fence's, so the module that reads a press is fetched
+        // either way.
         queryBlock ??= await import('./query-block')
+        if (language === 'tasks' && !__EVEN_PLUGIN__) {
+          const { tasksRowsHtml } = await import('./tasks-block')
+          return tasksRowsHtml(code, t('Nothing found'))
+        }
         return queryBlock.queryRowsHtml(code, t('Nothing found'))
       },
       pressRow: (target) => queryBlock?.pressRow(target) ?? false,
+      // What the app does for a task line: the engine's tick, a chip's choices, a typed
+      // date read. Fetched with the first that asks; see quick-add/task-help.ts.
+      tasks: TASKS,
       // How a note the editor shows rather than edits is rendered: an embed, and
       // the preview over a link. The reading view's own call, so one render
       // serves every place a note is read; see reading/render.ts.

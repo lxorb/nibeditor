@@ -110,9 +110,10 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    // Three pages out of one bundle: the editor, the window a presenter reads
-    // their notes in, and the plugin's page as the web serves it at `/even/`. The
-    // presenter's window carries none of the app; see docs/slides.md.
+    // Four pages out of one bundle: the editor, the window a presenter reads
+    // their notes in, the global quick add window, and the plugin's page as the web
+    // serves it at `/even/`. The presenter's window and quick add's carry none of the
+    // app; see docs/slides.md and docs/tasks.md 5.6.
     //
     // `even.html` is here so that opening `/even/` in a phone's browser reaches a
     // page with the bridge in it, which is how the glasses are tried without
@@ -126,6 +127,7 @@ export default defineConfig(({ command, mode }) => ({
         main: resolve(import.meta.dirname, 'index.html'),
         even: resolve(import.meta.dirname, 'even.html'),
         presenter: resolve(import.meta.dirname, 'presenter.html'),
+        quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
       },
     },
   },

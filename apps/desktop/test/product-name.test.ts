@@ -178,6 +178,7 @@ describe('the name a reader sees', () => {
     for (const name of [
       'index.html',
       'presenter.html',
+      'quick-add.html',
       'even.html',
       'public/manifest.webmanifest',
       'even.app.json',

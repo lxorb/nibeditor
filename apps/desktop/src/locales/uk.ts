@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'Додати завдання',
+  Tomorrow: 'Завтра',
+  'done {date}': 'виконано {date}',
+  'Next week': 'Наступного тижня',
+  'Pick a date…': 'Вибрати дату…',
+  'Set a time…': 'Задати час…',
+  'No date': 'Без дати',
+  'Priority {level}': 'Пріоритет {level}',
+  'At the time': 'У визначений час',
+  '{count} h': '{count} год',
+  Inbox: 'Вхідні',
+  Date: 'Дата',
+  Priority: 'Пріоритет',
+  Reminder: 'Нагадування',
+  Duration: 'Тривалість',
+  'Smart dates': 'Розумні дати',
+  'From any app': 'З будь-якого застосунку',
+  'Every day': 'Щодня',
+  'Every weekday': 'Щоробочого дня',
+  'Every week': 'Щотижня',
+  'Every month': 'Щомісяця',
+  'Every year': 'Щороку',
   // Files and notes
   Save: 'Зберегти',
   'New note': 'Нова нотатка',

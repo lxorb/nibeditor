@@ -129,7 +129,8 @@ export function dayAt(
   if (dayAfter) return { end: at + dayAfter, day: addDays(today, 2) }
 
   const monthEnd = longestAt(words, at, g.endOfMonth)
-  if (monthEnd) return { end: at + monthEnd, day: addDays(addMonths(today.slice(0, 8) + '01', 1), -1) }
+  if (monthEnd)
+    return { end: at + monthEnd, day: addDays(addMonths(today.slice(0, 8) + '01', 1), -1) }
 
   const weekend = longestAt(words, at, g.weekend)
   if (weekend) {
@@ -141,7 +142,8 @@ export function dayAt(
     const next = bare(words[at + 1])
     const day = g.weekdays[next]
     if (day !== undefined) return { end: at + 2, day: weekdayFrom(today, day, g.coming.has(key)) }
-    if (g.next.has(key) && g.week.has(next)) return { end: at + 2, day: weekdayFrom(today, 1, false) }
+    if (g.next.has(key) && g.week.has(next))
+      return { end: at + 2, day: weekdayFrom(today, 1, false) }
     if (g.next.has(key) && g.month.has(next)) {
       return { end: at + 2, day: addMonths(`${today.slice(0, 8)}01`, 1) }
     }
@@ -210,7 +212,12 @@ function writtenDate(words: readonly Word[], at: number, g: Grammar, today: stri
 
 /** A time of day standing at `at`. `asked` is whether `at` or `um` stood before it,
  *  which is what lets a bare hour be one. */
-export function timeAt(words: readonly Word[], at: number, g: Grammar, asked: boolean): When | null {
+export function timeAt(
+  words: readonly Word[],
+  at: number,
+  g: Grammar,
+  asked: boolean,
+): When | null {
   const word = words[at]
   const key = word?.key ?? ''
   if (key === '') return null

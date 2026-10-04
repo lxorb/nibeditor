@@ -344,6 +344,25 @@ export const signInSheet = latched(() => import('./SignIn.svelte'))
 /** The one word a link owes whoever followed it, when it owes one; see joining.svelte.ts. */
 export const joinSheet = latched(() => import('./JoinSheet.svelte'))
 
+/** Quick add, the first time its key, the palette's row or a view's button asks for it;
+ *  see quick-add/asked.svelte.ts. */
+export const quickAddSheet = latched(() =>
+  // Not in the glasses' plugin, which adds a task by voice (docs/tasks.md 5.18) and has
+  // no room in its package for a field it cannot show.
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./quick-add/QuickAddSheet.svelte'),
+)
+
+/** Opens quick add, knowing what a view's add button knows (its note, its tag, its day).
+ *  The whole of it is fetched by the first ask, so the first paint carries this line. */
+export function showQuickAdd(prefill: import('./quick-add/entry').Prefill = {}): void {
+  if (!__EVEN_PLUGIN__) {
+    void quickAddSheet.ask()
+    void import('./quick-add/asked.svelte').then(({ quickAdd }) => quickAdd.show(prefill))
+  }
+}
+
 /** The held form of the new-tab chord: the state a hand is in between pressing Ctrl+T
  *  and letting go of Ctrl, which is Alt+Tab's shape applied to the dialog above. See
  *  new-kind-chord.ts.

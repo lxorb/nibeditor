@@ -1,6 +1,29 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: quick add, its controls and its pickers, and the chips in a note
+  'Add task': 'လုပ်ငန်း ထည့်ရန်',
+  Tomorrow: 'မနက်ဖြန်',
+  'done {date}': 'ပြီးပြီ {date}',
+  'Next week': 'နောက်အပတ်',
+  'Pick a date…': 'ရက်စွဲ ရွေးရန်…',
+  'Set a time…': 'အချိန် သတ်မှတ်ရန်…',
+  'No date': 'ရက်စွဲ မရှိ',
+  'Priority {level}': 'ဦးစားပေး {level}',
+  'At the time': 'အချိန်တိတိ',
+  '{count} h': '{count} နာရီ',
+  Inbox: 'ဝင်စာပုံး',
+  Date: 'ရက်စွဲ',
+  Priority: 'ဦးစားပေး',
+  Reminder: 'သတိပေးချက်',
+  Duration: 'ကြာချိန်',
+  'Smart dates': 'စမတ် ရက်စွဲများ',
+  'From any app': 'မည်သည့်အက်ပ်မှမဆို',
+  'Every day': 'နေ့တိုင်း',
+  'Every weekday': 'အလုပ်ရက်တိုင်း',
+  'Every week': 'အပတ်တိုင်း',
+  'Every month': 'လတိုင်း',
+  'Every year': 'နှစ်တိုင်း',
   // Files and notes
   Save: 'သိမ်းဆည်း',
   'New note': 'မှတ်စုအသစ်',

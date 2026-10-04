@@ -26,6 +26,7 @@ import { once } from './once'
 import { slashCompletions } from './slash'
 import { snippetCompletions } from './snippets'
 import { tagCompletions } from './tags'
+import { takeHint, taskHint } from './live-preview/task-hint'
 import { wikilinkCompletions } from './wikilink/complete'
 
 /** The one popup, and the pairs when they are wanted.
@@ -65,4 +66,9 @@ export const completing = once((pairs: boolean): Extension => [
   }),
   Prec.highest(keymap.of(popupKeys)),
   ...(pairs ? [closeBrackets(), keymap.of(closeBracketsKeymap)] : []),
+  // A date typed at the end of a task, offered as its field: a completion of a kind,
+  // and one that waits for Tab rather than Enter, which is the next task. Tab with no
+  // hint up is whatever it always was. See live-preview/task-hint.ts.
+  taskHint,
+  Prec.high(keymap.of([{ key: 'Tab', run: takeHint }])),
 ])

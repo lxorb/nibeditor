@@ -29,6 +29,7 @@ import { pages } from './web-tab/pages.svelte'
 import { isSaver } from './web-tab/resting'
 import { saver } from './web-tab/saver.svelte'
 import { hiddenTabs } from './workspace/hidden-tabs.svelte'
+import { quickAdd } from './quick-add/asked.svelte'
 import { isHiddenTabs } from './workspace/sets'
 
 /** One side's picture in the wallpaper's row; see the `picture` kind. */
@@ -470,6 +471,34 @@ export function preferences(view?: EditorView): Pane[] {
                       saver.set(isSaver(value) ? value : 'off')
                       pages.retime()
                     },
+                  },
+                ] satisfies Field[])
+              : []),
+          ],
+        },
+        {
+          // Quick add: whether its words are read as dates and fields at all (Todoist's
+          // smart date switch), and whether its key reaches past the window. See
+          // quick-add/asked.svelte.ts and docs/tasks.md 5.6.
+          title: t('Add task'),
+          fields: [
+            {
+              kind: 'switch',
+              label: t('Smart dates'),
+              words: ['tasks', 'quick add', 'natural language', 'parse', 'todoist'],
+              initial: true,
+              get: () => quickAdd.smart,
+              set: (on) => quickAdd.setSmart(on),
+            },
+            ...(isDesktop && !isMobile
+              ? ([
+                  {
+                    kind: 'switch',
+                    label: t('From any app'),
+                    words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
+                    initial: true,
+                    get: () => quickAdd.anywhere,
+                    set: (on) => quickAdd.setAnywhere(on),
                   },
                 ] satisfies Field[])
               : []),

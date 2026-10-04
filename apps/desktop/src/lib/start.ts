@@ -165,7 +165,9 @@ export function start(): () => void {
   // The rows of every space, for Today, the views and the reminders, at the last turn
   // of the launch order: the open space's out of the link index's scan, then the rest
   // one at a time. See rows/rows.svelte.ts.
-  void startup.turn('right').then(() => import('./rows/rows.svelte'))
+  // Not the glasses' plugin, which has no view of them yet and whose package has no room
+  // for the engine they bring.
+  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
 
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
@@ -182,6 +184,17 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
   }
 
+  // Quick add's key over every other app, a desktop's alone and after the launch
+  // order: the window it opens is made the first time the key is pressed. See
+  // quick-add/anywhere.svelte.ts.
+  let stopAnywhere: (() => void) | null = null
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup
+      .turn('right')
+      .then(() => import('./quick-add/anywhere.svelte'))
+      .then((one) => (stopAnywhere = one.listen()))
+  }
+
   // The pointer hides while somebody types; see typing-pointer.ts.
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
@@ -190,6 +203,7 @@ export function start(): () => void {
 
   return () => {
     stopPointer?.()
+    stopAnywhere?.()
     clearInterval(sweeper)
     stopRecovery()
     stopReloading()

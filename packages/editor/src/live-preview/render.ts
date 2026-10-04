@@ -131,6 +131,7 @@ export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
   ...DIAGRAM_LANGUAGES,
   'chart',
   'query',
+  'tasks',
 ])
 
 let diagramSeq = 0
@@ -209,12 +210,16 @@ export class QueryWidget extends NibWidget {
   constructor(
     private readonly code: string,
     private readonly index: NoteIndex,
+    /** `query` for a search, `tasks` for the Tasks plugin's query block. */
+    private readonly language = 'query',
   ) {
     super()
   }
 
   override eq(other: QueryWidget) {
-    return other.code === this.code && other.index === this.index
+    return (
+      other.code === this.code && other.index === this.index && other.language === this.language
+    )
   }
 
   toDOM() {
@@ -238,7 +243,7 @@ export class QueryWidget extends NibWidget {
   }
 
   private async draw(host: HTMLElement) {
-    const html = await this.index.query?.(this.code)
+    const html = await this.index.query?.(this.code, this.language)
     // The widget may be gone by the time the space has answered.
     if (!host.isConnected || html === null || html === undefined) return
 

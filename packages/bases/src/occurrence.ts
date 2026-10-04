@@ -16,7 +16,7 @@
 import type { TextEdit } from '@nib/markdown/edits'
 import { changedTask, type TaskChange, writeTask } from '@nib/markdown/task-edits'
 import { parseTask, readTask, type TaskFields } from '@nib/markdown/task-line'
-import { addDays, dayNumber } from './dates'
+import { addDays, dayNumber, todayOf } from './dates'
 import { nextDate, parseRule } from './recurrence'
 
 export interface OccurrenceOptions {
@@ -217,3 +217,7 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
 export function finish(line: string, today: string): TextEdit[] {
   return writeTask(line, { done: true, completed: today, recurrence: null })
 }
+
+/** Today on this machine's wall clock, the day a box ticked now is done on; here as
+ *  well as at the package's root, for a caller that wants the tick and nothing else. */
+export { todayOf }

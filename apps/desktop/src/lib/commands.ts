@@ -92,6 +92,7 @@ import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openRandomNote, randomChoices } from './random-note'
+import { showQuickAdd } from './surfaces.svelte'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -1031,6 +1032,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.new'),
       run: () => workspace.openBlank(),
     },
+    // The palette's row turns its field into quick add's; see quick-add/asked.svelte.ts.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
+            id: 'quick-add',
+            label: t('Add task'),
+            hint: shortcuts.hint('app.quick-add'),
+            run: () => showQuickAdd(),
+          },
+        ]),
     {
       id: 'new-unique',
       label: t('New unique note'),

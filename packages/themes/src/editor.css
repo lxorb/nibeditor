@@ -848,6 +848,66 @@
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: var(--line-strong);
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+/* A task's fields, said again after its words while their marks are hidden: quiet, a
+   size down, each one pressable for its picker. See task-chips.ts in @nib/editor. */
+.nib-task-chips {
+  display: inline-flex;
+  gap: 0.5em;
+  margin-inline-start: 0.75em;
+  /* A list's line hangs its first line back by the marker's width; the chips are not
+     that line's first words and stand where they are. */
+  text-indent: 0;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-decoration: none;
+  vertical-align: 1px;
+  user-select: none;
+}
+
+.nib-task-chip {
+  padding: 0 0.3em;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.nib-task-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.nib-task-chip[data-tone='overdue'] {
+  color: var(--danger);
+}
+
+.nib-task-chip[data-tone='p1'] {
+  color: var(--canvas-1);
+}
+
+.nib-task-chip[data-tone='p2'] {
+  color: var(--canvas-2);
+}
+
+.nib-task-chip[data-tone='p3'] {
+  color: var(--canvas-5);
+}
+
+.nib-read-only .nib-task-chip {
+  pointer-events: none;
+}
+
+/* A date typed at the end of a task, offered: Tab takes it. See task-hint.ts. */
+.nib-task-hint {
+  margin-inline-start: 0.5em;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 /* ── Rules ───────────────────────────────────────────────────────── */

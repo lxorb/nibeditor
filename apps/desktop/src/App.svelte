@@ -54,6 +54,7 @@
     paletteDoor,
     promptSheet,
     publishSheet,
+    quickAddSheet,
     quickSheet,
     recordingPill,
     rewriteSheet,
@@ -1136,6 +1137,11 @@
 {#if !__EVEN_PLUGIN__ && workspace.restored && !workspace.spaces.length}
   {#await spaceChooserCard() then SpaceChooser}
     <SpaceChooser />
+  {/await}
+{/if}
+{#if quickAddSheet.asked}
+  {#await quickAddSheet.asked then QuickAddSheet}
+    <QuickAddSheet />
   {/await}
 {/if}
 {#if signInSheet.asked}
