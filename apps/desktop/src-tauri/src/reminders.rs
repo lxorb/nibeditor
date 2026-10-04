@@ -23,6 +23,10 @@
 pub(crate) mod link;
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg_attr(
+    not(any(windows, target_os = "macos")),
+    allow(dead_code, reason = "Linux has no schedule to hand a notification to")
+)]
 pub(crate) mod schedule;
 #[cfg(any(windows, test))]
 mod toast;
@@ -54,11 +58,22 @@ pub struct Planned {
     pub line: u32,
     /// Minutes from its moment to nine the next morning, which the snooze offers.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(
+        not(windows),
+        allow(
+            dead_code,
+            reason = "a Windows toast's snooze; a Mac's snoozes are fixed"
+        )
+    )]
     pub tomorrow: Option<u32>,
 }
 
 /// The words on a notification's buttons, in the reader's language.
 #[derive(Clone, Debug, Deserialize)]
+#[cfg_attr(
+    not(any(windows, target_os = "macos")),
+    allow(dead_code, reason = "Linux shows a reminder with no buttons")
+)]
 pub struct Words {
     pub done: String,
     pub snooze: String,
