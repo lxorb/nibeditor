@@ -59,6 +59,20 @@ pub fn write_log(app: AppHandle, level: String, message: String, at: String) -> 
         .map_err(|_| "the log has stopped being written".to_owned())
 }
 
+/// A line the crate writes itself, stamped now: the few things the window cannot say,
+/// because they happen where the window is not looking - its own thread stopped, or
+/// before it exists. The same file, the same shape and the same thread as the window's
+/// lines, so they read as one log in the order they happened.
+pub fn say(app: &AppHandle, level: &str, message: &str) {
+    let Ok(dir) = app.path().app_log_dir() else {
+        return;
+    };
+    let _ = writer().send((
+        dir.join(FILE),
+        line(level, message, &crate::clock::iso(crate::clock::now())),
+    ));
+}
+
 /// One entry as it reads in the file. Every field is folded onto one line, the
 /// timestamp included: a newline in any of them would otherwise pass itself off as
 /// a second entry.
@@ -80,13 +94,18 @@ fn line(level: &str, message: &str, at: &str) -> String {
 fn writer() -> &'static Sender<(PathBuf, String)> {
     static WRITER: OnceLock<Sender<(PathBuf, String)>> = OnceLock::new();
 
-    WRITER.get_or_init(|| {
-        lane(|(path, line): (PathBuf, String)| {
-            if let Err(error) = append(&path, &line) {
-                eprintln!("{error}");
-            }
-        })
-    })
+    // Handed the thread's work by name rather than in a closure: the check in lib.rs
+    // that a command waiting on the disk says `async` reads a closure as this function's
+    // own body, and the waiting is the lane's thread's, never the caller's.
+    WRITER.get_or_init(|| lane(written))
+}
+
+/// One line appended on the log's own thread, or said on the standard error where it
+/// could not be.
+fn written((path, line): (PathBuf, String)) {
+    if let Err(error) = append(&path, &line) {
+        eprintln!("{error}");
+    }
 }
 
 /// Appends one line to the file at `path`, rolling it over first when it has grown

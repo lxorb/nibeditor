@@ -22,6 +22,8 @@ export interface Plan {
   options: TreeOptions
   /** The notes it will read, the one in front first. */
   notes: string[]
+  /** Whether a website is on screen, whose browser the crate starts early. */
+  web: boolean
 }
 
 /** What the crate read, as the page received it. */
@@ -47,6 +49,7 @@ function answerOf(value: unknown): Answer | null {
       root: isString(root) ? root : null,
       options: { showHidden: isRecord(options) && options.showHidden === true },
       notes: Array.isArray(notes) ? notes.filter(isString) : [],
+      web: value.plan.web === true,
     },
     spaces: Array.isArray(value.spaces) ? (value.spaces as Answer['spaces']) : null,
     tree: isRecord(value.tree) ? (value.tree as unknown as Entry) : null,

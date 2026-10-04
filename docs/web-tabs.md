@@ -610,6 +610,26 @@ out and turned into a PNG through `NSBitmapImageRep`, so the window gets the sam
 address either way. On Linux there is no snapshot to be had through what wry hands out,
 and the hole keeps its own ground there.
 
+#### A browser that does not answer
+
+Every web tab of a store is drawn by one `WebView2` browser process, and showing a page,
+hiding it and building a new one are calls into that process the window's thread waits
+on - with a message loop under the wait, so the window repaints, and nothing the app has
+queued runs: no command, no event, no save. A browser busy for seconds with one heavy site
+stopped all of nib with it. Measured 2026-10-04 with the probe's browser held still from
+outside: a press on a web tab sat in `web_place` for as long as the browser was held, 47 to
+89 seconds.
+
+So the browser is asked first, the way Windows asks a window whether it responds: a
+message sent to the browser's own window under the page, waited for 150 ms at most and
+not at all once Windows calls it hung. A page whose browser does not answer is not shown
+(the window asks again a second later), not told it is hidden (its holder, which is
+nib's own window, is moved out of the window's room instead, which waits on nobody), not
+closed (it is put away and closed once its browser answers), and no new page is built on
+it (asked for again a second later). The rest of the app goes on; the log says it once a
+minute. See `apps/desktop/src-tauri/src/web_answers.rs` and
+`scripts/web-not-answering-probe.py`.
+
 #### Glued to the pane
 
 Emil, 2026-10-03: _"web sites display feels very buggy"_ - the page froze where it was

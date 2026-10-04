@@ -61,6 +61,11 @@ export const isDesktop = isNative && !isMobile
 // browser, where there is no crate to talk to. See native.ts.
 if (isNative) void import('./native')
 
+/** The calls to the crate not answered yet, and when each was asked: what a stall
+ *  says the page was waiting on; see stalls.ts. A number in and out of a map a call. */
+export const asking = new Map<number, { command: string; at: number }>()
+let calls = 0
+
 /** The browser build answers the same commands from its own storage, so every
  *  call site reads the same on all three. */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
@@ -69,8 +74,14 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
     return webInvoke<T>(command, args)
   }
 
-  const { invoke } = await import('./native')
-  return invoke<T>(command, args)
+  const call = ++calls
+  asking.set(call, { command, at: performance.now() })
+  try {
+    const { invoke } = await import('./native')
+    return await invoke<T>(command, args)
+  } finally {
+    asking.delete(call)
+  }
 }
 
 /** Stands in for the Tauri window. In a browser a page cannot minimise itself,

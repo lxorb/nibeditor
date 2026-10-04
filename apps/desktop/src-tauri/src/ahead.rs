@@ -67,6 +67,9 @@ pub struct Plan {
     options: serde_json::Value,
     /// The notes it will open, the one in front first.
     notes: Vec<String>,
+    /// Whether a website is on screen as it opens, whose page wants the browser process
+    /// web tabs share; see `start`.
+    web: bool,
 }
 
 /// What was read, as the page receives it. A part that could not be read is absent,
@@ -110,10 +113,16 @@ fn planned(app: &AppHandle) -> Option<Plan> {
 
 /// Starts reading what the plan names, on a thread of its own, and returns at once.
 /// Called before the window is built, so the reads run while the webview starts.
-pub fn start(app: &AppHandle) {
+///
+/// Answers whether a website will be on screen: its page is built on the browser
+/// process every web tab shares, which takes the window's thread a third of a second
+/// and more to start the first time, so the caller starts it while the window's own
+/// page is still loading rather than when that page asks; see `web_tabs::warm`.
+pub fn start(app: &AppHandle) -> bool {
     let Some(plan) = planned(app) else {
-        return;
+        return false;
     };
+    let web = plan.web;
     if let Ok(mut reading) = READING.lock() {
         *reading = Reading::Busy;
     }
@@ -136,6 +145,7 @@ pub fn start(app: &AppHandle) {
             *reading = Reading::Idle;
         }
     }
+    web
 }
 
 /// Everything the plan names, through the commands the page would have asked.
@@ -256,6 +266,7 @@ mod tests {
             root: Some("C:\\".repeat(100)),
             options: serde_json::json!({ "sort": "modified", "descending": true }),
             notes: vec!["C:\\Users\\somebody\\Documents\\Nib\\Space\\note.md".repeat(4); 24],
+            web: true,
         };
         let bytes = serde_json::to_vec(&plan).expect("written");
         assert!((bytes.len() as u64) < LONGEST_PLAN);

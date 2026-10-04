@@ -92,6 +92,9 @@ mod front_matter;
 mod fuzzy;
 #[cfg(desktop)]
 mod ground;
+// A second launch that finds the first not answering; see handover.rs.
+#[cfg(desktop)]
+mod handover;
 mod highlights;
 mod history;
 // The global shortcut plugin, added once for whoever holds a key from any app; see hotkeys.rs.
@@ -142,6 +145,9 @@ mod secrets;
 mod shell_menu;
 mod space_watch;
 mod spaces;
+// What the window's thread was doing when it stopped answering; see stall.rs.
+#[cfg(desktop)]
+mod stall;
 mod sync_store;
 mod tags;
 mod tasks;
@@ -154,6 +160,10 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
+// Whether a web tab's browser answers before the window's thread waits on it; see
+// web_answers.rs.
+#[cfg(desktop)]
+mod web_answers;
 // Only where there is a cookie store to reach: the system's own engine on Windows and
 // on a Mac.
 #[cfg(desktop)]
@@ -556,13 +566,21 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(feature = "cef")]
     let mut context = tauri::generate_context!("../tauri.conf.json");
 
-    // Which engine this launch belongs to, before anything of either engine starts: the
-    // other build takes the launch over where it is the one chosen. See engine_switch.rs.
+    // A second launch is handed to the nib already running, or - where that one has
+    // stopped answering - asks whether to end it, rather than waiting on it for ever; see
+    // handover.rs. Before the engine is chosen, because ending a frozen nib frees the
+    // lock the choice is made under.
+    //
+    // Then which engine this launch belongs to, before anything of either engine starts:
+    // the other build takes the launch over where it is the one chosen. See
+    // engine_switch.rs.
     #[cfg(desktop)]
-    if engine_switch::handed_over(
-        &context.config().identifier,
-        &context.package_info().version.to_string(),
-    ) {
+    if handover::handed_over(&context.config().identifier)
+        || engine_switch::handed_over(
+            &context.config().identifier,
+            &context.package_info().version.to_string(),
+        )
+    {
         return;
     }
     #[cfg(desktop)]
@@ -652,8 +670,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(ai_cli::Asks::default())
         .manage(chatgpt::ChatGpt::default());
 
+    // Every command the window asks for says, while it runs on the window's thread, what
+    // the thread is doing, so a stall can name it; see stall.rs.
     #[cfg(desktop)]
-    let builder = builder.invoke_handler(desktop_commands!());
+    let builder = builder.invoke_handler(named(desktop_commands!()));
 
     // An iPhone keeps a provider's key in its keychain the way a Mac does; Android keeps
     // it through the activity, so its page never calls these. See secrets.rs.
@@ -698,6 +718,18 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .run(on_event);
 }
 
+/// The window's commands, each saying by name while it runs on the window's thread what
+/// that thread is doing; see stall.rs.
+#[cfg(desktop)]
+fn named(
+    answer: impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static,
+) -> impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static {
+    move |invoke| {
+        let _doing = stall::doing(invoke.message.command());
+        answer(invoke)
+    }
+}
+
 /// What the system asks of the app as a whole, rather than of a window: a link
 /// from another program, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
 /// none of the three.
@@ -725,7 +757,7 @@ fn ready(
     // What the page will ask for first, read on a thread of its own from here, while
     // the webview below starts; see ahead.rs.
     #[cfg(desktop)]
-    ahead::start(handle);
+    let web_first = ahead::start(handle);
 
     // Before the page can put its menu strip up; see menu_bar.rs.
     #[cfg(target_os = "macos")]
@@ -834,10 +866,12 @@ fn ready(
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
+            stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
             // Started by nothing but a reminder's Done: answered without a window on
             // screen, from the tray; see reminders.rs.
-            building.visible(false).build()?;
+            let window = building.visible(false).build()?;
+            stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
             let at_once = colour.is_some() && !cfg!(target_os = "macos");
@@ -849,6 +883,7 @@ fn ready(
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
+            stall::watch_page(handle, window.as_ref(), "the window's");
             if !at_once {
                 #[cfg(target_os = "macos")]
                 lights::hold(&window);
@@ -873,6 +908,14 @@ fn ready(
     }
 
     trace::mark("window shown");
+    #[cfg(desktop)]
+    watched(handle);
+    // And the browser a website on screen is built on, started now that the window's own
+    // page is on its way; see `web_tabs::warm`.
+    #[cfg(desktop)]
+    if web_first {
+        web_tabs::warm(handle);
+    }
     // nib's own Chromium got as far as its window, so the next launch hands over to it
     // again; see engine_switch.rs.
     #[cfg(desktop)]
@@ -896,6 +939,24 @@ fn ready(
     }
 
     Ok(())
+}
+
+/// The launch said in the log, and the window's thread watched from here on: which
+/// process, so a relaunch is told apart from the page loading again, and what a launch
+/// before it left unsaid. See stall.rs and handover.rs.
+#[cfg(desktop)]
+fn watched(handle: &tauri::AppHandle) {
+    logs::say(
+        handle,
+        "info",
+        &format!(
+            "started nib {} (pid {})",
+            handle.package_info().version,
+            std::process::id()
+        ),
+    );
+    handover::said(handle);
+    stall::start(handle);
 }
 
 /// The app's own folder, `src-tauri`, for a test that reads a file beside the crate.
