@@ -6,3 +6,4 @@
 
 export * from './types'
 export { noteValues, scalarValue, taskHash } from './note-values'
+export { parseRule, ruleText } from './recurrence'

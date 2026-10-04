@@ -36,6 +36,8 @@ export type FormatId =
    *  another app's export - somebody's own paper is a thing to write on, and the
    *  door that already takes files is the door to bring it through. */
   | 'pdf-pages'
+  /** Todoist, from the account through its API or from its CSV exports. */
+  | 'todoist'
 
 /** One file the import will write. A note carries words, anything else carries
  *  bytes, and both are addressed the same way so the writing does not branch. */
@@ -67,6 +69,9 @@ export interface ImportPlan {
   /** What could not be carried over, one short line each, said before anything
    *  is written rather than in a log afterwards. */
   lost: Lost[]
+  /** The note, among `files`, that is the space's inbox once written, where the space
+   *  has none yet: Todoist's Inbox (docs/tasks.md 5.17). */
+  inbox?: string
 }
 
 /** What the sheet shows about a plan. Folders are counted rather than listed:

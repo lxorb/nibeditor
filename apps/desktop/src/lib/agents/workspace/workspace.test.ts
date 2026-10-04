@@ -325,7 +325,7 @@ const docs = {
   editNote: vi.fn((_agent: unknown, at: { path: string }) =>
     Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
   ),
-  writeNote: vi.fn((_agent: unknown, at: { path: string }) =>
+  writeNote: vi.fn((_agent: unknown, at: { path: string }, _text?: string) =>
     Promise.resolve({ path: at.path, rev: 'r2', edits: 1, lines: [0] }),
   ),
 }

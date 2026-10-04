@@ -26,7 +26,7 @@ import {
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
-import { relativeTo } from './space-paths'
+import { insideSpace, relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop, platform } from './tauri'
 import { workspace } from './workspace.svelte'
@@ -181,6 +181,30 @@ class Importing {
     }
   }
 
+  /** Todoist, read out of the account with the token the reader pasted. The token is
+   *  this call's and nobody else's: it is handed to the reader and dropped with it,
+   *  never kept, never logged (docs/tasks.md 5.17). */
+  async readTodoist(token: string, completed: boolean) {
+    const said = token.trim()
+    if (!said) return
+    this.stage = 'reading'
+    this.error = null
+    this.sources = []
+
+    try {
+      const todoist = await import('./import/todoist')
+      const account = await todoist.readTodoistAccount(fetch, said, { completed })
+      const plan = todoist.planOf(account)
+      this.format = plan.format
+      this.folder = nameOfFormat(plan.format)
+      this.plan = plan
+      this.stage = 'ready'
+    } catch (error) {
+      this.stage = 'waiting'
+      this.error = message(error, t('Todoist could not be reached.'))
+    }
+  }
+
   /** Opens Full Disk Access in System Settings, since a sheet that names a
    *  permission and leaves the reader to find the pane has asked twice. */
   async openAccess() {
@@ -266,12 +290,28 @@ class Importing {
       )
 
       this.stepped = landed.stepped
+      await inboxFrom(plan, root, landed.paths)
       this.stage = 'done'
     } catch (error) {
       this.stage = 'ready'
       this.error = message(error, t('That import could not be written.'))
     }
   }
+}
+
+/** Todoist's Inbox, written, as the space's inbox where the space has none of its own
+ *  yet: the notes land under the import's folder, and the inbox is named rather than
+ *  moved (rows/inbox.ts), so nothing the reader wrote is touched. */
+async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[]) {
+  const at = plan.inbox === undefined ? -1 : plan.files.findIndex((one) => one.path === plan.inbox)
+  const path = paths[at]
+  if (path === undefined) return
+  const { INBOX, inboxOf, setInbox } = await import('./rows/inbox')
+  const kept = inboxOf(root)
+  const there = await invoke<string>('read_note', { path: insideSpace(root, kept) }).catch(
+    () => null,
+  )
+  if (kept === INBOX && there === null) setInbox(root, relativeTo(root, path))
 }
 
 /** Whether this machine is the one platform that can be read without an export:
@@ -334,6 +374,8 @@ function nameOfFormat(format: FormatId): string {
       return 'Journal'
     case 'pdf-pages':
       return 'Papers'
+    case 'todoist':
+      return 'Todoist'
     case 'table':
     case 'markdown':
     case 'pandoc':
