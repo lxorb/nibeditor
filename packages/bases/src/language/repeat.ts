@@ -69,8 +69,10 @@ function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | n
   const most = Math.min(words.length - at, MOST_WORDS)
   for (let count = most; count >= 2 || (count === 1 && g.everyDone.has(key)); count--) {
     const said = words.slice(at, at + count).map((word) => bare(word))
-    // `each` is `every`, which is the word the plugin reads; `first` is `1st`.
+    // `each` is `every`, `second` is `other`, which are the words the plugin reads, and
+    // `first` is `1st`.
     if (said[0] === 'each') said[0] = 'every'
+    if (g.other.has(said[1] ?? '')) said[1] = 'other'
     const nth = g.ordinals[said[1] ?? '']
     if (nth !== undefined) said[1] = figures(nth)
     const rule = parseRule(pluginWords(said))

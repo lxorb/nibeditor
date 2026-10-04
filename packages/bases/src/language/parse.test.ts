@@ -333,6 +333,7 @@ describe('what a person types in a hurry', () => {
   test.each([
     ['Trash every 2nd week', 'every 2 weeks'],
     ['Trash every 3rd day', 'every 3 days'],
+    ['Trash every second week', 'every 2 weeks'],
   ])('%s', (text, recurrence) => {
     expect(said(en(text))).toEqual({ text: 'Trash', recurrence, due: '2026-10-07' })
   })

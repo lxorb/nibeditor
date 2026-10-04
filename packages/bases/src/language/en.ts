@@ -109,7 +109,7 @@ export const EN: Grammar = {
 
   every: new Set(['every', 'each']),
   everyDone: new Set(['every!']),
-  other: new Set(['other']),
+  other: new Set(['other', 'second']),
   last: new Set(['last']),
   rules: {
     daily: 'every day',
@@ -127,7 +127,8 @@ export const EN: Grammar = {
   bareDuration: false,
 
   ordinal: /^(\d{1,2})(?:st|nd|rd|th)$/,
-  ordinals: { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 },
+  // `second` is `other`, as German's `zweite` is: `every second week` is every two.
+  ordinals: { first: 1, third: 3, fourth: 4, fifth: 5 },
   articles: new Set(['the']),
   monthFirst: false,
 }
