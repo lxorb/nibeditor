@@ -172,6 +172,9 @@
       }
     },
     {
+      "keyboard": "now"
+    },
+    {
       "call": "browser_tabs",
       "args": {},
       "expect": {

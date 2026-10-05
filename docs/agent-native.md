@@ -705,10 +705,12 @@ and re-read the page every step; Atlas's "take control" is the mode switch peopl
   page changes by itself. The agent's next call reads it as it then is: a ref whose element
   went is `no_such_ref` and a new snapshot, and every act answers where the page is after
   it.
-- **The same field at the same moment.** Nothing locks, and nothing needs to. An agent's
-  words are one `Input.insertText` and a key one event, put into the page's own input
-  queue between the reader's keystrokes, never inside one; whichever lands last is what the
-  field says, and both see it. Locking the field instead would make one of them lose
+- **The same field at the same moment.** Nothing locks, and nothing needs to. In a
+  reader's tab an agent's words go in within one task of the page's own - the field
+  focused, the caret placed, the words inserted as the editing command a paste is - and a
+  key is one event, so each lands between the reader's keystrokes and never inside one: a
+  key of the reader's can never fall between the agent's focus and its words and send them
+  into the reader's field. Whichever lands last is what the field says, and both see it. Locking the field instead would make one of them lose
   without being told; this way the agent learns from its answer and its next read, and the
   reader sees the frame and the agent's mark, and has the stop. A key the agent presses
   goes to the element with the page's keyboard, so it re-reads before pressing one in a tab
