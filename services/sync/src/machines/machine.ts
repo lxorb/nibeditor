@@ -158,6 +158,8 @@ export class Machine implements DurableObject {
   /** Activity and egress since the meter last counted. */
   private pending = { cpuS: 0, egressBytes: 0, homeBytes: -1 }
   private saved: (() => void) | null = null
+  /** A sleep running in this instance; a `stopping` kept without one was cut short. */
+  private sleeping = false
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -773,6 +775,19 @@ export class Machine implements DurableObject {
     const state = await this.state()
     const me = await this.me()
     if (!me || state === 'asleep' || state === 'stopping') return
+    this.sleeping = true
+    try {
+      await this.sleepFrom(state, me, reason)
+    } finally {
+      this.sleeping = false
+    }
+  }
+
+  private async sleepFrom(
+    state: MachineState,
+    me: NonNullable<Awaited<ReturnType<Machine['me']>>>,
+    reason: DownReason,
+  ): Promise<void> {
     await this.setState('stopping', reason)
 
     if (this.link) {
@@ -962,7 +977,13 @@ export class Machine implements DurableObject {
   }
 
   async state(): Promise<MachineState> {
-    return (await this.ctx.storage.get<MachineState>(STATE)) ?? 'asleep'
+    const kept = (await this.ctx.storage.get<MachineState>(STATE)) ?? 'asleep'
+    // A deploy or eviction mid-sleep leaves `stopping` behind with nothing finishing it.
+    if (kept === 'stopping' && !this.sleeping) {
+      await this.ctx.storage.put(STATE, 'asleep')
+      return 'asleep'
+    }
+    return kept
   }
 
   private async down(): Promise<DownReason | null> {
