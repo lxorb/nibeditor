@@ -12,6 +12,7 @@
  *  The pty's source is here; the socket's is lib/online/source.ts, fetched with the
  *  first online terminal and never before. */
 
+import type { DownReason } from '@nib/online/wire'
 import { Channel } from '../native'
 import { isNumber, isRecord } from '../stored'
 import { invoke } from '../tauri'
@@ -39,7 +40,8 @@ export type Said =
   | { size: { cols: number; rows: number } }
   /** What runs in front and the title it set, as the other end saw it. */
   | { program: string | null; title: string | null }
-  | { machine: Machine }
+  /** The machine's state, and why it is down where it is. */
+  | { machine: Machine; reason?: DownReason }
   /** Whether the socket to the session is open; a drop comes back by itself. */
   | { connected: boolean }
   /** Whether keys typed here reach the session. */

@@ -37,6 +37,7 @@ import { remote } from '../remote/hosts.svelte'
 import { madeNow, markMade } from '../remote/open'
 import { platform } from '../tauri'
 import { isMadeName, isOnlineTab, termName } from '../online/path'
+import { Arrival, type Status } from '../online/arrival.svelte'
 import { marks } from '../online/marks.svelte'
 import { resumeCommand } from '../online/resume'
 import { type Tab, workspace } from '../workspace.svelte'
@@ -163,6 +164,9 @@ class Session {
   live = $state(true)
   /** For an online terminal: the machine's state, which the tab's mark shows. */
   machine = $state<Machine | null>(null)
+  /** For an online terminal: its way to its session's screen, said over the screen
+   *  until it is there. See online/arrival.svelte.ts. */
+  readonly arrival = new Arrival()
   /** For an online terminal a machine's restart stopped an agent in: the command
    *  Resume types, while the bar offering it is up. See online/resume.ts. */
   resumable = $state<string | null>(null)
@@ -212,6 +216,12 @@ class Session {
    *  back by a restart and not yet asked to - which the Reconnect bar over it says. See
    *  TerminalTab.svelte and `reconnect`. */
   offline = $state(false)
+
+  /** What an online terminal not showing its session as it is now says over its screen:
+   *  what it waits on, or why it stopped. Null for every other terminal and moment. */
+  get status(): Status | null {
+    return this.online && !this.live && !this.offline ? this.arrival.status : null
+  }
 
   /** The find bar, when it is up; see TerminalTab.svelte. */
   finding = $state(false)
@@ -620,6 +630,7 @@ class Session {
     this.source?.end()
     this.source = null
     this.pty = null
+    this.arrival.stop()
     setPty(this.tab.id, null)
     marks.delete(this.tab.id)
     clearTimeout(this.resting)
@@ -670,6 +681,7 @@ class Session {
     this.pty = id
     this.exited = null
     this.offline = false
+    if (this.online) this.arrival.begin()
     // An online session is never this window's to end, so nothing asks before it goes.
     if (!this.online) setPty(this.tab.id, id)
     this.front = new Front(spec.shell.startsWith('wsl:'))
@@ -733,9 +745,12 @@ class Session {
    *  online session what its machine knows. See source.ts. */
   private heard(id: string, what: Said) {
     if (id !== this.pty) return
+    if (this.online) this.arrival.heard()
 
     if ('out' in what) {
       const bytes = what.out
+      // Output with no screen before it is the session all the same.
+      if (this.online && !this.live) this.landed()
       // Said once drawn, which is what lets the crate send more; see MOST_UNSEEN.
       this.through(bytes, () => this.source?.seen(bytes.length))
       this.printed()
@@ -749,13 +764,25 @@ class Session {
       this.named()
     } else if ('machine' in what) {
       this.machine = what.machine
+      if (this.online) this.arrival.machine(what.machine, what.reason)
       this.named()
-    } else if ('connected' in what) this.live = what.connected && this.screened
-    else if ('typing' in what) this.mayType = what.typing
+    } else if ('connected' in what) {
+      this.arrival.linkedNow(what.connected)
+      if (what.connected && this.screened) this.landed()
+      else this.live = false
+    } else if ('typing' in what) this.mayType = what.typing
+    else if (this.online && !this.live) this.arrival.fail(what.refused)
     else {
       this.say(what.refused)
       this.wait()
     }
+  }
+
+  /** An online terminal shows its session as it is now. */
+  private landed() {
+    this.screened = true
+    this.live = true
+    this.arrival.arrived()
   }
 
   /** An online session's whole screen, drawn in place of whatever was: the cached one,
@@ -765,8 +792,7 @@ class Session {
     this.term.reset()
     this.applied(screen.cols, screen.rows)
     this.term.write(screen.screen, () => {
-      this.screened = true
-      this.live = true
+      this.landed()
       this.printed()
       this.fit()
       // An agent a machine's restart stopped: Resume offers its own continue command.
@@ -914,10 +940,10 @@ class Session {
     if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)
   }
 
-  /** A key in an online terminal: Reconnect or Resume where their bar is up, a new shell
+  /** A key in an online terminal: Reconnect, Try again or Resume where they are up, a new shell
    *  after one ended, and otherwise the session's - if this window may type in it. */
   private typedOnline(data: string, binary: boolean) {
-    if (this.offline) {
+    if (this.offline || this.arrival.failure !== null) {
       if (data === '\r') this.reconnect()
       return
     }

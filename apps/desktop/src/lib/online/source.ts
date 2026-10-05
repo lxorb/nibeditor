@@ -171,7 +171,10 @@ export class OnlineSource implements Source {
       case 'machine':
         machine.heard(frame.state)
         // Awake with most of the month's hours used is the amber the mark wears (4.9).
-        said({ machine: frame.state === 'awake' && machine.near ? 'near' : frame.state })
+        said({
+          machine: frame.state === 'awake' && machine.near ? 'near' : frame.state,
+          ...(frame.reason ? { reason: frame.reason } : {}),
+        })
         return
       case 'role':
         said({ typing: frame.type })

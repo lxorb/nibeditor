@@ -435,6 +435,24 @@ describe('a machine', () => {
     ])
   })
 
+  /** What the app's terminal reads as a boot that failed (lib/online/arrival.svelte.ts):
+   *  starting, then asleep with `restart`, on the socket that asked. */
+  test('a start the host refuses tells the socket, which may ask again', async () => {
+    const running = await machine(env, ID, user)
+    running.host.failStart = true
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+
+    expect(await running.machine.state()).toBe('asleep')
+    expect(socket.of('machine').slice(-2)).toEqual([
+      { t: 'machine', state: 'starting' },
+      { t: 'machine', state: 'asleep', reason: 'restart' },
+    ])
+
+    const again = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(await running.machine.state()).toBe('awake')
+    expect(again.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+  })
+
   test('does not wake for a watcher, nor for an owner the gate refuses', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: 'someone' })
