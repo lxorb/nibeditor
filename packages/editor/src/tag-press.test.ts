@@ -10,13 +10,19 @@ import { parsed } from '../test/parsed'
 /** Somewhere to park the caret that is outside every tag under test. */
 const PARK = '\n\nx'
 
-function state(doc: string, at = doc.length, more: Extension[] = []): EditorState {
+function state(
+  doc: string,
+  at = doc.length,
+  more: Extension[] = [],
+  upTo = doc.length,
+): EditorState {
   return parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(at),
       extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }), more],
     }),
+    upTo,
   )
 }
 
@@ -134,12 +140,14 @@ describe('a tag in the preview', () => {
 
 describe('the preview’s work on tags', () => {
   test('is the viewport’s, however long the note', () => {
-    // A note of ten thousand tagged lines and a window onto thirty of them: the
+    // A note of two thousand tagged lines and a window onto thirty of them: the
     // decorations are built for what is on screen, so the pills counted are the
-    // visible ones and nothing is spent on the rest. The same pass over a note a
-    // hundred times shorter draws exactly as many.
+    // visible ones and nothing is spent on the rest. The same pass over a note twenty
+    // times shorter draws exactly as many. Twenty times shows a count that grows with
+    // the note as well as a hundred did; ten thousand lines made into a state were
+    // seconds of a machine running three gates, against the five this test has.
     const line = (n: number) => `Line ${n} is filed under #work/n${n} and #reading.`
-    const long = Array.from({ length: 10_000 }, (_, n) => line(n)).join('\n')
+    const long = Array.from({ length: 2_000 }, (_, n) => line(n)).join('\n')
     const short = Array.from({ length: 100 }, (_, n) => line(n)).join('\n')
 
     const window = (doc: string) => {
@@ -148,8 +156,11 @@ describe('the preview’s work on tags', () => {
       return { from, to }
     }
 
+    // Parsed as far as the window, which is all a viewport's pass reads: parsing the
+    // whole note was most of this test's time, twice, and nothing it asks about.
     const counted = (doc: string) => {
-      const built = buildDecorations(state(doc, 0), [window(doc)])
+      const shown = window(doc)
+      const built = buildDecorations(state(doc, 0, [], shown.to), [shown])
       let tags = 0
       built.decorations.between(0, doc.length, (_from, _to, value) => {
         if ((value.spec as { class?: string }).class === 'tag') tags++
@@ -157,8 +168,9 @@ describe('the preview’s work on tags', () => {
       return tags
     }
 
-    expect(counted(long)).toBe(counted(short))
+    const drawn = counted(long)
+    expect(drawn).toBe(counted(short))
     // Lines 40 to 69, two tags each: the window ends where line 70 starts.
-    expect(counted(long)).toBe(30 * 2)
+    expect(drawn).toBe(30 * 2)
   })
 })
