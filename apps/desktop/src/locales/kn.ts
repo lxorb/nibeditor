@@ -2061,7 +2061,7 @@ export const kn: Dictionary = {
   Automations: 'ಸ್ವಯಂಚಾಲನೆಗಳು',
   'Row added': 'ಸಾಲು ಸೇರಿಸಲಾಗಿದೆ',
   Button: 'ಬಟನ್',
-  Number: 'ಸಂಖ್ಯೆ',
+  'Number with separators': 'ವಿಭಾಜಕಗಳೊಂದಿಗೆ ಸಂಖ್ಯೆ',
   Percent: 'ಶೇಕಡಾ',
   Progress: 'ಪ್ರಗತಿ',
   'Web address': 'ವೆಬ್ ವಿಳಾಸ',

@@ -2027,7 +2027,7 @@ export const my: Dictionary = {
   Automations: 'အလိုအလျောက် လုပ်ဆောင်ချက်များ',
   'Row added': 'အတန်း ထည့်ပြီး',
   Button: 'ခလုတ်',
-  Number: 'နံပါတ်',
+  'Number with separators': 'ခွဲခြားသင်္ကေတပါ နံပါတ်',
   Percent: 'ရာခိုင်နှုန်း',
   Progress: 'တိုးတက်မှု',
   'Web address': 'ဝဘ်လိပ်စာ',

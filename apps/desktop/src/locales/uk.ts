@@ -2118,7 +2118,7 @@ export const uk: Dictionary = {
   Automations: 'Автоматизації',
   'Row added': 'Додано рядок',
   Button: 'Кнопка',
-  Number: 'Число',
+  'Number with separators': 'Число з роздільниками',
   Percent: 'Відсоток',
   Progress: 'Поступ',
   'Web address': 'Вебадреса',

@@ -2004,7 +2004,7 @@ export const th: Dictionary = {
   Automations: 'การทำงานอัตโนมัติ',
   'Row added': 'เพิ่มแถวแล้ว',
   Button: 'ปุ่ม',
-  Number: 'ตัวเลข',
+  'Number with separators': 'ตัวเลขมีตัวคั่น',
   Percent: 'เปอร์เซ็นต์',
   Progress: 'ความคืบหน้า',
   'Web address': 'ที่อยู่เว็บ',

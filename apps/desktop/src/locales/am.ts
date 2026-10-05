@@ -2019,7 +2019,7 @@ export const am: Dictionary = {
   Automations: 'ራስ-ሰር ተግባሮች',
   'Row added': 'ረድፍ ታክሏል',
   Button: 'አዝራር',
-  Number: 'ቁጥር',
+  'Number with separators': 'መለያ ያለው ቁጥር',
   Percent: 'መቶኛ',
   Progress: 'ሂደት',
   'Web address': 'የድር አድራሻ',

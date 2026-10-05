@@ -2045,7 +2045,7 @@ export const mr: Dictionary = {
   Automations: 'स्वयंचलन',
   'Row added': 'ओळ जोडली',
   Button: 'बटण',
-  Number: 'संख्या',
+  'Number with separators': 'विभाजकांसह संख्या',
   Percent: 'टक्के',
   Progress: 'प्रगती',
   'Web address': 'वेब पत्ता',

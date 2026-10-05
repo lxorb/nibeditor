@@ -2035,7 +2035,7 @@ export const ms: Dictionary = {
   Automations: 'Automasi',
   'Row added': 'Baris ditambah',
   Button: 'Butang',
-  Number: 'Nombor',
+  'Number with separators': 'Nombor dengan pemisah',
   Percent: 'Peratus',
   Progress: 'Kemajuan',
   'Web address': 'Alamat web',

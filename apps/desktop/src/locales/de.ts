@@ -2082,7 +2082,7 @@ export const de: Dictionary = {
   Automations: 'Automationen',
   'Row added': 'Zeile hinzugefügt',
   Button: 'Schaltfläche',
-  Number: 'Zahl',
+  'Number with separators': 'Zahl mit Trennzeichen',
   Percent: 'Prozent',
   Progress: 'Fortschritt',
   'Web address': 'Webadresse',

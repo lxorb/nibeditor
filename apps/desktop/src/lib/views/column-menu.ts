@@ -58,7 +58,7 @@ function formatName(format: string): string {
   }
   switch (format) {
     case 'number':
-      return t('Number')
+      return t('Number with separators')
     case 'percent':
       return t('Percent')
     case 'progress':

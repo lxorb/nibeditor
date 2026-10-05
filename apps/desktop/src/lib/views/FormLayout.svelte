@@ -196,10 +196,6 @@
     animation: shake var(--dur-base) var(--ease-out);
   }
 
-  .missing :global(.nib-field) {
-    border-color: var(--danger);
-  }
-
   @keyframes shake {
     20%,
     60% {

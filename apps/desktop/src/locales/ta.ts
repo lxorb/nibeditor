@@ -2072,7 +2072,7 @@ export const ta: Dictionary = {
   Automations: 'தானியக்கங்கள்',
   'Row added': 'வரிசை சேர்க்கப்பட்டது',
   Button: 'பொத்தான்',
-  Number: 'எண்',
+  'Number with separators': 'பிரிப்பான்களுடன் எண்',
   Percent: 'சதவீதம்',
   Progress: 'முன்னேற்றம்',
   'Web address': 'இணைய முகவரி',

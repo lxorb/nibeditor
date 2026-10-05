@@ -1265,10 +1265,10 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 - **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
   with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
   of a base file. `fired` answers on a change, never a state, so one edit fires once; the
-  runner (`runner.svelte.ts` wiring `running.ts`, fetched at the launch's last turn)
+  runner (`runner.svelte.ts` wiring `running.ts`, fetched with the rows)
   holds the open space's bases that automate or number, hears each note's rows change,
   waits 80 ms for the edit to finish recording its undo, and writes every set as one
-  edit joined to that undo (`replaceInNotes(…, { join })`, `workspace/undo-join.ts`),
+  edit joined to that undo (`joinLast`, `workspace/undo-join.ts`),
   so one Ctrl+Z takes the edit and what it set off back. Its own write is not heard
   again, so automations never set each other off. A notice rings the way a reminder
   does (`reminders/platform.ts`).

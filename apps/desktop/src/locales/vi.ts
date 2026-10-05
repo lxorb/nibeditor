@@ -2023,7 +2023,7 @@ export const vi: Dictionary = {
   Automations: 'Tự động hóa',
   'Row added': 'Đã thêm hàng',
   Button: 'Nút',
-  Number: 'Số',
+  'Number with separators': 'Số có dấu phân cách',
   Percent: 'Phần trăm',
   Progress: 'Tiến độ',
   'Web address': 'Địa chỉ web',

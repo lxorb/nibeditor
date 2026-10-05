@@ -1993,7 +1993,7 @@ export const zhHans: Dictionary = {
   Automations: '自动化',
   'Row added': '已添加行',
   Button: '按钮',
-  Number: '数字',
+  'Number with separators': '带分隔符的数字',
   Percent: '百分比',
   Progress: '进度',
   'Web address': '网址',

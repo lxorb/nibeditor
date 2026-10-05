@@ -2035,7 +2035,7 @@ export const id: Dictionary = {
   Automations: 'Otomatisasi',
   'Row added': 'Baris ditambahkan',
   Button: 'Tombol',
-  Number: 'Angka',
+  'Number with separators': 'Angka dengan pemisah',
   Percent: 'Persen',
   Progress: 'Progres',
   'Web address': 'Alamat web',

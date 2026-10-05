@@ -150,7 +150,7 @@ export function rowNote(
 /** The base over a folder of row notes: a table of them, the columns in the file's
  *  order under the names the notes write them with. The folder is matched by its name
  *  wherever the import is put, since the plan does not know where that is. */
-export function baseOf(
+function baseOf(
   folder: string,
   columns: readonly string[],
   rows: readonly Record<string, string>[],

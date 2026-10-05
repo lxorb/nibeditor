@@ -52,6 +52,11 @@ $effect.root(() => {
   })
 })
 
+// A space's bases at work while nib runs (automations, ids, repeating templates) start
+// with the rows they read, and never in the glasses' plugin, which has no rows; see
+// views/runner.svelte.ts.
+if (!__EVEN_PLUGIN__) void import('../views/runner.svelte')
+
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),
   at: (path: string): readonly Row[] => store.at(path),

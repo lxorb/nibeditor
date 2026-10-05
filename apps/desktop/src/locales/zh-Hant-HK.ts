@@ -1993,7 +1993,7 @@ export const zhHantHK: Dictionary = {
   Automations: '自動化',
   'Row added': '已新增列',
   Button: '按鈕',
-  Number: '數字',
+  'Number with separators': '帶分隔符的數字',
   Percent: '百分比',
   Progress: '進度',
   'Web address': '網址',

@@ -2027,7 +2027,7 @@ export const jv: Dictionary = {
   Automations: 'Otomatisasi',
   'Row added': 'Baris ditambahake',
   Button: 'Tombol',
-  Number: 'Angka',
+  'Number with separators': 'Angka nganggo pamisah',
   Percent: 'Persen',
   Progress: 'Kemajuan',
   'Web address': 'Alamat web',

@@ -2048,7 +2048,7 @@ export const pa: Dictionary = {
   Automations: 'ਸਵੈਚਾਲਨ',
   'Row added': 'ਕਤਾਰ ਜੋੜੀ ਗਈ',
   Button: 'ਬਟਨ',
-  Number: 'ਨੰਬਰ',
+  'Number with separators': 'ਵੱਖਰੇਵਿਆਂ ਨਾਲ ਨੰਬਰ',
   Percent: 'ਪ੍ਰਤੀਸ਼ਤ',
   Progress: 'ਤਰੱਕੀ',
   'Web address': 'ਵੈੱਬ ਪਤਾ',

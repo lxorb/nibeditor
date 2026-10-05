@@ -2030,7 +2030,7 @@ export const ja: Dictionary = {
   Automations: 'オートメーション',
   'Row added': '行が追加されたとき',
   Button: 'ボタン',
-  Number: '数値',
+  'Number with separators': '桁区切りの数値',
   Percent: 'パーセント',
   Progress: '進捗',
   'Web address': 'Web アドレス',

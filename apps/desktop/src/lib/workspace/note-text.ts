@@ -172,8 +172,6 @@ export interface Keeping {
   snapshot?: boolean
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
-  /** One undo with the write before it; see undo-join.ts. */
-  join?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -210,8 +208,7 @@ export async function replaceInNotes(
     )
   }
 
-  const joined = keeping.join && (await import('./undo-join')).joined(ws.undone, done)
-  if (!joined) ws.undone.record({ kind: 'replace', notes: done })
+  ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 

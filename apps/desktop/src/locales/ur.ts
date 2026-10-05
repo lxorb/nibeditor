@@ -2040,7 +2040,7 @@ export const ur: Dictionary = {
   Automations: 'خودکار عمل',
   'Row added': 'قطار شامل ہوئی',
   Button: 'بٹن',
-  Number: 'عدد',
+  'Number with separators': 'علامات کے ساتھ عدد',
   Percent: 'فیصد',
   Progress: 'پیش رفت',
   'Web address': 'ویب پتہ',

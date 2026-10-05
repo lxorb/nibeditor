@@ -86,7 +86,8 @@ export async function writeEach(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaceInNotes(workspace, changes, { join })
+  await replaceInNotes(workspace, changes)
+  if (join) (await import('../workspace/undo-join')).joinLast(workspace.undone)
   return true
 }
 

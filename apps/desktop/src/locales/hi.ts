@@ -2040,7 +2040,7 @@ export const hi: Dictionary = {
   Automations: 'स्वचालन',
   'Row added': 'पंक्ति जोड़ी गई',
   Button: 'बटन',
-  Number: 'संख्या',
+  'Number with separators': 'विभाजकों वाली संख्या',
   Percent: 'प्रतिशत',
   Progress: 'प्रगति',
   'Web address': 'वेब पता',

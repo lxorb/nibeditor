@@ -2126,7 +2126,7 @@ export const pl: Dictionary = {
   Automations: 'Automatyzacje',
   'Row added': 'Dodano wiersz',
   Button: 'Przycisk',
-  Number: 'Liczba',
+  'Number with separators': 'Liczba z separatorami',
   Percent: 'Procent',
   Progress: 'Postęp',
   'Web address': 'Adres internetowy',

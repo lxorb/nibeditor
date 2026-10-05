@@ -132,7 +132,7 @@
     {#each offers as offer (offer)}
       <button
         type="button"
-        class="nib-chip"
+        class="nib-chip offer"
         onmousedown={(event) => event.preventDefault()}
         onclick={() => take(offer)}>{offer}</button
       >
@@ -159,7 +159,7 @@
     gap: var(--space-1);
   }
 
-  .offers .nib-chip {
+  .offer {
     padding: 0 var(--space-2);
     font-family: var(--font-mono);
     font-size: var(--text-xs);

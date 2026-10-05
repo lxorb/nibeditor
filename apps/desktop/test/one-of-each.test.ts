@@ -469,6 +469,8 @@ describe('the switch', () => {
       'lib/remote/HostDetail.svelte',
       // An extension on or off, in Settings > General > Browser.
       'lib/settings/ExtensionRows.svelte',
+      // An automation of a base on or off.
+      'lib/views/AutomationsBuilder.svelte',
       // What Delete browsing data takes, a switch a kind.
       'lib/web-tab/WebClear.svelte',
     ])

@@ -2041,7 +2041,7 @@ export const bn: Dictionary = {
   Automations: 'স্বয়ংক্রিয় কাজ',
   'Row added': 'সারি যোগ হয়েছে',
   Button: 'বোতাম',
-  Number: 'সংখ্যা',
+  'Number with separators': 'বিভাজকসহ সংখ্যা',
   Percent: 'শতাংশ',
   Progress: 'অগ্রগতি',
   'Web address': 'ওয়েব ঠিকানা',

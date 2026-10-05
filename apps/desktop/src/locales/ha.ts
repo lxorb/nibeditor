@@ -2071,7 +2071,7 @@ export const ha: Dictionary = {
   Automations: 'Ayyukan kai-tsaye',
   'Row added': 'An ƙara layi',
   Button: 'Maɓalli',
-  Number: 'Lamba',
+  'Number with separators': 'Lamba mai rarrabewa',
   Percent: 'Kashi',
   Progress: 'Ci gaba',
   'Web address': 'Adireshin yanar gizo',

@@ -12,7 +12,7 @@ import type { LiveView } from './live.svelte'
 import { propertyName } from './words'
 
 /** The view showing, as CSV; null where there is nothing to show. */
-export function viewCsv(live: LiveView): string | null {
+function viewCsv(live: LiveView): string | null {
   const base = live.base
   const answer = live.answer
   if (!base || !answer) return null

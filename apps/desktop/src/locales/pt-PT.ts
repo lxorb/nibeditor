@@ -2092,7 +2092,7 @@ export const ptPT: Dictionary = {
   Automations: 'Automatizações',
   'Row added': 'Linha adicionada',
   Button: 'Botão',
-  Number: 'Número',
+  'Number with separators': 'Número com separadores',
   Percent: 'Percentagem',
   Progress: 'Progresso',
   'Web address': 'Endereço web',

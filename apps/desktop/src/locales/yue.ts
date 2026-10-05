@@ -1993,7 +1993,7 @@ export const yue: Dictionary = {
   Automations: '自動化',
   'Row added': '加咗一行',
   Button: '掣',
-  Number: '數字',
+  'Number with separators': '有分隔符嘅數字',
   Percent: '百分比',
   Progress: '進度',
   'Web address': '網址',

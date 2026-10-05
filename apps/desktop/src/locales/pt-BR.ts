@@ -2079,7 +2079,7 @@ export const ptBR: Dictionary = {
   Automations: 'Automações',
   'Row added': 'Linha adicionada',
   Button: 'Botão',
-  Number: 'Número',
+  'Number with separators': 'Número com separadores',
   Percent: 'Porcentagem',
   Progress: 'Progresso',
   'Web address': 'Endereço web',

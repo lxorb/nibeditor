@@ -2104,7 +2104,7 @@ export const fr: Dictionary = {
   Automations: 'Automatisations',
   'Row added': 'Ligne ajoutée',
   Button: 'Bouton',
-  Number: 'Nombre',
+  'Number with separators': 'Nombre avec séparateurs',
   Percent: 'Pourcentage',
   Progress: 'Progression',
   'Web address': 'Adresse web',

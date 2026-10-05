@@ -2102,7 +2102,7 @@ export const it: Dictionary = {
   Automations: 'Automazioni',
   'Row added': 'Riga aggiunta',
   Button: 'Pulsante',
-  Number: 'Numero',
+  'Number with separators': 'Numero con separatori',
   Percent: 'Percentuale',
   Progress: 'Avanzamento',
   'Web address': 'Indirizzo web',

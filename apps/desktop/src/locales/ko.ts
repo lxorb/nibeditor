@@ -2016,7 +2016,7 @@ export const ko: Dictionary = {
   Automations: '자동화',
   'Row added': '행 추가됨',
   Button: '버튼',
-  Number: '숫자',
+  'Number with separators': '구분 기호가 있는 숫자',
   Percent: '백분율',
   Progress: '진행률',
   'Web address': '웹 주소',

@@ -2064,7 +2064,7 @@ export const ml: Dictionary = {
   Automations: 'ഓട്ടോമേഷനുകൾ',
   'Row added': 'വരി ചേർത്തു',
   Button: 'ബട്ടൺ',
-  Number: 'സംഖ്യ',
+  'Number with separators': 'വിഭജകങ്ങളോടെ സംഖ്യ',
   Percent: 'ശതമാനം',
   Progress: 'പുരോഗതി',
   'Web address': 'വെബ് വിലാസം',

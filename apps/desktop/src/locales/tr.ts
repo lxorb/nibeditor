@@ -2049,7 +2049,7 @@ export const tr: Dictionary = {
   Automations: 'Otomasyonlar',
   'Row added': 'Satır eklendi',
   Button: 'Düğme',
-  Number: 'Sayı',
+  'Number with separators': 'Ayraçlı sayı',
   Percent: 'Yüzde',
   Progress: 'İlerleme',
   'Web address': 'Web adresi',

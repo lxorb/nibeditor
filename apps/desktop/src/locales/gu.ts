@@ -2034,7 +2034,7 @@ export const gu: Dictionary = {
   Automations: 'સ્વચાલન',
   'Row added': 'પંક્તિ ઉમેરાઈ',
   Button: 'બટન',
-  Number: 'સંખ્યા',
+  'Number with separators': 'વિભાજકો સાથે સંખ્યા',
   Percent: 'ટકા',
   Progress: 'પ્રગતિ',
   'Web address': 'વેબ સરનામું',

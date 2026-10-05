@@ -59,7 +59,7 @@ export function fillTemplate(text: string, filling: Filling): string {
 }
 
 /** The front matter keys that are the template's own and never the note's. */
-export const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
+const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
 
 /** A template's words as a note's: its own keys taken off its front matter. */
 export function withoutTemplateKeys(text: string): string {

@@ -1,9 +1,10 @@
 /** A replacement that follows from the one before it, taken back with it: what a base's
  *  automation writes because of an edit is one undo with that edit (docs/tasks.md 5.13).
  *
- *  Joined only where every note it writes is one the last replacement wrote and still
- *  holds exactly what that left, so nothing typed in between is ever folded in. Out of
- *  the first paint: only an automation asks, and it is fetched with the first. */
+ *  The automation's write is recorded like any other, and then folded into the edit
+ *  before it - only where every note it wrote is one that edit wrote and held exactly
+ *  what that edit left, so nothing typed in between is ever folded in. Out of the first
+ *  paint: only the bases' runner asks (views/running.ts). */
 
 import { oneEdit } from '@nib/markdown/edits'
 import { reverse } from '../search/replace'
@@ -12,14 +13,14 @@ import type { FileAction, FileActions } from './undo.svelte'
 
 type Replaced = Extract<FileAction, { kind: 'replace' }>['notes'][number]
 
-/** The last action with these notes' writes folded into it, or null where they do not
- *  follow from it. */
+/** The earlier action with the later one's writes folded into it, or null where they
+ *  do not follow from it. */
 export function joinedAction(
-  last: FileAction | undefined,
+  earlier: FileAction | undefined,
   notes: readonly Replaced[],
 ): FileAction | null {
-  if (last?.kind !== 'replace') return null
-  const next = [...last.notes]
+  if (earlier?.kind !== 'replace') return null
+  const next = [...earlier.notes]
   for (const note of notes) {
     const at = next.findIndex((one) => samePath(one.path, note.path))
     const was = next[at]
@@ -35,13 +36,13 @@ export function joinedAction(
   return { kind: 'replace', notes: next }
 }
 
-/** Folds these writes into the newest undo where they follow from it. Answers whether
- *  it did; where it did not, the caller records them as an undo of their own. */
-export function joined(undone: FileActions, notes: readonly Replaced[]): boolean {
-  const action = joinedAction(undone.last, notes)
+/** Folds the newest undo into the one before it where it follows from it. Answers
+ *  whether it did. */
+export function joinLast(undone: FileActions): boolean {
+  const last = undone.stack.at(-1)
+  if (last?.kind !== 'replace') return false
+  const action = joinedAction(undone.stack.at(-2), last.notes)
   if (!action) return false
-  // Replacing the newest rather than recording: what is ahead was emptied by the edit
-  // this follows from, and stays empty.
-  undone.stack = [...undone.stack.slice(0, -1), action]
+  undone.stack = [...undone.stack.slice(0, -2), action]
   return true
 }

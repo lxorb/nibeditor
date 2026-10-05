@@ -1,8 +1,8 @@
 /** A space's bases at work while nib runs (docs/tasks.md 5.13): their automations and
  *  their ids on every change to a note, and the repeating templates on their days.
  *
- *  Fetched at the launch order's last turn, after the rows, never in the first paint
- *  (start.ts); importing this is starting it. It reads the open space's `.base` files
+ *  Fetched with the rows (rows/rows.svelte.ts), at the launch order's last turn and never
+ *  in the first paint; importing this is starting it. It reads the open space's `.base` files
  *  once and again when one is written, keeps only the ones that automate something or
  *  number their rows, and listens to the rows (`rows.watch`), one note at a time.
  *

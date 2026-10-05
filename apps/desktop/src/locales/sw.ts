@@ -2071,7 +2071,7 @@ export const sw: Dictionary = {
   Automations: 'Uendeshaji otomatiki',
   'Row added': 'Safu imeongezwa',
   Button: 'Kitufe',
-  Number: 'Nambari',
+  'Number with separators': 'Nambari yenye vitenganishi',
   Percent: 'Asilimia',
   Progress: 'Maendeleo',
   'Web address': 'Anwani ya wavuti',

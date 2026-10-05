@@ -2043,7 +2043,7 @@ export const fa: Dictionary = {
   Automations: 'خودکارسازی‌ها',
   'Row added': 'ردیف افزوده شد',
   Button: 'دکمه',
-  Number: 'عدد',
+  'Number with separators': 'عدد با جداکننده',
   Percent: 'درصد',
   Progress: 'پیشرفت',
   'Web address': 'نشانی وب',

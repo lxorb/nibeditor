@@ -2053,7 +2053,7 @@ export const gsw: Dictionary = {
   Automations: 'Automatione',
   'Row added': 'Ziile drzuegfüegt',
   Button: 'Chnopf',
-  Number: 'Zahl',
+  'Number with separators': 'Zahl mit Trennzeiche',
   Percent: 'Prozänt',
   Progress: 'Fortschritt',
   'Web address': 'Webadrässe',

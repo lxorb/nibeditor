@@ -2051,7 +2051,7 @@ export const te: Dictionary = {
   Automations: 'ఆటోమేషన్‌లు',
   'Row added': 'వరుస జోడించబడింది',
   Button: 'బటన్',
-  Number: 'సంఖ్య',
+  'Number with separators': 'విభాజకాలతో సంఖ్య',
   Percent: 'శాతం',
   Progress: 'పురోగతి',
   'Web address': 'వెబ్ చిరునామా',

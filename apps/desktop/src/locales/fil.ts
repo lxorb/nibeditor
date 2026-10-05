@@ -2081,7 +2081,7 @@ export const fil: Dictionary = {
   Automations: 'Mga automation',
   'Row added': 'Naidagdag ang hilera',
   Button: 'Button',
-  Number: 'Numero',
+  'Number with separators': 'Numero na may separator',
   Percent: 'Porsiyento',
   Progress: 'Progreso',
   'Web address': 'Web address',

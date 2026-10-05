@@ -2045,7 +2045,7 @@ export const ps: Dictionary = {
   Automations: 'اتومات کارونه',
   'Row added': 'قطار زیات شو',
   Button: 'تڼۍ',
-  Number: 'شمېره',
+  'Number with separators': 'له بېلوونکو سره شمېره',
   Percent: 'سلنه',
   Progress: 'پرمختګ',
   'Web address': 'وېب پته',

@@ -2150,7 +2150,7 @@ export const ar: Dictionary = {
   Automations: 'عمليات تلقائية',
   'Row added': 'أُضيف صف',
   Button: 'زر',
-  Number: 'رقم',
+  'Number with separators': 'رقم بفواصل',
   Percent: 'نسبة مئوية',
   Progress: 'تقدّم',
   'Web address': 'عنوان ويب',

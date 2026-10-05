@@ -2124,7 +2124,7 @@ export const ru: Dictionary = {
   Automations: 'Автоматизации',
   'Row added': 'Добавлена строка',
   Button: 'Кнопка',
-  Number: 'Число',
+  'Number with separators': 'Число с разделителями',
   Percent: 'Процент',
   Progress: 'Прогресс',
   'Web address': 'Веб-адрес',
