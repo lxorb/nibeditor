@@ -240,10 +240,17 @@ describe('a change', () => {
       { id: expect.any(String) as string, from: 4, to: 7, removed: 'two' },
     ])
 
-    review.keep(review.changes(thread))
-    expect(review.changes(thread)).toEqual([])
-    await settle(250)
-    expect(reviewMarksOf(viewer.state)).toEqual([])
+    // On a clock of the test's own: the fade's timer hands its last drawing to another,
+    // and a machine that held both back past a real wait of 250 ms ran the wait first.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      review.keep(review.changes(thread))
+      expect(review.changes(thread)).toEqual([])
+      await vi.advanceTimersByTimeAsync(250)
+      expect(reviewMarksOf(viewer.state)).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test('undone goes, with a later edit that rewrote its words', async () => {

@@ -94,6 +94,17 @@ vi.mock('@tauri-apps/api/event', () => ({
 
 const { pages, readOpening } = await import('./pages.svelte')
 
+// What the window's listeners are fetched with, behind the first page; see `listen` in
+// pages.svelte.ts. Fetched here first: a whole gate compiles them cold on a busy
+// machine, and that has outlasted even ten seconds of waiting inside a test.
+await Promise.all([
+  import('./permissions.svelte'),
+  import('./dialogs.svelte'),
+  import('./keys'),
+  import('./downloads.svelte'),
+  import('./heard'),
+])
+
 const SITE = 'https://example.com/'
 const PANE = { x: 0, y: 0, width: 800, height: 600 }
 const MOVED = { x: 260, y: 40, width: 540, height: 600 }

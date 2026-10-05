@@ -33,6 +33,7 @@ import { TOOK_TOO_LONG, WRONG_CODE } from './refused'
 import { opened, sealed } from './ask/key'
 import { equals, now, randomBytes, randomToken, sha256 } from './crypto'
 import { readBody } from './body'
+import { rounds } from './rounds'
 import { machineOf, mayTrySecond, mayTrySecondFrom } from './limits'
 import type { Env, User, Variables } from './types'
 
@@ -73,31 +74,9 @@ const RECOVERY_VERSION = '2'
  *  the cost of running the tests; see `recoveryCost`. */
 export const RECOVERY_ROUNDS = 100_000
 
-/** What the tests hash at. What a test about the ceiling on guesses counts is tries,
- *  not seconds: the file spends a hundred derivations, which at the real cost is two
- *  and a half minutes of a machine doing arithmetic nothing is measuring, and on a
- *  loaded one a timeout. */
-const ROUNDS_UNDER_TEST = 200
-
-/** Whether the test runner built this. Defined by services/sync/vitest.config.ts and
- *  by nothing else - wrangler defines nothing - so in a deployed Worker the name does
- *  not exist at all and `typeof` is what says so. */
-declare const __TESTING__: boolean | undefined
-
-/** What a recovery code is hashed at here.
- *
- *  A question about the build and about nothing that runs. This replaced an exported
- *  setter over a module `let`: anything in the bundle could have called it at any
- *  moment, and every code written afterwards - for the life of the isolate, for any
- *  account that enrolled - would have been hashed at whatever it said. Nothing called
- *  it, and a deploy carried it anyway, which is the part worth removing rather than
- *  the part worth trusting.
- *
- *  Not a binding on the environment either: a binding is configuration, and a deploy
- *  that mistyped one would weaken every code at rest without anybody writing a line
- *  of code. A cost is not configuration. */
+/** What a recovery code is hashed at here; see rounds.ts. */
 export function recoveryCost(): number {
-  return typeof __TESTING__ !== 'undefined' && __TESTING__ ? ROUNDS_UNDER_TEST : RECOVERY_ROUNDS
+  return rounds(RECOVERY_ROUNDS)
 }
 
 /** RFC 4648 base32, unpadded, which is the only way an authenticator app takes a
