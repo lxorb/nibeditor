@@ -1097,6 +1097,13 @@ describe('to-dos and bases', () => {
     })
   })
 
+  test('a task in German words is read in an English app, as the connector reads it', async () => {
+    await call('add_task', { space: 'Home', text: 'Zahnarzt anrufen morgen um 15 Uhr' })
+    expect(files.get('/s/Home/Inbox.md')).toMatch(
+      /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 📅 \d{4}-\d{2}-\d{2}\n$/u,
+    )
+  })
+
   test('a task added under a heading of a note, as the agent writes any edit', async () => {
     await call('add_task', { space: 'Home', note: 'Soup', under: 'Soup', text: 'Buy leeks' })
     expect(written()).toEqual(['# Soup\n\n- [ ] Buy milk #shop\n- [ ] Buy leeks\n'])
