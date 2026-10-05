@@ -455,7 +455,7 @@
         "path": { "type": "string", "description": "Path inside the space, such as ideas/plan.md" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "include": {
           "type": "array",
@@ -546,7 +546,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "edits": {
           "type": "array",
@@ -593,7 +593,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "content": { "type": "string" },
         "if_rev": { "type": "string" }
@@ -612,7 +612,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "content": { "type": "string" },
         "under": { "type": "string" }
@@ -631,7 +631,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "key": { "type": "string" },
         "value": { "description": "Words, a number, true or false, a list of words, or null." }
@@ -650,7 +650,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "at": {
           "type": "object",

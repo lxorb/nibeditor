@@ -19,6 +19,8 @@ import { writeFile } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
+import { SCRATCHPAD_TAB } from '../docs/desk'
+import { SCRATCHPAD } from '../../scratchpad/is.svelte'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
@@ -30,11 +32,21 @@ import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } 
 /** The note a call names, in a space it may reach: its place, and its path as the
  *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
  *  `get_context` lists: one with a file is that file, as though its path were said, and
- *  a note with no file yet (workspace/drafts.ts) is reached by the tab alone. */
+ *  a note with no file yet (workspace/drafts.ts) is reached by the tab alone. And
+ *  `tab: "scratchpad"`, the scratchpad, which is every space's and no tab: reached by
+ *  an agent that reaches the space it names, or the open one. */
 export function noteOf(
   call: Call,
   writing: boolean,
 ): { place: Place; relative: string; tab?: string } {
+  if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
+    return {
+      place: placeFor(call, maybe(call, 'space')),
+      relative: SCRATCHPAD,
+      tab: SCRATCHPAD_TAB,
+    }
+  }
+
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
     if (named.relative !== null) {

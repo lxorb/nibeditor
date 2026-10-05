@@ -522,6 +522,23 @@ describe('a note and a canvas, by their tab', () => {
     expect(await call('read_note', { tab: 'nope' })).toMatchObject({ code: 'no_such_tab' })
   })
 
+  test('the scratchpad is a note by its name, and never a tab', async () => {
+    await call('read_note', { tab: 'scratchpad' })
+    expect(docs.readNote).toHaveBeenLastCalledWith(
+      { path: 'Scratchpad.md', space: 'work', tab: 'scratchpad' },
+      undefined,
+    )
+
+    await call('write_note', { tab: 'scratchpad', content: 'jotted' })
+    expect(docs.writeNote).toHaveBeenLastCalledWith(
+      expect.anything(),
+      { path: 'Scratchpad.md', space: 'work', tab: 'scratchpad' },
+      'jotted',
+      undefined,
+    )
+    expect(workspace.open).not.toHaveBeenCalled()
+  })
+
   test('a canvas drawn and never saved is read and edited by its tab, on the surface', async () => {
     expect(await call('read_canvas', { tab: 'c1' })).toMatchObject({
       result: { path: '', nodes: [card], ink: 0 },

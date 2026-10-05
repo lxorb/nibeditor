@@ -204,6 +204,9 @@ are one key both ways; VS Code's layout buttons sit in the same corner:
   emptied and put away; the space on screen is offered too.
 - A quick question's **Add to note** with no note in front lands on its end; see
   docs/ai.md.
+- **An agent's too.** The note verbs reach it as `tab: "scratchpad"`: read and edited
+  through the card while it is up, the reader's caret carried, and in its file either
+  way, without a tab or the card being opened to do it (`agents/docs/desk.ts`).
 
 See `scratchpad/is.svelte.ts` for which file it is and whether the card is up,
 `scratchpad/pad.ts` for what it does and `scratchpad/ScratchpadCard.svelte` for the card.
