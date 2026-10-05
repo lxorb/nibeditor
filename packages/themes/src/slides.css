@@ -6,7 +6,12 @@
  * deck a projector shows: the words never reflow, they only get bigger.
  *
  * One sheet in three places, like document.css: the app's own stage, a deck
- * exported as a single HTML file, and a published note read as slides. */
+ * exported as a single HTML file, and a published note read as slides.
+ *
+ * Every rule is scoped to a deck, or to a frame of the presenter's window: this
+ * sheet is on every page of the app, and `.stage`, `.slide` and `.rail` are names
+ * a panel reaches for too. Bare, any component's own `.stage` was pinned to the
+ * middle of its parent at 1280 by 720 and scaled as a slide is. */
 
 /* ── The room ────────────────────────────────────────────────────── */
 
@@ -29,7 +34,7 @@
 
 /* ── The stage ───────────────────────────────────────────────────── */
 
-.stage {
+:is(.deck, .deck-frame) .stage {
   /* How big the body text is on a stage of this size. Everything else on a slide
      is a multiple of it, the way the prose sheet already sizes headings and code
      against the body. The stage's own size is written in by whatever put it on
@@ -53,7 +58,7 @@
   transform-origin: center;
 }
 
-.slide {
+:is(.deck, .deck-frame) .slide {
   width: 100%;
   height: 100%;
   padding: 68px 96px;
@@ -65,7 +70,7 @@
 
 /* The writing surface, without the app's column around it: a slide is as wide
    as the stage, and the stage decides the size of the text. */
-.slide #write {
+:is(.deck, .deck-frame) .slide #write {
   max-width: none;
   height: 100%;
   margin: 0;
@@ -77,18 +82,18 @@
 /* A slide of nothing but headings is a title, and a title sits in the middle of
    the page. Read off what the slide holds rather than off an annotation, so the
    markdown stays markdown. */
-.slide[data-shape='title'] #write {
+:is(.deck, .deck-frame) .slide[data-shape='title'] #write {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.slide[data-shape='title'] #write h1 {
+:is(.deck, .deck-frame) .slide[data-shape='title'] #write h1 {
   font-size: 2.6em;
   margin: 0;
 }
 
-.slide[data-shape='title'] #write h2 {
+:is(.deck, .deck-frame) .slide[data-shape='title'] #write h2 {
   font-size: 1.5em;
   margin: 0.5em 0 0;
   color: var(--muted-strong);
@@ -97,12 +102,12 @@
 
 /* One picture and nothing else fills the stage. Contained rather than cropped:
    a photograph somebody chose should be the photograph they chose. */
-.slide[data-shape='picture'] {
+:is(.deck, .deck-frame) .slide[data-shape='picture'] {
   padding: 0;
 }
 
-.slide[data-shape='picture'] #write,
-.slide[data-shape='picture'] #write p {
+:is(.deck, .deck-frame) .slide[data-shape='picture'] #write,
+:is(.deck, .deck-frame) .slide[data-shape='picture'] #write p {
   display: flex;
   height: 100%;
   margin: 0;
@@ -110,7 +115,7 @@
   justify-content: center;
 }
 
-.slide[data-shape='picture'] #write img {
+:is(.deck, .deck-frame) .slide[data-shape='picture'] #write img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -119,17 +124,17 @@
 
 /* Nothing on a slide bleeds in the way the editor's own ink does: the words are
    already there when the slide arrives. */
-.slide #write *,
-.slide #write *::before,
-.slide #write *::after {
+:is(.deck, .deck-frame) .slide #write *,
+:is(.deck, .deck-frame) .slide #write *::before,
+:is(.deck, .deck-frame) .slide #write *::after {
   animation: none;
 }
 
-.slide #write > *:first-child {
+:is(.deck, .deck-frame) .slide #write > *:first-child {
   margin-top: 0;
 }
 
-.slide #write pre {
+:is(.deck, .deck-frame) .slide #write pre {
   max-height: 100%;
   overflow: hidden;
 }
@@ -138,19 +143,19 @@
 
 /* A `+` bullet arrives on its own press. Held in place rather than removed, so
    nothing under it moves when it appears. */
-.slide #write li.fragment {
+:is(.deck, .deck-frame) .slide #write li.fragment {
   opacity: 0;
   transition: opacity var(--dur-stage) var(--ease-out);
 }
 
-.slide #write li.fragment.shown {
+:is(.deck, .deck-frame) .slide #write li.fragment.shown {
   opacity: 1;
 }
 
 /* ── The two things that are not the slide ───────────────────────── */
 
 /* How far through the deck, along the bottom edge. */
-.rail {
+.deck .rail {
   position: absolute;
   inset: auto 0 0 0;
   z-index: var(--z-lifted);
@@ -158,7 +163,7 @@
   background: var(--line);
 }
 
-.rail .run {
+.deck .rail .run {
   height: 100%;
   width: calc(var(--at, 0) * 100%);
   background: var(--accent);
@@ -303,7 +308,7 @@ body.deck-page {
 
   /* On paper the page is the stage, so nothing is scaled and nothing is pinned:
      the slides simply follow one another, a sheet each. */
-  .stage {
+  :is(.deck, .deck-frame) .stage {
     position: static;
     margin: 0;
     transform: none;
@@ -311,21 +316,21 @@ body.deck-page {
     page-break-after: always;
   }
 
-  .stage:last-of-type {
+  :is(.deck, .deck-frame) .stage:last-of-type {
     break-after: auto;
     page-break-after: auto;
   }
 
-  .slide {
+  :is(.deck, .deck-frame) .slide {
     animation: none;
   }
 
   /* Everything waiting for a click is out on paper: nobody presses a page. */
-  .slide #write li.fragment {
+  :is(.deck, .deck-frame) .slide #write li.fragment {
     opacity: 1;
   }
 
-  .rail,
+  .deck .rail,
   .deck .count,
   .deck .notes {
     display: none;
