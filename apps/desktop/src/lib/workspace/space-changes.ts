@@ -7,6 +7,7 @@ import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
+import { isUntouchedAgents } from '../agents-seed'
 import { isUntouchedWelcome } from '../welcome'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, loadSpaces, selectSpace } from './spaces'
@@ -107,6 +108,8 @@ export async function hasLocalContent(ws: HoldsSpaces): Promise<boolean> {
     // be the first thing a new reader ever sees - a warning that cannot be
     // undone, about the only note on screen. See welcome.ts and settling.ts.
     if (isUntouchedWelcome(note.path, doc)) continue
+    // Nor is the AGENTS.md a new space is made with; see agents-seed.ts.
+    if (isUntouchedAgents(note.path, doc)) continue
 
     return true
   }
