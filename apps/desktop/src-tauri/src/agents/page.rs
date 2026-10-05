@@ -854,9 +854,19 @@ impl Page<'_> {
         }
     }
 
-    /// One key or chord pressed inside the page. Refused where it would open a picker,
-    /// or type into a password field.
+    /// One key or chord pressed inside the page.
     pub fn press(&self, key: &Key) -> Result<(), Answer> {
+        self.may_press(key)?;
+        let before = self.navigations();
+        self.press_key(key)?;
+        self.settle(before);
+        Ok(())
+    }
+
+    /// Whether a key may go to the field that has the page's keyboard: never one that
+    /// would open a picker, and never a character into a password field - which in a
+    /// reader's tab may be the field the reader is typing their own password into.
+    fn may_press(&self, key: &Key) -> Result<(), Answer> {
         if let Some(facts) = self.active_facts()? {
             if facts.picker() && key.opens_a_picker() {
                 return Err(Answer::error(
@@ -864,16 +874,13 @@ impl Page<'_> {
                     "that key would open a list of the engine's own: use browser_select or browser_fill_form",
                 ));
             }
-            if facts.password() && key.text.is_some() {
+            if facts.password() && key.changes_words() {
                 return Err(Answer::error(
                     Code::PasswordField,
                     "the field with the keyboard is a password field: signing in is the reader's, ask with browser_takeover",
                 ));
             }
         }
-        let before = self.navigations();
-        self.press_key(key)?;
-        self.settle(before);
         Ok(())
     }
 
@@ -883,6 +890,7 @@ impl Page<'_> {
     /// submits the field's form, Tab moves along, Backspace and Delete delete - and its
     /// text is inserted as text.
     pub fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
+        self.may_press(key)?;
         let found = self.call(
             "Runtime.evaluate",
             &json!({ "expression": format!("{ACTIVE} || document.body"), "returnByValue": false }),

@@ -9,7 +9,7 @@
 //! | `grants` | who may drive nib and how far, and their tokens |
 //! | `policy` | what an agent may do, and what it asks first, read from the page |
 //! | `approvals` | the questions, and the reader's answers |
-//! | `limits`, `stop` | how fast, and the stop and every pause |
+//! | `limits`, `stop` | how fast, and the stop |
 //! | `log` | every call, written down |
 //! | `tabs`, `quiet` | the agent's own tabs nobody sees, and everything they may not do |
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
@@ -98,7 +98,7 @@ mod snapshot;
     not(any(windows, feature = "cef")),
     allow(
         dead_code,
-        reason = "only an engine with agent tabs has a tab to pause on"
+        reason = "only an engine with agent tabs has a call to stop"
     )
 )]
 mod stop;
@@ -377,8 +377,7 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
     #[cfg(not(any(windows, feature = "cef")))]
     let tabs = Vec::new();
     Answer::ok(verbs::Status {
-        paused: stop::stopped_for(&grant.id).then_some(verbs::PausedBy::Stop),
-        paused_tabs: stop::paused_tabs(&grant.id),
+        stopped: stop::stopped_for(&grant.id),
         tabs,
         approvals: approvals::pending(Some(&grant.id)),
         grant,
@@ -495,75 +494,19 @@ pub fn agents_stop(
     })
 }
 
-/// The reader taking one of their tabs from an agent on purpose (7.3): Take over in the
-/// tab's menu, which is a press in the page said in words, or Stop there, which ends the
-/// agent's work in that tab and tells it so. Given back with `agents_resume`.
-#[tauri::command]
-pub fn agents_pause(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: String,
-    tab: String,
-    stop: bool,
-) -> Result<(), String> {
-    from_the_app(&webview)?;
-    let by = if stop {
-        verbs::PausedBy::Stop
-    } else {
-        verbs::PausedBy::Reader
-    };
-    stop::pause(&app, &agent, &tab, by);
-    Ok(())
-}
-
-/// A pause given back by the reader: the stop's, when neither is named; one agent's on
-/// one tab; or all of one agent's.
+/// The stop lifted: everybody's when no agent is named, or one agent's own.
 #[tauri::command]
 pub fn agents_resume(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Option<String>,
-    tab: Option<String>,
 ) -> Result<(), String> {
     from_the_app(&webview)?;
-    stop::resume(&app, agent.as_deref(), tab.as_deref());
+    stop::resume(&app, agent.as_deref());
     Ok(())
 }
 
-/// What every probe build's identifier starts with (`scripts/probe_app.py`).
-const PROBE_IDENTIFIER: &str = "ch.emilvinu.nib.probe.";
-
-/// Whether a build answers test hooks: a debug build, or a probe's, which is built under
-/// an identifier of its own. The identifier is compiled into the build, so the app that
-/// ships, `ch.emilvinu.nib` from a release build, never answers one.
-fn test_hooks(identifier: &str, debug: bool) -> bool {
-    debug || identifier.starts_with(PROBE_IDENTIFIER)
-}
-
-/// A test hook, in debug and probe builds only: the reader taking the keyboard of one of
-/// their tabs, as the engine's `GotFocus` says it, without a press on this machine. It
-/// lets the harness prove the reader wins (7.3) with nobody's mouse or keyboard moved.
-#[tauri::command]
-pub fn agents_test_reader_focus(
-    webview: tauri::Webview,
-    app: AppHandle,
-    tab: String,
-) -> Result<(), String> {
-    from_the_app(&webview)?;
-    if !test_hooks(&app.config().identifier, cfg!(debug_assertions)) {
-        return Err("test hooks are only in debug and probe builds".into());
-    }
-    #[cfg(any(windows, feature = "cef"))]
-    return reader::focus_for_test(&app, &tab);
-    #[cfg(not(any(windows, feature = "cef")))]
-    {
-        let _ = (app, tab);
-        Err("the reader's tabs are not available on this engine yet".into())
-    }
-}
-
 /// The reader's answer to a question: Allow or Don't allow, and "Always on this site".
-/// A takeover answered is the reader handing the tab back.
 #[tauri::command(async)]
 pub fn agents_answer(
     webview: tauri::Webview,
@@ -583,11 +526,6 @@ pub fn agents_answer(
                     kept.push(category);
                 }
             });
-        }
-    }
-    if approval.category == Category::Takeover && approval.answer != ApprovalAnswer::Pending {
-        if let Some(tab) = &approval.tab {
-            stop::resume(&app, Some(&approval.agent), Some(tab));
         }
     }
     Ok(approval)
@@ -632,7 +570,7 @@ pub fn agents_ask(
 }
 
 /// Everything the activity panel draws from, at once: the agents, their tabs, the
-/// questions waiting and what is paused. The events keep it current after.
+/// questions waiting and who is stopped. The events keep it current after.
 #[tauri::command(async)]
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
     from_the_app(&webview)?;
@@ -649,21 +587,11 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
         .collect();
     #[cfg(not(any(windows, feature = "cef")))]
     let tabs = Vec::new();
-    let paused = agents
-        .iter()
-        .flat_map(|grant| {
-            stop::paused_tabs(&grant.id)
-                .into_iter()
-                .map(|tab| (grant.id.clone(), tab))
-                .collect::<Vec<_>>()
-        })
-        .collect();
     Ok(Overview {
         agents,
         tabs,
         approvals: approvals::pending(None),
         stopped: stop::stopped(),
-        paused,
         halted: stop::halted(),
         connected: shell::connected(),
     })
@@ -680,8 +608,6 @@ pub struct Overview {
     pub approvals: Vec<Approval>,
     /// Whether the stop is pressed.
     pub stopped: bool,
-    /// Every pause on one tab: the agent and the tab.
-    pub paused: Vec<(String, String)>,
     /// The agents stopped one at a time.
     pub halted: Vec<String>,
     /// The agents connected now.
@@ -790,15 +716,6 @@ mod tests {
 
         // The reader's own command line is not an agent.
         assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
-    }
-
-    #[test]
-    fn test_hooks_answer_in_debug_and_probe_builds_and_never_in_the_one_that_ships() {
-        assert!(test_hooks("ch.emilvinu.nib.probe.nightly", false));
-        assert!(test_hooks("ch.emilvinu.nib", true));
-        assert!(!test_hooks("ch.emilvinu.nib", false));
-        assert!(!test_hooks("ch.emilvinu.nib.probe", false));
-        assert!(!test_hooks("ch.emilvinu.nibprobe.x", false));
     }
 
     #[test]

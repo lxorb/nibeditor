@@ -1832,8 +1832,6 @@ export const ha: Dictionary = {
   'Stop agents': 'Dakatar da wakilai',
   Agents: 'Wakilai',
   'Always on this site': 'Koyaushe a wannan shafin',
-  'Give back': 'Mayar',
-  'Take over': 'Karɓi iko',
   'Agents stopped': 'An dakatar da wakilai',
   'Agent tabs closed': 'An rufe shafukan wakilai',
   'nibeditor is still running for your agents': 'nibeditor yana ci gaba da aiki don wakilanka',

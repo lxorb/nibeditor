@@ -20,10 +20,8 @@ export interface Source {
   state(): Promise<Overview>
   /** The stop for everyone, or one agent's. Answers whether the tabs were closed. */
   stop(agent?: string): Promise<boolean>
-  /** Gives back the stop, one agent's stop, or a pause on one tab. */
-  resume(agent?: string, tab?: string): Promise<void>
-  /** Pauses an agent on one tab: Take over, or Stop in the tab's menu. */
-  pause(agent: string, tab: string, stop: boolean): Promise<void>
+  /** Lifts the stop for everyone, or one agent's own. */
+  resume(agent?: string): Promise<void>
   /** The reader's answer to a question. */
   answer(id: string, allow: boolean, always: boolean): Promise<Approval>
   /** One day of the audit log, oldest first. */
@@ -47,12 +45,7 @@ export interface Source {
 export const crate: Source = {
   state: () => invoke<Overview>('agents_state'),
   stop: (agent) => invoke<boolean>('agents_stop', agent === undefined ? {} : { agent }),
-  resume: (agent, tab) =>
-    invoke('agents_resume', {
-      ...(agent === undefined ? {} : { agent }),
-      ...(tab === undefined ? {} : { tab }),
-    }),
-  pause: (agent, tab, stop) => invoke('agents_pause', { agent, tab, stop }),
+  resume: (agent) => invoke('agents_resume', agent === undefined ? {} : { agent }),
   answer: (id, allow, always) => invoke<Approval>('agents_answer', { id, allow, always }),
   log: (day) => invoke<unknown[]>('agents_log', { day }),
   adopt: (agentTab, tab) => invoke('agents_adopt', { agentTab, tab }),

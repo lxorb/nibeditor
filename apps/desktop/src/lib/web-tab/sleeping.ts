@@ -31,7 +31,7 @@ function resting(pages: Held): Resting[] {
       loading: page.loading,
       playing: page.playing,
       heard: page.heard,
-      acting: id in agentMarks.on,
+      acting: id in agentMarks.on || page.lent,
       calling: allowed('camera') || allowed('microphone'),
       notifying: allowed('notifications'),
       edited: page.edited,

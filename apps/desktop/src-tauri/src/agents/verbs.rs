@@ -551,7 +551,8 @@ pub struct Storage {
     pub cookie: Option<Cookie>,
 }
 
-/// `browser_takeover`: the reader asked to do one step in that tab.
+/// `browser_takeover`: the reader asked to do one step in that tab, which the agent
+/// keeps all the while.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Takeover {
@@ -715,9 +716,6 @@ pub enum Code {
     NoSuchTab,
     /// The element is gone, or never was: take a snapshot again.
     NoSuchRef,
-    /// The reader is using the tab. The reader's press on the agent's mark gives it
-    /// back.
-    PausedByReader,
     /// The stop was pressed.
     Stopped,
     /// A password field: signing in is a takeover (9.4).
@@ -1176,7 +1174,7 @@ pub enum ApprovalAnswer {
     Denied,
     /// Unanswered for a day.
     Expired,
-    /// A takeover the reader handed back.
+    /// A step the reader said they did.
     Done,
 }
 
@@ -1215,29 +1213,14 @@ pub struct ApprovalState {
     pub approval: Approval,
 }
 
-/// Why an agent is paused.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum PausedBy {
-    /// The reader pressed or typed in the tab (7.3).
-    Reader,
-    /// The reader took the tab over, or the agent asked them to.
-    Takeover,
-    /// The stop.
-    Stop,
-}
-
 /// `agent_status`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Status {
     /// The grant, as the settings pane shows it.
     pub grant: super::grants::Grant,
-    /// Whether everything this agent does is paused, and by what.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub paused: Option<PausedBy>,
-    /// The reader's tabs it is paused on.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub paused_tabs: Vec<TabId>,
+    /// Whether the reader stopped it: everybody, or this agent alone.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub stopped: bool,
     /// Its own tabs.
     pub tabs: Vec<AgentTab>,
     /// Its questions nobody has answered yet.
@@ -1271,23 +1254,15 @@ pub enum Event {
         /// The verb.
         verb: String,
     },
-    /// An agent is paused, on one tab or everywhere.
+    /// One agent stopped on its own.
     Paused {
         /// The agent.
         agent: String,
-        /// The tab; everywhere when there is none.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        tab: Option<TabId>,
-        /// By what.
-        by: PausedBy,
     },
-    /// The reader gave a paused tab back.
+    /// The stop lifted: one agent's, or everybody's when the agent is empty.
     Resumed {
         /// The agent.
         agent: String,
-        /// The tab; everywhere when there is none.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        tab: Option<TabId>,
     },
     /// A question for the reader.
     Asked {
@@ -1390,9 +1365,23 @@ pub mod window {
         ("recently_deleted", Some(Scope::Tree)),
     ];
 
-    /// The reader's web tabs with what only the window knows about them: which space,
-    /// whether in front, whether on screen. Answers `Vec<super::ReaderTab>`.
+    /// The reader's web tabs, of every space's set, with what only the window knows
+    /// about them: which space, whether in front, whether on screen. Answers
+    /// `Vec<super::ReaderTab>`.
     pub const READER_TABS: &str = "agent.reader_tabs";
+
+    /// A reader's tab lent to an agent: its page built if it has none (parked, or never
+    /// shown since a launch) and kept running out of sight - shown to the engine, outside
+    /// the window - while it is not on screen, until the agent's mark on it lapses. Takes
+    /// `Lend`, answers once the page is there.
+    pub const LEND: &str = "agent.lend";
+
+    /// `LEND`'s arguments.
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    pub struct Lend {
+        /// The reader's tab.
+        pub tab: String,
+    }
 
     /// Which store the reader's tabs of a space use for an address, as `web-data.ts`
     /// decides. Takes `StoreAsk`, answers `StoreSaid`.
@@ -1594,14 +1583,14 @@ mod tests {
             url: "https://shop.example/".into(),
             open_ms: 12,
         };
-        let said = Answer::error(Code::PausedByReader, "the reader is using this tab")
-            .with_dialog(Some(dialog));
+        let said =
+            Answer::error(Code::Stopped, "the reader pressed the stop").with_dialog(Some(dialog));
         assert_eq!(
             serde_json::to_value(&said).expect("json"),
             json!({
                 "status": "error",
-                "code": "paused_by_reader",
-                "message": "the reader is using this tab",
+                "code": "stopped",
+                "message": "the reader pressed the stop",
                 "dialog": { "kind": "confirm", "message": "Delete this?", "url": "https://shop.example/", "open_ms": 12 },
             })
         );
@@ -1611,12 +1600,10 @@ mod tests {
     fn an_event_says_its_kind() {
         let event = Event::Paused {
             agent: "claude-code".into(),
-            tab: Some("t4".into()),
-            by: PausedBy::Reader,
         };
         assert_eq!(
             serde_json::to_value(&event).expect("json"),
-            json!({ "kind": "paused", "agent": "claude-code", "tab": "t4", "by": "reader" })
+            json!({ "kind": "paused", "agent": "claude-code" })
         );
         assert_eq!(
             serde_json::to_value(Event::Stopped { closed: false }).expect("json"),

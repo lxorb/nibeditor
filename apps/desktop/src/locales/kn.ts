@@ -1821,8 +1821,6 @@ export const kn: Dictionary = {
   'Stop agents': 'ಏಜೆಂಟ್‌ಗಳನ್ನು ನಿಲ್ಲಿಸಿ',
   Agents: 'ಏಜೆಂಟ್‌ಗಳು',
   'Always on this site': 'ಈ ಸೈಟ್‌ನಲ್ಲಿ ಯಾವಾಗಲೂ',
-  'Give back': 'ಹಿಂತಿರುಗಿಸಿ',
-  'Take over': 'ನಿಯಂತ್ರಣ ತೆಗೆದುಕೊಳ್ಳಿ',
   'Agents stopped': 'ಏಜೆಂಟ್‌ಗಳನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ',
   'Agent tabs closed': 'ಏಜೆಂಟ್ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
   'nibeditor is still running for your agents': 'ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳಿಗಾಗಿ nibeditor ಇನ್ನೂ ಚಾಲನೆಯಲ್ಲಿದೆ',

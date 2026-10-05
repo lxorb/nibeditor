@@ -4,7 +4,7 @@ import type { AgentEvent, Overview } from '../verbs'
 import { ACTIVE_FOR, nextLapse, sameMarks, wornAt } from './marks'
 import { heard, nothing, overviewed, type Seen, wrote } from './seen'
 
-/** The frame and the tab mark are three states said with a colour: acting, paused,
+/** The frame and the tab mark are three states said with a colour: acting, stopped,
  *  none. These walk a tab through each way in and out of them, event by event, the way
  *  the crate says them. */
 
@@ -23,34 +23,26 @@ describe('a reader tab an agent acts in', () => {
     const seen = after([acting])
 
     expect(wornAt(seen, 1000, colour)).toEqual({
-      t1: { agent: 'claude', colour: 'colour-of-claude', paused: false },
+      t1: { agent: 'claude', colour: 'colour-of-claude', stopped: false },
     })
   })
 
   test('lets go once nothing has called on it for a while, and not before', () => {
     const seen = after([acting])
 
-    expect(wornAt(seen, 1000 + ACTIVE_FOR - 1, colour).t1?.paused).toBe(false)
+    expect(wornAt(seen, 1000 + ACTIVE_FOR - 1, colour).t1?.stopped).toBe(false)
     expect(wornAt(seen, 1000 + ACTIVE_FOR, colour)).toEqual({})
     expect(nextLapse(seen, 1000)).toBe(1000 + ACTIVE_FOR)
     expect(nextLapse(seen, 1000 + ACTIVE_FOR)).toBeNull()
   })
 
-  test('goes muted when the reader takes it, and stays so until given back', () => {
-    const seen = after([acting, { kind: 'paused', agent: 'claude', tab: 't1', by: 'reader' }])
+  test('keeps acting whatever the reader does there: nothing they do takes it', () => {
+    const seen = after([acting])
 
-    expect(wornAt(seen, 1001, colour).t1?.paused).toBe(true)
-    // Nothing gives it back by itself: an hour later it is still waiting for the press.
-    expect(wornAt(seen, 1001 + 60 * 60 * 1000, colour).t1?.paused).toBe(true)
-
-    heard(seen, { kind: 'resumed', agent: 'claude', tab: 't1' }, 2000)
-    expect(wornAt(seen, 2000, colour).t1?.paused).toBe(false)
-  })
-
-  test('a takeover pauses it the same way', () => {
-    const seen = after([acting, { kind: 'paused', agent: 'claude', tab: 't1', by: 'takeover' }])
-
-    expect(wornAt(seen, 1001, colour).t1?.paused).toBe(true)
+    // The reader pressed and typed in the page meanwhile, which the crate does not even
+    // say: the mark is the agent's for as long as it keeps calling.
+    heard(seen, { ...acting, verb: 'browser_type' }, 1000 + ACTIVE_FOR - 1)
+    expect(wornAt(seen, 1000 + ACTIVE_FOR + 10, colour).t1?.stopped).toBe(false)
   })
 
   test('the stop mutes every tab that was being acted in, and only those', () => {
@@ -61,7 +53,7 @@ describe('a reader tab an agent acts in', () => {
     heard(seen, { kind: 'stopped', closed: false }, ACTIVE_FOR + 20)
 
     const worn = wornAt(seen, ACTIVE_FOR * 10, colour)
-    expect(worn.t1?.paused).toBe(true)
+    expect(worn.t1?.stopped).toBe(true)
     expect(worn.old).toBeUndefined()
 
     heard(seen, { kind: 'resumed', agent: '' }, ACTIVE_FOR * 10)
@@ -72,21 +64,21 @@ describe('a reader tab an agent acts in', () => {
     const seen = after([
       acting,
       { kind: 'acting', agent: 'codex', tab: 't2', verb: 'browser_type' },
-      { kind: 'paused', agent: 'claude', by: 'stop' },
+      { kind: 'paused', agent: 'claude' },
     ])
 
     const worn = wornAt(seen, 1010, colour)
-    expect(worn.t1?.paused).toBe(true)
-    expect(worn.t2?.paused).toBe(false)
+    expect(worn.t1?.stopped).toBe(true)
+    expect(worn.t2?.stopped).toBe(false)
 
     heard(seen, { kind: 'resumed', agent: 'claude' }, 1020)
-    expect(wornAt(seen, 1020, colour).t1?.paused).toBe(false)
+    expect(wornAt(seen, 1020, colour).t1?.stopped).toBe(false)
   })
 
-  test('a tab that closed wears nothing, pause and all', () => {
+  test('a tab that closed wears nothing, stop and all', () => {
     const seen = after([
       acting,
-      { kind: 'paused', agent: 'claude', tab: 't1', by: 'reader' },
+      { kind: 'paused', agent: 'claude' },
       { kind: 'closed', agent: 'claude', id: 't1' },
     ])
 
@@ -137,26 +129,19 @@ describe('a note an agent writes in', () => {
 })
 
 describe('the overview', () => {
-  test('puts back the pauses and the stop a window finds on arriving', () => {
+  test('puts back who is stopped, and when, for a window arriving', () => {
     const overview: Overview = {
       agents: [],
       tabs: [],
       approvals: [],
       stopped: false,
-      paused: [['claude', 't9']],
-      halted: [],
+      halted: ['claude'],
       connected: ['claude'],
     }
     const seen = nothing()
     overviewed(seen, overview, 100)
 
-    // Nothing had been seen acting there, and the pause still wants its mark to be
-    // given back with.
-    expect(wornAt(seen, 100, colour).t9).toEqual({
-      agent: 'claude',
-      colour: 'colour-of-claude',
-      paused: true,
-    })
+    expect(seen.halted).toEqual({ claude: 100 })
     expect(seen.connected).toEqual(['claude'])
   })
 
@@ -201,9 +186,9 @@ describe('the overview', () => {
 })
 
 test('marks are only written again when one of them changed', () => {
-  const one = { t1: { agent: 'a', colour: 'c', paused: false } }
+  const one = { t1: { agent: 'a', colour: 'c', stopped: false } }
 
-  expect(sameMarks(one, { t1: { agent: 'a', colour: 'c', paused: false } })).toBe(true)
-  expect(sameMarks(one, { t1: { agent: 'a', colour: 'c', paused: true } })).toBe(false)
+  expect(sameMarks(one, { t1: { agent: 'a', colour: 'c', stopped: false } })).toBe(true)
+  expect(sameMarks(one, { t1: { agent: 'a', colour: 'c', stopped: true } })).toBe(false)
   expect(sameMarks(one, {})).toBe(false)
 })

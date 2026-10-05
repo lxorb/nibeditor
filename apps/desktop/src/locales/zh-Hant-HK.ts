@@ -1764,8 +1764,6 @@ export const zhHantHK: Dictionary = {
   'Stop agents': '停止代理',
   Agents: '代理',
   'Always on this site': '在此網站一律',
-  'Give back': '交還',
-  'Take over': '接管',
   'Agents stopped': '已停止代理',
   'Agent tabs closed': '已關閉代理分頁',
   'nibeditor is still running for your agents': 'nibeditor 仍在為你的代理運作',

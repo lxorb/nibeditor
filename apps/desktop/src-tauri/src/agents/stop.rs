@@ -1,39 +1,35 @@
-//! The stop, and every other reason an agent is not acting (docs/agent-native.md 7.3,
-//! 9.5).
+//! The stop (docs/agent-native.md 9.5).
 //!
 //! **The stop** cancels every call in flight, pauses every agent and says so; the tabs
 //! are kept so what happened can be looked at, and a second stop closes them. The key
 //! that presses it from any app is the activity lane's, in the keyboard registry; this
 //! is `agents_stop`, which that key, the tray's row and every indicator's Stop call.
 //!
-//! **The reader** pauses an agent on one of their own tabs by pressing or typing in it,
-//! and a takeover pauses it on the tab the reader is doing a step in. Nothing gives a
-//! pause back by itself (open question 5): the reader's press on the agent's mark does,
-//! which is `agents_resume`.
+//! **One agent** can be stopped too, from its row in the activity panel or the menu of a
+//! tab it is acting in: its next call is refused as a stopped call is, and every other
+//! agent carries on. What it has in flight finishes, because the count below is
+//! everybody's.
+//!
+//! Nothing else pauses an agent. The reader pressing, scrolling or typing in a tab an
+//! agent is acting in takes nothing from it (7.3): both act on the one page, and the
+//! agent reads the page as it then is.
 //!
 //! A call in flight is cancelled by the count it started under changing: every wait in
 //! a call asks `cancelled` between its steps, so a stop is felt within one step.
-//!
-//! **One agent** can be stopped too, from its row in the activity panel: its next call
-//! is refused as a stopped call is, and every other agent carries on. What it has in
-//! flight finishes, because the count above is everybody's.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Emitter as _};
 
-use super::verbs::{Event, PausedBy, EVENT};
+use super::verbs::{Event, EVENT};
 
 /// Which stop the app is on; a call remembers the one it started under.
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 
 /// Whether every agent is paused by the stop.
 static STOPPED: AtomicBool = AtomicBool::new(false);
-
-/// Pauses on single tabs: (agent, tab) and why.
-static PAUSED: Mutex<Option<HashMap<(String, String), PausedBy>>> = Mutex::new(None);
 
 /// The agents stopped one at a time.
 static HALTED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
@@ -73,7 +69,7 @@ pub fn halted() -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Stops one agent, and says so: its next call is refused until it is given back.
+/// Stops one agent, and says so: its next call is refused until it is resumed.
 pub fn halt(app: &AppHandle, agent: &str) {
     let fresh = HALTED
         .lock()
@@ -85,63 +81,8 @@ pub fn halt(app: &AppHandle, agent: &str) {
             EVENT,
             Event::Paused {
                 agent: agent.to_string(),
-                tab: None,
-                by: PausedBy::Stop,
             },
         );
-    }
-}
-
-/// Why an agent is paused on a tab, if it is.
-pub fn paused_on(agent: &str, tab: &str) -> Option<PausedBy> {
-    PAUSED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()?
-        .get(&(agent.to_string(), tab.to_string()))
-        .copied()
-}
-
-/// The tabs an agent is paused on.
-pub fn paused_tabs(agent: &str) -> Vec<String> {
-    PAUSED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()
-        .map(|all| {
-            all.keys()
-                .filter(|(one, _)| one == agent)
-                .map(|(_, tab)| tab.clone())
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-/// Pauses an agent on one tab, and says so. Once: a pause that is already there is not
-/// said again.
-pub fn pause(app: &AppHandle, agent: &str, tab: &str, by: PausedBy) {
-    let fresh = PAUSED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .get_or_insert_with(HashMap::new)
-        .insert((agent.to_string(), tab.to_string()), by)
-        .is_none();
-    if fresh {
-        let _ = app.emit(
-            EVENT,
-            Event::Paused {
-                agent: agent.to_string(),
-                tab: Some(tab.to_string()),
-                by,
-            },
-        );
-    }
-}
-
-/// Every agent paused on a tab by the reader: the agents acting there.
-pub fn reader_took(app: &AppHandle, tab: &str, agents: &[String]) {
-    for agent in agents {
-        pause(app, agent, tab, PausedBy::Reader);
     }
 }
 
@@ -159,10 +100,9 @@ pub fn stop(app: &AppHandle) -> bool {
     again
 }
 
-/// Gives a pause back: the stop's and everything under it, or one agent's on one tab,
-/// or all of one agent's, its own stop included.
-pub fn resume(app: &AppHandle, agent: Option<&str>, tab: Option<&str>) {
-    if tab.is_none() {
+/// Resumes: the stop and every agent's own, or one agent's own.
+pub fn resume(app: &AppHandle, agent: Option<&str>) {
+    {
         let mut halted = HALTED.lock().unwrap_or_else(PoisonError::into_inner);
         match (agent, halted.as_mut()) {
             (None, _) => {
@@ -175,64 +115,12 @@ pub fn resume(app: &AppHandle, agent: Option<&str>, tab: Option<&str>) {
             (Some(_), None) => {}
         }
     }
-    let given: Vec<(String, String)> = {
-        let mut held = PAUSED.lock().unwrap_or_else(PoisonError::into_inner);
-        let Some(all) = held.as_mut() else {
-            return said_resumed(app, agent, tab, &[]);
-        };
-        let matching: Vec<(String, String)> = all
-            .keys()
-            .filter(|(one, on)| {
-                agent.is_none_or(|agent| agent == one) && tab.is_none_or(|tab| tab == on)
-            })
-            .cloned()
-            .collect();
-        for key in &matching {
-            all.remove(key);
-        }
-        matching
-    };
-    said_resumed(app, agent, tab, &given);
-}
-
-/// Says what was given back: each tab's pause, and the stop - everybody's, or one
-/// agent's - whenever no tab was named, so a window that only heard the stop hears it
-/// lifted.
-fn said_resumed(
-    app: &AppHandle,
-    agent: Option<&str>,
-    tab: Option<&str>,
-    given: &[(String, String)],
-) {
-    for (agent, tab) in given {
-        let _ = app.emit(
-            EVENT,
-            Event::Resumed {
-                agent: agent.clone(),
-                tab: Some(tab.clone()),
-            },
-        );
-    }
-    if tab.is_none() || given.is_empty() {
-        let _ = app.emit(
-            EVENT,
-            Event::Resumed {
-                agent: agent.unwrap_or_default().to_string(),
-                tab: tab.map(str::to_string),
-            },
-        );
-    }
-}
-
-/// Forgets every pause on a tab that closed.
-pub fn tab_gone(tab: &str) {
-    if let Some(all) = PAUSED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
-        all.retain(|(_, on), _| on != tab);
-    }
+    let _ = app.emit(
+        EVENT,
+        Event::Resumed {
+            agent: agent.unwrap_or_default().to_string(),
+        },
+    );
 }
 
 #[cfg(test)]
@@ -265,20 +153,5 @@ mod tests {
             all.remove("halting");
         }
         assert!(!stopped_for("halting"));
-    }
-
-    #[test]
-    fn a_pause_is_per_agent_and_tab_until_given_back() {
-        PAUSED
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get_or_insert_with(HashMap::new)
-            .insert(("pausing".into(), "t1".into()), PausedBy::Reader);
-        assert_eq!(paused_on("pausing", "t1"), Some(PausedBy::Reader));
-        assert_eq!(paused_on("pausing", "t2"), None);
-        assert_eq!(paused_on("other", "t1"), None);
-        assert_eq!(paused_tabs("pausing"), ["t1"]);
-        tab_gone("t1");
-        assert_eq!(paused_on("pausing", "t1"), None);
     }
 }

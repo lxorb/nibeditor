@@ -1793,8 +1793,6 @@ export const my: Dictionary = {
   'Stop agents': 'အေးဂျင့်များကို ရပ်ရန်',
   Agents: 'အေးဂျင့်များ',
   'Always on this site': 'ဤဆိုက်တွင် အမြဲ',
-  'Give back': 'ပြန်ပေးရန်',
-  'Take over': 'ထိန်းချုပ်မှု ယူရန်',
   'Agents stopped': 'အေးဂျင့်များ ရပ်လိုက်ပြီ',
   'Agent tabs closed': 'အေးဂျင့် တက်ဘ်များ ပိတ်လိုက်ပြီ',
   'nibeditor is still running for your agents': 'သင့်အေးဂျင့်များအတွက် nibeditor ဆက်လည်ပတ်နေသည်',

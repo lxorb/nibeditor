@@ -12,11 +12,7 @@ describe('the crate news, read', () => {
       tab: 't',
       verb: 'browser_click',
     })
-    expect(readEvent({ kind: 'paused', agent: 'a', by: 'stop' })).toEqual({
-      kind: 'paused',
-      agent: 'a',
-      by: 'stop',
-    })
+    expect(readEvent({ kind: 'paused', agent: 'a' })).toEqual({ kind: 'paused', agent: 'a' })
     expect(readEvent({ kind: 'resumed', agent: '' })).toEqual({ kind: 'resumed', agent: '' })
     expect(readEvent({ kind: 'stopped', closed: true })).toEqual({ kind: 'stopped', closed: true })
     expect(readEvent({ kind: 'connected', agents: ['a', 'b'] })).toEqual({
@@ -33,7 +29,7 @@ describe('the crate news, read', () => {
   test('drops what it does not know rather than half applying it', () => {
     expect(readEvent(null)).toBeNull()
     expect(readEvent({ kind: 'acting', agent: 'a' })).toBeNull()
-    expect(readEvent({ kind: 'paused', agent: 'a', by: 'somebody' })).toBeNull()
+    expect(readEvent({ kind: 'paused', by: 'stop' })).toBeNull()
     expect(readEvent({ kind: 'connected', agents: ['a', 3] })).toBeNull()
     expect(readEvent({ kind: 'asked', approval: { id: 'q1' } })).toBeNull()
     expect(readEvent({ kind: 'something new' })).toBeNull()

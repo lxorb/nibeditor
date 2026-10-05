@@ -771,14 +771,6 @@ mod native {
 pub use native::chromium_page;
 pub use native::page;
 
-/// Which page of a window has the keyboard, as this platform can say it: the reader's
-/// side of an agent acting in their tab, on an engine with no focus event for a page
-/// (agents/reader.rs). On the window's own thread.
-#[cfg(feature = "cef")]
-pub fn page_holding(window: &str) -> Option<String> {
-    native::holding(window)
-}
-
 #[cfg(test)]
 mod tests {
     use super::{moment, Back, Homes, Moment, OWED_MS};

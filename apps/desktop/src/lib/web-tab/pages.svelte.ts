@@ -80,7 +80,7 @@ function sleeping() {
 }
 
 /** How far outside the window a page is put while it waits to be hidden; see `aside`. */
-const OUT_OF_THE_WAY = 20_000
+export const OUT_OF_THE_WAY = 20_000
 
 /** How long a still picture of a page stands for the page. Under half a second, so
  *  two overlays in a row share one and a page that has scrolled since is
@@ -484,6 +484,9 @@ export class Page {
   /** Whether the tab is on screen in its pane, page or no page. Not drawn. */
   onScreen = false
 
+  /** An agent is at work in it: out of sight, never hidden. See lending.ts. */
+  lent = false
+
   /** What the engine says beside where the page is; see heard.ts. */
   playing = $state(false)
   muted = $state(false)
@@ -641,7 +644,7 @@ class Pages {
    *  to have been switched away from, or for the tab to have been closed. None of
    *  those used to be possible - the command was answered inline, which is what froze
    *  the window - so all three are answered here now. */
-  private async build(
+  async build(
     tabId: string,
     page: Page,
     pane: Rect,
@@ -939,7 +942,7 @@ class Pages {
     page.onScreen = false
     page.looked = Date.now()
 
-    if (isDesktop && page.live && page.shooting) void this.aside(tabId, page, pane)
+    if (isDesktop && page.live && (page.shooting || page.lent)) void this.aside(tabId, page, pane)
     else void this.place(tabId, pane, false)
     if (!isDesktop) return
 
@@ -956,11 +959,11 @@ class Pages {
    *  measured with scripts/no-reload-probe.py. Hidden after the picture it freezes. So
    *  the page leaves the pane at once - placed far outside the window, which draws none
    *  of it - and is hidden the moment the picture is in, unless it was shown again. */
-  private async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
+  async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
     const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
     await this.put(tabId, page, { pane: away, visible: true, frame: null, cut: null, away: true })
     await page.shooting
-    if (!page.onScreen) await this.place(tabId, pane, false)
+    if (!page.onScreen && !page.lent) await this.place(tabId, pane, false)
   }
 
   private async rest(tabId: string): Promise<void> {
@@ -970,7 +973,7 @@ class Pages {
   /** Freezes a page out of sight, whatever it is doing: Hidden tabs' Pause. */
   freeze(tabId: string) {
     const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live || page.frozen || page.onScreen) return
+    if (!isDesktop || !page?.live || page.frozen || page.onScreen || page.lent) return
     page.frozen = true
     void sleeping().then((one) => one.lull(this, tabId, page, true))
   }
@@ -985,14 +988,6 @@ class Pages {
     const thawed = (await sleeping()).lull(this, tabId, page, false)
     if (!page.onScreen) void this.rest(tabId)
     return thawed
-  }
-
-  /** The crate woke a frozen page for an agent acting in it; see web_pause.rs. */
-  woken(tabId: string) {
-    const page = this.held.get(tabId)
-    if (!page?.frozen) return
-    page.frozen = false
-    void this.rest(tabId)
   }
 
   /** Memory saver changed: every page is judged by it again. */

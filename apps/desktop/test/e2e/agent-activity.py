@@ -121,13 +121,13 @@ def drive(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the turning mark")
     shot(page, f"{scheme}-01-acting")
 
-    # The reader takes the tab: both go muted, and a press on the mark gives it back.
-    fake(page, f"readerTook('{AGENT}', '{tab}')")
+    # The reader stops the agent: both go muted, and a press on the mark resumes it.
+    fake(page, f"stop('{AGENT}')")
     wait_for(page, "document.querySelector('.web .card.acted.resting')", "the muted frame")
     wait_for(page, "document.querySelector('.tab .mark.agent.resting')", "the still mark")
-    shot(page, f"{scheme}-02-paused")
+    shot(page, f"{scheme}-02-stopped")
     page.click(".tab .mark.agent")
-    if not wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the mark given back"):
+    if not wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the mark resumed"):
         say(f"asked: {page.evaluate('() => window.__fake.asked.slice(-3)')}")
 
     # The activity panel: an agent tab of its own, a picture of it, and a question.
@@ -168,7 +168,7 @@ def drive(page: Page, scheme: str) -> None:
     if not answered or answered[-1]["args"][1] is not True:
         wrong(f"Allow sent {answered}")
 
-    # A takeover: the agent's line under the tab's bar, and Done.
+    # A step asked of the reader: the agent's line under the tab's bar, and Done.
     fake(
         page,
         f"ask('{AGENT}', 'takeover', 'Sign in to finish the order', 'https://shop.example/', '{tab}')",
@@ -176,7 +176,7 @@ def drive(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.takeover')", "the takeover's line")
     shot(page, f"{scheme}-04-takeover")
     page.click(".takeover .nib-button")
-    wait_for(page, "!document.querySelector('.takeover')", "the takeover handed back")
+    wait_for(page, "!document.querySelector('.takeover')", "the step said done")
 
     # A client asking to connect.
     fake(page, "pair('Codex')")

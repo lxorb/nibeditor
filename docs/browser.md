@@ -1088,6 +1088,18 @@ Saying so is better than a switch that looks like it works.
 
 ---
 
+### Agents in the reader's tabs
+
+An agent drives any web tab of any space through the engine's own protocol, on both engines
+alike (docs/agent-native.md 7.3): the reader and the agent share the tab, and nothing the
+reader does in it - a press, a scroll, a key - takes it from the agent; the stop does. A tab
+an agent acts in that is not on screen - behind another, in a space out of sight, parked -
+is lent to it: its page built or thawed and placed outside the window, shown to the engine
+and never on a screen, the way a page being photographed as its tab is left already is
+(`lend` in `lib/web-tab/pages.svelte.ts`), and hidden again when the agent's mark lapses.
+No key reaches a reader's page through the engine (the page-first keys would hand it to the
+window), and no page is ever asked which of them has the keyboard on an agent's behalf.
+
 ## 6. Privacy
 
 Most of this is section 5 read from the other end, and it is short because the

@@ -1783,8 +1783,6 @@ export const ko: Dictionary = {
   'Stop agents': '에이전트 중지',
   Agents: '에이전트',
   'Always on this site': '이 사이트에서 항상',
-  'Give back': '돌려주기',
-  'Take over': '직접 제어',
   'Agents stopped': '에이전트가 중지됨',
   'Agent tabs closed': '에이전트 탭이 닫힘',
   'nibeditor is still running for your agents': '에이전트를 위해 nibeditor가 계속 실행 중입니다',

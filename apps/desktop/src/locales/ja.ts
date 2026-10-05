@@ -1797,8 +1797,6 @@ export const ja: Dictionary = {
   'Stop agents': 'エージェントを停止',
   Agents: 'エージェント',
   'Always on this site': 'このサイトでは常に',
-  'Give back': '返す',
-  'Take over': '引き継ぐ',
   'Agents stopped': 'エージェントを停止しました',
   'Agent tabs closed': 'エージェントのタブを閉じました',
   'nibeditor is still running for your agents': 'nibeditor はエージェントのために動き続けています',

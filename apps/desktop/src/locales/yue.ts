@@ -1763,8 +1763,6 @@ export const yue: Dictionary = {
   'Stop agents': '停晒啲代理',
   Agents: '代理',
   'Always on this site': '喺呢個網站一直咁做',
-  'Give back': '交返畀佢',
-  'Take over': '由我嚟控制',
   'Agents stopped': '啲代理停咗',
   'Agent tabs closed': '代理嘅分頁閂咗',
   'nibeditor is still running for your agents': 'nibeditor 仲喺度幫你啲代理做嘢',

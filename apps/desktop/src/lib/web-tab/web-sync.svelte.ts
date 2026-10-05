@@ -72,7 +72,7 @@ async function begin(): Promise<void> {
     busy: () =>
       pages.each().some(([, page]) => page.playing) ||
       agentMarks.holding ||
-      Object.values(agentMarks.on).some((one) => !one.paused),
+      Object.values(agentMarks.on).some((one) => !one.stopped),
     listen: listenForInput,
     every: (ms, tick) => {
       const timer = setInterval(tick, ms)

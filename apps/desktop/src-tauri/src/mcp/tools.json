@@ -7,7 +7,7 @@
   },
   {
     "name": "agent_status",
-    "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are paused.",
+    "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are stopped.",
     "inputSchema": { "type": "object", "properties": {} },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
@@ -25,7 +25,7 @@
   },
   {
     "name": "browser_tabs",
-    "description": "The reader's web tabs (with browser.reader) and your own tabs: id, address, title. An id is the `tab` of every other browser tool.",
+    "description": "The reader's web tabs in every space (with browser.reader) and your own: id, address, title, space. An id is the `tab` of every other browser tool; the reader may use a tab while you do.",
     "inputSchema": { "type": "object", "properties": {} },
     "annotations": { "readOnlyHint": true }
   },
@@ -393,7 +393,7 @@
   },
   {
     "name": "browser_takeover",
-    "description": "Ask the reader to do one step in a tab: sign in, a captcha, a payment. `reason` is the one line they read. Answers needs_approval; approval_status says done once they hand the tab back.",
+    "description": "Ask the reader to do one step in a tab: sign in, a captcha, a payment. `reason` is the one line they read. The tab stays yours: browser_wait for the page to change, or approval_status says done.",
     "inputSchema": {
       "type": "object",
       "properties": { "tab": { "type": "string" }, "reason": { "type": "string" } },

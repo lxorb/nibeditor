@@ -115,7 +115,9 @@ const workspace = {
     return treeOf(this.activeSpace?.root ?? '')
   },
   tabs,
-  panes: { focusedId: 'p1' },
+  // p3 is a pane of a set out of sight: another space's own tabs.
+  panes: { focusedId: 'p1', at: (id: string) => (id === 'p3' ? null : { id }) },
+  spaceOf: (note: { home?: string }) => note.home ?? 'work',
   activeTabId: 't1',
   previewTabId: null,
   outside: (path: string) =>
@@ -344,8 +346,14 @@ vi.mock('../../commands', () => ({
 }))
 const ran: string[] = []
 
+/** The page a lent tab has, as the pages store keeps it. */
+const lentPage: Record<string, unknown> = { url: null, space: null }
+const lending = { lend: vi.fn(() => Promise.resolve()), unlend: vi.fn() }
+vi.mock('../../web-tab/lending', () => lending)
+
 vi.mock('../../web-tab/pages.svelte', () => ({
   pages: {
+    of: () => lentPage,
     addressOf: () => 'https://docs.example/a',
     read: () =>
       Promise.resolve({
@@ -978,9 +986,9 @@ describe('a page into a note', () => {
     expect(saved()).toBeUndefined()
     expect(files.has('/s/Work/A page.md')).toBe(false)
 
-    captured = { status: 'error', code: 'paused_by_reader', message: 'the reader is using it' }
+    captured = { status: 'error', code: 'stopped', message: 'the reader pressed the stop' }
     expect(await call('capture_to_note', { tab: 'w1', as: 'clip' })).toMatchObject({
-      code: 'paused_by_reader',
+      code: 'stopped',
     })
   })
 
@@ -1082,17 +1090,56 @@ describe('the log into a note', () => {
 })
 
 describe('what the crate asks', () => {
-  test('the reader web tabs, with their space and whether in front', async () => {
-    expect(await answerTheCrate('agent.reader_tabs', {})).toEqual([
-      {
-        id: 'w1',
-        title: 'Docs',
-        url: 'https://docs.example/a',
-        space: 'Work',
-        front: false,
-        on_screen: true,
-      },
-    ])
+  test('the reader web tabs of every space, with their space and whether in front', async () => {
+    const away = {
+      id: 'w2',
+      kind: 'web',
+      path: '/s/Home/Bank.url',
+      paneId: 'p3',
+      pinned: false,
+      shown: 'Bank',
+      note: { live: { readerAt: null }, shared: null, home: 'home' },
+    }
+    tabs.push(away)
+    try {
+      expect(await answerTheCrate('agent.reader_tabs', {})).toEqual([
+        {
+          id: 'w1',
+          title: 'Docs',
+          url: 'https://docs.example/a',
+          space: 'Work',
+          front: false,
+          on_screen: true,
+        },
+        // In a set out of sight, and as much the reader's as one on screen.
+        {
+          id: 'w2',
+          title: 'Bank',
+          url: 'https://docs.example/a',
+          space: 'Home',
+          front: false,
+          on_screen: false,
+        },
+      ])
+    } finally {
+      tabs.pop()
+    }
+  })
+
+  test('a reader web tab lent to an agent, with what its pane would have told its page', async () => {
+    expect(await answerTheCrate('agent.lend', { tab: 'w1' })).toBeNull()
+    expect(lending.lend).toHaveBeenCalledWith('w1')
+    expect(lentPage).toMatchObject({
+      url: 'https://docs.example/',
+      space: 'work',
+      path: '/s/Work/Docs.url',
+    })
+
+    // Not a web tab, or no tab at all: nothing is lent.
+    lending.lend.mockClear()
+    await answerTheCrate('agent.lend', { tab: 't1' })
+    await answerTheCrate('agent.lend', { tab: 'gone' })
+    expect(lending.lend).not.toHaveBeenCalled()
   })
 
   test('which store a space keeps a site in, and a page as the clipper words it', async () => {

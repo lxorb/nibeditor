@@ -62,6 +62,16 @@ impl Key {
             || (matches!(self.name.as_str(), "ArrowDown" | "ArrowUp") && self.modifiers & ALT != 0)
     }
 
+    /// Whether this press changes the words of the field it lands in: anything that
+    /// types, a delete either way, and a paste or a cut. Never into a password field
+    /// (9.4), which in a reader's tab may be the one they are typing into.
+    pub fn changes_words(&self) -> bool {
+        self.text.is_some()
+            || matches!(self.name.as_str(), "Backspace" | "Delete")
+            || (self.modifiers & (CONTROL | META) != 0
+                && matches!(self.name.to_ascii_lowercase().as_str(), "v" | "x"))
+    }
+
     /// Whether this press submits the form the field is in.
     pub fn submits(&self) -> bool {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
@@ -201,6 +211,31 @@ fn character(name: &str) -> Option<Key> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn what_changes_a_fields_words_is_told_from_what_moves_about() {
+        for words in [
+            "a",
+            "Shift+B",
+            "Enter",
+            "Backspace",
+            "Delete",
+            "Control+V",
+            "Meta+x",
+        ] {
+            assert!(chord(words).expect(words).changes_words(), "{words}");
+        }
+        for moving in [
+            "Tab",
+            "Shift+Tab",
+            "Escape",
+            "ArrowDown",
+            "Control+A",
+            "Control+C",
+        ] {
+            assert!(!chord(moving).expect(moving).changes_words(), "{moving}");
+        }
+    }
 
     #[test]
     fn enter_types_a_return_and_submits() {

@@ -879,7 +879,7 @@
     <div
       class="hole"
       class:acted={worn !== null}
-      class:resting={worn?.paused}
+      class:resting={worn?.stopped}
       style:--agent={worn?.colour}
       class:still={page.shot !== null}
       style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
@@ -897,7 +897,7 @@
       data-web-tab={tab.id}
       onload={() => landed(tab.id)}
       class:acted={worn !== null}
-      class:resting={worn?.paused}
+      class:resting={worn?.stopped}
       style:--agent={worn?.colour}
       title={page.title || plainOrigin(address)}
       src={address}
@@ -917,7 +917,7 @@
     <div
       class="card"
       class:acted={worn !== null}
-      class:resting={worn?.paused}
+      class:resting={worn?.stopped}
       style:--agent={worn?.colour}
     >
       {#if address}

@@ -1812,8 +1812,6 @@ export const te: Dictionary = {
   'Stop agents': 'ఏజెంట్లను ఆపు',
   Agents: 'ఏజెంట్లు',
   'Always on this site': 'ఈ సైట్‌లో ఎల్లప్పుడూ',
-  'Give back': 'తిరిగి ఇవ్వు',
-  'Take over': 'నియంత్రణ తీసుకో',
   'Agents stopped': 'ఏజెంట్లు ఆపబడ్డాయి',
   'Agent tabs closed': 'ఏజెంట్ ట్యాబ్‌లు మూసివేయబడ్డాయి',
   'nibeditor is still running for your agents': 'మీ ఏజెంట్ల కోసం nibeditor ఇంకా నడుస్తోంది',

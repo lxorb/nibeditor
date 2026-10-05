@@ -11,15 +11,16 @@
 import { door } from '@nib/markdown/door'
 import { isDesktop } from './tauri'
 
-/** An agent's mark on one tab: whose, in its colour, and whether paused there. */
+/** An agent's mark on one tab: whose, in its colour, and whether the reader stopped it
+ *  while it was at work there. */
 export interface Worn {
   agent: string
   colour: string
-  paused: boolean
+  stopped: boolean
 }
 
-/** What a press on the mark, or a row of the tab's menu, asks of the agent. */
-type TabAct = 'stop' | 'take-over' | 'give-back'
+/** What a press on the mark, or a row of the tab's menu, asks of the agent there. */
+export type TabAct = 'stop' | 'resume'
 
 class AgentMarks {
   /** The mark each tab wears, by tab id. */
@@ -31,7 +32,8 @@ class AgentMarks {
   /** Questions waiting: the badge on that tab. */
   waiting = $state(0)
 
-  /** Takeovers waiting, by the reader's tab: the question and the agent's one line. */
+  /** Steps an agent asked the reader for, by the reader's tab: the question and the
+   *  agent's one line. */
   takeovers = $state<Record<string, { id: string; reason: string }>>({})
 
   /** Whether closing this window hides it: an agent is connected and its pages live

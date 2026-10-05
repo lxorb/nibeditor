@@ -19,10 +19,8 @@
 //! Letting it run is the other way round: the page woken, then what it was playing played.
 //!
 //! The window freezes a page that has been out of sight for a while as well, through this
-//! same command (lib/web-tab/resting.ts), and wakes it before it is shown. One thing
-//! reaches a page without the window: an agent acting in a reader's tab, whose protocol
-//! calls a frozen page would never answer. `woken` wakes it first, and leaves what it was
-//! playing paused. Only `WebView2` has agents acting in a reader's tab.
+//! same command (lib/web-tab/resting.ts), and wakes it before it is shown - or before an
+//! agent acts in it, when the crate asks the window to lend it the tab (agents/reader.rs).
 
 use tauri::AppHandle;
 
@@ -52,13 +50,6 @@ pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool
     engine::lull(&view, paused, said)?;
     // An engine that never answered froze nothing.
     Ok(heard.recv().await.unwrap_or(false))
-}
-
-/// A page an agent is about to act in, woken if it was frozen: nothing it was playing
-/// plays, because the reader did not ask for that.
-#[cfg(all(windows, not(feature = "cef")))]
-pub fn woken(view: &tauri::Webview) {
-    let _ = engine::wake(view);
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
@@ -106,26 +97,6 @@ mod engine {
             let done = ExecuteScriptCompletedHandler::create(Box::new(|_, _| Ok(())));
             // Safe: as above.
             let _ = unsafe { core.ExecuteScript(&HSTRING::from(PLAY), &done) };
-        })
-        .map_err(|error| format!("that page could not be reached: {error}"))
-    }
-
-    /// The page resumed, and nothing played. The engine wakes a page by itself on a few
-    /// calls (`Navigate`), not on its protocol's.
-    #[allow(
-        unsafe_code,
-        reason = "the engine's own resume is reached through its COM interfaces"
-    )]
-    pub fn wake(view: &Webview) -> Result<(), String> {
-        view.with_webview(|platform| {
-            // Safe: the controller is this webview's own, asked on its own thread.
-            let Ok(core) = (unsafe { platform.controller().CoreWebView2() }) else {
-                return;
-            };
-            if let Ok(three) = core.cast::<ICoreWebView2_3>() {
-                // Safe: as above.
-                let _ = unsafe { three.Resume() };
-            }
         })
         .map_err(|error| format!("that page could not be reached: {error}"))
     }

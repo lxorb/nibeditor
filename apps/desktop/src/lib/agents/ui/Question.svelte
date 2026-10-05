@@ -4,9 +4,9 @@
    *
    *  A site's permission bubble in the panel's width: the same words for the same two
    *  answers (see web-tab/WebAsk.svelte), and a third, "Always on this site", where the
-   *  question is about a site. A takeover is not asked the same way, because it is not
-   *  a yes or a no: the agent is waiting for the reader to do one step in a tab, so the
-   *  answers are to go there and to say it is done. */
+   *  question is about a site. A step asked of the reader is not asked the same way,
+   *  because it is not a yes or a no: the agent asks the reader to do one step in a tab,
+   *  so the answers are to go there and to say it is done. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'

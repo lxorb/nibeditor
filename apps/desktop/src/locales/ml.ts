@@ -1823,8 +1823,6 @@ export const ml: Dictionary = {
   'Stop agents': 'ഏജന്റുകളെ നിർത്തുക',
   Agents: 'ഏജന്റുകൾ',
   'Always on this site': 'ഈ സൈറ്റിൽ എപ്പോഴും',
-  'Give back': 'തിരികെ നൽകുക',
-  'Take over': 'നിയന്ത്രണം ഏറ്റെടുക്കുക',
   'Agents stopped': 'ഏജന്റുകളെ നിർത്തി',
   'Agent tabs closed': 'ഏജന്റ് ടാബുകൾ അടച്ചു',
   'nibeditor is still running for your agents':
