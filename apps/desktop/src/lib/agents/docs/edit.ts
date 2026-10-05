@@ -19,7 +19,8 @@
  *  (8.3). Edits elsewhere in the note land at once. */
 
 import { oneEdit } from '@nib/markdown/edits'
-import { applied, changeOf } from '../../search/replace'
+import { applied, changeOf, type Edit } from '../../search/replace'
+import type { Keeping } from '../../workspace/note-text'
 import { waited } from '../../timing'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Selected } from './anchors'
@@ -303,13 +304,30 @@ async function changeClosed(
   const id = track.nextId()
 
   const snapshot = firstEdit(agent, note)
-  await desk.replaceInNotes([changeOf(note.path, before, planned.edits)], {
+  const wrote = await writeClosed(desk, note, before, planned.edits, {
     snapshot,
     source: agent.name,
   })
+  // The reader wrote in the scratchpad's card meanwhile: worked out again.
+  if (!wrote) return null
 
   track.recordClosed(before, planned.edits, after, id)
   return answer(note, after, planned, null)
+}
+
+/** A closed note's words written with `edits`: the one road a note nobody has open is
+ *  written by, or the scratchpad's own, which carries its card's caret. False when the
+ *  scratchpad's words were no longer `before`. */
+async function writeClosed(
+  desk: Desk,
+  note: Located,
+  before: string,
+  edits: readonly Edit[],
+  keeping?: Keeping,
+): Promise<boolean> {
+  if (note.pad) return desk.padWrite(before, edits)
+  await desk.replaceInNotes([changeOf(note.path, before, [...edits])], keeping)
+  return true
 }
 
 /** Whether this is the agent's first edit of the note this session, remembered. */
@@ -385,7 +403,7 @@ export async function undoAt(desk: Desk, agent: Agent, note: Located): Promise<{
     const back = track.undoClosed(words)
     if (!back) return { undone: 0 }
 
-    await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
+    await writeClosed(desk, note, words, back.edits)
     return { undone: back.count }
   })
 }
@@ -413,7 +431,7 @@ export async function undoSomeAt(
     const back = track.undoSomeClosed(words, ids, token)
     if (!back) return []
 
-    await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
+    await writeClosed(desk, note, words, back.edits)
     return back.ids
   })
 }
@@ -438,7 +456,7 @@ export async function putBackAt(
     const back = track.putBackClosed(words, token)
     if (!back) return []
 
-    await desk.replaceInNotes([changeOf(note.path, words, back.edits)])
+    await writeClosed(desk, note, words, back.edits)
     return back.ids
   })
 }

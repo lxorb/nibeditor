@@ -200,3 +200,25 @@ test('what is typed is written as the card goes, and an append lands in the card
   )
   expect(scratchpad.live).toBe(null)
 })
+
+test("an agent's edit lands in the card around the caret, and a stale one is refused", async () => {
+  shown.show()
+  await card()
+  const view = scratchpad.live
+  view?.dispatch({ selection: { anchor: 5 } })
+
+  expect(await scratchpad.replace('First thought\n', [{ from: 0, to: 0, insert: '> ' }])).toBe(true)
+  expect(view?.state.doc.toString()).toBe('> First thought\n')
+  expect(view?.state.selection.main.head).toBe(7)
+  expect(disk.current?.files.get(PAD)).toBe('> First thought\n')
+
+  expect(await scratchpad.replace('First thought\n', [{ from: 0, to: 5, insert: '' }])).toBe(false)
+  expect(view?.state.doc.toString()).toBe('> First thought\n')
+})
+
+test("with the card away, an agent's edit is written to the file", async () => {
+  expect(
+    await scratchpad.replace('First thought\n', [{ from: 14, to: 14, insert: 'More\n' }]),
+  ).toBe(true)
+  expect(disk.current?.files.get(PAD)).toBe('First thought\nMore\n')
+})

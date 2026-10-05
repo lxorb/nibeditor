@@ -17,6 +17,7 @@
  *  the card ScratchpadCard.svelte. */
 
 import type { EditorView } from '@nib/editor'
+import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -58,6 +59,21 @@ class Scratchpad {
    *  written in the same breath. */
   async append(words: string): Promise<void> {
     await this.write((before) => joined(before, words))
+  }
+
+  /** An agent's edits, worked out against `before`, put in the same way: through the
+   *  card while it is up, so the reader's caret is carried, and into the file. False
+   *  when the words are no longer `before` - the reader wrote meanwhile - and the
+   *  edits have to be worked out again. See agents/docs. */
+  async replace(before: string, edits: readonly Edit[]): Promise<boolean> {
+    const path = await this.where()
+    const live = this.live
+    const now = live ? live.state.doc.toString() : ((await workspace.noteText(path)) ?? '')
+    if (now.replace(/\r\n?/g, '\n') !== before) return false
+
+    live?.dispatch({ changes: [...edits] })
+    await writeFile(path, applied(before, edits))
+    return true
   }
 
   private async write(change: (before: string) => string): Promise<void> {

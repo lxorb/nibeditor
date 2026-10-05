@@ -14,6 +14,7 @@
 import type { EditorView } from '@nib/editor'
 import { insideOnly } from '../../automation/inside'
 import type { Change } from '../../search/apply'
+import type { Edit } from '../../search/replace'
 import { insideSpace, isMarkdownPath, nameOf } from '../../space-paths'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Keeping } from '../../workspace/note-text'
@@ -45,17 +46,31 @@ export interface Desk {
   snapshot(path: string, content: string, source: string): Promise<void>
   /** The note in a tab with no file yet, by the tab's id, or null. */
   draftIn(tab: string): NoteDoc | null
+  /** The scratchpad's words as they stand: its card's while the card is up. */
+  padText(): Promise<string>
+  /** Edits into the scratchpad's words, worked out against `before`: through its card
+   *  while it is up, and into its file. False when its words are no longer `before`. */
+  padWrite(before: string, edits: readonly Edit[]): Promise<boolean>
   /** Which scheme a caret's colour is for. */
   scheme(): 'dark' | 'light'
 }
+
+/** What `tab` names the scratchpad by. It is a card and never a tab, but it is a
+ *  note, the same one from every space, and the note verbs reach it as they reach a
+ *  draft; see scratchpad/pad.ts. */
+export const SCRATCHPAD_TAB = 'scratchpad'
 
 /** A note as an agent names it: relative to a space, and the space when it is not
  *  the one that is open. */
 export interface NoteAt {
   path: string
   space?: string
-  /** A tab holding a note with no file yet (workspace/drafts.ts), in place of a path. */
+  /** A tab holding a note with no file yet (workspace/drafts.ts), or
+   *  `SCRATCHPAD_TAB`, in place of a path. */
   tab?: string
+  /** Where the scratchpad is on this disk, said with `SCRATCHPAD_TAB`; see `padded` in
+   *  index.ts. */
+  pad?: string
 }
 
 /** A note an agent named, found: its space, its path as the space speaks of it, and
@@ -66,6 +81,9 @@ export interface Located {
   path: string
   /** The document itself, for a note with no file: always open, and on no disk. */
   draft?: NoteDoc
+  /** The scratchpad, which no tab holds: read and written through the desk's own
+   *  road, `padText` and `padWrite`. */
+  pad?: true
 }
 
 /** The space an agent named by id or by name, or the open one. */
@@ -88,6 +106,11 @@ function spaceOf(desk: Desk, named: string | undefined): Space {
  *  a canvas or a PDF is edited by its own verbs. */
 export function located(desk: Desk, at: NoteAt): Located {
   const space = spaceOf(desk, at.space)
+
+  if (at.tab === SCRATCHPAD_TAB) {
+    if (!at.pad) throw new DocError('no_such_note', at.tab, 'there is no scratchpad here')
+    return { space, relative: nameOf(at.pad), path: at.pad, pad: true }
+  }
 
   if (at.tab !== undefined) {
     const draft = desk.draftIn(at.tab)
@@ -112,6 +135,7 @@ export function located(desk: Desk, at: NoteAt): Located {
 /** The document a located note is open as, when it is open as a note. */
 export function openNote(desk: Desk, note: Located): NoteDoc | null {
   if (note.draft) return note.draft
+  if (note.pad) return null
   const open = desk.documentAt(note.path)
   return open?.kind === 'note' ? open : null
 }
@@ -119,7 +143,11 @@ export function openNote(desk: Desk, note: Located): NoteDoc | null {
 /** A located note's words, with the one line ending the editor holds, or an error
  *  saying it is not there. */
 export async function wordsOf(desk: Desk, note: Located): Promise<string> {
-  const text = note.draft ? note.draft.latest : await desk.noteText(note.path)
+  const text = note.draft
+    ? note.draft.latest
+    : note.pad
+      ? await desk.padText()
+      : await desk.noteText(note.path)
   if (text === null)
     throw new DocError('no_such_note', note.relative, `there is no note at ${note.relative}`)
 
