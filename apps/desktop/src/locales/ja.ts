@@ -2065,7 +2065,6 @@ export const ja: Dictionary = {
   'Blocked by {task}': '{task} 待ち',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': '終了前に確認',
-  Always: '常に',
   'When something runs': '何かが実行中のとき',
   'Quit {name}?': '{name} を終了しますか？',
   'Restart {name}?': '{name} を再起動しますか？',

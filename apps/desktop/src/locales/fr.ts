@@ -2139,7 +2139,6 @@ export const fr: Dictionary = {
   'Blocked by {task}': 'Bloquée par {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avertir avant de quitter',
-  Always: 'Toujours',
   'When something runs': 'Quand quelque chose tourne',
   'Quit {name}?': 'Quitter {name} ?',
   'Restart {name}?': 'Redémarrer {name} ?',

@@ -2029,7 +2029,6 @@ export const zhHant: Dictionary = {
   'Blocked by {task}': '被 {task} 阻擋',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': '結束前提醒',
-  Always: '一律',
   'When something runs': '有程式執行時',
   'Quit {name}?': '結束 {name}？',
   'Restart {name}?': '重新啟動 {name}？',

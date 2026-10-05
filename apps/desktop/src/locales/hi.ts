@@ -2075,7 +2075,6 @@ export const hi: Dictionary = {
   'Blocked by {task}': '{task} से रुका हुआ',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Warn before quitting',
-  Always: 'Always',
   'When something runs': 'When something runs',
   'Quit {name}?': 'Quit {name}?',
   'Restart {name}?': 'Restart {name}?',

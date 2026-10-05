@@ -2131,7 +2131,6 @@ export const es: Dictionary = {
   'Blocked by {task}': 'Bloqueada por {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avisar antes de salir',
-  Always: 'Siempre',
   'When something runs': 'Cuando algo se ejecuta',
   'Quit {name}?': '¿Salir de {name}?',
   'Restart {name}?': '¿Reiniciar {name}?',

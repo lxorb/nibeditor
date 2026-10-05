@@ -2127,7 +2127,6 @@ export const ptPT: Dictionary = {
   'Blocked by {task}': 'Bloqueada por {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avisar antes de sair',
-  Always: 'Sempre',
   'When something runs': 'Quando algo estiver a correr',
   'Quit {name}?': 'Sair do {name}?',
   'Restart {name}?': 'Reiniciar o {name}?',

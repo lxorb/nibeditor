@@ -2062,7 +2062,6 @@ export const jv: Dictionary = {
   'Blocked by {task}': 'Diblokir dening {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Warn before quitting',
-  Always: 'Always',
   'When something runs': 'When something runs',
   'Quit {name}?': 'Quit {name}?',
   'Restart {name}?': 'Restart {name}?',

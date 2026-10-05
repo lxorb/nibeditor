@@ -2088,7 +2088,6 @@ export const gsw: Dictionary = {
   'Blocked by {task}': 'Wartet uf {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Vor em Beände warne',
-  Always: 'Immer',
   'When something runs': 'Wenn öppis lauft',
   'Quit {name}?': '{name} beände?',
   'Restart {name}?': '{name} neu starte?',

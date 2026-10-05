@@ -2028,7 +2028,6 @@ export const zhHans: Dictionary = {
   'Blocked by {task}': '被 {task} 阻塞',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': '退出前提醒',
-  Always: '始终',
   'When something runs': '有程序运行时',
   'Quit {name}?': '退出 {name}？',
   'Restart {name}?': '重新启动 {name}？',

@@ -2159,7 +2159,6 @@ export const ru: Dictionary = {
   'Blocked by {task}': 'Ждёт: {task}',
   // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Предупреждать перед выходом',
-  Always: 'Всегда',
   'When something runs': 'Когда что-то запущено',
   'Quit {name}?': 'Выйти из {name}?',
   'Restart {name}?': 'Перезапустить {name}?',
