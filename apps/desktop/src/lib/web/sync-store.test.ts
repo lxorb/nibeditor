@@ -259,7 +259,16 @@ test('is what the engine opens in a browser, and every table takes its row', asy
 })
 
 describe('one engine per browser', () => {
+  /** Without the Web Locks API every tab leads, which is what leadSync answers on a
+   *  host that lacks it. Node has it from 24, which CI and package.json ask for. */
+  const locked = () =>
+    expect(
+      (globalThis.navigator as Navigator | undefined)?.locks,
+      'Web Locks need Node 24',
+    ).toBeDefined()
+
   test('the second tab leads once the first lets go', async () => {
+    locked()
     const first = await leadSync()
     expect(first).not.toBeNull()
 
@@ -278,6 +287,7 @@ describe('one engine per browser', () => {
   })
 
   test('a tab that stops waiting is not the leader', async () => {
+    locked()
     const first = await leadSync()
     const giving = new AbortController()
     const waiting = leadSync(giving.signal)

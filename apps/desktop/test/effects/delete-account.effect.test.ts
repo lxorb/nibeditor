@@ -71,11 +71,14 @@ function open() {
   flushSync()
 }
 
-/** Everything in flight answered and drawn. */
+/** Everything in flight answered and drawn. A turn of the timers rather than a
+ *  count of microtasks: how many of those reading a body takes is the runtime's
+ *  business, and Node 22 takes more than five. */
 async function settled() {
-  for (let round = 0; round < 5; round++) await Promise.resolve()
-  await vi.waitFor(() => undefined)
-  flushSync()
+  for (let round = 0; round < 3; round++) {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    flushSync()
+  }
 }
 
 function type(label: string, value: string) {
