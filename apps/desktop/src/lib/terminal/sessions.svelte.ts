@@ -20,7 +20,6 @@ import { FitAddon } from '@xterm/addon-fit'
 import { type ISearchOptions, SearchAddon } from '@xterm/addon-search'
 import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
-import { WebLinksAddon } from '@xterm/addon-web-links'
 import { type ITheme, Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
@@ -56,6 +55,7 @@ import { type Route, routeKey } from './keys'
 import { findColours, monospace, terminalContrast, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
+import { AddressLinks, chosenText } from './links'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -245,6 +245,9 @@ class Session {
       minimumContrastRatio: terminalContrast(),
       rightClickSelectsWord: false,
       theme: terminalTheme(),
+      // A link a program marked itself (OSC 8) is followed the way any other is, with the
+      // whole address it carries, and not through xterm.js's own confirm box.
+      linkHandler: { activate: (event, uri) => this.follow(event, uri) },
       ...(conpty ? { windowsPty: conpty } : {}),
     })
 
@@ -253,7 +256,9 @@ class Session {
     this.term.loadAddon(this.serializing)
     this.term.loadAddon(new Unicode11Addon())
     this.term.unicode.activeVersion = '11'
-    this.term.loadAddon(new WebLinksAddon((event, uri) => this.follow(event, uri)))
+    this.term.registerLinkProvider(
+      new AddressLinks(this.term, (event, uri) => this.follow(event, uri)),
+    )
 
     this.term.onData((data) => this.typed(data, false))
     this.term.onBinary((data) => this.typed(data, true))
@@ -1082,7 +1087,7 @@ class Session {
   }
 
   private copyChosen() {
-    const chosen = this.term.getSelection()
+    const chosen = chosenText(this.term)
     if (chosen) void copyText(chosen)
   }
 

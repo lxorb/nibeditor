@@ -63,6 +63,9 @@ vi.mock('@xterm/xterm', () => ({
     buffer = { active: { type: 'normal' } }
     parser = { registerOscHandler: () => ({ dispose: () => undefined }) }
     private sized: ((size: { cols: number; rows: number }) => void) | null = null
+    registerLinkProvider() {
+      return { dispose: () => undefined }
+    }
     loadAddon(addon: { activate?: (term: unknown) => void }) {
       addon.activate?.(this)
     }
@@ -121,11 +124,6 @@ vi.mock('@xterm/addon-serialize', () => ({
 }))
 vi.mock('@xterm/addon-unicode11', () => ({
   Unicode11Addon: class {
-    activate = () => undefined
-  },
-}))
-vi.mock('@xterm/addon-web-links', () => ({
-  WebLinksAddon: class {
     activate = () => undefined
   },
 }))

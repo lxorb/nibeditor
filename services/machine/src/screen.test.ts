@@ -86,3 +86,22 @@ test("a saved screen is the shell's alone, with no modes left switched on", asyn
   expect(back.modes.bracketedPasteMode).toBe(false)
   expect(back.modes.mouseTrackingMode).toBe('none')
 })
+
+/** A long address the shell let wrap stays one line for a joiner, so the app's link
+ *  provider joins it as the watcher's would: the screen keeps which rows are wraps. */
+test('a wrapped line stays wrapped for a joiner', async () => {
+  const address = `https://claude.ai/oauth/authorize?scope=${'user%3Aprofile+'.repeat(12)}`
+  const screen = new Screen(COLS, ROWS)
+  screen.write(`$ ${address}\r\n$ `)
+  const serialized = await screen.serialized()
+  screen.dispose()
+
+  const joiner = terminal(COLS, ROWS)
+  await written(joiner, serialized)
+  const rows = Math.ceil((address.length + 2) / COLS)
+  const wrapped = Array.from(
+    { length: rows + 1 },
+    (_, y) => joiner.buffer.active.getLine(y)?.isWrapped,
+  )
+  expect(wrapped).toEqual([false, ...Array.from({ length: rows - 1 }, () => true), false])
+})

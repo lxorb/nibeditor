@@ -398,7 +398,11 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
 - **Links**: an address in the output is underlined under the pointer, and Ctrl+click
   (Cmd on a Mac) opens it in a web tab beside the terminal by `new-tab.ts`'s rule - behind,
   and in front with Shift. A plain click is the terminal's own: it is how a line is
-  selected.
+  selected. An address a program broke over rows itself, as Ink does with Claude Code's
+  sign-in link, is still one link: a row full to its last column runs on into the next
+  when that goes on in address characters (iTerm2's right-edge heuristic), and copying
+  part of it drops the breaks. A link the program marked (OSC 8) is followed the same
+  way. Local and online terminals alike; see `lib/terminal/links.ts`.
 - **A row of the file list** dropped on a terminal is its path at the prompt, spelled for
   the shell: quoted where it has a space, `/mnt/c/...` in WSL and `/c/...` in Git Bash -
   VS Code's drop into its terminal. See `spokenPath` in `lib/terminal/paste.ts`.
