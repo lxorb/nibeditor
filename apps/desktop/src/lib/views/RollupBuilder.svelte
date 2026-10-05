@@ -67,25 +67,39 @@
     calc = was?.calc ?? 'count'
   })
 
-  /** Writes the rollup: the formula where it was, or a new one shown as a column. */
+  /** What a rollup is called where nobody named it: the way its header should read,
+   *  the relation, what of it, and how. */
+  const autoName = (spec: { relation: string; property?: string | undefined; calc: Rollup }) =>
+    [propertyName(spec.relation), spec.property, NAMES[spec.calc]].filter(Boolean).join(' · ')
+
+  /** Writes the rollup: the formula where it was, or a new one shown as a column. A
+   *  rollup still under the name it was given here is renamed with its choices. */
   function write() {
     if (!relation || !base) return
-    const source = rollupFormula(
-      property && calc !== 'count' ? { relation, property, calc } : { relation, calc: 'count' },
-    )
-    if (target?.startsWith('formula.') && editing !== null) {
-      const name = target.slice(8)
-      kit.change((one) => setFormula(one, name, source))
+    const spec =
+      property && calc !== 'count'
+        ? { relation, property, calc }
+        : { relation, calc: 'count' as const }
+    const source = rollupFormula(spec)
+    const old = target?.startsWith('formula.') && editing !== null ? target.slice(8) : null
+    if (old !== null && (was === null || old !== autoName(was))) {
+      kit.change((one) => setFormula(one, old, source))
       return
     }
-    const named = (relation.split('.').pop() ?? 'rollup').replace(/\W+/g, '_')
-    const name = freeFormulaName(
-      base,
-      property ? `${named}_${property.replace(/\W+/g, '_')}` : `${named}_count`,
-    )
+    const without = old === null ? base : setFormula(base, old, null)
+    const name = freeFormulaName(without, autoName(spec))
     made = `formula.${name}`
-    const columns = [...live.columns, `formula.${name}`]
-    kit.change((one, at) => setColumns(setFormula(one, name, source), at, columns))
+    const columns =
+      old === null
+        ? [...live.columns, `formula.${name}`]
+        : live.columns.map((one) => (one === `formula.${old}` ? `formula.${name}` : one))
+    kit.change((one, at) =>
+      setColumns(
+        setFormula(old === null ? one : setFormula(one, old, null), name, source),
+        at,
+        columns,
+      ),
+    )
   }
 </script>
 

@@ -107,7 +107,7 @@
     {@const kind = kindOf(field)}
     {@const key = bare(field)}
     {@const choices = base ? optionsOf(base, field) : []}
-    <label class="field" class:missing={missing.includes(field)}>
+    <div class="field" class:missing={missing.includes(field)}>
       <span class="name" role="presentation" oncontextmenu={(event) => fieldMenu(event, field)}>
         {propertyName(
           field,
@@ -118,6 +118,7 @@
         <input
           type="checkbox"
           class="nib-checkbox"
+          aria-label={propertyName(field, base ? displayName(base, field) : undefined)}
           checked={values[field] === true}
           onchange={(event) => (values = { ...values, [field]: event.currentTarget.checked })}
         />
@@ -126,7 +127,7 @@
           label={propertyName(field)}
           value={typeof values[field] === 'string' ? values[field] : ''}
           options={[
-            { value: '', label: '' },
+            { value: '', label: t('None') },
             ...choices.map((one) => ({ value: one, label: one })),
           ]}
           onchange={(next: string) => (values = { ...values, [field]: next })}
@@ -134,12 +135,13 @@
       {:else}
         <input
           class="nib-field"
+          aria-label={propertyName(field, base ? displayName(base, field) : undefined)}
           type={kind === 'number' ? 'number' : kind === 'date' ? 'date' : 'text'}
           value={typeof values[field] === 'string' ? values[field] : ''}
           oninput={(event) => (values = { ...values, [field]: event.currentTarget.value })}
         />
       {/if}
-    </label>
+    </div>
   {/each}
 
   <div class="foot">
@@ -152,7 +154,7 @@
       >
     {/if}
     <span class="spring"></span>
-    <button type="submit" class="nib-action" disabled={sending}>{t('Send')}</button>
+    <button type="submit" class="nib-button" disabled={sending}>{t('Send')}</button>
   </div>
 </form>
 

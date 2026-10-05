@@ -150,3 +150,18 @@ describe('a column named after a folder with a space in it', () => {
     expect(Array.isArray(value) && value.length).toBe(3)
   })
 })
+
+describe('a rollup over a column whose name is not a word', () => {
+  test('reads the formula by its name in brackets', () => {
+    const spaced = readBase(`formulas:\n  My tasks: '${reverseFormula('project')}'\n`)
+    const formula = rollupFormula({ relation: 'formula.My tasks', calc: 'count' })
+    expect(formula).toBe('list(formula["My tasks"]).length')
+    const value = cellValue(
+      { ...spaced, formulas: { ...spaced.formulas, it: formula } },
+      'formula.it',
+      thesis,
+      context,
+    )
+    expect(value).toBe(3)
+  })
+})
