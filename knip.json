@@ -15,6 +15,7 @@
     "packages/editor": {},
     "packages/glasses": {},
     "packages/markdown": {},
+    "packages/online": {},
     "packages/rooms": {},
     "packages/sync-core": {},
     "apps/desktop": {
