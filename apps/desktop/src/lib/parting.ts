@@ -114,3 +114,11 @@ export function keptInTray(hide: (() => Promise<boolean>) | null): void {
 export function trayKeeper(): (() => Promise<boolean>) | null {
   return tray
 }
+
+/** What would stop with the window - a shell, an AI turn - each saying whether it
+ *  runs, so a close with nothing running fetches no question; see lib/quitting. */
+const running = new Set<() => boolean>()
+
+export const runs = (any: () => boolean) => void running.add(any)
+
+export const anythingRuns = () => [...running].some((any) => any())

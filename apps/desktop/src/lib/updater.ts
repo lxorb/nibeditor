@@ -134,6 +134,8 @@ export async function discard() {
  *  only reached on the platforms where it does not. What a close would write is
  *  written and waited for first, as a close waits; see start.ts. */
 export async function restartToUpdate() {
+  // What runs stops with the restart, and is asked about first; see lib/quitting.
+  if (!(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
   await installStaged()

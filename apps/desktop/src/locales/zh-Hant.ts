@@ -2018,4 +2018,16 @@ export const zhHant: Dictionary = {
   Form: '表單',
   Formula: '公式',
   'Blocked by {task}': '被 {task} 阻擋',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': '結束前提醒',
+  Always: '一律',
+  'When something runs': '有程式執行時',
+  'Quit {name}?': '結束 {name}？',
+  'Restart {name}?': '重新啟動 {name}？',
+  'Close window?': '關閉視窗？',
+  'Running processes will stop.': '執行中的程序將會停止。',
+  "Don't ask again": '不再詢問',
+  'Quit anyway': '仍要結束',
+  'Restart anyway': '仍要重新啟動',
+  'Close anyway': '仍要關閉',
 }

@@ -2067,4 +2067,16 @@ export const fa: Dictionary = {
   Form: 'فرم',
   Formula: 'فرمول',
   'Blocked by {task}': 'منتظر {task}',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': 'Warn before quitting',
+  Always: 'Always',
+  'When something runs': 'When something runs',
+  'Quit {name}?': 'Quit {name}?',
+  'Restart {name}?': 'Restart {name}?',
+  'Close window?': 'Close window?',
+  'Running processes will stop.': 'Running processes will stop.',
+  "Don't ask again": "Don't ask again",
+  'Quit anyway': 'Quit anyway',
+  'Restart anyway': 'Restart anyway',
+  'Close anyway': 'Close anyway',
 }

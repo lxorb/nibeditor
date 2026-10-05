@@ -2077,4 +2077,16 @@ export const gsw: Dictionary = {
   Form: 'Formular',
   Formula: 'Formle',
   'Blocked by {task}': 'Wartet uf {task}',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': 'Vor em Beände warne',
+  Always: 'Immer',
+  'When something runs': 'Wenn öppis lauft',
+  'Quit {name}?': '{name} beände?',
+  'Restart {name}?': '{name} neu starte?',
+  'Close window?': 'Fänschter zuemache?',
+  'Running processes will stop.': 'Laufendi Prozäss wärde beändet.',
+  "Don't ask again": 'Nüme frage',
+  'Quit anyway': 'Trotzdem beände',
+  'Restart anyway': 'Trotzdem neu starte',
+  'Close anyway': 'Trotzdem zuemache',
 }

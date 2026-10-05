@@ -16,6 +16,7 @@ import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
 import {
+  anythingRuns,
   GIVE_UP,
   handBack,
   handingBack,
@@ -261,7 +262,16 @@ async function guardClose() {
   // go as its close button would; see lifecycle.rs.
   if (isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
-    await getCurrentWindow().listen('nib://quit', () => void onQuit(window))
+    const own = getCurrentWindow()
+    await own.listen('nib://quit', () => void onQuit(window))
+    // Asked first whether what runs may stop, by the crate and by the other windows.
+    await own.listen(
+      'nib://quit-ask',
+      () => void import('./quitting/ask').then((one) => one.quitAsked()),
+    )
+    void startup
+      .turn('right')
+      .then(async () => (await import('./quitting/windows')).answer(own.label))
   }
 }
 
@@ -299,12 +309,13 @@ async function onClose(event: Closing, window: Closable) {
   // writes them.
   if (!isDesktop) return
 
-  // Nothing being written, no web login to hand back and no update to put in place: the
-  // window just goes.
-  if (!workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
+  // Nothing being written or running, no web login to hand back and no update to put in
+  // place: the window just goes. What runs is asked about first; see lib/quitting.
+  const runs = anythingRuns()
+  if (!runs && !workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
 
   event.preventDefault()
-  if (going) return
+  if (going || (runs && !(await (await import('./quitting/ask')).mayStop('window')))) return
   await go()
   await window.destroy()
 }

@@ -2116,4 +2116,16 @@ export const ptPT: Dictionary = {
   Form: 'Formulário',
   Formula: 'Fórmula',
   'Blocked by {task}': 'Bloqueada por {task}',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': 'Avisar antes de sair',
+  Always: 'Sempre',
+  'When something runs': 'Quando algo estiver a correr',
+  'Quit {name}?': 'Sair do {name}?',
+  'Restart {name}?': 'Reiniciar o {name}?',
+  'Close window?': 'Fechar a janela?',
+  'Running processes will stop.': 'Os processos em execução serão terminados.',
+  "Don't ask again": 'Não perguntar novamente',
+  'Quit anyway': 'Sair mesmo assim',
+  'Restart anyway': 'Reiniciar mesmo assim',
+  'Close anyway': 'Fechar mesmo assim',
 }

@@ -20,7 +20,7 @@ import { tabCycle } from './tab-cycle.svelte'
 import { isDesktop, isMobile, platform } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { swipeChoice } from './back-swipe/choice.svelte'
-import { shellName, shells, SIZES } from './terminal/shells.svelte'
+import { asWarning, shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
@@ -321,7 +321,7 @@ export interface Pane {
   groups: Group[]
 }
 
-/** The terminal's three settings. The shells are asked for as the pane is drawn, which is
+/** The terminal's four settings. The shells are asked for as the pane is drawn, which is
  *  the first time this list is needed; the row fills in when they arrive. */
 function terminalGroup(): Group {
   void shells.ask()
@@ -354,6 +354,19 @@ function terminalGroup(): Group {
         initial: true,
         get: () => shells.restoring,
         set: (on) => shells.setRestoring(on),
+      },
+      {
+        kind: 'select',
+        label: t('Warn before quitting'),
+        words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
+        options: [
+          { value: 'always', label: t('Always') },
+          { value: 'running', label: t('When something runs') },
+          { value: 'never', label: t('Never') },
+        ],
+        initial: 'running',
+        get: () => shells.warning,
+        set: (value) => shells.setWarning(asWarning(value)),
       },
     ],
   }

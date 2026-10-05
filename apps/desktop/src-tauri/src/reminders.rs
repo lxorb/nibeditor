@@ -409,7 +409,8 @@ pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), 
     let hidden =
         crate::agents::shell::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));
     if hidden && !crate::agents::shell::in_tray() {
-        crate::lifecycle::quit(&app);
+        // Out of sight, with nothing it opened: nobody to ask, and nothing to ask about.
+        crate::lifecycle::quit_now(&app);
     }
     Ok(())
 }

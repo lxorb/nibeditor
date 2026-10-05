@@ -2120,4 +2120,16 @@ export const es: Dictionary = {
   Form: 'Formulario',
   Formula: 'Fórmula',
   'Blocked by {task}': 'Bloqueada por {task}',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': 'Avisar antes de salir',
+  Always: 'Siempre',
+  'When something runs': 'Cuando algo se ejecuta',
+  'Quit {name}?': '¿Salir de {name}?',
+  'Restart {name}?': '¿Reiniciar {name}?',
+  'Close window?': '¿Cerrar la ventana?',
+  'Running processes will stop.': 'Los procesos en ejecución se detendrán.',
+  "Don't ask again": 'No volver a preguntar',
+  'Quit anyway': 'Salir de todos modos',
+  'Restart anyway': 'Reiniciar de todos modos',
+  'Close anyway': 'Cerrar de todos modos',
 }

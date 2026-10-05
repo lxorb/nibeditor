@@ -2755,9 +2755,8 @@ class Workspace {
   }
 
   /** Whether a set of tabs may all go. Nothing is asked about a note, which writes
-   *  itself; a terminal running something asks, once for all of them - but never as
-   *  the window goes, which puts every tab back on the next launch. See
-   *  terminal/closing.ts. */
+   *  itself; a terminal running something asks, once for all of them. The window going
+   *  asks its own; see terminal/closing.ts and lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__ || !closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
