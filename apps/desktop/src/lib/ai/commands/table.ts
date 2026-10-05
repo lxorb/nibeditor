@@ -58,16 +58,11 @@ export const ROWS: readonly Row[] = [
   row('model', 'output-style', ['personality', 'style'], key('How answers read'), '[style]'),
 
   // 3.3 Modes and long work
-  row('modes', 'ask', [], key('Ask mode'), '[question]'),
+  row('modes', 'approve', ['ask'], key('Approve mode'), '[task]'),
   row('modes', 'plan', [], key('Plan mode'), '[task]'),
   row('modes', 'agent', [], key('Agent mode'), '[task]'),
   row('modes', 'agents', ['subagents'], key('Agent profile'), '[name]'),
-  row(
-    'modes',
-    'permissions',
-    ['approvals', 'allowed-tools', 'approve'],
-    key('What the agent may do'),
-  ),
+  row('modes', 'permissions', ['approvals', 'allowed-tools'], key('What the agent may do')),
   row('modes', 'goal', [], key('Work toward a goal'), '[condition|pause|resume|clear]'),
   row('modes', 'loop', ['proactive'], key('Run again and again'), '[interval] [prompt]'),
   row('modes', 'subtask', [], key('A helper in the background'), '<task>'),

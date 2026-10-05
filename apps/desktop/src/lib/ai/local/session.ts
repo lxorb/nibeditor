@@ -10,12 +10,13 @@
 import { identifier } from '../../identifier'
 import { Channel } from '../../native'
 import { invoke } from '../../tauri'
-import { EDITS, READER_TABS } from '../chat/choices'
+import { READER_TABS } from '../chat/choices'
+import type { Mode } from '../modes'
 import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
 
 /** The tools a thread may use: a mode of the sidebar's, or none for words only. */
-type ToolsOf = 'ask' | 'plan' | 'agent' | null
+type ToolsOf = Mode | null
 
 /** nib's effort scale as the crate takes it: `null` is the model's own default. */
 export type Level = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
@@ -117,9 +118,9 @@ export async function openSession(
     id,
     opening: {
       tool: opening.tool,
-      // The grant's two choices, as the API loop makes it (lib/ai/chat/tools.ts): whichever
-      // road a provider's thread takes first, the grant is the same.
-      agent: { ...opening.agent, readerTabs: READER_TABS, askFirst: EDITS === 'ask-first' },
+      // The grant as the API loop makes it (lib/ai/chat/tools.ts): whichever road a
+      // provider's thread takes first, the grant is the same.
+      agent: { ...opening.agent, readerTabs: READER_TABS },
       mode: opening.mode,
       model: opening.model,
       effort: opening.effort,

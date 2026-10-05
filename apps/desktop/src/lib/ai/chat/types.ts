@@ -7,10 +7,11 @@
  *  runs, so importing it costs nothing. */
 
 import type { Limit } from '../local/heard'
+import type { Mode } from '../modes'
 import type { Provider, ProviderKind } from '../providers'
 
-/** What the agent may do in a thread: read and cite, read and write a plan, or act. */
-export type Mode = 'ask' | 'plan' | 'agent'
+/** What the agent may do in a thread, and how much it asks first (../modes.ts). */
+export type { Mode }
 
 /** nib's one scale of effort (4.9). `auto` is the model's own default and is sent as
  *  nothing; `off` is OpenAI's `none`; `xhigh` is the chip's Extra. A model offers only
@@ -226,6 +227,8 @@ export interface Thread {
   model: string
   effort: Effort
   mode: Mode
+  /** The tools the reader said Always to in Approve: asked no more in this thread. */
+  always?: string[]
   turns: Turn[]
   goal?: Goal
   /** The last request's counts: what the ring draws. */

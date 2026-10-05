@@ -918,6 +918,13 @@ Each agent holds:
 
 A third-party agent starts with `context` off, `browser.reader` off and `confirm` mode.
 
+The AI sidebar's own agents (one built-in grant per provider, "nib · Claude") ask as the
+thread's mode says rather than as the grant does (docs/ai-sidebar.md 4.4), so Settings >
+Agents shows them no "Asks first": Approve lays `confirm` with every category on over the
+grant for each call, and Agent a third mode, `autonomous`, that asks for nothing but
+paying and is never kept on a grant. A Claude Code or Codex session of the sidebar's
+proves itself with a token lent for its thread's mode, so the endpoint knows which.
+
 ### 9.2 Sites
 
 A denied site cannot be opened, navigated to, or acted in, in an agent tab or a reader's;
@@ -926,7 +933,8 @@ site on top of the scope, because running script in a page is running as that pa
 
 ### 9.3 What it always asks first
 
-In both modes, unless the reader turned the category off for that agent:
+In both modes, unless the reader turned the category off for that agent (and in the AI
+sidebar's Agent mode, `autonomous`, only paying):
 
 | category | how it is recognised, without trusting the model |
 | --- | --- |

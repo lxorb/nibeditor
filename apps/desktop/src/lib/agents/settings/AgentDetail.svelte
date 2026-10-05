@@ -29,6 +29,7 @@
     askApplies,
     asks,
     reaches,
+    sidebars,
     sitesOf,
     trifecta,
     withAsk,
@@ -281,17 +282,19 @@
   />
 </div>
 
-<h3>{t('Asks first')}</h3>
-<div class="card">
-  {@render toggle(CATEGORY_WORDS.writing(), grant.mode === 'confirm', () => {
-    change((one) => withMode(one, one.mode !== 'confirm'))
-  })}
-  {#each asked as { category } (category)}
-    {@render toggle(CATEGORY_WORDS[category](), asks(grant, category), () => {
-      toggleAsk(category)
+{#if !sidebars(grant)}
+  <h3>{t('Asks first')}</h3>
+  <div class="card">
+    {@render toggle(CATEGORY_WORDS.writing(), grant.mode === 'confirm', () => {
+      change((one) => withMode(one, one.mode !== 'confirm'))
     })}
-  {/each}
-</div>
+    {#each asked as { category } (category)}
+      {@render toggle(CATEGORY_WORDS[category](), asks(grant, category), () => {
+        toggleAsk(category)
+      })}
+    {/each}
+  </div>
+{/if}
 
 <h3>{t('Limits')}</h3>
 <div class="card">

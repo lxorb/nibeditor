@@ -2,10 +2,10 @@
  *
  *  Which things is docs/agent-native.md 9.3: publishing and sharing, deleting for good
  *  (a version put back over a note), settings, the terminal - and in `confirm` mode
- *  every write. The question is the crate's (`agents_ask`): it answers at once, either
- *  that this very call was already allowed, which spends the allowance, or with the
- *  question the reader will be shown, so an agent is never held on a connection for an
- *  hour. Called again once allowed, the same call finds its allowance by `key`, which is
+ *  every write; in the AI sidebar's Agent mode (`autonomous`), nothing. The question is
+ *  the crate's (`agents_ask`): it answers at once, either that this very call was
+ *  already allowed, which spends the allowance, or with the question the reader will be
+ *  shown, so an agent is never held on a connection for an hour. Called again once allowed, the same call finds its allowance by `key`, which is
  *  why the key is the call itself: the verb and its arguments, written one way. */
 
 import type { AgentAnswer } from '../../automation/caller'
@@ -42,7 +42,7 @@ export async function asked(
   summary: string,
 ): Promise<AgentAnswer | null> {
   const agent = call.caller.agent
-  if (agent === null) return null
+  if (agent === null || agent.mode === 'autonomous') return null
 
   const about = category ?? (agent.mode === 'confirm' ? 'writing' : null)
   if (about === null) return null

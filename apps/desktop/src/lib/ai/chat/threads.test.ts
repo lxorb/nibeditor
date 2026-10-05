@@ -147,7 +147,6 @@ describe('a thread kept', () => {
   test('is kept on this device, which is the fourth question’s default', () => {
     expect(choices.THREADS_SYNCED).toBe(false)
     expect(choices.ASK_IS_A_MODE).toBe(true)
-    expect(choices.EDITS).toBe('apply-and-review')
     expect(choices.READER_TABS).toBe(true)
   })
 })
@@ -157,6 +156,19 @@ describe('a file read back', () => {
     expect(threadIn(null)).toBeNull()
     expect(threadIn({ id: 'x' })).toBeNull()
     expect(threadIn('a thread')).toBeNull()
+  })
+
+  test('written in Ask, which Approve replaced, reads as Approve, and keeps its Always', () => {
+    const read = threadIn({
+      id: 't',
+      space: 's',
+      provider: 'openai',
+      model: 'gpt-5.5',
+      mode: 'ask',
+      always: ['edit_note', 3],
+      turns: [],
+    })
+    expect(read).toMatchObject({ mode: 'approve', always: ['edit_note'] })
   })
 
   test('keeps what it can read and leaves out what it cannot', () => {
@@ -181,7 +193,8 @@ describe('a file read back', () => {
         'nonsense',
       ],
     })
-    expect(read).toMatchObject({ effort: 'auto', mode: 'ask', title: '' })
+    expect(read).toMatchObject({ effort: 'auto', mode: 'approve', title: '' })
+    expect(read).not.toHaveProperty('always')
     expect(read?.turns).toHaveLength(1)
     // A call still running when the thread was written never answered.
     expect(read?.turns[0]?.parts).toEqual([

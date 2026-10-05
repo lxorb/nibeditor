@@ -110,7 +110,8 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
 - **Claude Code, a sidebar thread**: the same, kept open with turns on stdin
   (`--input-format stream-json`), with one tool: `nib mcp` (`--mcp-config`), only the
   mode's verbs allowed and the rest left out (`--allowedTools`, `--disallowedTools`),
-  everything else refused without asking (`--permission-mode dontAsk`). `--restricted`
+  everything else refused without asking (`--permission-mode dontAsk`), so Claude Code
+  itself never prompts in any mode. `--restricted`
   in place of `--safe-mode`, which drops the `--mcp-config` server too (measured on
   2.1.280), and the reader's `CLAUDE.md` files off by `CLAUDE_CODE_DISABLE_CLAUDE_MDS`.
   A message that starts with `/` goes with a space in front, so the reader's words are
@@ -122,11 +123,18 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
   stdin. The crate is the app-server's only client: every request is written there,
   and every request the app-server makes of its client (an approval, an elicitation, a
   token refresh) is answered no.
-- **The tool's token**: `nib mcp` proves itself with the token of the sidebar's built-in
-  grant ("nib · Claude Code" in Settings > Agents), issued afresh once per run of the
-  app, kept in memory, and handed over in the program's environment (`NIB_MCP_TOKEN`),
-  never on a command line or in a file. It stands in for pairing, so the reader's own
-  pairing of their own Claude Code is never read or touched.
+- **The tool's token**: `nib mcp` proves itself with a token lent to the sidebar's
+  built-in grant ("nib · Claude Code" in Settings > Agents) for the thread's mode, one per
+  provider and mode, made once per run of the app, kept in memory, and handed over in the
+  program's environment (`NIB_MCP_TOKEN`), never on a command line or in a file. The
+  endpoint knows the mode by it, so Agent asks nothing and Approve asks before every
+  change, at nib's own verbs; in Approve `nib mcp` holds the call open while the reader
+  answers in the thread (docs/ai-sidebar.md 4.4). It stands in for pairing, so the
+  reader's own pairing of their own Claude Code is never read or touched.
+- **Agent mode** gives a program nothing more than nib's verbs: never `bypassPermissions`,
+  `--dangerously-skip-permissions` or Codex's Full Access, which would only matter for
+  the program's own shell and files, and those stay off. "Anything" is every verb the
+  grant reaches, asked about by nobody.
 - All: started with no console window and none of nib's handles, in an empty folder of
   the app's own (never a space), and ended with everything they started - a job object
   on Windows, a process group elsewhere - on a stop, when their window goes and when nib
@@ -309,8 +317,9 @@ reads it.
 
 ## The Ask panel
 
-Ask is now the first mode of the AI panel (docs/ai-sidebar.md), in the same tab and on
-the same key; what follows is what that mode does, unchanged.
+Ask is now the AI panel's Approve mode (docs/ai-sidebar.md), the one a first thread
+starts in, in the same tab and on the same key; what follows is how that mode answers a
+question, unchanged. Approve can also act, and asks before every change it makes.
 
 The right side's last tab, or **Ctrl+Shift+A**, which puts the keyboard in its field.
 A question typed there is answered from your notes, beside the note you are reading,

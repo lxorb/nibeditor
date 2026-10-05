@@ -36,7 +36,9 @@ import type {
   Turn,
   Usage,
 } from '../chat/types'
+import { always, type Answers, crateAnswers } from '../chat/approvals'
 import { KIND_NAMES, type LocalKind, type Message, type Provider } from '../providers'
+import { agentOf } from '../review/changes'
 import { PLANS } from './ask'
 import { claudeReader } from './claude'
 import { codexReader } from './codex'
@@ -66,6 +68,8 @@ import { troubleOf } from './trouble'
 /** What the engine needs from the app around it: the API engine's `Setup`, read. */
 export interface LocalSetup {
   provider(id: string): Provider | null
+  /** The questions a call raises and the reader's answers; the crate's by default. */
+  answers?: Answers
   /** The space's instructions (`AGENTS.md`) and the reader's own. */
   instructions?(thread: Thread): Promise<string>
 }
@@ -145,6 +149,7 @@ function seeded(thread: Thread, instructions: string, message: string): string {
 export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const sessions = new Map<string, Live>()
   const running = new Map<string, Running>()
+  const answers = setup.answers ?? crateAnswers
   /** Windows learnt from the program's own counts, by model. */
   const windows = new Map<string, number>()
   let listed: ModelInfo[] = []
@@ -254,8 +259,9 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
     let live: Live
     let opened: boolean
+    let provider: Provider
     try {
-      const provider = providerOf(thread)
+      provider = providerOf(thread)
       ;[live, opened] = await liveFor(thread, provider)
       if (!opened) await retell(live, thread)
     } catch (error) {
@@ -479,6 +485,29 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
     running.set(thread.id, { thread, on, pending: 0, steered })
 
+    // A call that asks the reader holds its program's tool call open (`nib mcp` waits for
+    // the answer): its row becomes the question, answered there (chat/approvals.ts).
+    const agent = agentOf(provider.id)
+    const unhear = await answers
+      .asked((asked) => {
+        if (asked.agent !== agent) return
+        const at = turn.parts.findIndex(
+          (one) => one.kind === 'tool' && one.state === 'running' && one.verb === asked.verb,
+        )
+        const part = turn.parts[at]
+        if (part?.kind !== 'tool') return
+        if (always(thread, asked.verb)) {
+          void answers.answer(asked.id, true)
+          return
+        }
+        grow(at, {
+          ...part,
+          state: 'asking',
+          result: { text: '', images: [], error: false, approval: asked.id },
+        })
+      })
+      .catch(() => () => undefined)
+
     const stop = () => {
       stopping = true
       // A goal stopped is a goal held, or the program would start its next turn.
@@ -531,6 +560,13 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       on({ type: 'done', stop: 'error', error: words })
       return 'error'
     } finally {
+      unhear()
+      // A question still open when the turn ended is no longer anybody's to answer yes.
+      for (const part of turn.parts)
+        if (part.kind === 'tool' && part.state === 'asking' && part.result?.approval) {
+          void answers.answer(part.result.approval, false)
+          part.state = 'error'
+        }
       signal.removeEventListener('abort', stop)
       running.delete(thread.id)
       live.hear = null

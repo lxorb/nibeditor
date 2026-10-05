@@ -2,8 +2,8 @@
   /** A thinking block or a tool call, as one folded row (docs/ai-sidebar.md 4.3): a
    *  verb and an object, "Thought · 6 s", "Read Herons", "Edited Birds +3 −2". Open, it
    *  shows what the provider summarised of the thinking, or the call's arguments and
-   *  what it answered. A call still going pulses; one that asked the reader is a
-   *  question with its two answers in place, the Activity panel's question here.
+   *  what it answered. A call still going pulses; one waiting for the reader is the
+   *  question with its answers in place (review/Approval.svelte).
    *
    *  Folded by default because the answer is what was asked for; Ctrl+O opens them all
    *  (Claude Code's Focus view, the other way round). */
@@ -14,7 +14,7 @@
   import { workspace } from '../../workspace.svelte'
   import { insideSpace } from '../../space-paths'
   import type { Part } from '../chat/types'
-  import Asked from '../review/Asked.svelte'
+  import Approval from '../review/Approval.svelte'
   import { chat } from './chat.svelte'
   import { seconds } from './numbers'
   import { bareName, objectOf, verbOf } from './verbs'
@@ -59,14 +59,6 @@
     }
     opened = !opened
   }
-
-  let answering = $state(false)
-  async function answer(allow: boolean) {
-    const approval = part.kind === 'tool' ? part.result?.approval : undefined
-    if (!approval || answering) return
-    answering = true
-    await chat.approve(approval, allow)
-  }
 </script>
 
 <div class="row" class:going class:failed={part.kind === 'tool' && part.state === 'error'}>
@@ -81,16 +73,7 @@
   </button>
 
   {#if part.kind === 'tool' && part.state === 'asking' && part.result?.approval}
-    <div class="ask">
-      {#if part.result.text}<p>{part.result.text}</p>{/if}
-      <Asked {part} />
-      <button class="nib-button" disabled={answering} onclick={() => void answer(true)}
-        >{t('Allow')}</button
-      >
-      <button class="nib-button is-quiet" disabled={answering} onclick={() => void answer(false)}
-        >{t('Don’t allow')}</button
-      >
-    </div>
+    <Approval {part} thread={chat.thread} />
   {/if}
 
   {#if open && detail}
@@ -207,21 +190,5 @@
     line-height: 1.5;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-  }
-
-  .ask {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    margin: 4px 0 2px 13px;
-  }
-
-  .ask p {
-    flex-basis: 100%;
-    margin: 0;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
   }
 </style>

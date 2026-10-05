@@ -20,7 +20,9 @@ interface Agent {
   scopes: readonly string[]
   /** The spaces it may reach, by name; a space it may not reach does not exist to it. */
   spaces: 'all' | readonly string[]
-  mode: 'unsupervised' | 'confirm'
+  /** `autonomous` is the AI sidebar's Agent mode, laid over its grant for one call:
+   *  nothing the window asks about is asked. */
+  mode: 'unsupervised' | 'confirm' | 'autonomous'
   /** The programs `run_terminal` starts without asking. */
   programs: readonly string[]
   /** What it says about each site (9.2): a denied one is opened in no tab of the
@@ -54,8 +56,8 @@ export function callerOf(told: unknown): Caller {
       name: typeof grant.name === 'string' && grant.name ? grant.name : id,
       scopes: texts(grant.scopes),
       spaces: grant.spaces === 'all' ? 'all' : texts(grant.spaces),
-      // Anything but the one word that asks for less is the mode that asks for more.
-      mode: grant.mode === 'unsupervised' ? 'unsupervised' : 'confirm',
+      // Anything but the words that ask for less is the mode that asks for more.
+      mode: grant.mode === 'unsupervised' || grant.mode === 'autonomous' ? grant.mode : 'confirm',
       programs: texts(grant.programs),
       sites: isRecord(grant.sites)
         ? Object.fromEntries(

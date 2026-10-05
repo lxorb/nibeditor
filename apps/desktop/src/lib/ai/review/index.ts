@@ -6,7 +6,6 @@ import type { Thread, Turn } from '../chat/types'
 import { checkpoints } from './changes'
 import { review, type ReviewPanel } from './review.svelte'
 
-export { askFirst, setAskFirst } from './grant'
 export type { ReviewPanel } from './review.svelte'
 
 /** The rewind sheet: Esc Esc on an empty field, or the clock on a message (`turn`). */

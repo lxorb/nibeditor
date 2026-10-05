@@ -15,6 +15,7 @@
 import { t } from '../../i18n.svelte'
 import { type LocalKind, isLocal, type Provider, type ProviderKind } from '../providers'
 import { anthropic } from './anthropic'
+import { always, type Answers, crateAnswers } from './approvals'
 import { catalogue, unlisted, windowIn } from './catalogue'
 import { compactThread } from './compact'
 import { completions } from './completions'
@@ -56,24 +57,35 @@ const WIRES: Record<Api, Wire> = { anthropic, responses, completions }
  *  so: Windsurf's forty. The reader says "go on" to carry on. */
 export const MOST_ROUNDS = 40
 
+/** How many questions one call may raise one after the other before it is told no. */
+const MOST_ASKS = 3
+
 /** What the model is told, by mode. Not translated: nobody reads it, and the answer is
- *  asked for in the reader's own language. */
+ *  asked for in the reader's own language. Every mode names its sources, so an answer
+ *  from the notes cites them whatever the mode. */
+const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
+const PARTLY =
+  'Change part of a note with edit_note rather than write_note: they may be typing in it.'
+
 const SYSTEM: Record<Thread['mode'], string> = {
-  ask: [
-    'You are the reader’s assistant inside nib, their notes app and web browser, in a panel beside what they are reading.',
-    'You are in Ask mode: read and search with the tools you have, change nothing, and answer from what you read.',
-    'Name the note or page each claim comes from as a [[wikilink]] or its address.',
-    'Reply in the language of the question, in markdown, briefly: no preamble, no sign-off.',
+  approve: [
+    'You are the reader’s agent inside nib, their notes app and web browser, in a panel beside what they are reading.',
+    'Answer from what you read, and do what they ask with the tools you have; they approve each change before it is made.',
+    CITE,
+    PARTLY,
+    'Reply in the language of the request, in markdown, briefly: no preamble, no sign-off.',
   ].join(' '),
   plan: [
     'You are the reader’s assistant inside nib, their notes app and web browser, in a panel beside what they are reading.',
     'You are in Plan mode: read what you need, then write the plan as one new note with create_note, a task (- [ ]) per step, and change nothing else.',
+    CITE,
     'Reply in the language of the request, briefly.',
   ].join(' '),
   agent: [
     'You are the reader’s agent inside nib, their notes app and web browser, in a panel beside what they are reading.',
-    'Do what they ask with the tools you have; every change you make is shown to them to keep or undo.',
-    'Change part of a note with edit_note rather than write_note: they may be typing in it.',
+    'Do what they ask with the tools you have, without asking first; every change you make is shown to them to keep or undo.',
+    CITE,
+    PARTLY,
     'Reply in the language of the request, briefly, saying what you did.',
   ].join(' '),
 }
@@ -83,6 +95,8 @@ export interface Setup {
   /** A provider by its id in Settings > AI. */
   provider(id: string): Provider | null
   tools?: Tools
+  /** The questions a call raises and the reader's answers; the crate's by default. */
+  answers?: Answers
   /** The space's instructions (`AGENTS.md`) and the reader's own, for the system prompt. */
   instructions?(thread: Thread): Promise<string>
 }
@@ -116,6 +130,7 @@ function lastModel(thread: Thread): string {
 /** Builds the API engine. */
 export function createApiEngine(setup: Setup): Engine {
   const tools = setup.tools ?? crateTools
+  const answers = setup.answers ?? crateAnswers
   const listed = new Map<string, ModelInfo[]>()
   const steering = new Map<string, string[]>()
 
@@ -300,7 +315,7 @@ export function createApiEngine(setup: Setup): Engine {
         const { ending, calls } = result.answer
         if (ending === 'pause') continue
         if (ending === 'tool') {
-          const outputs = await runCalls(thread, provider, calls, turn, on)
+          const outputs = await runCalls(thread, provider, calls, turn, on, signal)
           addedNow = [...addedNow, ...wire.results(outputs)]
           if (signal.aborted) throw new DOMException('stopped', 'AbortError')
         } else if (ending !== 'end') {
@@ -366,29 +381,49 @@ export function createApiEngine(setup: Setup): Engine {
     }
   }
 
-  /** Runs a round's calls side by side, and writes each answer into its part. */
+  /** Runs a round's calls side by side, and writes each answer into its part. A call
+   *  that asked the reader waits in its row for the answer (approvals.ts). */
   async function runCalls(
     thread: Thread,
     provider: Provider,
     calls: readonly Call[],
     turn: Turn,
     on: (event: EngineEvent) => void,
+    signal: AbortSignal,
   ): Promise<{ call: Call; output: ToolOutput }[]> {
+    const written = (call: Call, output: ToolOutput) => {
+      const index = turn.parts.findIndex((one) => one.kind === 'tool' && one.id === call.id)
+      const part = turn.parts[index]
+      if (part?.kind !== 'tool') return
+      const done: Part = {
+        ...part,
+        args: call.args,
+        state: output.approval ? 'asking' : output.error ? 'error' : 'ok',
+        result: output,
+      }
+      turn.parts[index] = done
+      on({ type: 'part', turn: turn.id, index, part: done })
+    }
     return await Promise.all(
       calls.map(async (call) => {
-        const output = await tools.call(provider, thread.mode, call.name, call.args)
-        const index = turn.parts.findIndex((one) => one.kind === 'tool' && one.id === call.id)
-        const part = turn.parts[index]
-        if (part?.kind === 'tool') {
-          const done: Part = {
-            ...part,
-            args: call.args,
-            state: output.approval ? 'asking' : output.error ? 'error' : 'ok',
-            result: output,
+        const ask = () => tools.call(provider, thread.mode, call.name, call.args)
+        let output = await ask()
+        // Allowed, the same call goes through on the allowance; asked again (a second
+        // question the first one stood in front of), it waits again, a few times at most.
+        for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
+          const approval = output.approval
+          if (always(thread, call.name)) await answers.answer(approval, true)
+          else {
+            written(call, output)
+            if (!(await answers.answered(approval, signal))) {
+              if (signal.aborted) await answers.answer(approval, false)
+              output = { text: 'The reader said no.', images: [], error: true }
+              break
+            }
           }
-          turn.parts[index] = done
-          on({ type: 'part', turn: turn.id, index, part: done })
+          output = await ask()
         }
+        written(call, output)
         return { call, output }
       }),
     )

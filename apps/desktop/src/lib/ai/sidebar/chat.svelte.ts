@@ -14,7 +14,6 @@ import { message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
 import { forget, keep, stored } from '../../stored'
-import { invoke } from '../../tauri'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
@@ -40,6 +39,7 @@ import type {
   Usage,
 } from '../chat/types'
 import { added, noUsage } from '../chat/usage'
+import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { threadMarkdown } from './export'
@@ -81,8 +81,6 @@ export interface Head {
   /** Whether it has been sent anything, and so is kept. */
   kept: boolean
 }
-
-const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
 
 /** The two places the panel is drawn: the right side, and a tab of its own. */
 export type Host = 'side' | 'tab'
@@ -680,10 +678,9 @@ class Chat implements Panel {
     this.changedHead(thread)
   }
 
-  /** Shift+Tab: Ask, Plan, Agent, and round again. */
+  /** Shift+Tab: Approve, Agent, Plan, and round again. */
   nextMode(): void {
-    const at = MODES.indexOf(this.open?.mode ?? 'ask')
-    this.setMode(MODES[(at + 1) % MODES.length] ?? 'ask')
+    this.setMode(nextMode(this.open?.mode ?? lastMode()))
   }
 
   /** A provider's models, asked once a session. A list that cannot be had leaves the
@@ -878,11 +875,6 @@ class Chat implements Panel {
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()
-  }
-
-  /** The reader's answer to a question a tool call asked (`needs_approval`). */
-  async approve(approval: string, allow: boolean): Promise<void> {
-    await invoke('agents_answer', { id: approval, allow, always: false }).catch(() => undefined)
   }
 }
 

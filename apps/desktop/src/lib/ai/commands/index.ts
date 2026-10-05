@@ -11,7 +11,7 @@ import { isEffort } from '../chat/effort'
 import type { Effort, Thread } from '../chat/types'
 import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
-import { approve, autocompact, copy, exportThread, listJobs, recap } from './conversation'
+import { autocompact, copy, exportThread, listJobs, recap } from './conversation'
 import { foundNow } from './found'
 import { batch, fork, research, subtask } from './helpers'
 import { type Host, hostOf, sendHere } from './host'
@@ -138,8 +138,8 @@ const RUNS: Record<string, Run> = {
   'output-style': ({ args, thread }, host) => outputStyle(host, thread, args),
 
   // 3.3
-  ask: ({ args, panel }) => {
-    panel.setMode('ask')
+  approve: ({ args, panel }) => {
+    panel.setMode('approve')
     if (args) panel.send(args)
   },
   plan: ({ args, panel }) => {
@@ -151,10 +151,7 @@ const RUNS: Record<string, Run> = {
     if (args) panel.send(args)
   },
   agents: ({ args, thread }, host) => agents(host, thread, args),
-  permissions: ({ typed, thread }, host) => {
-    if (typed === 'approve' && thread) approve(host, thread)
-    else return settingsAt('agents')
-  },
+  permissions: () => settingsAt('agents'),
   goal: (context, host) => {
     const thread = threadOf(context)
     if (thread) goal(host, thread, context.args)

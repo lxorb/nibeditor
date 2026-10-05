@@ -15,7 +15,8 @@
 
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
 import { isEffort } from '../chat/effort'
-import type { Effort, Mode } from '../chat/types'
+import type { Effort } from '../chat/types'
+import { type Mode, modeIn } from '../modes'
 
 export type NoteKind = 'command' | 'agent' | 'output-style'
 
@@ -39,7 +40,9 @@ export interface NoteCommand {
   tools: string[]
 }
 
-const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
+function withMode(mode: Mode | null): { mode?: Mode } {
+  return mode ? { mode } : {}
+}
 
 /** A name as a command can be typed: no slash, no spaces, lower case. */
 export function commandName(value: string): string {
@@ -65,7 +68,7 @@ export function rolesOf(path: string, text: string): NoteCommand[] {
     ...(description ? { description } : {}),
     ...(model ? { model } : {}),
     ...(isEffort(effort) ? { effort } : effort === 'extra' ? { effort: 'xhigh' as const } : {}),
-    ...(MODES.find((one) => one === mode) ? { mode: mode as Mode } : {}),
+    ...withMode(modeIn(mode)),
     arguments: frontMatterList(text, 'arguments').map(commandName).filter(Boolean),
     tools: frontMatterList(text, 'tools'),
   }

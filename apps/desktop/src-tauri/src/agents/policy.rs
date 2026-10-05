@@ -1805,6 +1805,22 @@ mod tests {
     }
 
     #[test]
+    fn autonomous_mode_asks_only_before_paying() {
+        let mut grant = grant();
+        grant.mode = Mode::Autonomous;
+        let url = "https://mail.example/";
+        for name in ["Send", "Delete", "Publish", "Next"] {
+            assert!(
+                judge(&grant, &press(name), Act::Press, url, &[]).is_none(),
+                "{name}"
+            );
+        }
+        assert!(judge(&grant, &Facts::default(), Act::Write, url, &[]).is_none());
+        let paying = judge(&grant, &press("Buy now"), Act::Press, url, &[]);
+        assert_eq!(paying.map(|one| one.category), Some(Category::Paying));
+    }
+
+    #[test]
     fn a_sign_in_form_and_a_card_field_are_known() {
         let facts = Facts {
             tag: "input".into(),
