@@ -501,7 +501,7 @@ fn rows<R: tauri::Runtime>(
 /// The window back, from the tray: shown, and brought forward the way a second launch
 /// brings it (never a probe's, which stays where it was put).
 #[cfg(any(windows, target_os = "macos"))]
-fn open(app: &AppHandle) {
+pub(crate) fn open(app: &AppHandle) {
     if let Some(window) = host(app) {
         let _ = window.show();
         crate::placement::raised(&window);

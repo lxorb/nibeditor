@@ -2153,4 +2153,16 @@ export const ru: Dictionary = {
   Form: 'Форма',
   Formula: 'Формула',
   'Blocked by {task}': 'Ждёт: {task}',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': 'Предупреждать перед выходом',
+  Always: 'Всегда',
+  'When something runs': 'Когда что-то запущено',
+  'Quit {name}?': 'Выйти из {name}?',
+  'Restart {name}?': 'Перезапустить {name}?',
+  'Close window?': 'Закрыть окно?',
+  'Running processes will stop.': 'Запущенные процессы будут остановлены.',
+  "Don't ask again": 'Больше не спрашивать',
+  'Quit anyway': 'Всё равно выйти',
+  'Restart anyway': 'Всё равно перезапустить',
+  'Close anyway': 'Всё равно закрыть',
 }

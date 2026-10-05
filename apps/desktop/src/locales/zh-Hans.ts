@@ -2022,4 +2022,16 @@ export const zhHans: Dictionary = {
   Form: '表单',
   Formula: '公式',
   'Blocked by {task}': '被 {task} 阻塞',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': '退出前提醒',
+  Always: '始终',
+  'When something runs': '有程序运行时',
+  'Quit {name}?': '退出 {name}？',
+  'Restart {name}?': '重新启动 {name}？',
+  'Close window?': '关闭窗口？',
+  'Running processes will stop.': '正在运行的进程将会停止。',
+  "Don't ask again": '不再询问',
+  'Quit anyway': '仍要退出',
+  'Restart anyway': '仍要重新启动',
+  'Close anyway': '仍要关闭',
 }

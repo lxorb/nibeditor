@@ -16,7 +16,9 @@
   import { terminalMark } from './naming'
   import { hostIdOf, readSpec } from './spec'
 
-  const { tab }: { tab: Tab } = $props()
+  // What it reads of a tab, which the question before quitting also hands it for a tab
+  // of another window; see lib/quitting.
+  const { tab }: { tab: Pick<Tab, 'doc' | 'running'> } = $props()
 
   const shell = $derived(readSpec(tab.doc)?.shell ?? '')
   const mark = $derived(terminalMark(shell, tab.running?.program ?? null))

@@ -2059,4 +2059,16 @@ export const ja: Dictionary = {
   Form: 'フォーム',
   Formula: '数式',
   'Blocked by {task}': '{task} 待ち',
+  // The question before something running stops; see lib/quitting
+  'Warn before quitting': '終了前に確認',
+  Always: '常に',
+  'When something runs': '何かが実行中のとき',
+  'Quit {name}?': '{name} を終了しますか?',
+  'Restart {name}?': '{name} を再起動しますか?',
+  'Close window?': 'ウィンドウを閉じますか?',
+  'Running processes will stop.': '実行中のプロセスは停止します。',
+  "Don't ask again": '今後は確認しない',
+  'Quit anyway': '終了する',
+  'Restart anyway': '再起動する',
+  'Close anyway': '閉じる',
 }

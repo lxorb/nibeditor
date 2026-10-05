@@ -591,6 +591,43 @@ mod tests {
         session.end();
     }
 
+    /// What the quit question asks: busy while a program runs, and idle again once it has
+    /// ended by itself, with nobody pressing anything.
+    #[test]
+    fn a_program_that_ends_leaves_the_shell_idle() {
+        let (held, heard) = started(80, 24);
+        line(&held, SAYS_OK);
+        let _ = printed_until(&held, &heard, "nib-ok");
+
+        let short = if cfg!(windows) {
+            "ping -n 4 127.0.0.1 > NUL"
+        } else {
+            "sleep 3"
+        };
+        line(&held, short);
+        let busy = |held: &Held| {
+            held.lock()
+                .expect("the session")
+                .as_ref()
+                .is_some_and(Session::busy)
+        };
+
+        let until = Instant::now() + Duration::from_secs(3);
+        while !busy(&held) && Instant::now() < until {
+            let _ = heard.recv_timeout(Duration::from_millis(50));
+        }
+        assert!(busy(&held), "{short} was not running");
+
+        let until = Instant::now() + Duration::from_secs(15);
+        while busy(&held) && Instant::now() < until {
+            let _ = heard.recv_timeout(Duration::from_millis(100));
+        }
+        assert!(!busy(&held), "the shell stayed busy after {short} ended");
+
+        let session = held.lock().expect("the session").take().expect("running");
+        session.end();
+    }
+
     #[test]
     fn a_shell_at_its_prompt_is_not_busy() {
         let (held, heard) = started(80, 24);

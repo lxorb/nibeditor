@@ -58,6 +58,17 @@ pub struct Terminals {
 struct Held {
     owner: String,
     session: Session,
+    /// Whether the session is another machine's: `ssh` itself rather than a shell.
+    remote: bool,
+}
+
+impl Held {
+    /// Whether ending it would stop something: a program besides the shell, or - on
+    /// another machine, whose programs cannot be seen from here - the connection
+    /// itself, as macOS Terminal and iTerm2 count an `ssh` among the jobs that ask.
+    fn busy(&self) -> bool {
+        self.remote || self.session.busy()
+    }
 }
 
 /// What `pty_spawn` answers: the shell's process id, which the window keeps for nothing
@@ -207,7 +218,9 @@ pub fn pty_spawn(
     }
 
     // Another machine is a host the crate found, by its id, as a shell is; see remote.rs.
-    let launch = match remote::host_id(&shell) {
+    let host = remote::host_id(&shell);
+    let remote = host.is_some();
+    let launch = match host {
         Some(host) => remote::connect(&webview, host)?,
         None => shells::find(&shell)
             .ok_or_else(|| format!("no shell {shell} here"))?
@@ -216,7 +229,14 @@ pub fn pty_spawn(
     let (session, started) = session::Session::open(&launch, cols, rows)?;
     let pid = session.pid();
 
-    terminals.lock().insert(id.clone(), Held { owner, session });
+    terminals.lock().insert(
+        id.clone(),
+        Held {
+            owner,
+            session,
+            remote,
+        },
+    );
 
     let app = webview.app_handle().clone();
     started.run(
@@ -286,13 +306,17 @@ pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String
         .with(&owner, &id, |session| session.seen(bytes))
 }
 
-/// Whether something besides the shell is running, asked before the tab closes.
+/// Whether something besides the shell is running, asked before the tab closes and
+/// before the app quits; see `Held::busy`.
 #[tauri::command(async)]
 pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, Session::busy)
+    let sessions = webview.state::<Terminals>();
+    let sessions = sessions.lock();
+    match sessions.get(&id) {
+        Some(held) if held.owner == owner => Ok(held.busy()),
+        _ => Err(format!("no terminal {id}")),
+    }
 }
 
 /// What is running in front of the shell, by name, which the tab is named for; nothing
@@ -343,5 +367,48 @@ mod tests {
         for bad in ["", "../x", "a b", "a;b", &"x".repeat(81)] {
             assert!(usable(bad).is_err(), "{bad:?} was taken");
         }
+    }
+
+    /// A shell at its prompt, started the way a tab starts one.
+    fn idle_shell() -> Session {
+        let (program, args) = if cfg!(windows) {
+            let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
+            (
+                std::path::PathBuf::from(root).join(r"System32\cmd.exe"),
+                vec!["/q".to_owned()],
+            )
+        } else {
+            (std::path::PathBuf::from("/bin/sh"), Vec::new())
+        };
+        let launch = shells::Launch {
+            program,
+            args,
+            folder: Some(std::env::temp_dir()),
+            env: Vec::new(),
+        };
+        let (session, started) = Session::open(&launch, 80, 24).expect("a shell");
+        started.run(Box::new(|_| {}), |_| {});
+        session
+    }
+
+    /// Another machine's terminal is busy for as long as it is connected, whatever runs
+    /// there; a shell here only while something besides it runs.
+    #[test]
+    fn a_remote_terminal_is_busy_while_it_is_connected() {
+        let here = Held {
+            owner: "main".to_owned(),
+            session: idle_shell(),
+            remote: false,
+        };
+        assert!(!here.busy());
+        here.session.end();
+
+        let there = Held {
+            owner: "main".to_owned(),
+            session: idle_shell(),
+            remote: true,
+        };
+        assert!(there.busy());
+        there.session.end();
     }
 }
