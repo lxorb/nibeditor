@@ -49,6 +49,8 @@ export class Session {
   private askedAt = 0
   /** Output held back while a screen is written out; see `want`. */
   private held: NibdFrame[] | null = null
+  /** Ended for good: nothing more is drawn or said. */
+  private over = false
   private answering: Promise<void> = Promise.resolve()
   /** Where a screen may be taken; see scan.ts. Its offsets count from `base`. */
   private readonly scanner = new Scanner()
@@ -118,6 +120,7 @@ export class Session {
   }
 
   private sent(bytes: Uint8Array): void {
+    if (this.over) return
     const seq = this.ring.append(bytes)
     this.screen.write(bytes)
     this.emit({ t: 'out', session: this.id, seq, data: bytes })
@@ -215,6 +218,7 @@ export class Session {
   end(): void {
     const pty = this.pty
     this.pty = null
+    this.over = true
     if (this.asking) clearTimeout(this.asking)
     if (pty && !this.machine.cgroups?.kill(this.id)) killSession(pty.pid)
     try {
