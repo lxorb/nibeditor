@@ -192,7 +192,7 @@ test("an update's restart asks the same way", async () => {
 test('an AI turn in flight is a row, named by its thread', async () => {
   busy.set('pty-a', false)
   const { watching } = await import('../../src/lib/ai/chat/sends')
-  let finish = () => undefined as void
+  let finish: () => void = () => undefined
   const engine = watching({
     send: () =>
       new Promise<void>((resolve) => {
