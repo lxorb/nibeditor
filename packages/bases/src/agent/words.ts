@@ -25,8 +25,14 @@ const MARKED = [
   'block',
 ] as const
 
-/** A reader of words in these languages (the reader's first, then English), as of
- *  `now`, knowing the space's note names for `>`. */
+/** Every language quick add's grammar reads, after the ones asked for: an agent writes
+ *  in whatever language its conversation is in, which need not be the app's, so a German
+ *  `morgen um 15 Uhr` from an agent is a date in an English app too, as the account's
+ *  connector has always read it. */
+const SPOKEN = ['en', 'de']
+
+/** A reader of words in these languages (the reader's first, then every other the
+ *  grammar has), as of `now`, knowing the space's note names for `>`. */
 export function quickWords(
   langs: readonly string[],
   now: Date,
@@ -35,7 +41,7 @@ export function quickWords(
   return (said) => {
     const written = readTask(`- [ ] ${said}`)
     const words = written?.text ?? said.trim()
-    const quick = parseQuickAdd(words, langs, now, { notes })
+    const quick = parseQuickAdd(words, [...langs, ...SPOKEN], now, { notes })
     const fields: TaskFields = taskOf({ text: quick.text, fields: quick.fields })
     if (written) {
       for (const key of MARKED) {

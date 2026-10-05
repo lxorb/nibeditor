@@ -165,8 +165,8 @@ function writableNote(call: Call, path: string) {
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const place = placeFor(call, maybe(call, 'space'))
   const { rows } = await import('../../rows/rows.svelte')
-  // Quick add's grammar over the words, in the reader's language and English, knowing
-  // the space's notes for `>Note`, as the quick add field reads them.
+  // Quick add's grammar over the words, in the reader's language and then every other it
+  // reads (`quickWords`), knowing the space's notes for `>Note`.
   const { i18n } = await import('../../i18n.svelte')
   const names = rows
     .of(place.space.name)
