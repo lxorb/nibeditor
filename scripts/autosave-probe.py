@@ -8,8 +8,10 @@ What it checks, through the app's own automation endpoint:
 
 * **A note typed into, and the process killed** less than a second after the last
   keystroke: the words are in the file.
-* **A new tab typed into, and the process killed** the same way: it is a file in the
-  space, named after its first line, with the words in it.
+* **A new tab typed into, and the process killed** the same way: it comes back as the
+  draft it was, its words in it and no file made for it - a new tab is a draft until it
+  is saved (Emil, 2026-09-30; see src/lib/workspace/drafts.ts), and a draft is kept in
+  the session the way VS Code's hot exit keeps an untitled editor.
 * **Ctrl+S** asks nothing and opens nothing: no dialog, no file picker.
 * **Closing the window** straight after typing: the app goes without a question, and
   the words are in the file.
@@ -202,6 +204,13 @@ CTRL_S = """
 
 ASKED = "(() => document.querySelectorAll('[role=\"dialog\"]').length)()"
 
+# The drafts the launch brought back: every tab with words and no file.
+DRAFTS = """
+(() => window.nibApp.workspace.tabs
+  .filter((one) => one.kind === 'note' && one.path === null)
+  .map((one) => one.doc))()
+"""
+
 
 #: How long a burst of typing is left before the next, in seconds: past the autosave's
 #: quiet (SAVE_DELAY in src/lib/backoff.ts), so every burst is a save of its own.
@@ -278,13 +287,17 @@ def main() -> int:
         ran(port, secret, TYPE % json.dumps("Killed straight after"))
         time.sleep(KILL_AFTER)
         kill(app)
-        made = space / "Killed straight after.md"
-        if not made.exists():
-            wrong(f"the new tab is no file in the space: {sorted(one.name for one in space.iterdir())}")
-        elif made.read_text(encoding="utf-8") != "Killed straight after":
-            wrong(f"the new note does not say what was typed: {made.read_text(encoding='utf-8')!r}")
+        made = sorted(one.name for one in space.iterdir() if one.name != "Plan.md")
+        if made:
+            wrong(f"a draft was written as a file before it was saved: {made}")
+        time.sleep(6.0)
+        app, port, secret = launch(exe, environment, args.identifier, port)
+        back = ran(port, secret, DRAFTS)
+        if not isinstance(back, list) or "Killed straight after" not in back:
+            wrong(f"the draft typed {KILL_AFTER} s before the kill did not come back: {back!r}")
         else:
-            say(f"killed {KILL_AFTER} s after typing -> {made.name}, with the words")
+            say(f"killed {KILL_AFTER} s after typing -> the draft came back with its words, no file")
+        kill(app)
         time.sleep(6.0)
 
         say("--- Ctrl+S, and the window closed straight after typing ---")
