@@ -357,7 +357,9 @@ drawn byte for byte), with `node-pty`:
 - a session is a pty running the user's login shell as `nib` in the home, plus a **headless
   xterm** fed every byte it prints, with 5,000 lines of scrollback (the local terminal's);
 - output is sent on at most once a frame and at once after a quiet one, as the local engine's
-  sender does (`docs/terminal.md`, _The engine_), as binary frames numbered by a byte offset
+  sender does (`docs/terminal.md`, _The engine_), and at once for the first two reads after a
+  key even inside a busy frame, so an echo never waits behind a spinner's frame; as binary
+  frames numbered by a byte offset
   (`seq`), and the last megabyte of them is kept to answer a reconnect;
 - it tells which program is in front and the title it set, by the local crate's rules
   (`/proc` and the foreground process group), so the tab is named and marked as a local one is;
@@ -617,8 +619,17 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   with the first online terminal.
 - The last screen is drawn from the local cache before the socket opens, so a tab is never
   blank, and a sleeping machine's 1-3 s start is spent looking at it.
-- Machines in `WEUR`/`EEUR`: Zurich to a Frankfurt or Zurich data centre is tens of
-  milliseconds a keystroke. Predictive echo, as sshx and mosh do, is later if typing feels slow.
+- Machines in the EU: an object is placed where its first request came from, in the EU
+  jurisdiction, and its container beside it (the first machine, from Zurich: both in Prague,
+  read 2026-10-05). Containers that `Machine` starts itself take no placement constraint
+  (wrangler refuses `constraints` for them), and an object never moves.
+- A key's path waits on nothing: `Machine` forwards input before any bookkeeping and with no
+  storage or query, sends the echo on as it comes, and its 30-second activity write is
+  unconfirmed so it never holds frames behind it (the output gate).
+- **Predictive echo**, mosh's and VS Code's local echo: at a shell prompt, printable keys are
+  drawn at once, dim and underlined, over the screen (never into it), once the measured echo
+  is 30 ms or slower; the first key after Enter or a wrong guess is a hidden probe, so a
+  password is never drawn. See `apps/desktop/src/lib/online/echo.ts`.
 
 ## 5. What nib does not do
 

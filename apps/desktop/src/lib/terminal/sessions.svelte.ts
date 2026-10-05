@@ -38,6 +38,7 @@ import { madeNow, markMade } from '../remote/open'
 import { platform } from '../tauri'
 import { isMadeName, isOnlineTab, termName } from '../online/path'
 import { Arrival, type Status } from '../online/arrival.svelte'
+import { LocalEcho } from '../online/echo-view'
 import { marks } from '../online/marks.svelte'
 import { resumeCommand } from '../online/resume'
 import { type Tab, workspace } from '../workspace.svelte'
@@ -170,6 +171,9 @@ class Session {
   /** For an online terminal a machine's restart stopped an agent in: the command
    *  Resume types, while the bar offering it is up. See online/resume.ts. */
   resumable = $state<string | null>(null)
+  /** For an online terminal: what is typed at a prompt, drawn before the machine echoes
+   *  it where the echo is slow. See online/echo.ts. */
+  private readonly echo: LocalEcho | null
   /** How many shells this tab has started, which names each one. */
   private started = 0
   private opened = false
@@ -247,6 +251,18 @@ class Session {
       theme: terminalTheme(),
       ...(conpty ? { windowsPty: conpty } : {}),
     })
+
+    this.echo = this.online
+      ? new LocalEcho(
+          this.term,
+          () =>
+            this.live &&
+            this.mayType &&
+            this.front.program === null &&
+            this.exited === null &&
+            this.resumable === null,
+        )
+      : null
 
     this.term.loadAddon(this.fitting)
     this.term.loadAddon(this.searching)
@@ -635,6 +651,7 @@ class Session {
     marks.delete(this.tab.id)
     clearTimeout(this.resting)
     this.watching.disconnect()
+    this.echo?.dispose()
     this.term.dispose()
     this.host.remove()
   }
@@ -789,6 +806,7 @@ class Session {
    *  or one a reconnect could not be sent the rest of. At the session's size, then fitted
    *  to the pane, which tells the session this screen's size. Live from here. */
   private screen(screen: Extract<Said, { screen: string }>) {
+    this.echo?.reset()
     this.term.reset()
     this.applied(screen.cols, screen.rows)
     this.term.write(screen.screen, () => {
@@ -961,6 +979,7 @@ class Session {
     }
     if (!this.mayType) return
 
+    this.echo?.typed(binary ? '' : data)
     this.outgoing.push({ data, binary })
     void this.send()
   }

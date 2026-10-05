@@ -130,6 +130,14 @@
     background-color: transparent;
   }
 
+  /* Typed characters drawn ahead of a slow echo carry the caret after them, so the
+     terminal's own cursor, still where the machine last put it, is hidden meanwhile.
+     See lib/online/echo-view.ts. */
+  .place :global(.nib-echoing .xterm-cursor) {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
   /* Over the foot of the screen, out of the way of the lines above it: a floating
      layer's surface and hairline, and one button in it. */
   .bar {
