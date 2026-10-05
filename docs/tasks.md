@@ -416,6 +416,17 @@ each has it (✓), partly (~) or not (-).
 
 **Count: 57 must, 24 should, 9 later, 2 drop** (where a row has two marks, its first).
 
+**Still open after lane 7** (2026-10-05), every other must and should row being built by
+lanes 1, 4 and 7:
+
+| row | mark | why it waits |
+| --- | --- | --- |
+| person | should | needs the shared space's members as choices, which the sharing store does not hand the views yet |
+| relation limited to one | should | `nib.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
+| AI autofill of a property | should | the AI sidebar's job (5.15); no column command there yet |
+| `html` drawn | should | `html()` is evaluated and escaped by the engine; no layout draws it as markup yet |
+| move to a folder as one undo | (5.13) | an automation's move is a file operation and undoes on its own, after the edit it followed |
+
 ## 5. The design
 
 ### 5.1 Where tasks live
@@ -980,7 +991,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
 - **Measured** (test/e2e/tasks.py, headless Chromium on the Snapdragon X Elite): see
   the numbers the drive prints for a board of 2,000 cards.
 - **Not built here**: the comments count under a row (the rows carry no description
-  lines), conditional colour, row height and frozen columns (lane 7's view options),
+  lines), conditional colour, row height and frozen columns (lane 7's, built: 5.13),
   Assigned to me in the panel.
 
 ### 5.10 Reminders
@@ -1125,6 +1136,9 @@ nib:
         - { value: Done, group: done, tone: success }
 ```
 
+- **What lane 7 added to the key**: on a view `lines`, `freeze`, `colour`, `template`,
+  `required` and `locked`; on the base `template`, `id`, `locked`, `properties.<key>`
+  (`options`, `format`), `buttons` and `automations` (5.12, 5.13).
 - **`nib.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
   Obsidian shows the notes those tasks are in, which is the graceful version of the same
   question.
@@ -1169,6 +1183,45 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   one into 46 the first time a reader looks (a merge of ids, not of notes).
 - **Created by, edited by** wait for sync v2 to keep an author per version of each file.
 
+**As built** (lane 7, 2026-10-05). The engine's halves are `@nib/bases`'s `rollup.ts`,
+`ids.ts`, `colour.ts` and `csv.ts`; the app's are `lib/views/`'s builders, each a layer
+the view's head holds under its name (`live.builder`), opened from a column's menu
+(`column-menu.ts`, the table's header and a form's field alike) or the name's menu.
+
+- **Reverse relations**: "Add a column" offers `← Folder` for every property of the
+  space's notes whose links point at a row of the view, and writes
+  `file.backlinks.filter(list(value.asFile().properties.project).contains(file))` under
+  the linking notes' folder's name (`reverseFormula`). A formula named with a space,
+  `formula["My tasks"]`, is read now (`compile.ts`, `answer.ts`).
+- **Rollups**: `RollupBuilder`, three choices (relation, property or the notes
+  themselves, calculation), written by `rollupFormula` with Obsidian's own list
+  functions only (`filter`, `map`, `reduce`, `sort`, `unique`, `length`; Obsidian has
+  no `sum`), and read back by writing every shape it could have written
+  (`readRollup`). Percent ticked is a share, shown as a percentage by the column's
+  `percent` format. A rollup still under the name the picker gave it is renamed with
+  its choices.
+- **Formulas**: `FormulaBuilder`, the expression with the properties and functions the
+  word under the caret could be, and the first row's value as it is typed; words that
+  do not compile are kept, never written.
+- **Column names**: Rename in a column's menu writes Bases' `properties.<key>.displayName`.
+- **Unique ids**: Unique ID in "Add a column" sets `nib.id` (no prefix, as Notion's
+  default) and numbers every row of the base in the order they were made, as one write.
+  A row made by the plus, a form or a template gets `nextId`; a note that appears in the
+  base without one gets the next from the runner; of two rows sharing one, the younger
+  is renumbered (`idRepairs`, the same answer on every device). The id cell is not
+  editable; its Options are its prefix, and a new prefix is written into every id.
+- **Choices with tones**: Options in a column's menu (`OptionsBuilder`): each choice a
+  tone (the theme's six through `CanvasColours` without its wheel), its words (renamed
+  in every note that holds it, one write), its status group, carried by its grip to
+  reorder, which is the board's column order. A column with no choices starts from the
+  values its notes hold. Cells and cards draw them as chips in their tones.
+- **Formats** (row "number, with formats", "URL, email, phone"): `format.ts`, number,
+  percent, a currency by its sign, a progress bar, and words that open as an address, a
+  mail or a call.
+- **Sub-items for notes**: the list puts a note under the note its `parent` property
+  links to (`parentOf`, `list-items.ts`), folding like a sub-task; two notes naming each
+  other are both shown. A task blocked by an open one (`⛔`) dims and names it.
+
 ### 5.13 Templates, buttons, automations, forms
 
 - **Templates** are notes in a templates folder (`Templates/` unless the space says
@@ -1188,6 +1241,58 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   run where nib runs, are listed in the base's menu with a switch each, and every run is one
   undoable edit. Webhooks, mail and schedules while nib is closed need the Worker (later).
 - **Forms**: 5.9.
+
+**As built** (lane 7, 2026-10-05).
+
+- **Templates**: `@nib/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
+  `{{date:FORMAT}}` (Moment's tokens, `formatDate`) and `{{date+7d}}` (`d`, `w`, `M`,
+  `y`), and takes the template's own keys (`repeat`, `made`, `folder`) off the note. The
+  folder is `.obsidian/templates.json`'s, else `Templates` (`views/templates.ts`). The
+  palette's "New note from template" makes one beside the note in front; a view's plus,
+  pressed with the other button, makes a row from any template; its Default template
+  (the name's menu) is the view's `nib.template`, falling back to the base's. A new row
+  of a view of notes (`addNote`) is written where the filter points (`rowPlace`, the
+  agents' own), with the pinned values, the group, the template and the next id.
+- **Repeating templates**: `repeat: every Monday` (the Tasks plugin's words) in a
+  template's front matter; `repeatDue` answers the day owed and the days missed, the
+  runner makes `<Template> <day>.md` in the template's `folder:` (else the root) with
+  `missed:` listing the rest, and writes `made:` into the template. Not while the
+  template is open in a pane.
+- **Buttons**: `nib.buttons.<name>` with `set`, `task`, `command`, `open`; a column
+  `button.<name>` (`ButtonBuilder`, "Add a column"). A press (`press.ts`) sets the row's
+  properties and adds its task as one write; the command runs as a `nib://` link would
+  ask for it (`runCommand(…, 'link')`), and the address opens outside.
+- **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
+  with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
+  of a base file. `fired` answers on a change, never a state, so one edit fires once; the
+  runner (`runner.svelte.ts` wiring `running.ts`, fetched at the launch's last turn)
+  holds the open space's bases that automate or number, hears each note's rows change,
+  waits 80 ms for the edit to finish recording its undo, and writes every set as one
+  edit joined to that undo (`replaceInNotes(…, { join })`, `workspace/undo-join.ts`),
+  so one Ctrl+Z takes the edit and what it set off back. Its own write is not heard
+  again, so automations never set each other off. A notice rings the way a reminder
+  does (`reminders/platform.ts`).
+- **Forms**: `type: form`, offered for views of notes; the view's note properties are
+  the fields, `nib.required` the ones that must be filled (a field's menu toggles it);
+  Send makes the note through `addNote` without opening it and empties the form.
+- **Locks**: `nib.locked` on the view or the base (the name's menu). Every change to the
+  view's shape goes through `kit.change`, which a lock turns away while the padlock in
+  the head shakes; pressing the padlock unlocks both. Rows stay editable, as Notion's.
+- **Table**: Row height (the name's menu) is `nib.lines`, 1, 2 or 4 lines, the words
+  wrapping within, every row still one height so the window arithmetic holds; Freeze up
+  to here (a column's menu) is `nib.freeze`, sticky columns from the start; summaries
+  under each group as well as under all.
+- **Conditional colour**: `ColourBuilder`, rules of a filter row and a tone kept as one
+  nested `if` under `nib.colour` (`colourExpression`, `colourRules`); the table, the list,
+  the cards and the board tint a row in it. Another expression is kept as written.
+- **CSV**: Copy as CSV and Save as CSV in the name's menu (`views/csv.ts`, `csvText`); the
+  import sheet's "One note per row" also writes `<Name>.base` over the folder
+  (`baseOf` in `import/table.ts`), its columns the file's.
+- **Proved** by `packages/bases/src/rollup.test.ts` and `extras.test.ts` (rollups, id
+  collisions, automations firing once and as one effect), `lib/views/extras.test.ts`
+  (the runner's plan, the undo join) and the drive `test/e2e/databases.py`: a rollup
+  counts, a button sets a property and its automation dates it, one Ctrl+Z takes both
+  back, a form makes a note, and the builders and a locked view, photographed.
 
 ### 5.14 Sync, sharing, history
 
