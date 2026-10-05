@@ -317,13 +317,13 @@ jobs:
           gh release delete "$TAG" --cleanup-tag --yes || true
           gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
             --title "main · $VERSION" \
-            --notes "Built from \`${GITHUB_SHA::7}\` on main. Replaced by every push; the desktop app updates itself from here."
+            --notes ""
 
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$TAG" --title "$TAG" --generate-notes || true
+        run: gh release create "$TAG" --title "$TAG" --notes "" || true
 
       # What the Browser setting reads first; see scripts/chromium-manifest.mjs. None at
       # all where no platform's engine built and signed.

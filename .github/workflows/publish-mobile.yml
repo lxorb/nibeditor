@@ -307,11 +307,11 @@ jobs:
           gh release delete "$TAG" --cleanup-tag --yes || true
           gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
             --title "main on a phone · $VERSION" \
-            --notes "Built from \`${GITHUB_SHA::7}\` on main. Replaced by every push. The APK installs by hand; see docs/mobile.md."
+            --notes ""
 
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
-        run: gh release create "$TAG" --title "$TAG" --generate-notes || true
+        run: gh release create "$TAG" --title "$TAG" --notes "" || true
 
       - name: Upload the files
         run: gh release upload "$TAG" uploads/* --clobber
