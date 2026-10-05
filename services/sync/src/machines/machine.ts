@@ -978,8 +978,10 @@ export class Machine implements DurableObject {
 
   async state(): Promise<MachineState> {
     const kept = (await this.ctx.storage.get<MachineState>(STATE)) ?? 'asleep'
-    // A deploy or eviction mid-sleep leaves `stopping` behind with nothing finishing it.
-    if (kept === 'stopping' && !this.sleeping) {
+    // A deploy or eviction mid-sleep or mid-wake leaves `stopping` or `starting` behind
+    // with nothing in this instance finishing it.
+    const orphan = (kept === 'stopping' && !this.sleeping) || (kept === 'starting' && !this.waking)
+    if (orphan) {
       await this.ctx.storage.put(STATE, 'asleep')
       return 'asleep'
     }
