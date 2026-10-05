@@ -61,6 +61,7 @@ vi.mock('../../agents/docs', async () => {
 vi.mock('../chat/sends', () => ({
   answeringAt: (provider: string) => (provider.startsWith('p') ? `t-${provider}` : null),
   onSend: () => () => undefined,
+  onSent: () => () => undefined,
 }))
 
 // An agent's caret, and the mark on the tabs showing the note: no tabs here.

@@ -461,7 +461,12 @@ mod tests {
         let mut all = ask(None, &caps).expect("args");
         all.extend(codex_server());
         all.extend(claude_listing(&caps));
-        for mode in [None, Some(Mode::Approve), Some(Mode::Plan), Some(Mode::Agent)] {
+        for mode in [
+            None,
+            Some(Mode::Approve),
+            Some(Mode::Plan),
+            Some(Mode::Agent),
+        ] {
             let shape = Shape {
                 mode,
                 model: Some("opus[1m]"),
