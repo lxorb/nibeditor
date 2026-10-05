@@ -318,6 +318,10 @@ impl Watched {
     }
 
     #[cfg(not(windows))]
+    #[allow(
+        clippy::unused_self,
+        reason = "one signature on every system; only Windows can ask a thread whether a hand holds it"
+    )]
     fn held_by_the_person(&self) -> bool {
         false
     }

@@ -290,6 +290,7 @@ fn launcher() -> Option<PathBuf> {
 
 /// Whether this launch is a relaunch, which waits for the app that started it to go
 /// rather than handing itself to that app; see handover.rs.
+#[cfg(windows)]
 pub fn relaunching() -> bool {
     std::env::var_os(AFTER).is_some()
 }
