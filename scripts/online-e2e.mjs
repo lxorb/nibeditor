@@ -147,6 +147,8 @@ async function socket(session, since) {
     /** The offset after the last byte heard. */
     end: () => Math.max(0, ...heard.out.map((one) => one.seq + one.length)),
     type: (data) => ws.send(JSON.stringify({ t: 'in', data })),
+    /** Input as bytes, as the app sends a key xterm.js encoded itself. */
+    typeBytes: (data) => ws.send(new TextEncoder().encode(data)),
     close: () => ws.close(),
   }
 }
@@ -249,7 +251,9 @@ async function main() {
   )
   first.type('echo hi-$((6*7))\r')
   await until('hi-42 printed', () => first.text().includes('hi-42'), 30_000)
-  log('typed and answered')
+  first.typeBytes('echo bytes-$((5*5))\r')
+  await until('bytes-25 printed', () => first.text().includes('bytes-25'), 30_000)
+  log('typed and answered, as text and as bytes')
 
   // 3. Dropped while a command still prints, and back with `since`: the rest, and only it.
   first.type('sleep 3; echo later-$((7*6))\r')

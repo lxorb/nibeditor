@@ -42,7 +42,8 @@ and the container application, which the first `wrangler deploy` of the machines
    start environment, new every boot); and the image carries `sandbox-shim` for the home
    backups:
    `COPY --from=docker.io/cloudflare/sandbox:1.0.0 /usr/local/bin/sandbox-shim /usr/local/bin/sandbox-shim`
-   (the tag matches the pinned `@cloudflare/sandbox` 1.0.0).
+   (the tag matches the pinned `@cloudflare/sandbox` 1.0.0). In the Dockerfile since 2026-10-05,
+   and checked by the machine workflow.
 3. **The bucket** (EU):
    `wrangler r2 bucket create nib-homes --jurisdiction eu`
 4. **The migration** on the real database:
@@ -83,7 +84,13 @@ on this computer (`DevHost` in services/sync/src/machines/host.ts).
 4. `pnpm wrangler dev --config wrangler.machines.jsonc --enable-containers=false`.
 
 Start, link, input, output, screens, sizes, Resume and the minute's sleep all run for real;
-the backup and snapshot are skipped (the dev host keeps none).
+the backup and snapshot are skipped (the dev host keeps none). workerd has no jurisdictions,
+so with `MACHINE_DEV_NIBD` set the `Machine` objects are asked outside the EU one (ask.ts).
+
+`scripts/online-e2e.mjs` is all of this in one command, against a machine booted from the
+image: CI's machine workflow runs it on every change to the image, nibd or the Worker's
+machines (a session made as sync v1 makes one, typing, a reconnect with `since`, a late
+joiner's screen).
 
 ## Kill switches, for reference
 

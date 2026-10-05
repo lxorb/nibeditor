@@ -434,6 +434,10 @@ export class Machine implements DurableObject {
     const me = await this.me()
     if (!me) throw new Error('a machine that does not know its id')
     const link = await this.host.link(me.id)
+    // Binary frames as bytes, read in order: since the standard binary type
+    // (compatibility date 2026), the runtime hands a socket's binary messages over as
+    // Blobs, which no frame check reads.
+    link.binaryType = 'arraybuffer'
     this.link = link
     this.opened = new Set()
     for (const socket of this.ctx.getWebSockets()) this.next.set(socket, -1)
