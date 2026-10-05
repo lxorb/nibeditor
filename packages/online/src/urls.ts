@@ -41,7 +41,7 @@ export function isWebUrl(url: unknown): url is string {
 export function loopbackOrigin(url: unknown): string | null {
   if (typeof url !== 'string' || url.length > LONGEST_URL) return null
   const one = parsed(url)
-  if (!one || one.protocol !== 'http:' || !one.port) return null
+  if (one?.protocol !== 'http:' || !one.port) return null
   return LOOPBACK_HOSTS.has(one.hostname.toLowerCase()) ? one.origin : null
 }
 

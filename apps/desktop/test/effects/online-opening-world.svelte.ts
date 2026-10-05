@@ -11,6 +11,7 @@ class Page {
   url = $state<string | null>(null)
 }
 
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pages are reactive, not the list
 const pages = new Map<string, Page>()
 const tabs = $state<{ id: string }[]>([])
 let made = 0

@@ -69,6 +69,7 @@ const WATCHED_FOR = 15 * 60_000
 export class Opener {
   private readonly pace = new Pace()
   /** The sign-in tabs being watched, by the landing they are waiting on once landed. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping; nothing renders from it
   private readonly watched = new Map<string, { stop: () => void; landed: string | null }>()
 
   constructor(
