@@ -10,7 +10,11 @@
  *     `since`: the rest arrives, and nothing drawn already;
  *  4. a second socket, a late joiner, is sent the screen;
  *  5. keystroke round trips, a key sent to its echo heard, at a quiet prompt and while a
- *     program prints all the time, which is what the coalescing in nibd is measured by.
+ *     program prints all the time, which is what the coalescing in nibd is measured by;
+ *  6. `xdg-open` on the machine reaches the owner's socket as `browse`, and a sign-in
+ *     callback the app hands back is made on the machine;
+ *  7. a paste larger than one input frame, in the frames the app cuts it into, arrives
+ *     whole.
  *
  *  Run from the repository's root: `node scripts/online-e2e.mjs`. Everything local goes
  *  into a temporary folder that is removed afterwards. */
@@ -149,6 +153,8 @@ async function socket(session, since) {
     /** The offset after the last byte heard. */
     end: () => Math.max(0, ...heard.out.map((one) => one.seq + one.length)),
     type: (data) => ws.send(JSON.stringify({ t: 'in', data })),
+    /** Any frame of the app's, as text. */
+    send: (frame) => ws.send(JSON.stringify(frame)),
     /** Input as bytes, as the app sends a key xterm.js encoded itself. */
     typeBytes: (data) => ws.send(new TextEncoder().encode(data)),
     close: () => ws.close(),
@@ -322,6 +328,41 @@ async function main() {
   await roundTrips(back, 'under steady output')
   back.type('\x03')
   await pause(500)
+  // 6. A program asking for a browser: the owner's computer is told the address, once
+  //    (docs/online-terminal.md 4.13), and a sign-in's callback is made on the machine.
+  //    Both sockets here are one device's, so either may be the one told.
+  late.close()
+  back.type("xdg-open 'https://example.com/?from=e2e'; echo opened-$?\r")
+  await until(
+    'the address opened on the owner’s computer',
+    () =>
+      back.heard.frames.some(
+        (one) => one.t === 'browse' && one.url === 'https://example.com/?from=e2e',
+      ),
+    30_000,
+  )
+  log('xdg-open reached the owner’s socket')
+
+  back.type(
+    '(cd /tmp && python3 -m http.server 8766 --bind 127.0.0.1 >/dev/null 2>&1 &); sleep 1; echo served-$((1+1))\r',
+  )
+  await until('a listener on the machine', () => back.text().includes('served-2'), 30_000)
+  back.send({ t: 'callback', url: 'http://localhost:8766/?code=e2e' })
+  await until(
+    'the callback answered',
+    () => back.heard.frames.some((one) => one.t === 'called' && one.status === 200),
+    30_000,
+  )
+  log('a sign-in callback was made on the machine')
+
+  // 7. A paste of 200 000 bytes, in the app's frames (inputChunks in @nib/online/wire),
+  //    read by `head` in raw mode so no line limit of the terminal's stands in the way.
+  back.type('stty -icanon; head -c 200000 > /tmp/big; stty icanon; echo big-$(wc -c < /tmp/big)\r')
+  await pause(1000)
+  const paste = 'x'.repeat(200_000)
+  for (let at = 0; at < paste.length; at += 64 * 1024) back.type(paste.slice(at, at + 64 * 1024))
+  await until('the whole paste', () => back.text().includes('big-200000'), 60_000)
+  log('a paste of four frames arrived whole')
 
   back.close()
   late.close()

@@ -148,7 +148,7 @@ export class Nibd {
   open(url: string, session: string): boolean {
     const id = this.sessions.has(session) ? session : this.lastTyped
     if (!this.link || id === null || !this.sessions.has(id)) return false
-    this.send({ t: 'open', session: id, url })
+    this.send({ t: 'browse', session: id, url })
     return true
   }
 

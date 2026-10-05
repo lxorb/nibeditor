@@ -217,7 +217,7 @@ export class OnlineSource implements Source {
         return
       }
       // A program on the machine asked for a browser: this computer's (4.13).
-      case 'open':
+      case 'browse':
         this.opener.open(frame.url, this.place.front())
         return
       case 'called':

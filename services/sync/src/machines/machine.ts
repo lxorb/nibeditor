@@ -437,7 +437,7 @@ export class Machine implements DurableObject {
    *  machine's owner on that session - the device that typed there last, or else the
    *  one there longest awake - and to nobody else. A watcher in somebody's space is
    *  never sent a page by their machine (4.13). */
-  private open(session: string, url: string): void {
+  private browse(session: string, url: string): void {
     if (!within(this.opens, OPENS_A_MINUTE)) return
     const owners = this.ctx.getWebSockets(session).flatMap((socket) => {
       const viewer = viewerOf(socket)
@@ -447,7 +447,7 @@ export class Machine implements DurableObject {
     const chosen =
       owners.find((one) => one.viewer.device === device) ??
       owners.sort((a, b) => b.viewer.seen - a.viewer.seen)[0]
-    if (chosen) this.say(chosen.socket, { t: 'open', url })
+    if (chosen) this.say(chosen.socket, { t: 'browse', url })
   }
 
   /** A tab the owner's nib opened landed on the program's own sign-in callback: that
@@ -579,8 +579,8 @@ export class Machine implements DurableObject {
       case 'saved':
         this.saved?.()
         return
-      case 'open':
-        this.open(frame.session, frame.url)
+      case 'browse':
+        this.browse(frame.session, frame.url)
         return
       case 'called':
         this.called(frame.session, { t: 'called', url: frame.url, status: frame.status })

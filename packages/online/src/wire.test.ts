@@ -74,7 +74,7 @@ describe('the app socket', () => {
     { t: 'ended', code: null },
     { t: 'refused', error: 'role' },
     { t: 'refused', error: 'sessions' },
-    { t: 'open', url: 'https://github.com/login/device' },
+    { t: 'browse', url: 'https://github.com/login/device' },
     { t: 'called', url: 'http://127.0.0.1:1455/auth/callback?code=x', status: 302 },
     { t: 'called', url: 'http://localhost:1/x', status: 0 },
   ]
@@ -124,9 +124,9 @@ describe('the app socket', () => {
     '{"t":"role","type":"read"}',
     '{"t":"ended","code":1.5}',
     '{"t":"refused","error":"because"}',
-    '{"t":"open","url":"file:///etc/passwd"}',
-    '{"t":"open","url":"javascript:alert(1)"}',
-    '{"t":"open"}',
+    '{"t":"browse","url":"file:///etc/passwd"}',
+    '{"t":"browse","url":"javascript:alert(1)"}',
+    '{"t":"browse"}',
     '{"t":"called","url":"https://claude.ai/","status":200}',
     '{"t":"called","url":"http://localhost:1/","status":-1}',
   ])('drops a server frame that does not check: %s', (raw) => {
@@ -213,7 +213,7 @@ describe('the link', () => {
     { t: 'ended', session: 's_1', code: null },
     { t: 'activity', activity: { at: 1, output: 0, cpu: 0.25, net: 51_200, homeBytes: 2 ** 32 } },
     { t: 'saved' },
-    { t: 'open', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
+    { t: 'browse', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
     { t: 'called', session: 's_1', url: 'http://localhost:54545/callback', status: 200 },
   ]
 
@@ -253,8 +253,8 @@ describe('the link', () => {
     ],
     ['an ended with no session', { t: 'ended', code: 0 }],
     ['an unknown kind', { t: 'hello' }],
-    ['an address that is not the web', { t: 'open', session: 's', url: 'file:///etc/passwd' }],
-    ['an open with no session', { t: 'open', url: 'https://a.b/' }],
+    ['an address that is not the web', { t: 'browse', session: 's', url: 'file:///etc/passwd' }],
+    ['an open with no session', { t: 'browse', url: 'https://a.b/' }],
   ])('the Machine drops a frame with %s', (_, value) => {
     expect(nibdFrameOf(frame(value as object))).toBeNull()
   })

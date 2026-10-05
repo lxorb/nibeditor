@@ -785,20 +785,20 @@ describe('a machine', () => {
 
     await say(running, phone, { t: 'in', data: 'x' })
     await say(running, writer, { t: 'in', data: 'y' })
-    await nibd(running, { t: 'open', session: 'session-1', url })
-    expect(phone.of('open')).toEqual([{ t: 'open', url }])
-    expect(laptop.of('open')).toEqual([])
-    expect(writer.of('open')).toEqual([])
-    expect(reader.of('open')).toEqual([])
+    await nibd(running, { t: 'browse', session: 'session-1', url })
+    expect(phone.of('browse')).toEqual([{ t: 'browse', url }])
+    expect(laptop.of('browse')).toEqual([])
+    expect(writer.of('browse')).toEqual([])
+    expect(reader.of('browse')).toEqual([])
 
     await say(running, laptop, { t: 'in', data: 'z' })
-    await nibd(running, { t: 'open', session: 'session-1', url })
-    expect(laptop.of('open')).toHaveLength(1)
+    await nibd(running, { t: 'browse', session: 'session-1', url })
+    expect(laptop.of('browse')).toHaveLength(1)
 
     // Another session's program reaches nobody here.
-    await nibd(running, { t: 'open', session: 'session-2', url })
-    expect(laptop.of('open')).toHaveLength(1)
-    expect(phone.of('open')).toHaveLength(1)
+    await nibd(running, { t: 'browse', session: 'session-2', url })
+    expect(laptop.of('browse')).toHaveLength(1)
+    expect(phone.of('browse')).toHaveLength(1)
   })
 
   test('opens past ten a minute are dropped, and the next minute opens again', async () => {
@@ -807,12 +807,12 @@ describe('a machine', () => {
       const running = await machine(env, ID, user)
       const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
       for (let one = 0; one < 15; one++) {
-        await nibd(running, { t: 'open', session: 'session-1', url: `https://a.b/${String(one)}` })
+        await nibd(running, { t: 'browse', session: 'session-1', url: `https://a.b/${String(one)}` })
       }
-      expect(owner.of('open')).toHaveLength(10)
+      expect(owner.of('browse')).toHaveLength(10)
       vi.setSystemTime(Date.now() + 60_000)
-      await nibd(running, { t: 'open', session: 'session-1', url: 'https://a.b/next' })
-      expect(owner.of('open')).toHaveLength(11)
+      await nibd(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
+      expect(owner.of('browse')).toHaveLength(11)
     } finally {
       vi.useRealTimers()
     }

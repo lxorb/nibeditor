@@ -154,7 +154,7 @@ export type ClientFrame =
  *  - `role`: whether this socket may type;
  *  - `ended`: the shell ended with this code (null for a signal);
  *  - `refused`: what was asked was refused, and why;
- *  - `open`: a program on the machine asked for a browser; to one socket of the
+ *  - `browse`: a program on the machine asked for a browser; to one socket of the
  *    machine's owner only;
  *  - `called`: a `callback` was made on the machine, and the HTTP status it was
  *    answered with, 0 where nothing answered. */
@@ -175,7 +175,7 @@ export type ServerFrame =
   | { t: 'role'; type: boolean }
   | { t: 'ended'; code: number | null }
   | { t: 'refused'; error: Refusal }
-  | { t: 'open'; url: string }
+  | { t: 'browse'; url: string }
   | { t: 'called'; url: string; status: number }
 
 /** A text frame of either side, as it goes on the socket. */
@@ -240,7 +240,7 @@ export type NibdFrame =
   | { t: 'ended'; session: string; code: number | null }
   | { t: 'activity'; activity: Activity }
   | { t: 'saved' }
-  | { t: 'open'; session: string; url: string }
+  | { t: 'browse'; session: string; url: string }
   | { t: 'called'; session: string; url: string; status: number }
 
 /** A link frame as its bytes. */
@@ -422,8 +422,8 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return isCode(value.code) ? { t: 'ended', code: value.code } : null
     case 'refused':
       return oneOf(REFUSALS, value.error) ? { t: 'refused', error: value.error } : null
-    case 'open':
-      return isWebUrl(value.url) ? { t: 'open', url: value.url } : null
+    case 'browse':
+      return isWebUrl(value.url) ? { t: 'browse', url: value.url } : null
     case 'called':
       return isLoopbackUrl(value.url) && isStatus(value.status)
         ? { t: 'called', url: value.url, status: value.status }
@@ -494,8 +494,8 @@ export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
     }
     case 'ended':
       return isCode(value.code) ? { t: 'ended', session, code: value.code } : null
-    case 'open':
-      return isWebUrl(value.url) ? { t: 'open', session, url: value.url } : null
+    case 'browse':
+      return isWebUrl(value.url) ? { t: 'browse', session, url: value.url } : null
     case 'called':
       return isLoopbackUrl(value.url) && isStatus(value.status)
         ? { t: 'called', session, url: value.url, status: value.status }

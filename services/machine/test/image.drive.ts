@@ -76,7 +76,7 @@ describe.runIf(URL)('a browser on the owner’s computer', () => {
     await until(() => link.text(session).includes('done-42'), 60_000)
     const text = link.text(session)
     const opened = link.frames.flatMap((frame) =>
-      frame.t === 'open' ? [{ session: frame.session, url: frame.url }] : [],
+      frame.t === 'browse' ? [{ session: frame.session, url: frame.url }] : [],
     )
     link.close()
 
