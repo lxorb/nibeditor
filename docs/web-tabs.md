@@ -677,7 +677,12 @@ window, so a sheet over one empties the page's region and the still stands in un
 dimming, once it is decoded and drawn; until then only the sheet is cut out. A clear scrim
 counts as covering too: it is there to catch the press outside a menu, and a live page
 would take it. The cut waits the two frames the app takes to draw a layer that has just
-arrived; taking it away does not wait. The system engine on Windows only - elsewhere a
+arrived; taking it away does not wait. A layer that moves or grows while it is open is cut
+again where it is now: the page watches the size of every layer over it as it watches its
+own hole, and a tab's hover card sliding to the next tab says so on the overlay stack
+(`overlays.moved`). Before that, a card slid off one tab onto the next was cut out only
+where the two places overlapped, and the rest of it stood behind the page (Emil,
+2026-10-05). The system engine on Windows only - elsewhere a
 layer over the page hides it behind its still, as before, and a layer beside it no longer
 does.
 

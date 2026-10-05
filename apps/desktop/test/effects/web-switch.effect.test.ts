@@ -51,17 +51,33 @@ vi.mock('@tauri-apps/api/event', () => ({
   listen: () => Promise.resolve(() => undefined),
 }))
 
+/** jsdom never lays anything out, so nothing is ever resized; what each observer is
+ *  watching is kept, so a test can say an element changed size. */
 class NoLayout {
-  observe() {
-    // jsdom never moves anything.
+  static readonly all: NoLayout[] = []
+  readonly watched = new Set<Element>()
+
+  constructor(readonly heard: ResizeObserverCallback) {
+    NoLayout.all.push(this)
   }
 
-  unobserve() {
-    // Said above.
+  observe(node: Element) {
+    this.watched.add(node)
+  }
+
+  unobserve(node: Element) {
+    this.watched.delete(node)
   }
 
   disconnect() {
-    // Said above.
+    this.watched.clear()
+  }
+}
+
+/** Says to every observer watching `node` that it changed size. */
+function resized(node: Element) {
+  for (const one of NoLayout.all) {
+    if (one.watched.has(node)) one.heard([], one)
   }
 }
 
@@ -95,6 +111,23 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const given = this.getAttribute('data-box')
   if (given !== null) {
     const rect = JSON.parse(given) as { x: number; y: number; width: number; height: number }
+    return {
+      ...rect,
+      top: rect.y,
+      left: rect.x,
+      right: rect.x + rect.width,
+      bottom: rect.y + rect.height,
+      toJSON: () => rect,
+    }
+  }
+
+  // A tab's hover card, where its translate puts it, at its width and its height with a
+  // still. Read off the attribute, because jsdom's style object does not know `translate`.
+  const placed = this.classList.contains('card')
+    ? /translate:\s*(-?[\d.]+)px\s+(-?[\d.]+)px/.exec(this.getAttribute('style') ?? '')
+    : null
+  if (placed) {
+    const rect = { x: Number(placed[1]), y: Number(placed[2]), width: 256, height: 216 }
     return {
       ...rect,
       top: rect.y,
@@ -408,6 +441,63 @@ test('a tab’s hover card over the page is cut out of it, and the page never bl
   void unmount(app)
 })
 
+/** Emil, 2026-10-05, a picture of a hovered tab: the card had slid on from the tab beside
+ *  it, and the page was still cut round where the card had been - all of the card but a
+ *  strip, where the two places met, stood behind the page. A slide opens nothing on the
+ *  overlay stack, so the page never looked again. Now it hears of the slide, and the cut
+ *  goes where the card went. */
+test('a hover card sliding on to the next tab takes its cut with it', async () => {
+  cuts = true
+  const { tab, app } = await opened('https://example.com/slid')
+  const hollow = () =>
+    (
+      asked.filter((one) => one.command === 'web_place').at(-1)?.args.cut as {
+        hollows: { x: number; y: number }[]
+      } | null
+    )?.hollows[0]
+
+  const done = await hoverOver(tab)
+  expect(hollow()).toMatchObject({ x: 100 })
+
+  hovering.enter({ tab, box: { left: 420, right: 620, bottom: 38 }, widest: 238, focused: true })
+  await frames()
+  expect(hovering.card?.sliding).toBe(true)
+  expect(hollow()).toMatchObject({ x: 420 })
+
+  done()
+  await frames()
+  void unmount(app)
+})
+
+/** A layer can grow while it is open - the address field's suggestions as they arrive -
+ *  which is neither a press nor a change to the overlay stack. The page watches the
+ *  layers over it as it watches its own hole, and is cut round the layer as it is now. */
+test('a layer that grows while it is open is cut out of the page at its new size', async () => {
+  cuts = true
+  const { app } = await opened('https://example.com/grown')
+  const hollow = () =>
+    (
+      asked.filter((one) => one.command === 'web_place').at(-1)?.args.cut as {
+        hollows: { height: number }[]
+      } | null
+    )?.hollows[0]
+
+  const suggest = layer('nib-layer', { x: 100, y: 60, width: 400, height: 40 })
+  const off = overlays.show(() => undefined)
+  await frames()
+  expect(hollow()).toMatchObject({ height: 40 })
+
+  suggest.setAttribute('data-box', JSON.stringify({ x: 100, y: 60, width: 400, height: 240 }))
+  resized(suggest)
+  await frames()
+  expect(hollow()).toMatchObject({ height: 240 })
+
+  off()
+  suggest.remove()
+  await frames()
+  void unmount(app)
+})
+
 /** An engine that cannot cut hides a page behind its still for the card - and a page the
  *  engine would not photograph is left in front of the card instead, since behind it there
  *  would be nothing but an empty pane. */
@@ -422,6 +512,8 @@ test('a hover card never hides a page there is no picture of', async () => {
   expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual(
     [],
   )
+  // And the card gives way rather than stand half behind the page.
+  expect(hovering.card).toBeNull()
 
   done()
   await frames()

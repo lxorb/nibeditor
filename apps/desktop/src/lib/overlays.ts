@@ -59,6 +59,12 @@ class Overlays {
     return () => this.watchers.delete(tell)
   }
 
+  /** One already open moved: a hover card sliding to the next tab. The page under it
+   *  is cut round where it was until told; see hover-card.svelte.ts. */
+  moved() {
+    this.said()
+  }
+
   private said() {
     for (const tell of this.watchers) tell()
   }
