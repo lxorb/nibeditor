@@ -21,11 +21,12 @@ import argparse
 import importlib.util
 import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 import time
 
-from probe_app import close_app, main_window, run_probe
+from probe_app import WM_CLOSE, close_app, main_window, run_probe, user32
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -98,6 +99,30 @@ def prompt_line(window) -> str:
     return rows[-1] if rows else ""
 
 
+def quit_anyway(app, window) -> bool:
+    """Closes the window with a program running, answering Quit anyway where the question
+    that names what runs comes up; see quit-warning-probe.py. A cmdlet runs inside the
+    shell, which asks nothing."""
+
+    user32.PostMessageW(main_window(app.pid), WM_CLOSE, 0, 0)
+    asked = "document.querySelector('[role=\"alertdialog\"] .nib-button.is-danger')"
+
+    def answered() -> bool:
+        if app.poll() is not None:
+            return True
+        try:
+            return window.run(f"(() => {{ const go = {asked}; go?.click(); return !!go }})()") is True
+        except Exception:  # noqa: BLE001 - the app going away mid-call
+            return False
+
+    until(answered, 15)
+    try:
+        app.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        return False
+    return True
+
+
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
     if not until(lambda: main_window(app.pid), 120, 0.25):
@@ -156,7 +181,7 @@ def main() -> int:
         check(bool(until(lambda: reporting(window), 10)), "a running program has the mouse reported")
         time.sleep(3.0)
         running = terminal.shells_of(app.pid)
-        check(close_app(app), "the app closes with the program running")
+        check(quit_anyway(app, window), "the app closes with the program running")
         until(lambda: not any(terminal.alive(pid) for pid, _name in running), 15)
 
         time.sleep(6.0)

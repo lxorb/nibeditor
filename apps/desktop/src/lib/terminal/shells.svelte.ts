@@ -29,7 +29,7 @@ const WARN_KEY = 'nib:terminal-quit-warn'
  *  something runs in one, or never. macOS Terminal's three, and its middle one first, as
  *  VS Code's `hasChildProcesses`: a question about idle shells is one people learn to
  *  click through. */
-export const WARNINGS = ['always', 'running', 'never'] as const
+const WARNINGS = ['always', 'running', 'never'] as const
 export type Warning = (typeof WARNINGS)[number]
 
 /** A warning out of whatever storage handed back; the default for anything else. */
