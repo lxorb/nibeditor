@@ -592,7 +592,8 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator(".ask .plus").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the + menu")
     rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
-    for row in ("Add photos and files", "Plan", "Agent", "Web search", "Mention", "Commands"):
+    modes = ("Approve", "Agent", "Plan")
+    for row in ("Add photos and files", *modes, "Web search", "Mention", "Commands"):
         if row not in rows:
             wrong(f"the + menu has no {row!r}: {rows}")
     shot(page, f"{tag}03-plus")
@@ -601,7 +602,7 @@ def shape(browser: Browser, scheme: str) -> None:
     if page.locator(".ask .controls .mode").inner_text().strip() != "Plan":
         wrong("a mode picked under + is not the chip beside it")
     page.locator(".ask .controls .mode").click()
-    menu_row(page, "Ask").click()
+    menu_row(page, "Approve").click()
 
     # Ask again, with another model from its menu.
     Model.thoughts = []

@@ -25,7 +25,7 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
 
 1. **One panel replaces Ask**, in the same slot on the right and on the same key
    (**Ctrl+Shift+A**). Ask - answers from the notes with numbered citations - becomes the
-   panel's first mode rather than a panel of its own. Properties and the Activity panel stay
+   panel's first mode, Approve, rather than a panel of its own. Properties and the Activity panel stay
    where they are.
 2. **Three modes on one chip: Approve, Agent, Plan** (**Shift+Tab** cycles them, as in
    Claude Code and Cursor). Approve does what Agent does, and each change waits in its row
@@ -786,7 +786,7 @@ for clashes before taking it.
 | **Esc** | field, running | stop; what arrived stays |
 | **Esc Esc** | empty field | rewind |
 | **Up** | empty field | edit the last message |
-| **Shift+Tab** | field | Ask → Plan → Agent |
+| **Shift+Tab** | field | Approve → Agent → Plan |
 | **Alt+P** | field | model popover |
 | **Alt+T** | field | next effort level |
 | **Alt+K** | editor | the selection into the field as `@Note:12-14` |
@@ -1069,7 +1069,7 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | --- | --- |
 | `ChatPanel.svelte` | The panel in Ask's slot: the title and its menu, the conversation or the list, the foot |
 | `chat.svelte.ts` | The state: the space's threads, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
-| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, Allow and Don't allow |
+| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, and a question's row (`review/Approval.svelte`: Approve, Deny, Always) |
 | `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
 | `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
 | `Threads.svelte`, `ages.ts` | The thread list, by age: search, open, rename, archive, delete; a tab's rail |
