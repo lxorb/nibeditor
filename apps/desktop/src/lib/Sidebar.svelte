@@ -28,6 +28,7 @@
   import { startup } from './startup.svelte'
   import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './slide'
+  import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
   import {
@@ -121,8 +122,12 @@
   const FRESH_MARK =
     'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
 
-  /** Three lines of a list with a dot before each: the AI panel's threads. */
-  const THREADS_MARK = 'M5 3.5h5.5M5 6.5h5.5M5 9.5h5.5M2.6 3.5h.1M2.6 6.5h.1M2.6 9.5h.1'
+  /** A clock turned back, every assistant's history; a list read as Properties. */
+  const THREADS_MARK =
+    'M2 6.5a4.5 4.5 0 1 0 4.5-4.5 4.9 4.9 0 0 0-3.4 1.4L2 4.5M2 2v2.5h2.5M6.5 4v2.5l2 1'
+
+  /** Three dots: the panel tabs there was no room for. */
+  const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
 
   /** Whether this side is open. Shut, the panel stays where it is, built and laid
    *  out, and only its column closes over it; see `.column`. */
@@ -203,6 +208,39 @@
       ),
     )
   })
+
+  /** The shortcut a panel's tab opens it with: the Files tab's command is older than
+   *  the panel's id. */
+  const commandOf = (id: Panel) => `app.${id === 'tree' ? 'files' : id}`
+
+  /** The row, its tools and a tab's mark, measured: the pill gets the row less its
+   *  `--space-1` padding and the tools, and a tab gives down to its mark and
+   *  `--space-1` either side. See tabsShown in workspace/panels.ts. */
+  let rowWidth = $state(0)
+  let toolsWidth = $state(0)
+  let markWidth = $state(0)
+  let tablist = $state<HTMLElement>()
+  $effect(() => {
+    if (rowWidth) markWidth = tablist?.querySelector('svg')?.getBoundingClientRect().width ?? 0
+  })
+  const strip = $derived.by(() => {
+    const room = rowWidth - 8 - (toolsWidth ? toolsWidth + 4 : 0)
+    const shown = tabsShown(mine.length, room, markWidth + 8)
+    return splitTabs(mine, shown, (item) => item.id === showing)
+  })
+
+  /** The tabs with no room, as a menu with their keys. */
+  function showBehind(event: MouseEvent) {
+    menu.show(
+      event,
+      strip.behind.map((item) => ({
+        label: item.label,
+        hint: shortcuts.hint(commandOf(item.id)),
+        run: () => workspace.togglePanel(item.id),
+      })),
+      { title: t('More') },
+    )
+  }
 
   /** Whether the Links panel is showing the picture. Held here because the switch
    *  for it is in the row of panel tabs above.
@@ -654,30 +692,34 @@
       </div>
     {/if}
 
-    <div class="switch">
+    <div class="switch" bind:clientWidth={rowWidth}>
       <!-- Four tabs are one tab stop, and left and right move between them. They
          change as they are arrived at, because what each of them shows is already
          worked out and arrives without a wait - which is the rule the ARIA practices
-         give for choosing on arrival. See roving.ts. -->
+         give for choosing on arrival. See roving.ts. More, which the arrows reach
+         without opening, holds the tabs with no room, as VS Code's "..." does. -->
       <div
-        class="nib-segmented"
+        bind:this={tablist}
+        class="nib-segmented panels"
         data-region={side === 'left' ? 'panels' : undefined}
         use:roving={{
           across: true,
           rows: '[role=tab]',
           current: '[aria-selected=true]',
           wrap: true,
-          follow: (tab) => tab.click(),
+          follow: (tab) => {
+            if (!tab.classList.contains('behind')) tab.click()
+          },
         }}
         role="tablist"
         aria-label={t('Panels')}
         use:segmented
       >
-        {#each mine as item (item.id)}
+        {#each strip.drawn as item (item.id)}
           <button
             class:on={showing === item.id}
             role="tab"
-            title={shortcuts.tooltip(item.label, `app.${item.id === 'tree' ? 'files' : item.id}`)}
+            title={shortcuts.tooltip(item.label, commandOf(item.id))}
             aria-label={item.label}
             aria-selected={showing === item.id}
             onclick={() => workspace.togglePanel(item.id)}
@@ -693,13 +735,26 @@
             {/if}
           </button>
         {/each}
+        {#if strip.behind.length}
+          <button
+            class="behind"
+            role="tab"
+            aria-selected="false"
+            aria-haspopup="menu"
+            title={t('More')}
+            aria-label={t('More')}
+            onclick={showBehind}
+          >
+            <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
+          </button>
+        {/if}
       </div>
 
       <!-- What a panel has to offer goes at the other end of the row its tabs are
          in: whether a panel about one note stays on it, and whether the Links
          panel says what it has to say as a list or as a picture. -->
-      {#if holdable || showing === 'links'}
-        <div class="tools">
+      <div class="tools" bind:clientWidth={toolsWidth}>
+        {#if holdable || showing === 'links'}
           {#if holdable}
             <!-- A panel about one note usually means the note being worked in. Held,
                it means the note it was held on, so an outline can be read on the
@@ -748,16 +803,14 @@
               <svg viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
             </button>
           {/if}
-        </div>
-      {/if}
-      <!-- Which order the file list is read in. At the end of the header row, where
+        {/if}
+        <!-- Which order the file list is read in. At the end of the header row, where
          every other panel's own tools are, because it is a fact about the list under
          it rather than about the space: one glyph, one press, seven rows, and the one
          that is in force wears the tick. Remembered per space on this machine; the
          order somebody arranged by hand travels with the space instead. See
          tree-order.ts and docs/tree.md. -->
-      {#if showing === 'tree' && listing}
-        <div class="tools">
+        {#if showing === 'tree' && listing}
           <!-- Every row folded, drawn only while one is open. -->
           {#if workspace.unfolded}
             <button
@@ -779,10 +832,8 @@
           >
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
-        </div>
-      {/if}
-      {#if showing === 'agents'}
-        <div class="tools">
+        {/if}
+        {#if showing === 'agents'}
           <button
             class="nib-glyph tool"
             title={shortcuts.tooltip(t('Stop agents'), 'agents.stop')}
@@ -795,21 +846,9 @@
               ><rect class="solid" x="3.2" y="3.2" width="6.6" height="6.6" rx="1.2" /></svg
             >
           </button>
-        </div>
-      {/if}
-      {#if showing === 'ask'}
-        <div class="tools">
-          <button
-            class="nib-glyph tool"
-            title={shortcuts.tooltip(t('Chats'), 'app.ask')}
-            aria-label={t('Chats')}
-            onclick={() => {
-              if (!__EVEN_PLUGIN__)
-                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.showThreads())
-            }}
-          >
-            <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
-          </button>
+        {/if}
+        {#if showing === 'ask'}
+          <!-- New chat first, as VS Code has it, so Chats keeps the row's end. -->
           <button
             class="nib-glyph tool fresh"
             title={t('New chat')}
@@ -821,8 +860,19 @@
           >
             <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
           </button>
-        </div>
-      {/if}
+          <button
+            class="nib-glyph tool"
+            title={shortcuts.tooltip(t('Chats'), 'app.ask')}
+            aria-label={t('Chats')}
+            onclick={() => {
+              if (!__EVEN_PLUGIN__)
+                void import('./ai/sidebar/chat.svelte').then((one) => one.chat.showThreads())
+            }}
+          >
+            <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
+          </button>
+        {/if}
+      </div>
     </div>
 
     <!-- The one thing you can do from anywhere in the app. Outside the Search
@@ -1268,10 +1318,15 @@
   }
 
   /* The tabs are the segmented control the settings sheet already uses: one
-     shape, so "this one" looks the same wherever the app says it. */
+     shape, so "this one" looks the same wherever the app says it. As wide as its
+     tabs, like the view's layout switch: a share of a wide row drew six loose marks. */
   .switch .nib-segmented {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
+  }
+
+  .panels button {
+    padding: 0 var(--space-2);
   }
 
   /* And the tabs in it give way, which is the only thing in this row that can.
@@ -1320,13 +1375,13 @@
   }
 
   /* The tools keep their size: they are square glyph buttons, and a row that has
-     to give somewhere gives from the tabs above. */
+     to give somewhere gives from the tabs above. At the far end of the row, so the
+     tabs keep their place whether or not the panel showing has anything to offer. */
   .tools {
     flex: none;
+    margin-inline-start: auto;
   }
 
-  /* At the far end of the row, so the tabs keep their place whether or not the
-     panel showing has anything to offer. */
   /* The note a held panel is about, over the panel that is about it. Quiet: the
      panel says the same thing in more detail, and this is only here to say whose
      note that is. */
@@ -1613,7 +1668,7 @@
   }
 
   aside:has(:global(.ask.is-empty)) .fresh {
-    visibility: hidden;
+    display: none;
   }
 
   :global([data-touch]) .empty-text,

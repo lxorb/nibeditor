@@ -961,10 +961,18 @@ order and Notion's:
    place, at the same height, with the same radius and the same magnifier, drawn
    from the same `.nib-field` class. It is one control that becomes editable, not
    two controls that look alike.
-3. **The panel tabs**, full width, an equal share each - the segmented control the
-   settings sheet already uses, so the tab you are on is raised out of its groove
-   exactly the way every other "this one" in the app is, and the raised surface
-   slides between them rather than blinking; see "Swapping".
+3. **The panel tabs** - the segmented control the settings sheet already uses, so
+   the tab you are on is raised out of its groove exactly the way every other "this
+   one" in the app is, and the raised surface slides between them rather than
+   blinking; see "Swapping". The pill is as wide as its tabs, each a mark with
+   `--space-2` either side as in the view's layout switch, at the start of the row;
+   a share of the row each drew six marks 130 pixels apart in a wide panel. The
+   panel's own tools (hold, graph, order, stop, New chat and Chats) are one group at
+   the row's far end. Where the row is too narrow, a tab gives down to its mark and
+   `--space-1` either side, and past that the last tabs go behind a More segment at
+   the pill's end that lists them with their keys; the tab showing always keeps a
+   place. VS Code's activity bar does the same. See `tabsShown` in `workspace/panels.ts`, and
+   `test/e2e/panel-tabs.py`, which measures it at three widths in both schemes.
 
 The tabs sit between the name and the search entry rather than under both: the
 entry has to be in one place whether it is the pill or the field, and the field

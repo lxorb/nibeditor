@@ -21,9 +21,9 @@ export const SEARCH_MARK = 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3'
 export const LINKS_MARK =
   'M5.6 7.4 7.4 5.6M6.9 4.3l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.4 9.9l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2'
 
-/** A line of words with a raised number after it, and the rule and the note under
- *  it: a footnote, which is a mark in the words and what it says at the bottom. */
-export const FOOTNOTES_MARK = 'M2 3h5.5M9.4 1.8h1.6l-1.8 2.6h1.9M2 7h9M2 10h4'
+/** A line of words with a raised 1 after it, and the rule and the note under it: a
+ *  footnote, which is a mark in the words and what it says at the bottom. */
+export const FOOTNOTES_MARK = 'M2 3h5.5M9.2 2.4l1.2-.9v3.3M2 7h9M2 10h4'
 
 /** Three notes and the edges between them: the same links, drawn as a picture. */
 export const GRAPH_MARK =
@@ -45,9 +45,8 @@ export const PROPERTIES_MARK = 'M2 3.4h2.4M6.4 3.4h4.6M2 6.5h2.4M6.4 6.5h4.6M2 9
 export const ASK_MARK =
   'M6.5 2c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
 
-/** A frame with a spark in it, an agent at work in a page: the activity panel's tab. */
-export const AGENTS_MARK =
-  'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM6.5 4.3c.2 1.2.9 1.9 2.2 2.2-1.3.3-2 1-2.2 2.2-.2-1.2-.9-1.9-2.2-2.2 1.3-.3 2-1 2.2-2.2z'
+/** A pulse: the activity panel's tab, where agents are seen at work. */
+export const AGENTS_MARK = 'M1.5 6.5h2L5 2.5l3 8 1.5-4h2'
 
 /** A box with a tick in it: the Tasks panel, a list of things to do. */
 export const TASKS_MARK =
