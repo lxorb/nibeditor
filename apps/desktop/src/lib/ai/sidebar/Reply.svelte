@@ -1,9 +1,14 @@
 <script lang="ts">
   /** Everything that answered one message, in the order it arrived: words, folded
    *  thinking and tool rows, and the one-line notices between them (another model from
-   *  here, compacted, stopped, the provider's error). Ask's citations are buttons that
-   *  open their passage, and the notes they cite are a row under the words, as the Ask
-   *  panel drew them.
+   *  here, compacted, stopped, the provider's error). Across the whole width with no
+   *  bubble, ChatGPT's answer. Ask's citations are buttons that open their passage, and
+   *  the notes they cite are a row of chips under the words, ChatGPT's sources: each
+   *  opens its note beside, where ChatGPT opens a side panel.
+   *
+   *  Under it ChatGPT's row: copy, insert at the caret, ask again (whose menu asks
+   *  another model) and "..." for the rest. The last answer's row is always there; an
+   *  earlier one's shows where it is while the answer is pointed at.
    *
    *  The words are the model's, which are nobody's markup: drawn through ai/drawn.ts
    *  with raw HTML escaped and nothing to load. */
@@ -17,7 +22,7 @@
   import { copyText } from '../../clipboard'
   import { t } from '../../i18n.svelte'
   import { links } from '../../link-index.svelte'
-  import { menu, type MenuEntry } from '../../menu.svelte'
+  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur } from '../../motion'
   import { howFor, tabAsk } from '../../new-tab'
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
@@ -74,12 +79,16 @@
 
   function drawn(text: string): string {
     const source = citationLinks(text, sources.length)
-    return answerHtml(source, (link) => {
-      const found = link.target
-        ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
-        : null
-      return found === null ? null : { href: found }
-    })
+    return answerHtml(
+      source,
+      (link) => {
+        const found = link.target
+          ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
+          : null
+        return found === null ? null : { href: found }
+      },
+      t('Copy code'),
+    )
   }
 
   /** The notes the answer cited, each once, with the first passage cited of each. */
@@ -152,8 +161,8 @@
     copying = setTimeout(() => (copied = false), 1600)
   }
 
-  /** Ask again, and on its menu every model the provider has: claude.ai's and
-   *  Raycast's way of comparing two answers. */
+  /** Ask again, ChatGPT's "Try again": the same model first, and under it every model
+   *  the provider has, to compare two answers (claude.ai's and Raycast's way too). */
   function againMenu(event: MouseEvent) {
     const provider = chat.provider
     if (!provider) return
@@ -163,7 +172,17 @@
       checked: one.id === chat.head?.model,
       run: () => chat.retry({ provider: provider.id, id: one.id }),
     }))
-    if (rows.length) menu.show(event, rows, { title: t('Ask again') })
+    menu.show(event, [{ label: t('Ask again'), run: () => chat.retry() }, DIVIDER, ...rows], {
+      title: t('Ask again'),
+    })
+  }
+
+  /** The rest of what can be done with an answer, behind "...". */
+  function moreMenu(event: MouseEvent) {
+    menu.show(event, [
+      ...(answered ? [{ label: t('Save as a note'), run: () => void saveAsNote() }] : []),
+      { label: t('Branch'), run: () => chat.branch(undefined, turn.id) },
+    ])
   }
 
   /** What a notice says, in the catalogue's words or the provider's own. */
@@ -201,7 +220,11 @@
 <div class="answer" class:last>
   {#each blocks as block (block.at)}
     {#if block.kind === 'words'}
-      <Answer html={drawn(block.text)} onfollow={follow} />
+      <Answer
+        html={drawn(block.text)}
+        live={live && block.at === blocks.at(-1)?.at}
+        onfollow={follow}
+      />
     {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
       <TaskRows said={block.notice.text} />
     {:else if block.kind === 'notice'}
@@ -262,30 +285,27 @@
         >
           <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg>
         </button>
-        <button
-          class="nib-glyph act"
-          title={t('Save as a note')}
-          aria-label={t('Save as a note')}
-          onclick={() => void saveAsNote()}
-        >
-          <svg viewBox="0 0 13 13">
-            <path
-              d="M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9M6.5 6.2v3.4M4.8 7.9h3.4"
-            />
-          </svg>
-        </button>
       {/if}
       {#if last && ai.providers.length}
         <button
           class="nib-glyph act"
           title={t('Ask again')}
           aria-label={t('Ask again')}
-          onclick={() => chat.retry()}
-          oncontextmenu={againMenu}
+          aria-haspopup="menu"
+          onclick={againMenu}
         >
           <svg viewBox="0 0 13 13"><path d="M10.6 6.5a4.1 4.1 0 1 1-1.2-2.9M10.6 2v2.6H8" /></svg>
         </button>
       {/if}
+      <button
+        class="nib-glyph act"
+        title={t('More')}
+        aria-label={t('More')}
+        aria-haspopup="menu"
+        onclick={moreMenu}
+      >
+        <svg class="dots" viewBox="0 0 13 13"><path d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg>
+      </button>
     </div>
   {/if}
 </div>
@@ -344,8 +364,8 @@
     max-width: 100%;
     padding: 1px var(--space-2);
     border: 1px solid var(--line);
-    border-radius: var(--radius-row);
-    background: none;
+    border-radius: 999px;
+    background: var(--surface-2);
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
@@ -365,13 +385,9 @@
     }
   }
 
-  /* The last answer's under its words, always there. An earlier one's float over its
-     top corner while it is pointed at, the way a chat's message tools do, so a long
-     thread is neither a column of buttons nor a column of gaps where they hide. */
-  .answer {
-    position: relative;
-  }
-
+  /* The last answer's under its words, always there. An earlier one's in the same
+     place while its answer is pointed at, ChatGPT's, so a long thread is neither a
+     column of buttons nor a thread that jumps as the pointer crosses it. */
   .acts {
     gap: 0;
     margin-inline-start: -6px;
@@ -379,31 +395,22 @@
   }
 
   .answer:not(.last) .acts {
-    position: absolute;
-    top: -10px;
-    inset-inline-end: 0;
-    margin: 0;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
     opacity: 0;
-    pointer-events: none;
   }
 
   .answer:not(.last):hover .acts,
-  .answer:not(.last) .acts:focus-within {
+  .answer:not(.last) .acts:focus-within,
+  :global([data-touch]) .answer:not(.last) .acts {
     opacity: 1;
-    pointer-events: auto;
   }
 
-  :global([data-touch]) .answer:not(.last) .acts {
-    position: static;
-    border: 0;
-    background: none;
-    box-shadow: none;
-    opacity: 1;
-    pointer-events: auto;
+  .act {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+  }
+
+  .act .dots {
+    stroke-width: 2.2;
   }
 
   .act svg {

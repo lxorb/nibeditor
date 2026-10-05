@@ -1755,6 +1755,11 @@ export const sw: Dictionary = {
   'Ask again': 'Uliza tena',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Uliza chochote, @ kuongeza, / kwa zaidi',
+  'What can I help with?': 'Nikusaidie nini?',
+  'Add photos and files': 'Ongeza picha na faili',
+  Mention: 'Taja',
+  'Scroll to the end': 'Sogeza hadi mwisho',
+  'Continue in the panel': 'Endelea kwenye paneli',
   Chats: 'Gumzo',
   'Search chats': 'Tafuta gumzo',
   'No chats yet': 'Bado hakuna gumzo',

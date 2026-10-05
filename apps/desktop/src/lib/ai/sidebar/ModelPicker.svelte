@@ -18,10 +18,13 @@
   import { usable } from '../providers'
   import { ai } from '../store.svelte'
   import { chat } from './chat.svelte'
+  import { hostHere } from './host'
   import { tokens } from './numbers'
   import { effortWord } from './words'
 
-  const open = $derived(chat.popover === 'model')
+  const here = hostHere()
+  /** Up only in the place used last, where the panel is in two (host.ts). */
+  const open = $derived(chat.popover === 'model' && chat.host === here)
   const head = $derived(chat.head)
   const provider = $derived(chat.provider)
   const model = $derived(chat.model)

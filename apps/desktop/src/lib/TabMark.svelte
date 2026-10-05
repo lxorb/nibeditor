@@ -118,9 +118,11 @@
 {:else}
   <!-- Three notes and the edges between them: the space's own picture, which is what
        the panel that opens the graph and the bookmark that keeps a view of it already
-       wear. See panel-marks.ts. -->
+       wear, or the AI panel's. See panel-marks.ts. -->
   <span class="mark quiet" aria-hidden="true">
-    <svg class="graph" viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
+    <svg class="graph" viewBox="0 0 13 13"
+      ><path d={tab.kind === 'chat' ? ASK_MARK : GRAPH_MARK} /></svg
+    >
   </span>
 {/if}
 

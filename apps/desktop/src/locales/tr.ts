@@ -1735,6 +1735,11 @@ export const tr: Dictionary = {
   'Ask again': 'Yeniden sor',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Her şeyi sor, eklemek için @, fazlası için /',
+  'What can I help with?': 'Nasıl yardımcı olabilirim?',
+  'Add photos and files': 'Fotoğraf ve dosya ekle',
+  Mention: 'Bahset',
+  'Scroll to the end': 'Sona kaydır',
+  'Continue in the panel': 'Panelde sürdür',
   Chats: 'Sohbetler',
   'Search chats': 'Sohbetlerde ara',
   'No chats yet': 'Henüz sohbet yok',

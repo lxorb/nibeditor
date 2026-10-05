@@ -1830,6 +1830,11 @@ export const ar: Dictionary = {
   'Ask again': 'اسأل مجددًا',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'اسأل عن أي شيء، @ للإضافة، / للمزيد',
+  'What can I help with?': 'كيف يمكنني المساعدة؟',
+  'Add photos and files': 'إضافة صور وملفات',
+  Mention: 'إشارة',
+  'Scroll to the end': 'التمرير إلى النهاية',
+  'Continue in the panel': 'المتابعة في اللوحة',
   Chats: 'المحادثات',
   'Search chats': 'البحث في المحادثات',
   'No chats yet': 'لا توجد محادثات بعد',

@@ -1707,6 +1707,11 @@ export const am: Dictionary = {
   'Ask again': 'እንደገና ጠይቅ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ማንኛውንም ይጠይቁ፣ ለማከል @፣ ለተጨማሪ /',
+  'What can I help with?': 'በምን ልረዳዎት?',
+  'Add photos and files': 'ፎቶዎችንና ፋይሎችን ያክሉ',
+  Mention: 'ጥቀስ',
+  'Scroll to the end': 'ወደ መጨረሻው ይሸብልሉ',
+  'Continue in the panel': 'በፓነሉ ውስጥ ይቀጥሉ',
   Chats: 'ውይይቶች',
   'Search chats': 'ውይይቶችን ይፈልጉ',
   'No chats yet': 'እስካሁን ውይይት የለም',

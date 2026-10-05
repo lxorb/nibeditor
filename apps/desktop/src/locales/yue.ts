@@ -1688,6 +1688,11 @@ export const yue: Dictionary = {
   'Ask again': '再問一次',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨便問，@ 加嘢，/ 睇多啲',
+  'What can I help with?': '有咩可以幫到你？',
+  'Add photos and files': '加相同檔案',
+  Mention: '提及',
+  'Scroll to the end': '捲去最尾',
+  'Continue in the panel': '喺面板度繼續',
   Chats: '傾偈',
   'Search chats': '搵傾偈',
   'No chats yet': '仲未有傾偈',

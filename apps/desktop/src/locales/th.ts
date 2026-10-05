@@ -1696,6 +1696,11 @@ export const th: Dictionary = {
   'Ask again': 'ถามอีกครั้ง',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ถามอะไรก็ได้ @ เพื่อแนบ / เพื่อดูเพิ่ม',
+  'What can I help with?': 'ให้ช่วยอะไรดี?',
+  'Add photos and files': 'เพิ่มรูปภาพและไฟล์',
+  Mention: 'กล่าวถึง',
+  'Scroll to the end': 'เลื่อนไปท้ายสุด',
+  'Continue in the panel': 'ทำต่อในแผง',
   Chats: 'แชต',
   'Search chats': 'ค้นหาแชต',
   'No chats yet': 'ยังไม่มีแชต',

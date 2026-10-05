@@ -1745,6 +1745,11 @@ export const kn: Dictionary = {
   'Ask again': 'ಮತ್ತೆ ಕೇಳಿ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ಏನಾದರೂ ಕೇಳಿ, ಸೇರಿಸಲು @, ಇನ್ನಷ್ಟಕ್ಕೆ /',
+  'What can I help with?': 'ನಾನು ಏನು ಸಹಾಯ ಮಾಡಲಿ?',
+  'Add photos and files': 'ಫೋಟೋಗಳು ಮತ್ತು ಫೈಲ್‌ಗಳನ್ನು ಸೇರಿಸಿ',
+  Mention: 'ಉಲ್ಲೇಖಿಸಿ',
+  'Scroll to the end': 'ಕೊನೆಗೆ ಹೋಗಿ',
+  'Continue in the panel': 'ಫಲಕದಲ್ಲಿ ಮುಂದುವರಿಸಿ',
   Chats: 'ಚಾಟ್‌ಗಳು',
   'Search chats': 'ಚಾಟ್‌ಗಳಲ್ಲಿ ಹುಡುಕಿ',
   'No chats yet': 'ಇನ್ನೂ ಚಾಟ್‌ಗಳಿಲ್ಲ',

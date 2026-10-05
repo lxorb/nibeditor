@@ -133,6 +133,7 @@ async function selectionIn(tab: Tab): Promise<unknown> {
     case 'web':
     case 'graph':
     case 'view':
+    case 'chat':
       return null
   }
 }

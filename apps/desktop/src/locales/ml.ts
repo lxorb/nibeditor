@@ -1747,6 +1747,11 @@ export const ml: Dictionary = {
   'Ask again': 'വീണ്ടും ചോദിക്കുക',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'എന്തും ചോദിക്കൂ, ചേർക്കാൻ @, കൂടുതലിന് /',
+  'What can I help with?': 'ഞാൻ എന്ത് സഹായിക്കണം?',
+  'Add photos and files': 'ഫോട്ടോകളും ഫയലുകളും ചേർക്കുക',
+  Mention: 'പരാമർശിക്കുക',
+  'Scroll to the end': 'അവസാനത്തിലേക്ക് പോകുക',
+  'Continue in the panel': 'പാനലിൽ തുടരുക',
   Chats: 'ചാറ്റുകൾ',
   'Search chats': 'ചാറ്റുകളിൽ തിരയുക',
   'No chats yet': 'ഇതുവരെ ചാറ്റുകളില്ല',

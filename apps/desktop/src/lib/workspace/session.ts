@@ -159,6 +159,7 @@ const TAB_KINDS: readonly TabKind[] = [
   'web',
   'terminal',
   'view',
+  'chat',
 ]
 
 /** Which kind of tab an entry is, which is its file's name first and what the entry

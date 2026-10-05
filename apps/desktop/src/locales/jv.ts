@@ -1719,6 +1719,11 @@ export const jv: Dictionary = {
   'Ask again': 'Takon maneh',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Takon apa wae, @ kanggo nambah, / kanggo liyane',
+  'What can I help with?': 'Apa sing bisa dakbantu?',
+  'Add photos and files': 'Tambah foto lan file',
+  Mention: 'Sebut',
+  'Scroll to the end': 'Gulung menyang pungkasan',
+  'Continue in the panel': 'Terusake ing panel',
   Chats: 'Obrolan',
   'Search chats': 'Golek obrolan',
   'No chats yet': 'Durung ana obrolan',

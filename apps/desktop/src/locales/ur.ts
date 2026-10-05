@@ -1726,6 +1726,11 @@ export const ur: Dictionary = {
   'Ask again': 'دوبارہ پوچھیں',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'کچھ بھی پوچھیں، شامل کرنے کے لیے @، مزید کے لیے /',
+  'What can I help with?': 'میں کیا مدد کر سکتا ہوں؟',
+  'Add photos and files': 'تصاویر اور فائلیں شامل کریں',
+  Mention: 'ذکر کریں',
+  'Scroll to the end': 'آخر تک جائیں',
+  'Continue in the panel': 'پینل میں جاری رکھیں',
   Chats: 'چیٹس',
   'Search chats': 'چیٹس تلاش کریں',
   'No chats yet': 'ابھی کوئی چیٹ نہیں',

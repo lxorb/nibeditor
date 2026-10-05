@@ -416,44 +416,84 @@ in until the reader picks another (the last one picked is remembered).
 - **The Activity panel stays its own tab**: it is about agents from outside (Claude Desktop,
   a script). The sidebar's agent appears there too, because it is a grant like theirs, so
   the one stop and the one log still cover everything.
-- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here. A quick thread gets one more
-  glyph, **Continue in the panel**, which moves it into a new thread (Raycast's and Arc's
-  way from a quick answer to a conversation).
-- **Wider when it needs to be.** The right side's width is dragged as today; **Open as a
-  tab** on the thread's menu puts the same thread in a pane (JetBrains, Claude Code's
-  editor tab), for a long session beside two notes.
+- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here, drawn as ChatGPT's small
+  composer. Under its answer, **Continue in the panel** carries the conversation on as a
+  thread of its own (Raycast's and Arc's way from a quick answer to a conversation).
+- **Wider when it needs to be.** The right side's width is dragged as today; **Open in new
+  tab** on the thread's menu puts the same conversation in a pane (JetBrains, Claude Code's
+  editor tab), for a long session beside two notes, and shuts the side it came from.
 - Fetched the first time it opens, like the Ask panel is (`apps/desktop/src/lib/surfaces.svelte.ts`):
   none of it is in the first paint, held by `apps/desktop/test/weight.test.ts`.
+
+**Laid out as ChatGPT is** (Emil, 2026-10-05: "copy it in terms of the structuring and
+layout, it's battle tested"), in nib's own tokens, type and motion, from ChatGPT's web and
+desktop apps as they stood in late 2026 ([gpt-notes], [gpt-keys], [gpt-branch]); what was
+taken:
+
+| ChatGPT | nib |
+| --- | --- |
+| the history in a left rail, by age | the threads: at a side, the side's Chats button puts them in the conversation's place (ChatGPT's narrow drawer); in a tab, a rail down the left, put away and back with the header's button. Today, Yesterday, Last 7 days, then a month at a time; Archived last; "..." on a row for Rename, Archive, Delete |
+| New chat, Search chats | the side's own New chat (hidden while the thread is empty) or the rail's first row; the list's search field |
+| projects | spaces: threads are per space already |
+| the greeting with the composer in the middle | the same, "What can I help with?"; the composer settles to the foot as the first message goes |
+| the composer: one rounded box, "+", the model in it, one round button | the same box: the chips, the field, then "+" (files, the three modes, web search, dictation, `@`, `/`), the mode's chip beside it, the model and effort, the context ring, and one round button that is the microphone on an empty field, the arrow with words in it and the stop while an answer arrives |
+| the reader's words in a bubble at the end of the line, the answer across the width | the same; under a bubble while it is pointed at, copy, edit and rewind, and the `< 1/2 >` arrows once it has been edited |
+| the action row under an answer | copy, insert at the caret, ask again (its menu asks another model), "..." (save as a note, branch from here) |
+| "Thought for 6s" | the folded thinking row |
+| sources and their side panel | cited notes as chips under the answer, each opening its note beside, which is nib's canvas |
+| code with its language and copy | the same bar over every fenced block |
+| the streaming dot, the arrow back down | the same |
+| temporary chat, share, thumbs, read aloud, memory | left out: threads stay on this device, there is nobody to send feedback to, and no voice to read with |
 
 ```
  right side, 360 px, Agent mode, a turn running
 ┌──────────────────────────────────────┐
-│ Reading list cleanup ▾        ⌕   ✎  │  title (menu: rename, branch, export, open as tab) · search threads · new
+│ ✎ ◷   (the side's row of tabs)       │  New chat (hidden while empty), Chats
+│ Reading list cleanup ▾               │  title (menu: rename, follow, branch, save, open in new tab, archive, delete)
 ├──────────────────────────────────────┤
+│        ┌───────────────────────────┐ │
+│        │ file the open tabs about  │ │  your message, a bubble at the end
+│        │ herons under Reading/Birds│ │
+│        └───────────────────────────┘ │
+│                         ⧉ ✎ ⟲  ‹1/2› │  on hover: copy · edit · rewind; branches
+│  › Thought 6 s                       │  folded; Ctrl+O unfolds every one
+│  › Read 4 tabs                       │  tool rows: verb, object, nothing else
+│  › Edited Reading/Birds.md  +3 −0    │  click: the change, in the note
 │                                      │
-│  file the open tabs about herons     │  your message (hover: edit · rewind · copy)
-│  under Reading/Birds                 │
-│                                      │
-│  ▸ Thought for 6 s                   │  folded; Ctrl+O unfolds every one
-│  ▸ Read 4 tabs                       │  tool rows: verb, object, nothing else
-│  ▸ Created Reading/Birds/Herons.md   │
-│  ▸ Edited Reading/Birds.md  +3 −0    │  click: the change, in the note
-│                                      │
-│  Filed four pages. Two were the same │  the answer, streaming
+│  Filed four pages. Two were the same │  the answer, across the width
 │  article; I kept the one with the    │
-│  pictures.¹ ▍                        │  citations stay ¹ ² ³
-│                                      │
+│  pictures.¹ ●                        │  citations stay ¹ ² ³; the dot while it streams
+│  [Birds]                             │  the notes it cited
+│                 (↓)                  │  back to the end, when scrolled up
 ├──────────────────────────────────────┤
 │ ◐ 2 notes  +31 −0      Undo  Keep    │  changes bar: click opens /diff
-├──────────────────────────────────────┤
 │ ↳ and tag them #birds         ✕  ⋮⋮  │  queued (Enter queues while running; drag to reorder)
-├──────────────────────────────────────┤
-│ [Herons.md ✕] [selection 3 lines ✕]  │  context chips: implicit ones dim until used
-│ Ask anything, @ to add, / for more ▍ │  the one placeholder line
-│                                      │
-│ Agent ▾   Opus 5.5 · High ▾   ◔  🎙 ■ │  mode · model and effort · ring · voice · stop/send
+│ ╭──────────────────────────────────╮ │
+│ │ [Herons.md ✕] [selection ✕]      │ │  context chips: implicit ones dim until used
+│ │ Ask anything, @ to add, / for more│ │  the one placeholder line
+│ │ + (Agent)   Opus 5.5 · High ▾ ◔ ■│ │  + · mode · model and effort · ring · stop/send/mic
+│ ╰──────────────────────────────────╯ │
 └──────────────────────────────────────┘
 ```
+
+```
+ a tab of its own ("Open in new tab")
+┌────────────────┬──────────────────────────────────────────────────────┐
+│ ✎ New chat     │ ▯ Reading list cleanup ▾                              │
+│ ⌕ Search chats │                                                       │
+│ Today          │              ┌──── 48rem, centred ────┐               │
+│ ▸ Reading list │              │ the conversation       │               │
+│   Herons       │              │                        │               │
+│ Yesterday      │              │ ╭ composer ──────────╮ │               │
+│   Kestrels     │              │ ╰────────────────────╯ │               │
+│ September      │              └────────────────────────┘               │
+└────────────────┴──────────────────────────────────────────────────────┘
+```
+
+The side and the tab draw the same conversation (`ai/sidebar/chat.svelte.ts`). While both are
+on screen, the keyboard and the popovers go to the one used last (`ai/sidebar/host.ts`), and
+anything that hands the panel something to go on with - Alt+K's quote, the quick question's
+Continue - goes to the tab where there is one (`ai/sidebar/reveal.ts`).
 
 ```
  the model popover (Alt+P), a Claude key
@@ -1008,7 +1048,7 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, Allow and Don't allow |
 | `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
 | `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
-| `Threads.svelte` | The thread list: search, open, archive, delete |
+| `Threads.svelte`, `ages.ts` | The thread list, by age: search, open, rename, archive, delete; a tab's rail |
 | `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
 | `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
 | `seams.ts` | The `/` menu: lane 5's rows asked as it opens, matched as the reader types |
@@ -1027,9 +1067,11 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
   `ensure`, `text` and `approve` (not `voice`, below), `instructionsFor(thread)` in the
   setup, the goal chip from `thread.goal` and the running dot from `tasks.of(thread.id)`.
 
-Not built here, and why: voice (the recorder's road into a field is its own lane), Open
-as a tab (a thread as a pane needs a tab kind), and Continue in the panel from the quick
-question (the quick question stays as it is, beside `/btw`).
+Added with ChatGPT's layout (4.1): dictation (`dictate.svelte.ts`, the recorder's road into
+the field, behind the round button and `/voice`), the panel as a tab of its own (the `chat`
+tab kind; `host.ts` says which of the two places is in use, `reveal.ts` which one to bring
+forward), the threads by age (`ages.ts`), and Continue in the panel from the quick question
+(`continueFrom`).
 
 The drive `apps/desktop/test/e2e/ai-sidebar.py` walks all of it against a fake provider,
 in the light and the dark, and then the whole flow in one thread: Ask, an agent's edits
@@ -1040,6 +1082,9 @@ kept and undone, a rewind, a message edited and sent again.
 ## Sources
 
 [cc-commands]: https://code.claude.com/docs/en/commands
+[gpt-notes]: https://help.openai.com/en/articles/6825453-chatgpt-release-notes
+[gpt-keys]: https://www.coursera.org/articles/chatgpt-keyboard-shortcuts
+[gpt-branch]: https://www.memorylake.ai/en/blogs/chatgpt-branch-new-chat
 [cc-vscode]: https://code.claude.com/docs/en/vs-code
 [cc-model]: https://code.claude.com/docs/en/model-config
 [cc-checkpoint]: https://code.claude.com/docs/en/checkpointing

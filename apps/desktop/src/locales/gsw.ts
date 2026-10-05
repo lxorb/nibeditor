@@ -1738,6 +1738,11 @@ export const gsw: Dictionary = {
   'Ask again': 'Nomol frage',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Frög öppis, @ zum Aahänke, / für meh',
+  'What can I help with?': 'Wobi chan ich hälfe?',
+  'Add photos and files': 'Fotis und Dateie hinzuefüege',
+  Mention: 'Erwähne',
+  'Scroll to the end': 'Zum Änd scrolle',
+  'Continue in the panel': 'Im Panel wiitermache',
   Chats: 'Chats',
   'Search chats': 'Chats dursueche',
   'No chats yet': 'No kei Chats',

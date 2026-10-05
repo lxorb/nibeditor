@@ -1754,6 +1754,11 @@ export const ta: Dictionary = {
   'Ask again': 'மீண்டும் கேள்',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'எதையும் கேளுங்கள், சேர்க்க @, மேலும் /',
+  'What can I help with?': 'நான் எதில் உதவலாம்?',
+  'Add photos and files': 'படங்களையும் கோப்புகளையும் சேர்',
+  Mention: 'குறிப்பிடு',
+  'Scroll to the end': 'இறுதிக்குச் செல்',
+  'Continue in the panel': 'பலகத்தில் தொடர்',
   Chats: 'அரட்டைகள்',
   'Search chats': 'அரட்டைகளில் தேடு',
   'No chats yet': 'இன்னும் அரட்டைகள் இல்லை',

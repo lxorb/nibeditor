@@ -1737,6 +1737,11 @@ export const te: Dictionary = {
   'Ask again': 'మళ్లీ అడగండి',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ఏదైనా అడగండి, జోడించడానికి @, మరిన్నింటికి /',
+  'What can I help with?': 'నేను ఏమి సహాయం చేయగలను?',
+  'Add photos and files': 'ఫోటోలు, ఫైల్‌లను జోడించండి',
+  Mention: 'ప్రస్తావించు',
+  'Scroll to the end': 'చివరికి వెళ్ళండి',
+  'Continue in the panel': 'ప్యానెల్‌లో కొనసాగించండి',
   Chats: 'చాట్‌లు',
   'Search chats': 'చాట్‌లలో వెతకండి',
   'No chats yet': 'ఇంకా చాట్‌లు లేవు',

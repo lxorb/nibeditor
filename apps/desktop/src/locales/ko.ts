@@ -1707,6 +1707,11 @@ export const ko: Dictionary = {
   'Ask again': '다시 묻기',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '무엇이든 물어보세요. @ 추가, / 더 보기',
+  'What can I help with?': '무엇을 도와드릴까요?',
+  'Add photos and files': '사진 및 파일 추가',
+  Mention: '멘션',
+  'Scroll to the end': '맨 아래로 스크롤',
+  'Continue in the panel': '패널에서 계속',
   Chats: '채팅',
   'Search chats': '채팅 검색',
   'No chats yet': '아직 채팅이 없습니다',

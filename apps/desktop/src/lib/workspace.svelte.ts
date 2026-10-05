@@ -1525,6 +1525,17 @@ class Workspace {
     this.persist()
   }
 
+  /** The AI panel in a tab, one a window; see ai/sidebar/ChatPanel.svelte. */
+  openChat() {
+    const was = this.tabs.find((tab) => tab.kind === 'chat')
+    if (was) this.panes.activate(was.paneId, was.id)
+    else {
+      const doc = { kind: 'chat', path: null, name: t('Ask'), text: '', dirty: false } as const
+      this.add(new Tab(this.document(doc), this.panes.focusedId))
+    }
+    this.persist()
+  }
+
   /** A PDF in the space, in a tab of its own. One tab per PDF per pane, the way
    *  the graph is one: asking for a paper that is already open brings it forward
    *  and, when a link named a page, turns to it.

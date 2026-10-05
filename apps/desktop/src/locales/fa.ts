@@ -1729,6 +1729,11 @@ export const fa: Dictionary = {
   'Ask again': 'دوباره بپرس',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر چیزی بپرسید، @ برای افزودن، / برای بیشتر',
+  'What can I help with?': 'چه کمکی از من برمی‌آید؟',
+  'Add photos and files': 'افزودن عکس و فایل',
+  Mention: 'اشاره',
+  'Scroll to the end': 'رفتن به انتها',
+  'Continue in the panel': 'ادامه در پنل',
   Chats: 'گفتگوها',
   'Search chats': 'جستجو در گفتگوها',
   'No chats yet': 'هنوز گفتگویی نیست',

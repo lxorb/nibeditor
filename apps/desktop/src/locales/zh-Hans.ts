@@ -1689,6 +1689,11 @@ export const zhHans: Dictionary = {
   'Ask again': '再问一次',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '随便问，@ 添加，/ 更多',
+  'What can I help with?': '有什么可以帮忙的？',
+  'Add photos and files': '添加照片和文件',
+  Mention: '提及',
+  'Scroll to the end': '滚动到底部',
+  'Continue in the panel': '在面板中继续',
   Chats: '对话',
   'Search chats': '搜索对话',
   'No chats yet': '还没有对话',

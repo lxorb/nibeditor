@@ -1765,6 +1765,11 @@ export const fil: Dictionary = {
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more':
     'Magtanong ng kahit ano, @ para magdagdag, / para sa iba pa',
+  'What can I help with?': 'Ano ang maitutulong ko?',
+  'Add photos and files': 'Magdagdag ng mga larawan at file',
+  Mention: 'Banggitin',
+  'Scroll to the end': 'Pumunta sa dulo',
+  'Continue in the panel': 'Ituloy sa panel',
   Chats: 'Mga chat',
   'Search chats': 'Maghanap sa mga chat',
   'No chats yet': 'Wala pang chat',

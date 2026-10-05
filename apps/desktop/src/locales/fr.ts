@@ -1787,6 +1787,11 @@ export const fr: Dictionary = {
   'Ask again': 'Redemander',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Demandez, @ pour ajouter, / pour plus',
+  'What can I help with?': 'Comment puis-je vous aider ?',
+  'Add photos and files': 'Ajouter des photos et des fichiers',
+  Mention: 'Mentionner',
+  'Scroll to the end': 'Aller à la fin',
+  'Continue in the panel': 'Continuer dans le panneau',
   Chats: 'Discussions',
   'Search chats': 'Rechercher les discussions',
   'No chats yet': 'Aucune discussion',

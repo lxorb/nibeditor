@@ -1785,6 +1785,11 @@ export const it: Dictionary = {
   'Ask again': 'Chiedi di nuovo',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Chiedi qualsiasi cosa, @ per aggiungere, / per altro',
+  'What can I help with?': 'Come posso aiutarti?',
+  'Add photos and files': 'Aggiungi foto e file',
+  Mention: 'Menziona',
+  'Scroll to the end': 'Vai alla fine',
+  'Continue in the panel': 'Continua nel pannello',
   Chats: 'Chat',
   'Search chats': 'Cerca nelle chat',
   'No chats yet': 'Ancora nessuna chat',

@@ -1717,6 +1717,11 @@ export const my: Dictionary = {
   'Ask again': 'ထပ်မေးရန်',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ဘာမဆိုမေးပါ၊ ထည့်ရန် @၊ ပိုမိုရန် /',
+  'What can I help with?': 'ဘာကူညီပေးရမလဲ။',
+  'Add photos and files': 'ဓာတ်ပုံနှင့် ဖိုင်များ ထည့်ပါ',
+  Mention: 'ဖော်ပြပါ',
+  'Scroll to the end': 'အဆုံးသို့ သွားပါ',
+  'Continue in the panel': 'ဘောင်တွင် ဆက်လုပ်ပါ',
   Chats: 'ချတ်များ',
   'Search chats': 'ချတ်များ ရှာရန်',
   'No chats yet': 'ချတ် မရှိသေးပါ',

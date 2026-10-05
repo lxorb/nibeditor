@@ -1722,6 +1722,11 @@ export const ja: Dictionary = {
   'Ask again': 'もう一度質問',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '何でも質問、@ で追加、/ でその他',
+  'What can I help with?': '何かお手伝いできることはありますか？',
+  'Add photos and files': '写真とファイルを追加',
+  Mention: 'メンション',
+  'Scroll to the end': '最後までスクロール',
+  'Continue in the panel': 'パネルで続ける',
   Chats: 'チャット',
   'Search chats': 'チャットを検索',
   'No chats yet': 'チャットはまだありません',

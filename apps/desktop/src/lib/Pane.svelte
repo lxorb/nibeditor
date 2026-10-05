@@ -47,6 +47,7 @@
   import { settings } from './settings.svelte'
   import {
     archivedStrip,
+    askPanel,
     canvasSurface,
     emptySurface,
     findBar,
@@ -110,6 +111,7 @@
       tab.kind !== 'web' &&
       tab.kind !== 'terminal' &&
       tab.kind !== 'view' &&
+      tab.kind !== 'chat' &&
       !tab.reading,
   )
 
@@ -566,6 +568,13 @@
         {@render unreachable()}
       {/await}
     {/key}
+  {:else if tab?.kind === 'chat'}
+    <!-- The AI panel, wide; see ai/sidebar/ChatPanel.svelte. -->
+    {#await askPanel() then ChatPanel}
+      <ChatPanel wide />
+    {:catch}
+      {@render unreachable()}
+    {/await}
   {:else if tab?.kind === 'terminal'}
     <!-- A shell, in the note's place. Keyed like the others; the shell itself outlives
          this, so switching back finds it where it was. See terminal/sessions.svelte.ts. -->

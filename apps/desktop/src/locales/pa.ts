@@ -1734,6 +1734,11 @@ export const pa: Dictionary = {
   'Ask again': 'ਦੁਬਾਰਾ ਪੁੱਛੋ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ਕੁਝ ਵੀ ਪੁੱਛੋ, ਜੋੜਨ ਲਈ @, ਹੋਰ ਲਈ /',
+  'What can I help with?': 'ਮੈਂ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',
+  'Add photos and files': 'ਫ਼ੋਟੋਆਂ ਅਤੇ ਫ਼ਾਈਲਾਂ ਜੋੜੋ',
+  Mention: 'ਜ਼ਿਕਰ ਕਰੋ',
+  'Scroll to the end': 'ਅੰਤ ਤੱਕ ਜਾਓ',
+  'Continue in the panel': 'ਪੈਨਲ ਵਿੱਚ ਜਾਰੀ ਰੱਖੋ',
   Chats: 'ਚੈਟਾਂ',
   'Search chats': 'ਚੈਟਾਂ ਖੋਜੋ',
   'No chats yet': 'ਹਾਲੇ ਕੋਈ ਚੈਟ ਨਹੀਂ',

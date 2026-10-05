@@ -1757,6 +1757,11 @@ export const ha: Dictionary = {
   'Ask again': 'Sake tambaya',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tambayi komai, @ don ƙarawa, / don ƙari',
+  'What can I help with?': 'Me zan iya taimaka da shi?',
+  'Add photos and files': 'Ƙara hotuna da fayiloli',
+  Mention: 'Ambata',
+  'Scroll to the end': 'Je zuwa ƙarshe',
+  'Continue in the panel': 'Ci gaba a allon',
   Chats: 'Hirarraki',
   'Search chats': 'Bincika hirarraki',
   'No chats yet': 'Babu hira tukuna',

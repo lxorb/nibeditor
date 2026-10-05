@@ -113,7 +113,7 @@ export function fileMark(name: string): FileMark {
  *  a file in it. */
 export function markOf(kind: TabKind): FileMark | null {
   if (kind === 'view') return 'base'
-  return kind === 'graph' ? null : kind
+  return kind === 'graph' || kind === 'chat' ? null : kind
 }
 
 /** The drawing each mark is.

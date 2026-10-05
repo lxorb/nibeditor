@@ -183,6 +183,22 @@ class Quick {
     }
   }
 
+  /** The conversation so far, carried on as a thread of the AI panel, and the sheet
+   *  put away: Raycast's and Arc's way from a quick answer to a conversation. The panel
+   *  and its store are fetched by the press. */
+  async continueInPanel() {
+    const turns = this.turns.filter((one) => one.text.trim())
+    if (!turns.length || this.running) return
+    const space = workspace.activeSpaceId ?? ''
+    this.close()
+    const [{ chat }, { revealChat }] = await Promise.all([
+      import('./sidebar/chat.svelte'),
+      import('./sidebar/reveal'),
+    ])
+    revealChat()
+    chat.continueFrom(turns, space)
+  }
+
   /** An answer into the note it was asked about, on lines of its own under the
    *  selection or the caret's line, and the sheet put away with the caret after it.
    *  Asked about anything else - a page, nothing - it goes on the end of the

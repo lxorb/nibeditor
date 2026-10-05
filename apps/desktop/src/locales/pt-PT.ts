@@ -1775,6 +1775,11 @@ export const ptPT: Dictionary = {
   'Ask again': 'Perguntar de novo',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pergunte o que quiser, @ para anexar, / para mais',
+  'What can I help with?': 'Como posso ajudar?',
+  'Add photos and files': 'Adicionar fotografias e ficheiros',
+  Mention: 'Mencionar',
+  'Scroll to the end': 'Ir para o fim',
+  'Continue in the panel': 'Continuar no painel',
   Chats: 'Conversas',
   'Search chats': 'Pesquisar conversas',
   'No chats yet': 'Ainda sem conversas',

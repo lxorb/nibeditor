@@ -1,7 +1,7 @@
 /** What the panel remembers between runs, beside the threads themselves: the mode a new
  *  thread starts in (the last one picked, docs/ai-sidebar.md 4.1), the effort last
- *  used with each model (4.9, Claude Code's `modelSettings`), and which thread each
- *  space had open. Choices, not words of anybody's, so `localStorage` through
+ *  used with each model (4.9, Claude Code's `modelSettings`), which thread each space
+ *  had open, and whether a tab of the panel shows its rail of threads. Choices, not words of anybody's, so `localStorage` through
  *  stored.ts is the place. */
 
 import type { Effort, Mode } from '../chat/types'
@@ -15,6 +15,7 @@ interface Prefs {
   mode: Mode
   efforts: Record<string, Effort>
   open: Record<string, string>
+  rail: boolean
 }
 
 function isMode(value: unknown): value is Mode {
@@ -23,8 +24,9 @@ function isMode(value: unknown): value is Mode {
 
 function read(): Prefs {
   const saved = stored(STORAGE_KEY)
-  const out: Prefs = { mode: 'ask', efforts: {}, open: {} }
+  const out: Prefs = { mode: 'ask', efforts: {}, open: {}, rail: true }
   if (!isRecord(saved)) return out
+  if (saved.rail === false) out.rail = false
   if (isMode(saved.mode)) out.mode = saved.mode
   if (isRecord(saved.efforts)) {
     for (const [model, effort] of Object.entries(saved.efforts)) {
@@ -79,5 +81,16 @@ export function openIn(space: string): string | null {
 export function rememberOpen(space: string, id: string | null): void {
   const prefs = held()
   prefs.open = id ? { ...prefs.open, [space]: id } : without(prefs.open, space)
+  save()
+}
+
+/** Whether a tab of the panel shows the rail of threads down its left, as ChatGPT's
+ *  sidebar stays as it was left. */
+export function railOpen(): boolean {
+  return held().rail
+}
+
+export function rememberRail(open: boolean): void {
+  held().rail = open
   save()
 }

@@ -1726,6 +1726,11 @@ export const ms: Dictionary = {
   'Ask again': 'Tanya lagi',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tanya apa sahaja, @ untuk tambah, / untuk lagi',
+  'What can I help with?': 'Apa yang boleh saya bantu?',
+  'Add photos and files': 'Tambah foto dan fail',
+  Mention: 'Sebut',
+  'Scroll to the end': 'Tatal ke penghujung',
+  'Continue in the panel': 'Teruskan di panel',
   Chats: 'Sembang',
   'Search chats': 'Cari sembang',
   'No chats yet': 'Belum ada sembang',

@@ -1731,6 +1731,11 @@ export const ps: Dictionary = {
   'Ask again': 'بیا پوښتنه وکړئ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر څه وپوښتئ، د زیاتولو لپاره @، د نورو لپاره /',
+  'What can I help with?': 'څنګه مرسته کولی شم؟',
+  'Add photos and files': 'انځورونه او فایلونه ورزیات کړئ',
+  Mention: 'یادونه',
+  'Scroll to the end': 'پای ته لاړ شئ',
+  'Continue in the panel': 'په تخته کې دوام ورکړئ',
   Chats: 'خبرې اترې',
   'Search chats': 'په خبرو اترو کې لټون',
   'No chats yet': 'لا تر اوسه خبرې اترې نشته',

@@ -33,8 +33,9 @@ export const UNTITLED = 'Untitled'
  *  as the two lines in the file. See docs/web-tabs.md. A terminal is a shell, and its
  *  words are which one and where; see docs/terminal.md. A view is a question about the
  *  rows of the spaces (Today, a project, a `.base` file's board), and its words are which
- *  question; see lib/views/spec.ts and docs/tasks.md 5.5. */
-export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web' | 'terminal' | 'view'
+ *  question; see lib/views/spec.ts and docs/tasks.md 5.5. A chat is the AI panel. */
+export type TabKind =
+  'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web' | 'terminal' | 'view' | 'chat'
 
 /** Whether a tab's words are a file's words: a note, a canvas, and a page note,
  *  whose words are the JSON in them.

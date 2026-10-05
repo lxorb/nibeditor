@@ -1801,6 +1801,11 @@ export const uk: Dictionary = {
   'Ask again': 'Запитати знову',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Запитайте що завгодно, @ щоб додати, / для команд',
+  'What can I help with?': 'Чим я можу допомогти?',
+  'Add photos and files': 'Додати фото й файли',
+  Mention: 'Згадати',
+  'Scroll to the end': 'Прокрутити до кінця',
+  'Continue in the panel': 'Продовжити в панелі',
   Chats: 'Чати',
   'Search chats': 'Пошук у чатах',
   'No chats yet': 'Чатів поки немає',

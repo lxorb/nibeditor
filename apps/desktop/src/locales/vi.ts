@@ -1714,6 +1714,11 @@ export const vi: Dictionary = {
   'Ask again': 'Hỏi lại',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Hỏi bất cứ điều gì, @ để thêm, / để xem thêm',
+  'What can I help with?': 'Tôi có thể giúp gì?',
+  'Add photos and files': 'Thêm ảnh và tệp',
+  Mention: 'Nhắc đến',
+  'Scroll to the end': 'Cuộn xuống cuối',
+  'Continue in the panel': 'Tiếp tục trong bảng',
   Chats: 'Cuộc trò chuyện',
   'Search chats': 'Tìm cuộc trò chuyện',
   'No chats yet': 'Chưa có cuộc trò chuyện',

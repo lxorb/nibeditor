@@ -1809,6 +1809,11 @@ export const pl: Dictionary = {
   'Ask again': 'Zapytaj ponownie',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Zapytaj o cokolwiek, @ aby dodać, / po więcej',
+  'What can I help with?': 'W czym mogę pomóc?',
+  'Add photos and files': 'Dodaj zdjęcia i pliki',
+  Mention: 'Wspomnij',
+  'Scroll to the end': 'Przewiń na koniec',
+  'Continue in the panel': 'Kontynuuj w panelu',
   Chats: 'Czaty',
   'Search chats': 'Szukaj w czatach',
   'No chats yet': 'Brak czatów',

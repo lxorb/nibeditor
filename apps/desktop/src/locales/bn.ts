@@ -1727,6 +1727,11 @@ export const bn: Dictionary = {
   'Ask again': 'আবার জিজ্ঞাসা করুন',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'যা খুশি জিজ্ঞেস করুন, যোগ করতে @, আরও জন্য /',
+  'What can I help with?': 'কীভাবে সাহায্য করতে পারি?',
+  'Add photos and files': 'ছবি ও ফাইল যোগ করুন',
+  Mention: 'উল্লেখ',
+  'Scroll to the end': 'শেষে যান',
+  'Continue in the panel': 'প্যানেলে চালিয়ে যান',
   Chats: 'চ্যাট',
   'Search chats': 'চ্যাট খুঁজুন',
   'No chats yet': 'এখনও কোনো চ্যাট নেই',

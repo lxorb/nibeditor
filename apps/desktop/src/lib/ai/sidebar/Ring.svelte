@@ -13,13 +13,16 @@
   import { i18n, key, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { chat } from './chat.svelte'
+  import { hostHere } from './host'
   import { tokens } from './numbers'
   import { attachedIn, bandsOf } from './ring'
   import { instructionsSent } from './setup'
 
   const { next }: { next: number } = $props()
 
-  const open = $derived(chat.popover === 'context')
+  const here = hostHere()
+  /** Up only in the place used last, where the panel is in two (host.ts). */
+  const open = $derived(chat.popover === 'context' && chat.host === here)
   const head = $derived(chat.head)
   const bands = $derived.by(() => {
     if (!head) return null

@@ -1,7 +1,10 @@
 <script lang="ts">
-  /** The foot of the panel (docs/ai-sidebar.md 4.1): what is queued, the changes bar's
-   *  place, the chips that go with the next message, the field, and under it the mode,
-   *  the model and its effort, the context ring and the one button that sends or stops.
+  /** The foot of the panel (docs/ai-sidebar.md 4.1), ChatGPT's composer: what is queued
+   *  and the changes bar over it, then one rounded box holding the chips that go with
+   *  the next message, the field, and a row under the words - "+" (files, the modes,
+   *  web search, dictation, `@` and `/`) with the mode beside it, then the model and its
+   *  effort, the context ring, and one round button that is the microphone on an empty
+   *  field, the arrow with words in it, and the stop while an answer arrives.
    *
    *  Keyboard first. Enter sends, and queues behind a running answer; Ctrl+Enter sends
    *  into the running answer; Escape stops it; Shift+Tab steps the mode, Alt+P opens the
@@ -13,16 +16,19 @@
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
   import { links } from '../../link-index.svelte'
-  import { menu } from '../../menu.svelte'
+  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur } from '../../motion'
   import { shortcuts } from '../../shortcuts.svelte'
   import { withinSpace } from '../../space-paths'
   import { views } from '../../views.svelte'
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from '../chat/usage'
+  import { canTranscribe } from '../hears'
   import type { Mode } from '../chat/types'
   import { chat } from './chat.svelte'
+  import { dictation } from './dictate.svelte'
   import type { Front } from './gather'
+  import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import { type Mention, mentionAt, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
@@ -41,6 +47,8 @@
   /** The menu put away with Escape, until the text changes again. */
   let hushed = $state('')
   let commands = $state<readonly PanelCommand[]>([])
+  let picker = $state<HTMLInputElement>()
+  const here = hostHere()
 
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
@@ -382,22 +390,77 @@
 
   const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
 
-  function modeMenu(event: MouseEvent) {
-    menu.show(
-      event,
-      MODES.map((mode) => ({
-        label: t(modeWord(mode)),
-        hint: shortcuts.hint('ai.mode'),
-        checked: head?.mode === mode,
-        run: () => chat.setMode(mode),
-      })),
-    )
+  /** The modes as rows, the one in force ticked. The key that steps them is the chip's
+   *  tooltip rather than a hint on every row, where it would say the same thing thrice. */
+  function modeRows(): MenuEntry[] {
+    return MODES.map((mode) => ({
+      label: t(modeWord(mode)),
+      checked: head?.mode === mode,
+      run: () => chat.setMode(mode),
+    }))
   }
+
+  function modeMenu(event: MouseEvent) {
+    menu.show(event, modeRows())
+  }
+
+  // ── "+" ───────────────────────────────────────────────
+
+  const searching = $derived(chat.chips.some((one) => one.kind === 'web'))
+
+  function toggleWeb() {
+    if (searching) chat.chips = chat.chips.filter((one) => one.kind !== 'web')
+    else addChip({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
+  }
+
+  /** ChatGPT's "+": files first, then the modes (its tools), then what the field's own
+   *  keys do, for whoever has not met `@` and `/` yet. */
+  function plusMenu(event: MouseEvent) {
+    menu.show(event, [
+      { label: t('Add photos and files'), asks: true, run: () => picker?.click() },
+      DIVIDER,
+      ...modeRows(),
+      DIVIDER,
+      { label: t('Web search'), checked: searching, run: toggleWeb },
+      ...(canTranscribe() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
+      { label: t('Mention'), run: () => typeAt('@') },
+      { label: t('Commands'), disabled: !!chat.text.trim(), run: () => typeAt('/') },
+    ])
+  }
+
+  /** A key's character typed for the reader where the caret is, opening its list. */
+  function typeAt(mark: string) {
+    const at = field?.selectionStart ?? chat.text.length
+    const before = chat.text.slice(0, at)
+    const typed = mark === '@' && before && !/\s$/.test(before) ? ` ${mark}` : mark
+    chat.text = before + typed + chat.text.slice(at)
+    place(at + typed.length)
+  }
+
+  function picked(event: Event) {
+    const input = event.currentTarget as HTMLInputElement
+    for (const file of input.files ?? []) take(file)
+    input.value = ''
+    chat.focus()
+  }
+
+  // ── The round button ──────────────────────────────────
+
+  /** What the one round button is now: the stop while an answer arrives and the field is
+   *  empty, the microphone while it listens or an empty field could be dictated into,
+   *  and the arrow otherwise. */
+  const button = $derived.by((): 'stop' | 'listening' | 'hearing' | 'mic' | 'send' => {
+    if (busy && !chat.text.trim()) return 'stop'
+    if (dictation.state !== 'idle') return dictation.state
+    if (!chat.text.trim() && !chat.chips.length && canTranscribe()) return 'mic'
+    return 'send'
+  })
 
   // ── Focus ─────────────────────────────────────────────
 
+  // Only in the place used last, where the panel is in two (host.ts).
   $effect(() => {
-    if (chat.focusAsked) requestAnimationFrame(() => field?.focus())
+    if (chat.focusAsked && chat.host === here) requestAnimationFrame(() => field?.focus())
   })
 
   /** The open thread itself, the live one the engine writes into, for the review's bar:
@@ -486,64 +549,6 @@
     {/if}
   {/if}
 
-  {#if frontOn || selectionOn || chat.chips.length > 0}
-    <div class="chips">
-      {#if front && frontOn}
-        <span class="chip implicit" title={front.path}>
-          <MentionMark kind="note" />
-          <span class="name">{front.name}</span>
-          <button
-            class="drop"
-            aria-label={t('Remove')}
-            title={t('Remove')}
-            onclick={() => chat.drop(front.key)}><Cross small /></button
-          >
-        </span>
-      {/if}
-      {#if selectionOn}
-        <span class="chip implicit" title={selection.slice(0, 400)}>
-          <MentionMark kind="selection" />
-          <span class="name quoted">{selection.trim().slice(0, 40)}</span>
-          <button
-            class="drop"
-            aria-label={t('Remove')}
-            title={t('Remove')}
-            onclick={() => chat.drop(selectionKey)}><Cross small /></button
-          >
-        </span>
-      {/if}
-      {#each chat.chips as chip (`${chip.kind}:${chip.id}`)}
-        <span
-          class="chip"
-          class:refused={chip.kind === 'picture' && chat.model?.images === false}
-          title={chip.kind === 'picture' && chat.model?.images === false
-            ? t('This model takes no pictures')
-            : chip.label}
-          transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
-        >
-          {#if chip.image}
-            <img
-              class="thumb"
-              alt=""
-              draggable="false"
-              src={`data:${chip.image.mime};base64,${chip.image.data}`}
-            />
-          {:else}
-            <MentionMark kind={chip.kind} />
-          {/if}
-          <span class="name">{chip.label}</span>
-          <button
-            class="drop"
-            aria-label={t('Remove')}
-            title={t('Remove')}
-            onclick={() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip)))}
-            ><Cross small /></button
-          >
-        </span>
-      {/each}
-    </div>
-  {/if}
-
   <div class="box-wrap">
     {#if rows.length}
       <Suggest
@@ -553,7 +558,73 @@
         onlight={(index: number) => (lit = index)}
       />
     {/if}
-    <div class="nib-field box">
+    <!-- One box, ChatGPT's: a press anywhere in it that is not a control is a press in
+         the field. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div
+      class="composer nib-field"
+      onclick={(event) => {
+        if (event.target === event.currentTarget) field?.focus()
+      }}
+    >
+      {#if frontOn || selectionOn || chat.chips.length > 0}
+        <div class="chips">
+          {#if front && frontOn}
+            <span class="chip implicit" title={front.path}>
+              <MentionMark kind="note" />
+              <span class="name">{front.name}</span>
+              <button
+                class="drop"
+                aria-label={t('Remove')}
+                title={t('Remove')}
+                onclick={() => chat.drop(front.key)}><Cross small /></button
+              >
+            </span>
+          {/if}
+          {#if selectionOn}
+            <span class="chip implicit" title={selection.slice(0, 400)}>
+              <MentionMark kind="selection" />
+              <span class="name quoted">{selection.trim().slice(0, 40)}</span>
+              <button
+                class="drop"
+                aria-label={t('Remove')}
+                title={t('Remove')}
+                onclick={() => chat.drop(selectionKey)}><Cross small /></button
+              >
+            </span>
+          {/if}
+          {#each chat.chips as chip (`${chip.kind}:${chip.id}`)}
+            <span
+              class="chip"
+              class:refused={chip.kind === 'picture' && chat.model?.images === false}
+              title={chip.kind === 'picture' && chat.model?.images === false
+                ? t('This model takes no pictures')
+                : chip.label}
+              transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
+            >
+              {#if chip.image}
+                <img
+                  class="thumb"
+                  alt=""
+                  draggable="false"
+                  src={`data:${chip.image.mime};base64,${chip.image.data}`}
+                />
+              {:else}
+                <MentionMark kind={chip.kind} />
+              {/if}
+              <span class="name">{chip.label}</span>
+              <button
+                class="drop"
+                aria-label={t('Remove')}
+                title={t('Remove')}
+                onclick={() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip)))}
+                ><Cross small /></button
+              >
+            </span>
+          {/each}
+        </div>
+      {/if}
+
       <textarea
         bind:this={field}
         bind:value={chat.text}
@@ -567,51 +638,93 @@
         onkeyup={onInput}
         onpaste={onPaste}
         ondrop={onDrop}></textarea>
-    </div>
-  </div>
 
-  <div class="controls">
-    <button
-      class="mode"
-      title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
-      onclick={modeMenu}
-      disabled={!head}>{t(modeWord(head?.mode ?? 'ask'))}</button
-    >
-    <ModelPicker />
-    <span class="gap"></span>
-    <Ring {next} />
-    {#if busy && !chat.text.trim()}
-      <button
-        class="nib-glyph go"
-        title={t('Stop')}
-        aria-label={t('Stop')}
-        onclick={() => chat.stop()}
-      >
-        <svg viewBox="0 0 13 13"><rect x="3.5" y="3.5" width="6" height="6" rx="1" /></svg>
-      </button>
-    {:else}
-      <button
-        class="nib-glyph go"
-        title={t('Send')}
-        aria-label={t('Send')}
-        disabled={!chat.text.trim() && !chat.chips.length}
-        onclick={() => void submit()}
-      >
-        <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
-      </button>
-    {/if}
+      <div class="controls">
+        <button
+          class="nib-glyph plus"
+          title={t('Add')}
+          aria-label={t('Add')}
+          aria-haspopup="menu"
+          disabled={!head}
+          onclick={plusMenu}
+        >
+          <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.5v8M2.5 6.5h8" /></svg>
+        </button>
+        <button
+          class="mode"
+          title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
+          aria-haspopup="menu"
+          onclick={modeMenu}
+          disabled={!head}>{t(modeWord(head?.mode ?? 'ask'))}</button
+        >
+        <span class="gap"></span>
+        <ModelPicker />
+        <Ring {next} />
+        {#if button === 'stop'}
+          <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => chat.stop()}>
+            <svg viewBox="0 0 13 13"
+              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+            >
+          </button>
+        {:else if button === 'send'}
+          <button
+            class="go"
+            title={t('Send')}
+            aria-label={t('Send')}
+            disabled={!chat.text.trim() && !chat.chips.length}
+            onclick={() => void submit()}
+          >
+            <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+          </button>
+        {:else}
+          <!-- Dictation: the microphone, its stop while it listens, and a breath while
+               what was said is turned into words. -->
+          <button
+            class="go"
+            class:listening={button === 'listening'}
+            class:hearing={button === 'hearing'}
+            title={button === 'mic' ? t('Dictate') : t('Listening')}
+            aria-label={button === 'mic' ? t('Dictate') : t('Listening')}
+            aria-pressed={button !== 'mic'}
+            disabled={button === 'hearing'}
+            onclick={() => void dictation.toggle()}
+          >
+            {#if button === 'listening'}
+              <svg viewBox="0 0 13 13"
+                ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+              >
+            {:else}
+              <svg viewBox="0 0 13 13"
+                ><path
+                  d="M6.5 1.8a1.7 1.7 0 0 1 1.7 1.7v2.9a1.7 1.7 0 0 1-3.4 0V3.5a1.7 1.7 0 0 1 1.7-1.7zM3.6 6.2a2.9 2.9 0 0 0 5.8 0M6.5 9.2v2"
+                /></svg
+              >
+            {/if}
+          </button>
+        {/if}
+      </div>
+    </div>
+    <input class="files" type="file" multiple bind:this={picker} onchange={picked} tabindex="-1" />
   </div>
 </div>
 
 <style>
+  /* The composer's column: the panel's width at a side, ChatGPT's measure down the
+     middle of a tab (`--column`, set by the panel). */
   .foot {
     position: relative;
     flex: none;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: var(--space-2) var(--space-1) var(--space-1);
-    border-top: 1px solid var(--line);
+    width: 100%;
+    max-width: calc(var(--column, 100%) + 2 * var(--space-4));
+    margin-inline: auto;
+    padding: var(--space-1) var(--space-1) var(--space-2);
+  }
+
+  :global(.ask.wide) .foot {
+    padding-inline: var(--space-4);
   }
 
   .editing {
@@ -697,11 +810,28 @@
     font-size: var(--text-xs);
   }
 
+  .box-wrap {
+    position: relative;
+  }
+
+  /* The box, ChatGPT's: rounded, the chips, the words and the controls all inside it.
+     A field (`.nib-field`), so it answers the keyboard as every box in the app does. */
+  .composer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    min-height: 0;
+    padding: var(--space-2) var(--space-1) var(--space-1);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     min-width: 0;
+    padding: 0 var(--space-1) 2px;
   }
 
   .chip {
@@ -746,11 +876,11 @@
 
   /* The selection, quoted: what it is says itself. */
   .quoted::before {
-    content: 'C';
+    content: '\201C';
   }
 
   .quoted::after {
-    content: 'D';
+    content: '\201D';
   }
 
   .thumb {
@@ -788,22 +918,17 @@
     }
   }
 
-  .box-wrap {
-    position: relative;
-  }
-
-  .box {
-    align-items: flex-end;
-    padding: 2px var(--row-pad);
-  }
-
   /* Grows to a few lines and then scrolls: a message is sometimes a paragraph, and the
      conversation above it is what the room is for. */
-  .box textarea {
-    min-height: calc(var(--row-height) - 4px);
-    max-height: 9rem;
-    padding: 5px 0;
-    line-height: 1.4;
+  .composer textarea {
+    flex: none;
+    width: 100%;
+    min-height: 1.45em;
+    max-height: 12rem;
+    padding: 2px var(--space-2) 4px;
+    color: var(--text-strong);
+    font-size: var(--text-row);
+    line-height: 1.45;
     resize: none;
     field-sizing: content;
   }
@@ -819,19 +944,33 @@
     flex: 1;
   }
 
+  .plus {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    border-radius: 50%;
+  }
+
+  .plus svg {
+    stroke-width: 1.4;
+  }
+
+  /* The mode beside "+", where ChatGPT puts the tool it is using: always said, since a
+     mode is never none and one of them acts on its own. */
   .mode {
     flex: none;
     height: var(--row-height-sm);
     padding: 0 var(--space-2);
-    border: 0;
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    border-radius: 999px;
     background: none;
     color: var(--text);
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: var(--weight-strong);
     cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
   }
 
   @media (hover: hover) {
@@ -840,15 +979,89 @@
     }
   }
 
+  /* The one round button: filled while it can do something, its glyph changing with
+     what that is. */
   .go {
     flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    margin-inline-start: 2px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-strong);
+    color: var(--bg);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      scale var(--dur-fast) var(--ease-out);
+  }
+
+  .go:disabled {
+    background: var(--surface-hover);
+    color: var(--muted);
+  }
+
+  .go:active:not(:disabled) {
+    scale: 0.92;
   }
 
   .go svg {
-    stroke-width: 1.3;
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
-  :global([data-touch]) .box textarea {
+  .go .square {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  /* Listening: the accent, and a ring breathing out of it. */
+  .go.listening {
+    background: var(--accent);
+    color: var(--accent-ink);
+    animation: listen calc(var(--dur-slow) * 4) var(--ease-out) infinite;
+  }
+
+  .go.hearing {
+    animation: breathe calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
+  }
+
+  @keyframes listen {
+    0% {
+      box-shadow: 0 0 0 0 var(--accent-line);
+    }
+    100% {
+      box-shadow: 0 0 0 7px transparent;
+    }
+  }
+
+  @keyframes breathe {
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .go.listening,
+    .go.hearing {
+      animation: none;
+    }
+  }
+
+  .files {
+    display: none;
+  }
+
+  :global([data-touch]) .composer textarea {
     font-size: var(--text-base);
   }
 </style>

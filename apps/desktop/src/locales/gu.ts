@@ -1720,6 +1720,11 @@ export const gu: Dictionary = {
   'Ask again': 'ફરી પૂછો',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'કંઈ પણ પૂછો, ઉમેરવા @, વધુ માટે /',
+  'What can I help with?': 'હું કેવી રીતે મદદ કરી શકું?',
+  'Add photos and files': 'ફોટા અને ફાઇલો ઉમેરો',
+  Mention: 'ઉલ્લેખ',
+  'Scroll to the end': 'અંત સુધી જાઓ',
+  'Continue in the panel': 'પેનલમાં ચાલુ રાખો',
   Chats: 'ચેટ',
   'Search chats': 'ચેટ શોધો',
   'No chats yet': 'હજી કોઈ ચેટ નથી',
