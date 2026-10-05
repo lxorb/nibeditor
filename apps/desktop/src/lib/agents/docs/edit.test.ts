@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { editNote, PATIENCE, undoAgent, writeNote } from './edit'
 import { readNote } from './read'
 import { SHOWN_FOR } from './presence'
+import { SCRATCHPAD_TAB } from './desk'
 import { DocError } from './problem'
 import { revOf } from './rev'
 import { deskWith } from './test-desk'
@@ -451,5 +452,58 @@ describe('a note with no file yet', () => {
     const { desk } = deskWith({})
 
     expect(await refusal(readNote(desk, { path: '', tab: 'nope' }))).toBe('no_such_note')
+  })
+})
+
+/** The scratchpad is a card and never a tab, and the same note from every space: an
+ *  agent names it `tab: "scratchpad"`, and its words go through its own road - the
+ *  card's editor while it is up, its file always - rather than a space's. */
+describe('the scratchpad', () => {
+  const PAD = { path: '', tab: SCRATCHPAD_TAB, pad: '/app/Scratchpad.md' }
+
+  test('is read, edited and taken back by its name, and keeps no version', async () => {
+    const { desk, pad, kept, written } = deskWith({})
+    pad.text = 'first'
+    const agent = anAgent()
+
+    const read = await readNote(desk, PAD, ['text'])
+    expect(read).toMatchObject({ path: 'Scratchpad.md', text: 'first' })
+
+    const answer = await editNote(desk, agent, PAD, [{ at: { end: true }, insert_after: 'second' }])
+    expect(answer).toMatchObject({ path: 'Scratchpad.md', edits: 1 })
+    expect(pad.text).toBe('first\n\nsecond')
+    expect(kept).toEqual([])
+    expect(written).toEqual([])
+
+    await writeNote(desk, agent, PAD, 'all new')
+    expect(pad.text).toBe('all new')
+    expect(await undoAgent(desk, agent, PAD)).toEqual({ undone: 2 })
+    expect(pad.text).toBe('first')
+  })
+
+  test('is worked out again when the reader wrote in its card meanwhile', async () => {
+    const { desk, pad } = deskWith({})
+    pad.text = 'alpha'
+    const padText = desk.padText.bind(desk)
+    let first = true
+    // The reader's keystroke, landing between the agent's read and its write.
+    desk.padText = async () => {
+      const words = await padText()
+      if (first) {
+        first = false
+        pad.text = 'alpha!'
+      }
+      return words
+    }
+
+    await editNote(desk, anAgent(), PAD, [{ at: { quote: 'alpha' }, insert_before: '> ' }])
+    expect(pad.text).toBe('> alpha!')
+    expect(pad.wrote).toBe(1)
+  })
+
+  test('is not there without its place', async () => {
+    const { desk } = deskWith({})
+
+    expect(await refusal(readNote(desk, { path: '', tab: SCRATCHPAD_TAB }))).toBe('no_such_note')
   })
 })
