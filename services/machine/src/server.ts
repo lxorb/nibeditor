@@ -19,14 +19,14 @@ import type { Nibd } from './nibd'
 const BEHIND = 8 * 1024 * 1024
 const CAUGHT_UP = 1024 * 1024
 
-export const LINK_PATH = '/link'
+const LINK_PATH = '/link'
 
 function digest(value: string): Buffer {
   return createHash('sha256').update(value).digest()
 }
 
 /** Whether a request carries the link's secret. */
-export function allowed(request: IncomingMessage, secret: string): boolean {
+function allowed(request: IncomingMessage, secret: string): boolean {
   if (!secret) return false
   const given = /^Bearer (.+)$/.exec(request.headers.authorization ?? '')?.[1]
   return given !== undefined && timingSafeEqual(digest(given), digest(secret))

@@ -13,7 +13,9 @@ import { readFileSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
 
 /** Microseconds of CPU used so far, by the machine's cgroup or the kernel's count. */
-export function cpuMicros(read: (file: string) => string = (file) => readFileSync(file, 'utf8')): number | null {
+export function cpuMicros(
+  read: (file: string) => string = (file) => readFileSync(file, 'utf8'),
+): number | null {
   try {
     const used = /^usage_usec (\d+)$/m.exec(read('/sys/fs/cgroup/cpu.stat'))?.[1]
     if (used) return Number(used)
@@ -34,7 +36,9 @@ export function cpuMicros(read: (file: string) => string = (file) => readFileSyn
 }
 
 /** Bytes received and sent so far over every interface but loopback. */
-export function netBytes(read: (file: string) => string = (file) => readFileSync(file, 'utf8')): number | null {
+export function netBytes(
+  read: (file: string) => string = (file) => readFileSync(file, 'utf8'),
+): number | null {
   try {
     let total = 0
     for (const line of read('/proc/net/dev').split('\n').slice(2)) {

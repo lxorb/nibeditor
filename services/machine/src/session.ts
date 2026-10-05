@@ -218,7 +218,7 @@ export class Session {
     if (this.asking) clearTimeout(this.asking)
     if (pty && !this.machine.cgroups?.kill(this.id)) killSession(pty.pid)
     try {
-      pty?.kill("SIGKILL")
+      pty?.kill('SIGKILL')
     } catch {
       // Gone with the rest of the session.
     }
@@ -249,7 +249,7 @@ export class Session {
 /** The dim line under a screen drawn back after a boot, saying when it is from: the
  *  local terminal's `restoredLine` (lib/terminal/history.ts), in the machine's time
  *  zone, and without words, which the machine has no language for. */
-export function restoredLine(at: number): string {
+function restoredLine(at: number): string {
   const when = new Date(at).toLocaleString('en-GB', {
     day: 'numeric',
     month: 'short',

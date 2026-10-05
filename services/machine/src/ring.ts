@@ -39,7 +39,10 @@ export class Ring {
     this.chunks.push({ seq, bytes })
     this.held += bytes.length
     this.end += bytes.length
-    while (this.chunks.length > 1 && this.held - (this.chunks[0]?.bytes.length ?? 0) >= this.limit) {
+    while (
+      this.chunks.length > 1 &&
+      this.held - (this.chunks[0]?.bytes.length ?? 0) >= this.limit
+    ) {
       this.held -= this.chunks.shift()?.bytes.length ?? 0
     }
     return seq

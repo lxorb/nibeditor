@@ -44,7 +44,7 @@ export class Coalescer {
   }
 }
 
-export function joined(parts: readonly Uint8Array[]): Uint8Array {
+function joined(parts: readonly Uint8Array[]): Uint8Array {
   if (parts.length === 1 && parts[0]) return parts[0]
   const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0))
   let at = 0

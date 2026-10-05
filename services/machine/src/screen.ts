@@ -87,7 +87,7 @@ const TO_SECOND = '\x1b[?1049h\x1b[H'
  *  taken has the whole of its second screen redrawn in that colour, and the first
  *  screen's saved cursor wears it too. The colours are reset at the switch; the
  *  addon sets the cursor's own again at the very end. */
-export function evenColours(serialized: string): string {
+function evenColours(serialized: string): string {
   const at = serialized.indexOf(TO_SECOND)
   return at < 0 ? serialized : `${serialized.slice(0, at)}\x1b[0m${serialized.slice(at)}`
 }

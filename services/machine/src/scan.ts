@@ -59,7 +59,13 @@ export class Scanner {
         return
       case ESCAPE:
         if (byte === 0x5b) this.state = CSI
-        else if (byte === 0x5d || byte === 0x50 || byte === 0x58 || byte === 0x5e || byte === 0x5f) {
+        else if (
+          byte === 0x5d ||
+          byte === 0x50 ||
+          byte === 0x58 ||
+          byte === 0x5e ||
+          byte === 0x5f
+        ) {
           this.state = TEXT
         } else if (byte === ESC) this.state = ESCAPE
         else if (byte >= 0x30 && byte <= 0x7e) this.state = GROUND

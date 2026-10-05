@@ -16,7 +16,14 @@
  *  Shells run as the machine's user, `nib`, through `setpriv` with that user's groups,
  *  when `nibd` is root; as `nibd`'s own user otherwise (a developer's machine, CI). */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, rmdirSync, writeFileSync } from 'node:fs'
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmdirSync,
+  writeFileSync,
+} from 'node:fs'
 import { join } from 'node:path'
 import { sessionProcesses } from './proc'
 

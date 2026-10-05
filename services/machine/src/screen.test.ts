@@ -18,8 +18,12 @@ const ROWS = 12
 function stream(): Uint8Array {
   const parts: string[] = ['\x1b]0;build\x07']
   for (let i = 0; i < 40; i++) {
-    parts.push(`\x1b[1;3${String(i % 8)}m${String(i)}\x1b[0m line \x1b[38;5;${String(i * 5)}m256\x1b[0m `)
-    parts.push(`\x1b[38;2;${String(i)};100;200mtrue\x1b[48;2;10;20;${String(i)}mcolour\x1b[0m 漢字 ✓\r\n`)
+    parts.push(
+      `\x1b[1;3${String(i % 8)}m${String(i)}\x1b[0m line \x1b[38;5;${String(i * 5)}m256\x1b[0m `,
+    )
+    parts.push(
+      `\x1b[38;2;${String(i)};100;200mtrue\x1b[48;2;10;20;${String(i)}mcolour\x1b[0m 漢字 ✓\r\n`,
+    )
   }
   parts.push('a long line that wraps past the edge of the screen and on '.repeat(2), '\r\n')
   parts.push('\x1b[4munder\x1b[24m \x1b[3mitalic\x1b[23m \x1b[9mstruck\x1b[29m $ vim\r\n')
@@ -73,7 +77,7 @@ test('the screen is the one in front: the editor, with its modes', async () => {
   expect(screen.title).toBe('build')
 })
 
-test('a saved screen is the shell\'s alone, with no modes left switched on', async () => {
+test("a saved screen is the shell's alone, with no modes left switched on", async () => {
   const screen = new Screen(COLS, ROWS)
   screen.write(stream())
   const back = terminal(COLS, ROWS)
