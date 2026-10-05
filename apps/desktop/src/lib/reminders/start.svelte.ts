@@ -103,9 +103,10 @@ $effect.root(() => {
       scheduler.changed()
     })
   })
-  // The quick add key from any app needs nib running, so it keeps nib in the tray too.
+  // The quick add key from any app needs nib running, so it keeps nib in the tray too:
+  // the key the system holds, not the switch, which asks for one it may not get.
   $effect(() => {
-    const held = quickAdd.anywhere
+    const held = quickAdd.held
     untrack(() => (residency.quickAdd = held))
   })
   $effect(() => {

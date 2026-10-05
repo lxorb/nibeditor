@@ -55,7 +55,11 @@ export function listen(): () => void {
           const key = quickAdd.anywhere
             ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform)
             : null
-          untrack(() => void invoke('quick_add_key', { key }).catch(() => undefined))
+          untrack(() => {
+            void invoke<string | null>('quick_add_key', { key })
+              .then((now) => (quickAdd.held = now !== null))
+              .catch(() => (quickAdd.held = false))
+          })
         })
       })
       // Held for as long as this window answers.
@@ -72,5 +76,6 @@ export function listen(): () => void {
     stopKey?.()
     channel?.close()
     if (stopKey) void invoke('quick_add_key', { key: null }).catch(() => undefined)
+    quickAdd.held = false
   }
 }
