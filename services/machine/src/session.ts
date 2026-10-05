@@ -133,6 +133,8 @@ export class Session {
   }
 
   input(data: Uint8Array): void {
+    // Its echo goes the moment the pty prints it; see coalesce.ts.
+    this.coalescer.typed()
     this.pty?.write(Buffer.from(data.buffer, data.byteOffset, data.byteLength))
     if (data.includes(13)) this.ask()
   }
