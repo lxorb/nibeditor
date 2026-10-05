@@ -36,7 +36,7 @@ import time
 from ctypes import wintypes
 from typing import Any
 
-from probe_app import close_app
+from probe_app import close_app, main_window, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -111,6 +111,21 @@ POINT = """(() => {
   return JSON.stringify(true)
 })()"""
 
+# The pointer going from one tab straight on to the next, in one breath as a real mouse
+# does it: two asks would leave the card time to go between them, and the next would
+# arrive rather than slide.
+ACROSS = """(() => {
+  const tabs = [...document.querySelectorAll('[data-strip] .tab')]
+  const named = (words) => tabs.find((one) => (one.textContent ?? '').trim().startsWith(words))
+  const from = named('%s'), to = named('%s')
+  if (!from || !to) return JSON.stringify(false)
+  from.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }))
+  to.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
+  return JSON.stringify(true)
+})()"""
+
+SLIDING = "JSON.stringify(document.querySelector('.card')?.classList.contains('sliding') ?? null)"
+
 # Where the card and its still are, in the window's own pixels.
 WHERE = """(() => {
   const scale = window.devicePixelRatio || 1
@@ -151,8 +166,8 @@ def matching(base: pathlib.Path, shot: pathlib.Path, box: list[int], origin: tup
     left, top, right, bottom = box
     crop = (left + origin[0] + inset, top + origin[1] + inset, right + origin[0] - inset, bottom + origin[1] - inset)
     with Image.open(base) as before, Image.open(shot) as after:
-        a = list(before.convert("RGB").crop(crop).getdata())
-        b = list(after.convert("RGB").crop(crop).getdata())
+        a = list(before.convert("RGB").crop(crop).get_flattened_data())
+        b = list(after.convert("RGB").crop(crop).get_flattened_data())
     return sum(1 for x, y in zip(a, b) if same(x, y)) / max(1, len(a))
 
 
@@ -162,7 +177,7 @@ def green(shot: pathlib.Path, box: list[int], origin: tuple[int, int], inset: in
     left, top, right, bottom = box
     crop = (left + origin[0] + inset, top + origin[1] + inset, right + origin[0] - inset, bottom + origin[1] - inset)
     with Image.open(shot) as picture:
-        seen = list(picture.convert("RGB").crop(crop).getdata())
+        seen = list(picture.convert("RGB").crop(crop).get_flattened_data())
     return sum(1 for one in seen if same(one, (0x00, 0xC0, 0x40))) / max(1, len(seen))
 
 
@@ -179,6 +194,7 @@ def main() -> int:
 
     switch = borrowed("web-switch-probe")
     overlays = borrowed("web-overlays-probe")
+    smooth = borrowed("web-smooth-probe")
     shutil.rmtree(args.out, ignore_errors=True)
     args.out.mkdir(parents=True, exist_ok=True)
     overlays.OUT = args.out
@@ -220,12 +236,23 @@ def main() -> int:
         if slide_from:
             app.ask(POINT % (slide_from, "pointerenter"))
             time.sleep(2.0)
-            app.ask(POINT % (slide_from, "pointerleave"))
-        app.ask(POINT % (name, "pointerenter"))
-        time.sleep(1.0 if slide_from else 2.0)
+            app.ask(smooth.COUNT)
+            app.ask(ACROSS % (slide_from, name))
+            time.sleep(1.0)
+            placed = app.ask(smooth.TAKE)
+            if isinstance(placed, list):
+                places = [one for one in placed if one[1] == "web_place"]
+                said[f"{shot}: placements while it slid"] = len(places)
+                if any(one[2] is False for one in places):
+                    failed.append(f"{shot}: the page was hidden while the card slid")
+        else:
+            app.ask(POINT % (name, "pointerenter"))
+            time.sleep(2.0)
         where = app.ask(WHERE)
         picture = overlays.shoot(hwnd, shot)
-        row: dict[str, object] = {"where": where}
+        row: dict[str, object] = {"where": where, "slid": app.ask(SLIDING)}
+        if slide_from and row["slid"] is not True:
+            failed.append(f"{shot}: the card arrived rather than slid")
         card = where.get("card") if isinstance(where, dict) else None
         if not card:
             failed.append(f"{shot}: no card came up")
@@ -266,8 +293,18 @@ def main() -> int:
         running.wait(timeout=30)
         switch.allow_eval(args.identifier)
         time.sleep(1)
-        running, app, hwnd = switch.launch(args.exe, args.identifier, unlike=app.port)
+        running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
+        # The app's own window, not the first the process shows.
+        hwnd = 0
+        until = time.perf_counter() + 30
+        while not hwnd and time.perf_counter() < until:
+            hwnd = main_window(running.pid)
+            time.sleep(0.1)
+        sized(hwnd, 1600, 1000)
+        time.sleep(1)
         origin = client_origin(hwnd)
+        # Which code this is, so a picture is never read against the wrong build.
+        said["build"] = app.ask("JSON.stringify(window.nibBuild)")
 
         app.open("Idea.md", SPACE)
         time.sleep(2)
