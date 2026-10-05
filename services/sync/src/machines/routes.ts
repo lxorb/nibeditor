@@ -18,7 +18,7 @@ import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
 import { FREE, resetAt } from '@nib/online'
 import { usedOf } from './meter'
-import { MOST_SESSIONS } from '@nib/online/wire'
+import { MOST_SESSIONS, type Refusal } from '@nib/online/wire'
 import { allowed, serviceOf } from './service'
 
 interface Online {
@@ -74,6 +74,10 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
 
 const asked = (machine: MachineRow) => ({ 'x-nib-user': machine.user_id })
 
+/** A refusal as the app reads it: one of `@nib/online`'s codes, which the app turns into
+ *  words, rather than a sentence of the Worker's. */
+const refused = (error: Refusal) => ({ error })
+
 /** The machine, the month and whether the account may have one at all. */
 online.get('/machine', async (context) => {
   const user = context.get('user')
@@ -99,9 +103,9 @@ online.get('/machine', async (context) => {
 
 online.post('/machine/start', async (context) => {
   const user = context.get('user')
-  const refused = await whyNotWake(context.env, user.id, now())
-  if (refused) return context.json({ error: refused }, refused === 'list' ? 403 : 409)
-  if (!(await mayStart(context.env, user.id))) return context.json({ error: 'rate' }, 429)
+  const refusal = await whyNotWake(context.env, user.id, now())
+  if (refusal) return context.json(refused(refusal), refusal === 'list' ? 403 : 409)
+  if (!(await mayStart(context.env, user.id))) return context.json(refused('rate'), 429)
 
   const machine = await ensureMachine(context.env, user.id)
   await audit(context.env, machine.id, 'start', { who: user.id })
@@ -134,7 +138,7 @@ online.post('/terms', async (context) => {
   const term = body.text('term', 200)
   if (body.problem || !term) return context.json({ error: body.problem ?? 'name the file' }, 400)
 
-  if (!(await allowed(env, user.id))) return context.json({ error: 'list' }, 403)
+  if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
 
   const file = await env.DB.prepare('select id, space_id from notes where id = ? and deleted = 0')
     .bind(term)
@@ -143,7 +147,7 @@ online.post('/terms', async (context) => {
     ? ((await reachedSpace(env, who, file.space_id)) ?? (await reachedItem(env, who, file)))
     : null
   if (!file || !reached) return context.json({ error: NOT_FOUND }, 404)
-  if (reached.role === 'read') return context.json({ error: 'role' }, 403)
+  if (reached.role === 'read') return context.json(refused('role'), 403)
 
   const had = await env.DB.prepare(
     'select machine, session, user_id, ended_at from term_sessions where term = ?',
@@ -153,7 +157,7 @@ online.post('/terms', async (context) => {
   if (had?.user_id === user.id && had.ended_at === null) {
     return context.json({ v: 1, machine: had.machine, session: had.session })
   }
-  if (had) return context.json({ error: 'gone' }, 409)
+  if (had) return context.json(refused('gone'), 409)
 
   const machine = await ensureMachine(env, user.id)
   const { results: live } = await env.DB.prepare(
@@ -162,9 +166,9 @@ online.post('/terms', async (context) => {
     .bind(machine.id)
     .all<{ term: string }>()
   if (live.length >= MOST_SESSIONS) {
-    return context.json({ error: 'sessions', sessions: live.map((one) => one.term) }, 409)
+    return context.json({ ...refused('sessions'), sessions: live.map((one) => one.term) }, 409)
   }
-  if (!(await mayMakeSession(env, user.id))) return context.json({ error: 'rate' }, 429)
+  if (!(await mayMakeSession(env, user.id))) return context.json(refused('rate'), 429)
 
   const session = `s_${newId().replaceAll('-', '')}`
   await env.DB.prepare(

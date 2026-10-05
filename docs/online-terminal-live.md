@@ -35,7 +35,7 @@ and the container application, which the first `wrangler deploy` of the machines
 
 ## Steps
 
-1. **Lanes on main**, gate green: `@nib/online`, `services/machine` (the image and `nibd`),
+1. **Lanes on main**, gate green: `@nib/online`, the machine's image and `nibd` (lane `online-nibd`),
    this Worker lane, the client.
 2. **The image's two requirements from this lane**: `nibd` listens on port **8080** and takes
    the link at `GET /link` with `authorization: Bearer <NIBD_SECRET>` (the secret is in the
