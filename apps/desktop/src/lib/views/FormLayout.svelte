@@ -83,7 +83,7 @@
   function fieldMenu(event: MouseEvent, field: string) {
     if (!base) return
     event.preventDefault()
-    menu.show(event, columnMenu(kit, field, live.columns), {
+    menu.show(event, columnMenu(kit, field, live.columns, event), {
       title: propertyName(field, displayName(base, field)),
     })
   }

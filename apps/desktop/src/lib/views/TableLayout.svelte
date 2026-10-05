@@ -123,7 +123,7 @@
   function headMenu(event: MouseEvent, column: string) {
     const base = live.base
     if (!base) return
-    menu.show(event, columnMenu(kit, column, columns), {
+    menu.show(event, columnMenu(kit, column, columns, event), {
       title: propertyName(column, displayName(base, column)),
     })
   }

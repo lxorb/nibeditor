@@ -23,6 +23,7 @@
   import AutomationsBuilder from './AutomationsBuilder.svelte'
   import ButtonBuilder from './ButtonBuilder.svelte'
   import ColourBuilder from './ColourBuilder.svelte'
+  import { grouped } from './column-menu'
   import { copyCsv, saveCsv } from './csv'
   import { addView, removeView, renameView, setBaseNib, setViewNib } from './edit'
   import FilterBuilder from './FilterBuilder.svelte'
@@ -165,21 +166,18 @@
       },
       ...(layout === 'table'
         ? [
-            {
-              label: t('Row height'),
-              run: () => undefined,
-              more: () =>
-                Promise.resolve(
-                  HEIGHTS.map((one) => ({
-                    label: one.label,
-                    checked: (view?.nib.lines ?? 1) === one.lines,
-                    run: () =>
-                      kit.change((b, at) =>
-                        setViewNib(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
-                      ),
-                  })),
-                ),
-            },
+            grouped(event, t('Row height'), () =>
+              Promise.resolve(
+                HEIGHTS.map((one) => ({
+                  label: one.label,
+                  checked: (view?.nib.lines ?? 1) === one.lines,
+                  run: () =>
+                    kit.change((b, at) =>
+                      setViewNib(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
+                    ),
+                })),
+              ),
+            ),
           ]
         : []),
       ...(kit.file !== null
@@ -193,14 +191,11 @@
         : []),
       ...(notes
         ? [
-            {
-              label: t('Default template'),
-              run: () => undefined,
-              more: () =>
-                templateRows(view?.nib.template ?? base.nib.template, (link) =>
-                  kit.change((b, at) => setViewNib(b, at, 'template', link ?? undefined)),
-                ),
-            },
+            grouped(event, t('Default template'), () =>
+              templateRows(view?.nib.template ?? base.nib.template, (link) =>
+                kit.change((b, at) => setViewNib(b, at, 'template', link ?? undefined)),
+              ),
+            ),
           ]
         : []),
       DIVIDER,

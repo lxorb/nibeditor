@@ -27,10 +27,13 @@
   /** Every relation a rollup can start from: the views' notes' link properties, and
    *  the base's reverse columns. */
   const relations = $derived([
-    ...relationsOf(live.rows).map((one) => ({ value: one, label: propertyName(one) })),
     ...Object.entries(base?.formulas ?? {})
       .filter(([, source]) => readReverse(source) !== null)
       .map(([name]) => ({ value: `formula.${name}`, label: `← ${name}` })),
+    ...relationsOf(live.answer?.groups.flatMap((group) => group.rows) ?? []).map((one) => ({
+      value: one,
+      label: propertyName(one),
+    })),
   ])
 
   /** Every front matter key the space's notes have: what of a related note to read. */

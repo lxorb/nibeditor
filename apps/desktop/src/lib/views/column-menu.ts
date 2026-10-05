@@ -17,7 +17,7 @@ import {
   reverseFormula,
 } from '@nib/bases'
 import { i18n, t } from '../i18n.svelte'
-import { DIVIDER, type MenuEntry } from '../menu.svelte'
+import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { writeEach } from './act'
 import {
   bare,
@@ -137,7 +137,30 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   ]
 }
 
-export function columnMenu(kit: Kit, column: string, columns: readonly string[]): MenuEntry[] {
+/** A row that is only its alternatives: pressed, it shows them where the menu was, as its
+ *  chevron does. */
+export function grouped(
+  event: MouseEvent | undefined,
+  label: string,
+  more: () => Promise<MenuEntry[]>,
+): MenuEntry {
+  return {
+    label,
+    more,
+    run: () => {
+      // After the press has finished reaching the window, whose click shuts any menu.
+      if (event)
+        setTimeout(() => void more().then((rows) => menu.show(event, rows, { title: label })))
+    },
+  }
+}
+
+export function columnMenu(
+  kit: Kit,
+  column: string,
+  columns: readonly string[],
+  event?: MouseEvent,
+): MenuEntry[] {
   const live = kit.live
   const base = live.base
   if (!base) return []
@@ -158,28 +181,21 @@ export function columnMenu(kit: Kit, column: string, columns: readonly string[])
       run: () => kit.change((b, i) => setSort(b, i, [{ property: column, direction: 'DESC' }])),
     },
     DIVIDER,
-    {
-      label: t('Summary'),
-      run: () => undefined,
-      more: () =>
-        Promise.resolve([
-          {
-            label: t('None'),
-            checked: !view?.summaries[column],
-            run: () => kit.change((b, i) => setSummary(b, i, column, null)),
-          },
-          ...DEFAULT_SUMMARIES.map((name) => ({
-            label: summaryName(name),
-            checked: view?.summaries[column] === name,
-            run: () => kit.change((b, i) => setSummary(b, i, column, name)),
-          })),
-        ]),
-    },
-    {
-      label: t('Add a column'),
-      run: () => undefined,
-      more: () => Promise.resolve(additions(kit, columns)),
-    },
+    grouped(event, t('Summary'), () =>
+      Promise.resolve([
+        {
+          label: t('None'),
+          checked: !view?.summaries[column],
+          run: () => kit.change((b, i) => setSummary(b, i, column, null)),
+        },
+        ...DEFAULT_SUMMARIES.map((name) => ({
+          label: summaryName(name),
+          checked: view?.summaries[column] === name,
+          run: () => kit.change((b, i) => setSummary(b, i, column, name)),
+        })),
+      ]),
+    ),
+    grouped(event, t('Add a column'), () => Promise.resolve(additions(kit, columns))),
     DIVIDER,
     ...(note
       ? [
@@ -198,24 +214,20 @@ export function columnMenu(kit: Kit, column: string, columns: readonly string[])
       : []),
     ...(note || formula !== undefined
       ? [
-          {
-            label: t('Format'),
-            run: () => undefined,
-            more: () =>
-              Promise.resolve([
-                {
-                  label: t('None'),
-                  checked: format === undefined,
-                  run: () =>
-                    kit.change((b) => setProperty(b, keyOf(column), { format: undefined })),
-                },
-                ...FORMATS.map((one) => ({
-                  label: formatName(one),
-                  checked: format === one,
-                  run: () => kit.change((b) => setProperty(b, keyOf(column), { format: one })),
-                })),
-              ]),
-          },
+          grouped(event, t('Format'), () =>
+            Promise.resolve([
+              {
+                label: t('None'),
+                checked: format === undefined,
+                run: () => kit.change((b) => setProperty(b, keyOf(column), { format: undefined })),
+              },
+              ...FORMATS.map((one) => ({
+                label: formatName(one),
+                checked: format === one,
+                run: () => kit.change((b) => setProperty(b, keyOf(column), { format: one })),
+              })),
+            ]),
+          ),
         ]
       : []),
     ...(formula !== undefined && readRollup(formula) !== null

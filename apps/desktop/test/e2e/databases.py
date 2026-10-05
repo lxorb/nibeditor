@@ -185,6 +185,49 @@ def the_button(page: Page) -> None:
         say(f"[undo] {json.dumps(after, ensure_ascii=False)}")
 
 
+def menu_row(page: Page, label: str) -> None:
+    page.locator(f".menu [role=menuitem]:has-text({json.dumps(label)})").first.click()
+
+
+def the_builders(page: Page) -> None:
+    """The layers lane 7 adds over a view, each opened from where a reader finds it,
+    and a locked view turning a change away."""
+    open_view(page, "All")
+    page.locator(".view-tab .heads .head:has-text('status')").first.click(button="right")
+    menu_row(page, "Options")
+    wait_for(page, "document.querySelectorAll('.view-tab .pop .tone').length === 3", "the status options")
+    shot(page, "05-options")
+    page.keyboard.press("Escape")
+
+    for label, name in [("Automations", "06-automations"), ("Colour", "07-colour")]:
+        page.locator(".view-tab .head .name").first.click()
+        menu_row(page, label)
+        wait_for(page, "document.querySelector('.view-tab .pop')", f"the {label} layer")
+        shot(page, name)
+        page.keyboard.press("Escape")
+        wait_for(page, "!document.querySelector('.view-tab .pop')", f"the {label} layer shut")
+
+    page.locator(".view-tab .heads .head:has-text('Tasks_count')").first.click(button="right")
+    menu_row(page, "Add a column")
+    wait_for(page, "document.querySelector('[role=menu].menu')?.getAttribute('aria-label') === 'Add a column'", "the columns to add")
+    quiet(page)
+    menu_row(page, "Rollup")
+    wait_for(page, "document.querySelector('.view-tab .pop .rows')", "the rollup picker")
+    shot(page, "08-rollup-picker")
+    page.keyboard.press("Escape")
+
+    page.locator(".view-tab .head .name").first.click()
+    menu_row(page, "Lock view")
+    wait_for(page, "document.querySelector('.view-tab .lock')", "the padlock of a locked view")
+    page.locator(".view-tab .heads .head:has-text('status') .name").first.click()
+    wait_for(page, "document.querySelector('.view-tab .lock.shake')", "the padlock answering a change")
+    if page.evaluate("!!document.querySelector('.view-tab .head .arrow')"):
+        wrong("a locked view was sorted")
+    shot(page, "09-locked")
+    page.locator(".view-tab .lock").click()
+    wait_for(page, "!document.querySelector('.view-tab .lock')", "the view unlocked")
+
+
 def the_form(page: Page) -> None:
     open_view(page, "New")
     wait_for(page, "document.querySelector('.view-tab form.form')", "the form")
@@ -192,7 +235,7 @@ def the_form(page: Page) -> None:
     page.locator(".view-tab form.form .field").first.locator("button").click()
     page.locator("[role=listbox] [role=option]:has-text('Doing')").first.click()
     wait_for(page, "!document.querySelector('[role=listbox]')", "the choice made and its list shut")
-    shot(page, "03-form-filled")
+    shot(page, "10-form-filled")
     page.locator(".view-tab form.form button[type=submit]").click()
     if not DRIVE.waited(
         page,
@@ -200,9 +243,8 @@ def the_form(page: Page) -> None:
         "the form to make Projects/Orchard.md with status: Doing",
     ):
         return
-    if page.locator(".view-tab form.form .title").input_value() != "":
-        wrong("the form did not empty itself after sending")
-    shot(page, "04-form-sent")
+    DRIVE.waited(page, "document.querySelector('.view-tab form.form .title')?.value === ''", "the form to empty itself after sending")
+    shot(page, "11-form-sent")
 
 
 def drive(browser) -> None:  # type: ignore[no-untyped-def]
@@ -211,6 +253,7 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     seed(page)
     the_rollup(page)
     the_button(page)
+    the_builders(page)
     the_form(page)
     page.close()
 

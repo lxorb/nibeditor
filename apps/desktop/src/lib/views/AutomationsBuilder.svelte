@@ -208,8 +208,12 @@
     background: none;
   }
 
+  .mark,
+  .switch {
+    width: 40px;
+  }
+
   .mark {
-    width: 28px;
     color: var(--muted);
     text-align: center;
   }
