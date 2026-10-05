@@ -6,7 +6,7 @@
  *  ever watches, through the socket; a program's `nib_` token reaches none either
  *  (`programMayReach`). Every route answers 404 while the service is off. */
 
-import { Hono, type MiddlewareHandler } from 'hono'
+import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
 import { newId, now } from '../crypto'
 import { reachedItem, reachedSpace } from '../spaces/space'
@@ -129,16 +129,22 @@ online.post('/machine/stop', async (context) => {
 
 /** A `.term` file made a session on the maker's own machine (4.5). The file is made
  *  first, by sync, in a space the maker may write in; this names its session. Asking
- *  again for the same file answers the same session. */
+ *  again for the same file answers the same session.
+ *
+ *  With no `term`, a session of the maker's alone, in no space: what a device still on
+ *  sync v1 makes, having no file id the account knows. Its socket is named by the
+ *  session (`/v2/online/<session>/socket`), and only its owner reaches it; it is shared
+ *  by nobody until its file has an id. */
 online.post('/terms', async (context) => {
   const env = context.env
   const user = context.get('user')
   const who = context.get('who')
   const body = await readBody(context)
   const term = body.text('term', 200)
-  if (body.problem || !term) return context.json({ error: body.problem ?? 'name the file' }, 400)
+  if (body.problem) return context.json({ error: body.problem }, 400)
 
   if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
+  if (!term) return await makeSession(context, env, user.id, null)
 
   const file = await env.DB.prepare('select id, space_id from notes where id = ? and deleted = 0')
     .bind(term)
@@ -159,7 +165,18 @@ online.post('/terms', async (context) => {
   }
   if (had) return context.json(refused('gone'), 409)
 
-  const machine = await ensureMachine(env, user.id)
+  return await makeSession(context, env, user.id, term)
+})
+
+/** A new session on the account's machine, for a file or (`term` null) for none, in
+ *  which case the session's own id names it. */
+async function makeSession(
+  context: Context<Online>,
+  env: Env,
+  userId: string,
+  term: string | null,
+): Promise<Response> {
+  const machine = await ensureMachine(env, userId)
   const { results: live } = await env.DB.prepare(
     'select term from term_sessions where machine = ? and ended_at is null order by created_at',
   )
@@ -168,18 +185,18 @@ online.post('/terms', async (context) => {
   if (live.length >= MOST_SESSIONS) {
     return context.json({ ...refused('sessions'), sessions: live.map((one) => one.term) }, 409)
   }
-  if (!(await mayMakeSession(env, user.id))) return context.json(refused('rate'), 429)
+  if (!(await mayMakeSession(env, userId))) return context.json(refused('rate'), 429)
 
   const session = `s_${newId().replaceAll('-', '')}`
   await env.DB.prepare(
     `insert into term_sessions (term, machine, session, user_id, created_at)
      values (?, ?, ?, ?, ?)`,
   )
-    .bind(term, machine.id, session, user.id, now())
+    .bind(term ?? session, machine.id, session, userId, now())
     .run()
-  await audit(env, machine.id, 'session', { who: user.id })
+  await audit(env, machine.id, 'session', { who: userId })
   return context.json({ v: 1, machine: machine.id, session })
-})
+}
 
 /** The sessions of the account's machine, for Settings. */
 online.get('/terms', async (context) => {
@@ -208,7 +225,7 @@ online.get('/terms', async (context) => {
       createdAt: one.created_at,
       space: one.space,
       path: one.path,
-      trashed: one.deleted !== 0,
+      trashed: one.deleted === 1,
     })),
   })
 })

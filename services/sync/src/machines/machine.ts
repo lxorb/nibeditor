@@ -27,7 +27,7 @@ import type { Env } from '../types'
 import { audit, type Detail } from './audit'
 import { budgetLeft } from './budget'
 import { whyNotWake } from './gate'
-import { ContainerHost, SECRET } from './host'
+import { ContainerHost, DevHost, SECRET } from './host'
 import { meter, usedOf } from './meter'
 import {
   type Activity,
@@ -164,7 +164,7 @@ export class Machine implements DurableObject {
     private readonly env: Env,
     host?: MachineHost,
   ) {
-    this.host = host ?? new ContainerHost(ctx, env)
+    this.host = host ?? DevHost.of(env) ?? new ContainerHost(ctx, env)
   }
 
   /* ── Requests ─────────────────────────────────────────────────────────── */

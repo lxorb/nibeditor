@@ -67,6 +67,24 @@ and the container application, which the first `wrangler deploy` of the machines
    from the backup; egress as chosen above. Then a week of Emil's own use before the
    allow-list grows.
 
+## A drive against a local `nibd`, before any of that
+
+No container and no Cloudflare resource: the `Machine` object drives a `nibd` already running
+on this computer (`DevHost` in services/sync/src/machines/host.ts).
+
+1. Start `nibd` with a secret, listening on `127.0.0.1:8080` (`NIBD_SECRET=dev`).
+2. In services/sync, a `.dev.vars` (never committed):
+   `MACHINE_DEV_NIBD="http://127.0.0.1:8080"` and `MACHINE_DEV_SECRET="dev"`. Any address
+   that is not this computer's is ignored.
+3. `pnpm wrangler d1 migrations apply nib --local`, then switch the service on locally:
+   `pnpm wrangler d1 execute nib --local --command "update online_service set value = 'on' where key = 'online'"`
+   and put the drive's account on the list:
+   `... --command "update users set online = 1 where email = '<address>'"`.
+4. `pnpm wrangler dev --config wrangler.machines.jsonc --enable-containers=false`.
+
+Start, link, input, output, screens, sizes, Resume and the minute's sleep all run for real;
+the backup and snapshot are skipped (the dev host keeps none).
+
 ## Kill switches, for reference
 
 - the service: `online_service.online` to `off` (every machine sleeps at its next minute, every

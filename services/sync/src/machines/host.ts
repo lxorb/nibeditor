@@ -187,6 +187,64 @@ export class ContainerHost implements MachineHost {
   }
 }
 
+/** A machine that is a `nibd` already running on this computer, for an end-to-end drive
+ *  under `wrangler dev` with no container at all.
+ *
+ *  Chosen by `MACHINE_DEV_NIBD` (its address, `http://127.0.0.1:<port>`) and
+ *  `MACHINE_DEV_SECRET` (the secret that `nibd` was started with), which only a
+ *  `.dev.vars` sets; an address that is not this computer's is refused, so a deployed
+ *  Worker can never be pointed at one. Starting, stopping and saving are nothing here:
+ *  the `nibd` is the drive's, and so is its home. */
+export class DevHost implements MachineHost {
+  constructor(
+    private readonly address: string,
+    private readonly secret: string,
+  ) {}
+
+  /** The dev host, if the environment asks for one and it is this computer's. */
+  static of(env: Env): DevHost | null {
+    const address = env.MACHINE_DEV_NIBD
+    if (!address) return null
+    const host = new URL(address).hostname
+    if (host !== '127.0.0.1' && host !== 'localhost' && host !== '[::1]') return null
+    return new DevHost(address, env.MACHINE_DEV_SECRET ?? '')
+  }
+
+  start(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  stop(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  async link(): Promise<WebSocket> {
+    const answer = await fetch(new URL('/link', this.address), {
+      headers: { upgrade: 'websocket', authorization: `Bearer ${this.secret}` },
+    })
+    const socket = answer.webSocket
+    if (!socket) throw new Error(`nibd answered ${String(answer.status)}`)
+    socket.accept()
+    return socket
+  }
+
+  snapshot(): Promise<string> {
+    return Promise.resolve('dev')
+  }
+
+  backup(): Promise<string> {
+    return Promise.reject(new Error('a dev machine keeps no backups'))
+  }
+
+  restore(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  usage(): Promise<{ cpuS: number; egressBytes: number }> {
+    return Promise.resolve({ cpuS: 0, egressBytes: 0 })
+  }
+}
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

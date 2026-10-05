@@ -290,6 +290,29 @@ describe('the door', () => {
     expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('no')
   })
 
+  test('with no file id (a device on sync v1), a session of the owner’s alone', async () => {
+    const { owner, writer } = await made()
+    const alone = await call<{ v: number; machine: string; session: string }>(
+      env,
+      '/v2/online/terms',
+      { token: owner, body: {} },
+    )
+    expect(alone.status).toBe(200)
+    expect(alone.json.v).toBe(1)
+
+    door.asked.length = 0
+    expect((await knock(alone.json.session, owner)).status).toBe(200)
+    expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
+    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(alone.json.session)
+    expect((await knock(alone.json.session, writer)).status).toBe(404)
+
+    // Not on the list, not even that.
+    const stranger = await session('stranger@example.com')
+    expect((await call(env, '/v2/online/terms', { token: stranger, body: {} })).json).toEqual({
+      error: 'list',
+    })
+  })
+
   test('a copied .term reaches nothing: access is the file’s id, never its text', async () => {
     const { owner } = await made()
     expect((await knock('copy-1', owner)).status).toBe(404)
@@ -757,5 +780,18 @@ describe('the hub’s machine frame', () => {
     const { hubFrameOf } = await import('@nib/sync-core/wire')
     expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
+  })
+})
+
+describe('the dev host', () => {
+  test('drives a nibd on this computer and refuses any other address', async () => {
+    const { DevHost } = await import('../src/machines/host')
+    const local = testEnv({ MACHINE_DEV_NIBD: 'http://127.0.0.1:8080', MACHINE_DEV_SECRET: 's' })
+    const remote = testEnv({ MACHINE_DEV_NIBD: 'http://203.0.113.9:8080' })
+    expect(DevHost.of(local)).toBeInstanceOf(DevHost)
+    expect(DevHost.of(remote)).toBeNull()
+    expect(DevHost.of(env)).toBeNull()
+    local.close()
+    remote.close()
   })
 })

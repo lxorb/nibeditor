@@ -10,7 +10,9 @@
  *  The role is the rooms' (rooms/index.ts): the space's owner, the stronger of a
  *  membership of the space and one of this file, or a link's. The machine's owner
  *  reaches their own session whatever the space says - from a trashed file, or a space
- *  they were taken out of - because it is their machine (4.5). */
+ *  they were taken out of - because it is their machine (4.5). A session made with no
+ *  file at all, by an account whose devices are still on sync v1 and so have no file id
+ *  to name, is in no space, and reaches its owner and nobody else. */
 
 import type { Env } from '../types'
 import type { SpaceRole, Typing } from '@nib/online'
@@ -44,15 +46,15 @@ select p.who as who, p.term as term, p.guest as guest,
             when coalesce(ms.role, mi.role, gs.role, gi.role) is not null then 'read'
             else null end as role,
        (t.user_id = p.who and p.guest = 0) as owns,
-       n.deleted as deleted,
+       coalesce(n.deleted, 1) as deleted,
        t.machine as machine, t.session as session, t.user_id as owner, t.typing as typing,
        (select online from users where id = t.user_id) as listed,
        (select held from machines where id = t.machine) as held
   from pairs p
   join term_sessions t on t.term = p.term and t.ended_at is null
                       and (${machine} = '' or t.machine = ${machine})
-  join notes n on n.id = t.term
-  join spaces sp on sp.id = n.space_id and sp.deleted = 0
+  left join notes n on n.id = t.term
+  left join spaces sp on sp.id = n.space_id and sp.deleted = 0
   left join users u on u.id = p.who and p.guest = 0
   left join space_members ms on ms.space_id = sp.id and ms.email = u.email and ms.item = ''
   left join space_members mi on mi.space_id = sp.id and mi.email = u.email and mi.item = n.id

@@ -26,6 +26,11 @@ export interface Env {
   /** How a machine's traffic leaves it, `open` (the default) or `web`; see
    *  machines/host.ts `egressOf`. */
   MACHINE_EGRESS?: string
+  /** A `nibd` on this computer to drive instead of a container, and its link secret, for
+   *  an end-to-end drive under `wrangler dev`; set only in `.dev.vars`. See
+   *  machines/host.ts `DevHost`. */
+  MACHINE_DEV_NIBD?: string
+  MACHINE_DEV_SECRET?: string
 
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
