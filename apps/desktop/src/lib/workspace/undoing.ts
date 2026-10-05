@@ -126,7 +126,7 @@ async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }
  *  fourteen days, and Recently deleted can purge an entry by hand. The
  *  snapshot is still here either way, so it stands in rather than leaving
  *  the note gone with nothing said. */
-async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
+export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
   if (!action.trashId) {
     // Nothing kept and nothing in the trash, which is what a PDF deleted while
     // signed in looks like. Writing nothing would leave an empty file where the

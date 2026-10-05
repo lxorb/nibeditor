@@ -32,10 +32,20 @@ runs(() => sends.some((send) => send.to === null))
  *  put back once the next message goes. */
 const starting = new Set<(thread: string) => void>()
 
+/** Whoever wants to hear a send end: the review, whose list of moved and deleted notes
+ *  is read off the turn the send wrote. */
+const ending = new Set<(thread: string) => void>()
+
 /** Listens; answers the way to stop. */
 export function onSend(listener: (thread: string) => void): () => void {
   starting.add(listener)
   return () => starting.delete(listener)
+}
+
+/** Listens for a send's end; answers the way to stop. */
+export function onSent(listener: (thread: string) => void): () => void {
+  ending.add(listener)
+  return () => ending.delete(listener)
 }
 
 /** A send starting; answers its end. */
@@ -53,6 +63,7 @@ function began(thread: Thread): () => void {
   return () => {
     send.to = Date.now()
     send.held = null
+    for (const listener of ending) listener(thread.id)
   }
 }
 
