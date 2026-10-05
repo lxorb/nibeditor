@@ -1,0 +1,64 @@
+name: machine
+
+# The online terminal's machine image (docs/online-terminal.md 4.2, 6.2): built and booted
+# with nothing in the cloud, driven over nibd's link, the agents' checksums compared
+# with their makers' and nibd traced while a session reads the agents' files. Nothing is
+# pushed anywhere: the image lives and dies on the runner. nibd's own tests run in
+# check.yml's `pnpm test` like every package's.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - services/machine/**
+      - packages/online/**
+      - packages/sync-core/src/frame.ts
+      - .github/workflows/machine.yml
+  pull_request:
+    paths:
+      - services/machine/**
+      - packages/online/**
+      - packages/sync-core/src/frame.ts
+      - .github/workflows/machine.yml
+
+concurrency:
+  group: machine-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: nibd
+        run: pnpm --filter @nib/machine build
+
+      - name: Image
+        run: docker build -t nib-machine:ci services/machine
+
+      - name: Booted and driven
+        working-directory: services/machine
+        run: test/image.sh nib-machine:ci
+
+      - name: What the machine said
+        if: failure()
+        working-directory: services/machine
+        run: |
+          cat machine.log || true
+          tail -n 200 trace.log || true
