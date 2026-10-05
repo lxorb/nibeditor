@@ -70,7 +70,7 @@ async function counted(env: Env, scope: string, key: string, window: number): Pr
 }
 
 /** Counts one arrival against a ceiling and says whether it was inside it. */
-async function within(
+export async function within(
   env: Env,
   scope: string,
   key: string,

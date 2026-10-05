@@ -16,6 +16,17 @@ export interface Env {
    *  hub is a poke nobody hears, which polling covers. */
   HUB?: DurableObjectNamespace
 
+  /** One `Machine` per online terminal machine (docs/online-terminal.md): bound only in
+   *  wrangler.machines.jsonc until going live, so absent in every deploy of
+   *  wrangler.jsonc, where the online routes answer 404. See machines/. */
+  MACHINES?: DurableObjectNamespace
+  /** Where the machines' homes are backed up (4.3): an R2 bucket in the EU jurisdiction,
+   *  bound beside `MACHINES`. */
+  HOMES?: R2Bucket
+  /** How a machine's traffic leaves it, `open` (the default) or `web`; see
+   *  machines/host.ts `egressOf`. */
+  MACHINE_EGRESS?: string
+
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside

@@ -330,6 +330,8 @@ export type HubFrame =
   | { t: 'key-wanted'; device: string; name: string; pub: string }
   | { t: 'key'; wrapped: string; generation: number }
   | { t: 'key-denied' }
+  /** The account's online terminal machine changed state (docs/online-terminal.md, 4.6). */
+  | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
 
 /** One row of `GET /v2/devices`. */
 export interface DeviceRow {
@@ -684,6 +686,13 @@ export function hubFrameOf(value: unknown): HubFrame | null {
         : null
     case 'key-denied':
       return { t: 'key-denied' }
+    case 'machine':
+      return value.state === 'asleep' ||
+        value.state === 'starting' ||
+        value.state === 'awake' ||
+        value.state === 'stopping'
+        ? { t: 'machine', state: value.state }
+        : null
     default:
       return null
   }

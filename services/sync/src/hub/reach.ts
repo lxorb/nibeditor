@@ -11,7 +11,7 @@ import { chunks } from '../bound'
 import type { Env } from '../types'
 
 /** What a route may ask a hub. */
-export type HubAsk = 'join' | 'poke' | 'upload' | 'revoke' | 'renamed' | 'erase'
+export type HubAsk = 'join' | 'poke' | 'upload' | 'revoke' | 'renamed' | 'erase' | 'machine'
 
 /** What a route answers when the hub it needs did not answer: a moment to wait
  *  through, as a deploy is, rather than a failure. The socket's own handshake cannot

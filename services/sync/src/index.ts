@@ -27,6 +27,10 @@ import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { devices } from './hub/devices'
 import { hubDoor } from './hub/door'
+import { onlineAdmin } from './machines/admin'
+import { sweepAudit } from './machines/audit'
+import { onlineDoor } from './machines/door'
+import { online } from './machines/routes'
 import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
 import { settings } from './settings'
@@ -111,6 +115,11 @@ app.route('/rooms', rooms)
 // and the web key's relay. A socket for the same reason as a room's, so it is let
 // in ahead of the guard as well; see hub/door.ts.
 app.route('/v2/hub', hubDoor)
+
+// An online terminal's socket, for the same reason: the token rides in the
+// subprotocol. Only `/:term/socket` is answered here; the rest of `/v2/online` is
+// behind the guard below. See machines/door.ts and docs/online-terminal.md.
+app.route('/v2/online', onlineDoor)
 
 // A link somebody was sent to a shared space. Both halves sit outside the guard
 // below, because a link is its own proof: what it is about is answered to
@@ -285,6 +294,12 @@ app.route('/v2/blobs', v2Blobs)
 // Where each device can be pushed to: reminders now, chats next. See push/.
 app.route('/v2/push', push)
 
+// The online terminal: the account's machine, its sessions and its month, and Emil's
+// switches ahead of them, which stay open while the service is off. Every other route
+// here answers 404 until it is on; see machines/.
+app.route('/v2/online/admin', onlineAdmin)
+app.route('/v2/online', online)
+
 app.get('/health', (context) => context.json({ ok: true }))
 
 /** The Even Realities plugin, which is the same web app with a bridge to a pair
@@ -380,6 +395,8 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   // And what readers typed into forms, once it is older than a space keeps it; see
   // spaces/answers.ts.
   context.waitUntil(sweepAnswers(env, at))
+  // And the online terminal's audit past its 90 days; see machines/audit.ts.
+  context.waitUntil(sweepAudit(env, at))
   context.waitUntil(forgetHalfDone(env, at))
   // And every second factor still sealed under the AI key's secret, moved under its
   // own, so that rotating that secret locks nobody out; see second.ts.

@@ -23,6 +23,7 @@ import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import type { Env, Note } from '../types'
+import { machinesRevoked } from '../machines/revoke'
 import { roomKind } from './kind'
 import type { Ingested } from './room'
 
@@ -349,6 +350,9 @@ export async function roomsRevoked(
   role: 'none' | 'read',
   item = '',
 ): Promise<void> {
+  // And the online terminals of the space they may be watching; see machines/revoke.ts.
+  await machinesRevoked(env, spaceId, who, role, item)
+
   const namespace = env.ROOMS
   if (!namespace || !who) return
 

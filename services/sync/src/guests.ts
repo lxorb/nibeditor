@@ -193,6 +193,10 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'POST', path: /^\/v2\/docs\/(pull|push|keep)$/ },
   { method: 'GET', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
   { method: 'PUT', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
+  // Deliberately nothing under `/v2/online`. A guest only ever watches an online
+  // terminal, through its socket, which is let in ahead of this guard; making a
+  // session, Start and Stop, typing and the machine's month are an account's, because
+  // whoever does them is spending somebody's machine (docs/online-terminal.md, 4.6).
 ]
 
 export function guestMayReach(method: string, path: string): boolean {

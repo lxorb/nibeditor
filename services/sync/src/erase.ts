@@ -56,6 +56,12 @@ const NOTED: readonly string[] = [
   `insert or ignore into leftovers (what, since)
      select 'web/' || user_id || '/chunks/' || name, ?3 from web_chunks where user_id = ?1`,
   `insert or ignore into leftovers (what, since) values ('hubs/' || ?1, ?3)`,
+  // Its online terminal machine, whose object holds the container and its state, and
+  // the home's latest backup in the homes bucket; see machines/.
+  `insert or ignore into leftovers (what, since)
+     select 'machines/' || id, ?3 from machines where user_id = ?1`,
+  `insert or ignore into leftovers (what, since)
+     select 'homes/' || backup_key, ?3 from machines where user_id = ?1 and backup_key is not null`,
   `insert or ignore into leftovers (what, since)
      select 'hubs/' || id, ?3 from guests where email = ?2`,
 ]
@@ -124,6 +130,15 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   // Where its devices were pushed to, and the reminders kept to push them.
   ['push_targets', 'delete from push_targets where user_id = ?1'],
   ['push_reminders', 'delete from push_reminders where user_id = ?1'],
+  // Its online terminal machine: the audit, the sessions, the months and the machine,
+  // the audit before the machine it is keyed by.
+  [
+    'machine_events',
+    'delete from machine_events where machine in (select id from machines where user_id = ?1)',
+  ],
+  ['term_sessions', 'delete from term_sessions where user_id = ?1'],
+  ['machine_usage', 'delete from machine_usage where user_id = ?1'],
+  ['machines', 'delete from machines where user_id = ?1'],
   ['users', 'delete from users where id = ?1'],
 ]
 

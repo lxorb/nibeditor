@@ -13,6 +13,7 @@
 
 import { askInChunks, chunks, places } from './bound'
 import { eraseHubs } from './hub/reach'
+import { eraseMachines } from './machines/ask'
 import type { Env } from './types'
 import { eraseRooms } from './rooms'
 
@@ -30,25 +31,35 @@ const ROOM = 'rooms/'
 /** An account's hub, or a guest's, which keeps leases and requests of its own; see
  *  hub/hub.ts. Emptied the way a room is, and counted with the rooms. */
 const HUB = 'hubs/'
+/** An online terminal machine, whose object holds its container; see machines/. */
+const MACHINE = 'machines/'
+/** A machine home's backup, in the homes bucket rather than the notes one. */
+const HOME = 'homes/'
 
 /** Whether a name is an object's storage rather than the bucket's. */
-const isObject = (name: string) => name.startsWith(ROOM) || name.startsWith(HUB)
+const isObject = (name: string) =>
+  name.startsWith(ROOM) || name.startsWith(HUB) || name.startsWith(MACHINE)
 
 /** Empties the oldest of what the list names, as much as one sweep takes on, and
  *  answers how many it crossed off. */
 export async function sweepLeftovers(env: Env): Promise<number> {
   const taken = async (sql: string, most: number) =>
-    (await env.DB.prepare(sql).bind(`${ROOM}%`, `${HUB}%`, most).all<{ what: string }>()).results
+    (
+      await env.DB.prepare(sql)
+        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, most)
+        .all<{ what: string }>()
+    ).results
 
   const results = [
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
-        order by since, what limit ?3`,
+          and what not like ?3
+        order by since, what limit ?4`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
-      `select what from leftovers where what like ?1 or what like ?2
-        order by since, what limit ?3`,
+      `select what from leftovers where what like ?1 or what like ?2 or what like ?3
+        order by since, what limit ?4`,
       ROOMS_AT_ONCE,
     )),
   ]
@@ -63,20 +74,35 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const named = await stillNamed(env, names)
   const loose = names.filter((one) => !named.has(one))
 
-  const objects = loose.filter((one) => !isObject(one))
+  const objects = loose.filter((one) => !isObject(one) && !one.startsWith(HOME))
   for (const piece of chunks(objects, PER_DELETE)) await env.NOTES.delete(piece)
 
-  const rooms = loose.filter((one) => one.startsWith(ROOM)).map((one) => one.slice(ROOM.length))
-  const hubs = loose.filter((one) => one.startsWith(HUB)).map((one) => one.slice(HUB.length))
+  // A home's backup is in a bucket of its own, bound only where machines are; until it
+  // is bound there is nothing to delete it from, and the name waits.
+  const homes = loose.filter((one) => one.startsWith(HOME))
+  const homesBucket = env.HOMES
+  if (homesBucket) {
+    for (const piece of chunks(homes, PER_DELETE)) {
+      await homesBucket.delete(piece.map((one) => one.slice(HOME.length)))
+    }
+  }
+
+  const of = (prefix: string) =>
+    loose.filter((one) => one.startsWith(prefix)).map((one) => one.slice(prefix.length))
   const emptied = new Set([
-    ...(await eraseRooms(env, rooms)).map((id) => ROOM + id),
-    ...(await eraseHubs(env, hubs)).map((id) => HUB + id),
+    ...(await eraseRooms(env, of(ROOM))).map((id) => ROOM + id),
+    ...(await eraseHubs(env, of(HUB))).map((id) => HUB + id),
+    ...(await eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
+    ...(homesBucket ? homes : []),
   ])
 
-  // Everything the bucket took, every room and hub that answered, and every name
-  // that turned out to be somebody else's. One that did not answer stays for the
+  // Everything the bucket took, every room, hub and machine that answered, and every
+  // name that turned out to be somebody else's. One that did not answer stays for the
   // next sweep.
-  const done = names.filter((one) => !isObject(one) || named.has(one) || emptied.has(one))
+  const done = names.filter(
+    (one) =>
+      (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
+  )
 
   for (const chunk of chunks(done)) {
     await env.DB.prepare(`delete from leftovers where what in (${places(chunk.length)})`)

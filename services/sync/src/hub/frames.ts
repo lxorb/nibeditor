@@ -54,6 +54,9 @@ export type FromHub =
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
   | { t: 'refused'; to: FromDevice['t']; key?: string; error: string }
+  /** The account's online terminal machine changed state, to every device of its
+   *  owner at once, so a status dot changes everywhere (docs/online-terminal.md, 4.6). */
+  | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
 
 type Fields = Record<string, unknown>
 

@@ -125,6 +125,9 @@ export class AccountHub implements DurableObject {
         return new Response(null, { status: 204 })
       case 'erase':
         return await this.erase()
+      case 'machine':
+        this.machine(headers)
+        return new Response(null, { status: 204 })
       default:
         return new Response('not something a hub does', { status: 400 })
     }
@@ -336,6 +339,19 @@ export class AccountHub implements DurableObject {
 
     for (const { socket, attached } of everySocket(this.ctx)) {
       if (attached.device !== from) say(socket, { t: 'poke', space, seq })
+    }
+  }
+
+  /** The account's online terminal machine changed state (docs/online-terminal.md,
+   *  4.6): every device of the account hears it. Only an account's own hub is asked;
+   *  a guest has no machine. */
+  private machine(headers: Headers): void {
+    const state = headers.get('x-nib-state')
+    if (state !== 'asleep' && state !== 'starting' && state !== 'awake' && state !== 'stopping') {
+      return
+    }
+    for (const { socket, attached } of everySocket(this.ctx)) {
+      if (!attached.guest) say(socket, { t: 'machine', state })
     }
   }
 
