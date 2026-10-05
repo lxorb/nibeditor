@@ -750,16 +750,31 @@ impl Page<'_> {
                 "that is not a field words can be typed into",
             ));
         }
-        self.call_on(
-            element,
-            "DOM.focus",
-            &json!({ "backendNodeId": element.backend }),
-        )?;
         let placing = if replace {
             "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }"
         } else {
             "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }"
         };
+        // In a reader's tab the field is focused, its caret placed and the words put in
+        // within one task of the page's own, so a key of the reader's - who may be typing
+        // in the same page this moment - lands before them or after them and never
+        // between, where it would have sent the words into the reader's field (7.3). An
+        // agent's own tab has nobody else in it and keeps the engine's insert.
+        if !self.own && !text.is_empty() {
+            let put = self.run_on(
+                element,
+                &format!("function (text) {{ this.focus(); ({placing}).call(this); return document.execCommand('insertText', false, text) }}"),
+                &[json!(text)],
+            )?;
+            if put.as_bool() == Some(true) {
+                return Ok(());
+            }
+        }
+        self.call_on(
+            element,
+            "DOM.focus",
+            &json!({ "backendNodeId": element.backend }),
+        )?;
         self.run_on(element, placing, &[])?;
         if text.is_empty() {
             if replace {
