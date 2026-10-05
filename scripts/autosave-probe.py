@@ -180,6 +180,15 @@ OPEN = """
 
 BLANK = "(() => { window.nibApp.workspace.openBlank(); return true })()"
 
+# The tab in front given its file, the way Save gives a draft one: in the space, under
+# the name its first line offers. See src/lib/workspace/drafts.ts.
+PLACE = """
+(async () => {
+  const ws = window.nibApp.workspace
+  return await ws.save(ws.tabs.find((one) => one.id === ws.activeTabId) ?? ws.active)
+})()
+"""
+
 # Ctrl+S as the window hears it, and whether anything is asked afterwards.
 CTRL_S = """
 (() => {
@@ -315,6 +324,7 @@ def main() -> int:
         ran(port, secret, BLANK)
         time.sleep(1.0)
         ran(port, secret, TYPE % json.dumps("Hackathon List"))
+        say(f"saved                  -> {ran(port, secret, PLACE)}")
         time.sleep(BETWEEN_SAVES)
         note = space / "Hackathon List.md"
         if not note.exists():
