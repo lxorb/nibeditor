@@ -556,6 +556,52 @@ Off costs one environment read and a push onto an array, so there is no build to
 make and no flag to pass: the app somebody already has is the app that answers
 this.
 
+Every launch also says itself in one line of `nib.log`, switch or no switch, beside
+a line naming the process, so a launch is told apart from the page loading again:
+
+```text
+INFO  started nib 0.11.1-497 (pid 23140)
+INFO  launch: windows 14, window 52, page 299, shell 499, first frame 732, tab 769, done 978 ms; 12 spaces, 28 tabs
+```
+
+Milliseconds from the process being created to the window, the page being asked for,
+the shell, the first frame with the file list, the tab in front and the launch order
+done; then counts, never names.
+
+**A freeze says itself too.** A thread of the crate's own asks the window's thread
+every half second the way Windows decides a window is not responding - a message sent
+to one of its windows - and posts a task to the app's own loop, which is what every
+command, event and page load waits behind. Either one away a second is a line, with what
+the window's thread was running: the command by its name in lib.rs, or one of the
+crate's own jobs (`stall::doing`), innermost first. `in a nested loop` is the thread
+taking messages from inside a wait of its own, which repaints the window and runs
+nothing else, and is the freeze a person sees just the same. The page's main thread is
+watched through the Long Animation Frames API: a frame it could not draw for a second
+is a line with the scripts that ran in it, by bundle file and position, and the calls to
+the crate it was waiting on. A stall of five seconds is written down beside the log, so a
+process ended in the middle of one is said by the next launch. And `WebView2` saying the
+window's page stopped responding, or lost a process, is a line.
+
+```text
+WARN  stall: the window has not answered for 1 s (web_place: shown < web_place, in a nested loop)
+WARN  stall: the window answered after 47.8 s (web_place: shown < web_place, in a nested loop)
+WARN  stall: the page was blocked 1840 ms; ran TimerHandler:setTimeout - link-index-3bd2.js:4120 1610 ms; waiting on read_tree 2.1 s
+WARN  stall: nib was not responding for 41.0 s when it was ended (web_open: building the page), since 2026-10-04T08:15:02.481Z
+```
+
+So when nib freezes, the thing to do is wait ten seconds and say so: the log has the
+rest. See `apps/desktop/src-tauri/src/stall.rs` and `apps/desktop/src/lib/stalls.ts`.
+
+A second launch while the first nib is frozen no longer waits on it for ever. The single
+instance plugin hands a launch over with a `SendMessage` that waits as long as the
+frozen window does, so every click after a freeze used to be another invisible process
+stuck behind it. The hand-over is now made first with a timeout of two seconds; past
+that the launch asks, once, whether to end the nib that is not responding - found
+through the plugin's own window, so it can only ever be nib under the same identifier -
+and comes up in its place, or leaves it and goes. The question closes itself and the
+launch is handed over if the frozen one answers meanwhile. See
+`apps/desktop/src-tauri/src/handover.rs` and `scripts/not-responding-probe.py`.
+
 The window opens where it was left: its size, its place and whether it was
 maximised are written to `window.json` beside the settings as it closes, and put
 into the window's config before it is built, so the first frame is already in the
@@ -580,6 +626,12 @@ takes each answer only where it is the question it would have asked, once. See
 `apps/desktop/src-tauri/src/ahead.rs` and `apps/desktop/src/lib/workspace/ahead.ts`;
 it is on the trace as `read ahead: spaces`, `read ahead: tree` and `read ahead: N
 notes`, on the crate's side, before the page is requested.
+
+Where a website is on screen as the window opens, the browser its page is built on is
+started then too: the page that holds the shared web session open, which is the first
+thing building that website would do and a third of a second of the window's thread,
+is built while the window's own page loads (`web` in `launch.json`; see `warm` in
+`apps/desktop/src-tauri/src/web_tabs.rs`). On the trace as `web session warmed`.
 
 And the note the window was left on is drawn in the first frame, before its editor
 exists: its first screen is kept as the editor's own markup whenever the reader stops
@@ -719,6 +771,32 @@ What is next. Four times slower, the shell is still 70 ms from the listing over 
 thousand notes: the answer is in, and waits for the thread the app's modules are being
 run on. And a launch's own modules, 260 to 290 ms of the slowed page before anything
 is drawn.
+
+**The heavy launch**, measured 2026-10-04 because every row above is a light one and
+Emil's is not: `python scripts/heavy-launch-probe.py` seeds twelve spaces and five
+thousand notes, opens two dozen web tabs (heavy pages of the probe's own and four public
+sites), three terminals that have printed four thousand lines, the Ask panel, the
+wallpaper theme and an extension, and closes; then measures warm launches of that, and a
+minute of use. Same machine, other agents' builds on it, load 36-68 %, 5-8 GB free; warm
+launches of two builds turn and turn about, eight each. Before is main at cd041a4b;
+after is that with the browser of a website on screen started while the window's own
+page loads (`web_tabs::warm`, said by `launch.json`).
+
+| warm, heavy | page requested | shell | tree read | first frame | tab | order done | web page loaded |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| before | 317 | 514 | 537 | 736 | 774 | 961 | 1474 |
+| after | 293 | 537 | 561 | 757 | 793 | 1052 | 1223 |
+
+What it says. The heavy setup is not what makes a launch slow on this machine: the first
+frame is 0.74 s and the tab in front 0.78 s, 0.1 to 0.2 s past the light rows, and the
+page's own work between the request and the first frame is a quarter of that. What the
+reader waits for after it is the website in front, half a second after the launch order
+because building its page starts the browser every web tab shares; started while the
+window's page loads, it arrives 0.25 s sooner, the first frame within the noise of where
+it was. A minute of use - switching spaces, Ctrl+Tab, terminals printing - found the
+window's thread never away 100 ms and the page's longest answer under 0.2 s. What froze
+was not in the app's own code at all: a web tab's browser busy with a site, which the
+window's thread waited on. See `web_answers.rs` and the freeze lines in "The launch".
 
 ## Types
 

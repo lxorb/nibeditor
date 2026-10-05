@@ -92,6 +92,14 @@ export interface World {
   /** The note on the glasses, by the id its row carries. Same reason: a list you
    *  opened to change something starts where you are. */
   atNote: () => string
+  /** Today: the open tasks for today and overdue, a box in front of each, as they
+   *  stood when the list was put up (`freshToday`). A ticked one stays, its box
+   *  filled, until the list is left, so a mis-tap is a second tap away. */
+  today: () => Row[]
+  /** Reads Today again, for a list being put up. */
+  freshToday: () => void
+  /** Ticks the task a row of Today is, or opens it again. */
+  tick: (id: string) => void
 }
 
 /** The glasses' own settings, as rows the cursor walks.
@@ -145,6 +153,7 @@ export interface Words {
   settings: string
   reset: string
   done: string
+  today: string
 }
 
 /** What the reader is looking at. */
@@ -155,6 +164,7 @@ export type Screen =
   | { kind: 'spaces'; at: number }
   | { kind: 'tree'; at: number }
   | { kind: 'settings'; at: number }
+  | { kind: 'today'; at: number }
   | { kind: 'choice'; id: string; title: string; rows: readonly Option[]; at: number }
   | { kind: 'asking'; question: string }
   | { kind: 'answer'; question: string; rows: readonly string[]; at: number }
@@ -169,10 +179,13 @@ export interface View {
   mic: string
 }
 
-/** The three choices the hold gesture puts up. In this order, because the first is
- *  the one somebody holding the temple most often wants. */
-const CHOICES = ['space', 'note', 'voice', 'settings'] as const
+/** The choices the hold gesture puts up. In this order, because the first is the one
+ *  somebody holding the temple most often wants; Today came fifth (docs/tasks.md 5.18). */
+const CHOICES = ['space', 'note', 'voice', 'settings', 'today'] as const
 type Choice = (typeof CHOICES)[number]
+
+/** The screens that are a list put up by name. */
+type Listed = 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings' | 'today'
 
 /** What a gesture is, once `sdk.ts` has read it off the wire. */
 export type Gesture = 'tap' | 'double' | 'hold' | 'up' | 'down'
@@ -333,13 +346,14 @@ export class Shell {
   }
 
   /** Puts a screen up by name. What a spoken command asks for. */
-  show(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): Wish {
+  show(kind: Listed): Wish {
+    if (kind === 'today') this.world.freshToday()
     this.stack = [{ kind: 'note' }, { kind, at: this.opensAt(kind) }]
     return 'draw'
   }
 
   /** Where a screen's cursor starts: on what the reader is already in. */
-  private opensAt(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): number {
+  private opensAt(kind: Listed): number {
     const rows = this.rowsFor(kind)
     switch (kind) {
       case 'spaces':
@@ -349,12 +363,13 @@ export class Shell {
         return startAt(rows, this.world.atNote())
       case 'modal':
       case 'settings':
+      case 'today':
         return firstPick(rows)
     }
   }
 
   /** The rows a screen is made of, by its name. */
-  private rowsFor(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): Row[] {
+  private rowsFor(kind: Listed): Row[] {
     switch (kind) {
       case 'sidebar':
         return this.world.contents()
@@ -366,6 +381,8 @@ export class Shell {
         return this.choices()
       case 'settings':
         return this.settingRows()
+      case 'today':
+        return this.world.today()
     }
   }
 
@@ -481,6 +498,9 @@ export class Shell {
       case 'settings':
         return this.step(screen, this.settingRows(), by)
 
+      case 'today':
+        return this.step(screen, this.world.today(), by)
+
       case 'choice':
         return this.step(screen, optionRows(screen.rows), by)
 
@@ -581,6 +601,15 @@ export class Shell {
         return 'draw'
       }
 
+      case 'today': {
+        // Ticked where it stands, the box filled; the list is left by a double tap.
+        const row = this.world.today()[screen.at]
+        if (!row?.pick) return 'none'
+
+        this.world.tick(row.id)
+        return 'draw'
+      }
+
       case 'choice': {
         const option = screen.rows[clamp(screen.at, screen.rows.length)]
         if (!option) return 'none'
@@ -610,6 +639,11 @@ export class Shell {
 
       case 'settings':
         this.stack.push({ kind: 'settings', at: this.opensAt('settings') })
+        return 'draw'
+
+      case 'today':
+        this.world.freshToday()
+        this.stack.push({ kind: 'today', at: this.opensAt('today') })
         return 'draw'
 
       case 'voice': {
@@ -651,6 +685,9 @@ export class Shell {
 
       case 'settings':
         return { ...this.list(this.words.settings, this.settingRows(), screen.at), mic }
+
+      case 'today':
+        return { ...this.list(this.words.today, this.world.today(), screen.at), mic }
 
       case 'choice':
         return { ...this.list(screen.title, optionRows(screen.rows), screen.at), mic }
@@ -764,6 +801,7 @@ export class Shell {
       note: this.words.changeNote,
       voice: this.world.listening() ? this.words.voiceOff : this.words.voiceOn,
       settings: this.words.settings,
+      today: this.words.today,
     }
 
     return CHOICES.map((choice) => ({

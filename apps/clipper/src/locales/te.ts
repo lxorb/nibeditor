@@ -78,4 +78,6 @@ export const te: Dictionary = {
   'sign in first': 'ముందు సైన్ ఇన్ చేయండి',
   'no such space': 'అలాంటి స్పేస్ లేదు',
   'that path is not usable': 'ఆ పాత్ వాడదగినది కాదు',
+  // A page as a task in the inbox
+  'As a task': 'పనిగా',
 }

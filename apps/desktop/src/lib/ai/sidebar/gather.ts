@@ -6,7 +6,7 @@
  *  the space goes that no chip names: the two the panel offers on its own (the note in
  *  front and its selection) are chips too, and one taken off stays off.
  *
- *  Ask mode keeps the Ask panel's behaviour: the space is searched for the passages the
+ *  Approve mode, where questions are asked, keeps the Ask panel's behaviour: the space is searched for the passages the
  *  question is about, the note in front gives its own passages first, and the answer
  *  cites them by number (citations.ts, ai/retrieve.ts). */
 
@@ -145,8 +145,8 @@ export async function draftOf(
   const space = workspace.activeSpace
   const attachments: Attachment[] = []
   if (space) {
-    if (mode === 'ask') {
-      // Ask's own reading: the note in front's passages first, then the space's.
+    if (mode === 'approve') {
+      // The Ask panel's own reading: the note in front's passages first, then the space's.
       const root = space.root
       const passages = await retrieve(
         text,
@@ -169,7 +169,7 @@ export async function draftOf(
 }
 
 /** The note in front's own path, relative to the space, so a note whose chip was taken
- *  off is taken out of Ask's search as well: taking it off says not to send it. */
+ *  off is taken out of Approve's search as well: taking it off says not to send it. */
 function frontPath(root: string): string[] {
   const tab = workspace.panelTab
   const path = tab?.kind === 'note' && tab.path ? withinSpace(root, tab.path) : null

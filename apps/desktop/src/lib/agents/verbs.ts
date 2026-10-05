@@ -67,6 +67,13 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   append_note: 'notes.write',
   set_property: 'notes.write',
   set_task: 'notes.write',
+  list_tasks: 'notes.read',
+  add_task: 'notes.write',
+  update_task: 'notes.write',
+  query_base: 'notes.read',
+  add_row: 'notes.write',
+  edit_rows: 'notes.write',
+  edit_base: 'notes.write',
   create_note: 'notes.write',
   restore_version: 'notes.write',
   edit_canvas: 'notes.write',
@@ -245,6 +252,8 @@ export interface Approval {
   summary: string
   site?: string
   tab?: string
+  /** The verb whose call asked. */
+  verb?: string
   /** Milliseconds since 1970. */
   asked: number
   answer: ApprovalAnswer

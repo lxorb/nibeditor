@@ -58,6 +58,7 @@
     quickSheet,
     recordingPill,
     rewriteSheet,
+    scratchpadCard,
     settingsSheet,
     shareSheet,
     signInSheet,
@@ -81,6 +82,9 @@
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { saveFront } from './lib/save-place/door'
+  import { shown as pad } from './lib/scratchpad/is.svelte'
+  import { scale } from 'svelte/transition'
+  import { LAYER } from './lib/motion'
   import { isDraft } from './lib/workspace/drafts'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
@@ -570,6 +574,14 @@
         { store },
       ]) => {
         Object.assign((window as unknown as { nibApp: object }).nibApp, {
+          // The rows and the views, which a drive opens by name and reads back: fetched
+          // when it asks, being the largest graph here; see test/e2e/tasks.py.
+          tasks: () =>
+            Promise.all([
+              import('./lib/rows/rows.svelte'),
+              import('./lib/views/open'),
+              import('./lib/workspace/write-file'),
+            ]).then(([{ rows }, views, { writeFile }]) => ({ rows, ...views, writeFile })),
           agents: { standIn },
           ai,
           importing,
@@ -1002,6 +1014,18 @@
           {/if}
         </div>
 
+        <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
+        {#if pad.on && !fullscreen.on && !filled && !__EVEN_PLUGIN__}
+          <div
+            class="pad"
+            data-scratchpad
+            style:width="{pad.width}px"
+            transition:scale={{ duration: LAYER.rise, start: LAYER.start }}
+          >
+            {#await scratchpadCard() then Card}<Card />{/await}
+          </div>
+        {/if}
+
         {#if workspace.right.length && !fullscreen.on && !filled}
           <div
             class="panels right"
@@ -1280,10 +1304,19 @@
   /* The note and the other side of the window, side by side under the bar. One
      row, because the bar above it spans both: see the note in the markup. */
   .body {
+    position: relative;
     flex: 1;
     min-width: 0;
     min-height: 0;
     display: flex;
+  }
+
+  .pad {
+    transform-origin: top right;
+  }
+
+  :global([dir='rtl']) .pad {
+    transform-origin: top left;
   }
 
   /* Positioned, so the line that says the app is busy draws along the top of

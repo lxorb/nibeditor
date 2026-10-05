@@ -63,6 +63,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   const html = paths.filter((one) => /\.html?$/i.test(one))
   const csv = paths.filter((one) => /\.csv$/i.test(one))
 
+  if (csv.length && (await looksLikeTodoist(sources))) return 'todoist'
   if (csv.length && !markdown.length && !html.length) return 'table'
 
   // Both of these say so in the HTML itself, and both are asked before the
@@ -169,6 +170,15 @@ async function looksLikeApple(sources: readonly Source[]): Promise<boolean> {
   return false
 }
 
+/** Todoist's CSV says so in its header, the same on every one. */
+async function looksLikeTodoist(sources: readonly Source[]): Promise<boolean> {
+  if (__EVEN_PLUGIN__) return false
+  const { isTodoistCsv } = await import('./todoist')
+  const tables = sources.filter((one) => /\.csv$/i.test(one.path)).slice(0, PEEK)
+  for (const table of tables) if (isTodoistCsv(await table.text())) return true
+  return false
+}
+
 /** OneNote says so in the HTML it writes. */
 async function looksLikeOneNote(sources: readonly Source[]): Promise<boolean> {
   const pages = sources.filter((one) => /\.html?$/i.test(one.path)).slice(0, PEEK)
@@ -232,6 +242,10 @@ export async function readAs(
     case 'journal': {
       const { readJournal } = await import('./journal')
       return readJournal(sources)
+    }
+    case 'todoist': {
+      const { readTodoistFiles } = await import('./todoist')
+      return readTodoistFiles(sources)
     }
     case 'pdf-pages': {
       const { readPdfPages } = await import('./pdf-pages')

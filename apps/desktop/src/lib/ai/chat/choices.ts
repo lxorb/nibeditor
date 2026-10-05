@@ -4,13 +4,12 @@
  *
  *  These are product decisions rather than settings: a reader never sees them. */
 
-/** 1. Ask is a mode of the one panel, in Ask's slot and on its key, rather than a tab of
- *  its own beside the new panel. */
+/** 1. The Ask panel is a mode of the one panel (Approve, where questions are asked), in
+ *  its slot and on its key, rather than a tab of its own beside the new panel. */
 export const ASK_IS_A_MODE = true
 
-/** 2. In Agent mode an edit lands at once and is reviewed after (Keep, Undo), Cursor's
- *  way, rather than asked first (Claude Code's Manual). The other is one click away. */
-export const EDITS: 'apply-and-review' | 'ask-first' = 'apply-and-review'
+/** 2. Answered by the modes since (../modes.ts): Agent lets an edit land at once and
+ *  reviews it after (Keep, Undo), Cursor's way; Approve asks first, Claude Code's. */
 
 /** 3. The sidebar's agent may reach the reader's own web tabs (`browser.reader`) by
  *  default, because the reader is at the keyboard; an outside agent may not. */

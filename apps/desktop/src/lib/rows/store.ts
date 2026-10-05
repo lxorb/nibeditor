@@ -18,10 +18,10 @@
 import type { Row } from '@nib/bases'
 import type { ScannedNote, SpaceLinks } from '../scan-note'
 import { scanNote } from '../scan-note'
-import { scanRows } from '../scan-rows'
+import { scanRows } from '@nib/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
-import { movedRows, type NoteRead, rowsOf } from './build'
+import { movedRows, type NoteRead, rowsOf } from '@nib/bases/rows'
 
 /** A space as the store is told of it. */
 export interface SpaceName {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Today, beside the notes widget: the open tasks for today and overdue (docs/tasks.md
+  5.18). The notes widget's sizes on the home screen, and not offered to the lock
+  screen, where a box that opens the app is a press the phone would unlock for first.
+  Nothing polls (`updatePeriodMillis` nought): the page hands the rows over whenever
+  they change, the way it hands over the notes; see widget_notes.xml.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_today"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="60dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:maxResizeWidth="320dp"
+    android:maxResizeHeight="300dp"
+    android:description="@string/widget_today_description"
+    android:previewLayout="@layout/widget_today"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="0" />

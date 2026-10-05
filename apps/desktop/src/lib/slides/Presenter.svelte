@@ -130,7 +130,7 @@
 {#if stage && !gone}
   <div class="presenter" {style}>
     <div class="screens">
-      <div class="frame now" bind:this={big}>
+      <div class="frame deck-frame now" bind:this={big}>
         <div class="stage">
           <div class="slide" data-shape={stage.shape}>
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- the slide the stage sent, already rendered by it -->
@@ -139,7 +139,7 @@
         </div>
       </div>
 
-      <div class="frame then" bind:this={small}>
+      <div class="frame deck-frame then" bind:this={small}>
         <div class="stage">
           <div class="slide" data-shape={stage.nextShape}>
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- the next slide, from the same place -->

@@ -8,45 +8,23 @@
  *  strength, a grain). What nib adds is that none of them can make the frame unreadable:
  *  every floor is worked out from the picture under the dials; see look.ts. */
 
-import { ACCENTS } from '../accents'
-import { contentOf, contentSetting } from '../content-setting'
 import { t } from '../i18n.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
 import { theme } from '../theme.svelte'
+import {
+  ACCENT_SWATCH,
+  contentOf,
+  contentSetting,
+  rangeSetting as range,
+  tintColourSetting,
+} from '../translucent-settings'
 import { type Dials, type Fit, FITS } from './look'
-
-/** The tint's own swatch for "the accent, whichever it is", first in the row. */
-export const ACCENT_TINT = 'accent'
 
 const FIT_NAMES: Record<Fit, string> = {
   fill: 'Fill',
   fit: 'Fit',
   tile: 'Tile',
   centre: 'Centre',
-}
-
-/** A dial in per cent or pixels whose value is painted nowhere: the picture is made
- *  again from it, or the sheet says it. */
-function range(
-  id: string,
-  label: string,
-  min: number,
-  max: number,
-  initial: number,
-  unit: string,
-): ThemeSetting {
-  return {
-    id,
-    label,
-    own: true,
-    kind: 'range',
-    min,
-    max,
-    step: 1,
-    unit,
-    initial,
-    paint: () => ({}),
-  }
 }
 
 export function wallpaperSettings(): ThemeSetting[] {
@@ -58,24 +36,7 @@ export function wallpaperSettings(): ThemeSetting[] {
     },
     range('saturation', t('Saturation'), 0, 200, 100, '%'),
     range('tint', t('Tint'), 0, 100, 0, '%'),
-    {
-      id: 'tint-colour',
-      label: t('Tint colour'),
-      own: true,
-      kind: 'colour',
-      initial: ACCENT_TINT,
-      options: [
-        { value: ACCENT_TINT, name: t('Accent'), dark: 'var(--accent)', light: 'var(--accent)' },
-        ...ACCENTS.map((one) => ({
-          value: one.id,
-          name: t(one.name),
-          dark: one.dark,
-          light: one.light,
-        })),
-      ],
-      when: () => Number(theme.values.tint ?? 0) > 0,
-      paint: () => ({}),
-    },
+    tintColourSetting('tint-colour', () => Number(theme.values.tint ?? 0) > 0),
     range('grain', t('Grain'), 0, 100, 0, '%'),
     {
       id: 'fit',
@@ -123,10 +84,10 @@ export interface Tone {
 }
 
 export function toneOf(values: Record<string, ThemeValue>, accent: string): Tone {
-  const chosen = String(values['tint-colour'] ?? ACCENT_TINT)
+  const chosen = String(values['tint-colour'] ?? ACCENT_SWATCH)
   return {
     saturation: Number(values.saturation ?? 100) / 100,
     tint: Number(values.tint ?? 0) / 100,
-    colour: chosen === ACCENT_TINT ? accent : chosen,
+    colour: chosen === ACCENT_SWATCH ? accent : chosen,
   }
 }

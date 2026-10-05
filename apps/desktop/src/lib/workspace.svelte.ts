@@ -87,6 +87,7 @@ import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
+import { isScratchpad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import {
@@ -141,7 +142,7 @@ export interface Space {
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel =
-  'tree' | 'outline' | 'search' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
+  'tree' | 'outline' | 'search' | 'tasks' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
@@ -491,7 +492,10 @@ class Workspace {
    *  a rename, a replacement run across the space, an undone one. There is one
    *  answer because there is one document per file; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null {
-    return this.opened.at(path)
+    const open = this.opened.at(path)
+    // A view tab over a `.base` file holds which view it is, not the file's words: the
+    // file is read and written past it, as any closed file is. See lib/views/source.ts.
+    return open?.kind === 'view' ? null : open
   }
 
   /** Every open file that has words of its own and a path behind it, once each
@@ -818,6 +822,14 @@ class Workspace {
         // Spelled as the listing spells it, whatever the sitting wrote down.
         const draft = written.path ? { ...written, path: this.spelled(written.path) } : written
 
+        // Never a tab: an older nib's goes, its unwritten words written first.
+        if (isScratchpad(draft.path)) {
+          if (draft.dirty && draft.path)
+            await writeFile(draft.path, draft.doc).catch(() => undefined)
+          made.push(null)
+          continue
+        }
+
         // A tab from a sitting before nib stopped opening files from outside its
         // spaces goes quietly: nothing in nib opens that file any more.
         if (draft.path && !(await this.opens(draft.path))) {
@@ -1126,6 +1138,7 @@ class Workspace {
       notes: [...reads.filter((tab) => tab === front), ...reads.filter((tab) => tab !== front)]
         .map((tab) => tab.path)
         .filter((path) => path !== null),
+      web: this.panes.all.some((pane) => this.showing(pane.id)?.kind === 'web'),
     })
   }
 
@@ -1476,6 +1489,20 @@ class Workspace {
     if (kept) this.onlyOne(kept)
   }
 
+  /** A view of rows - Today, a project, a `.base` file - in a tab of its own, the way
+   *  the graph is one: `words` say which view (lib/views/spec.ts) and `path` is the
+   *  base file it shows, or null for a view nib ships. Whether one is open already is the views'
+   *  question, asked before this; see lib/views/open.ts. */
+  openView(words: string, name: string, path: string | null, how: OpenHow = {}): Tab {
+    const file = this.document({ kind: 'view', path, name, text: words, dirty: false })
+    const tab = new Tab(file, this.panes.focusedId)
+    this.arrive(tab, how)
+    if (how.activate !== false) this.showNote()
+    if (path !== null) this.remember(path)
+    this.persist()
+    return tab
+  }
+
   /** The graph of the whole space, as a tab of its own. One at a time: a second
    *  picture of the same space says the same thing, so asking again brings the
    *  one already there forward. */
@@ -1495,6 +1522,17 @@ class Workspace {
       this.add(new Tab(note, paneId))
     }
 
+    this.persist()
+  }
+
+  /** The AI panel in a tab, one a window; see ai/sidebar/ChatPanel.svelte. */
+  openChat() {
+    const was = this.tabs.find((tab) => tab.kind === 'chat')
+    if (was) this.panes.activate(was.paneId, was.id)
+    else {
+      const doc = { kind: 'chat', path: null, name: t('Ask'), text: '', dirty: false } as const
+      this.add(new Tab(this.document(doc), this.panes.focusedId))
+    }
     this.persist()
   }
 
@@ -2097,6 +2135,13 @@ class Workspace {
       case 'canvas':
         await this.openCanvas(path, options)
         return
+      case 'view': {
+        // Never the glasses' (openers.ts), and a fetch only never called still ships.
+        if (__EVEN_PLUGIN__) return
+        const { openBaseFile } = await import('./views/open')
+        openBaseFile(path, options)
+        return
+      }
       case 'note':
         await this.open(path, options)
         return
@@ -2349,6 +2394,12 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean } = {}) {
     const path = this.spelled(asked)
+    // Never a tab: its card, wherever it is opened from.
+    if (isScratchpad(path)) {
+      const { scratchpad } = await import('./scratchpad/pad')
+      scratchpad.show()
+      return
+    }
 
     // One open of a file at a time, whoever asked: a second click on the row, a link
     // followed twice, a note clicked while the session is still reading that very
@@ -2730,9 +2781,8 @@ class Workspace {
   }
 
   /** Whether a set of tabs may all go. Nothing is asked about a note, which writes
-   *  itself; a terminal running something asks, once for all of them - but never as
-   *  the window goes, which puts every tab back on the next launch. See
-   *  terminal/closing.ts. */
+   *  itself; a terminal running something asks, once for all of them. The window going
+   *  asks its own; see terminal/closing.ts and lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__ || !closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')

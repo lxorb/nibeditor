@@ -130,7 +130,7 @@ pub enum SiteRule {
     AgentStore,
 }
 
-/// Whether an agent asks for every write or only for the list in 9.3.
+/// Whether an agent asks for every write, only for the list in 9.3, or for nothing.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
@@ -139,6 +139,10 @@ pub enum Mode {
     Unsupervised,
     /// Every write asks, batched.
     Confirm,
+    /// Nothing asks but paying: the AI sidebar's Agent mode (docs/ai-sidebar.md 4.4),
+    /// whose safety is that every change can be undone. Only ever a call's, laid over the
+    /// built-in grant by `ai_agent.rs`; never kept (`Grants::replace`).
+    Autonomous,
 }
 
 /// How much an agent may do (9.1, 6.4).
@@ -250,9 +254,11 @@ impl Grant {
         self.scopes.contains(&scope)
     }
 
-    /// Whether a category asks for this agent: on unless the reader turned it off.
+    /// Whether a category asks for this agent: on unless the reader turned it off. An
+    /// autonomous agent asks only before paying, the one thing no undo takes back.
     pub fn asks(&self, category: Category) -> bool {
-        self.asks.get(&category).copied().unwrap_or(true)
+        let on = self.asks.get(&category).copied().unwrap_or(true);
+        on && (self.mode != Mode::Autonomous || category == Category::Paying)
     }
 
     /// Whether the reader said "always" for this category on this site.
@@ -373,6 +379,12 @@ impl Grants {
                             // settings.
                             client: one.grant.client.clone(),
                             created: one.grant.created,
+                            // A call's mode, never a grant's own.
+                            mode: if grant.mode == Mode::Autonomous {
+                                one.grant.mode
+                            } else {
+                                grant.mode
+                            },
                             ..grant
                         },
                         token: one.token.clone(),
@@ -382,22 +394,6 @@ impl Grants {
             *kept = next;
             write(&path, kept).map(|()| kept.iter().map(|one| one.grant.clone()).collect())
         })?
-    }
-
-    /// A fresh token for a grant that has one already, which stops working: for the AI
-    /// sidebar's own agents, whose token lives in the app's memory for one run and is
-    /// handed to `nib mcp` there (`src/ai_cli.rs`), so last run's is worth nothing.
-    pub fn reissue(&self, app: &AppHandle, id: &str) -> Result<String, String> {
-        let token = fresh_token()?;
-        let path = file(app)?;
-        self.with(app, |kept| {
-            let Some(one) = kept.iter_mut().find(|one| one.grant.id == id) else {
-                return Err("there is no such agent".to_string());
-            };
-            one.token = hashed(&token);
-            write(&path, kept)
-        })??;
-        Ok(token)
     }
 
     /// One grant changed in place, and kept.
@@ -488,7 +484,7 @@ fn free_id(client: &str, taken: &[&str]) -> String {
 }
 
 /// A token nobody can guess, from the system's own randomness.
-fn fresh_token() -> Result<String, String> {
+pub(crate) fn fresh_token() -> Result<String, String> {
     let mut bytes = [0_u8; TOKEN_BYTES];
     getrandom::fill(&mut bytes)
         .map_err(|error| format!("no randomness to make a token from: {error}"))?;
@@ -496,7 +492,7 @@ fn fresh_token() -> Result<String, String> {
 }
 
 /// A token's SHA-256, as hex: what the file keeps.
-fn hashed(token: &str) -> String {
+pub(crate) fn hashed(token: &str) -> String {
     hex(&Sha256::digest(token.as_bytes()))
 }
 
@@ -512,7 +508,7 @@ fn hex(bytes: &[u8]) -> String {
 
 /// Whether two hashes are the same, in a time that does not depend on where they
 /// differ. Both are always 64 characters, so the length gives nothing away.
-fn same(one: &str, other: &str) -> bool {
+pub(crate) fn same(one: &str, other: &str) -> bool {
     if one.len() != other.len() {
         return false;
     }

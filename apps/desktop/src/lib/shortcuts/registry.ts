@@ -25,7 +25,7 @@ import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd } from '../surfaces.svelte'
-import { toggleScratchpad } from '../scratchpad/is'
+import { toggleScratchpad } from '../scratchpad/is.svelte'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
@@ -887,6 +887,21 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-b',
     run: () => revealPanel('links'),
   },
+  // Inbox, Today and the rest (docs/tasks.md 5.16). Y, the next letter no chord held:
+  // T is a new tab's and K the palette's in every browser.
+  // The views are the app's alone; the glasses' plugin has no Tasks panel.
+  ...(__EVEN_PLUGIN__
+    ? []
+    : [
+        {
+          id: 'app.tasks',
+          label: () => t('Tasks'),
+          category: 'view',
+          scope: 'app',
+          key: 'Mod-Shift-y',
+          run: () => revealPanel('tasks'),
+        } satisfies Shortcut,
+      ]),
   {
     id: 'app.ask',
     label: () => t('Ask'),
@@ -925,9 +940,9 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod Mod',
     run: () => askQuickly(),
   },
-  // The one note in no space; pressed again while it is in front, back to the tab
-  // before it. Ctrl+Shift, which a terminal hands the app, and no browser's or any
-  // other app's key nib keeps a keyboard of. See scratchpad/pad.ts.
+  // The one note in no space, its card up and away again. Ctrl+Shift, which a
+  // terminal hands the app, and no browser's or any other app's key nib keeps a
+  // keyboard of. See scratchpad/pad.ts.
   {
     id: 'app.scratchpad',
     label: () => t('Scratchpad'),

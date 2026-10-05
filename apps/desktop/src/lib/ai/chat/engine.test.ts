@@ -12,6 +12,7 @@ const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
 const { watching } = await import('./sends')
+const { sayAlways } = await import('./approvals')
 
 import type { Provider } from '../providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
@@ -204,7 +205,7 @@ describe('a call made and answered', () => {
 
   test('another model is told by a notice, and gets the turns rebuilt', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'ask')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     await send(thread, 'one')
     thread.model = 'claude-sonnet-5'
     await send(thread, 'two')
@@ -217,10 +218,102 @@ describe('a call made and answered', () => {
   })
 })
 
+describe('a call that asks the reader first', () => {
+  /** A crate that asks once for every call, and a reader who answers as each test says. */
+  function asking(answer: (id: string) => boolean | null) {
+    const given: { id: string; allow: boolean }[] = []
+    const waited: string[] = []
+    let asked = 0
+    const engine = createApiEngine({
+      provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
+      tools: {
+        ...tools,
+        call: async (provider, mode, name, args) => {
+          const allowed = given.some((one) => one.id === `q${asked}` && one.allow)
+          if (!allowed) {
+            asked += 1
+            return { text: 'Read Birds.md', images: [], error: false, approval: `q${asked}` }
+          }
+          return tools.call(provider, mode, name, args)
+        },
+      },
+      answers: {
+        answer: (id, allow) => {
+          given.push({ id, allow })
+          return Promise.resolve()
+        },
+        answered: (id) => {
+          waited.push(id)
+          const said = answer(id)
+          if (said !== null) given.push({ id, allow: said })
+          return Promise.resolve(said === true)
+        },
+        asked: () => Promise.resolve(() => undefined),
+      },
+    })
+    return { engine, given, waited }
+  }
+
+  async function sent(engine: ReturnType<typeof asking>['engine'], thread: Thread) {
+    const heard: EngineEvent[] = []
+    await engine.send(
+      thread,
+      { text: 'What is in Birds.md?', attachments: [] },
+      (event) => heard.push(event),
+      new AbortController().signal,
+    )
+    return heard
+  }
+
+  test('waits in its row for Approve, then goes through', async () => {
+    answers = [stream('anthropic-1'), stream('anthropic-2')]
+    const { engine, waited } = asking(() => true)
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    const heard = await sent(engine, thread)
+
+    expect(waited).toEqual(['q1'])
+    // The row was the question while it waited, and the answer once allowed.
+    const states = heard.flatMap((one) =>
+      one.type === 'part' && one.part.kind === 'tool' ? [one.part.state] : [],
+    )
+    expect(states).toContain('asking')
+    expect(thread.turns[1]?.parts[2]).toMatchObject({
+      state: 'ok',
+      result: { text: 'Herons stand still for a long time.' },
+    })
+    expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' }, mode: 'approve' }])
+  })
+
+  test('denied, the model is told no and the call never runs', async () => {
+    answers = [stream('anthropic-1'), stream('anthropic-2')]
+    const { engine } = asking(() => false)
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    await sent(engine, thread)
+
+    expect(calls).toEqual([])
+    expect(thread.turns[1]?.parts[2]).toMatchObject({
+      state: 'error',
+      result: { text: 'The reader said no.' },
+    })
+  })
+
+  test('a tool said Always to in the thread is approved without waiting', async () => {
+    answers = [stream('anthropic-1'), stream('anthropic-2')]
+    const { engine, given, waited } = asking(() => null)
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'read_note')
+    await sent(engine, thread)
+
+    expect(waited).toEqual([])
+    expect(given).toEqual([{ id: 'q1', allow: true }])
+    expect(thread.turns[1]?.parts[2]).toMatchObject({ state: 'ok' })
+  })
+})
+
 describe('where the reader is', () => {
   test('goes with every message, as nib’s own verbs said it, and stays with it', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'ask')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     where = 'Space: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.'
     await send(thread, 'What is this note about?')
     where = 'Space: Birds. In front: Egrets.md.'
@@ -255,7 +348,7 @@ describe('an effort the model refuses', () => {
       }),
       stream('responses-2'),
     ]
-    const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'ask')
+    const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'approve')
     const heard = await send(thread, 'hi')
 
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
@@ -278,7 +371,7 @@ describe('an effort the model refuses', () => {
       }),
       stream('responses-2'),
     ]
-    const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'low', 'ask')
+    const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'low', 'approve')
     await send(thread, 'hi')
     expect(sent[1]?.body).not.toHaveProperty('reasoning')
     expect(thread.effort).toBe('auto')
@@ -368,7 +461,7 @@ describe('compaction', () => {
       }),
       stream('anthropic-2'),
     ]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'ask')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     await send(thread, 'one')
     await engine.compact(thread, 'the herons')
 
@@ -400,7 +493,7 @@ describe('compaction', () => {
         },
       )
     answers = [said('First answer.'), said('A summary of it.'), said('Second answer.')]
-    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'ask')
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
     await send(thread, 'one')
     expect(thread.usage).toMatchObject({ input: 7_000, window: 8_192 })
 

@@ -197,11 +197,13 @@ describe('writing an export', () => {
   })
 
   /** And the reason it is a command of ours: the write is whole or it never
-   *  happened. The plugin writes in place, which truncates the file it is replacing
-   *  the moment it opens it. */
-  test('and the write is atomic, which is what the plugin could not give it', () => {
-    expect(read('../src-tauri/src/notes.rs')).toContain('write_atomically(target, bytes)')
-    expect(read('../src-tauri/src/paths.rs')).toContain('fs::rename(&temp, target)')
+   *  happened. The plugin truncates the file it is replacing the moment it opens it;
+   *  ours writes the bytes whole beside it first, and only then into it. */
+  test('and the write is whole, which is what the plugin could not give it', () => {
+    expect(read('../src-tauri/src/notes.rs')).toContain('write_in_place(target, bytes)')
+    const paths = read('../src-tauri/src/paths.rs')
+    expect(paths).toContain('let copy = staged(target, bytes, false)?;')
+    expect(paths).toContain('fs::rename(&copy, target)')
   })
 
   test('asks the desktop where to save, which needs the save dialog', () => {

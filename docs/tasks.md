@@ -416,6 +416,17 @@ each has it (✓), partly (~) or not (-).
 
 **Count: 57 must, 24 should, 9 later, 2 drop** (where a row has two marks, its first).
 
+**Still open after lane 7** (2026-10-05), every other must and should row being built by
+lanes 1, 4 and 7:
+
+| row | mark | why it waits |
+| --- | --- | --- |
+| person | should | needs the shared space's members as choices, which the sharing store does not hand the views yet |
+| relation limited to one | should | `nib.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
+| AI autofill of a property | should | the AI sidebar's job (5.15); no column command there yet |
+| `html` drawn | should | `html()` is evaluated and escaped by the engine; no layout draws it as markup yet |
+| move to a folder as one undo | (5.13) | an automation's move is a file operation and undoes on its own, after the edit it followed |
+
 ## 5. The design
 
 ### 5.1 Where tasks live
@@ -554,8 +565,8 @@ added to the scan, under 4 MB of rows, under 2 ms to update one note's rows afte
 null), `tasks` (`{ line, indent, mark, text, section }`, `text` being everything after
 the box, outside code and front matter, at most 5,000 a note and 2,000 characters a line)
 and `stamp` (`{ size, mtime, ctime }` in milliseconds, off the handle the note was read
-through); `scan-rows.ts` is the browser's twin, and its tests are the crate's cases. The
-rows store is `lib/rows/`: `build.ts` makes a note's rows (`readTask`, `noteValues`,
+through); `@nib/bases/scan` (`packages/bases/src/scan.ts`) is the browser's twin, and its tests are the crate's cases. The
+rows store is `lib/rows/`: `@nib/bases/rows` makes a note's rows (`readTask`, `noteValues`,
 `taskHash`; `parent` is the nearest less indented task above under the same heading),
 `store.ts` keeps them per space and file, `write.ts` is the one write path and `inbox.ts`
 the inbox. `rows.svelte.ts` is the app's instance, fetched at the launch order's last turn:
@@ -696,9 +707,9 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
 
   | what | English | German |
   | --- | --- | --- |
-  | day | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `end of month`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Monatsende`, `6. Okt`, `6.10.` |
-  | time | `16:00`, `4pm`, `at 4`, `noon`, `tonight` | `16:00`, `16 Uhr`, `um 4`, `mittags`, `heute Abend` |
-  | repeat | `every day`, `every weekday`, `every other week`, `every 2nd monday`, `every 3 months`, `every!` | `jeden Tag`, `werktags`, `jede zweite Woche`, `jeden 2. Montag`, `alle 3 Monate`, `jeden!` |
+  | day | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `wednesday next week`, `next weekend`, `end of month`, `on the 15th`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Mittwoch nächste Woche`, `nächstes Wochenende`, `Monatsende`, `am 15.`, `6. Okt`, `6.10.` |
+  | time | `16:00`, `4pm`, `at 4`, `noon`, `tonight`, `tomorrow morning at 7` | `16:00`, `16 Uhr`, `um 4`, `um 15.30`, `mittags`, `heute Abend`, `am Abend` |
+  | repeat | `every day`, `every weekday`, `every other week`, `every 2nd week`, `every 2nd monday`, `every first monday`, `every 3 months`, `every morning`, `every!` | `jeden Tag`, `werktags`, `jede zweite Woche`, `jede 2. Woche`, `alle zwei Wochen`, `jeden 2. Montag`, `jeden ersten Montag`, `alle 3 Monate`, `jeden Morgen`, `jeden!` |
   | priority | `p1`...`p4`, `!!!` | the same |
   | where | `>Note`, `>Note /Heading`, `>Folder/Note` | the same |
   | tag | `#tag`, `@tag`, `%tag` | the same |
@@ -927,6 +938,62 @@ those properties and the base's template. In the app first; a published form is 
 properties under the title; calendar defaults to agenda; timeline is not offered under 600
 px. Every drag is a long press then a move, as on the canvas.
 
+**As built** (lane 4). Everything is `lib/views/`, fetched behind doors
+(`viewSurface`, `tasksPanel` in surfaces.svelte.ts, `views/mount` from the link index
+and the reading view), so the first paint carries the panel's tab mark and nothing else.
+
+- **The panel** is `TasksPanel.svelte`, the `'tasks'` panel between Search and Links,
+  on `Mod-Shift-y` (`app.tasks`). Inbox, Today and Upcoming are counted by the engine
+  answering the very bases their tabs open (`panel.ts`), so a count and its rows cannot
+  disagree. Saved views are the open space's `.base` files, each counted by its first
+  view. A project's menu opens it as a board or a calendar. Moved right, it is Today's
+  list. Every add row and Q (`tasks.quick-add`) open quick add (`openQuickAdd` in
+  `add.ts`, `showQuickAdd`) with what the view knows: its note, Today's day, a label's
+  tag, the column's day. A column that stands for a section, a priority or a status is
+  more than quick add's prefill carries, so there the row's own field takes the words
+  and writes them with those fields.
+- **The view tab** is `TabKind` `'view'`; its words are a `ViewSpec` (`spec.ts`): a
+  built-in and what it is about, or, for a `.base` tab, which of its views. A built-in
+  view keeps its changes in the tab (`yaml`) until "Copy to a base" writes a file; a
+  base file's changes are written into it with `writeBase`, every unknown key kept, as
+  one undoable write. One tab per view per pane (`open.ts`). `workspace.documentAt`
+  passes over a view tab, so the file under it is read and written as a closed file.
+  The crate and the browser's tree list `.base` files (`is_base` in paths.rs).
+- **One write path.** A cell, a drop and a key go through `rows.write`; a tick through
+  the engine's `tick`, so a recurring task writes its next occurrence; moving whole
+  lines (Alt+↑/↓, Tab, a drag within a note, onto a heading, into another note) is
+  `lines.ts` and `act.ts`, one write of the notes it touches, and "Reschedule to today"
+  is one write of every overdue note. Ctrl+Z in a view is `undoFileAction`.
+- **What a drop means** is `drop.ts`: one question per grouping. A status column ticks
+  (Done), opens again (To do) or writes the box; a day writes the date the task is
+  placed by; Today's two halves move a task to today; a heading moves the lines; a note
+  property writes the property. A board also keeps its manual order per column
+  (`nib.order`), and a sub-group draws swimlanes.
+- **The layouts** draw the engine's answer and never filter: `ListLayout` (windowed,
+  sub-tasks under parents, the keys of 5.16), `TableLayout` (windowed, Obsidian's
+  `columnSize`, header sort, drag to reorder, summaries, spreadsheet keys, cells in
+  `Cell.svelte` with the Properties panel's own control, `properties/PropertyValue`),
+  `CardsLayout` (Bases' `image`, `imageFit`, `imageAspectRatio`, `cardSize`; a cover on
+  the web is the host's name until the reader opens it), `BoardLayout` (every card one
+  height, each column windowed), `CalendarLayout` (month, week, three days, day; the
+  tray; hours with duration; a pulled edge writes the duration; repeats faded),
+  `UpcomingLayout`, `TimelineLayout` (start to due, or `nib.date` to `nib.end`;
+  dependency arrows from `⛔`), `ChartLayout` (settings under the view's `nib:`). A
+  phone gets `PhoneRows`, `AgendaLayout`, and no timeline.
+- **Builders**: `FilterBuilder` reads Todoist's language into the tree (`fromTodoist`)
+  and the tree into rows of property, operator and value (`filter-rows.ts`); a filter it
+  cannot show stays as written. `ArrangeBuilder` is the sort and the group with its
+  sub-group.
+- **In a note**: the editor's `BaseWidget` and `EmbedBaseWidget` hand a box to
+  `mountBase` on the note index; the reading view leaves a `[data-base-code]` box and the
+  base card, and `mountBases` draws into them. A fence's changes are written back into
+  the fence; `this` is the note.
+- **Measured** (test/e2e/tasks.py, headless Chromium on the Snapdragon X Elite): see
+  the numbers the drive prints for a board of 2,000 cards.
+- **Not built here**: the comments count under a row (the rows carry no description
+  lines), conditional colour, row height and frozen columns (lane 7's, built: 5.13),
+  Assigned to me in the panel.
+
 ### 5.10 Reminders
 
 What a reminder is: a time, from `[remind::]` or from the due time when the task has one
@@ -963,6 +1030,51 @@ push from the Worker, which can read notes (notes are not end-to-end encrypted, 
 receives and send Web Push and FCM at the time. That is a real piece of work (a Firebase
 project, a service worker route, a cron every minute, and the privacy question of the server
 reading reminder times), and Emil decided to build it (8.5).
+
+**As built** (lane 5, 2026-10-04):
+
+- **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
+  app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
+  on the wall clock from the task's time on its due (else scheduled) day; a bare time is
+  on that day; an absolute one is its own moment; the automatic one is the account
+  setting `remindBefore` (0, 5, 15, 30, 60, or -1 for off; Settings > General >
+  Reminders), for every task with a day and a time. A floating time is the device's
+  clock, a written zone its own. The id is `reminderId`: FNV-1a 64 over the space, the
+  note, the words' hash and the minute, the same on every device and on the Worker.
+- **The scheduler**: `lib/reminders/plan.ts` (pure, the next 64) and `scheduler.ts` (the
+  store over `rows.watch`, quiet for 400 ms, nothing handed before every space is read,
+  the same plan never handed twice, planned again just after the first reminder passes
+  and at least every six hours). `start.svelte.ts` wires it after the rows, out of the
+  first paint (`weight.test.ts` unchanged).
+- **Windows**: `src-tauri/src/reminders/toasts.rs` puts each on `ToastNotifier`'s schedule
+  under the app's id, tagged with its id in the group `nib.reminders`; the toast
+  (`toast.rs`) is `scenario="reminder"` with the system's own snooze (15 min, 1 h,
+  tomorrow 9:00) and Done as a `nib://reminder` link. Proved by
+  `scripts/reminders-probe.py` on a probe of its own; where Windows refuses the id, the
+  page rings the plan itself while nib runs (7.3's fallback).
+- **macOS**: `reminders/macos.rs`, `UNCalendarNotificationTrigger` requests in one
+  category with Done and two snoozes (15 min, 1 h), the delegate set at launch so a
+  press that started the app is heard; a build that is not a bundle answers no and the
+  page rings. Compiled and linted on the Mac runner only.
+- **Presses**: every Done and press is a `nib://reminder?act=…&id=…&n=…` link (a Mac's
+  delegate hands them over directly). The nonce is made per reminder and kept in
+  `reminders.json` beside the settings for a week after it rang, so no link anybody
+  else writes can tick a task. Done ticks through `rows.write` (`lib/reminders/presses.ts`),
+  finding the line again by the words' hash; a press opens the note at the line. A
+  launch for nothing but a Done comes up without its window and goes again unless the
+  tray keeps it.
+- **Linux and the browser build**: the crate answers no, and the page rings the plan with
+  timers while it runs (`ring.ts`): the notification plugin on Linux, Web Notifications
+  in a browser, each reminder once a run.
+- **The tray** (decision 6): `residency.svelte.ts`, on by default while a reminder waits
+  (and while the quick add key is held, which lane 3 says through `residency.quickAdd`),
+  a switch in Settings, Windows and macOS only. One tray with the agents' (`tray_keep` in
+  `agents/shell.rs`): Open, the stop while agents are connected, Quit.
+- **Android**: `Reminders.kt` and `AlarmList.kt`; see docs/mobile.md, *Alarms*.
+- **The Worker**: `services/sync/src/push` and `0044_push.sql`; see docs/mobile.md,
+  *Push*, for what it sends, what is still the client's (lane 6 of docs/chats.md) and
+  the keys Emil has to make. Dry-run under `wrangler dev --test-scheduled`: a due row in
+  a local D1 was claimed by the minute's cron.
 
 ### 5.11 `.base` files, and nib's key
 
@@ -1024,6 +1136,9 @@ nib:
         - { value: Done, group: done, tone: success }
 ```
 
+- **What lane 7 added to the key**: on a view `lines`, `freeze`, `colour`, `template`,
+  `required` and `locked`; on the base `template`, `id`, `locked`, `properties.<key>`
+  (`options`, `format`), `buttons` and `automations` (5.12, 5.13).
 - **`nib.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
   Obsidian shows the notes those tasks are in, which is the graceful version of the same
   question.
@@ -1068,6 +1183,45 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   one into 46 the first time a reader looks (a merge of ids, not of notes).
 - **Created by, edited by** wait for sync v2 to keep an author per version of each file.
 
+**As built** (lane 7, 2026-10-05). The engine's halves are `@nib/bases`'s `rollup.ts`,
+`ids.ts`, `colour.ts` and `csv.ts`; the app's are `lib/views/`'s builders, each a layer
+the view's head holds under its name (`live.builder`), opened from a column's menu
+(`column-menu.ts`, the table's header and a form's field alike) or the name's menu.
+
+- **Reverse relations**: "Add a column" offers `← Folder` for every property of the
+  space's notes whose links point at a row of the view, and writes
+  `file.backlinks.filter(list(value.asFile().properties.project).contains(file))` under
+  the linking notes' folder's name (`reverseFormula`). A formula named with a space,
+  `formula["My tasks"]`, is read now (`compile.ts`, `answer.ts`).
+- **Rollups**: `RollupBuilder`, three choices (relation, property or the notes
+  themselves, calculation), written by `rollupFormula` with Obsidian's own list
+  functions only (`filter`, `map`, `reduce`, `sort`, `unique`, `length`; Obsidian has
+  no `sum`), and read back by writing every shape it could have written
+  (`readRollup`). Percent ticked is a share, shown as a percentage by the column's
+  `percent` format. A rollup still under the name the picker gave it is renamed with
+  its choices.
+- **Formulas**: `FormulaBuilder`, the expression with the properties and functions the
+  word under the caret could be, and the first row's value as it is typed; words that
+  do not compile are kept, never written.
+- **Column names**: Rename in a column's menu writes Bases' `properties.<key>.displayName`.
+- **Unique ids**: Unique ID in "Add a column" sets `nib.id` (no prefix, as Notion's
+  default) and numbers every row of the base in the order they were made, as one write.
+  A row made by the plus, a form or a template gets `nextId`; a note that appears in the
+  base without one gets the next from the runner; of two rows sharing one, the younger
+  is renumbered (`idRepairs`, the same answer on every device). The id cell is not
+  editable; its Options are its prefix, and a new prefix is written into every id.
+- **Choices with tones**: Options in a column's menu (`OptionsBuilder`): each choice a
+  tone (the theme's six through `CanvasColours` without its wheel), its words (renamed
+  in every note that holds it, one write), its status group, carried by its grip to
+  reorder, which is the board's column order. A column with no choices starts from the
+  values its notes hold. Cells and cards draw them as chips in their tones.
+- **Formats** (row "number, with formats", "URL, email, phone"): `format.ts`, number,
+  percent, a currency by its sign, a progress bar, and words that open as an address, a
+  mail or a call.
+- **Sub-items for notes**: the list puts a note under the note its `parent` property
+  links to (`parentOf`, `list-items.ts`), folding like a sub-task; two notes naming each
+  other are both shown. A task blocked by an open one (`⛔`) dims and names it.
+
 ### 5.13 Templates, buttons, automations, forms
 
 - **Templates** are notes in a templates folder (`Templates/` unless the space says
@@ -1087,6 +1241,58 @@ fence as code, for the reason a ` ```query ` fence stays code (`apps/desktop/src
   run where nib runs, are listed in the base's menu with a switch each, and every run is one
   undoable edit. Webhooks, mail and schedules while nib is closed need the Worker (later).
 - **Forms**: 5.9.
+
+**As built** (lane 7, 2026-10-05).
+
+- **Templates**: `@nib/bases`'s `templates.ts` fills `{{title}}`, `{{date}}`, `{{time}}`,
+  `{{date:FORMAT}}` (Moment's tokens, `formatDate`) and `{{date+7d}}` (`d`, `w`, `M`,
+  `y`), and takes the template's own keys (`repeat`, `made`, `folder`) off the note. The
+  folder is `.obsidian/templates.json`'s, else `Templates` (`views/templates.ts`). The
+  palette's "New note from template" makes one beside the note in front; a view's plus,
+  pressed with the other button, makes a row from any template; its Default template
+  (the name's menu) is the view's `nib.template`, falling back to the base's. A new row
+  of a view of notes (`addNote`) is written where the filter points (`rowPlace`, the
+  agents' own), with the pinned values, the group, the template and the next id.
+- **Repeating templates**: `repeat: every Monday` (the Tasks plugin's words) in a
+  template's front matter; `repeatDue` answers the day owed and the days missed, the
+  runner makes `<Template> <day>.md` in the template's `folder:` (else the root) with
+  `missed:` listing the rest, and writes `made:` into the template. Not while the
+  template is open in a pane.
+- **Buttons**: `nib.buttons.<name>` with `set`, `task`, `command`, `open`; a column
+  `button.<name>` (`ButtonBuilder`, "Add a column"). A press (`press.ts`) sets the row's
+  properties and adds its task as one write; the command runs as a `nib://` link would
+  ask for it (`runCommand(…, 'link')`), and the address opens outside.
+- **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
+  with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
+  of a base file. `fired` answers on a change, never a state, so one edit fires once; the
+  runner (`runner.svelte.ts` wiring `running.ts`, fetched with the rows)
+  holds the open space's bases that automate or number, hears each note's rows change,
+  waits 80 ms for the edit to finish recording its undo, and writes every set as one
+  edit joined to that undo (`joinLast`, `workspace/undo-join.ts`),
+  so one Ctrl+Z takes the edit and what it set off back. Its own write is not heard
+  again, so automations never set each other off. A notice rings the way a reminder
+  does (`reminders/platform.ts`).
+- **Forms**: `type: form`, offered for views of notes; the view's note properties are
+  the fields, `nib.required` the ones that must be filled (a field's menu toggles it);
+  Send makes the note through `addNote` without opening it and empties the form.
+- **Locks**: `nib.locked` on the view or the base (the name's menu). Every change to the
+  view's shape goes through `kit.change`, which a lock turns away while the padlock in
+  the head shakes; pressing the padlock unlocks both. Rows stay editable, as Notion's.
+- **Table**: Row height (the name's menu) is `nib.lines`, 1, 2 or 4 lines, the words
+  wrapping within, every row still one height so the window arithmetic holds; Freeze up
+  to here (a column's menu) is `nib.freeze`, sticky columns from the start; summaries
+  under each group as well as under all.
+- **Conditional colour**: `ColourBuilder`, rules of a filter row and a tone kept as one
+  nested `if` under `nib.colour` (`colourExpression`, `colourRules`); the table, the list,
+  the cards and the board tint a row in it. Another expression is kept as written.
+- **CSV**: Copy as CSV and Save as CSV in the name's menu (`views/csv.ts`, `csvText`); the
+  import sheet's "One note per row" also writes `<Name>.base` over the folder
+  (`baseOf` in `import/table.ts`), its columns the file's.
+- **Proved** by `packages/bases/src/rollup.test.ts` and `extras.test.ts` (rollups, id
+  collisions, automations firing once and as one effect), `lib/views/extras.test.ts`
+  (the runner's plan, the undo join) and the drive `test/e2e/databases.py`: a rollup
+  counts, a button sets a property and its automation dates it, one Ctrl+Z takes both
+  back, a form makes a note, and the builders and a locked view, photographed.
 
 ### 5.14 Sync, sharing, history
 
@@ -1145,6 +1351,23 @@ its table test reads. Decision 8.3.
 <text>`, `nib tasks done <anchor>`, `nib base query <path> [--view V]`, and the link
 `nib://add-task?text=...`, which the five link verbs gain as their sixth, a write that can
 only add a line to an inbox.
+
+**As built** (lane 6). The verbs are `lib/agents/workspace/tasks.ts` in the window and
+`services/sync/src/mcp/tasks.ts` on the Worker, both over `@nib/bases/agent`: a task
+goes out as the fields it has with `at` (`path#line:hash`), found again in the note as
+it is by the hash nearest its line, and a change is the note written back whole as the
+agent's own edit (`writeNote`, the connector's `write_note`). `edit_rows` and
+`edit_base` are the local server's alone. The seven rows cost the tools table 3,767
+characters, about 950 tokens, and its ceiling went from 28,000 to 31,000. The rows of a
+note are `@nib/bases/rows` (`rowsOfText` on the Worker), so both servers read a task
+one way. `/tasks` draws its rows as a notice with live boxes (`ai/sidebar/TaskRows.svelte`)
+and `/today` is a turn in Agent mode; the reader's own surfaces add, tick and list
+through `lib/task-actions.ts`, which writes the way quick add does (`quick-add/write.ts`).
+`add_task` reads its words with quick add's grammar (`quickWords`: the reader's language
+and English in the app, English and German on the Worker), the Tasks plugin's own marks
+written in them winning, and `>Note /Heading` choosing where it goes; every way a task
+comes in places its line with one function (`placeIn`, `@nib/bases/tasks`). The CLI's verbs are the same verbs asked as the reader, and `nib://add-task`
+takes the words and a space and nothing else.
 
 ### 5.16 Keys
 
@@ -1217,6 +1440,19 @@ says how many of each before anything is written, as the other importers do.
   switch slides like every segmented control; reduced motion makes all of it a cut.
 - **Tokens**: priorities are the six tones (p1 danger, p2 warning, p3 info, p4 none), select
   options take tones by name, nothing brings a colour of its own.
+
+**As built** (lane 6). The phone's share sheet asks once more for words alone: **As a
+task** puts the share's title, linked to where it came from, in the open space's inbox
+(`mobile/shared.ts` `sharedTask`). The Today widget is a second widget beside the notes
+one (`TodayWidget.kt`, `res/layout/widget_today.xml`), drawn from the JSON the page
+already hands over (`mobile/widgets.svelte.ts`, its `today`), read again when the rows
+change; a box opens the app with the task's anchor and the page ticks it through the one
+write path (`mobile/handed.ts`), a row's words open its note, the plus is quick add.
+The clipper's menu has **As a task** under nibeditor, a line in the inbox of the space the
+last clip went to, the page or the link under the cursor linked in it, through the
+Worker's `POST /v1/spaces/:id/tasks` (`services/sync/src/tasks.ts`), which is the
+connector's `add_task` behind the session. On the glasses the modal's fifth row is
+Today and "task ..." / "Aufgabe ..." adds to the inbox (docs/even.md).
 
 ## 6. What nib does not do
 

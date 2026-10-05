@@ -32,6 +32,10 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
+/** jsdom has no Web Animations. This one finishes in the microtask after it is asked
+ *  for - after Svelte has hung its `onfinish` on it, and before any timer: a machine
+ *  busy enough to hold the timers back for a second would otherwise keep a number on
+ *  its way out on screen past a wait for it to go. */
 Element.prototype.animate = () => {
   const animation = {
     cancel: () => undefined,
@@ -44,7 +48,7 @@ Element.prototype.animate = () => {
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
     onfinish: null as (() => void) | null,
   }
-  setTimeout(() => animation.onfinish?.(), 0)
+  queueMicrotask(() => animation.onfinish?.())
   return animation as unknown as Animation
 }
 Element.prototype.scrollIntoView = () => undefined

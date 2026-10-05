@@ -7,6 +7,7 @@ import {
   isPicture,
   type SharedItem,
   sharedPlan,
+  sharedTask,
   sharedTitle,
   sharedWords,
 } from './shared'
@@ -122,6 +123,22 @@ describe('what the note is called', () => {
     expect(
       sharedTitle(arrived({ items: [item({ name: 'holiday.png', mime: 'image/png', size: 4 })] })),
     ).toBe('holiday')
+  })
+})
+
+describe('a share as a task', () => {
+  test('its title, linked to where it came from', () => {
+    expect(
+      sharedTask(
+        arrived({ subject: 'Read: the plan [draft]', items: [item({ text: 'https://x.test/a' })] }),
+      ),
+    ).toBe('[Read the plan draft](https://x.test/a)')
+  })
+
+  test('its first line, where it came from nowhere', () => {
+    expect(
+      sharedTask(arrived({ items: [item({ text: 'Call the plumber\nabout the sink' })] })),
+    ).toBe('Call the plumber')
   })
 })
 

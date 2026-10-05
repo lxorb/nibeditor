@@ -21,11 +21,12 @@ import argparse
 import importlib.util
 import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 import time
 
-from probe_app import close_app, main_window, run_probe
+from probe_app import WM_CLOSE, close_app, main_window, run_probe, user32
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -91,11 +92,57 @@ def reporting(window) -> bool:
     return window.run("document.querySelector('.nib-terminal .xterm').classList.contains('enable-mouse-events')") is True
 
 
-def prompt_line(window) -> str:
-    """The last line of the screen that has anything on it."""
+def screen(window) -> str:
+    """Every line of the screen that has anything on it: a prompt that wraps - conda's
+    `(base)` before a long folder - is more than its last row."""
 
-    rows = [row for row in window.rows() if row.strip()]
-    return rows[-1] if rows else ""
+    return "\n".join(row for row in window.rows() if row.strip())
+
+
+def prompted(window, after: str = "", seconds: float = 120.0) -> str:
+    """The screen once the shell is at its prompt and has stopped drawing: its last line
+    ends at `>`, below `after` where that is said - the end of the line just typed - and
+    the screen is the same a second later. A line typed at it is echoed across as many
+    rows as it wraps over, `Add-Type` compiles for seconds first, and a shell whose
+    profile starts conda takes many more to draw its first prompt, so a fixed pause read
+    the command's own rows, or the prompt before it, as the prompt after it."""
+
+    end = time.perf_counter() + seconds
+    last = ""
+    while time.perf_counter() < end:
+        now = screen(window)
+        # Rows put back together, so a line that wrapped is found whole.
+        whole = now.replace("\n", "")
+        below = whole.rsplit(after, 1)[-1] if after and after in whole else ""
+        if now == last and now.endswith(">") and (not after or ">" in below):
+            return now
+        last = now
+        time.sleep(1.0)
+    return last
+
+
+def quit_anyway(app, window) -> bool:
+    """Closes the window with a program running, answering Quit anyway where the question
+    that names what runs comes up; see quit-warning-probe.py. A cmdlet runs inside the
+    shell, which asks nothing."""
+
+    user32.PostMessageW(main_window(app.pid), WM_CLOSE, 0, 0)
+    asked = "document.querySelector('[role=\"alertdialog\"] .nib-button.is-danger')"
+
+    def answered() -> bool:
+        if app.poll() is not None:
+            return True
+        try:
+            return window.run(f"(() => {{ const go = {asked}; go?.click(); return !!go }})()") is True
+        except Exception:  # noqa: BLE001 - the app going away mid-call
+            return False
+
+    until(answered, 15)
+    try:
+        app.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        return False
+    return True
 
 
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
@@ -139,24 +186,24 @@ def main() -> int:
         shell = "pwsh" if "pwsh" in ids else "powershell"
         tab = window.open(shell, "PowerShell", "probe-modes")
         say(f"{shell} in tab {tab}")
-        check(bool(until(lambda: prompt_line(window).endswith(">"), 40)), "PowerShell draws its prompt")
+        check(prompted(window).endswith(">"), "PowerShell draws its prompt")
 
         # The program asks for every move and ends without taking it back.
         window.typed(f"{MOUSE_ON}\r")
-        time.sleep(3.0)
+        before = prompted(window, after=MOUSE_ON[-12:])
+        check(before.endswith(">"), "the shell comes back to its prompt")
         check(not reporting(window), "the prompt after it has the mouse reported no more")
-        before = prompt_line(window)
         moved(window)
-        after = prompt_line(window)
-        say(f"prompt before the moves {before!r}, after {after!r}")
-        check(after.endswith(">") and after == before, "the prompt after it gets nothing when the mouse moves")
+        after = screen(window)
+        say(f"prompt before the moves {before.splitlines()[-1]!r}, after {after.splitlines()[-1]!r}")
+        check(after == before, "the prompt after it gets nothing when the mouse moves")
 
         # Now a program still running with the mouse reported as the app goes.
         window.typed(f"{MOUSE_ON}; Start-Sleep 600\r")
         check(bool(until(lambda: reporting(window), 10)), "a running program has the mouse reported")
         time.sleep(3.0)
         running = terminal.shells_of(app.pid)
-        check(close_app(app), "the app closes with the program running")
+        check(quit_anyway(app, window), "the app closes with the program running")
         until(lambda: not any(terminal.alive(pid) for pid, _name in running), 15)
 
         time.sleep(6.0)
@@ -166,12 +213,12 @@ def main() -> int:
             "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()"
         )
         check(isinstance(back, str), "the terminal comes back")
-        check(bool(until(lambda: prompt_line(window).endswith(">"), 40)), "with a fresh prompt")
+        before = prompted(window)
+        check(before.endswith(">"), "with a fresh prompt")
         check(not reporting(window), "and the mouse not reported")
-        before = prompt_line(window)
         moved(window)
-        after = prompt_line(window)
-        say(f"restored prompt before the moves {before!r}, after {after!r}")
+        after = screen(window)
+        say(f"restored prompt before the moves {before.splitlines()[-1]!r}, after {after.splitlines()[-1]!r}")
         check(after == before, "and the mouse moving over it types nothing")
     finally:
         if app.poll() is None and not close_app(app):

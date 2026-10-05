@@ -109,10 +109,13 @@ export function exportKindOf(open: Open | null): ExportKind {
     // Nothing to hand over: the graph is drawn from the space rather than held in a
     // file, and a website is a window on somebody else's page. What there is of a
     // page worth keeping is kept by clipping it, which writes a note; see
-    // web-tab/clip.ts. A terminal is a session, and holds nothing a file would.
+    // web-tab/clip.ts. A terminal is a session, and holds nothing a file would, and a
+    // view is drawn from the rows of the spaces.
     case 'graph':
     case 'web':
     case 'terminal':
+    case 'view':
+    case 'chat':
       return 'none'
   }
 }

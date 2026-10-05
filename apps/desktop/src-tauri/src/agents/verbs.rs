@@ -1199,6 +1199,9 @@ pub struct Approval {
     /// The tab, when a page is what it is about.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab: Option<TabId>,
+    /// The verb whose call asked, so the AI sidebar finds the call it is about.
+    #[serde(default)]
+    pub verb: String,
     /// When it was asked, in milliseconds since 1970.
     pub asked: u64,
     /// Where it has got to.
@@ -1361,6 +1364,13 @@ pub mod window {
         ("append_note", Some(Scope::NotesWrite)),
         ("set_property", Some(Scope::NotesWrite)),
         ("set_task", Some(Scope::NotesWrite)),
+        ("list_tasks", Some(Scope::NotesRead)),
+        ("add_task", Some(Scope::NotesWrite)),
+        ("update_task", Some(Scope::NotesWrite)),
+        ("query_base", Some(Scope::NotesRead)),
+        ("add_row", Some(Scope::NotesWrite)),
+        ("edit_rows", Some(Scope::NotesWrite)),
+        ("edit_base", Some(Scope::NotesWrite)),
         ("create_note", Some(Scope::NotesWrite)),
         ("restore_version", Some(Scope::NotesWrite)),
         ("edit_canvas", Some(Scope::NotesWrite)),

@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nib</id>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
     <packageSourceUrl>https://github.com/lxorb/nibeditor/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>lxorb</owners>
 
     <title>nibeditor</title>
     <authors>lxorb</authors>
     <projectUrl>https://nibeditor.com</projectUrl>
-    <iconUrl>https://cdn.jsdelivr.net/gh/lxorb/nibeditor@v0.11.0/apps/desktop/src-tauri/icons/icon.png</iconUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/lxorb/nibeditor@v0.12.0/apps/desktop/src-tauri/icons/icon.png</iconUrl>
     <copyright>Copyright (c) 2026 lxorb</copyright>
     <licenseUrl>https://github.com/lxorb/nibeditor/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -42,7 +42,7 @@ This package installs the machine-wide MSI build, so nibeditor lands in `Program
 and is available to every user on the machine. x64 and ARM64 are both supported; 32-bit
 Windows is not. The MSI is not code-signed.
 ]]></description>
-    <releaseNotes>https://github.com/lxorb/nibeditor/releases/tag/v0.11.0</releaseNotes>
+    <releaseNotes>https://github.com/lxorb/nibeditor/releases/tag/v0.12.0</releaseNotes>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />

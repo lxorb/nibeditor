@@ -19,7 +19,6 @@
 import { documentOf } from '@nib/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo } from '../../space-paths'
-import { isScratchpad } from '../../scratchpad/is'
 import { type Section, settings } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
@@ -67,7 +66,6 @@ function tabOf(tab: Tab) {
     kind: tab.kind,
     title: tab.shown,
     ...(tab.path !== null && root && !outside ? { path: relativeTo(root, tab.path) } : {}),
-    ...(isScratchpad(tab.path) ? { scratchpad: true } : {}),
     ...(url ? { url } : {}),
     pane: tab.paneId,
     front: front(tab),
@@ -131,8 +129,11 @@ async function selectionIn(tab: Tab): Promise<unknown> {
     case 'pdf':
       return tab.page === undefined ? null : { page: tab.page }
 
+    // A view's rows are the tasks verbs' to read; a view has no selection of its own.
     case 'web':
     case 'graph':
+    case 'view':
+    case 'chat':
       return null
   }
 }
@@ -251,13 +252,13 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
     workspace.openGraph()
     return answered(workspace.active)
   }
+  // A card and never a tab: up, with the keyboard only for an agent that may take it.
   if (view === 'scratchpad') {
     const back = behind(call)
     if (!back) needScope(call, 'workspace.focus', 'opening in front')
     const { scratchpad } = await import('../../scratchpad/pad')
-    const path = await scratchpad.where()
-    await workspace.open(path, back ? { activate: false, beside: true } : {})
-    return answered(workspace.tabs.find((one) => one.path === path))
+    scratchpad.show(null, !back)
+    return done({ scratchpad: true })
   }
   if (view === 'settings') return showSettings(call)
   if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')

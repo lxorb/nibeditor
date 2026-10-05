@@ -53,7 +53,7 @@
   } = $props()
 
   /* Somebody looking at the graph has found it; see hints.svelte.ts. */
-  void import('./hints.svelte').then(({ hints }) => hints.dismiss('graph'))
+  if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.dismiss('graph'))
 
   /** How long a frame may spend settling the arrangement, in milliseconds. A
    *  count of ticks would be wrong on one machine or the other: a tick over ten

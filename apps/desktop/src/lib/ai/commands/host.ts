@@ -13,7 +13,7 @@ import type { Message, Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { engineFor, type Setup } from '../chat/engine'
 import { keepThread } from '../chat/threads'
-import type { Draft, EngineEvent, Thread, Turn, Usage } from '../chat/types'
+import type { Draft, EngineEvent, NoticeCode, Thread, Turn, Usage } from '../chat/types'
 import { added } from '../chat/usage'
 import { instructionsFor } from './instructions'
 import type { Ended, Once, Panel } from './types'
@@ -26,8 +26,9 @@ export interface Host {
   turn(thread: Thread, text: string, once?: Once): Promise<Ended>
   adopt(thread: Thread, open?: boolean): void
   touched(thread: Thread): void
-  /** A command's own line at the end of a thread, never sent to the model. */
-  line(thread: Thread, text: string): void
+  /** A command's own line at the end of a thread, never sent to the model: words, or
+   *  under another code what the thread draws its own way (`tasks`). */
+  line(thread: Thread, text: string, code?: NoticeCode): void
   /** One question to the thread's provider and model, outside the thread. */
   ask(thread: Thread, messages: readonly Message[], signal?: AbortSignal): Promise<string>
 }
@@ -109,12 +110,12 @@ export function hostOf(panel: Panel): Host {
       else void keepThread(thread).catch(() => undefined)
     },
     touched,
-    line(thread, text) {
+    line(thread, text, code = 'command') {
       thread.turns.push({
         id: crypto.randomUUID(),
         role: 'model',
         at: Date.now(),
-        parts: [{ kind: 'notice', code: 'command', text }],
+        parts: [{ kind: 'notice', code, text }],
       })
       thread.updated = Date.now()
       touched(thread)

@@ -25,11 +25,14 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
 
 1. **One panel replaces Ask**, in the same slot on the right and on the same key
    (**Ctrl+Shift+A**). Ask - answers from the notes with numbered citations - becomes the
-   panel's first mode rather than a panel of its own. Properties and the Activity panel stay
+   panel's first mode, Approve, rather than a panel of its own. Properties and the Activity panel stay
    where they are.
-2. **Three modes on one chip: Ask, Plan, Agent** (**Shift+Tab** cycles them, as in Claude
-   Code and Cursor). Ask reads and cites. Plan reads and writes a plan you can edit. Agent
-   acts: notes, tabs, the browser, the terminal, as far as its grant reaches.
+2. **Three modes on one chip: Approve, Agent, Plan** (**Shift+Tab** cycles them, as in
+   Claude Code and Cursor). Approve does what Agent does, and each change waits in its row
+   for **Approve**, **Deny** or **Always**; reads never ask, and answers cite. Agent acts on
+   its own: notes, tabs, the browser, the terminal, sends and publishing, as far as its grant
+   reaches, and every change can be kept or undone after. Plan reads and writes a plan you
+   can edit. (Emil, 2026-10-05: "agent mode should be able to do anything".)
 3. **Every provider, every control.** A model chip under the field opens one popover: the
    model (from the provider's own list), the effort (Auto, Low, Medium, High, Extra, Max,
    only the levels that model has), and Fast where the provider offers it. The same popover
@@ -297,7 +300,7 @@ names the provider's own road.
 | `/archive` | - | Cx | out of the list, kept | nib | nib | nib |
 | `/delete` | - | Cx | gone for good; asks | nib | nib | nib |
 | `/stop` | - | CC, Cx | the turn and the thread's background work stop (**Esc** stops the turn) | interrupt | `turn/interrupt` | abort |
-| `/tasks` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands | nib | nib | nib |
+| `/jobs` | `/ps`, `/bashes` | CC `/tasks` (`/bashes`), Cx `/ps` | the thread's background work: a goal, loops, subtasks, agent tabs, terminal commands. Claude Code's `/tasks` is named `/jobs` here because a task in nib is a box in a note (`docs/tasks.md` 5.15, decision 8.3); `/ps` and `/bashes` still land | nib | nib | nib |
 | `/focus` | - | CC | tool rows and thinking fold away; prompts and answers stay | nib | nib | nib |
 | `/help` | - | everyone | the commands and keys | nib | nib | nib |
 
@@ -314,11 +317,11 @@ names the provider's own road.
 
 | nib | synonyms | from | what it does in nib | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/ask [question]` | - | Cursor Ask | Ask mode: read and search tools only, answers cite their passages (today's Ask panel) | read-only tools listed | read-only tools listed | read-only tools |
+| `/approve [task]` | `/ask` | CC default mode, Cx Auto, Copilot approvals | Approve mode, the first one: every tool the grant reaches, and each change waits in its row for **Approve**, **Deny** or **Always** (this tool, this thread); reads never ask; answers cite their passages (the Ask panel's reading) | full grant, nib asks at its verbs | full grant, nib asks at its verbs | full grant, nib asks at its verbs |
 | `/plan [task]` | - | CC, Cx, Cursor, Copilot | Plan mode: read-only tools; the plan is written as a draft note with a task per step, which you edit; **Build** runs it in Agent mode | read-only tools listed | Cx plan mode, read-only tools | read-only tools |
-| `/agent [task]` | - | Cursor Agent, Copilot Agent | Agent mode: every tool the grant reaches | full grant | full grant | full grant |
+| `/agent [task]` | - | Cursor Agent auto-run, CC bypassPermissions, Cx Full Access | Agent mode: every tool the grant reaches, nothing asked but paying; every change on the changes bar to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
 | `/agents [name]` | `/subagents` | CC `/agents`, Cx `/agent` (`/subagents`) | the thread's agent profile: a note with `agent:` front matter gives instructions, a model, an effort and tools; none is the default | profile's instructions as the fixed style slot + model + effort | the same, by `thread/start` | system message + model + effort |
-| `/permissions` | `/approvals`, `/allowed-tools`, `/approve` | CC (`/allowed-tools`), Cx `/permissions`, `/approve` | the sidebar agent's grant for this thread (4.4): scopes, sites, **Ask before edits** or **Apply and review**; `/approve` retries the last refused call | nib's grant | nib's grant | nib's grant |
+| `/permissions` | `/approvals`, `/allowed-tools` | CC (`/allowed-tools`), Cx `/permissions` | the sidebar agent's grant (4.4): scopes and sites; how much it asks is the mode | nib's grant | nib's grant | nib's grant |
 | `/goal [condition\|pause\|resume\|clear]` | `clear`: `stop`, `off`, `reset`, `none`, `cancel` | CC, Cx, Cursor | keeps working until the condition holds, an evaluator says it cannot, or the budget is spent (4.8) | CC's own `/goal` in the session | `thread/goal/set\|get\|clear` | nib's evaluator loop |
 | `/loop [interval] [prompt]` | `/proactive` | CC | runs a prompt on an interval while nib is open; the interval left out, the model paces it | nib | nib | nib |
 | `/subtask <task>` | - | CC | a helper thread in the background whose answer comes back here | nib | nib | nib |
@@ -358,6 +361,8 @@ reviewable diff, not a reply.
 
 | nib | synonyms | from | what it does in nib | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
+| `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | nib | nib | nib |
+| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Agent mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
 | `/status` | - | CC, Cx | provider, model, effort, account and plan, grant, program version | `claude auth status --json` | `codex login status` | Settings > AI's row |
 | `/usage` | `/cost`, `/stats`, `/rate-limit-options` | CC `/usage` (`/cost`, `/stats`), Cx `/usage` | tokens in this thread and today; a plan's state and reset time; money only where the provider says it | `total_cost_usd`, `rate_limit_event` | rate limits from the app-server | `usage`; OpenRouter's `cost` |
 | `/login` | - | CC | the provider's own sign-in road (`docs/ai.md`, "Your own plan") | `claude auth login` in a terminal tab | `codex login` in a terminal tab | ChatGPT: Continue with ChatGPT; keys: Settings > AI |
@@ -369,7 +374,7 @@ reviewable diff, not a reply.
 | `/vim` | - | Cx (CC took its out) | vim keys in the field, using nib's vim mode | nib | nib | nib |
 | `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | nib | nib | nib |
 
-That is **58 commands** and **42 synonyms**. A custom command (4.7) is one more row, and a
+That is **60 commands** and **43 synonyms**. A custom command (4.7) is one more row, and a
 custom command with a vendor's name wins over nothing but itself: built-ins keep their
 names.
 
@@ -407,51 +412,92 @@ Every other command Claude Code and Codex have, and why it has no row.
 **It replaces the Ask panel**, in the right side's last tab, on **Ctrl+Shift+A**, which puts
 the keyboard in its field. Two panels that both talk to a model, one able to act and one not,
 is one panel with a mode. Ask's behaviour - retrieval with no index, numbered citations,
-the note in front as a chip - is Ask mode, unchanged, and still the mode a new thread starts
-in until the reader picks another (the last one picked is remembered).
+the note in front as a chip - is Approve mode's, which is the mode the first thread starts in.
+A thread keeps its mode; a new thread starts in the last one picked. A thread written in Ask
+reads as Approve.
 
 - **Properties stays its own tab**: front matter is not a conversation.
 - **The Activity panel stays its own tab**: it is about agents from outside (Claude Desktop,
   a script). The sidebar's agent appears there too, because it is a grant like theirs, so
   the one stop and the one log still cover everything.
-- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here. A quick thread gets one more
-  glyph, **Continue in the panel**, which moves it into a new thread (Raycast's and Arc's
-  way from a quick answer to a conversation).
-- **Wider when it needs to be.** The right side's width is dragged as today; **Open as a
-  tab** on the thread's menu puts the same thread in a pane (JetBrains, Claude Code's
-  editor tab), for a long session beside two notes.
+- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here, drawn as ChatGPT's small
+  composer. Under its answer, **Continue in the panel** carries the conversation on as a
+  thread of its own (Raycast's and Arc's way from a quick answer to a conversation).
+- **Wider when it needs to be.** The right side's width is dragged as today; **Open in new
+  tab** on the thread's menu puts the same conversation in a pane (JetBrains, Claude Code's
+  editor tab), for a long session beside two notes, and shuts the side it came from.
 - Fetched the first time it opens, like the Ask panel is (`apps/desktop/src/lib/surfaces.svelte.ts`):
   none of it is in the first paint, held by `apps/desktop/test/weight.test.ts`.
+
+**Laid out as ChatGPT is** (Emil, 2026-10-05: "copy it in terms of the structuring and
+layout, it's battle tested"), in nib's own tokens, type and motion, from ChatGPT's web and
+desktop apps as they stood in late 2026 ([gpt-notes], [gpt-keys], [gpt-branch]); what was
+taken:
+
+| ChatGPT | nib |
+| --- | --- |
+| the history in a left rail, by age | the threads: at a side, the side's Chats button puts them in the conversation's place (ChatGPT's narrow drawer); in a tab, a rail down the left, put away and back with the header's button. Today, Yesterday, Last 7 days, then a month at a time; Archived last; "..." on a row for Rename, Archive, Delete |
+| New chat, Search chats | the side's own New chat (hidden while the thread is empty) or the rail's first row; the list's search field |
+| projects | spaces: threads are per space already |
+| the greeting with the composer in the middle | the same, "What can I help with?"; the composer settles to the foot as the first message goes |
+| the composer: one rounded box, "+", the model in it, one round button | the same box: the chips, the field, then "+" (files, the three modes, web search, dictation, `@`, `/`), the mode's chip beside it, the model and effort, the context ring, and one round button that is the microphone on an empty field, the arrow with words in it and the stop while an answer arrives |
+| the reader's words in a bubble at the end of the line, the answer across the width | the same; under a bubble while it is pointed at, copy, edit and rewind, and the `< 1/2 >` arrows once it has been edited |
+| the action row under an answer | copy, insert at the caret, ask again (its menu asks another model), "..." (save as a note, branch from here) |
+| "Thought for 6s" | the folded thinking row |
+| sources and their side panel | cited notes as chips under the answer, each opening its note beside, which is nib's canvas |
+| code with its language and copy | the same bar over every fenced block |
+| the streaming dot, the arrow back down | the same |
+| temporary chat, share, thumbs, read aloud, memory | left out: threads stay on this device, there is nobody to send feedback to, and no voice to read with |
 
 ```
  right side, 360 px, Agent mode, a turn running
 ┌──────────────────────────────────────┐
-│ Reading list cleanup ▾        ⌕   ✎  │  title (menu: rename, branch, export, open as tab) · search threads · new
+│ ✎ ◷   (the side's row of tabs)       │  New chat (hidden while empty), Chats
+│ Reading list cleanup ▾               │  title (menu: rename, follow, branch, save, open in new tab, archive, delete)
 ├──────────────────────────────────────┤
+│        ┌───────────────────────────┐ │
+│        │ file the open tabs about  │ │  your message, a bubble at the end
+│        │ herons under Reading/Birds│ │
+│        └───────────────────────────┘ │
+│                         ⧉ ✎ ⟲  ‹1/2› │  on hover: copy · edit · rewind; branches
+│  › Thought 6 s                       │  folded; Ctrl+O unfolds every one
+│  › Read 4 tabs                       │  tool rows: verb, object, nothing else
+│  › Edited Reading/Birds.md  +3 −0    │  click: the change, in the note
 │                                      │
-│  file the open tabs about herons     │  your message (hover: edit · rewind · copy)
-│  under Reading/Birds                 │
-│                                      │
-│  ▸ Thought for 6 s                   │  folded; Ctrl+O unfolds every one
-│  ▸ Read 4 tabs                       │  tool rows: verb, object, nothing else
-│  ▸ Created Reading/Birds/Herons.md   │
-│  ▸ Edited Reading/Birds.md  +3 −0    │  click: the change, in the note
-│                                      │
-│  Filed four pages. Two were the same │  the answer, streaming
+│  Filed four pages. Two were the same │  the answer, across the width
 │  article; I kept the one with the    │
-│  pictures.¹ ▍                        │  citations stay ¹ ² ³
-│                                      │
+│  pictures.¹ ●                        │  citations stay ¹ ² ³; the dot while it streams
+│  [Birds]                             │  the notes it cited
+│                 (↓)                  │  back to the end, when scrolled up
 ├──────────────────────────────────────┤
 │ ◐ 2 notes  +31 −0      Undo  Keep    │  changes bar: click opens /diff
-├──────────────────────────────────────┤
 │ ↳ and tag them #birds         ✕  ⋮⋮  │  queued (Enter queues while running; drag to reorder)
-├──────────────────────────────────────┤
-│ [Herons.md ✕] [selection 3 lines ✕]  │  context chips: implicit ones dim until used
-│ Ask anything, @ to add, / for more ▍ │  the one placeholder line
-│                                      │
-│ Agent ▾   Opus 5.5 · High ▾   ◔  🎙 ■ │  mode · model and effort · ring · voice · stop/send
+│ ╭──────────────────────────────────╮ │
+│ │ [Herons.md ✕] [selection ✕]      │ │  context chips: implicit ones dim until used
+│ │ Ask anything, @ to add, / for more│ │  the one placeholder line
+│ │ + (Agent)   Opus 5.5 · High ▾ ◔ ■│ │  + · mode · model and effort · ring · stop/send/mic
+│ ╰──────────────────────────────────╯ │
 └──────────────────────────────────────┘
 ```
+
+```
+ a tab of its own ("Open in new tab")
+┌────────────────┬──────────────────────────────────────────────────────┐
+│ ✎ New chat     │ ▯ Reading list cleanup ▾                              │
+│ ⌕ Search chats │                                                       │
+│ Today          │              ┌──── 48rem, centred ────┐               │
+│ ▸ Reading list │              │ the conversation       │               │
+│   Herons       │              │                        │               │
+│ Yesterday      │              │ ╭ composer ──────────╮ │               │
+│   Kestrels     │              │ ╰────────────────────╯ │               │
+│ September      │              └────────────────────────┘               │
+└────────────────┴──────────────────────────────────────────────────────┘
+```
+
+The side and the tab draw the same conversation (`ai/sidebar/chat.svelte.ts`). While both are
+on screen, the keyboard and the popovers go to the one used last (`ai/sidebar/host.ts`), and
+anything that hands the panel something to go on with - Alt+K's quote, the quick question's
+Continue - goes to the tab where there is one (`ai/sidebar/reveal.ts`).
 
 ```
  the model popover (Alt+P), a Claude key
@@ -519,8 +565,10 @@ draws for `@note` and it holds here.
 - **Tool calls** are rows of one verb and one object - Read, Searched, Opened, Clicked,
   Edited, Created, Ran - with the note's or page's name, and for an edit its +/− count. A
   row opens to its arguments and result; an edit row opens the change in the note.
-  `needs_approval` is a row with **Allow** and **Don't allow**, the activity panel's
-  question in place.
+  A call that asks is its own row turned into the question: the change it would make,
+  then **Approve**, **Deny** and **Always** (this tool, for the rest of the thread). The
+  call waits there, and goes ahead or is told no once answered, here or in the Activity
+  panel (`review/Approval.svelte`, `chat/approvals.ts`).
 - **Follow** (off by default, the eye on the thread menu, Zed's word): the note being
   edited comes to the front as it is edited. Off, the note's tab wears the agent's mark and
   its caret is in it, as `docs/agent-native.md` 8.4 already draws.
@@ -537,21 +585,27 @@ the same scopes, sites, asks and limits, and the same stop. Its default is Emil'
 agents (all but `browser.script`, `browser.storage`, `settings`, `terminal`), with
 `browser.reader` on, because the reader is right there, and `terminal` on with no program on
 its list: "why did the build fail" is a question about the reader's terminal, so it reads one
-(`read_terminal`, under `context`, in every mode) and every command it would run or type into
-one asks first (`ai_agent.rs` `made`; `docs/agent-native.md` 8.9).
+(`read_terminal`, under `context`, in every mode), and runs or types into one as its mode
+says (`ai_agent.rs` `made`; `docs/agent-native.md` 8.9).
 
-The modes are views of that grant, never more than it:
+The modes are views of that grant, never more than it, and each says how much is asked
+first. The supervision is laid over the grant for each call (`ai_agent.rs` `supervised`)
+and never kept, so the grant in Settings > Agents has no "Asks first" of its own:
 
-| mode | tools listed |
-| --- | --- |
-| Ask | the read-only ones (`readOnlyHint` in `apps/desktop/src-tauri/src/mcp/tools.json`), plus nib's retrieval for citations |
-| Plan | the read-only ones, plus `create_note` for the plan itself |
-| Agent | everything the grant reaches |
+| mode | tools listed | asks first |
+| --- | --- | --- |
+| Approve | everything the grant reaches | every change: the grant in `confirm` mode with every category on, so a write, a press in a page, a delete, a send, publishing, a setting and every terminal command waits for the reader; never a read |
+| Agent | everything the grant reaches | nothing but paying (`autonomous`): every change lands on the changes bar (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
+| Plan | the read-only ones (`readOnlyHint` in `apps/desktop/src-tauri/src/mcp/tools.json`), plus `create_note` for the plan itself | as the grant says |
 
-**Ask before edits** (the permission chip's other half, Claude Code's Manual mode) makes
-every write answer `needs_approval` with the change attached, so it is a question with a
-diff rather than an edit to undo. **Apply and review** (the default) lets writes land and
-puts them on the changes bar (4.5).
+What stays in Agent mode, and why: **paying** (a card field, a Buy button, a payment
+processor) still asks, because no undo takes a payment back and every role model stops
+there (ChatGPT's agent, Copilot); a **password or sign-in field** is refused outright in
+every mode, since it is the reader's, through a takeover (`docs/agent-native.md` 9.4); and
+**Show** and **Take over** are the agent asking the reader for something, not permission
+prompts. Claude Code's `bypassPermissions` and Codex's Full Access are where the same idea
+comes from; the CLIs themselves already never prompt here (below), so Agent is nib's own
+verbs asking nothing.
 
 Two roads to the same tools:
 
@@ -560,8 +614,8 @@ Two roads to the same tools:
   function tools; for the ChatGPT plan in a namespace, as its preview requires [siwc-limits]).
   Each call goes to the crate with the built-in agent's identity and is answered exactly as
   an external agent's is: the policy, the asks, the log, `<untrusted>` marks. No second
-  policy path in the window. A compatible server that refuses tools leaves the thread in
-  Ask mode and the mode chip says so by being greyed.
+  policy path in the window. A compatible server that refuses tools leaves the thread
+  answering in words, and says so in a line.
 - **Claude Code and Codex: they run the loop, and nib is their only tool.** Claude Code gets
   `--mcp-config` naming `nib mcp` alone (with the built-in agent's token), still
   `--tools ""` and `--strict-mcp-config`, so none of its own file, shell or web tools and
@@ -569,6 +623,14 @@ Two roads to the same tools:
   tool off, read-only sandbox. This is the road `docs/ai.md` already promises: "One that
   ever does gets nib's own MCP server (`nib mcp`) with the grant Settings > Agents gives
   it, never a folder." The crate still writes every argument (`apps/desktop/src-tauri/src/ai_cli/args.rs`).
+  Neither program prompts in any mode: in Approve and Agent every nib verb is allowed in
+  advance (`--permission-mode dontAsk`, Codex's `approvalPolicy: never`), which within a
+  toolset of nib's verbs alone is what `bypassPermissions` and Full Access would be,
+  without lifting a sandbox nothing uses or tripping a managed setting that forbids them.
+  What asks is nib: the token `nib mcp` is handed is lent for the thread's mode
+  (`ai_agent::lend`), so the endpoint supervises the session as that mode says, and in
+  Approve `nib mcp` holds the program's call open while the reader answers in the row (up
+  to seven minutes; each program gives a nib tool ten).
 
 `@web` is the one tool that is the provider's rather than nib's, turned on per message.
 
@@ -581,7 +643,11 @@ sidebar adds a review layer on top, and nothing underneath changes.
 
 - **The changes bar** over the field: how many notes, +/−, **Undo** and **Keep**. Click it,
   or `/diff`, for the list: each note with its changes, each change with **Keep** and
-  **Undo**, **J**/**K** to walk them.
+  **Undo**, **J**/**K** to walk them; then each note the thread moved (old name → new) or
+  sent to Recently deleted (struck through), with the same pair. Undo moves it back, links
+  and all, or brings it back out of Recently deleted the way the tree's own Undo does
+  (`review/files.ts`, `review/file-ops.ts`): what Agent mode does without asking is all on
+  this list.
 - **In the note**, each change the thread made and the reader has not kept wears a mark in
   the gutter and a tint on its words (the version history's colours), with **Keep** and
   **Undo** on hover. A note leaves the list when every change is kept or undone; a note the
@@ -596,7 +662,7 @@ sidebar adds a review layer on top, and nothing underneath changes.
   on an empty field, `/rewind`, or the clock on a message's hover) offers Claude Code's five
   choices; restoring notes undoes the thread's steps after that point, mapped the same way.
   **Redo** is there until the next send (Copilot). A note created after the checkpoint goes
-  to Recently deleted; a page clicked, a form filled or a command run is not undone, and the
+  to Recently deleted, a note moved goes back, a note deleted comes back; a page clicked, a form filled or a command run is not undone, and the
   rewind sheet says so in one line (Copilot's honest sentence).
 - **Edit a message** (the pencil on hover, or **Up** on an empty field for the last one):
   the thread rewinds to before it, notes and conversation, and the edited message is sent.
@@ -723,7 +789,7 @@ for clashes before taking it.
 | **Esc** | field, running | stop; what arrived stays |
 | **Esc Esc** | empty field | rewind |
 | **Up** | empty field | edit the last message |
-| **Shift+Tab** | field | Ask → Plan → Agent |
+| **Shift+Tab** | field | Approve → Agent → Plan |
 | **Alt+P** | field | model popover |
 | **Alt+T** | field | next effort level |
 | **Alt+K** | editor | the selection into the field as `@Note:12-14` |
@@ -800,7 +866,7 @@ The plan rules in `docs/ai.md`; the agent policy, asks, untrusted marks, log and
 `docs/agent-native.md`; `complete()` for the block, the rewrites and the
 quick question; the Ask behaviour of retrieval with no index and citations; Settings > AI's
 providers. The Ask panel's own drive (`apps/desktop/test/e2e/ask-panel.py`) keeps passing,
-pointed at the new panel in Ask mode.
+pointed at the new panel in Approve mode, which kept Ask's reading.
 
 ---
 
@@ -854,7 +920,7 @@ run(context) }`.
 | **1 `ai-chat-engine`** | `lib/ai/chat/` (new), additions to `apps/desktop/src/lib/ai/providers.ts` and `apps/desktop/src/lib/ai/stream.ts` | the types above; the thread store (crate-kept files per space, a `ai_threads` read/write pair in `src-tauri/src/ai_threads.rs`); the API adapter for Anthropic Messages, OpenAI Responses (keys and the ChatGPT plan: `store: false`, `stream: true`, tools in a namespace), chat completions; the tool loop calling the crate as the built-in agent; effort mapping and refusal learning; the model catalogue with capabilities and windows (4.9); usage and the ≈ estimate; compaction (server where offered, own summary otherwise) | unit tests against recorded provider streams and a fake crate: every adapter's text, thinking, tool and usage events, effort refused and stepped, compaction swaps, transcript round-trip; `complete.test.ts` and `seam.test.ts` untouched and green | 1 |
 | **2 `ai-cli-sessions`** | `apps/desktop/src-tauri/src/ai_cli/` (new `session.rs`, `codex_app.rs`; `args.rs`), `apps/desktop/src-tauri/src/ai_cli.rs`, `apps/desktop/src/lib/ai/local/`, `scripts/fake-ai-cli.mjs` | the Claude Code session (stream-json in, `--effort`, `--mcp-config` with `nib mcp` alone and the built-in token, interrupt, idle end, reseed); Codex on the app-server (thread, turn, steer, interrupt, compact, goal, fork, `model/list`, token usage); both as `Engine` adapters; the fake CLI speaking both protocols | cargo tests over the fake through the real spawn, stream, stop and timeout; a test that no argument comes from the window but tool, model, effort, mode and thread; the args table test extended; `cargo test real_claude -- --ignored` read-only; a draft-PR CI before main | 1 |
 | **3 `ai-review`** | `lib/ai/review/` (new), `review/` in the editor package (new), the sidebar agent's grant in `apps/desktop/src-tauri/src/agents/grants.rs` | the built-in grant per provider and its mode views (4.4), **Ask before edits** as `needs_approval` with the change; the changes list, per-change Keep and Undo mapped through later edits, the gutter marks and tints, checkpoints, rewind with its five choices and Redo, edit-and-resend; Follow | unit tests on `test-desk.ts`: undo of one change among the reader's typing and the agent's later edits, rewind across three notes, a created note to Recently deleted, a kept change leaving no mark; grant tests for each mode's tool list | 2 |
-| **4 `ai-sidebar-ui`** | `lib/ai/sidebar/` (new), the Ask panel (replaced), `apps/desktop/src/lib/Sidebar.svelte` and `apps/desktop/src/lib/surfaces.svelte.ts` (the slot), keys in `apps/desktop/src/lib/shortcuts/registry.ts`, `apps/desktop/src/locales` | the panel of 4.1: thread header and list with search, messages with parts, folded thinking and tool rows, the changes bar (drawing lane 3's list), queue chips with reorder, the field with chips, `@` menu and `/` menu (drawing lane 5's registry), mode chip, model popover, ring and tray, voice; Continue in the panel from the quick question; Open as a tab; motion; all strings in every catalogue | component tests; a drive `test/e2e/ai-sidebar.py` against the fake provider of `apps/desktop/test/e2e/ai.py`: a send, a stop, a queued and a steered message, a model and effort switch, the ring filling, an edit kept and one undone, a rewind; the Ask drive green in Ask mode; `weight.test.ts` unchanged | 2 |
+| **4 `ai-sidebar-ui`** | `lib/ai/sidebar/` (new), the Ask panel (replaced), `apps/desktop/src/lib/Sidebar.svelte` and `apps/desktop/src/lib/surfaces.svelte.ts` (the slot), keys in `apps/desktop/src/lib/shortcuts/registry.ts`, `apps/desktop/src/locales` | the panel of 4.1: thread header and list with search, messages with parts, folded thinking and tool rows, the changes bar (drawing lane 3's list), queue chips with reorder, the field with chips, `@` menu and `/` menu (drawing lane 5's registry), mode chip, model popover, ring and tray, voice; Continue in the panel from the quick question; Open as a tab; motion; all strings in every catalogue | component tests; a drive `test/e2e/ai-sidebar.py` against the fake provider of `apps/desktop/test/e2e/ai.py`: a send, a stop, a queued and a steered message, a model and effort switch, the ring filling, an edit kept and one undone, a rewind; the Ask drive green in Approve mode; `weight.test.ts` unchanged | 2 |
 | **5 `ai-commands`** | `lib/ai/commands/` (new) | the registry of section 3, table-driven, with synonyms, arguments and availability per provider; custom commands and agent profiles from front matter (4.7); the runners: `/goal` and its evaluator, `/loop`, `/subtask`, `/bg`, `/batch`, `/deep-research`, `/init`, `/memory` and remembering, `/export`, `/usage`, `/status`, `/doctor`, the verbs of 3.5 | a table test that every row of section 3 is registered, no name or synonym is taken twice, every command is available or dimmed with a reason for each of the six provider kinds, and none of 3.7 is registered; the goal loop against a fake engine through met, impossible, budget, no-progress and a fatal error; front-matter commands found, argued and overridden | 2 |
 
 Wave 1 is lanes 1 and 2, side by side: one is the window's TypeScript, the other the
@@ -867,7 +933,8 @@ and 5 export and owns none of their logic.
 1. **Ask becomes a mode**, and the panel keeps Ask's slot and key. Or keep a separate Ask
    tab beside the new panel?
 2. **Apply and review** as the default for Agent mode (Cursor's way), with Ask before edits
-   one click away. Or the other way round (Claude Code's Manual)?
+   one click away. Or the other way round (Claude Code's Manual)? Answered 2026-10-05: Agent
+   never asks, and Approve (which replaced Ask) asks before every change.
 3. **The sidebar's agent gets `browser.reader` by default** (the reader is at the keyboard),
    where an outside agent does not. Fine?
 4. **Threads on this device only**, never synced. Or synced like notes (they hold the words
@@ -945,8 +1012,9 @@ other's files.
     line it added), to draw and write down.
   - `approve(approval, allow)` and `voice(on?)`, for `/approve` and `/voice`.
 - **Its lines** are a notice of their own, code `command` (added to lane 1's `NoticeCode`),
-  in a model turn of their own: a goal that ended, a subtask's answer, `/status`, `/usage`,
-  `/doctor`, `/tasks`, a listing. `text` is already worded, a row a line (`word · value`),
+  in a model turn of their own (and `/tasks`'s rows under code `tasks`, drawn with live
+  boxes): a goal that ended, a subtask's answer, `/status`, `/usage`,
+  `/doctor`, `/jobs`, a listing. `text` is already worded, a row a line (`word · value`),
   never sent to the model. The panel draws it as it is.
 - **The goal chip** draws `thread.goal` (lane 1's `Goal`): ◎, minutes since `started`,
   `turns` of `budget.turns`, `tokens`, `reason` on click; ✕ runs `/goal clear`. A thread's
@@ -977,11 +1045,10 @@ change a line once it lands, and none of it is in the first paint.
 | --- | --- | --- | --- |
 | `ChangesBar.svelte` | the panel, over the field | `thread` (the live thread the engine writes into, `chat.thread`), `panel` (the chat store) | the bar, the list of changes (`/diff`), the rewind sheet and Redo; nothing while nothing waits |
 | `Branches.svelte` | the panel, under each of the reader's messages | `thread`, `turn` (the message's id), `panel` | `‹ 2/3 ›` where the message was edited; nothing elsewhere |
-| `Asked.svelte` | the panel, in a tool row whose state is `asking` | `part` | the diff the write would make (Ask before edits) |
+| `Approval.svelte` | the panel, in a tool row whose state is `asking` | `part`, `thread` | the question: the diff the write would make (`Asked.svelte`), **Approve**, **Deny**, **Always** |
 | `index.ts` `openRewind(thread, panel, turn?)` | Esc Esc on an empty field; the clock on a message's hover (with its `turn`) | | opens the rewind sheet in the bar |
 | `index.ts` `lastMessage(thread)` | Up on an empty field | | the message an edit changes |
 | `index.ts` `editMessage(thread, turn, text, panel)` | the pencil on a message, sent | | rewinds notes and conversation to before it, keeps what followed as a branch, sends `text` |
-| `index.ts` `askFirst(provider)`, `setAskFirst(provider, on)` | `/permissions` | | the built-in grant's `confirm` mode: Ask before edits, or Apply and review |
 | `commands.ts` `rewind(context)`, `changes(context)` | `/rewind`, `/diff` | the command's `{ thread, panel }` | the sheet; the list |
 
 `panel` is anything with `send(text)`, a writable `text` (the field) and `touched(thread)`,
@@ -1005,10 +1072,10 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | --- | --- |
 | `ChatPanel.svelte` | The panel in Ask's slot: the title and its menu, the conversation or the list, the foot |
 | `chat.svelte.ts` | The state: the space's threads, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
-| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, Allow and Don't allow |
+| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, and a question's row (`review/Approval.svelte`: Approve, Deny, Always) |
 | `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
 | `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
-| `Threads.svelte` | The thread list: search, open, archive, delete |
+| `Threads.svelte`, `ages.ts` | The thread list, by age: search, open, rename, archive, delete; a tab's rail |
 | `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
 | `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
 | `seams.ts` | The `/` menu: lane 5's rows asked as it opens, matched as the reader types |
@@ -1027,9 +1094,11 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
   `ensure`, `text` and `approve` (not `voice`, below), `instructionsFor(thread)` in the
   setup, the goal chip from `thread.goal` and the running dot from `tasks.of(thread.id)`.
 
-Not built here, and why: voice (the recorder's road into a field is its own lane), Open
-as a tab (a thread as a pane needs a tab kind), and Continue in the panel from the quick
-question (the quick question stays as it is, beside `/btw`).
+Added with ChatGPT's layout (4.1): dictation (`dictate.svelte.ts`, the recorder's road into
+the field, behind the round button and `/voice`), the panel as a tab of its own (the `chat`
+tab kind; `host.ts` says which of the two places is in use, `reveal.ts` which one to bring
+forward), the threads by age (`ages.ts`), and Continue in the panel from the quick question
+(`continueFrom`).
 
 The drive `apps/desktop/test/e2e/ai-sidebar.py` walks all of it against a fake provider,
 in the light and the dark, and then the whole flow in one thread: Ask, an agent's edits
@@ -1040,6 +1109,9 @@ kept and undone, a rewind, a message edited and sent again.
 ## Sources
 
 [cc-commands]: https://code.claude.com/docs/en/commands
+[gpt-notes]: https://help.openai.com/en/articles/6825453-chatgpt-release-notes
+[gpt-keys]: https://www.coursera.org/articles/chatgpt-keyboard-shortcuts
+[gpt-branch]: https://www.memorylake.ai/en/blogs/chatgpt-branch-new-chat
 [cc-vscode]: https://code.claude.com/docs/en/vs-code
 [cc-model]: https://code.claude.com/docs/en/model-config
 [cc-checkpoint]: https://code.claude.com/docs/en/checkpointing

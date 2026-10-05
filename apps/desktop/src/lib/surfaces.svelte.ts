@@ -88,6 +88,14 @@ export const canvasSurface = held(() =>
 /** The space as a picture: the layout, the painter and the controls over it. */
 export const graphSurface = held(() => import('./Graph.svelte'))
 
+/** A view tab and the Tasks panel (docs/tasks.md 5.5); never the plugin's. */
+export const viewSurface = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/ViewTab.svelte'),
+)
+export const tasksPanel = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/TasksPanel.svelte'),
+)
+
 /** Pages of paper, for a note laid out rather than flowed. Never the plugin's, for
  *  the canvas's reason: it opens no page note either. */
 export const pagesSurface = held(() =>
@@ -217,8 +225,14 @@ export const shareSheet = latched(() => import('./ShareSheet.svelte'))
 export const publishSheet = latched(() => import('./PublishSheet.svelte'))
 
 /** Somebody else's notes on their way in, whichever app wrote them. Asked for the same
- *  way the publish sheet is, by `importing.show`. */
-export const importSheet = latched(() => import('./ImportSheet.svelte'))
+ *  way the publish sheet is, by `importing.show`. Never the glasses' plugin's, which
+ *  offers no import (`importCommand` in commands.ts): a fetch that is only never called
+ *  still puts its chunk in the package, the sheet's own and Todoist's with it. */
+export const importSheet = latched(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no import in the Even Realities plugin'))
+    : import('./ImportSheet.svelte'),
+)
 
 /** The one picker everything that wears an icon asks for one. */
 export const iconPicker = latched(() => import('./IconPicker.svelte'))
@@ -238,6 +252,13 @@ export const quickSheet = latched(() =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no quick question in the Even Realities plugin'))
     : import('./QuickQuestion.svelte'),
+)
+
+/** The scratchpad's card; see scratchpad/pad.ts. */
+export const scratchpadCard = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('not in the plugin'))
+    : import('./scratchpad/ScratchpadCard.svelte'),
 )
 
 /** The red dot, the clock and the stop, which is the whole of what the window says

@@ -288,6 +288,13 @@ fn launcher() -> Option<PathBuf> {
         .filter(|path| path.is_file())
 }
 
+/// Whether this launch is a relaunch, which waits for the app that started it to go
+/// rather than handing itself to that app; see handover.rs.
+#[cfg(windows)]
+pub fn relaunching() -> bool {
+    std::env::var_os(AFTER).is_some()
+}
+
 /// Whether this launch belongs to the other build, which has been started with its
 /// arguments: the caller ends the process at once. The first thing a launch does, before
 /// Tauri or Chromium starts anything.

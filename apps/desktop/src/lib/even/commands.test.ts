@@ -129,3 +129,14 @@ describe('matching a name that was said out loud', () => {
     expect(likeness('note', 'notes')).toBeGreaterThan(0.9)
   })
 })
+
+describe('a task said aloud', () => {
+  test('is everything after "task", or after "Aufgabe"', () => {
+    expect(commandIn('Task, call mum tomorrow at four.')).toEqual({
+      kind: 'task',
+      said: 'call mum tomorrow at four',
+    })
+    expect(commandIn('Aufgabe Milch kaufen')).toEqual({ kind: 'task', said: 'milch kaufen' })
+    expect(commandIn('task')).toBeNull()
+  })
+})

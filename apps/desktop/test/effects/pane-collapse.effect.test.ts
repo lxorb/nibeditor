@@ -13,6 +13,7 @@
 
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { warmWindow } from './warm-window'
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
@@ -63,6 +64,30 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { viewport } = await import('../../src/lib/viewport.svelte')
 const { views } = await import('../../src/lib/views.svelte')
 const App = (await import('../../src/App.svelte')).default
+
+// Everything the window fetches the first time it draws two notes side by side, fetched
+// before any test counts its time; see warm-window.ts.
+await warmWindow(
+  () => {
+    workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.openBlank('Left', '# Left')
+    workspace.split('row')
+    workspace.openBlank('Right', '# Right')
+    const held = document.createElement('div')
+    document.body.append(held)
+    const drawn = mount(App, { target: held })
+    return () => {
+      void unmount(drawn, { outro: false })
+      held.remove()
+      workspace.panes.collapse()
+      workspace.tabs = []
+    }
+  },
+  () =>
+    document.querySelectorAll('[data-pane]').length === 2 &&
+    document.querySelectorAll('[data-pane] .cm-content').length === 2,
+)
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null

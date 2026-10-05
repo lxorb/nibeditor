@@ -8,7 +8,7 @@
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@nib/editor'
 import { revealPanel } from './focus'
-import { isScratchpad } from './scratchpad/is'
+import { isScratchpad } from './scratchpad/is.svelte'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { selectedWords } from './search/seed'

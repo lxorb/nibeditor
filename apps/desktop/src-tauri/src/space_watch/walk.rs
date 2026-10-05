@@ -172,7 +172,7 @@ mod tests {
         fs::write(root.join(".git").join("HEAD"), "ref").expect("its head");
         fs::write(root.join("Plan.md"), "words").expect("a note");
         fs::write(root.join("shot.png"), [1, 2, 3]).expect("a picture");
-        fs::write(root.join(".Plan.md.123-0.nib-tmp"), "half").expect("a temp file");
+        fs::write(root.join(".Plan.md.123-0.nib.tmp"), "half").expect("a temp file");
         fs::write(root.join("Thumbs.db"), "").expect("clutter");
         fs::write(root.join("~$Report.docx"), "").expect("an owner file");
         fs::write(root.join("Reading").join("Deep.md"), "").expect("a nested note");

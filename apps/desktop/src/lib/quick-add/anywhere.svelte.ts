@@ -11,13 +11,13 @@
  *  the one holding the lock; when it closes, the next takes the lock and the key. */
 
 import { untrack } from 'svelte'
+import { accelerator } from '../accelerator'
 import { i18n } from '../i18n.svelte'
 import { log } from '../log'
 import { shortcuts } from '../shortcuts.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { quickAdd } from './asked.svelte'
-import { accelerator } from './accelerator'
 import { ANSWERING, CHANNEL, heard, type Said } from './channel'
 import { addTask, noteNames } from './write'
 
@@ -52,8 +52,14 @@ export function listen(): () => void {
       }
       stopKey = $effect.root(() => {
         $effect(() => {
-          const key = quickAdd.anywhere ? accelerator(shortcuts.keyFor('app.quick-add')) : null
-          untrack(() => void invoke('quick_add_key', { key }).catch(() => undefined))
+          const key = quickAdd.anywhere
+            ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform)
+            : null
+          untrack(() => {
+            void invoke<string | null>('quick_add_key', { key })
+              .then((now) => (quickAdd.held = now !== null))
+              .catch(() => (quickAdd.held = false))
+          })
         })
       })
       // Held for as long as this window answers.
@@ -70,5 +76,6 @@ export function listen(): () => void {
     stopKey?.()
     channel?.close()
     if (stopKey) void invoke('quick_add_key', { key: null }).catch(() => undefined)
+    quickAdd.held = false
   }
 }

@@ -27,9 +27,9 @@ import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'
 import { groundOf } from './reading'
 import { alphaFor, layered, linkOf, type PaperInks } from '../content-ground'
-import { contentOf } from '../content-setting'
+import { ACCENT_SWATCH, contentOf } from '../translucent-settings'
 import { PAPER, schemeTokens } from '../scheme-tokens'
-import { ACCENT_COLOUR, dialsOf, glassValues } from './settings'
+import { dialsOf, glassValues } from './settings'
 import { barFor, frameFor, type Material, type Sides, type Source } from './tint'
 
 /** How long after a page's last news it is read: a page lands, then names itself, then
@@ -155,8 +155,8 @@ function sourceOf(): Source {
 
   const values = glassValues()
   if (values.follow === false) {
-    const chosen = String(values.colour ?? ACCENT_COLOUR)
-    const colour = chosen === ACCENT_COLOUR ? accent : rgbOf(accentColour(chosen, app))
+    const chosen = String(values.colour ?? ACCENT_SWATCH)
+    const colour = chosen === ACCENT_SWATCH ? accent : rgbOf(accentColour(chosen, app))
     return { colour: colour ?? accent, page: true }
   }
 

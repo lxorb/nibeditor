@@ -45,6 +45,15 @@ const SETTLE = 3000
  *  it do not send the same launch twice. */
 let sent = false
 
+/** What the launch opened, as counts, for the line the crate writes in the log; set by
+ *  whoever knows (start.ts), so this file in the first paint names no store. */
+let facts: () => string = () => ''
+
+/** Says what goes with the launch's line in the log: counts, never names. */
+export function factsOfLaunch(said: () => string): void {
+  facts = said
+}
+
 /** One step of the launch, now. */
 export function mark(step: string): void {
   if (STEPS.length >= MOST) return
@@ -82,8 +91,8 @@ export function watchFirstInput(): void {
   for (const kind of kinds) addEventListener(kind, heard, { capture: true, once: false })
 }
 
-/** Hands the launch over to the crate, which writes it beside its own steps if the
- *  switch is on and drops it if it is not.
+/** Hands the launch over to the crate, which writes one line of it to the log on every
+ *  launch, and the whole of it beside its own steps where the switch is on.
  *
  *  The navigation's own timings go with it: how long the page took to be fetched
  *  and parsed is the webview's part of the launch, and it is the part no mark of
@@ -96,6 +105,7 @@ export function sendTrace(): void {
     void invoke('trace_startup', {
       origin: performance.timeOrigin,
       steps: [...navigationSteps(), ...STEPS],
+      facts: facts(),
     }).catch(() => undefined)
   }, SETTLE)
 }

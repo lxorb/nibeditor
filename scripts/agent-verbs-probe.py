@@ -102,7 +102,8 @@ class Drive(mcp.Drive):
         return agent
 
     def selected(self, agent: Any) -> str:
-        return (self.result(agent, "get_context", {}) or {}).get("selected", {}).get("id", "")
+        # Null where no tab is selected yet: a fresh profile opens none.
+        return ((self.result(agent, "get_context", {}) or {}).get("selected") or {}).get("id", "")
 
     def context(self, agent: Any) -> str:
         print("context: where the reader is", flush=True)

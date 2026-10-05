@@ -74,4 +74,6 @@ export const gu: Dictionary = {
   'sign in first': 'પહેલાં સાઇન ઇન કરો',
   'no such space': 'એવી જગ્યા નથી',
   'that path is not usable': 'એ પથ વાપરી શકાતો નથી',
+  // A page as a task in the inbox
+  'As a task': 'કાર્ય તરીકે',
 }

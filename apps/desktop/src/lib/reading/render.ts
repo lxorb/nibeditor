@@ -100,6 +100,8 @@ export async function readingHtml(
         language === 'tasks' && !__EVEN_PLUGIN__
           ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'))
           : queryRowsHtml(code, t('Nothing found')),
+      // A base fence is a box the reading view draws the view into; see views/mount.ts.
+      base: true,
     }),
     prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
   ])

@@ -10,8 +10,10 @@
  *  of nib wrote, possibly one cut short, so it is checked on the way in and what is not a
  *  thread is left out rather than trusted. See `threadIn`. */
 
+import { without } from '../../records'
 import { isNumber, isRecord, isString } from '../../stored'
 import { isNative, invoke } from '../../tauri'
+import { FIRST_MODE, modeIn } from '../modes'
 import { isEffort } from './effort'
 import type {
   Compaction,
@@ -37,7 +39,7 @@ export function newThread(
   provider: string,
   model: string,
   effort: Effort = 'auto',
-  mode: Mode = 'ask',
+  mode: Mode = FIRST_MODE,
 ): Thread {
   const now = Date.now()
   return {
@@ -105,8 +107,6 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
   }
 }
 
-const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
-
 function usageIn(value: unknown): Usage {
   if (!isRecord(value)) return noUsage(null)
   const number = (one: unknown) => (isNumber(one) ? one : 0)
@@ -130,6 +130,7 @@ const NOTICES: readonly NoticeCode[] = [
   'stopped',
   'no_tools',
   'command',
+  'tasks',
 ]
 const STATES: readonly ToolState[] = ['running', 'ok', 'error', 'asking']
 
@@ -214,17 +215,19 @@ export function threadIn(value: unknown): Thread | null {
     isRecord(value.compaction) && isString(value.compaction.upTo)
       ? (value.compaction as unknown as Compaction)
       : undefined
+  const always = Array.isArray(value.always) ? value.always.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
   return {
-    ...(value as unknown as Thread),
+    ...(without(value, 'always') as unknown as Thread),
     id,
     space,
     title: isString(title) ? title : '',
     provider,
     model,
     effort: isEffort(effort) ? effort : 'auto',
-    mode: MODES.find((one) => one === mode) ?? 'ask',
+    mode: modeIn(mode) ?? FIRST_MODE,
+    ...(always.length ? { always } : {}),
     turns,
     usage: usageIn(value.usage),
     created: isNumber(value.created) ? value.created : 0,

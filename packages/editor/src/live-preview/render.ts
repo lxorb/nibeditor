@@ -2,7 +2,7 @@ import { MOST_EMS } from '@nib/markdown'
 import { chartFigure } from '@nib/markdown/chart'
 import { DIAGRAM_LANGUAGES } from '@nib/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@nib/markdown/engines'
-import type { NoteIndex } from '../wikilink/notes'
+import type { BaseAsk, NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 // The engine itself, chemistry pack and all, is loaded when a note turns out to have
 // a formula in it; see @nib/markdown/engines, which is the one holder for it. Its
@@ -132,6 +132,7 @@ export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
   'chart',
   'query',
   'tasks',
+  'base',
 ])
 
 let diagramSeq = 0
@@ -248,6 +249,36 @@ export class QueryWidget extends NibWidget {
     if (!host.isConnected || html === null || html === undefined) return
 
     host.innerHTML = html
+  }
+}
+
+/** A base where a note holds one, a ` ```base ` fence or `![[Bugs.base#Board]]`: a box
+ *  the app draws the view into (`mountBase`, docs/tasks.md 5.11). Equal while it asks
+ *  for the same thing from the same note, so a save elsewhere does not build it again. */
+export class BaseWidget extends NibWidget {
+  constructor(
+    private readonly ask: BaseAsk,
+    private readonly index: NoteIndex,
+  ) {
+    super()
+  }
+
+  override eq(other: BaseWidget) {
+    return (
+      JSON.stringify(other.ask) === JSON.stringify(this.ask) && other.index.path === this.index.path
+    )
+  }
+
+  toDOM() {
+    const host = document.createElement('div')
+    host.className = 'nib-base-block'
+    const mounted = this.index.mountBase?.(host, this.ask)
+    if (mounted) this.onDestroy(host, mounted)
+    return host
+  }
+
+  override ignoreEvent() {
+    return true
   }
 }
 

@@ -229,8 +229,9 @@ and the host is what the tab is.
 **A connection that drops** - `ssh` ending with anything but 0 - leaves its lines readable and a
 quiet bar at the foot, **Reconnect**, which Enter is too. Never by itself: Tabby's reconnect
 loops on a machine that is down. `exit` on the other machine is `ssh` ending with 0, and the tab
-closes, as a shell here does. Closing a remote tab never asks, as Windows Terminal's SSH tabs do not: `ssh` is
-its shell, and what runs on the other machine cannot be seen from here (`lib/terminal/closing.ts`).
+closes, as a shell here does. Closing a remote tab while it is connected asks, as macOS Terminal
+and iTerm2 count an `ssh` among the jobs that ask: what runs on the other machine cannot be seen
+from here, and closing it ends it (`Held::busy` in `src-tauri/src/terminal.rs`).
 
 **After a restart** a remote tab comes back with its last lines, like any terminal, and the same
 Reconnect bar under them: a window that comes back should not knock on every machine it once
@@ -261,9 +262,17 @@ which opens the file in the system's text editor (nib never writes it).
   and not on Windows' list, so a WSL tab closes without asking. Several busy tabs closing
   together ask once. See `src-tauri/src/terminal/process.rs` and
   `lib/terminal/closing.ts`.
-- **The window closing, or the app quitting**, never asks, which is VS Code's default:
-  the next launch puts every terminal back. A tab closing takes its lines with it; see
-  above.
+- **The window closing, the app quitting, or an update's restart** asks one question when
+  something runs - a busy terminal in any space's set, a connected remote one, an AI turn
+  answering (Claude Code and Codex threads among them) - and names each, with its tab's
+  mark; macOS Terminal's and Warp's list, Chrome's one question for every window. A row
+  goes to it; Cancel stays; Quit anyway goes on; "Don't ask again" is Settings >
+  Terminal > Warn before quitting's Never (Always / When something runs / Never). Nothing
+  idle is asked about, and the next launch still puts every terminal back with its last
+  lines: the question comes before the writes the window waits for. Quit in the tray, a
+  Mac's Cmd+Q and the engine's relaunch reach it through the crate, which holds the quit
+  while one window asks (`quit` in `src-tauri/src/lifecycle.rs`); the other windows send
+  their rows over a broadcast channel. See `lib/quitting`.
 - **The shell exiting** by itself: cleanly (`exit`, Ctrl+D) and the tab goes with it; with
   an error and it stays, with a dim line saying the code, and Enter starts it again -
   Windows Terminal's `graceful`.
@@ -447,8 +456,10 @@ test/weight.test.ts).
 | `scripts/remote-probe.py` | a remote terminal driven against `scripts/fake-ssh.py`, never a real machine: the arguments `ssh` is given, the host's name on the tab, a dropped connection and Reconnect |
 | `apps/desktop/src/lib/terminal/history.ts`         | the last lines, between runs: how much, when, and a closed tab's                                                                                                                                                                 |
 | `apps/desktop/src-tauri/src/terminal/history.rs`   | where they are kept, a file per terminal, and how many                                                                                                                                                                           |
-| `apps/desktop/src/lib/terminal/shells.svelte.ts`   | the shells found, and the two settings                                                                                                                                                                                           |
+| `apps/desktop/src/lib/terminal/shells.svelte.ts`   | the shells found, and the four settings                                                                                                                                                                                          |
 | `apps/desktop/src/lib/terminal/closing.ts`         | the question before a busy tab closes                                                                                                                                                                                            |
+| `apps/desktop/src/lib/quitting/`                   | the question before the window closes or the app quits or restarts: what runs, in every window, and the sheet that names it |
+| `scripts/quit-warning-probe.py`                    | quitting driven: the busy terminal named and the idle one not, Cancel and a row keep the app, Quit anyway ends it, and both terminals come back |
 | `scripts/terminal-probe.py`                        | the packaged app driven: Command Prompt and PowerShell answer, a resize reaches the shell, Ctrl+C interrupts, Ctrl+T and Ctrl+W go where they should, a restart puts the terminal back, and no shell outlives its tab or the app |
 | `scripts/terminal-restore-probe.py` | a restart driven: the lines written as the window goes and read back by the next launch, the fresh shell in the folder the old one was in, the tab in its place, and a closed tab leaving nothing on the disk |
 | `scripts/terminal-modes-probe.py` | a program that leaves the mouse reported: the prompt after it, and the one a restart put back, get nothing typed at them when the mouse moves |

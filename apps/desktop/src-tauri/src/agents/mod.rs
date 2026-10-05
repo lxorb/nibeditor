@@ -197,11 +197,13 @@ impl Caller {
 }
 
 /// Who a bearer token belongs to, other than the installation's secret: an agent, or
-/// nobody.
+/// nobody. A token the app lent one of the sidebar's own sessions is that provider's
+/// agent in that session's mode.
 pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
     state(app)
         .grants
         .by_token(app, token)
+        .or_else(|| crate::ai_agent::lent(app, token))
         .map(|grant| Caller::Agent(Box::new(grant)))
 }
 

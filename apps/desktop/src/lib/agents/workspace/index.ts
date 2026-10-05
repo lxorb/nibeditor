@@ -35,6 +35,7 @@ import {
 import { pdfHighlights, readPdf } from './pdf'
 import { answerOf, Refused } from './problem'
 import { readSetting, writeSetting } from './settings'
+import { addRow, addTask, editBase, editRows, listTasks, queryBase, updateTask } from './tasks'
 import { reachable } from './spaces'
 import { getContext, workspaceTabs } from './tabs'
 import { runTerminal } from './terminal'
@@ -72,6 +73,13 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   append_note: appendNote,
   set_property: setProperty,
   set_task: setTask,
+  list_tasks: listTasks,
+  add_task: addTask,
+  update_task: updateTask,
+  query_base: queryBase,
+  add_row: addRow,
+  edit_rows: editRows,
+  edit_base: editBase,
   create_note: createNote,
   restore_version: restoreVersion,
   edit_canvas: editCanvas,

@@ -39,7 +39,7 @@
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
-  import { ALL, cutOf, layersOver, moving, strangerOver, type Cut } from './covers'
+  import { ALL, cutOf, layersOver, moving, strangerOver, type Cut, type Layer } from './covers'
   import { ALLOW, SANDBOX } from './frame'
   import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
@@ -148,7 +148,23 @@
     if (!hole) return null
     // Something over the page nothing knows the shape of: a drawer, a deck.
     if (strangerOver(hole)) return ALL
-    return cutOf(box, layersOver(hole))
+    const layers = layersOver(hole)
+    watchLayers(layers)
+    return cutOf(box, layers)
+  }
+
+  /** The layers on the window, watched for a change of size as the hole is. A layer can
+   *  grow while it is open - the address field's suggestions as they arrive, a hover
+   *  card's words for the next tab - and that is neither a press nor a change to the
+   *  overlay stack, so the page was cut round the layer as it had been and the rest of it
+   *  stood behind the page. */
+  let watched: Element[] = []
+  function watchLayers(layers: readonly Layer[]) {
+    if (!watching) return
+    const now = layers.flatMap((one) => (one.node ? [one.node] : []))
+    for (const one of watched) if (!now.includes(one)) watching.unobserve(one)
+    for (const one of now) if (!watched.includes(one)) watching.observe(one)
+    watched = now
   }
 
   /** Where the hole sits in the window's layout: the area every pane shares and this

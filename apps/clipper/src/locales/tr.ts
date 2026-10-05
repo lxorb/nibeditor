@@ -79,4 +79,6 @@ export const tr: Dictionary = {
   'sign in first': 'önce oturum açın',
   'no such space': 'böyle bir alan yok',
   'that path is not usable': 'bu yol kullanılabilir değil',
+  // A page as a task in the inbox
+  'As a task': 'Görev olarak',
 }

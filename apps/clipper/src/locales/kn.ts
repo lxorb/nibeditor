@@ -78,4 +78,6 @@ export const kn: Dictionary = {
   'sign in first': 'ಮೊದಲು ಸೈನ್ ಇನ್ ಮಾಡಿ',
   'no such space': 'ಅಂತಹ ಸ್ಪೇಸ್ ಇಲ್ಲ',
   'that path is not usable': 'ಆ ಪಾತ್ ಬಳಸಲು ಯೋಗ್ಯವಲ್ಲ',
+  // A page as a task in the inbox
+  'As a task': 'ಕೆಲಸವಾಗಿ',
 }

@@ -111,6 +111,14 @@ export const api = {
     return { path: text(note, 'path') ?? path }
   },
 
+  /** A line in the space's inbox (docs/tasks.md 3, row 16); answers the note it went
+   *  into. */
+  addTask: async (token: string, spaceId: string, words: string) => {
+    const where = `/v1/spaces/${encodeURIComponent(spaceId)}/tasks`
+    const body = await request(where, { token, body: { text: words } })
+    return { path: text(body, 'path') ?? 'Inbox.md' }
+  },
+
   /** Named by its own hash, so a picture two articles share is stored once and
    *  a repeat costs one request and no storage. */
   putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {

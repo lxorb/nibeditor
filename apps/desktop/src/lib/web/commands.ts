@@ -5,7 +5,7 @@ import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
-import { scanRows } from '../scan-rows'
+import { scanRows } from '@nib/bases/scan'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
@@ -21,7 +21,7 @@ import {
   spaceOf,
   within,
 } from './paths'
-import { isWebTarget } from '@nib/markdown/links'
+import { isBaseTarget, isWebTarget } from '@nib/markdown/links'
 import { assetType } from './asset-route'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
@@ -116,13 +116,20 @@ function chunksOf(
 }
 
 /** Whether a file is one the tree shows: a note, a PDF beside one, a canvas, a page
- *  note, or a website. The same kinds the desktop's `read_tree` lists, and for the
+ *  note, a website, or a base. The same kinds the desktop's `read_tree` lists, and for the
  *  same reason - they are the things a tab can hold. A page note was left out of
  *  both lists, which left one drawn in a tab and nowhere else: no row in the file
  *  list, nothing for a search to read, and nothing for the mirror to send up, since
  *  the mirror walks this tree. */
 function listed(path: string): boolean {
-  return isMarkdown(path) || isPdf(path) || isCanvas(path) || isPages(path) || isWebTarget(path)
+  return (
+    isMarkdown(path) ||
+    isPdf(path) ||
+    isCanvas(path) ||
+    isPages(path) ||
+    isWebTarget(path) ||
+    isBaseTarget(path)
+  )
 }
 
 /** Where a PDF's highlights are kept. The desktop's command derives this on the

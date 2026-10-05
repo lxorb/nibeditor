@@ -145,6 +145,17 @@ export function sharedTitle(arrived: Arrived): string {
   return 'Shared'
 }
 
+/** What a share of words becomes as a task: its title, a link to where it came from
+ *  where it came from somewhere, one line (docs/tasks.md 3, row 17). The words of a
+ *  share are a sentence somebody wants to act on, which is a to-do, and the page they
+ *  were on is the context Todoist would have put in a comment. */
+export function sharedTask(arrived: Arrived): string {
+  const words = sharedWords(arrived)
+  const address = ADDRESS.exec(words)?.[0]
+  const title = sharedTitle(arrived).replace(/[[\]]/g, '').replace(/\s+/g, ' ').trim()
+  return address ? `[${title}](${address})` : title
+}
+
 /** The host of an address, for a share that is nothing but a link. */
 function hostOf(address: string): string {
   const found = /^https?:\/\/([^/?#]+)/.exec(address)

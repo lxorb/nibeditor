@@ -31,6 +31,7 @@ import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
 import { glassesSettings, glassesStamp, resetGlasses } from './settings'
 import { type Row, type Settings, Shell, type Wish, type Words, type World } from './shell'
+import { spokenTask, Today } from './today'
 import { type Listening, Voice } from './voice'
 import { rooms } from '../rooms.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
@@ -186,6 +187,12 @@ class Bridge {
   private glasses: Glasses | null = null
   private panel: Panel | null = null
   private shell: Shell | null = null
+  /** Today, as the modal's fifth row puts it up; see today.ts. */
+  private readonly todayList = new Today({
+    load: async () => (await import('./today-tasks')).todayHere(),
+    tick: async (at, space, done) => (await import('../task-actions')).tickTask(at, space, done),
+    redraw: () => this.act('draw'),
+  })
   private voice: Voice | null = null
   private readonly session = new Session()
   private timer: ReturnType<typeof setTimeout> | undefined
@@ -317,6 +324,11 @@ class Bridge {
       // By path, because that is what a row in these lists is named by. The note
       // the glasses are on is the note the plugin has active; see session.ts.
       atNote: () => workspace.active?.path ?? '',
+      today: () => this.todayList.rows(),
+      freshToday: () => this.todayList.fresh(),
+      tick: (id) => {
+        this.todayList.tick(id)
+      },
     }
   }
 
@@ -340,6 +352,7 @@ class Bridge {
       settings: panelWord('Settings'),
       reset: panelWord('Reset glasses settings'),
       done: panelWord('Done'),
+      today: panelWord('Today'),
     }
   }
 
@@ -728,14 +741,14 @@ class Bridge {
     if (!command) return
 
     this.flash(said.slice(0, 40))
-    this.obey(command)
+    this.obey(command, said)
     // The plugin's own share of the latency, from the end of the speech to the
     // panel being asked to change. What the recogniser took before that is the
     // recogniser's, and is not ours to measure.
     this.latency = performance.now() - ended
   }
 
-  private obey(command: Command): void {
+  private obey(command: Command, said = ''): void {
     const shell = this.shell
     if (!shell) return
 
@@ -813,7 +826,20 @@ class Bridge {
       case 'question':
         void this.ask(command.asked)
         return
+
+      case 'task':
+        void this.addSpoken(spokenTask(said) || command.said)
+        return
     }
+  }
+
+  /** A task said aloud, into the inbox of the space the reader is in: "task call Mum
+   *  tomorrow", through the same reading every other way in has (task-actions.ts).
+   *  The foot says it landed. */
+  private async addSpoken(words: string): Promise<void> {
+    const { addTask } = await import('../task-actions')
+    const added = await addTask(words).catch(() => null)
+    if (added) this.flash(panelWord('Done'))
   }
 
   /** A question, asked of the model and answered on the glasses.

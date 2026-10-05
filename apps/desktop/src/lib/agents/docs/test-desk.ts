@@ -12,6 +12,7 @@ import {
   undoEdit,
 } from '@nib/editor'
 import type { Change } from '../../search/apply'
+import { applied } from '../../search/replace'
 import { NoteDoc } from '../../workspace/documents.svelte'
 import type { Keeping } from '../../workspace/note-text'
 import type { Desk, Space } from './desk'
@@ -84,6 +85,8 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
   const written: { changes: readonly Change[]; keeping: Keeping | undefined }[] = []
   const kept: { path: string; content: string; source: string }[] = []
   let front: Pane | null = null
+  /** The scratchpad's words, which a reader may write in between a read and a write. */
+  const pad = { text: '', wrote: 0 }
 
   const opened = (path: string, caret = 0): Pane => {
     const at = `${SPACE.root}/${path}`
@@ -123,6 +126,13 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     },
     scheme: () => 'dark',
     draftIn: (tab) => drafts.get(tab) ?? null,
+    padText: () => Promise.resolve(pad.text),
+    padWrite: (before, edits) => {
+      if (pad.text !== before) return Promise.resolve(false)
+      pad.text = applied(before, edits)
+      pad.wrote++
+      return Promise.resolve(true)
+    },
   }
 
   return {
@@ -131,6 +141,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     disk,
     written,
     kept,
+    pad,
     /** Opens a note that was closed, as a pane on a new document. */
     open: opened,
     /** A tab holding a note with no file, as a pane on it. */

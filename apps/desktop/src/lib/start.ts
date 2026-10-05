@@ -15,7 +15,16 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import { GIVE_UP, handBack, handingBack, settleUp, stillWriting, written } from './parting'
+import {
+  anythingRuns,
+  GIVE_UP,
+  handBack,
+  handingBack,
+  settleUp,
+  stillWriting,
+  trayKeeper,
+  written,
+} from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
@@ -26,7 +35,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
 import { HANDS_BACK_WITHIN } from './backoff'
 import { waited } from './timing'
-import { mark } from './trace'
+import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
 import { toolbar } from './toolbar.svelte'
@@ -43,6 +52,11 @@ const DAY = 24 * 60 * 60 * 1000
 export function start(): () => void {
   mark('start')
   collectErrors()
+  // A frame the page could not draw for a second is written down with what ran in it,
+  // from the launch's own frames on; set going once the launch is drawn. See stalls.ts.
+  void startup.turn('doors').then(async () => (await import('./stalls')).watchStalls())
+  // And what the launch opened, said beside its phases in the log's line about it.
+  factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
   i18n.restore()
   theme.init()
@@ -59,7 +73,7 @@ export function start(): () => void {
   // since nothing a launch draws needs it; see hints.svelte.ts.
   const settling = setTimeout(() => {
     startup.settled = true
-    void import('./hints.svelte').then(({ hints }) => hints.settle())
+    if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())
   }, 20_000)
   // The one glyph on an `ai` fence that asks a model, installed whether or not any
   // provider is set up: a press on a block in a note somebody was sent says where to
@@ -176,6 +190,12 @@ export function start(): () => void {
   // for the engine they bring.
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./rows/rows.svelte'))
 
+  // And the reminders, which plan over those rows and hand the plan to whatever rings
+  // with nib closed; never the glasses' plugin. See reminders/start.svelte.ts.
+  if (!__EVEN_PLUGIN__) {
+    void startup.turn('right').then(() => import('./reminders/start.svelte'))
+  }
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {
@@ -248,9 +268,18 @@ async function guardClose() {
 
   // Cmd+Q closes no window, so the crate holds the quit and asks each window to
   // go as its close button would; see lifecycle.rs.
-  if (isDesktop) {
+  if (!__EVEN_PLUGIN__ && isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
-    await getCurrentWindow().listen('nib://quit', () => void onQuit(window))
+    const own = getCurrentWindow()
+    await own.listen('nib://quit', () => void onQuit(window))
+    // Asked first whether what runs may stop, by the crate and by the other windows.
+    await own.listen(
+      'nib://quit-ask',
+      () => void import('./quitting/ask').then((one) => one.quitAsked()),
+    )
+    void startup
+      .turn('right')
+      .then(async () => (await import('./quitting/windows')).answer(own.label))
   }
 }
 
@@ -269,11 +298,13 @@ let going = false
 async function onClose(event: Closing, window: Closable) {
   settle()
 
-  // An agent's pages live in this window: it hides instead, and the tray has Quit
-  // (docs/agent-native.md, open question 6).
-  if (agentMarks.holding && agentMarks.hide) {
+  // An agent's pages live in this window, or the reminders keep nib in the tray: it
+  // hides instead, and the tray has Quit (docs/agent-native.md, open question 6, and
+  // docs/tasks.md decision 6).
+  const hide = agentMarks.holding ? agentMarks.hide : trayKeeper()
+  if (hide) {
     event.preventDefault()
-    if ((await agentMarks.hide()) || going) return
+    if ((await hide()) || going) return
     // Not kept after all: the last agent went a moment ago.
     await go()
     await window.destroy()
@@ -286,12 +317,15 @@ async function onClose(event: Closing, window: Closable) {
   // writes them.
   if (!isDesktop) return
 
-  // Nothing being written, no web login to hand back and no update to put in place: the
-  // window just goes.
-  if (!workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
+  // Nothing being written or running, no web login to hand back and no update to put in
+  // place: the window just goes. What runs is asked about first; see lib/quitting.
+  const runs = anythingRuns()
+  if (!runs && !workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
 
   event.preventDefault()
   if (going) return
+  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quitting/ask')).mayStop('window')))
+    return
   await go()
   await window.destroy()
 }

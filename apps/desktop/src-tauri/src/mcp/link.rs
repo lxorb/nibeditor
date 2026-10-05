@@ -42,6 +42,14 @@ const LOOK_EVERY: Duration = Duration::from_secs(2);
 /// settling after it a few more.
 const PATIENCE: Duration = Duration::from_secs(150);
 
+/// How long the sidebar's own session waits for the reader to approve a call: with the
+/// call made again after it (`PATIENCE`), inside the ten minutes each program gives a
+/// tool (`src/ai_cli/args.rs`).
+const APPROVAL_WAIT: Duration = Duration::from_secs(7 * 60);
+
+/// How often a waiting call looks for the reader's answer.
+const APPROVAL_LOOK: Duration = Duration::from_millis(400);
+
 /// How long a window that is still loading has to say which verbs it answers before
 /// the link settles without them; the watch asks again every two seconds after.
 const WINDOW_WAIT: Duration = Duration::from_secs(5);
@@ -398,9 +406,47 @@ impl Link {
         });
     }
 
-    /// One verb, called as this agent. A call that finds no app on the port it knew looks
-    /// at the endpoint file once, for a launch on another port.
+    /// One verb, called as this agent. The sidebar's own sessions wait on a question
+    /// the call raised, the way the sidebar's own loop does (`answered`): the reader
+    /// approves inline, and the call goes ahead then.
     pub fn call(&self, verb: &str, args: &Value) -> Outcome {
+        let outcome = self.call_once(verb, args);
+        let Outcome::Asked { approval, .. } = &outcome else {
+            return outcome;
+        };
+        if handed().is_none() {
+            return outcome;
+        }
+        match self.answered(approval) {
+            Some(true) => self.call_once(verb, args),
+            Some(false) => Outcome::failed("denied", "the reader said no"),
+            None => outcome,
+        }
+    }
+
+    /// Waits for the reader's answer to a question: allowed, refused, or `None` when it
+    /// was not answered in time (the model is then told it was asked, as an outside
+    /// agent is).
+    fn answered(&self, approval: &str) -> Option<bool> {
+        let started = Instant::now();
+        while started.elapsed() < APPROVAL_WAIT {
+            let asked = self.call_once("approval_status", &json!({ "id": approval }));
+            let Outcome::Done { result, .. } = asked else {
+                return None;
+            };
+            match result["approval"]["answer"].as_str() {
+                Some("allowed" | "done") => return Some(true),
+                Some("denied") => return Some(false),
+                Some("pending") => std::thread::sleep(APPROVAL_LOOK),
+                _ => return None,
+            }
+        }
+        None
+    }
+
+    /// One verb, called once. A call that finds no app on the port it knew looks at the
+    /// endpoint file once, for a launch on another port.
+    fn call_once(&self, verb: &str, args: &Value) -> Outcome {
         let (endpoint, kept) = {
             let held = self.held();
             (held.endpoint.clone(), held.kept.clone())

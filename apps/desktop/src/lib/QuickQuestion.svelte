@@ -1,6 +1,9 @@
 <script lang="ts">
   /** The quick question: a field in the middle of the window, what the reader is
-   *  looking at as a chip under it, and the answer arriving in place below.
+   *  looking at as a chip under it, and the answer arriving in place below. Drawn as
+   *  ChatGPT's small composer: one rounded box with the round send button in it, the
+   *  question in a bubble at the end of the line and the answer across the width, and
+   *  under the answer its row - into the note, copy, and on in the AI panel.
    *
    *  The palette's shape and place - a box at the top of a layer that hangs from
    *  `--screen-top` and grows down as the answer arrives - because it is the same
@@ -120,17 +123,14 @@
           onkeydown={onKey}></textarea>
 
         {#if quick.running}
-          <button
-            class="nib-glyph go"
-            title={t('Stop')}
-            aria-label={t('Stop')}
-            onclick={() => quick.stop()}
-          >
-            <svg viewBox="0 0 13 13"><rect x="3.5" y="3.5" width="6" height="6" rx="1" /></svg>
+          <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => quick.stop()}>
+            <svg viewBox="0 0 13 13"
+              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+            >
           </button>
         {:else}
           <button
-            class="nib-glyph go"
+            class="go"
             title={t('Ask')}
             aria-label={t('Ask')}
             disabled={!quick.question.trim()}
@@ -186,7 +186,11 @@
           {#if turn.role === 'you'}
             <p class="said" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>{turn.text}</p>
           {:else}
-            <Answer html={answerHtml(turn.text)} onfollow={follow} />
+            <Answer
+              html={answerHtml(turn.text, undefined, t('Copy code'))}
+              live={quick.running && at === turns.length - 1}
+              onfollow={follow}
+            />
           {/if}
         {/each}
 
@@ -225,6 +229,18 @@
                 {/if}
               </svg>
             </button>
+            <button
+              class="nib-glyph act"
+              title={t('Continue in the panel')}
+              aria-label={t('Continue in the panel')}
+              onclick={() => void quick.continueInPanel()}
+            >
+              <svg viewBox="0 0 13 13"
+                ><path
+                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                /></svg
+              >
+            </button>
           </div>
         {/if}
       </div>
@@ -249,16 +265,18 @@
     overflow: hidden;
   }
 
-  /* The palette's box: the hairline under it is the border that turns to the accent. */
+  /* The composer's box, ChatGPT's: rounded, inset from the sheet's edge, the round
+     button inside it at the end of the words. */
   .field {
     flex: none;
     align-items: flex-end;
     min-height: 0;
+    width: calc(100% - 2 * var(--space-3));
+    margin: var(--space-3) var(--space-3) 0;
     padding: 0 var(--space-2) 0 0;
-    border: none;
-    border-bottom: 1px solid var(--line);
-    border-radius: 0;
-    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
 
@@ -266,7 +284,7 @@
   textarea {
     min-height: 0;
     max-height: 9rem;
-    padding: var(--space-4);
+    padding: var(--space-3);
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
@@ -279,12 +297,51 @@
     color: var(--muted);
   }
 
+  /* The one round button: filled while there is something to send, the stop while an
+     answer arrives; the AI panel's. */
   .go {
     flex: none;
-    margin-bottom: calc((var(--text-base) * 1.4 + 2 * var(--space-4) - var(--row-height)) / 2);
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-strong);
+    color: var(--bg);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      scale var(--dur-fast) var(--ease-out);
   }
 
-  .go svg,
+  .go:disabled {
+    background: var(--surface-hover);
+    color: var(--muted);
+  }
+
+  .go:active:not(:disabled) {
+    scale: 0.92;
+  }
+
+  .go svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .go .square {
+    fill: currentColor;
+    stroke: none;
+  }
+
   .act svg,
   .chip svg {
     stroke-width: 1.3;
@@ -293,7 +350,7 @@
   .chips {
     flex: none;
     display: flex;
-    padding: var(--space-2) var(--space-4) 0;
+    padding: var(--space-2) var(--space-4) var(--space-1);
   }
 
   /* What goes along: its mark, its name, and the cross that takes it off. The Ask
@@ -381,15 +438,18 @@
     padding: var(--space-3) var(--space-4) var(--space-3);
   }
 
-  /* The Ask panel's question: its weight and a rule down its starting edge. */
+  /* The question: the AI panel's bubble at the end of the line. */
   .said {
+    align-self: flex-end;
+    max-width: 85%;
     margin: 0;
-    padding-inline-start: var(--space-2);
-    border-inline-start: 2px solid var(--line-strong);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-row);
-    font-weight: var(--weight-strong);
+    line-height: 1.5;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }

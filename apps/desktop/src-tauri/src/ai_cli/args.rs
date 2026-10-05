@@ -32,6 +32,10 @@ use std::path::Path;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
+/// What the sidebar's thread may do and how it is supervised: `ai_agent.rs` says, for
+/// both roads (docs/ai-sidebar.md 4.4).
+pub use crate::ai_agent::Mode;
+
 /// The two programs, as the window names them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -66,11 +70,12 @@ You have no tools: answer in words only.";
 pub fn session_system(mode: Option<Mode>) -> &'static str {
     match mode {
         None => SYSTEM,
-        Some(Mode::Ask) => {
-            "You are the reader's assistant inside nibeditor, their notes app and web \
-browser. Ask mode: read and search with the nib tools, change nothing, and answer from what \
-you read, naming the note or page each claim comes from as a [[wikilink]] or its address. \
-Reply in the language of the question, in markdown, briefly."
+        Some(Mode::Approve) => {
+            "You are the reader's agent inside nibeditor, their notes app and web browser. \
+Do what they ask with the nib tools; the reader approves each change before it is made, so \
+a call may wait for them. Name the note or page a claim comes from as a [[wikilink]] or its \
+address. Change part of a note with edit_note rather than write_note, since they may be \
+typing in it. Reply in the language of the request, in markdown, briefly."
         }
         Some(Mode::Plan) => {
             "You are the reader's assistant inside nibeditor, their notes app and web \
@@ -80,24 +85,12 @@ the request, briefly."
         }
         Some(Mode::Agent) => {
             "You are the reader's agent inside nibeditor, their notes app and web browser. \
-Do what they ask with the nib tools; every change you make is shown to them to keep or undo. \
+Do what they ask with the nib tools, without asking: every change you make is shown to them \
+to keep or undo. Name the note or page a claim comes from as a [[wikilink]] or its address. \
 Change part of a note with edit_note rather than write_note, since they may be typing in it. \
 Reply in the language of the request, briefly, saying what you did."
         }
     }
-}
-
-/// What the sidebar's thread may do (docs/ai-sidebar.md 4.4): the tools each lists are a
-/// view of the grant, never more than it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Mode {
-    /// The tools that only read.
-    Ask,
-    /// Those, and `create_note` for the plan.
-    Plan,
-    /// Everything the grant reaches.
-    Agent,
 }
 
 /// nib's scale of effort, less `auto`, which is sent as nothing (docs/ai-sidebar.md 4.9).
@@ -155,11 +148,7 @@ pub fn tools_of(mode: Mode) -> (Vec<String>, Vec<String>) {
         serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default();
     let (listed, left): (Vec<Row>, Vec<Row>) = table.into_iter().partition(|row| {
         let reads = row.annotations["readOnlyHint"].as_bool() == Some(true);
-        match mode {
-            Mode::Ask => reads,
-            Mode::Plan => reads || row.name == "create_note",
-            Mode::Agent => true,
-        }
+        crate::ai_agent::in_mode(mode, &row.name, reads)
     });
     let names = |rows: Vec<Row>| rows.into_iter().map(|row| row.name).collect();
     (names(listed), names(left))
@@ -174,9 +163,16 @@ pub const SERVER: &str = "nib";
 /// and Codex is told to pass this one on (`env_vars`). Never on a command line.
 pub const TOKEN_VAR: &str = "NIB_MCP_TOKEN";
 
+/// How long either program waits for one nib tool: ten minutes, since in Approve a call
+/// waits for the reader to approve it (src/mcp/link.rs).
+const TOOL_SECONDS: u64 = 600;
+
 /// What a Claude Code session's environment adds to the app's: the reader's `CLAUDE.md`
-/// files left unread, which `--restricted` does not do on its own.
-pub const CLAUDE_SESSION_ENV: [(&str, &str); 1] = [("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1")];
+/// files left unread, which `--restricted` does not do on its own, and the tool timeout.
+pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] = [
+    ("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1"),
+    ("MCP_TOOL_TIMEOUT", "600000"),
+];
 
 /// Claude Code's `--mcp-config`: `nib mcp` alone, by this app's own program. No token in
 /// it; see `TOKEN_VAR`.
@@ -398,7 +394,7 @@ pub fn codex_thread(mode: Option<Mode>, model: Option<&str>, nib: &Path, folder:
         config.insert(key("args"), json!(["mcp"]));
         config.insert(key("env_vars"), json!([TOKEN_VAR]));
         config.insert(key("startup_timeout_sec"), json!(30));
-        config.insert(key("tool_timeout_sec"), json!(180));
+        config.insert(key("tool_timeout_sec"), json!(TOOL_SECONDS));
         if !left.is_empty() {
             config.insert(key("enabled_tools"), json!(listed));
         }
@@ -465,7 +461,12 @@ mod tests {
         let mut all = ask(None, &caps).expect("args");
         all.extend(codex_server());
         all.extend(claude_listing(&caps));
-        for mode in [None, Some(Mode::Ask), Some(Mode::Plan), Some(Mode::Agent)] {
+        for mode in [
+            None,
+            Some(Mode::Approve),
+            Some(Mode::Plan),
+            Some(Mode::Agent),
+        ] {
             let shape = Shape {
                 mode,
                 model: Some("opus[1m]"),
@@ -501,32 +502,38 @@ mod tests {
             ..Shape::default()
         };
 
-        let ask = claude_session(shape(Mode::Ask), &caps, &config()).expect("ask");
-        assert_eq!(value_of(&ask, "--tools"), Some(""));
+        let plan = claude_session(shape(Mode::Plan), &caps, &config()).expect("plan");
+        assert_eq!(value_of(&plan, "--tools"), Some(""));
         assert_eq!(
-            value_of(&ask, "--mcp-config"),
+            value_of(&plan, "--mcp-config"),
             Some(config().to_string_lossy().as_ref())
         );
-        let allowed = value_of(&ask, "--allowedTools").expect("allowed");
+        let allowed = value_of(&plan, "--allowedTools").expect("allowed");
         assert!(allowed.contains("mcp__nib__read_note"));
-        assert!(!allowed.contains("edit_note"));
+        assert!(allowed.contains("mcp__nib__create_note"));
+        assert!(!allowed.contains("edit_note") && !allowed.contains("write_note"));
         assert!(allowed.split(',').all(|one| one.starts_with("mcp__nib__")));
-        let denied = value_of(&ask, "--disallowedTools").expect("denied");
+        let denied = value_of(&plan, "--disallowedTools").expect("denied");
         assert!(denied.contains("mcp__nib__edit_note"));
         assert!(denied.contains("mcp__nib__run_terminal"));
-        assert!(!ask.contains(&"--safe-mode".to_owned()));
-        assert!(ask.contains(&"--restricted".to_owned()));
-        assert_eq!(value_of(&ask, "--permission-mode"), Some("dontAsk"));
-        assert_eq!(value_of(&ask, "--input-format"), Some("stream-json"));
+        assert!(!plan.contains(&"--safe-mode".to_owned()));
+        assert!(plan.contains(&"--restricted".to_owned()));
+        assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
+        assert_eq!(value_of(&plan, "--input-format"), Some("stream-json"));
 
-        let plan = claude_session(shape(Mode::Plan), &caps, &config()).expect("plan");
-        let allowed = value_of(&plan, "--allowedTools").expect("allowed");
-        assert!(allowed.contains("mcp__nib__create_note"));
-        assert!(!allowed.contains("write_note"));
-
-        let agent = claude_session(shape(Mode::Agent), &caps, &config()).expect("agent");
-        assert_eq!(value_of(&agent, "--allowedTools"), Some("mcp__nib"));
-        assert!(!agent.contains(&"--disallowedTools".to_owned()));
+        // Approve and Agent list every nib verb, allowed in advance, so Claude Code itself
+        // never prompts: what asks first in Approve is nib, at its own verbs, for the
+        // token lent to that mode. Its own tools stay out, so no bypass is needed.
+        for mode in [Mode::Approve, Mode::Agent] {
+            let all = claude_session(shape(mode), &caps, &config()).expect("all");
+            assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__nib"));
+            assert!(!all.contains(&"--disallowedTools".to_owned()));
+            assert_eq!(value_of(&all, "--permission-mode"), Some("dontAsk"));
+            assert_eq!(value_of(&all, "--tools"), Some(""));
+            assert!(all.contains(&"--strict-mcp-config".to_owned()));
+            assert!(!all.iter().any(|one| one.contains("skip-permissions")));
+            assert!(!all.iter().any(|one| one == "bypassPermissions"));
+        }
 
         let words = claude_session(Shape::default(), &caps, &config()).expect("words");
         assert!(!words.contains(&"--mcp-config".to_owned()));
@@ -537,7 +544,7 @@ mod tests {
     fn a_session_takes_its_model_and_effort_as_values() {
         let caps = Caps::from_help(CLAUDE_HELP);
         let shape = Shape {
-            mode: Some(Mode::Ask),
+            mode: Some(Mode::Plan),
             model: Some("sonnet[1m]"),
             effort: Some(Effort::Max),
         };
@@ -586,12 +593,12 @@ mod tests {
     fn a_codex_thread_adds_nib_alone_with_its_mode_s_tools() {
         let nib = PathBuf::from("nib.exe");
         let folder = PathBuf::from("ai");
-        let ask = codex_thread(Some(Mode::Ask), Some("gpt-5.1-codex"), &nib, &folder);
-        assert_eq!(ask["sandbox"], "read-only");
-        assert_eq!(ask["approvalPolicy"], "never");
-        assert_eq!(ask["ephemeral"], true);
-        assert_eq!(ask["model"], "gpt-5.1-codex");
-        let config = &ask["config"];
+        let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &nib, &folder);
+        assert_eq!(plan["sandbox"], "read-only");
+        assert_eq!(plan["approvalPolicy"], "never");
+        assert_eq!(plan["ephemeral"], true);
+        assert_eq!(plan["model"], "gpt-5.1-codex");
+        let config = &plan["config"];
         assert_eq!(config["mcp_servers.nib.args"], json!(["mcp"]));
         assert_eq!(config["mcp_servers.nib.env_vars"], json!([TOKEN_VAR]));
         let enabled = config["mcp_servers.nib.enabled_tools"]
@@ -607,6 +614,11 @@ mod tests {
 
         let agent = codex_thread(Some(Mode::Agent), None, &nib, &folder);
         assert!(agent["config"]["mcp_servers.nib.enabled_tools"].is_null());
+        let approve = codex_thread(Some(Mode::Approve), None, &nib, &folder);
+        assert!(approve["config"]["mcp_servers.nib.enabled_tools"].is_null());
+        // Codex asks nobody in any mode: nib asks, at its verbs, in Approve.
+        assert_eq!(approve["approvalPolicy"], "never");
+        assert_eq!(agent["approvalPolicy"], "never");
         assert!(agent.get("model").is_none());
         let words = codex_thread(None, None, &nib, &folder);
         assert_eq!(words["config"], json!({}));

@@ -29,6 +29,8 @@ export interface When {
   end: number
   day?: string
   time?: string
+  /** Whether a bare hour was taken for the afternoon's: `at 4` as 16:00. */
+  guessed?: boolean
 }
 
 const pad = (value: number) => String(value).padStart(2, '0')
@@ -144,6 +146,11 @@ export function dayAt(
     if (day !== undefined) return { end: at + 2, day: weekdayFrom(today, day, g.coming.has(key)) }
     if (g.next.has(key) && g.week.has(next))
       return { end: at + 2, day: weekdayFrom(today, 1, false) }
+    if (g.next.has(key) && g.weekends.has(next)) {
+      // The Saturday after this weekend's; on a Sunday this one is over already.
+      const coming = weekdayFrom(today, 6, true)
+      return { end: at + 2, day: weekday(today) === 0 ? coming : addDays(coming, 7) }
+    }
     if (g.next.has(key) && g.month.has(next)) {
       return { end: at + 2, day: addMonths(`${today.slice(0, 8)}01`, 1) }
     }
@@ -155,6 +162,10 @@ export function dayAt(
 
   const day = g.weekdays[key]
   if (day !== undefined && dayHere(words, at, g, free)) {
+    // `wednesday next week`: that day of the week starting next Monday.
+    if (g.next.has(bare(words[at + 1])) && g.week.has(bare(words[at + 2]))) {
+      return { end: at + 3, day: addDays(weekdayFrom(today, 1, false), (day + 6) % 7) }
+    }
     return { end: at + 1, day: weekdayFrom(today, day, true) }
   }
 
@@ -249,15 +260,22 @@ export function timeAt(
   const oclock = g.oclock.has(next)
   const colon = key.includes(':')
   if (hours > 23) return null
-  // `16.30` is a time only when `Uhr` says so; `16:30` always is; `16` only after `um`
-  // or `at`, or with `Uhr`.
-  if (key.includes('.') && !oclock) return null
+  // `16.30` and `16` are times only after `um` or `at`, or with `Uhr`; `16:30` always is.
+  if (key.includes('.') && !oclock && !asked) return null
   if (!colon && !oclock && !asked) return null
 
   // `at 4` is four in the afternoon: a task at four in the morning is the rarer one,
   // and whoever means it writes `4am` or `04:00`.
-  const afternoon = !colon && !oclock && hours >= 1 && hours <= 7 && !hoursText.startsWith('0')
-  return { end: oclock ? end + 1 : end, time: timeOf(afternoon ? hours + 12 : hours, minutes) }
+  // Minutes written out, `7.05`, are a timetable's: the hour as written.
+  const afternoon =
+    !colon &&
+    !oclock &&
+    !key.includes('.') &&
+    hours >= 1 &&
+    hours <= 7 &&
+    !hoursText.startsWith('0')
+  const time = timeOf(afternoon ? hours + 12 : hours, minutes)
+  return afternoon ? { end, time, guessed: true } : { end: oclock ? end + 1 : end, time }
 }
 
 /** A span from now: `in 2 hours`, `in 30 min`. Answers the day it lands on too. */
@@ -291,17 +309,29 @@ function dayTimeAt(words: readonly Word[], at: number, g: Grammar, clock: Clock)
   return best
 }
 
-/** A morning hour moved into the afternoon where the phrase it came with named the
- *  afternoon or the evening: `tonight at 8` is eight in the evening. */
-function sameHalf(time: string, named: string): string {
-  const hours = Number(time.slice(0, 2))
-  if (hours >= 12 || Number(named.slice(0, 2)) < 12) return time
-  return timeOf(hours + 12, Number(time.slice(3)))
+/** A time said after a part of the day, in that half of the day: `tonight at 8` is
+ *  eight in the evening, `tomorrow morning at 7` seven in the morning. */
+export function timeInPart(
+  words: readonly Word[],
+  at: number,
+  g: Grammar,
+  part: string,
+): When | null {
+  const said = askedTime(words, at, g)
+  if (!said?.time) return null
+  const hours = Number(said.time.slice(0, 2))
+  const minutes = Number(said.time.slice(3))
+  const evening = Number(part.slice(0, 2)) >= 12
+  if (evening && hours < 12) return { end: said.end, time: timeOf(hours + 12, minutes) }
+  if (!evening && said.guessed) return { end: said.end, time: timeOf(hours - 12, minutes) }
+  return { end: said.end, time: said.time }
 }
 
 /** A time, `at` or `um` in front of it included. */
 function askedTime(words: readonly Word[], at: number, g: Grammar): When | null {
   if (g.timeWords.has(bare(words[at]))) return timeAt(words, at + 1, g, true)
+  const part = g.dayWords.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
+  if (part) return { end: at + 2, time: part }
   return timeAt(words, at, g, false)
 }
 
@@ -314,10 +344,27 @@ function askedDay(
   free: boolean,
 ): When | null {
   if (g.dayWords.has(bare(words[at]))) {
-    const day = dayAt(words, at + 1, g, clock, true)
+    // `am Abend` is the evening, which askedTime reads, and never tomorrow's.
+    if (g.partsOfDay[bare(words[at + 1])]) return null
+    const day = dayAt(words, at + 1, g, clock, true) ?? monthDayAt(words, at + 1, g, clock.today)
     if (day) return day
   }
   return dayAt(words, at, g, clock, free)
+}
+
+/** A day of the month alone, after a day word: `on the 15th`, `am 15.`. This month's,
+ *  or the next month that has it once this month's has gone by. */
+function monthDayAt(words: readonly Word[], at: number, g: Grammar, today: string): When | null {
+  const from = g.articles.has(bare(words[at])) ? at + 1 : at
+  const written = g.ordinal.exec(words[from]?.key ?? '')?.[1]
+  const day = Number(written)
+  if (written === undefined || day < 1 || day > 31) return null
+  for (let ahead = 0; ahead < 12; ahead++) {
+    const month = addMonths(`${today.slice(0, 8)}01`, ahead)
+    const iso = isoOf(Number(month.slice(0, 4)), Number(month.slice(5, 7)), day)
+    if (civil(iso) && iso >= today) return { end: from + 1, day: iso }
+  }
+  return null
 }
 
 /** The longest phrase of a day and a time standing at `at`, in either order, the
@@ -336,9 +383,8 @@ export function whenAt(
   const both = dayTimeAt(words, at, g, clock)
   if (both) {
     // `tonight at 8`: the time said is the time meant, in the part of the day named.
-    const later = askedTime(words, both.end, g)
-    if (!later?.time) return both
-    return { ...both, end: later.end, time: sameHalf(later.time, both.time ?? '') }
+    const later = timeInPart(words, both.end, g, both.time ?? '')
+    return later ? { ...both, end: later.end, time: later.time ?? '' } : both
   }
 
   const day = askedDay(words, at, g, clock, free)

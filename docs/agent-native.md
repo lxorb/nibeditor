@@ -423,12 +423,26 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `list_notes` | `folder`?, `kind`? | notes, canvases, page notes, PDFs, web notes |
 | `search_notes` | `query` | the search panel's own search, as rows, without opening the panel |
 | `list_backlinks` | `path` | every link in the space that points at it; also `read_note`'s `backlinks` |
-| `read_note` | `path` or `tab`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task. `tab` is any note tab `get_context` lists: one with a file is that file; one `unsaved` is a new note with no file yet, which is its space's though it is on no disk; and the scratchpad is the same note from every space - the last two read and edited like any open note and kept no version of; the note tools below take it too |
+| `read_note` | `path` or `tab`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task. `tab` is any note tab `get_context` lists: one with a file is that file; one `unsaved` is a new note with no file yet, which is its space's though it is on no disk, read and edited like any open note and kept no version of; and `scratchpad` is the scratchpad, the same note from every space, which is a card and never a tab - read and edited through its card while it is up, so the reader's caret is carried, and in its file either way. The note tools below take both |
 | `edit_note` | `path`, `edits`: `[{at, replace?, insert_before?, insert_after?, delete?}]` (one of the four), `if_rev`? | anchored edits in one transaction (8.2) |
 | `write_note` | `path`, `content`, `if_rev`? | the whole text, for parity with the account connector (whose argument is `content`, so every note tool here says `content` for words); applied as the smallest edit between what is there and what is sent, as one transaction, so it is an anchored edit like the rest |
 | `append_note` | `path`, `content`, `under`? (a heading) | |
 | `set_property` | `path`, `key`, `value` or `null` | the front matter, through `frontMatterEdit` |
 | `set_task` | `path`, `at`, `done` | ticks or clears one box |
+| `list_tasks` | `view`? (`inbox`, `today`, `upcoming`, `logbook`, a `.base` path), `filter`? (Todoist's language), `space`?, `limit`? | to-dos in every space the grant reaches, or `space`'s, each with an `at` (`path#line:hash`) the other task tools take back (docs/tasks.md 5.15) |
+| `add_task` | `text`, `fields`?, `note`?, `under`?, `space`? | a line in the space's inbox, or in `note` under the heading `under` (made where missing); `text` may carry the Tasks plugin's marks, `fields` what `update_task` takes |
+| `update_task` | `at`, any of `done`, `status`, `text`, `due`, `time`, `scheduled`, `start`, `deadline`, `priority`, `recurrence`, `remind`, `duration`, `assignee`, `tags`, `move_to` | one edit of the note; `done` ticks the way the Tasks plugin does, a recurring task's next line written above it (`next` in the answer); `""` takes a field off; `move_to` takes the task and what is under it to another note or heading |
+| `query_base` | `path` or `yaml`, `view`? | a view's groups, rows (the columns it shows) and summaries |
+| `add_row` | `base`, `properties`?, `title`?, `view`? | a note made where the base's filters look (`file.inFolder`, `file.hasTag`, `prop == "value"`), from its template |
+| `edit_rows` | `paths`, `properties` | front matter on several notes, an edit each |
+| `edit_base` | `path`, `ops`: `add_view`, `edit_view`, `remove_view`, `set_filter`, `add_formula`, `add_property` | the base written back as the YAML it was, every key no op names kept |
+
+The task tools are the agent's own edits of a note, read off it as it is on screen and
+written with `writeNote`, so the review keeps or undoes them and one undo takes a tick
+and its next occurrence back together. What a call means is `@nib/bases/agent`, which
+the account connector shares (`services/sync/src/mcp/tasks.ts`); the list, add and
+tick the reader's own surfaces use (the AI sidebar, the glasses, the widget, a share)
+are `lib/task-actions.ts`.
 | `create_note` | `path`, `kind`?, `content`?, `url`?, `open`?: false | never over an existing file. A note, or by the path's ending or `kind` a canvas (a blank plane, or the JSON Canvas sent), a page note (a page of the reader's paper) or a web note (a shortcut to `url`) |
 | `list_versions` | `path` | the versions, with who wrote each (8.5) |
 | `restore_version` | `path`, `version` | asks first (9.3) |
@@ -441,7 +455,7 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `recently_deleted` | `op`: `list`, `restore`; `id` | Recently deleted as the panel lists it, as far as the grant reaches, and one thing put back where it was, as the panel's Restore does. Nothing is deleted for good |
 | `trash_file` | `path` | to Recently deleted, which is undoable, so it is not "deleting for good"; a file in front of the reader needs `workspace.focus`, since its tab closes, and one in a tab behind it does not |
 | `create_folder` | `path` | |
-| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`? | `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does. Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
+| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`? | `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front; the scratchpad is its card, never a tab, and takes the keyboard only with `background` false); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does. Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
 | `bookmarks` | `op`: `list`, `add`, `remove` | |
 | `list_spaces` | - | the spaces this agent may reach |
 | `read_canvas`, `edit_canvas` | `path` or `tab`; `ops`: `add_card`, `edit_text`, `move`, `connect`, `remove`, and in a page note `add_page`, `remove_page`, `move_page` | a canvas or a page note as JSON Canvas, edited object by object, a tab drawn and never saved included; a page note read as its pages and each card's page (8.7) |
@@ -904,6 +918,13 @@ Each agent holds:
 
 A third-party agent starts with `context` off, `browser.reader` off and `confirm` mode.
 
+The AI sidebar's own agents (one built-in grant per provider, "nib · Claude") ask as the
+thread's mode says rather than as the grant does (docs/ai-sidebar.md 4.4), so Settings >
+Agents shows them no "Asks first": Approve lays `confirm` with every category on over the
+grant for each call, and Agent a third mode, `autonomous`, that asks for nothing but
+paying and is never kept on a grant. A Claude Code or Codex session of the sidebar's
+proves itself with a token lent for its thread's mode, so the endpoint knows which.
+
 ### 9.2 Sites
 
 A denied site cannot be opened, navigated to, or acted in, in an agent tab or a reader's;
@@ -912,7 +933,8 @@ site on top of the scope, because running script in a page is running as that pa
 
 ### 9.3 What it always asks first
 
-In both modes, unless the reader turned the category off for that agent:
+In both modes, unless the reader turned the category off for that agent (and in the AI
+sidebar's Agent mode, `autonomous`, only paying):
 
 | category | how it is recognised, without trusting the model |
 | --- | --- |
@@ -1002,7 +1024,7 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
 | | the local server (`nib mcp`) | the account connector (`services/sync/src/mcp`) |
 | --- | --- | --- |
 | runs | on this machine, while nib runs | on the Worker, always |
-| reaches | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note` |
+| reaches | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note`, and the to-dos and bases: `list_tasks`, `add_task`, `update_task`, `query_base`, `add_row` |
 | sees unsaved words | yes | no |
 | for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where nib is closed |
 | auth | a grant made by the bubble in 9.1 | OAuth or a pasted `nib_` token, as today |
@@ -1020,8 +1042,9 @@ client that only speaks HTTP can be given the endpoint's own `/mcp` later; nothi
 depends on it.
 
 **The two servers share their names and shapes** for what both can do - `list_spaces`,
-`list_notes`, `read_note`, `search_notes`, `list_backlinks` and `write_note` are the
-connector's six, with the same arguments, and the local ones only add to them - so a
+`list_notes`, `read_note`, `search_notes`, `list_backlinks` and `write_note`, and
+`list_tasks`, `add_task`, `update_task`, `query_base` and `add_row`, are the
+connector's eleven, with the same arguments, and the local ones only add to them - so a
 prompt or a skill written against one works against the other, and the local server's
 instructions say to prefer it while nib runs, because it sees the words on screen. Under
 sync v2 a note with a document is written only by its room (`sync-v2.md` 5.3), and the

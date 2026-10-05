@@ -14,15 +14,15 @@
 
 import { documentOf } from '@nib/editor'
 import { links } from '../../link-index.svelte'
+import { isScratchpad } from '../../scratchpad/is.svelte'
+import { scratchpad } from '../../scratchpad/pad'
 import { withinSpace } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { theme } from '../../theme.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
-import { isScratchpad } from '../../scratchpad/is'
-import type { NoteDoc } from '../../workspace/documents.svelte'
 import { isDraft } from '../../workspace/drafts'
-import { type Desk, located, type NoteAt } from './desk'
+import { type Desk, located, type NoteAt, SCRATCHPAD_TAB } from './desk'
 import {
   editNote,
   type NoteEdited,
@@ -51,14 +51,6 @@ export interface NoteDocs {
   undoAgent(agent: Agent, at: NoteAt): Promise<{ undone: number }>
 }
 
-/** A note a tab holds that is in no space's folder: a draft with no file yet, and the
- *  scratchpad, which is the same note from every space. Both are reached by their tab
- *  and edited as the open document they always are; the scratchpad is written down as
- *  it changes, like any open note. */
-function inNoSpace(note: NoteDoc): boolean {
-  return isDraft(note) || isScratchpad(note.path)
-}
-
 /** The app itself, as the docs see it. */
 const desk: Desk = {
   get spaces() {
@@ -84,34 +76,40 @@ const desk: Desk = {
   },
   draftIn(id) {
     const tab = workspace.tabs.find((one) => one.id === id)
-    return tab?.kind === 'note' && inNoSpace(tab.note) ? tab.note : null
+    return tab?.kind === 'note' && isDraft(tab.note) ? tab.note : null
   },
+  padText: () => scratchpad.text(),
+  padWrite: (before, edits) => scratchpad.replace(before, edits),
   scheme: () => theme.current,
+}
+
+/** A call naming the scratchpad, with where it is on this disk: asked once a run, and
+ *  only of a call that names it. */
+async function padded(at: NoteAt): Promise<NoteAt> {
+  return at.tab === SCRATCHPAD_TAB ? { ...at, pad: await scratchpad.where() } : at
 }
 
 /** The notes of this window, on today's editor. */
 export const notes: NoteDocs = {
-  readNote: (at, include) => readNote(desk, at, include),
-  editNote: (agent, at, edits, ifRev) => editNote(desk, agent, at, edits, ifRev),
-  writeNote: (agent, at, text, ifRev) => writeNote(desk, agent, at, text, ifRev),
-  undoAgent: (agent, at) => undoAgent(desk, agent, at),
+  readNote: async (at, include) => readNote(desk, await padded(at), include),
+  editNote: async (agent, at, edits, ifRev) =>
+    editNote(desk, agent, await padded(at), edits, ifRev),
+  writeNote: async (agent, at, text, ifRev) =>
+    writeNote(desk, agent, await padded(at), text, ifRev),
+  undoAgent: async (agent, at) => undoAgent(desk, agent, await padded(at)),
 }
 
 /** Takes back one agent's edits in the note at `path`, a path on this disk: what the
  *  palette's row and the activity panel ask, about the note in front. */
 export async function undoAgentIn(agent: Agent, path: string): Promise<{ undone: number }> {
-  for (const space of workspace.spaces) {
-    const relative = withinSpace(space.root, path)
-    if (relative !== null)
-      return undoAt(desk, agent, located(desk, { path: relative, space: space.id }))
-  }
-
-  return { undone: 0 }
+  const note = locatedAt(path)
+  return note ? undoAt(desk, agent, note) : { undone: 0 }
 }
 
 /** The note at `path`, a path on this disk or a draft's `unsaved:` key, as the
  *  space it is in names it; null for one that is not there. */
 function locatedAt(path: string) {
+  if (isScratchpad(path)) return located(desk, { path: '', tab: SCRATCHPAD_TAB, pad: path })
   if (path.startsWith('unsaved:')) {
     const key = path.slice('unsaved:'.length)
     const tab = workspace.tabs.find((one) => one.kind === 'note' && one.note.key === key)

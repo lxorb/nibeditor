@@ -9,6 +9,7 @@ import {
   asks,
   ownGrant,
   reaches,
+  sidebars,
   sitesOf,
   thirdPartyGrant,
   trifecta,
@@ -106,6 +107,14 @@ describe('a switch means what it says', () => {
   it('keeps the crate’s order, and never a scope twice', () => {
     const grant = withScope(withScope(only('terminal'), 'context', true), 'context', true)
     expect(grant.scopes).toEqual(['context', 'terminal'])
+  })
+})
+
+describe('the AI sidebar’s own agents', () => {
+  it('are told apart by the name the crate gives them, and ask as their thread’s mode says', () => {
+    expect(sidebars(ownGrant('nib-anthropic', 'nib · Claude', 1))).toBe(true)
+    expect(sidebars(own())).toBe(false)
+    expect(sidebars(ownGrant('nib-notes', 'Nib Notes', 1))).toBe(false)
   })
 })
 

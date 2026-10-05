@@ -11,7 +11,7 @@
 
 import { isDesktop, invoke } from '../../tauri'
 import type { Provider } from '../providers'
-import { EDITS, READER_TABS } from './choices'
+import { READER_TABS } from './choices'
 import type { Mode, ToolOutput } from './types'
 import { record, text, type ToolDef } from './wire'
 
@@ -31,14 +31,10 @@ interface Listed {
   tools: ToolDef[]
 }
 
-/** Which built-in agent asks: the provider, and the two choices that shape its grant. */
+/** Which built-in agent asks: the provider, and whether its grant reaches the reader's
+ *  tabs. How much it asks is the thread's mode's, sent with every call. */
 function agentOf(provider: Provider) {
-  return {
-    id: provider.id,
-    name: provider.name,
-    readerTabs: READER_TABS,
-    askFirst: EDITS === 'ask-first',
-  }
+  return { id: provider.id, name: provider.name, readerTabs: READER_TABS }
 }
 
 /** One row of the crate's list. */

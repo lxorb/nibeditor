@@ -1,13 +1,13 @@
-/** The shells this machine has, and the three things Settings says about terminals: which
- *  shell a new one opens, how large its type is, and whether a restart puts back what
- *  was on its screen.
+/** The shells this machine has, and the four things Settings says about terminals: which
+ *  shell a new one opens, how large its type is, whether a restart puts back what was on
+ *  its screen, and when quitting asks first (see lib/quitting).
  *
  *  The list is the crate's (see src-tauri/src/terminal/shells.rs) and is asked for the
  *  first time something needs it - a chooser opening, the settings pane, a terminal
  *  being made - and never at launch: finding the WSL distributions costs a process. Every
  *  later ask is the same promise.
  *
- *  Both settings belong to this machine and are never sent to the account: a shell is a
+ *  Every one of them belongs to this machine and are never sent to the account: a shell is a
  *  program on one computer, and the one a laptop has may not be on the desktop. */
 
 import { t } from '../i18n.svelte'
@@ -23,6 +23,19 @@ export interface Shell {
 const SHELL_KEY = 'nib:terminal-shell'
 const SIZE_KEY = 'nib:terminal-size'
 const RESTORE_KEY = 'nib:terminal-restore'
+const WARN_KEY = 'nib:terminal-quit-warn'
+
+/** When quitting asks first: whenever a terminal or an AI turn is open, only while
+ *  something runs in one, or never. macOS Terminal's three, and its middle one first, as
+ *  VS Code's `hasChildProcesses`: a question about idle shells is one people learn to
+ *  click through. */
+const WARNINGS = ['always', 'running', 'never'] as const
+export type Warning = (typeof WARNINGS)[number]
+
+/** A warning out of whatever storage handed back; the default for anything else. */
+export function asWarning(value: unknown): Warning {
+  return WARNINGS.find((one) => one === value) ?? 'running'
+}
 
 /** The type sizes Settings offers, and where a terminal starts: the size a code block is
  *  read at, a little under the note's own. */
@@ -62,6 +75,8 @@ class Shells {
   /** Whether a terminal's last lines are kept for the next launch: on, as VS Code,
    *  Windows Terminal and Warp all start. See history.ts. */
   restoring = $state(storedText(RESTORE_KEY) !== 'no')
+  /** When quitting asks first; see `WARNINGS`. */
+  warning = $state<Warning>(asWarning(storedText(WARN_KEY)))
 
   private asked: Promise<Shell[]> | null = null
 
@@ -99,6 +114,11 @@ class Shells {
   setSize(size: number) {
     this.size = sizeOf(String(size))
     keep(SIZE_KEY, String(this.size))
+  }
+
+  setWarning(warning: Warning) {
+    this.warning = warning
+    keep(WARN_KEY, warning)
   }
 
   /** Off forgets every terminal's lines at once, rather than only writing no more of

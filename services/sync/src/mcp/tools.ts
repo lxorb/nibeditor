@@ -171,7 +171,7 @@ export async function noteBody(env: Env, spaceId: string, noteId: string): Promi
 }
 
 /** The space an argument names, or the sentence to answer with instead. */
-async function askedSpace(
+export async function askedSpace(
   env: Env,
   userId: string,
   args: Record<string, unknown>,
@@ -296,7 +296,17 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  const content = asked ?? ''
+  return (await putNote(env, space, path, asked ?? '')) ?? `Saved ${path}.`
+}
+
+/** A note's words written, made where there is none: null when it was, else the
+ *  sentence to answer with. The to-dos' tools write through here too (tasks.ts). */
+export async function putNote(
+  env: Env,
+  space: Pick<Space, 'id' | 'user_id'>,
+  path: string,
+  content: string,
+): Promise<string | null> {
   const size = byteLength(content)
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
 
@@ -334,7 +344,7 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
     }
   }
 
-  return `Saved ${path}.`
+  return null
 }
 
 /** Runs one tool for one caller. Everything reachable is reached through the

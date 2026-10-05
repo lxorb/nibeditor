@@ -73,4 +73,6 @@ export const am: Dictionary = {
   'sign in first': 'መጀመሪያ ግባ',
   'no such space': 'እንዲህ ያለ ቦታ የለም',
   'that path is not usable': 'ያ መንገድ አይሠራም',
+  // A page as a task in the inbox
+  'As a task': 'እንደ ሥራ',
 }

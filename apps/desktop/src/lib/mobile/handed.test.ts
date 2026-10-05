@@ -9,21 +9,29 @@ import { askedFrom, openable } from './handed'
  *  carries both is exported, so anything on the phone can send one; what matters
  *  here is that nothing else ever comes out of it. */
 
+const nothing = { command: '', open: '', tick: '', tickSpace: '' }
+
 describe('what the press asked for', () => {
   test('a command', () => {
-    expect(askedFrom('{"command":"new","open":""}')).toEqual({ command: 'new', open: '' })
+    expect(askedFrom('{"command":"new","open":""}')).toEqual({ ...nothing, command: 'new' })
   })
 
   test('a note', () => {
     expect(askedFrom('{"command":"","open":"/Notes/Plan.md"}')).toEqual({
-      command: '',
+      ...nothing,
       open: '/Notes/Plan.md',
     })
   })
 
-  test('nothing, in every shape nothing arrives in', () => {
-    const nothing = { command: '', open: '' }
+  test('a task a Today box asked to tick', () => {
+    expect(askedFrom('{"tick":"Inbox.md#0:abc","tickSpace":"Home"}')).toEqual({
+      ...nothing,
+      tick: 'Inbox.md#0:abc',
+      tickSpace: 'Home',
+    })
+  })
 
+  test('nothing, in every shape nothing arrives in', () => {
     expect(askedFrom('')).toEqual(nothing)
     expect(askedFrom('undefined')).toEqual(nothing)
     expect(askedFrom('null')).toEqual(nothing)

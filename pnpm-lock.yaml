@@ -549,6 +549,9 @@ importers:
       '@lezer/yaml':
         specifier: ^1.0.4
         version: 1.0.4
+      '@nib/bases':
+        specifier: workspace:*
+        version: link:../../packages/bases
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown

@@ -29,6 +29,11 @@ class MainActivity : TauriActivity() {
     /** A note to open, carried in by a widget row. */
     const val EXTRA_OPEN = "ch.emilvinu.nib.open"
 
+    /** A task to tick, by its anchor and its space, carried in by a box of the Today
+     *  widget; see TodayWidget.kt and mobile/handed.ts. */
+    const val EXTRA_TICK = "ch.emilvinu.nib.tick"
+    const val EXTRA_TICK_SPACE = "ch.emilvinu.nib.tick.space"
+
     /** Written onto an intent once it has been read, so a launch that is replayed
      *  - a process killed in the background and restored with the intent it was
      *  started with - does not make the same note twice. */
@@ -37,6 +42,15 @@ class MainActivity : TauriActivity() {
     /** Asking for the microphone. Its own number so the answer can be told from
      *  anything else the app ever asks for. */
     private const val MICROPHONE = 0x6d69
+
+    /** The activity while it is up, so a reminder's Done pressed in the shade reaches
+     *  a page that is open at once; see Reminders.kt. */
+    @Volatile private var live: java.lang.ref.WeakReference<MainActivity>? = null
+
+    /** A press on a reminder is waiting: the page, if there is one, takes it now. */
+    fun reminded() {
+      live?.get()?.tell("window.__nibReminders?.()")
+    }
   }
 
   // Back closes whatever is over the note rather than the app. Every layer the
@@ -56,6 +70,8 @@ class MainActivity : TauriActivity() {
   // own thread, the same way the insets are.
   @Volatile private var command = ""
   @Volatile private var opening = ""
+  @Volatile private var ticking = ""
+  @Volatile private var tickingIn = ""
 
   /** The page, once there is one. Held so an intent that arrives while the app is
    *  already open can say so, and so the recogniser's words have somewhere to go. */
@@ -92,6 +108,7 @@ class MainActivity : TauriActivity() {
       navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
     )
     super.onCreate(savedInstanceState)
+    live = java.lang.ref.WeakReference(this)
 
     // Read before the page exists, which is the usual case: a share is what
     // started the app. The page asks for it as it comes up; see mobile/handed.ts.
@@ -106,6 +123,11 @@ class MainActivity : TauriActivity() {
     if (read(intent)) tell("window.__nibHanded?.()")
   }
 
+  override fun onDestroy() {
+    if (live?.get() === this) live = null
+    super.onDestroy()
+  }
+
   /**
    * Takes what an intent was carrying and answers whether it was carrying
    * anything. Nothing here acts on it: what a share becomes, and what a command
@@ -117,11 +139,23 @@ class MainActivity : TauriActivity() {
 
     val asked = intent.getStringExtra(EXTRA_COMMAND) ?: ""
     val note = intent.getStringExtra(EXTRA_OPEN) ?: ""
+    val tick = intent.getStringExtra(EXTRA_TICK) ?: ""
     if (asked.isNotEmpty()) command = asked
     if (note.isNotEmpty()) opening = note
+    if (tick.isNotEmpty()) {
+      ticking = tick
+      tickingIn = intent.getStringExtra(EXTRA_TICK_SPACE) ?: ""
+    }
+
+    // A reminder's notification pressed: its note opened at the task, which is the
+    // page's to do; see Reminders.kt.
+    Reminders.carried(intent)?.let {
+      Reminders.pressed(this, "open", it)
+      reminded()
+    }
 
     val shared = Shared.take(this, intent)
-    return shared || asked.isNotEmpty() || note.isNotEmpty()
+    return shared || asked.isNotEmpty() || note.isNotEmpty() || tick.isNotEmpty()
   }
 
   override fun onWebViewCreate(webView: WebView) {
@@ -284,8 +318,12 @@ class MainActivity : TauriActivity() {
       val json = JSONObject()
       json.put("command", command)
       json.put("open", opening)
+      json.put("tick", ticking)
+      json.put("tickSpace", tickingIn)
       command = ""
       opening = ""
+      ticking = ""
+      tickingIn = ""
       return json.toString()
     }
 
@@ -315,5 +353,24 @@ class MainActivity : TauriActivity() {
      *  because a microphone is not a thing a framed page turns on; see `frame`. */
     @JavascriptInterface
     fun listen(said: String, on: Boolean): Boolean = said == frame && dictation.listen(on)
+
+    /** The reminders' plan, set as alarms; see Reminders.kt. The word, because a framed
+     *  page has no business ringing the phone. */
+    @JavascriptInterface
+    fun reminders(said: String, json: String) {
+      if (said == frame) Reminders.set(this@MainActivity, json)
+    }
+
+    /** Done and presses on a reminder since the page last asked, once. */
+    @JavascriptInterface fun remindersTaken(): String = Reminders.taken(this@MainActivity)
+
+    /** Whether an alarm rings at its minute. */
+    @JavascriptInterface fun exactAlarms(): Boolean = Reminders.exact(this@MainActivity)
+
+    /** The system's switch for exact alarms. */
+    @JavascriptInterface
+    fun askExactAlarms() {
+      Reminders.openExactSwitch(this@MainActivity)
+    }
   }
 }

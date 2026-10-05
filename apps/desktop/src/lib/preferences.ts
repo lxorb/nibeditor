@@ -4,7 +4,8 @@ import { panelDrawable } from './even/panel-words'
 import { glassesGroups, wordFields } from './even/settings'
 import { CATALOGUES_URL, i18n, plural, t } from './i18n.svelte'
 import { languageOptions, machineSaid } from './language-options'
-import { modes } from './modes.svelte'
+import { method } from './mobile/bridge'
+import { modes, REMIND_BEFORE } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { isPlugin } from './plugin'
@@ -12,13 +13,14 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './paper'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
+import { hasTray, residency } from './reminders/residency.svelte'
 import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
-import { isDesktop, isMobile } from './tauri'
+import { isDesktop, isMobile, platform } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { swipeChoice } from './back-swipe/choice.svelte'
-import { shellName, shells, SIZES } from './terminal/shells.svelte'
+import { asWarning, shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
 import type { ThemeSetting } from './themes/settings'
 import { asChannel } from './updater'
@@ -319,7 +321,7 @@ export interface Pane {
   groups: Group[]
 }
 
-/** The terminal's three settings. The shells are asked for as the pane is drawn, which is
+/** The terminal's four settings. The shells are asked for as the pane is drawn, which is
  *  the first time this list is needed; the row fills in when they arrive. */
 function terminalGroup(): Group {
   void shells.ask()
@@ -353,6 +355,75 @@ function terminalGroup(): Group {
         get: () => shells.restoring,
         set: (on) => shells.setRestoring(on),
       },
+      {
+        kind: 'select',
+        label: t('Warn before quitting'),
+        words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
+        options: [
+          { value: 'always', label: t('Always') },
+          { value: 'running', label: t('When something runs') },
+          { value: 'never', label: t('Never') },
+        ],
+        initial: 'running',
+        get: () => shells.warning,
+        set: (value) => shells.setWarning(asWarning(value)),
+      },
+    ],
+  }
+}
+
+/** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
+ *  desktop that has one, the exact alarms on a phone. One line on Linux, where nothing
+ *  rings with nib closed. See docs/tasks.md 5.10. */
+function remindersGroup(): Group {
+  const exact = method('exactAlarms')
+  const ask = method('askExactAlarms')
+
+  return {
+    title: t('Reminders'),
+    ...(isDesktop && platform() === 'linux'
+      ? { caption: { text: t('Reminders ring while nibeditor is open') } }
+      : {}),
+    fields: [
+      {
+        kind: 'select',
+        label: t('Automatic'),
+        words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
+        options: REMIND_BEFORE.map((minutes) => ({
+          value: String(minutes),
+          label:
+            minutes < 0
+              ? t('Off')
+              : minutes === 0
+                ? t('At the time')
+                : t('{count} min', { count: minutes }),
+        })),
+        initial: '0',
+        get: () => String(modes.remindBefore),
+        set: (value) => modes.setRemindBefore(Number(value)),
+      },
+      ...(hasTray
+        ? ([
+            {
+              kind: 'switch',
+              label: t('Stay in the tray'),
+              words: ['tray', 'background', 'menu bar', 'close', 'quit', 'reminder'],
+              get: () => residency.on,
+              set: (on) => residency.set(on),
+            },
+          ] satisfies Field[])
+        : []),
+      ...(exact && ask
+        ? ([
+            {
+              kind: 'switch',
+              label: t('Exact alarms'),
+              words: ['alarm', 'reminder', 'exact', 'battery'],
+              get: () => exact(),
+              set: () => ask(),
+            },
+          ] satisfies Field[])
+        : []),
     ],
   }
 }
@@ -504,22 +575,24 @@ export function preferences(view?: EditorView): Pane[] {
               : []),
           ],
         },
-        {
-          // The few hints that point at a feature somebody has not found, or none of
-          // them: Silent mode is for whoever knows the app and wants it clean. See
-          // hints.svelte.ts.
-          title: t('Hints'),
-          fields: [
-            {
-              kind: 'switch',
-              label: t('Silent mode'),
-              words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
-              initial: false,
-              get: () => modes.silent,
-              set: () => modes.toggleSilent(),
-            },
-          ],
-        },
+        // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
+        ...(__EVEN_PLUGIN__
+          ? []
+          : [
+              {
+                title: t('Hints'),
+                fields: [
+                  {
+                    kind: 'switch' as const,
+                    label: t('Silent mode'),
+                    words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
+                    initial: false,
+                    get: () => modes.silent,
+                    set: () => modes.toggleSilent(),
+                  },
+                ],
+              },
+            ]),
         {
           title: t('Language'),
           // Two things can be worth saying about a language, and both are one line.
@@ -548,6 +621,10 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+
+        // The automatic reminder, and the tray or the alarms that keep reminders ringing;
+        // never the glasses' plugin, which rings nothing.
+        ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
 
         // Which shell a new terminal opens, how large its type is and whether its lines
         // come back after a restart: this machine's, like the release channel below,

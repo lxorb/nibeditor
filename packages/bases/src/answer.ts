@@ -57,7 +57,24 @@ function getter(property: string): Getter {
     }
   } catch (error) {
     if (!(error instanceof BasesError)) throw error
-    // A property name an expression cannot spell, `note.my prop`, read as it is.
+    // A property name an expression cannot spell, `note.my prop`, read as it is; a
+    // formula named so, `formula.My tasks`, read as that formula (a reverse column is
+    // named after a folder, which may have a space in it).
+    if (property.startsWith('formula.')) {
+      const formula = property.slice(8)
+      return {
+        local: false,
+        clock: true,
+        run: (scope) => {
+          try {
+            return scope.row ? scope.formula(formula, scope.row) : null
+          } catch (error) {
+            if (error instanceof BasesError) return null
+            throw error
+          }
+        },
+      }
+    }
     const name = property.replace(/^note\./, '')
     return { local: true, clock: false, run: (scope) => scope.row?.note[name] ?? null }
   }

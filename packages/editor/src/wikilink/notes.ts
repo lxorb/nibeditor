@@ -170,6 +170,9 @@ export interface NoteIndex {
    *  (docs/tasks.md 5.7). Absent where the editor stands alone, and a box then ticks as
    *  a character and chips are only drawn. */
   tasks?: TaskHelp | undefined
+  /** Draws a base's view into a box and answers what takes it away (docs/tasks.md
+   *  5.11). Absent where the editor stands alone: a fence stays code, an embed a card. */
+  mountBase?: ((host: HTMLElement, ask: BaseAsk) => () => void) | undefined
 }
 
 /** A date read off the end of a task's words: where they start, and what they said. */
@@ -191,6 +194,9 @@ export interface TaskHelp {
    *  still on its way. */
   dayAtEnd(text: string): DayTyped | null
 }
+
+/** What a base drawn in a note is: a fence's words, or a base file and one of its views. */
+export type BaseAsk = { code: string } | { target: string; view: string | null }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }
 

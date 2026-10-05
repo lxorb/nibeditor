@@ -1,6 +1,5 @@
 /** The commands about the thread itself (docs/ai-sidebar.md 3.1) that are more than one
- *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact`, `/tasks` and
- *  `/approve`. */
+ *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact` and `/jobs`. */
 
 import { copyText } from '../../clipboard'
 import { workspace } from '../../workspace.svelte'
@@ -104,31 +103,12 @@ const GLYPH: Record<TaskKind, string> = {
   fork: '⑂',
 }
 
-/** `/tasks`: the thread's background work, a row each. */
-export function listTasks(host: Host, thread: Thread): void {
+/** `/jobs`: the thread's background work, a row each. */
+export function listJobs(host: Host, thread: Thread): void {
   const now = Date.now()
   const rows = tasks.of(thread.id).map((one) => {
     const minutes = Math.round((now - one.started) / 60_000)
     return `${GLYPH[one.kind]} ${one.label.split('\n')[0]?.slice(0, 80) ?? ''} · ${minutes}m`
   })
   host.line(thread, rows.join('\n') || '∅')
-}
-
-/** `/approve`: yes to the last call that asked; where none is asking, the last refused
- *  call is asked for again. */
-export function approve(host: Host, thread: Thread): void {
-  for (let at = thread.turns.length - 1; at >= 0; at--) {
-    const turn = thread.turns[at]
-    for (const part of [...(turn?.parts ?? [])].reverse()) {
-      if (part.kind !== 'tool') continue
-      if (part.state === 'asking' && part.result?.approval && host.panel.approve) {
-        void host.panel.approve(part.result.approval, true)
-        return
-      }
-      if (part.state === 'error') {
-        host.panel.send(`Try the ${part.verb} call that was refused again.`)
-        return
-      }
-    }
-  }
 }

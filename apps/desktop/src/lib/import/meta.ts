@@ -63,7 +63,7 @@ export function noteText(title: string | null, body: string, meta: Meta = {}): s
 
 /** A property name YAML will read as one word, for a column called
  *  `Last edited time`. */
-function propertyName(key: string): string {
+export function propertyName(key: string): string {
   return key
     .trim()
     .replace(/[^\w /-]+/g, '')

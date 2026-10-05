@@ -78,12 +78,21 @@ describe('what Android may copy out of the app', () => {
 })
 
 describe('what the app asks the phone for', () => {
-  test('the microphone, for dictation, and nothing else beyond the network', () => {
+  test('the microphone, for dictation, the reminders, and nothing else beyond the network', () => {
     const asked = [...manifest.matchAll(/uses-permission android:name="([^"]+)"/g)].map(
       (one) => one[1],
     )
 
-    expect(asked).toEqual(['android.permission.INTERNET', 'android.permission.RECORD_AUDIO'])
+    // The reminders' three: showing one, an alarm at its minute, and the alarms set again
+    // after a reboot (Reminders.kt). Never USE_EXACT_ALARM, which is for clocks and
+    // calendars and which a store review refuses an app like this.
+    expect(asked).toEqual([
+      'android.permission.INTERNET',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.SCHEDULE_EXACT_ALARM',
+      'android.permission.RECEIVE_BOOT_COMPLETED',
+    ])
   })
 
   /** Deliberate, and load-bearing: the webview offers the camera for a `capture`
@@ -388,5 +397,40 @@ describe('what a release build shrinks', () => {
 
     expect(built).toContain('--apk')
     expect(built, 'a debug assembly does not run R8').not.toContain('--debug')
+  })
+})
+
+/** Today, the second widget (docs/tasks.md 5.18): the open tasks for today and
+ *  overdue, a box each that ticks it through the app's own write. */
+describe('the Today widget', () => {
+  const today = read(ANDROID, 'res', 'layout', 'widget_today.xml')
+  const kotlin = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+
+  test('is declared, with the provider that describes it', () => {
+    expect(manifest).toContain('android:name=".TodayWidget"')
+    expect(manifest).toContain('android:resource="@xml/widget_today"')
+    expect(read(ANDROID, 'res', 'xml', 'widget_today.xml')).toContain('home_screen')
+  })
+
+  test('has a box and the words for every task the page sends', () => {
+    const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
+    const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
+    const ids = (kind: string, text: string) =>
+      [...text.matchAll(new RegExp(String.raw`nib_today_${kind}_(\d+)`, 'g'))].map((one) =>
+        Number(one[1]),
+      )
+
+    for (const kind of ['row', 'box', 'text']) {
+      expect(ids(kind, today), kind).toEqual([...Array(most).keys()])
+      expect(ids(kind, kotlin), kind).toEqual([...Array(most).keys()])
+    }
+  })
+
+  test('ticks through the page, which reads the anchor the activity hands over', () => {
+    expect(kotlin).toContain('MainActivity.EXTRA_TICK')
+    expect(activity).toContain('json.put("tick", ticking)')
+    expect(read(SOURCE, 'lib', 'mobile', 'handed.ts')).toContain('tickTask(at, space, true)')
+    // Redrawn whenever the notes widget is, from the one JSON the page hands over.
+    expect(widgets).toContain('TodayWidget.refresh(context)')
   })
 })

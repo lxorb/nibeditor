@@ -67,6 +67,11 @@ export const KEEP_MONTH = 30
 export const KEEP_YEAR = 365
 export const KEEP_VERSIONS: readonly number[] = [KEEP_MONTH, KEEP_YEAR]
 
+/** How many minutes before a task's time it reminds of itself, with -1 for not at all:
+ *  Todoist's automatic reminder (docs/tasks.md 5.10). The same list the service takes,
+ *  which reads it too, to push to a phone; see services/sync/src/settings.ts. */
+export const REMIND_BEFORE: readonly number[] = [0, 5, 15, 30, 60, -1]
+
 /** How far back a bulk restore could offer to go, in days, before the horizon is
  *  taken into account. */
 const ROLLBACK_STEPS: readonly number[] = [1, 7, 30, 90, 180, 365]
@@ -165,6 +170,7 @@ interface Saved {
   pagesPaper: string
   conflicts: string
   keepVersions: number
+  remindBefore: number
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -393,6 +399,11 @@ class Modes {
    *  and docs/sync.md. */
   keepVersions = $state<number>(KEEP_MONTH)
 
+  /** The automatic reminder: minutes before a task's time, -1 for none. On the account,
+   *  because every device rings the same task and the Worker pushes it; see
+   *  lib/reminders. At the time, as Todoist starts. */
+  remindBefore = $state<number>(0)
+
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
    *  written and so is where this starts.
@@ -485,6 +496,9 @@ class Modes {
       this.keepVersions = KEEP_VERSIONS.includes(saved.keepVersions as number)
         ? (saved.keepVersions as number)
         : KEEP_MONTH
+      if (REMIND_BEFORE.includes(saved.remindBefore as number)) {
+        this.remindBefore = saved.remindBefore as number
+      }
       this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
       this.glassesVoice = saved.glassesVoice === true
@@ -984,6 +998,15 @@ class Modes {
     this.share({ keepVersions: wanted })
   }
 
+  /** One of the automatic reminder's choices, and nothing else. */
+  setRemindBefore(minutes: number) {
+    if (!REMIND_BEFORE.includes(minutes) || minutes === this.remindBefore) return
+
+    this.remindBefore = minutes
+    this.persist()
+    this.share({ remindBefore: minutes })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1054,6 +1077,14 @@ class Modes {
     if (isNumber(keeping) && KEEP_VERSIONS.includes(keeping) && unheard) {
       if (keeping !== this.keepVersions) {
         this.keepVersions = keeping
+        this.persist()
+      }
+    }
+
+    const before = remote.remindBefore
+    if (isNumber(before) && REMIND_BEFORE.includes(before) && unheard) {
+      if (before !== this.remindBefore) {
+        this.remindBefore = before
         this.persist()
       }
     }
@@ -1355,6 +1386,7 @@ class Modes {
       hand: this.hand,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
+      remindBefore: this.remindBefore,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

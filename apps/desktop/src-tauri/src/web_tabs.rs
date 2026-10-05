@@ -944,6 +944,22 @@ mod session {
         }
     }
 
+    /// Whether a page of `store` can be built without the window waiting on a browser
+    /// that does not answer: the shared store's browser is asked through the page that
+    /// holds its session open, and one not started yet answers. See `web_answers.rs`.
+    pub fn answering(app: &tauri::AppHandle, store: Option<&str>) -> Result<(), String> {
+        use tauri::Manager as _;
+        let answers = store.is_some()
+            || app
+                .get_webview(ANCHOR)
+                .is_none_or(|anchor| crate::web_answers::answers(&anchor));
+        if answers {
+            return Ok(());
+        }
+        crate::web_answers::said(app);
+        Err(crate::web_answers::NOT_ANSWERING.to_owned())
+    }
+
     /// What the page that holds the session open is called. Under the same `web-` prefix
     /// every page in a tab wears, so no capability reaches it either; a tab would have to
     /// be called `session` for the two to collide, and a tab's id is made rather than
@@ -1007,6 +1023,66 @@ mod session {
         }
     }
 }
+
+/// A tab's page built in the window, on the window's own thread, which is the only one
+/// that may build one.
+///
+/// Built on the one session the run shares, so closing a note and opening it again keeps
+/// the login and the cookies the way a browser tab does. The session is held open by a
+/// page nobody sees rather than by this tab, because `WebView2` ends it with the last
+/// webview on the profile however long the environment is kept; see `session::anchor`,
+/// which is opened once here and never closed.
+///
+/// And a page of the store every space shares is built by that store's browser, which the
+/// window's thread would wait on with the whole app behind it: where it does not answer,
+/// the page is refused and asked for again later instead. See `web_answers.rs`.
+fn page_built(
+    window: &tauri::Window,
+    builder: WebviewBuilder<crate::Engine>,
+    pane: &Pane,
+    app: &AppHandle,
+    store: Option<&str>,
+) -> Result<(), String> {
+    let _doing = crate::stall::doing("web_open: building the page");
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = {
+        session::answering(app, store)?;
+        on_shared_session(builder, window, app, store)
+    };
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    let _ = (app, store);
+
+    window
+        .add_child(
+            builder,
+            LogicalPosition::new(pane.x, pane.y),
+            LogicalSize::new(pane.width, pane.height),
+        )
+        .map(|_| ())
+        .map_err(|error| format!("that page could not be opened: {error}"))
+}
+
+/// Starts the browser process every web tab shares while the window's own page is still
+/// loading, where the launch will put a website on screen: the page that holds the shared
+/// session open (`session::anchor`) is the first thing building that website would do,
+/// and the window's thread spends a third of a second and more on it. Done here it
+/// overlaps the window's page coming up instead of following it; the tab's own build
+/// then finds it there. See `ahead::start`, which says whether a website is coming.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) fn warm(app: &AppHandle) {
+    let anchoring = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        if let Some(window) = anchoring.get_window(MAIN) {
+            let _doing = crate::stall::doing("web_warm");
+            session::anchor(&window, &anchoring);
+            crate::trace::mark("web session warmed");
+        }
+    });
+}
+
+/// Every other engine starts nothing ahead.
+#[cfg(all(desktop, not(all(windows, not(feature = "cef")))))]
+pub(crate) fn warm(_app: &AppHandle) {}
 
 /// The builder, pointed at the one session its store shares - and the shared store's
 /// session opened, if this is the first page of the run.
@@ -1223,33 +1299,17 @@ pub async fn web_open(
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 
-    // The handle the page that holds the session open is built through, since the one
-    // below is moved into the closure and this file still needs it afterwards.
-    #[cfg(all(windows, not(feature = "cef")))]
-    let anchoring = app.clone();
-    #[cfg(all(windows, not(feature = "cef")))]
-    let storing = store.clone();
-
+    // The handle and the store the page is built through, moved into the build.
+    let (building, storing) = (app.clone(), store.clone());
     let posted = app.run_on_main_thread(move || {
-        // Built on the one session the run shares, so closing a note and opening it
-        // again keeps the login and the cookies the way a browser tab does. The session
-        // is held open by a page nobody sees rather than by this tab, because `WebView2`
-        // ends it with the last webview on the profile however long the environment is
-        // kept; see `session::anchor`, which is opened once here and never closed.
-        #[cfg(all(windows, not(feature = "cef")))]
-        let builder = on_shared_session(builder, &window, &anchoring, storing.as_deref());
-
-        let made = window
-            .add_child(
-                builder,
-                LogicalPosition::new(pane.x, pane.y),
-                LogicalSize::new(pane.width, pane.height),
-            )
-            .map(|_| ())
-            .map_err(|error| format!("that page could not be opened: {error}"));
-
         // One build, one answer: a full channel would be an answer already sent.
-        let _ = sending.try_send(made);
+        let _ = sending.try_send(page_built(
+            &window,
+            builder,
+            &pane,
+            &building,
+            storing.as_deref(),
+        ));
     });
 
     let made = match posted {
@@ -1700,6 +1760,24 @@ pub fn web_place(
 ) -> Result<bool, String> {
     let view = found(&app, &tab)?;
 
+    // A page whose browser does not answer is neither shown nor told it is hidden: either
+    // would wait on that browser with the whole app stopped behind it. Out of sight it is
+    // put by its holder, which is this process's own window; shown, the window asks
+    // again. See web_answers.rs.
+    let answering = {
+        let _doing = crate::stall::doing("web_place: asked");
+        crate::web_answers::answers(&view)
+    };
+    if !answering {
+        crate::web_answers::said(&app);
+        if visible {
+            return Err(crate::web_answers::NOT_ANSWERING.to_owned());
+        }
+        let _doing = crate::stall::doing("web_place: put away");
+        crate::web_answers::put_away(&view);
+        return Ok(crate::web_cut::CUTS);
+    }
+
     // Where the layout the window measured puts the page at the window's size now, which
     // is where it was measured unless the window has been resized since; see
     // web_follow.rs.
@@ -1710,21 +1788,35 @@ pub fn web_place(
         frame,
         visible,
     );
-    view.set_bounds(crate::web_follow::rect_of(bounds))
-        .map_err(|error| format!("that page could not be placed: {error}"))?;
+    // Each step says itself while it runs, so a stall names the one that waited; see
+    // stall.rs.
+    {
+        let _doing = crate::stall::doing("web_place: bounds");
+        view.set_bounds(crate::web_follow::rect_of(bounds))
+            .map_err(|error| format!("that page could not be placed: {error}"))?;
+    }
 
     // What of the page the app's own layers are over, cut out of it rather than the page
     // hidden; see web_cut.rs. Asked before the page is shown, so a page coming back under
     // a layer never draws a frame over it.
     if visible {
+        let _doing = crate::stall::doing("web_place: cut");
         crate::web_cut::apply(&view, cut.clone(), bounds.width, bounds.height);
     }
 
-    if visible { view.show() } else { view.hide() }
-        .map_err(|error| format!("that page could not be shown: {error}"))?;
+    {
+        let _doing = crate::stall::doing(if visible {
+            "web_place: shown"
+        } else {
+            "web_place: hidden"
+        });
+        if visible { view.show() } else { view.hide() }
+            .map_err(|error| format!("that page could not be shown: {error}"))?;
+    }
 
     // A page shown again after a layer that closed over it may be owed the keyboard; see
     // keyboard.rs. A page under a layer is not shown to the keyboard: the layer has it.
+    let _doing = crate::stall::doing("web_place: keyboard");
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
     Ok(crate::web_cut::CUTS)
 }
@@ -2035,6 +2127,7 @@ pub async fn web_close(
     let named = tab.clone();
 
     let posted = app.run_on_main_thread(move || {
+        let _doing = crate::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
             // A page still fetching a file stays until the file is in, out of sight; the
             // engine stops reporting a download whose webview has gone. See
@@ -2047,7 +2140,13 @@ pub async fn web_close(
             crate::web_cut::uncut(view.label());
             #[cfg(feature = "cef")]
             let_go(view.label());
-            if crate::downloads::linger(&closing, &named) {
+            // A page whose browser does not answer is put out of sight now and closed
+            // once it does, rather than the app waiting on it; see web_answers.rs.
+            if !crate::web_answers::answers(&view) {
+                crate::web_answers::said(&closing);
+                crate::web_answers::put_away(&view);
+                crate::web_answers::close_when_answering(&closing, view.label().to_owned());
+            } else if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
                 let _ = view.close();

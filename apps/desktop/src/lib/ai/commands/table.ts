@@ -47,7 +47,7 @@ export const ROWS: readonly Row[] = [
   row('conversation', 'archive', [], key('Archive the thread')),
   row('conversation', 'delete', [], key('Delete the thread')),
   row('conversation', 'stop', [], key('Stop everything it runs')),
-  row('conversation', 'tasks', ['ps', 'bashes'], key('Background work')),
+  row('conversation', 'jobs', ['ps', 'bashes'], key('Background work')),
   row('conversation', 'focus', [], key('Fold tools and thinking')),
   row('conversation', 'help', [], key('Commands and keys')),
 
@@ -58,16 +58,11 @@ export const ROWS: readonly Row[] = [
   row('model', 'output-style', ['personality', 'style'], key('How answers read'), '[style]'),
 
   // 3.3 Modes and long work
-  row('modes', 'ask', [], key('Ask mode'), '[question]'),
+  row('modes', 'approve', ['ask'], key('Approve mode'), '[task]'),
   row('modes', 'plan', [], key('Plan mode'), '[task]'),
   row('modes', 'agent', [], key('Agent mode'), '[task]'),
   row('modes', 'agents', ['subagents'], key('Agent profile'), '[name]'),
-  row(
-    'modes',
-    'permissions',
-    ['approvals', 'allowed-tools', 'approve'],
-    key('What the agent may do'),
-  ),
+  row('modes', 'permissions', ['approvals', 'allowed-tools'], key('What the agent may do')),
   row('modes', 'goal', [], key('Work toward a goal'), '[condition|pause|resume|clear]'),
   row('modes', 'loop', ['proactive'], key('Run again and again'), '[interval] [prompt]'),
   row('modes', 'subtask', [], key('A helper in the background'), '<task>'),
@@ -94,6 +89,8 @@ export const ROWS: readonly Row[] = [
   row('words', 'diff', ['changes'], key('What it changed')),
 
   // 3.6 Account and app
+  row('app', 'tasks', [], key('To-dos'), '[filter|words]'),
+  row('app', 'today', ['plan-day'], key('Plan my day'), '[wishes]'),
   row('app', 'status', [], key('Status')),
   row('app', 'usage', ['cost', 'stats', 'rate-limit-options'], key('Usage')),
   row('app', 'login', [], key('Sign in')),

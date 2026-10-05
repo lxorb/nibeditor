@@ -73,4 +73,6 @@ export const zhHans: Dictionary = {
   'sign in first': '请先登录',
   'no such space': '没有该空间',
   'that path is not usable': '该路径不可用',
+  // A page as a task in the inbox
+  'As a task': '作为任务',
 }

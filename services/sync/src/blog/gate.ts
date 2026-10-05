@@ -17,6 +17,7 @@
  *  old one handed out. */
 
 import { equals, randomBytes } from '../crypto'
+import { rounds } from '../rounds'
 import { escape } from './head'
 import type { SitePassword } from './site'
 
@@ -35,8 +36,8 @@ const TICKET = 'nib_site'
 
 /** How hard the hash is to try. A hundred thousand rounds of PBKDF2 is what a
  *  Worker can do inside one request and what a password guesser cannot do a
- *  million times. */
-const ROUNDS = 100_000
+ *  million times. The tests hash at less; see rounds.ts. */
+export const SITE_ROUNDS = 100_000
 
 function hex(bytes: Uint8Array): string {
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -56,7 +57,7 @@ async function derived(password: string, salt: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', bytes(password), 'PBKDF2', false, ['deriveBits'])
 
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: bytes(salt), iterations: ROUNDS },
+    { name: 'PBKDF2', hash: 'SHA-256', salt: bytes(salt), iterations: rounds(SITE_ROUNDS) },
     key,
     256,
   )

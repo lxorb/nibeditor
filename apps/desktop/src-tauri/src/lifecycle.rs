@@ -18,7 +18,12 @@ use crate::launch;
 /// it would ask, and close if the answer is yes.
 const QUIT: &str = "nib://quit";
 
-/// Where the app is on its way out, as one of the three values below.
+/// What one window is told before any of them is: ask whether what is running may
+/// stop - a terminal's program, an AI turn - and answer `quit_confirmed` or
+/// `keep_running`. See `lib/quitting` in the app.
+const QUIT_ASK: &str = "nib://quit-ask";
+
+/// Where the app is on its way out, as one of the four values below.
 #[derive(Default)]
 pub struct Quitting(AtomicU8);
 
@@ -28,6 +33,9 @@ const RUNNING: u8 = 0;
 const ASKING: u8 = 1;
 /// Every window has gone and the app is ending. Nothing stops it now.
 const LEAVING: u8 = 2;
+/// Asked to quit, and one window is asking whether what runs may stop. No window
+/// has been asked to go yet.
+const CONFIRMING: u8 = 3;
 
 impl Quitting {
     fn now(&self) -> u8 {
@@ -111,8 +119,10 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::window_gone(app, &label);
             crate::ai_cli::window_gone(app, &label);
             // The last window has answered yes. With the presenter's window still
-            // open the loop would not end by itself, so it is ended here.
-            if state(app).now() == ASKING && launch::document_windows(app).is_empty() {
+            // open the loop would not end by itself, so it is ended here. A window
+            // closed while it was asking whether to quit is that question answered.
+            let now = state(app).now();
+            if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
                 leave(app);
             }
         }
@@ -121,11 +131,89 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
     }
 }
 
-/// Quits the app the careful way: every window is asked to close as if its close
-/// button had been pressed, which is where the question about unsaved notes lives,
-/// and the app ends once all of them have. What Quit in the app's menu comes to,
-/// and anything else that asks the app to end: see `asked_to_quit` for a Mac.
+/// Quits the app the careful way, asking first whether what is running may stop: one
+/// window - the one in front, else one in sight, else the first - is told to ask, and
+/// answers `quit_confirmed` or `keep_running`. With no window able to ask, the quit
+/// goes on at once. What Quit in the tray, a Mac's Cmd+Q and the engine's relaunch
+/// all come to; see `asked_to_quit` for a Mac.
 pub fn quit(app: &AppHandle) {
+    let quitting = state(app);
+    if quitting.now() == ASKING || quitting.now() == LEAVING {
+        return;
+    }
+
+    let windows = listening_windows(app, None);
+    let asker = windows
+        .iter()
+        .find(|window| window.is_focused().unwrap_or(false))
+        .or_else(|| {
+            windows
+                .iter()
+                .find(|window| window.is_visible().unwrap_or(false))
+        })
+        .or_else(|| windows.first());
+
+    let Some(asker) = asker else {
+        quit_now(app);
+        return;
+    };
+    quitting.set(CONFIRMING);
+    let _ = app.emit_to(asker.label(), QUIT_ASK, ());
+}
+
+/// The document windows whose page has come up far enough to answer, but `except`.
+fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window> {
+    let pending = app.try_state::<launch::Pending>();
+    launch::document_windows(app)
+        .into_iter()
+        .filter(|window| Some(window.label()) != except)
+        .filter(|window| {
+            pending
+                .as_ref()
+                .is_some_and(|pending| pending.is_listening(window.label()))
+        })
+        .collect()
+}
+
+/// The asking window's yes: every window goes, as `quit_now` has them. On a thread of
+/// the runtime's, as a quit writes down where each window was.
+#[tauri::command(async)]
+pub fn quit_confirmed(webview: tauri::Webview) {
+    let app = webview.app_handle();
+    if launch::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
+        quit_now(app);
+    }
+}
+
+/// The other windows a question about quitting waits on, by label.
+#[tauri::command]
+pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
+    listening_windows(webview.app_handle(), Some(webview.label()))
+        .iter()
+        .map(|window| window.label().to_owned())
+        .collect()
+}
+
+/// The asking window put where its question can be read: back from the tray when Quit
+/// there is what asked, and forward otherwise. Never a probe's; see placement.rs.
+#[tauri::command(async)]
+pub fn quit_show(webview: tauri::Webview) {
+    let window = webview.window();
+    if !launch::is_document_window(window.label()) {
+        return;
+    }
+    #[cfg(any(windows, target_os = "macos"))]
+    if !window.is_visible().unwrap_or(true) {
+        crate::agents::shell::open(webview.app_handle());
+        return;
+    }
+    crate::placement::raised(&window);
+}
+
+/// Quits without asking whether anything may stop: every window is asked to close as
+/// if its close button had been pressed, which is where the writes owed are waited
+/// for, and the app ends once all of them have.
+pub fn quit_now(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
@@ -169,14 +257,14 @@ pub fn quit(app: &AppHandle) {
     }
 }
 
-/// A window said no: somebody chose Cancel over an unsaved note. The app carries
+/// A window said no: somebody chose Cancel over what was still running. The app carries
 /// on as it was, so closing the last window later keeps it in the Dock rather
 /// than finishing a quit nobody still wants.
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
     crate::engine_switch::relaunch_called_off();
     let quitting = state(&app);
-    if quitting.now() == ASKING {
+    if quitting.now() == ASKING || quitting.now() == CONFIRMING {
         quitting.set(RUNNING);
     }
     // And whatever asked for the quit is told it is off: a logout or a restart
@@ -359,7 +447,7 @@ fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
         // The last window has closed. On the way out of a quit that is the quit
         // done; otherwise a Mac app stays in the Dock, and elsewhere the app ends
         // with its last window as it always has.
-        None if now == ASKING || !mac => Exit::Pass,
+        None if now == ASKING || now == CONFIRMING || !mac => Exit::Pass,
         None => Exit::Stay,
         // Asked to end. Asked again while the windows are still answering - Cmd+Q
         // pressed a second time - the question is put again, and a window already
@@ -371,7 +459,7 @@ fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
 
 #[cfg(test)]
 mod tests {
-    use super::{on_exit, Exit, ASKING, LEAVING, RUNNING};
+    use super::{on_exit, Exit, ASKING, CONFIRMING, LEAVING, RUNNING};
 
     #[test]
     fn a_mac_app_outlives_its_last_window() {
@@ -398,6 +486,15 @@ mod tests {
         // And the exit the app asks for itself once they have all gone.
         assert_eq!(on_exit(Some(0), LEAVING, true), Exit::Pass);
         assert_eq!(on_exit(None, LEAVING, true), Exit::Pass);
+    }
+
+    /// The last window closed while one was asking whether to quit is the quit
+    /// answered; a second Cmd+Q puts the question again.
+    #[test]
+    fn a_quit_being_confirmed_ends_with_its_last_window() {
+        assert_eq!(on_exit(None, CONFIRMING, true), Exit::Pass);
+        assert_eq!(on_exit(None, CONFIRMING, false), Exit::Pass);
+        assert_eq!(on_exit(Some(0), CONFIRMING, true), Exit::Ask);
     }
 
     #[test]

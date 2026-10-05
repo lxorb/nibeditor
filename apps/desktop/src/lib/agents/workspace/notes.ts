@@ -16,10 +16,11 @@ import type { AgentAnswer } from '../../automation/caller'
 import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
-import { isScratchpad } from '../../scratchpad/is'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
+import { SCRATCHPAD_TAB } from '../docs/desk'
+import { SCRATCHPAD } from '../../scratchpad/is.svelte'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
@@ -31,9 +32,21 @@ import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } 
 /** The note a call names, in a space it may reach: its place, and its path as the
  *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
  *  `get_context` lists: one with a file is that file, as though its path were said, and
- *  one in no space - a note with no file yet (workspace/drafts.ts), the scratchpad - is
- *  reached by the tab alone. */
-function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {
+ *  a note with no file yet (workspace/drafts.ts) is reached by the tab alone. And
+ *  `tab: "scratchpad"`, the scratchpad, which is every space's and no tab: reached by
+ *  an agent that reaches the space it names, or the open one. */
+export function noteOf(
+  call: Call,
+  writing: boolean,
+): { place: Place; relative: string; tab?: string } {
+  if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
+    return {
+      place: placeFor(call, maybe(call, 'space')),
+      relative: SCRATCHPAD,
+      tab: SCRATCHPAD_TAB,
+    }
+  }
+
   if (maybe(call, 'tab') !== null) {
     const named = namedTab(call, ['note'], 'a note')
     if (named.relative !== null) {
@@ -58,17 +71,16 @@ function noteOf(call: Call, writing: boolean): { place: Place; relative: string;
   return { place, relative }
 }
 
-/** The space of a note tab in no space's folder: a draft's own, the open one for the
- *  scratchpad. */
+/** The space of a note tab with no file: the draft's own. */
 function spaceOfTab(tab: Tab): string {
-  const space = isDraft(tab.note) || isScratchpad(tab.path) ? workspace.spaceOf(tab.note) : null
+  const space = isDraft(tab.note) ? workspace.spaceOf(tab.note) : null
   if (space === null) {
     throw new Refused('no_such_tab', `tab ${tab.id} holds a note outside every space`)
   }
   return space
 }
 
-function at({ place, relative, tab }: { place: Place; relative: string; tab?: string }) {
+export function at({ place, relative, tab }: { place: Place; relative: string; tab?: string }) {
   return { path: relative, space: place.space.id, ...(tab === undefined ? {} : { tab }) }
 }
 

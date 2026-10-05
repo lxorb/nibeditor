@@ -5,23 +5,22 @@
  *  many of the tabs going are busy. What counts as running is the crate's answer; see
  *  src-tauri/src/terminal/process.rs.
  *
- *  Never as the window closes or the app quits, which is VS Code's default too: those
- *  put every tab back on the next launch, and a question per terminal on the way out is
- *  a question people learn to click through. */
+ *  The window closing and the app quitting ask one question for all of them instead; see
+ *  lib/quitting. Settings' Warn before quitting is that question's, and this one asks
+ *  whatever it says: closing a tab is always one tab's program stopped on purpose or by
+ *  a slip, which VS Code's `confirmOnKill` asks about by default too. */
 
 import { key, t } from '../i18n.svelte'
 import { invoke } from '../tauri'
 import type { Tab } from '../workspace.svelte'
 import { ptyOf } from './running'
-import { hostIdOf, readSpec } from './spec'
 
 /** Whether the terminals among `closing` may go. */
 export async function mayEnd(closing: readonly Tab[]): Promise<boolean> {
-  // `ssh` is a remote terminal's shell, as Windows Terminal's SSH profiles have it: what
-  // runs there cannot be seen from here, and the tab closes as a shell at its prompt does.
-  const shells = closing.filter(
-    (tab) => tab.kind === 'terminal' && hostIdOf(readSpec(tab.doc)?.shell ?? '') === null,
-  )
+  // Another machine's terminal counts as busy while it is connected, as macOS Terminal
+  // and iTerm2 count an `ssh`: what runs there cannot be seen from here, and closing it
+  // ends it. The crate says so; see `Held::busy` in src-tauri/src/terminal.rs.
+  const shells = closing.filter((tab) => tab.kind === 'terminal')
   const busy = await Promise.all(
     shells.map(async (tab) => {
       const id = ptyOf(tab.id)

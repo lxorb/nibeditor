@@ -14,7 +14,6 @@ import { message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
 import { forget, keep, stored } from '../../stored'
-import { invoke } from '../../tauri'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
@@ -40,6 +39,7 @@ import type {
   Usage,
 } from '../chat/types'
 import { added, noUsage } from '../chat/usage'
+import { nextMode } from '../modes'
 import type { Provider } from '../providers'
 import { ai } from '../store.svelte'
 import { threadMarkdown } from './export'
@@ -82,7 +82,8 @@ export interface Head {
   kept: boolean
 }
 
-const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
+/** The two places the panel is drawn: the right side, and a tab of its own. */
+export type Host = 'side' | 'tab'
 
 /** What the panel needs from around it at the moment of sending: the note in front and
  *  its selection, where their chips are on. */
@@ -140,6 +141,9 @@ class Chat implements Panel {
   models = $state.raw<Record<string, ModelInfo[]>>({})
   /** Asks the field to take the keyboard; the panel answers it. */
   focusAsked = $state(0)
+  /** Where the panel was last used, the right side or a tab of its own ("Open in new
+   *  tab"): the one place the keyboard and a popover go while both are on screen. */
+  host = $state<Host>('side')
 
   /** The space the panel shows. Plain, so the effect that sets it never reads what it
    *  writes. */
@@ -261,7 +265,7 @@ class Chat implements Panel {
   }
 
   async openThread(id: string, focus = true): Promise<void> {
-    const held = this.live.get(id) ?? (await readThread(this.space, id).catch(() => null))
+    const held = await this.held(id)
     if (!held) return
     this.listing = false
     this.show(held)
@@ -313,7 +317,14 @@ class Chat implements Panel {
     if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
 
+  /** The thread list in the conversation's place; asked again with nothing to search
+   *  for while it is there, the conversation back (the side's Chats button). */
   showThreads(query = ''): void {
+    if (this.listing && !query) {
+      this.listing = false
+      this.focus()
+      return
+    }
     this.popover = null
     this.listing = true
     this.listQuery = query
@@ -667,10 +678,9 @@ class Chat implements Panel {
     this.changedHead(thread)
   }
 
-  /** Shift+Tab: Ask, Plan, Agent, and round again. */
+  /** Shift+Tab: Approve, Agent, Plan, and round again. */
   nextMode(): void {
-    const at = MODES.indexOf(this.open?.mode ?? 'ask')
-    this.setMode(MODES[(at + 1) % MODES.length] ?? 'ask')
+    this.setMode(nextMode(this.open?.mode ?? lastMode()))
   }
 
   /** A provider's models, asked once a session. A list that cannot be had leaves the
@@ -779,8 +789,9 @@ class Chat implements Panel {
 
   // ── The thread's own menu ──────────────────────────────
 
-  async rename(name?: string): Promise<void> {
-    const thread = this.open
+  /** The open thread renamed, or the one the list names (its row's menu). */
+  async rename(name?: string, id = this.open?.id): Promise<void> {
+    const thread = id ? await this.held(id) : null
     if (!thread) return
     const named = name ?? (await prompt.ask({ title: t('Rename'), value: thread.title }))
     if (!named?.trim()) return
@@ -789,14 +800,40 @@ class Chat implements Panel {
     void this.refreshHeads()
   }
 
-  /** A copy of the thread up to here, and the reader in it (`/branch`). */
-  branch(name?: string): void {
+  /** A copy of the thread up to here, and the reader in it (`/branch`); from an answer's
+   *  own menu, up to that answer (ChatGPT's "Branch in new chat"). */
+  branch(name?: string, from?: string): void {
     const thread = this.open
-    const last = thread?.turns.at(-1)
+    const last = from ? thread?.turns.find((one) => one.id === from) : thread?.turns.at(-1)
     if (!thread || !last) return
     const copy = branchThread(thread, last.id, name ?? thread.title)
     this.show(copy)
+    rememberOpen(copy.space, copy.id)
     void keepThread(copy).then(() => this.refreshHeads())
+    this.focus()
+  }
+
+  /** A quick question's conversation (Ctrl Ctrl), carried on as a thread of its own in
+   *  the panel: Raycast's and Arc's way from a quick answer to a conversation. */
+  continueFrom(turns: readonly { role: 'you' | 'model'; text: string }[], space: string): void {
+    this.enter(space)
+    const provider = this.providerForNew()
+    const thread = threadFromAsk(turns, space, provider?.id ?? '', provider?.model ?? '')
+    if (!thread) return
+    thread.mode = lastMode()
+    this.adopt(thread, true)
+    rememberOpen(space, thread.id)
+    this.focus()
+  }
+
+  /** Dictation into the field (`/voice`, the round button on an empty field). */
+  voice(on?: boolean): void {
+    void import('./dictate.svelte').then(({ dictation }) => dictation.toggle(on))
+  }
+
+  /** A thread by id: the one in hand, else the one kept. */
+  private async held(id: string): Promise<Thread | null> {
+    return this.live.get(id) ?? (await readThread(this.space, id).catch(() => null))
   }
 
   async exportThread(): Promise<void> {
@@ -816,7 +853,7 @@ class Chat implements Panel {
 
   private async setArchived(id: string | undefined, archived: boolean): Promise<void> {
     if (!id) return
-    const thread = this.live.get(id) ?? (await readThread(this.space, id).catch(() => null))
+    const thread = await this.held(id)
     if (!thread) return
     if (archived) thread.archived = true
     else delete thread.archived
@@ -838,11 +875,6 @@ class Chat implements Panel {
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()
-  }
-
-  /** The reader's answer to a question a tool call asked (`needs_approval`). */
-  async approve(approval: string, allow: boolean): Promise<void> {
-    await invoke('agents_answer', { id: approval, allow, always: false }).catch(() => undefined)
   }
 }
 

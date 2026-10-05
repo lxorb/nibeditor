@@ -29,7 +29,7 @@ describe('the crate is asked', () => {
     expect(await crateTools.context(CLAUDE)).toBe(SCREEN)
     expect(asked.at(-1)).toEqual({
       command: 'ai_agent_context',
-      args: { agent: { id: 'anthropic', name: 'Claude', readerTabs: true, askFirst: false } },
+      args: { agent: { id: 'anthropic', name: 'Claude', readerTabs: true } },
     })
   })
 
@@ -46,12 +46,12 @@ describe('the crate is asked', () => {
         { nope: 1 },
       ],
     }
-    const listed = await crateTools.list(CLAUDE, 'ask')
+    const listed = await crateTools.list(CLAUDE, 'approve')
     expect(asked.at(-1)).toEqual({
       command: 'ai_agent_tools',
       args: {
-        agent: { id: 'anthropic', name: 'Claude', readerTabs: true, askFirst: false },
-        mode: 'ask',
+        agent: { id: 'anthropic', name: 'Claude', readerTabs: true },
+        mode: 'approve',
       },
     })
     expect(listed).toEqual({
@@ -69,10 +69,10 @@ describe('the crate is asked', () => {
 
   test('for a call, and a refusal of the call is the model’s to read rather than a failure', async () => {
     answer = new Error('edit_note is not a tool in this mode')
-    const output = await crateTools.call(CLAUDE, 'ask', 'edit_note', { path: 'a.md' })
+    const output = await crateTools.call(CLAUDE, 'plan', 'edit_note', { path: 'a.md' })
     expect(asked.at(-1)).toMatchObject({
       command: 'ai_agent_call',
-      args: { mode: 'ask', tool: 'edit_note', args: { path: 'a.md' } },
+      args: { mode: 'plan', tool: 'edit_note', args: { path: 'a.md' } },
     })
     expect(output).toEqual({
       text: 'edit_note is not a tool in this mode',

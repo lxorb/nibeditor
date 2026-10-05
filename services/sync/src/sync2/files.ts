@@ -71,7 +71,8 @@ function typeOf(header: string | undefined): string {
   return DECLARED.has(type) ? type : BYTES
 }
 
-function blobKey(hash: string): string {
+/** Where a file's bytes are kept: by their hash, so one blob serves every copy. */
+export function blobKey(hash: string): string {
   return `blobs/${hash}`
 }
 

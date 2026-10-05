@@ -105,10 +105,11 @@ export const EN: Grammar = {
     { words: ['tomorrow', 'evening'], day: 'tomorrow', time: '19:00' },
     { words: ['tomorrow', 'night'], day: 'tomorrow', time: '19:00' },
   ],
+  partsOfDay: { morning: '09:00', afternoon: '15:00', evening: '19:00', night: '22:00' },
 
   every: new Set(['every', 'each']),
   everyDone: new Set(['every!']),
-  other: new Set(['other']),
+  other: new Set(['other', 'second']),
   last: new Set(['last']),
   rules: {
     daily: 'every day',
@@ -126,6 +127,9 @@ export const EN: Grammar = {
   bareDuration: false,
 
   ordinal: /^(\d{1,2})(?:st|nd|rd|th)$/,
+  // `second` is `other`, as German's `zweite` is: `every second week` is every two.
+  ordinals: { first: 1, third: 3, fourth: 4, fifth: 5 },
+  articles: new Set(['the']),
   monthFirst: false,
 }
 

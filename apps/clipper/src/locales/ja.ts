@@ -76,4 +76,6 @@ export const ja: Dictionary = {
   'sign in first': 'まずサインインしてください',
   'no such space': 'そのスペースはありません',
   'that path is not usable': 'そのパスは使えません',
+  // A page as a task in the inbox
+  'As a task': 'タスクとして',
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   /** The changes bar over the field (docs/ai-sidebar.md 4.1, 4.5): how many notes the
-   *  thread changed that the reader has not kept, by how many lines, and Undo and Keep
-   *  for all of it. Pressed, the list of every change opens over it. Nothing at all
+   *  thread changed, moved or deleted that the reader has not kept, by how many lines,
+   *  and Undo and Keep for all of it. Pressed, the list of every change opens over it. Nothing at all
    *  while nothing waits, and the two buttons never move while the agent works, so a
    *  press meant for one cannot land on the other (Cursor's readers' complaint).
    *
@@ -22,9 +22,11 @@
 
   const notes = $derived(review.notes(thread))
   const all = $derived(notes.flatMap((note) => note.changes))
+  const files = $derived(review.files(thread))
+  const waiting = $derived(all.length + files.length)
   const added = $derived(notes.reduce((sum, note) => sum + note.added, 0))
   const removed = $derived(notes.reduce((sum, note) => sum + note.removed, 0))
-  const listing = $derived(review.listing === thread.id && all.length > 0)
+  const listing = $derived(review.listing === thread.id && waiting > 0)
   const sheet = $derived(review.sheet?.thread.id === thread.id ? review.sheet : null)
   const redo = $derived(review.canRedo(thread))
 
@@ -36,12 +38,12 @@
 {#if sheet}
   <Rewind {sheet} />
 {:else if listing}
-  <Changes {notes} />
+  <Changes {notes} {files} {thread} />
 {/if}
 
-{#if all.length || redo}
+{#if waiting || redo}
   <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-    {#if all.length}
+    {#if waiting}
       <button class="nib-row is-short what" aria-expanded={listing} onclick={toggle}>
         <svg class="mark" viewBox="0 0 13 13" aria-hidden="true">
           <circle cx="6.5" cy="6.5" r="4.6" />
@@ -49,12 +51,27 @@
         </svg>
         <span class="nib-row-label"
           >{review.said ??
-            plural(notes.length, { one: '{count} note', other: '{count} notes' })}</span
+            plural(notes.length + files.length, {
+              one: '{count} note',
+              other: '{count} notes',
+            })}</span
         >
         <Tally {added} {removed} />
       </button>
-      <button class="nib-chip is-quiet" onclick={() => void review.undo(all)}>{t('Undo')}</button>
-      <button class="nib-chip" onclick={() => review.keep(all)}>{t('Keep')}</button>
+      <button
+        class="nib-chip is-quiet"
+        onclick={() => {
+          void review.undo(all)
+          void review.undoFiles(thread, files)
+        }}>{t('Undo')}</button
+      >
+      <button
+        class="nib-chip"
+        onclick={() => {
+          review.keep(all)
+          review.keepFiles(files)
+        }}>{t('Keep')}</button
+      >
     {:else}
       <span class="what"></span>
     {/if}

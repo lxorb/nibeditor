@@ -70,9 +70,10 @@ describe('the durations JavaScript hands out', () => {
     const missing = sources
       .filter(
         (one) =>
-          // Wherever the file is: a component two folders down imports `../../motion`.
+          // Wherever the file is: a component two folders down imports `../../motion`,
+          // and App.svelte `./lib/motion`.
           /duration:\s*(dur\(|LAYER\.)/.test(one.text) &&
-          !/from '(?:\.\.?\/)+motion'/.test(one.text),
+          !/from '(?:\.\.?\/)+(?:lib\/)?motion'/.test(one.text),
       )
       .map((one) => one.name)
 

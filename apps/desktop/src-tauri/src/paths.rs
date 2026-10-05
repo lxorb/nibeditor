@@ -108,6 +108,16 @@ pub fn is_pages(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
 }
 
+/// Whether a path names a base: Obsidian's `.base` file, a view of a space's notes and
+/// tasks (docs/tasks.md 5.11). YAML, so `read_note` and `write_note` carry it like
+/// any text; the crate only has to agree that it is a file the window lists and
+/// opens, and the mirror sends up, since the mirror walks the tree this crate builds.
+pub fn is_base(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("base"))
+}
+
 /// Whether a path names a website: a shortcut file rather than words.
 ///
 /// `.url` is the Windows Internet Shortcut - an INI file with an address in it,
@@ -710,29 +720,86 @@ pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
     written(target, bytes, true)
 }
 
-fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
-    let parent = target
-        .parent()
-        .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
-    let name = temp_stem(target);
+/// Writes a file the person keeps, a note or something that travels with one, so
+/// that it stays the same file: the bytes go into the file that is there, rather
+/// than into a new one renamed over it.
+///
+/// A rename over a file is a new file under the old name, with a new NTFS file id or
+/// inode, and whatever follows files by that identity reads it so. Proton Drive does:
+/// it saw a stranger arrive under a name it was still syncing, kept the file it knew,
+/// and renamed each save of a note being typed into to a "Name clash" copy beside it.
+/// Sublime Text turned its atomic save off by default for the same family of reasons
+/// (hard links split, watchers confused), and VS Code and Obsidian write in place.
+///
+/// What the rename was for is kept. The new bytes are first written whole to a temp
+/// file beside the note and flushed, so a full disk fails there, before a byte of the
+/// note is touched. Only then is the note overwritten and flushed, and the copy
+/// dropped. A write into the note that fails part way puts the copy over it the old
+/// way, so the note is the old text or the new, never half of either; a crash in that
+/// moment leaves the copy beside it, and the version before is in the note's history.
+///
+/// A file that is not there yet has no identity to keep, and is made the atomic way.
+/// So is a link: paths are judged by what they say (see `inside`), so writing through
+/// one could land outside the spaces, and replacing it is what a save always did.
+pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    let linked = fs::symlink_metadata(target).is_ok_and(|meta| meta.file_type().is_symlink());
+    let opened = (!linked)
+        .then(|| fs::OpenOptions::new().write(true).open(target).ok())
+        .flatten();
+    let Some(mut file) = opened else {
+        return write_atomically(target, bytes);
+    };
 
-    // Hidden, so a half-written note never shows up in the tree beside the real
-    // one, and named after this process so two windows cannot collide.
-    let temp = parent.join(format!(
-        ".{name}.{}-{}.nib-tmp",
-        std::process::id(),
-        WRITES.fetch_add(1, Ordering::Relaxed)
-    ));
+    let copy = staged(target, bytes, false)?;
+    let into = file
+        .write_all(bytes)
+        .and_then(|()| file.set_len(bytes.len() as u64))
+        .and_then(|()| file.sync_all());
+    drop(file);
 
-    if let Err(error) = spill(&temp, bytes, private) {
-        let _ = fs::remove_file(&temp);
-        return Err(error);
+    match into {
+        Ok(()) => {
+            let _ = fs::remove_file(&copy);
+            Ok(())
+        }
+        // The copy is the only whole version left if this fails too, so it stays.
+        Err(_) => fs::rename(&copy, target).map_err(|error| cannot("save", target, &error)),
     }
+}
 
+fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
+    let temp = staged(target, bytes, private)?;
     fs::rename(&temp, target).map_err(|error| {
         let _ = fs::remove_file(&temp);
         cannot("save", target, &error)
     })
+}
+
+/// A temp file beside `target` holding `bytes` whole and flushed to the disk, or
+/// nothing at all when it could not be written.
+///
+/// Hidden, so a half-written note never shows up in the tree beside the real one;
+/// named after this process and a count so two windows cannot collide; and ending in
+/// `.tmp`, the temp-file name sync clients skip (Proton Drive's filter does), so none
+/// of them uploads a file that lives for a millisecond.
+fn staged(target: &Path, bytes: &[u8], private: bool) -> Result<PathBuf, String> {
+    let parent = target
+        .parent()
+        .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
+    let temp = parent.join(format!(
+        ".{}.{}-{}.nib.tmp",
+        temp_stem(target),
+        std::process::id(),
+        WRITES.fetch_add(1, Ordering::Relaxed)
+    ));
+
+    match spill(&temp, bytes, private) {
+        Ok(()) => Ok(temp),
+        Err(error) => {
+            let _ = fs::remove_file(&temp);
+            Err(error)
+        }
+    }
 }
 
 /// How many bytes of the target's name its temp file carries.
@@ -837,9 +904,9 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, at_most, drop_highlights, files_in, folded, folder_key, folder_named,
-        free_spot, highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut,
-        judged, judged_beyond, judged_space, link_to, move_highlights, same_path, space_root,
-        write_atomically, Picked,
+        free_spot, highlights_of, inside, is_base, is_canvas, is_markdown, is_pages, is_pdf,
+        is_shortcut, judged, judged_beyond, judged_space, link_to, move_highlights, same_path,
+        space_root, write_atomically, Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1169,6 +1236,56 @@ mod tests {
         assert_eq!(left, vec!["Note.md".to_string()]);
     }
 
+    /// A save writes into the note that is there, so the note stays the same file,
+    /// and leaves nothing beside it; one that shrinks the note leaves no tail.
+    #[test]
+    fn an_in_place_write_keeps_the_file() {
+        use std::io::{Read as _, Seek as _};
+
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("Note.md");
+        super::write_in_place(&target, b"a first, longer version").expect("the first write");
+
+        let mut held = std::fs::File::open(&target).expect("a reader holding the note");
+        super::write_in_place(&target, b"second").expect("the second write");
+
+        let mut through = String::new();
+        held.rewind().expect("back to the start");
+        held.read_to_string(&mut through).expect("the held file");
+        assert_eq!(through, "second");
+
+        let left: Vec<_> = std::fs::read_dir(dir.path())
+            .expect("the folder")
+            .flatten()
+            .map(|entry| entry.file_name().to_string_lossy().to_string())
+            .collect();
+        assert_eq!(left, vec!["Note.md".to_string()]);
+    }
+
+    /// A link is replaced by the note, as every save did before, never written
+    /// through: what it points at may be outside the spaces.
+    #[test]
+    #[cfg(unix)]
+    fn an_in_place_write_never_writes_through_a_link() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let outside = dir.path().join("outside.md");
+        let link = dir.path().join("Note.md");
+        std::fs::write(&outside, "untouched").expect("a file the link points at");
+        std::os::unix::fs::symlink(&outside, &link).expect("a link");
+
+        super::write_in_place(&link, b"words").expect("the write");
+
+        assert_eq!(
+            std::fs::read_to_string(&outside).expect("the far file"),
+            "untouched"
+        );
+        assert_eq!(std::fs::read_to_string(&link).expect("the note"), "words");
+        assert!(!std::fs::symlink_metadata(&link)
+            .expect("the note")
+            .file_type()
+            .is_symlink());
+    }
+
     /// A private file is its owner's alone, and so was the temp file it was
     /// written through, which is the file the rename leaves in its place.
     #[test]
@@ -1264,6 +1381,9 @@ mod tests {
         assert!(is_pages(Path::new("a/Journal.PAGES")));
         assert!(!is_pages(Path::new("a/Journal.pages.md")));
         assert!(!is_pages(Path::new("a/Journal")));
+        assert!(is_base(Path::new("a/Bugs.base")));
+        assert!(is_base(Path::new("a/Bugs.BASE")));
+        assert!(!is_base(Path::new("a/Bugs.base.md")));
         // The two planes are told apart by their names, whatever is inside them.
         assert!(!is_canvas(Path::new("a/Journal.pages")));
         assert!(!is_markdown(Path::new("a/Journal.pages")));

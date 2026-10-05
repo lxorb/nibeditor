@@ -23,6 +23,7 @@ vi.mock('./surfaces.svelte', () => ({
 
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
+const { agentMarks } = await import('./agent-marks.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
 
 /** A space with one note open, which is what a panel about a note needs. */
@@ -58,7 +59,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    expect(strip('left')).toEqual(['Files', 'Search'])
+    expect(strip('left')).toEqual(['Files', 'Tasks'])
     expect(strip('right')).toEqual(['Outline', 'Links', 'Properties', 'Footnotes', 'Ask'])
   })
 
@@ -66,11 +67,77 @@ describe('the panel tabs', () => {
     open('# Head\n')
     workspace.movePanel('outline', 'left')
 
-    expect(strip('left')).toEqual(['Files', 'Outline', 'Search'])
+    expect(strip('left')).toEqual(['Files', 'Outline', 'Tasks'])
     expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask'])
     workspace.movePanel('outline', 'right')
     expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask', 'Outline'])
     workspace.right = [...STARTS_RIGHT]
+  })
+
+  /** The strip's row split at the end of the pill: what is in the one tablist, and
+   *  what is after it. */
+  function row(panel: Parameters<typeof workspace.showPanel>[0]) {
+    viewport.device = 'desktop'
+    workspace.rightPanel = panel
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.rightPanel = null
+
+    const start = html.indexOf('role="tablist"')
+    const end = html.indexOf('class="tools', start)
+    const after = html.slice(end, html.indexOf('class="stack', end))
+    return { pill: html.slice(start, end), after, html }
+  }
+
+  test('are every one of them in one pill, and nothing of the panel’s own is', () => {
+    open('# Head\n')
+    agentMarks.heard = true
+    const { pill, after, html } = row('ask')
+    agentMarks.heard = false
+
+    // Emil's 840 px panel: six tabs, and the Ask panel's Chats beside them looking
+    // like a seventh. All six are tabs of the one list; Chats is a tool after it.
+    expect(html.match(/role="tablist"/g)).toHaveLength(1)
+    expect(pill.match(/role="tab"/g)).toHaveLength(6)
+    expect(after).not.toContain('role="tab"')
+    expect(after).toContain('aria-label="Chats"')
+    expect(after).toContain('aria-label="New chat"')
+    expect(pill).not.toContain('aria-label="Chats"')
+  })
+
+  test('and the panel’s tools come after the pill in one group, whichever panel', () => {
+    open('# Head\n')
+
+    for (const panel of ['outline', 'links', 'ask'] as const) {
+      const { html } = row(panel)
+      expect(html.match(/class="tools/g)).toHaveLength(1)
+    }
+  })
+
+  test('and with nothing laid out yet, none is put behind More', () => {
+    open('# Head\n')
+    const { pill } = row('outline')
+
+    expect(pill).not.toContain('aria-label="More"')
+  })
+})
+
+/** The search is a bar over the list rather than a tab in the strip, and the new note
+ *  a button at the head of it on every machine, as Apple Notes has both. */
+describe('the head of the list', () => {
+  test('has a search bar to type into and no search tab', () => {
+    open('# Head\n')
+    const html = drawn('tree')
+
+    expect(html).toMatch(/<input[^>]*aria-label="Search this space"/)
+    expect(html).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
+  })
+
+  test('has the new note button on a desktop as well as a phone', () => {
+    open('# Head\n')
+
+    for (const device of ['desktop', 'phone'] as const) {
+      expect(drawn('tree', device), device).toMatch(/class="new[^"]*"[^>]*aria-label="New note"/)
+    }
   })
 })
 

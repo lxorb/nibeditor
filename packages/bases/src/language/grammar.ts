@@ -65,6 +65,9 @@ export interface Grammar {
   /** A day and a time in one phrase: `tonight`, `heute Abend`, `morgen früh`. The
    *  first word names the day the way `today` and `tomorrow` do. */
   dayTimes: readonly { words: readonly string[]; day: 'today' | 'tomorrow'; time: string }[]
+  /** Parts of the day as a time: after `every` (`every morning`) and after a day word
+   *  (`am Abend`), where the German one would otherwise be read as tomorrow. */
+  partsOfDay: Readonly<Record<string, string>>
 
   /** Repeating. */
   every: ReadonlySet<string>
@@ -92,6 +95,10 @@ export interface Grammar {
 
   /** An ordinal written with figures: `6th`, `6.`. */
   ordinal: RegExp
+  /** Ordinals written out, `first`, `ersten`, the ones a rule counts with. */
+  ordinals: Readonly<Record<string, number>>
+  /** Words between a day word and a day of the month: `on the 15th`, `bis zum 5.`. */
+  articles: ReadonlySet<string>
   /** `6/10` read day first, or month first (`en-US`). */
   monthFirst: boolean
 }

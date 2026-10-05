@@ -74,4 +74,6 @@ export const vi: Dictionary = {
   'sign in first': 'đăng nhập trước',
   'no such space': 'không có không gian đó',
   'that path is not usable': 'đường dẫn đó không dùng được',
+  // A page as a task in the inbox
+  'As a task': 'Thành việc cần làm',
 }

@@ -75,4 +75,6 @@ export const ps: Dictionary = {
   'sign in first': 'لومړی ننوځئ',
   'no such space': 'داسې ځای نشته',
   'that path is not usable': 'هغه لار نه کارېدی شي',
+  // A page as a task in the inbox
+  'As a task': 'د کار په توګه',
 }

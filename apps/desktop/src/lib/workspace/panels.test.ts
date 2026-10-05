@@ -8,8 +8,10 @@ import {
   rightFrom,
   showing,
   sideOf,
+  splitTabs,
   type Sides,
   STARTS_RIGHT,
+  tabsShown,
 } from './panels'
 
 /** Which side each panel sits on, as arithmetic.
@@ -156,7 +158,7 @@ describe('where a panel lives until somebody moves it', () => {
       'ask',
       'agents',
     ])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search'])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'tasks'])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {
@@ -175,5 +177,51 @@ describe('where a panel lives until somebody moves it', () => {
   test('while one that knew every panel is kept exactly, however empty', () => {
     expect(rightFrom([], PANELS)).toEqual([])
     expect(rightFrom(['ask'], PANELS)).toEqual(['ask'])
+  })
+})
+
+/** The strip's room, in pixels: a tab at its narrowest is 26 (an 18 pixel mark and
+ *  4 either side), 2 between tabs and 6 of groove. */
+describe('how many tabs the strip draws', () => {
+  test('all of them where nothing has been laid out yet', () => {
+    expect(tabsShown(9, 0, 26)).toBe(9)
+  })
+
+  test('all of them where they fit at their narrowest', () => {
+    // 6 x 26 + 5 x 2 + 6 = 172.
+    expect(tabsShown(6, 172, 26)).toBe(6)
+    expect(tabsShown(6, 840, 26)).toBe(6)
+  })
+
+  test('and where they do not, as many as fit beside More', () => {
+    // A pixel short of six places is five: four tabs and More.
+    expect(tabsShown(6, 171, 26)).toBe(4)
+    expect(tabsShown(9, 172, 26)).toBe(5)
+  })
+
+  test('but never none: the one showing always has a place', () => {
+    expect(tabsShown(9, 10, 26)).toBe(1)
+  })
+})
+
+describe('which tabs go behind More', () => {
+  const tabs = ['outline', 'links', 'properties', 'footnotes', 'ask', 'agents']
+
+  test('none, where every one is drawn', () => {
+    expect(splitTabs(tabs, 6, (one) => one === 'ask')).toEqual({ drawn: tabs, behind: [] })
+  })
+
+  test('the last ones, in the strip’s order', () => {
+    expect(splitTabs(tabs, 3, (one) => one === 'links')).toEqual({
+      drawn: ['outline', 'links', 'properties'],
+      behind: ['footnotes', 'ask', 'agents'],
+    })
+  })
+
+  test('except the one showing, which takes the last place drawn', () => {
+    expect(splitTabs(tabs, 3, (one) => one === 'ask')).toEqual({
+      drawn: ['outline', 'links', 'ask'],
+      behind: ['properties', 'footnotes', 'agents'],
+    })
   })
 })

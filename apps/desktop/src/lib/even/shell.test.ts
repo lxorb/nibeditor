@@ -24,6 +24,7 @@ const WORDS: Words = {
   settings: 'Settings',
   reset: 'Reset glasses settings',
   done: 'Done',
+  today: 'Today',
 }
 
 /** Settings that answer like the app's own and write down what they were told.
@@ -107,6 +108,15 @@ class Fake implements World {
   note_ = ''
   atSpace = () => this.space_
   atNote = () => this.note_
+  /** Today as the list holds it, and what was ticked and asked for again. */
+  todayRows: Row[] = [row('□ Call Mum'), row('□ Pay rent')]
+  readonly ticked: string[] = []
+  fresh = 0
+  today = () => this.todayRows
+  freshToday = () => {
+    this.fresh += 1
+  }
+  tick = (id: string) => void this.ticked.push(id)
 }
 
 let world: Fake
@@ -601,5 +611,38 @@ describe('a catalogue that lands after the glasses did', () => {
     late.handle('down')
     late.handle('tap')
     expect(late.view().head).toContain('Einstellungen')
+  })
+})
+
+/** Today, the modal's fifth row (docs/tasks.md 5.18): eight lines like any list, a tap
+ *  ticks and the row stays, a double tap leaves. */
+describe('today', () => {
+  test('is the fifth row of the modal, and read afresh when it is put up', () => {
+    shell.handle('hold')
+    expect(shell.view().body).toContain('Today')
+    for (let at = 0; at < 4; at++) shell.handle('down')
+    shell.handle('tap')
+
+    expect(shell.screen.kind).toBe('today')
+    expect(world.fresh).toBe(1)
+    expect(shell.view().head).toContain('Today')
+    expect(shell.view().body).toContain('▶ □ Call Mum')
+  })
+
+  test('a tap ticks the row under the cursor and stays on the list', () => {
+    shell.show('today')
+    shell.handle('down')
+    shell.handle('tap')
+
+    expect(world.ticked).toEqual(['□ Pay rent'])
+    expect(shell.screen.kind).toBe('today')
+  })
+
+  test('a double tap closes it, one level, and an empty Today says so', () => {
+    world.todayRows = []
+    shell.show('today')
+    expect(shell.view().body).toBe('Nothing here')
+    shell.handle('double')
+    expect(shell.screen.kind).toBe('note')
   })
 })

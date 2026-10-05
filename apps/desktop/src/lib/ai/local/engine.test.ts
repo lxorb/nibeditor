@@ -81,7 +81,7 @@ function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
     provider: provider.id,
     model: '',
     effort: 'auto',
-    mode: 'ask',
+    mode: 'approve',
     turns: [],
     usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
     created: 0,
@@ -92,9 +92,17 @@ function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
 
 const draft = (text: string): Draft => ({ text, attachments: [] })
 
+/** Questions nobody raises: the crate's listener is not in a test. */
+const QUIET = {
+  answer: () => Promise.resolve(),
+  answered: () => Promise.resolve(false),
+  asked: () => Promise.resolve(() => undefined),
+}
+
 function engine(provider: Provider, instructions = '') {
   return createLocalEngine(provider.kind === 'codex' ? 'codex' : 'claude-code', {
     provider: (id) => (id === provider.id ? provider : null),
+    answers: QUIET,
     instructions: () => Promise.resolve(instructions),
   })
 }
@@ -161,6 +169,103 @@ beforeEach(() => {
   answer = (_, said) => (said.kind === 'turn' ? claudeTurn('Herons wait.') : [])
 })
 
+describe('a call that asks the reader, in a program’s session', () => {
+  /** The crate's questions, raised by hand; the answers given, written down. */
+  function questions() {
+    let hear: ((asked: { id: string; agent: string; verb: string }) => void) | null = null
+    const given: { id: string; allow: boolean }[] = []
+    const answers = {
+      answer: (id: string, allow: boolean) => {
+        given.push({ id, allow })
+        return Promise.resolve()
+      },
+      answered: () => Promise.resolve(false),
+      asked: (on: NonNullable<typeof hear>) => {
+        hear = on
+        return Promise.resolve(() => (hear = null))
+      },
+    }
+    const built = createLocalEngine('claude-code', {
+      provider: (id) => (id === CLAUDE.id ? CLAUDE : null),
+      answers,
+    })
+    return {
+      built,
+      given,
+      raise: (verb: string, agent = 'nib-cc') => hear?.({ id: 'q1', agent, verb }),
+    }
+  }
+
+  /** The turn up to the call, then the rest - or only its end, a stopped turn's - once
+   *  the test says. */
+  function held(stopped = false) {
+    const lines = claudeTurn('Herons wait.')
+    let rest: () => void = () => undefined
+    answer = (open, said) => {
+      if (said.kind !== 'turn') return []
+      rest = () => {
+        for (const one of stopped ? lines.slice(-1) : lines.slice(4)) line(open.channel, one)
+      }
+      return lines.slice(0, 4)
+    }
+    return () => rest()
+  }
+
+  test('its running row becomes the question, and the answer the program heard ends it', async () => {
+    const go = held()
+    const { built, raise } = questions()
+    const on = thread(CLAUDE)
+    const events: EngineEvent[] = []
+    const sent = built.send(
+      on,
+      draft('what waits?'),
+      (event) => events.push(event),
+      new AbortController().signal,
+    )
+    await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
+
+    raise('edit_note')
+    raise('read_note', 'nib-somebody-else')
+    expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
+    raise('read_note')
+    expect(on.turns.at(-1)?.parts[1]).toMatchObject({
+      state: 'asking',
+      result: { approval: 'q1' },
+    })
+
+    go()
+    await sent
+    expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'ok' })
+  })
+
+  test('Always in the thread answers yes at once, and a question left open is answered no', async () => {
+    const go = held()
+    const { built, given, raise } = questions()
+    const on = thread(CLAUDE, { always: ['read_note'] })
+    const controller = new AbortController()
+    const sent = built.send(on, draft('what waits?'), () => undefined, controller.signal)
+    await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
+    raise('read_note')
+    expect(given).toEqual([{ id: 'q1', allow: true }])
+    expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
+    go()
+    await sent
+
+    const asked = held(true)
+    const second = questions()
+    const other = thread(CLAUDE)
+    const stopping = new AbortController()
+    const again = second.built.send(other, draft('again'), () => undefined, stopping.signal)
+    await vi.waitFor(() => expect(other.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
+    second.raise('read_note')
+    stopping.abort()
+    asked()
+    await again
+    expect(second.given).toEqual([{ id: 'q1', allow: false }])
+    expect(other.turns.at(-1)?.parts[1]).toMatchObject({ state: 'error' })
+  })
+})
+
 describe('a Claude Code thread', () => {
   test('streams thinking, a row per tool call and the words, with the program’s counts', async () => {
     const on = thread(CLAUDE)
@@ -190,8 +295,8 @@ describe('a Claude Code thread', () => {
     expect(opened).toHaveLength(1)
     expect(opened[0]?.opening).toEqual({
       tool: 'claude-code',
-      agent: { id: 'cc', name: 'Claude Code', readerTabs: true, askFirst: false },
-      mode: 'ask',
+      agent: { id: 'cc', name: 'Claude Code', readerTabs: true },
+      mode: 'approve',
       model: 'opus',
       effort: 'high',
     })
@@ -350,7 +455,7 @@ describe('a Codex thread', () => {
 
     expect(opened[0]?.opening).toMatchObject({
       tool: 'codex',
-      mode: 'ask',
+      mode: 'approve',
       model: 'gpt-fake',
       effort: 'off',
     })

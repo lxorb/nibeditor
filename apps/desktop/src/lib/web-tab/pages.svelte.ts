@@ -33,7 +33,6 @@ import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import type { Cut } from './covers'
 import { Latest } from './latest'
-import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
 /** This device's history, asked for by the first page that says where it is rather
@@ -64,6 +63,17 @@ function dropDialogs(tab: string): void {
   if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
 }
 
+/** What a site may use, asked for the same way: no site can ask before a page is open,
+ *  and a tab closed before any did has nothing to take back. See permissions.svelte.ts. */
+function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
+  return import('./permissions.svelte')
+}
+
+/** A closed tab's questions, dropped; never in the glasses' plugin, as above. */
+function dropGrants(tab: string): void {
+  if (!__EVEN_PLUGIN__) void pagePermissions().then(({ grants }) => grants.dropped(tab))
+}
+
 /** What becomes of a page out of sight, fetched with the first one; see sleeping.ts. */
 function sleeping() {
   return import('./sleeping')
@@ -76,6 +86,15 @@ const OUT_OF_THE_WAY = 20_000
  *  two overlays in a row share one and a page that has scrolled since is
  *  photographed again. */
 const SHOT_KEEPS = 400
+
+/** What the crate says when a page's browser did not answer and the page was left where
+ *  it was rather than the app waiting on it; see src-tauri/src/web_answers.rs. */
+const NOT_ANSWERING = 'that page is not answering'
+
+/** How long before a page whose browser did not answer is placed again. A second: a
+ *  browser busy with one heavy page is usually back by then, and each try costs the
+ *  crate a moment of asking at most. */
+const ASK_AGAIN = 1000
 
 /** How long the page is given to say where it is before it is parked anyway. Half a
  *  second: the answer is a line of script in the page's own document, and a page that
@@ -347,6 +366,10 @@ export class Page {
 
   /** Every placement of this page, one in the air at a time; see latest.ts. */
   placing: Latest<Placement> | null = null
+
+  /** The placement sent last, so one asked again after its browser did not answer is
+   *  dropped once the pane has said something newer. Not drawn. */
+  sent: Placement | null = null
 
   /** Where the page was last placed and what was over it, while it is under one of the
    *  app's layers. Not drawn. */
@@ -679,7 +702,18 @@ class Pages {
       // the page would otherwise photograph nothing. See `shoot`.
       page.shown = true
       void this.bound()
-    } catch {
+    } catch (error) {
+      // The store's browser did not answer, and the crate did not build on it rather than
+      // stop the app to wait: the page is asked for again in a moment, where the tab still
+      // wants one. Nothing about the tab changes meanwhile.
+      if (error === NOT_ANSWERING) {
+        setTimeout(() => {
+          const asking = this.held.get(tabId) === page && !page.live && !page.opening
+          if (asking && page.onScreen)
+            void this.build(tabId, page, page.pane ?? pane, visible, over)
+        }, ASK_AGAIN)
+        return
+      }
       // No webview to be had here. Reported by the pane rather than by a message:
       // it shows the card, which offers the page in the reader's own browser.
       // The label is cleared first: the crate refuses a second page under a label that
@@ -846,6 +880,7 @@ class Pages {
   /** The placement itself, and what the page is now that it has landed. */
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return
+    page.sent = one
     try {
       const cuts = await invoke<boolean | undefined>('web_place', {
         tab: tabId,
@@ -856,6 +891,15 @@ class Pages {
       })
       cutting = cuts === true
     } catch (error) {
+      // The page's browser did not answer, and the crate left the page where it was rather
+      // than stop the app to wait for it. The page is alive: it is placed again in a
+      // moment, unless the pane has said something newer since.
+      if (error === NOT_ANSWERING) {
+        setTimeout(() => {
+          if (this.held.get(tabId) === page && page.sent === one) void this.put(tabId, page, one)
+        }, ASK_AGAIN)
+        throw error
+      }
       // The webview has gone, and the next show opens it again. Only a refused show may
       // conclude that: a page wrongly thought gone is built again, where one wrongly
       // given up on is left over the app.
@@ -1227,7 +1271,7 @@ class Pages {
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
-      grants.dropped(tabId)
+      dropGrants(tabId)
       dropDialogs(tabId)
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
@@ -1250,7 +1294,7 @@ class Pages {
     await this.look(tabId)
 
     this.held.delete(tabId)
-    grants.dropped(tabId)
+    dropGrants(tabId)
     dropDialogs(tabId)
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
@@ -1320,6 +1364,7 @@ class Pages {
     // the clipboard to read. The request is held open in the engine until this is
     // answered, which is what lets the reader be asked at the moment they pressed
     // something rather than in a menu beforehand; see permissions.svelte.ts.
+    const { grants, readAsked } = await pagePermissions()
     await listen('nib://web-ask', (event) => {
       const said = readAsked(event.payload)
       if (said && this.held.has(said.tab)) grants.heard(said)

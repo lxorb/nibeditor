@@ -53,6 +53,17 @@ function walk(dir: string): string[] {
 
 let files: { name: string; text: string }[] = []
 
+/** Every catalogue as it is written, and the language a catalogue's path is for. */
+const WRITTEN = import.meta.glob<Record<string, Dictionary>>('../../locales/*.ts')
+const languageOf = (path: string) => /([\w-]+)\.ts$/.exec(path)?.[1] ?? path
+
+/** The staged chunk that is each catalogue, by its language. */
+const catalogues = new Map<string, string>()
+
+/** What the plugin can ask a catalogue for: what the server says, and every string in
+ *  the plugin's own code but its catalogues. */
+let asked = new Set<string>()
+
 // Five minutes, said here rather than left to the project's thirty seconds: this
 // hook builds the whole plugin package, which takes about forty-five, and a
 // project's own timeout wins over `--hookTimeout` on the command line. The number
@@ -82,6 +93,24 @@ beforeAll(() => {
   files = walk(staged)
     .filter((one) => /\.(js|css|html|json|webmanifest)$/.test(one))
     .map((one) => ({ name: one.slice(staged.length + 1), text: readFileSync(one, 'utf8') }))
+
+  // And the package read once for what its catalogues may hold, with the build rather
+  // than in a hook of the catalogues' own: parsing the server's source and every chunk
+  // of the plugin is eight seconds of one core on an idle machine, which the project's
+  // thirty did not cover on one running three gates.
+  const code = files.filter((one) => one.name.endsWith('.js'))
+  for (const path of Object.keys(WRITTEN)) {
+    const id = languageOf(path)
+    // The hash is eight characters, which is what tells `zh-Hant` from `zh-Hant-HK`.
+    const chunk = code.find((one) => new RegExp(`^${id}-[\\w-]{8}\\.js$`).test(basename(one.name)))
+    if (chunk) catalogues.set(id, chunk.name)
+  }
+  const shipping = new Set(catalogues.values())
+  asked = serverWords()
+  for (const one of code) {
+    if (shipping.has(one.name)) continue
+    for (const text of stringsIn(one.text)) asked.add(text)
+  }
 }, 300_000)
 
 afterAll(() => {
@@ -404,6 +433,12 @@ describe('the bundle a package is made of', () => {
     // never did. Measured the way a release builds, main at cd609ab6 was 8,273,092,
     // where this test said 8,393,657 and failed. The other 66,155 are the desktop's
     // plans, engine and updater, behind `__EVEN_PLUGIN__` and asserted gone above.
+    //
+    // **8,353,708 bytes** on 2026-10-04 at quick add's bff080134 (about 10 KB under
+    // there), with Today and a spoken task on the glasses in it. The import sheet, which
+    // the plugin never opens, is behind `__EVEN_PLUGIN__` now (and Todoist's reader with
+    // it), and Today is read off the link index's scan and answered without the rows
+    // store or the engine (even/today-tasks.ts, `todayTasks` in @nib/bases/tasks).
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 
@@ -455,38 +490,25 @@ describe('the bundle a package is made of', () => {
    *  reads in English to somebody who chose another language, and a row nothing in it
    *  can ask for is a string paid for twenty-four times and never shown. */
   describe('the rows of each catalogue it ships', () => {
-    const WRITTEN = import.meta.glob<Record<string, Dictionary>>('../../locales/*.ts')
-
     const shipped: { id: string; file: string; rows: Dictionary; written: Dictionary }[] = []
-    let asked = new Set<string>()
 
     beforeAll(async () => {
-      const code = files.filter((one) => one.name.endsWith('.js'))
+      const read = async (from: Promise<Record<string, Dictionary>>) =>
+        Object.values(await from)[0] ?? {}
 
-      for (const [path, load] of Object.entries(WRITTEN)) {
-        const id = /([\w-]+)\.ts$/.exec(path)?.[1] ?? path
-        // The hash is eight characters, which is what tells `zh-Hant` from `zh-Hant-HK`.
-        const chunk = code.find((one) =>
-          new RegExp(`^${id}-[\\w-]{8}\\.js$`).test(basename(one.name)),
-        )
-        if (!chunk) continue
-
-        const read = async (from: Promise<Record<string, Dictionary>>) =>
-          Object.values(await from)[0] ?? {}
-        const url = pathToFileURL(join(staged, chunk.name)).href
-        shipped.push({
-          id,
-          file: chunk.name,
-          rows: await read(import(url) as Promise<Record<string, Dictionary>>),
-          written: await read(load()),
-        })
-      }
-
-      asked = serverWords()
-      for (const one of code) {
-        if (shipped.some((catalogue) => catalogue.file === one.name)) continue
-        for (const text of stringsIn(one.text)) asked.add(text)
-      }
+      // All at once rather than one after another: each is a module of its own to load.
+      const loading = Object.entries(WRITTEN).flatMap(([path, load]) => {
+        const id = languageOf(path)
+        const file = catalogues.get(id)
+        if (!file) return []
+        const url = pathToFileURL(join(staged, file)).href
+        const both = Promise.all([
+          read(import(url) as Promise<Record<string, Dictionary>>),
+          read(load()),
+        ])
+        return [both.then(([rows, written]) => ({ id, file, rows, written }))]
+      })
+      shipped.push(...(await Promise.all(loading)))
     })
 
     test('are all found', () => {

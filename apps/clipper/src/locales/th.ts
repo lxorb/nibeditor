@@ -74,4 +74,6 @@ export const th: Dictionary = {
   'sign in first': 'เข้าสู่ระบบก่อน',
   'no such space': 'ไม่มีพื้นที่นั้น',
   'that path is not usable': 'พาธนั้นใช้ไม่ได้',
+  // A page as a task in the inbox
+  'As a task': 'เป็นงาน',
 }

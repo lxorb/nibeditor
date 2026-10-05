@@ -2,7 +2,7 @@
 
 What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 
-- Ctrl+Shift+A opens the panel with the keyboard in its field, Ask first;
+- Ctrl+Shift+A opens the panel with the keyboard in its field, Approve first;
 - a message streams in with its thinking folded into one row, the ring fills from
   the provider's own count against the model's window, and the request carries the
   note in front;
@@ -18,11 +18,20 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
 - the ring's tray lists the bands;
-- and the whole of it in one thread: Ask answers, Agent mode edits a note as the
+- and the whole of it in one thread: Approve answers, Agent mode edits a note as the
   provider's agent while its answer runs, the changes bar keeps one edit and undoes the
   other, the clock on a message rewinds notes and conversation to before it, and Up
   on the empty field sends an edited message again, which leaves arrows between the
   two branches.
+
+And ChatGPT's shape, which the panel copies (docs/ai-sidebar.md 4.1), in the light and
+the dark: an empty thread is the greeting with the composer in the middle, which settles
+to the foot as the first message goes; the reader's words are a bubble at the end of the
+line and the answer runs the width; a code block wears its language and a copy button;
+"+" holds the modes; Ask again asks another model; the round arrow goes back down a long
+thread; "Open in new tab" puts the conversation in a pane with the threads down its left
+by age; and the quick question is the small composer, whose Continue carries it on in
+the panel.
 
 A fake OpenAI-compatible server answers, a word at a time, with reasoning before the
 words and its counts at the end. No key, no network, no bill.
@@ -207,8 +216,8 @@ def drive(browser: Browser, scheme: str) -> None:
     if where != {"panel": "ask", "tag": "textarea"}:
         wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {where}")
     mode = page.locator(".ask .controls .mode").inner_text()
-    if mode.strip() != "Ask":
-        wrong(f"a new thread does not start in Ask: {mode!r}")
+    if mode.strip() != "Approve":
+        wrong(f"a new thread does not start in Approve: {mode!r}")
     shot(page, f"{tag}01-empty")
 
     # A message: thinking folded, words streamed, the ring from the provider's count.
@@ -331,8 +340,8 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
-    if page.locator(".ask .controls .mode").inner_text().strip() != "Plan":
-        wrong("Shift+Tab did not step Ask to Plan")
+    if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
+        wrong("Shift+Tab did not step Approve to Agent")
     page.keyboard.press("Shift+Tab")
     page.keyboard.press("Shift+Tab")
 
@@ -417,7 +426,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
     page.keyboard.press("Delete")
-    waited(page, "document.querySelector('.ask .threads .group')", "the archived group")
+    waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
     shot(page, f"{tag}11-archived")
     page.keyboard.press("Escape")
     page.context.close()
@@ -428,7 +437,7 @@ def running(page: Page) -> bool:
 
 
 def flow(browser: Browser) -> None:
-    """Ask, then an agent's edits kept and undone, a rewind, and a message sent again."""
+    """Approve answers, then an agent's edits kept and undone, a rewind, and a message sent again."""
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
     DRIVE.open(page)
     DRIVE.seed(page, HERONS)
@@ -438,7 +447,7 @@ def flow(browser: Browser) -> None:
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
 
-    # Ask.
+    # Approve answers with citations, as Ask did.
     Model.thoughts = []
     Model.words = ["It ", "stands ", "still ", "[1]."]
     Model.pause = 0
@@ -449,9 +458,8 @@ def flow(browser: Browser) -> None:
     # Agent mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
-    page.keyboard.press("Shift+Tab")
     if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
-        wrong("Shift+Tab twice did not reach Agent")
+        wrong("Shift+Tab did not reach Agent")
     Model.words = [f"done{one} " for one in range(25)]
     Model.pause = 0.08
     type_and_send(page, "Shout the heron's verbs")
@@ -522,14 +530,158 @@ def flow(browser: Browser) -> None:
     page.context.close()
 
 
+BOX = """
+(selector) => {
+  const box = document.querySelector(selector)?.getBoundingClientRect()
+  return box ? { top: box.top, bottom: box.bottom, left: box.left, right: box.right } : null
+}
+"""
+
+QUICK = "() => import('/src/lib/ai/quick-door.ts').then((door) => door.askQuickly())"
+
+
+def menu_row(page: Page, words: str):
+    return page.locator(".menu [role=menuitem]").filter(has_text=words).first
+
+
+def shape(browser: Browser, scheme: str) -> None:
+    """ChatGPT's layout, at the side's width and a tab's, with the shots to hold it to."""
+    page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
+    DRIVE.open(page)
+    DRIVE.seed(page, HERONS, HOVERING)
+    page.evaluate(SETUP, MODEL_ORIGIN)
+    DRIVE.open_note(page, "Herons")
+    page.evaluate("() => window.nib.focus()")
+    page.keyboard.press("Control+Shift+A")
+    waited(page, f"document.querySelector('{FIELD}')", "the field")
+    tag = f"shape/{scheme}/"
+
+    # Empty: the greeting, and the composer in the middle of the panel.
+    waited(page, "document.querySelector('.ask .hello')", "the greeting")
+    page.wait_for_timeout(400)
+    panel = page.evaluate(BOX, ".ask")
+    foot = page.evaluate(BOX, ".ask .composer")
+    middle = (panel["top"] + panel["bottom"]) / 2
+    if not foot or not (panel["top"] + 80 < foot["top"] < middle + 80):
+        wrong(f"an empty thread's composer is not in the middle: {foot} in {panel}")
+    shot(page, f"{tag}01-empty-side")
+
+    # The first message: the composer settles to the foot, the words a bubble at the end.
+    Model.thoughts = ["Reading ", "the note."]
+    Model.words = ["A heron ", "waits.\n\n", "```py\n", "print('strike')\n", "```\n"]
+    Model.pause = 0.02
+    type_and_send(page, "What does a heron do?")
+    idle(page)
+    page.wait_for_timeout(500)
+    foot = page.evaluate(BOX, ".ask .composer")
+    if page.locator(".ask .hello").count():
+        wrong("the greeting stayed after the first message")
+    if not foot or foot["bottom"] < panel["bottom"] - 40:
+        wrong(f"the composer did not settle to the foot: {foot} in {panel}")
+    bubble = page.evaluate(BOX, ".ask .said .bubble")
+    if not bubble or bubble["right"] < panel["right"] - 40 or bubble["left"] < panel["left"] + 30:
+        wrong(f"the message is not a bubble at the end of the line: {bubble} in {panel}")
+    language = page.locator(".ask .answer .code-bar span").first.inner_text()
+    if language != "py" or page.locator(".ask .answer .code-copy").count() != 1:
+        wrong(f"the code block wears no bar with its language and copy: {language!r}")
+    if page.locator(".ask .answer.last .acts button").count() < 3:
+        wrong("the last answer has no row of actions under it")
+    shot(page, f"{tag}02-answered-side")
+
+    # "+" holds the modes; one picked is the chip beside it.
+    page.locator(".ask .plus").click()
+    waited(page, "document.querySelector('.menu [role=menuitem]')", "the + menu")
+    rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
+    modes = ("Approve", "Agent", "Plan")
+    for row in ("Add photos and files", *modes, "Web search", "Mention", "Commands"):
+        if row not in rows:
+            wrong(f"the + menu has no {row!r}: {rows}")
+    shot(page, f"{tag}03-plus")
+    menu_row(page, "Plan").click()
+    page.wait_for_timeout(200)
+    if page.locator(".ask .controls .mode").inner_text().strip() != "Plan":
+        wrong("a mode picked under + is not the chip beside it")
+    page.locator(".ask .controls .mode").click()
+    menu_row(page, "Approve").click()
+
+    # Ask again, with another model from its menu.
+    Model.thoughts = []
+    Model.words = ["Large ", "answers."]
+    page.locator('.ask .answer.last .acts button[aria-label="Ask again"]').click()
+    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length >= 3", "the models under Ask again")
+    menu_row(page, "Fake Large").click()
+    idle(page)
+    if Model.seen[-1].get("model") != "fake-large":
+        wrong(f"Ask again did not ask the model picked: {Model.seen[-1].get('model')}")
+
+    # A long thread: scrolled up, the round arrow goes back down.
+    Model.words = [f"line {one}\n\n" for one in range(40)]
+    Model.pause = 0
+    type_and_send(page, "Count to forty")
+    idle(page)
+    page.evaluate(
+        "() => { const t = document.querySelector('.ask .talk'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')) }"
+    )
+    waited(page, "document.querySelector('.ask .down')", "the arrow back down")
+    shot(page, f"{tag}04-scrolled-side")
+    page.locator(".ask .down").click()
+    waited(page, "!document.querySelector('.ask .down')", "the end again")
+
+    # Open in new tab: the conversation in a pane, the threads down its left by age.
+    page.locator(".ask .title").click()
+    menu_row(page, "Open in new tab").click()
+    waited(page, "document.querySelector('.ask.wide .shelf .threads')", "the conversation in a tab")
+    page.wait_for_timeout(500)
+    if page.evaluate("() => window.nibApp.workspace.openOn('right')") == "ask":
+        wrong("the side stayed open beside the tab")
+    groups = page.locator(".ask.wide .threads .group").all_inner_texts()
+    if not groups or groups[0].strip() != "Today":
+        wrong(f"the rail does not file the threads by age: {groups}")
+    column = page.evaluate(BOX, ".ask.wide .composer")
+    if not column or (column["right"] - column["left"]) > 48 * 16 + 40:
+        wrong(f"the tab's composer is not ChatGPT's column: {column}")
+    shot(page, f"{tag}05-tab")
+    page.locator(".ask.wide .threads .new").click()
+    waited(page, "document.querySelector('.ask.wide .hello')", "a new thread in the tab")
+    page.wait_for_timeout(400)
+    shot(page, f"{tag}06-tab-empty")
+
+    # The quick question, ChatGPT's small composer, carried on in the panel.
+    page.evaluate(QUICK)
+    waited(page, "document.querySelector('.quick textarea')", "the quick question")
+    Model.words = ["Herons ", "fish."]
+    page.locator(".quick textarea").fill("What do herons eat?")
+    page.locator(".quick textarea").press("Enter")
+    waited(page, "document.querySelector('.quick .acts')", "the quick answer")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}07-quick")
+    page.locator('.quick .acts button[aria-label="Continue in the panel"]').click()
+    waited(page, "!document.querySelector('.quick')", "the quick question put away")
+    waited(
+        page,
+        "[...document.querySelectorAll('.ask.wide .said .bubble')].some((one) => one.textContent.includes('What do herons eat?'))",
+        "the quick thread in the panel",
+    )
+    if "Herons fish." not in page.locator(".ask.wide .answer").last.inner_text():
+        wrong("the quick answer did not come along into the panel")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}08-continued")
+    page.context.close()
+
+
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
+            say(f"--- ChatGPT's shape, {scheme} ---")
+            shape(browser, scheme)
         say("--- the whole flow ---")
         flow(browser)
-    return DRIVE.verdict("the AI panel sends, stops, queues, steers, switches, lists, reviews, rewinds and resends")
+    return DRIVE.verdict(
+        "the AI panel is ChatGPT's shape, and sends, stops, queues, steers, switches, lists,"
+        " reviews, rewinds and resends"
+    )
 
 
 if __name__ == "__main__":

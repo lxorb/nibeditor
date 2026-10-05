@@ -177,6 +177,19 @@ function compileNode(node: Node, facts: Facts): Fn {
     case 'member':
       return compileMember(node, facts)
     case 'index': {
+      // `formula["My tasks"]`: a formula whose name is not a word, as `note["a key"]`
+      // is a property's. Bases writes either; a rollup over a reverse column named
+      // after a folder with a space in it is the one nib writes.
+      if (
+        node.object.type === 'name' &&
+        node.object.name === 'formula' &&
+        node.index.type === 'literal' &&
+        typeof node.index.value === 'string'
+      ) {
+        const name = node.index.value
+        facts.formulas.add(name)
+        return (scope) => (scope.row ? scope.formula(name, scope.row) : null)
+      }
       const object = compileNode(node.object, facts)
       const index = compileNode(node.index, facts)
       return (scope) => indexed(object(scope), index(scope), scope)

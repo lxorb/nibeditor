@@ -11,6 +11,8 @@ import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
+import { push } from './push/targets'
+import { sendDue } from './push/reminders'
 import { fillFronts } from './blog/fill'
 import { sweepLeftovers } from './leftovers'
 import { forgetHalfDone, resealBorrowed, second } from './second'
@@ -19,6 +21,7 @@ import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
+import { tasks } from './tasks'
 import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
@@ -261,6 +264,7 @@ app.route('/v1/second', second)
 // Deleting the account, which takes fresh codes and not only the session; see
 // account.ts.
 app.route('/v1/account', account)
+app.route('/v1', tasks)
 app.route('/v1', notes)
 
 // Sync v2, the hub's half: a site's web state and its chunks, the account's
@@ -277,6 +281,9 @@ app.route('/v2/spaces', v2Maps)
 app.route('/v2/docs', v2Docs)
 app.route('/v2/files', v2Files)
 app.route('/v2/blobs', v2Blobs)
+
+// Where each device can be pushed to: reminders now, chats next. See push/.
+app.route('/v2/push', push)
 
 app.get('/health', (context) => context.json({ ok: true }))
 
@@ -340,6 +347,9 @@ function unframed(response: Response): Response {
   })
 }
 
+/** The cron that sends reminders, as wrangler.jsonc names it. */
+const EVERY_MINUTE = '* * * * *'
+
 /** The daily job: everything that has run out of time.
  *
  *  What has waited its 14 days in Recently deleted goes, and so does everything
@@ -348,8 +358,15 @@ function unframed(response: Response): Response {
  *  enrolment nobody finished, the bytes a deleted account left behind - and the
  *  proof on every domain of somebody's own is read again. Each is its own statement in its own module and none of them can
  *  fail another, which is why they are a call each rather than one. */
-function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
+function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
+
+  // Each minute, the reminders due by now, pushed to the devices that asked for them;
+  // nothing else runs on that one. See push/reminders.ts.
+  if (event.cron === EVERY_MINUTE) {
+    context.waitUntil(sendDue(env, at))
+    return
+  }
 
   context.waitUntil(purgeExpired(env, at))
   context.waitUntil(expireGuests(env, at))

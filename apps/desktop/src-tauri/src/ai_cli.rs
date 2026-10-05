@@ -23,11 +23,12 @@
 //! model, an effort, a mode and a thread, and send words - never a program, an argument,
 //! a variable or a protocol message; see args.rs and say.rs.
 //!
-//! **The sidebar's token.** `nib mcp` proves itself with the token of the provider's
-//! built-in grant ("nib · Claude Code" in Settings > Agents). A fresh one is issued the
-//! first time a run of the app needs it, kept in memory only, and handed to the program
-//! in its environment, which passes it to `nib mcp` (src/mcp/link.rs). Last run's is
-//! worth nothing.
+//! **The sidebar's token.** `nib mcp` proves itself with a token the app lends the
+//! provider's built-in grant ("nib · Claude Code" in Settings > Agents) for the thread's
+//! mode (`ai_agent::lend`), so the endpoint supervises the session as that mode says. One
+//! per provider and mode, made the first time a run of the app needs it, kept in memory
+//! only, and handed to the program in its environment, which passes it to `nib mcp`
+//! (src/mcp/link.rs). Last run's is worth nothing.
 //!
 //! **Nothing outlives its asking.** A question ends when it is stopped, when it has run
 //! for `ASKING`, when its window is destroyed and when the app exits; a session when it is
@@ -122,12 +123,13 @@ enum On {
     Codex(Arc<Host>),
 }
 
-/// An app-server: the window's, and for threads with tools, the provider whose token it
-/// was started with. A question's threads are on one with no token at all.
+/// An app-server: the window's, and for threads with tools, the provider and mode whose
+/// token it was started with, so each is supervised as its mode is. A question's threads
+/// are on one with no token at all.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 struct HostKey {
     owner: String,
-    agent: Option<String>,
+    agent: Option<(String, Mode)>,
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -366,22 +368,6 @@ pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// The provider's built-in grant's token for this run of the app: the grant made with
-/// the API loop's own `grant_for` (the same grant, whichever road answers), its token
-/// issued afresh the first time a run asks and kept in memory only.
-fn token_for(app: &AppHandle, agent: &Builtin) -> Result<String, String> {
-    static ISSUED: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
-    let issued = ISSUED.get_or_init(Mutex::default);
-    let id = crate::ai_agent::grant_for(app, agent)?.id;
-    let mut held = lock(issued);
-    if let Some(token) = held.get(&id) {
-        return Ok(token.clone());
-    }
-    let token = crate::agents::state(app).grants.reissue(app, &id)?;
-    held.insert(id, token.clone());
-    Ok(token)
-}
-
 /// Which opening of a session this is; see `Session::opening`.
 fn next_opening() -> u64 {
     static OPENINGS: AtomicU64 = AtomicU64::new(1);
@@ -458,10 +444,10 @@ pub fn ai_cli_open(
         .as_deref()
         .filter(|one| !one.trim().is_empty());
     let model = args::checked_model(model)?;
-    let token = match opening.mode {
-        Some(_) => Some(token_for(&app, &opening.agent)?),
-        None => None,
-    };
+    let token = opening
+        .mode
+        .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
+        .transpose()?;
 
     // Read off its help, perhaps for the first time this run, before any lock is held.
     let claude = match tool {
@@ -494,7 +480,7 @@ pub fn ai_cli_open(
         (Tool::Codex, _) => {
             let key = HostKey {
                 owner: owner.clone(),
-                agent: token.as_ref().map(|_| opening.agent.id.clone()),
+                agent: opening.mode.map(|mode| (opening.agent.id.clone(), mode)),
             };
             let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
             let fork_of = opening.fork_of.as_deref();
@@ -933,7 +919,7 @@ mod tests {
         }
         let dir = tempfile::tempdir().expect("a folder");
         let shape = Shape {
-            mode: Some(Mode::Ask),
+            mode: Some(Mode::Plan),
             model: Some("opus"),
             effort: Some(Effort::High),
         };
@@ -1079,7 +1065,7 @@ mod tests {
         host.open(
             "one",
             one,
-            Some(Mode::Ask),
+            Some(Mode::Plan),
             Some("gpt-fake"),
             Some(Effort::Xhigh),
             None,

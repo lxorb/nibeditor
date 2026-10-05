@@ -12,7 +12,8 @@
  *
  *  A native page draws over every pixel of HTML, so a card that would hang over one
  *  stands on the overlay stack while it is up, and the page under it cuts the card out
- *  of itself, exactly as it does for a menu; see web-tab/covers.ts.
+ *  of itself, exactly as it does for a menu; see web-tab/covers.ts. A card sliding to the
+ *  next tab says so to the stack, and the cut follows it there.
  *
  *  Fetched with the first pointer to rest on a tab, and not before: nothing of it is
  *  in front of the first paint. Tabs.svelte says where the pointer is. */
@@ -25,6 +26,7 @@ import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { type Anchor, type From, fromOf, REENTRY, showDelay, siteOf, spot, whereOf } from './card'
 import TabCard from './TabCard.svelte'
+import { stillOf } from './thumb'
 
 /** What the pointer, or the keyboard, is resting on. */
 export interface Aim {
@@ -108,6 +110,8 @@ class Hovering {
 
     this.aim = aim
     clearTimeout(this.timer)
+    // The still is made while the card waits, so it is there when the card is.
+    void this.stillFor(aim)
 
     const now = this.card !== null || aim.focused === true || this.slippedBack()
     if (now) void this.show(aim)
@@ -154,23 +158,31 @@ class Hovering {
     if (this.aim !== aim || !this.may()) return
 
     const { tab } = aim
-    const active = workspace.panes.at(tab.paneId)?.activeTabId === tab.id
     const web = tab.kind === 'web'
-    // Chrome shows the page only for a tab that is not the one in front: that one is
-    // already on the screen.
-    const still = web && !active ? pages.of(tab.id).shot : null
     const width = wide()
     const at = spot(aim.box, width, window.innerWidth, i18n.factor)
+    const still = await this.stillFor(aim)
+    const tall = WORDS_TALL + (still ? STILL_TALL : 0)
+    const sliding = this.card !== null
 
-    if (!this.card) {
-      const tall = WORDS_TALL + (still ? STILL_TALL : 0)
-      await this.cover({ left: at.x, top: at.y, right: at.x + width, bottom: at.y + tall })
-      // Moved on, or pressed, while the pages were being photographed: the pages come
-      // back out from behind their stills.
-      if (this.aim !== aim) {
-        this.hide(false)
-        return
-      }
+    // Every card, the first and each one it slides on to: the pages under where it is
+    // going are asked, not those under where it was.
+    const over = await this.cover({
+      left: at.x,
+      top: at.y,
+      right: at.x + width,
+      bottom: at.y + tall,
+    })
+    // Moved on, or pressed, while the still was made or the pages photographed: a card
+    // that never arrived takes its place on the stack back with it.
+    if (this.aim !== aim) {
+      if (!this.card) this.hide(false)
+      return
+    }
+    // A page that would be left blank behind it: the card gives way; see `cover`.
+    if (!over) {
+      this.hide(false)
+      return
     }
 
     this.card = {
@@ -183,13 +195,32 @@ class Hovering {
       still,
       x: at.x,
       y: at.y,
-      sliding: this.card !== null,
+      sliding,
+    }
+    // A slide opens nothing, and the pages under the card have to hear of it all the same:
+    // they are cut round where it was until they look again, which is what the stack's
+    // watchers are told to do. So the card steps off the stack and back on in one breath,
+    // which every page under it hears, and the cut goes where the card went. Emil,
+    // 2026-10-05: a card slid off one tab onto the next stood behind the page but for a
+    // strip where its two places met.
+    if (sliding && this.uncover) {
+      this.uncover()
+      this.uncover = overlays.show(() => this.hush())
     }
 
     if (!this.mounted) {
       this.mounted = true
       mount(TabCard, { target: document.body, props: { hovering: this } })
     }
+  }
+
+  /** The page's still for a web tab that is not the one in front - Chrome shows none for
+   *  that one, which is already on the screen - or null. */
+  private async stillFor(aim: Aim): Promise<string | null> {
+    const { tab } = aim
+    if (tab.kind !== 'web' || workspace.panes.at(tab.paneId)?.activeTabId === tab.id) return null
+    const shot = pages.of(tab.id).shot
+    return shot ? stillOf(tab.id, shot, wide()) : null
   }
 
   /** Put away, and off the overlay stack, which may have been joined for a card that
@@ -205,26 +236,32 @@ class Hovering {
    *  page under it look again at what is over it: the card is cut out of the page and the
    *  page goes on round it (see web-tab/covers.ts). An engine that cannot cut puts the
    *  page behind its still instead, so there the pages under the card are photographed
-   *  first - only those, because a page the card is not over is left alone. */
-  private async cover(box: { left: number; top: number; right: number; bottom: number }) {
-    if (this.uncover) return
-
+   *  first - only those, because a page the card is not over is left alone.
+   *
+   *  Answers whether the card may stand there. A page the engine would not photograph
+   *  stays in front of the card rather than stepping back for it: behind it there would
+   *  be an empty pane - the black Emil saw under a hovered tab on 2026-10-03 - and the
+   *  card is a glance, where the page is the thing being read. Chrome never blanks a page
+   *  for its card either. */
+  private async cover(box: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+  }): Promise<boolean> {
     const under = workspace.panes.all
       .map((pane) => workspace.tabs.find((one) => one.id === pane.activeTabId))
       .filter((one): one is Tab => one?.kind === 'web')
       .filter((one) => pages.of(one.id).live && pages.of(one.id).shown)
       .filter((one) => overlaps(one.paneId, box))
-    if (under.length === 0) return
+    if (under.length === 0) return true
 
     if (!pages.cuts) {
       await Promise.all(under.map((one) => pages.shoot(one.id)))
-      // A page the engine would not photograph stays in front of the card rather than
-      // stepping back for it: behind it there would be an empty pane - the black Emil
-      // saw under a hovered tab on 2026-10-03 - and the card is a glance, where the page
-      // is the thing being read. Chrome never blanks a page for its card either.
-      if (under.some((one) => pages.of(one.id).shot === null)) return
+      if (under.some((one) => pages.of(one.id).shot === null)) return false
     }
-    this.uncover = overlays.show(() => this.hush())
+    this.uncover ??= overlays.show(() => this.hush())
+    return true
   }
 }
 

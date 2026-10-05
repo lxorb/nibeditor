@@ -11,20 +11,16 @@
  *  the window - a Mac's opaque webview, Linux, a browser, a phone - glass is the frame
  *  taking its colour from what is open, and those rows would turn nothing. */
 
-import { ACCENTS } from '../accents'
-import { contentSetting } from '../content-setting'
 import { t } from '../i18n.svelte'
 import { isDesktop, platform } from '../tauri'
 import { theme } from '../theme.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
+import { contentSetting, rangeSetting, tintColourSetting } from '../translucent-settings'
 import { chrome } from './chrome.svelte'
 import { DIALS, type Dials } from './tint'
 
 /** The theme's id, which is also the drawer its dials are kept in. */
 const GLASS = 'glass'
-
-/** The fixed colour's own swatch for "the accent, whichever it is", first in the row. */
-export const ACCENT_COLOUR = 'accent'
 
 /** Each material the row offers, by the word the crate is asked with. */
 const MATERIALS = {
@@ -73,17 +69,8 @@ export function glassSettings(): ThemeSetting[] {
             paint: () => ({}),
           },
           {
-            id: 'opacity',
-            label: t('Opacity'),
-            own: true,
-            kind: 'range',
-            min: 0,
-            max: 100,
-            step: 1,
-            unit: '%',
-            initial: Math.round(DIALS.opacity * 100),
+            ...rangeSetting('opacity', t('Opacity'), 0, 100, Math.round(DIALS.opacity * 100), '%'),
             least: () => Math.ceil(chrome.floor * 100),
-            paint: () => ({}),
           },
         ] satisfies ThemeSetting[])
       : []),
@@ -95,36 +82,8 @@ export function glassSettings(): ThemeSetting[] {
       initial: true,
       paint: () => ({}),
     },
-    {
-      id: 'tint',
-      label: t('Tint'),
-      own: true,
-      kind: 'range',
-      min: 0,
-      max: 100,
-      step: 1,
-      unit: '%',
-      initial: Math.round(DIALS.strength * 100),
-      paint: () => ({}),
-    },
-    {
-      id: 'colour',
-      label: t('Tint colour'),
-      own: true,
-      kind: 'colour',
-      initial: ACCENT_COLOUR,
-      options: [
-        { value: ACCENT_COLOUR, name: t('Accent'), dark: 'var(--accent)', light: 'var(--accent)' },
-        ...ACCENTS.map((one) => ({
-          value: one.id,
-          name: t(one.name),
-          dark: one.dark,
-          light: one.light,
-        })),
-      ],
-      when: () => !following(),
-      paint: () => ({}),
-    },
+    rangeSetting('tint', t('Tint'), 0, 100, Math.round(DIALS.strength * 100), '%'),
+    tintColourSetting('colour', () => !following()),
     {
       id: 'tab',
       label: t('Coloured tab'),

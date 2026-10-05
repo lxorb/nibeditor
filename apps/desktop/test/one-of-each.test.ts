@@ -454,6 +454,8 @@ describe('the switch', () => {
 
     expect(wearing).toEqual([
       'lib/GraphControls.svelte',
+      // Whether Todoist's done tasks come too.
+      'lib/ImportSheet.svelte',
       'lib/McpSetup.svelte',
       // A setting's row in the palette, which flips where it stands.
       'lib/Palette.svelte',
@@ -467,6 +469,8 @@ describe('the switch', () => {
       'lib/remote/HostDetail.svelte',
       // An extension on or off, in Settings > General > Browser.
       'lib/settings/ExtensionRows.svelte',
+      // An automation of a base on or off.
+      'lib/views/AutomationsBuilder.svelte',
       // What Delete browsing data takes, a switch a kind.
       'lib/web-tab/WebClear.svelte',
     ])

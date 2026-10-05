@@ -130,6 +130,7 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         summary: asking.summary,
         site: asking.site,
         tab: asking.tab,
+        verb: verb_of(&asking.key).to_owned(),
         asked: crate::clock::now(),
         answer: ApprovalAnswer::Pending,
     };
@@ -150,6 +151,12 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
         approval: approval.id,
         summary: approval.summary,
     }
+}
+
+/// The verb a call's key names first, whichever way the key was written: the crate's
+/// `browser_click:a1:e7`, the window's `edit_note:{...}`.
+fn verb_of(key: &str) -> &str {
+    key.split(':').next().unwrap_or_default()
 }
 
 /// The reader's answer. Answers the question as it now stands.
@@ -249,6 +256,7 @@ mod tests {
                 summary: "Pay on shop.example".into(),
                 site: Some("shop.example".into()),
                 tab: Some("a1".into()),
+                verb: verb_of(key).into(),
                 asked: 0,
                 answer,
             },
@@ -277,6 +285,13 @@ mod tests {
         assert!(status("reading", &id).is_some());
         assert!(status("other", &id).is_none());
         assert!(pending(Some("reading")).iter().any(|one| one.id == id));
+    }
+
+    #[test]
+    fn a_question_names_the_verb_that_asked() {
+        assert_eq!(verb_of("browser_click:a1:e7"), "browser_click");
+        assert_eq!(verb_of(r#"edit_note:{"path":"a.md"}"#), "edit_note");
+        assert_eq!(verb_of(""), "");
     }
 
     #[test]

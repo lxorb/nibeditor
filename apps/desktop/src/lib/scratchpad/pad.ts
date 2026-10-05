@@ -2,31 +2,34 @@
  *  jotting something down before deciding where it goes.
  *
  *  Drafts opens on a blank page and asks where a thought goes afterwards; Apple's Quick
- *  Note is one gesture away from anywhere; VS Code keeps an untitled tab through a
- *  restart without asking. This is those three as one file: the same note from every
- *  space, a key and a glyph away, written down as it changes and there after a restart,
- *  and **Move to space** when it has become a real note.
+ *  Note and Raycast's notes are one key away from anywhere and that same key puts them
+ *  away. So this is a switch in the bar and a card docked at the window's edge, never a
+ *  tab: it is not in a strip, a tab cycle, the closed tabs or the session's tabs, and
+ *  opening its file from anywhere shows the card (see `open` in the workspace). Docked
+ *  rather than floating, because a web tab's page is a native view that would draw over
+ *  a floating card; docked, the page is narrowed instead.
  *
- *  A tab and not a panel of its own, opened the way Edit custom CSS opens the app's own
- *  file: the whole editor - live preview, find, undo, splits - and the note writer and
- *  the session that puts a tab back come with it, rather than a second editor kept equal
- *  to the first. It lives beside `custom.css` in the app's own folder (`Scratchpad.md`,
- *  `scratchpad_path` in the crate's themes.rs, which `openable` admits); the browser
- *  build keeps it in a dot folder of its own store, which no space lists.
- *
- *  Its words answer the Search panel from every space, and the quick question puts an
- *  answer on its end when no note is in front; see search/scratchpad.ts and
- *  ai/quick.svelte.ts. Which file it is, and its tab's row, are is.ts: all of it that
- *  is in front of the first paint. */
+ *  It lives beside `custom.css` in the app's own folder (`scratchpad_path` in the
+ *  crate's themes.rs, which `openable` admits); the browser build keeps it in a dot
+ *  folder of its own store. Its words answer the Search panel from every space, and the
+ *  quick question puts an answer on its end when no note is in front; see
+ *  search/scratchpad.ts and ai/quick.svelte.ts. Whether the card is up is shown.svelte.ts,
+ *  the card ScratchpadCard.svelte. */
 
+import type { EditorView } from '@nib/editor'
+import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
-import { isScratchpad } from './is'
+import { shown } from './is.svelte'
 import { difference, joined } from './words'
 
 class Scratchpad {
   private asked: Promise<string> | null = null
+  /** The card's editor while it is up, which holds the words before the file does. */
+  live: EditorView | null = null
+  /** The line a search hit asked the card to land on; the card takes it. */
+  line: number | null = null
 
   /** Where it is, made the first time. One question per run; a failed one is asked
    *  again next time. */
@@ -38,81 +41,66 @@ class Scratchpad {
     return this.asked
   }
 
-  /** Whether the tab in front is it. */
-  get inFront(): boolean {
-    return isScratchpad(workspace.active?.path)
+  /** The card up, with the keyboard in it unless asked not to, at a line when one is
+   *  given. */
+  show(line: number | null = null, take = true) {
+    this.line = line
+    shown.show(take)
   }
 
-  /** The key, the glyph and the palette row: the scratchpad in front, and pressed
-   *  again while it is, the tab that was in front before it - Quick Note's one gesture
-   *  both ways. */
-  async toggle(): Promise<void> {
-    if (this.inFront) {
-      // The tab used before it, else the one beside it: a window put back by the
-      // session has used nothing yet.
-      const strip = workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.id)
-      const at = strip.indexOf(workspace.activeTabId ?? '')
-      const others = strip.filter((id) => id !== workspace.activeTabId)
-      const back = workspace.panes.lastOf(others) ?? strip[at - 1] ?? strip[at + 1]
-      if (back) workspace.activate(back)
-      return
-    }
-
-    await workspace.open(await this.where())
-  }
-
-  /** What it says now: the words in a tab where one has it open, else the file's. */
+  /** What it says now: the card's words while it is up, else the file's. */
   async text(): Promise<string> {
+    if (this.live) return this.live.state.doc.toString()
     return (await workspace.noteText(await this.where())) ?? ''
   }
 
-  /** Puts words on the end of it, with a blank line before them, without opening it.
-   *  A tab that has it open takes them as an edit from outside - its caret stays put
-   *  - and the file is written in the same breath, as a replacement across a space
-   *  is; see `edited` in workspace/documents.svelte.ts. */
+  /** Puts words on the end of it, with a blank line before them, without showing it.
+   *  A card that is up takes them as an edit - its caret stays put - and the file is
+   *  written in the same breath. */
   async append(words: string): Promise<void> {
-    const path = await this.where()
-    await this.write(path, (before) => joined(before, words))
+    await this.write((before) => joined(before, words))
   }
 
-  /** Writes it as `change` says, through the tab that has it open where one does. */
-  private async write(path: string, change: (before: string) => string): Promise<void> {
-    const open = workspace.documentAt(path)
-    if (open) {
-      open.flush()
-      const before = open.text
-      const after = change(before)
-      if (after === before) return
-      open.edited([difference(before, after)], after)
-      await writeFile(path, after)
-      return
-    }
+  /** An agent's edits, worked out against `before`, put in the same way: through the
+   *  card while it is up, so the reader's caret is carried, and into the file. False
+   *  when the words are no longer `before` - the reader wrote meanwhile - and the
+   *  edits have to be worked out again. See agents/docs. */
+  async replace(before: string, edits: readonly Edit[]): Promise<boolean> {
+    const path = await this.where()
+    const live = this.live
+    const now = live ? live.state.doc.toString() : ((await workspace.noteText(path)) ?? '')
+    if (now.replace(/\r\n?/g, '\n') !== before) return false
 
-    const before = (await workspace.noteText(path)) ?? ''
+    live?.dispatch({ changes: [...edits] })
+    await writeFile(path, applied(before, edits))
+    return true
+  }
+
+  private async write(change: (before: string) => string): Promise<void> {
+    const path = await this.where()
+    const before = await this.text()
     const after = change(before)
-    if (after !== before) await writeFile(path, after)
+    if (after === before) return
+
+    this.live?.dispatch({ changes: difference(before, after) })
+    await writeFile(path, after)
   }
 
   /** Makes it a real note in a space: written at the space's root under the name its
-   *  first line gives it, opened where the scratchpad was, and the scratchpad emptied
-   *  for the next thing. Nothing for an empty scratchpad, which has no note in it.
-   *
-   *  The space is shown first, so the note is written into the listing on screen and
-   *  opened in that space's own tabs, where the reader will look for it. */
+   *  first line gives it, opened, and the scratchpad emptied and put away. Nothing for
+   *  an empty scratchpad, which has no note in it. The space is shown first, so the
+   *  note lands in the listing on screen and in that space's own tabs. */
   async moveTo(spaceId: string): Promise<void> {
     const space = workspace.spaces.find((one) => one.id === spaceId)
-    const path = await this.where()
     const words = await this.text()
     if (!space || !words.trim()) return
 
     if (space.id !== workspace.activeSpaceId) await workspace.selectSpace(space.id)
     const made = await workspace.noteFrom(words, space.root)
     if (!made) return
-    await this.write(path, () => '')
-
-    const shown = workspace.active
+    await this.write(() => '')
+    if (shown.on) shown.hide()
     await workspace.open(made)
-    if (shown && isScratchpad(shown.path)) workspace.close(shown.id, false)
   }
 }
 

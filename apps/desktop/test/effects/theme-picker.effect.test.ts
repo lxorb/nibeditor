@@ -7,6 +7,19 @@ import { theme } from '../../src/lib/theme.svelte'
 import { store } from '../../src/lib/themes/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
 
+// What the picker and a theme tried on fetch the first time they are wanted - the
+// wallpaper's sheet and its settings, the tokens a card is drawn from - fetched before
+// any test: a machine running three gates took longer over them than a poll waits.
+await Promise.all([
+  import('../../src/lib/wallpaper/sheet'),
+  import('../../src/lib/wallpaper/settings'),
+  import('../../src/lib/wallpaper/wallpaper.svelte'),
+  import('../../src/lib/material'),
+  import('../../src/lib/themes/declared'),
+  import('../../src/lib/theme-picker/ThemePicker.svelte'),
+  import('@nib/themes/tokens.css?raw'),
+])
+
 /** The theme picker, which Emil asked for in as many words: *"It should be openable
  *  either by right-clicking on the dark/light theme switch or by using the global
  *  search. And then, by just hovering on a theme, we already get a preview. And when

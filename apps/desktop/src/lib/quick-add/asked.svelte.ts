@@ -16,6 +16,9 @@ class QuickAddAsk {
   smart = $state(storedText(SMART) !== 'off')
   /** Whether the key opens quick add over every other app too. */
   anywhere = $state(storedText(ANYWHERE) !== 'off')
+  /** Whether the system holds that key for nib right now, as the crate answers: not
+   *  where another app has it, nor in a probe, which never takes the reader's key. */
+  held = $state(false)
 
   /** Opens it, knowing what a view's add button knows. */
   show(prefill: Prefill = {}) {

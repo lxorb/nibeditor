@@ -8,11 +8,16 @@ What it checks, through the app's own automation endpoint:
 
 * **A note typed into, and the process killed** less than a second after the last
   keystroke: the words are in the file.
-* **A new tab typed into, and the process killed** the same way: it is a file in the
-  space, named after its first line, with the words in it.
+* **A new tab typed into, and the process killed** the same way: it comes back as the
+  draft it was, its words in it and no file made for it - a new tab is a draft until it
+  is saved (Emil, 2026-09-30; see src/lib/workspace/drafts.ts), and a draft is kept in
+  the session the way VS Code's hot exit keeps an untitled editor.
 * **Ctrl+S** asks nothing and opens nothing: no dialog, no file picker.
 * **Closing the window** straight after typing: the app goes without a question, and
   the words are in the file.
+* **A new note typed into for a while** is one file, and the same file through every
+  save: its file id never changes and nothing is left beside it. A save that put a new
+  file under the name is what Proton Drive kept as a "Name clash" copy, once per save.
 
 The spaces are made in a temp folder named by `NIB_SPACES_DIR`, so the run touches
 nothing of anybody's; see docs/automation.md. Every launch goes through `run_probe`,
@@ -177,6 +182,15 @@ OPEN = """
 
 BLANK = "(() => { window.nibApp.workspace.openBlank(); return true })()"
 
+# The tab in front given its file, the way Save gives a draft one: in the space, under
+# the name its first line offers. See src/lib/workspace/drafts.ts.
+PLACE = """
+(async () => {
+  const ws = window.nibApp.workspace
+  return await ws.save(ws.tabs.find((one) => one.id === ws.activeTabId) ?? ws.active)
+})()
+"""
+
 # Ctrl+S as the window hears it, and whether anything is asked afterwards.
 CTRL_S = """
 (() => {
@@ -189,6 +203,24 @@ CTRL_S = """
 """
 
 ASKED = "(() => document.querySelectorAll('[role=\"dialog\"]').length)()"
+
+# The drafts the launch brought back: every tab with words and no file.
+DRAFTS = """
+(() => window.nibApp.workspace.tabs
+  .filter((one) => one.kind === 'note' && one.path === null)
+  .map((one) => one.doc))()
+"""
+
+
+#: How long a burst of typing is left before the next, in seconds: past the autosave's
+#: quiet (SAVE_DELAY in src/lib/backoff.ts), so every burst is a save of its own.
+BETWEEN_SAVES = 1.5
+
+
+def identity(path: pathlib.Path) -> tuple[int, int]:
+    """The volume and the file id, which NTFS gives a new file and keeps for an old one."""
+    stat = path.stat()
+    return stat.st_dev, stat.st_ino
 
 
 def kill(app: subprocess.Popen[bytes]) -> None:
@@ -214,6 +246,7 @@ def main() -> int:
     space = spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
     (space / "Plan.md").write_text("# Plan\n\nWords.\n", encoding="utf-8")
+    plan = identity(space / "Plan.md")
     say(f"spaces root {spaces}")
 
     refuse_updating(exe)
@@ -254,13 +287,17 @@ def main() -> int:
         ran(port, secret, TYPE % json.dumps("Killed straight after"))
         time.sleep(KILL_AFTER)
         kill(app)
-        made = space / "Killed straight after.md"
-        if not made.exists():
-            wrong(f"the new tab is no file in the space: {sorted(one.name for one in space.iterdir())}")
-        elif made.read_text(encoding="utf-8") != "Killed straight after":
-            wrong(f"the new note does not say what was typed: {made.read_text(encoding='utf-8')!r}")
+        made = sorted(one.name for one in space.iterdir() if one.name != "Plan.md")
+        if made:
+            wrong(f"a draft was written as a file before it was saved: {made}")
+        time.sleep(6.0)
+        app, port, secret = launch(exe, environment, args.identifier, port)
+        back = ran(port, secret, DRAFTS)
+        if not isinstance(back, list) or "Killed straight after" not in back:
+            wrong(f"the draft typed {KILL_AFTER} s before the kill did not come back: {back!r}")
         else:
-            say(f"killed {KILL_AFTER} s after typing -> {made.name}, with the words")
+            say(f"killed {KILL_AFTER} s after typing -> the draft came back with its words, no file")
+        kill(app)
         time.sleep(6.0)
 
         say("--- Ctrl+S, and the window closed straight after typing ---")
@@ -293,6 +330,45 @@ def main() -> int:
             wrong("the line typed as the window closed is not in the file")
         else:
             say("closed                 -> the last line is in Plan.md")
+        time.sleep(6.0)
+
+        say("--- a new note typed into for a while: one file, the same file ---")
+        app, port, secret = launch(exe, environment, args.identifier, port)
+        ran(port, secret, BLANK)
+        time.sleep(1.0)
+        ran(port, secret, TYPE % json.dumps("Hackathon List"))
+        say(f"saved                  -> {ran(port, secret, PLACE)}")
+        time.sleep(BETWEEN_SAVES)
+        note = space / "Hackathon List.md"
+        if not note.exists():
+            wrong(f"the new note is no file: {sorted(one.name for one in space.iterdir())}")
+        else:
+            born = identity(note)
+            for save in range(6):
+                ran(port, secret, TYPE % json.dumps(f"\n- idea {save}"))
+                time.sleep(BETWEEN_SAVES)
+                if identity(note) != born:
+                    wrong(f"save {save + 2} made a new file under the name")
+                    break
+            beside = sorted(
+                one.name
+                for one in space.iterdir()
+                if one.name.endswith(".tmp") or one.name.startswith("Hackathon List")
+            )
+            if beside != ["Hackathon List.md"]:
+                wrong(f"more than the one note is there: {beside}")
+            elif "- idea 5" not in note.read_text(encoding="utf-8"):
+                wrong("the last save is not in the note")
+            else:
+                say("7 saves                -> one file, the same file id, nothing beside it")
+        if not close_app(app, 15):
+            kill(app)
+
+        # Plan.md was typed into by three launches, one of them killed mid-save.
+        if identity(space / "Plan.md") != plan:
+            wrong("Plan.md is no longer the file it started as")
+        else:
+            say("Plan.md                -> the same file through every save")
     finally:
         shutil.rmtree(spaces, ignore_errors=True)
 

@@ -74,4 +74,6 @@ export const mr: Dictionary = {
   'sign in first': 'आधी साइन इन करा',
   'no such space': 'असा स्पेस नाही',
   'that path is not usable': 'तो पथ वापरता येत नाही',
+  // A page as a task in the inbox
+  'As a task': 'काम म्हणून',
 }

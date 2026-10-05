@@ -127,6 +127,14 @@ export const DE: Grammar = {
     { words: ['morgen', 'nachmittag'], day: 'tomorrow', time: '15:00' },
     { words: ['morgen', 'abend'], day: 'tomorrow', time: '19:00' },
   ],
+  partsOfDay: {
+    morgen: '09:00',
+    vormittag: '10:00',
+    mittag: '12:00',
+    nachmittag: '15:00',
+    abend: '19:00',
+    nacht: '22:00',
+  },
 
   every: new Set(['jeden', 'jede', 'jedes', 'alle']),
   everyDone: new Set(['jeden!', 'jede!', 'jedes!', 'alle!']),
@@ -149,5 +157,17 @@ export const DE: Grammar = {
   bareDuration: true,
 
   ordinal: /^(\d{1,2})\.$/,
+  // `zweite` is `other`: `jede zweite Woche` is every two weeks.
+  ordinals: {
+    erste: 1,
+    ersten: 1,
+    dritte: 3,
+    dritten: 3,
+    vierte: 4,
+    vierten: 4,
+    fünfte: 5,
+    fünften: 5,
+  },
+  articles: new Set(['zum', 'den', 'dem']),
   monthFirst: false,
 }

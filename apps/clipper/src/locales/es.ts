@@ -82,4 +82,6 @@ export const es: Dictionary = {
   'sign in first': 'iniciar sesión primero',
   'no such space': 'no hay ese espacio',
   'that path is not usable': 'esa ruta no se puede usar',
+  // A page as a task in the inbox
+  'As a task': 'Como tarea',
 }

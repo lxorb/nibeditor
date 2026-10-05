@@ -1,40 +1,34 @@
 <script lang="ts">
-  /** Three dots while an answer's first words are on their way: something is happening,
-   *  and nothing needs saying about it. */
+  /** One dot breathing while an answer's first words are on their way, ChatGPT's: the
+   *  same dot that then rides at the end of the words as they arrive (Answer.svelte), so
+   *  waiting and streaming read as one thing. Nothing needs saying about it. */
 </script>
 
-<div class="thinking" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="thinking" aria-hidden="true"><span></span></div>
 
 <style>
   .thinking {
     display: flex;
-    gap: 4px;
     padding: var(--space-1) 0;
   }
 
   .thinking span {
-    width: 5px;
-    height: 5px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: var(--muted);
-    animation: pulse calc(var(--dur-slow) * 4) var(--ease-out) infinite;
-  }
-
-  .thinking span:nth-child(2) {
-    animation-delay: calc(var(--dur-slow) * 0.6);
-  }
-
-  .thinking span:nth-child(3) {
-    animation-delay: calc(var(--dur-slow) * 1.2);
+    background: var(--text-strong);
+    animation: pulse calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
   }
 
   @keyframes pulse {
     0%,
     100% {
-      opacity: 0.25;
+      opacity: 0.35;
+      scale: 0.8;
     }
-    40% {
+    50% {
       opacity: 1;
+      scale: 1;
     }
   }
 

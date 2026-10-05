@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Today: its heading and a plus along the top, then the open tasks for today and
+  overdue, a box and the task's words a row.
+
+  The notes widget's card, sizes and colours (see widget_notes.xml), with each row
+  split in two: the box ticks the task, the words open its note. Rows past what the
+  page handed over are hidden by the provider; see TodayWidget.kt.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_page"
+    android:orientation="vertical"
+    android:paddingTop="10dp"
+    android:paddingBottom="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp">
+
+        <TextView
+            android:id="@+id/nib_today_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/widget_muted"
+            android:textSize="13sp"
+            android:text="@string/widget_today" />
+
+        <ImageView
+            android:id="@+id/nib_today_add"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_new"
+            android:tint="@color/widget_text"
+            android:contentDescription="@string/widget_add_task" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/nib_today_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:textColor="@color/widget_muted"
+        android:textSize="15sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/nib_today_row_0"
+        style="@style/NibWidgetTask">
+
+        <TextView
+            android:id="@+id/nib_today_box_0"
+            style="@style/NibWidgetBox" />
+
+        <TextView
+            android:id="@+id/nib_today_text_0"
+            style="@style/NibWidgetTaskWords" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nib_today_row_1"
+        style="@style/NibWidgetTask">
+
+        <TextView
+            android:id="@+id/nib_today_box_1"
+            style="@style/NibWidgetBox" />
+
+        <TextView
+            android:id="@+id/nib_today_text_1"
+            style="@style/NibWidgetTaskWords" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nib_today_row_2"
+        style="@style/NibWidgetTask">
+
+        <TextView
+            android:id="@+id/nib_today_box_2"
+            style="@style/NibWidgetBox" />
+
+        <TextView
+            android:id="@+id/nib_today_text_2"
+            style="@style/NibWidgetTaskWords" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nib_today_row_3"
+        style="@style/NibWidgetTask">
+
+        <TextView
+            android:id="@+id/nib_today_box_3"
+            style="@style/NibWidgetBox" />
+
+        <TextView
+            android:id="@+id/nib_today_text_3"
+            style="@style/NibWidgetTaskWords" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nib_today_row_4"
+        style="@style/NibWidgetTask">
+
+        <TextView
+            android:id="@+id/nib_today_box_4"
+            style="@style/NibWidgetBox" />
+
+        <TextView
+            android:id="@+id/nib_today_text_4"
+            style="@style/NibWidgetTaskWords" />
+    </LinearLayout>
+</LinearLayout>

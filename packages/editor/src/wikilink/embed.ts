@@ -14,6 +14,7 @@ import { imageResolver } from '../images'
 import { label } from '../labels'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
+import { BaseWidget } from '../live-preview/render'
 import { NibWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
@@ -178,9 +179,16 @@ export class EmbedWidget extends NibWidget {
 /** The widget for one embedded note. An embed of a note the space does not hold
  *  still gets a frame, saying so: the markup is there to be corrected, and an
  *  empty space says nothing. */
-export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget | EmbedFileWidget {
+export function embedWidget(
+  state: EditorState,
+  link: LinkSpan,
+): EmbedWidget | EmbedFileWidget | BaseWidget {
   const index = state.facet(noteIndex)
   const kind = embedKind(link.target)
+
+  // A base is drawn as its view by the app, where there is one to draw it.
+  if (kind === 'base' && index.mountBase)
+    return new BaseWidget({ target: link.target, view: link.heading }, index)
 
   // A paper and a plane resolve against the files of the space rather than its
   // notes, the same way a link to one does; see `isTabFile`.

@@ -138,6 +138,10 @@ const USAGE = `nib - drive the running nibeditor
   publish now
   window
   screenshot [--out FILE]
+  tasks list [filter] [--view V]
+  tasks add <text> [--note N] [--under H]
+  tasks done <at> [--undo]
+  base query <path> [--view V]
   eval <code> --yes
   verbs
 

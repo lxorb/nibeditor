@@ -455,7 +455,7 @@
         "path": { "type": "string", "description": "Path inside the space, such as ideas/plan.md" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "include": {
           "type": "array",
@@ -546,7 +546,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "edits": {
           "type": "array",
@@ -593,7 +593,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "content": { "type": "string" },
         "if_rev": { "type": "string" }
@@ -612,7 +612,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "content": { "type": "string" },
         "under": { "type": "string" }
@@ -631,7 +631,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "key": { "type": "string" },
         "value": { "description": "Words, a number, true or false, a list of words, or null." }
@@ -650,7 +650,7 @@
         "path": { "type": "string" },
         "tab": {
           "type": "string",
-          "description": "In place of path: a note tab's id from get_context, an unsaved one or the scratchpad too."
+          "description": "In place of path: a note tab's id from get_context, an unsaved one too, or \"scratchpad\" for the scratchpad."
         },
         "at": {
           "type": "object",
@@ -660,6 +660,137 @@
         "done": { "type": "boolean" }
       },
       "required": ["at", "done"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "list_tasks",
+    "description": "To-dos in every space you reach, or `space`: a `view` (inbox, today, upcoming, logbook, or a .base path), Todoist's `filter` language (`today & #work | overdue`, `p1`, `7 days`), or both. Each row's `at` is what update_task takes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "view": { "type": "string" },
+        "filter": { "type": "string" },
+        "limit": { "type": "integer" }
+      }
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false }
+  },
+  {
+    "name": "add_task",
+    "description": "Add a to-do line to the space's Inbox, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (📅 2026-10-06 ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "text": { "type": "string" },
+        "fields": { "type": "object" },
+        "note": { "type": "string" },
+        "under": { "type": "string" }
+      },
+      "required": ["text"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "update_task",
+    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` moves it with its sub-tasks.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "at": { "type": "string" },
+        "done": { "type": "boolean" },
+        "status": { "type": "string" },
+        "text": { "type": "string" },
+        "due": { "type": "string" },
+        "time": {
+          "type": "string",
+          "description": "HH:MM, a zone after it if fixed"
+        },
+        "scheduled": { "type": "string" },
+        "start": { "type": "string" },
+        "deadline": { "type": "string" },
+        "priority": { "type": "integer" },
+        "recurrence": {
+          "type": "string",
+          "description": "every week on Monday, every 3 days when done"
+        },
+        "remind": {
+          "type": "string",
+          "description": "15m, 09:00, 2026-10-06 09:00"
+        },
+        "duration": { "type": "string", "description": "45m, 1h30m" },
+        "assignee": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "move_to": {
+          "type": "object",
+          "properties": {
+            "note": { "type": "string" },
+            "under": { "type": "string" }
+          }
+        }
+      },
+      "required": ["at"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "query_base",
+    "description": "A view of a base as rows: its groups, the columns it shows and its summaries. `path` of a .base file, or the base as `yaml`.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "path": { "type": "string" },
+        "yaml": { "type": "string" },
+        "view": { "type": "string" }
+      }
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false }
+  },
+  {
+    "name": "add_row",
+    "description": "Make a note as a row of a base: in the folder its filters look in, with the tags and values they ask for, from its template, then `properties`.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "base": { "type": "string" },
+        "view": { "type": "string" },
+        "title": { "type": "string" },
+        "properties": { "type": "object" }
+      },
+      "required": ["base"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "edit_rows",
+    "description": "Set front matter on several notes at once; null takes a property off.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "properties": { "type": "object" }
+      },
+      "required": ["paths", "properties"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "edit_base",
+    "description": "Change a .base file, every key not named kept. `ops`: add_view {name, type, filters, order, sort, groupBy, limit}, edit_view {view, ...}, remove_view {name}, set_filter {filter, view?}, add_formula {name, formula}, add_property {name, displayName}.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "space": { "type": "string" },
+        "path": { "type": "string" },
+        "ops": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["path", "ops"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },

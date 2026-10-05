@@ -19,6 +19,7 @@ import { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@nib/editor'
 import { codeBlocks, findLinks, type Wikilink } from '@nib/markdown'
 import { loadFor } from '@nib/markdown/engines'
 import { highlightedFence } from '@nib/markdown/highlight'
+import { escapeAll } from '@nib/markdown/html'
 import { embedKind } from '@nib/markdown/links'
 import { drawDiagram } from './diagrams'
 import { loadParsers, type Parser } from './highlight'
@@ -81,6 +82,10 @@ export async function prepareFences(
      *  for an export and for a published page, which have no space to search, and
      *  where such a fence stays the code it is; see query-block.ts. */
     query?: ((code: string, language: string) => Promise<string | null>) | undefined
+    /** Whether a ` ```base ` fence is left as a box the app draws its view into, as
+     *  the reading view does; everywhere else it stays the code it is. See
+     *  views/mount.ts. */
+    base?: boolean
   } = {},
   draw: Drawer = drawDiagram,
 ): Promise<Fence> {
@@ -128,6 +133,13 @@ ${block.code}`,
   ])
 
   return (code, language) => {
+    if (language === 'base' && options.base) {
+      // The words go with the box, which is all the view needs; until it is drawn the
+      // box holds them as the code they are.
+      const words = escapeAll(code)
+      return `<figure class="base-fence" data-base-code="${words}"><pre><code>${words}</code></pre></figure>\n`
+    }
+
     if (ANSWERED.has(language)) {
       const rows = answers.get(`${language}
 ${code}`)

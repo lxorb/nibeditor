@@ -57,6 +57,26 @@ export interface Env {
    *  factors are sealed under `OPENAI_KEY_SECRET` as they were, and once it is they
    *  move across on their next use and on the next nightly run. */
   SECOND_FACTOR_SECRET?: string
+
+  /** Push to the devices that registered for it (src/push): Web Push to the browser
+   *  build, FCM to Android, APNs to an iPhone. Each service is off until its keys are
+   *  set, and a target on a service that is off is simply not pushed to. See
+   *  docs/mobile.md, "Push", for what each one is and how it is made.
+   *
+   *  The VAPID key pair, base64url: the public point (a var, which the browser build
+   *  subscribes with) and the private scalar (a secret), and who to write to about them. */
+  VAPID_PUBLIC_KEY?: string
+  VAPID_PRIVATE_KEY?: string
+  VAPID_SUBJECT?: string
+  /** The JSON key of the Firebase project's service account, as Google hands it out. */
+  FCM_SERVICE_ACCOUNT?: string
+  /** The `.p8` key APNs tokens are signed with, its id, the team's id and the app's
+   *  bundle id; `APNS_SANDBOX` is `true` for a development build. */
+  APNS_KEY?: string
+  APNS_KEY_ID?: string
+  APNS_TEAM_ID?: string
+  APNS_TOPIC?: string
+  APNS_SANDBOX?: string
 }
 
 /** The `send_email` binding's surface, which workers-types does not yet cover. */

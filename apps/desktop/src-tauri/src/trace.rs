@@ -7,10 +7,13 @@
 //! appears in the log folder with every step of the launch on it, from before the
 //! first line of our own code ran to the moment the window has nothing left to do.
 //!
-//! Off by default and free when it is off: one environment read, and a `mark`
-//! that returns without locking anything. Nothing here is behind a compile-time
-//! feature on purpose - a switch that has to be built specially is a switch that
-//! is not there when the launch that is slow happens.
+//! The file is off by default. The steps are not: a mark is a lock and a number, a few
+//! dozen of them a launch, and every launch says what it cost in one line of nib.log -
+//! `launch: window 52, page 310, shell 480, first frame 560, tab 600, done 690 ms` - so
+//! a launch somebody calls slow is a launch the log can answer for without a switch
+//! having been set first; see `said`. Nothing here is behind a compile-time feature on
+//! purpose - a switch that has to be built specially is a switch that is not there when
+//! the launch that is slow happens.
 //!
 //! Two clocks, one axis. This side counts from an `Instant` taken as the app
 //! starts; the window counts from its own `performance.timeOrigin`, which is when
@@ -108,10 +111,6 @@ pub struct Said {
 /// and letting whatever scans a new binary read it - and on a machine that has
 /// just auto-updated that is most of what somebody waited through.
 pub fn begin() {
-    if !on() {
-        return;
-    }
-
     let _ = *STARTED;
     if *BEFORE > Duration::ZERO {
         push("windows, before our first line", *BEFORE);
@@ -127,10 +126,6 @@ pub fn on() -> bool {
 
 /// One step, now.
 pub fn mark(step: &str) {
-    if !on() {
-        return;
-    }
-
     push(step, along());
 }
 
@@ -273,11 +268,7 @@ fn push_with(step: &str, at: Duration, cpu: Option<Duration>) {
 /// `origin` says where that was on the wall clock, so the difference against this
 /// side's own zero is what turns one into the other.
 #[tauri::command(async)]
-pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
-    if !on() {
-        return;
-    }
-
+pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>, facts: Option<String>) {
     let shift = offset(origin);
     for said in steps {
         let at = span_of(said.at);
@@ -287,7 +278,56 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
         push_said(&format!("window: {}", said.step), at);
     }
 
+    if let Ok(marks) = MARKS.lock() {
+        crate::logs::say(&app, "info", &said(&marks, facts.as_deref()));
+    }
     write(&app);
+}
+
+/// The steps of a launch the log keeps, and the word each is said as.
+const SAID: [(&str, &str); 7] = [
+    ("windows, before our first line", "windows"),
+    ("window shown", "window"),
+    ("window: page requested", "page"),
+    ("window: shell painted", "shell"),
+    ("window: first frame painted", "first frame"),
+    ("window: active tab painted", "tab"),
+    ("window: launch order finished", "done"),
+];
+
+/// The launch in one line of the log: when each of its few phases was reached, in
+/// milliseconds from the process being created, and what the window says it opened -
+/// counts, never names.
+fn said(marks: &[Mark], facts: Option<&str>) -> String {
+    let mut out = String::from("launch:");
+    let mut first = true;
+    for (step, word) in SAID {
+        let Some(mark) = marks.iter().find(|one| one.step == step) else {
+            continue;
+        };
+        let _ = write!(
+            out,
+            "{} {word} {:.0}",
+            if first { "" } else { "," },
+            millis(mark.at)
+        );
+        first = false;
+    }
+    out.push_str(" ms");
+    if let Some(facts) = facts.map(plain).filter(|one| !one.is_empty()) {
+        let _ = write!(out, "; {facts}");
+    }
+    out
+}
+
+/// What the window says it opened, kept to what a count is written in: digits, letters,
+/// spaces and commas, and not much of them.
+fn plain(facts: &str) -> String {
+    facts
+        .chars()
+        .filter(|one| one.is_ascii_alphanumeric() || matches!(one, ' ' | ','))
+        .take(160)
+        .collect()
 }
 
 /// How far into the launch the window's clock started, or nothing at all where
@@ -447,7 +487,7 @@ fn before_main() -> Option<Duration> {
 
 #[cfg(test)]
 mod tests {
-    use super::{line, millis, offset, page, push, span_of, Mark, COLUMN, MARKS};
+    use super::{line, millis, offset, page, push, said, span_of, Mark, COLUMN, MARKS};
     use std::time::Duration;
 
     /// The marks are one list for the whole process, so a test that writes to them
@@ -467,6 +507,31 @@ mod tests {
         let written = read(&held);
         *held = before;
         written
+    }
+
+    /// The log's line: the phases a launch reached, in order, and counts the window
+    /// gave, with anything that is not a count taken out.
+    #[test]
+    fn a_launch_is_one_line_of_the_log() {
+        let at = |step: &str, millis: u64| Mark {
+            step: step.to_owned(),
+            at: Duration::from_millis(millis),
+            cpu: None,
+        };
+        let marks = vec![
+            at("windows, before our first line", 41),
+            at("plugins", 60),
+            at("window shown", 95),
+            at("window: page requested", 310),
+            at("window: shell painted", 482),
+            at("window: first frame painted", 560),
+            at("window: launch order finished", 690),
+        ];
+        assert_eq!(
+            said(&marks, Some("12 spaces, 31 tabs; <b>\n")),
+            "launch: windows 41, window 95, page 310, shell 482, first frame 560, done 690 ms; 12 spaces, 31 tabs b"
+        );
+        assert_eq!(said(&[], None), "launch: ms");
     }
 
     #[test]

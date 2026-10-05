@@ -41,6 +41,8 @@ export interface Layer {
   radius: number
   /** A scrim, clear or not, which covers the whole window; otherwise a floating layer. */
   scrim: boolean
+  /** The element itself, which the page watches for a change of size; see WebTab.svelte. */
+  node?: Element
 }
 
 /** The shapes the theme package gives every layer that floats (see base.css), and the
@@ -98,6 +100,7 @@ export function layersOver(hole: HTMLElement): Layer[] {
       box: boxOf(node),
       radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
       scrim,
+      node,
     })
   }
   return found

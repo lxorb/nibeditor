@@ -9,11 +9,14 @@
  *  Nothing in the file says which, so the sheet asks, once, with the answer that
  *  is right more often already chosen: a table. The other answer is one note per
  *  row, with the row's columns as its properties, which is the shape a Notion
- *  database row already had. */
+ *  database row already had - and a `.base` beside their folder showing them as a
+ *  table again, so what came in as a database is one (docs/tasks.md 4, "import CSV
+ *  as a base"). */
 
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
-import { dayOf, noteText, type Meta } from './meta'
+import { type Base, writeBase } from '@nib/bases'
+import { dayOf, noteText, type Meta, propertyName } from './meta'
 import { Names, safeName } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -65,6 +68,11 @@ export async function readTable(
         text: note.text,
       })
     }
+    files.push({
+      kind: 'note',
+      path: names.free(`${stem}.base`),
+      text: baseOf(folder, table.columns, table.rows),
+    })
   }
 
   if (!files.length) {
@@ -137,4 +145,45 @@ export function rowNote(
   if (extra.length) meta.extra = extra
 
   return { name, text: noteText(name, words.join('\n\n'), meta) }
+}
+
+/** The base over a folder of row notes: a table of them, the columns in the file's
+ *  order under the names the notes write them with. The folder is matched by its name
+ *  wherever the import is put, since the plan does not know where that is. */
+function baseOf(
+  folder: string,
+  columns: readonly string[],
+  rows: readonly Record<string, string>[],
+): string {
+  const title = columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
+  const order = columns
+    .filter((one) => one !== title && !rows.some((row) => (row[one] ?? '').includes('\n')))
+    .map((one) =>
+      DATES.test(one) ? (/created|^date$/i.test(one) ? 'date' : 'updated') : propertyName(one),
+    )
+  const base: Base = {
+    filters: {
+      or: [
+        `file.folder == ${JSON.stringify(folder)}`,
+        `file.folder.endsWith(${JSON.stringify(`/${folder}`)})`,
+      ],
+    },
+    formulas: {},
+    properties: {},
+    summaries: {},
+    views: [
+      {
+        type: 'table',
+        name: 'Table',
+        order: ['file.name', ...new Set(order.map((one) => `note.${one}`))],
+        sort: [],
+        summaries: {},
+        nib: { kept: {} },
+        options: {},
+      },
+    ],
+    nib: { properties: {}, kept: {} },
+    kept: {},
+  }
+  return writeBase(base)
 }

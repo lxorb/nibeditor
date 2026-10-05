@@ -977,10 +977,18 @@ order and Notion's:
    place, at the same height, with the same radius and the same magnifier, drawn
    from the same `.nib-field` class. It is one control that becomes editable, not
    two controls that look alike.
-3. **The panel tabs**, full width, an equal share each - the segmented control the
-   settings sheet already uses, so the tab you are on is raised out of its groove
-   exactly the way every other "this one" in the app is, and the raised surface
-   slides between them rather than blinking; see "Swapping".
+3. **The panel tabs** - the segmented control the settings sheet already uses, so
+   the tab you are on is raised out of its groove exactly the way every other "this
+   one" in the app is, and the raised surface slides between them rather than
+   blinking; see "Swapping". The pill is as wide as its tabs, each a mark with
+   `--space-2` either side as in the view's layout switch, at the start of the row;
+   a share of the row each drew six marks 130 pixels apart in a wide panel. The
+   panel's own tools (hold, graph, order, stop, New chat and Chats) are one group at
+   the row's far end. Where the row is too narrow, a tab gives down to its mark and
+   `--space-1` either side, and past that the last tabs go behind a More segment at
+   the pill's end that lists them with their keys; the tab showing always keeps a
+   place. VS Code's activity bar does the same. See `tabsShown` in `workspace/panels.ts`, and
+   `test/e2e/panel-tabs.py`, which measures it at three widths in both schemes.
 
 The tabs sit between the name and the search entry rather than under both: the
 entry has to be in one place whether it is the pill or the field, and the field
@@ -1058,6 +1066,54 @@ undo takes it back, and every pane showing the note has it at once. A block nib 
 read without guessing - a comment, a nested shape - is shown as the YAML it is and not
 turned into rows. A tag in a `tags` list asks the space about itself, as a tag does
 everywhere else.
+
+The value controls are one component, `lib/properties/PropertyValue.svelte`, which a
+table's cell draws too (docs/tasks.md 5.12): a date is picked the same way in the panel
+and in a view.
+
+### The Tasks panel and the views
+
+The Tasks panel is the third tab of the list panel, a box with a tick in it, and it is
+navigation, never the work (docs/tasks.md 5.5). Its rows are `.nib-row`s with a mark,
+the name and the count as the row's meta: the add row, Inbox, Today, Upcoming and the
+Logbook, then under section labels the space's `.base` files, the projects (every note
+with open tasks, the last written first, seven and then More) and the labels.
+Bookmarked ones come first. Today's count turns to `--danger` while something is
+overdue, and that is the only colour in the panel. A row opens its view in a tab; a
+project's menu opens it as a board or a calendar. Moved to the right, the panel is
+Today's list itself, worked through beside the note.
+
+A view tab (`lib/views/ViewTab.svelte`) is a head and a body. The head is the view's
+name, which is the menu of the base's views and what can be done to them; the layout
+switch, a `.nib-segmented` of seven marks drawn on the panel marks' 13 unit grid (list,
+table, cards, board, calendar, timeline, chart); the filter, the sort and the group as
+glyphs that light in the accent while set, each opening a `.nib-layer` under it; the
+view's own search field; and the plus. The body swaps with the app's swap motion
+(`arrive` in slide.ts).
+
+- **A task row** is Todoist's: a round box ringed in the priority's tone (p1
+  `--canvas-1`, p2 `--canvas-2`, p3 `--canvas-5`), half filled while doing, filled and
+  ticked when done; the words with their inline marks drawn; the chips after them in
+  `--muted` at the small size, a date past in `--danger`; and where the task lives,
+  note › heading, in the row's meta. A done row fades to 55%. A sub-task sits a
+  `--row-indent` in under its parent, which wears the twist.
+- **A group head** is the section label's shape with a twist and its count.
+- **A card** (board, cards) is `--surface` on the column's `--surface-2`, `--radius-md`,
+  a hairline, and a 3px start edge in the priority's tone. Every card on a board is one
+  height, so a column is a window of what is on screen.
+- **A calendar event** is a wash of its tone at 14% over the surface with a 3px start
+  edge; a repeat's future occurrence is the same at 45% with a dashed edge. Today's
+  date is a pill in the accent; in the week the hour column of today carries a 4%
+  accent wash and a 2px accent line at the time.
+- **Carried**, a row leaves a 35% ghost behind and a card of its words follows the
+  pointer with `--shadow-md`, tilted 1.5 degrees; whatever would take it lights with
+  `--surface-selected` and a 1px accent ring, `.is-taking` as a row of the file list
+  does.
+- **On a phone** the table is rows with their first three properties under the name,
+  the calendar is an agenda, and the timeline is not offered.
+
+A base in a note, a ` ```base ` fence or `![[Bugs.base#Board]]`, is the same frame with
+the head at the row's size and a hairline round it.
 
 ### The rail is gone
 

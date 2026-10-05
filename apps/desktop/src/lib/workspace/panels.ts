@@ -106,6 +106,7 @@ export const PANELS: readonly Panel[] = [
   'tree',
   'outline',
   'search',
+  'tasks',
   'links',
   'footnotes',
   'properties',
@@ -114,7 +115,7 @@ export const PANELS: readonly Panel[] = [
 ]
 
 /** The panels a window could be arranged with before a session said which it knew. */
-const ARRANGED_BEFORE: readonly Panel[] = PANELS.slice(0, 5)
+const ARRANGED_BEFORE: readonly Panel[] = ['tree', 'outline', 'search', 'links', 'footnotes']
 
 /** The right side a window opens with: the homes when nothing was written down, else
  *  what was written plus any homed there that the build which wrote it never knew. */
@@ -125,4 +126,28 @@ export function rightFrom(
   if (!saved) return [...STARTS_RIGHT]
 
   return [...saved, ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one))]
+}
+
+/** How many of a side's tabs the strip draws: all where they fit at their narrowest
+ *  (or nothing is laid out yet), else as many as fit beside a More segment, and at
+ *  least the one showing. VS Code's activity bar keeps its overflow the same way. */
+export function tabsShown(count: number, room: number, tab: number, gap = 2, inset = 6): number {
+  if (room <= 0 || tab <= 0) return count
+
+  const width = (n: number) => n * tab + Math.max(0, n - 1) * gap + inset
+  if (width(count) <= room) return count
+
+  let fit = count - 1
+  while (fit > 1 && width(fit + 1) > room) fit -= 1
+  return Math.max(1, fit)
+}
+
+/** The tabs drawn and the ones behind More, in the strip's order, except that the
+ *  one showing always takes the last place drawn. */
+export function splitTabs<T>(items: readonly T[], shown: number, isOn: (item: T) => boolean) {
+  const drawn = items.slice(0, shown)
+  const on = items.find(isOn)
+  if (on !== undefined && !drawn.includes(on)) drawn[drawn.length - 1] = on
+
+  return { drawn, behind: items.filter((item) => !drawn.includes(item)) }
 }

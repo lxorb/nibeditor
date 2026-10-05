@@ -1,20 +1,31 @@
 <script lang="ts">
-  /** The space's threads (docs/ai-sidebar.md 4.11): newest first, each its title, its
-   *  model and its age, a dot on the ones still answering or with work running out of
-   *  sight (a goal, a loop, a helper). Typing searches titles and
-   *  words; arrows walk it, Enter opens, Delete archives (and an archived one comes back
-   *  with Delete again), Shift+Delete deletes for good, Escape goes back to the open
-   *  thread. The archived ones are the list's last group, as Claude Code keeps them. */
+  /** The space's threads (docs/ai-sidebar.md 4.11), as ChatGPT's history: New chat and
+   *  the search at the top, then the threads by age - Today, Yesterday, the last seven
+   *  days, a month at a time - each its title alone, a ring on the ones still answering
+   *  or with work running out of sight (a goal, a loop, a helper), and a "..." on the
+   *  one pointed at for Rename, Archive and Delete. The archived ones are the list's
+   *  last group, as Claude Code keeps them.
+   *
+   *  In the panel it takes the conversation's place (the list glyph, or Ctrl+Shift+A
+   *  twice); in a tab of its own it is the rail down the left, always there.
+   *
+   *  Typing searches titles and words; arrows walk it, Enter opens, Delete archives (and
+   *  an archived one comes back with Delete again), Shift+Delete deletes for good,
+   *  Escape goes back to the open thread. */
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
-  import { t } from '../../i18n.svelte'
+  import { i18n, t } from '../../i18n.svelte'
+  import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
   import { scrollbar } from '../../scrollbar'
-  import { when } from '../../when'
+  import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
   import { tasks } from '../commands/tasks.svelte'
+  import { type Age, ageKey, ageOf } from './ages'
   import { chat } from './chat.svelte'
+
+  const { rail = false }: { rail?: boolean } = $props()
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
@@ -29,16 +40,56 @@
     const found = chat.heads.filter((one) => matches(one, words))
     return [...found.filter((one) => !one.archived), ...found.filter((one) => one.archived)]
   })
-  const firstArchived = $derived(rows.findIndex((one) => one.archived))
+
+  /** The heading over each row, where it starts a group: its age's, or Archived. */
+  const headings = $derived.by(() => {
+    const now = new Date()
+    let before = ''
+    return rows.map((one) => {
+      const age = ageOf(one.updated, now)
+      const group = one.archived ? 'archived' : ageKey(age)
+      const starts = group !== before
+      before = group
+      if (!starts) return null
+      return one.archived ? t('Archived') : ageWord(age, now)
+    })
+  })
+
+  function ageWord(age: Age, now: Date): string {
+    switch (age.kind) {
+      case 'today':
+        return t('Today')
+      case 'yesterday':
+        return t('Yesterday')
+      case 'week':
+        return t('Last 7 days')
+      case 'month':
+        return i18n.when(new Date(age.year, age.month, 1), {
+          month: 'long',
+          ...(age.year === now.getFullYear() ? {} : { year: 'numeric' }),
+        })
+    }
+  }
 
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
     if (untrack(() => lit) > last) lit = last
   })
 
+  // The panel's list takes the keyboard as it comes; the rail of a tab waits to be asked.
   $effect(() => {
-    requestAnimationFrame(() => field?.focus())
+    if (!rail) requestAnimationFrame(() => field?.focus())
   })
+
+  function rowMenu(event: MouseEvent, one: ThreadHead) {
+    menu.show(event, [
+      { label: t('Rename'), asks: true, run: () => void chat.rename(undefined, one.id) },
+      one.archived
+        ? { label: t('Unarchive'), run: () => chat.unarchive(one.id) }
+        : { label: t('Archive'), run: () => chat.archive(one.id) },
+      { label: t('Delete'), danger: true, run: () => void chat.remove(one.id) },
+    ])
+  }
 
   function onKey(event: KeyboardEvent) {
     const one = rows[lit]
@@ -63,25 +114,47 @@
   }
 </script>
 
-<div class="threads" in:fly={{ y: -6, duration: dur(150), easing: cubicOut }}>
-  <div class="find">
-    <input
-      class="nib-field"
-      bind:this={field}
-      bind:value={chat.listQuery}
-      placeholder={t('Search chats')}
-      aria-label={t('Search chats')}
-      onkeydown={onKey}
-      oninput={() => (lit = 0)}
-    />
+<div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
+  <div class="top">
+    <!-- New chat heads a tab's rail, as it heads ChatGPT's; at a side it is already in
+         the side's own row of tabs. -->
+    {#if rail}
+      <button
+        class="new"
+        title={shortcuts.tooltip(t('New chat'), 'ai.new')}
+        onclick={() => chat.newThread()}
+      >
+        <svg viewBox="0 0 13 13" aria-hidden="true"
+          ><path
+            d="M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z"
+          /></svg
+        >
+        <span>{t('New chat')}</span>
+      </button>
+    {/if}
+    <div class="find nib-field">
+      <svg class="nib-field-mark" viewBox="0 0 13 13" aria-hidden="true"
+        ><path d="M5.8 2.2a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 1 0 0-7.2zM8.4 8.4l2.6 2.6" /></svg
+      >
+      <input
+        bind:this={field}
+        bind:value={chat.listQuery}
+        placeholder={t('Search chats')}
+        aria-label={t('Search chats')}
+        onkeydown={onKey}
+        oninput={() => (lit = 0)}
+      />
+    </div>
   </div>
 
   <ul class="list" role="listbox" use:scrollbar>
     {#each rows as one, index (one.id)}
-      {#if index === firstArchived}
-        <li class="group" role="presentation">{t('Archived')}</li>
+      {#if headings[index]}
+        <li class="group" class:archived={one.archived} role="presentation">
+          {headings[index]}
+        </li>
       {/if}
-      <li role="presentation">
+      <li class="item" role="presentation">
         <button
           class="row"
           class:lit={index === lit}
@@ -91,12 +164,22 @@
           aria-selected={index === lit}
           onpointermove={() => (lit = index)}
           onclick={() => void chat.openThread(one.id)}
+          oncontextmenu={(event) => rowMenu(event, one)}
         >
+          <span class="title">{one.title || t('Untitled')}</span>
           {#if chat.running.includes(one.id) || tasks.of(one.id).length}<span class="dot"
             ></span>{/if}
-          <span class="title">{one.title || t('Untitled')}</span>
-          <span class="meta">{one.model}</span>
-          <span class="age">{when(one.updated, 'short')}</span>
+        </button>
+        <button
+          class="nib-glyph more"
+          title={t('More')}
+          aria-label={t('More')}
+          aria-haspopup="menu"
+          onclick={(event) => rowMenu(event, one)}
+        >
+          <svg viewBox="0 0 13 13" aria-hidden="true"
+            ><path d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg
+          >
         </button>
       </li>
     {:else}
@@ -115,9 +198,52 @@
     flex-direction: column;
   }
 
-  .find {
+  .top {
     flex: none;
-    padding: var(--space-1) var(--space-1) var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 var(--space-1) var(--space-2);
+  }
+
+  /* New chat, a row of the list's own shape, and the search under it: the first things
+     in it, as ChatGPT's rail starts. */
+  .new {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--row-height);
+    padding: 0 var(--row-pad);
+    border: 0;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+    text-align: start;
+    cursor: default;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .new:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .new svg {
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .find {
+    margin-top: 2px;
   }
 
   .list {
@@ -127,6 +253,10 @@
     padding: 0 var(--space-1) var(--space-2);
     overflow-y: auto;
     list-style: none;
+  }
+
+  .item {
+    position: relative;
   }
 
   .row {
@@ -151,13 +281,40 @@
     background: var(--surface-hover);
   }
 
-  .row.open .title {
+  .row.open {
+    background: var(--surface-press);
     color: var(--text-strong);
-    font-weight: var(--weight-strong);
   }
 
   .row.archived {
     color: var(--muted);
+  }
+
+  /* The "..." over the end of the row pointed at, ChatGPT's: the row's menu without a
+     column of glyphs down a list of titles. */
+  .more {
+    position: absolute;
+    top: 50%;
+    inset-inline-end: 2px;
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    translate: 0 -50%;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .more svg {
+    stroke-width: 2.2;
+  }
+
+  .item:hover .more,
+  .more:focus-visible,
+  :global([data-touch]) .more {
+    opacity: 1;
+  }
+
+  .item:hover .row {
+    padding-inline-end: calc(var(--row-height-sm) + 4px);
   }
 
   /* A ring rather than a dot: a dot in the accent is a tab saving, and this is a thread
@@ -191,22 +348,15 @@
     white-space: nowrap;
   }
 
-  .meta,
-  .age {
-    flex: none;
-    max-width: 30%;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: var(--text-xs);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .group,
   .empty {
     padding: var(--space-3) var(--row-pad) var(--space-1);
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
+  }
+
+  .group:first-child {
+    padding-top: var(--space-1);
   }
 </style>

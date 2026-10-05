@@ -173,8 +173,18 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
 /// comes forward and takes whatever the launch was asked to open.
 fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
     // The window, not the webview window, which a window holding a page in a tab
-    // is not; see web_tabs.rs.
-    if let Some(window) = app.get_window(MAIN) {
+    // is not; see web_tabs.rs. Not for a reminder's press, which the deep link hands
+    // to the reminders: a Done is answered out of sight, and a press on the
+    // notification brings the window up itself (reminders.rs).
+    let reminder = argv
+        .iter()
+        .any(|one| crate::reminders::link::is_reminder(one));
+    if let Some(window) = app.get_window(MAIN).filter(|_| !reminder) {
+        // A window hidden in the tray comes back as well, the way a tray app's does when
+        // it is started again.
+        if crate::placement::away().is_none() {
+            let _ = window.show();
+        }
         bring_forward(&window);
     }
 

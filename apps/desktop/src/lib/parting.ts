@@ -96,3 +96,29 @@ export function handingBack(): boolean {
 export async function handBack(): Promise<void> {
   await Promise.all([...handing].map((one) => one.send().catch(() => undefined)))
 }
+
+/** What puts the window in the tray rather than closing it, while something keeps nib
+ *  there: the reminders, while one is waiting or the reader asked (docs/tasks.md
+ *  decision 6; see reminders/residency.svelte.ts). Said here for the reason everything
+ *  else here is, so the close handler loads nothing to ask. Null while nothing does.
+ *  The agents keep their own in agent-marks.svelte.ts; the crate holds the one tray
+ *  both share (agents/shell.rs). */
+let tray: (() => Promise<boolean>) | null = null
+
+/** Said by whoever keeps nib in the tray, and taken back with null. */
+export function keptInTray(hide: (() => Promise<boolean>) | null): void {
+  tray = hide
+}
+
+/** What hides the window into the tray, if anything keeps it there. */
+export function trayKeeper(): (() => Promise<boolean>) | null {
+  return tray
+}
+
+/** What would stop with the window - a shell, an AI turn - each saying whether it
+ *  runs, so a close with nothing running fetches no question; see lib/quitting. */
+const running = new Set<() => boolean>()
+
+export const runs = (any: () => boolean) => void running.add(any)
+
+export const anythingRuns = () => [...running].some((any) => any())

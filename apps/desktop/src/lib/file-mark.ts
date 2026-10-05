@@ -11,6 +11,7 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import {
+  isBaseTarget,
   isCanvasTarget,
   isImageTarget,
   isPagesTarget,
@@ -32,6 +33,7 @@ import Image from 'lucide/dist/esm/icons/image.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
 import Server from 'lucide/dist/esm/icons/server.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
+import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
 
@@ -82,7 +84,7 @@ const Workflow: IconNode = [
  *  its front matter, and the row had to ask the link index what the file said - and
  *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
 export type FileMark =
-  'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web' | 'terminal' | 'remote'
+  'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web' | 'terminal' | 'remote' | 'base'
 
 /** The mark a file's name earns it.
  *
@@ -96,6 +98,7 @@ export function fileMark(name: string): FileMark {
   if (isCanvasTarget(name)) return 'canvas'
   if (isPagesTarget(name)) return 'pages'
   if (isPdfTarget(name)) return 'pdf'
+  if (isBaseTarget(name)) return 'base'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
   return 'file'
@@ -109,7 +112,8 @@ export function fileMark(name: string): FileMark {
  *  still a note. The graph wears none: it is a picture drawn from the space, not
  *  a file in it. */
 export function markOf(kind: TabKind): FileMark | null {
-  return kind === 'graph' ? null : kind
+  if (kind === 'view') return 'base'
+  return kind === 'graph' || kind === 'chat' ? null : kind
 }
 
 /** The drawing each mark is.
@@ -148,4 +152,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   terminal: SquareTerminal,
   // Another machine: the server a remote terminal's tab wears.
   remote: Server,
+  // A grid of rows and columns: a base, and a view of rows in a tab, Obsidian's mark
+  // for a base and the shape a table, a board and a calendar all share.
+  base: Table,
 }

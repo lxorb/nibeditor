@@ -23,6 +23,7 @@ import { steppedKey } from './direction'
 import { focusEditor } from './focus'
 import { chorded } from './keys'
 import { spelled, type Spelling } from './list-keys'
+import { overlays } from './overlays'
 import { walked } from './walk'
 
 /** A list too long to keep in the page.
@@ -288,6 +289,10 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
           event.preventDefault()
           return
         }
+        // A list in a layer - the space switcher, a menu - is closed by Escape, and the
+        // layer hands the keyboard back to whatever opened it (trap.ts): the file list,
+        // a terminal, a page. Sending it to the note as well took it from them.
+        if (overlays.depth > 0) return
         event.preventDefault()
         focusEditor()
         return

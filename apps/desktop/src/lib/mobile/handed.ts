@@ -34,6 +34,7 @@ import {
   arrivedFrom,
   isPicture,
   sharedPlan,
+  sharedTask,
   sharedTitle,
   sharedWords,
   type SharedItem,
@@ -50,15 +51,17 @@ const SLICE = 256 * 1024
  *  they are answering about. */
 const SHOWN = 160
 
-/** Where a tile or a widget row asked to go. */
+/** Where a tile or a widget row asked to go, and the task a Today box asked to tick. */
 interface Asked {
   command: string
   open: string
+  tick: string
+  tickSpace: string
 }
 
 /** Reads what the activity said about the press that started this. */
 export function askedFrom(json: string): Asked {
-  const nothing: Asked = { command: '', open: '' }
+  const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
   if (!json) return nothing
 
   let parsed: unknown
@@ -71,9 +74,12 @@ export function askedFrom(json: string): Asked {
   if (typeof parsed !== 'object' || parsed === null) return nothing
   const held = parsed as Record<string, unknown>
 
+  const words = (value: unknown) => (typeof value === 'string' ? value : '')
   return {
-    command: typeof held.command === 'string' ? held.command : '',
-    open: typeof held.open === 'string' ? held.open : '',
+    command: words(held.command),
+    open: words(held.open),
+    tick: words(held.tick),
+    tickSpace: words(held.tickSpace),
   }
 }
 
@@ -118,8 +124,20 @@ async function take(): Promise<void> {
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
+  if (asked.tick) await ticked(asked.tick, asked.tickSpace)
 
   await taken()
+}
+
+/** A box of the Today widget: the task ticked in its note, through the one write path.
+ *  An anchor is words anything on the phone could have sent, so it is read as one and
+ *  found among the rows of a space the app has, or nothing happens. */
+async function ticked(at: string, space: string): Promise<void> {
+  if (!workspace.spaces.some((one) => one.name === space)) return
+  const { tickTask } = await import('../task-actions')
+  await tickTask(at, space, true).catch((error: unknown) => {
+    log('error', `handed: a task could not be ticked: ${String(error)}`)
+  })
 }
 
 /** The share, from what the activity holds to what the space holds. */
@@ -133,6 +151,7 @@ async function taken(): Promise<void> {
 
     if (where === 'here') await intoTheOpenNote(arrived, bytes)
     else if (where === 'new') await intoANewNote(arrived, bytes)
+    else if (where === 'task') await asATask(arrived)
   } catch (error) {
     log('error', `shared: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
@@ -184,29 +203,39 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
   return held
 }
 
-/** Which of the two ways this share should land, or null for neither.
+/** Which way this share should land, or null for none.
  *
- *  Asked only when both are possible: a note open to write in, and a share that
- *  is nothing but words and pictures, which are the two things that can go into a
- *  note that already exists. Anything else makes its own note without asking,
- *  because there is nothing to choose between. */
-async function ask(arrived: Arrived): Promise<'new' | 'here' | null> {
+ *  Asked only where there is a choice: a note open to write in, for a share that is
+ *  nothing but words and pictures, which are the two things that can go into a note
+ *  that already exists; and a task in the inbox, for a share that is words alone (a
+ *  link, a sentence). Anything else makes its own note without asking, because there
+ *  is nothing to choose between. */
+async function ask(arrived: Arrived): Promise<'new' | 'here' | 'task' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
   const fits = arrived.items.every((one) => one.text !== null || isPicture(one))
-  if (tab?.kind !== 'note' || !view || view.state.readOnly || !fits) return 'new'
+  const into = tab?.kind === 'note' && !!view && !view.state.readOnly && fits ? tab : null
+  const words = arrived.items.every((one) => one.text !== null)
+  if (!into && !words) return 'new'
 
   const chosen = await prompt.choose({
     title: t('Shared'),
     detail: summary(arrived),
     options: [
       { id: 'new', label: t('New note'), primary: true },
-      { id: 'here', label: t('Add to {name}', { name: tab.shown }) },
+      ...(into ? [{ id: 'here', label: t('Add to {name}', { name: into.shown }) }] : []),
+      ...(words ? [{ id: 'task', label: t('As a task') }] : []),
     ],
   })
 
-  if (chosen === 'new' || chosen === 'here') return chosen
+  if (chosen === 'new' || chosen === 'here' || chosen === 'task') return chosen
   return null
+}
+
+/** A line in the open space's inbox, the share's title linked to where it came from. */
+async function asATask(arrived: Arrived) {
+  const { addTask } = await import('../task-actions')
+  await addTask(sharedTask(arrived))
 }
 
 /** What arrived, in one line, so the question is about something the reader can

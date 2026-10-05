@@ -1,8 +1,8 @@
 /** A tab an agent names by its id, as `get_context` and `workspace_tabs` list them.
  *
  *  Every kind of tab is reached this way as well as by its path, so "the tab in front"
- *  is one id whatever it holds: a note with a file, a note with none yet, the
- *  scratchpad, a canvas or page note drawn but never saved, a terminal. The tabs are
+ *  is one id whatever it holds: a note with a file, a note with none yet, a canvas or
+ *  page note drawn but never saved, a terminal. The tabs are
  *  the open space's - another space's are not in the window until the reader goes there
  *  - so an agent that may not reach that space has no tab to name. */
 
@@ -15,7 +15,7 @@ import { Refused } from './problem'
 import { type Place, placeFor } from './spaces'
 
 /** A tab, found: the tab itself, the space it is shown in, and its file's path inside
- *  that space - null for a tab with no file there (a draft, the scratchpad, a terminal,
+ *  that space - null for a tab with no file there (a draft, a terminal,
  *  the graph). */
 interface Named {
   tab: Tab

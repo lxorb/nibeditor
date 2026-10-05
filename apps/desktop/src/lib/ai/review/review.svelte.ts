@@ -29,7 +29,7 @@ import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import { writeFile } from '../../workspace/write-file'
-import { answeringAt, onSend } from '../chat/sends'
+import { answeringAt, onSend, onSent } from '../chat/sends'
 import type { Thread, Turn } from '../chat/types'
 import { cutForEdit } from './branches'
 import {
@@ -43,6 +43,8 @@ import {
   providersOf,
   type Reviewed,
 } from './changes'
+import { redoFile, undoFile } from './file-ops'
+import { type FileChange, fileChangesOf } from './files'
 import { type Choice, type Made, planFor, type Plan } from './plan'
 import { summarized } from './summary'
 
@@ -60,6 +62,8 @@ interface Redo {
   token: string
   notes: { agent: string; path: string }[]
   made: { path: string; words: string }[]
+  /** The moves and deletes it took back, oldest first. */
+  files: FileChange[]
   turns: Turn[] | null
 }
 
@@ -86,6 +90,8 @@ class Review {
   private version = $state(0)
   /** The changes the reader kept, by id. */
   readonly kept = new SvelteSet<string>()
+  /** The file changes kept or taken back, by their call's id. */
+  readonly filesDone = new SvelteSet<string>()
   /** Kept a moment ago, still fading out of the note. */
   private readonly fading = new SvelteSet<string>()
   /** The changes list, open for this thread. */
@@ -115,6 +121,8 @@ class Review {
     onSend((thread) => {
       if (this.redo?.thread === thread) this.forgetRedo()
     })
+    // A note moved or deleted is read off the turn, which is whole once its send ends.
+    onSent(() => this.version++)
     setReviewSource((doc) => this.marksOfDoc(doc))
     // The marks are fetched with the review: every editor made from now on carries
     // them, and every note open now is handed them.
@@ -157,9 +165,15 @@ class Review {
     return byNote(this.changes(thread))
   }
 
+  /** The notes a thread moved or deleted that the reader has not kept, oldest first. */
+  files(thread: Pick<Thread, 'turns'>): FileChange[] {
+    this.heard()
+    return fileChangesOf(thread.turns, this.filesDone)
+  }
+
   /** What rewinding a thread to its message `turn` would do. */
   plan(thread: Thread, turn: string): Plan | null {
-    return planFor(thread, turn, this.changes(thread))
+    return planFor(thread, turn, this.changes(thread), this.filesDone)
   }
 
   // ── Keep and Undo ──────────────────────────────────────
@@ -189,6 +203,23 @@ class Review {
     }
     if (more) this.say(plural(more, { one: 'and {count} after it', other: 'and {count} after it' }))
     return more
+  }
+
+  /** Moves and deletes the reader has read: they leave the list. */
+  keepFiles(files: readonly FileChange[]): void {
+    for (const one of files) this.filesDone.add(one.id)
+  }
+
+  /** Moves and deletes taken back, newest first, so a note moved twice goes back the
+   *  way it came. Answers those that were. */
+  async undoFiles(thread: Thread, files: readonly FileChange[]): Promise<FileChange[]> {
+    const undone: FileChange[] = []
+    for (const one of [...files].reverse()) {
+      if (!(await undoFile(one, thread))) continue
+      this.filesDone.add(one.id)
+      undone.unshift(one)
+    }
+    return undone
   }
 
   /** Changes by the agent and the note they are in, which is what one take is of. */
@@ -301,7 +332,7 @@ class Review {
     if (!plan) return
     this.forgetRedo()
     const token = crypto.randomUUID()
-    const redo: Redo = { thread: thread.id, token, notes: [], made: [], turns: null }
+    const redo: Redo = { thread: thread.id, token, notes: [], made: [], files: [], turns: null }
 
     if (choice === 'both' || choice === 'notes') {
       await this.undo(plan.changes, token)
@@ -310,6 +341,7 @@ class Review {
         return { agent, path }
       })
       redo.made = await this.unmake(thread, plan.made)
+      redo.files = await this.undoFiles(thread, plan.files)
     }
 
     const index = thread.turns.findIndex((one) => one.id === turn)
@@ -342,7 +374,7 @@ class Review {
     }
 
     this.sheet = null
-    if (redo.notes.length || redo.made.length || redo.turns) this.redo = redo
+    if (redo.notes.length || redo.made.length || redo.files.length || redo.turns) this.redo = redo
   }
 
   /** The conversation cut: a compaction of turns now gone forgotten, a program that
@@ -393,6 +425,10 @@ class Review {
       if ((await workspace.noteText(path).catch(() => null)) === null) await writeFile(path, words)
     }
     if (redo.made.length) await workspace.loadTree()
+    for (const one of redo.files) {
+      await redoFile(one, thread)
+      this.filesDone.delete(one.id)
+    }
     if (redo.turns) {
       thread.turns.push(...redo.turns)
       void rewound(thread)
@@ -418,6 +454,7 @@ class Review {
     this.forgetRedo()
     await this.undo(plan.changes)
     await this.unmake(thread, plan.made)
+    await this.undoFiles(thread, plan.files)
     if (!cutForEdit(thread, turn)) return
     const upTo = thread.compaction?.upTo
     if (upTo && !thread.turns.some((one) => one.id === upTo)) delete thread.compaction
