@@ -55,6 +55,10 @@ vi.mock('./clipboard', () => ({
 
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
+// Copy link fetches the code that spells a link the first time it is pressed. Fetched
+// here, so the press waits on no module's first load: on a busy machine that alone is
+// longer than a wait for the clipboard.
+await (await import('@nib/editor')).noteLinksCode()
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {

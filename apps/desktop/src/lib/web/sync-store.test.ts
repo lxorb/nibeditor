@@ -56,6 +56,13 @@ const entry = (id: string, space: string, extra: Partial<EntryRow> = {}): Change
 
 const file = (hash: string): Change => put('files', { hash, state: 'here' })
 
+/** Whether two runs of bytes are the same bytes. `toEqual` walks a megabyte one element
+ *  at a time through its general equality: ten seconds on its own, and past the test's
+ *  thirty on a machine running three gates. */
+function sameBytes(one: Uint8Array | undefined, other: Uint8Array): boolean {
+  return one?.length === other.length && one.every((byte, at) => byte === other[at])
+}
+
 describe('the browser sync store', () => {
   test('is new with a device of its own, and keeps it', async () => {
     const name = account()
@@ -159,7 +166,8 @@ describe('the browser sync store', () => {
       }),
     ])
     const [row] = await store.read([get('docs', 'n')])
-    expect(row?.confirmed).toEqual(large)
+    expect(row?.confirmed).toBeInstanceOf(Uint8Array)
+    expect(sameBytes(row?.confirmed, large)).toBe(true)
     expect(row?.confirmed_sv).toEqual(every)
     expect(row?.pending).toEqual(new Uint8Array())
     expect(row?.client_id).toBe(4_294_967_295)

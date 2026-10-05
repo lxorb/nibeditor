@@ -1,6 +1,7 @@
 import { parser as xml } from '@lezer/xml'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frontOf } from '../src/blog/front'
+import { SITE_ROUNDS } from '../src/blog/gate'
 import { publishes } from '../src/blog/site'
 import { call, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 
@@ -537,6 +538,13 @@ describe('a site behind a password', () => {
    *  rounds of PBKDF2. Counted per machine at this site, and answered the way a
    *  wrong password is: saying "too many tries" would tell a guesser that the tries
    *  are being counted. */
+  /** Hashed at a few rounds here, which is the tests' own build (see rounds.ts); so
+   *  the number a deploy hashes at is asserted, since a hundred thousand becoming two
+   *  hundred would be the one change nobody would notice. */
+  test('is hashed at a hundred thousand rounds wherever it is deployed', () => {
+    expect(SITE_ROUNDS).toBe(100_000)
+  })
+
   test('and a machine that keeps guessing stops being answered', async () => {
     const guess = (password: string) =>
       page('/plan', {
