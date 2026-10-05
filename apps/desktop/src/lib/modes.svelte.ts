@@ -136,6 +136,7 @@ interface Saved {
   readOnly: boolean
   focus: boolean
   quietMarks: boolean
+  silent: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -260,6 +261,10 @@ class Modes {
    *  caret is inside it. The account's, because how somebody likes to write is the
    *  same on every device. See `quietMarks` in the editor package. */
   quietMarks = $state(false)
+  /** No hints at all: the app as clean as it is for somebody who already knows it.
+   *  Off, because the people a hint is for would never look for the switch. The
+   *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
+  silent = $state(false)
   typewriter = $state(false)
   punctuation = $state(false)
   numbers = $state(false)
@@ -465,6 +470,7 @@ class Modes {
       this.focus = saved.focus === true
       this.typewriter = saved.typewriter === true
       this.quietMarks = saved.quietMarks === true
+      this.silent = saved.silent === true
       this.hand = saved.hand === true
       // `=== true` rather than `!== false`: a reader who never chose keeps the
       // new default, and only one who turned it on keeps it on.
@@ -678,6 +684,12 @@ class Modes {
     this.each(view, (one) => setQuietMarks(one, this.quietMarks))
     this.persist()
     this.share({ quietMarks: this.quietMarks })
+  }
+
+  toggleSilent() {
+    this.silent = !this.silent
+    this.persist()
+    this.share({ silent: this.silent })
   }
 
   toggleHand() {
@@ -1094,6 +1106,12 @@ class Modes {
       this.persist()
     }
 
+    const quietly = remote.silent
+    if (typeof quietly === 'boolean' && unheard && quietly !== this.silent) {
+      this.silent = quietly
+      this.persist()
+    }
+
     const breaking = remote.hardBreaks
     if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
       this.hardBreaks = breaking
@@ -1334,6 +1352,7 @@ class Modes {
       readOnly: this.readOnly,
       focus: this.focus,
       quietMarks: this.quietMarks,
+      silent: this.silent,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,

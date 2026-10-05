@@ -75,6 +75,11 @@
   } = $props()
   /* eslint-enable prefer-const */
 
+  /* Somebody who has found the palette needs no card pointing at it. */
+  $effect(() => {
+    if (open) void import('./hints.svelte').then(({ hints }) => hints.dismiss('palette'))
+  })
+
   let query = $state('')
   let cursor = $state(0)
   let input = $state<HTMLInputElement>()

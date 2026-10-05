@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: '提示',
+  'Silent mode': '安静模式',
+  'Sign in to keep your notes safe and on every device.':
+    '登录后,你的笔记将安全保存并在所有设备上可用。',
+  'See how your notes connect.': '查看你的笔记如何相互关联。',
+  'Press {key} to find anything, notes and commands alike.':
+    '按 {key} 查找任何内容,笔记和命令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '书写时显示 Markdown',
   Pointer: '指针',

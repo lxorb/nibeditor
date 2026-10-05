@@ -181,6 +181,14 @@ describe('the Appearance pane', () => {
     expect(hand?.initial).toBe(false)
   })
 
+  /** Hints are on for somebody new, who would never go looking for the switch;
+   *  Silent mode is for the one who knows the app. */
+  test('and General offers Silent mode, off by default', () => {
+    const silent = fieldsOf('general').find((one) => one.label === 'Silent mode')
+    expect(silent?.kind).toBe('switch')
+    expect(silent?.initial).toBe(false)
+  })
+
   test('and draws the theme’s own settings as a row apiece, in the group that chose it', () => {
     const group = pane('appearance').groups[0]
     const accent = group?.fields.find((one) => one.label === 'Accent')

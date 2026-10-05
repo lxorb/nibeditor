@@ -77,6 +77,7 @@ interface Held {
   vim?: boolean
   glassesSeen?: boolean
   quietMarks?: boolean
+  silent?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -422,6 +423,14 @@ describe('the formatting marks kept quiet', () => {
   })
 })
 
+describe('Silent mode', () => {
+  test('starts off, so hints show, and is remembered across a restart', async () => {
+    expect(modes.silent).toBe(false)
+    modes.toggleSilent()
+    expect((await restarted()).silent).toBe(true)
+  })
+})
+
 describe('the pointing hand', () => {
   test('starts off and is said on the root for the stylesheet', async () => {
     expect(modes.hand).toBe(false)
@@ -494,6 +503,17 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.quietMarks).toBe(true)
+  })
+
+  test('brings Silent mode', async () => {
+    const { release, settingsCall } = heldAnswer({ silent: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.silent).toBe(true)
   })
 
   test('brings a setting this machine has never chosen', async () => {

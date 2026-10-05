@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: '힌트',
+  'Silent mode': '조용한 모드',
+  'Sign in to keep your notes safe and on every device.':
+    '로그인하면 노트를 안전하게, 모든 기기에서 볼 수 있어요.',
+  'See how your notes connect.': '노트가 어떻게 연결되는지 보세요.',
+  'Press {key} to find anything, notes and commands alike.':
+    '{key}를 누르면 노트와 명령을 모두 찾을 수 있어요.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '작성 중 마크다운 표시',
   Pointer: '포인터',

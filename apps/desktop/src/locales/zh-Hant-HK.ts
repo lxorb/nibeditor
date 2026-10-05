@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: '提示',
+  'Silent mode': '安靜模式',
+  'Sign in to keep your notes safe and on every device.':
+    '登入後,你的筆記會安全保存,並在所有裝置上可用。',
+  'See how your notes connect.': '查看你的筆記如何互相連結。',
+  'Press {key} to find anything, notes and commands alike.':
+    '按 {key} 尋找任何內容,筆記和指令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '書寫時顯示 Markdown',
   Pointer: '指標',

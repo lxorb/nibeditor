@@ -474,6 +474,8 @@ export interface AccountSettings {
   /** Whether the formatting marks stay out of sight while writing. How somebody
    *  likes to write, so the same on every device; see `quietMarks` in modes.svelte.ts. */
   quietMarks?: boolean
+  /** No hints anywhere in the app; see hints.svelte.ts. */
+  silent?: boolean
 }
 
 /** What any read can say about the account's OpenAI key.

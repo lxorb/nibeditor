@@ -733,6 +733,8 @@ describe('the bubble a sentence appears in', () => {
 
     expect(own).toEqual([
       'lib/Hint.svelte',
+      // A feature pointed at, once, beside the control it is about.
+      'lib/HintCard.svelte',
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
