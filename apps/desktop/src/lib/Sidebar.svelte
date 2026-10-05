@@ -179,7 +179,6 @@
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
-    { id: 'search', label: t('Search'), path: SEARCH_MARK },
     // The views are the app's alone; the glasses' plugin has no Tasks panel.
     ...(__EVEN_PLUGIN__ ? [] : [{ id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK }]),
     { id: 'links', label: t('Links'), path: LINKS_MARK },
@@ -673,22 +672,18 @@
          was the same arrangement with a spacer in the middle. -->
         <SpaceSwitcher />
 
-        <!-- The one plus. A desktop's lives at the end of the tab strip, where a
-         browser puts it; a handheld has no tab strip, so it is here. Either way
-         a plain press makes a note and a held finger offers the other two kinds,
-         which is what the strip's plus does; see Tabs.svelte. -->
-        {#if viewport.touch}
-          <button
-            class="new"
-            title={t('New note')}
-            aria-label={t('New note')}
-            onclick={writeNew}
-            oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-            use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-          >
-            <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
-          </button>
-        {/if}
+        <!-- Apple Notes' compose button, on every machine. A held finger or a right
+         click offers the other kinds, as the strip's plus does. -->
+        <button
+          class="new"
+          title={shortcuts.tooltip(t('New note'), 'app.new')}
+          aria-label={t('New note')}
+          onclick={writeNew}
+          oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+          use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+        >
+          <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
+        </button>
       </div>
     {/if}
 
@@ -833,6 +828,17 @@
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
         {/if}
+        {#if showing === 'search'}
+          <button
+            class="nib-glyph tool"
+            title={t('Sort')}
+            aria-label={t('Sort')}
+            aria-haspopup="menu"
+            onclick={(event) => menu.show(event, tabMenu('search'), { title: t('Search') })}
+          >
+            <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
+          </button>
+        {/if}
         {#if showing === 'agents'}
           <button
             class="nib-glyph tool"
@@ -875,20 +881,29 @@
       </div>
     </div>
 
-    <!-- The one thing you can do from anywhere in the app. Outside the Search
-       panel it is the door to it; inside, the panel's own field stands in the
-       same place, at the same height and in the same box - one control that
-       becomes editable rather than two that look alike.
+    <!-- The search bar; typed into, it opens the panel, whose field stands in its place.
 
        On the side the Search panel lives on, and only there: a door on one side
        that opens a panel on the other is a door that moves the reader's eye
        across the window for no reason. -->
     {#if showing !== 'search' && workspace.sideOf('search') === side}
       <div class="hunt" data-region={side === 'left' ? 'search' : undefined}>
-        <button class="nib-field" onclick={() => workspace.showPanel('search')}>
+        <label class="nib-field">
           <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-          <span class="nib-row-label">{t('Search this space')}</span>
-        </button>
+          <input
+            value={search.text}
+            placeholder={t('Search this space')}
+            aria-label={t('Search this space')}
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            onclick={() => workspace.showPanel('search')}
+            oninput={(event) => {
+              search.ask(event.currentTarget.value)
+              workspace.showPanel('search')
+            }}
+          />
+        </label>
       </div>
     {/if}
 
@@ -1279,7 +1294,7 @@
     border: none;
     border-radius: var(--radius-row);
     background: none;
-    color: var(--muted);
+    color: var(--text);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -1301,12 +1316,6 @@
   .hunt {
     flex: none;
     padding: 0 var(--space-1) var(--space-2);
-  }
-
-  /* The pill's words are the placeholder they stand in for; the magnifier is
-     what says what it is. */
-  .hunt .nib-row-label {
-    color: var(--muted);
   }
 
   /* A panel's tools on its tabs' line. */

@@ -40,6 +40,15 @@
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
 
   let field = $state<HTMLInputElement>()
+
+  // The field arrives from the search bar with what was typed there already in it,
+  // so the caret goes after it rather than before.
+  $effect(() => {
+    if (!field) return
+    const end = field.value.length
+    field.setSelectionRange(end, end)
+    caret = end
+  })
   let focused = $state(false)
   /** Set by Escape, so a popup that was shut stays shut until the next
    *  keystroke asks for it again. */
@@ -222,6 +231,16 @@
     if (event.key === 'Escape' && search.replacing) {
       event.preventDefault()
       search.closeReplace()
+      return
+    }
+
+    // A search field's Escape, as a Mac's has it: the words first, then the field
+    // itself. The panel has no tab to leave by, so the second one goes back to
+    // the file list.
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      if (search.text) search.ask('')
+      else workspace.showPanel('tree')
     }
   }
 
