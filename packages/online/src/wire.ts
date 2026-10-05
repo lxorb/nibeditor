@@ -53,7 +53,7 @@ export function inputChunks(data: string, most = MOST_INPUT): string[] {
   const chunks: string[] = []
   let from = 0
   let bytes = 0
-  for (let at = 0; at < data.length; ) {
+  for (let at = 0; at < data.length;) {
     const code = data.codePointAt(at) ?? 0
     const size = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4
     if (bytes + size > most && at > from) {

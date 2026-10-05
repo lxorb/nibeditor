@@ -807,7 +807,11 @@ describe('a machine', () => {
       const running = await machine(env, ID, user)
       const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
       for (let one = 0; one < 15; one++) {
-        await nibd(running, { t: 'browse', session: 'session-1', url: `https://a.b/${String(one)}` })
+        await nibd(running, {
+          t: 'browse',
+          session: 'session-1',
+          url: `https://a.b/${String(one)}`,
+        })
       }
       expect(owner.of('browse')).toHaveLength(10)
       vi.setSystemTime(Date.now() + 60_000)

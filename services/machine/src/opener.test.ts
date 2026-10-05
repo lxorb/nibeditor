@@ -82,6 +82,9 @@ test('reads a request the way the script writes one', () => {
     url: 'https://a.b/',
     session: 's_1',
   })
-  expect(askedOf('{"url":"https://a.b/","session":7}')).toEqual({ url: 'https://a.b/', session: '' })
+  expect(askedOf('{"url":"https://a.b/","session":7}')).toEqual({
+    url: 'https://a.b/',
+    session: '',
+  })
   expect(askedOf(null)).toBeNull()
 })

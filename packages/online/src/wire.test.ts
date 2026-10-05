@@ -233,7 +233,10 @@ describe('the link', () => {
     ['text for input', { t: 'in', session: 's', data: 'ls' }],
     ['a negative offset', { t: 'want', session: 's', since: -5 }],
     ['an unknown kind', { t: 'reboot', session: 's' }],
-    ['a callback anywhere but loopback', { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' }],
+    [
+      'a callback anywhere but loopback',
+      { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' },
+    ],
   ])('nibd drops a frame with %s', (_, value) => {
     expect(machineFrameOf(frame(value as object))).toBeNull()
   })

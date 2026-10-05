@@ -8,12 +8,7 @@
 
 import { invoke, isDesktop } from './tauri'
 
-export function notify(
-  title: string,
-  body: string,
-  tag?: string,
-  opened?: () => void,
-): void {
+export function notify(title: string, body: string, tag?: string, opened?: () => void): void {
   if (isDesktop) {
     void invoke('reminders_ring', { title, body }).catch(() => undefined)
     return

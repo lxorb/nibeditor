@@ -8,9 +8,12 @@ const base64 = (text: string) => {
 }
 
 describe('a program writing the clipboard (OSC 52)', () => {
-  it.each(['c', 'p', 's', '0', '', 'cp'])('writes it, whichever clipboard is named: %s', (where) => {
-    expect(clipboardWrite(`${where};${base64('git push')}`)).toBe('git push')
-  })
+  it.each(['c', 'p', 's', '0', '', 'cp'])(
+    'writes it, whichever clipboard is named: %s',
+    (where) => {
+      expect(clipboardWrite(`${where};${base64('git push')}`)).toBe('git push')
+    },
+  )
 
   it('keeps every character, past ASCII too', () => {
     expect(clipboardWrite(`c;${base64('grüße 😀\nzweite Zeile')}`)).toBe('grüße 😀\nzweite Zeile')
