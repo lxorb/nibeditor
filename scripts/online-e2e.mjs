@@ -36,6 +36,8 @@ const WRANGLER = join(SYNC, 'node_modules/wrangler/bin/wrangler.js')
 const state = mkdtempSync(join(tmpdir(), 'nib-online-e2e-'))
 const vars = join(state, 'dev.vars')
 let worker = null
+/** Every socket opened, for the log when something fails. */
+const opened = []
 
 function log(...what) {
   console.log('[online-e2e]', ...what)
@@ -111,6 +113,7 @@ async function socket(session, since) {
   const ws = new WebSocket(url, [`nib.token.${TOKEN}`, `nib.device.${DEVICE}`])
   ws.binaryType = 'arraybuffer'
   const heard = { frames: [], out: [], closed: false }
+  opened.push(heard)
   ws.onmessage = (event) => {
     if (typeof event.data === 'string') {
       heard.frames.push(JSON.parse(event.data))
@@ -299,6 +302,7 @@ try {
   await main()
 } catch (error) {
   console.error('[online-e2e] FAILED:', error)
+  for (const [at, heard] of opened.entries()) log(`socket ${at} heard`, JSON.stringify(heard))
   failed = true
 }
 await stop()
