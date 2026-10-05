@@ -13,7 +13,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{cannot, highlights_of, in_spaces, is_pdf, write_atomically};
+use crate::paths::{cannot, highlights_of, in_spaces, is_pdf, write_in_place};
 
 /// How much a sidecar may hold. Tens of thousands of highlights, and a ceiling so
 /// that a file which is not what it claims to be cannot be read whole into the
@@ -56,8 +56,8 @@ fn read_sidecar(target: &Path) -> Result<String, String> {
     })
 }
 
-/// Writes the sidecar whole, atomically, the way a note is written: a crash mid
-/// write leaves the marks that were there rather than half of the new ones.
+/// Writes the sidecar whole, the way a note is written (`write_in_place`): a crash
+/// mid write leaves the marks that were there rather than half of the new ones.
 ///
 /// Nothing left to keep takes the file with it, so a PDF whose last highlight was
 /// deleted is a PDF with no sidecar rather than one with an empty one.
@@ -78,7 +78,7 @@ fn write_sidecar(target: &Path, content: &str) -> Result<(), String> {
         };
     }
 
-    write_atomically(target, content.as_bytes())
+    write_in_place(target, content.as_bytes())
 }
 
 /// What has been highlighted on a PDF in a space, as the text of its sidecar.
@@ -131,7 +131,7 @@ mod tests {
         write_sidecar(&target, marks).expect("the write");
         assert_eq!(read_sidecar(&target), Ok(marks.to_string()));
 
-        // And nothing but the sidecar is left behind by the atomic write.
+        // And nothing but the sidecar is left behind by the write.
         let left: Vec<String> = std::fs::read_dir(dir.path())
             .expect("the folder")
             .flatten()

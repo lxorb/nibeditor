@@ -553,13 +553,13 @@ mod tests {
     fn what_sync_leaves_alone_is_never_an_answer() {
         let (dir, mut space) = space_with(&["Plan.md"]);
         let root = dir.path();
-        fs::write(root.join(".Plan.md.1-0.nib-tmp"), "half").expect("a temp file");
+        fs::write(root.join(".Plan.md.1-0.nib.tmp"), "half").expect("a temp file");
         fs::create_dir_all(root.join(".git")).expect("a repository");
 
         assert!(settle(
             &mut space,
             root,
-            &[".Plan.md.1-0.nib-tmp", ".git", ".git/HEAD"]
+            &[".Plan.md.1-0.nib.tmp", ".git", ".git/HEAD"]
         )
         .is_empty());
     }

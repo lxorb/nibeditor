@@ -13,6 +13,9 @@ What it checks, through the app's own automation endpoint:
 * **Ctrl+S** asks nothing and opens nothing: no dialog, no file picker.
 * **Closing the window** straight after typing: the app goes without a question, and
   the words are in the file.
+* **A new note typed into for a while** is one file, and the same file through every
+  save: its file id never changes and nothing is left beside it. A save that put a new
+  file under the name is what Proton Drive kept as a "Name clash" copy, once per save.
 
 The spaces are made in a temp folder named by `NIB_SPACES_DIR`, so the run touches
 nothing of anybody's; see docs/automation.md. Every launch goes through `run_probe`,
@@ -191,6 +194,17 @@ CTRL_S = """
 ASKED = "(() => document.querySelectorAll('[role=\"dialog\"]').length)()"
 
 
+#: How long a burst of typing is left before the next, in seconds: past the autosave's
+#: quiet (SAVE_DELAY in src/lib/backoff.ts), so every burst is a save of its own.
+BETWEEN_SAVES = 1.5
+
+
+def identity(path: pathlib.Path) -> tuple[int, int]:
+    """The volume and the file id, which NTFS gives a new file and keeps for an old one."""
+    stat = path.stat()
+    return stat.st_dev, stat.st_ino
+
+
 def kill(app: subprocess.Popen[bytes]) -> None:
     """The process ended the way a crash or a power cut ends it: nothing runs after."""
     app.kill()
@@ -214,6 +228,7 @@ def main() -> int:
     space = spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
     (space / "Plan.md").write_text("# Plan\n\nWords.\n", encoding="utf-8")
+    plan = identity(space / "Plan.md")
     say(f"spaces root {spaces}")
 
     refuse_updating(exe)
@@ -293,6 +308,44 @@ def main() -> int:
             wrong("the line typed as the window closed is not in the file")
         else:
             say("closed                 -> the last line is in Plan.md")
+        time.sleep(6.0)
+
+        say("--- a new note typed into for a while: one file, the same file ---")
+        app, port, secret = launch(exe, environment, args.identifier, port)
+        ran(port, secret, BLANK)
+        time.sleep(1.0)
+        ran(port, secret, TYPE % json.dumps("Hackathon List"))
+        time.sleep(BETWEEN_SAVES)
+        note = space / "Hackathon List.md"
+        if not note.exists():
+            wrong(f"the new note is no file: {sorted(one.name for one in space.iterdir())}")
+        else:
+            born = identity(note)
+            for save in range(6):
+                ran(port, secret, TYPE % json.dumps(f"\n- idea {save}"))
+                time.sleep(BETWEEN_SAVES)
+                if identity(note) != born:
+                    wrong(f"save {save + 2} made a new file under the name")
+                    break
+            beside = sorted(
+                one.name
+                for one in space.iterdir()
+                if one.name.endswith(".tmp") or one.name.startswith("Hackathon List")
+            )
+            if beside != ["Hackathon List.md"]:
+                wrong(f"more than the one note is there: {beside}")
+            elif "- idea 5" not in note.read_text(encoding="utf-8"):
+                wrong("the last save is not in the note")
+            else:
+                say("7 saves                -> one file, the same file id, nothing beside it")
+        if not close_app(app, 15):
+            kill(app)
+
+        # Plan.md was typed into by three launches, one of them killed mid-save.
+        if identity(space / "Plan.md") != plan:
+            wrong("Plan.md is no longer the file it started as")
+        else:
+            say("Plan.md                -> the same file through every save")
     finally:
         shutil.rmtree(spaces, ignore_errors=True)
 

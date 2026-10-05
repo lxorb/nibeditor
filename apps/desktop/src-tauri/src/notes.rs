@@ -19,7 +19,7 @@ use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made,
-    move_highlights, openable, write_atomically,
+    move_highlights, openable, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -69,8 +69,8 @@ pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
     Ok((words, meta))
 }
 
-/// Writes a note atomically, so a crash mid-write can never truncate the note
-/// that was already there. Missing folders are created, which is what lets sync
+/// Writes a note whole into the file that is there, so a crash mid-write can never
+/// truncate it and every save stays the same file; see `write_in_place`. Missing folders are created, which is what lets sync
 /// land a note at a path that is new on this machine.
 ///
 /// A note in a space, one of the settings files, or the file an export was pointed
@@ -164,8 +164,9 @@ fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String>
 }
 
 /// What both writers do once they have the bytes: make the folder, then write
-/// the file whole. Atomic, so a crash mid-write can never truncate the file that
-/// was already there; and the missing folders are made, which is what lets sync
+/// the file whole, into the file that is there (`write_in_place`), so a crash
+/// mid-write can never truncate it and no sync client mistakes a save for a new
+/// file; and the missing folders are made, which is what lets sync
 /// land a note at a path that is new on this machine.
 ///
 /// The target is judged by the caller rather than here, because the text writer has
@@ -177,7 +178,7 @@ fn write_file(target: &Path, shown: &str, bytes: &[u8]) -> Result<(), String> {
         .ok_or_else(|| format!("{shown} has no folder to write into"))?;
 
     made(parent)?;
-    write_atomically(target, bytes)
+    write_in_place(target, bytes)
 }
 
 /// Deletes a note outright. The window sends almost everything to the trash
@@ -605,10 +606,46 @@ mod tests {
             .expect("the folder")
             .filter_map(Result::ok)
             .map(|entry| entry.file_name().to_string_lossy().to_string())
-            .filter(|name| name.ends_with(".nib-tmp"))
+            .filter(|name| name.ends_with(".nib.tmp"))
             .collect();
 
         assert!(left.is_empty(), "{left:?}");
+    }
+
+    /// Every save of a note is an edit of one file, never a new file under its name.
+    /// A sync client that follows files by their identity (Proton Drive follows the
+    /// NTFS file id) read a new file under a taken name as a clash, and kept each
+    /// save as a copy of its own beside the note: eight files for one note typed into
+    /// for a minute. A reader that opened the note before the saves sees the last
+    /// one through its own handle only if the file it holds is still the note.
+    #[test]
+    fn every_save_is_the_same_file() {
+        use std::io::{Read as _, Seek as _};
+
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "Hackathon List.md");
+        write_note(target.clone(), "# Hackathon List\n".to_string()).expect("the first save");
+
+        let mut held = fs::File::open(&target).expect("a reader holding the note");
+        let mut text = "# Hackathon List\n".to_string();
+        for line in ["- one", "- two that is longer", "- 3"] {
+            text.push_str(line);
+            text.push('\n');
+            write_note(target.clone(), text.clone()).expect("a save");
+        }
+        write_note(target.clone(), "short\n".to_string()).expect("a save that shrinks it");
+
+        let mut through = String::new();
+        held.rewind().expect("back to the start");
+        held.read_to_string(&mut through).expect("the held file");
+        assert_eq!(through, "short\n", "the held file is no longer the note");
+
+        let left: Vec<String> = fs::read_dir(dir.path())
+            .expect("the folder")
+            .filter_map(Result::ok)
+            .map(|entry| entry.file_name().to_string_lossy().to_string())
+            .collect();
+        assert_eq!(left, ["Hackathon List.md"]);
     }
 
     #[test]
