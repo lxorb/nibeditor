@@ -268,7 +268,12 @@ export function timeAt(
   // and whoever means it writes `4am` or `04:00`.
   // Minutes written out, `7.05`, are a timetable's: the hour as written.
   const afternoon =
-    !colon && !oclock && !key.includes('.') && hours >= 1 && hours <= 7 && !hoursText.startsWith('0')
+    !colon &&
+    !oclock &&
+    !key.includes('.') &&
+    hours >= 1 &&
+    hours <= 7 &&
+    !hoursText.startsWith('0')
   const time = timeOf(afternoon ? hours + 12 : hours, minutes)
   return afternoon ? { end, time, guessed: true } : { end: oclock ? end + 1 : end, time }
 }

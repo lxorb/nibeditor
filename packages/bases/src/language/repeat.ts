@@ -132,7 +132,12 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   } else if (g.other.has(word())) {
     rule.every = 2
     index++
-  } else if ((counted ?? nth) !== undefined && unitNext && unitNext !== 'minute' && unitNext !== 'hour') {
+  } else if (
+    (counted ?? nth) !== undefined &&
+    unitNext &&
+    unitNext !== 'minute' &&
+    unitNext !== 'hour'
+  ) {
     rule.every = counted ?? nth ?? 1
     index++
   }

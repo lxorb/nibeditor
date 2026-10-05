@@ -350,7 +350,12 @@ describe('what a person types in a hurry', () => {
     ['Run every morning', '09:00'],
     ['Run every evening', '19:00'],
   ])('%s', (text, time) => {
-    expect(said(en(text))).toEqual({ text: 'Run', recurrence: 'every day', due: '2026-10-07', time })
+    expect(said(en(text))).toEqual({
+      text: 'Run',
+      recurrence: 'every day',
+      due: '2026-10-07',
+      time,
+    })
   })
 
   test.each([
@@ -358,7 +363,12 @@ describe('what a person types in a hurry', () => {
     ['Laufen jeden Abend', '19:00'],
     ['Laufen jeden Mittag', '12:00'],
   ])('%s', (text, time) => {
-    expect(said(de(text))).toEqual({ text: 'Laufen', recurrence: 'every day', due: '2026-10-07', time })
+    expect(said(de(text))).toEqual({
+      text: 'Laufen',
+      recurrence: 'every day',
+      due: '2026-10-07',
+      time,
+    })
   })
 
   test('a time said beside every morning is the time', () => {
@@ -407,7 +417,11 @@ describe('what a person types in a hurry', () => {
   })
 
   test('am Morgen is the morning, not tomorrow', () => {
-    expect(said(de('Laufen am Morgen'))).toEqual({ text: 'Laufen', due: '2026-10-08', time: '09:00' })
+    expect(said(de('Laufen am Morgen'))).toEqual({
+      text: 'Laufen',
+      due: '2026-10-08',
+      time: '09:00',
+    })
     expect(said(de('Laufen morgen am Abend'))).toEqual({
       text: 'Laufen',
       due: '2026-10-08',
