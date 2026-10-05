@@ -348,19 +348,24 @@ export class Machine implements DurableObject {
       return
     }
 
-    if (now - viewer.seen > SEEN_EVERY) socket.serializeAttachment({ ...viewer, seen: now })
-
+    // Down the link before anything else is done with it, and nothing on the way waits:
+    // no storage, no query, no await. A key is a round trip the typist feels, and the
+    // bookkeeping after it is nobody's wait. Only the size goes first, so the key lands
+    // at the typist's size (4.6).
     const wasTyping = now - (this.lastKey.get(viewer.who) ?? 0) < TYPING_FOR
     this.lastKey.set(viewer.who, now)
     this.typedBy(viewer, now)
-
     this.ensureOpen(viewer)
     this.tell(viewer.session, { t: 'in', session: viewer.session, data })
-    this.toSession(viewer.session, {
-      t: 'typed',
-      who: viewer.who,
-      seq: this.ends.get(viewer.session) ?? 0,
-    })
+
+    if (now - viewer.seen > SEEN_EVERY) socket.serializeAttachment({ ...viewer, seen: now })
+    // Said to everybody else: the typist knows they typed, and on a slow link a frame
+    // per key back to them is a frame their echo queues behind.
+    this.toSession(
+      viewer.session,
+      { t: 'typed', who: viewer.who, seq: this.ends.get(viewer.session) ?? 0 },
+      socket,
+    )
     if (!wasTyping) this.people(viewer.session)
   }
 
@@ -561,7 +566,9 @@ export class Machine implements DurableObject {
       (old) => one.at - old.at <= RECENT_FOR,
     )
     recent.push({ ...one, at: Date.now() })
-    await this.ctx.storage.put(RECENT, recent)
+    // Unconfirmed: a confirmed write holds every frame the object sends until it is
+    // durable, keystroke echoes included, and a report lost to a crash costs nothing.
+    await this.ctx.storage.put(RECENT, recent, { allowUnconfirmed: true })
     // CPU as a share of the machine's vCPUs over the 30 s the report covers.
     this.pending.cpuS += one.cpu * SMALL.vcpu * 30
     this.pending.egressBytes += one.net

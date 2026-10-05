@@ -496,6 +496,49 @@ describe('a machine', () => {
     expect(owner.of('screen')).toEqual([{ t: 'screen', seq: 0, cols: 80, rows: 24, data: '' }])
   })
 
+  test('a key and its echo pass through with no storage, no query and no wait', async () => {
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const watcher = await join(running, { who: 'reader', role: 'read' })
+    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
+    await say(running, watcher, { t: 'hello', cols: 80, rows: 24 })
+    running.host.link_?.take()
+
+    const storage = running.state.storage
+    const touched = (['get', 'put', 'delete', 'list', 'setAlarm', 'deleteAll'] as const).map(
+      (name) => vi.spyOn(storage, name),
+    )
+    const queried = vi.spyOn(env.DB, 'prepare')
+    const socket = owner as unknown as WebSocket
+
+    // Neither is awaited: each key is down the link before its handler yields once.
+    void running.machine.webSocketMessage(socket, JSON.stringify({ t: 'in', data: 'a' }))
+    void running.machine.webSocketMessage(
+      socket,
+      new TextEncoder().encode('b').buffer as ArrayBuffer,
+    )
+    const keys = (running.host.link_?.take() ?? []).filter((frame) => frame.t === 'in')
+    expect(keys).toEqual([
+      { t: 'in', session: 'session-1', data: new TextEncoder().encode('a') },
+      { t: 'in', session: 'session-1', data: new TextEncoder().encode('b') },
+    ])
+
+    // And the echo out to every socket the same way.
+    void running.machine.fromNibd({
+      t: 'out',
+      session: 'session-1',
+      seq: 0,
+      data: new TextEncoder().encode('ab'),
+    })
+    expect(owner.bytes).toHaveLength(1)
+    expect(watcher.bytes).toHaveLength(1)
+
+    for (const spy of [...touched, queried]) expect(spy).not.toHaveBeenCalled()
+    // Who typed is news to the others, never a frame per key back to the typist.
+    expect(owner.of('typed')).toEqual([])
+    expect(watcher.of('typed')).toHaveLength(2)
+  })
+
   test('refuses a reader’s keys and sends nothing of them down', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
