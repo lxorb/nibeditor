@@ -35,13 +35,13 @@
 
   /** Every front matter key the space's notes have: what of a related note to read. */
   const keys = $derived.by(() => {
-    const seen = new Set<string>()
+    const seen: Record<string, true> = {}
     for (const row of live.rows) {
       if (row.kind !== 'note') continue
-      for (const key of Object.keys(row.note)) seen.add(key)
-      if (seen.size > 200) break
+      for (const key of Object.keys(row.note)) seen[key] = true
+      if (Object.keys(seen).length > 200) break
     }
-    return [...seen].sort()
+    return Object.keys(seen).sort()
   })
 
   const NAMES: Record<Rollup, string> = {

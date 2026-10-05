@@ -22,6 +22,8 @@
   const view = $derived(live.view)
   const written = $derived(view?.nib.colour)
   const rules = $derived(colourRules(written))
+  /** Each rule beside the filter row its condition reads as, where it reads as one. */
+  const shownRules = $derived((rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when) })))
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
@@ -67,13 +69,15 @@
     >
   </div>
 {:else}
-  {#each rules as rule, at (at)}
-    {@const shown = rowOf(rule.when)}
+  {#each shownRules as { rule, shown }, at (at)}
     <div class="row">
-      <ToneDot tone={rule.tone} ontone={(tone) => change(at, { ...rule, tone: tone ?? '1' })} />
+      <ToneDot
+        tone={rule.tone}
+        ontone={(tone: string | null) => change(at, { ...rule, tone: tone ?? '1' })}
+      />
       {#if 'kept' in shown}
         <code class="kept">{rule.when}</code>
-      {:else}
+      {:else if 'property' in shown}
         <Select
           label={t('Property')}
           value={shown.property}

@@ -44,19 +44,15 @@
     if (typeof said === 'boolean') return said
     const words = said.trim()
     if (!words) return null
-    switch (kindOf(field)) {
-      case 'number':
-        return Number.isFinite(Number(words)) ? Number(words) : words
-      case 'date':
-        return { kind: 'date', iso: words }
-      case 'list':
-        return words
-          .split(',')
-          .map((one) => one.trim())
-          .filter(Boolean)
-      default:
-        return words
-    }
+    const kind = kindOf(field)
+    if (kind === 'number') return Number.isFinite(Number(words)) ? Number(words) : words
+    if (kind === 'date') return { kind: 'date', iso: words }
+    if (kind === 'list')
+      return words
+        .split(',')
+        .map((one) => one.trim())
+        .filter(Boolean)
+    return words
   }
 
   async function send() {
@@ -128,7 +124,7 @@
       {:else if choices.length}
         <Select
           label={propertyName(field)}
-          value={typeof values[field] === 'string' ? (values[field] as string) : ''}
+          value={typeof values[field] === 'string' ? values[field] : ''}
           options={[
             { value: '', label: '' },
             ...choices.map((one) => ({ value: one, label: one })),

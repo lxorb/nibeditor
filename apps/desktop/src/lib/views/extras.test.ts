@@ -72,11 +72,9 @@ describe('a base at work on a change', () => {
 })
 
 describe("a property's choices", () => {
-  const rows = [
-    noteRow('A.md', 'status: Doing\ntags: [a, b]'),
-    noteRow('B.md', 'status: Done\ntags: [b, c]'),
-    noteRow('C.md', 'status: Doing'),
-  ]
+  const doing = noteRow('A.md', 'status: Doing\ntags: [a, b]')
+  const done = noteRow('B.md', 'status: Done\ntags: [b, c]')
+  const rows = [doing, done, noteRow('C.md', 'status: Doing')]
 
   test('start from the values the notes hold, each in the next tone', () => {
     expect(valuesOf(rows, 'note.status')).toEqual(['Doing', 'Done'])
@@ -88,13 +86,13 @@ describe("a property's choices", () => {
   })
 
   test('renamed, in every note holding one, a list member by member', () => {
-    expect(renamedIn(rows[0] as Row, 'status', 'Doing', 'Busy')).toEqual({
+    expect(renamedIn(doing, 'status', 'Doing', 'Busy')).toEqual({
       note: { status: 'Busy' },
     })
-    expect(renamedIn(rows[1] as Row, 'tags', 'b', 'bee')).toEqual({
+    expect(renamedIn(done, 'tags', 'b', 'bee')).toEqual({
       note: { tags: ['bee', 'c'] },
     })
-    expect(renamedIn(rows[1] as Row, 'status', 'Doing', 'Busy')).toBeNull()
+    expect(renamedIn(done, 'status', 'Doing', 'Busy')).toBeNull()
   })
 
   test("a base's ids written again under a new prefix", () => {

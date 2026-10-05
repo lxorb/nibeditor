@@ -23,7 +23,7 @@ export function joinedAction(
   for (const note of notes) {
     const at = next.findIndex((one) => samePath(one.path, note.path))
     const was = next[at]
-    if (!was || was.after !== note.content) return null
+    if (was?.after !== note.content) return null
     const edit = oneEdit(was.content, note.after)
     next[at] = {
       path: was.path,

@@ -86,7 +86,7 @@
     <div class="row">
       <ToneDot
         tone={option.tone}
-        ontone={(tone) => {
+        ontone={(tone: string | null) => {
           const next: SelectOption = { value: option.value }
           if (option.group) next.group = option.group
           if (tone !== null) next.tone = tone

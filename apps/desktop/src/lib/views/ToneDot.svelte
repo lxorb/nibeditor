@@ -30,7 +30,7 @@
       <CanvasColours
         colour={tone ?? null}
         wheel={false}
-        oncolour={(next) => {
+        oncolour={(next: string | null) => {
           open = false
           ontone(next)
         }}
