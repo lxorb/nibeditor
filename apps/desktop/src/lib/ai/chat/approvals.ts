@@ -13,7 +13,7 @@ import { invoke, isDesktop } from '../../tauri'
 import type { Thread } from './types'
 
 /** A question as the crate tells it: its id, its agent and the verb that asked. */
-export interface Asked {
+interface Asked {
   id: string
   agent: string
   verb: string
