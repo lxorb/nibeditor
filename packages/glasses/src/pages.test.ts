@@ -458,9 +458,12 @@ describe('what a page costs', () => {
       return { pages, ...cost }
     }
 
+    // Eight rounds: a pager gone quadratic is already paying several times over by
+    // the eighth, and twenty were more than a gate's busy machine finished in the
+    // five seconds a test has.
     const first = round(0)
     let last = first
-    for (let at = 1; at < 20; at++) last = round(at)
+    for (let at = 1; at < 8; at++) last = round(at)
 
     // A keystroke changes one line of the note, so one line is broken and the
     // other four hundred and seventy nine are handed back from the cache. A cache
@@ -469,8 +472,8 @@ describe('what a page costs', () => {
     expect(first.set.broken).toBe(1)
     expect(first.set.cached).toBeGreaterThan(400)
 
-    // And the twentieth paging is the first one over again, to the glyph: paging a
-    // note twenty times costs twenty times what paging it once costs, which is
+    // And the eighth paging is the first one over again, to the glyph: paging a
+    // note eight times costs eight times what paging it once costs, which is
     // what a pager gone quadratic would not.
     expect(last.set).toEqual(first.set)
     expect(last.paged).toEqual(first.paged)

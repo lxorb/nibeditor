@@ -43,6 +43,14 @@ const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab
+// What the question reads the AI's turns from, and a row pressed goes to, fetched the
+// first time it is asked; fetched here first, since a busy machine took longer over them
+// than a wait for the sheet to rise.
+await Promise.all([
+  import('../../src/lib/ai/chat/sends'),
+  import('../../src/lib/ai/store.svelte'),
+  import('../../src/lib/ai/sidebar/chat.svelte'),
+])
 
 /** A terminal tab with its shell running, as much of one as the question reads. */
 function terminal(id: string, shown: string, program: string | null): Tab {
