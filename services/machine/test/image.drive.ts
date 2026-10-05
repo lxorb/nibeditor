@@ -29,7 +29,7 @@ describe.runIf(URL)('the image', () => {
       's_tools',
       'id -un; sudo -n true && echo sudo-ok; node --version; python3 --version; git --version; gh --version; uv --version; rg --version; jq --version; echo "path=$PATH"',
     )
-    expect(text).toMatch(/\r\nnib\r\n/)
+    expect(text).toMatch(/[\r\n]nib\r\n/)
     expect(text).toContain('sudo-ok')
     expect(text).toMatch(/v22\.\d+\.\d+/)
     expect(text).toMatch(/Python 3\.\d+/)

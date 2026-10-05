@@ -45,6 +45,7 @@ COPY --from=uv /uv /uvx /usr/local/bin/
 # a password, since installing things is the point of having a machine (4.2).
 RUN userdel -r ubuntu 2>/dev/null; \
     useradd -m -u 1000 -s /bin/bash nib \
+ && install -d -o nib -g nib /home/nib/.local /home/nib/.local/bin \
  && echo 'nib ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/nib \
  && chmod 440 /etc/sudoers.d/nib
 

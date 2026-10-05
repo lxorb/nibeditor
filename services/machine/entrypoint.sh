@@ -29,6 +29,7 @@ fi
 # A home put back from a backup comes with whatever owner the restore gave it.
 mkdir -p /home/nib /var/lib/nibd
 chown nib:nib /home/nib
+install -d -o nib -g nib /home/nib/.local /home/nib/.local/bin
 chmod 700 /var/lib/nibd
 
 # Claude Code and Codex, installed into the home on the first boot and updated on the
