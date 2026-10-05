@@ -1,4 +1,4 @@
-import { answer, type Base, builtinView, readBase, type Row } from '@nib/bases'
+import { answer, type Base, builtinView, cellValue, readBase, type Row } from '@nib/bases'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -33,6 +33,8 @@ const TimelineLayout = (await import('./TimelineLayout.svelte')).default
 const ChartLayout = (await import('./ChartLayout.svelte')).default
 const AgendaLayout = (await import('./AgendaLayout.svelte')).default
 const PhoneRows = (await import('./PhoneRows.svelte')).default
+const FormLayout = (await import('./FormLayout.svelte')).default
+const { toneColour } = await import('./chips')
 const ViewFrame = (await import('./ViewFrame.svelte')).default
 
 const TODAY = '2026-10-04'
@@ -55,6 +57,14 @@ function kitOf(base: Base, rows: readonly Row[], spec = {}) {
     search: () => undefined,
     change: () => Promise.resolve(),
     reload: () => Promise.resolve(),
+    builder: null,
+    refused: 0,
+    locked: base.nib.locked === true || base.views[0]?.nib.locked === true,
+    colourOf: (row: Row) => {
+      const expression = base.views[0]?.nib.colour
+      const tone = expression ? cellValue(base, expression, row, context) : null
+      return typeof tone === 'string' ? toneColour(tone) : null
+    },
   }
   // A LiveView is a store with runes; the layouts read only these fields of it.
   return kitFor(live as unknown as Parameters<typeof kitFor>[0], spec, null, false)
@@ -117,6 +127,62 @@ describe('the table', () => {
     expect(html).toContain('Sync.md')
     expect(html).toContain('Doing')
     expect(html).toContain('8')
+  })
+})
+
+describe('the table, as lane 7 left it', () => {
+  const base = readBase(`nib:
+  buttons:
+    Ship:
+      set: { status: Done }
+  properties:
+    status:
+      options:
+        - { value: To do, tone: '1' }
+        - { value: Doing, tone: '5' }
+    points:
+      format: percent
+views:
+  - type: table
+    order: [file.name, note.status, note.points, button.Ship]
+    nib:
+      lines: 2
+      freeze: 1
+      colour: 'if(status == "Doing", "4", null)'
+`)
+  const html = render(TableLayout, { props: { kit: kitOf(base, NOTES) } }).body
+
+  test('wraps its rows within the lines asked for, and freezes its first column', () => {
+    expect(html).toMatch(/class="table [^"]*wraps/)
+    expect(html).toContain('--lines: 2')
+    expect(html.match(/class="head [^"]*stuck/g)).toHaveLength(1)
+  })
+
+  test('tints a row in its conditional colour, and only that row', () => {
+    expect(html.match(/class="line [^"]*toned/g)).toHaveLength(1)
+    expect(html).toContain('--row-tone: var(--canvas-4)')
+  })
+
+  test('shows choices as chips in their tones, a format as itself, a button to press', () => {
+    expect(html).toContain('--tone: var(--canvas-5)')
+    expect(html).toContain('300%')
+    expect(html.match(/class="nib-chip press/g)).toHaveLength(2)
+  })
+})
+
+describe('the form', () => {
+  test('is a field per property under a name, and a button that sends it', () => {
+    const base = readBase(`views:
+  - type: form
+    order: [file.name, note.status, note.due]
+    nib:
+      required: [status]
+`)
+    const html = render(FormLayout, { props: { kit: kitOf(base, NOTES) } }).body
+    expect(html.match(/class="field/g)).toHaveLength(2)
+    expect(html).toMatch(/class="needed/)
+    expect(html).toContain('type="date"')
+    expect(html).toContain('Send')
   })
 })
 
