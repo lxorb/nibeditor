@@ -64,7 +64,12 @@ export function shellCommand(
   has: (path: string) => boolean = existsSync,
 ): { file: string; args: string[] } {
   let command = [shell, '-l']
-  if (has(PRLIMIT)) command = [PRLIMIT, `--nproc=${String(pidsMax)}`, '--', ...command]
+  // Best effort: a host that refuses the limit (a container without the capability)
+  // still gets its shell, with the cgroup as the fence.
+  if (has(PRLIMIT)) {
+    const fence = `${PRLIMIT} --nproc=${String(pidsMax)} --pid $$ 2>/dev/null; exec "$@"`
+    command = ['/bin/sh', '-c', fence, 'nib-shell', ...command]
+  }
   if (user && has(SETPRIV)) {
     command = [
       SETPRIV,

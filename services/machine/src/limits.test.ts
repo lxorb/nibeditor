@@ -14,9 +14,10 @@ test('as root, a shell runs as the user, under the process limit, as a login she
       '--regid=1000',
       '--init-groups',
       '--',
-      '/usr/bin/prlimit',
-      '--nproc=4096',
-      '--',
+      '/bin/sh',
+      '-c',
+      '/usr/bin/prlimit --nproc=4096 --pid $$ 2>/dev/null; exec "$@"',
+      'nib-shell',
       '/bin/bash',
       '-l',
     ],
@@ -25,8 +26,14 @@ test('as root, a shell runs as the user, under the process limit, as a login she
 
 test('as anybody else, it runs as them, still under the limit', () => {
   expect(shellCommand('/bin/zsh', null, 64, () => true)).toEqual({
-    file: '/usr/bin/prlimit',
-    args: ['--nproc=64', '--', '/bin/zsh', '-l'],
+    file: '/bin/sh',
+    args: [
+      '-c',
+      '/usr/bin/prlimit --nproc=64 --pid $$ 2>/dev/null; exec "$@"',
+      'nib-shell',
+      '/bin/zsh',
+      '-l',
+    ],
   })
 })
 
