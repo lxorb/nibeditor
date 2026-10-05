@@ -15,7 +15,7 @@ on:
       - packages/online/**
       - packages/sync-core/src/frame.ts
       - services/sync/src/machines/**
-      - services/sync/wrangler.machines.jsonc
+      - services/sync/wrangler.jsonc
       - scripts/online-e2e.mjs
       - .github/workflows/machine.yml
   pull_request:
@@ -24,7 +24,7 @@ on:
       - packages/online/**
       - packages/sync-core/src/frame.ts
       - services/sync/src/machines/**
-      - services/sync/wrangler.machines.jsonc
+      - services/sync/wrangler.jsonc
       - scripts/online-e2e.mjs
       - .github/workflows/machine.yml
 

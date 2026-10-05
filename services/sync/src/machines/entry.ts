@@ -1,4 +1,4 @@
-/** The Worker with the machines in it: wrangler.machines.jsonc's `main`
+/** The Worker with the machines in it: wrangler.jsonc's `main`
  *  (docs/online-terminal.md, 6.3).
  *
  *  Everything src/index.ts is, plus the three classes only a deploy with containers

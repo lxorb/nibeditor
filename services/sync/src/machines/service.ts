@@ -4,8 +4,8 @@
  *  Each is one row, so each kill switch is one request: `online` off in
  *  `online_service` stops every machine at its next minute and turns every route into a
  *  404; `users.online` cleared stops one account's machine and refuses its starts. The
- *  service is also off wherever the `Machine` binding is not, which is every deploy of
- *  wrangler.jsonc: the class only exists in wrangler.machines.jsonc until going live. */
+ *  service is also off wherever the `Machine` binding is not, such as a local test
+ *  config without it. */
 
 import type { Env } from '../types'
 

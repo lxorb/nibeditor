@@ -7,7 +7,7 @@
  *  told the answer and never looks anybody up. The machine's owner's socket may wake
  *  the machine; everybody else watches it as it is.
  *
- *  While the service is off, which is every deploy that is not wrangler.machines.jsonc,
+ *  While the service is off, or wherever the `MACHINES` binding is absent,
  *  this answers 404 like a route that does not exist. */
 
 import { Hono } from 'hono'

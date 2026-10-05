@@ -458,6 +458,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
+      - name: Build nibd for the machine image
+        run: pnpm --filter @nib/machine build
+
       - name: Deploy the Worker
         run: pnpm --filter @nib/sync run deploy
         env:

@@ -49,14 +49,13 @@ and the container application, which the first `wrangler deploy` of the machines
 4. **The migration** on the real database:
    `pnpm --filter @nib/sync migrate:remote` (applies `0045_machines.sql`; Emil's account
    `78180341-d10b-4bea-92dc-f327035ebfac` is on the allow-list and is the admin from it).
-5. **Move the machines into the deployed config**: copy the `MACHINES` binding, the `v3`
-   migration tag, the `containers` block, the `HOMES` bucket and `MACHINE_EGRESS` from
-   `services/sync/wrangler.machines.jsonc` into `wrangler.jsonc`, and point `main` at
-   `src/machines/entry.ts`. CI then builds the image with Docker (the deploy job runs on
+5. **Move the machines into the deployed config** (done 2026-10-05): the `MACHINES`
+   binding, the `v3` migration tag, the `containers` block, the `HOMES` bucket and
+   `MACHINE_EGRESS` are in `wrangler.jsonc`, and `main` is `src/machines/entry.ts`; CI's
+   deploy job builds nibd first. CI then builds the image with Docker (the deploy job runs on
    `ubuntu-latest`, which has it), pushes it to `registry.cloudflare.com` and makes the
    container application `nib-sync-machines`. **This is the first moment anything costs
-   money.** Locally, `wrangler deploy --dry-run --containers-rollout=none --config
-   wrangler.machines.jsonc` proves the bundle and the bindings without Docker.
+   money.** Locally, `wrangler deploy --dry-run --containers-rollout=none` proves the bundle and the bindings without Docker.
 6. **A budget alert** in the dashboard (Billing > Budget alerts) at the same $30: the second
    breaker.
 7. **Switch it on**, one statement:
@@ -81,7 +80,7 @@ on this computer (`DevHost` in services/sync/src/machines/host.ts).
    `pnpm wrangler d1 execute nib --local --command "update online_service set value = 'on' where key = 'online'"`
    and put the drive's account on the list:
    `... --command "update users set online = 1 where email = '<address>'"`.
-4. `pnpm wrangler dev --config wrangler.machines.jsonc --enable-containers=false`.
+4. `pnpm wrangler dev --enable-containers=false`.
 
 Start, link, input, output, screens, sizes, Resume and the minute's sleep all run for real;
 the backup and snapshot are skipped (the dev host keeps none). workerd has no jurisdictions,

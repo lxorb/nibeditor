@@ -22,7 +22,7 @@ import { join, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const SYNC = join(ROOT, 'services/sync')
-const CONFIG = 'wrangler.machines.jsonc'
+const CONFIG = 'wrangler.jsonc'
 const PORT = Number(process.env.E2E_PORT ?? 8788)
 const BASE = `http://127.0.0.1:${PORT}`
 const NIBD = process.env.E2E_NIBD ?? 'http://127.0.0.1:7680'

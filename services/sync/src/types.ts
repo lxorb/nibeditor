@@ -16,9 +16,8 @@ export interface Env {
    *  hub is a poke nobody hears, which polling covers. */
   HUB?: DurableObjectNamespace
 
-  /** One `Machine` per online terminal machine (docs/online-terminal.md): bound only in
-   *  wrangler.machines.jsonc until going live, so absent in every deploy of
-   *  wrangler.jsonc, where the online routes answer 404. See machines/. */
+  /** One `Machine` per online terminal machine (docs/online-terminal.md): where it is
+   *  absent, the online routes answer 404. See machines/. */
   MACHINES?: DurableObjectNamespace
   /** Where the machines' homes are backed up (4.3): an R2 bucket in the EU jurisdiction,
    *  bound beside `MACHINES`. */

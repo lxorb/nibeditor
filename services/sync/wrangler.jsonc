@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "nib-sync",
-  "main": "src/index.ts",
+  "main": "src/machines/entry.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
@@ -37,14 +37,35 @@
     "bindings": [
       { "name": "ROOMS", "class_name": "NoteRoom" },
       { "name": "HUB", "class_name": "AccountHub" },
+      // One per online terminal machine, named by its id, in the EU (decision 6).
+      { "name": "MACHINES", "class_name": "Machine" },
     ],
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["NoteRoom"] },
     { "tag": "v2", "new_sqlite_classes": ["AccountHub"] },
+    { "tag": "v3", "new_sqlite_classes": ["Machine"] },
   ],
 
-  "r2_buckets": [{ "binding": "NOTES", "bucket_name": "nib-notes" }],
+  // The machines' container application. `durable_object` scheduling: each `Machine`
+  // starts its own instance with `ctx.container.start()`, choosing the image (or the
+  // snapshot to boot from) and the instance size there; see machines/host.ts. The image
+  // is services/machine/Dockerfile (Ubuntu 24.04, nibd, the tools; 4.2), built and
+  // pushed to Cloudflare's registry by `wrangler deploy`.
+  "containers": [
+    {
+      "class_name": "Machine",
+      "name": "nib-sync-machines",
+      "scheduling_policy": "durable_object",
+      "images": { "machine": { "dockerfile": "../machine/Dockerfile" } },
+    },
+  ],
+
+  "r2_buckets": [
+    { "binding": "NOTES", "bucket_name": "nib-notes" },
+    // The machines' homes, backed up as they sleep (4.3), kept in the EU.
+    { "binding": "HOMES", "bucket_name": "nib-homes", "jurisdiction": "eu" },
+  ],
 
   // Workers AI. What listens for an account with no OpenAI key of its own: the
   // glasses hand a plugin raw PCM and nothing on the device turns it into words, so
@@ -116,6 +137,8 @@
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://nibeditor.com",
     "MAIL_FROM": "nibeditor <nib@nibeditor.com>",
+    // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
+    "MACHINE_EGRESS": "open",
   },
 
   // The catch-all is what lets a custom hostname reach the Worker: a request

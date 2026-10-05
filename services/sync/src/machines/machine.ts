@@ -63,7 +63,7 @@ import {
 import { reachAgain } from './reach'
 import { serviceOf } from './service'
 
-/** The image the machine boots, by its name in wrangler.machines.jsonc's `images`. */
+/** The image the machine boots, by its name in wrangler.jsonc's `images`. */
 const IMAGE = 'machine'
 
 /** The home `nibd` keeps the person in, and what its backup leaves out: what any

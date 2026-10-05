@@ -1412,8 +1412,7 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
 `new_sqlite_classes` and not `new_classes`, as `collaboration.md` records, and proved with
 `wrangler deploy --dry-run` before anything else.
 
-- `Machine` (online terminal, migration tag `v3`, only in `wrangler.machines.jsonc` until
-  going live): one per machine, in the `eu` jurisdiction, with the container application
+- `Machine` (online terminal, migration tag `v3`, live since 2026-10-05): one per machine, in the `eu` jurisdiction, with the container application
   `nib-sync-machines` (`durable_object` scheduling) bound to it. Migration
   `0045_machines.sql` adds `machines`, `machine_usage`, `machine_events`, `term_sessions`,
   `online_service` and `users.online`; `erase.ts` takes the first four and leaves
