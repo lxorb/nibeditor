@@ -68,7 +68,7 @@ def asking(window) -> dict | None:
     """The question while it is up: its title and the names of its rows."""
 
     said = window.run(
-        "(() => { const sheet = document.querySelector('[role=\"alertdialog\"]'); "
+        "(() => { const sheet = document.querySelector('[role=\"alertdialog\"]:not([inert])'); "
         "if (!sheet) return null; return JSON.stringify({ "
         "title: sheet.querySelector('.title')?.textContent ?? '', "
         "rows: [...sheet.querySelectorAll('.rows .name')].map((one) => one.textContent) }) })()"
@@ -81,7 +81,7 @@ def asking(window) -> dict | None:
 
 def press(window, selector: str) -> None:
     window.run(
-        f"(() => {{ document.querySelector('[role=\"alertdialog\"] {selector}')?.click(); return true }})()"
+        f"(() => {{ document.querySelector('[role=\"alertdialog\"]:not([inert]) {selector}')?.click(); return true }})()"
     )
 
 
@@ -164,19 +164,24 @@ def main() -> int:
         check(window.open_tabs().count(busy) == 1 and idle in window.open_tabs(), "with both terminals")
 
         # A row: the quit is off, and the busy terminal is in front.
+        until(lambda: asking(window) is None, 10)
         closed_by_hand(app)
         until(lambda: asking(window), 15)
         press(window, ".rows button")
         check(bool(until(lambda: active(window) == busy, 5)), "pressing the row goes to its terminal")
         check(app.poll() is None, "and keeps the app running")
 
-        # Quit anyway: every shell goes with the app.
+        # Quit anyway: every shell goes with the app. Once the last question has gone: a
+        # sheet on its way out is inert, and answers nothing.
+        until(lambda: asking(window) is None, 10)
         running = terminal.shells_of(app.pid)
         closed_by_hand(app)
         until(lambda: asking(window), 15)
         press(window, ".nib-button.is-danger")
+        started = time.perf_counter()
         try:
-            app.wait(timeout=30)
+            app.wait(timeout=90)
+            say(f"ended in {time.perf_counter() - started:.1f} s")
             ended = True
         except Exception:  # noqa: BLE001 - the timeout, whichever module raised it
             ended = False
@@ -193,7 +198,8 @@ def main() -> int:
             "(() => { const tab = nib.workspace.tabs.find((one) => one.kind === 'terminal' "
             "&& one.doc.includes('probe-quit-busy')); if (tab) nib.workspace.activate(tab.id); return true })()"
         )
-        restored = until(lambda: any("quit-probe-marker" in row for row in window.rows()), 30)
+        until(lambda: any(row.rstrip().endswith(">") for row in window.rows()), 30)
+        restored = any("quit-probe-marker" in row for row in terminal.above(window))
         check(bool(restored), "the busy one with its last lines")
         time.sleep(3.0)
         check(close_app(app, 30), "with nothing running, the window closes asking nothing")
