@@ -24,6 +24,7 @@
 
 import { frame, unframe } from '@nib/sync-core/wire'
 import type { Activity, MachineState, SleepReason } from './types'
+import { isLoopbackUrl, isWebUrl } from './urls'
 
 // ---------------------------------------------------------------------------
 // Bounds (4.6, 4.8)
@@ -44,6 +45,28 @@ export const KEPT_OUTPUT = 1024 * 1024
 export const SCROLLBACK = 5000
 /** The widest and tallest screen anything here will size a pty to. */
 export const MOST_CELLS = 1000
+
+/** Input as frames none of which is larger than `MOST_INPUT` once it is UTF-8: a paste
+ *  of a long log is many frames, in order, never one refused as `large`. Never cut
+ *  inside a character, so every frame is text on its own. */
+export function inputChunks(data: string, most = MOST_INPUT): string[] {
+  const chunks: string[] = []
+  let from = 0
+  let bytes = 0
+  for (let at = 0; at < data.length;) {
+    const code = data.codePointAt(at) ?? 0
+    const size = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4
+    if (bytes + size > most && at > from) {
+      chunks.push(data.slice(from, at))
+      from = at
+      bytes = 0
+    }
+    bytes += size
+    at += code > 0xffff ? 2 : 1
+  }
+  if (from < data.length || chunks.length === 0) chunks.push(data.slice(from))
+  return chunks
+}
 
 /** The app socket's address for a `.term` file's id. */
 export function socketPath(term: string): string {
@@ -113,6 +136,9 @@ export type ClientFrame =
   | { t: 'size'; cols: number; rows: number }
   | { t: 'start' }
   | { t: 'resume' }
+  /** A tab this nib opened for the machine landed on the loopback page the opened
+   *  address sent it back to: that request, made on the machine instead (urls.ts). */
+  | { t: 'callback'; url: string }
 
 /** What `Machine` says to the app, as text. Output is not here: it is binary
  *  (`outFrame`).
@@ -127,7 +153,11 @@ export type ClientFrame =
  *  - `machine`: the machine's state, and why it is down;
  *  - `role`: whether this socket may type;
  *  - `ended`: the shell ended with this code (null for a signal);
- *  - `refused`: what was asked was refused, and why. */
+ *  - `refused`: what was asked was refused, and why;
+ *  - `browse`: a program on the machine asked for a browser; to one socket of the
+ *    machine's owner only;
+ *  - `called`: a `callback` was made on the machine, and the HTTP status it was
+ *    answered with, 0 where nothing answered. */
 export type ServerFrame =
   | {
       t: 'screen'
@@ -145,6 +175,8 @@ export type ServerFrame =
   | { t: 'role'; type: boolean }
   | { t: 'ended'; code: number | null }
   | { t: 'refused'; error: Refusal }
+  | { t: 'browse'; url: string }
+  | { t: 'called'; url: string; status: number }
 
 /** A text frame of either side, as it goes on the socket. */
 export function text(value: ClientFrame | ServerFrame): string {
@@ -181,10 +213,12 @@ export type MachineFrame =
   | { t: 'want'; session: string; since: number }
   | { t: 'close'; session: string }
   | { t: 'sleep' }
+  | { t: 'callback'; session: string; url: string }
 
 /** What `nibd` tells `Machine`: output from an offset; a whole screen; the program in
- *  front; a shell that ended; the last 30 seconds' activity; and that every screen is
- *  saved, after a `sleep` or a SIGTERM. */
+ *  front; a shell that ended; the last 30 seconds' activity; that every screen is
+ *  saved, after a `sleep` or a SIGTERM; an address a program in a session asked a
+ *  browser for (`nib-open`); and how a `callback` was answered. */
 export type NibdFrame =
   | { t: 'out'; session: string; seq: number; data: Uint8Array }
   | {
@@ -206,6 +240,8 @@ export type NibdFrame =
   | { t: 'ended'; session: string; code: number | null }
   | { t: 'activity'; activity: Activity }
   | { t: 'saved' }
+  | { t: 'browse'; session: string; url: string }
+  | { t: 'called'; session: string; url: string; status: number }
 
 /** A link frame as its bytes. */
 export function linkFrame(value: MachineFrame | NibdFrame): Uint8Array {
@@ -254,6 +290,11 @@ function isCode(value: unknown): value is number | null {
 
 function isScreen(value: unknown): value is string {
   return typeof value === 'string' && value.length <= MOST_SCREEN
+}
+
+/** An HTTP status, or 0 for none. */
+function isStatus(value: unknown): value is number {
+  return isCount(value) && value <= 999
 }
 
 function oneOf<T>(list: readonly T[], value: unknown): value is T {
@@ -330,6 +371,8 @@ export function clientFrameOf(raw: string): ClientFrame | null {
     case 'start':
     case 'resume':
       return { t: value.t }
+    case 'callback':
+      return isLoopbackUrl(value.url) ? { t: 'callback', url: value.url } : null
     default:
       return null
   }
@@ -379,6 +422,12 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return isCode(value.code) ? { t: 'ended', code: value.code } : null
     case 'refused':
       return oneOf(REFUSALS, value.error) ? { t: 'refused', error: value.error } : null
+    case 'browse':
+      return isWebUrl(value.url) ? { t: 'browse', url: value.url } : null
+    case 'called':
+      return isLoopbackUrl(value.url) && isStatus(value.status)
+        ? { t: 'called', url: value.url, status: value.status }
+        : null
     default:
       return null
   }
@@ -406,6 +455,8 @@ export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
       return isCount(value.since) ? { t: 'want', session, since: value.since } : null
     case 'close':
       return { t: 'close', session }
+    case 'callback':
+      return isLoopbackUrl(value.url) ? { t: 'callback', session, url: value.url } : null
     default:
       return null
   }
@@ -443,6 +494,12 @@ export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
     }
     case 'ended':
       return isCode(value.code) ? { t: 'ended', session, code: value.code } : null
+    case 'browse':
+      return isWebUrl(value.url) ? { t: 'browse', session, url: value.url } : null
+    case 'called':
+      return isLoopbackUrl(value.url) && isStatus(value.status)
+        ? { t: 'called', session, url: value.url, status: value.status }
+        : null
     default:
       return null
   }

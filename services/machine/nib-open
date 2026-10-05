@@ -1,0 +1,25 @@
+#!/bin/sh
+# The machine's browser (docs/online-terminal.md 4.13): `xdg-open`, `sensible-browser`,
+# `x-www-browser`, `www-browser` and `$BROWSER` are all this. A machine has no screen,
+# so an address a program asks a browser for - a sign-in, a pull request, docs - opens on
+# its owner's computer, in nib, through `nibd` (src/opener.ts). Only web addresses; a file
+# or any other scheme fails here, and a program that sees the failure prints the address.
+url=${1:-}
+if [ -z "$url" ]; then
+  echo "usage: ${0##*/} <address>" >&2
+  exit 2
+fi
+case "$url" in
+  http://* | https://*) ;;
+  *)
+    echo "${0##*/}: only web addresses open on your computer" >&2
+    exit 3
+    ;;
+esac
+body=$(jq -cn --arg url "$url" --arg session "${NIB_SESSION:-}" '{url: $url, session: $session}')
+said=$(curl -sS --max-time 5 --unix-socket "${NIBD_OPEN:-/run/nibd/open.sock}" \
+  -o /dev/null -w '%{http_code}' -H 'content-type: application/json' \
+  --data-binary "$body" http://nibd/open 2>/dev/null)
+[ "$said" = 202 ] && exit 0
+echo "${0##*/}: could not open $url on your computer" >&2
+exit 4

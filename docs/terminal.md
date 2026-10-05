@@ -311,6 +311,28 @@ session.
 **Who may type** is the machine's owner, unless they let the space's writers in; a
 socket told it may not type swallows the keys and still shows the screen.
 
+**As if it were here** (docs/online-terminal.md 4.13). Pasting, copying, links and
+notifications are every terminal's (below); what the machine adds:
+
+- **A browser that is yours.** The machine has no screen, so `xdg-open`,
+  `sensible-browser` and `$BROWSER` there are `nib-open`, which hands the address to the
+  machine's owner's nib - on the device that typed in that session last - where it opens
+  as a link from this terminal would: a web tab beside it, in front while the terminal is
+  what they look at and behind otherwise; the system browser on a phone; and in the browser
+  build, where a page may not open a window nobody pressed for, the site's name on the
+  quiet bar, one press away. Only web addresses, six a minute. So `gh auth login --web`,
+  Claude Code's `/login` and Python's `webbrowser` open the page by themselves.
+- **A sign-in's way back.** A provider sends the browser back to the program's own
+  listener, `http://localhost:<port>/callback` - on the machine. A tab opened for an address
+  that names such a page is watched, and when it lands there, that request is made on the
+  machine instead; the tab closes and the terminal is in front again, where the program
+  says it is signed in. A phone and the browser build cannot watch a tab, so they leave
+  such an address to the one the program prints.
+- **Long pastes** go up in frames of at most 64 KB at an even pace, so a whole log pasted
+  arrives whole, bracketed as one paste, rather than refused as one frame too large.
+- A watcher's clipboard is never written by somebody else's program: OSC 52 reaches only a
+  window that may type in the session.
+
 **Settings, Online terminal**: the machine's state with Start or Stop, and the month as one
 bar per allowance - hours, CPU, home and the web - with the day it starts again; the hours'
 bar turns amber at 80%, as the mark does (`lib/online/OnlinePane.svelte`). The palette has
@@ -395,6 +417,18 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   case where each line would run as it lands; VS Code's `auto`. A single line loses the
   whitespace after it, Windows Terminal's `trimPaste`, so a command copied with its line
   break does not run before anybody has looked at it. See `lib/terminal/paste.ts`.
+- **A program writing the clipboard** (OSC 52: vim's and tmux's yank, Claude Code's copy,
+  anything over SSH or on an online machine) puts its text on the clipboard - writing
+  only, as Windows Terminal, kitty, Alacritty and WezTerm have it: a program asking to
+  read the clipboard is never answered, since that would hand whatever was copied last to
+  whatever printed the question. And only while the terminal is on screen in the window
+  that has the keyboard. See `lib/terminal/signals.ts`.
+- **A program asking to be looked at** - OSC 9 (iTerm2's), OSC 777 `notify` (Ghostty's,
+  WezTerm's) or the bell - is a notification of the system's, named by the tab, while the
+  terminal is not what the person is looking at, and nothing when it is; one every four
+  seconds at most. Claude Code sends one when its notification channel is set to iTerm2
+  or Ghostty (`/config`), Codex with `tui.notifications`. In the browser build a press on
+  it brings the tab forward.
 - **Links**: an address in the output is underlined under the pointer, and Ctrl+click
   (Cmd on a Mac) opens it in a web tab beside the terminal by `new-tab.ts`'s rule - behind,
   and in front with Shift. A plain click is the terminal's own: it is how a line is
@@ -486,8 +520,6 @@ test/weight.test.ts).
   the profiles; Windows Terminal's settings file is a product of its own.
 - **Running as Administrator.** Elevated and unelevated consoles cannot share a window on
   Windows; Windows Terminal opens a second one.
-- **OSC 52**, a program writing the clipboard. Useful over SSH, and a way for anything
-  printed to a terminal to put text on the clipboard.
 - **Shell integration** past the folder and the prompt mark: marks by each command, sticky
   scroll, command decorations.
 - **A colour per tab.** A remote terminal wears its host's colour (above); a local shell has
@@ -517,6 +549,9 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/sessions.svelte.ts` | the screens and their shells                                                                                                                                                                                                     |
 | `apps/desktop/src/lib/terminal/TerminalTab.svelte` | the surface in a pane                                                                                                                                                                                                            |
 | `apps/desktop/src/lib/terminal/keys.ts`            | which keys the app has                                                                                                                                                                                                           |
+| `apps/desktop/src/lib/terminal/signals.ts` | what a program says to the terminal: the clipboard (OSC 52) and a notification (OSC 9, OSC 777, the bell) |
+| `apps/desktop/src/lib/online/opening.svelte.ts` | an address the machine asked a browser for: where it opens, and a sign-in's way back |
+| `services/machine/nib-open`, `services/machine/src/opener.ts` | the machine's browser: `xdg-open` and `$BROWSER`, and nibd's endpoint for them |
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
 | `apps/desktop/src/lib/terminal/modes.ts` | what a program left on, switched off where the prompt begins |
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |

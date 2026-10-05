@@ -27,6 +27,7 @@ import { copyText } from '../clipboard'
 import { dragged, isTreeDrag } from '../drag-paths'
 import { i18n, key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
+import { notify } from '../notify'
 import { showCombination } from '../keys'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { tabAsk } from '../new-tab'
@@ -59,6 +60,7 @@ import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
+import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { type Machine, PtySource, type Said, type Source } from './source'
 import { hostIdOf, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
@@ -94,6 +96,12 @@ const ASK_AFTER = 300
 /** And how often at most, whatever asks: a title said every second, as Claude Code's is
  *  while it works, is one look a second and never one per title. */
 const ASK_EVERY = 1000
+
+/** How often a terminal may ask to be looked at, at most; see `noticed`. */
+const NOTICE_EVERY = 4000
+
+/** How long an address the machine asked for stays on the bar; see `offered`. */
+const OFFERED_FOR = 60_000
 
 /** Which Windows this is, for xterm.js's ConPTY allowances: the os plugin writes the
  *  version beside the platform, and the build is its third number. */
@@ -174,6 +182,13 @@ class Session {
   /** For an online terminal: what is typed at a prompt, drawn before the machine echoes
    *  it where the echo is slow. See online/echo.ts. */
   private readonly echo: LocalEcho | null
+  /** For an online terminal in a browser build: an address a program on the machine
+   *  asked a browser for, offered on the bar, since a page may not open a window nobody
+   *  pressed for. See online/opening.svelte.ts. */
+  offered = $state<string | null>(null)
+  private offerGoes: ReturnType<typeof setTimeout> | undefined
+  /** When this tab last asked to be looked at; see `noticed`. */
+  private lastNotice = -Infinity
   /** How many shells this tab has started, which names each one. */
   private started = 0
   private opened = false
@@ -281,7 +296,12 @@ class Session {
     this.term.onResize(({ cols, rows }) => this.sized(cols, rows))
     this.term.attachCustomKeyEventHandler((event) => this.pressed(event))
     this.term.parser.registerOscHandler(7, (data) => this.reported(7, data))
-    this.term.parser.registerOscHandler(9, (data) => this.reported(9, data))
+    this.term.parser.registerOscHandler(9, (data) =>
+      data.startsWith('9;') ? this.reported(9, data) : this.noticed(osc9Notice(data)),
+    )
+    this.term.parser.registerOscHandler(777, (data) => this.noticed(osc777Notice(data)))
+    this.term.parser.registerOscHandler(52, (data) => this.clipboard(data))
+    this.term.onBell(() => this.noticed({ title: null, body: '' }))
     this.term.onTitleChange((title) => this.titled(title))
     this.searching.onDidChangeResults(({ resultIndex, resultCount }) => {
       this.found = { count: resultCount, at: resultIndex }
@@ -635,6 +655,7 @@ class Session {
     clearTimeout(this.resting)
     clearTimeout(this.waitingIdle)
     clearTimeout(this.asking)
+    clearTimeout(this.offerGoes)
     this.unwatch()
     const place = this.place()
     if (this.online) {
@@ -710,7 +731,11 @@ class Session {
     this.named()
 
     const source = this.online
-      ? (await import('../online/source')).onlineSource(() => this.tab.path)
+      ? (await import('../online/source')).onlineSource(() => this.tab.path, {
+          tab: () => this.tab.id,
+          front: () => this.inFront && workspace.activeTabId === this.tab.id,
+          offer: (url) => this.offer(url),
+        })
       : new PtySource(id, spec.shell, spec.folder, this.remote)
     if (this.pty !== id) {
       source.end()
@@ -1043,6 +1068,54 @@ class Session {
     )
     if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
     return true
+  }
+
+  /** Whether this terminal is on screen in the window that has the keyboard: what a
+   *  program writing the clipboard needs, and what a notification is for the lack of. */
+  private get inFront(): boolean {
+    return this.drawn && this.host.isConnected && document.hasFocus()
+  }
+
+  /** A program writing the clipboard (OSC 52; see signals.ts): only while this terminal
+   *  is in front, and for an online session only where this window may type in it - a
+   *  watcher's clipboard is never somebody else's program's to fill. Taken either way,
+   *  so nothing else reads it. */
+  private clipboard(data: string): boolean {
+    const text = clipboardWrite(data)
+    if (text !== null && this.inFront && (!this.online || this.mayType)) void copyText(text)
+    return true
+  }
+
+  /** A program asking to be looked at (OSC 9, OSC 777, the bell): a notification of the
+   *  system's, named by the tab, when this terminal is not what the person is looking at
+   *  - an agent that finished, or wants an answer - and nothing when it is. One every few
+   *  seconds at most, so a bell rung in a loop is one notification. */
+  private noticed(notice: Notice | null): boolean {
+    if (!notice) return false
+    const now = Date.now()
+    if (this.inFront || now - this.lastNotice < NOTICE_EVERY) return true
+    this.lastNotice = now
+    const name = this.tab.running?.name ?? this.tab.shown
+    notify(notice.title ?? name, notice.body, `terminal-${this.tab.id}`, () => {
+      workspace.activeTabId = this.tab.id
+    })
+    return true
+  }
+
+  /** An address the machine asked for, on the bar for a while; see `offered`. */
+  private offer(url: string) {
+    clearTimeout(this.offerGoes)
+    this.offered = url
+    this.offerGoes = setTimeout(() => (this.offered = null), OFFERED_FOR)
+  }
+
+  /** The bar's offer pressed: the address, in a tab of the browser this build runs in. */
+  openOffered() {
+    const url = this.offered
+    clearTimeout(this.offerGoes)
+    this.offered = null
+    if (url) window.open(url, '_blank', 'noopener')
+    this.focus()
   }
 
   /** A link: followed with the modifier a browser follows one with, into a tab of its

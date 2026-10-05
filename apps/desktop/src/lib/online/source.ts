@@ -13,14 +13,17 @@
  *  with nobody until the account moves to v2 (services/sync/src/machines/routes.ts). */
 
 import { termOf, termText } from '@nib/online/term'
-import type { ServerFrame } from '@nib/online/wire'
+import { inputChunks, MOST_INPUT, INPUT_RATE, type ServerFrame } from '@nib/online/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
 import type { Said, Source } from '../terminal/source'
+import { isDesktop, isNative } from '../tauri'
+import { viewport } from '../viewport.svelte'
 import { writeFile } from '../workspace/write-file'
 import { refusedOf, termSession } from './calls'
 import { Link, pageWorld } from './link'
 import { machine } from './machine.svelte'
+import { type Build, Opener } from './opening.svelte'
 import { ownSession } from './own'
 import { refusalWords } from './words'
 
@@ -103,17 +106,42 @@ async function socketName(
   return refused === null ? { name: id } : { refused }
 }
 
+/** What an online terminal's tab tells its source about itself: which tab it is,
+ *  whether it is what the person is looking at, and where an address the machine asked
+ *  for is offered when this build cannot open it unasked. See opening.svelte.ts. */
+export interface Place {
+  tab: () => string
+  front: () => boolean
+  offer: (url: string) => void
+}
+
+/** Input frames a second at most, half the `Machine`'s bound per person, so a long paste
+ *  never meets it whatever is typed beside it. */
+const FRAMES_A_SECOND = INPUT_RATE / 2
+
 export class OnlineSource implements Source {
   readonly remote = true
   private link: Link | null = null
   private ended = false
+  private readonly opener: Opener
+  /** This second's input frames, for the pace a paste goes at. */
+  private sent = { second: 0, count: 0 }
 
   /** `path` is the `.term` file's, read as it starts: a file renamed or moved keeps its
    *  id, and the socket with it. */
   constructor(
     private readonly path: () => string | null,
     private readonly device: () => Promise<string>,
-  ) {}
+    private readonly place: Place,
+    build: Build,
+  ) {
+    this.opener = new Opener(
+      place.tab,
+      build,
+      (url) => this.link?.say({ t: 'callback', url }),
+      place.offer,
+    )
+  }
 
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {
     if (!account.accountToken) {
@@ -188,6 +216,13 @@ export class OnlineSource implements Source {
         if (words) said({ refused: words })
         return
       }
+      // A program on the machine asked for a browser: this computer's (4.13).
+      case 'browse':
+        this.opener.open(frame.url, this.place.front())
+        return
+      case 'called':
+        this.opener.called(frame.url, frame.status)
+        return
       // Who is here, and whose input came last: the people popover's and the cursor's,
       // which come later (4.6).
       case 'people':
@@ -196,11 +231,35 @@ export class OnlineSource implements Source {
     }
   }
 
+  /** Input up the socket in frames the `Machine` takes - none larger than `MOST_INPUT`,
+   *  none faster than `FRAMES_A_SECOND` - so a paste of a whole log arrives whole, its
+   *  brackets around all of it, rather than being refused as one frame too large. */
   async write(data: string, binary: boolean): Promise<void> {
-    // A key xterm.js encoded itself comes one character a byte.
-    if (binary) this.link?.sayBytes(Uint8Array.from(data, (char) => char.charCodeAt(0) & 0xff))
-    else this.link?.say({ t: 'in', data })
-    await Promise.resolve()
+    if (binary) {
+      // A key xterm.js encoded itself comes one character a byte.
+      const bytes = Uint8Array.from(data, (char) => char.charCodeAt(0) & 0xff)
+      for (let at = 0; at < bytes.length || at === 0; at += MOST_INPUT) {
+        await this.paced()
+        this.link?.sayBytes(bytes.subarray(at, at + MOST_INPUT))
+      }
+      return
+    }
+    for (const chunk of inputChunks(data)) {
+      await this.paced()
+      this.link?.say({ t: 'in', data: chunk })
+    }
+  }
+
+  /** Waits for the next second once this one has had its frames. */
+  private async paced(): Promise<void> {
+    const now = Date.now()
+    const second = Math.floor(now / 1000)
+    if (second !== this.sent.second) this.sent = { second, count: 0 }
+    if (this.sent.count >= FRAMES_A_SECOND) {
+      await new Promise((settle) => setTimeout(settle, (second + 1) * 1000 - now))
+      this.sent = { second: second + 1, count: 0 }
+    }
+    this.sent.count += 1
   }
 
   resize(cols: number, rows: number): void {
@@ -219,14 +278,20 @@ export class OnlineSource implements Source {
   /** The socket closed; the session goes on without this window. */
   end(): void {
     this.ended = true
+    this.opener.end()
     this.link?.close()
     this.link = null
   }
 }
 
 /** The source for an online terminal's tab, whose file is at `path` as it starts. */
-export function onlineSource(path: () => string | null): OnlineSource {
-  return new OnlineSource(path, async () => (await import('../sync2/hub.svelte')).deviceId())
+export function onlineSource(path: () => string | null, place: Place): OnlineSource {
+  return new OnlineSource(
+    path,
+    async () => (await import('../sync2/hub.svelte')).deviceId(),
+    place,
+    { pages: isDesktop && viewport.device !== 'phone', native: isNative },
+  )
 }
 
 /** What an online terminal's cached screen is kept under: `online-` and its session, read

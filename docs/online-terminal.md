@@ -631,6 +631,55 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   is 30 ms or slower; the first key after Enter or a wrong guess is a hidden probe, so a
   password is never drawn. See `apps/desktop/src/lib/online/echo.ts`.
 
+### 4.13 As if it were here
+
+Emil, 2026-10-05: "I want the online terminal to integrate nicely, e.g. when I Ctrl+Click a
+link there it should open in my browser" - after `claude` printed its sign-in address to be
+copied by hand. VS Code Remote and Codespaces solved the same: a `BROWSER` helper that opens
+on the person's computer, port forwarding for the sign-in's way back, and the clipboard.
+
+- **The machine's browser is its owner's.** `nib-open` (services/machine) is `xdg-open`,
+  `sensible-browser`, `x-www-browser`, `www-browser` and `$BROWSER` on the machine. It posts
+  the address and `$NIB_SESSION` to `nibd` on a Unix socket (`/run/nibd/open.sock`, every
+  user of the machine may write, since every user is its owner), which says `browse
+  {session, url}` up the link; `Machine` sends `browse {url}` to **one** socket of the
+  machine's owner on that session - the device that typed there last, else the one seen
+  last - and to nobody else: a watcher is never sent a page by somebody else's machine.
+  Only `http` and `https` (`isWebUrl` in `@nib/online/urls`), at most ten a minute at
+  `nibd` and at `Machine`, six a minute a terminal in the app. With no nib connected,
+  `nib-open` fails and the program prints the address, as it does on any headless box.
+- **Where it opens** is where a link from the terminal opens (`lib/online/opening.svelte.ts`):
+  a web tab beside the terminal on a desktop - in front while the terminal is what the
+  person looks at, behind while an agent works alone - the system browser on a phone, and
+  in the browser build, which may not open a window nobody pressed for, the site's name on
+  the terminal's quiet bar, one press away (Codespaces' notification button).
+- **A sign-in's way back.** Claude Code (read from its binary on 2026-10-05) opens a browser
+  only when `$BROWSER` is set or there is a display, and sends that browser back to its own
+  listener, `http://localhost:<49152-65535>/callback`; Codex to `localhost:1455`. That page
+  is on the machine. So a tab opened for an address whose query names a loopback page is
+  watched, and when it lands on that origin - and only that one (`isCallbackOf`) - the app
+  says `callback {url}`; `Machine` passes it on for the owner alone, and `nibd` makes the
+  one GET on the machine, loopback only, ten seconds at most, redirects not followed, and
+  answers `called {url, status}`. On a 2xx or 3xx the tab closes and the terminal is in
+  front again, where the program says it is signed in; otherwise the tab stays to show the
+  error. VS Code forwards the whole port; one request is all a sign-in needs, and nothing
+  else of the machine is reachable from the person's computer. A phone and the browser
+  build cannot watch a tab, so they do not open such an address at all, and the address
+  the program printed (Claude Code's manual one) stands.
+- **Pasting** is every terminal's: Ctrl+Shift+V, Shift+Insert, Ctrl+V on Windows, Cmd+V,
+  the menu, with the local rules for several lines and bracketed paste. Input goes up in
+  frames of at most `MOST_INPUT` (64 KB) of UTF-8, never cut inside a character
+  (`inputChunks`), at no more than half the `Machine`'s rate, so a pasted log arrives whole
+  inside one pair of paste brackets instead of being refused as one frame `large`.
+- **The clipboard** (OSC 52) and **notifications** (OSC 9, OSC 777, the bell) are every
+  terminal's too (docs/terminal.md), with one rule of the online terminal's: OSC 52 is
+  written only in a window that may type in the session.
+- **The same environment as a local terminal**: `TERM_PROGRAM=nib` beside `TERM` and
+  `COLORTERM`, and the title a program sets names the tab (4.10).
+- **Left out**: the folder a shell reports (OSC 7) - a folder on the machine is nothing
+  this computer can open; forwarding any other port (ports, 4.10's later); and asking a
+  browser build's permission to notify, which the page does not ask for a terminal.
+
 ## 5. What nib does not do
 
 - **Machines per space**, or machines several people pay for (4.1).

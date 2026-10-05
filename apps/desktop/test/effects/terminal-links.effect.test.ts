@@ -53,6 +53,7 @@ vi.mock('@xterm/xterm', () => ({
     onData = () => undefined
     onBinary = () => undefined
     onTitleChange = () => undefined
+    onBell = () => undefined
     onResize = () => undefined
     attachCustomKeyEventHandler = () => undefined
   },

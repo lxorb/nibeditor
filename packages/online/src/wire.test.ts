@@ -3,6 +3,7 @@ import { frame } from '@nib/sync-core/wire'
 import {
   type ClientFrame,
   clientFrameOf,
+  inputChunks,
   linkFrame,
   type MachineFrame,
   machineFrameOf,
@@ -30,6 +31,7 @@ describe('the app socket', () => {
     { t: 'size', cols: 80, rows: 24 },
     { t: 'start' },
     { t: 'resume' },
+    { t: 'callback', url: 'http://localhost:54545/callback?code=x&state=y' },
   ]
 
   it.each(clients)('reads back what the app sent: %j', (one) => {
@@ -72,6 +74,9 @@ describe('the app socket', () => {
     { t: 'ended', code: null },
     { t: 'refused', error: 'role' },
     { t: 'refused', error: 'sessions' },
+    { t: 'browse', url: 'https://github.com/login/device' },
+    { t: 'called', url: 'http://127.0.0.1:1455/auth/callback?code=x', status: 302 },
+    { t: 'called', url: 'http://localhost:1/x', status: 0 },
   ]
 
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
@@ -94,6 +99,9 @@ describe('the app socket', () => {
     '{"t":"in","data":3}',
     '{"t":"in"}',
     '{"t":"size","cols":80}',
+    '{"t":"callback","url":"https://claude.ai/x"}',
+    '{"t":"callback","url":"http://10.0.0.1:80/"}',
+    '{"t":"callback"}',
   ])('drops a client frame that does not check: %s', (raw) => {
     expect(clientFrameOf(raw)).toBeNull()
   })
@@ -116,6 +124,11 @@ describe('the app socket', () => {
     '{"t":"role","type":"read"}',
     '{"t":"ended","code":1.5}',
     '{"t":"refused","error":"because"}',
+    '{"t":"browse","url":"file:///etc/passwd"}',
+    '{"t":"browse","url":"javascript:alert(1)"}',
+    '{"t":"browse"}',
+    '{"t":"called","url":"https://claude.ai/","status":200}',
+    '{"t":"called","url":"http://localhost:1/","status":-1}',
   ])('drops a server frame that does not check: %s', (raw) => {
     expect(serverFrameOf(raw)).toBeNull()
   })
@@ -174,6 +187,7 @@ describe('the link', () => {
     { t: 'want', session: 's_1', since: 123_456 },
     { t: 'close', session: 's_1' },
     { t: 'sleep' },
+    { t: 'callback', session: 's_1', url: 'http://localhost:54545/callback?code=x' },
   ]
 
   it.each(machines)('nibd reads back what the Machine sent: %j', (one) => {
@@ -199,6 +213,8 @@ describe('the link', () => {
     { t: 'ended', session: 's_1', code: null },
     { t: 'activity', activity: { at: 1, output: 0, cpu: 0.25, net: 51_200, homeBytes: 2 ** 32 } },
     { t: 'saved' },
+    { t: 'browse', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
+    { t: 'called', session: 's_1', url: 'http://localhost:54545/callback', status: 200 },
   ]
 
   it.each(nibds)('the Machine reads back what nibd sent: %j', (one) => {
@@ -217,6 +233,10 @@ describe('the link', () => {
     ['text for input', { t: 'in', session: 's', data: 'ls' }],
     ['a negative offset', { t: 'want', session: 's', since: -5 }],
     ['an unknown kind', { t: 'reboot', session: 's' }],
+    [
+      'a callback anywhere but loopback',
+      { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' },
+    ],
   ])('nibd drops a frame with %s', (_, value) => {
     expect(machineFrameOf(frame(value as object))).toBeNull()
   })
@@ -236,6 +256,8 @@ describe('the link', () => {
     ],
     ['an ended with no session', { t: 'ended', code: 0 }],
     ['an unknown kind', { t: 'hello' }],
+    ['an address that is not the web', { t: 'browse', session: 's', url: 'file:///etc/passwd' }],
+    ['an open with no session', { t: 'browse', url: 'https://a.b/' }],
   ])('the Machine drops a frame with %s', (_, value) => {
     expect(nibdFrameOf(frame(value as object))).toBeNull()
   })
@@ -243,5 +265,35 @@ describe('the link', () => {
   it('drops bytes that are not an envelope at all', () => {
     expect(machineFrameOf(bytes(9, 9, 9))).toBeNull()
     expect(nibdFrameOf(bytes())).toBeNull()
+  })
+})
+
+describe('input in frames', () => {
+  const bytesOf = (value: string) => new TextEncoder().encode(value).length
+
+  it('keeps short input whole, the empty string included', () => {
+    expect(inputChunks('ls\r')).toEqual(['ls\r'])
+    expect(inputChunks('')).toEqual([''])
+  })
+
+  it('cuts a long paste into frames that each fit, and nothing lost', () => {
+    const paste = `\u001b[200~${'line of a log\n'.repeat(20_000)}\u001b[201~`
+    const chunks = inputChunks(paste)
+    expect(chunks.length).toBeGreaterThan(1)
+    expect(chunks.join('')).toBe(paste)
+    for (const chunk of chunks) {
+      expect(bytesOf(chunk)).toBeLessThanOrEqual(MOST_INPUT)
+      expect(clientFrameOf(text({ t: 'in', data: chunk }))).not.toBeNull()
+    }
+  })
+
+  it('never cuts inside a character', () => {
+    const paste = 'ü😀€a'.repeat(5)
+    const chunks = inputChunks(paste, 7)
+    expect(chunks.join('')).toBe(paste)
+    for (const chunk of chunks) {
+      expect(bytesOf(chunk)).toBeLessThanOrEqual(7)
+      expect(chunk.codePointAt(chunk.length - 1)).not.toBe(0xd83d)
+    }
   })
 })

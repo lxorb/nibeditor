@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { Cgroups, PIDS_MAX, userOf } from './limits'
 import { Nibd } from './nibd'
+import { listenOpener, OPEN_SOCKET, serveOpener } from './opener'
 import { serve } from './server'
 
 const PORT = 7680
@@ -51,7 +52,11 @@ function main(): void {
     SHELL: shell,
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
+    // As every terminal nib starts on a computer says (src-tauri/src/terminal/shells.rs).
+    TERM_PROGRAM: 'nib',
     LANG: 'C.UTF-8',
+    // A program that asks for a browser gets its owner's own; see opener.ts.
+    BROWSER: 'nib-open',
   }
   for (const key of PASSED) {
     const value = env[key]
@@ -72,6 +77,10 @@ function main(): void {
 
   const server = serve(nibd, secret)
   server.listen(numberOf(env.NIBD_PORT, PORT), env.NIBD_HOST ?? '0.0.0.0')
+  listenOpener(
+    serveOpener({ open: (url, session) => nibd.open(url, session) }),
+    env.NIBD_OPEN ?? OPEN_SOCKET,
+  )
 
   let stopping = false
   const stop = (): void => {

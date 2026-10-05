@@ -83,6 +83,7 @@ vi.mock('@xterm/xterm', () => ({
       typing = listener
     }
     onBinary = () => undefined
+    onBell = () => ({ dispose: () => undefined })
     onTitleChange(listener: (title: string) => void) {
       titling = listener
     }

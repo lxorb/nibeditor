@@ -8,6 +8,7 @@
  *  `@nib/online/wire`. */
 
 import type { Activity } from '@nib/online/types'
+import { isLoopbackUrl } from '@nib/online/urls'
 import type { MachineFrame, NibdFrame } from '@nib/online/wire'
 import { Meter, homeSize } from './activity'
 import type { Cgroups, User } from './limits'
@@ -26,6 +27,24 @@ export interface Options {
   /** How often activity is reported (30 s) and the home measured (an hour). */
   activityEvery: number
   homeEvery: number
+  /** Makes a callback's request on this machine; `fetch`, or the tests' stand-in. */
+  call?: (url: string) => Promise<number>
+}
+
+/** How long a callback's request may take: a program's sign-in listener answers at
+ *  once, or it is not listening. */
+const CALL_WAIT = 10_000
+
+/** The request a callback is: a GET to the program's own listener on this machine,
+ *  followed nowhere. The answer's status, or 0 where nothing answered. */
+async function call(url: string): Promise<number> {
+  try {
+    const answer = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(CALL_WAIT) })
+    await answer.body?.cancel()
+    return answer.status
+  } catch {
+    return 0
+  }
 }
 
 export class Nibd {
@@ -35,6 +54,8 @@ export class Nibd {
   private readonly meter = new Meter(Date.now())
   private link: ((frame: NibdFrame) => void) | null = null
   private homeBytes = 0
+  /** The session typed in last, for an address asked for where none was said. */
+  private lastTyped: string | null = null
   private readonly timers: ReturnType<typeof setInterval>[] = []
 
   constructor(options: Options) {
@@ -98,6 +119,7 @@ export class Nibd {
         return
       case 'in':
         session?.input(frame.data)
+        if (session) this.lastTyped = frame.session
         return
       case 'size':
         session?.resize(frame.cols, frame.rows)
@@ -110,7 +132,24 @@ export class Nibd {
         this.sessions.delete(frame.session)
         this.saves.forget(frame.session)
         return
+      case 'callback': {
+        // Checked by the codec already; asked again, since this one goes to the network.
+        if (!isLoopbackUrl(frame.url)) return
+        const status = await (this.options.call ?? call)(frame.url)
+        this.send({ t: 'called', session: frame.session, url: frame.url, status })
+        return
+      }
     }
+  }
+
+  /** An address a program asked a browser for (opener.ts): said up the link for the
+   *  session it was asked in, or the one typed in last. False where no link hears it or
+   *  there is no session to say it for. */
+  open(url: string, session: string): boolean {
+    const id = this.sessions.has(session) ? session : this.lastTyped
+    if (!this.link || id === null || !this.sessions.has(id)) return false
+    this.send({ t: 'browse', session: id, url })
+    return true
   }
 
   /** Every screen written down, then `saved`: as the machine sleeps, and on SIGTERM. */

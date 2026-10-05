@@ -98,7 +98,8 @@ export class Session {
       cols: this.screen.cols,
       rows: this.screen.rows,
       cwd: folder,
-      env: this.machine.env,
+      // Which session a program asked a browser in, for `nib-open` to say; see opener.ts.
+      env: { ...this.machine.env, NIB_SESSION: this.id },
       encoding: null,
     })
     this.pty = pty
