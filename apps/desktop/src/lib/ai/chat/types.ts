@@ -168,6 +168,8 @@ export interface Turn {
   effort?: Effort
   usage?: Usage
   replay?: Replay
+  /** How long a `model` turn worked, in ms, once it is done: Codex's "Worked for". */
+  took?: number
 }
 
 /** Where a goal stands (4.8), in Claude Code's and Codex's words.

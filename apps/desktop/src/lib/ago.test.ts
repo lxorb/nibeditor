@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { relativeStep } from './ago'
+import { agoShort, relativeStep } from './ago'
 
 /** How long ago something happened, as a number and a unit for
  *  `Intl.RelativeTimeFormat`.
@@ -40,5 +40,14 @@ describe('how long ago, as a step', () => {
   test('and a stamp from the future is now rather than a promise', () => {
     expect(relativeStep(-1)).toEqual({ value: 0, unit: 'second' })
     expect(relativeStep(-5 * MINUTE)).toEqual({ value: 0, unit: 'second' })
+  })
+})
+
+describe('how long ago, said short', () => {
+  test('is the language’s own narrow words, and English for a tag Intl does not know', () => {
+    const now = Date.UTC(2026, 9, 5, 12)
+    expect(agoShort(now - 3 * 60 * 60 * 1000, 'en', now)).toBe('3h ago')
+    expect(agoShort(now, 'en', now)).toBe('now')
+    expect(agoShort(now - 2 * 24 * 60 * 60 * 1000, 'not a language', now)).toBe('2d ago')
   })
 })

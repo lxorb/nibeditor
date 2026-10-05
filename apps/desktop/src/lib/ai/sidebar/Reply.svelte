@@ -1,26 +1,27 @@
 <script lang="ts">
-  /** Everything that answered one message, in the order it arrived: words, folded
-   *  thinking and tool rows, and the one-line notices between them (another model from
-   *  here, compacted, stopped, the provider's error). Across the whole width with no
-   *  bubble, ChatGPT's answer. Ask's citations are buttons that open their passage, and
-   *  the notes they cite are a row of chips under the words, ChatGPT's sources: each
-   *  opens its note beside, where ChatGPT opens a side panel.
+  /** Everything that answered one message, in the order it arrived, as the Codex
+   *  sidebar draws a turn (docs/ai-sidebar.md 4.3): the work as compact steps - folded
+   *  thinking, tool rows, reads in a row as one Explored step, the words between - and
+   *  once the answer is in, all of it folded behind "Worked for 1m 23s" over the last
+   *  words (steps.ts). One-line notices stay in their place (another model from here,
+   *  compacted, stopped, the provider's error). Across the whole width with no bubble.
+   *  Ask's citations are buttons that open their passage, and the notes they cite are a
+   *  row of chips under the words: each opens its note beside.
    *
-   *  Under it ChatGPT's row: copy, insert at the caret, ask again (whose menu asks
-   *  another model) and "..." for the rest. The last answer's row is always there; an
-   *  earlier one's shows where it is while the answer is pointed at.
+   *  Under it, while it is pointed at: copy, insert at the caret, ask again (whose menu
+   *  asks another model) and "..." for the rest.
    *
    *  The words are the model's, which are nobody's markup: drawn through ai/drawn.ts
    *  with raw HTML escaped and nothing to load. */
   import type { EditorView } from '@nib/editor'
-  import { fly } from 'svelte/transition'
+  import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Answer from '../Answer.svelte'
   import { answerHtml } from '../drawn'
   import { citationLinks, citedIn, linkedAnswer } from '../retrieve'
   import type { Part, Turn } from '../chat/types'
   import { copyText } from '../../clipboard'
-  import { t } from '../../i18n.svelte'
+  import { i18n, t } from '../../i18n.svelte'
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
   import { dur } from '../../motion'
@@ -33,7 +34,11 @@
   import { ai } from '../store.svelte'
   import { chat } from './chat.svelte'
   import type { Source } from './citations'
+  import Explored from './Explored.svelte'
+  import { lasted } from './numbers'
   import PartRow from './PartRow.svelte'
+  import StepLine from './StepLine.svelte'
+  import { type Block, blocksOf, foldOf } from './steps'
   import TaskRows from './TaskRows.svelte'
 
   const {
@@ -56,26 +61,15 @@
   )
 
   type Notice = Extract<Part, { kind: 'notice' }>
-  type Folded = Extract<Part, { kind: 'thinking' | 'tool' }>
-  type Block =
-    | { kind: 'words'; text: string; at: number }
-    | { kind: 'notice'; notice: Notice; at: number }
-    | { kind: 'row'; row: Folded; at: number }
 
-  /** Consecutive text parts drawn as one answer, so a paragraph split across two
-   *  rounds of a stream is one paragraph. */
-  const blocks = $derived.by(() => {
-    const out: Block[] = []
-    turn.parts.forEach((part, at) => {
-      const before = out.at(-1)
-      if (part.kind === 'text') {
-        if (before?.kind === 'words') before.text += part.text
-        else out.push({ kind: 'words', text: part.text, at })
-      } else if (part.kind === 'notice') out.push({ kind: 'notice', notice: part, at })
-      else out.push({ kind: 'row', row: part, at })
-    })
-    return out
-  })
+  const blocks = $derived(blocksOf(turn.parts))
+  /** Once it is done, the steps fold into "Worked for" over the last words (steps.ts). */
+  const fold = $derived(foldOf(blocks, live))
+  let working = $state(false)
+  const showWork = $derived(working || chat.unfolded)
+  const worked = $derived(
+    turn.took ? t('Worked for {time}', { time: lasted(turn.took, i18n.language) }) : t('Worked'),
+  )
 
   function drawn(text: string): string {
     const source = citationLinks(text, sources.length)
@@ -217,34 +211,61 @@
   const answered = $derived(!!words.trim())
 </script>
 
+{#snippet one(block: Block)}
+  {#if block.kind === 'words'}
+    <Answer
+      html={drawn(block.text)}
+      live={live && block.at === blocks.at(-1)?.at}
+      onfollow={follow}
+    />
+  {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
+    <TaskRows said={block.notice.text} />
+  {:else if block.kind === 'notice'}
+    <p
+      class="notice"
+      class:wrong={block.notice.code === 'error'}
+      class:model={block.notice.code === 'model'}
+      class:said={block.notice.code === 'command'}
+      in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
+    >
+      {noticeOf(block.notice)}
+      {#if block.notice.code === 'error' && last && !live}
+        <button class="link" onclick={() => chat.retry()}>{t('Ask again')}</button>
+      {/if}
+    </p>
+  {:else if block.kind === 'explored'}
+    <div in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <Explored rows={block.rows} {live} />
+    </div>
+  {:else}
+    <div in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <PartRow part={block.row} {live} />
+    </div>
+  {/if}
+{/snippet}
+
 <div class="answer" class:last>
-  {#each blocks as block (block.at)}
-    {#if block.kind === 'words'}
-      <Answer
-        html={drawn(block.text)}
-        live={live && block.at === blocks.at(-1)?.at}
-        onfollow={follow}
-      />
-    {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
-      <TaskRows said={block.notice.text} />
-    {:else if block.kind === 'notice'}
-      <p
-        class="notice"
-        class:wrong={block.notice.code === 'error'}
-        class:model={block.notice.code === 'model'}
-        class:said={block.notice.code === 'command'}
-        in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
-      >
-        {noticeOf(block.notice)}
-        {#if block.notice.code === 'error' && last && !live}
-          <button class="link" onclick={() => chat.retry()}>{t('Ask again')}</button>
-        {/if}
-      </p>
-    {:else}
-      <div in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-        <PartRow part={block.row} {live} />
+  {#each fold.before as block (block.at)}
+    {@render one(block)}
+  {/each}
+
+  {#if fold.work.length}
+    <!-- Codex's "Worked for": the way to the answer, folded once it is done, with a
+         hairline across to the end as the line between the work and the answer. -->
+    <div class="worked">
+      <StepLine verb={worked} open={showWork} onpress={() => (working = !working)} />
+    </div>
+    {#if showWork}
+      <div class="work" transition:slide={{ duration: dur(150), easing: cubicOut }}>
+        {#each fold.work as block (block.at)}
+          {@render one(block)}
+        {/each}
       </div>
     {/if}
+  {/if}
+
+  {#each fold.after as block (block.at)}
+    {@render one(block)}
   {/each}
 
   {#if cited.length}
@@ -318,6 +339,25 @@
     min-width: 0;
   }
 
+  .worked {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .worked::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .work {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
   .notice {
     margin: 0;
     color: var(--muted);
@@ -385,22 +425,19 @@
     }
   }
 
-  /* The last answer's under its words, always there. An earlier one's in the same
-     place while its answer is pointed at, ChatGPT's, so a long thread is neither a
-     column of buttons nor a thread that jumps as the pointer crosses it. */
+  /* Under the words while the answer is pointed at, Codex's hover-revealed actions, in
+     their place all along, so a long thread is neither a column of buttons nor a thread
+     that jumps as the pointer crosses it. */
   .acts {
     gap: 0;
     margin-inline-start: -6px;
+    opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
-  .answer:not(.last) .acts {
-    opacity: 0;
-  }
-
-  .answer:not(.last):hover .acts,
-  .answer:not(.last) .acts:focus-within,
-  :global([data-touch]) .answer:not(.last) .acts {
+  .answer:hover .acts,
+  .acts:focus-within,
+  :global([data-touch]) .acts {
     opacity: 1;
   }
 

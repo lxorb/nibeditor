@@ -1,26 +1,30 @@
 <script lang="ts">
-  /** The open thread, scrolling over the composer, as ChatGPT draws one: the reader's
-   *  messages in bubbles at the end of the line, each answer across the whole width
-   *  under it with no bubble at all, a message pressed a moment ago drawn at once, and a
-   *  dot breathing until the first words of an answer arrive. Under a bubble, while it
-   *  is pointed at: copy, edit and rewind, and the arrows between its branches once it
-   *  has been edited.
+  /** The open thread, scrolling over the composer, as the Codex sidebar draws one: the
+   *  reader's messages in bubbles at the end of the line, each answer across the whole
+   *  width under it (Reply.svelte), a message pressed a moment ago drawn at once, and a
+   *  dot breathing until the first words of an answer arrive. Beside a bubble, while it
+   *  is pointed at: copy, edit and rewind; under it the arrows between its branches once
+   *  it has been edited. What the thread changed is a card at the end, once the answer
+   *  is in (review/ChangesCard.svelte).
    *
    *  The end stays in view while an answer streams, as long as the reader has not
    *  scrolled up to read something else; then a round arrow over the composer goes back
-   *  down. An empty thread is the greeting, over the composer in the middle. */
+   *  down. An empty thread is Codex's home: the latest chats, and the way to all. */
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fade, fly } from 'svelte/transition'
   import Thinking from '../Thinking.svelte'
+  import { agoShort } from '../../ago'
   import { copyText } from '../../clipboard'
-  import { t } from '../../i18n.svelte'
+  import { i18n, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'
   import { chat } from './chat.svelte'
   import { sourcesFor } from './citations'
+  import { hostHere } from './host'
   import Branches from '../review/Branches.svelte'
+  import ChangesCard from '../review/ChangesCard.svelte'
   import Reply from './Reply.svelte'
 
   const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } =
@@ -46,6 +50,11 @@
       (pending !== undefined || !turns.at(-1)?.parts.length || turns.at(-1)?.role === 'you'),
   )
   const hello = $derived(ready && !turns.length && pending === undefined && !running)
+  /** The latest threads, Codex's three on its home, and how many there are: a tab
+   *  has them all in its rail already. */
+  const listed = $derived(chat.heads.filter((one) => !one.archived).length)
+  const recent = $derived(chat.heads.filter((one) => !one.archived).slice(0, 3))
+  const here = hostHere()
 
   /** What went with a message besides its passages, by name, so a message says what
    *  it was sent with. */
@@ -78,7 +87,7 @@
   const follows = (..._values: unknown[]) => undefined
 
   $effect(() => {
-    follows(turns, waiting, chat.trouble, pending)
+    follows(turns, waiting, chat.trouble, pending, running)
     const box = talk
     if (box && atEnd) void tick().then(() => (box.scrollTop = box.scrollHeight))
   })
@@ -100,8 +109,32 @@
       </p>
     {/if}
 
-    {#if hello}
-      <h2 class="hello" in:fade={{ duration: dur(150) }}>{t('What can I help with?')}</h2>
+    {#if hello && recent.length}
+      <!-- Codex's home: no greeting, the latest chats under their heading and the way to
+           all of them, over a composer that is at the foot from the start. -->
+      <div class="home" in:fade={{ duration: dur(150) }}>
+        <h2 class="heading">{t('Chats')}</h2>
+        <ul class="recent">
+          {#each recent as one (one.id)}
+            <li>
+              <button class="nib-row is-short" onclick={() => void chat.openThread(one.id)}>
+                <span class="nib-row-label">{one.title || t('Untitled')}</span>
+                {#if chat.running.includes(one.id)}<span class="dot"></span>{:else}<span
+                    class="nib-row-meta">{agoShort(one.updated, i18n.language)}</span
+                  >{/if}
+              </button>
+            </li>
+          {/each}
+          {#if here === 'side' && listed > recent.length}
+            <li>
+              <button class="nib-row is-short all" onclick={() => chat.showThreads()}>
+                <span class="nib-row-label">{t('Show all')}</span>
+                <span class="nib-row-meta">{listed}</span>
+              </button>
+            </li>
+          {/if}
+        </ul>
+      </div>
     {/if}
 
     {#each turns as turn, index (turn.id)}
@@ -119,9 +152,12 @@
               {/each}
             </div>
           {/if}
-          <p class="bubble">{words}</p>
-          {#if thread && !turn.steered}
-            <div class="under">
+          <!-- The message, and beside it while it is pointed at copy, edit and rewind,
+               over the room at its start rather than on a row of their own, so a
+               thread of messages stays as dense as Codex's. -->
+          <div class="held">
+            <p class="bubble">{words}</p>
+            {#if thread && !turn.steered}
               <span class="tools">
                 <button
                   class="nib-glyph tool"
@@ -140,7 +176,7 @@
                   </svg>
                 </button>
                 {#if !running}
-                  <!-- Change it and send again, or go back to before it: ChatGPT's
+                  <!-- Change it and send again, or go back to before it: Codex's
                        pencil and Claude Code's checkpoint. -->
                   <button
                     class="nib-glyph tool"
@@ -164,8 +200,10 @@
                   </button>
                 {/if}
               </span>
-              <Branches {thread} turn={turn.id} panel={chat} />
-            </div>
+            {/if}
+          </div>
+          {#if thread && !turn.steered}
+            <Branches {thread} turn={turn.id} panel={chat} />
           {/if}
         </div>
       {:else}
@@ -178,6 +216,11 @@
         />
       {/if}
     {/each}
+
+    <!-- What the thread changed, under the turn that changed it, once it is done. -->
+    {#if thread && !running}
+      <ChangesCard {thread} />
+    {/if}
 
     {#if pending !== undefined}
       <div class="said is-pending"><p class="bubble">{pending}</p></div>
@@ -220,7 +263,7 @@
     flex-direction: column;
   }
 
-  /* The thread in a column: the panel's gutter at a side's width, and ChatGPT's measure
+  /* The thread in a column: the panel's gutter at a side's width, and a reading measure
      down the middle of a tab (`--column`, set by the panel). */
   .talk {
     flex: 1;
@@ -229,7 +272,7 @@
     overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-3);
     padding-block: var(--space-2) var(--space-4);
     padding-inline: max(
       calc(var(--space-1) + var(--row-pad)),
@@ -237,23 +280,42 @@
     );
   }
 
-  /* An empty thread: the greeting sits on the composer, which sits in the middle. */
-  :global(.ask.is-empty) .talk {
-    justify-content: flex-end;
-    padding-bottom: var(--space-5);
+  .home {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-inline: calc(var(--row-pad) * -1);
   }
 
-  .hello {
+  .heading {
     margin: 0;
-    color: var(--text-strong);
+    padding: 0 var(--row-pad) var(--space-1);
+    color: var(--muted);
     font-family: var(--font-ui);
-    font-size: calc(var(--text-base) * 1.45);
-    font-weight: var(--weight-strong);
-    letter-spacing: -0.01em;
-    text-align: center;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-row);
   }
 
-  /* The reader's message: a bubble at the end of the line, ChatGPT's, with what went
+  .recent {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .all .nib-row-label {
+    color: var(--muted);
+  }
+
+  /* A thread still at work: the list's ring (Threads.svelte). */
+  .dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+  }
+
+  /* The reader's message: a bubble at the end of the line, Codex's, with what went
      with it over it and its tools under it. */
   .said {
     display: flex;
@@ -264,8 +326,14 @@
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
+  .held,
+  .said > .bubble {
+    position: relative;
+    max-width: min(70%, 36rem);
+    min-width: 0;
+  }
+
   .bubble {
-    max-width: min(85%, 36rem);
     margin: 0;
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-lg);
@@ -309,16 +377,15 @@
     white-space: nowrap;
   }
 
-  .under {
-    display: flex;
-    align-items: center;
-    min-height: var(--row-height-sm);
-    margin-top: -2px;
-  }
-
-  /* The tools under a bubble while it is pointed at, in place, so nothing moves. */
+  /* The tools beside a message while it is pointed at, over the room before it, so
+     nothing moves. */
   .tools {
+    position: absolute;
+    top: 50%;
+    inset-inline-end: 100%;
     display: flex;
+    padding-inline-end: 2px;
+    translate: 0 -50%;
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
@@ -338,7 +405,7 @@
     stroke-width: 1.3;
   }
 
-  /* Back to the end: a round arrow floating over the composer, centred, ChatGPT's. */
+  /* Back to the end: a round arrow floating over the composer, centred. */
   .down {
     position: absolute;
     bottom: var(--space-2);

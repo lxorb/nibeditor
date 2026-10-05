@@ -1,6 +1,6 @@
-/** Dictation into the panel's field: ChatGPT's microphone, through nib's own road from
- *  sound to words (recorder/microphone.ts records, recorder/transcribe.ts hears it with
- *  the reader's provider or the account). Pressed once it listens, pressed again it
+/** Dictation into the panel's field, behind "+": nib's own road from sound to words
+ *  (recorder/microphone.ts records, recorder/transcribe.ts hears it with the reader's
+ *  provider or the account). Pressed once it listens, pressed again it
  *  stops, and the words land at the end of what is already in the field, for the reader
  *  to read over before sending: a dictated message is still a message somebody sends.
  *

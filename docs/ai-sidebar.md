@@ -319,7 +319,7 @@ names the provider's own road.
 | --- | --- | --- | --- | --- | --- | --- |
 | `/approve [task]` | `/ask` | CC default mode, Cx Auto, Copilot approvals | Approve mode, the first one: every tool the grant reaches, and each change waits in its row for **Approve**, **Deny** or **Always** (this tool, this thread); reads never ask; answers cite their passages (the Ask panel's reading) | full grant, nib asks at its verbs | full grant, nib asks at its verbs | full grant, nib asks at its verbs |
 | `/plan [task]` | - | CC, Cx, Cursor, Copilot | Plan mode: read-only tools; the plan is written as a draft note with a task per step, which you edit; **Build** runs it in Agent mode | read-only tools listed | Cx plan mode, read-only tools | read-only tools |
-| `/agent [task]` | - | Cursor Agent auto-run, CC bypassPermissions, Cx Full Access | Agent mode: every tool the grant reaches, nothing asked but paying; every change on the changes bar to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
+| `/agent [task]` | - | Cursor Agent auto-run, CC bypassPermissions, Cx Full Access | Agent mode: every tool the grant reaches, nothing asked but paying; every change on the changes card to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
 | `/agents [name]` | `/subagents` | CC `/agents`, Cx `/agent` (`/subagents`) | the thread's agent profile: a note with `agent:` front matter gives instructions, a model, an effort and tools; none is the default | profile's instructions as the fixed style slot + model + effort | the same, by `thread/start` | system message + model + effort |
 | `/permissions` | `/approvals`, `/allowed-tools` | CC (`/allowed-tools`), Cx `/permissions` | the sidebar agent's grant (4.4): scopes and sites; how much it asks is the mode | nib's grant | nib's grant | nib's grant |
 | `/goal [condition\|pause\|resume\|clear]` | `clear`: `stop`, `off`, `reset`, `none`, `cancel` | CC, Cx, Cursor | keeps working until the condition holds, an evaluator says it cannot, or the budget is spent (4.8) | CC's own `/goal` in the session | `thread/goal/set\|get\|clear` | nib's evaluator loop |
@@ -420,7 +420,7 @@ reads as Approve.
 - **The Activity panel stays its own tab**: it is about agents from outside (Claude Desktop,
   a script). The sidebar's agent appears there too, because it is a grant like theirs, so
   the one stop and the one log still cover everything.
-- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here, drawn as ChatGPT's small
+- **The quick question stays** on **Ctrl Ctrl**, as `/btw` here, drawn as a small
   composer. Under its answer, **Continue in the panel** carries the conversation on as a
   thread of its own (Raycast's and Arc's way from a quick answer to a conversation).
 - **Wider when it needs to be.** The right side's width is dragged as today; **Open in new
@@ -429,55 +429,76 @@ reads as Approve.
 - Fetched the first time it opens, like the Ask panel is (`apps/desktop/src/lib/surfaces.svelte.ts`):
   none of it is in the first paint, held by `apps/desktop/test/weight.test.ts`.
 
-**Laid out as ChatGPT is** (Emil, 2026-10-05: "copy it in terms of the structuring and
-layout, it's battle tested"), in nib's own tokens, type and motion, from ChatGPT's web and
-desktop apps as they stood in late 2026 ([gpt-notes], [gpt-keys], [gpt-branch]); what was
-taken:
+**Laid out as the Codex extension's sidebar is in VS Code** (Emil, 2026-10-05: "I wanted the
+VS Code Codex sidebar"), in nib's own tokens, type and motion, from the extension as it shipped
+in October 2026 (openai.chatgpt 26.5930, its docs and its issues: [codex-ide], [codex-cmds],
+[codex-settings], [codex-changelog]); what was taken:
 
-| ChatGPT | nib |
+| Codex | nib |
 | --- | --- |
-| the history in a left rail, by age | the threads: at a side, the side's Chats button puts them in the conversation's place (ChatGPT's narrow drawer); in a tab, a rail down the left, put away and back with the header's button. Today, Yesterday, Last 7 days, then a month at a time; Archived last; "..." on a row for Rename, Archive, Delete |
-| New chat, Search chats | the side's own New chat (hidden while the thread is empty) or the rail's first row; the list's search field |
-| projects | spaces: threads are per space already |
-| the greeting with the composer in the middle | the same, "What can I help with?"; the composer settles to the foot as the first message goes |
-| the composer: one rounded box, "+", the model in it, one round button | the same box: the chips, the field, then "+" (files, the three modes, web search, dictation, `@`, `/`), the mode's chip beside it, the model and effort, the context ring, and one round button that is the microphone on an empty field, the arrow with words in it and the stop while an answer arrives |
-| the reader's words in a bubble at the end of the line, the answer across the width | the same; under a bubble while it is pointed at, copy, edit and rewind, and the `< 1/2 >` arrows once it has been edited |
-| the action row under an answer | copy, insert at the caret, ask again (its menu asks another model), "..." (save as a note, branch from here) |
-| "Thought for 6s" | the folded thinking row |
-| sources and their side panel | cited notes as chips under the answer, each opening its note beside, which is nib's canvas |
-| code with its language and copy | the same bar over every fenced block |
-| the streaming dot, the arrow back down | the same |
-| temporary chat, share, thumbs, read aloud, memory | left out: threads stay on this device, there is nobody to send feedback to, and no voice to read with |
+| History, Settings and New chat in the view's title | the side's own row: New chat (hidden while the thread is empty) and Chats; Settings › AI stays where every setting is |
+| Back and the chat's title in a chat | the same at a side: Back to the home, the title's menu (rename, follow, branch, save, open in new tab, archive, delete) |
+| the home: "Chats", three recent chats, View all (N), no greeting | the same: the space's three latest threads with their age, a ring on one still at work, Show all and the count to the list |
+| the task history: search, newest first, how long ago | the list in the conversation's place (a tab's rail down its left): search, newest first with the age at the end, "..." for Rename, Archive, Delete, Archived last |
+| the composer at the foot from the start, a rounded card the conversation fades under | the same |
+| its row: "+", permissions, the context donut, model and effort, send / stop / queue | "+" (files, web search, dictation, `@`, `/`), the mode (its mark and name; the mark alone on a narrow side), the context ring, the model and effort, one round button: the arrow, the stop while an answer arrives with an empty field, dictation's stop while it listens |
+| Ask for approval / Approve for me / Full access | Approve / Agent / Plan (4.4), from the mode's own menu or Shift+Tab |
+| the IDE context toggle | the note in front and its selection as chips over the field (4.2) |
+| queued messages with Steer | the same (4.12) |
+| the prompt in a bubble at the end, Copy and Edit on hover | the same, with Rewind; the arrows between branches under it once edited |
+| the activity: one line a step, a bold verb and a muted detail; "Thought for 6s"; a command as `$ cmd` and its output | the same rows (4.3); reads in a row are one "Explored" step, Codex's CLI word |
+| "Worked for 1m 23s" over the final answer once a turn is done | the same: every step before the last words folds behind it, once a tool ran |
+| the end-of-turn card: N files changed, +N −M a file, Undo, Review | the changes card under the thread once the answer is in (4.5): N notes, +/−, Undo and Keep for all, each note with its own pair, pressed (or `/diff`) every change |
+| an approval as a card in the transcript: Allow once, Always allow, Deny | the same card in the call's step: the diff, Approve, Always, Deny |
+| actions revealed on hover | copy, insert at the caret, ask again (another model from its menu) and "..." under an answer pointed at |
+| Local / worktree / Cloud under the composer, cloud chats | not yet: the online terminal's hook, later |
 
 ```
- right side, 360 px, Agent mode, a turn running
+ right side, 360 px, Agent mode, a turn done
 ┌──────────────────────────────────────┐
 │ ✎ ◷   (the side's row of tabs)       │  New chat (hidden while empty), Chats
-│ Reading list cleanup ▾               │  title (menu: rename, follow, branch, save, open in new tab, archive, delete)
+│ ‹ Reading list cleanup ▾             │  Back to the home; the title's menu
 ├──────────────────────────────────────┤
 │        ┌───────────────────────────┐ │
-│        │ file the open tabs about  │ │  your message, a bubble at the end
+│ ⧉ ✎ ⟲  │ file the open tabs about  │ │  your message; copy · edit · rewind on hover
 │        │ herons under Reading/Birds│ │
 │        └───────────────────────────┘ │
-│                         ⧉ ✎ ⟲  ‹1/2› │  on hover: copy · edit · rewind; branches
-│  › Thought 6 s                       │  folded; Ctrl+O unfolds every one
-│  › Read 4 tabs                       │  tool rows: verb, object, nothing else
-│  › Edited Reading/Birds.md  +3 −0    │  click: the change, in the note
-│                                      │
+│  › Worked for 1m 23s ──────────────  │  the steps, folded once the answer is in
 │  Filed four pages. Two were the same │  the answer, across the width
 │  article; I kept the one with the    │
-│  pictures.¹ ●                        │  citations stay ¹ ² ³; the dot while it streams
+│  pictures.¹                          │  citations stay ¹ ² ³
 │  [Birds]                             │  the notes it cited
+│ ╭──────────────────────────────────╮ │
+│ │ › 2 notes  +31 −0     Undo  Keep │ │  the changes card: pressed, every change
+│ │   Birds    +27 −0                │ │  each note, its own pair on hover
+│ │   Herons    +4 −0                │ │
+│ ╰──────────────────────────────────╯ │
 │                 (↓)                  │  back to the end, when scrolled up
 ├──────────────────────────────────────┤
-│ ◐ 2 notes  +31 −0      Undo  Keep    │  changes bar: click opens /diff
 │ ↳ and tag them #birds         ✕  ⋮⋮  │  queued (Enter queues while running; drag to reorder)
 │ ╭──────────────────────────────────╮ │
 │ │ [Herons.md ✕] [selection ✕]      │ │  context chips: implicit ones dim until used
 │ │ Ask anything, @ to add, / for more│ │  the one placeholder line
-│ │ + (Agent)   Opus 5.5 · High ▾ ◔ ■│ │  + · mode · model and effort · ring · stop/send/mic
+│ │ + ⚡Agent ▾        ◔ Opus 5.5 · High ▾ ↑│  + · mode · ring · model and effort · send/stop
 │ ╰──────────────────────────────────╯ │
 └──────────────────────────────────────┘
+```
+
+```
+ the same turn while it runs, and opened
+│  › Thought 2s                        │  folded; Ctrl+O unfolds every one
+│  › Explored Birds, Herons, “heron”   │  reads in a row, one step
+│  I'll file them under Birds.         │  words between steps stay in their place
+│  ⌄ Ran  wc -w Birds.md               │  a command opens to its output
+│    ┌ $ wc -w Birds.md ──────────┐    │
+│    │ 412 Birds.md               │    │
+│    └────────────────────────────┘    │
+│  › Edited Birds  +27 −0              │  click: the change, in the note
+│  › Edited Herons                     │  Approve mode: the call asks
+│    ╭ Herons.md            +4 −0 ╮    │
+│    │  (the diff it would make)  │    │
+│    │ [Approve] Always  Deny     │    │
+│    ╰────────────────────────────╯    │
 ```
 
 ```
@@ -485,12 +506,12 @@ taken:
 ┌────────────────┬──────────────────────────────────────────────────────┐
 │ ✎ New chat     │ ▯ Reading list cleanup ▾                              │
 │ ⌕ Search chats │                                                       │
-│ Today          │              ┌──── 48rem, centred ────┐               │
-│ ▸ Reading list │              │ the conversation       │               │
-│   Herons       │              │                        │               │
-│ Yesterday      │              │ ╭ composer ──────────╮ │               │
-│   Kestrels     │              │ ╰────────────────────╯ │               │
-│ September      │              └────────────────────────┘               │
+│ Reading list 2m│              ┌──── 48rem, centred ────┐               │
+│ Herons      1h │              │ the conversation       │               │
+│ Kestrels    3d │              │                        │               │
+│                │              │ ╭ composer ──────────╮ │               │
+│                │              │ ╰────────────────────╯ │               │
+│                │              └────────────────────────┘               │
 └────────────────┴──────────────────────────────────────────────────────┘
 ```
 
@@ -559,12 +580,17 @@ draws for `@note` and it holds here.
 
 - **Words stream** as every provider streams them (Codex's app-server streams too, so the
   exec-mode "a message at a time" goes away).
-- **Thinking** is a folded row, "Thought for 6 s", which unfolds to the summary the provider
+- **Thinking** is a folded row, "Thought 6s", which unfolds to the summary the provider
   gives (Claude's thinking blocks, OpenAI's `reasoning.summary: "auto"`, CC's
   `thinking_delta`, Cx's reasoning items). Never a spinner of fake words.
 - **Tool calls** are rows of one verb and one object - Read, Searched, Opened, Clicked,
   Edited, Created, Ran - with the note's or page's name, and for an edit its +/− count. A
-  row opens to its arguments and result; an edit row opens the change in the note.
+  row opens to its arguments and result, a command's to `$ command` and its output as a
+  terminal shows it; an edit row opens the change in the note. Reads that follow one
+  another are one row, "Explored" and what was looked at (`sidebar/steps.ts`).
+- **Worked for**: once the answer is in, every step before its last words folds behind one
+  row, "Worked for 1m 23s", the way the Codex sidebar ends a turn; a turn where no tool ran
+  keeps its one thinking row instead. The time is the turn's own (`Turn.took`).
   A call that asks is its own row turned into the question: the change it would make,
   then **Approve**, **Deny** and **Always** (this tool, for the rest of the thread). The
   call waits there, and goes ahead or is told no once answered, here or in the Activity
@@ -595,7 +621,7 @@ and never kept, so the grant in Settings > Agents has no "Asks first" of its own
 | mode | tools listed | asks first |
 | --- | --- | --- |
 | Approve | everything the grant reaches | every change: the grant in `confirm` mode with every category on, so a write, a press in a page, a delete, a send, publishing, a setting and every terminal command waits for the reader; never a read |
-| Agent | everything the grant reaches | nothing but paying (`autonomous`): every change lands on the changes bar (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
+| Agent | everything the grant reaches | nothing but paying (`autonomous`): every change lands on the changes card (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
 | Plan | the read-only ones (`readOnlyHint` in `apps/desktop/src-tauri/src/mcp/tools.json`), plus `create_note` for the plan itself | as the grant says |
 
 What stays in Agent mode, and why: **paying** (a card field, a Buy button, a payment
@@ -641,9 +667,10 @@ step, undoable per agent mapped through the reader's later typing
 (`apps/desktop/src/lib/agents/docs/track.ts`, `docs/agent-native.md` 8.2 to 8.5). The
 sidebar adds a review layer on top, and nothing underneath changes.
 
-- **The changes bar** over the field: how many notes, +/−, **Undo** and **Keep**. Click it,
-  or `/diff`, for the list: each note with its changes, each change with **Keep** and
-  **Undo**, **J**/**K** to walk them; then each note the thread moved (old name → new) or
+- **The changes card** at the end of the thread once the answer is in (the Codex sidebar's
+  end-of-turn card): how many notes, +/−, **Undo** and **Keep**, and each note with its own
+  pair. Click its head, or `/diff`, for every change: each with **Keep** and **Undo**,
+  **J**/**K** to walk them; then each note the thread moved (old name → new) or
   sent to Recently deleted (struck through), with the same pair. Undo moves it back, links
   and all, or brings it back out of Recently deleted the way the tree's own Undo does
   (`review/files.ts`, `review/file-ops.ts`): what Agent mode does without asking is all on
@@ -679,7 +706,7 @@ sidebar adds a review layer on top, and nothing underneath changes.
 - **Personal instructions** are a field in Settings > AI, for every space.
 - **Remembering is an edit.** "Remember that I file papers under Reading" (or the model's
   own `remember` when memory is on) appends a line under `## Memory` in `AGENTS.md` as a
-  change on the changes bar. No hidden memory store, nothing on a server: what the agent
+  change on the changes card. No hidden memory store, nothing on a server: what the agent
   knows about the reader is a note the reader can read and delete.
 - Instructions count on the ring as their own band, so a long `AGENTS.md` is visible as the
   cost it is.
@@ -764,8 +791,9 @@ from there (and that the cache starts again where it does).
   space it was asked in. Kept on this device, under the app's data folder by the crate
   (`localStorage` is too small for a history), never synced, never in a note unless
   exported; deleted with `/delete`, and all of a space's with the space.
-- **The list** (⌕, or **Ctrl+Shift+A** twice): newest first, title, model mark, age; typing
-  searches titles and words; **Enter** opens, **Delete** archives.
+- **The list** (◷, or **Ctrl+Shift+A** twice): newest first, title and how long ago; typing
+  searches titles and words; **Enter** opens, **Delete** archives. The home of an empty
+  thread holds the latest three.
 - **Several at once**: a thread keeps running when another is opened; the list marks the
   running ones, and the panel's tab wears a dot while one works out of sight.
 - **Edit, branch, fork**: 4.5 and the commands in 3.1.
@@ -1040,9 +1068,10 @@ change a line once it lands, and none of it is in the first paint.
 
 | piece | who draws or calls it | with | does |
 | --- | --- | --- | --- |
-| `ChangesBar.svelte` | the panel, over the field | `thread` (the live thread the engine writes into, `chat.thread`), `panel` (the chat store) | the bar, the list of changes (`/diff`), the rewind sheet and Redo; nothing while nothing waits |
+| `ChangesCard.svelte` | the panel, at the end of the conversation once the answer is in | `thread` (the live thread the engine writes into, `chat.thread`) | the card and the list of changes (`/diff`); nothing while nothing waits |
+| `Rewinding.svelte` | the panel, over the field | `thread`, `panel` (the chat store) | the rewind sheet and Redo |
 | `Branches.svelte` | the panel, under each of the reader's messages | `thread`, `turn` (the message's id), `panel` | `‹ 2/3 ›` where the message was edited; nothing elsewhere |
-| `Approval.svelte` | the panel, in a tool row whose state is `asking` | `part`, `thread` | the question: the diff the write would make (`Asked.svelte`), **Approve**, **Deny**, **Always** |
+| `Approval.svelte` | the panel, in a tool row whose state is `asking` | `part`, `thread` | the question: the diff the write would make (`Asked.svelte`), **Approve**, **Always**, **Deny** |
 | `index.ts` `openRewind(thread, panel, turn?)` | Esc Esc on an empty field; the clock on a message's hover (with its `turn`) | | opens the rewind sheet in the bar |
 | `index.ts` `lastMessage(thread)` | Up on an empty field | | the message an edit changes |
 | `index.ts` `editMessage(thread, turn, text, panel)` | the pencil on a message, sent | | rewinds notes and conversation to before it, keeps what followed as a branch, sends `text` |
@@ -1069,10 +1098,10 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | --- | --- |
 | `ChatPanel.svelte` | The panel in Ask's slot: the title and its menu, the conversation or the list, the foot |
 | `chat.svelte.ts` | The state: the space's threads, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
-| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte` | Messages, answers with Ask's citations, folded thinking and tool rows, notices, and a question's row (`review/Approval.svelte`: Approve, Deny, Always) |
+| `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte`, `Explored.svelte`, `StepLine.svelte`, `steps.ts` | The home, messages, answers with Ask's citations, the steps (folded thinking, tool rows, reads as one Explored step) and their fold into Worked for, notices, and a question's row (`review/Approval.svelte`: Approve, Always, Deny) |
 | `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
 | `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
-| `Threads.svelte`, `ages.ts` | The thread list, by age: search, open, rename, archive, delete; a tab's rail |
+| `Threads.svelte` | The thread list, newest first with each one's age: search, open, rename, archive, delete; a tab's rail |
 | `gather.ts`, `citations.ts`, `mentions.ts` | What a message is sent with: chips read at the send, Ask's passages, what `@` means |
 | `setup.ts` | The engine's `Setup`: providers, `AGENTS.md` and `CLAUDE.md`, Ask's citing rule |
 | `seams.ts` | The `/` menu: lane 5's rows asked as it opens, matched as the reader types |
@@ -1081,8 +1110,8 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 **Where the other lanes meet it.** Claude Code and Codex need nothing of the panel:
 `engineFor` (6.4) answers them with its one setup.
 
-- **Lane 3**, met as 6.6 says: `ChangesBar` over the field with the live thread and the
-  panel, `Branches` under each of the reader's messages, `Asked` in a call that asked;
+- **Lane 3**, met as 6.6 says: `ChangesCard` at the end of the conversation with the live
+  thread, `Rewinding` over the field with it and the panel, `Branches` under each of the reader's messages, `Asked` in a call that asked;
   Esc Esc on an empty field and the clock on a message open the rewind sheet, Up on an
   empty field and the pencil on a message put it in the field to send again
   (`editMessage`), and Follow is a row of the thread's menu.
@@ -1091,11 +1120,14 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
   `ensure`, `text` and `approve` (not `voice`, below), `instructionsFor(thread)` in the
   setup, the goal chip from `thread.goal` and the running dot from `tasks.of(thread.id)`.
 
-Added with ChatGPT's layout (4.1): dictation (`dictate.svelte.ts`, the recorder's road into
-the field, behind the round button and `/voice`), the panel as a tab of its own (the `chat`
-tab kind; `host.ts` says which of the two places is in use, `reveal.ts` which one to bring
-forward), the threads by age (`ages.ts`), and Continue in the panel from the quick question
-(`continueFrom`).
+Added with the ChatGPT layout and kept in the Codex one (4.1): dictation
+(`dictate.svelte.ts`, the recorder's road into the field, behind "+" and `/voice`), the
+panel as a tab of its own (the `chat` tab kind; `host.ts` says which of the two places is
+in use, `reveal.ts` which one to bring forward), and Continue in the panel from the quick
+question (`continueFrom`). Added with the Codex layout: the steps and their fold
+(`steps.ts`, `StepLine.svelte`, `Explored.svelte`), the changes card at the end of the
+thread (`review/ChangesCard.svelte`, the rewind and Redo over the field in
+`review/Rewinding.svelte`), and the home.
 
 The drive `apps/desktop/test/e2e/ai-sidebar.py` walks all of it against a fake provider,
 in the light and the dark, and then the whole flow in one thread: Ask, an agent's edits
@@ -1106,9 +1138,10 @@ kept and undone, a rewind, a message edited and sent again.
 ## Sources
 
 [cc-commands]: https://code.claude.com/docs/en/commands
-[gpt-notes]: https://help.openai.com/en/articles/6825453-chatgpt-release-notes
-[gpt-keys]: https://www.coursera.org/articles/chatgpt-keyboard-shortcuts
-[gpt-branch]: https://www.memorylake.ai/en/blogs/chatgpt-branch-new-chat
+[codex-ide]: https://learn.chatgpt.com/docs/codex/ide
+[codex-cmds]: https://learn.chatgpt.com/docs/developer-commands?surface=ide
+[codex-settings]: https://learn.chatgpt.com/docs/developer-settings?surface=ide
+[codex-changelog]: https://learn.chatgpt.com/docs/changelog
 [cc-vscode]: https://code.claude.com/docs/en/vs-code
 [cc-model]: https://code.claude.com/docs/en/model-config
 [cc-checkpoint]: https://code.claude.com/docs/en/checkpointing

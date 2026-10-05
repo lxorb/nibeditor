@@ -553,6 +553,8 @@ class Chat implements Panel {
       },
       stopper.signal,
     )
+    // How long the answer worked, for the row its steps fold into (steps.ts).
+    if (ended.turn) ended.turn.took = Date.now() - ended.turn.at
     // A send refused before any turn (no provider, no engine) has nowhere to say so but
     // under the thread.
     if (ended.stop === 'error' && !ended.turn && ended.error) throw new Error(ended.error)

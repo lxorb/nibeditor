@@ -1,10 +1,10 @@
 <script lang="ts">
-  /** The space's threads (docs/ai-sidebar.md 4.11), as ChatGPT's history: New chat and
-   *  the search at the top, then the threads by age - Today, Yesterday, the last seven
-   *  days, a month at a time - each its title alone, a ring on the ones still answering
-   *  or with work running out of sight (a goal, a loop, a helper), and a "..." on the
-   *  one pointed at for Rename, Archive and Delete. The archived ones are the list's
-   *  last group, as Claude Code keeps them.
+  /** The space's threads (docs/ai-sidebar.md 4.11), as Codex's task history: the search
+   *  at the top (and New chat over it in a tab's rail), then the threads newest first,
+   *  each its title and how long ago it moved, a ring on the ones still answering or
+   *  with work running out of sight (a goal, a loop, a helper), and a "..." on the one
+   *  pointed at for Rename, Archive and Delete. The archived ones are the list's last
+   *  group, as Claude Code keeps them.
    *
    *  In the panel it takes the conversation's place (the list glyph, or Ctrl+Shift+A
    *  twice); in a tab of its own it is the rail down the left, always there.
@@ -13,6 +13,7 @@
    *  an archived one comes back with Delete again), Shift+Delete deletes for good,
    *  Escape goes back to the open thread. */
   import { untrack } from 'svelte'
+  import { agoShort } from '../../ago'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { i18n, t } from '../../i18n.svelte'
@@ -22,7 +23,6 @@
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
   import { tasks } from '../commands/tasks.svelte'
-  import { type Age, ageKey, ageOf } from './ages'
   import { chat } from './chat.svelte'
 
   const { rail = false }: { rail?: boolean } = $props()
@@ -41,35 +41,8 @@
     return [...found.filter((one) => !one.archived), ...found.filter((one) => one.archived)]
   })
 
-  /** The heading over each row, where it starts a group: its age's, or Archived. */
-  const headings = $derived.by(() => {
-    const now = new Date()
-    let before = ''
-    return rows.map((one) => {
-      const age = ageOf(one.updated, now)
-      const group = one.archived ? 'archived' : ageKey(age)
-      const starts = group !== before
-      before = group
-      if (!starts) return null
-      return one.archived ? t('Archived') : ageWord(age, now)
-    })
-  })
-
-  function ageWord(age: Age, now: Date): string {
-    switch (age.kind) {
-      case 'today':
-        return t('Today')
-      case 'yesterday':
-        return t('Yesterday')
-      case 'week':
-        return t('Last 7 days')
-      case 'month':
-        return i18n.when(new Date(age.year, age.month, 1), {
-          month: 'long',
-          ...(age.year === now.getFullYear() ? {} : { year: 'numeric' }),
-        })
-    }
-  }
+  /** The one heading in the list, over its first archived thread. */
+  const archivedFrom = $derived(rows.findIndex((one) => one.archived))
 
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
@@ -116,7 +89,7 @@
 
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
-    <!-- New chat heads a tab's rail, as it heads ChatGPT's; at a side it is already in
+    <!-- New chat heads a tab's rail, as New chat heads Codex's header; at a side it is already in
          the side's own row of tabs. -->
     {#if rail}
       <button
@@ -149,10 +122,8 @@
 
   <ul class="list" role="listbox" use:scrollbar>
     {#each rows as one, index (one.id)}
-      {#if headings[index]}
-        <li class="group" class:archived={one.archived} role="presentation">
-          {headings[index]}
-        </li>
+      {#if index === archivedFrom}
+        <li class="group archived" role="presentation">{t('Archived')}</li>
       {/if}
       <li class="item" role="presentation">
         <button
@@ -168,7 +139,7 @@
         >
           <span class="title">{one.title || t('Untitled')}</span>
           {#if chat.running.includes(one.id) || tasks.of(one.id).length}<span class="dot"
-            ></span>{/if}
+            ></span>{:else}<span class="when">{agoShort(one.updated, i18n.language)}</span>{/if}
         </button>
         <button
           class="nib-glyph more"
@@ -207,7 +178,7 @@
   }
 
   /* New chat, a row of the list's own shape, and the search under it: the first things
-     in it, as ChatGPT's rail starts. */
+     in it, as a rail of threads starts. */
   .new {
     display: flex;
     align-items: center;
@@ -290,7 +261,7 @@
     color: var(--muted);
   }
 
-  /* The "..." over the end of the row pointed at, ChatGPT's: the row's menu without a
+  /* The "..." over the end of the row pointed at, Codex's: the row's menu without a
      column of glyphs down a list of titles. */
   .more {
     position: absolute;
@@ -315,6 +286,19 @@
 
   .item:hover .row {
     padding-inline-end: calc(var(--row-height-sm) + 4px);
+  }
+
+  /* How long ago, at the end of the row where the "..." comes on the one pointed at. */
+  .when {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .item:hover .when {
+    opacity: 0;
   }
 
   /* A ring rather than a dot: a dot in the accent is a tab saving, and this is a thread

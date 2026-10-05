@@ -1,10 +1,11 @@
 <script lang="ts">
-  /** The foot of the panel (docs/ai-sidebar.md 4.1), ChatGPT's composer: what is queued
-   *  and the changes bar over it, then one rounded box holding the chips that go with
-   *  the next message, the field, and a row under the words - "+" (files, the modes,
-   *  web search, dictation, `@` and `/`) with the mode beside it, then the model and its
-   *  effort, the context ring, and one round button that is the microphone on an empty
-   *  field, the arrow with words in it, and the stop while an answer arrives.
+  /** The foot of the panel (docs/ai-sidebar.md 4.1), Codex's composer: what is queued
+   *  and the rewind over it, then one rounded box holding the chips that go with the
+   *  next message (the note in front and the selection, Codex's IDE context), the
+   *  field, and a row under the words - "+" (files, web search, dictation, `@` and `/`)
+   *  and the mode at its start, Codex's permissions; the context ring, the model and its
+   *  effort, and one round button at its end, the arrow, and the stop while an answer
+   *  arrives.
    *
    *  Keyboard first. Enter sends, and queues behind a running answer; Ctrl+Enter sends
    *  into the running answer; Escape stops it; Shift+Tab steps the mode, Alt+P opens the
@@ -16,7 +17,7 @@
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
   import { links } from '../../link-index.svelte'
-  import { DIVIDER, menu, type MenuEntry } from '../../menu.svelte'
+  import { DIVIDER, menu } from '../../menu.svelte'
   import { dur } from '../../motion'
   import { shortcuts } from '../../shortcuts.svelte'
   import { withinSpace } from '../../space-paths'
@@ -29,13 +30,14 @@
   import type { Front } from './gather'
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
+  import ModeMark from './ModeMark.svelte'
   import { type Mention, mentionAt, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
   import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
   import type { PanelCommand } from '../commands/types'
-  import ChangesBar from '../review/ChangesBar.svelte'
+  import Rewinding from '../review/Rewinding.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
   import { MODES, FIRST_MODE, modeWord } from '../modes'
@@ -388,18 +390,18 @@
 
   // ── Mode ──────────────────────────────────────────────
 
-  /** The modes as rows, the one in force ticked. The key that steps them is the chip's
-   *  tooltip rather than a hint on every row, where it would say the same thing thrice. */
-  function modeRows(): MenuEntry[] {
-    return MODES.map((mode) => ({
-      label: t(modeWord(mode)),
-      checked: head?.mode === mode,
-      run: () => chat.setMode(mode),
-    }))
-  }
-
+  /** The modes as rows, the one in force ticked, Codex's approval menu. The key that
+   *  steps them is the button's tooltip rather than a hint on every row, where it would
+   *  say the same thing thrice. */
   function modeMenu(event: MouseEvent) {
-    menu.show(event, modeRows())
+    menu.show(
+      event,
+      MODES.map((mode) => ({
+        label: t(modeWord(mode)),
+        checked: head?.mode === mode,
+        run: () => chat.setMode(mode),
+      })),
+    )
   }
 
   // ── "+" ───────────────────────────────────────────────
@@ -411,13 +413,11 @@
     else addChip({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
   }
 
-  /** ChatGPT's "+": files first, then the modes (its tools), then what the field's own
+  /** Codex's "+": files first, then what else can go along, then what the field's own
    *  keys do, for whoever has not met `@` and `/` yet. */
   function plusMenu(event: MouseEvent) {
     menu.show(event, [
       { label: t('Add photos and files'), asks: true, run: () => picker?.click() },
-      DIVIDER,
-      ...modeRows(),
       DIVIDER,
       { label: t('Web search'), checked: searching, run: toggleWeb },
       ...(canTranscribe() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
@@ -444,13 +444,11 @@
 
   // ── The round button ──────────────────────────────────
 
-  /** What the one round button is now: the stop while an answer arrives and the field is
-   *  empty, the microphone while it listens or an empty field could be dictated into,
-   *  and the arrow otherwise. */
-  const button = $derived.by((): 'stop' | 'listening' | 'hearing' | 'mic' | 'send' => {
+  /** What the one round button is now, Codex's: the stop while an answer arrives and
+   *  the field is empty, dictation's stop while it listens, and the arrow otherwise. */
+  const button = $derived.by((): 'stop' | 'listening' | 'hearing' | 'send' => {
     if (busy && !chat.text.trim()) return 'stop'
     if (dictation.state !== 'idle') return dictation.state
-    if (!chat.text.trim() && !chat.chips.length && canTranscribe()) return 'mic'
     return 'send'
   })
 
@@ -499,7 +497,7 @@
   <Queue />
 
   {#if thread}
-    <ChangesBar {thread} panel={chat} />
+    <Rewinding {thread} panel={chat} />
   {/if}
 
   {#if chat.editing}
@@ -556,7 +554,7 @@
         onlight={(index: number) => (lit = index)}
       />
     {/if}
-    <!-- One box, ChatGPT's: a press anywhere in it that is not a control is a press in
+    <!-- One box, Codex's: a press anywhere in it that is not a control is a press in
          the field. -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
@@ -648,16 +646,21 @@
         >
           <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.5v8M2.5 6.5h8" /></svg>
         </button>
+        <!-- How much the agent may do without asking, Codex's permissions beside "+". -->
         <button
           class="mode"
           title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
-          disabled={!head}>{t(modeWord(head?.mode ?? FIRST_MODE))}</button
+          disabled={!head}
         >
+          <ModeMark mode={head?.mode ?? FIRST_MODE} />
+          <span>{t(modeWord(head?.mode ?? FIRST_MODE))}</span>
+          <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+        </button>
         <span class="gap"></span>
-        <ModelPicker />
         <Ring {next} />
+        <ModelPicker />
         {#if button === 'stop'}
           <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => chat.stop()}>
             <svg viewBox="0 0 13 13"
@@ -675,29 +678,21 @@
             <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
           </button>
         {:else}
-          <!-- Dictation: the microphone, its stop while it listens, and a breath while
-               what was said is turned into words. -->
+          <!-- Dictating: its stop while it listens, and a breath while what was said is
+               turned into words. -->
           <button
             class="go"
             class:listening={button === 'listening'}
             class:hearing={button === 'hearing'}
-            title={button === 'mic' ? t('Dictate') : t('Listening')}
-            aria-label={button === 'mic' ? t('Dictate') : t('Listening')}
-            aria-pressed={button !== 'mic'}
+            title={t('Listening')}
+            aria-label={t('Listening')}
+            aria-pressed="true"
             disabled={button === 'hearing'}
             onclick={() => void dictation.toggle()}
           >
-            {#if button === 'listening'}
-              <svg viewBox="0 0 13 13"
-                ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
-              >
-            {:else}
-              <svg viewBox="0 0 13 13"
-                ><path
-                  d="M6.5 1.8a1.7 1.7 0 0 1 1.7 1.7v2.9a1.7 1.7 0 0 1-3.4 0V3.5a1.7 1.7 0 0 1 1.7-1.7zM3.6 6.2a2.9 2.9 0 0 0 5.8 0M6.5 9.2v2"
-                /></svg
-              >
-            {/if}
+            <svg viewBox="0 0 13 13"
+              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+            >
           </button>
         {/if}
       </div>
@@ -707,7 +702,7 @@
 </div>
 
 <style>
-  /* The composer's column: the panel's width at a side, ChatGPT's measure down the
+  /* The composer's column: the panel's width at a side, a reading measure down the
      middle of a tab (`--column`, set by the panel). */
   .foot {
     position: relative;
@@ -719,6 +714,18 @@
     max-width: calc(var(--column, 100%) + 2 * var(--space-4));
     margin-inline: auto;
     padding: var(--space-1) var(--space-1) var(--space-2);
+  }
+
+  /* The conversation fades out under the top of the foot, Codex's sticky composer,
+     rather than being cut off at a line. */
+  .foot::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    height: var(--space-4);
+    background: linear-gradient(to top, var(--ground), transparent);
+    pointer-events: none;
   }
 
   :global(.ask.wide) .foot {
@@ -812,7 +819,7 @@
     position: relative;
   }
 
-  /* The box, ChatGPT's: rounded, the chips, the words and the controls all inside it.
+  /* The box, Codex's: rounded, the chips, the words and the controls all inside it.
      A field (`.nib-field`), so it answers the keyboard as every box in the app does. */
   .composer {
     flex-direction: column;
@@ -932,6 +939,7 @@
   }
 
   .controls {
+    container-type: inline-size;
     display: flex;
     align-items: center;
     gap: 2px;
@@ -952,29 +960,50 @@
     stroke-width: 1.4;
   }
 
-  /* The mode beside "+", where ChatGPT puts the tool it is using: always said, since a
-     mode is never none and one of them acts on its own. */
+  /* The mode, always said, since a mode is never none and one of them acts on its own:
+     its mark, its name and the caret of a menu, as the model is said beside it. */
   .mode {
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     height: var(--row-height-sm);
-    padding: 0 var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    padding: 0 4px 0 var(--space-1);
+    border: 0;
+    border-radius: var(--radius-sm);
     background: none;
-    color: var(--text);
+    color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
-    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
+      color var(--dur-fast) var(--ease-out);
   }
 
   @media (hover: hover) {
     .mode:hover:not(:disabled) {
       background: var(--surface-hover);
+      color: var(--text-strong);
     }
+  }
+
+  /* A narrow side keeps the model's name whole and says the mode by its mark alone,
+     its name a hover away (the tooltip and the menu). */
+  @container (max-width: 17rem) {
+    .mode span {
+      display: none;
+    }
+  }
+
+  .mode .caret {
+    width: 11px;
+    height: 11px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* The one round button: filled while it can do something, its glyph changing with

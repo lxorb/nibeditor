@@ -41,3 +41,21 @@ export function relativeStep(elapsed: number): Step {
 
   return { value: -Math.round(elapsed / DAY), unit: 'day' }
 }
+
+const formats = new Map<string, Intl.RelativeTimeFormat>()
+
+/** How long ago, as short as the language says it ("3h ago", "vor 3 Std."): a row's
+ *  age at the end of a list of threads. One formatter per language, made once. */
+export function agoShort(at: number, language: string, now = Date.now()): string {
+  let format = formats.get(language)
+  if (!format) {
+    try {
+      format = new Intl.RelativeTimeFormat(language, { numeric: 'auto', style: 'narrow' })
+    } catch {
+      format = new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'narrow' })
+    }
+    formats.set(language, format)
+  }
+  const step = relativeStep(now - at)
+  return format.format(step.value, step.unit)
+}

@@ -24,14 +24,17 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
   on the empty field sends an edited message again, which leaves arrows between the
   two branches.
 
-And ChatGPT's shape, which the panel copies (docs/ai-sidebar.md 4.1), in the light and
-the dark: an empty thread is the greeting with the composer in the middle, which settles
-to the foot as the first message goes; the reader's words are a bubble at the end of the
-line and the answer runs the width; a code block wears its language and a copy button;
-"+" holds the modes; Ask again asks another model; the round arrow goes back down a long
-thread; "Open in new tab" puts the conversation in a pane with the threads down its left
-by age; and the quick question is the small composer, whose Continue carries it on in
-the panel.
+And the Codex sidebar's shape, which the panel copies (docs/ai-sidebar.md 4.1), in the
+light and the dark: no greeting, the composer at the foot from the start with "+", the
+mode, the ring, the model and the round button in its row; the reader's words a bubble
+at the end of the line and the answer across the width; Back to the home and its latest
+chats; "+" holds what goes along and the modes their own menu; Ask again asks another
+model; a run's steps fold into "Worked for" over the answer once it is in, a command
+opens to its output, and what the run changed is a card under it, drawn only once it is
+done; a write that asks is a card with Approve, Always and Deny; the round arrow goes
+back down a long thread; "Open in new tab" puts the conversation in a pane with the
+threads down its left, and a new thread there is the home; and the quick question's
+Continue carries it on in the panel.
 
 A fake OpenAI-compatible server answers, a word at a time, with reasoning before the
 words and its counts at the end. No key, no network, no bill.
@@ -215,7 +218,7 @@ def drive(browser: Browser, scheme: str) -> None:
     where = page.evaluate(WHERE)
     if where != {"panel": "ask", "tag": "textarea"}:
         wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {where}")
-    mode = page.locator(".ask .controls .mode").inner_text()
+    mode = page.locator(".ask .controls .mode").text_content()
     if mode.strip() != "Approve":
         wrong(f"a new thread does not start in Approve: {mode!r}")
     shot(page, f"{tag}01-empty")
@@ -340,7 +343,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
-    if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
+    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
         wrong("Shift+Tab did not step Approve to Agent")
     page.keyboard.press("Shift+Tab")
     page.keyboard.press("Shift+Tab")
@@ -458,7 +461,7 @@ def flow(browser: Browser) -> None:
     # Agent mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
-    if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
+    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
         wrong("Shift+Tab did not reach Agent")
     Model.words = [f"done{one} " for one in range(25)]
     Model.pause = 0.08
@@ -544,29 +547,73 @@ def menu_row(page: Page, words: str):
     return page.locator(".menu [role=menuitem]").filter(has_text=words).first
 
 
+# A run as an agent leaves one, written into the open thread's last answer: thinking,
+# two reads, words between, a command with its output and an edit, and how long it all
+# took. The fake provider streams words only, so the steps are put in by hand.
+STEPS = """
+async () => {
+  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const thread = chat.thread
+  const turn = [...thread.turns].reverse().find((one) => one.role === 'model')
+  const ok = (text) => ({ text, images: [], error: false })
+  turn.parts = [
+    { kind: 'thinking', text: 'The note names two verbs.', ms: 2400 },
+    { kind: 'tool', id: 'r1', verb: 'read_note', args: { path: 'Herons.md' }, state: 'ok', result: ok('# Herons') },
+    { kind: 'tool', id: 'r2', verb: 'search_notes', args: { query: 'heron' }, state: 'ok', result: ok('Herons.md') },
+    { kind: 'text', text: 'Both verbs, then.' },
+    { kind: 'tool', id: 'c1', verb: 'run_command', args: { command: 'wc -w Herons.md' }, state: 'ok', result: ok('19 Herons.md') },
+    { kind: 'tool', id: 'e1', verb: 'edit_note', args: { path: 'Herons.md' }, state: 'ok', change: { path: 'Herons.md', added: 2, removed: 2 } },
+    ...turn.parts,
+  ]
+  turn.took = 83000
+  chat.touched(thread)
+}
+"""
+
+# A write that asks first, as Approve leaves one waiting in the thread.
+ASKING = """
+async () => {
+  const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
+  const thread = chat.thread
+  thread.turns.push({ id: 'you-ask', role: 'you', at: Date.now(), draft: { text: 'Shout the first words too', attachments: [] }, parts: [] })
+  thread.turns.push({ id: 'model-ask', role: 'model', at: Date.now(), parts: [
+    { kind: 'tool', id: 'a1', verb: 'edit_note', args: { path: 'Herons.md', edits: [{ at: { quote: 'A heron' }, replace: 'A HERON' }] }, state: 'asking', result: { text: '', images: [], error: false, approval: 'q1' } },
+  ] })
+  chat.touched(thread)
+}
+"""
+
+
 def shape(browser: Browser, scheme: str) -> None:
-    """ChatGPT's layout, at the side's width and a tab's, with the shots to hold it to."""
+    """The Codex extension's sidebar, at the side's width and a tab's, with the shots to
+    hold it to (docs/ai-sidebar.md 4.1)."""
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     DRIVE.open(page)
     DRIVE.seed(page, HERONS, HOVERING)
-    page.evaluate(SETUP, MODEL_ORIGIN)
+    provider = page.evaluate(SETUP, MODEL_ORIGIN)
     DRIVE.open_note(page, "Herons")
     page.evaluate("() => window.nib.focus()")
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
     tag = f"shape/{scheme}/"
 
-    # Empty: the greeting, and the composer in the middle of the panel.
-    waited(page, "document.querySelector('.ask .hello')", "the greeting")
+    # Empty: no greeting, and the composer at the foot from the start, the mode at the
+    # start of its row as Codex's permissions are.
     page.wait_for_timeout(400)
     panel = page.evaluate(BOX, ".ask")
     foot = page.evaluate(BOX, ".ask .composer")
-    middle = (panel["top"] + panel["bottom"]) / 2
-    if not foot or not (panel["top"] + 80 < foot["top"] < middle + 80):
-        wrong(f"an empty thread's composer is not in the middle: {foot} in {panel}")
+    if not foot or foot["bottom"] < panel["bottom"] - 60:
+        wrong(f"an empty thread's composer is not at the foot: {foot} in {panel}")
+    if page.locator(".ask .talk h2").count():
+        wrong("an empty thread with no chats still greets")
+    plus = page.evaluate(BOX, ".ask .controls .plus")
+    mode = page.evaluate(BOX, ".ask .controls .mode")
+    model = page.evaluate(BOX, ".ask .controls .picker")
+    if not (plus and mode and model and plus["right"] <= mode["left"] < model["left"]):
+        wrong(f"the composer's row is not +, the mode, then the model: {plus} {mode} {model}")
     shot(page, f"{tag}01-empty-side")
 
-    # The first message: the composer settles to the foot, the words a bubble at the end.
+    # The first message: the words a bubble at the end, the answer across the width.
     Model.thoughts = ["Reading ", "the note."]
     Model.words = ["A heron ", "waits.\n\n", "```py\n", "print('strike')\n", "```\n"]
     Model.pause = 0.02
@@ -574,35 +621,46 @@ def shape(browser: Browser, scheme: str) -> None:
     idle(page)
     page.wait_for_timeout(500)
     foot = page.evaluate(BOX, ".ask .composer")
-    if page.locator(".ask .hello").count():
-        wrong("the greeting stayed after the first message")
-    if not foot or foot["bottom"] < panel["bottom"] - 40:
-        wrong(f"the composer did not settle to the foot: {foot} in {panel}")
+    if not foot or foot["bottom"] < panel["bottom"] - 60:
+        wrong(f"the composer moved from the foot: {foot} in {panel}")
     bubble = page.evaluate(BOX, ".ask .said .bubble")
     if not bubble or bubble["right"] < panel["right"] - 40 or bubble["left"] < panel["left"] + 30:
-        wrong(f"the message is not a bubble at the end of the line: {bubble} in {panel}")
+        wrong(f"the message is not at the end of the line: {bubble} in {panel}")
     language = page.locator(".ask .answer .code-bar span").first.inner_text()
     if language != "py" or page.locator(".ask .answer .code-copy").count() != 1:
         wrong(f"the code block wears no bar with its language and copy: {language!r}")
-    if page.locator(".ask .answer.last .acts button").count() < 3:
-        wrong("the last answer has no row of actions under it")
     shot(page, f"{tag}02-answered-side")
 
-    # "+" holds the modes; one picked is the chip beside it.
+    # Back: Codex's home, the latest chats, and the thread again from there.
+    page.locator('.ask .top button[aria-label="Back"]').click()
+    waited(page, "document.querySelector('.ask .home .recent')", "the home with its chats")
+    recent = page.locator(".ask .home .recent .nib-row-label").all_inner_texts()
+    if recent[:1] != ["What does a heron do?"]:
+        wrong(f"the home does not list the latest chat: {recent}")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}02b-home-side")
+    page.locator(".ask .home .recent .nib-row", has_text="What does a heron do?").click()
+    waited(page, "document.querySelector('.ask .said')", "the chat open again")
+
+    # "+" holds what goes along; the modes have their own menu beside it.
     page.locator(".ask .plus").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the + menu")
     rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
-    modes = ("Approve", "Agent", "Plan")
-    for row in ("Add photos and files", *modes, "Web search", "Mention", "Commands"):
+    for row in ("Add photos and files", "Web search", "Mention", "Commands"):
         if row not in rows:
             wrong(f"the + menu has no {row!r}: {rows}")
-    shot(page, f"{tag}03-plus")
+    if any(mode in rows for mode in ("Approve", "Agent", "Plan")):
+        wrong(f"the + menu still holds the modes: {rows}")
+    page.keyboard.press("Escape")
+    page.locator(".ask .controls .mode").click()
+    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length === 3", "the modes")
+    shot(page, f"{tag}03-modes")
     menu_row(page, "Plan").click()
     page.wait_for_timeout(200)
-    if page.locator(".ask .controls .mode").inner_text().strip() != "Plan":
-        wrong("a mode picked under + is not the chip beside it")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Plan":
+        wrong("a mode picked from its menu is not the one it says")
     page.locator(".ask .controls .mode").click()
-    menu_row(page, "Approve").click()
+    menu_row(page, "Agent").click()
 
     # Ask again, with another model from its menu.
     Model.thoughts = []
@@ -614,47 +672,91 @@ def shape(browser: Browser, scheme: str) -> None:
     if Model.seen[-1].get("model") != "fake-large":
         wrong(f"Ask again did not ask the model picked: {Model.seen[-1].get('model')}")
 
-    # A long thread: scrolled up, the round arrow goes back down.
-    Model.words = [f"line {one}\n\n" for one in range(40)]
-    Model.pause = 0
-    type_and_send(page, "Count to forty")
+    # A run: its steps as they come, then folded into "Worked for" over the answer, and
+    # what it changed as a card under it.
+    Model.words = [f"Shouted {one} " for one in range(4)] + ["both verbs."]
+    Model.pause = 0.12
+    type_and_send(page, "Shout the heron's verbs")
+    running(page)
+    page.evaluate(EDIT, [provider, "strikes", "STRIKES"])
+    page.evaluate(EDIT, [provider, "stands still", "STANDS STILL"])
+    page.wait_for_timeout(250)
+    if page.locator(".ask .card").count():
+        wrong("the changes card is drawn while the answer still runs")
     idle(page)
+    page.evaluate(STEPS)
+    waited(page, "document.querySelector('.ask .answer.last .worked')", "Worked for")
+    worked = page.locator(".ask .answer.last .worked").inner_text()
+    if "Worked for 1m 23s" not in worked:
+        wrong(f"the steps did not fold into Worked for: {worked!r}")
+    if page.locator(".ask .answer.last .work").count():
+        wrong("the steps are open once the answer is in")
+    card = page.locator(".ask .card .bar .what").inner_text()
+    if "1 note" not in card or "+2" not in card:
+        wrong(f"the changes card does not count the note: {card!r}")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}04-worked-side")
+    page.locator(".ask .answer.last .worked .line").click()
+    waited(page, "document.querySelector('.ask .answer.last .work')", "the steps")
+    verbs = page.locator(".ask .answer.last .work .verb").all_inner_texts()
+    if verbs != ["Thought", "Explored", "Ran", "Edited"]:
+        wrong(f"the steps are not Codex's rows: {verbs}")
+    page.locator(".ask .answer.last .work .line", has_text="Ran").click()
+    waited(page, "document.querySelector('.ask .work .detail.said')", "the command's output")
+    said = page.locator(".ask .work .detail.said").inner_text()
+    if "$ wc -w Herons.md" not in said or "19 Herons.md" not in said:
+        wrong(f"a command does not open to its output: {said!r}")
+    page.locator(".ask .card .bar .what").click()
+    waited(page, "document.querySelectorAll('.ask .card .changes .change').length === 2", "the changes listed")
+    page.wait_for_timeout(800)
+    shot(page, f"{tag}05-steps-and-changes-side")
+    page.locator(".ask .card .bar .nib-chip:not(.is-quiet)").click()
+    waited(page, "!document.querySelector('.ask .card')", "the card gone once kept")
+
+    # A write that asks: a card in its step, with the change and the three answers.
+    page.evaluate(ASKING)
+    waited(page, "document.querySelector('.ask .approval')", "the question")
+    answers = page.locator(".ask .approval .answers button").all_inner_texts()
+    if answers != ["Approve", "Always", "Deny"]:
+        wrong(f"the question does not offer Codex's answers: {answers}")
+    page.wait_for_timeout(500)
+    shot(page, f"{tag}06-approval-side")
+
+    # A long thread: scrolled up, the round arrow goes back down.
     page.evaluate(
         "() => { const t = document.querySelector('.ask .talk'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')) }"
     )
     waited(page, "document.querySelector('.ask .down')", "the arrow back down")
-    shot(page, f"{tag}04-scrolled-side")
     page.locator(".ask .down").click()
     waited(page, "!document.querySelector('.ask .down')", "the end again")
 
-    # Open in new tab: the conversation in a pane, the threads down its left by age.
+    # Open in new tab: the conversation in a pane, the threads down its left.
     page.locator(".ask .title").click()
     menu_row(page, "Open in new tab").click()
     waited(page, "document.querySelector('.ask.wide .shelf .threads')", "the conversation in a tab")
     page.wait_for_timeout(500)
     if page.evaluate("() => window.nibApp.workspace.openOn('right')") == "ask":
         wrong("the side stayed open beside the tab")
-    groups = page.locator(".ask.wide .threads .group").all_inner_texts()
-    if not groups or groups[0].strip() != "Today":
-        wrong(f"the rail does not file the threads by age: {groups}")
     column = page.evaluate(BOX, ".ask.wide .composer")
     if not column or (column["right"] - column["left"]) > 48 * 16 + 40:
-        wrong(f"the tab's composer is not ChatGPT's column: {column}")
-    shot(page, f"{tag}05-tab")
+        wrong(f"the tab's composer is not a reading column: {column}")
+    shot(page, f"{tag}07-tab")
     page.locator(".ask.wide .threads .new").click()
-    waited(page, "document.querySelector('.ask.wide .hello')", "a new thread in the tab")
+    waited(page, "document.querySelector('.ask.wide .home')", "a new thread in the tab")
+    recent = page.locator(".ask.wide .home .recent .nib-row-label").all_inner_texts()
+    if "What does a heron do?" not in recent:
+        wrong(f"the home does not list the latest threads: {recent}")
     page.wait_for_timeout(400)
-    shot(page, f"{tag}06-tab-empty")
+    shot(page, f"{tag}08-tab-empty")
 
-    # The quick question, ChatGPT's small composer, carried on in the panel.
+    # The quick question, carried on in the panel.
     page.evaluate(QUICK)
     waited(page, "document.querySelector('.quick textarea')", "the quick question")
     Model.words = ["Herons ", "fish."]
+    Model.pause = 0
     page.locator(".quick textarea").fill("What do herons eat?")
     page.locator(".quick textarea").press("Enter")
     waited(page, "document.querySelector('.quick .acts')", "the quick answer")
-    page.wait_for_timeout(300)
-    shot(page, f"{tag}07-quick")
     page.locator('.quick .acts button[aria-label="Continue in the panel"]').click()
     waited(page, "!document.querySelector('.quick')", "the quick question put away")
     waited(
@@ -665,7 +767,7 @@ def shape(browser: Browser, scheme: str) -> None:
     if "Herons fish." not in page.locator(".ask.wide .answer").last.inner_text():
         wrong("the quick answer did not come along into the panel")
     page.wait_for_timeout(300)
-    shot(page, f"{tag}08-continued")
+    shot(page, f"{tag}09-continued")
     page.context.close()
 
 
@@ -674,12 +776,12 @@ def main() -> int:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
-            say(f"--- ChatGPT's shape, {scheme} ---")
+            say(f"--- Codex's shape, {scheme} ---")
             shape(browser, scheme)
         say("--- the whole flow ---")
         flow(browser)
     return DRIVE.verdict(
-        "the AI panel is ChatGPT's shape, and sends, stops, queues, steers, switches, lists,"
+        "the AI panel is the Codex sidebar's shape, and sends, stops, queues, steers, switches, lists,"
         " reviews, rewinds and resends"
     )
 

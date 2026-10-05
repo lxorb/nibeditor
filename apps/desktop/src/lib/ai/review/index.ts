@@ -1,6 +1,7 @@
 /** What the panel (lane 4) reaches the review by (docs/ai-sidebar.md 6.6), besides the
- *  components it draws by name - `ChangesBar.svelte` over the field, `Branches.svelte`
- *  under each of the reader's messages, `Asked.svelte` in a call that asked. */
+ *  components it draws by name - `ChangesCard.svelte` at the end of the conversation,
+ *  `Rewinding.svelte` over the field, `Branches.svelte` under each of the reader's
+ *  messages, `Asked.svelte` in a call that asked. */
 
 import type { Thread, Turn } from '../chat/types'
 import { checkpoints } from './changes'

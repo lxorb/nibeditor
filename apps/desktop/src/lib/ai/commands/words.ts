@@ -4,7 +4,7 @@
  *  The four rewrites are the rewrite menu's own (rewrite.ts): the same sheet, with the
  *  diff beside the words and Keep or nothing, opened on the selection or, with nothing
  *  selected, on the whole of the note below its front matter. `/summarize` and `/review`
- *  are the agent's edits, which land on the changes bar to keep or undo; `/explain` is the
+ *  are the agent's edits, which land on the changes card to keep or undo; `/explain` is the
  *  one that is a reply. The prompts are the model's to read and are not translated. */
 
 import { frontMatterBlock } from '@nib/markdown/front-matter'

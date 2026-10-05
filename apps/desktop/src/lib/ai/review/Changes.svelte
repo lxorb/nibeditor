@@ -1,14 +1,15 @@
 <script lang="ts">
-  /** Every change the thread made that the reader has not kept (`/diff`, or the bar
-   *  pressed): each note with its changes, each with Keep and Undo, and the note's
-   *  own pair for all of its changes; then each note it moved (old name, new name) or
-   *  deleted (struck through), with the same pair. A row pressed shows the change.
+  /** The notes under the changes card (ChangesCard.svelte), Codex's files: each note
+   *  the thread changed with its count and its own Keep and Undo; then each note it
+   *  moved (old name, new name) or deleted (struck through), with the same pair. A note
+   *  pressed shows its first change.
    *
-   *  Keys, Claude Code's and Cursor's: J and K (or the arrows) walk the changes, Y
-   *  keeps the lit one, N undoes it, Enter shows it, Escape puts the list away. */
-  import { onMount } from 'svelte'
+   *  Open (`/diff`, or the card's head pressed), every change of every note under it,
+   *  each with its pair, and the keyboard in the list, Claude Code's and Cursor's keys:
+   *  J and K (or the arrows) walk the changes, Y keeps the lit one, N undoes it, Enter
+   *  shows it, Escape folds the list again. */
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
+  import { slide } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { insideSpace } from '../../space-paths'
@@ -20,8 +21,12 @@
   import Tally from './Tally.svelte'
   import { snippetOf, titleOf } from './words'
 
-  const { notes, files, thread }: { notes: NoteChanges[]; files: FileChange[]; thread: Thread } =
-    $props()
+  const {
+    notes,
+    files,
+    thread,
+    open = false,
+  }: { notes: NoteChanges[]; files: FileChange[]; thread: Thread; open?: boolean } = $props()
 
   /** A moved note opened where it is now. */
   function openMoved(file: FileChange) {
@@ -39,7 +44,17 @@
     if (lit >= rows.length) lit = Math.max(0, rows.length - 1)
   })
 
-  onMount(() => list?.focus())
+  // Opened, the keyboard goes to the list, for its keys, and the list into view once
+  // its rows have slid open: it is at the end of the conversation, under the fold.
+  $effect(() => {
+    if (!open) return
+    list?.focus({ preventScroll: true })
+    const shown = setTimeout(
+      () => list?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }),
+      dur(150) + 20,
+    )
+    return () => clearTimeout(shown)
+  })
 
   function keys(event: KeyboardEvent) {
     const change = rows[lit]
@@ -60,15 +75,8 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
-<div
-  class="changes"
-  role="list"
-  tabindex="0"
-  bind:this={list}
-  onkeydown={keys}
-  transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+<div class="changes" role="list" tabindex={open ? 0 : -1} bind:this={list} onkeydown={keys}>
   {#each notes as note (`${note.agent}\n${note.path}`)}
     <div class="note" role="listitem">
       <div class="line">
@@ -79,13 +87,15 @@
           <span class="nib-row-label">{titleOf(note.path)}</span>
           <Tally added={note.added} removed={note.removed} />
         </button>
-        <button class="nib-chip is-quiet" onclick={() => void review.undo(note.changes)}
-          >{t('Undo')}</button
-        >
-        <button class="nib-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
+        <span class="pair">
+          <button class="nib-chip is-quiet" onclick={() => void review.undo(note.changes)}
+            >{t('Undo')}</button
+          >
+          <button class="nib-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
+        </span>
       </div>
-      {#each note.changes as change (change.id)}
-        <div class="line change">
+      {#each open ? note.changes : [] as change (change.id)}
+        <div class="line change" transition:slide={{ duration: dur(150), easing: cubicOut }}>
           <button
             class="nib-row is-short name"
             class:is-on={litOf(change)}
@@ -99,10 +109,12 @@
             >
             <Tally added={change.added} removed={change.removed} />
           </button>
-          <button class="nib-chip is-quiet" onclick={() => void review.undo([change])}
-            >{t('Undo')}</button
-          >
-          <button class="nib-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
+          <span class="pair">
+            <button class="nib-chip is-quiet" onclick={() => void review.undo([change])}
+              >{t('Undo')}</button
+            >
+            <button class="nib-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
+          </span>
         </div>
       {/each}
     </div>
@@ -118,10 +130,12 @@
           <span class="nib-row-label is-gone">{titleOf(file.path)}</span>
         </span>
       {/if}
-      <button class="nib-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
-        >{t('Undo')}</button
-      >
-      <button class="nib-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
+      <span class="pair">
+        <button class="nib-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
+          >{t('Undo')}</button
+        >
+        <button class="nib-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
+      </span>
     </div>
   {/each}
 </div>
@@ -130,20 +144,41 @@
   .changes {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
     max-height: 40vh;
     overflow: auto;
-    margin-block-end: 2px;
     padding: 2px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
+    outline: none;
   }
 
   .line {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 2px;
+  }
+
+  /* A row's pair while it is pointed at, or the keyboard is in it, so a column of
+     notes is not a column of buttons. */
+  /* Over the end of the row rather than beside it, so a name in a narrow side is not
+     cut short for two buttons that are not there until it is pointed at. */
+  .pair {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-inline-start: var(--space-2);
+    background: linear-gradient(to left, var(--ground, var(--surface)) 85%, transparent);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .line:hover .pair,
+  .line:focus-within .pair,
+  .changes:focus-visible .is-on ~ .pair,
+  :global([data-touch]) .pair {
+    opacity: 1;
   }
 
   .change .name {

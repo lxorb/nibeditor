@@ -4,15 +4,16 @@
    *  the Ask panel, and Ask is its first mode: answers from the notes, each passage cited
    *  by a number that opens it.
    *
-   *  Laid out as ChatGPT is (docs/ai-sidebar.md 4.1): a thin header with the thread's
-   *  title and its menu (and in a tab the threads' and New chat's buttons, which a side
-   *  has in its own row of tabs); the conversation, the reader's words
-   *  in bubbles and the answers across the width; the composer at the foot. A thread with
-   *  nothing in it yet is a greeting with the composer in the middle, which settles to
-   *  the foot as the first message goes.
+   *  Laid out as the Codex extension's sidebar is in VS Code (docs/ai-sidebar.md 4.1): a
+   *  thin header with the thread's title and its menu (and in a tab the threads' and New
+   *  chat's buttons, which a side has in its own row of tabs, where Codex has them in
+   *  its view's title); the conversation, each message and then the work that answered
+   *  it as compact steps that fold into "Worked for" once the answer is in, and what it
+   *  changed as a card; the composer at the foot, always. A thread with nothing in it
+   *  yet is Codex's home: the latest threads, and the way to all of them.
    *
    *  Two places draw it: the right side (`wide` false), where the threads take the
-   *  conversation's place as ChatGPT's narrow drawer does, and a tab of its own ("Open in
+   *  conversation's place as Codex's task history does, and a tab of its own ("Open in
    *  new tab", `wide`), where they are the rail down the left and the conversation is a
    *  centred column. Both show the one open thread; see host.ts.
    *
@@ -70,7 +71,7 @@
     untrack(() => chat.follow(provider))
   })
 
-  /** A tab's rail shown or put away, ChatGPT's sidebar button. */
+  /** A tab's rail shown or put away. */
   function toggleRail() {
     railed = !railed
     rememberRail(railed)
@@ -147,8 +148,9 @@
 
   <div class="main">
     <!-- The header: at a side, the thread's title and its menu, the side's own row
-         over it holding Chats and New chat; in a tab, ChatGPT's whole bar - the rail's
-         button, the title, and New chat while the rail that has it is put away. -->
+         over it holding New chat and Chats, as Codex's view title holds them; in a tab,
+         the whole bar - the rail's button, the title, and New chat while the rail that
+         has it is put away. -->
     {#if wide || (head?.kept && !listing)}
       <header class="top">
         {#if wide}
@@ -163,6 +165,19 @@
               ><path
                 d="M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6"
               /></svg
+            >
+          </button>
+        {/if}
+        {#if !wide && head?.kept && !listing}
+          <!-- Codex's back chevron: out of the thread to the home and its latest chats. -->
+          <button
+            class="nib-glyph"
+            title={t('Back')}
+            aria-label={t('Back')}
+            onclick={() => chat.newThread()}
+          >
+            <svg class="nib-mirror" viewBox="0 0 13 13" aria-hidden="true"
+              ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
             >
           </button>
         {/if}
@@ -197,10 +212,6 @@
       {#if ready}
         <Composer />
       {/if}
-      <!-- Below the composer while the thread is empty, as much room as above it: the
-           composer in the middle. It gives the room up as the first message goes, and
-           the composer settles to the foot. -->
-      <div class="under"></div>
     {/if}
   </div>
 </div>
@@ -209,7 +220,10 @@
   /* A column with one thing that scrolls in it: the conversation grows and the field
      at the foot stays put. The body this sits in gives up its own scrolling and
      padding for it; see Sidebar.svelte. */
+  /* `--ground` is what the panel is drawn on, which the composer's fade fades to. */
   .ask {
+    --ground: var(--side-bar-bg-color);
+
     flex: 1;
     min-height: 0;
     min-width: 0;
@@ -217,9 +231,10 @@
   }
 
   /* A tab of its own: the page's ground, and the conversation and the composer in a
-     column ChatGPT's width down the middle. */
+     column of a reading measure down the middle. */
   .ask.wide {
     --column: 48rem;
+    --ground: var(--bg);
 
     height: 100%;
     background: var(--bg);
@@ -303,16 +318,5 @@
     .title:hover {
       background: var(--surface-hover);
     }
-  }
-
-  /* The room under the composer: all of the lower half while the thread is empty,
-     none once it is not, and the change of the two is the composer moving down. */
-  .under {
-    flex: 0 0 0;
-    transition: flex-grow var(--dur-base) var(--ease-out);
-  }
-
-  .ask.is-empty .under {
-    flex-grow: 1;
   }
 </style>

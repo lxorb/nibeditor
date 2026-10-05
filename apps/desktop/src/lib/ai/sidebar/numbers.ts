@@ -50,3 +50,13 @@ export function seconds(ms: number, language: string): string {
     unitDisplay: 'narrow',
   }).format(Math.max(1, Math.round(ms / 1000)))
 }
+
+/** How long an answer worked, Codex's "Worked for 1m 23s": seconds alone under a
+ *  minute, minutes and seconds after. */
+export function lasted(ms: number, language: string): string {
+  const whole = Math.max(1, Math.round(ms / 1000))
+  if (whole < 60) return seconds(whole * 1000, language)
+  const left = whole % 60
+  const counted = minutes(whole * 1000, language)
+  return left ? `${counted} ${seconds(left * 1000, language)}` : counted
+}
