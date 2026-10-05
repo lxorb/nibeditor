@@ -108,12 +108,6 @@ export class FileActions {
     if (last?.kind === 'delete' && samePath(last.path, path)) last.trashId = id
   }
 
-  /** Everything except one action, put back some other way: the AI panel's Undo of
-   *  a note its agent deleted (lib/ai/review/file-ops.ts). */
-  without(action: FileAction) {
-    this.stack = this.stack.filter((one) => one !== action)
-  }
-
   /** Everything except the deletion whose copy has been restored some other
    *  way - from Recently deleted, say. Undoing it again would write the
    *  snapshot over the note that is now back. */

@@ -50,7 +50,9 @@ export async function undoFile(
     if (!step) return false
     const { putBack } = await import('../../workspace/undoing')
     const back = await putBack(step)
-    workspace.undone.without(step)
+    // Off the tree's own Undo, which would otherwise write it back a second time; here
+    // rather than a method of the stack's, which is in the first paint.
+    workspace.undone.stack = workspace.undone.stack.filter((one) => one !== step)
     await workspace.fileCame(back, 'file')
     await workspace.loadTree()
     return true
