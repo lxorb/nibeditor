@@ -18,9 +18,13 @@ export async function askMachine(
   const namespace = env.MACHINES
   if (!namespace) return null
 
-  // In the EU jurisdiction (decision 6), where the runtime offers one.
+  // In the EU jurisdiction (decision 6), where the runtime offers one. `wrangler dev`'s
+  // workerd throws on any jurisdiction, so a drive against a local `nibd` (DevHost, never
+  // set on a deployed Worker) asks the namespace itself.
   const place =
-    typeof namespace.jurisdiction === 'function' ? namespace.jurisdiction('eu') : namespace
+    typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_NIBD
+      ? namespace.jurisdiction('eu')
+      : namespace
 
   for (let asked = 0; asked < 2; asked++) {
     try {

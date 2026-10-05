@@ -27,7 +27,7 @@ describe.runIf(URL)('the image', () => {
     const text = await ran(
       URL,
       's_tools',
-      'id -un; sudo -n true && echo sudo-ok; node --version; python3 --version; git --version; gh --version; uv --version; rg --version; jq --version; echo "path=$PATH"',
+      'id -un; sudo -n true && echo sudo-ok; node --version; python3 --version; git --version; gh --version; uv --version; rg --version; jq --version; [ -x /usr/local/bin/sandbox-shim ] && echo shim-ok; echo "path=$PATH"',
     )
     expect(text).toMatch(/[\r\n]nib\r\n/)
     expect(text).toContain('sudo-ok')
@@ -38,6 +38,7 @@ describe.runIf(URL)('the image', () => {
     expect(text).toMatch(/uv \d+\.\d+/)
     expect(text).toMatch(/ripgrep/)
     expect(text).toMatch(/jq-/)
+    expect(text).toContain('shim-ok')
     expect(text).toMatch(/path=\/home\/nib\/\.local\/bin:/)
   })
 

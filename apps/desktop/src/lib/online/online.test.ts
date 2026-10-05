@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
+import { terminalMark } from '../terminal/naming'
 import { onlineOf } from './calls'
+import { ownSession } from './own'
 import { isMadeName, isOnlineTab, isTermTarget, termName } from './path'
 import { resumeCommand } from './resume'
 
@@ -59,5 +61,63 @@ describe("the account's answer about the machine", () => {
     expect(onlineOf({ ...month, used: { awakeS: '1' } })).toBeNull()
     expect(onlineOf(null)).toBeNull()
     expect(onlineOf({ ...month, machine: { id: 'm1', state: 'flying' } })?.machine).toBeNull()
+  })
+})
+
+describe('a session on sync v1, which has no file id', () => {
+  const made = { v: 1 as const, machine: 'm1', session: 's_new' }
+
+  /** A file with the words given, and what was made and written. */
+  function file(words: string | null) {
+    const did = { made: 0, written: [] as string[] }
+    return {
+      did,
+      file: {
+        read: () => Promise.resolve(words),
+        write: (text: string) => {
+          did.written.push(text)
+          return Promise.resolve()
+        },
+        make: () => {
+          did.made += 1
+          return Promise.resolve(made)
+        },
+      },
+    }
+  }
+
+  test('is made for an empty file, and written into it', async () => {
+    const { did, file: empty } = file('')
+    expect(await ownSession(empty)).toBe('s_new')
+    expect(did).toEqual({ made: 1, written: ['{"v":1,"machine":"m1","session":"s_new"}\n'] })
+  })
+
+  test('is the one the file names, made once and never again', async () => {
+    const { did, file: named } = file('{"v":1,"machine":"m1","session":"s_old"}\n')
+    expect(await ownSession(named)).toBe('s_old')
+    expect(did).toEqual({ made: 0, written: [] })
+  })
+
+  test('is made again for a file that cannot be read or does not name one', async () => {
+    expect(await ownSession(file(null).file)).toBe('s_new')
+    expect(await ownSession(file('not a terminal').file)).toBe('s_new')
+  })
+
+  test('refused by the account, writes nothing', async () => {
+    const { did, file: one } = file('')
+    one.make = () => Promise.reject(new Error('list'))
+    await expect(ownSession(one)).rejects.toThrow('list')
+    expect(did.written).toEqual([])
+  })
+})
+
+describe('the program in front of an online terminal', () => {
+  /** nibd names the program and leaves the mark to the app, as a local terminal's. */
+  test('wears the mark its name gives, the shell’s otherwise', () => {
+    expect(terminalMark('', 'claude')).toBe('claude')
+    expect(terminalMark('', 'codex')).toBe('codex')
+    expect(terminalMark('', 'python3')).toBe('python')
+    expect(terminalMark('', 'htop')).toBe('shell')
+    expect(terminalMark('', null)).toBe('shell')
   })
 })

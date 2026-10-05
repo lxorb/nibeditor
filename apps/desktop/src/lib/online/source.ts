@@ -6,7 +6,11 @@
  *  - made the moment the file was - and the account for the session that id names, which
  *  the account makes on the asker's own machine the first time. A file still on its way to
  *  the account is waited for; the session it names is written into it, so another device
- *  and a restart read it. Then the socket. */
+ *  and a restart read it. Then the socket.
+ *
+ *  A device on sync v1 has no file id the account knows, so there the file's words are the
+ *  name: the session it says, or a new one of the asker's own, written into it. Shared
+ *  with nobody until the account moves to v2 (services/sync/src/machines/routes.ts). */
 
 import { termOf, termText } from '@nib/online/term'
 import type { ServerFrame } from '@nib/online/wire'
@@ -17,6 +21,7 @@ import { writeFile } from '../workspace/write-file'
 import { refusedOf, termSession } from './calls'
 import { Link, pageWorld } from './link'
 import { machine } from './machine.svelte'
+import { ownSession } from './own'
 import { refusalWords } from './words'
 
 /** How long a new file is waited for, by sync and then by the account, and how often. */
@@ -60,10 +65,42 @@ async function sessionOf(id: string, path: string, until: number): Promise<strin
         await pause(EVERY)
         continue
       }
-      const why = refusedOf(error)
-      return why === 'list' || why === 'sessions' || why === 'signed-out' ? refusalWords(why) : null
+      return refusalOf(error)
     }
   }
+}
+
+/** The words a refusal from the account is shown with, where it has any worth showing
+ *  before the socket would say its own. */
+function refusalOf(error: unknown): string | null {
+  const why = refusedOf(error)
+  return why === 'list' || why === 'sessions' || why === 'signed-out' ? refusalWords(why) : null
+}
+
+/** The name the socket goes to, or the words it is refused with: on v2 the file's id,
+ *  once the account has it and named its session; on v1 the session's own. */
+async function socketName(
+  path: string,
+  until: number,
+): Promise<{ name: string } | { refused: string }> {
+  const { sync } = await import('../sync.svelte')
+  if (sync.version === 1) {
+    const { invoke } = await import('../tauri')
+    try {
+      const name = await ownSession({
+        read: () => invoke<string>('read_note', { path }).catch(() => null),
+        write: (text) => writeFile(path, text),
+        make: () => termSession(null),
+      })
+      return { name }
+    } catch (error) {
+      return { refused: refusalWords(refusedOf(error)) ?? refusalWords('other') ?? '' }
+    }
+  }
+  const id = await termIdOf(path, until)
+  if (id === null) return { refused: refusalWords('other') ?? '' }
+  const refused = await sessionOf(id, path, until)
+  return refused === null ? { name: id } : { refused }
 }
 
 export class OnlineSource implements Source {
@@ -84,21 +121,19 @@ export class OnlineSource implements Source {
       return
     }
     const path = this.path()
-    const until = Date.now() + WAIT
-    const id = path === null ? null : await termIdOf(path, until)
-    if (id === null || path === null) {
+    if (path === null) {
       said({ refused: refusalWords('other') ?? '' })
       return
     }
-    const refused = await sessionOf(id, path, until)
-    if (refused !== null) {
-      said({ refused })
+    const found = await socketName(path, Date.now() + WAIT)
+    if ('refused' in found) {
+      said({ refused: found.refused })
       return
     }
     if (this.ended) return
 
     this.link = new Link(
-      id,
+      found.name,
       pageWorld(BASE, () => account.accountToken, this.device),
       (heard) => {
         if (heard.t === 'out') said({ out: heard.data })
@@ -129,8 +164,9 @@ export class OnlineSource implements Source {
         said({ size: { cols: frame.cols, rows: frame.rows } })
         return
       case 'program':
-        // The mark nibd read by the local terminal's rules, else the program's own name.
-        said({ program: frame.mark ?? frame.name, title: frame.title })
+        // The name, as a local terminal's: its mark is `terminalMark`'s from that name
+        // (lib/terminal/naming.ts), here as for every terminal, so `mark` is not read.
+        said({ program: frame.name, title: frame.title })
         return
       case 'machine':
         machine.heard(frame.state)

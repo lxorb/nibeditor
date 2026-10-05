@@ -41,6 +41,10 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 
 COPY --from=uv /uv /uvx /usr/local/bin/
 
+# The Sandbox SDK's shim, which the home's backups to R2 and their restores run through
+# (services/sync/src/machines/host.ts); its tag is the pinned @cloudflare/sandbox's.
+COPY --from=docker.io/cloudflare/sandbox:1.0.0 /usr/local/bin/sandbox-shim /usr/local/bin/sandbox-shim
+
 # The one user, uid 1000, which Ubuntu's image gives to `ubuntu`; root by sudo without
 # a password, since installing things is the point of having a machine (4.2).
 RUN userdel -r ubuntu 2>/dev/null; \

@@ -2,9 +2,10 @@ name: machine
 
 # The online terminal's machine image (docs/online-terminal.md 4.2, 6.2): built and booted
 # with nothing in the cloud, driven over nibd's link, the agents' checksums compared
-# with their makers' and nibd traced while a session reads the agents' files. Nothing is
-# pushed anywhere: the image lives and dies on the runner. nibd's own tests run in
-# check.yml's `pnpm test` like every package's.
+# with their makers' and nibd traced while a session reads the agents' files; then the
+# whole path end to end, the Worker under wrangler dev driving a machine booted from it
+# (scripts/online-e2e.mjs). Nothing is pushed anywhere: the image lives and dies on the
+# runner. nibd's own tests run in check.yml's `pnpm test` like every package's.
 
 on:
   push:
@@ -13,12 +14,18 @@ on:
       - services/machine/**
       - packages/online/**
       - packages/sync-core/src/frame.ts
+      - services/sync/src/machines/**
+      - services/sync/wrangler.machines.jsonc
+      - scripts/online-e2e.mjs
       - .github/workflows/machine.yml
   pull_request:
     paths:
       - services/machine/**
       - packages/online/**
       - packages/sync-core/src/frame.ts
+      - services/sync/src/machines/**
+      - services/sync/wrangler.machines.jsonc
+      - scripts/online-e2e.mjs
       - .github/workflows/machine.yml
 
 concurrency:
@@ -50,11 +57,25 @@ jobs:
         run: pnpm --filter @nib/machine build
 
       - name: Image
+        id: image
         run: docker build -t nib-machine:ci services/machine
 
       - name: Booted and driven
         working-directory: services/machine
         run: test/image.sh nib-machine:ci
+
+      # The app's socket protocol through the Worker's Machine to nibd in the image: a
+      # session made as sync v1 makes one, typing, a reconnect with since, a late joiner.
+      - name: End to end through the Worker
+        if: ${{ !cancelled() && steps.image.outcome == 'success' }}
+        run: |
+          docker run -d --name nib-e2e -e NIBD_SECRET=dev -e NIB_AGENTS=0 \
+            -p 127.0.0.1:7680:7680 nib-machine:ci
+          node scripts/online-e2e.mjs
+
+      - name: What the end-to-end machine said
+        if: failure()
+        run: docker logs nib-e2e || true
 
       - name: What the machine said
         if: failure()
