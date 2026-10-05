@@ -145,7 +145,10 @@ fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
 pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
     let mut all = lent_now();
-    if let Some(one) = all.iter().find(|one| one.grant == grant && one.mode == mode) {
+    if let Some(one) = all
+        .iter()
+        .find(|one| one.grant == grant && one.mode == mode)
+    {
         return Ok(one.token.clone());
     }
     let token = fresh_token()?;
@@ -381,7 +384,11 @@ mod tests {
         let agent = supervised(stored, Mode::Agent);
         assert_eq!(agent.mode, GrantMode::Autonomous);
         for category in ASKED {
-            assert_eq!(agent.asks(category), category == Category::Paying, "{category:?}");
+            assert_eq!(
+                agent.asks(category),
+                category == Category::Paying,
+                "{category:?}"
+            );
         }
     }
 
@@ -435,8 +442,7 @@ mod tests {
 
     #[test]
     fn modes_read_as_the_window_names_them() {
-        let read: Vec<Mode> =
-            serde_json::from_str(r#"["approve","plan","agent"]"#).expect("modes");
+        let read: Vec<Mode> = serde_json::from_str(r#"["approve","plan","agent"]"#).expect("modes");
         assert_eq!(read, [Mode::Approve, Mode::Plan, Mode::Agent]);
         assert!(serde_json::from_str::<Mode>(r#""ask""#).is_err());
     }

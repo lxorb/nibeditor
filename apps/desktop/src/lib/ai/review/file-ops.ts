@@ -22,7 +22,7 @@ async function moved(root: string, from: string, to: string): Promise<void> {
 function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | null {
   const named = change.space
   const space =
-    (named && workspace.spaces.find((one) => one.id === named || one.name === named)) ||
+    (named ? workspace.spaces.find((one) => one.id === named || one.name === named) : undefined) ??
     workspace.spaces.find((one) => one.id === thread.space)
   return space?.root ?? null
 }

@@ -91,7 +91,8 @@ export const crateAnswers: Answers = {
     return heard((payload) => {
       const { kind, approval } = questionIn(payload)
       if (kind !== 'asked' || typeof approval.id !== 'string') return
-      on({ id: approval.id, agent: String(approval.agent), verb: String(approval.verb ?? '') })
+      const words = (value: unknown) => (typeof value === 'string' ? value : '')
+      on({ id: approval.id, agent: words(approval.agent), verb: words(approval.verb) })
     })
   },
 }
