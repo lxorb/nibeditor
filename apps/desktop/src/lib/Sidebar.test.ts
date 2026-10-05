@@ -59,7 +59,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    expect(strip('left')).toEqual(['Files', 'Search', 'Tasks'])
+    expect(strip('left')).toEqual(['Files', 'Tasks'])
     expect(strip('right')).toEqual(['Outline', 'Links', 'Properties', 'Footnotes', 'Ask'])
   })
 
@@ -67,7 +67,7 @@ describe('the panel tabs', () => {
     open('# Head\n')
     workspace.movePanel('outline', 'left')
 
-    expect(strip('left')).toEqual(['Files', 'Outline', 'Search', 'Tasks'])
+    expect(strip('left')).toEqual(['Files', 'Outline', 'Tasks'])
     expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask'])
     workspace.movePanel('outline', 'right')
     expect(strip('right')).toEqual(['Links', 'Properties', 'Footnotes', 'Ask', 'Outline'])
@@ -118,6 +118,26 @@ describe('the panel tabs', () => {
     const { pill } = row('outline')
 
     expect(pill).not.toContain('aria-label="More"')
+  })
+})
+
+/** The search is a bar over the list rather than a tab in the strip, and the new note
+ *  a button at the head of it on every machine, as Apple Notes has both. */
+describe('the head of the list', () => {
+  test('has a search bar to type into and no search tab', () => {
+    open('# Head\n')
+    const html = drawn('tree')
+
+    expect(html).toMatch(/<input[^>]*aria-label="Search this space"/)
+    expect(html).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
+  })
+
+  test('has the new note button on a desktop as well as a phone', () => {
+    open('# Head\n')
+
+    for (const device of ['desktop', 'phone'] as const) {
+      expect(drawn('tree', device), device).toMatch(/class="new[^"]*"[^>]*aria-label="New note"/)
+    }
   })
 })
 
