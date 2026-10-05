@@ -260,7 +260,7 @@ async function guardClose() {
 
   // Cmd+Q closes no window, so the crate holds the quit and asks each window to
   // go as its close button would; see lifecycle.rs.
-  if (isDesktop) {
+  if (!__EVEN_PLUGIN__ && isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
     await own.listen('nib://quit', () => void onQuit(window))
@@ -315,7 +315,9 @@ async function onClose(event: Closing, window: Closable) {
   if (!runs && !workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
 
   event.preventDefault()
-  if (going || (runs && !(await (await import('./quitting/ask')).mayStop('window')))) return
+  if (going) return
+  if (!__EVEN_PLUGIN__ && runs && !(await (await import('./quitting/ask')).mayStop('window')))
+    return
   await go()
   await window.destroy()
 }

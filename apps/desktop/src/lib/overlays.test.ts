@@ -176,6 +176,7 @@ describe('what hides a web page', () => {
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',
+    'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/remote/HostPicker.svelte': 'dialog',
     // Only while it would hang over a page, and gone the moment the pointer leaves.
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',

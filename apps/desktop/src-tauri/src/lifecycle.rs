@@ -175,8 +175,9 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
         .collect()
 }
 
-/// The asking window's yes: every window goes, as `quit_now` has them.
-#[tauri::command]
+/// The asking window's yes: every window goes, as `quit_now` has them. On a thread of
+/// the runtime's, as a quit writes down where each window was.
+#[tauri::command(async)]
 pub fn quit_confirmed(webview: tauri::Webview) {
     let app = webview.app_handle();
     if launch::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
@@ -195,7 +196,7 @@ pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
 
 /// The asking window put where its question can be read: back from the tray when Quit
 /// there is what asked, and forward otherwise. Never a probe's; see placement.rs.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn quit_show(webview: tauri::Webview) {
     let window = webview.window();
     if !launch::is_document_window(window.label()) {
