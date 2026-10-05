@@ -252,6 +252,8 @@ export interface Approval {
   summary: string
   site?: string
   tab?: string
+  /** The verb whose call asked. */
+  verb?: string
   /** Milliseconds since 1970. */
   asked: number
   answer: ApprovalAnswer

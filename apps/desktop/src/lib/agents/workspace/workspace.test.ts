@@ -800,6 +800,65 @@ describe('what asks the reader first', () => {
   })
 })
 
+describe('the AI sidebar’s two modes that act', () => {
+  /** Every change a note, the tree or the app can be asked for (the scheme set to one it
+   *  is not yet), and two reads. */
+  const changes = (scheme: string): [string, Record<string, unknown>][] => [
+    [
+      'edit_note',
+      { space: 'Home', path: 'Soup', edits: [{ at: { end: true }, insert_after: 'x' }] },
+    ],
+    ['write_note', { space: 'Home', path: 'Soup', content: '# Soup!\n' }],
+    ['append_note', { space: 'Home', path: 'Soup', content: 'More.' }],
+    ['set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true }],
+    ['create_note', { space: 'Home', path: 'Stew', content: '# Stew\n' }],
+    ['edit_canvas', { space: 'Home', path: 'board.canvas', ops: [{ op: 'add_card', text: 'Hi' }] }],
+    ['bookmarks', { space: 'Home', op: 'add', path: 'Recipes.md' }],
+    ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
+    ['create_folder', { space: 'Home', path: 'Drinks' }],
+    ['trash_file', { space: 'Home', path: 'Recipes.md' }],
+    ['restore_version', { space: 'Home', path: 'Soup', version: 'device:1000' }],
+    ['write_setting', { key: 'scheme', value: scheme }],
+    ['run_command', { id: 'publish' }],
+    ['run_terminal', { command: 'rm -rf build' }],
+  ]
+  const READS: [string, Record<string, unknown>][] = [
+    ['read_note', { space: 'Home', path: 'Soup' }],
+    ['list_backlinks', { space: 'Home', path: 'Soup' }],
+  ]
+
+  test('Agent (autonomous) is never asked anything', async () => {
+    const acting = agent({ mode: 'autonomous' })
+    for (const [verb, args] of [...changes('dark'), ...READS]) {
+      asked.length = 0
+      answer = { status: 'needs_approval', approval: 'a9', summary: verb }
+      const said = await call(verb, args, acting)
+      expect(said, verb).not.toMatchObject({ status: 'needs_approval' })
+      expect(
+        asked.some((one) => one.command === 'agents_ask'),
+        verb,
+      ).toBe(false)
+    }
+  })
+
+  test('Approve (confirm) asks before every change and never before a read', async () => {
+    const approving = agent({ mode: 'confirm' })
+    for (const [verb, args] of changes('light')) {
+      asked.length = 0
+      answer = { status: 'needs_approval', approval: 'a9', summary: verb }
+      expect(await call(verb, args, approving), verb).toMatchObject({ status: 'needs_approval' })
+    }
+    for (const [verb, args] of READS) {
+      asked.length = 0
+      await call(verb, args, approving)
+      expect(
+        asked.some((one) => one.command === 'agents_ask'),
+        verb,
+      ).toBe(false)
+    }
+  })
+})
+
 describe('the notes, on the road', () => {
   test('a note of a shared space is read as data', async () => {
     expect(await call('read_note', { space: 'Home', path: 'Soup' })).toMatchObject({

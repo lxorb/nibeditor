@@ -1199,6 +1199,9 @@ pub struct Approval {
     /// The tab, when a page is what it is about.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab: Option<TabId>,
+    /// The verb whose call asked, so the AI sidebar finds the call it is about.
+    #[serde(default)]
+    pub verb: String,
     /// When it was asked, in milliseconds since 1970.
     pub asked: u64,
     /// Where it has got to.

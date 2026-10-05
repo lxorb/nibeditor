@@ -3,50 +3,53 @@
 //!
 //! **An agent like any other.** Each provider gets a built-in grant, named after it
 //! ("nib · Claude"), made the first time its thread asks and kept in Settings > Agents
-//! with the same scopes, sites, questions, limits and stop as an outside agent's. A call
-//! goes through the endpoint's own dispatch with that grant as the caller
-//! (`endpoint::dispatch`), so it meets the same policy, asks the same questions and is
-//! written to the same log; the answer is written for the model the way `nib mcp`
-//! writes it, marks round every word from outside (`mcp::host`). There is no second
-//! policy in the window.
+//! with the same scopes, sites, limits and stop as an outside agent's. A call goes
+//! through the endpoint's own dispatch with that grant as the caller
+//! (`endpoint::dispatch`), so it meets the same policy and is written to the same log;
+//! the answer is written for the model the way `nib mcp` writes it, marks round every
+//! word from outside (`mcp::host`). There is no second policy in the window.
 //!
-//! **The modes are views of the grant, never more than it** (4.4): Ask lists the tools
-//! that only read, Plan those and `create_note` for the plan, Agent everything the grant
-//! reaches. A call to a tool its mode does not list is refused here as well, whatever
-//! the model says.
+//! **The modes are views of the grant, never more than it** (4.4). What each lists:
+//! Plan the tools that only read and `create_note` for the plan, Approve and Agent
+//! everything the grant reaches. A call to a tool its mode does not list is refused here
+//! as well, whatever the model says. And how each is supervised, laid over the grant for
+//! the call and never kept (`supervised`): Approve asks before every change and never
+//! before a read; Agent asks for nothing but paying, because every change it makes can
+//! be kept or undone; Plan as the grant says.
+//!
+//! The sidebar's Claude Code and Codex call the same tools through `nib mcp`, with a token
+//! the app lends each provider and mode for one run (`lend`): the endpoint finds the
+//! grant in that mode by it (`lent`), so a session is supervised as its thread's mode is.
 //!
 //! Every turn also carries where the reader is - the space, the tab in front, every
 //! open tab - asked by nib through the same two verbs an outside agent would call
 //! (`ai_agent_context`).
-//!
-//! The grant is made with the two choices the window holds (src/lib/ai/chat/choices.ts):
-//! whether the reader's own tabs are in reach (`browser.reader`), and whether every edit
-//! asks first (`confirm` mode). Made once; the reader changes it in Settings > Agents.
 
 use std::collections::BTreeSet;
+use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tauri::AppHandle;
 
-use crate::agents::grants::{Grant, Mode as GrantMode, Scope};
+use crate::agents::grants::{fresh_token, hashed, same, Grant, Mode as GrantMode, Scope};
 use crate::agents::{state, Caller};
 use crate::mcp::host;
 
 /// The sidebar's modes, as the window names them.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Mode {
-    /// Reads and cites.
-    Ask,
+    /// Everything the grant reaches, every change approved first.
+    Approve,
     /// Reads, and writes the plan as a note.
     Plan,
-    /// Everything the grant reaches.
+    /// Everything the grant reaches, nothing asked.
     Agent,
 }
 
-/// Which provider's agent is asking, and the window's two choices for a new grant.
+/// Which provider's agent is asking, and whether a new grant reaches the reader's tabs.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Builtin {
@@ -57,9 +60,6 @@ pub struct Builtin {
     /// Whether the reader's own tabs are in reach.
     #[serde(default = "yes")]
     pub reader_tabs: bool,
-    /// Whether every edit asks first.
-    #[serde(default)]
-    pub ask_first: bool,
 }
 
 fn yes() -> bool {
@@ -82,26 +82,36 @@ fn grant_id(provider: &str) -> Result<String, String> {
 }
 
 /// A new built-in grant: Emil's defaults for the reader's own agents (9.1), with the
-/// reader's tabs in reach or not, and asking for every write or not - and the terminal,
-/// which the sidebar is asked about as much as the notes ("why did the build fail"). It
-/// holds no program it may start without asking, so every command it runs or types into
-/// one of the reader's terminals asks first (9.3); reading a terminal is `context`.
+/// reader's tabs in reach or not - and the terminal, which the sidebar is asked about as
+/// much as the notes ("why did the build fail"). How much it asks is the thread's mode's
+/// (`supervised`), not the grant's.
 fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     let mut grant = Grant::own(id, client);
     grant.scopes.push(Scope::Terminal);
     if !builtin.reader_tabs {
         grant.scopes.retain(|one| *one != Scope::BrowserReader);
     }
-    if builtin.ask_first {
-        grant.mode = GrantMode::Confirm;
+    grant
+}
+
+/// The grant as a call in `mode` meets the policy: Approve asks before every change, and
+/// about every category, whatever was switched off; Agent asks for nothing but paying;
+/// Plan, which changes nothing but its own note, as the grant is.
+fn supervised(mut grant: Grant, mode: Mode) -> Grant {
+    match mode {
+        Mode::Approve => {
+            grant.mode = GrantMode::Confirm;
+            grant.asks.clear();
+        }
+        Mode::Agent => grant.mode = GrantMode::Autonomous,
+        Mode::Plan => {}
     }
     grant
 }
 
 /// The provider's built-in grant, made the first time it is asked for. Its token is not
-/// kept: the window's calls are dispatched inside the app, and a client outside it gets
-/// a token of its own: the sidebar's Claude Code and Codex get theirs from
-/// `ai_cli::token_for`, which asks this for the grant.
+/// kept: the window's calls are dispatched inside the app, and the sidebar's Claude Code
+/// and Codex are lent a token of their own (`lend`).
 pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
@@ -114,12 +124,65 @@ pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, Str
     Ok(grant)
 }
 
-/// Whether a mode lists a tool: Ask what only reads, Plan that and `create_note`.
-fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
+/// A token lent for one run: the grant it is, the mode it is in, the token and its hash.
+struct Lent {
+    grant: String,
+    mode: Mode,
+    token: String,
+    hash: String,
+}
+
+/// Every token lent this run. Memory only: the next run lends new ones, so last run's
+/// is worth nothing.
+static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
+
+fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
+    LENT.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// The token a provider's session in `mode` hands `nib mcp`: one per provider and mode
+/// for a run of the app, made the first time it is asked for.
+pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
+    let grant = grant_for(app, builtin)?.id;
+    let mut all = lent_now();
+    if let Some(one) = all.iter().find(|one| one.grant == grant && one.mode == mode) {
+        return Ok(one.token.clone());
+    }
+    let token = fresh_token()?;
+    all.push(Lent {
+        grant,
+        mode,
+        hash: hashed(&token),
+        token: token.clone(),
+    });
+    Ok(token)
+}
+
+/// The grant a lent token is, in its mode; `None` for a token this run did not lend.
+/// Every hash compared, none skipped, as `Grants::by_token` does.
+pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
+    let said = hashed(token);
+    let (grant, mode) = {
+        let all = lent_now();
+        let mut found = None;
+        for one in all.iter() {
+            if same(&said, &one.hash) && found.is_none() {
+                found = Some((one.grant.clone(), one.mode));
+            }
+        }
+        found?
+    };
+    state(app)
+        .grants
+        .by_id(app, &grant)
+        .map(|grant| supervised(grant, mode))
+}
+
+/// Whether a mode lists a tool: Plan what only reads and `create_note`, the others all.
+pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
-        Mode::Ask => reads_only,
         Mode::Plan => reads_only || name == "create_note",
-        Mode::Agent => true,
+        Mode::Approve | Mode::Agent => true,
     }
 }
 
@@ -181,8 +244,8 @@ pub fn ai_agent_call(
     }
     let args = host::with_defaults(&tool, if args.is_object() { args } else { json!({}) });
     let asked = json!({ "verb": tool, "args": args, "rest": [] });
-    let (status, body) =
-        crate::endpoint::dispatch(&app, &Caller::Agent(Box::new(grant)), asked, false);
+    let caller = Caller::Agent(Box::new(supervised(grant, mode)));
+    let (status, body) = crate::endpoint::dispatch(&app, &caller, asked, false);
     Ok(host::rendered(&tool, &args, status, &body))
 }
 
@@ -225,14 +288,33 @@ pub fn ai_agent_context(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::agents::verbs::Category;
 
-    fn builtin(reader_tabs: bool, ask_first: bool) -> Builtin {
+    /// Every question a call can raise about itself (pairing is a client's, not a call's).
+    const ASKED: [Category; 11] = [
+        Category::Paying,
+        Category::Sending,
+        Category::Publishing,
+        Category::Deleting,
+        Category::SigningIn,
+        Category::Settings,
+        Category::Terminal,
+        Category::Files,
+        Category::Writing,
+        Category::Showing,
+        Category::Takeover,
+    ];
+
+    fn builtin(reader_tabs: bool) -> Builtin {
         Builtin {
             id: "anthropic".into(),
             name: "Claude".into(),
             reader_tabs,
-            ask_first,
         }
+    }
+
+    fn grant() -> Grant {
+        made("nib-anthropic".into(), "nib · Claude", &builtin(true))
     }
 
     fn names(mode: Mode, grant: &Grant) -> BTreeSet<String> {
@@ -261,62 +343,23 @@ mod tests {
     }
 
     #[test]
-    fn ask_lists_only_what_reads() {
-        let grant = made(
-            "nib-anthropic".into(),
-            "nib · Claude",
-            &builtin(true, false),
-        );
-        let ask = names(Mode::Ask, &grant);
-        assert!(
-            ask.contains("read_note")
-                && ask.contains("search_notes")
-                && ask.contains("browser_snapshot")
-        );
-        assert!(
-            !ask.contains("edit_note")
-                && !ask.contains("create_note")
-                && !ask.contains("browser_click")
-        );
-    }
-
-    #[test]
     fn plan_adds_the_plans_own_note_and_nothing_else_that_writes() {
-        let grant = made(
-            "nib-anthropic".into(),
-            "nib · Claude",
-            &builtin(true, false),
-        );
-        let plan = names(Mode::Plan, &grant);
+        let plan = names(Mode::Plan, &grant());
         assert!(plan.contains("create_note") && plan.contains("read_note"));
+        assert!(plan.contains("browser_snapshot") && plan.contains("read_terminal"));
         assert!(!plan.contains("edit_note") && !plan.contains("write_note"));
+        assert!(!plan.contains("browser_click") && !plan.contains("type_terminal"));
     }
 
     #[test]
-    fn agent_lists_everything_the_grant_reaches_and_no_more() {
-        let grant = made(
-            "nib-anthropic".into(),
-            "nib · Claude",
-            &builtin(true, false),
-        );
+    fn approve_and_agent_list_everything_the_grant_reaches_and_no_more() {
+        let grant = grant();
         let agent = names(Mode::Agent, &grant);
+        assert_eq!(names(Mode::Approve, &grant), agent);
         assert!(agent.contains("edit_note") && agent.contains("browser_click"));
-        // Emil's defaults leave scripts and settings out; the terminal is in, and asks.
+        // Emil's defaults leave scripts and settings out; the terminal is in.
         assert!(!agent.contains("browser_evaluate") && agent.contains("type_terminal"));
-        assert!(grant.programs.is_empty());
-        let ask = names(Mode::Ask, &grant);
-        assert!(ask.is_subset(&agent));
-        assert!(ask.contains("read_terminal") && !ask.contains("type_terminal"));
-    }
-
-    #[test]
-    fn agent_can_make_rename_move_and_delete_every_kind() {
-        let grant = made(
-            "nib-anthropic".into(),
-            "nib · Claude",
-            &builtin(true, false),
-        );
-        let agent = names(Mode::Agent, &grant);
+        assert!(names(Mode::Plan, &grant).is_subset(&agent));
         for verb in [
             "create_note",
             "create_folder",
@@ -328,8 +371,45 @@ mod tests {
         ] {
             assert!(agent.contains(verb), "{verb}");
         }
-        let ask = names(Mode::Ask, &grant);
-        assert!(!ask.contains("trash_file") && !ask.contains("move_file"));
+    }
+
+    #[test]
+    fn agent_never_asks_but_before_paying() {
+        let mut stored = grant();
+        // Whatever the grant said, asking first included.
+        stored.mode = GrantMode::Confirm;
+        let agent = supervised(stored, Mode::Agent);
+        assert_eq!(agent.mode, GrantMode::Autonomous);
+        for category in ASKED {
+            assert_eq!(agent.asks(category), category == Category::Paying, "{category:?}");
+        }
+    }
+
+    #[test]
+    fn approve_asks_before_every_change_whatever_was_switched_off() {
+        let mut stored = grant();
+        stored.asks.insert(Category::Deleting, false);
+        stored.asks.insert(Category::Terminal, false);
+        let approve = supervised(stored, Mode::Approve);
+        assert_eq!(approve.mode, GrantMode::Confirm);
+        for category in ASKED {
+            assert!(approve.asks(category), "{category:?}");
+        }
+    }
+
+    #[test]
+    fn plan_is_supervised_as_the_grant_says() {
+        let stored = grant();
+        assert_eq!(supervised(stored.clone(), Mode::Plan), stored);
+    }
+
+    #[test]
+    fn a_mode_is_laid_over_a_call_never_over_the_grant() {
+        // The grant a provider is made with asks for nothing of its own; the thread's
+        // mode says how much it asks.
+        let made = grant();
+        assert_eq!(made.mode, GrantMode::Unsupervised);
+        assert!(made.asks.is_empty());
     }
 
     #[test]
@@ -339,13 +419,9 @@ mod tests {
     }
 
     #[test]
-    fn the_two_choices_shape_a_new_grant() {
-        let open = made("nib-a".into(), "nib · A", &builtin(true, false));
-        assert!(open.holds(Scope::BrowserReader));
-        assert_eq!(open.mode, GrantMode::Unsupervised);
-        let shut = made("nib-a".into(), "nib · A", &builtin(false, true));
-        assert!(!shut.holds(Scope::BrowserReader));
-        assert_eq!(shut.mode, GrantMode::Confirm);
+    fn the_readers_tabs_are_in_reach_or_not() {
+        assert!(made("nib-a".into(), "nib · A", &builtin(true)).holds(Scope::BrowserReader));
+        assert!(!made("nib-a".into(), "nib · A", &builtin(false)).holds(Scope::BrowserReader));
     }
 
     #[test]
@@ -359,7 +435,9 @@ mod tests {
 
     #[test]
     fn modes_read_as_the_window_names_them() {
-        let read: Vec<Mode> = serde_json::from_str(r#"["ask","plan","agent"]"#).expect("modes");
-        assert_eq!(read, [Mode::Ask, Mode::Plan, Mode::Agent]);
+        let read: Vec<Mode> =
+            serde_json::from_str(r#"["approve","plan","agent"]"#).expect("modes");
+        assert_eq!(read, [Mode::Approve, Mode::Plan, Mode::Agent]);
+        assert!(serde_json::from_str::<Mode>(r#""ask""#).is_err());
     }
 }

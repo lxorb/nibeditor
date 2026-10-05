@@ -63,8 +63,6 @@ export interface Panel {
   ensure?(): Thread
   /** Dictation into the field (`/voice`): on, off, or the other of the two. */
   voice?(on?: boolean): void
-  /** Answers a tool call that asked (`/approve`). */
-  approve?(approval: string, allow: boolean): Promise<void>
   /** Sends words in a thread, the open one or another, exactly as the field does (queued
    *  behind a running turn, drawn while it runs), and resolves once its turn is over. */
   turn?(thread: Thread, text: string, once?: Once): Promise<Ended>
@@ -79,8 +77,7 @@ export interface Panel {
 /** What a command runs with: the words after its name, the open thread, the panel. */
 export interface CommandContext {
   args: string
-  /** The name it was typed by, where that was a synonym: `/approve` is a synonym of
-   *  `/permissions` that does something of its own. */
+  /** The name it was typed by, where that was a synonym (`/ask` for `/approve`). */
   typed?: string
   thread: Thread | null
   panel: Panel

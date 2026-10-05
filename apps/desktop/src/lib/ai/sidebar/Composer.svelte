@@ -24,7 +24,6 @@
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from '../chat/usage'
   import { canTranscribe } from '../hears'
-  import type { Mode } from '../chat/types'
   import { chat } from './chat.svelte'
   import { dictation } from './dictate.svelte'
   import type { Front } from './gather'
@@ -39,7 +38,7 @@
   import ChangesBar from '../review/ChangesBar.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
-  import { modeWord } from './words'
+  import { MODES, FIRST_MODE, modeWord } from '../modes'
 
   let field = $state<HTMLTextAreaElement>()
   let caret = $state(0)
@@ -95,7 +94,8 @@
 
   const next = $derived.by(() => {
     let sum = estimateText(chat.text)
-    if (frontOn && front && head?.mode !== 'ask') sum += Math.min(12_000, estimateText(front.text))
+    if (frontOn && front && head?.mode !== 'approve')
+      sum += Math.min(12_000, estimateText(front.text))
     if (selectionOn) sum += estimateText(selection)
     for (const chip of chat.chips) {
       if (chip.text) sum += estimateText(chip.text)
@@ -388,8 +388,6 @@
 
   // ── Mode ──────────────────────────────────────────────
 
-  const MODES: readonly Mode[] = ['ask', 'plan', 'agent']
-
   /** The modes as rows, the one in force ticked. The key that steps them is the chip's
    *  tooltip rather than a hint on every row, where it would say the same thing thrice. */
   function modeRows(): MenuEntry[] {
@@ -655,7 +653,7 @@
           title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
-          disabled={!head}>{t(modeWord(head?.mode ?? 'ask'))}</button
+          disabled={!head}>{t(modeWord(head?.mode ?? FIRST_MODE))}</button
         >
         <span class="gap"></span>
         <ModelPicker />

@@ -1,10 +1,9 @@
 /** The change a write would make, shown with the question it asked (docs/ai-sidebar.md
- *  4.4, "Ask before edits"): with the built-in grant in `confirm` mode every write
- *  answers `needs_approval` instead of landing, and the reader is asked about a diff
- *  rather than about a sentence.
+ *  4.4): in Approve every write answers `needs_approval` instead of landing, and the
+ *  reader is asked about a diff rather than about a sentence.
  *
  *  Worked out the way the write itself would work it out - the same anchors, the same
- *  smallest edit - against the note as it stands, so what is shown is what Allow
+ *  smallest edit - against the note as it stands, so what is shown is what Approve
  *  does. Calls it cannot work out (a property, a task, a call that names a tab) show
  *  no diff and keep the question's own line. */
 

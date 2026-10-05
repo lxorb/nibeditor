@@ -2,7 +2,7 @@
 
 What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 
-- Ctrl+Shift+A opens the panel with the keyboard in its field, Ask first;
+- Ctrl+Shift+A opens the panel with the keyboard in its field, Approve first;
 - a message streams in with its thinking folded into one row, the ring fills from
   the provider's own count against the model's window, and the request carries the
   note in front;
@@ -18,7 +18,7 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
 - the ring's tray lists the bands;
-- and the whole of it in one thread: Ask answers, Agent mode edits a note as the
+- and the whole of it in one thread: Approve answers, Agent mode edits a note as the
   provider's agent while its answer runs, the changes bar keeps one edit and undoes the
   other, the clock on a message rewinds notes and conversation to before it, and Up
   on the empty field sends an edited message again, which leaves arrows between the
@@ -216,8 +216,8 @@ def drive(browser: Browser, scheme: str) -> None:
     if where != {"panel": "ask", "tag": "textarea"}:
         wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {where}")
     mode = page.locator(".ask .controls .mode").inner_text()
-    if mode.strip() != "Ask":
-        wrong(f"a new thread does not start in Ask: {mode!r}")
+    if mode.strip() != "Approve":
+        wrong(f"a new thread does not start in Approve: {mode!r}")
     shot(page, f"{tag}01-empty")
 
     # A message: thinking folded, words streamed, the ring from the provider's count.
@@ -340,8 +340,8 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
-    if page.locator(".ask .controls .mode").inner_text().strip() != "Plan":
-        wrong("Shift+Tab did not step Ask to Plan")
+    if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
+        wrong("Shift+Tab did not step Approve to Agent")
     page.keyboard.press("Shift+Tab")
     page.keyboard.press("Shift+Tab")
 
@@ -437,7 +437,7 @@ def running(page: Page) -> bool:
 
 
 def flow(browser: Browser) -> None:
-    """Ask, then an agent's edits kept and undone, a rewind, and a message sent again."""
+    """Approve answers, then an agent's edits kept and undone, a rewind, and a message sent again."""
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
     DRIVE.open(page)
     DRIVE.seed(page, HERONS)
@@ -447,7 +447,7 @@ def flow(browser: Browser) -> None:
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
 
-    # Ask.
+    # Approve answers with citations, as Ask did.
     Model.thoughts = []
     Model.words = ["It ", "stands ", "still ", "[1]."]
     Model.pause = 0
@@ -458,9 +458,8 @@ def flow(browser: Browser) -> None:
     # Agent mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
-    page.keyboard.press("Shift+Tab")
     if page.locator(".ask .controls .mode").inner_text().strip() != "Agent":
-        wrong("Shift+Tab twice did not reach Agent")
+        wrong("Shift+Tab did not reach Agent")
     Model.words = [f"done{one} " for one in range(25)]
     Model.pause = 0.08
     type_and_send(page, "Shout the heron's verbs")

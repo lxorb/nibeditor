@@ -1,8 +1,8 @@
-/** The words the panel's two choices are said in: each mode, each level of effort.
- *  Keys of the catalogues, translated where they are drawn. */
+/** The words each level of effort is said in: keys of the catalogues, translated where
+ *  they are drawn. A mode's are ../modes.ts's. */
 
 import { key } from '../../i18n.svelte'
-import type { Effort, Mode } from '../chat/types'
+import type { Effort } from '../chat/types'
 
 const EFFORTS: Record<Effort, string> = {
   auto: key('Auto'),
@@ -15,16 +15,6 @@ const EFFORTS: Record<Effort, string> = {
   max: key('Max'),
 }
 
-const MODES: Record<Mode, string> = {
-  ask: key('Ask'),
-  plan: key('Plan'),
-  agent: key('Agent'),
-}
-
 export function effortWord(effort: Effort): string {
   return EFFORTS[effort]
-}
-
-export function modeWord(mode: Mode): string {
-  return MODES[mode]
 }
