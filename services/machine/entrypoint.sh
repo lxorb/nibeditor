@@ -27,7 +27,7 @@ if [ -n "${TZ:-}" ] && [ -f "/usr/share/zoneinfo/$TZ" ]; then
 fi
 
 # A home put back from a backup comes with whatever owner the restore gave it.
-mkdir -p /home/nib /var/lib/nibd
+mkdir -p /home/nib /var/lib/nibd /run/nibd
 chown nib:nib /home/nib
 install -d -o nib -g nib /home/nib/.local /home/nib/.local/bin
 chmod 700 /var/lib/nibd

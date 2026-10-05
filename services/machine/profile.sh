@@ -6,3 +6,5 @@ case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
+# A program that asks for a browser gets its owner's own, in nib (nib-open).
+export BROWSER=nib-open

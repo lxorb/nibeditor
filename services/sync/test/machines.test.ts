@@ -771,6 +771,76 @@ describe('a machine', () => {
     )
   })
 
+  test('an address a program asks a browser for reaches one socket of the owner’s, the one that typed', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await join(
+      running,
+      { who: user, device: 'laptop', owns: true, role: 'owner' },
+      'yes',
+    )
+    const phone = await join(running, { who: user, device: 'phone', owns: true, role: 'owner' })
+    const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
+    const reader = await join(running, { who: 'reader', role: 'read' })
+    const url = 'https://github.com/login/device'
+
+    await say(running, phone, { t: 'in', data: 'x' })
+    await say(running, writer, { t: 'in', data: 'y' })
+    await nibd(running, { t: 'open', session: 'session-1', url })
+    expect(phone.of('open')).toEqual([{ t: 'open', url }])
+    expect(laptop.of('open')).toEqual([])
+    expect(writer.of('open')).toEqual([])
+    expect(reader.of('open')).toEqual([])
+
+    await say(running, laptop, { t: 'in', data: 'z' })
+    await nibd(running, { t: 'open', session: 'session-1', url })
+    expect(laptop.of('open')).toHaveLength(1)
+
+    // Another session's program reaches nobody here.
+    await nibd(running, { t: 'open', session: 'session-2', url })
+    expect(laptop.of('open')).toHaveLength(1)
+    expect(phone.of('open')).toHaveLength(1)
+  })
+
+  test('opens past ten a minute are dropped, and the next minute opens again', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const running = await machine(env, ID, user)
+      const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+      for (let one = 0; one < 15; one++) {
+        await nibd(running, { t: 'open', session: 'session-1', url: `https://a.b/${String(one)}` })
+      }
+      expect(owner.of('open')).toHaveLength(10)
+      vi.setSystemTime(Date.now() + 60_000)
+      await nibd(running, { t: 'open', session: 'session-1', url: 'https://a.b/next' })
+      expect(owner.of('open')).toHaveLength(11)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('a sign-in callback is made on the machine for the owner alone, and its answer is theirs', async () => {
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
+    const url = 'http://localhost:54545/callback?code=c&state=s'
+    running.host.link_?.take()
+
+    await say(running, writer, { t: 'callback', url })
+    expect(writer.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
+    expect(running.host.link_?.take()).toEqual([])
+
+    // Anywhere but this machine's loopback is no callback at all.
+    await say(running, owner, { t: 'callback', url: 'http://10.0.0.1:80/admin' })
+    expect(running.host.link_?.take()).toEqual([])
+
+    await say(running, owner, { t: 'callback', url })
+    expect(running.host.link_?.take()).toEqual([{ t: 'callback', session: 'session-1', url }])
+
+    await nibd(running, { t: 'called', session: 'session-1', url, status: 302 })
+    expect(owner.of('called')).toEqual([{ t: 'called', url, status: 302 }])
+    expect(writer.of('called')).toEqual([])
+  })
+
   test('the audit never holds what anybody typed or saw', async () => {
     const secret = 'sk-ant-THIS-IS-A-SECRET-0123456789'
     const running = await machine(env, ID, user)

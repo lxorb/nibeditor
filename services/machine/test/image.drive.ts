@@ -53,6 +53,70 @@ describe.runIf(URL)('the image', () => {
   })
 })
 
+describe.runIf(URL)('a browser on the owner’s computer', () => {
+  test('xdg-open, sensible-browser and $BROWSER say the address up the link, and only the web', async () => {
+    await healthy(URL)
+    const session = 's_open'
+    const link = await linked(URL, SECRET)
+    link.send({ t: 'open', session, cols: 200, rows: 50 })
+    link.send({
+      t: 'in',
+      session,
+      data: bytes(
+        [
+          'echo "browser=$BROWSER program=$TERM_PROGRAM"',
+          "xdg-open 'https://example.com/a?b=1'; echo open=$?",
+          'sensible-browser https://github.com/login/device; echo sensible=$?',
+          'python3 -c "import webbrowser; webbrowser.open(\'https://docs.python.org/\')"',
+          'xdg-open /etc/passwd; echo file=$?',
+          'echo done-$((40+2))\r',
+        ].join('; '),
+      ),
+    })
+    await until(() => link.text(session).includes('done-42'), 60_000)
+    const text = link.text(session)
+    const opened = link.frames.flatMap((frame) =>
+      frame.t === 'open' ? [{ session: frame.session, url: frame.url }] : [],
+    )
+    link.close()
+
+    expect(text).toContain('browser=nib-open program=nib')
+    expect(text).toContain('open=0')
+    expect(text).toContain('sensible=0')
+    expect(text).toMatch(/file=[1-9]/)
+    expect(opened).toEqual([
+      { session, url: 'https://example.com/a?b=1' },
+      { session, url: 'https://github.com/login/device' },
+      { session, url: 'https://docs.python.org/' },
+    ])
+  })
+
+  test('a sign-in callback is made on the machine, where the program listens', async () => {
+    await healthy(URL)
+    const session = 's_callback'
+    const link = await linked(URL, SECRET)
+    link.send({ t: 'open', session, cols: 200, rows: 50 })
+    link.send({
+      t: 'in',
+      session,
+      data: bytes(
+        '(cd /tmp && python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &); sleep 1; echo up-$((40+2))\r',
+      ),
+    })
+    await until(() => link.text(session).includes('up-42'), 30_000)
+    const url = 'http://localhost:8765/?code=abc'
+    link.send({ t: 'callback', session, url })
+    await until(() => link.frames.some((frame) => frame.t === 'called'), 15_000)
+    expect(link.frames.find((frame) => frame.t === 'called')).toEqual({
+      t: 'called',
+      session,
+      url,
+      status: 200,
+    })
+    link.close()
+  })
+})
+
 describe.runIf(TRACED)('the traced machine', () => {
   test('a session reads the agents files, as a person would', async () => {
     await healthy(TRACED)

@@ -66,8 +66,14 @@ RUN npm install --omit=dev --no-audit --no-fund --no-save \
 COPY dist/nibd.cjs /opt/nibd/nibd.cjs
 COPY entrypoint.sh /usr/local/bin/nib-entrypoint
 COPY agents.sh /usr/local/bin/nib-agents
-RUN chmod 755 /usr/local/bin/nib-entrypoint /usr/local/bin/nib-agents \
- && mkdir -p /var/lib/nibd
+# The machine's browser is its owner's (docs/online-terminal.md 4.13): every name a
+# program asks for one by, ahead of /usr/bin, and $BROWSER (profile.sh, nibd).
+COPY nib-open /usr/local/bin/nib-open
+RUN chmod 755 /usr/local/bin/nib-entrypoint /usr/local/bin/nib-agents /usr/local/bin/nib-open \
+ && for name in xdg-open sensible-browser x-www-browser www-browser; do \
+      ln -s nib-open "/usr/local/bin/$name"; \
+    done \
+ && mkdir -p /var/lib/nibd /run/nibd
 
 WORKDIR /home/nib
 EXPOSE 7680

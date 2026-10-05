@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./term": "./src/term.ts",
     "./types": "./src/types.ts",
+    "./urls": "./src/urls.ts",
     "./wire": "./src/wire.ts"
   },
   "scripts": {

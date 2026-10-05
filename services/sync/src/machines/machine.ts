@@ -90,6 +90,11 @@ const STOP_GRACE = 15_000
 const TYPING_FOR = 2_000
 /** How often a socket's `seen` is written back to it, at most. */
 const SEEN_EVERY = MINUTE
+/** How many addresses a machine may have opened on its owner's computer in a minute,
+ *  and how many sign-in callbacks it may be asked to make: a program in a loop opens
+ *  a few tabs and then nothing, never a wall of them (docs/online-terminal.md 4.13). */
+const OPENS_A_MINUTE = 10
+const CALLBACKS_A_MINUTE = 10
 
 /** Storage keys. */
 const ME = 'me'
@@ -155,6 +160,12 @@ export class Machine implements DurableObject {
   /** Input frames each person sent this second, for the rate. */
   private readonly rate = new Map<string, { second: number; count: number }>()
   private readonly lastKey = new Map<string, number>()
+  /** The owner's device whose keys reached each session last: where an address a program in it
+   *  asks a browser for is opened. */
+  private readonly lastDevice = new Map<string, string>()
+  /** When this minute's opens and callbacks began, and how many there were. */
+  private opens = { minute: 0, count: 0 }
+  private callbacks = { minute: 0, count: 0 }
   /** Activity and egress since the meter last counted. */
   private pending = { cpuS: 0, egressBytes: 0, homeBytes: -1 }
   private saved: (() => void) | null = null
@@ -284,6 +295,9 @@ export class Machine implements DurableObject {
       case 'resume':
         await this.resume(socket, viewer)
         break
+      case 'callback':
+        this.callback(socket, viewer, frame.url)
+        break
     }
   }
 
@@ -354,6 +368,7 @@ export class Machine implements DurableObject {
     // at the typist's size (4.6).
     const wasTyping = now - (this.lastKey.get(viewer.who) ?? 0) < TYPING_FOR
     this.lastKey.set(viewer.who, now)
+    if (viewer.owns) this.lastDevice.set(viewer.session, viewer.device)
     this.typedBy(viewer, now)
     this.ensureOpen(viewer)
     this.tell(viewer.session, { t: 'in', session: viewer.session, data })
@@ -414,6 +429,46 @@ export class Machine implements DurableObject {
     this.input(socket, viewer, encoder.encode(command))
     const me = await this.me()
     if (me) await audit(this.env, me.id, 'resume', { who: viewer.who, device: viewer.device })
+  }
+
+  /* ── The owner's computer ──────────────────────────────────────────────── */
+
+  /** An address a program in a session asked a browser for: to one socket of the
+   *  machine's owner on that session - the device that typed there last, or else the
+   *  one there longest awake - and to nobody else. A watcher in somebody's space is
+   *  never sent a page by their machine (4.13). */
+  private open(session: string, url: string): void {
+    if (!within(this.opens, OPENS_A_MINUTE)) return
+    const owners = this.ctx.getWebSockets(session).flatMap((socket) => {
+      const viewer = viewerOf(socket)
+      return viewer?.owns && socket.readyState === OPEN ? [{ socket, viewer }] : []
+    })
+    const device = this.lastDevice.get(session)
+    const chosen =
+      owners.find((one) => one.viewer.device === device) ??
+      owners.sort((a, b) => b.viewer.seen - a.viewer.seen)[0]
+    if (chosen) this.say(chosen.socket, { t: 'open', url })
+  }
+
+  /** A tab the owner's nib opened landed on the program's own sign-in callback: that
+   *  request, made on the machine, where the program listens. The owner's alone. */
+  private callback(socket: WebSocket, viewer: Viewer, url: string): void {
+    if (!viewer.owns) {
+      this.say(socket, { t: 'refused', error: 'role' })
+      return
+    }
+    if (!within(this.callbacks, CALLBACKS_A_MINUTE)) {
+      this.say(socket, { t: 'refused', error: 'rate' })
+      return
+    }
+    this.tell(viewer.session, { t: 'callback', session: viewer.session, url })
+  }
+
+  /** How a callback was answered, to the owner's sockets on that session. */
+  private called(session: string, frame: Extract<ServerFrame, { t: 'called' }>): void {
+    for (const socket of this.ctx.getWebSockets(session)) {
+      if (viewerOf(socket)?.owns) this.say(socket, frame)
+    }
   }
 
   /* ── The link to nibd ─────────────────────────────────────────────────── */
@@ -523,6 +578,12 @@ export class Machine implements DurableObject {
         return
       case 'saved':
         this.saved?.()
+        return
+      case 'open':
+        this.open(frame.session, frame.url)
+        return
+      case 'called':
+        this.called(frame.session, { t: 'called', url: frame.url, status: frame.status })
         return
     }
   }
@@ -1079,6 +1140,17 @@ function viewerFrom(headers: Headers): Viewer {
     rows: 24,
     seen: Date.now(),
   }
+}
+
+/** Counts one more in this minute's `count`; false past `most`. */
+function within(counted: { minute: number; count: number }, most: number): boolean {
+  const minute = Math.floor(Date.now() / MINUTE)
+  if (counted.minute !== minute) {
+    counted.minute = minute
+    counted.count = 0
+  }
+  counted.count += 1
+  return counted.count <= most
 }
 
 function isRefusal(value: string): value is Refusal {
