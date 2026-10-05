@@ -3,7 +3,7 @@ import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
 import { canPublish, canShare, roleOf, share } from './sharing.svelte'
-import { isDesktop } from './tauri'
+import { isDesktop, joinPath } from './tauri'
 import { type Space, workspace } from './workspace.svelte'
 
 /** The rows that open into a choice, fetched with the press; see space-choices.ts. */
@@ -21,6 +21,16 @@ export async function newSpace(): Promise<Space | undefined> {
 
   if (!name) return
   const space = await workspace.addSpace(name)
+  if (!space) return
+
+  // What an assistant in the space is to know; see agents-seed.ts. A space whose
+  // file could not be written is still a space.
+  const [{ AGENTS_NAME, AGENTS_SEED }, { writeFile }] = await Promise.all([
+    import('./agents-seed'),
+    import('./workspace/write-file'),
+  ])
+  await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
+  await workspace.loadTree()
 
   // Until a pass has put it on the account there is nothing to share or to
   // publish, and a quiet loop can be a minute from its next one. Somebody who

@@ -608,8 +608,11 @@ sidebar adds a review layer on top, and nothing underneath changes.
 
 - **The space's instructions** are its `AGENTS.md` at the space root, the file Codex,
   Cursor and Copilot read and Claude Code reads beside `CLAUDE.md`; a `CLAUDE.md` there is
-  read too. They are notes, in the tree, synced and versioned like any other. `/init`
-  writes one; `/memory` opens it.
+  read too. They are notes, in the tree, synced and versioned like any other. A space
+  made in nib starts with one of two lines (write in the notes' own language and style,
+  ask before deleting, moving or renaming) and an empty `## Memory`; an import brings
+  only what its folder had (`agents-seed.ts`). `/init` writes a fuller one; `/memory`
+  opens it.
 - **Personal instructions** are a field in Settings > AI, for every space.
 - **Remembering is an edit.** "Remember that I file papers under Reading" (or the model's
   own `remember` when memory is on) appends a line under `## Memory` in `AGENTS.md` as a

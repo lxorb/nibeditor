@@ -80,6 +80,7 @@ const { workspace } = await import('./workspace.svelte')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('./import/sources')
 const { WELCOME, WELCOME_NAME, isUntouchedWelcome } = await import('./welcome')
+const { AGENTS_NAME, AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed')
 
 beforeEach(() => {
   notes.clear()
@@ -117,7 +118,19 @@ describe('creating the first space', () => {
     await firstSpace.create()
 
     expect(workspace.spaces).toHaveLength(1)
-    expect(notes.size).toBe(0)
+    expect(notes.has(`/spaces/Journal/${WELCOME_NAME}`)).toBe(false)
+  })
+
+  /** Every space made from here, the first and the next, starts with the few lines an
+   *  assistant working in it is to read; see agents-seed.ts. */
+  test('and every space gets its AGENTS.md', async () => {
+    await firstSpace.create()
+    workspace.tabs = []
+    asked.name = 'Work'
+    await firstSpace.create()
+
+    expect(notes.get(`/spaces/Journal/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
+    expect(notes.get(`/spaces/Work/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
   })
 
   test('makes nothing when the name is not given', async () => {
@@ -127,6 +140,14 @@ describe('creating the first space', () => {
 
     expect(made).toEqual([])
     expect(localStorage.getItem('nib:seeded')).toBeNull()
+  })
+})
+
+describe('the AGENTS.md, untouched', () => {
+  test('is not writing, but one word in it is', () => {
+    expect(isUntouchedAgents(`/spaces/Journal/${AGENTS_NAME}`, AGENTS_SEED)).toBe(true)
+    expect(isUntouchedAgents(`/spaces/Journal/${AGENTS_NAME}`, `${AGENTS_SEED}- tea\n`)).toBe(false)
+    expect(isUntouchedAgents(`/spaces/Journal/Other.md`, AGENTS_SEED)).toBe(false)
   })
 })
 
