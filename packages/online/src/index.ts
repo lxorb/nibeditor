@@ -19,6 +19,7 @@ export {
   accrue,
   budgetLeft,
   FREE,
+  ALLOWANCE,
   type MachineSize,
   monthOf,
   near,

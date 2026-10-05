@@ -33,6 +33,14 @@ export const FREE: Allowance = {
   egressBytes: 20 * GB,
 }
 
+/** The allowance the service holds machines to now: the hours and CPU lifted for now
+ *  (Emil, 2026-10-05), so only the budget breaker stops a machine on spend. */
+export const ALLOWANCE: Allowance = {
+  ...FREE,
+  awakeS: Number.MAX_SAFE_INTEGER,
+  cpuS: Number.MAX_SAFE_INTEGER,
+}
+
 /** One account's month, as a row of `machine_usage` holds it: awake seconds, CPU
  *  seconds, memory and disk provisioned over the awake time, and bytes sent out. */
 export interface Usage {

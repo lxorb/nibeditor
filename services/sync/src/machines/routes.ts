@@ -16,7 +16,7 @@ import { audit } from './audit'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
-import { FREE, resetAt } from '@nib/online'
+import { ALLOWANCE, resetAt } from '@nib/online'
 import { usedOf } from './meter'
 import { MOST_SESSIONS, type Refusal } from '@nib/online/wire'
 import { allowed, serviceOf } from './service'
@@ -96,7 +96,7 @@ online.get('/machine', async (context) => {
       backupAt: machine.backup_at,
     },
     used: await usedOf(context.env, user.id, at),
-    limit: FREE,
+    limit: ALLOWANCE,
     resetAt: resetAt(at),
   })
 })

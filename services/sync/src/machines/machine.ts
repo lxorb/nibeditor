@@ -32,7 +32,7 @@ import { meter, usedOf } from './meter'
 import {
   type Activity,
   awake,
-  FREE,
+  ALLOWANCE,
   type MachineHost,
   type MachineState,
   mayType,
@@ -740,7 +740,7 @@ export class Machine implements DurableObject {
       recent,
       row?.keep === 1,
       await usedOf(this.env, me.user, now),
-      on ? FREE : OFF,
+      on ? ALLOWANCE : OFF,
       await budgetLeft(this.env, service.ceiling, now),
     )
     if (answer.stay) {

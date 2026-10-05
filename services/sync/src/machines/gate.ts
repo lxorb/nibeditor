@@ -7,7 +7,7 @@
 
 import type { Env } from '../types'
 import { budgetLeft } from './budget'
-import { FREE } from '@nib/online'
+import { ALLOWANCE } from '@nib/online'
 import { usedOf } from './meter'
 import type { Refusal } from '@nib/online/wire'
 import { serviceOf } from './service'
@@ -29,6 +29,8 @@ export async function whyNotWake(env: Env, userId: string, at: number): Promise<
 
   const used = await usedOf(env, userId, at)
   const spent =
-    used.awakeS >= FREE.awakeS || used.cpuS >= FREE.cpuS || used.egressBytes >= FREE.egressBytes
+    used.awakeS >= ALLOWANCE.awakeS ||
+    used.cpuS >= ALLOWANCE.cpuS ||
+    used.egressBytes >= ALLOWANCE.egressBytes
   return spent ? 'allowance' : null
 }
