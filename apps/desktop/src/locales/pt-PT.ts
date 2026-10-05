@@ -1853,8 +1853,6 @@ export const ptPT: Dictionary = {
   'Stop agents': 'Parar agentes',
   Agents: 'Agentes',
   'Always on this site': 'Sempre neste site',
-  'Give back': 'Devolver',
-  'Take over': 'Assumir o controlo',
   'Agents stopped': 'Agentes parados',
   'Agent tabs closed': 'Separadores dos agentes fechados',
   'nibeditor is still running for your agents':

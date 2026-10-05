@@ -9,7 +9,7 @@ import { ended, start, started } from '../../src/lib/agents/ui/index'
  *  window exactly the news the real one does (docs/agent-native.md 13.1).
  *
  *  In the jsdom project because what is under test is what the UI's effects write into
- *  the shell - the marks the strip and the web tabs read, the badge, the takeovers, the
+ *  the shell - the marks the strip and the web tabs read, the badge, the steps asked, the
  *  key handed to the system - and what the panel and the pairing bubble put on screen
  *  and do when they are pressed. Nothing here asks about layout or paint. */
 
@@ -60,56 +60,56 @@ describe('the frame and the mark', () => {
 
     const worn = agentMarks.on.t1
     expect(worn?.agent).toBe('claude')
-    expect(worn?.paused).toBe(false)
+    expect(worn?.stopped).toBe(false)
     expect(worn?.colour).toMatch(/^#/)
     expect(agentMarks.heard).toBe(true)
   })
 
-  test('go muted when the reader takes the tab, and come back on a press on the mark', async () => {
+  test('stay on whatever the reader does in the tab: nothing hands it over', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
-    fake.readerTook('claude', 't1')
-    await settled()
-    expect(agentMarks.on.t1?.paused).toBe(true)
-
-    agentMarks.act?.('t1', 'give-back')
     await settled()
 
-    expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: ['claude', 't1'] })
-    expect(agentMarks.on.t1?.paused).toBe(false)
+    // The reader presses and types in the page: the crate says nothing, and the agent's
+    // next call finds the tab as theirs as ever.
+    fake.act('claude', 't1', 'browser_type')
+    await settled()
+    expect(agentMarks.on.t1?.stopped).toBe(false)
+    expect(fake.asked.some((one) => one.command === 'pause')).toBe(false)
   })
 
-  test('Take over and Stop in the tab menu pause the agent there, the stop saying so', async () => {
+  test('Stop in the tab menu stops that agent, and a press on its mark resumes it', async () => {
     fake.connect('claude', 'Claude Code')
+    fake.connect('codex', 'Codex')
     fake.act('claude', 't1', 'browser_click')
-    fake.act('claude', 't2', 'browser_type')
+    fake.act('codex', 't2', 'browser_type')
     await settled()
 
-    agentMarks.act?.('t1', 'take-over')
-    agentMarks.act?.('t2', 'stop')
+    agentMarks.act?.('t1', 'stop')
     await settled()
+    expect(fake.asked.at(-1)).toEqual({ command: 'stop', args: ['claude'] })
+    expect(agentMarks.on.t1?.stopped).toBe(true)
+    expect(agentMarks.on.t2?.stopped).toBe(false)
 
-    expect(fake.asked.filter((one) => one.command === 'pause')).toEqual([
-      { command: 'pause', args: ['claude', 't1', false] },
-      { command: 'pause', args: ['claude', 't2', true] },
-    ])
-    expect(agentMarks.on.t1?.paused).toBe(true)
-    expect(agentMarks.on.t2?.paused).toBe(true)
+    agentMarks.act?.('t1', 'resume')
+    await settled()
+    expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: ['claude'] })
+    expect(agentMarks.on.t1?.stopped).toBe(false)
   })
 
-  test('the stop mutes them all, and giving it back lets them act again', async () => {
+  test('the stop mutes them all, and lifting it lets them act again', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
     await settled()
 
     await started().stop()
     await settled()
-    expect(agentMarks.on.t1?.paused).toBe(true)
+    expect(agentMarks.on.t1?.stopped).toBe(true)
 
-    agentMarks.act?.('t1', 'give-back')
+    agentMarks.act?.('t1', 'resume')
     await settled()
-    expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: [undefined, undefined] })
-    expect(agentMarks.on.t1?.paused).toBe(false)
+    expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: [undefined] })
+    expect(agentMarks.on.t1?.stopped).toBe(false)
   })
 })
 
@@ -240,7 +240,7 @@ describe('questions outside the panel', () => {
     expect(document.body.querySelector('.pairing')).toBeNull()
   })
 
-  test('a takeover is put under the bar of the tab it is in, and pauses it', async () => {
+  test('a step asked of the reader is put under the bar of its tab, and takes nothing', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
     const asked = fake.ask(
@@ -253,11 +253,11 @@ describe('questions outside the panel', () => {
     await settled()
 
     expect(agentMarks.takeovers.t1).toEqual({ id: asked.id, reason: 'Sign in to the bank' })
-    expect(agentMarks.on.t1?.paused).toBe(true)
+    expect(agentMarks.on.t1?.stopped).toBe(false)
 
     await started().answer(asked, true)
     await settled()
     expect(agentMarks.takeovers.t1).toBeUndefined()
-    expect(agentMarks.on.t1?.paused).toBe(false)
+    expect(agentMarks.on.t1?.stopped).toBe(false)
   })
 })

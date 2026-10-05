@@ -76,8 +76,8 @@
 {#if worn}
   <span
     class="mark agent"
-    class:turning={!worn.paused}
-    class:resting={worn.paused}
+    class:turning={!worn.stopped}
+    class:resting={worn.stopped}
     style:--agent={worn.colour}
     aria-hidden="true"
   >

@@ -1908,8 +1908,6 @@ export const ar: Dictionary = {
   'Stop agents': 'إيقاف الوكلاء',
   Agents: 'الوكلاء',
   'Always on this site': 'دائمًا على هذا الموقع',
-  'Give back': 'إعادة التحكم',
-  'Take over': 'تولي التحكم',
   'Agents stopped': 'تم إيقاف الوكلاء',
   'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
   'nibeditor is still running for your agents': 'لا يزال nibeditor يعمل لوكلائك',

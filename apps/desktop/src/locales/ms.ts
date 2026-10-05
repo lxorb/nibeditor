@@ -1805,8 +1805,6 @@ export const ms: Dictionary = {
   'Stop agents': 'Hentikan ejen',
   Agents: 'Ejen',
   'Always on this site': 'Sentiasa di tapak ini',
-  'Give back': 'Kembalikan',
-  'Take over': 'Ambil alih',
   'Agents stopped': 'Ejen dihentikan',
   'Agent tabs closed': 'Tab ejen ditutup',
   'nibeditor is still running for your agents': 'nibeditor masih berjalan untuk ejen anda',

@@ -1813,8 +1813,6 @@ export const tr: Dictionary = {
   'Stop agents': 'Ajanları durdur',
   Agents: 'Ajanlar',
   'Always on this site': 'Bu sitede her zaman',
-  'Give back': 'Geri ver',
-  'Take over': 'Kontrolü al',
   'Agents stopped': 'Ajanlar durduruldu',
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
   'nibeditor is still running for your agents': 'nibeditor ajanlarınız için çalışmaya devam ediyor',

@@ -24,8 +24,8 @@ What it asks, and how:
   a frame from another origin, dialogs (alert, confirm, prompt, beforeunload), a popup that
   posts to its opener, a download, a file input, a `<select>`, a date input. Each is
   timed.
-* **The reader wins.** An agent acts in the reader's own web tab, and the tab never takes
-  the keyboard from it, so the agent is never paused by its own presses (`GotFocus`).
+* **The reader's tab is shared.** An agent acts in the reader's own web tab, and its
+  presses never move the keyboard.
 * **The reader's logins, not their extensions.** An agent tab asked for the reader's store
   is in its twin (src/agents/engines/mod.rs): a cookie the reader's store holds is there,
   and the agent's own cookie never reaches the reader's store.
@@ -772,13 +772,13 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         shown = agent.call("browser_show", tab=atab)
         check.that("showing an agent tab asks", shown.get("status") == "needs_approval", shown)
         taken = agent.call("browser_takeover", tab=atab, reason="Sign in to the probe")
-        paused = agent.call("browser_snapshot", tab=atab)
+        meanwhile = agent.call("browser_snapshot", tab=atab)
         cli.window(f"window.__TAURI_INTERNALS__.invoke('agents_answer', {{ id: {json.dumps(taken.get('approval'))}, allow: true, always: false }})")
         handed = agent.call("browser_snapshot", tab=atab)
         state = cli.window("window.__TAURI_INTERNALS__.invoke('agents_state')")
-        said["show and takeover"] = {"show": shown, "takeover": taken, "while taken": paused.get("code"), "handed back": handed.get("status"),
+        said["show and takeover"] = {"show": shown, "takeover": taken, "while asked": meanwhile.get("status"), "after": handed.get("status"),
                                      "state": {k: (len(v) if isinstance(v, list) else v) for k, v in state.items()} if isinstance(state, dict) else state}
-        check.that("a takeover pauses the agent until it is handed back", taken.get("status") == "needs_approval" and paused.get("code") == "paused_by_reader" and handed.get("status") == "ok", said["show and takeover"])
+        check.that("a takeover asks and the tab stays the agent's all the while", taken.get("status") == "needs_approval" and meanwhile.get("status") == "ok" and handed.get("status") == "ok", said["show and takeover"])
 
         # ---- the reader's own tab: the agent's presses never take the keyboard ----
         if reader_tab:
@@ -786,8 +786,8 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             pressed = agent.call("browser_click", tab=reader_tab, ref=ref_of(rsnap, "button", "Mine"))
             time.sleep(0.5)
             after = agent.call("agent_status")
-            said["reader tab"] = {"snapshot ms": rsnap.get("ms"), "click": pressed, "paused": result(after).get("paused_tabs")}
-            check.that("the agent's own press never pauses it", not result(after).get("paused_tabs"), said["reader tab"])
+            said["reader tab"] = {"snapshot ms": rsnap.get("ms"), "click": pressed, "stopped": result(after).get("stopped")}
+            check.that("the agent acts in the reader's tab and is never stopped by it", pressed.get("status") == "ok" and not result(after).get("stopped"), said["reader tab"])
             unmoved("reader tab")
 
         # ---- the stop ----

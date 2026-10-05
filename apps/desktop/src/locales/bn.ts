@@ -1805,8 +1805,6 @@ export const bn: Dictionary = {
   'Stop agents': 'এজেন্ট থামান',
   Agents: 'এজেন্ট',
   'Always on this site': 'এই সাইটে সবসময়',
-  'Give back': 'ফিরিয়ে দিন',
-  'Take over': 'নিয়ন্ত্রণ নিন',
   'Agents stopped': 'এজেন্ট থামানো হয়েছে',
   'Agent tabs closed': 'এজেন্টের ট্যাব বন্ধ হয়েছে',
   'nibeditor is still running for your agents': 'আপনার এজেন্টদের জন্য nibeditor এখনও চলছে',

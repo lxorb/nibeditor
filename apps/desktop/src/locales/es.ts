@@ -1856,8 +1856,6 @@ export const es: Dictionary = {
   'Stop agents': 'Detener agentes',
   Agents: 'Agentes',
   'Always on this site': 'Siempre en este sitio',
-  'Give back': 'Devolver',
-  'Take over': 'Tomar el control',
   'Agents stopped': 'Agentes detenidos',
   'Agent tabs closed': 'Pestañas de agentes cerradas',
   'nibeditor is still running for your agents': 'nibeditor sigue en marcha para tus agentes',

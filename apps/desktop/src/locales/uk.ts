@@ -1879,8 +1879,6 @@ export const uk: Dictionary = {
   'Stop agents': 'Зупинити агентів',
   Agents: 'Агенти',
   'Always on this site': 'Завжди на цьому сайті',
-  'Give back': 'Повернути',
-  'Take over': 'Перебрати керування',
   'Agents stopped': 'Агентів зупинено',
   'Agent tabs closed': 'Вкладки агентів закрито',
   'nibeditor is still running for your agents': 'nibeditor і далі працює для ваших агентів',

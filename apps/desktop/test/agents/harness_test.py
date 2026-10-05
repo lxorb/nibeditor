@@ -19,7 +19,7 @@ from fake_agent import from_contract, marked_source  # noqa: E402
 from run import ROADS, SCENARIOS, dotted, filled, judged, needed  # noqa: E402
 
 #: Every kind of step run.py knows; a scenario with any other is a typo.
-STEPS = {"call", "join", "record", "keyboard", "windows", "reader", "reader_eval", "hook", "pause", "observe"}
+STEPS = {"call", "join", "record", "keyboard", "windows", "reader", "reader_call", "reader_eval", "pause", "observe"}
 
 #: Every verb of the contract (agents/verbs.rs `NAMES`) and the window's agent verbs.
 VERBS = {

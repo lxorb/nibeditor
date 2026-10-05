@@ -1812,8 +1812,6 @@ export const pa: Dictionary = {
   'Stop agents': 'ਏਜੰਟ ਰੋਕੋ',
   Agents: 'ਏਜੰਟ',
   'Always on this site': 'ਇਸ ਸਾਈਟ ’ਤੇ ਹਮੇਸ਼ਾ',
-  'Give back': 'ਵਾਪਸ ਦਿਓ',
-  'Take over': 'ਕੰਟਰੋਲ ਲਓ',
   'Agents stopped': 'ਏਜੰਟ ਰੋਕੇ ਗਏ',
   'Agent tabs closed': 'ਏਜੰਟ ਟੈਬ ਬੰਦ ਹੋਏ',
   'nibeditor is still running for your agents': 'ਤੁਹਾਡੇ ਏਜੰਟਾਂ ਲਈ nibeditor ਹਾਲੇ ਵੀ ਚੱਲ ਰਿਹਾ ਹੈ',

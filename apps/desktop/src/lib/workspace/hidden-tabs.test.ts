@@ -118,7 +118,7 @@ describe('pausing', () => {
 
   test('a tab an agent is acting in is left running', async () => {
     hiddenTabs.set('pause')
-    agentMarks.on = { a: { agent: 'claude', colour: '#000', paused: false } }
+    agentMarks.on = { a: { agent: 'claude', colour: '#000', stopped: false } }
     await hiddenTabs.left([webTab('a'), webTab('b')])
     expect(await paused()).toEqual([['b', true]])
   })

@@ -1,0 +1,228 @@
+{
+  "proves": "an agent reaches any of the reader's web tabs, in another space too, and keeps it whatever the reader does there: the reader's press and words in the same page take nothing from it, a password field the reader is in still refuses the agent's keys, and the keyboard never moves",
+  "doc": "7.3",
+  "steps": [
+    {
+      "reader_eval": "nib.workspace.openPage('{site}/together'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "save": {
+        "reader": "result"
+      }
+    },
+    {
+      "keyboard": "now"
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{reader}",
+        "role": "textbox",
+        "name": "Words"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "words": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{reader}",
+        "role": "textbox",
+        "name": "Notes"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "notes": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{words}",
+        "text": "agent "
+      },
+      "as": "typing"
+    },
+    {
+      "reader_call": "browser_click",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{notes}"
+      }
+    },
+    {
+      "reader_call": "browser_type",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{notes}",
+        "text": "the reader's words"
+      }
+    },
+    {
+      "join": "typing",
+      "expect": {
+        "status": "ok"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{words}",
+        "text": "and on"
+      },
+      "expect": {
+        "status": "ok"
+      }
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{reader}",
+        "expression": "document.getElementById('words').value + ' | ' + document.getElementById('notes').value"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.value": "agent and on | the reader's words"
+        }
+      }
+    },
+    {
+      "call": "agent_status",
+      "args": {},
+      "expect": {
+        "status": "ok",
+        "lacks": {
+          "result": "stopped"
+        }
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{reader}",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "password": "result.matches.0.ref"
+      }
+    },
+    {
+      "reader_call": "browser_click",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{password}"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{reader}",
+        "keys": "a"
+      },
+      "expect": {
+        "status": "error",
+        "code": "password_field"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{reader}",
+        "keys": "Backspace"
+      },
+      "expect": {
+        "status": "error",
+        "code": "password_field"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{password}",
+        "text": "guessed"
+      },
+      "expect": {
+        "status": "error",
+        "code": "password_field"
+      }
+    },
+    {
+      "reader_eval": "const here = nib.workspace.activeSpaceId; localStorage.setItem('nib:space-tabs', JSON.stringify({ [here]: 'space' })); await nib.workspace.addSpace('Elsewhere'); await new Promise((go) => setTimeout(go, 1500)); return { here, now: nib.workspace.activeSpaceId }",
+      "save": {
+        "here": "result.here",
+        "elsewhere": "result.now"
+      }
+    },
+    {
+      "call": "browser_tabs",
+      "args": {},
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.reader": "{reader}"
+        }
+      }
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{reader}",
+        "expression": "document.getElementById('words').value + ' / ' + document.visibilityState"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.value": "agent and on / visible"
+        }
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{notes}",
+        "text": " and from another space",
+        "replace": false
+      },
+      "expect": {
+        "status": "ok"
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{reader}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.text": "Notes"
+        }
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "reader_eval": "await nib.workspace.selectSpace('{here}'); localStorage.removeItem('nib:space-tabs'); await new Promise((go) => setTimeout(go, 1000)); nib.workspace.close('{reader}'); return nib.workspace.activeSpaceId"
+    }
+  ]
+}

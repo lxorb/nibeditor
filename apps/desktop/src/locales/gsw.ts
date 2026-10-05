@@ -1816,8 +1816,6 @@ export const gsw: Dictionary = {
   'Stop agents': 'Agänte aahalte',
   Agents: 'Agänte',
   'Always on this site': 'Immer uf dere Websiite',
-  'Give back': 'Zruggää',
-  'Take over': 'Übernää',
   'Agents stopped': 'Agänte aaghalte',
   'Agent tabs closed': 'Agänte-Tabs zuegmacht',
   'nibeditor is still running for your agents': 'nibeditor lauft für dini Agänte wiiter',

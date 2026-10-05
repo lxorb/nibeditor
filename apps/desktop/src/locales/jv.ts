@@ -1797,8 +1797,6 @@ export const jv: Dictionary = {
   'Stop agents': 'Mandhegake agen',
   Agents: 'Agen',
   'Always on this site': 'Tansah ing situs iki',
-  'Give back': 'Balekake',
-  'Take over': 'Njupuk kendhali',
   'Agents stopped': 'Agen dimandhegake',
   'Agent tabs closed': 'Tab agen ditutup',
   'nibeditor is still running for your agents': 'nibeditor isih mlaku kanggo agen sampeyan',

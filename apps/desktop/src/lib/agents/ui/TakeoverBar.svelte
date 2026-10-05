@@ -1,12 +1,14 @@
 <script lang="ts">
   /** An agent waiting for the reader to do one step in this tab (docs/agent-native.md
-   *  7.3): a sign-in, a captcha, a payment. Operator's takeover, said as quietly as nib
-   *  says anything: the agent's mark, the one line it gave, and Done.
+   *  7.3): a sign-in, a captcha, a payment, the steps that are only ever the reader's.
+   *  Said as quietly as nib says anything: the agent's mark, the one line it gave, and
+   *  Done.
    *
    *  A line under the bar and not a bubble over the page, because the page is the thing
    *  the reader has to use while it is up: it takes its height from the pane like the
-   *  find bar does, and nothing hides the page. Nothing is read or photographed while
-   *  the tab is the reader's; Done hands it back. */
+   *  find bar does, and nothing hides the page. Nobody hands the tab to anybody: it is
+   *  the reader's and the agent's at once, a password field is never readable through
+   *  any tool (9.4), and Done only tells the agent the step is done. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../../i18n.svelte'

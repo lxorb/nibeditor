@@ -779,7 +779,7 @@ describe('a page out of sight', () => {
     const { agentMarks } = await import('../agent-marks.svelte')
     await built('t0')
     await built('t1')
-    agentMarks.on = { t0: { agent: 'claude', colour: '#000', paused: false } }
+    agentMarks.on = { t0: { agent: 'claude', colour: '#000', stopped: false } }
     away('t0', 30)
     away('t1', 30)
     pages.retime()

@@ -1767,8 +1767,6 @@ export const zhHans: Dictionary = {
   'Stop agents': '停止智能体',
   Agents: '智能体',
   'Always on this site': '在此网站始终',
-  'Give back': '交还',
-  'Take over': '接管',
   'Agents stopped': '已停止智能体',
   'Agent tabs closed': '已关闭智能体标签页',
   'nibeditor is still running for your agents': 'nibeditor 仍在为你的智能体运行',

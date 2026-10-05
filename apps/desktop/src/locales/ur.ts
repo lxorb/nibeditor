@@ -1804,8 +1804,6 @@ export const ur: Dictionary = {
   'Stop agents': 'ایجنٹ روکیں',
   Agents: 'ایجنٹ',
   'Always on this site': 'اس سائٹ پر ہمیشہ',
-  'Give back': 'واپس دیں',
-  'Take over': 'کنٹرول لیں',
   'Agents stopped': 'ایجنٹ روک دیے گئے',
   'Agent tabs closed': 'ایجنٹ ٹیب بند ہو گئے',
   'nibeditor is still running for your agents': 'آپ کے ایجنٹوں کے لیے nibeditor اب بھی چل رہا ہے',

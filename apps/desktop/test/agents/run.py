@@ -17,7 +17,7 @@ The exe is a probe build, as scripts/probe_app.py says. A scenario ends as one o
 
     pass      every step answered as written, and the sites saw what it says
     fail      a step did not; the exit code counts these
-    waiting   a verb, tool or hook it needs is not there yet, or it fails in a way a
+    waiting   a verb or tool it needs is not there yet, or it fails in a way a
               lane already owns (its `known` note): named, with that lane
     skipped   it cannot run here now (a picker waits for a minute of nobody at the
               machine), or not through this road
@@ -92,14 +92,6 @@ LANES = {
     "approval_status": "agent-core",
     "read_note": "agent-workspace-tools",
     "edit_note": "agent-workspace-tools",
-}
-
-#: The tests hooks a scenario may ask for, by name, and the crate's command for each.
-#: None where no lane has exposed one yet.
-HOOKS: dict[str, str | None] = {
-    # A `GotFocus` on a tab's page as the engine raises it for a reader's press, without
-    # pressing anything on this machine (docs/agent-native.md 7.3).
-    "reader_focus": "agents_test_reader_focus",
 }
 
 
@@ -316,17 +308,17 @@ class Run:
                 raise AssertionError(f"a window of the engine's appeared: {self.windows[seen:]}")
         elif "reader" in step:
             self.reader(step)
+        elif "reader_call" in step:
+            # The reader acting in a page through the engine, as the command line does: a
+            # press or words of theirs, made without touching this machine's mouse or keys.
+            said = self.probe.window.call(step["reader_call"], step.get("args", {}))
+            self.expect(said, step.get("expect", {"status": "ok"}), f"the reader's {step['reader_call']}")
         elif "reader_eval" in step:
             said = self.probe.reader(step["reader_eval"])
             if said["status"] != "ok":
                 raise AssertionError(f"the reader's own step: {said.get('message')}")
             for name, path in step.get("save", {}).items():
                 self.names[name] = dotted(said, path)
-        elif "hook" in step:
-            command = HOOKS.get(step["hook"])
-            if command is None:
-                raise Waiting(f"agent-core: a test hook for {step['hook']}")
-            self.reader({"reader": command, "args": step.get("args", {})})
         elif "pause" in step:
             time.sleep(float(step["pause"]) / 1000)
         elif "observe" in step:

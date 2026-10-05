@@ -1798,8 +1798,6 @@ export const gu: Dictionary = {
   'Stop agents': 'એજન્ટ રોકો',
   Agents: 'એજન્ટ',
   'Always on this site': 'આ સાઇટ પર હંમેશાં',
-  'Give back': 'પાછું આપો',
-  'Take over': 'નિયંત્રણ લો',
   'Agents stopped': 'એજન્ટ રોકાયા',
   'Agent tabs closed': 'એજન્ટની ટૅબ બંધ થઈ',
   'nibeditor is still running for your agents': 'તમારા એજન્ટ માટે nibeditor હજી ચાલે છે',

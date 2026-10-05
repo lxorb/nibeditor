@@ -1833,8 +1833,6 @@ export const ta: Dictionary = {
   'Stop agents': 'முகவர்களை நிறுத்து',
   Agents: 'முகவர்கள்',
   'Always on this site': 'இந்தத் தளத்தில் எப்போதும்',
-  'Give back': 'திருப்பிக் கொடு',
-  'Take over': 'கட்டுப்பாட்டை எடு',
   'Agents stopped': 'முகவர்கள் நிறுத்தப்பட்டன',
   'Agent tabs closed': 'முகவர் தாவல்கள் மூடப்பட்டன',
   'nibeditor is still running for your agents':

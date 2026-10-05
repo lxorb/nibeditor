@@ -1844,8 +1844,6 @@ export const fil: Dictionary = {
   'Stop agents': 'Itigil ang mga agent',
   Agents: 'Mga agent',
   'Always on this site': 'Palagi sa site na ito',
-  'Give back': 'Ibalik',
-  'Take over': 'Kunin ang kontrol',
   'Agents stopped': 'Itinigil ang mga agent',
   'Agent tabs closed': 'Isinara ang mga tab ng agent',
   'nibeditor is still running for your agents':

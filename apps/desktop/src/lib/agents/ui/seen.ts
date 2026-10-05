@@ -7,7 +7,7 @@
  *  off this. */
 
 import { without } from '../../records'
-import type { AgentEvent, AgentTab, Approval, Grant, Overview, PausedBy } from '../verbs'
+import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../verbs'
 
 /** An agent tab, with the agent it belongs to. */
 export interface Held extends AgentTab {
@@ -33,8 +33,6 @@ export interface Seen {
   stopped: number | null
   /** The agents stopped one at a time, and when. */
   halted: Record<string, number>
-  /** The pauses on single tabs, by `pausedKey`. */
-  paused: Record<string, PausedBy>
   /** The agents that called lately and did not say goodbye. */
   connected: string[]
   /** The last call on each tab, a reader's or an agent's own, by the tab's id. */
@@ -51,17 +49,10 @@ export function nothing(): Seen {
     approvals: [],
     stopped: null,
     halted: {},
-    paused: {},
     connected: [],
     acting: {},
     doing: {},
   }
-}
-
-/** The key a pause on one tab is kept under. A newline, since neither an agent's id
- *  nor a tab's has one. */
-export function pausedKey(agent: string, tab: string): string {
-  return `${agent}\n${tab}`
 }
 
 /** What the crate's overview says, over whatever was known: the calls seen stay,
@@ -75,9 +66,6 @@ export function overviewed(seen: Seen, overview: Overview, now: number): void {
   seen.stopped = overview.stopped ? (seen.stopped ?? now) : null
   seen.halted = Object.fromEntries(
     overview.halted.map((agent) => [agent, seen.halted[agent] ?? now]),
-  )
-  seen.paused = Object.fromEntries(
-    overview.paused.map(([agent, tab]) => [pausedKey(agent, tab), 'reader' as const]),
   )
   seen.connected = overview.connected
 }
@@ -93,11 +81,10 @@ export function heard(seen: Seen, event: AgentEvent, now: number): void {
       return
     }
     case 'paused':
-      if (event.tab !== undefined) seen.paused[pausedKey(event.agent, event.tab)] = event.by
-      else seen.halted[event.agent] = now
+      seen.halted[event.agent] = now
       return
     case 'resumed':
-      resumed(seen, event.agent, event.tab)
+      resumed(seen, event.agent)
       return
     case 'asked':
       seen.approvals = [
@@ -134,34 +121,21 @@ export function heard(seen: Seen, event: AgentEvent, now: number): void {
   }
 }
 
-/** A pause given back: the stop's when no agent is named, one agent's everywhere when
- *  no tab is, or one tab's. */
-function resumed(seen: Seen, agent: string, tab: string | undefined): void {
-  if (tab !== undefined) {
-    seen.paused = without(seen.paused, pausedKey(agent, tab))
-    return
-  }
-
+/** The stop lifted: everybody's when no agent is named, else one agent's own. */
+function resumed(seen: Seen, agent: string): void {
   if (agent === '') {
     seen.stopped = null
-    seen.paused = {}
     seen.halted = {}
     return
   }
 
   seen.halted = without(seen.halted, agent)
-  seen.paused = Object.fromEntries(
-    Object.entries(seen.paused).filter(([key]) => !key.startsWith(`${agent}\n`)),
-  )
 }
 
 /** A tab gone, the agent's own or the reader's: nothing of it is kept. */
 function closed(seen: Seen, id: string): void {
   seen.tabs = without(seen.tabs, id)
   seen.acting = without(seen.acting, id)
-  seen.paused = Object.fromEntries(
-    Object.entries(seen.paused).filter(([key]) => !key.endsWith(`\n${id}`)),
-  )
 }
 
 /** An agent wrote in a note: the tabs showing it wear its mark as a page's would. */

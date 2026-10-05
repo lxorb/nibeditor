@@ -24,10 +24,13 @@ import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
 import { hostOf } from '../../web-tab/web-data'
+import { agentMarks } from '../../agent-marks.svelte'
+import { lend, unlend } from '../../web-tab/lending'
 import { pages } from '../../web-tab/pages.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { fileNamed, isDraft, isUnsaved } from '../../workspace/drafts'
 import type { ReaderTab } from '../verbs'
+import { ACTIVE_FOR } from '../ui/marks'
 import { TYPING } from '../docs/edit'
 import { notes } from '../docs'
 import { asked } from './asks'
@@ -477,18 +480,48 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** The reader's web tabs, for the crate, which acts in them with `browser.reader`: the
- *  tab's id, its page, which space it is in and whether it is in front. */
+/** The reader's web tabs of every space's set, for the crate, which acts in them with
+ *  `browser.reader`: the tab's id, its page, the space it belongs to and whether it is
+ *  in front. A tab of a set out of sight is the reader's as much as one on screen, and an
+ *  agent reaches it the same way (docs/agent-native.md 7). */
 export function readerTabs(): ReaderTab[] {
-  const space = workspace.activeSpace?.name
   return workspace.tabs
     .filter((tab) => tab.kind === 'web')
-    .map((tab) => ({
-      id: tab.id,
-      title: tab.shown,
-      url: addressOf(tab) ?? '',
-      ...(space ? { space } : {}),
-      front: front(tab) && tab.paneId === workspace.panes.focusedId,
-      on_screen: front(tab),
-    }))
+    .map((tab) => {
+      const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
+      const home = workspace.spaceOf(tab.note)
+      const space = workspace.spaces.find((one) => one.id === home)?.name
+      return {
+        id: tab.id,
+        title: tab.shown,
+        url: addressOf(tab) ?? '',
+        ...(space ? { space } : {}),
+        front: shown && tab.paneId === workspace.panes.focusedId,
+        on_screen: shown,
+      }
+    })
+}
+
+/** How long a tab lent to an agent stays lent with no mark of the agent's on it: past
+ *  the mark's own lapse, for a call refused before the crate said it was acting. */
+const LENT_UNMARKED = ACTIVE_FOR + 5_000
+
+/** A reader's tab lent to the crate for an agent's call (`agent.lend`): its page made
+ *  to run out of sight, built first where the tab has none - which a tab of a set out
+ *  of sight may never have had - with what its pane would have told it. See
+ *  web-tab/lending.ts. */
+export async function lendTab(id: string): Promise<null> {
+  const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
+  if (!tab) return null
+
+  const page = pages.of(tab.id)
+  page.url ??= tab.address ?? workspace.webAddressOf(tab)
+  page.space ??= workspace.spaceOf(tab.note)
+  page.path = tab.path
+  page.pinned = tab.pinned
+  await lend(tab.id)
+  setTimeout(() => {
+    if (!(tab.id in agentMarks.on)) unlend(tab.id)
+  }, LENT_UNMARKED)
+  return null
 }

@@ -1809,8 +1809,6 @@ export const ps: Dictionary = {
   'Stop agents': 'اېجنټان درول',
   Agents: 'اېجنټان',
   'Always on this site': 'په دې سایټ تل',
-  'Give back': 'بېرته ورکول',
-  'Take over': 'کنټرول اخيستل',
   'Agents stopped': 'اېجنټان ودرول شول',
   'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
   'nibeditor is still running for your agents': 'nibeditor لا هم ستاسو د اېجنټانو لپاره چلېږي',

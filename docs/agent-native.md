@@ -43,10 +43,13 @@ And later the same day:
 4. **The reader's logins by default.** An agent tab is in the same web store as the
    reader's tabs, so it is signed in where they are. A task can ask for a store of the
    agent's own instead, which starts signed out, and a site can be set to require that.
-5. **Acting in the reader's own tab is visible and never in the way**: a thin accent frame
+5. **Any of the reader's tabs is the agent's too, and nothing takes it away**: every web
+   tab of every space, by its id, with the same verbs as its own. The reader clicking or
+   typing in it changes the page and nothing else - there is no lease to lose and nothing to
+   hand back (Emil, 2026-10-05). It is visible and never in the way: a thin accent frame
    round the page and the agent's mark on the tab, the element about to be pressed lit by
-   the engine's own highlight, and a press or a key from the reader pauses the agent on that
-   tab at once. The agent never takes the window or the keyboard.
+   the engine's own highlight. The agent never takes the window or the keyboard, and the
+   stop stops it.
 6. **An open note is edited as a transaction in the live editor, never by writing the
    file.** Edits name what they change by anchors (a quoted passage, a heading, a block),
    resolved against the words as they are at that moment, so a paragraph the reader wrote
@@ -121,8 +124,11 @@ What that adds up to, and what nib takes from each:
 - **Typed actions beat driving an interface** wherever the app owns the thing (App
   Intents). nib owns its notes, so the notes are typed tools, never an agent clicking about
   in the editor.
-- **Takeover is the answer for credentials** (Operator): the agent never types a password;
-  the reader does, in the tab, while the agent waits.
+- **Credentials are the reader's** (Operator): the agent never types a password; the reader
+  does, in the tab. What nib does not take from Operator and Atlas is the mode switch
+  around it - "take control", then hand back - which leaves either the reader or the agent
+  waiting on the other; Claude in Chrome, Comet, Browser Use and Playwright MCP's extension
+  all share the tab instead and re-read the page every step, and so does nib (7.3).
 - **A visible mark on what the agent is touching** is universal (Comet's outline, Atlas's
   highlight, Claude's tab group) and the thing people complain about is when it is loud
   (Chrome's debugging bar) or left behind (orphaned groups).
@@ -351,16 +357,17 @@ words from a page, a download, a PDF or a note in a shared space comes back insi
 | tool | what it answers | scope |
 | --- | --- | --- |
 | `get_context` | the space; every open tab by id with its kind, title, path or address, pane, and whether it is in front, selected, pinned, unsaved, the preview or a running terminal; the selected tab and what is selected inside it in its own terms (a note's words, caret and lines on screen, a canvas's or page note's picked objects, a terminal's selected words, a PDF's page); and whether the reader is typing right now | `context` |
-| `agent_status` | this agent's grant, its mode, its open tabs, its pending approvals, whether it is paused and by what | always |
+| `agent_status` | this agent's grant, its mode, its open tabs, its pending approvals, whether it is stopped | always |
 
 ### 5.2 The browser
 
-`tab` is an agent tab's id or a reader's web tab's id, as `browser_tabs` lists them. A
-reader's tab needs `browser.reader`; an agent's own needs `browser`.
+`tab` is an agent tab's id or a reader's web tab's id, as `browser_tabs` lists them: any
+web tab of any space the grant reaches, on screen or not. A reader's tab needs
+`browser.reader`; an agent's own needs `browser`.
 
 | tool | arguments | what it does |
 | --- | --- | --- |
-| `browser_tabs` | - | the reader's web tabs (id, title, address, space, in front, on screen) and this agent's (id, address, title, loading) |
+| `browser_tabs` | - | the reader's web tabs of every space's set (id, title, address, space, in front, on screen) and this agent's (id, address, title, loading) |
 | `browser_open` | `url`, `store`?: `reader` (default), `agent`, `space`; `space`?; `width`, `height`? | an agent tab, out of sight; answers its id and the store it is in, which is the agent's own for a site kept to it (6.3) whatever was asked |
 | `browser_navigate` | `tab`, `url` or `back`/`forward`/`reload` | |
 | `browser_wait` | `tab`, `for`: `load`, `network_idle`, `{text}`, `{ref}`, `{url}`; `timeout_ms` | network idle is no request in flight for 500 ms, counted from the engine's own network events |
@@ -384,14 +391,14 @@ reader's tab needs `browser.reader`; an agent's own needs `browser`.
 | `browser_storage` | `tab`, `op`: `cookies`, `set_cookie`, `clear`, `local` | an agent's own store only, unless `browser.storage` for the reader's |
 | `browser_close` | `tab` | |
 | `browser_show` | `tab` | asks for the agent tab to become a tab of the reader's, beside the one in front (6.7); it asks, because it changes the screen |
-| `browser_takeover` | `tab`, `reason` | asks the reader to do one step in that tab - sign in, a captcha, a payment - and answers when they hand it back (7.3) |
+| `browser_takeover` | `tab`, `reason` | asks the reader to do one step in that tab - sign in, a captcha, a payment - and answers `needs_approval`; the tab stays the agent's, and `approval_status` says `done` once the reader says so (7.3) |
 
 Four verbs of the crate's own sit beside these: `agent_status`, `approval_status`,
 `agent_pair` (the installation's secret only: a client asking to become an agent, answered
 with its token once the reader allows it) and `agent_bye` (a client going away; its tabs
 close ten minutes later unless it comes back). Every answer is one of three shapes - `ok`
 with the verb's result, `needs_approval` (9.3), or `error` with a code an agent can act on
-(`paused_by_reader`, `no_such_ref`, `password_field`, `site_denied`,
+(`stopped`, `no_such_ref`, `password_field`, `site_denied`,
 `unsupported_on_this_engine` and the rest) - and a dialog the page is holding rides on
 each. The whole contract is `src-tauri/src/agents/verbs.rs`, mirrored for the window in
 `src/lib/agents/verbs.ts`.
@@ -641,15 +648,17 @@ picture takes no input: watching can never be interacting by accident, and the r
 pointer over it is the reader's pointer over nib. The page keeps rendering out of sight, so
 the frames are real; a hidden page would have none (section 3).
 
-### 6.7 Showing, and handing back
+### 6.7 Showing
 
 **Show** on a thumbnail, or the agent's `browser_show`, makes an agent tab a tab of the
 reader's, beside the one in front, **without loading it again**: it is already a child of
-the window, so showing it is placing it where the pane is. What changes is who owns it: the
-listeners of a reader's tab are attached (keys, page-first, full screen, permissions), the
-engine's dialogs, context menu and developer tools come back, and the agent keeps acting in
-it as in any reader's tab, with the frame (7.1). `web_tabs.rs` finds a page by
-`web-<tab>` today, so this needs a map from tab to label, which is lane `agent-core`'s.
+the window, so showing it is placing it where the pane is. What changes is whose strip it
+is in: the listeners of a reader's tab are attached (keys, page-first, full screen,
+permissions), the engine's dialogs, context menu and developer tools come back, and the
+agent keeps acting in it as in any reader's tab, with the frame (7.1), under either id.
+Nothing is ever handed back: a reader's tab is the agent's as much as its own are (7.3).
+On nib's own Chromium, where an agent's page has no window to move (12.1), the reader's
+tab loads the address again.
 
 ---
 
@@ -664,7 +673,8 @@ While an agent is acting in a tab the reader can see:
   nothing of the app's can be (`web-tabs.md`, "A native webview draws above every pixel").
   Comet's outline and Atlas's highlight, said as quietly as nib says anything.
 - **The agent's mark on the tab**, in place of the site's while it acts, turning like the
-  loading mark; the tab's menu holds **Stop** and **Take over**. No words.
+  loading mark; the tab's menu holds **Stop**, which stops that agent, and **Resume** once
+  it is stopped. No words.
 - **The element about to be pressed is lit** by the engine's own inspector highlight
   (`Overlay.highlightNode`) for 300 ms before the press. It is drawn by the renderer, not
   put into the page, so the site's scripts cannot see or move it.
@@ -680,25 +690,48 @@ the page, and the window in front and the app's focus window never changed. The 
 no verb that raises, focuses, moves or resizes the window, and `workspace_tabs` opens
 behind the tab in front unless it holds `workspace.focus`.
 
-### 7.3 The reader wins
+### 7.3 Shared, never taken
 
-- **A press in the page pauses the agent on that tab at once, and it stays paused while
-  the page has the keyboard.** Seen without guessing: the engine says when a webview takes
-  the keyboard and when it lets go (`GotFocus`, `LostFocus`), and the protocol's own clicks
-  never move the keyboard - measured - so a `GotFocus` is always the reader. Typing needs
-  the keyboard, so it is covered by the same fact; a wheel over the page with no press is
-  not seen, and the agent's next snapshot simply finds the page scrolled. The frame turns
-  to the muted ink, and the agent's next call on that tab answers `paused_by_reader`. One
-  press on the tab's mark gives it back; nothing gives it back by itself (open question
-  5). The harness proves it without a press on the machine it runs on:
-  `agents_test_reader_focus`, which answers only in debug and probe builds, says what the
-  engine's `GotFocus` says, through the same function.
-- **Take over** in the tab's menu does the same on purpose; **Stop** ends the agent's work
-  in that tab and tells it so.
-- **`browser_takeover`** is the agent asking: the tab comes forward with the reason as its
-  one line under the bar, the reader does the step (a sign-in, a captcha, a payment), and
-  **Done** hands it back. Nothing is photographed or read while the tab is the reader's -
-  Operator's rule - and a password field is never readable through any tool (9.4).
+Emil, 2026-10-05: *"an agent should be able to use any of a user's tabs, and it should not
+lose access just because the user does something in it."* The first build paused an agent
+on a tab the moment the reader pressed or typed in it, until the reader pressed its mark to
+give it back - `GotFocus` on `WebView2`, and on nib's own Chromium the window asked ten
+times a second which page had the keyboard. All of it is gone, and so are Take over and
+Give back in the tab's menu and the `paused_by_reader` answer. Nobody that does this well
+locks the tab: Claude in Chrome, Comet, Browser Use and Playwright MCP's extension share it
+and re-read the page every step; Atlas's "take control" is the mode switch people wait on.
+
+- **One page, two people.** The reader's press, scroll or key is the page changing, as a
+  page changes by itself. The agent's next call reads it as it then is: a ref whose element
+  went is `no_such_ref` and a new snapshot, and every act answers where the page is after
+  it.
+- **The same field at the same moment.** Nothing locks, and nothing needs to. An agent's
+  words are one `Input.insertText` and a key one event, put into the page's own input
+  queue between the reader's keystrokes, never inside one; whichever lands last is what the
+  field says, and both see it. Locking the field instead would make one of them lose
+  without being told; this way the agent learns from its answer and its next read, and the
+  reader sees the frame and the agent's mark, and has the stop. A key the agent presses
+  goes to the element with the page's keyboard, so it re-reads before pressing one in a tab
+  the reader is typing in - and a key that changes words is refused outright in a password
+  field (`password_field`), which in a reader's tab may be the one they are typing their
+  own password into (9.4).
+- **Any tab, out of sight too.** A reader's tab behind another one, in a space out of sight,
+  or parked to give memory back has a page that is hidden, frozen or not there at all, and
+  a hidden page answers a press after five seconds or never (section 3). So before each
+  call the crate asks the window to lend it the tab (`agent.lend`): the page is built where
+  there is none, thawed where frozen, and shown to the engine outside the window - out of
+  sight, never on a screen, the way a page being photographed as its tab is left already
+  is - until the agent's mark on it lapses, when it is hidden and counts down to being
+  frozen again. The reader showing the tab meanwhile shows it as ever.
+- **The stop is the reader's one control**: the key from any app, the tray, every
+  indicator, and **Stop** in the tab's menu, which stops that agent the way its row in
+  the activity panel does (9.5); a press on a stopped agent's mark resumes it.
+- **`browser_takeover`** is the agent asking for a step only the reader may do - a sign-in,
+  a captcha, a payment: the reason is one line under the tab's bar, with **Done**, and a
+  notification. The agent is not paused and gets nothing handed back: it carries on, waits
+  for the page to change (`browser_wait`), or asks `approval_status`, which says `done`
+  once the reader pressed Done. A password field is never readable through any tool (9.4),
+  so what the reader types there is theirs whoever else is in the tab.
 
 ### 7.4 One session, one holder
 
@@ -1159,10 +1192,8 @@ its opener kept, permissions refused, downloads into the agent's folder under th
 the file chooser intercepted (and refused should one get past), a sign-in box and a client
 certificate refused and said, no context menu, no sound, and a site the agent may not visit
 stopped before it loads. A reader's tab on this engine is driven through
-`engine/devtools.rs`; nothing tells the crate when it takes the keyboard, so while an agent
-acts in one, which page of the window holds the keyboard is asked ten times a second, and
-the moment it is that tab's is the reader taking it back (Windows; on a Mac and Linux the
-reader's tabs are not an agent's on this engine, since nothing could hear them taken back).
+`engine/devtools.rs`, exactly as on `WebView2`, and nothing about who has the keyboard is
+asked: the reader using a tab takes nothing from an agent (7.3).
 
 **Only for somebody who uses agents.** Off-screen rendering is a switch CEF reads once, as it
 starts, for the whole process, and its own documentation says it can cost browsers that never
@@ -1284,7 +1315,7 @@ the app, is in `scripts/probe_app.py`'s `run_probe`).
 | `agent-harness` | a fake agent (a scripted MCP client), scenario pages (injection, a shop, a sign-in, dialogs, popups, pickers), the family watch in `probe_app.py`, the weight guard for `lib/agents`, a nightly drive | the spike; each lane's verbs as they land | 1, running through 3 |
 | `agent-mcp` | `main.rs`'s `mcp` mode, the tool schemas and descriptions, the untrusted marking, the pairing, `needs_approval` | `agent-core`'s verb contract (13.1), which it can build against a fake | 2 |
 | `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands | `agent-core`'s token and scope check | 2 |
-| `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, pause and take over, the activity panel with thumbnails, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
+| `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the activity panel with thumbnails, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
 | `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales | `agent-core`'s grant shape | 2 |
 | `agent-engines` | CEF's windowless agent tabs; `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core`; the `engine` lane's CEF switch | 3 |
 
@@ -1297,8 +1328,8 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   `lib/agents/verbs.ts` with the window's; `agent-mcp` generates the tool schemas from
   those two files, so a verb and its tool cannot drift.
 - **Events** from the crate to the window, on `nib://agent`, each with its `kind`:
-  `acting {agent, tab, verb}`, `paused {agent, tab?, by}` (`reader`, `takeover`, `stop`),
-  `resumed {agent, tab?}`, `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
+  `acting {agent, tab, verb}`, `paused {agent}` (one agent stopped on its own),
+  `resumed {agent}` (its stop lifted, or everybody's for an empty agent), `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
   title}`, `closed {agent, id}`, `stopped {closed}`, `connected {agents}` (the agents that
   called in the last ten minutes and did not say goodbye, said whenever the list
   changes). An `acting` names a shown tab by the reader's id. The activity UI is built
@@ -1310,23 +1341,23 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   settings pane through `agents_read` and `agents_write`; `agents_mint` makes one by hand
   and answers its token once.
 - **The window's commands**, each answering only nib's own window: `agents_stop`,
-  `agents_resume {agent?, tab?}`, `agents_answer {id, allow, always}` (a takeover answered
-  is the tab handed back), `agents_ask {agent, category, summary, key}` for a window verb
+  `agents_resume {agent?}`, `agents_answer {id, allow, always}`, `agents_ask {agent, category, summary, key}` for a window verb
   that asks first, `agents_state` for everything the activity panel draws at once,
   `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
   `agents_log_clear {agent?}` (Settings > Agents' Clear), and `agents_adopt {agent_tab,
   tab}` for Show (6.7). The activity
-  UI adds five: `agents_stop {agent?}` stops one agent where one is named,
-  `agents_pause {agent, tab, stop}` is Take over and a tab's Stop, `agents_watch {tabs}`
+  UI adds four: `agents_stop {agent?}` stops one agent where one is named (the panel's
+  row and a tab's Stop), `agents_watch {tabs}`
   starts the screencast of those agent tabs (and stops the rest) with its frames on
   `nib://agent-frame`, `agents_shell {key, words}` hands the crate the stop's key in the
   system's notation and the words the tray and the notifications say, and `agents_hold
   {hide}` answers whether the asking window holds the agents' pages and, with `hide`,
   hides it instead of closing it (open question 6).
 - **The window's verbs the crate asks**, on the endpoint's own road, each optional:
-  `agent.reader_tabs` (the reader's web tabs with their space and whether in front),
-  `agent.store_for {space?, url}` (which store, as `web-data.ts` decides) and
-  `agent.markdown {html, url}`. Without them the crate answers from what it knows: every
+  `agent.reader_tabs` (the reader's web tabs of every space's set, with their space and
+  whether in front), `agent.lend {tab}` (a reader's tab's page built or thawed and kept
+  running out of sight while an agent acts in it, 7.3), `agent.store_for {space?, url}`
+  (which store, as `web-data.ts` decides) and `agent.markdown {html, url}`. Without them the crate answers from what it knows: every
   reader's page it holds, the store every space shares, and the page's text.
 - **The endpoint**: an agent's token reaches the crate's verbs and, from the window's, only
   the agent verbs of sections 5.1, 5.3 and 5.4, each checked against the scope it needs
@@ -1354,9 +1385,8 @@ Each has a recommendation, and the design above assumes it.
    The agent carries on with whatever else it can.
 4. **The stop key.** Recommendation: **Ctrl+Alt+Shift+K (Ctrl+Option+Cmd+K), from any
    app**, first press pauses everything, second closes the agents' tabs.
-5. **When you click into a tab an agent is using.** Recommendation: **the agent pauses on
-   that tab until you press its mark**, never resuming by itself: a tab that starts moving
-   again while you read it is the interruption this whole design avoids.
+5. **When you click into a tab an agent is using.** Decided 2026-10-05: **nothing
+   happens to the agent**; you and it share the tab, and the stop is how you stop it (7.3).
 6. **Closing nib's last window while an agent works.** Recommendation: **the window hides
    and nib keeps working in the tray**, said once; Quit in the tray ends it. Otherwise
    closing the window ends the job and its tabs.
@@ -1373,7 +1403,7 @@ Each has a recommendation, and the design above assumes it.
     somebody else's tool does not until you say.
 11. **Showing an agent's tab.** Recommendation: **Show on its thumbnail makes it a tab of
     yours beside the one in front, without reloading**; the agent keeps working in it,
-    framed.
+    framed, and nothing is handed back.
 12. **How the local server is installed.** Recommendation: **`nib mcp`, the app's own
     binary**, with the line to paste in Settings > Agents; an HTTP address only if a client
     needs one.

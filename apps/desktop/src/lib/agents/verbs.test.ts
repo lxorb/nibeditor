@@ -24,7 +24,6 @@ import {
   type Minted,
   type Opened,
   type Overview,
-  type PausedBy,
   type ReaderTab,
   type SiteRule,
   type Store,
@@ -101,7 +100,7 @@ describe('the mirror of the crate agent verbs', () => {
     // The crate's own serialisations, as its tests pin them; typed here so a shape that
     // changes on one side fails to compile on this one.
     const asked: Answer = { status: 'needs_approval', approval: 'a17', summary: 'Place order' }
-    const paused: AgentEvent = { kind: 'paused', agent: 'claude-code', tab: 't4', by: 'reader' }
+    const paused: AgentEvent = { kind: 'paused', agent: 'claude-code' }
     const grant: Grant = {
       id: 'claude-code',
       name: 'Claude Code',
@@ -130,14 +129,19 @@ describe('the mirror of the crate agent verbs', () => {
 
   it('reads every answer and event shape the crate tests pin', () => {
     const verb: BrowserVerb = 'browser_click'
-    const code: Code = 'paused_by_reader'
+    const code: Code = 'stopped'
     const dialog: Dialog = {
       kind: 'confirm',
       message: 'Delete this?',
       url: 'https://shop.example/',
       open_ms: 12,
     }
-    const refused: Answer = { status: 'error', code, message: 'the reader is using it', dialog }
+    const refused: Answer = {
+      status: 'error',
+      code,
+      message: 'the reader pressed the stop',
+      dialog,
+    }
     const rule: SiteRule = 'deny'
     const store: Store = 'agent'
     const reader: ReaderTab = {
@@ -168,21 +172,19 @@ describe('the mirror of the crate agent verbs', () => {
       asked: 0,
       answer,
     }
-    const by: PausedBy = 'stop'
     const opened: Opened = { tab: 'a1', store }
     const overview: Overview = {
       agents: [],
       tabs: [['claude-code', own]],
       approvals: [approval],
       stopped: false,
-      paused: [['claude-code', opened.tab]],
-      halted: [],
+      halted: ['claude-code'],
       connected: ['claude-code'],
     }
-    expect(overview.tabs[0]?.[1].id).toBe('a1')
+    expect(overview.tabs[0]?.[1].id).toBe(opened.tab)
     const events: AgentEvent[] = [
       { kind: 'asked', approval },
-      { kind: 'paused', agent: 'claude-code', by },
+      { kind: 'paused', agent: 'claude-code' },
       { kind: 'tab', agent: 'claude-code', id: own.id, url: own.url, title: reader.title },
       { kind: 'connected', agents: ['claude-code'] },
     ]
