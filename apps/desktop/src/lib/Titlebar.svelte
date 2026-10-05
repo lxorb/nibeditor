@@ -9,6 +9,7 @@
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
+  import { shown as pad } from './scratchpad/is.svelte'
   import { isDraft } from './workspace/drafts'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
@@ -80,34 +81,51 @@
   }
 </script>
 
+<!-- The scratchpad's switch. It leaves the keyboard where it is; its menu moves the note. -->
+{#snippet padGlyph()}
+  {#if !__EVEN_PLUGIN__}
+    <button
+      class="nib-glyph pad"
+      class:is-on={pad.on}
+      aria-pressed={pad.on}
+      title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
+      aria-label={t('Scratchpad')}
+      onpointerdown={(event) => event.preventDefault()}
+      onclick={() => pad.toggle()}
+      oncontextmenu={(event) => {
+        event.preventDefault()
+        void import('./scratchpad/menu').then((one) => one.padMenu(event))
+      }}
+    >
+      <svg viewBox="0 0 14 14"
+        ><rect x="2.5" y="2.5" width="9" height="10" rx="1.6" /><path
+          d="M5 1.2v2.6M9 1.2v2.6M4.9 7h4.2M4.9 9.6h2.8"
+        /></svg
+      >
+    </button>
+  {/if}
+{/snippet}
+
 <!-- One row: what the app is, the button that opens the file list, the open
      notes, and the window's own buttons. On a desktop the note's name lives in
      its tab, so there is no separate title; a phone and a tablet hold one
      document, so the name is the middle of the row and the whole of the app is
      behind the dots at the end of it. -->
 <header class:lights={cornered} data-chrome="top" data-theme={chrome.theme}>
-  <!-- The application itself, at the top left corner of the screen, which is
-       where it was when there was a column of spaces to put it above. A phone
-       reaches it through the three dots at the other end of this same row
-       instead: there the left corner is the file list. -->
+  <!-- The application itself, top left; a phone has it behind the dots at the
+       other end, its left corner being the file list. -->
   {#if !viewport.touch && !mac}
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <!-- Not while there is no space and no tab: the list has nothing to list, and on a
-       fresh install the space chooser's scrim covers the panel, so the button opened
-       a list nobody could see. Asked of the workspace rather than of the chooser,
-       which is fetched with its card and stays out of the first paint. The plus
-       beside the tabs stays; a tab is what sends the chooser away. -->
+  <!-- Not while there is no space and no tab: the space chooser's scrim covers the
+       panel then. Asked of the workspace, since the chooser is fetched with its card. -->
   {#if !listless}
     <SidebarToggle />
   {/if}
 
-  <!-- With the list shut there is nothing on the screen saying which space
-       these notes are in, and the panel's own header is what usually says it.
-       So its mark stands here while the panel is away: the switcher, bare. No name,
-       since the badge says which space it is and the tabs want the room. Outside
-       the drag region, so a press on it is never a drag. -->
+  <!-- With the list shut, the space's mark stands here: the switcher, bare, and
+       outside the drag region so a press on it is never a drag. -->
   {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
     <div class="space">
       <SpaceSwitcher bare />
@@ -115,9 +133,7 @@
   {/if}
 
   {#if viewport.touch}
-    <!-- One document at a time, so its name goes here rather than a strip of
-         tabs too narrow to read: the mark for what it is, and what it is called.
-         The rest is behind the three dots. -->
+    <!-- One document at a time: its mark and name instead of a strip of tabs. -->
     <h1 class="title" data-save-anchor>
       {#if showing}<TabMark tab={showing} />{/if}
       <span class="name">{title}</span>
@@ -128,22 +144,19 @@
       {/if}
     </h1>
 
-    <!-- Everything the desktop's menu bar holds, as one menu with its groups and
-         their submenus: the same rows, the same order, asked for with the three
-         dots a phone puts at this end of a bar. See AppMenu.svelte. -->
+    <!-- The desktop's whole menu bar behind three dots; see AppMenu.svelte. -->
+    {@render padGlyph()}
     <AppMenu {view} {onpalette} {onhistory} dots />
   {:else}
-    <!-- One pane keeps its tabs up here, where a browser puts them. Split, each
-         pane carries its own strip instead, so which tabs belong to which pane
-         is never a question; see Pane.svelte. -->
+    <!-- One pane keeps its tabs up here; split, each pane has its own (Pane.svelte). -->
     {#if only}
       <Tabs paneId={only.id} caption />
     {/if}
 
-    <!-- The empty stretch is what the window is dragged by. Beside a strip of tabs
-         it is only a sliver the strip leaves, because the strip's own empty stretch
-         is the caption as well; see Tabs.svelte. -->
+    <!-- What the window is dragged by; a sliver beside a strip, whose own empty
+         stretch is the caption too (Tabs.svelte). Then the scratchpad's switch. -->
     <div class="drag" class:sliver={!!only} data-tauri-drag-region></div>
+    {@render padGlyph()}
   {/if}
 
   <!-- The other side's own button, while that side holds a panel. -->
@@ -151,15 +164,8 @@
     <SidebarToggle side="right" />
   {/if}
 
-  <!-- A page in a browser has no window of its own to minimise or close, so it
-       has none of these. Left out rather than hidden: three buttons a stylesheet
-       hides are still three buttons a screen reader reads out and a key reaches.
-
-       And out again where the reader asked for the system's own frame, for exactly
-       the same reason: the titlebar above the bar already has these three, and two
-       sets of them is one set that lies about which window it belongs to. The bar
-       itself stays - it holds the menu, the sidebar toggle and the tabs - and so
-       does the stretch the window is dragged by. See modes.svelte.ts. -->
+  <!-- Left out, not hidden, in a browser (no window of its own) and under the
+       system's own frame (which has these three already); see modes.svelte.ts. -->
   {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls">
@@ -212,6 +218,10 @@
      rather than about reading, and AppKit keeps them at the window's left edge. */
   header.lights {
     padding-left: var(--traffic-lights);
+  }
+
+  .pad {
+    align-self: center;
   }
 
   .drag {
@@ -329,8 +339,4 @@
        two; the desktop's hairline would only fight it. */
     padding-inline-start: var(--inset-start);
   }
-
-  /* The note's name is titled the way the space's name is over the list beside
-     it - `--text-head` - and the two buttons either side of it are sized where
-     they are drawn: SidebarToggle.svelte and AppMenu.svelte. */
 </style>

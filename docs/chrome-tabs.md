@@ -173,30 +173,40 @@ See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for 
 
 ### The scratchpad
 
-**One note in no space, for pasting and jotting before deciding where it goes.** The
-glyph in the sidebar's foot, Ctrl+Shift+X or **Scratchpad** in the palette open it as a
-tab, and the same again while it is in front goes back to the tab before it. Drafts'
-capture-first page, Apple's Quick Note one gesture away, and VS Code's untitled tab that
-outlives a restart without asking, as one file:
+**One note in no space, for pasting and jotting before deciding where it goes.** A
+switch, never a tab (Emil, 2026-10-05): the pad glyph at the bar's top right, beside the
+right sidebar's, is pressed while its card is up. Raycast's notes and Apple's Quick Note
+are one key both ways; VS Code's layout buttons sit in the same corner:
 
-- **A tab, not a panel.** It opens the way Edit custom CSS does, so it is the whole
-  editor, written down a moment after it changes like any note, and put back with the
-  session. Obsidian's scratchpad plugins are a text box in a side panel, and their
-  readers' complaint is that it is not a real editor and not searchable.
+- **A card docked at the window's edge.** The note's own live-preview editor in a card
+  under the bar, the panes narrowed beside it - docked rather than floating, because a
+  web tab's page is a native view that would draw over a floating card. Over the note
+  where the panels are drawers. It scales in from the glyph's corner.
+- **Never a tab.** Not in a strip, Ctrl+Tab, the closed tabs or the session's tabs;
+  opening its file from anywhere (a search hit, an agent) shows the card. A Scratchpad
+  tab an older session left is dropped on the way in, its unwritten words written first.
+- **The switch, the key, Escape.** The glyph shows and hides it and leaves the keyboard
+  where it is. Ctrl+Shift+X and the palette's **Scratchpad** do the same, but with the
+  card up and the keyboard elsewhere they put the keyboard in it, as VS Code's terminal
+  key does. Escape inside puts it away. Shown by a person it takes the keyboard, and
+  hidden it hands it back where it was.
+- **Written as it changes**, a pause after the typing stops and at once as the card or
+  the window goes; no dot. Whether it is up and how wide (its edge drags) are kept per
+  window and are the same in every space, since it is the one note in no space.
 - **The app's own, not a space's.** `Scratchpad.md` beside `custom.css` in the app's
   settings folder (`scratchpad_path` in themes.rs; `openable` admits it), the same note
   from every space; the browser build keeps it in a dot folder no space lists. Its name
   is its file's, the same in every language.
 - **Found from every space**: the Search panel reads it with each search
   (`search/scratchpad.ts`), and no replacement across a space touches it.
-- **Move to space makes it a note.** Its tab's Move to space - and the palette's, and a
-  drop onto the switcher - writes it into that space's root, named by its first line,
-  opens the note in its place and empties the scratchpad; the space on screen is offered
-  too. It does not travel as a tab, as every other tab does.
+- **Move to space makes it a note.** The glyph's right click offers Move to space: it is
+  written into that space's root, named by its first line, opened, and the scratchpad
+  emptied and put away; the space on screen is offered too.
 - A quick question's **Add to note** with no note in front lands on its end; see
   docs/ai.md.
 
-See `scratchpad/is.ts` for which file it is and `scratchpad/pad.ts` for what it does.
+See `scratchpad/is.svelte.ts` for which file it is and whether the card is up,
+`scratchpad/pad.ts` for what it does and `scratchpad/ScratchpadCard.svelte` for the card.
 
 ## Motion
 

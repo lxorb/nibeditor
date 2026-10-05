@@ -24,6 +24,7 @@
   import Suggest from './Suggest.svelte'
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
+  import { isScratchpad } from './scratchpad/is.svelte'
   import { type Entry, workspace } from './workspace.svelte'
   import { dur } from './motion'
 
@@ -258,6 +259,13 @@
     if (hit.tab !== undefined) {
       workspace.activate(hit.tab)
       ongoto?.(hit.line)
+      return
+    }
+
+    // The scratchpad is its card, at the line.
+    if (isScratchpad(hit.path)) {
+      const { scratchpad } = await import('./scratchpad/pad')
+      scratchpad.show(hit.line)
       return
     }
 

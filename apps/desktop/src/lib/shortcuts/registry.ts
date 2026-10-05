@@ -25,7 +25,7 @@ import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd } from '../surfaces.svelte'
-import { toggleScratchpad } from '../scratchpad/is'
+import { toggleScratchpad } from '../scratchpad/is.svelte'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
@@ -940,9 +940,9 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod Mod',
     run: () => askQuickly(),
   },
-  // The one note in no space; pressed again while it is in front, back to the tab
-  // before it. Ctrl+Shift, which a terminal hands the app, and no browser's or any
-  // other app's key nib keeps a keyboard of. See scratchpad/pad.ts.
+  // The one note in no space, its card up and away again. Ctrl+Shift, which a
+  // terminal hands the app, and no browser's or any other app's key nib keeps a
+  // keyboard of. See scratchpad/pad.ts.
   {
     id: 'app.scratchpad',
     label: () => t('Scratchpad'),

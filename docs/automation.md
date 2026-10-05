@@ -227,7 +227,7 @@ naming it is "there is no space called" like a name nobody has.
 
 Every tab of the reader's is reached by its id as well as by its path, so "the tab in
 front" is one id whatever it holds (`lib/agents/workspace/tab-target.ts`): a note's verbs
-take a note tab - one with a file, a draft, the scratchpad - a canvas's take a canvas or
+take a note tab - one with a file or a draft - a canvas's take a canvas or
 page note tab drawn and never saved, `read_terminal` and `type_terminal` take a terminal,
 and the browser's verbs take a web tab. `get_context` lists them all, with the selected
 one and what is selected in it. `workspace_tabs` makes, opens, renames and saves them

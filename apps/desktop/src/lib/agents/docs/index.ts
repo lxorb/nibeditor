@@ -19,8 +19,6 @@ import { invoke } from '../../tauri'
 import { theme } from '../../theme.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
-import { isScratchpad } from '../../scratchpad/is'
-import type { NoteDoc } from '../../workspace/documents.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { type Desk, located, type NoteAt } from './desk'
 import {
@@ -51,14 +49,6 @@ export interface NoteDocs {
   undoAgent(agent: Agent, at: NoteAt): Promise<{ undone: number }>
 }
 
-/** A note a tab holds that is in no space's folder: a draft with no file yet, and the
- *  scratchpad, which is the same note from every space. Both are reached by their tab
- *  and edited as the open document they always are; the scratchpad is written down as
- *  it changes, like any open note. */
-function inNoSpace(note: NoteDoc): boolean {
-  return isDraft(note) || isScratchpad(note.path)
-}
-
 /** The app itself, as the docs see it. */
 const desk: Desk = {
   get spaces() {
@@ -84,7 +74,7 @@ const desk: Desk = {
   },
   draftIn(id) {
     const tab = workspace.tabs.find((one) => one.id === id)
-    return tab?.kind === 'note' && inNoSpace(tab.note) ? tab.note : null
+    return tab?.kind === 'note' && isDraft(tab.note) ? tab.note : null
   },
   scheme: () => theme.current,
 }

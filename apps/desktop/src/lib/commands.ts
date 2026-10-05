@@ -70,7 +70,7 @@ import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
-import { isScratchpad, toggleScratchpad } from './scratchpad/is'
+import { toggleScratchpad } from './scratchpad/is.svelte'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
@@ -452,9 +452,8 @@ function tabCommands(): Command[] {
       disabled: !tab || !workspace.canRenameFromTab(tab),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
-    // Left out with one space, but for the scratchpad, which becomes a note in the one
-    // there is; see tab-strip/to-space.ts, fetched with the press.
-    ...(tab && (workspace.spaces.length > 1 || isScratchpad(tab.path))
+    // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
+    ...(tab && workspace.spaces.length > 1
       ? [
           {
             id: 'move-to-space',

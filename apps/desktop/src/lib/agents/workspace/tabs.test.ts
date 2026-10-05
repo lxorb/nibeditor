@@ -1,6 +1,6 @@
 /** Every kind of tab, as an agent sees and works it: where the reader is and what they
  *  have selected, a tab of each kind made behind the one in front, a page, the graph and
- *  the scratchpad opened, a tab renamed and saved, a note, a canvas and a terminal
+ *  the scratchpad's card shown, a tab renamed and saved, a note, a canvas and a terminal
  *  reached by the tab's id - and, the core of it, what none of these does without
  *  `workspace.focus`: change what the reader is looking at (docs/agent-native.md 5.4).
  *
@@ -175,8 +175,9 @@ const trash = {
 }
 vi.mock('../../trash.svelte', () => ({ trash }))
 
+const showPad = vi.fn()
 vi.mock('../../scratchpad/pad', () => ({
-  scratchpad: { where: () => Promise.resolve('/app/Scratchpad.md') },
+  scratchpad: { where: () => Promise.resolve('/app/Scratchpad.md'), show: showPad },
 }))
 
 const docs = {
@@ -299,7 +300,7 @@ beforeEach(() => {
       shown: 'PowerShell',
       doc: JSON.stringify({ shell: 'pwsh', folder: null, key: 'k1' }),
     }),
-    tab('s1', 'note', '/app/Scratchpad.md', { shown: 'Scratchpad', pinned: true }),
+    tab('s1', 'note', '/s/Work/Pinned.md', { shown: 'Pinned', pinned: true }),
   ]
   showing.p1 = 'n1'
   showing.p2 = 'c1'
@@ -326,11 +327,9 @@ describe('where the reader is', () => {
         { id: 'd1', unsaved: true, preview: true, front: false },
         { id: 'c1', kind: 'canvas', unsaved: true, pane: 'p2', front: true, selected: false },
         { id: 't1', kind: 'terminal', running: false },
-        { id: 's1', scratchpad: true, pinned: true },
+        { id: 's1', path: 'Pinned.md', pinned: true },
       ],
     })
-    // The scratchpad is in no space, so it has no path in one.
-    expect((said.result.tabs as Record<string, unknown>[])[4]).not.toHaveProperty('path')
   })
 
   test('the selection is the selected tab kind', async () => {
@@ -429,14 +428,12 @@ describe('opening', () => {
     await call('workspace_tabs', { op: 'open', view: 'graph' }, agent(focusing))
     expect(workspace.openGraph).toHaveBeenCalled()
 
-    // The scratchpad already in the strip is the one answered.
+    // The scratchpad is its card, never a tab, and behind leaves the keyboard alone.
     expect(await call('workspace_tabs', { op: 'open', view: 'scratchpad' })).toMatchObject({
-      result: { id: 's1', scratchpad: true },
+      result: { scratchpad: true },
     })
-    expect(workspace.open).toHaveBeenCalledWith('/app/Scratchpad.md', {
-      activate: false,
-      beside: true,
-    })
+    expect(showPad).toHaveBeenCalledWith(null, false)
+    expect(workspace.open).not.toHaveBeenCalled()
   })
 })
 
@@ -510,14 +507,14 @@ describe('a file of every kind', () => {
   })
 })
 
-describe('a note, a canvas and the scratchpad, by their tab', () => {
-  test('a file tab is read as its path; the scratchpad and a draft by the tab', async () => {
+describe('a note and a canvas, by their tab', () => {
+  test('a file tab is read as its path; a draft by the tab', async () => {
     await call('read_note', { tab: 'n1' })
     expect(docs.readNote).toHaveBeenLastCalledWith({ path: 'Plan.md', space: 'work' }, undefined)
 
-    await call('read_note', { tab: 's1' })
+    await call('read_note', { tab: 'd1' })
     expect(docs.readNote).toHaveBeenLastCalledWith(
-      { path: '', space: 'work', tab: 's1' },
+      { path: '', space: 'work', tab: 'd1' },
       undefined,
     )
 

@@ -16,7 +16,6 @@ import type { AgentAnswer } from '../../automation/caller'
 import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
-import { isScratchpad } from '../../scratchpad/is'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
@@ -31,8 +30,7 @@ import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } 
 /** The note a call names, in a space it may reach: its place, and its path as the
  *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
  *  `get_context` lists: one with a file is that file, as though its path were said, and
- *  one in no space - a note with no file yet (workspace/drafts.ts), the scratchpad - is
- *  reached by the tab alone. */
+ *  a note with no file yet (workspace/drafts.ts) is reached by the tab alone. */
 export function noteOf(
   call: Call,
   writing: boolean,
@@ -61,10 +59,9 @@ export function noteOf(
   return { place, relative }
 }
 
-/** The space of a note tab in no space's folder: a draft's own, the open one for the
- *  scratchpad. */
+/** The space of a note tab with no file: the draft's own. */
 function spaceOfTab(tab: Tab): string {
-  const space = isDraft(tab.note) || isScratchpad(tab.path) ? workspace.spaceOf(tab.note) : null
+  const space = isDraft(tab.note) ? workspace.spaceOf(tab.note) : null
   if (space === null) {
     throw new Refused('no_such_tab', `tab ${tab.id} holds a note outside every space`)
   }

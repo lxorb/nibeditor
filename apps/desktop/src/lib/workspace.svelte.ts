@@ -87,6 +87,7 @@ import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
+import { isScratchpad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import {
@@ -820,6 +821,14 @@ class Workspace {
       for (const written of drafts) {
         // Spelled as the listing spells it, whatever the sitting wrote down.
         const draft = written.path ? { ...written, path: this.spelled(written.path) } : written
+
+        // Never a tab: an older nib's goes, its unwritten words written first.
+        if (isScratchpad(draft.path)) {
+          if (draft.dirty && draft.path)
+            await writeFile(draft.path, draft.doc).catch(() => undefined)
+          made.push(null)
+          continue
+        }
 
         // A tab from a sitting before nib stopped opening files from outside its
         // spaces goes quietly: nothing in nib opens that file any more.
@@ -2374,6 +2383,12 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean } = {}) {
     const path = this.spelled(asked)
+    // Never a tab: its card, wherever it is opened from.
+    if (isScratchpad(path)) {
+      const { scratchpad } = await import('./scratchpad/pad')
+      scratchpad.show()
+      return
+    }
 
     // One open of a file at a time, whoever asked: a second click on the row, a link
     // followed twice, a note clicked while the session is still reading that very

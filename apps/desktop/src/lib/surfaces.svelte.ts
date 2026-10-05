@@ -254,6 +254,13 @@ export const quickSheet = latched(() =>
     : import('./QuickQuestion.svelte'),
 )
 
+/** The scratchpad's card; see scratchpad/pad.ts. */
+export const scratchpadCard = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('not in the plugin'))
+    : import('./scratchpad/ScratchpadCard.svelte'),
+)
+
 /** The red dot, the clock and the stop, which is the whole of what the window says
  *  about an open microphone. Latched rather than drawn while a recording runs, because
  *  the pill is what stays up while what was recorded is still being written down; the
