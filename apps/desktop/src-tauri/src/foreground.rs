@@ -46,7 +46,9 @@
 //!   centres itself, a menu, a tooltip and a window put back where it was all go there.
 //!   nib's own Chromium's other processes - the GPU's, a utility's - hold theirs the same
 //!   way (`hold_helper`); its switches keep the dialogs it can be talked out of from being
-//!   raised at all (see src-tauri/cef).
+//!   raised at all (see src-tauri/cef). Some systems refuse every in-context event hook,
+//!   whatever the module (`in_context_refusal`); there the process says so on stderr at
+//!   its start, and only the watch in `scripts/probe_app.py` stands behind such a dialog.
 //!
 //! And the app's own ways of asking for the keyboard do nothing under the switch; see
 //! `raised` and `keyboard_to` in placement.rs. A drive that types into a probe does it
@@ -79,7 +81,7 @@ pub fn hold() -> bool {
     if crate::placement::asked_away() {
         let locked = held::lock();
         held::on_this_thread();
-        held::on_every_thread(0);
+        held::every_thread_or_say();
         return locked;
     }
     false
@@ -92,7 +94,7 @@ pub fn hold() -> bool {
 pub fn hold_helper() {
     #[cfg(windows)]
     if crate::placement::asked_away() {
-        held::on_every_thread(0);
+        held::every_thread_or_say();
     }
 }
 
@@ -191,6 +193,64 @@ mod held {
                 WINEVENT_INCONTEXT,
             );
             (!hook.is_invalid()).then_some(hook)
+        }
+    }
+
+    /// `on_every_thread(0)`, and a line on stderr where the system refuses it: a window
+    /// another thread makes is then not held, and a drive has to know that.
+    pub fn every_thread_or_say() {
+        if on_every_thread(0).is_none() {
+            eprintln!(
+                "nib: the system refused the window-event hook ({}); a window another \
+                 thread makes is not held off the screens",
+                in_context_refusal()
+                    .map_or_else(|| "this module".to_owned(), |code| code.to_string())
+            );
+        }
+    }
+
+    /// Why the system refuses every in-context event hook here, or None where it grants
+    /// one: asked with user32's own module, which every process has. Some machines refuse
+    /// them all with `ERROR_MOD_NOT_FOUND` (126), whatever the module - this ARM64 Windows
+    /// 11 among them, verified 2026-10-05 for an x64 and an ARM64 process alike - where a
+    /// Windows runner grants them.
+    #[allow(
+        unsafe_code,
+        reason = "setting and removing an event hook are Win32 calls"
+    )]
+    pub fn in_context_refusal() -> Option<u32> {
+        use windows::core::w;
+        use windows::Win32::Foundation::GetLastError;
+        use windows::Win32::UI::Accessibility::UnhookWinEvent;
+
+        unsafe extern "system" fn nothing(
+            _hook: HWINEVENTHOOK,
+            _event: u32,
+            _window: HWND,
+            _object: i32,
+            _child: i32,
+            _thread: u32,
+            _time: u32,
+        ) {
+        }
+
+        // Safe: a hook on this process that hears nothing it acts on, removed at once.
+        unsafe {
+            let module = GetModuleHandleW(w!("user32.dll")).ok()?;
+            let hook = SetWinEventHook(
+                EVENT_OBJECT_CREATE,
+                EVENT_OBJECT_CREATE,
+                module,
+                Some(nothing),
+                GetCurrentProcessId(),
+                0,
+                WINEVENT_INCONTEXT,
+            );
+            if hook.is_invalid() {
+                return Some(GetLastError().0);
+            }
+            let _ = UnhookWinEvent(hook);
+            None
         }
     }
 
@@ -577,6 +637,16 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn a_dialog_any_thread_raises_is_never_on_a_screen() {
+        // Only where the system grants no in-context hook to any module at all: then what
+        // is asked here cannot be done on this machine, and the run says so. Where it
+        // grants one, the hook below must be granted too, or this fails.
+        if let Some(code) = super::held::in_context_refusal() {
+            eprintln!(
+                "skipped: this system refuses every in-context event hook (error {code}), \
+                 whatever the module; a Windows runner holds this test"
+            );
+            return;
+        }
         let plain = a_message_box_watched(false);
         assert!(plain.seen, "the plain dialog never appeared");
         assert!(
