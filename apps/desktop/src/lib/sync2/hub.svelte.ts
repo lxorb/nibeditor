@@ -360,7 +360,7 @@ function madeId(): string {
 
 /** This device's id: the one the account's sync store keeps (section 9.2), which is
  *  the id the engine's documents are written under too, else one of its own. */
-async function deviceId(): Promise<string> {
+export async function deviceId(): Promise<string> {
   const user = account.user
   if (user) {
     try {

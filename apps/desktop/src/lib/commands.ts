@@ -1096,6 +1096,35 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
+    // A shell on the reader's machine in the cloud, on every device; and its machine
+    // started or stopped by hand. Never by a link or the command line, as a terminal
+    // here is not. See docs/online-terminal.md 4.10.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
+            id: 'new-online-terminal',
+            label: t('New online terminal'),
+            ownWindow: true,
+            run: () => void import('./online/open').then(({ openOnline }) => openOnline()),
+          },
+          {
+            id: 'start-online-machine',
+            label: t('Start online machine'),
+            ownWindow: true,
+            run: () =>
+              void import('./online/machine.svelte').then(({ machine }) => machine.startStop(true)),
+          },
+          {
+            id: 'stop-online-machine',
+            label: t('Stop online machine'),
+            ownWindow: true,
+            run: () =>
+              void import('./online/machine.svelte').then(({ machine }) =>
+                machine.startStop(false),
+              ),
+          },
+        ]),
     // Only where there is something to convert, which is a space that was written in
     // an older nib: a row that did nothing would be a row that read as broken. See
     // workspace.convertWebsites.

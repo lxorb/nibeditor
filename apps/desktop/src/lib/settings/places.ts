@@ -74,6 +74,15 @@ export function places(): Place[] {
     })
   }
 
+  // The account's machine; see online/OnlinePane.svelte.
+  if (!__EVEN_PLUGIN__ && account.user) {
+    all.push({
+      section: 'online',
+      label: t('Online terminal'),
+      text: [t('Machine'), t('Start'), t('Stop'), t('Hours'), 'CPU'],
+    })
+  }
+
   if (account.user) {
     all.push({
       section: 'llm',

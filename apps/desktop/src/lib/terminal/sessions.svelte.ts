@@ -30,14 +30,15 @@ import { i18n, key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
 import { showCombination } from '../keys'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
-import { Channel } from '../native'
 import { tabAsk } from '../new-tab'
 import { owes } from '../parting'
 import { SHORTCUTS, shortcuts } from '../shortcuts.svelte'
-import { isNumber, isRecord } from '../stored'
 import { remote } from '../remote/hosts.svelte'
 import { madeNow, markMade } from '../remote/open'
-import { invoke, platform } from '../tauri'
+import { platform } from '../tauri'
+import { isMadeName, isOnlineTab, termName } from '../online/path'
+import { marks } from '../online/marks.svelte'
+import { resumeCommand } from '../online/resume'
 import { type Tab, workspace } from '../workspace.svelte'
 import {
   dropHistory,
@@ -57,6 +58,7 @@ import { Front, terminalName } from './naming'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
+import { type Machine, PtySource, type Said, type Source } from './source'
 import { hostIdOf, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 /** How many lines a terminal remembers above its screen: Windows Terminal keeps about
@@ -136,6 +138,34 @@ class Session {
 
   /** The session the shell runs under, or null between shells. */
   private pty: string | null = null
+  /** Where the screen is fed from while it is: the pty, or the socket to an online
+   *  session. See source.ts. */
+  private source: Source | null = null
+  /** Whether this is an online terminal: a `.term` naming a session on the reader's
+   *  machine, fed by a socket rather than a pty. See lib/online and
+   *  docs/online-terminal.md. */
+  readonly online: boolean
+  /** For an online terminal: what its cached screen is kept under, `online-<session>`,
+   *  once the file has been read. */
+  private onlineKey = ''
+  /** For an online terminal: whether a screen the session sent has been drawn, after
+   *  which a reconnect is sent only what it missed. */
+  private screened = false
+  /** For an online terminal: whether keys typed here reach the session, which is the
+   *  machine's owner's alone unless they let the space's writers in. */
+  private mayType = true
+  /** True while a size the session decided is put on the screen, which is not this
+   *  screen's own to send back. */
+  private applying = false
+
+  /** For an online terminal: whether what is drawn is the session as it is now, rather
+   *  than the cached screen or one whose socket has dropped, which is drawn dimmed. */
+  live = $state(true)
+  /** For an online terminal: the machine's state, which the tab's mark shows. */
+  machine = $state<Machine | null>(null)
+  /** For an online terminal a machine's restart stopped an agent in: the command
+   *  Resume types, while the bar offering it is up. See online/resume.ts. */
+  resumable = $state<string | null>(null)
   /** How many shells this tab has started, which names each one. */
   private started = 0
   private opened = false
@@ -189,6 +219,8 @@ class Session {
   found = $state({ count: 0, at: -1 })
 
   constructor(readonly tab: Tab) {
+    this.online = isOnlineTab(tab)
+    this.live = !this.online
     this.host.className = 'nib-terminal'
     const conpty = windowsPty()
     this.term = new Terminal({
@@ -276,6 +308,24 @@ class Session {
   /** What the strip calls the tab, and the program it wears, out of what is known now;
    *  see naming.ts. Nothing for a tab the reader named: their name is its own name. */
   private named(spec = this.spec(), shell = this.tab.name) {
+    if (this.online) {
+      // The file's name, unless it is still the `Terminal` it was made as: then what runs
+      // in it, as a local terminal says. See docs/online-terminal.md 4.10.
+      const file = termName(shell)
+      const name = isMadeName(file)
+        ? terminalName({
+            given: null,
+            title: this.front.title,
+            program: this.front.program,
+            shell: file,
+            folder: null,
+          })
+        : file
+      this.running(name, this.front.program, null, null)
+      marks.set(this.tab.id, this.machine)
+      return
+    }
+
     const host = hostIdOf(spec.shell)
     if (host !== null) {
       // Another machine is its host's name and colour, whatever runs there: nothing on
@@ -313,11 +363,13 @@ class Session {
 
   /** Whether this terminal reaches another machine rather than a shell on this one. */
   private get remote(): boolean {
-    return hostIdOf(this.spec().shell) !== null
+    return this.online || hostIdOf(this.spec().shell) !== null
   }
 
-  /** A program's title, which is the tab's name while it runs; see `Front`. */
+  /** A program's title, which is the tab's name while it runs; see `Front`. An online
+   *  session is told its program and title by the machine instead. */
   private titled(title: string) {
+    if (this.online) return
     if (this.front.titled(title)) this.askSoon()
     this.named()
   }
@@ -337,13 +389,14 @@ class Session {
 
   private async askFront() {
     const pty = this.pty
-    if (pty === null) return
+    const source = this.source
+    if (pty === null || !(source instanceof PtySource)) return
 
     this.asked = Date.now()
-    const found = await invoke<unknown>('pty_program', { id: pty }).catch(() => undefined)
+    const found = await source.program()
     if (pty !== this.pty || found === undefined) return
 
-    this.front.looked(typeof found === 'string' && found ? found : null)
+    this.front.looked(found)
     this.named()
   }
 
@@ -368,7 +421,8 @@ class Session {
 
   /** Where this tab's history is kept; see history.ts. */
   private place(): Place {
-    return placeOf(this.tab)
+    // An online terminal's cached screen is its session's, wherever its file is.
+    return this.online ? { space: null, key: this.onlineKey } : placeOf(this.tab)
   }
 
   /** Drawn inside `place`: opened the first time, with the screen it had last time put
@@ -401,6 +455,14 @@ class Session {
    *  a key of its own instead, so two tabs never write one file, and so is a tab from
    *  before there were keys. */
   private async lastScreen(): Promise<History | null> {
+    // An online terminal's last screen is the one cached from the last visit, drawn at
+    // once while the socket opens; see docs/online-terminal.md 4.12.
+    if (this.online) {
+      const { cacheKey } = await import('../online/source')
+      this.onlineKey = await cacheKey(this.tab.doc, this.tab.path)
+      return this.onlineKey && shells.restoring ? historyOf(this.place()) : null
+    }
+
     const spec = this.spec()
     const twin = [...sessions.values()].some(
       (other) => other !== this && other.opened && other.spec().key === spec.key,
@@ -434,6 +496,17 @@ class Session {
     this.replaying = true
     const { cols, rows } = history
     if (cols >= 2 && cols <= 1000 && rows >= 1 && rows <= 500) this.term.resize(cols, rows)
+
+    // An online session is still running: its cached screen is drawn as it was, dimmed
+    // until the session's own replaces it, with no line between it and a new shell.
+    if (this.online) {
+      this.term.write(history.text, () => {
+        fitted()
+        this.begin()
+      })
+      return
+    }
+
     const when = i18n.when(history.at, { dateStyle: 'medium', timeStyle: 'short' })
     const words = t('Restored {time}', { time: when })
 
@@ -453,7 +526,9 @@ class Session {
    *  restart, which waits for Reconnect: a window coming back should not knock on every
    *  machine it once reached before anybody has looked. See remote/open.ts. */
   private begin() {
-    if (this.remote && !madeNow(this.spec().key)) this.wait()
+    // An online terminal connects as it is first on screen, which wakes its machine.
+    if (this.online) void this.start()
+    else if (this.remote && !madeNow(this.spec().key)) this.wait()
     else void this.start()
   }
 
@@ -466,6 +541,14 @@ class Session {
   /** Connects again: the bar's button, and Enter while it is up. Whatever the last
    *  program there left on goes first, as it does before any new shell. */
   reconnect() {
+    if (this.online) {
+      if (!this.drawn) return
+      this.source?.end()
+      this.source = null
+      void this.start()
+      this.focus()
+      return
+    }
     if (this.pty !== null || !this.drawn) return
     const host = hostIdOf(this.spec().shell)
     if (host !== null) remote.connected(host)
@@ -523,16 +606,22 @@ class Session {
     clearTimeout(this.asking)
     this.unwatch()
     const place = this.place()
-    if (this.drawn || !shells.restoring) {
+    if (this.online) {
+      // Nothing ends with an online terminal's tab: its session runs on, and its cached
+      // screen stays for the file opening again.
+      this.remember()
+    } else if (this.drawn || !shells.restoring) {
       dropHistory(place, shells.restoring ? this.snapshot() : null)
     } else {
       // Never drawn: what it had is the file's, which goes into memory on its way out.
       void (this.coming ?? historyOf(place)).then((last) => dropHistory(place, last))
     }
 
-    if (this.pty !== null) void invoke('pty_kill', { id: this.pty }).catch(() => undefined)
+    this.source?.end()
+    this.source = null
     this.pty = null
     setPty(this.tab.id, null)
+    marks.delete(this.tab.id)
     clearTimeout(this.resting)
     this.watching.disconnect()
     this.term.dispose()
@@ -581,22 +670,22 @@ class Session {
     this.pty = id
     this.exited = null
     this.offline = false
-    setPty(this.tab.id, id)
+    // An online session is never this window's to end, so nothing asks before it goes.
+    if (!this.online) setPty(this.tab.id, id)
     this.front = new Front(spec.shell.startsWith('wsl:'))
     this.named()
 
-    const output = new Channel<unknown>()
-    output.onmessage = (message) => this.heard(id, message)
+    const source = this.online
+      ? (await import('../online/source')).onlineSource(() => this.tab.path)
+      : new PtySource(id, spec.shell, spec.folder, this.remote)
+    if (this.pty !== id) {
+      source.end()
+      return
+    }
+    this.source = source
 
     const { cols, rows } = this.term
-    this.spawning = invoke('pty_spawn', {
-      id,
-      shell: spec.shell,
-      folder: spec.folder,
-      cols,
-      rows,
-      output,
-    })
+    this.spawning = source.start(cols, rows, (what) => this.heard(id, what))
 
     try {
       await this.spawning
@@ -616,6 +705,7 @@ class Session {
    *  it. Otherwise a line saying so, and Enter tries again. */
   private async failed(spec: Spec) {
     this.pty = null
+    this.source = null
     setPty(this.tab.id, null)
 
     // Another machine is never swapped for a shell on this one.
@@ -639,24 +729,70 @@ class Session {
     this.say(t('Could not start {shell}', { shell: this.tab.shown }))
   }
 
-  /** What the shell sent: bytes to draw, or the code it exited with. */
-  private heard(id: string, message: unknown) {
+  /** What the source said: bytes to draw, the code the shell exited with, and for an
+   *  online session what its machine knows. See source.ts. */
+  private heard(id: string, what: Said) {
     if (id !== this.pty) return
 
-    if (message instanceof ArrayBuffer) {
-      const bytes = new Uint8Array(message)
+    if ('out' in what) {
+      const bytes = what.out
       // Said once drawn, which is what lets the crate send more; see MOST_UNSEEN.
-      this.through(
-        bytes,
-        () => void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined),
-      )
+      this.through(bytes, () => this.source?.seen(bytes.length))
       this.printed()
       clearTimeout(this.waitingIdle)
       this.waitingIdle = setTimeout(() => void this.idle(), RESTING)
-      return
+    } else if ('exit' in what) this.exitedWith(what.exit ?? -1)
+    else if ('screen' in what) this.screen(what)
+    else if ('size' in what) this.applied(what.size.cols, what.size.rows)
+    else if ('program' in what) {
+      this.front.told(what.program, what.title)
+      this.named()
+    } else if ('machine' in what) {
+      this.machine = what.machine
+      this.named()
+    } else if ('connected' in what) this.live = what.connected && this.screened
+    else if ('typing' in what) this.mayType = what.typing
+    else {
+      this.say(what.refused)
+      this.wait()
     }
+  }
 
-    if (isRecord(message) && isNumber(message.exit)) this.exitedWith(message.exit)
+  /** An online session's whole screen, drawn in place of whatever was: the cached one,
+   *  or one a reconnect could not be sent the rest of. At the session's size, then fitted
+   *  to the pane, which tells the session this screen's size. Live from here. */
+  private screen(screen: Extract<Said, { screen: string }>) {
+    this.term.reset()
+    this.applied(screen.cols, screen.rows)
+    this.term.write(screen.screen, () => {
+      this.screened = true
+      this.live = true
+      this.printed()
+      this.fit()
+      // An agent a machine's restart stopped: Resume offers its own continue command.
+      if (screen.restored) this.resumable = resumeCommand(screen.restored.program)
+    })
+  }
+
+  /** A size the session decided, put on the screen without being said back. */
+  private applied(cols: number, rows: number) {
+    if (cols === this.term.cols && rows === this.term.rows) return
+    this.applying = true
+    try {
+      this.term.resize(cols, rows)
+    } finally {
+      this.applying = false
+    }
+  }
+
+  /** Resume: the bar's button, and Enter while it is up. */
+  resume() {
+    const command = this.resumable
+    this.resumable = null
+    if (command === null) return
+    this.outgoing.push({ data: `${command}\r`, binary: false })
+    void this.send()
+    this.focus()
   }
 
   /** Output onto the screen, in order, cut at each prompt mark: where the shell begins a
@@ -702,11 +838,12 @@ class Session {
     if (this.front.worthLooking) this.askSoon(0)
 
     const pty = this.pty
+    const source = this.source
     if (this.marks || pty === null || this.spec().shell.startsWith('wsl:') || this.remote) return
-    if (!reporting(this.left())) return
+    if (!(source instanceof PtySource) || !reporting(this.left())) return
 
-    const busy = await invoke<unknown>('pty_busy', { id: pty }).catch(() => true)
-    if (busy !== false || pty !== this.pty || !reporting(this.left())) return
+    const busy = await source.busy()
+    if (busy || pty !== this.pty || !reporting(this.left())) return
     this.term.write(tidied(this.left(), true, false))
   }
 
@@ -714,6 +851,16 @@ class Session {
    *  with it - `exit`, Ctrl+D; with an error, and it stays to be read, with a line
    *  saying how it ended, and Enter starts it again. */
   private exitedWith(code: number) {
+    // An online session's shell ended: the file and its screen stay, with the line saying
+    // the code, and Enter starts a new shell in the same session (4.5).
+    if (this.online) {
+      this.front = new Front(false)
+      this.named()
+      this.exited = code
+      this.say(t('Exited with code {code}', { code }))
+      return
+    }
+
     this.pty = null
     setPty(this.tab.id, null)
     this.front = new Front(false)
@@ -743,6 +890,10 @@ class Session {
   /** What was typed, on its way to the shell - or, after a shell that ended badly,
    *  Enter to start another. */
   private typed(data: string, binary: boolean) {
+    if (this.online) {
+      this.typedOnline(data, binary)
+      return
+    }
     if (this.pty === null) {
       if (this.offline && data === '\r') this.reconnect()
       else if (this.exited !== null && data === '\r') {
@@ -763,6 +914,31 @@ class Session {
     if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)
   }
 
+  /** A key in an online terminal: Reconnect or Resume where their bar is up, a new shell
+   *  after one ended, and otherwise the session's - if this window may type in it. */
+  private typedOnline(data: string, binary: boolean) {
+    if (this.offline) {
+      if (data === '\r') this.reconnect()
+      return
+    }
+    if (this.resumable !== null && data === '\r') {
+      this.resume()
+      return
+    }
+    this.resumable = null
+    if (this.exited !== null) {
+      if (data !== '\r') return
+      this.exited = null
+      this.term.write('\r\n')
+      this.source?.again?.()
+      return
+    }
+    if (!this.mayType) return
+
+    this.outgoing.push({ data, binary })
+    void this.send()
+  }
+
   /** Keystrokes go one call at a time and in order, whatever arrives while a call is in
    *  the air going with the next: a paste of a page is one call, not a thousand, and no
    *  two can overtake each other on the way. */
@@ -772,12 +948,12 @@ class Session {
 
     await this.spawning.catch(() => undefined)
 
-    while (this.outgoing.length && this.pty !== null) {
+    while (this.outgoing.length && this.pty !== null && this.source) {
       const binary = this.outgoing[0]?.binary ?? false
       let data = ''
       while (this.outgoing[0]?.binary === binary) data += this.outgoing.shift()?.data ?? ''
 
-      await invoke('pty_write', { id: this.pty, data, binary }).catch(() => undefined)
+      await this.source.write(data, binary)
     }
 
     this.outgoing = []
@@ -785,18 +961,19 @@ class Session {
   }
 
   private sized(cols: number, rows: number) {
-    if (this.pty !== null)
-      void invoke('pty_resize', { id: this.pty, cols, rows }).catch(() => undefined)
+    if (this.applying) return
+    if (this.pty !== null) this.source?.resize(cols, rows)
   }
 
   /** Where the shell is, asked of the kernel for a shell that does not say: Linux's
    *  /proc, a Mac's `proc_pidinfo` - zsh, a Mac's own, says nothing. */
   private async lookWhere() {
-    if (this.pty === null) return
+    const source = this.source
+    if (this.pty === null || !(source instanceof PtySource)) return
 
-    const folder = await invoke<unknown>('pty_folder', { id: this.pty }).catch(() => null)
+    const folder = await source.where()
     const spec = this.spec()
-    if (typeof folder === 'string' && folder && folder !== spec.folder) {
+    if (folder && folder !== spec.folder) {
       this.respec({ ...spec, folder })
     }
   }
@@ -910,7 +1087,8 @@ class Session {
   /** Rows of the file list, as their paths at the prompt, one space apart. */
   private dropped(event: DragEvent) {
     const paths = isTreeDrag(event.dataTransfer) ? dragged(event.dataTransfer) : []
-    if (!paths.length || this.pty === null) return
+    // A path on this computer is nowhere on the online machine.
+    if (!paths.length || this.pty === null || this.online) return
 
     event.preventDefault()
     const shell = this.spec().shell
@@ -1072,7 +1250,9 @@ function watch() {
   })
 
   // The lines this page's own storage held, before they were the crate's.
-  moveLegacy(workspace.tabs.filter((tab) => tab.kind === 'terminal').map(placeOf))
+  moveLegacy(
+    workspace.tabs.filter((tab) => tab.kind === 'terminal' && !isOnlineTab(tab)).map(placeOf),
+  )
 }
 
 watch()

@@ -57,6 +57,8 @@ export const ICONS: Record<string, string> = {
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   // Two servers stacked, the mark a remote terminal's tab wears.
   remote: 'M3 2.5h10v4.5H3zM3 9h10v4.5H3zM5.5 4.75h.01M5.5 11.25h.01',
+  // A cloud with a prompt in it, the mark an online terminal's file wears.
+  online: 'M11.7 12.7H6a4.7 4.7 0 1 1 4.5-6h1.2a3 3 0 1 1 0 6zM5 7.7l1.3 1.2L5 10.1M8 10h2',
 }
 
 /** The panes, in their groups.
@@ -96,6 +98,11 @@ export function sectionGroups(): Item[][] {
         : []),
       // The machines a remote terminal reaches: a desktop's alone, as a terminal is.
       ...(!__EVEN_PLUGIN__ && isDesktop ? [{ id: 'remote' as Section, label: t('Remote') }] : []),
+      // The account's machine in the cloud and its month: on every device, with an
+      // account. See docs/online-terminal.md 4.10.
+      ...(!__EVEN_PLUGIN__ && account.user
+        ? [{ id: 'online' as Section, label: t('Online terminal') }]
+        : []),
       // Only for somebody who has a pair: in the plugin always, and on any other
       // device once the plugin has answered one, which the account remembers.
       // Spread rather than hidden, so the group closes over the gap instead of

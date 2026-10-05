@@ -31,6 +31,7 @@ import { nameOf, withinSpace } from '../space-paths'
 import { toggleFill } from '../tab-fill/fill'
 import { openTerminal, shellRows } from '../terminal/open'
 import { readSpec } from '../terminal/spec'
+import { isOnlineTab } from '../online/path'
 import { pages } from '../web-tab/pages.svelte'
 import { viewport } from '../viewport.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
@@ -162,6 +163,17 @@ async function muting(tabId: string): Promise<void> {
  *  `+ ˅` has it. Duplicate is this row's, for a terminal; see `tabEntries`. */
 function shellEntries(tab: Tab): MenuEntry[] {
   if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return []
+
+  // Another online terminal is another session on the same machine, beside this one.
+  if (isOnlineTab(tab)) {
+    return [
+      {
+        label: t('Open another'),
+        run: () => void import('../online/open').then(({ openOnline }) => openOnline(true)),
+      },
+      DIVIDER,
+    ]
+  }
 
   const spec = readSpec(tab.doc)
   const beside = { folder: spec?.folder ?? null, beside: tab.id }

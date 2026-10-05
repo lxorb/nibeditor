@@ -29,6 +29,7 @@
  *  rather than a document, and the one with more than one way to make it: the row makes
  *  the default shell and its chevron lists the rest; see `others` and docs/terminal.md. */
 
+import type { IconNode } from 'lucide'
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
 import { menu, type MenuEntry } from './menu.svelte'
@@ -40,7 +41,7 @@ import { type NewKind, workspace } from './workspace.svelte'
 
 /** What a new tab can be: the kinds the file list also makes, and a terminal here or on
  *  another machine, which is a tab and never a file. */
-export type NewKindName = NewKind | 'private' | 'terminal' | 'remote'
+export type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online'
 
 export interface NewKindRow {
   kind: NewKindName
@@ -48,6 +49,8 @@ export interface NewKindRow {
   /** The shape the file list and the tab strip already draw for this kind, so the
    *  buttons in an empty pane wear what the rows wear; see file-mark.ts. */
   mark: FileMark
+  /** A drawing of its own, for the one kind no file wears: an online terminal. */
+  icon?: IconNode
   /** The key that picks it in the dialog: its own first letter, as the code names it
    *  rather than as a language spells it, so the key is the same key in every one of
    *  them and the dialog can show it on the card. See NewKindSheet.svelte. */
@@ -133,7 +136,30 @@ export function newKinds(): NewKindRow[] {
     // years. See docs/terminal.md.
     // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
     ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow(), remoteRow()] : []),
+    // A shell on the reader's own machine in the cloud: on every device, since it is the
+    // one terminal a phone and a browser can have. O for Online. See
+    // docs/online-terminal.md 4.10.
+    ...(__EVEN_PLUGIN__ ? [] : [onlineRow()]),
   ]
+}
+
+/** Lucide's cloud, with square-terminal's prompt inside it: a shell somewhere else. */
+const ONLINE: IconNode = [
+  ['path', { d: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z' }],
+  ['path', { d: 'm7.5 11.5 2 1.75-2 1.75' }],
+  ['path', { d: 'M12 15h3' }],
+]
+
+function onlineRow(): NewKindRow {
+  return {
+    kind: 'online',
+    label: () => t('Online terminal'),
+    mark: 'terminal',
+    icon: ONLINE,
+    letter: 'o',
+    make: (paneId) =>
+      inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline())),
+  }
 }
 
 function remoteRow(): NewKindRow {

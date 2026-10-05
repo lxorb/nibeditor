@@ -1043,6 +1043,11 @@
     {#await import('./agents/settings/AgentsPane.svelte') then agents}
       <agents.default />
     {/await}
+  {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
+    <!-- Fetched as it is opened; see online/OnlinePane.svelte. -->
+    {#await import('./online/OnlinePane.svelte') then pane}
+      <pane.default />
+    {/await}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
     <!-- Fetched as it is opened, as Agents is; see remote/RemotePane.svelte. -->
     {#await import('./remote/RemotePane.svelte') then pane}

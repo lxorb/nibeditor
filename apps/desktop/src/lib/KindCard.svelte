@@ -56,7 +56,9 @@
   <!-- The kind's own mark, drawn large: nothing here chose an icon, so the mark is the
        fallback, which is what every list that shows a kind does. See Icon.svelte and
        FileMark.svelte. -->
-  <span class="mark" aria-hidden="true"><Icon icon={null} fallback={MARKS[one.mark]} /></span>
+  <span class="mark" aria-hidden="true"
+    ><Icon icon={null} fallback={one.icon ?? MARKS[one.mark]} /></span
+  >
   <span class="nib-row-label">{one.label()}</span>
   {#if letter}
     <kbd aria-hidden="true">{letter.toUpperCase()}</kbd>

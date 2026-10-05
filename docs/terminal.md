@@ -9,7 +9,8 @@ whatever there is), then you should be able to choose"_.
 It is built to what Windows Terminal, VS Code's terminal, iTerm2, Warp and JetBrains'
 terminal already taught everybody's hands, and where they disagree it says which it
 follows and why. A desktop's alone: a phone has no shell to give an app, a page in a
-browser has no machine under it, and the glasses' plugin never carries any of it.
+browser has no machine under it, and the glasses' plugin never carries any of it. The one
+exception is an online terminal, whose shell is a machine of the reader's in the cloud (below).
 
 ## Where one comes from
 
@@ -253,6 +254,75 @@ which opens the file in the system's text editor (nib never writes it).
   the same list and question it has for a local shell. Until then no agent verb reaches a remote
   terminal.
 
+## An online terminal
+
+A shell on the reader's own machine in the cloud, which goes on when every window is closed:
+the design, the machine and the server are docs/online-terminal.md; this is the tab.
+
+**Where one comes from.** Ctrl+T's card on **O**, after Remote, and the same row in the plus's
+menu, an empty pane and the palette (_New online terminal_) - on the desktop, a phone and the
+browser build alike, since it is the one terminal those two can have. A tab's own menu has
+_Open another_ beside it. Signed out, it opens the account sheet; an account not on the list
+yet is told so once, in the question sheet, and nothing is made.
+
+**A file, not a session in the tab's words.** It makes `Terminal.term` (`Terminal 2.term`...)
+in the space's folder and opens it as a terminal tab whose document is that file
+(`openTerm` in `lib/online/open.ts`) - one tab per file, as a PDF has. The file starts
+empty: sync gives it its id, and the terminal, as it first connects, asks the account for
+the session that id names (`POST /v2/online/terms`), which the account makes on the
+reader's own machine the first time, and writes it into the file
+(`{"v":1,"machine":"m_...","session":"s_..."}`). So renaming the tab renames the file, Move
+to space moves the file and so the session's audience, and a restart puts the tab back as
+any tab with a file comes back.
+
+**One seam.** The surface, the keys, find, copy and paste, links and the look are every
+terminal's (`sessions.svelte.ts`); only what feeds the screen differs, and that is a
+`Source` (`lib/terminal/source.ts`): a pty here, or the socket to the session
+(`lib/online/source.ts`, `link.ts`), fetched with the first online terminal and never in
+front of the first paint. The socket opens at `/v2/online/<file id>/socket` with the
+account's token and the device, says `hello` with the screen's size and the first byte it
+has not drawn, and is sent only what it missed - or the whole screen, serialised by the
+machine's headless xterm, drawn in place of what is there. A drop comes back by itself,
+sooner first and then less often; a refusal that waiting cannot change (no role, not on the
+list, the month's hours used) waits for Reconnect instead.
+
+**Its screen at once.** The last screen of the session is cached like a local terminal's
+last lines (`history.ts`, under `online-<session>`), drawn dimmed the moment the tab is
+looked at while the socket opens, and replaced by the session's own; dimmed again while the
+socket is down. Closing the tab keeps the cache - and never asks, since nothing ends: the
+session runs on, and so does whatever runs in it.
+
+**Waking.** It connects when it is first on screen, which wakes its machine; a tab put back
+by a restart and never looked at knocks on nothing, as a Remote tab does not.
+
+**Its name and its mark.** The file's name, unless it is still the `Terminal` it was made
+as: then what runs in it, by the same order as any terminal (`naming.ts`), told by the
+machine rather than asked of a kernel. The mark is the program in front's - Claude Code,
+Codex, Node... - with a small cloud cut into its corner, and the machine's state as a dot
+over the other corner: none while awake, hollow while asleep, turning while it starts,
+amber near the month's hours (`TerminalMark.svelte`, `lib/online/marks.svelte.ts`).
+
+**Resume.** When a restart of the machine put back a screen whose program was Claude Code
+or Codex, a quiet bar at the foot offers **Resume**, which types `claude --continue` or
+`codex resume --last` (`lib/online/resume.ts`); Enter is Resume too. A shell that ended
+leaves its screen and the line saying the code, and Enter starts a new shell in the same
+session.
+
+**Who may type** is the machine's owner, unless they let the space's writers in; a
+socket told it may not type swallows the keys and still shows the screen.
+
+**Settings, Online terminal**: the machine's state with Start or Stop, and the month as one
+bar per allowance - hours, CPU, home and the web - with the day it starts again; the hours'
+bar turns amber at 80%, as the mark does (`lib/online/OnlinePane.svelte`). The palette has
+_Start online machine_ and _Stop online machine_.
+
+**Not yet**, with the seams left for them: the faces of who is watching and the typing dot
+(the socket's `people` frame), the cursor in the colour of whoever typed last (`typed`), the
+session scaled down to a narrower screen, a phone's pinch and the key row over its keyboard,
+a `.term` opened from the file list (the desktop's list shows the kinds a tab can hold, and
+`.term` is not among them yet), and Settings' sessions, audit, Download home, Reset and
+Delete.
+
 ## Closing
 
 - **A tab closing** asks only when something besides the idle shell is running - VS
@@ -446,6 +516,8 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
 | `apps/desktop/src/lib/terminal/modes.ts` | what a program left on, switched off where the prompt begins |
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |
+| `apps/desktop/src/lib/terminal/source.ts` | where a screen is fed from: a pty, or an online session's socket |
+| `apps/desktop/src/lib/online/` | an online terminal: making one, its socket, its machine, Resume, Settings |
 | `apps/desktop/src/lib/terminal/naming.ts` | what a tab is called and what it wears, out of what runs in it |
 | `apps/desktop/src/lib/terminal/rename.ts` | a name of the reader's own, given and given back |
 | `apps/desktop/src-tauri/src/terminal/remote.rs` | another machine: which host an id names, `ssh` started for it, and the hosts nib keeps |

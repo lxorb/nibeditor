@@ -135,6 +135,14 @@ export class Front {
     this.waiting = null
   }
 
+  /** What the other end of an online terminal saw in front, and the title it set: told,
+   *  never looked for, since nothing on this side can see the machine's programs. */
+  told(program: string | null, title: string | null) {
+    this.program = program
+    this.title = title === null ? null : programTitle(title)
+    this.waiting = null
+  }
+
   /** Whether a look is worth asking for when the output rests: a program was in front,
    *  and may have gone. A shell at its prompt is never looked at. */
   get worthLooking(): boolean {

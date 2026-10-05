@@ -111,6 +111,9 @@ importers:
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
+      '@nib/online':
+        specifier: workspace:*
+        version: link:../../packages/online
       '@nib/rooms':
         specifier: workspace:*
         version: link:../../packages/rooms

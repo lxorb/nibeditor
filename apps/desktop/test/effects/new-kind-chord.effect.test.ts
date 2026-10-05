@@ -168,7 +168,13 @@ test('holding the modifier opens the dialog, on the web page', async () => {
   pressT()
   await settle()
 
-  expect(cards()).toEqual(['New note', 'New canvas', 'New web note', 'New page note'])
+  expect(cards()).toEqual([
+    'New note',
+    'New canvas',
+    'New web note',
+    'New page note',
+    'Online terminal',
+  ])
   expect(standing()).toBe('New web note')
   expect(lit()).toBe('New web note')
 
@@ -199,6 +205,8 @@ test('each further press steps one along, and the release makes that one', async
 
   pressT()
   expect(standing()).toBe('New page note')
+  pressT()
+  expect(standing()).toBe('Online terminal')
   pressT()
   expect(standing()).toBe('New note')
   expect(lit()).toBe('New note')
@@ -344,7 +352,7 @@ test('a phone makes a note, and opens the dialog on one', async () => {
 
   pressT()
   await settle()
-  expect(cards()).toEqual(['New note', 'New canvas', 'New page note'])
+  expect(cards()).toEqual(['New note', 'New canvas', 'New page note', 'Online terminal'])
   expect(standing()).toBe('New note')
   letGo()
 })

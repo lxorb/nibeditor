@@ -27,6 +27,16 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
+/** An online terminal's maker asks the account for a session; here it only says it was
+ *  asked. See online/open.ts. */
+const online = vi.hoisted(() => ({ made: null as string[] | null }))
+vi.mock('./online/open', () => ({
+  openOnline: () => {
+    online.made?.push('online')
+    return Promise.resolve(null)
+  },
+}))
+
 const { newKindMenu, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
@@ -58,13 +68,14 @@ function makers(): string[] {
   vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
   vi.spyOn(workspace, 'openWebsite').mockImplementation(() => void made.push('web'))
   vi.spyOn(workspace, 'newPages').mockImplementation(async () => void made.push('pages'))
+  online.made = made
 
   return made
 }
 
 describe('the kinds a new tab can be', () => {
-  test('are the four, in the order a reader is offered them', () => {
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'web', 'pages'])
+  test('are the four, and an online terminal, in the order a reader is offered them', () => {
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'web', 'pages', 'online'])
   })
 
   test('read as the words every menu in the app already uses', () => {
@@ -73,27 +84,34 @@ describe('the kinds a new tab can be', () => {
       'New canvas',
       'New web note',
       'New page note',
+      'Online terminal',
     ])
   })
 
   /** The shape the file list and the tab strip already draw for the kind, so the
    *  buttons in an empty pane and the rows in a list say the same thing. */
   test('each wears the mark its own files wear', () => {
-    expect(newKinds().map((one) => one.mark)).toEqual(['note', 'canvas', 'web', 'pages'])
+    expect(newKinds().map((one) => one.mark)).toEqual([
+      'note',
+      'canvas',
+      'web',
+      'pages',
+      'terminal',
+    ])
   })
 
   /** A website is a bookmark on a phone: it opens in the phone's own browser, so
    *  there is no tab to make and the row would answer nothing. */
   test('leave the website out on a phone', () => {
     viewport.device = 'phone'
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages'])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online'])
   })
 
-  test('make one each', () => {
+  test('make one each', async () => {
     const made = makers()
     for (const one of newKinds()) one.make()
 
-    expect(made).toEqual(['note', 'canvas', 'web', 'pages'])
+    await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'web', 'pages', 'online']))
   })
 
   /** The pane whose plus was pressed takes the keyboard first, so a plus in the other
@@ -119,7 +137,7 @@ describe('the kinds a new tab can be', () => {
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'w', 'p'])
+    expect(letters).toEqual(['n', 'c', 'w', 'p', 'o'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 
@@ -128,12 +146,12 @@ describe('the kinds a new tab can be', () => {
     expect(rows).toEqual(newKinds().map((one) => one.label()))
   })
 
-  test('and a row of it makes its kind', () => {
+  test('and a row of it makes its kind', async () => {
     const made = makers()
     for (const row of newKindMenu()) {
       if (row !== null && !isSubmenu(row)) row.run()
     }
 
-    expect(made).toEqual(['note', 'canvas', 'web', 'pages'])
+    await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'web', 'pages', 'online']))
   })
 })

@@ -11,6 +11,8 @@
 
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
+import { isOnlineTab, MADE_NAME } from '../online/path'
+import { folderOf } from '../space-paths'
 import { shellName, shells } from './shells.svelte'
 import { hostIdOf, readSpec, writeSpec } from './spec'
 
@@ -19,6 +21,15 @@ import { hostIdOf, readSpec, writeSpec } from './spec'
 const NAME_MOST = 120
 
 export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
+  // An online terminal's name is its file's, and renaming it renames the file (an empty
+  // name gives it back to what runs in it); see docs/online-terminal.md 4.5.
+  if (isOnlineTab(tab) && tab.path !== null) {
+    const name = typed.trim().slice(0, NAME_MOST).replace(/[\\/]/g, ' ') || MADE_NAME
+    const folder = folderOf(tab.path)
+    await workspace.rename(tab.path, workspace.freeName(folder, `${name}.term`, tab.path))
+    return
+  }
+
   const before = readSpec(tab.doc)
   if (tab.kind !== 'terminal' || !before) return
 

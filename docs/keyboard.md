@@ -391,7 +391,8 @@ shape: after a beat a dialog comes up in the middle of the window with the kinds
 cards and the website standing, each further T steps one along (Shift+T back), the
 arrows walk them too, and letting Ctrl go makes the one that stands. Each card's letter
 - N, C, W, P, R for a terminal, since T is the chord's own step, and S (SSH) for Remote,
-which opens the host picker (docs/terminal.md, _Another machine_) - makes it outright,
+which opens the host picker (docs/terminal.md, _Another machine_), and O for an online
+terminal, on every device (docs/terminal.md, _An online terminal_) - makes it outright,
 Enter and a click make the one pressed, Escape makes nothing. The terminal's card has a
 chevron in its corner: pressed, or Shift held with R, Enter or a click, it lists the
 other shells instead of starting the default one (see docs/terminal.md). A phone has no web tab, so there the note stands. The palette's New opens the
@@ -573,6 +574,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | Ctrl+F | find, in nib's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
 | Cmd+A, Cmd+K | select all, clear, on a Mac (Terminal's own) |
+| Enter, under a dropped or refused online terminal, or after its machine's restart stopped an agent | Reconnect, or Resume (`claude --continue`, `codex resume --last`), as the bar at its foot says. After its shell ended, a new shell in the same session |
 | every app command on Cmd | the app's, on a Mac: no shell ever sees Cmd |
 
 AltGr is never a chord: Windows says it as Ctrl and Alt, and a key that came out as

@@ -12,7 +12,11 @@
    *
    *  A terminal on another machine that is not connected - the connection dropped, or a
    *  restart put it back - has a quiet bar at its foot, Reconnect, which Enter is too;
-   *  the lines it had stay readable above it. See `offline` in sessions.svelte.ts. */
+   *  the lines it had stay readable above it. See `offline` in sessions.svelte.ts.
+   *
+   *  An online terminal draws its cached screen dimmed until its session's own arrives,
+   *  and again while its socket is down; and after its machine's restart stopped an agent,
+   *  the same quiet bar offers Resume. See docs/online-terminal.md 4.7 and 4.10. */
 
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -60,11 +64,15 @@
     />
   {/if}
 
-  <div class="place" bind:this={place}></div>
+  <div class="place" class:is-waiting={!session.live} bind:this={place}></div>
 
   {#if session.offline}
-    <div class="offline" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+    <div class="bar offline" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
       <button type="button" onclick={() => session.reconnect()}>{t('Reconnect')}</button>
+    </div>
+  {:else if session.resumable !== null}
+    <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <button type="button" onclick={() => session.resume()}>{t('Resume')}</button>
     </div>
   {/if}
 </div>
@@ -88,6 +96,13 @@
     position: relative;
     flex: 1;
     min-height: 0;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  /* A screen that is not the session as it is now: the one cached from the last visit,
+     or one whose socket has dropped. */
+  .place.is-waiting {
+    opacity: 0.55;
   }
 
   /* The screen's own element, made by the session rather than by this component, so
@@ -110,7 +125,7 @@
 
   /* Over the foot of the screen, out of the way of the lines above it: a floating
      layer's surface and hairline, and one button in it. */
-  .offline {
+  .bar {
     position: absolute;
     bottom: var(--space-4);
     left: 50%;
@@ -123,7 +138,7 @@
     box-shadow: var(--shadow-md);
   }
 
-  .offline button {
+  .bar button {
     padding: var(--space-1) var(--space-3);
     border: none;
     border-radius: var(--radius-sm);
@@ -137,12 +152,12 @@
   }
 
   @media (hover: hover) {
-    .offline button:hover {
+    .bar button:hover {
       background: var(--surface-hover);
     }
   }
 
-  .offline button:active {
+  .bar button:active {
     background: var(--surface-press);
   }
 </style>

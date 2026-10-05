@@ -50,7 +50,7 @@ afterEach(() => {
 })
 
 describe('a terminal, as a kind a new tab can be', () => {
-  test('is the fifth, after the four the file list also makes, and Remote after it', () => {
+  test('is the fifth, after the four the file list also makes, then Remote and Online', () => {
     expect(newKinds().map((one) => one.kind)).toEqual([
       'note',
       'canvas',
@@ -59,6 +59,7 @@ describe('a terminal, as a kind a new tab can be', () => {
       'pages',
       'terminal',
       'remote',
+      'online',
     ])
   })
 

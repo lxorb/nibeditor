@@ -84,6 +84,7 @@ test('offers every kind a new tab can be, in the order the plus offers them', ()
     'New canvas',
     'New web note',
     'New page note',
+    'Online terminal',
   ])
 })
 
@@ -123,5 +124,5 @@ test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
 
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1])
+  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1])
 })
