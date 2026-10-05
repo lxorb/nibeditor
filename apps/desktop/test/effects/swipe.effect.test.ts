@@ -77,11 +77,27 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
+/** The clock the events are stamped on. A machine under load leaves a gap of its own
+ *  between two events dispatched one after the other, and the gesture reads speed off
+ *  the stamps: a steady sweep would then look like a pad coasting, and decide itself
+ *  before the fingers lifted. So every event says when it was, a touchpad's 8 ms apart. */
+let clock = 1000
+const STEP = 8
+
+/** An event stamped at the next tick of `clock`. */
+function stamped<T extends Event>(event: T): T {
+  clock += STEP
+  Object.defineProperty(event, 'timeStamp', { value: clock })
+  return event
+}
+
 /** Two fingers swept `steps` times by `dx` over `at`, as a touchpad reports them; or, with
  *  `notch`, a tilted wheel, which says its turn in whole notches as well. */
 function sweep(at: Element, steps: number, dx: number, init: WheelEventInit = {}, notch = 0) {
   for (let one = 0; one < steps; one++) {
-    const event = new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true, ...init })
+    const event = stamped(
+      new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true, ...init }),
+    )
     if (notch) Object.defineProperty(event, 'wheelDeltaX', { value: notch })
     at.dispatchEvent(event)
   }
@@ -204,7 +220,7 @@ test('a page that took the scroll says so, and keeps it', () => {
 
 test('a finger from the side of the pane goes back when it lifts far enough along', () => {
   const touch = (type: string, x: number) => {
-    const event = new Event(type, { bubbles: true }) as Event & { touches: unknown[] }
+    const event = stamped(new Event(type, { bubbles: true })) as Event & { touches: unknown[] }
     Object.defineProperty(event, 'touches', {
       value: type === 'touchend' ? [] : [{ clientX: x, clientY: 300 }],
     })

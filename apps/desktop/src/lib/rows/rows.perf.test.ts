@@ -19,6 +19,12 @@ import { type Host, RowsStore } from './store'
 
 vi.mock('@nib/markdown/task-line', { spy: true })
 
+/** Whether the clock may be asserted on at all: only where somebody is measuring and
+ *  set `NIB_PERF=1`, for the reason search/fuzzy.perf.test.ts gives. The counts are the
+ *  test, and they hold on a machine running three gates at once; the clock does not -
+ *  this file failed one at 3.2 seconds with every count right. */
+const CLOCKED = process.env.NIB_PERF === '1'
+
 const NOTES = 5_000
 const TASKS_EACH = 2
 
@@ -77,7 +83,7 @@ describe('the rows of a space of 5,000 notes and 10,000 tasks', () => {
     // One `file` and one `note` per note, however many tasks it has.
     expect(new Set(all.map((row) => row.file)).size).toBe(NOTES)
     expect(new Set(all.map((row) => row.note)).size).toBe(NOTES)
-    expect(took).toBeLessThan(2_000)
+    if (CLOCKED) expect(took).toBeLessThan(2_000)
   })
 
   test('and a save reads the note saved and nothing else of the space', async () => {
@@ -97,7 +103,7 @@ describe('the rows of a space of 5,000 notes and 10,000 tasks', () => {
     // Two task lines, read once a save: the space's 10,000 are not read again.
     expect(readTask.mock.calls).toHaveLength(50 * TASKS_EACH)
     times.sort((one, other) => one - other)
-    expect(times[25]).toBeLessThan(2)
+    if (CLOCKED) expect(times[25]).toBeLessThan(2)
   })
 
   test('and nothing at all happens while nobody saves', async () => {
