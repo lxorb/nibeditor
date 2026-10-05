@@ -8,7 +8,9 @@
  *  2. its socket opened, `echo` typed, the output read;
  *  3. the socket dropped while a command is still printing, and opened again with
  *     `since`: the rest arrives, and nothing drawn already;
- *  4. a second socket, a late joiner, is sent the screen.
+ *  4. a second socket, a late joiner, is sent the screen;
+ *  5. keystroke round trips, a key sent to its echo heard, at a quiet prompt and while a
+ *     program prints all the time, which is what the coalescing in nibd is measured by.
  *
  *  Run from the repository's root: `node scripts/online-e2e.mjs`. Everything local goes
  *  into a temporary folder that is removed afterwards. */
@@ -113,6 +115,8 @@ async function socket(session, since) {
   const ws = new WebSocket(url, [`nib.token.${TOKEN}`, `nib.device.${DEVICE}`])
   ws.binaryType = 'arraybuffer'
   const heard = { frames: [], out: [], closed: false }
+  /** Those waiting for output with something in it; see `echoOf`. */
+  const waiting = new Set()
   opened.push(heard)
   ws.onmessage = (event) => {
     if (typeof event.data === 'string') {
@@ -121,11 +125,9 @@ async function socket(session, since) {
     }
     const bytes = new Uint8Array(event.data)
     const seq = new DataView(bytes.buffer, bytes.byteOffset).getFloat64(0)
-    heard.out.push({
-      seq,
-      length: bytes.length - 8,
-      data: Buffer.from(bytes.subarray(8)).toString('utf8'),
-    })
+    const data = Buffer.from(bytes.subarray(8)).toString('utf8')
+    heard.out.push({ seq, length: bytes.length - 8, data })
+    for (const one of waiting) one(data)
   }
   ws.onclose = () => (heard.closed = true)
   await new Promise((opened, failed) => {
@@ -150,7 +152,37 @@ async function socket(session, since) {
     /** Input as bytes, as the app sends a key xterm.js encoded itself. */
     typeBytes: (data) => ws.send(new TextEncoder().encode(data)),
     close: () => ws.close(),
+    /** Milliseconds from `key` sent to output with `key` in it heard. */
+    echoOf: (key) =>
+      new Promise((settle, failed) => {
+        const from = performance.now()
+        const timer = setTimeout(() => {
+          waiting.delete(heardIt)
+          failed(new Error(`no echo of ${JSON.stringify(key)}`))
+        }, 10_000)
+        const heardIt = (data) => {
+          if (!data.includes(key)) return
+          waiting.delete(heardIt)
+          clearTimeout(timer)
+          settle(performance.now() - from)
+        }
+        waiting.add(heardIt)
+        ws.send(new TextEncoder().encode(key))
+      }),
   }
+}
+
+/** Keystroke round trips on `on`, one key at a time with a typist's pause between. */
+async function roundTrips(on, label) {
+  const times = []
+  for (let at = 0; at < 40; at++) {
+    times.push(await on.echoOf('x'))
+    await pause(40 + Math.random() * 60)
+  }
+  times.sort((a, b) => a - b)
+  const pick = (share) => times[Math.min(times.length - 1, Math.floor(times.length * share))]
+  const ms = (value) => `${value.toFixed(1)} ms`
+  log(`echo ${label}: p50 ${ms(pick(0.5))}, p90 ${ms(pick(0.9))}, max ${ms(pick(1))}`)
 }
 
 async function main() {
@@ -280,6 +312,16 @@ async function main() {
   )
   if (!late.text().includes('hi-42')) throw new Error('the late joiner’s screen is missing hi-42')
   log('late joiner got the screen')
+
+  // 5. Keystroke round trips: at a quiet prompt, read by the line editor; and while a
+  // loop prints a dot every few milliseconds, echoed by the kernel's line discipline.
+  await roundTrips(back, 'at a quiet prompt')
+  back.type('\x15')
+  back.type('while :; do printf .; sleep 0.003; done\r')
+  await pause(1000)
+  await roundTrips(back, 'under steady output')
+  back.type('\x03')
+  await pause(500)
 
   back.close()
   late.close()
