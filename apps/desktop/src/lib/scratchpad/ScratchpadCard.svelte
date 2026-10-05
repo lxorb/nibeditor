@@ -175,8 +175,9 @@
     padding: var(--space-2);
   }
 
-  /* Where the panels are drawers, over the note as they are. */
-  :global([data-drawer] [data-scratchpad]) {
+  /* Where the panels are drawers, or the window is too narrow for two columns, over
+     the note. */
+  :global(:is([data-drawer], [data-narrow]) [data-scratchpad]) {
     position: absolute;
     inset-block: 0;
     inset-inline-end: 0;
@@ -205,8 +206,10 @@
   }
 
   /* A card's worth of margin rather than a page's. */
-  .host :global(.cm-content) {
-    padding-inline: var(--space-3);
+  .host :global(#write) {
+    max-width: none;
+    margin: 0 var(--space-4);
+    padding: var(--space-4) 0 var(--space-7);
   }
 
   .edge {
