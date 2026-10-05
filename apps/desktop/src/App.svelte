@@ -558,11 +558,6 @@
       // The wallpaper, whose picture a drive hands over as bytes.
       import('./lib/wallpaper/wallpaper.svelte'),
       import('./lib/themes/store.svelte'),
-      // The rows of every space and the views over them, which a drive opens by name
-      // and reads back; see test/e2e/tasks.py.
-      import('./lib/rows/rows.svelte'),
-      import('./lib/views/open'),
-      import('./lib/workspace/write-file'),
     ]).then(
       ([
         { importing },
@@ -573,12 +568,16 @@
         { standIn },
         { wallpaper },
         { store },
-        { rows },
-        views,
-        { writeFile },
       ]) => {
         Object.assign((window as unknown as { nibApp: object }).nibApp, {
-          tasks: { rows, ...views, writeFile },
+          // The rows and the views, which a drive opens by name and reads back: fetched
+          // when it asks, being the largest graph here; see test/e2e/tasks.py.
+          tasks: () =>
+            Promise.all([
+              import('./lib/rows/rows.svelte'),
+              import('./lib/views/open'),
+              import('./lib/workspace/write-file'),
+            ]).then(([{ rows }, views, { writeFile }]) => ({ rows, ...views, writeFile })),
           agents: { standIn },
           ai,
           importing,

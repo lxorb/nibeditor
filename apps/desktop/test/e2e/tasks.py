@@ -115,12 +115,13 @@ Words after them.
 WRITE = """async ([files]) => {
   const ws = window.nibApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) await window.nibApp.tasks.writeFile(`${root}/${path}`, text)
+  for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
 }"""
 
 def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     files = [
         ["Errands.md", ERRANDS.format(**days)],
@@ -133,7 +134,7 @@ def seed(page: Page) -> dict[str, str]:
     page.evaluate(WRITE, [files])
     wait_for(
         page,
-        "() => window.nibApp.tasks.rows.of().some((one) => one.task?.text === 'Draft the talk')",
+        "() => window.tasks.rows.of().some((one) => one.task?.text === 'Draft the talk')",
         "the seeded rows",
     )
     return days
@@ -162,7 +163,7 @@ def the_panel(page: Page) -> None:
 
 
 def open_builtin(page: Page, name: str) -> None:
-    page.evaluate(f"window.nibApp.tasks.openBuiltin('{name}')")
+    page.evaluate(f"window.tasks.openBuiltin('{name}')")
     wait_for(page, "document.querySelector('.view-tab .list, .view-tab .upcoming')", f"the {name} view")
     quiet(page)
 
@@ -196,7 +197,7 @@ def open_base(page: Page, view: str) -> None:
           const ws = window.nibApp.workspace
           for (const tab of ws.tabs.filter((one) => one.kind === 'view' && one.path)) await ws.closeAsking(tab.id)
           const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-          window.nibApp.tasks.openBaseFile(`${root}/Bugs.base`, {}, view)
+          window.tasks.openBaseFile(`${root}/Bugs.base`, {}, view)
         }""",
         view,
     )
@@ -232,7 +233,7 @@ def the_board(page: Page) -> None:
     carry(page, ".view-tab .card:has-text('Sync')", ".view-tab .column:has(.name:text-is('Done'))")
     if not DRIVE.waited(
         page,
-        "() => window.nibApp.tasks.rows.of().find((one) => one.path === 'Bugs/Sync.md')?.note.status === 'Done'",
+        "() => window.tasks.rows.of().find((one) => one.path === 'Bugs/Sync.md')?.note.status === 'Done'",
         "the card dropped on Done to write status: Done",
     ):
         return
@@ -250,7 +251,7 @@ def the_calendar(page: Page, days: dict[str, str]) -> None:
     )
     DRIVE.waited(
         page,
-        f"() => window.nibApp.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.due?.iso === {json.dumps(target)}",
+        f"() => window.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.due?.iso === {json.dumps(target)}",
         "the event dropped on a day to write that due date",
     )
     shot(page, "06-calendar")
@@ -264,7 +265,7 @@ def the_table(page: Page) -> None:
     page.select_option(".view-tab .cell.on select", "Done")
     if not DRIVE.waited(
         page,
-        "() => window.nibApp.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.status === 'Done'",
+        "() => window.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.status === 'Done'",
         "the cell to write status: Done",
     ):
         return
@@ -273,7 +274,7 @@ def the_table(page: Page) -> None:
     page.keyboard.press("Control+z")
     DRIVE.waited(
         page,
-        "() => window.nibApp.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.status === 'To do'",
+        "() => window.tasks.rows.of().find((one) => one.path === 'Bugs/Glass.md')?.note.status === 'To do'",
         "Ctrl+Z to take the cell back",
     )
 
@@ -306,15 +307,16 @@ def the_big_board(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
     lines = "\n".join(f"- [ ] Card number {at} #big" for at in range(2000))
     page.evaluate(WRITE, [[["Big.md", f"# Big\n\n{lines}\n"]]])
     wait_for(
         page,
-        "() => window.nibApp.tasks.rows.of().filter((one) => one.task?.tags.includes('big')).length === 2000",
+        "() => window.tasks.rows.of().filter((one) => one.task?.tags.includes('big')).length === 2000",
         "two thousand rows",
     )
     page.evaluate(
-        """() => window.nibApp.tasks.openProject(window.nibApp.workspace.activeSpace.name, 'Big.md', 'kanban')"""
+        """() => window.tasks.openProject(window.nibApp.workspace.activeSpace.name, 'Big.md', 'kanban')"""
     )
     wait_for(page, "document.querySelector('.view-tab .card')", "the big board")
     quiet(page)
