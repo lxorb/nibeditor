@@ -67,13 +67,3 @@ export function fileChangesOf(turns: readonly Turn[], done: ReadonlySet<string>)
     .flatMap((part) => (part.kind === 'tool' ? [fileChangeOf(part)] : []))
     .filter((one): one is FileChange => one !== null && !done.has(one.id))
 }
-
-/** The file changes made in answer to the message `turn` and every one after it. */
-export function fileChangesSince(
-  turns: readonly Turn[],
-  turn: string,
-  done: ReadonlySet<string>,
-): FileChange[] {
-  const at = turns.findIndex((one) => one.id === turn)
-  return at < 0 ? [] : fileChangesOf(turns.slice(at), done)
-}
