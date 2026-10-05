@@ -314,9 +314,9 @@ so a width change lays out that one tab and nothing beside it.
   losing the pointer puts it away, and the pressed tab says nothing more until the pointer
   leaves it; never over a menu, during a drag or under a finger. Over a native page it takes a
   place on the overlay stack and is cut out of the page, and every slide to the next tab tells
-  the page where it went (`overlays.moved`); an engine that can neither cut nor photograph the
-  page has the card give way rather than stand half behind it. The tab carries no native
-  tooltip. See `tab-strip/card.ts` and `tab-strip/hover-card.svelte.ts`.
+  the page where it went by stepping off the stack and back on; an engine that can neither
+  cut nor photograph the page has the card give way rather than stand half behind it. The
+  tab carries no native tooltip. See `tab-strip/card.ts` and `tab-strip/hover-card.svelte.ts`.
 - **Several tabs at once are Chrome's pick**: Ctrl (Cmd on a Mac) and a click adds or takes
   out, Shift a run from the last one clicked, both to add a run; the tab in front is always
   one of them, and anything else bringing a tab to the front puts the pick down. Picked tabs

@@ -13,7 +13,7 @@
  *  A native page draws over every pixel of HTML, so a card that would hang over one
  *  stands on the overlay stack while it is up, and the page under it cuts the card out
  *  of itself, exactly as it does for a menu; see web-tab/covers.ts. A card sliding to the
- *  next tab says so to the stack (`overlays.moved`), and the cut follows it there.
+ *  next tab says so to the stack, and the cut follows it there.
  *
  *  Fetched with the first pointer to rest on a tab, and not before: nothing of it is
  *  in front of the first paint. Tabs.svelte says where the pointer is. */
@@ -197,8 +197,16 @@ class Hovering {
       y: at.y,
       sliding,
     }
-    // A slide opens nothing, and the pages under the card have to hear of it all the same.
-    if (sliding && this.uncover) overlays.moved()
+    // A slide opens nothing, and the pages under the card have to hear of it all the same:
+    // they are cut round where it was until they look again, which is what the stack's
+    // watchers are told to do. So the card steps off the stack and back on in one breath,
+    // which every page under it hears, and the cut goes where the card went. Emil,
+    // 2026-10-05: a card slid off one tab onto the next stood behind the page but for a
+    // strip where its two places met.
+    if (sliding && this.uncover) {
+      this.uncover()
+      this.uncover = overlays.show(() => this.hush())
+    }
 
     if (!this.mounted) {
       this.mounted = true
