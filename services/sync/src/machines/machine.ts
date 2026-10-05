@@ -612,7 +612,15 @@ export class Machine implements DurableObject {
     const now = Date.now()
     const secret = randomToken()
     await this.ctx.storage.put(SECRET, secret)
-    const env = { NIBD_SECRET: secret }
+    // The machine's clock in its owner's zone (4.2): the zone their newest device that
+    // said one is in, as push keeps it; UTC for an account none of whose devices did.
+    const zone = await this.env.DB.prepare(
+      `select zone from push_targets where user_id = ? and zone is not null
+        order by created_at desc limit 1`,
+    )
+      .bind(me.user)
+      .first<{ zone: string }>()
+    const env = { NIBD_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
 
     // A snapshot of this image, still kept, brings everything back in one step; past
     // that, a fresh system with the home put back (4.3).

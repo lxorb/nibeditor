@@ -16,7 +16,7 @@ import type { Env } from '../types'
 import type { MachineHost } from '@nib/online'
 
 /** The port `nibd` listens on in the machine, and the path its link answers. */
-const NIBD_PORT = 8080
+const NIBD_PORT = 7680
 const LINK_URL = 'http://nibd/link'
 
 /** How long the container waits with nobody's request after `Machine` goes quiet.

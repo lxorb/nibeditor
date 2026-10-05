@@ -786,8 +786,8 @@ describe('the hub’s machine frame', () => {
 describe('the dev host', () => {
   test('drives a nibd on this computer and refuses any other address', async () => {
     const { DevHost } = await import('../src/machines/host')
-    const local = testEnv({ MACHINE_DEV_NIBD: 'http://127.0.0.1:8080', MACHINE_DEV_SECRET: 's' })
-    const remote = testEnv({ MACHINE_DEV_NIBD: 'http://203.0.113.9:8080' })
+    const local = testEnv({ MACHINE_DEV_NIBD: 'http://127.0.0.1:7680', MACHINE_DEV_SECRET: 's' })
+    const remote = testEnv({ MACHINE_DEV_NIBD: 'http://203.0.113.9:7680' })
     expect(DevHost.of(local)).toBeInstanceOf(DevHost)
     expect(DevHost.of(remote)).toBeNull()
     expect(DevHost.of(env)).toBeNull()

@@ -37,7 +37,7 @@ and the container application, which the first `wrangler deploy` of the machines
 
 1. **Lanes on main**, gate green: `@nib/online`, the machine's image and `nibd` (lane `online-nibd`),
    this Worker lane, the client.
-2. **The image's two requirements from this lane**: `nibd` listens on port **8080** and takes
+2. **The image's two requirements from this lane**: `nibd` listens on port **7680** and takes
    the link at `GET /link` with `authorization: Bearer <NIBD_SECRET>` (the secret is in the
    start environment, new every boot); and the image carries `sandbox-shim` for the home
    backups:
@@ -72,9 +72,9 @@ and the container application, which the first `wrangler deploy` of the machines
 No container and no Cloudflare resource: the `Machine` object drives a `nibd` already running
 on this computer (`DevHost` in services/sync/src/machines/host.ts).
 
-1. Start `nibd` with a secret, listening on `127.0.0.1:8080` (`NIBD_SECRET=dev`).
+1. Start `nibd` with a secret, listening on `127.0.0.1:7680` (`NIBD_SECRET=dev`).
 2. In services/sync, a `.dev.vars` (never committed):
-   `MACHINE_DEV_NIBD="http://127.0.0.1:8080"` and `MACHINE_DEV_SECRET="dev"`. Any address
+   `MACHINE_DEV_NIBD="http://127.0.0.1:7680"` and `MACHINE_DEV_SECRET="dev"`. Any address
    that is not this computer's is ignored.
 3. `pnpm wrangler d1 migrations apply nib --local`, then switch the service on locally:
    `pnpm wrangler d1 execute nib --local --command "update online_service set value = 'on' where key = 'online'"`
