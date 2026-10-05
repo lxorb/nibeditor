@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: 'సూచనలు',
+  'Silent mode': 'నిశ్శబ్ద మోడ్',
+  'Sign in to keep your notes safe and on every device.':
+    'మీ నోట్‌లు సురక్షితంగా, ప్రతి పరికరంలో ఉండేందుకు సైన్ ఇన్ చేయండి.',
+  'See how your notes connect.': 'మీ నోట్‌లు ఎలా అనుసంధానమై ఉన్నాయో చూడండి.',
+  'Press {key} to find anything, notes and commands alike.':
+    'నోట్‌లు, ఆదేశాలు, ఏదైనా కనుగొనడానికి {key} నొక్కండి.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'రాస్తున్నప్పుడు మార్క్‌డౌన్ చూపించు',
   Pointer: 'పాయింటర్',

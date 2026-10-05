@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: 'Підказки',
+  'Silent mode': 'Тихий режим',
+  'Sign in to keep your notes safe and on every device.':
+    'Увійдіть, щоб нотатки були в безпеці та на кожному пристрої.',
+  'See how your notes connect.': 'Подивіться, як пов’язані ваші нотатки.',
+  'Press {key} to find anything, notes and commands alike.':
+    'Натисніть {key}, щоб знайти будь-що: нотатки й команди.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показувати Markdown під час набору',
   Pointer: 'Вказівник',

@@ -348,6 +348,9 @@
   const held = $derived(workspace.held)
   const holdable = $derived(workspace.holdable(showing))
 
+  /** The palette's keys as this reader has them, for its hint; none, no hint. */
+  const paletteKey = $derived(shortcuts.hint('app.palette'))
+
   /** Takes the reader to a line of the note the panel is about.
    *
    *  A panel held on a note open in another pane takes them to that pane first: a
@@ -691,6 +694,20 @@
         {/each}
       </div>
 
+      <!-- The graph is one press away and easy to miss behind the Links tab; once
+         there are notes enough to connect, a card says so. See hints.svelte.ts. -->
+      {#if side === 'left' && startup.settled}
+        {#await import('./HintCard.svelte') then card}
+          <card.default
+            hint="graph"
+            side="below"
+            text={t('See how your notes connect.')}
+            when={workspace.notes.length > 2}
+            onpress={() => workspace.openGraph()}
+          />
+        {/await}
+      {/if}
+
       <!-- What a panel has to offer goes at the other end of the row its tabs are
          in: whether a panel about one note stays on it, and whether the Links
          panel says what it has to say as a list or as a picture. -->
@@ -835,6 +852,20 @@
           <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
           <span class="nib-row-label">{t('Search this space')}</span>
         </button>
+        <!-- The palette has no button of its own, only its keys; a keyboard is the
+           only place the card would make sense. -->
+        {#if paletteKey && startup.settled}
+          {#await import('./HintCard.svelte') then card}
+            <card.default
+              hint="palette"
+              side="below"
+              text={t('Press {key} to find anything, notes and commands alike.', {
+                key: paletteKey,
+              })}
+              when={!viewport.touch}
+            />
+          {/await}
+        {/if}
       </div>
     {/if}
 
@@ -1238,6 +1269,7 @@
   }
 
   .hunt {
+    position: relative;
     flex: none;
     padding: 0 var(--space-1) var(--space-2);
   }
@@ -1250,6 +1282,7 @@
 
   /* A panel's tools on its tabs' line. */
   .switch {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--space-1);

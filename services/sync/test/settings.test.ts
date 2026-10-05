@@ -162,6 +162,17 @@ describe('the formatting marks kept quiet on an account', () => {
   })
 })
 
+describe('Silent mode on an account', () => {
+  test('is on or off', async () => {
+    expect((await patch({ silent: true })).json.settings.silent).toBe(true)
+    expect((await patch({ silent: false })).json.settings.silent).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    expect((await patch({ silent: 1 })).status).toBe(400)
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)

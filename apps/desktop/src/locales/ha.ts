@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: 'Shawarwari',
+  'Silent mode': 'Yanayin shiru',
+  'Sign in to keep your notes safe and on every device.':
+    'Shiga don bayananka su kasance lafiya kuma a kowace na’ura.',
+  'See how your notes connect.': 'Duba yadda bayananka suke haɗe.',
+  'Press {key} to find anything, notes and commands alike.':
+    'Danna {key} don nemo komai, bayanai da umarni duka.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Nuna Markdown yayin rubutu',
   Pointer: 'Mai nuni',

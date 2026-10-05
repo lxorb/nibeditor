@@ -937,6 +937,17 @@ tick on the Publish sheet - rather than the cross, which is simply the first
 thing in the head. Never under a thumb, where there is no Tab to hold on to and a
 field taking the keyboard puts the system's own over half the sheet.
 
+### Hints
+
+nib explains nothing in its own text, so a feature somebody has not found gets a card
+beside the control it lives behind, the way Google Docs and Notion point at theirs:
+one line saying what it does, pressed to do it, and a cross to put it away. At most
+one a session, not before the window has been open twenty seconds, never again once
+put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
+off out of the box, an account setting). There are three, in order: signing in, the
+graph, and the palette's keys. The store is `hints.svelte.ts`, the card
+`HintCard.svelte`, and both are fetched through a door, since no launch draws one.
+
 ### Section labels
 
 `.nib-section` in `base.css`: `--text-xs`, uppercase, `0.06em` of tracking,

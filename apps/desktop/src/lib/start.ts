@@ -54,6 +54,13 @@ export function start(): () => void {
   // And which command a pull down past the top of a list runs.
   pull.restore()
   settings.restore()
+  // The moment a hint may appear: long enough that the window has settled and the
+  // reader has started on what they came for. The store is fetched then, not here,
+  // since nothing a launch draws needs it; see hints.svelte.ts.
+  const settling = setTimeout(() => {
+    startup.settled = true
+    void import('./hints.svelte').then(({ hints }) => hints.settle())
+  }, 20_000)
   // The one glyph on an `ai` fence that asks a model, installed whether or not any
   // provider is set up: a press on a block in a note somebody was sent says where to
   // add one. What it installs is a stub that fetches the runner with the first press,
@@ -205,6 +212,7 @@ export function start(): () => void {
     stopPointer?.()
     stopAnywhere?.()
     clearInterval(sweeper)
+    clearTimeout(settling)
     stopRecovery()
     stopReloading()
     stopStrayDrops()

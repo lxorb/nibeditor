@@ -86,6 +86,12 @@ class Startup {
    *  again and a window that paints twice keeps one order. */
   private moving = false
 
+  /** Whether the session has run long enough for a hint to appear, which start.ts
+   *  says twenty seconds in. Markup asks it before fetching a hint's card through its
+   *  door, so a window draws the same thing at launch whether or not a hint is due;
+   *  see hints.svelte.ts. */
+  settled = $state(false)
+
   /** What is on screen is painted, and everything that reads a body may go.
    *
    *  Awaited by whoever put it there. It both yields the frame and starts the
@@ -125,6 +131,7 @@ class Startup {
   /** Everything from here is a test starting again. */
   reset() {
     this.at = 0
+    this.settled = false
     this.waiting.clear()
     this.moving = false
   }

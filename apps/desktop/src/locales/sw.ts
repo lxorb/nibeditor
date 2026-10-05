@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: 'Vidokezo',
+  'Silent mode': 'Hali ya kimya',
+  'Sign in to keep your notes safe and on every device.':
+    'Ingia ili madokezo yako yawe salama na kwenye kila kifaa.',
+  'See how your notes connect.': 'Tazama jinsi madokezo yako yanavyounganika.',
+  'Press {key} to find anything, notes and commands alike.':
+    'Bonyeza {key} kupata chochote, madokezo na amri pia.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Onyesha Markdown unapoandika',
   Pointer: 'Kielekezi',

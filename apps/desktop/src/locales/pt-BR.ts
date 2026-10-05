@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Hints: Silent mode and the cards that point at a feature
+  Hints: 'Dicas',
+  'Silent mode': 'Modo silencioso',
+  'Sign in to keep your notes safe and on every device.':
+    'Entre para manter suas notas seguras e em todos os seus dispositivos.',
+  'See how your notes connect.': 'Veja como suas notas se conectam.',
+  'Press {key} to find anything, notes and commands alike.':
+    'Pressione {key} para encontrar qualquer coisa, notas e comandos.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostrar Markdown ao escrever',
   Pointer: 'Ponteiro',

@@ -505,6 +505,22 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
         {
+          // The few hints that point at a feature somebody has not found, or none of
+          // them: Silent mode is for whoever knows the app and wants it clean. See
+          // hints.svelte.ts.
+          title: t('Hints'),
+          fields: [
+            {
+              kind: 'switch',
+              label: t('Silent mode'),
+              words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
+              initial: false,
+              get: () => modes.silent,
+              set: () => modes.toggleSilent(),
+            },
+          ],
+        },
+        {
           title: t('Language'),
           // Two things can be worth saying about a language, and both are one line.
           //

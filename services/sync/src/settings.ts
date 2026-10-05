@@ -239,6 +239,8 @@ const KNOWN: Record<string, Check> = {
   properties: wordOf('properties', PROPERTIES_MODES),
   // Whether the formatting marks stay out of sight while writing, as Notion edits.
   quietMarks: switched('quietMarks'),
+  // No hints anywhere in the app, for somebody who knows it.
+  silent: switched('silent'),
 }
 
 /** How much of any of this an account may hold.

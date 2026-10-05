@@ -717,7 +717,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the eleven that show one wear the class rather than a card of their own', () => {
+  test('and the twelve that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -725,6 +725,8 @@ describe('the bubble a sentence appears in', () => {
 
     expect(own).toEqual([
       'lib/Hint.svelte',
+      // A feature pointed at, once, beside the control it is about.
+      'lib/HintCard.svelte',
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
