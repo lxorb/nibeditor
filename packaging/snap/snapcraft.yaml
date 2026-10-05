@@ -9,12 +9,12 @@
 # blank.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable nibeditor_0.11.0_amd64.snap`; see
+# account and `snapcraft upload --release=stable nibeditor_0.12.0_amd64.snap`; see
 # packaging/README.md.
 name: nibeditor
 title: nibeditor
 base: core24
-version: '0.11.0'
+version: '0.12.0'
 summary: Markdown editor with live preview
 description: |
   nibeditor is a small markdown editor that formats what you write as you write it.
@@ -76,8 +76,8 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.11.0/Nib-0.11.0-linux-x64.deb
-      - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.11.0/Nib-0.11.0-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.12.0/Nib-0.12.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.12.0/Nib-0.12.0-linux-arm64.deb
     # The bytes those two names stood for on the day the release was made. Every
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
@@ -86,8 +86,8 @@ parts:
     # lines per release from the digests the release page reports; see
     # packaging/linux.md.
     source-checksum:
-      - on amd64: sha256/e53312b306aa108a501d391ced75620344648ec56df7b5a8723d6f564a71a374
-      - on arm64: sha256/ee4c19cc6a3559f93d17a06a3e5dadc704c6df8ea7e8f853a4497a67165ed438
+      - on amd64: sha256/6f7ad2b729dfc74d0769c13bd02579ebe376e9c1752150f264e19d526f2d3ccd
+      - on arm64: sha256/8014436d76123749ddb72796a8d95d502c4d19d7940189818dcd596b2347c65e
     override-build: |
       craftctl default
 
