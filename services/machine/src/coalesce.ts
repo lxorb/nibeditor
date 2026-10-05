@@ -28,13 +28,17 @@ export class Coalescer {
     else this.timer = setTimeout(() => this.flush(), wait)
   }
 
-  /** Everything waiting, now: before a screen is taken or the session is saved. */
-  flush(): void {
+  /** What is waiting, now, or its first `count` bytes and the rest at the next frame:
+   *  before a screen is taken or the session is saved. */
+  flush(count = Infinity): void {
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
     if (this.pending.length === 0) return
-    const bytes = joined(this.pending)
-    this.pending = []
+    const all = joined(this.pending)
+    const bytes = count < all.length ? all.subarray(0, count) : all
+    this.pending = bytes === all ? [] : [all.subarray(bytes.length)]
+    if (this.pending.length > 0) this.timer = setTimeout(() => this.flush(), FRAME_MS)
+    if (bytes.length === 0) return
     this.last = this.now()
     this.send(bytes)
   }

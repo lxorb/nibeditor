@@ -1,0 +1,6 @@
+*
+!dist/nibd.cjs
+!package.json
+!entrypoint.sh
+!agents.sh
+!profile.sh

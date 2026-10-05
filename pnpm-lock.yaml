@@ -523,9 +523,9 @@ importers:
 
   services/machine:
     dependencies:
-      '@nib/sync-core':
+      '@nib/online':
         specifier: workspace:*
-        version: link:../../packages/sync-core
+        version: link:../../packages/online
       '@xterm/addon-serialize':
         specifier: 0.14.0
         version: 0.14.0
