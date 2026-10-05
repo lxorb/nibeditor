@@ -583,7 +583,14 @@ function holds(tail: string): boolean {
  *  FirstScreen.svelte), and the launch's reads handed out as the crate read them ahead
  *  (workspace/ahead.ts); what keeps the note's first screen is fetched at the last turn.
  *  Measured 3,141,378 and 375: 73,622 bytes and six modules under the ceiling. The
- *  production build preloads 1,344,097 bytes in 172 chunks against 1,359,421 in 176. */
+ *  production build preloads 1,344,097 bytes in 172 chunks against 1,359,421 in 176.
+ *
+ *  Not raised 2026-10-05, from a main at 3,218,399 and 380: the freeze recorder's ears
+ *  (which call the window was waiting on, a page whose browser did not answer, the
+ *  launch's facts in its log line) have to be there from the first call. What paid for
+ *  them is the store of what each site may use (web-tab/permissions.svelte.ts, 9,000
+ *  bytes), which no site can ask about before a page is open: it comes with the first
+ *  page now, as a page's dialogs do. Measured 3,209,907 and 379. */
 const BUDGET = 3_215_000
 const MOST_FILES = 381
 
@@ -722,6 +729,9 @@ describe('what the app evaluates before it draws anything', () => {
     // the listener for links from other programs, with the roads in after the space.
     ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
     ['/lib/web-tab/handed.ts', 'the pages other programs hand over'],
+    // What a site may use, which no site can ask about before a page is open; see
+    // `pagePermissions` in web-tab/pages.svelte.ts.
+    ['/lib/web-tab/permissions.svelte.ts', 'what a site may use'],
     ['/lib/export.ts', 'the exporters'],
     ['/editor/src/vim-mode.ts', "the vim mode's own module"],
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],

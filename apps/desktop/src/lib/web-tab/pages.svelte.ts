@@ -33,7 +33,6 @@ import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import type { Cut } from './covers'
 import { Latest } from './latest'
-import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
 /** This device's history, asked for by the first page that says where it is rather
@@ -62,6 +61,17 @@ function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
  *  and so leaves the store out of its package. */
 function dropDialogs(tab: string): void {
   if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
+}
+
+/** What a site may use, asked for the same way: no site can ask before a page is open,
+ *  and a tab closed before any did has nothing to take back. See permissions.svelte.ts. */
+function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
+  return import('./permissions.svelte')
+}
+
+/** A closed tab's questions, dropped; never in the glasses' plugin, as above. */
+function dropGrants(tab: string): void {
+  if (!__EVEN_PLUGIN__) void pagePermissions().then(({ grants }) => grants.dropped(tab))
 }
 
 /** What becomes of a page out of sight, fetched with the first one; see sleeping.ts. */
@@ -1261,7 +1271,7 @@ class Pages {
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
-      grants.dropped(tabId)
+      dropGrants(tabId)
       dropDialogs(tabId)
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
@@ -1284,7 +1294,7 @@ class Pages {
     await this.look(tabId)
 
     this.held.delete(tabId)
-    grants.dropped(tabId)
+    dropGrants(tabId)
     dropDialogs(tabId)
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
@@ -1354,6 +1364,7 @@ class Pages {
     // the clipboard to read. The request is held open in the engine until this is
     // answered, which is what lets the reader be asked at the moment they pressed
     // something rather than in a menu beforehand; see permissions.svelte.ts.
+    const { grants, readAsked } = await pagePermissions()
     await listen('nib://web-ask', (event) => {
       const said = readAsked(event.payload)
       if (said && this.held.has(said.tab)) grants.heard(said)
