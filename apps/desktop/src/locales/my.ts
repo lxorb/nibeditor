@@ -2049,4 +2049,6 @@ export const my: Dictionary = {
   'Unlock base': 'base သော့ဖွင့်ရန်',
   'Lock base': 'base သော့ခတ်ရန်',
   Form: 'ဖောင်',
+  Formula: 'ပုံသေနည်း',
+  'Blocked by {task}': '{task} ကို စောင့်နေသည်',
 }

@@ -2086,4 +2086,6 @@ export const ml: Dictionary = {
   'Unlock base': 'ബേസ് അൺലോക്ക് ചെയ്യുക',
   'Lock base': 'ബേസ് ലോക്ക് ചെയ്യുക',
   Form: 'ഫോം',
+  Formula: 'ഫോർമുല',
+  'Blocked by {task}': '{task} കാരണം തടഞ്ഞു',
 }

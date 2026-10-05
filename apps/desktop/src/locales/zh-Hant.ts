@@ -2016,4 +2016,6 @@ export const zhHant: Dictionary = {
   'Unlock base': '解鎖資料庫',
   'Lock base': '鎖定資料庫',
   Form: '表單',
+  Formula: '公式',
+  'Blocked by {task}': '被 {task} 阻擋',
 }

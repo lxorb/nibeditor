@@ -2075,4 +2075,6 @@ export const gsw: Dictionary = {
   'Unlock base': 'Base entsperre',
   'Lock base': 'Base sperre',
   Form: 'Formular',
+  Formula: 'Formle',
+  'Blocked by {task}': 'Wartet uf {task}',
 }

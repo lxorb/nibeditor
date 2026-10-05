@@ -252,3 +252,13 @@ export function reverseOffers(
   }
   return [...found].map(([property, name]) => ({ property, name: name || property }))
 }
+
+/** The note a note row sits under: the one its `parent` property links to, by the path
+ *  that is its row's id (docs/tasks.md 4, "sub-items"). */
+export function parentOf(row: Row, context: Context): string | null {
+  if (row.kind !== 'note') return null
+  const said = row.note.parent
+  const link = (Array.isArray(said) ? said[0] : said) ?? null
+  if (!isLinkValue(link)) return null
+  return context.resolve?.(link.target, row) ?? null
+}

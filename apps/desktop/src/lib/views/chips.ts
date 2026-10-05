@@ -7,9 +7,10 @@
  *  Lane 3 draws the same fields in the editor; the words here are the views' own and
  *  read the same fields, so the two cannot say a task is due on different days. */
 
-import type { TaskRow, Value } from '@nib/bases'
+import type { Row, TaskRow, Value } from '@nib/bases'
 import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
+import { plain } from './inline'
 import { dayWords } from '@nib/editor/task-days'
 
 export interface Chip {
@@ -105,4 +106,14 @@ export function toneColour(tone: string | undefined): string | null {
     default:
       return null
   }
+}
+
+/** The words of the first open task this one waits on (its `⛔` ids), or null. */
+export function blockerOf(task: TaskRow, rows: readonly Row[]): string | null {
+  for (const row of rows) {
+    const other = row.task
+    if (!other?.id || other.done || other.cancelled) continue
+    if (task.dependsOn.includes(other.id)) return plain(other.text)
+  }
+  return null
 }

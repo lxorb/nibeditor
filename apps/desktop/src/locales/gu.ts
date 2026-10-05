@@ -2056,4 +2056,6 @@ export const gu: Dictionary = {
   'Unlock base': 'બેઝ અનલૉક કરો',
   'Lock base': 'બેઝ લૉક કરો',
   Form: 'ફોર્મ',
+  Formula: 'સૂત્ર',
+  'Blocked by {task}': '{task} માટે અટકેલું',
 }

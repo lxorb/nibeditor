@@ -48,3 +48,6 @@ export {
   withAutomations,
 } from './automations'
 export { csvText, csvValue } from './csv'
+// What the formula field asks: whether words compile, and which functions there are.
+export { compile } from './expr/compile'
+export { GLOBALS } from './expr/globals'

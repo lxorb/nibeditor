@@ -2026,4 +2026,6 @@ export const th: Dictionary = {
   'Unlock base': 'ปลดล็อกฐานข้อมูล',
   'Lock base': 'ล็อกฐานข้อมูล',
   Form: 'แบบฟอร์ม',
+  Formula: 'สูตร',
+  'Blocked by {task}': 'รอ {task}',
 }

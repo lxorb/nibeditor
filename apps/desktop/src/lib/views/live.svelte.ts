@@ -47,8 +47,8 @@ export interface Source {
  *  menu row asked for, about one column where it is about one. */
 export type Builder =
   | { kind: 'colour' | 'automations' }
-  | { kind: 'rollup' | 'button'; column?: string }
-  | { kind: 'options'; column: string }
+  | { kind: 'rollup' | 'button' | 'formula'; column?: string }
+  | { kind: 'options' | 'name'; column: string }
 
 /** How long the view's search waits for the typing to stop. */
 const SEARCH_QUIET = 160

@@ -2103,4 +2103,6 @@ export const fil: Dictionary = {
   'Unlock base': 'I-unlock ang base',
   'Lock base': 'I-lock ang base',
   Form: 'Form',
+  Formula: 'Formula',
+  'Blocked by {task}': 'Hinarang ng {task}',
 }

@@ -2052,4 +2052,6 @@ export const ja: Dictionary = {
   'Unlock base': 'ベースのロックを解除',
   'Lock base': 'ベースをロック',
   Form: 'フォーム',
+  Formula: '数式',
+  'Blocked by {task}': '{task} 待ち',
 }

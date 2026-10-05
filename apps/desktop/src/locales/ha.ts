@@ -2093,4 +2093,6 @@ export const ha: Dictionary = {
   'Unlock base': 'Buɗe base',
   'Lock base': 'Kulle base',
   Form: 'Fom',
+  Formula: 'Dabara',
+  'Blocked by {task}': '{task} ya hana',
 }

@@ -2070,4 +2070,6 @@ export const pa: Dictionary = {
   'Unlock base': 'ਬੇਸ ਅਨਲੌਕ ਕਰੋ',
   'Lock base': 'ਬੇਸ ਲੌਕ ਕਰੋ',
   Form: 'ਫ਼ਾਰਮ',
+  Formula: 'ਫ਼ਾਰਮੂਲਾ',
+  'Blocked by {task}': '{task} ਕਾਰਨ ਰੁਕਿਆ',
 }

@@ -2067,4 +2067,6 @@ export const ps: Dictionary = {
   'Unlock base': 'د بیس قلف خلاص کړئ',
   'Lock base': 'بیس قلف کړئ',
   Form: 'فورمه',
+  Formula: 'فورمول',
+  'Blocked by {task}': 'د {task} په تمه',
 }

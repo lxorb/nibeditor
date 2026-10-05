@@ -2073,4 +2073,6 @@ export const te: Dictionary = {
   'Unlock base': 'బేస్‌ను అన్‌లాక్ చేయి',
   'Lock base': 'బేస్‌ను లాక్ చేయి',
   Form: 'ఫారం',
+  Formula: 'ఫార్ములా',
+  'Blocked by {task}': '{task} కోసం ఆగింది',
 }

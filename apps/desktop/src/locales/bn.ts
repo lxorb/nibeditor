@@ -2063,4 +2063,6 @@ export const bn: Dictionary = {
   'Unlock base': 'বেস আনলক করুন',
   'Lock base': 'বেস লক করুন',
   Form: 'ফর্ম',
+  Formula: 'সূত্র',
+  'Blocked by {task}': '{task}-এর জন্য আটকে',
 }

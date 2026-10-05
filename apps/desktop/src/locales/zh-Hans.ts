@@ -2015,4 +2015,6 @@ export const zhHans: Dictionary = {
   'Unlock base': '解锁库',
   'Lock base': '锁定库',
   Form: '表单',
+  Formula: '公式',
+  'Blocked by {task}': '被 {task} 阻塞',
 }

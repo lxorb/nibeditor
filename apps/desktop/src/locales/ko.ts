@@ -2038,4 +2038,6 @@ export const ko: Dictionary = {
   'Unlock base': '베이스 잠금 해제',
   'Lock base': '베이스 잠금',
   Form: '양식',
+  Formula: '수식',
+  'Blocked by {task}': '{task} 대기 중',
 }

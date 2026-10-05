@@ -2049,4 +2049,6 @@ export const jv: Dictionary = {
   'Unlock base': 'Bukak kunci base',
   'Lock base': 'Kunci base',
   Form: 'Formulir',
+  Formula: 'Rumus',
+  'Blocked by {task}': 'Diblokir dening {task}',
 }

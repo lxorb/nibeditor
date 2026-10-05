@@ -2083,4 +2083,6 @@ export const kn: Dictionary = {
   'Unlock base': 'ಬೇಸ್ ಅನ್‌ಲಾಕ್ ಮಾಡಿ',
   'Lock base': 'ಬೇಸ್ ಲಾಕ್ ಮಾಡಿ',
   Form: 'ಫಾರ್ಮ್',
+  Formula: 'ಸೂತ್ರ',
+  'Blocked by {task}': '{task} ಗಾಗಿ ತಡೆಹಿಡಿಯಲಾಗಿದೆ',
 }

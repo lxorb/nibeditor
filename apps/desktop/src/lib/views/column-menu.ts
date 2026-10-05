@@ -131,6 +131,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     ...others,
     DIVIDER,
     ...reverse,
+    { label: t('Formula'), run: () => (live.builder = { kind: 'formula' }) },
     { label: t('Rollup'), run: () => (live.builder = { kind: 'rollup' }) },
     { label: t('Button'), run: () => (live.builder = { kind: 'button' }) },
     ...ids,
@@ -230,8 +231,17 @@ export function columnMenu(
           ),
         ]
       : []),
-    ...(formula !== undefined && readRollup(formula) !== null
-      ? [{ label: t('Edit'), run: () => (live.builder = { kind: 'rollup', column }) }]
+    ...(formula !== undefined
+      ? [
+          {
+            label: t('Edit'),
+            run: () =>
+              (live.builder = {
+                kind: readRollup(formula) !== null ? 'rollup' : 'formula',
+                column,
+              }),
+          },
+        ]
       : []),
     ...(isButton(column)
       ? [{ label: t('Edit'), run: () => (live.builder = { kind: 'button', column }) }]
@@ -265,6 +275,7 @@ export function columnMenu(
         ]
       : []),
     DIVIDER,
+    { label: t('Rename'), run: () => (live.builder = { kind: 'name', column }) },
     {
       label: t('Hide'),
       disabled: columns.length < 2,

@@ -2041,4 +2041,6 @@ export const am: Dictionary = {
   'Unlock base': 'መሠረቱን ክፈት',
   'Lock base': 'መሠረቱን ቆልፍ',
   Form: 'ቅጽ',
+  Formula: 'ቀመር',
+  'Blocked by {task}': 'በ{task} ታግዷል',
 }

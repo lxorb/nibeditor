@@ -2062,4 +2062,6 @@ export const hi: Dictionary = {
   'Unlock base': 'बेस अनलॉक करें',
   'Lock base': 'बेस लॉक करें',
   Form: 'फ़ॉर्म',
+  Formula: 'फ़ॉर्मूला',
+  'Blocked by {task}': '{task} से रुका हुआ',
 }

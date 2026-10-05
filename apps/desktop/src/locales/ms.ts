@@ -2057,4 +2057,6 @@ export const ms: Dictionary = {
   'Unlock base': 'Buka kunci base',
   'Lock base': 'Kunci base',
   Form: 'Borang',
+  Formula: 'Formula',
+  'Blocked by {task}': 'Disekat oleh {task}',
 }

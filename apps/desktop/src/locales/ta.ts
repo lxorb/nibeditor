@@ -2094,4 +2094,6 @@ export const ta: Dictionary = {
   'Unlock base': 'பேஸைத் திற',
   'Lock base': 'பேஸைப் பூட்டு',
   Form: 'படிவம்',
+  Formula: 'சூத்திரம்',
+  'Blocked by {task}': '{task} காரணமாகத் தடைபட்டது',
 }

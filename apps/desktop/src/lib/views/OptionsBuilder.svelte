@@ -3,7 +3,8 @@
    *  its words and, for a status, To do, Doing or Done. Renaming a choice renames it in
    *  every note that holds it, as one write. A column that had none starts with the
    *  values its notes already hold, each in the next tone, which is how a text column
-   *  becomes a select.
+   *  becomes a select. Their order is the board's columns and the groups', so a choice
+   *  is carried up or down by its grip to reorder them.
    *
    *  The column of a base's ids has no choices: it has its prefix, and a new one is
    *  written into every id at once. */
@@ -60,6 +61,26 @@
     write([...options, { value, tone: String((options.length % 6) + 1) }])
   }
 
+  /** A choice carried by its grip and let go over another: it takes that one's place. */
+  function carry(event: PointerEvent, from: number) {
+    event.preventDefault()
+    const list = (event.currentTarget as HTMLElement).closest('.options')
+    const up = (one: PointerEvent) => {
+      window.removeEventListener('pointerup', up)
+      const rows = [...(list?.querySelectorAll<HTMLElement>('.row') ?? [])]
+      const to = rows.findIndex((row) => {
+        const box = row.getBoundingClientRect()
+        return one.clientY >= box.top && one.clientY < box.bottom
+      })
+      if (to === -1 || to === from) return
+      const next = [...options]
+      const [moved] = next.splice(from, 1)
+      if (moved) next.splice(to, 0, moved)
+      write(next)
+    }
+    window.addEventListener('pointerup', up)
+  }
+
   function prefix(words: string) {
     const base = live.base
     if (!base || !id) return
@@ -82,43 +103,46 @@
     />
   </label>
 {:else}
-  {#each options as option, at (option.value)}
-    <div class="row">
-      <ToneDot
-        tone={option.tone}
-        ontone={(tone: string | null) => {
-          const next: SelectOption = { value: option.value }
-          if (option.group) next.group = option.group
-          if (tone !== null) next.tone = tone
-          change(at, next)
-        }}
-      />
-      <input
-        class="nib-field"
-        value={option.value}
-        aria-label={t('Value')}
-        onchange={(event) => rename(at, event.currentTarget.value)}
-      />
-      <Select
-        label={t('Status')}
-        value={option.group ?? ''}
-        options={GROUPS}
-        onchange={(group: string) => {
-          const next: SelectOption = { value: option.value }
-          if (option.tone) next.tone = option.tone
-          if (group === 'todo' || group === 'doing' || group === 'done') next.group = group
-          change(at, next)
-        }}
-      />
-      <button
-        type="button"
-        class="nib-glyph"
-        title={t('Remove')}
-        aria-label={t('Remove')}
-        onclick={() => write(options.filter((_, index) => index !== at))}><Cross small /></button
-      >
-    </div>
-  {/each}
+  <div class="options">
+    {#each options as option, at (option.value)}
+      <div class="row">
+        <span class="grip" aria-hidden="true" onpointerdown={(event) => carry(event, at)}>⠿</span>
+        <ToneDot
+          tone={option.tone}
+          ontone={(tone: string | null) => {
+            const next: SelectOption = { value: option.value }
+            if (option.group) next.group = option.group
+            if (tone !== null) next.tone = tone
+            change(at, next)
+          }}
+        />
+        <input
+          class="nib-field"
+          value={option.value}
+          aria-label={t('Value')}
+          onchange={(event) => rename(at, event.currentTarget.value)}
+        />
+        <Select
+          label={t('Status')}
+          value={option.group ?? ''}
+          options={GROUPS}
+          onchange={(group: string) => {
+            const next: SelectOption = { value: option.value }
+            if (option.tone) next.tone = option.tone
+            if (group === 'todo' || group === 'doing' || group === 'done') next.group = group
+            change(at, next)
+          }}
+        />
+        <button
+          type="button"
+          class="nib-glyph"
+          title={t('Remove')}
+          aria-label={t('Remove')}
+          onclick={() => write(options.filter((_, index) => index !== at))}><Cross small /></button
+        >
+      </div>
+    {/each}
+  </div>
 
   <button type="button" class="nib-row is-short adder" onclick={add}>
     <span class="nib-row-label">{t('Add')}</span>
@@ -128,9 +152,22 @@
 <style>
   .row {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, 0.7fr) auto;
+    grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 0.7fr) auto;
     align-items: center;
     gap: var(--space-2);
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .grip {
+    color: var(--muted);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
   }
 
   .prefix {

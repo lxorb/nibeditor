@@ -21,6 +21,7 @@
   import { droppable, type Point } from './drag.svelte'
   import { type Kit, runKey } from './kit'
   import { EMPTY, listItems, toggled } from './list-items'
+  import { parentOf } from './columns'
   import { rowKey } from './row-keys'
   import RowLine from './RowLine.svelte'
   import { groupLabel } from './words'
@@ -56,6 +57,7 @@
       shut,
       hidden: view?.nib.hidden ?? [],
       adding: true,
+      parentOf: (row) => parentOf(row, live.context),
     }),
   )
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))

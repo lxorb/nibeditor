@@ -2065,4 +2065,6 @@ export const fa: Dictionary = {
   'Unlock base': 'باز کردن قفل پایگاه',
   'Lock base': 'قفل کردن پایگاه',
   Form: 'فرم',
+  Formula: 'فرمول',
+  'Blocked by {task}': 'منتظر {task}',
 }

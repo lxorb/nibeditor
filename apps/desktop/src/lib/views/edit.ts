@@ -210,3 +210,20 @@ export function freeFormulaName(base: Base, wanted: string): string {
   for (let count = 2; ; count++)
     if (!(`${name} ${count}` in base.formulas)) return `${name} ${count}`
 }
+
+/** What a column is called in this base (Bases' `properties.<key>.displayName`), under
+ *  the key Bases writes it with: a note's property by its own name, anything else by
+ *  its whole one. Empty words take the name away. */
+export function setDisplayName(base: Base, column: string, words: string): Base {
+  const key = column.startsWith('note.') ? column.slice(5) : column
+  const was = base.properties[key] ?? base.properties[column] ?? { kept: {} }
+  const next = { ...was }
+  if (words.trim()) next.displayName = words.trim()
+  else Reflect.deleteProperty(next, 'displayName')
+  const properties = { ...base.properties }
+  Reflect.deleteProperty(properties, column)
+  if (next.displayName === undefined && !Object.keys(next.kept).length)
+    Reflect.deleteProperty(properties, key)
+  else properties[key] = next
+  return { ...base, properties }
+}

@@ -2140,4 +2140,6 @@ export const uk: Dictionary = {
   'Unlock base': 'Розблокувати базу',
   'Lock base': 'Заблокувати базу',
   Form: 'Форма',
+  Formula: 'Формула',
+  'Blocked by {task}': 'Чекає: {task}',
 }

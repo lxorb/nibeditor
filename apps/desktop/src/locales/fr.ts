@@ -2126,4 +2126,6 @@ export const fr: Dictionary = {
   'Unlock base': 'Déverrouiller la base',
   'Lock base': 'Verrouiller la base',
   Form: 'Formulaire',
+  Formula: 'Formule',
+  'Blocked by {task}': 'Bloquée par {task}',
 }

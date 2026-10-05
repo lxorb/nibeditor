@@ -2015,4 +2015,6 @@ export const yue: Dictionary = {
   'Unlock base': '解鎖資料庫',
   'Lock base': '鎖定資料庫',
   Form: '表格',
+  Formula: '公式',
+  'Blocked by {task}': '等緊 {task}',
 }

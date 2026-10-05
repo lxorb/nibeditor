@@ -7,7 +7,7 @@
   import { t } from '../i18n.svelte'
   import { linkModifier } from '@nib/editor'
   import Twist from '../Twist.svelte'
-  import { chipsOf } from './chips'
+  import { blockerOf, chipsOf } from './chips'
   import { draggable } from './drag.svelte'
   import type { Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
@@ -42,6 +42,9 @@
   const section = $derived(task?.section.at(-1))
   const label = $derived(task ? plain(task.text) : row.file.basename)
   /** Which space, where it is not the open one (decision 8.4). */
+  /** The open task this one waits on (`⛔`), if any: a blocked task dims and says
+   *  why under the pointer (docs/tasks.md 4, "dependencies, blocked-by"). */
+  const blocker = $derived(task?.dependsOn.length ? blockerOf(task, kit.live.rows) : null)
   /** The view's conditional colour for this row, if any. */
   const tone = $derived(kit.live.colourOf(row))
   const elsewhere = $derived(
@@ -59,6 +62,8 @@
   class:is-on={selected}
   class:finished={!!task && (task.done || task.cancelled)}
   class:toned={tone !== null}
+  class:blocked={blocker !== null}
+  title={blocker === null ? undefined : t('Blocked by {task}', { task: blocker })}
   style:--row-tone={tone}
   style:--depth={depth}
   role="option"
@@ -116,6 +121,10 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       opacity var(--dur-base) var(--ease-out);
+  }
+
+  .line.blocked {
+    opacity: 0.55;
   }
 
   .line.finished {

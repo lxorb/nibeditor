@@ -2062,4 +2062,6 @@ export const ur: Dictionary = {
   'Unlock base': 'بیس کا قفل کھولیں',
   'Lock base': 'بیس مقفل کریں',
   Form: 'فارم',
+  Formula: 'فارمولا',
+  'Blocked by {task}': '{task} کا انتظار',
 }

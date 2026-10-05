@@ -2114,4 +2114,6 @@ export const ptPT: Dictionary = {
   'Unlock base': 'Desbloquear base',
   'Lock base': 'Bloquear base',
   Form: 'Formulário',
+  Formula: 'Fórmula',
+  'Blocked by {task}': 'Bloqueada por {task}',
 }

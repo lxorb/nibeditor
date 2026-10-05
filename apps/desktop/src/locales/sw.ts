@@ -2093,4 +2093,6 @@ export const sw: Dictionary = {
   'Unlock base': 'Fungua base',
   'Lock base': 'Funga base',
   Form: 'Fomu',
+  Formula: 'Fomula',
+  'Blocked by {task}': 'Imezuiwa na {task}',
 }

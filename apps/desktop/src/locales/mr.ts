@@ -2067,4 +2067,6 @@ export const mr: Dictionary = {
   'Unlock base': 'बेस अनलॉक करा',
   'Lock base': 'बेस लॉक करा',
   Form: 'फॉर्म',
+  Formula: 'सूत्र',
+  'Blocked by {task}': '{task} मुळे अडकले',
 }

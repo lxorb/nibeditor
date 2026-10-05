@@ -2045,4 +2045,6 @@ export const vi: Dictionary = {
   'Unlock base': 'Mở khóa base',
   'Lock base': 'Khóa base',
   Form: 'Biểu mẫu',
+  Formula: 'Công thức',
+  'Blocked by {task}': 'Bị chặn bởi {task}',
 }

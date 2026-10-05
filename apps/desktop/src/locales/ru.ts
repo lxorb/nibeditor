@@ -2146,4 +2146,6 @@ export const ru: Dictionary = {
   'Unlock base': 'Разблокировать базу',
   'Lock base': 'Заблокировать базу',
   Form: 'Форма',
+  Formula: 'Формула',
+  'Blocked by {task}': 'Ждёт: {task}',
 }

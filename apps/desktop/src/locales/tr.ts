@@ -2071,4 +2071,6 @@ export const tr: Dictionary = {
   'Unlock base': 'Base’in kilidini aç',
   'Lock base': 'Base’i kilitle',
   Form: 'Form',
+  Formula: 'Formül',
+  'Blocked by {task}': '{task} bekleniyor',
 }

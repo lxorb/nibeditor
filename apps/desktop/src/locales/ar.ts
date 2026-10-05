@@ -2172,4 +2172,6 @@ export const ar: Dictionary = {
   'Unlock base': 'إلغاء قفل القاعدة',
   'Lock base': 'قفل القاعدة',
   Form: 'نموذج',
+  Formula: 'صيغة',
+  'Blocked by {task}': 'محظورة بسبب {task}',
 }

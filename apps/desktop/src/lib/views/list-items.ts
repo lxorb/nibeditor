@@ -2,7 +2,9 @@
  *  tasks with their sub-tasks under them, and the add row at the end of a group.
  *
  *  A sub-task sits under its parent wherever both are in the group, indented a level,
- *  and a parent wears a twist that folds them (docs/tasks.md 3, row 97). One flat list
+ *  and a parent wears a twist that folds them (docs/tasks.md 3, row 97). A note sits
+ *  under the note its `parent` property links to, Notion's sub-items, the same way
+ *  (docs/tasks.md 4, "sub-items"). One flat list
  *  of same-height rows is what the window arithmetic needs (row-window.ts), so a
  *  Logbook of ten thousand done lines mounts the thirty on screen. Pure. */
 
@@ -31,33 +33,58 @@ export interface ListOptions {
   hidden?: readonly string[]
   /** Whether each group ends in an add row. */
   adding: boolean
+  /** The row id of the note a note row sits under, where it names one. */
+  parentOf?: (row: Row) => string | null
 }
 
 /** A group's rows in tree order, each with its depth. */
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
+  parentOf?: (row: Row) => string | null,
 ): { row: Row; depth: number; parent: boolean }[] {
   const present = new Set(rows.map(rowId))
   const children = new Map<string, Row[]>()
   const roots: Row[] = []
   for (const row of rows) {
     const parent = row.task?.parent
-    const parentId = parent === undefined ? null : `${row.path}#${parent}`
+    const parentId = row.task
+      ? parent === undefined
+        ? null
+        : `${row.path}#${parent}`
+      : (parentOf?.(row) ?? null)
     if (parentId !== null && present.has(parentId)) {
       children.set(parentId, [...(children.get(parentId) ?? []), row])
     } else roots.push(row)
   }
 
+  // Notes that name each other as parents have no root among them; the first of each
+  // such ring is shown at the top rather than lost.
+  const reached = new Set<string>()
+  const reach = (row: Row) => {
+    const id = rowId(row)
+    if (reached.has(id)) return
+    reached.add(id)
+    for (const child of children.get(id) ?? []) reach(child)
+  }
+  for (const root of roots) reach(root)
+  for (const row of rows) {
+    if (reached.has(rowId(row))) continue
+    roots.push(row)
+    reach(row)
+  }
+
   const out: { row: Row; depth: number; parent: boolean }[] = []
+  const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
     const id = rowId(row)
-    const under = children.get(id) ?? []
+    placed.add(id)
+    const under = (children.get(id) ?? []).filter((child) => !placed.has(rowId(child)))
     out.push({ row, depth, parent: under.length > 0 })
     if (shut.has(id)) return
-    for (const child of under) walk(child, depth + 1)
+    for (const child of under) if (!placed.has(rowId(child))) walk(child, depth + 1)
   }
-  for (const root of roots) walk(root, 0)
+  for (const root of roots) if (!placed.has(rowId(root))) walk(root, 0)
   return out
 }
 
@@ -72,7 +99,7 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
       out.push({ kind: 'head', id: `head:${name}`, group, count: group.rows.length, folded })
       if (folded) continue
     }
-    for (const one of tree(group.rows, options.shut)) {
+    for (const one of tree(group.rows, options.shut, options.parentOf)) {
       const id = rowId(one.row)
       out.push({
         kind: 'row',

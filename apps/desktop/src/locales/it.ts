@@ -2124,4 +2124,6 @@ export const it: Dictionary = {
   'Unlock base': 'Sblocca base',
   'Lock base': 'Blocca base',
   Form: 'Modulo',
+  Formula: 'Formula',
+  'Blocked by {task}': 'Bloccata da {task}',
 }

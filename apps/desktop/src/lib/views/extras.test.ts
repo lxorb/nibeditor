@@ -10,7 +10,9 @@ import { planned } from './automate'
 import { contextFor } from './context'
 import { noteRow } from './fixture'
 import { formatted } from './format'
+import { listItems } from './list-items'
 import { optionsFor, renamedIn, reprefixed, valuesOf } from './options'
+import { parentOf } from './columns'
 
 const TODAY = '2026-10-05'
 const filling = { today: TODAY, time: '09:30' }
@@ -153,5 +155,38 @@ describe("an automation's write", () => {
       joinedAction(last, [{ path: 'C:/s/Other.md', content: 'a', after: 'b', edits: [] }]),
     ).toBeNull()
     expect(joinedAction(undefined, [])).toBeNull()
+  })
+})
+
+describe('notes as sub-items', () => {
+  const rows = [
+    noteRow('Epic.md', 'status: Doing'),
+    noteRow('Story.md', 'parent: "[[Epic]]"'),
+    noteRow('Task.md', 'parent: "[[Story]]"'),
+    noteRow('A.md', 'parent: "[[B]]"'),
+    noteRow('B.md', 'parent: "[[A]]"'),
+  ]
+  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:30:00` })
+  const items = (shut: ReadonlySet<string> = new Set()) =>
+    listItems([{ key: null, rows, summaries: {} }], {
+      grouped: false,
+      folded: new Set(),
+      shut,
+      adding: false,
+      parentOf: (row) => parentOf(row, context),
+    }).flatMap((item) => (item.kind === 'row' ? [[item.row.path, item.depth, item.twist]] : []))
+
+  test('sit under the note their parent property links to, to any depth', () => {
+    expect(items()).toEqual([
+      ['Epic.md', 0, 'open'],
+      ['Story.md', 1, 'open'],
+      ['Task.md', 2, null],
+      ['A.md', 0, 'open'],
+      ['B.md', 1, null],
+    ])
+  })
+
+  test('fold under their parent, and two that name each other are not lost', () => {
+    expect(items(new Set(['Epic.md'])).map(([path]) => path)).toEqual(['Epic.md', 'A.md', 'B.md'])
   })
 })

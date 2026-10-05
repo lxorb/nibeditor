@@ -31,6 +31,8 @@
   import { switched } from './layout'
   import type { Builder } from './live.svelte'
   import { ADD_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
+  import FormulaBuilder from './FormulaBuilder.svelte'
+  import NameBuilder from './NameBuilder.svelte'
   import OptionsBuilder from './OptionsBuilder.svelte'
   import RollupBuilder from './RollupBuilder.svelte'
   import { templates } from './templates'
@@ -74,6 +76,8 @@
     rollup: t('Rollup'),
     button: t('Button'),
     options: t('Options'),
+    formula: t('Formula'),
+    name: t('Rename'),
   }
 
   /** A table's three heights, in lines. */
@@ -277,6 +281,10 @@
           <ButtonBuilder {kit} column={live.builder.column} />
         {:else if live.builder?.kind === 'options'}
           <OptionsBuilder {kit} column={live.builder.column} />
+        {:else if live.builder?.kind === 'formula'}
+          <FormulaBuilder {kit} column={live.builder.column} />
+        {:else if live.builder?.kind === 'name'}
+          <NameBuilder {kit} column={live.builder.column} />
         {/if}
       </Popover>
     </div>
