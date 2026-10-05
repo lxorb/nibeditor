@@ -767,7 +767,7 @@
 
       <!-- The graph is one press away and easy to miss behind the Links tab; once
          there are notes enough to connect, a card says so. See hints.svelte.ts. -->
-      {#if side === 'left' && startup.settled}
+      {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
         {#await import('./HintCard.svelte') then card}
           <card.default
             hint="graph"
@@ -940,7 +940,7 @@
         </label>
         <!-- The palette has no button of its own, only its keys; a keyboard is the
            only place the card would make sense. -->
-        {#if paletteKey && startup.settled}
+        {#if !__EVEN_PLUGIN__ && paletteKey && startup.settled}
           {#await import('./HintCard.svelte') then card}
             <card.default
               hint="palette"

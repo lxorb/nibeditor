@@ -77,7 +77,8 @@
 
   /* Somebody who has found the palette needs no card pointing at it. */
   $effect(() => {
-    if (open) void import('./hints.svelte').then(({ hints }) => hints.dismiss('palette'))
+    if (!__EVEN_PLUGIN__ && open)
+      void import('./hints.svelte').then(({ hints }) => hints.dismiss('palette'))
   })
 
   let query = $state('')

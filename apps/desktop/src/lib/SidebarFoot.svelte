@@ -42,12 +42,12 @@
   <!-- Notes on this device alone until somebody signs in, which nothing on screen
        says: the one hint that is about not losing anything, so the first a session
        offers. Not in the glasses' plugin, which signs in through the phone. -->
-  {#if startup.settled}
+  {#if !__EVEN_PLUGIN__ && startup.settled}
     {#await import('./HintCard.svelte') then card}
       <card.default
         hint="sign-in"
         text={t('Sign in to keep your notes safe and on every device.')}
-        when={!__EVEN_PLUGIN__ && !account.restoring && !account.signedIn}
+        when={!account.restoring && !account.signedIn}
         onpress={() => settings.show('account')}
       />
     {/await}

@@ -590,8 +590,16 @@ function holds(tail: string): boolean {
  *  launch's facts in its log line) have to be there from the first call. What paid for
  *  them is the store of what each site may use (web-tab/permissions.svelte.ts, 9,000
  *  bytes), which no site can ask about before a page is open: it comes with the first
- *  page now, as a page's dialogs do. Measured 3,209,907 and 379. */
-const BUDGET = 3_215_000
+ *  page now, as a page's dialogs do. Measured 3,209,907 and 379.
+ *
+ *  Raised 2026-10-05, to 3,225,000, from a main at 3,214,936 (64 bytes under) for three
+ *  settings that have to be there before the first key: markdown kept hidden while
+ *  writing (`quietMarks`, which the editor's reveal rule reads on every caret move), the
+ *  pointing hand on buttons (said on the root as the window comes up), and Silent mode,
+ *  with the moment a session has settled (startup.svelte.ts) that the hint cards wait
+ *  for. The hints themselves, their store and their cards, and the AGENTS.md a new
+ *  space is made with are behind doors and in none of this. Measured 3,222,295 and 378. */
+const BUDGET = 3_225_000
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

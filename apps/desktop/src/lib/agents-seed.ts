@@ -10,6 +10,10 @@
  *  Made with the space from the switcher and the first screen, not with an import,
  *  which brings what the folder had. */
 
+import { joinPath } from './tauri'
+import { writeFile } from './workspace/write-file'
+import { workspace } from './workspace.svelte'
+
 export const AGENTS_NAME = 'AGENTS.md'
 
 export const AGENTS_SEED = `# AGENTS
@@ -24,4 +28,11 @@ These are my notes. Write in the language and style they are written in, and ask
 export function isUntouchedAgents(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   return name === AGENTS_NAME && content === AGENTS_SEED
+}
+
+/** Writes the seed into a space just made. A space whose file could not be written is
+ *  still a space. */
+export async function seedAgents(root: string): Promise<void> {
+  await writeFile(joinPath(root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
+  await workspace.loadTree()
 }

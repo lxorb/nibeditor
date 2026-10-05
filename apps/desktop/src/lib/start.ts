@@ -73,7 +73,7 @@ export function start(): () => void {
   // since nothing a launch draws needs it; see hints.svelte.ts.
   const settling = setTimeout(() => {
     startup.settled = true
-    void import('./hints.svelte').then(({ hints }) => hints.settle())
+    if (!__EVEN_PLUGIN__) void import('./hints.svelte').then(({ hints }) => hints.settle())
   }, 20_000)
   // The one glyph on an `ai` fence that asks a model, installed whether or not any
   // provider is set up: a press on a block in a note somebody was sent says where to
