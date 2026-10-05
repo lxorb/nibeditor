@@ -216,17 +216,24 @@ describe.runIf(linux)('a session', () => {
     await new Promise((resolve) => setTimeout(resolve, 4000))
     expect(sessionProcesses(shell).length).toBeLessThanOrEqual(limit)
 
-    // The machine still answers: another session opens, and a builtin needs no fork.
-    const other = session(on, 's_after')
-    const seen = watcher(on.frames)
-    other.input(bytes('echo still-$((2+3))\r'))
+    // nibd, outside the limit, still answers and still starts programs; the sessions'
+    // user is the one held, until the owner ends the session.
+    const asked = on.frames.length
+    await one.want(0)
+    expect(on.frames[asked]?.t).toMatch(/^(out|screen)$/)
+    expect(spawnSync('true').status).toBe(0)
+
+    one.end()
+    await until(() => sessionProcesses(shell).length === 0)
+
+    const next = machine(limit)
+    const after = session(next, 's_after')
+    const seen = watcher(next.frames)
+    after.input(bytes('echo still-$((2+3))\r'))
     await until(async () => {
       await seen.caught()
       return text(seen.term).includes('still-5')
     })
-
-    one.end()
-    await until(() => sessionProcesses(shell).length === 0)
   })
 })
 

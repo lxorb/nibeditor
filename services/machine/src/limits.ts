@@ -159,9 +159,10 @@ function enablePids(root: string): void {
 
 /** Every process in the shell's kernel session, killed until none is left: the end of a
  *  session where there is no cgroup. A fork bomb forks while it is being killed, so
- *  this goes round until a pass finds nothing. */
+ *  this goes round until a pass finds nothing, for a few seconds at most. */
 export function killSession(shell: number): void {
-  for (let pass = 0; pass < 50; pass++) {
+  const until = Date.now() + 5000
+  while (Date.now() < until) {
     const pids = sessionProcesses(shell)
     if (pids.length === 0) return
     for (const pid of pids) {
