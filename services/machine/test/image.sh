@@ -46,15 +46,17 @@ docker exec -u nib -w /home/nib nib-machine bash -lc '
   echo "claude $version $platform: $actual"
   [ "$expected" = "$actual" ]
 
-  lock=~/.local/lib/node_modules/.package-lock.json
+  # npm keeps the integrity of every tarball it fetched, checked as it fetched it, in
+  # its cache index; each installed Codex package is looked up there by its tarball.
   checked=0
-  for name in $(jq -r ".packages | keys[] | select(test(\"@openai/codex\"))" "$lock"); do
-    installed=$(jq -r ".packages[\"$name\"].integrity" "$lock")
-    resolved=$(jq -r ".packages[\"$name\"].resolved" "$lock")
-    published=$(curl -fsSL "$(dirname "$(dirname "$resolved")")" |
-      jq -r --arg file "$(basename "$resolved")" ".versions[] | select(.dist.tarball | endswith(\$file)) | .dist.integrity")
-    echo "$name: $installed"
-    [ -n "$installed" ] && [ "$installed" = "$published" ]
+  for manifest in $(find ~/.local/lib/node_modules/@openai -name package.json -path "*/@openai/codex*/package.json" -not -path "*/node_modules/*/node_modules/*/node_modules/*"); do
+    [ "$(jq -r .name "$manifest")" = "@openai/codex" ] || continue
+    version=$(jq -r .version "$manifest")
+    tarball="codex-$version.tgz"
+    fetched=$(grep -rh -- "/-/$tarball" ~/.npm/_cacache/index-v5 | cut -f2 | jq -r ".integrity" | sort -u)
+    published=$(npm view "@openai/codex@$version" dist.integrity)
+    echo "@openai/codex@$version: $fetched"
+    [ -n "$fetched" ] && [ "$fetched" = "$published" ]
     checked=$((checked + 1))
   done
   [ "$checked" -ge 2 ]
