@@ -28,37 +28,43 @@ import { audit, type Detail } from './audit'
 import { budgetLeft } from './budget'
 import { whyNotWake } from './gate'
 import { ContainerHost, SECRET } from './host'
-import { FREE, meter, SMALL, usedOf } from './meter'
+import { meter, usedOf } from './meter'
 import {
   type Activity,
   awake,
+  FREE,
+  type MachineHost,
+  type MachineState,
+  mayType,
+  OFF,
+  sizeOf,
+  SMALL,
+  type SpaceRole,
+  type Typed,
+  type Typing,
+  type Watcher,
+} from '@nib/online'
+import {
   clientFrameOf,
   type DownReason,
   INPUT_RATE,
   linkFrame,
   type MachineFrame,
-  type MachineHost,
-  type MachineState,
   MOST_INPUT,
   MOST_SOCKETS,
-  mayType,
   nibdFrameOf,
   type NibdFrame,
   outFrame,
   type Refusal,
+  REFUSALS,
   type ServerFrame,
-  type SpaceRole,
-  sizeOf,
   text,
-  type Typed,
-  type Typing,
-  type Watcher,
-} from './online'
+} from '@nib/online/wire'
 import { reachAgain } from './reach'
 import { serviceOf } from './service'
 
 /** The image the machine boots, by its name in wrangler.machines.jsonc's `images`. */
-export const IMAGE = 'machine'
+const IMAGE = 'machine'
 
 /** The home `nibd` keeps the person in, and what its backup leaves out: what any
  *  package manager fetches again (4.3). */
@@ -126,7 +132,7 @@ interface SessionNews {
 const OPEN = 1
 const encoder = new TextEncoder()
 
-export function viewerOf(socket: WebSocket): Viewer | null {
+function viewerOf(socket: WebSocket): Viewer | null {
   const held: unknown = socket.deserializeAttachment()
   if (typeof held !== 'object' || held === null) return null
   const one = held as Partial<Viewer>
@@ -252,7 +258,7 @@ export class Machine implements DurableObject {
     if (!viewer) return
 
     if (typeof message !== 'string') {
-      await this.input(socket, viewer, new Uint8Array(message))
+      this.input(socket, viewer, new Uint8Array(message))
       return
     }
 
@@ -263,14 +269,15 @@ export class Machine implements DurableObject {
         await this.hello(socket, { ...viewer, cols: frame.cols, rows: frame.rows }, frame.since)
         break
       case 'in':
-        await this.input(socket, viewer, encoder.encode(frame.data))
+        this.input(socket, viewer, encoder.encode(frame.data))
         break
       case 'size':
         this.resized(socket, { ...viewer, cols: frame.cols, rows: frame.rows })
         break
       case 'start':
         if (!maySocketType(viewer)) this.say(socket, { t: 'refused', error: 'role' })
-        else this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
+        else
+          this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
         break
       case 'resume':
         await this.resume(socket, viewer)
@@ -302,6 +309,16 @@ export class Machine implements DurableObject {
     socket.serializeAttachment({ ...viewer, seen: Date.now() })
     this.next.set(socket, since ?? -1)
     this.ensureOpen(viewer)
+    // Before anybody typed, the pty is the size of whoever may type and arrived; after,
+    // the latest typist's (4.6).
+    if (maySocketType(viewer) && !this.typed.get(viewer.session)?.length) {
+      this.tell(viewer.session, {
+        t: 'size',
+        session: viewer.session,
+        cols: viewer.cols,
+        rows: viewer.rows,
+      })
+    }
     this.tell(viewer.session, { t: 'want', session: viewer.session, since: since ?? 0 })
 
     // The owner putting a sleeping machine's terminal on screen wakes it.
@@ -310,7 +327,7 @@ export class Machine implements DurableObject {
     }
   }
 
-  private async input(socket: WebSocket, viewer: Viewer, data: Uint8Array): Promise<void> {
+  private input(socket: WebSocket, viewer: Viewer, data: Uint8Array): void {
     if (!maySocketType(viewer)) {
       this.say(socket, { t: 'refused', error: 'role' })
       return
@@ -387,7 +404,7 @@ export class Machine implements DurableObject {
     const restored = (await this.ctx.storage.get<Record<string, string | null>>(RESTORED)) ?? {}
     const command = resumeOf(restored[viewer.session] ?? null)
     if (!command) return
-    await this.input(socket, viewer, encoder.encode(command))
+    this.input(socket, viewer, encoder.encode(command))
     const me = await this.me()
     if (me) await audit(this.env, me.id, 'resume', { who: viewer.who, device: viewer.device })
   }
@@ -455,7 +472,14 @@ export class Machine implements DurableObject {
         this.out(frame.session, frame.seq, frame.data)
         return
       case 'screen': {
-        const { t: _t, session, ...screen } = frame
+        const { session, seq, cols, rows, data } = frame
+        const screen = {
+          seq,
+          cols,
+          rows,
+          data,
+          ...(frame.restored ? { restored: frame.restored } : {}),
+        }
         if (screen.restored) {
           const restored =
             (await this.ctx.storage.get<Record<string, string | null>>(RESTORED)) ?? {}
@@ -470,8 +494,8 @@ export class Machine implements DurableObject {
         return
       }
       case 'program': {
-        const { t: _t, session, ...program } = frame
-        const said = { t: 'program' as const, ...program }
+        const { session, name, title, mark } = frame
+        const said = { t: 'program' as const, name, title, mark }
         this.news.set(session, { ...this.news.get(session), program: said })
         this.toSession(session, said)
         return
@@ -496,9 +520,11 @@ export class Machine implements DurableObject {
   private out(session: string, seq: number, data: Uint8Array): void {
     const end = seq + data.length
     this.ends.set(session, Math.max(this.ends.get(session) ?? 0, end))
-    if (this.news.get(session)?.ended) {
-      const { ended: _ended, ...rest } = this.news.get(session) ?? {}
-      this.news.set(session, rest)
+    // Output after `ended` is a new shell: the old code is no news to a joiner.
+    const news = this.news.get(session)
+    if (news?.ended) {
+      const { program, size } = news
+      this.news.set(session, { ...(program ? { program } : {}), ...(size ? { size } : {}) })
     }
 
     for (const socket of this.ctx.getWebSockets(session)) {
@@ -682,23 +708,25 @@ export class Machine implements DurableObject {
   /** Why the machine sleeps now, or null to stay awake. */
   private async decide(me: Me, now: number): Promise<DownReason | null> {
     const service = await serviceOf(this.env)
-    if (!service.on) return 'off'
     const row = await this.env.DB.prepare(
-      'select u.online as online, m.held as held, m.keep_awake as keep from users u left join machines m on m.user_id = u.id where u.id = ?',
+      `select u.online as online, m.held as held, m.keep_awake as keep
+         from users u left join machines m on m.user_id = u.id where u.id = ?`,
     )
       .bind(me.user)
       .first<{ online: number; held: string | null; keep: number | null }>()
-    if (row?.online !== 1) return 'off'
-    if (row.held) return row.held === 'flag' ? 'flag' : 'stopped'
+    if (row?.held) return row.held === 'flag' ? 'flag' : 'stopped'
 
+    // The service or the account switched off is an allowance of nothing, which the
+    // rule answers `off`.
+    const on = service.on && row?.online === 1
     const recent = (await this.ctx.storage.get<Activity[]>(RECENT)) ?? []
     const answer = awake(
       now,
       this.watchers(now),
       recent,
-      row.keep === 1,
+      row?.keep === 1,
       await usedOf(this.env, me.user, now),
-      FREE,
+      on ? FREE : OFF,
       await budgetLeft(this.env, service.ceiling, now),
     )
     if (answer.stay) {
@@ -722,7 +750,9 @@ export class Machine implements DurableObject {
       const viewer = viewerOf(socket)
       if (!viewer || socket.readyState !== OPEN) return []
       const seen = Math.max(viewer.seen, this.lastKey.get(viewer.who) ?? 0)
-      return [{ who: viewer.who, device: viewer.device, active: now - seen < ACTIVE_FOR, onScreen: true }]
+      return [
+        { who: viewer.who, device: viewer.device, active: now - seen < ACTIVE_FOR, onScreen: true },
+      ]
     })
   }
 
@@ -832,12 +862,10 @@ export class Machine implements DurableObject {
   private async recheck(): Promise<void> {
     const me = await this.me()
     if (!me) return
-    const sockets = this.ctx
-      .getWebSockets()
-      .flatMap((socket) => {
-        const viewer = viewerOf(socket)
-        return viewer ? [{ socket, viewer }] : []
-      })
+    const sockets = this.ctx.getWebSockets().flatMap((socket) => {
+      const viewer = viewerOf(socket)
+      return viewer ? [{ socket, viewer }] : []
+    })
     if (!sockets.length) return
 
     const pairs = new Map<string, { who: string; term: string; guest: boolean }>()
@@ -853,7 +881,7 @@ export class Machine implements DurableObject {
 
     for (const { socket, viewer } of sockets) {
       const one = now.get(`${viewer.who}\n${viewer.term}`)
-      if (!one || one.session !== viewer.session) {
+      if (one?.session !== viewer.session) {
         socket.close(4403, 'no longer reaches this terminal')
         continue
       }
@@ -938,7 +966,9 @@ export class Machine implements DurableObject {
 
     const me = await this.me()
     if (!me) return
-    await this.env.DB.prepare('update machines set state = ?2 where id = ?1').bind(me.id, state).run()
+    await this.env.DB.prepare('update machines set state = ?2 where id = ?1')
+      .bind(me.id, state)
+      .run()
     this.everybody({ t: 'machine', state, ...(reason ? { reason } : {}) })
     await askHub(this.env, me.user, 'machine', { 'x-nib-state': state })
   }
@@ -1008,19 +1038,6 @@ function viewerFrom(headers: Headers): Viewer {
     seen: Date.now(),
   }
 }
-
-const REFUSALS: readonly Refusal[] = [
-  'gone',
-  'role',
-  'list',
-  'allowance',
-  'budget',
-  'off',
-  'flag',
-  'sessions',
-  'rate',
-  'large',
-]
 
 function isRefusal(value: string): value is Refusal {
   return REFUSALS.some((one) => one === value)

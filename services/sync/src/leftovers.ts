@@ -100,8 +100,7 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   // name that turned out to be somebody else's. One that did not answer stays for the
   // next sweep.
   const done = names.filter(
-    (one) =>
-      (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
+    (one) => (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
   )
 
   for (const chunk of chunks(done)) {

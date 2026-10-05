@@ -32,7 +32,7 @@ export async function serviceOf(env: Env): Promise<Service> {
   return {
     on: said.get('online') === 'on' && env.MACHINES !== undefined,
     ceiling: Number.isFinite(ceiling) && ceiling >= 0 ? ceiling : DEFAULT_CEILING,
-    admin: said.get('admin') || null,
+    admin: said.get('admin')?.trim() ? (said.get('admin') ?? null) : null,
   }
 }
 

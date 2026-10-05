@@ -30,6 +30,7 @@
     "@lezer/yaml": "^1.0.4",
     "@nib/bases": "workspace:*",
     "@nib/markdown": "workspace:*",
+    "@nib/online": "workspace:*",
     "@nib/rooms": "workspace:*",
     "@nib/sync-core": "workspace:*",
     "hono": "^4.13.5",

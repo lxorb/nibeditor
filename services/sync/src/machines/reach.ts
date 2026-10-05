@@ -13,7 +13,7 @@
  *  they were taken out of - because it is their machine (4.5). */
 
 import type { Env } from '../types'
-import type { SpaceRole, Typing } from './online'
+import type { SpaceRole, Typing } from '@nib/online'
 
 /** What one person reaches on one terminal. */
 export interface Reached {
@@ -62,7 +62,8 @@ select p.who as who, p.term as term, p.guest as guest,
                             and gi.item = n.id and gi.joined_at is not null`
 
 /** The door's: the session behind a token (`?1` its hash, `?2` now) and the file. */
-export const DOOR = reach(`me as (
+export const DOOR = reach(
+  `me as (
   select s.user_id as who, 0 as guest from sessions s where s.token_hash = ?1 and s.expires_at > ?2
   union all
   select g.guest_id as who, 1 as guest from guest_sessions g
@@ -78,7 +79,8 @@ export const WHO = `select s.user_id as who from sessions s where s.token_hash =
   select g.guest_id as who from guest_sessions g where g.token_hash = ?1 and g.expires_at > ?2`
 
 /** `Machine`'s: every socket's person and file at once, as JSON in `?1`. */
-const AGAIN = reach(`pairs as (
+const AGAIN = reach(
+  `pairs as (
   select json_extract(value, '$.who') as who, json_extract(value, '$.term') as term,
          json_extract(value, '$.guest') as guest
     from json_each(?1)
@@ -131,8 +133,6 @@ export async function reachAgain(
 ): Promise<Reached[]> {
   if (!pairs.length) return []
   const given = JSON.stringify(pairs.map((one) => ({ ...one, guest: one.guest ? 1 : 0 })))
-  const { results } = await env.DB.prepare(AGAIN)
-    .bind(given, machine)
-    .all<Row>()
+  const { results } = await env.DB.prepare(AGAIN).bind(given, machine).all<Row>()
   return results.flatMap((row) => reachedOf(row) ?? [])
 }

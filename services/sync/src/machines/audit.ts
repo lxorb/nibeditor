@@ -74,5 +74,7 @@ export async function audit(
 
 /** The audit past its 90 days, gone; one statement for the nightly job. */
 export async function sweepAudit(env: Env, at: number): Promise<void> {
-  await env.DB.prepare('delete from machine_events where at < ?').bind(at - KEPT).run()
+  await env.DB.prepare('delete from machine_events where at < ?')
+    .bind(at - KEPT)
+    .run()
 }

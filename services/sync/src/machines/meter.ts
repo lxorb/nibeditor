@@ -1,47 +1,26 @@
-/** What a machine used, counted per account per month, and what it may use
- *  (docs/online-terminal.md, 4.9).
+/** The meter's rows (docs/online-terminal.md, 4.9): what each account's machine used,
+ *  per month, in `machine_usage`.
  *
  *  `Machine` adds to the month's row every minute it is awake and once more as it
- *  sleeps, so the allowance and the budget breaker read numbers that are at most a
- *  minute old. Memory and disk are counted from awake seconds and the small machine's
- *  size; CPU and egress from what `nibd` reports (or the host, whichever is larger). */
+ *  sleeps, so the allowance and the budget breaker read numbers at most a minute old.
+ *  The arithmetic is `@nib/online`'s (`accrue`, `usedOf`, `spend`); this is the SQL. */
 
+import { accrue, monthOf, NONE, SMALL, type Usage, usedOf as asAllowance } from '@nib/online'
+import type { Allowance } from '@nib/online'
 import type { Env } from '../types'
-import type { Allowance } from './online'
 
-/** The small machine (decision 3): ½ vCPU, 2 GiB of memory, an 8 GB disk. */
-export const SMALL = { vcpu: 0.5, memGib: 2, diskGb: 8 } as const
+const USAGE = `awake_s as awakeS, cpu_s as cpuS, mem_gib_s as memGibS, disk_gb_s as diskGbS,
+  egress_bytes as egressBytes`
 
-const GB = 1_000_000_000
-
-/** The free allowance, a month: 20 awake hours, 10 vCPU-hours, 5 GB of home, 20 GB
- *  of egress. */
-export const FREE: Allowance = {
-  awakeS: 20 * 3600,
-  cpuS: 10 * 3600,
-  homeBytes: 5 * GB,
-  egressBytes: 20 * GB,
-}
-
-/** The month a moment is counted in, as `YYYY-MM` in UTC. */
-export function monthOf(at: number): string {
-  return new Date(at).toISOString().slice(0, 7)
-}
-
-/** When the month a moment is in ends: the allowance's reset. */
-export function resetOf(at: number): number {
-  const day = new Date(at)
-  return Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + 1, 1)
-}
-
-/** One stretch of use, added to its month's row. */
+/** One awake stretch added to its month's row. */
 export async function meter(
   env: Env,
   userId: string,
   at: number,
-  used: { awakeS: number; cpuS: number; egressBytes: number },
+  stretch: { awakeS: number; cpuS: number; egressBytes: number },
 ): Promise<void> {
-  if (used.awakeS <= 0 && used.cpuS <= 0 && used.egressBytes <= 0) return
+  const added = accrue(NONE, stretch.awakeS, SMALL, stretch.cpuS, stretch.egressBytes)
+  if (added.awakeS <= 0 && added.cpuS <= 0 && added.egressBytes <= 0) return
   await env.DB.prepare(
     `insert into machine_usage (user_id, month, awake_s, cpu_s, mem_gib_s, disk_gb_s, egress_bytes)
      values (?1, ?2, ?3, ?4, ?5, ?6, ?7)
@@ -52,34 +31,43 @@ export async function meter(
     .bind(
       userId,
       monthOf(at),
-      Math.round(used.awakeS),
-      used.cpuS,
-      used.awakeS * SMALL.memGib,
-      used.awakeS * SMALL.diskGb,
-      Math.round(used.egressBytes),
+      Math.round(added.awakeS),
+      added.cpuS,
+      added.memGibS,
+      added.diskGbS,
+      Math.round(added.egressBytes),
     )
     .run()
 }
 
 /** What an account has used this month, against the allowance's four lines. */
 export async function usedOf(env: Env, userId: string, at: number): Promise<Allowance> {
-  const row = await env.DB.prepare(
-    `select u.awake_s as awake_s, u.cpu_s as cpu_s, u.egress_bytes as egress_bytes,
-            (select home_bytes from machines where user_id = ?1) as home_bytes
-       from (select 1) left join machine_usage u on u.user_id = ?1 and u.month = ?2`,
+  const usage = await env.DB.prepare(
+    `select ${USAGE} from machine_usage where user_id = ? and month = ?`,
   )
     .bind(userId, monthOf(at))
-    .first<{
-      awake_s: number | null
-      cpu_s: number | null
-      egress_bytes: number | null
-      home_bytes: number | null
-    }>()
+    .first<Usage>()
+  const home = await env.DB.prepare('select home_bytes from machines where user_id = ?')
+    .bind(userId)
+    .first<{ home_bytes: number }>()
+  return asAllowance(usage ?? NONE, home?.home_bytes ?? 0)
+}
 
-  return {
-    awakeS: row?.awake_s ?? 0,
-    cpuS: row?.cpu_s ?? 0,
-    homeBytes: row?.home_bytes ?? 0,
-    egressBytes: row?.egress_bytes ?? 0,
-  }
+/** The whole service's month, and the homes it keeps: what the breaker prices. */
+export async function serviceMonth(
+  env: Env,
+  at: number,
+): Promise<{ usage: Usage; storedBytes: number }> {
+  const usage = await env.DB.prepare(
+    `select coalesce(sum(awake_s), 0) as awakeS, coalesce(sum(cpu_s), 0) as cpuS,
+            coalesce(sum(mem_gib_s), 0) as memGibS, coalesce(sum(disk_gb_s), 0) as diskGbS,
+            coalesce(sum(egress_bytes), 0) as egressBytes
+       from machine_usage where month = ?`,
+  )
+    .bind(monthOf(at))
+    .first<Usage>()
+  const stored = await env.DB.prepare(
+    'select coalesce(sum(home_bytes), 0) as bytes from machines where backup_key is not null',
+  ).first<{ bytes: number }>()
+  return { usage: usage ?? NONE, storedBytes: stored?.bytes ?? 0 }
 }

@@ -1229,6 +1229,28 @@ where it adds to the routes of this section:
   merge two documents seeded apart, which doubles the text. v2 sockets hear `EPOCH`
   and 4001 as above.
 
+### Online terminal
+
+The online terminal (`docs/online-terminal.md`, lane `online-machine`,
+`services/sync/src/machines/`) adds, all answering 404 while `online_service.online` is not
+`on` or the `MACHINES` binding is absent:
+
+- `GET /v2/online/:term/socket`, upgraded, ahead of the guard like the hub: `nib.token.<token>`
+  and `nib.device.<id>`. One query (`machines/reach.ts`) decides the role from the `.term`
+  file's id and its space, never its text; the machine's owner reaches their own session
+  from a trashed file too. Frames are `@nib/online/wire`'s.
+- Behind the guard, accounts only (no guest, no program): `GET /v2/online/machine` (state,
+  month, allowance, reset); `POST /v2/online/machine/start` and `/stop`; `POST
+  /v2/online/terms {term}` (answers the `.term`'s `{v, machine, session}`; `409 sessions`
+  with the eight); `GET /v2/online/terms`; `PATCH /v2/online/terms/:term {typing}` and
+  `DELETE /v2/online/terms/:term`, the machine's owner only; `GET /v2/online/events` (the
+  audit).
+- `/v2/online/admin` for the account `online_service.admin` names: `GET /`, `POST
+  /service {online?, ceiling?}`, `POST /allow {email, online}`, `POST
+  /machines/:id/stop {flag?}` and `/release`. Open while the service is off.
+- The hub says `{t:'machine', state}` to every device of the owner when the machine's
+  state changes.
+
 ### What a program token may reach
 
 `nib_...` tokens (`programs.ts`) reach the feed, `/v2/docs/pull`, and the v1 note routes they
@@ -1390,6 +1412,13 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
 `new_sqlite_classes` and not `new_classes`, as `collaboration.md` records, and proved with
 `wrangler deploy --dry-run` before anything else.
 
+- `Machine` (online terminal, migration tag `v3`, only in `wrangler.machines.jsonc` until
+  going live): one per machine, in the `eu` jurisdiction, with the container application
+  `nib-sync-machines` (`durable_object` scheduling) bound to it. Migration
+  `0045_machines.sql` adds `machines`, `machine_usage`, `machine_events`, `term_sessions`,
+  `online_service` and `users.online`; `erase.ts` takes the first four and leaves
+  `machines/<id>` and `homes/<key>` in `leftovers`.
+
 ### R2
 
 | key | what |
@@ -1400,6 +1429,7 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
 | `blobs/<hash>` | pictures, PDFs, and now every file in a space |
 | `web/<user>/<key>` | an encrypted web manifest |
 | `web/<user>/chunks/<name>` | an encrypted chunk |
+| `<backup id>.tar.zst` in `nib-homes` (`eu`) | an online terminal machine's home, its latest backup |
 
 ### Quotas, limits and mail
 

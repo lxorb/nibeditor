@@ -47,7 +47,10 @@
       ],
       "ignoreDependencies": ["@nib/themes"]
     },
-    "services/sync": {},
+    "services/sync": {
+      "entry": ["src/machines/entry.ts"],
+      "ignoreDependencies": ["cloudflare"]
+    },
     "services/machine": {
       "entry": ["src/main.ts", "vitest.image.config.ts", "test/**/*.drive.ts"]
     },

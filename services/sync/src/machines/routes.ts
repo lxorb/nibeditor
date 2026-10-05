@@ -16,11 +16,15 @@ import { audit } from './audit'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
-import { FREE, resetOf, usedOf } from './meter'
-import { MOST_SESSIONS } from './online'
+import { FREE, resetAt } from '@nib/online'
+import { usedOf } from './meter'
+import { MOST_SESSIONS } from '@nib/online/wire'
 import { allowed, serviceOf } from './service'
 
-type Online = { Bindings: Env; Variables: Variables }
+interface Online {
+  Bindings: Env
+  Variables: Variables
+}
 
 export const online = new Hono<Online>()
 
@@ -89,7 +93,7 @@ online.get('/machine', async (context) => {
     },
     used: await usedOf(context.env, user.id, at),
     limit: FREE,
-    resetAt: resetOf(at),
+    resetAt: resetAt(at),
   })
 })
 
@@ -102,7 +106,9 @@ online.post('/machine/start', async (context) => {
   const machine = await ensureMachine(context.env, user.id)
   await audit(context.env, machine.id, 'start', { who: user.id })
   const answer = await askMachine(context.env, machine.id, 'start', asked(machine))
-  return context.json({ state: answer ? ((await answer.json()) as { state: string }).state : 'asleep' })
+  return context.json({
+    state: answer ? (await answer.json<{ state: string }>()).state : 'asleep',
+  })
 })
 
 online.post('/machine/stop', async (context) => {
@@ -110,7 +116,10 @@ online.post('/machine/stop', async (context) => {
   const machine = await machineOf(context.env, user.id)
   if (!machine) return context.json({ error: NOT_FOUND }, 404)
   await audit(context.env, machine.id, 'stop', { who: user.id, detail: 'stopped' })
-  await askMachine(context.env, machine.id, 'stop', { ...asked(machine), 'x-nib-reason': 'stopped' })
+  await askMachine(context.env, machine.id, 'stop', {
+    ...asked(machine),
+    'x-nib-reason': 'stopped',
+  })
   return context.json({ state: 'asleep' })
 })
 
@@ -141,7 +150,7 @@ online.post('/terms', async (context) => {
   )
     .bind(term)
     .first<{ machine: string; session: string; user_id: string; ended_at: number | null }>()
-  if (had && had.user_id === user.id && had.ended_at === null) {
+  if (had?.user_id === user.id && had.ended_at === null) {
     return context.json({ v: 1, machine: had.machine, session: had.session })
   }
   if (had) return context.json({ error: 'gone' }, 409)

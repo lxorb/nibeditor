@@ -18,6 +18,7 @@ import { hubs } from './hub-fakes'
 const HOLDS_NOTHING: Record<string, string> = {
   oauth_clients: 'a client registered itself; its row names a program, never a person',
   leftovers: 'what is still to go, written by the deletion itself and emptied after it',
+  online_service: "the online terminal service's own switches, about no account",
 }
 
 /** The columns that say whose a row is or what it is inside. A table with one of
@@ -281,6 +282,20 @@ function seed(database: DatabaseSync, who: Person): void {
        ('lease', ?1 || ':device', 1, 9e15), ('web-up', ?1 || ':site-key', 1, 9e15),
        ('web-key', ?1, 1, 9e15)`,
     who.id,
+  )
+  // Its online terminal machine: the machine, a month of it, a line of its audit and a
+  // session on it; see machines/.
+  run("insert into machines (id, user_id, created_at) values ('m-' || ?1, ?1, 1)", who.id)
+  run("insert into machine_usage (user_id, month, awake_s) values (?, '2026-10', 60)", who.id)
+  run(
+    "insert into machine_events (machine, at, kind, who) values ('m-' || ?1, 1, 'open', ?1)",
+    who.id,
+  )
+  run(
+    `insert into term_sessions (term, machine, session, user_id, created_at)
+     values (?2, 'm-' || ?1, 's-' || ?1, ?1, 1)`,
+    who.id,
+    who.note,
   )
 }
 

@@ -13,10 +13,10 @@
  *  docs/online-terminal-live.md. */
 
 import type { Env } from '../types'
-import type { MachineHost } from './online'
+import type { MachineHost } from '@nib/online'
 
 /** The port `nibd` listens on in the machine, and the path its link answers. */
-export const NIBD_PORT = 8080
+const NIBD_PORT = 8080
 const LINK_URL = 'http://nibd/link'
 
 /** How long the container waits with nobody's request after `Machine` goes quiet.
@@ -43,10 +43,10 @@ export interface Backups {
   restore(record: string): Promise<void>
 }
 
-export type MakeBackups = (container: Container, ctx: DurableObjectState, env: Env) => Backups
+type MakeBackups = (container: Container, ctx: DurableObjectState, env: Env) => Backups
 
 /** How HTTP and HTTPS leave a machine; see `egressOf`. */
-export type Egress = 'open' | 'web'
+type Egress = 'open' | 'web'
 
 /** What the entry hands the host: the backups, and the outbound gateway for `web`. */
 export interface Wiring {
@@ -74,7 +74,7 @@ export function wire(given: Wiring): void {
  *
  *  The design's rule is "never the other way round", so `open` is the default and
  *  `web` is one variable away; which to run is Emil's call at going live. */
-export function egressOf(env: Env): Egress {
+function egressOf(env: Env): Egress {
   return env.MACHINE_EGRESS === 'web' ? 'web' : 'open'
 }
 
@@ -135,11 +135,13 @@ export class ContainerHost implements MachineHost {
 
   async stop(_id: string, grace: number): Promise<void> {
     const container = this.container
-    if (!container.running) return
+    // Read afresh each time: `running` is the runtime's, and changes under us.
+    const running = () => container.running
+    if (!running()) return
     container.signal(15)
     const until = Date.now() + grace
-    while (container.running && Date.now() < until) await wait(LINK_WAIT)
-    if (container.running) await container.destroy('stopped')
+    while (running() && Date.now() < until) await wait(LINK_WAIT)
+    if (running()) await container.destroy('stopped')
   }
 
   async link(_id: string): Promise<WebSocket> {

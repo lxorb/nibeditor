@@ -7,8 +7,9 @@
 
 import type { Env } from '../types'
 import { budgetLeft } from './budget'
-import { FREE, usedOf } from './meter'
-import type { Refusal } from './online'
+import { FREE } from '@nib/online'
+import { usedOf } from './meter'
+import type { Refusal } from '@nib/online/wire'
 import { serviceOf } from './service'
 
 export async function whyNotWake(env: Env, userId: string, at: number): Promise<Refusal | null> {

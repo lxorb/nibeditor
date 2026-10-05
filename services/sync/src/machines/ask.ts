@@ -7,15 +7,7 @@
 import { chunks } from '../bound'
 import type { Env } from '../types'
 
-export type MachineAsk =
-  | 'join'
-  | 'start'
-  | 'stop'
-  | 'state'
-  | 'typing'
-  | 'revoke'
-  | 'end'
-  | 'erase'
+export type MachineAsk = 'join' | 'start' | 'stop' | 'state' | 'typing' | 'revoke' | 'end' | 'erase'
 
 export async function askMachine(
   env: Env,

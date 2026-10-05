@@ -12,10 +12,13 @@ import { askMachine } from './ask'
 import { audit } from './audit'
 import { spentThisMonth } from './budget'
 import { NOT_FOUND } from './door'
-import { monthOf } from './meter'
+import { monthOf } from '@nib/online'
 import { serviceOf, setService } from './service'
 
-type Admin = { Bindings: Env; Variables: Variables }
+interface Admin {
+  Bindings: Env
+  Variables: Variables
+}
 
 export const onlineAdmin = new Hono<Admin>()
 
@@ -54,7 +57,8 @@ onlineAdmin.post('/service', async (context) => {
   const ceiling = body.count('ceiling')
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (on !== undefined) await setService(context.env, 'online', on ? 'on' : 'off')
-  if (ceiling !== undefined && ceiling >= 0) await setService(context.env, 'ceiling', String(ceiling))
+  if (ceiling !== undefined && ceiling >= 0)
+    await setService(context.env, 'ceiling', String(ceiling))
   const service = await serviceOf(context.env)
   return context.json({ online: service.on, ceiling: service.ceiling })
 })
@@ -64,7 +68,8 @@ onlineAdmin.post('/allow', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', 320)
   const on = body.flag('online')
-  if (body.problem || !email || on === undefined) return context.json({ error: 'email and online' }, 400)
+  if (body.problem || !email || on === undefined)
+    return context.json({ error: 'email and online' }, 400)
 
   const user = await context.env.DB.prepare('select id from users where email = ?')
     .bind(email.toLowerCase())
@@ -79,7 +84,10 @@ onlineAdmin.post('/allow', async (context) => {
       .bind(user.id)
       .first<{ id: string }>()
     if (machine) {
-      await audit(context.env, machine.id, 'stop', { who: context.get('user').id, detail: 'account' })
+      await audit(context.env, machine.id, 'stop', {
+        who: context.get('user').id,
+        detail: 'account',
+      })
       await askMachine(context.env, machine.id, 'stop', {
         'x-nib-user': user.id,
         'x-nib-reason': 'off',
