@@ -1802,8 +1802,6 @@ export const id: Dictionary = {
   'Stop agents': 'Hentikan agen',
   Agents: 'Agen',
   'Always on this site': 'Selalu di situs ini',
-  'Give back': 'Kembalikan',
-  'Take over': 'Ambil alih',
   'Agents stopped': 'Agen dihentikan',
   'Agent tabs closed': 'Tab agen ditutup',
   'nibeditor is still running for your agents': 'nibeditor masih berjalan untuk agen Anda',

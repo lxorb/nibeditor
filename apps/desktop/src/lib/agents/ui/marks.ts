@@ -1,13 +1,16 @@
 /** Which tabs wear an agent's mark, and how: the frame's and the mark's state machine.
  *
  *  A tab is in one of three states, and the whole of the frame and the tab mark is
- *  these three said with a colour (docs/agent-native.md 7.1, 7.3):
+ *  these three said with a colour (docs/agent-native.md 7.1):
  *
  *  | state | when | worn |
  *  | --- | --- | --- |
  *  | acting | the agent called on the tab within `ACTIVE_FOR` | its colour; the mark turns |
- *  | paused | the reader took the tab, handed it over for a step, or stopped the agent while it was acting there | muted; the mark is still, and a press on it gives the tab back |
+ *  | stopped | the reader stopped the agent while it was acting there | muted; the mark is still, and a press on it resumes the agent |
  *  | none | anything else | nothing |
+ *
+ *  Nothing the reader does in the tab changes its state: they and the agent act on one
+ *  page, and the agent reads the page as it is (7.3).
  *
  *  **Acting is a stretch of time, not a call.** The crate says when a call starts and
  *  never when an agent is done, because an agent at work is a model thinking between
@@ -15,13 +18,11 @@
  *  blink on every one, which is the loud thing this design is against, so a tab is
  *  acted in until `ACTIVE_FOR` has passed without a call.
  *
- *  **A pause is kept until it is given back.** Nothing gives a tab back by itself (open
- *  question 5): a tab that started moving again while somebody read it is the
- *  interruption the whole design avoids, and a mark that went away would leave nobody
- *  anything to press. */
+ *  **A stop is kept until it is lifted.** A tab that started moving again while somebody
+ *  read it is the interruption the whole design avoids. */
 
 import type { Worn } from '../../agent-marks.svelte'
-import { pausedKey, type Seen } from './seen'
+import type { Seen } from './seen'
 
 /** How long a tab counts as acted in after the agent's last call there. Longer than a
  *  model takes over one step, and short enough that a job that has finished lets go of
@@ -39,18 +40,14 @@ export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<stri
   for (const [tab, touch] of Object.entries(seen.acting)) {
     if (tab in seen.tabs) continue
 
-    const state = stateOf(seen, tab, touch.agent, touch.at, now)
+    const state = stateOf(seen, touch.agent, touch.at, now)
     if (state !== 'none') {
-      worn[tab] = { agent: touch.agent, colour: colourOf(touch.agent), paused: state === 'paused' }
+      worn[tab] = {
+        agent: touch.agent,
+        colour: colourOf(touch.agent),
+        stopped: state === 'stopped',
+      }
     }
-  }
-
-  // A pause on a tab nothing is known to have acted in - the overview's, after a
-  // window came up - still wants its mark, or there is nothing to give it back with.
-  for (const key of Object.keys(seen.paused)) {
-    const [agent = '', tab = ''] = key.split('\n')
-    if (tab in worn || tab in seen.tabs) continue
-    worn[tab] = { agent, colour: colourOf(agent), paused: true }
   }
 
   return worn
@@ -59,18 +56,15 @@ export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<stri
 /** One tab's state, for the agent that last called on it. */
 export function stateOf(
   seen: Seen,
-  tab: string,
   agent: string,
   at: number,
   now: number,
-): 'acting' | 'paused' | 'none' {
-  if (pausedKey(agent, tab) in seen.paused) return 'paused'
-
+): 'acting' | 'stopped' | 'none' {
   // Stopped while it was acting here: the tab is kept as it was so what happened can be
-  // looked at, muted, until the stop is given back.
+  // looked at, muted, until the stop is lifted.
   const stoppedAt = seen.halted[agent] ?? seen.stopped
   if (stoppedAt !== null) {
-    return at + ACTIVE_FOR > stoppedAt ? 'paused' : 'none'
+    return at + ACTIVE_FOR > stoppedAt ? 'stopped' : 'none'
   }
 
   return now - at < ACTIVE_FOR ? 'acting' : 'none'
@@ -99,6 +93,6 @@ export function sameMarks(one: Record<string, Worn>, other: Record<string, Worn>
     const a = one[key]
     const b = other[key]
     if (!a || !b) return false
-    return a.agent === b.agent && a.colour === b.colour && a.paused === b.paused
+    return a.agent === b.agent && a.colour === b.colour && a.stopped === b.stopped
   })
 }

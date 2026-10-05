@@ -42,9 +42,9 @@ import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
 import { spaceEntry } from './to-space'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
-/** An agent acting in the tab, or paused in it (docs/agent-native.md 7.3): Take over
- *  pauses it there, as a press in the page would; Stop ends its work in the tab and
- *  tells it so; Give back is the tab handed back after either. First, because while an
+/** An agent acting in the tab (docs/agent-native.md 7.3, 9.5): Stop stops that agent,
+ *  as its row in the activity panel does, and Resume lets it go on. Nothing hands the
+ *  tab to anybody: it is the reader's and the agent's at once. First, because while an
  *  agent is in a tab it is the thing about the tab most worth reaching. */
 function agentEntries(tab: Tab): MenuEntry[] {
   const worn = agentMarks.on[tab.id]
@@ -52,10 +52,9 @@ function agentEntries(tab: Tab): MenuEntry[] {
   if (!worn || !act) return []
 
   return [
-    ...(worn.paused
-      ? [{ label: t('Give back'), run: () => act(tab.id, 'give-back') }]
-      : [{ label: t('Take over'), run: () => act(tab.id, 'take-over') }]),
-    { label: t('Stop'), run: () => act(tab.id, 'stop') },
+    worn.stopped
+      ? { label: t('Resume'), run: () => act(tab.id, 'resume') }
+      : { label: t('Stop'), run: () => act(tab.id, 'stop') },
     DIVIDER,
   ]
 }

@@ -1831,8 +1831,6 @@ export const sw: Dictionary = {
   'Stop agents': 'Simamisha mawakala',
   Agents: 'Mawakala',
   'Always on this site': 'Daima kwenye tovuti hii',
-  'Give back': 'Rudisha',
-  'Take over': 'Chukua udhibiti',
   'Agents stopped': 'Mawakala wamesimamishwa',
   'Agent tabs closed': 'Vichupo vya mawakala vimefungwa',
   'nibeditor is still running for your agents':

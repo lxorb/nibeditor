@@ -1789,8 +1789,6 @@ export const vi: Dictionary = {
   'Stop agents': 'Dừng tác tử',
   Agents: 'Tác tử',
   'Always on this site': 'Luôn trên trang này',
-  'Give back': 'Trả lại',
-  'Take over': 'Tiếp quản',
   'Agents stopped': 'Đã dừng tác tử',
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
   'nibeditor is still running for your agents': 'nibeditor vẫn chạy cho các tác tử của bạn',

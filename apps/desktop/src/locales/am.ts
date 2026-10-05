@@ -1782,8 +1782,6 @@ export const am: Dictionary = {
   'Stop agents': 'ወኪሎችን አቁም',
   Agents: 'ወኪሎች',
   'Always on this site': 'በዚህ ጣቢያ ሁልጊዜ',
-  'Give back': 'መልስ',
-  'Take over': 'ተረከብ',
   'Agents stopped': 'ወኪሎች ቆመዋል',
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
   'nibeditor is still running for your agents': 'nibeditor ለወኪሎችዎ አሁንም እየሰራ ነው',

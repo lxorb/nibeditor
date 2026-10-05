@@ -1,7 +1,7 @@
 /** The crate's news, read rather than trusted: an event is a boundary like any other,
  *  and one this build does not know the shape of is dropped rather than half applied. */
 
-import type { AgentEvent, Approval, PausedBy } from '../verbs'
+import type { AgentEvent, Approval } from '../verbs'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -18,8 +18,6 @@ function strings(value: unknown): string[] | null {
   }
   return out
 }
-
-const PAUSED_BY: readonly PausedBy[] = ['reader', 'takeover', 'stop']
 
 function readApproval(value: unknown): Approval | null {
   if (!isRecord(value)) return null
@@ -56,14 +54,9 @@ export function readEvent(value: unknown): AgentEvent | null {
         ? { kind: 'acting', agent, tab, verb }
         : null
     }
-    case 'paused': {
-      const by = PAUSED_BY.find((one) => one === value.by)
-      if (agent === null || by === undefined) return null
-      return tab === null ? { kind: 'paused', agent, by } : { kind: 'paused', agent, tab, by }
-    }
+    case 'paused':
     case 'resumed':
-      if (agent === null) return null
-      return tab === null ? { kind: 'resumed', agent } : { kind: 'resumed', agent, tab }
+      return agent === null ? null : { kind: value.kind, agent }
     case 'asked':
     case 'answered': {
       const approval = readApproval(value.approval)

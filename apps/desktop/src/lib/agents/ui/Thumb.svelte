@@ -16,7 +16,7 @@
   const picture = $derived(activity.frames[tab.id] ?? null)
   const touch = $derived(activity.seen.acting[tab.id])
   const status = $derived(
-    touch ? stateOf(activity.seen, tab.id, touch.agent, touch.at, activity.now) : 'none',
+    touch ? stateOf(activity.seen, touch.agent, touch.at, activity.now) : 'none',
   )
   const name = $derived(tab.title || hostOf(tab.url))
 </script>
@@ -24,7 +24,7 @@
 <button
   class="thumb"
   class:acting={status === 'acting'}
-  class:paused={status === 'paused'}
+  class:stopped={status === 'stopped'}
   style:--agent={activity.colourOf(tab.agent)}
   title={name}
   aria-label={name}
@@ -74,7 +74,7 @@
     box-shadow: inset 0 0 0 2px var(--agent);
   }
 
-  .paused .picture {
+  .stopped .picture {
     box-shadow: inset 0 0 0 2px var(--muted);
   }
 

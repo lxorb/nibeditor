@@ -96,9 +96,12 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
 /** The window's verbs the crate asks on an agent's behalf. Each is optional: a window
  *  that does not answer gets the crate's own best answer instead. */
 export const CRATE_ASKS = {
-  /** Answers `ReaderTab[]`: the reader's web tabs with their space and whether in
-   *  front and on screen. */
+  /** Answers `ReaderTab[]`: the reader's web tabs of every space's set, with their
+   *  space and whether in front and on screen. */
   readerTabs: 'agent.reader_tabs',
+  /** Takes `{ tab }`: a reader's tab lent to an agent, its page built or thawed and kept
+   *  running out of sight while it is not on screen. Answers once the page is there. */
+  lend: 'agent.lend',
   /** Takes `StoreAsk`, answers `StoreSaid`: which store the reader's tabs of a space
    *  use for an address, as `web-data.ts` decides. */
   storeFor: 'agent.store_for',
@@ -180,7 +183,6 @@ export type Code =
   | 'site_denied'
   | 'no_such_tab'
   | 'no_such_ref'
-  | 'paused_by_reader'
   | 'stopped'
   | 'password_field'
   | 'limit'
@@ -259,9 +261,6 @@ export interface Approval {
   answer: ApprovalAnswer
 }
 
-/** Why an agent is paused. */
-export type PausedBy = 'reader' | 'takeover' | 'stop'
-
 /** `browser_open`'s answer: the store is the agent's own when the site is kept to it,
  *  whatever was asked. */
 export interface Opened {
@@ -273,9 +272,8 @@ export interface Opened {
 
 /** The commands the window calls the crate with: the settings pane (`agents_read`,
  *  `agents_write`, `agents_mint`, the log's days and its Clear), the activity panel,
- *  `capture_to_note`'s reading of a page (`agents_capture`), and the agent harness's one
- *  test hook (`agents_test_reader_focus`), which answers only in debug and probe builds.
- *  Each answers only nib's own window. */
+ *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only nib's
+ *  own window. */
 export const AGENT_COMMANDS = [
   'agents_read',
   'agents_write',
@@ -290,21 +288,18 @@ export const AGENT_COMMANDS = [
   'agents_log_clear',
   'agents_adopt',
   'agents_capture',
-  'agents_test_reader_focus',
-  'agents_pause',
   'agents_watch',
   'agents_shell',
   'agents_hold',
 ] as const
 
 /** `agents_state`: everything the activity panel draws from at once; the events keep it
- *  current after. `tabs` and `paused` are `[agent, tab]` pairs. */
+ *  current after. `tabs` are `[agent, tab]` pairs. */
 export interface Overview {
   agents: Grant[]
   tabs: [string, AgentTab][]
   approvals: Approval[]
   stopped: boolean
-  paused: [string, string][]
   /** The agents stopped one at a time, beside the stop for all of them. */
   halted: string[]
   /** The agents that called in the last ten minutes and did not say goodbye. */
@@ -350,8 +345,8 @@ export interface Captured {
 /** The crate's news, on `AGENT_EVENT`. */
 export type AgentEvent =
   | { kind: 'acting'; agent: string; tab: string; verb: string }
-  | { kind: 'paused'; agent: string; tab?: string; by: PausedBy }
-  | { kind: 'resumed'; agent: string; tab?: string }
+  | { kind: 'paused'; agent: string }
+  | { kind: 'resumed'; agent: string }
   | { kind: 'asked'; approval: Approval }
   | { kind: 'answered'; approval: Approval }
   | { kind: 'tab'; agent: string; id: string; url: string; title: string }

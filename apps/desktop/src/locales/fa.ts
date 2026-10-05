@@ -1804,8 +1804,6 @@ export const fa: Dictionary = {
   'Stop agents': 'ایستاندن عامل‌ها',
   Agents: 'عامل‌ها',
   'Always on this site': 'همیشه در این سایت',
-  'Give back': 'بازگرداندن',
-  'Take over': 'در دست گرفتن',
   'Agents stopped': 'عامل‌ها ایستانده شدند',
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
   'nibeditor is still running for your agents': 'nibeditor هنوز برای عامل‌های شما کار می‌کند',

@@ -4,12 +4,12 @@
  *  Started by the first agent event the shell hears (agent-marks.svelte.ts), or by the
  *  activity panel being opened, whichever is first, and only ever once. What it keeps
  *  up to date is small and all of it is the shell's: which tabs wear a mark, the badge,
- *  the takeovers, whether closing the window hides it, the stop's key from any app, and
+ *  the steps asked of the reader, whether closing the window hides it, the stop's key from any app, and
  *  the pairing bubble while a client is asking. */
 
 import { mount, unmount, untrack } from 'svelte'
 import { agentMarks } from '../../agent-marks.svelte'
-import { pages } from '../../web-tab/pages.svelte'
+import { unlend } from '../../web-tab/lending'
 import { t } from '../../i18n.svelte'
 import { shortcuts } from '../../shortcuts.svelte'
 import { accelerator } from '../../accelerator'
@@ -42,13 +42,13 @@ export function started(source: Source = crate): Activity {
 
   unfollow = $effect.root(() => {
     // Which tabs wear a mark: written only when one changed, since the strip and every
-    // web tab read it. A tab newly acted in had its page woken by the crate, should it
-    // have been frozen out of sight; see web_pause.rs.
+    // web tab read it. A tab the agent has let go of is the reader's to hide and freeze
+    // again, out of sight; the crate lent it page and all (agents/reader.rs).
     $effect(() => {
       const worn = wornAt(activity.seen, activity.now, (agent) => activity.colourOf(agent))
       untrack(() => {
         if (sameMarks(worn, agentMarks.on)) return
-        for (const tab of Object.keys(worn)) if (!(tab in agentMarks.on)) pages.woken(tab)
+        for (const tab of Object.keys(agentMarks.on)) if (!(tab in worn)) unlend(tab)
         agentMarks.on = worn
       })
     })
@@ -64,7 +64,8 @@ export function started(source: Source = crate): Activity {
       return () => clearTimeout(timer)
     })
 
-    // The badge on the panel's tab, and the takeovers each web tab puts under its bar.
+    // The badge on the panel's tab, and the steps asked of the reader that each web tab
+    // puts under its bar.
     $effect(() => {
       agentMarks.waiting = activity.questions.length
       agentMarks.takeovers = Object.fromEntries(

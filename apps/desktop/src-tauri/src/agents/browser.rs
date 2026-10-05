@@ -4,8 +4,9 @@
 //! this agent may act there, what the page says it would be doing, and then the act.
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
-//! own or a reader's tab it may reach (`browser.reader`, its spaces); the reader has not
-//! taken the tab back; the page is not holding a dialog; the site is not denied. A press
+//! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not
+//! holding a dialog; the site is not denied. Nothing the reader does in a tab takes it
+//! from the agent (7.3), and the stop is asked before any verb (`super::answer`). A press
 //! or a write is then judged from the page (`policy`) and asks first when it has to,
 //! answering `needs_approval` at once.
 
@@ -27,8 +28,8 @@ use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
 use super::verbs::{
     Acted, Answer, Category, Closed, Code, ConsoleLines, DownloadList, Evaluated, Event, Found,
-    Opened, PageText, PausedBy, Requests, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited,
-    World, EVENT,
+    Opened, PageText, Requests, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World,
+    EVENT,
 };
 use super::Caller;
 
@@ -78,7 +79,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
         Verb::Close(on) => match tabs::find(caller.id(), &on.tab) {
             Some(_) => {
                 tabs::close(app, &on.tab);
-                super::stop::tab_gone(&on.tab);
                 Answer::ok(Closed { tab: on.tab })
             }
             None => Answer::error(
@@ -213,12 +213,6 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
     {
         return Err(not_found());
     }
-    if !super::reader::HEARS_THE_READER {
-        return Err(Answer::error(
-            Code::UnsupportedOnThisEngine,
-            "the reader's own tabs are not an agent's on this engine: it cannot hear the reader take one back",
-        ));
-    }
     if let Caller::Agent(grant) = caller {
         if !matches!(grant.spaces, super::grants::Spaces::All(_))
             && !super::reader::tabs(app, &grant.spaces)
@@ -229,8 +223,6 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         }
     }
     let Some(view) = super::reader::page(app, tab) else {
-        super::reader::gone(tab);
-        super::stop::tab_gone(tab);
         return Err(not_found());
     };
     Ok((Place::Reader(tab.to_string()), view))
@@ -245,36 +237,12 @@ fn gate<'a>(
     place: &Place,
     since: u64,
 ) -> Result<Page<'a>, Answer> {
-    if let Some(by) = super::stop::paused_on(caller.id(), place.id()) {
-        return Err(match by {
-            PausedBy::Reader => Answer::error(
-                Code::PausedByReader,
-                "the reader is using this tab: it is theirs until they give it back",
-            ),
-            PausedBy::Takeover => Answer::error(
-                Code::PausedByReader,
-                "the reader is doing a step in this tab",
-            ),
-            PausedBy::Stop => Answer::error(
-                Code::Stopped,
-                "the reader stopped you in this tab: leave it until they give it back",
-            ),
-        });
-    }
     let label = view.label();
     let own = matches!(place, Place::Own(_));
     // The tab by the id the window knows it under: an agent's tab the reader was shown is
     // the reader's tab now, whichever of its two ids the agent called it by (6.7), and it
-    // is that tab that wears the frame and hears the reader take it back.
+    // is that tab that wears the frame.
     let tab = place.id();
-    if !own {
-        // A reader's tab out of sight may be frozen, and a frozen page answers no call.
-        #[cfg(all(windows, not(feature = "cef")))]
-        if let Some(webview) = view.webview() {
-            crate::web_pause::woken(webview);
-        }
-        super::reader::acting(app, caller.id(), tab, view);
-    }
     let _ = app.emit(
         EVENT,
         Event::Acting {
@@ -898,7 +866,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 };
                 let key = approvals::key("browser_takeover", Some(&tab), Some(&takeover.reason));
-                let asked = ask(
+                // A question and nothing more: the agent keeps the tab, and goes on
+                // when the page shows the step done.
+                ask(
                     app,
                     grant,
                     Category::Takeover,
@@ -906,9 +876,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     Some(&page.url()),
                     &tab,
                     &key,
-                );
-                super::stop::pause(app, &grant.id, &tab, PausedBy::Takeover);
-                asked
+                )
             }
             other => Answer::error(
                 Code::BadArguments,

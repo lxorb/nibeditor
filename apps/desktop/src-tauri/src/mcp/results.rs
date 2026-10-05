@@ -315,7 +315,7 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
     );
     if tool == "browser_takeover" {
         return format!(
-            "The reader is asked to do this step (approval {approval}):\n{about}\nLeave the tab alone until approval_status with id \"{approval}\" says done."
+            "The reader is asked to do this step (approval {approval}):\n{about}\nThe tab stays yours: browser_wait for the page to show the step done, or ask approval_status with id \"{approval}\", which says done once they say so."
         );
     }
     format!(
@@ -329,9 +329,6 @@ fn failed(code: &str, message: &str) -> String {
     let next = match code {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
         "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of nib's.",
-        "paused_by_reader" => {
-            "The reader is using this tab: leave it alone until they give it back from its mark."
-        }
         "stopped" => "The reader pressed stop: stop working and tell the user.",
         "password_field" => "Never type a password: ask the reader with browser_takeover.",
         "not_granted" => "The reader has not granted this; they can in nib's Settings > Agents.",

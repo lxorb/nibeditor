@@ -94,12 +94,12 @@
     )
   }
 
-  /** A press on a paused agent's mark gives the tab back to it, and nothing else
-   *  does (docs/agent-native.md 7.3). Read on the press, which is where the pointer
-   *  was: the tab captures it, so the click lands on the tab as a whole. */
+  /** A press on a stopped agent's mark resumes it (docs/agent-native.md 9.5). Read on
+   *  the press, which is where the pointer was: the tab captures it, so the click lands
+   *  on the tab as a whole. */
   let onMark = false
-  function givesBack(id: string) {
-    if (onMark && agentMarks.on[id]?.paused) agentMarks.act?.(id, 'give-back')
+  function resumes(id: string) {
+    if (onMark && agentMarks.on[id]?.stopped) agentMarks.act?.(id, 'resume')
     onMark = false
   }
 
@@ -881,7 +881,7 @@
           }}
           onblur={() => card(tab, null)}
           onclick={(event) => {
-            givesBack(tab.id)
+            resumes(tab.id)
             // A click with Ctrl or Shift was a pick, and its press answered it.
             if (event.detail > 0 && picksWith(event)) return
             workspace.activate(tab.id)

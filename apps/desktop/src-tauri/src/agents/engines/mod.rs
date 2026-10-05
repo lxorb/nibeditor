@@ -114,22 +114,6 @@ impl View {
         }
     }
 
-    /// The app's webview, for a page that is one.
-    #[cfg_attr(
-        not(feature = "cef"),
-        allow(
-            clippy::unnecessary_wraps,
-            reason = "every page is a webview on the system's engine; on nib's own Chromium an agent's is not"
-        )
-    )]
-    pub fn webview(&self) -> Option<&Webview> {
-        match self {
-            View::Webview(view) => Some(view),
-            #[cfg(feature = "cef")]
-            View::Windowless(_) => None,
-        }
-    }
-
     /// Closes it.
     pub fn close(&self) {
         match self {

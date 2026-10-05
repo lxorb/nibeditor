@@ -1837,8 +1837,6 @@ export const ptBR: Dictionary = {
   'Stop agents': 'Parar agentes',
   Agents: 'Agentes',
   'Always on this site': 'Sempre neste site',
-  'Give back': 'Devolver',
-  'Take over': 'Assumir o controle',
   'Agents stopped': 'Agentes parados',
   'Agent tabs closed': 'Abas dos agentes fechadas',
   'nibeditor is still running for your agents': 'O nibeditor continua rodando para seus agentes',

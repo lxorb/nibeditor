@@ -2,12 +2,13 @@
  *  can make about them.
  *
  *  What an event means is `seen.ts`; which tab wears what is `marks.ts`; this holds the
- *  two together as state and answers the presses - Stop, Resume, Take over, Give back,
- *  Allow, Show, Add to note, Undo - by asking the crate, whose answer comes back as an
- *  event like everyone else's. So a press in one window is seen in every window, and
+ *  two together as state and answers the presses - Stop, Resume, Allow, Show, Add to
+ *  note, Undo - by asking the crate, whose answer comes back as an event like everyone
+ *  else's. So a press in one window is seen in every window, and
  *  nothing here guesses at what the crate will say. */
 
 import { accentFor } from '../../accents'
+import type { TabAct } from '../../agent-marks.svelte'
 import { without } from '../../records'
 import { theme } from '../../theme.svelte'
 import { pages } from '../../web-tab/pages.svelte'
@@ -17,7 +18,7 @@ import type { AgentEvent, Approval, Grant } from '../verbs'
 import { touchedBy } from '../docs/touched'
 import { keepInNote } from './keep'
 import { callsOf, sessionMarkdown, today, type Call } from './session'
-import { heard, isStopped, nothing, overviewed, pausedKey, type Seen, wrote } from './seen'
+import { heard, isStopped, nothing, overviewed, type Seen, wrote } from './seen'
 import type { Source } from './source'
 
 export class Activity {
@@ -149,30 +150,19 @@ export class Activity {
     await this.source.resume(agent)
   }
 
-  /** A press on a tab's mark or a row of its menu. */
-  async act(tab: string, what: 'stop' | 'take-over' | 'give-back'): Promise<void> {
-    const touch = this.seen.acting[tab]
-    const agent =
-      touch?.agent ??
-      Object.keys(this.seen.paused)
-        .find((key) => key.endsWith(`\n${tab}`))
-        ?.split('\n')[0]
+  /** A press on a tab's mark or a row of its menu: the agent acting there stopped, or
+   *  resumed - its own stop, or everybody's when that is what holds it. The same stop as
+   *  its row in the panel; nothing about the tab itself is the agent's to give back. */
+  async act(tab: string, what: TabAct): Promise<void> {
+    const agent = this.seen.acting[tab]?.agent
     if (agent === undefined) return
 
-    if (what === 'give-back') {
-      if (pausedKey(agent, tab) in this.seen.paused) await this.source.resume(agent, tab)
-      else if (agent in this.seen.halted) await this.source.resume(agent)
-      else if (this.seen.stopped !== null) await this.source.resume()
-      return
-    }
-
-    await this.source.pause(agent, tab, what === 'stop')
-    // Taking over is taking the tab: it comes to the front, as a press in it would.
-    if (what === 'take-over') workspace.activate(tab)
+    if (what === 'stop') await this.source.stop(agent)
+    else if (agent in this.seen.halted) await this.source.resume(agent)
+    else if (this.seen.stopped !== null) await this.source.resume()
   }
 
-  /** The reader's answer to a question. Allowing a Show shows the tab; a takeover's
-   *  answer is the tab handed back. */
+  /** The reader's answer to a question. Allowing a Show shows the tab. */
   async answer(approval: Approval, allow: boolean, always = false): Promise<void> {
     const answered = await this.source.answer(approval.id, allow, always)
     if (answered.answer === 'allowed' && answered.category === 'showing' && answered.tab) {

@@ -222,6 +222,7 @@ const VERBS: Record<string, Verb> = {
   // an answer of its own when the window gives none (docs/agent-native.md 13.1). The
   // crate asks as the installation and never as an agent, so no agent reaches these.
   'agent.reader_tabs': { run: (args) => fromTheCrate('agent.reader_tabs', args) },
+  'agent.lend': { run: (args) => fromTheCrate('agent.lend', args) },
   'agent.store_for': { run: (args) => fromTheCrate('agent.store_for', args) },
   'agent.markdown': { run: (args) => fromTheCrate('agent.markdown', args) },
 }

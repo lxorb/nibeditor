@@ -1771,8 +1771,6 @@ export const th: Dictionary = {
   'Stop agents': 'หยุดเอเจนต์',
   Agents: 'เอเจนต์',
   'Always on this site': 'เสมอในเว็บไซต์นี้',
-  'Give back': 'คืนการควบคุม',
-  'Take over': 'รับช่วงควบคุม',
   'Agents stopped': 'หยุดเอเจนต์แล้ว',
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
   'nibeditor is still running for your agents': 'nibeditor ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',

@@ -3,8 +3,8 @@
  *
  *  For the tests, and for the drive of the browser build, which has no crate. It keeps
  *  the crate's rules where the UI can see them - a first stop pauses and a second
- *  closes the tabs, a takeover answered gives its tab back, a tab shown is no longer
- *  the agent's - and nothing the UI cannot see. Every call it is asked is written down
+ *  closes the tabs, a tab shown is no longer the agent's - and nothing the UI cannot
+ *  see. Every call it is asked is written down
  *  in `asked`, so a test can say what a press did. */
 
 import type {
@@ -53,7 +53,6 @@ export class FakeCrate implements Source {
     tabs: [],
     approvals: [],
     stopped: false,
-    paused: [],
     halted: [],
     connected: [],
   }
@@ -135,7 +134,6 @@ export class FakeCrate implements Source {
       answer: 'pending',
     }
     this.overview.approvals.push(approval)
-    if (category === 'takeover' && tab !== undefined) this.paused(agent, tab, 'takeover')
     this.emit({ kind: 'asked', approval })
     return approval
   }
@@ -143,11 +141,6 @@ export class FakeCrate implements Source {
   /** A client asking to become an agent (9.1). */
   pair(client: string): Approval {
     return this.ask('', 'pairing', client)
-  }
-
-  /** The reader pressed or typed in a tab an agent acts in. */
-  readerTook(agent: string, tab: string): void {
-    this.paused(agent, tab, 'reader')
   }
 
   /** A picture of a tab, sent to whoever watches. */
@@ -167,7 +160,7 @@ export class FakeCrate implements Source {
     this.asked.push({ command: 'stop', args: [agent] })
     if (agent !== undefined) {
       if (!this.overview.halted.includes(agent)) this.overview.halted.push(agent)
-      this.emit({ kind: 'paused', agent, by: 'stop' })
+      this.emit({ kind: 'paused', agent })
       return Promise.resolve(false)
     }
 
@@ -182,28 +175,15 @@ export class FakeCrate implements Source {
     return Promise.resolve(again)
   }
 
-  resume(agent?: string, tab?: string): Promise<void> {
-    this.asked.push({ command: 'resume', args: [agent, tab] })
-    if (agent === undefined && tab === undefined) {
+  resume(agent?: string): Promise<void> {
+    this.asked.push({ command: 'resume', args: [agent] })
+    if (agent === undefined) {
       this.overview.stopped = false
       this.overview.halted = []
-      this.overview.paused = []
-      this.emit({ kind: 'resumed', agent: '' })
-      return Promise.resolve()
-    }
-
-    this.overview.paused = this.overview.paused.filter(
-      ([one, on]) => !(one === agent && (tab === undefined || on === tab)),
-    )
-    if (tab === undefined)
+    } else {
       this.overview.halted = this.overview.halted.filter((one) => one !== agent)
-    this.emit({ kind: 'resumed', agent: agent ?? '', ...(tab === undefined ? {} : { tab }) })
-    return Promise.resolve()
-  }
-
-  pause(agent: string, tab: string, stop: boolean): Promise<void> {
-    this.asked.push({ command: 'pause', args: [agent, tab, stop] })
-    this.paused(agent, tab, stop ? 'stop' : 'reader')
+    }
+    this.emit({ kind: 'resumed', agent: agent ?? '' })
     return Promise.resolve()
   }
 
@@ -215,9 +195,6 @@ export class FakeCrate implements Source {
     approval.answer = allow ? (approval.category === 'takeover' ? 'done' : 'allowed') : 'denied'
     this.overview.approvals = this.overview.approvals.filter((one) => one.id !== id)
     this.emit({ kind: 'answered', approval: { ...approval } })
-    if (approval.category === 'takeover' && approval.tab !== undefined) {
-      void this.resume(approval.agent, approval.tab)
-    }
     return Promise.resolve({ ...approval })
   }
 
@@ -261,12 +238,5 @@ export class FakeCrate implements Source {
     this.asked.push({ command: 'hide', args: [] })
     this.hidden = this.holding && this.overview.connected.length > 0
     return Promise.resolve(this.hidden)
-  }
-
-  private paused(agent: string, tab: string, by: 'reader' | 'takeover' | 'stop'): void {
-    if (!this.overview.paused.some(([one, on]) => one === agent && on === tab)) {
-      this.overview.paused.push([agent, tab])
-    }
-    this.emit({ kind: 'paused', agent, tab, by })
   }
 }
