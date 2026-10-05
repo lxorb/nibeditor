@@ -79,6 +79,18 @@ export function nameKey(name: string): string {
   return name.normalize('NFC').toLowerCase()
 }
 
+/** What an entry is, read off its name: the one rule the app and the account both
+ *  read a name by, so a file made on one is the same kind on the other. Anything that
+ *  is not one of the document kinds, or an online terminal's `.term`, is a file. */
+export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
+  if (/\.(md|markdown|mdown|mkd)$/i.test(name)) return 'note'
+  if (/\.canvas$/i.test(name)) return 'canvas'
+  if (/\.pages$/i.test(name)) return 'pages'
+  if (/\.(url|webloc)$/i.test(name)) return 'url'
+  if (/\.term$/i.test(name)) return 'term'
+  return 'file'
+}
+
 /** A tree to apply operations to: the entries a space holds, and its cursor. */
 export function treeState(entries: Iterable<TreeEntry> = [], cursor = 0): TreeState {
   const map = new Map<string, TreeEntry>()

@@ -33,6 +33,7 @@ import {
   applyOp,
   contentChanged,
   type EntryKind,
+  kindOfName,
   nameKey,
   type Op,
   type OpContext,
@@ -47,20 +48,19 @@ import type { Env } from '../types'
 
 /** The kinds that are documents: a room holds each as a Yjs document. A `file` is a
  *  blob by hash and a `folder` holds the others. */
-export const DOCUMENT_KINDS: ReadonlySet<string> = new Set(['note', 'canvas', 'pages', 'url'])
+export const DOCUMENT_KINDS: ReadonlySet<string> = new Set([
+  'note',
+  'canvas',
+  'pages',
+  'url',
+  'term',
+])
 
-/** The same four, as SQL, for the statements that ask. */
-export const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url')"
+/** The same five, as SQL, for the statements that ask. */
+export const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term')"
 
-/** What an entry is, read off its name the way the app reads it. Anything that is not
- *  one of the four document kinds is a file. */
-export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
-  if (/\.(md|markdown|mdown|mkd)$/i.test(name)) return 'note'
-  if (/\.canvas$/i.test(name)) return 'canvas'
-  if (/\.pages$/i.test(name)) return 'pages'
-  if (/\.(url|webloc)$/i.test(name)) return 'url'
-  return 'file'
-}
+/** What an entry is, read off its name: sync-core's rule, which the app reads by too. */
+export { kindOfName }
 
 /** A kind as a column holds it, checked. */
 function kindIn(value: string, name: string): EntryKind {

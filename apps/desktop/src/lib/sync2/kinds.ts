@@ -7,7 +7,9 @@
  *  and a page note are a plane: a map of objects by id, merged object by object, whose
  *  file is what `writeCanvas` writes. A web note's `.url` is words the account keeps
  *  last-writer-wins: nobody writes it but the device whose tab follows the page, so two
- *  versions of it never ask anybody anything, and the later arrival stands.
+ *  versions of it never ask anybody anything, and the later arrival stands. An online
+ *  terminal's `.term` is the same shape for the same reason: three fields written once,
+ *  never by hand (docs/online-terminal.md 4.5).
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
@@ -33,6 +35,7 @@ export function shapeOf(kind: string): Shape | null {
     case 'pages':
       return 'plane'
     case 'url':
+    case 'term':
       return 'link'
     default:
       return null

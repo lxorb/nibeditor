@@ -21,6 +21,7 @@
  *  was there, three ways against that text (section 5.9). */
 
 import { fileMade } from './files'
+import { kindOfName } from '@nib/sync-core/tree'
 import type { EntryKind, Op } from '@nib/sync-core/wire'
 import type { Core } from './core'
 import { MINE } from './docs'
@@ -29,14 +30,8 @@ import { folderOf, nameOf, SEP, type SpaceState } from './places'
 import { wrote } from './project'
 import { put, type Change, type EntryRow } from './store'
 
-/** What an entry is, read off its name the way the account reads it. */
-export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
-  if (/\.(md|markdown|mdown|mkd)$/i.test(name)) return 'note'
-  if (/\.canvas$/i.test(name)) return 'canvas'
-  if (/\.pages$/i.test(name)) return 'pages'
-  if (/\.(url|webloc)$/i.test(name)) return 'url'
-  return 'file'
-}
+/** What an entry is, read off its name: sync-core's rule, which the account reads by too. */
+export { kindOfName }
 
 /** An id no other device will ever make: 128 random bits. */
 function freshId(core: Core): string {

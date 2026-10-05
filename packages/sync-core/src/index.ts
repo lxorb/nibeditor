@@ -18,6 +18,7 @@ export { textops } from './textops'
 export {
   applyOp,
   contentChanged,
+  kindOfName,
   nameKey,
   treeState,
   type OpContext,

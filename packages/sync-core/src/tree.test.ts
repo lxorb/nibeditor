@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { applyOp, contentChanged, nameKey, type TreeState, treeState } from './tree'
+import { applyOp, contentChanged, kindOfName, nameKey, type TreeState, treeState } from './tree'
 import type { Op, OpResult } from './wire'
 
 const OWNER = { role: 'owner' as const, device: 'laptop' }
@@ -385,5 +385,83 @@ describe('tree properties', () => {
       ),
       { numRuns: 1000 },
     )
+  })
+})
+
+describe('an online terminal in the tree', () => {
+  function term(state: TreeState, id: string, name: string, parent: string | null = null) {
+    return applyOp(
+      state,
+      { op: opId(), t: 'create', id, kind: 'term', parent, name, seen: state.cursor },
+      OWNER,
+    )
+  }
+
+  test('is named by its file, read off the extension', () => {
+    expect(kindOfName('Build.term')).toBe('term')
+    expect(kindOfName('BUILD.TERM')).toBe('term')
+    expect(kindOfName('Build.term.md')).toBe('note')
+    expect(kindOfName('term')).toBe('file')
+    expect(kindOfName('Web.url')).toBe('url')
+  })
+
+  test('a second Terminal is numbered before its extension, as the Ctrl+T card names it', () => {
+    const state = treeState()
+    term(state, 'a', 'Terminal.term')
+    expect(term(state, 'b', 'Terminal.term')).toMatchObject({ ok: true, name: 'Terminal 2.term' })
+    expect(state.entries.get('b')?.kind).toBe('term')
+  })
+
+  test('renamed, it keeps its id and its kind, so the session stays the one it named', () => {
+    const state = treeState()
+    term(state, 't', 'Terminal.term')
+    applyOp(
+      state,
+      { op: opId(), t: 'rename', id: 't', name: 'Build.term', seen: state.cursor },
+      OWNER,
+    )
+    expect(state.entries.get('t')).toMatchObject({
+      name: 'Build.term',
+      kind: 'term',
+      deleted: false,
+    })
+  })
+
+  test('moved into another folder, it is the same entry there', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    term(state, 't', 'Build.term')
+    applyOp(state, { op: opId(), t: 'move', id: 't', parent: 'f', seen: state.cursor }, OWNER)
+    expect(state.entries.get('t')).toMatchObject({ parent: 'f', kind: 'term' })
+  })
+
+  test('moved beside a terminal of the same name, it steps aside', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    term(state, 'there', 'Build.term', 'f')
+    term(state, 't', 'Build.term')
+    applyOp(state, { op: opId(), t: 'move', id: 't', parent: 'f', seen: state.cursor }, OWNER)
+    expect(state.entries.get('t')).toMatchObject({ parent: 'f', name: 'Build 2.term' })
+  })
+
+  test('trashed and restored, and trashed with its folder', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    term(state, 't', 'Build.term', 'f')
+    applyOp(state, { op: opId(), t: 'delete', id: 't', seen: state.cursor }, OWNER)
+    expect(live(state, 't')).toBe(false)
+    applyOp(state, { op: opId(), t: 'restore', id: 't', seen: state.cursor }, OWNER)
+    expect(live(state, 't')).toBe(true)
+
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor }, OWNER)
+    expect(live(state, 't')).toBe(false)
+    applyOp(state, { op: opId(), t: 'restore', id: 'f', seen: state.cursor }, OWNER)
+    expect(live(state, 't')).toBe(true)
+  })
+
+  test('a note and a terminal of one name cannot share a folder', () => {
+    const state = treeState()
+    term(state, 't', 'Build.term')
+    expect(create(state, 'n', 'build.term')).toMatchObject({ name: 'build 2.term' })
   })
 })
