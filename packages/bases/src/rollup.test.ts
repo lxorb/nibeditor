@@ -98,7 +98,7 @@ describe('rollups', () => {
     expect(of('filled', 'due')).toBe(2)
     expect(of('unique', 'done')).toBe(2)
     expect(of('checked', 'done')).toBe(2)
-    expect(of('percent', 'done')).toBe(67)
+    expect(of('percent', 'done')).toBeCloseTo(2 / 3)
   })
 
   test('an even number of values has the middle two halved as its median', () => {
@@ -140,5 +140,13 @@ describe('rollups', () => {
     for (const calc of ROLLUPS) {
       expect(rollupFormula({ relation: 'note.tasks', property: 'hours', calc })).not.toMatch(own)
     }
+  })
+})
+
+describe('a column named after a folder with a space in it', () => {
+  test('reads its formula', () => {
+    const spaced = readBase(`formulas:\n  My tasks: '${reverseFormula('project')}'\n`)
+    const value = cellValue(spaced, 'formula.My tasks', thesis, context)
+    expect(Array.isArray(value) && value.length).toBe(3)
   })
 })

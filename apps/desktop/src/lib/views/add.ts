@@ -1,16 +1,20 @@
 /** Adding to a view: a task where the view says (its note, its day, its label, the
  *  column the plus was pressed in), or for a view of notes, a note where its filter
  *  points with its properties written in - the Bases bug of new rows landing at the
- *  root, fixed (docs/tasks.md 4).
+ *  root, fixed (docs/tasks.md 4) - from the base's template and with its next id.
  *
  *  A task is quick add's to read and write (quick-add/, docs/tasks.md 5.6), opened with
  *  what this view would prefill. A column that stands for a section, a priority or a
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import type { Base, Filter, Priority, Value } from '@nib/bases'
+import { type Base, inBase, nextId, type Priority, type Value } from '@nib/bases'
+import { noteName, plainValue, rowPlace, withProperties } from '@nib/bases/agent'
 import { joinPath } from '../tauri'
 import { folderOf, insideSpace, withinSpace } from '../space-paths'
+import { contextFor } from './context'
+import { nowHere, todayHere } from './days'
+import { templatePath, templateWords } from './templates'
 import { showQuickAdd } from '../surfaces.svelte'
 import { rows } from '../rows/rows.svelte'
 import { workspace } from '../workspace.svelte'
@@ -101,51 +105,50 @@ export async function addTyped(words: string, prefill: Prefill): Promise<boolean
   )
 }
 
-/** The folder a filter names with `file.inFolder("…")`, where it names one. */
-function folderIn(filter: Filter | undefined): string | null {
-  if (filter === undefined) return null
-  if (typeof filter === 'string')
-    return /file\.inFolder\("((?:[^"\\]|\\.)*)"\)/.exec(filter)?.[1] ?? null
-  const members = 'and' in filter ? filter.and : 'or' in filter ? filter.or : []
-  for (const one of members) {
-    const found = folderIn(one)
-    if (found !== null) return found
-  }
-  return null
+/** What a new note of a view of notes is made with: a name, its own properties, and the
+ *  template it starts from (the view's or the base's where absent, none for null). */
+export interface NewNote {
+  title?: string
+  properties?: Record<string, Value>
+  template?: string | null
+  /** Opened in a tab for its name, as a plus does; a form stays where it is. */
+  open?: boolean
 }
 
-/** The properties a filter pins with `note.key == "value"`, which a new row is given
- *  so it belongs to the view it was made in. Only from an `and`: an `or` pins nothing. */
-function pinned(filter: Filter | undefined): Record<string, string> {
-  if (filter === undefined) return {}
-  const members = typeof filter === 'string' ? [filter] : 'and' in filter ? filter.and : []
-  const out: Record<string, string> = {}
-  for (const one of members) {
-    if (typeof one !== 'string') continue
-    const found = /^\s*(?:note\.)?([A-Za-z_][\w-]*)\s*==\s*"((?:[^"\\]|\\.)*)"\s*$/.exec(one)
-    if (found?.[1] && found[2] !== undefined && !['file', 'task', 'formula'].includes(found[1])) {
-      out[found[1]] = found[2]
-    }
-  }
-  return out
+/** The row's next id where the base keeps them, counted over the base's own rows. */
+function idFor(base: Base): Record<string, string> {
+  const id = base.nib.id
+  const space = workspace.activeSpace
+  if (!id || !space) return {}
+  const mine = rows.of(space.name)
+  const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
+  const own = mine.filter((row) => inBase(base, row, context))
+  return { [id.property]: nextId(own, id.property, id.prefix) }
 }
 
 /** A new note for a view of notes: in the folder its filter names, with the
- *  properties its filter pins and the group's value, opened for its name. `base` is
- *  the view's base, `file` the base file it is in (its space and folder), if any. */
+ *  properties its filter pins and the group's value, from its template, with the base's
+ *  next id; opened for its name unless `made.open` is false. `base` is the view's base,
+ *  `file` the base file it is in (its folder), if any. Answers its path. */
 export async function addNote(
   base: Base,
   at: number,
   file: string | null,
   group?: { property: string; key: Value },
-): Promise<void> {
+  made: NewNote = {},
+): Promise<string | null> {
   const space = workspace.activeSpace
-  if (!space) return
+  if (!space) return null
   const view = base.views[at]
-  const folder = folderIn(view?.filters) ?? folderIn(base.filters)
-  const dir = folder !== null ? joinPath(space.root, folder) : file ? folderOf(file) : space.root
+  const place = rowPlace(base, view?.name)
+  const dir =
+    place.folder !== undefined && place.folder !== ''
+      ? joinPath(space.root, place.folder)
+      : file
+        ? folderOf(file)
+        : space.root
 
-  const props = { ...pinned(base.filters), ...pinned(view?.filters) }
+  const props: Record<string, unknown> = { ...place.properties }
   // The column the plus was pressed in: the value its property has there.
   const key = group?.key
   if (
@@ -153,15 +156,21 @@ export async function addNote(
     isNoteProperty(group.property) &&
     (typeof key === 'string' || typeof key === 'number')
   ) {
-    props[bare(group.property)] = String(key)
+    props[bare(group.property)] = key
   }
+  for (const [name, value] of Object.entries(made.properties ?? {})) props[name] = plainValue(value)
+  Object.assign(props, idFor(base))
 
-  const name = workspace.freeName(dir, 'Untitled.md')
+  const title = noteName(made.title ?? 'Untitled')
+  const name = workspace.freeName(dir, `${title}.md`)
+  const link =
+    made.template === undefined ? (view?.nib.template ?? base.nib.template) : made.template
+  const template = link ? templatePath(link) : null
+  const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
   const path = joinPath(dir, name)
-  const front = Object.entries(props).map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
-  const content = front.length ? `---\n${front.join('\n')}\n---\n\n` : ''
-  await writeFile(path, content)
+  await writeFile(path, withProperties(words, props))
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
-  await workspace.open(path)
+  if (made.open !== false) await workspace.open(path)
+  return path
 }

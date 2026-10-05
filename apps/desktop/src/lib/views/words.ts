@@ -98,7 +98,7 @@ export function propertyName(property: string, displayName?: string): string {
   if (displayName) return displayName
   const known = FIELD_NAMES[property]
   if (known) return t(known)
-  return bare(property).replace(/^formula\./, '')
+  return bare(property).replace(/^(formula|button)\./, '')
 }
 
 /** The words of a priority, `p1` to `p4`; the two low ones Tasks has read as `p5`

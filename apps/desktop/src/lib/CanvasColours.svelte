@@ -21,6 +21,7 @@
     recent = [],
     none = true,
     bare,
+    wheel = true,
     oncolour,
   }: {
     /** The colour in hand, so the dot that is on shows it. */
@@ -39,6 +40,9 @@
      *  white dot that went dark when the theme did. So the pen draws that dot in the
      *  ink it actually writes. */
     bare?: { css: string; title: string }
+    /** Whether every other colour is offered behind the wheel. A base's tones are the
+     *  theme's six and nothing else (docs/tasks.md 5.19), so its pickers leave it out. */
+    wheel?: boolean
     oncolour: (colour: string | null) => void
   } = $props()
 
@@ -78,14 +82,16 @@
 
   <!-- A colour of your own. The input is the dot, so there is nothing extra to
        learn and nothing extra to draw. -->
-  <label class="dot wheel" title={t('Another colour')}>
-    <input
-      type="color"
-      value={colour?.startsWith('#') ? colour : '#7c5cff'}
-      aria-label={t('Another colour')}
-      oninput={(event) => choose(event.currentTarget.value)}
-    />
-  </label>
+  {#if wheel}
+    <label class="dot wheel" title={t('Another colour')}>
+      <input
+        type="color"
+        value={colour?.startsWith('#') ? colour : '#7c5cff'}
+        aria-label={t('Another colour')}
+        oninput={(event) => choose(event.currentTarget.value)}
+      />
+    </label>
+  {/if}
 
   {#each recent as one (one)}
     <button

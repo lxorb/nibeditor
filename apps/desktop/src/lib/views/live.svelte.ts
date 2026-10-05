@@ -15,12 +15,14 @@ import {
   answer as answered,
   type Answer,
   type Base,
+  cellValue,
   type Context,
   type Row,
   type View,
 } from '@nib/bases'
 import { rows as store } from '../rows/rows.svelte'
 import { afterQuiet } from '../timing'
+import { toneColour } from './chips'
 import { columnsOf } from './columns'
 import { contextFor } from './context'
 import { nowHere, todayHere, untilMidnightHere } from './days'
@@ -41,6 +43,13 @@ export interface Source {
   watch?: (changed: () => void) => () => void
 }
 
+/** The small layer a view's head holds open over the view: a builder for something a
+ *  menu row asked for, about one column where it is about one. */
+export type Builder =
+  | { kind: 'colour' | 'automations' }
+  | { kind: 'rollup' | 'button'; column?: string }
+  | { kind: 'options'; column: string }
+
 /** How long the view's search waits for the typing to stop. */
 const SEARCH_QUIET = 160
 
@@ -55,6 +64,10 @@ export class LiveView {
   failed = $state(false)
   /** The rows the view is over, the store's list as it was last told of a change. */
   rows = $state.raw<readonly Row[]>([])
+  /** The builder the head holds open, if any. */
+  builder = $state<Builder | null>(null)
+  /** How many changes a lock turned away, so the lock can answer each one. */
+  refused = $state(0)
 
   private readonly stops: (() => void)[] = []
   /** Whether the base has been read once: the view a host names is the first shown,
@@ -133,6 +146,19 @@ export class LiveView {
       return null
     }
   })
+
+  /** Whether the view's shape is locked, by itself or with its whole base (Notion's
+   *  lock: the rows stay editable, the view and the base do not). */
+  readonly locked = $derived(this.base?.nib.locked === true || this.view?.nib.locked === true)
+
+  /** The colour the view's conditional colour gives a row, or null. */
+  colourOf(row: Row): string | null {
+    const base = this.base
+    const expression = this.view?.nib.colour
+    if (!base || !expression) return null
+    const tone = cellValue(base, expression, row, this.context)
+    return typeof tone === 'string' ? toneColour(tone) : null
+  }
 
   /** The columns the view shows. */
   readonly columns = $derived.by((): string[] =>

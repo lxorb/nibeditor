@@ -7,8 +7,19 @@
  *  a note's own property and a task's own field are written through the one write
  *  path, and `file.*` and `formula.*` are what the files and the formulas say. */
 
-import type { Base, Row, RowKinds, TaskChange, Value } from '@nib/bases'
+import {
+  type Base,
+  isButton,
+  readButtons,
+  readReverse,
+  type Context,
+  type Row,
+  type RowKinds,
+  type TaskChange,
+  type Value,
+} from '@nib/bases'
 import type { RowChange } from '../rows/write'
+import { isLinkValue } from './values'
 
 /** What a cell is edited with. `none` is read-only. */
 export type Editor =
@@ -23,6 +34,7 @@ export type Editor =
   | 'priority'
   | 'status'
   | 'select'
+  | 'button'
   | 'none'
 
 /** A property's name without the `note.` Bases lets it go without. */
@@ -109,7 +121,10 @@ function noteKind(key: string, rows: readonly Row[]): Editor {
 /** What a cell of this column is edited with. */
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'
+  if (isButton(property)) return 'button'
   if (!isNoteProperty(property)) return 'none'
+  // An id is given, never typed: Notion's ID property cannot be edited either.
+  if (base.nib.id?.property === bare(property)) return 'none'
   if (optionsOf(base, property).length) return 'select'
   return noteKind(bare(property), rows)
 }
@@ -174,5 +189,66 @@ export function knownProperties(base: Base, kinds: RowKinds, rows: readonly Row[
     ...FILE_FIELDS,
     ...[...keys].sort(),
     ...Object.keys(base.formulas).map((name) => `formula.${name}`),
+    ...readButtons(base).map((button) => `button.${button.name}`),
   ]
+}
+
+/** How the base says a property's value is shown (`nib.properties.<key>.format`). */
+export function formatOf(base: Base, property: string): string | undefined {
+  const key = property.startsWith('formula.') ? property.slice(8) : bare(property)
+  return base.nib.properties[key]?.format
+}
+
+/** Whether a value is a link, or a list holding one. */
+function holdsLink(value: Value | undefined): boolean {
+  if (Array.isArray(value)) return value.some(holdsLink)
+  return isLinkValue(value)
+}
+
+/** The note properties of these rows that hold links: the relations a rollup can start
+ *  from. */
+export function relationsOf(rows: readonly Row[]): string[] {
+  const keys = new Set<string>()
+  for (const row of rows) {
+    if (row.kind !== 'note') continue
+    for (const [key, value] of Object.entries(row.note)) if (holdsLink(value)) keys.add(key)
+  }
+  return [...keys].sort().map((key) => `note.${key}`)
+}
+
+/** A relation another set of notes holds to this view's rows, which a reverse column
+ *  shows: the property, and what the column is called (the linking notes' folder, as
+ *  Notion names the reverse after the other database). */
+export interface ReverseOffer {
+  property: string
+  name: string
+}
+
+/** Every property of the space's notes whose links point at a row of the view, but the
+ *  ones the base already shows back. */
+export function reverseOffers(
+  base: Base,
+  shown: readonly Row[],
+  all: readonly Row[],
+  context: Context,
+): ReverseOffer[] {
+  const keyOf = (space: string, path: string) => `${space}\n${path}`
+  const here = new Set(shown.map((row) => keyOf(row.space, row.path)))
+  const taken = new Set(Object.values(base.formulas).flatMap((source) => readReverse(source) ?? []))
+  const found = new Map<string, string>()
+  for (const row of all) {
+    if (row.kind !== 'note') continue
+    for (const [key, value] of Object.entries(row.note)) {
+      if (found.has(key) || taken.has(key) || !holdsLink(value)) continue
+      const targets = (Array.isArray(value) ? value : [value]).flatMap((one) =>
+        isLinkValue(one) ? [one.target] : [],
+      )
+      const points = targets.some((target) => {
+        const path = context.resolve?.(target, row)
+        return path != null && here.has(keyOf(row.space, path))
+      })
+      if (points) found.set(key, row.file.folder.split('/').pop() ?? key)
+    }
+  }
+  return [...found].map(([property, name]) => ({ property, name: name || property }))
 }

@@ -6,7 +6,8 @@
  *  contents are already gone, and there is no snapshot of a folder. */
 
 import { t } from '../i18n.svelte'
-import type { Edit } from '../search/replace'
+import { type Edit, reverse } from '../search/replace'
+import { oneEdit } from '@nib/markdown/edits'
 
 export type FileAction =
   | {
@@ -54,6 +55,9 @@ export type FileAction =
       closed: string[]
     }
 
+/** One note of a replacement, as it is kept to be taken back. */
+export type ReplacedNote = Extract<FileAction, { kind: 'replace' }>['notes'][number]
+
 export interface Copied {
   path: string
   folder: boolean
@@ -87,6 +91,32 @@ export class FileActions {
   record(action: FileAction) {
     this.stack = [...this.stack, action].slice(-KEPT)
     this.ahead = []
+  }
+
+  /** A replacement that follows from the last one, taken back with it: what a base's
+   *  automation writes because of the edit that fired it is one undo with that edit
+   *  (docs/tasks.md 5.13). Joined only where every note it writes is one the last
+   *  replacement wrote and still holds exactly what that left, so nothing typed in
+   *  between is ever folded in. Answers whether it was joined. */
+  join(notes: ReplacedNote[]): boolean {
+    const last = this.last
+    if (last?.kind !== 'replace') return false
+    const next = [...last.notes]
+    for (const note of notes) {
+      const at = next.findIndex((one) => samePath(one.path, note.path))
+      const was = next[at]
+      if (!was || was.after !== note.content) return false
+      const edit = oneEdit(was.content, note.after)
+      next[at] = {
+        path: was.path,
+        content: was.content,
+        after: note.after,
+        edits: edit ? reverse(was.content, [edit]) : [],
+      }
+    }
+    this.stack = [...this.stack.slice(0, -1), { kind: 'replace', notes: next }]
+    this.ahead = []
+    return true
   }
 
   /** Drops the newest one, once it has actually been put back, and keeps it to do

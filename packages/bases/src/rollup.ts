@@ -6,7 +6,8 @@
  *  `project` points here, read off the backlinks every time, so it cannot drift the
  *  way Notion's two stored columns can. A rollup is a calculation over the notes a
  *  relation points at: a count, or one property of each of them summed, averaged,
- *  ranged.
+ *  ranged. A percentage is a share, 0 to 1, which the column's `percent` format shows
+ *  as one, as Notion's does.
  *
  *  Both are written as formulas Obsidian reads too, so only its own functions are
  *  used: lists have `filter`, `map`, `reduce`, `sort`, `unique` and `length` there,
@@ -84,7 +85,7 @@ export function rollupFormula(spec: RollupSpec): string {
     case 'checked':
       return `${values}.filter(value == true).length`
     case 'percent':
-      return `if(${values}.length, (${values}.filter(value == true).length / ${values}.length * 100).round(), 0)`
+      return `if(${values}.length, ${values}.filter(value == true).length / ${values}.length, 0)`
     case 'count':
       return `${notes}.length`
   }

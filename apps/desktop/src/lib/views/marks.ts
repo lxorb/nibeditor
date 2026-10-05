@@ -31,3 +31,9 @@ export const VIEW_MARK = LAYOUT_MARKS.table
 export const PROJECT_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10z'
 export const LABEL_MARK = 'M4.8 1.8 3.8 11.2M9.2 1.8l-1 9.4M1.8 4.6h9.6M1.4 8.4h9.6'
 export const ADD_MARK = 'M6.5 2v9M2 6.5h9'
+
+/** A padlock: the view or its base is locked. */
+export const LOCK_MARK = 'M3.2 6.2h6.6v5H3.2zM4.6 6.2V4.4a1.9 1.9 0 0 1 3.8 0v1.8'
+
+/** A form: fields under one another, the last one the button that sends it. */
+export const FORM_MARK = 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z'

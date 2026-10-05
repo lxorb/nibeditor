@@ -59,11 +59,21 @@ export function writeRow(row: Row, change: RowChange): Promise<boolean> {
 /** One change made to many rows as one write, so one undo takes all of it back:
  *  Today's "Reschedule to today" over every overdue task. Each note is read once and
  *  every change in it made on its words in turn. */
-export async function writeRows(many: readonly Row[], change: RowChange): Promise<boolean> {
-  const byNote = new Map<string, Row[]>()
-  for (const row of many) {
-    const path = pathOf(row)
-    if (path !== null) byNote.set(path, [...(byNote.get(path) ?? []), row])
+export function writeRows(many: readonly Row[], change: RowChange): Promise<boolean> {
+  return writeEach(many.map((row) => ({ row, change })))
+}
+
+/** A change of its own to each of many rows, as one write: an option renamed in every
+ *  note that holds it, ids given to a base's rows. `join` makes it one undo with the
+ *  write just before, where it follows from that one (an automation). */
+export async function writeEach(
+  pairs: readonly { row: Row; change: RowChange }[],
+  join = false,
+): Promise<boolean> {
+  const byNote = new Map<string, { row: Row; change: RowChange }[]>()
+  for (const pair of pairs) {
+    const path = pathOf(pair.row)
+    if (path !== null) byNote.set(path, [...(byNote.get(path) ?? []), pair])
   }
 
   const changes = []
@@ -71,12 +81,12 @@ export async function writeRows(many: readonly Row[], change: RowChange): Promis
     const before = await noteText(workspace, path)
     if (before === null) continue
     let after = before
-    for (const row of inNote) after = changed(after, row, change) ?? after
+    for (const { row, change } of inNote) after = changed(after, row, change) ?? after
     const edit = oneEdit(before, after)
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaceInNotes(workspace, changes)
+  await replaceInNotes(workspace, changes, { join })
   return true
 }
 
@@ -202,4 +212,16 @@ export async function addTask(
     '- ',
   )
   return rewrite(path, (before) => withLines(before, [line], heading))
+}
+
+/** A button pressed on a row (docs/tasks.md 5.13): its properties set and its task
+ *  added at the end of the row's note, as one write, so one undo takes the press back. */
+export async function pressRow(row: Row, change: RowChange, task?: string): Promise<boolean> {
+  const path = pathOf(row)
+  if (path === null) return false
+  return rewrite(path, (before) => {
+    const set = Object.keys(change.note ?? {}).length ? changed(before, row, change) : before
+    if (set === null) return null
+    return task?.trim() ? withLines(set, [`- [ ] ${task.trim()}`]) : set
+  })
 }

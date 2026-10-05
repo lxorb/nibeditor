@@ -6,7 +6,7 @@
  *  before; every edit here makes a new base, sharing whatever it did not touch, and
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
-import type { Base, Filter, NibView, Sort, View } from '@nib/bases'
+import type { Base, Filter, NibBase, NibProperty, NibView, Sort, View } from '@nib/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
 function withView(base: Base, at: number, change: (view: View) => View): Base {
@@ -152,4 +152,61 @@ export function setViewOption(base: Base, at: number, key: string, value: unknow
     else options[key] = value
     return { ...view, options }
   })
+}
+
+/** One of nib's own keys of a view (`lines`, `freeze`, `colour`, `template`, `required`,
+ *  `locked`), set or, with undefined, taken away. */
+export function setViewNib<K extends Exclude<keyof NibView, 'kept'>>(
+  base: Base,
+  at: number,
+  key: K,
+  value: NibView[K] | undefined,
+): Base {
+  return withView(base, at, (view) => withNib(view, { [key]: value }))
+}
+
+/** The base's nib keys with one changed: its default template, its ids, its lock. */
+export function setBaseNib<K extends 'template' | 'id' | 'locked'>(
+  base: Base,
+  key: K,
+  value: NibBase[K] | undefined,
+): Base {
+  const nib: NibBase = { ...base.nib }
+  if (value === undefined) Reflect.deleteProperty(nib, key)
+  else Reflect.set(nib, key, value)
+  return { ...base, nib }
+}
+
+/** A formula made, changed or (null) taken away. */
+export function setFormula(base: Base, name: string, source: string | null): Base {
+  const formulas = { ...base.formulas }
+  if (source === null) Reflect.deleteProperty(formulas, name)
+  else formulas[name] = source
+  return { ...base, formulas }
+}
+
+/** What nib says about one property (`nib.properties.<key>`): its options, its format. */
+export function setProperty(
+  base: Base,
+  key: string,
+  change: { [K in keyof NibProperty]?: NibProperty[K] | undefined },
+): Base {
+  const next: NibProperty = { ...(base.nib.properties[key] ?? { kept: {} }) }
+  for (const [name, value] of Object.entries(change)) {
+    if (value === undefined) Reflect.deleteProperty(next, name)
+    else Reflect.set(next, name, value)
+  }
+  const properties = { ...base.nib.properties }
+  const empty = Object.keys(next).length === 1 && !Object.keys(next.kept).length
+  if (empty) Reflect.deleteProperty(properties, key)
+  else properties[key] = next
+  return { ...base, nib: { ...base.nib, properties } }
+}
+
+/** A name no formula of the base has yet: the one asked for, or it with a number. */
+export function freeFormulaName(base: Base, wanted: string): string {
+  const name = wanted.trim() || 'Formula'
+  if (!(name in base.formulas)) return name
+  for (let count = 2; ; count++)
+    if (!(`${name} ${count}` in base.formulas)) return `${name} ${count}`
 }

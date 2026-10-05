@@ -172,6 +172,9 @@ export interface Keeping {
   snapshot?: boolean
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
+  /** One undo with the replacement just before, where it follows from it
+   *  (FileActions.join): an automation's write beside the edit that fired it. */
+  join?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -208,7 +211,7 @@ export async function replaceInNotes(
     )
   }
 
-  ws.undone.record({ kind: 'replace', notes: done })
+  if (!keeping.join || !ws.undone.join(done)) ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 

@@ -3,19 +3,36 @@
    *  base's views and what can be done to them; the layout switch, as marks; the
    *  filter, the sort and the group, each a small layer; the view's own search; and
    *  the plus. A mark lights when what it stands for is set. Names and counts and
-   *  nothing else. */
+   *  nothing else.
+   *
+   *  The name's menu also holds what lane 7 added (docs/tasks.md 4): the conditional
+   *  colour, a table's row height, the base's automations, the default template, the
+   *  view as CSV, and the locks. A builder a menu row asks for hangs under the name
+   *  (`live.builder`), whichever layout asked. A locked view shows its padlock, which
+   *  shakes when a change is turned away and opens the lock when pressed. The plus's
+   *  own menu makes a note from a template. */
   import { writeBase } from '@nib/bases'
   import { t } from '../i18n.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { ORDER_MARK } from '../panel-marks'
   import { segmented } from '../slide'
+  import { relativeTo } from '../space-paths'
   import { viewport } from '../viewport.svelte'
+  import { workspace } from '../workspace.svelte'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
-  import { addView, removeView, renameView } from './edit'
+  import AutomationsBuilder from './AutomationsBuilder.svelte'
+  import ButtonBuilder from './ButtonBuilder.svelte'
+  import ColourBuilder from './ColourBuilder.svelte'
+  import { copyCsv, saveCsv } from './csv'
+  import { addView, removeView, renameView, setBaseNib, setViewNib } from './edit'
   import FilterBuilder from './FilterBuilder.svelte'
   import type { Kit } from './kit'
   import { switched } from './layout'
-  import { ADD_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS } from './marks'
+  import type { Builder } from './live.svelte'
+  import { ADD_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
+  import OptionsBuilder from './OptionsBuilder.svelte'
+  import RollupBuilder from './RollupBuilder.svelte'
+  import { templates } from './templates'
   import Popover from './Popover.svelte'
   import { copyToBase } from './save'
   import { type Layout, LAYOUTS, layoutName, layoutOf } from './words'
@@ -43,6 +60,54 @@
   )
 
   let open = $state<'filter' | 'sort' | 'group' | null>(null)
+  const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
+
+  /** What each builder is called, for the layer that holds it. */
+  const BUILDERS: Record<Builder['kind'], string> = {
+    colour: t('Colour'),
+    automations: t('Automations'),
+    rollup: t('Rollup'),
+    button: t('Button'),
+    options: t('Options'),
+  }
+
+  /** A table's three heights, in lines. */
+  const HEIGHTS = [
+    { lines: 1, label: t('Short') },
+    { lines: 2, label: t('Medium') },
+    { lines: 4, label: t('Tall') },
+  ]
+
+  /** A template as a base names it: a link to its path in the space, without `.md`. */
+  function linkTo(path: string): string {
+    const root = workspace.activeSpace?.root ?? ''
+    return `[[${relativeTo(root, path).replace(/\.md$/i, '')}]]`
+  }
+
+  /** The templates a new row can start from, as menu rows; `pick` gets a link or null. */
+  async function templateRows(
+    chosen: string | undefined,
+    pick: (link: string | null) => void,
+  ): Promise<MenuEntry[]> {
+    const found = await templates()
+    return [
+      { label: t('Blank'), checked: chosen === undefined, run: () => pick(null) },
+      ...found.map((one) => ({
+        label: one.name.replace(/\.md$/i, ''),
+        checked: chosen === linkTo(one.path),
+        run: () => pick(linkTo(one.path)),
+      })),
+    ]
+  }
+
+  /** The plus's own menu: a new note, blank or from a template. */
+  function plusMenu(event: MouseEvent) {
+    if (!notes || !base) return
+    event.preventDefault()
+    void templateRows(undefined, (link) => kit.add(undefined, link)).then((items) =>
+      menu.show(event, items, { title: t('New note') }),
+    )
+  }
   let renaming = $state(false)
 
   const toggle = (which: 'filter' | 'sort' | 'group') => (open = open === which ? null : which)
@@ -88,6 +153,76 @@
             },
           ]
         : []),
+      DIVIDER,
+      {
+        label: t('Colour'),
+        checked: view?.nib.colour !== undefined,
+        run: () => (live.builder = { kind: 'colour' }),
+      },
+      ...(layout === 'table'
+        ? [
+            {
+              label: t('Row height'),
+              run: () => undefined,
+              more: () =>
+                Promise.resolve(
+                  HEIGHTS.map((one) => ({
+                    label: one.label,
+                    checked: (view?.nib.lines ?? 1) === one.lines,
+                    run: () =>
+                      kit.change((b, at) =>
+                        setViewNib(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
+                      ),
+                  })),
+                ),
+            },
+          ]
+        : []),
+      ...(kit.file !== null
+        ? [
+            {
+              label: t('Automations'),
+              checked: Array.isArray(base.nib.kept.automations),
+              run: () => (live.builder = { kind: 'automations' }),
+            },
+          ]
+        : []),
+      ...(notes
+        ? [
+            {
+              label: t('Default template'),
+              run: () => undefined,
+              more: () =>
+                templateRows(view?.nib.template ?? base.nib.template, (link) =>
+                  kit.change((b, at) => setViewNib(b, at, 'template', link ?? undefined)),
+                ),
+            },
+          ]
+        : []),
+      DIVIDER,
+      { label: t('Copy as CSV'), run: () => void copyCsv(live) },
+      { label: t('Save as CSV'), run: () => void saveCsv(live, named) },
+      DIVIDER,
+      {
+        label: view?.nib.locked ? t('Unlock view') : t('Lock view'),
+        run: () =>
+          kit.change(
+            (b, at) => setViewNib(b, at, 'locked', view?.nib.locked ? undefined : true),
+            true,
+          ),
+      },
+      ...(kit.file !== null
+        ? [
+            {
+              label: base.nib.locked ? t('Unlock base') : t('Lock base'),
+              run: () =>
+                kit.change(
+                  (b) => setBaseNib(b, 'locked', base.nib.locked ? undefined : true),
+                  true,
+                ),
+            },
+          ]
+        : []),
     ]
     menu.show(event, items, { title: named })
   }
@@ -122,10 +257,49 @@
       }}
     />
   {:else}
-    <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
-      <span class="words">{named}</span>
-      <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
-    </button>
+    <div class="tool named">
+      <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
+        <span class="words">{named}</span>
+        <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+      </button>
+      <Popover
+        start
+        open={live.builder !== null}
+        label={live.builder ? BUILDERS[live.builder.kind] : ''}
+        onclose={() => (live.builder = null)}
+      >
+        {#if live.builder?.kind === 'colour'}
+          <ColourBuilder {kit} />
+        {:else if live.builder?.kind === 'automations'}
+          <AutomationsBuilder {kit} />
+        {:else if live.builder?.kind === 'rollup'}
+          <RollupBuilder {kit} column={live.builder.column} />
+        {:else if live.builder?.kind === 'button'}
+          <ButtonBuilder {kit} column={live.builder.column} />
+        {:else if live.builder?.kind === 'options'}
+          <OptionsBuilder {kit} column={live.builder.column} />
+        {/if}
+      </Popover>
+    </div>
+  {/if}
+
+  {#if live.locked}
+    {#key live.refused}
+      <button
+        type="button"
+        class="nib-glyph lock"
+        class:shake={live.refused > 0}
+        title={t('Unlock view')}
+        aria-label={t('Unlock view')}
+        onclick={() =>
+          kit.change(
+            (b, at) => setBaseNib(setViewNib(b, at, 'locked', undefined), 'locked', undefined),
+            true,
+          )}
+      >
+        <svg viewBox="0 0 13 13"><path d={LOCK_MARK} /></svg>
+      </button>
+    {/key}
   {/if}
 
   <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
@@ -196,9 +370,10 @@
   <button
     type="button"
     class="nib-glyph"
-    title={t('Add task')}
-    aria-label={t('Add task')}
+    title={notes ? t('New note') : t('Add task')}
+    aria-label={notes ? t('New note') : t('Add task')}
     onclick={onadd}
+    oncontextmenu={plusMenu}
   >
     <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
   </button>
@@ -271,6 +446,35 @@
 
   .rename {
     max-width: 30%;
+  }
+
+  .named {
+    min-width: 0;
+    max-width: 30%;
+  }
+
+  .named .name {
+    max-width: 100%;
+  }
+
+  .lock {
+    color: var(--muted-strong);
+  }
+
+  .lock.shake {
+    animation: shake var(--dur-base) var(--ease-out);
+    color: var(--accent);
+  }
+
+  @keyframes shake {
+    20%,
+    60% {
+      translate: -2px 0;
+    }
+    40%,
+    80% {
+      translate: 2px 0;
+    }
   }
 
   .layouts button {

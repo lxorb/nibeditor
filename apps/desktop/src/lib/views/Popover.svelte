@@ -14,11 +14,14 @@
     onclose,
     label,
     children,
+    start = false,
   }: {
     open: boolean
     onclose: () => void
     label: string
     children: Snippet
+    /** Hung from the start of what opened it rather than its end. */
+    start?: boolean
   } = $props()
 
   let layer = $state<HTMLElement>()
@@ -45,6 +48,7 @@
 {#if open}
   <div
     class="pop nib-layer"
+    class:start
     bind:this={layer}
     role="dialog"
     aria-label={label}
@@ -76,5 +80,10 @@
     overflow-y: auto;
     font-family: var(--font-ui);
     font-size: var(--text-row);
+  }
+
+  .pop.start {
+    inset-inline-end: auto;
+    inset-inline-start: 0;
   }
 </style>

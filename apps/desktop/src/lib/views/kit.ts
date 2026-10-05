@@ -3,7 +3,7 @@
  *  view itself. A layout draws the engine's answer and calls these; it never filters,
  *  sorts or writes a file of its own (docs/tasks.md 5.9). */
 
-import { addDays, type Base, type Row, type Value } from '@nib/bases'
+import { addDays, type Base, BUTTON, type Row, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -11,6 +11,7 @@ import { dropRow, indentRow, moveRow, tickRow, writeRow } from './act'
 import { addNote, openQuickAdd, type Prefill, prefillOf } from './add'
 import { dropInto } from './drop'
 import { nextMonday } from './days'
+import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
 import type { RowKey } from './row-keys'
 import type { ViewSpec } from './spec'
@@ -26,14 +27,19 @@ export interface Kit {
   open(row: Row, how?: 'aside' | 'tab'): void
   tick(row: Row): void
   write(row: Row, change: RowChange): void
+  /** A button cell pressed: `column` is `button.<name>`. */
+  press(row: Row, column: string): void
   /** A row dropped into the group keyed `key` of the view's grouping (or of
    *  `property` where a layout groups by one of its own, a calendar's day). */
   drop(row: Row, key: Value, property?: string): void
-  /** Adds to the view, in a group where one is named. Answers the prefill where the
+  /** Adds to the view, in a group where one is named; a note of a view of notes from
+   *  `template` where one is named (null for a blank one). Answers the prefill where the
    *  view's own add row should take the words (no quick add yet), else null. */
-  add(group?: { property: string; key: Value }): Prefill | null
-  /** Changes the view: a new base made from the one showing. */
-  change(edit: (base: Base, at: number) => Base): void
+  add(group?: { property: string; key: Value }, template?: string | null): Prefill | null
+  /** Changes the view: a new base made from the one showing. A locked view or base
+   *  turns the change away and its lock answers (`live.refused`), unless `unlocking`:
+   *  the lock's own switch. */
+  change(edit: (base: Base, at: number) => Base, unlocking?: boolean): void
 }
 
 /** Where a row's note is on this disk. */
@@ -62,25 +68,33 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     write(row, change) {
       void writeRow(row, change)
     },
+    press(row, column) {
+      if (live.base) void pressButton(live.base, column.slice(BUTTON.length), row)
+    },
     drop(row, key, property) {
       const by = property ?? live.view?.groupBy?.property
       if (by === undefined) return
       const drop = dropInto(by, key, row, live.today)
       if (drop) void dropRow(row, drop)
     },
-    add(group) {
+    add(group, template) {
       const base = live.base
       const kinds = live.view?.nib.rows ?? 'notes'
       if (base && kinds === 'notes') {
-        void addNote(base, live.at, file, group)
+        void addNote(base, live.at, file, group, template === undefined ? {} : { template })
         return null
       }
       const prefill = prefillOf(spec, live.today, group)
       return openQuickAdd(prefill) ? null : prefill
     },
-    change(edit) {
+    change(edit, unlocking = false) {
       const base = live.base
-      if (base) void live.change(edit(base, live.at))
+      if (!base) return
+      if (live.locked && !unlocking) {
+        live.refused++
+        return
+      }
+      void live.change(edit(base, live.at))
     },
   }
 }
