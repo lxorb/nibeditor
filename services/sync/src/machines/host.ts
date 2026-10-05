@@ -28,8 +28,9 @@ const BACKSTOP = 20 * 60 * 1000
 const LINK_TRIES = 40
 const LINK_WAIT = 250
 
-/** The small machine as an instance: ½ vCPU, 2 GiB, an 8 GB disk (decision 3). */
-const SMALL_INSTANCE = { vcpu: 0.5, memoryMib: 2048, diskMb: 8000 }
+/** The small machine as an instance: ½ vCPU, 4 GiB, an 8 GB disk (decision 3). A custom
+ *  size needs at least one whole vCPU, so it is the named type. */
+const SMALL_INSTANCE = 'standard-1' as const
 
 /** Where a machine's link secret is kept across an object restart. */
 export const SECRET = 'secret'
