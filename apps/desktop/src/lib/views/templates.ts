@@ -6,9 +6,12 @@
  *  filled (`fillTemplate` in @nib/bases) for the note made from it. */
 
 import { fillTemplate, withoutTemplateKeys } from '@nib/bases'
-import { relativeTo, within } from '../space-paths'
+import { t } from '../i18n.svelte'
+import { menu } from '../menu.svelte'
+import { folderOf, relativeTo, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
+import { writeFile } from '../workspace/write-file'
 import { nowHere } from './days'
 
 /** The folder Obsidian's Templates plugin was told, per space root, read once. */
@@ -71,5 +74,35 @@ export async function templateWords(path: string, title: string): Promise<string
   const now = nowHere()
   return withoutTemplateKeys(
     fillTemplate(text, { title, today: now.slice(0, 10), time: now.slice(11, 16) }),
+  )
+}
+
+/** A new note from a template the reader picks, in the folder of the note in front (the
+ *  space's root where none is), opened: the palette's "New note from template". */
+export async function pickTemplate(): Promise<void> {
+  const space = workspace.activeSpace
+  if (!space) return
+  const found = await templates()
+  if (!found.length) return
+  const active = workspace.active?.path ?? null
+  const dir =
+    active && within(space.root, active, space.root) !== null ? folderOf(active) : space.root
+  const make = async (template: string) => {
+    const name = workspace.freeName(dir, 'Untitled.md')
+    const path = joinPath(dir, name)
+    await writeFile(path, await templateWords(template, name.replace(/\.md$/i, '')))
+    await workspace.loadTree()
+    await workspace.fileCame(path, 'file')
+    await workspace.open(path)
+  }
+  // The palette has closed by now; the choice is asked where it was, in the window's middle.
+  const at = new MouseEvent('contextmenu', {
+    clientX: window.innerWidth / 2,
+    clientY: window.innerHeight / 3,
+  })
+  menu.show(
+    at,
+    found.map((one) => ({ label: one.name.replace(/\.md$/i, ''), run: () => void make(one.path) })),
+    { title: t('New note from template') },
   )
 }

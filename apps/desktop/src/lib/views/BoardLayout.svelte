@@ -106,8 +106,11 @@
 
 {#snippet card(row: Row)}
   {@const title = row.task ? plain(row.task.text) : row.file.basename}
+  {@const tone = live.colourOf(row)}
   <div
     class="card"
+    class:toned={tone !== null}
+    style:--row-tone={tone}
     data-card
     role="button"
     tabindex="0"
@@ -395,5 +398,10 @@
     .folded:hover {
       color: var(--text-strong);
     }
+  }
+
+  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
+  .toned {
+    background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 </style>

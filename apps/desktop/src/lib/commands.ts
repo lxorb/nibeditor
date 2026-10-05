@@ -1050,6 +1050,11 @@ export function appCommands(view?: EditorView): Command[] {
     },
     { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
     { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
+    {
+      id: 'new-from-template',
+      label: t('New note from template'),
+      run: () => void import('./views/templates').then((one) => one.pickTemplate()),
+    },
     ...(viewport.device === 'phone'
       ? []
       : [

@@ -33,6 +33,7 @@ export const LAYOUTS = [
   'calendar',
   'timeline',
   'chart',
+  'form',
 ] as const
 export type Layout = (typeof LAYOUTS)[number]
 
@@ -44,6 +45,7 @@ const LAYOUT_NAMES: Record<Layout, string> = {
   calendar: key('Calendar'),
   timeline: key('Timeline'),
   chart: key('Chart'),
+  form: key('Form'),
 }
 
 /** The layout a view's type draws as: Bases' own names, and `board` read as the

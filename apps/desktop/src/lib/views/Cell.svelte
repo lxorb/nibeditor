@@ -4,14 +4,22 @@
    *  edited in the Properties panel's own control (properties/PropertyValue.svelte); a
    *  task's field in the control that field needs - a date, a time, a priority, a
    *  status. Whatever it becomes is written through the one write path (kit.write),
-   *  one undo per edit. */
+   *  one undo per edit.
+   *
+   *  Shown, a property with choices is its choices as chips in their tones, a property
+   *  with a format is that format (format.ts: a percentage, money, a bar, an address
+   *  a press opens), and a button column is its button, which a press runs on the row
+   *  (press.ts). */
   import type { Row, Value } from '@nib/bases'
   import { cellValue } from '@nib/bases'
   import type { Property } from '@nib/markdown/properties'
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'
-  import { bare, changeOf, type Editor, optionsOf } from './columns'
+  import { bare, changeOf, type Editor, formatOf, optionsOf, toneOf } from './columns'
+  import { formatted } from './format'
+  import { toneColour } from './chips'
+  import { openExternal } from '../tauri'
   import type { Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
   import { dayIn, isDateValue } from './values'
@@ -40,8 +48,24 @@
     return base ? cellValue(base, property, row, kit.live.context) : null
   })
   const shown = $derived(valueText(value, kit.live.today))
+  /** The value as its column's format shows it, where it has one. */
+  const styled = $derived(
+    kit.live.base ? formatted(value, formatOf(kit.live.base, property)) : null,
+  )
+  /** A property with choices, each value as a chip in its tone. */
+  const chips = $derived.by(() => {
+    const base = kit.live.base
+    if (editor !== 'select' || !base) return null
+    const values = Array.isArray(value) ? value : value === null ? [] : [value]
+    return values.map((one) => {
+      const words = valueText(one, kit.live.today)
+      return { words, colour: toneColour(toneOf(base, property, words)) }
+    })
+  })
   const writable = $derived(
-    editor !== 'none' && (row.kind === 'task' || !property.startsWith('task.')),
+    editor !== 'none' &&
+      editor !== 'button' &&
+      (row.kind === 'task' || !property.startsWith('task.')),
   )
 
   function write(next: Value | null) {
@@ -216,11 +240,95 @@
       else write(event.currentTarget.checked)
     }}
   />
+{:else if editor === 'button'}
+  <button
+    type="button"
+    class="nib-chip press"
+    onclick={(event) => {
+      event.stopPropagation()
+      kit.press(row, property)
+    }}>{bare(property).replace(/^button\./, '')}</button
+  >
+{:else if chips}
+  <span class="shown chips">
+    {#each chips as chip, at (at)}<span class="chip" style:--tone={chip.colour}>{chip.words}</span
+      >{/each}
+  </span>
+{:else if styled?.href}
+  <a
+    class="shown link"
+    href={styled.href}
+    onclick={(event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      if (styled.href) void openExternal(styled.href)
+    }}>{styled.text}</a
+  >
+{:else if styled?.share !== undefined}
+  <span class="shown progress">
+    <span class="bar"><span class="fill" style:inline-size="{styled.share * 100}%"></span></span>
+    {styled.text}
+  </span>
 {:else}
-  <span class="shown" class:empty={!shown}>{shown}</span>
+  <span class="shown" class:empty={!(styled?.text ?? shown)}>{styled?.text ?? shown}</span>
 {/if}
 
 <style>
+  .press {
+    padding: 0 var(--space-2);
+    line-height: 1.6;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chips {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .chip {
+    flex: none;
+    padding: 0 0.5em;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--tone, var(--muted)) 22%, transparent);
+    color: var(--text-strong);
+    line-height: 1.6;
+  }
+
+  .link {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .link:hover {
+    text-decoration: underline;
+  }
+
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar {
+    flex: 1;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: var(--surface-press);
+  }
+
+  .fill {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: inline-size var(--dur-base) var(--ease-out);
+  }
+
   .task {
     display: flex;
     align-items: center;

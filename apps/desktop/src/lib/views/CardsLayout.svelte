@@ -76,8 +76,11 @@
       {#each group.rows as row (`${row.space}:${rowId(row)}`)}
         {@const cover = coverOf(row)}
         {@const title = row.task ? plain(row.task.text) : row.file.basename}
+        {@const tone = live.colourOf(row)}
         <div
           class="card"
+          class:toned={tone !== null}
+          style:--row-tone={tone}
           role="button"
           tabindex="0"
           use:draggable={{ row, label: title }}
@@ -232,5 +235,10 @@
   .grid:global(.is-taking) {
     border-radius: var(--radius-md);
     box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
+  .toned {
+    background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 </style>

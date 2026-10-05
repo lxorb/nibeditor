@@ -172,8 +172,7 @@ export interface Keeping {
   snapshot?: boolean
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
-  /** One undo with the replacement just before, where it follows from it
-   *  (FileActions.join): an automation's write beside the edit that fired it. */
+  /** One undo with the write before it; see undo-join.ts. */
   join?: boolean
 }
 
@@ -211,7 +210,8 @@ export async function replaceInNotes(
     )
   }
 
-  if (!keeping.join || !ws.undone.join(done)) ws.undone.record({ kind: 'replace', notes: done })
+  const joined = keeping.join && (await import('./undo-join')).joined(ws.undone, done)
+  if (!joined) ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 

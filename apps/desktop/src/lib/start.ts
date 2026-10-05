@@ -186,6 +186,8 @@ export function start(): () => void {
   // with nib closed; never the glasses' plugin. See reminders/start.svelte.ts.
   if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(() => import('./reminders/start.svelte'))
+    // And the bases' automations; see views/runner.svelte.ts.
+    void startup.turn('right').then(() => import('./views/runner.svelte'))
   }
 
   // The account's hub, beside the sockets the open notes join, after the first paint;

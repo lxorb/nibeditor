@@ -22,6 +22,7 @@
   import { ghostOwner } from './drag.svelte'
   import DragGhost from './DragGhost.svelte'
   import type { Kit } from './kit'
+  import FormLayout from './FormLayout.svelte'
   import ListLayout from './ListLayout.svelte'
   import { openBuiltin } from './open'
   import PhoneRows from './PhoneRows.svelte'
@@ -132,6 +133,8 @@
           {#if phone}<AgendaLayout {kit} />{:else}<CalendarLayout {kit} />{/if}
         {:else if layout === 'timeline'}
           <TimelineLayout {kit} />
+        {:else if layout === 'form'}
+          <FormLayout {kit} />
         {:else}
           <ChartLayout {kit} />
         {/if}

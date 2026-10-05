@@ -42,6 +42,8 @@
   const section = $derived(task?.section.at(-1))
   const label = $derived(task ? plain(task.text) : row.file.basename)
   /** Which space, where it is not the open one (decision 8.4). */
+  /** The view's conditional colour for this row, if any. */
+  const tone = $derived(kit.live.colourOf(row))
   const elsewhere = $derived(
     kit.spec.builtin !== undefined && row.space !== workspace.activeSpace?.name ? row.space : null,
   )
@@ -56,6 +58,8 @@
   class="nib-row line"
   class:is-on={selected}
   class:finished={!!task && (task.done || task.cancelled)}
+  class:toned={tone !== null}
+  style:--row-tone={tone}
   style:--depth={depth}
   role="option"
   aria-selected={selected}
@@ -199,5 +203,10 @@
 
   :global([data-touch]) .where {
     display: none;
+  }
+
+  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
+  .toned {
+    background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 </style>

@@ -56,7 +56,11 @@
   const named = $derived(view?.name.trim() ? view.name : title)
   /** The layouts this place has room for: a fence and a phone leave the timeline out. */
   const offered = $derived(
-    LAYOUTS.filter((one) => one !== 'timeline' || (!kit.compact && viewport.device !== 'phone')),
+    LAYOUTS.filter(
+      (one) =>
+        (one !== 'timeline' || (!kit.compact && viewport.device !== 'phone')) &&
+        (one !== 'form' || (view?.nib.rows ?? 'notes') === 'notes'),
+    ),
   )
 
   let open = $state<'filter' | 'sort' | 'group' | null>(null)

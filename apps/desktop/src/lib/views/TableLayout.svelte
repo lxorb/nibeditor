@@ -285,7 +285,7 @@
         <div
           class="line"
           class:toned={tone !== null}
-          style:--tone={tone}
+          style:--row-tone={tone}
           role="row"
           use:draggable={{
             row: line.row,
@@ -412,7 +412,7 @@
   }
 
   .line.toned {
-    background: color-mix(in srgb, var(--tone) 14%, var(--bg));
+    background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 
   /* A frozen column stays where it is while the rest scroll under it, so it wears

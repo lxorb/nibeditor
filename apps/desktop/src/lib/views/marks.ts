@@ -12,6 +12,7 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
   calendar: 'M1.5 2.5h10v9h-10zM1.5 5.2h10M4.2 1v3M8.8 1v3',
   timeline: 'M1.5 3.5h6M4 6.5h6.5M2.5 9.5h4.5',
   chart: 'M1.5 11.5h10M3.2 11V7.5M6.5 11V3M9.8 11V5.5',
+  form: 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z',
 }
 
 /** A funnel: what is let through. */
@@ -34,6 +35,3 @@ export const ADD_MARK = 'M6.5 2v9M2 6.5h9'
 
 /** A padlock: the view or its base is locked. */
 export const LOCK_MARK = 'M3.2 6.2h6.6v5H3.2zM4.6 6.2V4.4a1.9 1.9 0 0 1 3.8 0v1.8'
-
-/** A form: fields under one another, the last one the button that sends it. */
-export const FORM_MARK = 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z'

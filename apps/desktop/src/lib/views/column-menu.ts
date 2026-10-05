@@ -106,6 +106,10 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
         {
           label: t('Unique ID'),
           run: () => {
+            if (live.locked) {
+              live.refused++
+              return
+            }
             const property = 'id'
             kit.change((b, at) =>
               setColumns(setBaseNib(b, 'id', { property, prefix: '' }), at, [
@@ -219,6 +223,21 @@ export function columnMenu(kit: Kit, column: string, columns: readonly string[])
       : []),
     ...(isButton(column)
       ? [{ label: t('Edit'), run: () => (live.builder = { kind: 'button', column }) }]
+      : []),
+    ...(view?.type === 'form' && note
+      ? [
+          {
+            label: t('Required'),
+            checked: view.nib.required?.includes(bare(column)) === true,
+            run: () =>
+              kit.change((b, i) => {
+                const was = b.views[i]?.nib.required ?? []
+                const key = bare(column)
+                const next = was.includes(key) ? was.filter((one) => one !== key) : [...was, key]
+                return setViewNib(b, i, 'required', next.length ? next : undefined)
+              }),
+          },
+        ]
       : []),
     ...(view?.type === 'table' || view?.type === undefined
       ? [
