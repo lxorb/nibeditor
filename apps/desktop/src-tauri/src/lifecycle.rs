@@ -122,8 +122,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             // open the loop would not end by itself, so it is ended here. A window
             // closed while it was asking whether to quit is that question answered.
             let now = state(app).now();
-            if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty()
-            {
+            if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
                 leave(app);
             }
         }
