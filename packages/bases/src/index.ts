@@ -15,3 +15,36 @@ export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'
 export { fromTodoist } from './todoist'
+// What lane 7 adds (docs/tasks.md 5.12, 5.13): relations seen back, rollups, ids, colour,
+// templates, buttons, automations and CSV.
+export {
+  readRollup,
+  readReverse,
+  reverseFormula,
+  type Rollup,
+  rollupFormula,
+  ROLLUPS,
+  type RollupSpec,
+} from './rollup'
+export { idNumber, idRepairs, idText, nextId } from './ids'
+export { type ColourRule, colourExpression, colourRules } from './colour'
+export { fillTemplate, type Filling, repeatDue, withoutTemplateKeys } from './templates'
+export {
+  BUTTON,
+  type Button,
+  isButton,
+  type Press,
+  pressed,
+  readButtons,
+  withButton,
+} from './buttons'
+export {
+  type Automation,
+  type Effect,
+  fired,
+  inBase,
+  readAutomations,
+  type Trigger,
+  withAutomations,
+} from './automations'
+export { csvText, csvValue } from './csv'

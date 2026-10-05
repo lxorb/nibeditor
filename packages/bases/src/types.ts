@@ -183,6 +183,14 @@ export interface NibView {
   /** Groups kept out of sight, by key as text. */
   hidden?: string[]
   locked?: boolean
+  /** A table's rows, this many lines tall (1, 2 or 4), the words wrapping within. */
+  lines?: number
+  /** How many of a table's columns, from the first, stay put while it scrolls across. */
+  freeze?: number
+  /** The note a new row of this view is made from, before the base's own. */
+  template?: string
+  /** A form's fields that must be filled before it is sent. */
+  required?: string[]
   /** Every other key, as written. */
   kept: Record<string, unknown>
 }

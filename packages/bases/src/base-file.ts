@@ -84,6 +84,10 @@ const NIB_VIEW_KEYS = [
   'groupOrder',
   'hidden',
   'locked',
+  'lines',
+  'freeze',
+  'template',
+  'required',
 ]
 
 function readNibView(raw: unknown): NibView {
@@ -107,6 +111,10 @@ function readNibView(raw: unknown): NibView {
   if (raw.groupOrder === 'rows' || raw.groupOrder === 'value') nib.groupOrder = raw.groupOrder
   if (Array.isArray(raw.hidden)) nib.hidden = raw.hidden.map(String)
   if (typeof raw.locked === 'boolean') nib.locked = raw.locked
+  if (typeof raw.lines === 'number' && raw.lines >= 1) nib.lines = Math.floor(raw.lines)
+  if (typeof raw.freeze === 'number' && raw.freeze >= 0) nib.freeze = Math.floor(raw.freeze)
+  if (typeof raw.template === 'string') nib.template = raw.template
+  if (Array.isArray(raw.required)) nib.required = raw.required.map(String)
   nib.kept = rest(raw, NIB_VIEW_KEYS)
   return nib
 }
@@ -237,6 +245,10 @@ function nibViewPlain(nib: NibView): Plain {
     ['groupOrder', nib.groupOrder],
     ['hidden', nib.hidden],
     ['locked', nib.locked],
+    ['lines', nib.lines],
+    ['freeze', nib.freeze],
+    ['template', nib.template],
+    ['required', nib.required],
     ...Object.entries(nib.kept),
   ])
 }
