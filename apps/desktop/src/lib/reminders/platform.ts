@@ -8,6 +8,7 @@
 
 import { t } from '../i18n.svelte'
 import { frameWord, method } from '../mobile/bridge'
+import { notify } from '../notify'
 import { parsed } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import type { Reminder } from './plan'
@@ -50,18 +51,9 @@ export async function hand(plan: readonly Reminder[]): Promise<boolean> {
 
 /** Shows one reminder the page rang itself, and answers a press on it with `opened`. */
 export function show(one: Reminder, opened: (press: Pressed) => void) {
-  if (isDesktop) {
-    void invoke('reminders_ring', { title: one.title, body: one.body }).catch(() => undefined)
-    return
-  }
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-
-  const shown = new Notification(one.title, { body: one.body, tag: one.id })
-  shown.onclick = () => {
-    window.focus()
+  notify(one.title, one.body, one.id, () => {
     opened({ act: 'open', space: one.space, path: one.path, hash: one.hash, line: one.line })
-    shown.close()
-  }
+  })
 }
 
 /** Asks the browser, once, whether the page may show a notification at all. */

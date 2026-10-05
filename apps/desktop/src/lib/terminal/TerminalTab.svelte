@@ -26,6 +26,7 @@
   import FindBar from '../FindBar.svelte'
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
+  import { hostOf } from '@nib/online/urls'
   import OnlineStatus from '../online/OnlineStatus.svelte'
   import type { Tab } from '../workspace.svelte'
   import { sessionOf } from './sessions.svelte'
@@ -80,6 +81,14 @@
   {:else if session.resumable !== null}
     <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
       <button type="button" onclick={() => session.resume()}>{t('Resume')}</button>
+    </div>
+  {:else if session.offered !== null}
+    <!-- An address a program on the machine asked a browser for, in a browser build,
+         which may open a window only for a press: the site's name is the whole of it. -->
+    <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+      <button type="button" onclick={() => session.openOffered()}>
+        {hostOf(session.offered)} ↗
+      </button>
     </div>
   {/if}
 </div>
