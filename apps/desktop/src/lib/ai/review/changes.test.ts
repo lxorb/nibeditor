@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
 import { answered, byNote, changesOf, changesSince, type Edit, linesOf } from './changes'
 import { forkAt, cutForEdit, switchBranch, type Branched } from './branches'
-import { planFor, verbOf } from './plan'
+import { fileChangesOf, verbOf } from './files'
+import { planFor } from './plan'
 
 function you(id: string, at: number, steered = false): Turn {
   return {
@@ -133,6 +134,37 @@ describe('the rewind plan', () => {
     const clicked = [you('m1', 10), model('a1', 11, [tool('browser_click', { ref: 'e1' })])]
     expect(planFor({ turns: clicked }, 'm1', [])?.lasting).toBe(true)
     expect(verbOf('mcp__nib__edit_note')).toBe('edit_note')
+  })
+
+  test('takes a note moved or deleted since back, rather than calling it lasting', () => {
+    const turns = [
+      you('m1', 10),
+      model('a1', 11, [
+        tool(
+          'mcp__nib__move_file',
+          { path: 'Plan', to: 'Old/Plan' },
+          '{"from":"Plan.md","to":"Old/Plan.md"}',
+        ),
+        tool(
+          'trash_file',
+          { path: 'Herons', space: 'Work' },
+          '{"path":"Herons.md","trashed":true}',
+        ),
+        // A move to where it already was moved nothing.
+        tool('move_file', { path: 'A', to: 'A' }, '{"from":"A.md","to":"A.md"}'),
+      ]),
+    ]
+    const plan = planFor({ turns }, 'm1', [])
+    expect(plan?.lasting).toBe(false)
+    expect(plan?.choices[0]).toBe('both')
+    expect(plan?.files).toEqual([
+      { id: 'mcp__nib__move_file', kind: 'moved', from: 'Plan.md', path: 'Old/Plan.md' },
+      { id: 'trash_file', kind: 'trashed', path: 'Herons.md', space: 'Work' },
+    ])
+    expect(fileChangesOf(turns, new Set(['trash_file']))).toHaveLength(1)
+    expect(
+      planFor({ turns }, 'm1', [], new Set(['mcp__nib__move_file', 'trash_file']))?.files,
+    ).toEqual([])
   })
 })
 

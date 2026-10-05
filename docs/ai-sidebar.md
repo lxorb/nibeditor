@@ -643,7 +643,11 @@ sidebar adds a review layer on top, and nothing underneath changes.
 
 - **The changes bar** over the field: how many notes, +/−, **Undo** and **Keep**. Click it,
   or `/diff`, for the list: each note with its changes, each change with **Keep** and
-  **Undo**, **J**/**K** to walk them.
+  **Undo**, **J**/**K** to walk them; then each note the thread moved (old name → new) or
+  sent to Recently deleted (struck through), with the same pair. Undo moves it back, links
+  and all, or brings it back out of Recently deleted the way the tree's own Undo does
+  (`review/files.ts`, `review/file-ops.ts`): what Agent mode does without asking is all on
+  this list.
 - **In the note**, each change the thread made and the reader has not kept wears a mark in
   the gutter and a tint on its words (the version history's colours), with **Keep** and
   **Undo** on hover. A note leaves the list when every change is kept or undone; a note the
@@ -658,7 +662,7 @@ sidebar adds a review layer on top, and nothing underneath changes.
   on an empty field, `/rewind`, or the clock on a message's hover) offers Claude Code's five
   choices; restoring notes undoes the thread's steps after that point, mapped the same way.
   **Redo** is there until the next send (Copilot). A note created after the checkpoint goes
-  to Recently deleted; a page clicked, a form filled or a command run is not undone, and the
+  to Recently deleted, a note moved goes back, a note deleted comes back; a page clicked, a form filled or a command run is not undone, and the
   rewind sheet says so in one line (Copilot's honest sentence).
 - **Edit a message** (the pencil on hover, or **Up** on an empty field for the last one):
   the thread rewinds to before it, notes and conversation, and the edited message is sent.

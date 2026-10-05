@@ -1,7 +1,8 @@
 <script lang="ts">
   /** Every change the thread made that the reader has not kept (`/diff`, or the bar
    *  pressed): each note with its changes, each with Keep and Undo, and the note's
-   *  own pair for all of its changes. A row pressed shows the change in its note.
+   *  own pair for all of its changes; then each note it moved (old name, new name) or
+   *  deleted (struck through), with the same pair. A row pressed shows the change.
    *
    *  Keys, Claude Code's and Cursor's: J and K (or the arrows) walk the changes, Y
    *  keeps the lit one, N undoes it, Enter shows it, Escape puts the list away. */
@@ -10,12 +11,25 @@
   import { fly } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
+  import { insideSpace } from '../../space-paths'
+  import { workspace } from '../../workspace.svelte'
+  import type { Thread } from '../chat/types'
   import type { Change, NoteChanges } from './changes'
+  import type { FileChange } from './files'
   import { review } from './review.svelte'
   import Tally from './Tally.svelte'
   import { snippetOf, titleOf } from './words'
 
-  const { notes }: { notes: NoteChanges[] } = $props()
+  const { notes, files, thread }: { notes: NoteChanges[]; files: FileChange[]; thread: Thread } =
+    $props()
+
+  /** A moved note opened where it is now. */
+  function openMoved(file: FileChange) {
+    const root = workspace.spaces.find(
+      (one) => one.id === file.space || one.name === file.space || one.id === thread.space,
+    )?.root
+    if (root) void workspace.open(insideSpace(root, file.path))
+  }
 
   const rows = $derived(notes.flatMap((note) => note.changes))
   let lit = $state(0)
@@ -91,6 +105,23 @@
           <button class="nib-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
         </div>
       {/each}
+    </div>
+  {/each}
+  {#each files as file (file.id)}
+    <div class="line" role="listitem">
+      {#if file.kind === 'moved'}
+        <button class="nib-row is-short name" onclick={() => openMoved(file)}>
+          <span class="nib-row-label">{titleOf(file.from)} → {titleOf(file.path)}</span>
+        </button>
+      {:else}
+        <span class="nib-row is-short name">
+          <span class="nib-row-label is-gone">{titleOf(file.path)}</span>
+        </span>
+      {/if}
+      <button class="nib-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
+        >{t('Undo')}</button
+      >
+      <button class="nib-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
     </div>
   {/each}
 </div>

@@ -1,11 +1,12 @@
 /** What rewinding a thread to one of the reader's messages would do (docs/ai-sidebar.md
  *  4.5): Claude Code's five choices, which of them there is anything for, the changes
- *  and the notes made since, and whether the thread did anything since that a rewind
- *  cannot take back - a page clicked, a form filled, a command run, a file moved -
- *  which the sheet says in one line, as Copilot does. Pure. */
+ *  the notes made, moved and deleted since, and whether the thread did anything since
+ *  that a rewind cannot take back - a page clicked, a form filled, a command run - which
+ *  the sheet says in one line, as Copilot does. Pure. */
 
 import type { Part, Thread, Turn } from '../chat/types'
 import { type Change, changesSince, checkpoints } from './changes'
+import { answerOf, argsOf, type FileChange, fileChangeOf, verbOf } from './files'
 
 /** Claude Code's five, in its order. */
 export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'summarize-to'
@@ -20,15 +21,11 @@ export interface Plan {
   turn: Turn
   changes: Change[]
   made: Made[]
+  /** Notes moved or deleted since, oldest first. */
+  files: FileChange[]
   /** Whether something since cannot be taken back. */
   lasting: boolean
   choices: Choice[]
-}
-
-/** A tool's name as nib's verbs say it: Claude Code calls it `mcp__nib__edit_note`. */
-export function verbOf(name: string): string {
-  const at = name.lastIndexOf('__')
-  return at < 0 ? name : name.slice(at + 2)
 }
 
 /** The verbs that only look. */
@@ -38,25 +35,12 @@ const LOOKS =
 /** The verbs whose edits the review takes back: through the agent's own steps. */
 const EDITS = new Set(['edit_note', 'write_note', 'append_note', 'set_property', 'set_task'])
 
+/** The verbs whose files the review moves back or brings back (files.ts). */
+const MOVES = new Set(['move_file', 'trash_file'])
+
 /** Whether a call made something a rewind sends to Recently deleted. */
 function makes(verb: string): boolean {
   return verb.startsWith('create_')
-}
-
-/** The words of a call's answer, read as the JSON a window verb answers, or null. */
-function answerOf(part: Extract<Part, { kind: 'tool' }>): Record<string, unknown> | null {
-  try {
-    const read: unknown = JSON.parse(part.result?.text ?? '')
-    return typeof read === 'object' && read !== null ? (read as Record<string, unknown>) : null
-  } catch {
-    return null
-  }
-}
-
-function argsOf(part: Extract<Part, { kind: 'tool' }>): Record<string, unknown> {
-  return typeof part.args === 'object' && part.args !== null
-    ? (part.args as Record<string, unknown>)
-    : {}
 }
 
 /** What a call that made a file made. */
@@ -80,11 +64,13 @@ function callsSince(turns: readonly Turn[], turn: string): Extract<Part, { kind:
 }
 
 /** The plan for rewinding `thread` to before its message `turn`; null for a turn that
- *  is not one of the reader's messages with a checkpoint. */
+ *  is not one of the reader's messages with a checkpoint. `done` are the file changes
+ *  already kept or taken back. */
 export function planFor(
   thread: Pick<Thread, 'turns'>,
   turn: string,
   changes: readonly Change[],
+  done: ReadonlySet<string> = new Set(),
 ): Plan | null {
   const marks = checkpoints(thread.turns)
   const at = marks.findIndex((one) => one.id === turn)
@@ -93,16 +79,20 @@ export function planFor(
 
   const since = changesSince(changes, thread.turns, turn)
   const made: Made[] = []
+  const files: FileChange[] = []
   let lasting = false
   for (const part of callsSince(thread.turns, turn)) {
     const verb = verbOf(part.verb)
     if (LOOKS.test(verb) || EDITS.has(verb)) continue
     const file = makes(verb) ? madeBy(part) : null
+    const moved = fileChangeOf(part)
     if (file) made.push(file)
-    else lasting = true
+    else if (moved) {
+      if (!done.has(moved.id)) files.push(moved)
+    } else if (!MOVES.has(verb)) lasting = true
   }
 
-  const notes = since.length > 0 || made.length > 0
+  const notes = since.length > 0 || made.length > 0 || files.length > 0
   const choices: Choice[] = [
     ...(notes ? (['both'] as const) : []),
     'conversation',
@@ -110,5 +100,5 @@ export function planFor(
     'summarize-from',
     ...(at > 0 ? (['summarize-to'] as const) : []),
   ]
-  return { turn: found, changes: since, made, lasting, choices }
+  return { turn: found, changes: since, made, files, lasting, choices }
 }
