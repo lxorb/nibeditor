@@ -5,7 +5,7 @@ import { shells } from '../terminal/shells.svelte'
 import type { Row, Why } from './rows'
 
 /** What the question was answered with: go on, stay, or stay and show this one. */
-export type Answer = 'go' | 'stay' | Row
+type Answer = 'go' | 'stay' | Row
 
 class QuitAsk {
   open = $state(false)
