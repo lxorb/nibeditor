@@ -44,7 +44,7 @@ export class Tunnels {
     private readonly token: string,
     private readonly account: string,
     private readonly zone: string,
-    private readonly fetcher: Fetch = fetch,
+    private readonly fetcher: Fetch = (input, init) => fetch(input, init),
   ) {}
 
   private async ask(method: string, path: string, body?: unknown): Promise<unknown> {

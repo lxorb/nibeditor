@@ -78,7 +78,7 @@ function amount(value: unknown): number | null {
 export class Hetzner {
   constructor(
     private readonly token: string,
-    private readonly fetcher: Fetch = fetch,
+    private readonly fetcher: Fetch = (input, init) => fetch(input, init),
   ) {}
 
   private async ask(method: string, path: string, body?: unknown): Promise<unknown> {
