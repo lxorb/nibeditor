@@ -1060,15 +1060,19 @@ async function hasContent(): Promise<boolean> {
  *  it as though it did is how a reader who deleted every note gets the welcome
  *  note back - and, signed in, gets it in their account. So the answer is written
  *  down, and written down whichever way this went: a device that already had notes
- *  has been introduced too. See seeded.ts and welcome.ts. */
-export async function seed() {
-  if (await wasSeeded()) return
+ *  has been introduced too. See seeded.ts and welcome.ts.
+ *
+ *  Answers whether it wrote the note just now, which is what a first visit is; see
+ *  first-visit.svelte.ts. */
+export async function seed(): Promise<boolean> {
+  if (await wasSeeded()) return false
 
   if (await hasContent()) {
     await markSeeded()
-    return
+    return false
   }
 
   await writeNote(WELCOME_PATH, WELCOME)
   await markSeeded()
+  return true
 }

@@ -18,6 +18,9 @@ import type { Rows } from './table'
  *  few enough that a zip of six thousand notes is not unpacked to answer it. */
 const PEEK = 20
 
+/** Obsidian's own folder at the top of a vault, or one folder down. */
+const VAULT = /^([^/]+\/)?\.obsidian\//
+
 /** One Apple Journal entry, as its export names it. */
 const ENTRY = /(^|\/)entries\/[^/]+\.html?$/i
 
@@ -36,6 +39,12 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 
   if (has(/\.enex$/i)) return 'evernote'
   if (has(/\.note$/i)) return 'tomboy'
+
+  // Obsidian keeps its settings in `.obsidian/` at the top of a vault, and nothing
+  // else writes that folder. Asked before the folder shapes below, because a vault
+  // with a `pages/` folder in it is still a vault and not a Logseq graph. One folder
+  // deep as well, for a zip whose only entry is the vault itself.
+  if (has(VAULT)) return 'obsidian'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this
@@ -250,6 +259,11 @@ export async function readAs(
     case 'pdf-pages': {
       const { readPdfPages } = await import('./pdf-pages')
       return readPdfPages(sources)
+    }
+    case 'obsidian': {
+      const { readPlain } = await import('./plain')
+      const { leftInVault } = await import('./obsidian')
+      return readPlain(sources, { format, skip: leftInVault })
     }
     case 'craft':
     case 'onenote':

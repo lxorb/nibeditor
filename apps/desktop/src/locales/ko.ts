@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Import: the first screen's rows for another app, and the palette's two
+  'Another app': '다른 앱',
+  'Start fresh': '새로 시작',
+  'Import from Obsidian': 'Obsidian에서 가져오기',
+  'Import from Notion': 'Notion에서 가져오기',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '힌트',
   'Silent mode': '조용한 모드',

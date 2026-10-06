@@ -11,8 +11,12 @@
 
 export interface Moment {
   /** The desktop app or the phone app. The browser build seeds a welcome note of
-   *  its own instead and never asks. */
+   *  its own instead, so it always has a space, and asks once, on the visit that
+   *  wrote that note: see `firstVisit`. */
   native: boolean
+  /** The browser build's first visit, still being asked where its notes come from;
+   *  see first-visit.svelte.ts. */
+  firstVisit: boolean
   /** The Even Realities plugin, which never shows anything new. */
   plugin: boolean
   /** Whether the launch has read the spaces folder yet; before that an empty list
@@ -34,9 +38,13 @@ export interface Moment {
 }
 
 export function choosing(now: Moment): boolean {
-  if (!now.native || now.plugin) return false
+  if (now.plugin) return false
   if (!now.restored || now.restoring) return false
   if (now.signedIn || now.invited) return false
+
+  // The browser build has the welcome note's space from the first frame, so the
+  // question there is whether this is the visit that wrote it.
+  if (!now.native) return now.firstVisit
 
   return now.spaces === 0 && now.tabs === 0
 }

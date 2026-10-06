@@ -30,6 +30,7 @@ export type Section =
   | 'sync'
   | 'llm'
   | 'trash'
+  | 'import'
   | 'export'
 
 class Settings {

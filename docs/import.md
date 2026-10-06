@@ -37,6 +37,37 @@ folders: a note that holds notes is a note here, so they are already counted
 among the notes. Counts rather than a list, because a reader importing four thousand notes
 cannot read a list of four thousand notes.
 
+## Coming from another app
+
+The import above is for notes arriving in a space somebody already writes in.
+Somebody arriving *themselves* is asked first, on the first screen: the iPhone's
+"Transfer Your Apps & Data", one row per place the notes could come from and the
+fresh start under them. Obsidian, Notion, and every other app as one row, since
+the format is read off the file either way. Each brings its notes in as a space of
+their own, named after what came in, and lands in it.
+
+- **Where it is asked.** The space chooser on the desktop and the phone, which is
+  up while there is no space; the browser build's first visit, beside the welcome
+  note's space, where "Start fresh" stays on that note (`first-visit.svelte.ts`).
+  Later, the same rows are Settings > Import (Notion's place for them) and the
+  palette's Import from Obsidian and Import from Notion. See `MigrateRows.svelte`
+  and `migrating.svelte.ts`.
+- **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults
+  Obsidian itself lists in `obsidian.json`, newest first, the way Arc's first run
+  lists the browsers it found. The crate reads a vault only when Obsidian lists it,
+  and every file only from inside it: a narrow way past paths.rs, which otherwise
+  keeps the crate to the spaces folder. See `obsidian_vaults.rs`. The vault is
+  copied, never written; reading and writing a vault where it is is a separate
+  matter.
+- **The habits come along.** Chrome's first run brings the search engine over
+  without asking, and an import that makes a new space brings the app's habits the
+  same way (David, 2026-10-06): from a vault's `app.json`, the link spelling, line
+  breaks, where a pasted picture goes, how properties are shown and Vim; from
+  Notion, markdown hidden while writing, properties as a panel and Notion's keys.
+  Each through the setter Settings uses, so it is saved and shared like a choice.
+  An import into an existing space carries none. See `import/carry.ts`.
+- **More apps** are a row and a case in `carriedBy`; the readers are already there.
+
 ## Where it lands
 
 Two rows. `Into` is the space and folder, through the same picker that moving a
@@ -130,7 +161,16 @@ out the same way Logseq's is, `{{[[TODO]]}}` becomes a box, `^^text^^` becomes
 `==text==`, and a daily page called `September 11th, 2026` becomes `2026-09-11`,
 in a folder of its own.
 
-**Craft**, **Ulysses**, **iA Writer**, **Obsidian** and anything else that writes
+**Obsidian.** A vault is markdown in folders, which is nib's own spelling already:
+wikilinks, embeds, callouts, block ids, `%%comments%%`, `==highlights==`, `.canvas`
+and `.base` files all read as they are, so the notes go through the plain reader
+below untouched. What is Obsidian's alone is `.obsidian/` at the top, which is also
+how a vault is known (before the folder shapes, so a vault with a `pages/` folder
+is not taken for Logseq). It comes along, so Obsidian still opens the space, minus
+what is about one machine rather than the vault: `workspace.json`, the installed
+plugins and themes, the cache, and Obsidian's own `.trash/`. See `import/obsidian.ts`.
+
+**Craft**, **Ulysses**, **iA Writer** and anything else that writes
 markdown are read as what they are: files in folders, some notes and the rest the
 pictures those notes point at. A TextBundle is unwrapped on the way past, so
 `Iceland.textbundle/text.md` is the note `Iceland.md` with its assets beside it.

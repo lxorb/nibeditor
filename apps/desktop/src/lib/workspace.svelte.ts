@@ -42,6 +42,7 @@ import { mark, markPainted } from './trace'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
+import { firstVisit } from './first-visit.svelte'
 import {
   type Draft,
   frameDraft,
@@ -708,7 +709,8 @@ class Workspace {
     // wants a welcome note. See welcome.ts.
     if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
-      await seed()
+      // A first visit is asked where its notes are coming from; see first-visit.svelte.ts.
+      if (await seed()) firstVisit.asking = true
     }
 
     const state = readSession(stored(STORAGE_KEY))

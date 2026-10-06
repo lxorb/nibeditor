@@ -125,6 +125,9 @@ mod notes;
 // chat's can be answered in place; see notices.rs and docs/chats.md 4.11.
 #[cfg(desktop)]
 mod notices;
+// The vaults Obsidian lists, for the migration's first screen; see obsidian_vaults.rs.
+#[cfg(desktop)]
+mod obsidian_vaults;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
@@ -355,6 +358,9 @@ macro_rules! desktop_commands {
             ground::remember_ground,
             apple_notes::read_apple_notes,
             apple_notes::open_full_disk_access,
+            obsidian_vaults::obsidian_vaults,
+            obsidian_vaults::obsidian_vault_files,
+            obsidian_vaults::read_obsidian_file,
             launch::take_startup_pages,
             launch::new_window,
             launch::show_window,

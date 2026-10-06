@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pl: Dictionary = {
+  // Import: the first screen's rows for another app, and the palette's two
+  'Another app': 'Inna aplikacja',
+  'Start fresh': 'Zacznij od nowa',
+  'Import from Obsidian': 'Importuj z Obsidiana',
+  'Import from Notion': 'Importuj z Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Wskazówki',
   'Silent mode': 'Tryb cichy',

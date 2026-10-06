@@ -13,6 +13,7 @@
 import { account } from './account.svelte'
 import { joining } from './joining.svelte'
 import { isPlugin } from './plugin'
+import { firstVisit } from './first-visit.svelte'
 import { choosing } from './space-choice'
 import { isNative } from './tauri'
 import { workspace } from './workspace.svelte'
@@ -23,6 +24,7 @@ class SpaceChooser {
   readonly showing = $derived(
     choosing({
       native: isNative,
+      firstVisit: firstVisit.asking,
       plugin: isPlugin(),
       restored: workspace.restored,
       spaces: workspace.spaces.length,
