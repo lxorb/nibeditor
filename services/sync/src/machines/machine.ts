@@ -556,7 +556,11 @@ export class Machine implements DurableObject {
       // A link that turns up after it was given up on is nobody's.
       asked.then(
         (late) => {
-          late.close(1000, 'late')
+          try {
+            late.close(1000, 'late')
+          } catch {
+            // Closed already.
+          }
         },
         () => undefined,
       )
