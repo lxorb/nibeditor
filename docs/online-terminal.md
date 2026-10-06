@@ -808,7 +808,7 @@ killed, and the warning that a firewall change can lock its owner out).
   ceiling. A server that exists is never refused its link for the budget.
 - **The disk is said.** `nibd` reports the filesystem the home is on (`statfs`) every 30
   seconds, on every host. Settings › Online terminal shows the server in one line - _CX43 · 8
-  vCPU · 16 GB · 160 GB · €14.27 a month_ - and its disk as the one bar, amber at 80%. Every
+  vCPU · 16 GB · 160 GB · €16.49 a month_ - and its disk as the one bar, amber at 80%. Every
   online terminal says one quiet line, once, when its machine's disk is 90% full or has less
   than a gigabyte left: _Your machine's disk is almost full_.
 - **Emergency SSH**, off by default: the admin sets the owner's public key

@@ -116,7 +116,8 @@ file host the terminal can `curl` from.
 - **Back to Cloudflare**: `POST /v2/online/admin/machines/<id>/host {"host": "cloudflare"}`;
   the server keeps running (and costing) until it is removed.
 - **The ceiling**: a server is refused (`budget`) when its price would take the month's fixed
-  prices past it; at $30, one CX43 (about €14, counted as about $18) fits and a second does not.
+  prices past it; at $30, one CX43 (€15.99 and €0.50 for its IPv4 a month net, read 2026-10-06, counted as about $21)
+  fits and a second does not.
 - **Hetzner's own billing**: a server is billed by the hour up to its monthly price, from its
   making until its removal, whether anybody uses it or not.
 

@@ -27,7 +27,7 @@
   /** Gigabytes as Hetzner counts them, whole. */
   const gb = (value: number) => `${i18n.amount(Math.round(value))} GB`
 
-  /** What the server is and costs, one line: CX43 · 8 vCPU · 16 GB · 160 GB · €14.27 a month. */
+  /** What the server is and costs, one line: CX43 · 8 vCPU · 16 GB · 160 GB · €16.49 a month. */
   const spec = $derived.by(() => {
     const about = known?.machine?.server
     if (!about) return null
