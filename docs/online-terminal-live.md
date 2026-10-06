@@ -1,8 +1,124 @@
 # The online terminal: going live
 
-What switching the online terminal on needs on Emil's Cloudflare account, read on 2026-10-05
-with read-only API calls, and the steps in order. Nothing here has been done yet. It is the
-checklist of `docs/online-terminal.md` 6.3, made concrete.
+What switching the online terminal on needs, and the steps in order: first the move to a
+Hetzner server of its own (2026-10-06, `docs/online-terminal.md` 4.15), then the Cloudflare
+containers it began on, read on 2026-10-05 with read-only API calls (`docs/online-terminal.md`
+6.3, made concrete).
+
+## Going live on Hetzner (2026-10-06)
+
+The design is `docs/online-terminal.md` 4.15. The push that brought it changed nothing that
+runs: migration 0046 leaves every machine on `cloudflare`, and a Hetzner machine without its
+secrets is refused as `off`. Nothing on Hetzner exists and nothing costs money until step 5.
+Do the steps in order.
+
+### 1. The Hetzner token
+
+Hetzner Cloud Console (console.hetzner.cloud):
+
+1. Make a project of its own, **`nib-machines`**, so the token reaches nothing else of Emil's.
+2. In it, **Security > API tokens > Generate API token**, permission **Read & Write** (Hetzner's
+   tokens are per project and have no narrower write scope). Description `nib-sync worker`.
+3. `cd services/sync && pnpm wrangler secret put HETZNER_TOKEN`, paste it.
+4. Check the project's limits (**Limits** in the project): at least 1 server, 1 firewall and 1
+   primary IPv4 free. A new Hetzner account may need its limits raised before its first
+   `cx43`.
+
+### 2. The Cloudflare token the Worker makes tunnels with
+
+dash.cloudflare.com > My Profile > **API Tokens > Create Token > Custom token**:
+
+| | |
+| --- | --- |
+| name | `nib machines: tunnels and DNS` |
+| permission 1 | **Account** > **Cloudflare Tunnel** > **Edit** (shown as "Cloudflare One Connector: cloudflared Write" in the newer list; either is the one) |
+| permission 2 | **Zone** > **DNS** > **Edit** |
+| account resources | Include > **Emil Vinu** (`b0e98c15b1f905a394ecd6a849e8e99f`) only |
+| zone resources | Include > Specific zone > **nibeditor.com** only |
+| client IP filtering, TTL | none (a Worker has no fixed address) |
+
+Nothing else: no Workers, no Access, no other zone. Then
+`pnpm wrangler secret put MACHINE_TUNNEL_TOKEN`. (`CF_ACCOUNT_ID` and `CF_ZONE_ID` are vars in
+wrangler.jsonc already.)
+
+### 3. Access in front of the machines' hostnames
+
+Cloudflare Zero Trust (one.dash.cloudflare.com; the free plan is enough):
+
+1. **Access > Service auth > Service tokens > Create service token**, name `nib-machines`,
+   duration **non-expiring** (or a year, with a reminder to rotate). Copy the **Client ID** and
+   **Client Secret** (shown once):
+   `pnpm wrangler secret put MACHINE_ACCESS_ID` and `pnpm wrangler secret put MACHINE_ACCESS_SECRET`.
+2. **Access > Applications > Add an application > Self-hosted**: name `nib machines`, domain
+   subdomain `m-*`, domain `nibeditor.com` (the partial wildcard covers every machine), session
+   duration any. One policy: action **Service Auth**, include **Service Token** =
+   `nib-machines`. No other policy, no identity provider.
+3. From the application's **Overview**, the **Application Audience (AUD) Tag**:
+   `pnpm wrangler secret put MACHINE_ACCESS_AUD`; and the team name (the `<team>` of
+   `<team>.cloudflareaccess.com`, Settings > Custom pages):
+   `pnpm wrangler secret put MACHINE_ACCESS_TEAM`.
+
+Steps 1 and 2 alone make it work; step 3 adds Access in front, and every start writes the
+tunnel's route again, so Access can also be added later.
+
+### 4. Check what the Worker sees
+
+`GET https://nibeditor.com/v2/online/admin` signed in as Emil: `hetzner.missing` is `[]`.
+`GET https://nibeditor.com/v2/online/machine/current` answers 64 hex characters.
+
+### 5. Move Emil's machine (this is when it starts to cost money)
+
+1. `POST /v2/online/admin/machines/<id>/host {"host": "hetzner"}` (the id is in the admin
+   answer's `machines`). If the container is awake it is saved one last time - a snapshot,
+   and the home to `nib-homes` whatever the last backup's age - and stopped. Its 17 GB home
+   is in R2 under the row's `backup_key` from then on.
+2. Open an online terminal (Ctrl+T, then O). The first start makes the tunnel, the hostname,
+   the firewall and the server; the terminal says _Starting machine…_ for the five to ten
+   minutes cloud-init takes (packages, node, cloudflared, nibd, swap), and is live after.
+   Then Claude Code and Codex install in the background.
+3. `select at, kind, detail from machine_events where machine = '<id>' order by at desc`:
+   `wake fresh`, no `failed`. Settings > Online terminal: _CX43 · 8 vCPU · 16 GB · 160 GB ·
+   €… a month_ and the disk bar.
+
+### 6. Prove it
+
+1. From outside: `curl -s -o /dev/null -w '%{http_code}' https://m-<id without m_>.nibeditor.com/health`
+   is 302 or 403 (Access), never 200 (200 only while step 3 is not done: then `nibd`'s secret
+   is the one lock). In the Hetzner console the server's firewall has no
+   inbound rule.
+2. In the terminal: `df -h ~` says about 150 GB; `nproc` 8; `uname -m` x86_64;
+   `systemctl is-active nibd cloudflared` both active; `sudo cat /var/log/cloud-init-output.log | grep -c NIBD_SECRET` is 0.
+3. Close every tab, wait an hour, open one: the same shell, `sleep 9999` still running (no
+   sleep on a server).
+4. `sudo systemctl kill -s KILL nibd`: within seconds `relink`; the shells end with it and the
+   screens come back (systemd restarts nibd).
+5. Settings > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
+6. Admin Reboot, `POST /v2/online/admin/machines/<id>/reboot`: `reboot`, then `wake restart`
+   a minute or two later; the files are all there.
+7. Push anything: the terminal shows _Starting machine…_ for a moment and comes back with a
+   `relink` row, and nothing on the server restarted.
+
+### 7. The old home, by hand
+
+The container's home is a `.tar.zst` in `nib-homes` (EU). To put it on the server:
+`pnpm wrangler r2 object get "nib-homes/<backup_key>" --jurisdiction eu --remote --file home.tar.zst`
+on this computer, then either the emergency SSH key (below) and
+`scp home.tar.zst nib@<server ip>:` followed by `tar --zstd -xf home.tar.zst -C ~`, or any
+file host the terminal can `curl` from.
+
+### Switches and costs
+
+- **Emergency SSH**: `POST /v2/online/admin/machines/<id>/ssh {"key": "ssh-ed25519 ..."}` opens
+  port 22; on a server already made, also `sudo systemctl enable --now ssh` and the key into
+  `~/.ssh/authorized_keys` in a terminal. `{"key": ""}` closes it again.
+- **Stop paying**: `POST /v2/online/admin/machines/<id>/remove` deletes the server, its
+  firewall, its tunnel and its hostname (and its disk). The next terminal makes a new one.
+- **Back to Cloudflare**: `POST /v2/online/admin/machines/<id>/host {"host": "cloudflare"}`;
+  the server keeps running (and costing) until it is removed.
+- **The ceiling**: a server is refused (`budget`) when its price would take the month's fixed
+  prices past it; at $30, one CX43 (about €14, counted as about $18) fits and a second does not.
+- **Hetzner's own billing**: a server is billed by the hour up to its monthly price, from its
+  making until its removal, whether anybody uses it or not.
 
 ## What the account has
 

@@ -29,6 +29,8 @@ Each has a recommendation, and the design below assumes it.
 
 1. **Provider: Cloudflare Containers**, through Cloudflare's Sandbox SDK, on the account nib
    already runs on. Fly.io Machines stays the fallback behind the same interface (6.1).
+   **Since 2026-10-06: a Hetzner Cloud CX43 per person, always on (4.15)**; the containers
+   stay behind the same interface for now.
 2. **One machine per person, not per space.** Its terminals are documents put in any space;
    the space's roles decide who watches and who types.
 3. **Who pays: Emil, for a small free allowance**: 20 awake hours a month on a small machine
@@ -715,6 +717,109 @@ the disk. An awake machine either works or says it does not, and comes back by i
   home folder could not be restored_). Every failure is written to `machine_events` with its
   reason (`failureOf`: the step, the error's name and code, its words with home paths cut).
 
+### 4.15 A server of its own
+
+2026-10-06, Emil: the online terminal moves off Cloudflare Containers onto a **Hetzner Cloud
+CX43** per person - x86, 8 vCPU, 16 GB, 160 GB of local disk, **always on**, in the EU. A
+container's disk is 8 GB at most for the instance type (20 GB at the very top) and goes with
+the instance; his home reached 17 GB, the disk filled, the machine froze, and the backups and
+snapshots that should have saved it failed or hung. He wants x86 and at least 128 GB.
+
+Who gets one is unchanged: an account with `users.online = 1`, which today is Emil alone.
+
+**Studied**: Coder's and DevPod's Hetzner workspaces (a server made by API with cloud-init, an
+agent that dials out, a firewall that lets nothing in, a server found again by its label rather
+than remembered), Codespaces' machine types (the size and disk said where one chooses, and a
+"running out of space" warning in the editor), and 2026's write-ups of coding agents on Hetzner
+(key-only SSH, no root, unattended upgrades, swap so an agent's build is slowed rather than
+killed, and the warning that a firewall change can lock its owner out).
+
+- **A host per machine.** `machines.host` is `cloudflare` or `hetzner` (migration 0046).
+  Machines made from now on are `hetzner`; the ones there stay where they are until the admin
+  moves them (`POST /v2/online/admin/machines/:id/host`), which saves the container one last
+  time first - its home goes to R2 whatever its backup's age - and stops it. `HetznerHost`
+  (`services/sync/src/machines/hetzner-host.ts`) implements `MachineHost` beside the
+  container's, with `alwaysOn` set, so `Machine` is one class for both.
+- **Made from the Worker**, through the Hetzner Cloud API with `HETZNER_TOKEN`, and safe to
+  ask again at any point: the tunnel and its hostname first, then the server, found by its
+  label `nib-machine=<id>` and made only where there is none - `cx43`, `ubuntu-24.04`, in
+  **Nuremberg** (`nbg1`: a connection in 16.6 ms from ETH Zurich against Falkenstein's 18.4
+  ms, measured 2026-10-06), in Falkenstein (`fsn1`) where Nuremberg has none to give. Its
+  firewall has **no inbound rule at all**; outbound is open. IPv4 as well as IPv6, since
+  GitHub has no IPv6.
+- **The way in is a Cloudflare Tunnel.** `cloudflared` on the server dials out to Cloudflare;
+  `m-<id>.nibeditor.com` is a proxied CNAME to the tunnel, whose one route is `nibd` on the
+  server's loopback (`127.0.0.1:7680`; `nibd` listens nowhere else). `Machine` links to
+  `https://m-<id>.nibeditor.com/link` past three locks: a **Cloudflare Access** application on
+  `m-*.nibeditor.com` lets through only requests carrying its one **service token** (the
+  Worker's `MACHINE_ACCESS_ID` and `MACHINE_ACCESS_SECRET`); `cloudflared` checks the Access
+  token again against the application's audience (`originRequest.access`); and `nibd` takes
+  the link only with the machine's own secret. The zone's catch-all Worker route matches these
+  names too, so the Worker hands a request for one on to its origin untouched
+  (`isMachineHost`), which is the tunnel. **Weighed and left**: a public address with TLS and a
+  pinned certificate - an open port, certificates to issue and rotate on the box, and `nibd`'s
+  HTTP server facing the internet; and Workers VPC, whose bindings are fixed at deploy and
+  cannot name a tunnel made for one person at run time.
+- **What is installed is said once.** `services/machine/install.sh` installs the system (apt's
+  signed repositories, gh's, node from its tarball against `SHASUMS256.txt`, uv against its
+  `.sha256`), the user `nib` with sudo, and nib's own files. The Dockerfile runs it for the
+  Cloudflare image; cloud-init runs it with `--server`, which adds `cloudflared` from
+  Cloudflare's signed repository, the systemd units, unattended security upgrades (never an
+  automatic reboot), 4 GB of swap, and SSH shut: no root, no passwords, off unless a key is set.
+- **`nibd` reaches the server reproducibly.** `pnpm --filter @nib/machine build` writes,
+  beside `nibd.cjs`, `dist/machine.bin`: `nibd`, `install.sh`, the scripts and the units as one
+  deterministic gzipped tar. The Worker **carries it inside itself** (a Data module of
+  `entry.ts`) and serves it at `/v2/online/machine/<sha256>.bin`, its hash at
+  `/v2/online/machine/current`; cloud-init fetches it and checks the hash before anything in
+  it runs. So the `nibd` a server runs is the one built with the Worker that links to it.
+  Before every start of `nibd`, `nib-update` asks the Worker for the hash and puts a newer
+  bundle in place (`install.sh --files`), checked the same way: a Restart picks up a deploy.
+- **Secrets.** The machine's link secret is made once, with the server, and kept in
+  `Machine`'s storage and in `/etc/nibd/env` (root's, `0600`). The tunnel's token is asked of
+  Cloudflare as the server is made, handed to it, and never kept by the Worker
+  (`/etc/cloudflared/env`, `0600`). Both travel in cloud-init's `write_files` only, which
+  cloud-init never logs; no command it runs carries one, and its own copy of the user data is
+  removed once the machine is set up. The root password Hetzner's API answers with is never
+  read, and root's password is locked.
+- **Always on.** No sleep, snapshot, backup or restore: the disk is a disk, and processes
+  survive everything but a reboot. `awake` and the allowance are not asked; only a kill switch
+  (the service, the account, a hold) puts the machine down, and then it is only unlinked - the
+  server runs on. It is `awake` once `nibd` answers. A server being made is `starting` for its
+  first boot's few minutes, waited for on the alarm every 10 seconds (never inside a request),
+  and `starting` is said again each time, so a waiting terminal keeps waiting.
+- **The health path** (4.14) on a server: a link that goes quiet is made again; a `nibd` that
+  goes quiet again within five minutes is told `restart` down the fresh link (it saves every
+  screen and ends, and systemd starts it again, `nib-update` first); one that will not link is
+  waited for while systemd restarts it, and after three minutes the server is **power-cycled**
+  through the API; ten minutes after that it is `asleep` with `restart`, which its terminals
+  offer to try again. The owner's **Stop is Restart** on a server. The admin has **Reboot** and
+  **Remove** (the server, its firewall, its tunnel and its hostname deleted, the row kept, so
+  the next terminal makes a new server). Erasing the account deletes all of it through
+  `leftovers`, which asks again the next night if Hetzner would not yet.
+- **systemd** runs `nibd` (`Restart=always`, never given up on, `OOMScoreAdjust=-900`; the
+  sessions' cgroup is fenced by `nibd` to the machine's memory less 512 MiB), `cloudflared`
+  (the same) and `nib-agents` (Claude Code by Anthropic's checksum-checking installer and Codex
+  by npm, as the user, at every boot). `nibd`'s own watchdog is the `WatchdogSec` it cannot
+  have, since node cannot speak `sd_notify`.
+- **Cost.** A fixed monthly price, read from Hetzner's API as the server is made - the type's
+  gross monthly price in its location and the IPv4 address's - and kept on the row. The budget
+  breaker becomes: no server is **made** whose price would take the month's fixed prices (in US
+  dollars at 1.25 to the euro, deliberately high) and the containers' estimate past the
+  ceiling. A server that exists is never refused its link for the budget.
+- **The disk is said.** `nibd` reports the filesystem the home is on (`statfs`) every 30
+  seconds, on every host. Settings › Online terminal shows the server in one line - _CX43 · 8
+  vCPU · 16 GB · 160 GB · €14.27 a month_ - and its disk as the one bar, amber at 80%. Every
+  online terminal says one quiet line, once, when its machine's disk is 90% full or has less
+  than a gigabyte left: _Your machine's disk is almost full_.
+- **Emergency SSH**, off by default: the admin sets the owner's public key
+  (`POST /v2/online/admin/machines/:id/ssh`), which opens port 22 in the firewall and is written
+  into a server made after it; on a server made before, its owner adds it in a terminal. Never
+  root, never a password.
+- **Left out**: moving a Cloudflare home onto the server by itself (it stays in R2, to be
+  fetched by hand); keeping the shells through a restart of `nibd` itself (they end with the
+  pty `nibd` holds - a `dtach` under each session would keep them, later); several servers per
+  person; any other size.
+
 ## 5. What nib does not do
 
 - **Machines per space**, or machines several people pay for (4.1).
@@ -779,8 +884,15 @@ interface MachineHost {
   backup(id: string, dir: string): Promise<string>
   restore(id: string, from: { snapshot?: string; backup?: string }): Promise<void>
   usage(id: string, since: number): Promise<{ cpuS: number; egressBytes: number }>
+  running(id: string): Promise<boolean>     // an instance a sleep cut short left running
+  readonly alwaysOn?: boolean               // a server of its own (4.15)
+  reboot?(id: string): Promise<void>        // power-cycled: the health path's last step
+  remove?(id: string): Promise<void>        // everything made for it, deleted
 }
 ```
+
+`ContainerHost` and `DevHost` are in `machines/host.ts`, `HetznerHost` in
+`machines/hetzner-host.ts`; `hostOf` picks one by `machines.host`.
 
 `nibd` is told nothing of nib's accounts: it speaks the link protocol and nothing else.
 
