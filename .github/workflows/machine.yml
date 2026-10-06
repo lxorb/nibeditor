@@ -165,6 +165,8 @@ jobs:
       - name: Hardened
         run: |
           set -euo pipefail
+          # SSH is off without a key, so its runtime folder is not there; made to read its settings.
+          sudo install -d -m 755 /run/sshd
           sudo sshd -T | grep -qx 'permitrootlogin no'
           sudo sshd -T | grep -qx 'passwordauthentication no'
           grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
