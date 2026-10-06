@@ -3,7 +3,8 @@
    *
    *  The app's mark, its name and its version, then one row per way in - a title on
    *  the left and the button that does it on the right - and the language at the
-   *  foot. Obsidian puts a line of description under each title; nib leaves them
+   *  foot. The first rows are the apps somebody might be coming from (MigrateRows),
+   *  which Obsidian's chooser does not have and the iPhone's setup puts first. Obsidian puts a line of description under each title; nib leaves them
    *  out, because the words on the buttons already say it and nothing on screen
    *  here is there to be read rather than pressed.
    *
@@ -20,8 +21,11 @@
   import { LAYER } from './motion'
   import Select from './Select.svelte'
   import { firstSpace } from './first-space.svelte'
+  import { migrating } from './migrating.svelte'
+  import MigrateRows from './MigrateRows.svelte'
   import { spaceChooser } from './space-chooser.svelte'
-  import { isDesktop } from './tauri'
+  import { firstVisit } from './first-visit.svelte'
+  import { isDesktop, isNative } from './tauri'
   import { trap } from './trap'
 
   const version = __APP_VERSION__
@@ -51,54 +55,61 @@
     </div>
 
     <div class="rows">
-      <div class="nib-setting">
-        <span class="name">{t('Create a space')}</span>
-        <button
-          class="nib-button"
-          type="button"
-          data-lands
-          disabled={firstSpace.working}
-          onclick={() => void firstSpace.create()}
-        >
-          {t('Create')}
-        </button>
-      </div>
+      <!-- Where the notes come from first, the way the iPhone's setup asks about
+           the old phone before anything else; Create is the fresh start under them. -->
+      <MigrateRows />
 
-      <!-- A phone hands over files one at a time and never a folder; see
-           import/picking.ts. -->
-      {#if isDesktop}
+      {#if !migrating.vaults}
+        <!-- The browser build already has its welcome note's space, so starting
+             fresh there is staying on it; see first-visit.svelte.ts. -->
+        {#if isNative}
+          <div class="nib-setting">
+            <span class="name">{t('Create a space')}</span>
+            <button
+              class="nib-button"
+              type="button"
+              data-lands
+              disabled={firstSpace.working || migrating.working}
+              onclick={() => void firstSpace.create()}
+            >
+              {t('Create')}
+            </button>
+          </div>
+        {:else}
+          <div class="nib-setting">
+            <span class="name">{t('Start fresh')}</span>
+            <button
+              class="nib-button"
+              type="button"
+              data-lands
+              disabled={migrating.working}
+              onclick={() => (firstVisit.asking = false)}
+            >
+              {t('Continue')}
+            </button>
+          </div>
+        {/if}
+
         <div class="nib-setting">
-          <span class="name">{t('Import a folder')}</span>
-          <button
-            class="nib-button is-quiet is-soft"
-            type="button"
-            disabled={firstSpace.working}
-            onclick={() => void firstSpace.importFolder()}
-          >
-            {t('Import')}
-          </button>
+          <span class="name">{t('Sign in to sync')}</span>
+          <span class="pair">
+            <button
+              class="nib-button is-quiet is-soft"
+              type="button"
+              onclick={() => firstSpace.signIn('sign-in')}
+            >
+              {t('Sign in')}
+            </button>
+            <button
+              class="nib-button is-quiet is-soft"
+              type="button"
+              onclick={() => firstSpace.signIn('create')}
+            >
+              {t('Create account')}
+            </button>
+          </span>
         </div>
       {/if}
-
-      <div class="nib-setting">
-        <span class="name">{t('Sign in to sync')}</span>
-        <span class="pair">
-          <button
-            class="nib-button is-quiet is-soft"
-            type="button"
-            onclick={() => firstSpace.signIn('sign-in')}
-          >
-            {t('Sign in')}
-          </button>
-          <button
-            class="nib-button is-quiet is-soft"
-            type="button"
-            onclick={() => firstSpace.signIn('create')}
-          >
-            {t('Create account')}
-          </button>
-        </span>
-      </div>
     </div>
 
     <div class="foot">

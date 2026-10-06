@@ -34,6 +34,7 @@
     logseq: 'Logseq',
     roam: 'Roam',
     craft: 'Craft',
+    obsidian: 'Obsidian',
     onenote: 'OneNote',
     tomboy: 'Tomboy',
     'apple-notes': 'Apple Notes',

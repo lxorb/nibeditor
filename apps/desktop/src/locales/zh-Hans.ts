@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Import: the first screen's rows for another app, and the palette's two
+  'Another app': '其他应用',
+  'Start fresh': '从头开始',
+  'Import from Obsidian': '从 Obsidian 导入',
+  'Import from Notion': '从 Notion 导入',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安静模式',

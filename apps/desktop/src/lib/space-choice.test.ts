@@ -6,6 +6,7 @@ import { choosing, type Moment } from './space-choice'
 
 const FRESH: Moment = {
   native: true,
+  firstVisit: false,
   plugin: false,
   restored: true,
   spaces: 0,
@@ -21,7 +22,10 @@ describe('the space chooser', () => {
   })
 
   test.each<[string, Partial<Moment>]>([
-    ['the browser build, which seeds its own welcome note', { native: false }],
+    [
+      'the browser build past its first visit, which seeded the welcome note before',
+      { native: false },
+    ],
     ['the plugin, which never shows anything new', { plugin: true }],
     ['before the spaces folder has been read', { restored: false }],
     ['once there is a space', { spaces: 1 }],
@@ -31,6 +35,11 @@ describe('the space chooser', () => {
     ['over a file handed over at launch', { tabs: 1 }],
   ])('is not up in %s', (_, change) => {
     expect(choosing({ ...FRESH, ...change })).toBe(false)
+  })
+
+  test('is up on the browser build’s first visit, beside the welcome note’s space', () => {
+    expect(choosing({ ...FRESH, native: false, firstVisit: true, spaces: 1, tabs: 1 })).toBe(true)
+    expect(choosing({ ...FRESH, native: false, firstVisit: true, signedIn: true })).toBe(false)
   })
 
   test('comes back when the last space goes, as Obsidian’s does', () => {

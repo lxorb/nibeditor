@@ -1,13 +1,11 @@
-/** What the space chooser's rows do: make the first space, bring a folder in as one,
- *  or open the sign-in. Obsidian's three ways out of its vault chooser.
+/** What the space chooser's own rows do: make the first space, or open the sign-in.
+ *  Obsidian's ways out of its vault chooser; the rows that bring notes over from
+ *  another app are migrating.svelte.ts, which Settings and the palette share.
  *
  *  Fetched with the card rather than carried by the window; whether the card is up
  *  at all is space-chooser.svelte.ts. */
 
 import { account } from './account.svelte'
-import { busy } from './busy.svelte'
-import { message, t } from './i18n.svelte'
-import { insideFolder, pickedFolder, sourcesFrom, type Picked } from './import/sources'
 import { markSeeded, wasSeeded } from './seeded'
 import { joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -28,29 +26,6 @@ class FirstSpace {
       const space = await newSpace()
       if (space) await this.arrive(space, await this.welcome(space))
     })
-  }
-
-  /** Import: a folder off the disk, as a space of its own named after it. What
-   *  Obsidian's "Open folder as vault" does, except that nib copies rather than
-   *  points, because its spaces live in the one folder the app owns; see paths.rs.
-   *  The import's own readers do the work, so an Obsidian vault, a Bear export and a
-   *  plain folder of markdown all arrive the way the import sheet brings them. */
-  async importFolder() {
-    const { pickFolder } = await import('./import/picking')
-    const picked = await pickFolder()
-    const name = pickedFolder(picked)
-    if (!name) return
-
-    await this.while(() =>
-      busy.run(t('Importing'), async () => {
-        try {
-          const space = await importAsSpace(name, picked)
-          if (space) await this.arrive(space, firstNote())
-        } catch (error) {
-          busy.failed(message(error, t('That import could not be written.')))
-        }
-      }),
-    )
   }
 
   /** Both doors lead to the same emailed code; the sheet only says which was taken. */
@@ -89,32 +64,6 @@ class FirstSpace {
     if (note) await workspace.openEntry(note, { activate: true })
     if (!viewport.drawer) workspace.showPanel('tree')
   }
-}
-
-/** Reads what was picked before anything is made, so a folder that holds no notes
- *  leaves no empty space behind it. */
-async function importAsSpace(name: string, picked: readonly Picked[]): Promise<Space | null> {
-  const [{ detect, readAs }, { applyImport }] = await Promise.all([
-    import('./import/read'),
-    import('./import/apply'),
-  ])
-
-  const sources = await sourcesFrom(insideFolder(picked))
-  const format = await detect(sources)
-  if (!format) throw new Error(t('Nothing in there can be read as notes.'))
-
-  const plan = await readAs(format, sources)
-  const space = await workspace.addSpace(name)
-  if (!space) return null
-
-  await applyImport(plan, { root: space.root, folder: '' })
-  await workspace.loadTree()
-  return space
-}
-
-/** The first note of the space as the file list shows it, to open on. */
-function firstNote(): string | null {
-  return workspace.files[0]?.path ?? null
 }
 
 export const firstSpace = new FirstSpace()

@@ -313,6 +313,32 @@ function importCommand(): Command | null {
   }
 }
 
+/** Obsidian and Notion by name, the two apps most people arrive from: each brings
+ *  its notes in as a space of their own, with the app's habits in the settings,
+ *  the way the first screen does. Settings' Import pane holds the same rows; see
+ *  migrating.svelte.ts. Obsidian opens that pane, where the vaults it lists are. */
+function migrateCommands(): Command[] {
+  if (__EVEN_PLUGIN__) return []
+
+  return [
+    {
+      id: 'import-obsidian',
+      label: t('Import from Obsidian'),
+      run: () => {
+        settings.show('import')
+        void import('./migrating.svelte').then(({ migrating }) => migrating.obsidian())
+      },
+    },
+    {
+      id: 'import-notion',
+      label: t('Import from Notion'),
+      run: () => {
+        void import('./migrating.svelte').then(({ migrating }) => migrating.files())
+      },
+    },
+  ]
+}
+
 /** Shows the log file in the file manager, for when something has gone wrong. */
 async function openLog() {
   if (!isDesktop) return
@@ -1118,6 +1144,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => openRandomNote(),
     },
     ...(imported ? [imported] : []),
+    ...migrateCommands(),
     {
       id: 'convert-syntax',
       label: t('Convert syntax'),

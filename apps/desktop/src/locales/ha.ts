@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Import: the first screen's rows for another app, and the palette's two
+  'Another app': 'Wata manhaja',
+  'Start fresh': 'Fara sabo',
+  'Import from Obsidian': 'Shigo daga Obsidian',
+  'Import from Notion': 'Shigo daga Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Shawarwari',
   'Silent mode': 'Yanayin shiru',

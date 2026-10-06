@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Import: the first screen's rows for another app, and the palette's two
+  'Another app': 'ಬೇರೆ ಆ್ಯಪ್',
+  'Start fresh': 'ಹೊಸದಾಗಿ ಆರಂಭಿಸಿ',
+  'Import from Obsidian': 'Obsidian ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Import from Notion': 'Notion ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ಸುಳಿವುಗಳು',
   'Silent mode': 'ಮೌನ ಮೋಡ್',

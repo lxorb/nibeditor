@@ -1053,6 +1053,14 @@
     <McpSetup />
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
+  {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
+    <!-- The first screen's rows, any time later: Notion's Settings > Import. Fetched
+         as it is opened, as Agents is. -->
+    {#await import('./MigrateRows.svelte') then rows}
+      <div class="card">
+        <rows.default />
+      </div>
+    {/await}
   {/if}
 {/snippet}
 

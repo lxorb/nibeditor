@@ -24,6 +24,8 @@ export type FormatId =
   | 'logseq'
   | 'roam'
   | 'craft'
+  /** A vault: a folder of markdown with Obsidian's own `.obsidian/` at its top. */
+  | 'obsidian'
   | 'onenote'
   | 'tomboy'
   | 'apple-notes'

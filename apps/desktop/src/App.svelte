@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte'
   import { t } from './lib/i18n.svelte'
+  import { firstVisit } from './lib/first-visit.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -1158,7 +1159,7 @@
 <!-- What a fresh install opens on, until there is a space. Fetched only then; the card
      decides the rest itself, and the plugin never shows it, so its build does not
      carry it. See SpaceChooser.svelte and space-choice.ts. -->
-{#if !__EVEN_PLUGIN__ && workspace.restored && !workspace.spaces.length}
+{#if !__EVEN_PLUGIN__ && workspace.restored && (!workspace.spaces.length || firstVisit.asking)}
   {#await spaceChooserCard() then SpaceChooser}
     <SpaceChooser />
   {/await}

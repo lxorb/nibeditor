@@ -364,6 +364,8 @@ function nameOfFormat(format: FormatId): string {
       return 'Roam'
     case 'craft':
       return 'Craft'
+    case 'obsidian':
+      return 'Obsidian'
     case 'onenote':
       return 'OneNote'
     case 'tomboy':
