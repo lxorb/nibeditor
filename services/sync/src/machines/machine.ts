@@ -86,6 +86,12 @@ const BACKUP_EVERY = 6 * 60 * MINUTE
  *  instance to stop after SIGTERM. */
 const SAVE_WAIT = 15_000
 const STOP_GRACE = 15_000
+/** The most a host call may take before the machine gives up on it: a call with no answer
+ *  must never leave the machine starting or stopping for good. */
+const START_LIMIT = 90_000
+const RESTORE_LIMIT = 120_000
+const SAVE_LIMIT = 120_000
+
 /** How long somebody counts as typing after a key. */
 const TYPING_FOR = 2_000
 /** How often a socket's `seen` is written back to it, at most. */
@@ -136,6 +142,17 @@ interface SessionNews {
 
 const OPEN = 1
 const encoder = new TextEncoder()
+
+/** `promise`, or an error once `ms` pass without it settling. */
+function capped<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const late = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error(`${what} took longer than ${String(ms)} ms`)), ms)
+  })
+  return Promise.race([promise, late]).finally(() => {
+    if (timer !== null) clearTimeout(timer)
+  })
+}
 
 function viewerOf(socket: WebSocket): Viewer | null {
   const held: unknown = socket.deserializeAttachment()
@@ -708,18 +725,18 @@ export class Machine implements DurableObject {
         now - row.snapshot_at < SNAPSHOT_KEPT
       if (good) {
         try {
-          await this.host.restore(me.id, { snapshot })
-          await this.host.start(me.id, IMAGE, env)
+          await capped(this.host.restore(me.id, { snapshot }), RESTORE_LIMIT, 'snapshot restore')
+          await capped(this.host.start(me.id, IMAGE, env), START_LIMIT, 'start')
           from = 'snapshot'
         } catch (error) {
           note(`machine ${me.id} snapshot`, error, null)
         }
       }
       if (from !== 'snapshot') {
-        await this.host.start(me.id, IMAGE, env)
+        await capped(this.host.start(me.id, IMAGE, env), START_LIMIT, 'start')
         if (row?.backup) {
           try {
-            await this.host.restore(me.id, { backup: row.backup })
+            await capped(this.host.restore(me.id, { backup: row.backup }), RESTORE_LIMIT, 'restore')
             from = 'backup'
           } catch (error) {
             note(`machine ${me.id} restore`, error, null)
@@ -874,7 +891,7 @@ export class Machine implements DurableObject {
       .first<{ backup_at: number | null; backup_key: string | null }>()
     if (state === 'awake' && (row?.backup_at ?? 0) < now - BACKUP_EVERY) {
       try {
-        const record = await this.host.backup(me.id, HOME)
+        const record = await capped(this.host.backup(me.id, HOME), SAVE_LIMIT, 'backup')
         const key = keyOf(record)
         await this.env.DB.prepare(
           'update machines set backup = ?2, backup_key = ?3, backup_at = ?4 where id = ?1',
@@ -891,7 +908,7 @@ export class Machine implements DurableObject {
 
     if (state === 'awake') {
       try {
-        const snapshot = await this.host.snapshot(me.id)
+        const snapshot = await capped(this.host.snapshot(me.id), SAVE_LIMIT, 'snapshot')
         await this.env.DB.prepare(
           'update machines set snapshot = ?2, snapshot_at = ?3, snapshot_image = ?4 where id = ?1',
         )
@@ -912,7 +929,7 @@ export class Machine implements DurableObject {
       // Already closed.
     }
     try {
-      await this.host.stop(me.id, STOP_GRACE)
+      await capped(this.host.stop(me.id, STOP_GRACE), STOP_GRACE + 15_000, 'stop')
     } catch (error) {
       note(`machine ${me.id} stop`, error, null)
     }
