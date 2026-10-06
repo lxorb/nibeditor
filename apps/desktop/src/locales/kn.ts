@@ -2127,6 +2127,7 @@ export const kn: Dictionary = {
   'Restoring…': 'ಮರುಸ್ಥಾಪಿಸಲಾಗುತ್ತಿದೆ…',
   'Try again': 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'Your machine could not start': 'ನಿಮ್ಮ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ',
+  'Your home folder could not be restored': 'ನಿಮ್ಮ ಹೋಮ್ ಫೋಲ್ಡರ್ ಅನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ',
   Machine: 'ಯಂತ್ರ',
   Awake: 'ಎಚ್ಚರವಾಗಿದೆ',
   Starting: 'ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ',

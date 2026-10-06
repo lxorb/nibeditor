@@ -2148,6 +2148,8 @@ export const de: Dictionary = {
   'Restoring…': 'Wird wiederhergestellt…',
   'Try again': 'Erneut versuchen',
   'Your machine could not start': 'Deine Maschine konnte nicht starten',
+  'Your home folder could not be restored':
+    'Dein Home-Ordner konnte nicht wiederhergestellt werden',
   Machine: 'Maschine',
   Awake: 'Wach',
   Starting: 'Startet',

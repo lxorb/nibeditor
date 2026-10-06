@@ -2,8 +2,9 @@
  *  the machine did, and never a keystroke or a screen.
  *
  *  `detail` takes only what `Detail` allows - a word from a short list, a role, a
- *  number - so no caller can hand it input by mistake: there is no string parameter
- *  that free text could travel through. Kept 90 days, then swept by the nightly job. */
+ *  number, or a `Failure` that `failureOf` made of an error the host threw - so no
+ *  caller can hand it input by mistake: there is no string parameter that free text
+ *  could travel through. Kept 90 days, then swept by the nightly job. */
 
 import type { Env } from '../types'
 
@@ -26,6 +27,8 @@ export type EventKind =
   | 'release'
   | 'hour'
   | 'failed'
+  /** The link to `nibd` went quiet or closed under an awake machine and was made again. */
+  | 'relink'
 
 /** What an event may say about itself. */
 export type Detail =
@@ -45,8 +48,35 @@ export type Detail =
   | 'owner'
   | 'writers'
   | 'guest'
+  | 'running'
+  | Failure
   | number
   | null
+
+/** Why a call to the host failed, as the audit keeps it: which step, the error's name,
+ *  its code where it has one, and the start of what it said - the one thing that tells a
+ *  backup the shim gave up on from one R2 refused (2026-10-06: two sleeps' failures were
+ *  only ever "backup" and "snapshot"). Errors are the host's and the SDK's, never a
+ *  person's input, and a path into the home is cut to `~`, so no file name of theirs
+ *  is kept. Made only by `failureOf`. */
+export type Failure = string & { readonly failure: unique symbol }
+
+/** The steps a failure is named by. */
+export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop'
+
+const SAID_LIMIT = 160
+
+export function failureOf(step: Step, error: unknown): Failure {
+  const named = error instanceof Error ? error : null
+  const coded = (error as { code?: unknown } | null)?.code
+  const code = typeof coded === 'string' ? coded : null
+  const said = (named ? named.message : String(error))
+    .replace(/\/home\/nib(\/[^\s'"`]*)?/g, '~')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, SAID_LIMIT)
+  return [`${step}:`, named?.name ?? typeof error, code, said].filter(Boolean).join(' ') as Failure
+}
 
 /** How long the audit is kept. */
 const KEPT = 90 * 24 * 60 * 60 * 1000

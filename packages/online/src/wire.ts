@@ -177,6 +177,13 @@ export type ServerFrame =
   | { t: 'refused'; error: Refusal }
   | { t: 'browse'; url: string }
   | { t: 'called'; url: string; status: number }
+  | { t: 'note'; note: Note }
+
+/** Something worth one line under the screen: `restore`, the home could not be put back
+ *  from its backup, so this wake has the image's fresh one. */
+export type Note = 'restore'
+
+const NOTES: readonly Note[] = ['restore']
 
 /** A text frame of either side, as it goes on the socket. */
 export function text(value: ClientFrame | ServerFrame): string {
@@ -214,6 +221,8 @@ export type MachineFrame =
   | { t: 'close'; session: string }
   | { t: 'sleep' }
   | { t: 'callback'; session: string; url: string }
+  /** Are you there: answered with `pong` at once. */
+  | { t: 'ping' }
 
 /** What `nibd` tells `Machine`: output from an offset; a whole screen; the program in
  *  front; a shell that ended; the last 30 seconds' activity; that every screen is
@@ -242,6 +251,14 @@ export type NibdFrame =
   | { t: 'saved' }
   | { t: 'browse'; session: string; url: string }
   | { t: 'called'; session: string; url: string; status: number }
+  | { t: 'pong' }
+
+/** How often `Machine` asks `nibd` whether it is there, and how long a link may say
+ *  nothing at all before either end counts it dead: two pings missed, and a little.
+ *  `nibd` reports activity every 30 s, so even one that predates the ping is never
+ *  silent that long while it answers. */
+export const PING_EVERY = 15_000
+export const SILENT_FOR = 40_000
 
 /** A link frame as its bytes. */
 export function linkFrame(value: MachineFrame | NibdFrame): Uint8Array {
@@ -428,6 +445,8 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return isLoopbackUrl(value.url) && isStatus(value.status)
         ? { t: 'called', url: value.url, status: value.status }
         : null
+    case 'note':
+      return oneOf(NOTES, value.note) ? { t: 'note', note: value.note } : null
     default:
       return null
   }
@@ -437,7 +456,7 @@ export function serverFrameOf(raw: string): ServerFrame | null {
 export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
-  if (value.t === 'sleep') return { t: 'sleep' }
+  if (value.t === 'sleep' || value.t === 'ping') return { t: value.t }
 
   const { session } = value
   if (!isId(session)) return null
@@ -472,7 +491,8 @@ export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
       return activity ? { t: 'activity', activity } : null
     }
     case 'saved':
-      return { t: 'saved' }
+    case 'pong':
+      return { t: value.t }
     default:
       break
   }

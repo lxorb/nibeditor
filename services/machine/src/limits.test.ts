@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
-import { Cgroups, shellCommand, userOf, type User } from './limits'
+import { Cgroups, memoryMax, shellCommand, userOf, type User } from './limits'
 
 const NIB: User = { name: 'nib', uid: 1000, gid: 1000, home: '/home/nib', shell: '/bin/bash' }
 
@@ -58,4 +58,11 @@ test('with no cgroup filesystem to write, there is no cgroup, and nothing fails'
   const dir = mkdtempSync(join(tmpdir(), 'nibd-cgroup-'))
   expect(Cgroups.open(4096, dir)).toBeNull()
   rmSync(dir, { recursive: true })
+})
+
+test('the sessions get the machine’s memory less what nibd keeps for itself', () => {
+  const gib = 1024 * 1024 * 1024
+  expect(memoryMax('MemTotal:        4194304 kB\nMemFree:  100 kB\n')).toBe(4 * gib - gib / 2)
+  expect(memoryMax('MemTotal:         524288 kB\n')).toBeNull()
+  expect(memoryMax('nothing here')).toBeNull()
 })

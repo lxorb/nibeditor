@@ -27,6 +27,10 @@ export interface Options {
   /** How often activity is reported (30 s) and the home measured (an hour). */
   activityEvery: number
   homeEvery: number
+  /** How often every screen is written down while awake (5 min), so a `nibd` ended
+   *  without a SIGTERM - its watchdog, a crash, the kernel - comes back with screens
+   *  only minutes old; 0 for never. */
+  saveEvery?: number
   /** Makes a callback's request on this machine; `fetch`, or the tests' stand-in. */
   call?: (url: string) => Promise<number>
 }
@@ -74,6 +78,13 @@ export class Nibd {
         void this.measure()
       }, options.homeEvery),
     )
+    if (options.saveEvery) {
+      this.timers.push(
+        setInterval(() => {
+          void this.saveAll(false)
+        }, options.saveEvery),
+      )
+    }
     void this.measure()
   }
 
@@ -105,6 +116,11 @@ export class Nibd {
   async receive(frame: MachineFrame): Promise<void> {
     if (frame.t === 'sleep') {
       await this.saveAll()
+      return
+    }
+    // Answered by the server as it arrives (server.ts); here only from a test.
+    if (frame.t === 'ping') {
+      this.send({ t: 'pong' })
       return
     }
     if (!isSessionId(frame.session)) return
@@ -152,8 +168,9 @@ export class Nibd {
     return true
   }
 
-  /** Every screen written down, then `saved`: as the machine sleeps, and on SIGTERM. */
-  async saveAll(): Promise<void> {
+  /** Every screen written down, then `saved`: as the machine sleeps, and on SIGTERM;
+   *  quietly, with nobody waiting on it, every few minutes. */
+  async saveAll(say = true): Promise<void> {
     const at = Date.now()
     for (const session of this.sessions.values()) {
       try {
@@ -162,7 +179,7 @@ export class Nibd {
         // A full disk loses this one screen, never the others or the sleep.
       }
     }
-    this.send({ t: 'saved' })
+    if (say) this.send({ t: 'saved' })
   }
 
   /** The last stretch's activity, as the awake rule reads it. */

@@ -2058,6 +2058,7 @@ export const zhHantHK: Dictionary = {
   'Restoring…': '正在還原…',
   'Try again': '重試',
   'Your machine could not start': '無法啟動你的機器',
+  'Your home folder could not be restored': '無法還原你的主資料夾',
   Machine: '機器',
   Awake: '運行中',
   Starting: '正在啟動',

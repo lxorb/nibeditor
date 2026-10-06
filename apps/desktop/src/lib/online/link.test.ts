@@ -12,7 +12,7 @@ function fakeWorld(token: string | null = 'tok') {
     closed: boolean
     events: { opened(): void; heard(data: string | ArrayBuffer): void; closed(code: number): void }
   }[] = []
-  const timers: { ms: number; run: () => void; cancelled: boolean }[] = []
+  const timers: { ms: number; run: () => void; cancelled: boolean; ran: boolean }[] = []
 
   const world: LinkWorld = {
     base: 'https://nib.test',
@@ -40,7 +40,15 @@ function fakeWorld(token: string | null = 'tok') {
       }
     },
     after: (ms, run) => {
-      const timer = { ms, run, cancelled: false }
+      const timer = {
+        ms,
+        run: () => {
+          timer.ran = true
+          run()
+        },
+        cancelled: false,
+        ran: false,
+      }
       timers.push(timer)
       return () => {
         timer.cancelled = true
@@ -52,6 +60,11 @@ function fakeWorld(token: string | null = 'tok') {
 }
 
 const settle = () => new Promise((done) => setTimeout(done, 0))
+
+/** The timers still to run: a reconnect's wait, or the next beat. */
+function waiting(found: ReturnType<typeof fakeWorld>) {
+  return found.timers.filter((one) => !one.cancelled && !one.ran)
+}
 
 function opened(found: ReturnType<typeof fakeWorld>, at = -1) {
   const socket = found.sockets.at(at)
@@ -115,8 +128,8 @@ describe('the socket to an online session', () => {
 
     first.events.closed(1006)
     expect(heard.at(-1)).toEqual({ t: 'dropped' })
-    expect(found.timers).toHaveLength(1)
-    found.timers[0]?.run()
+    expect(waiting(found)).toHaveLength(1)
+    waiting(found)[0]?.run()
     await settle()
 
     const second = opened(found)
@@ -139,7 +152,7 @@ describe('the socket to an online session', () => {
 
     expect(heard.filter((one) => one.t === 'out')).toHaveLength(1)
     socket.events.closed(1006)
-    found.timers[0]?.run()
+    waiting(found)[0]?.run()
     await settle()
     expect(opened(found).sent[0]).toBe(text({ t: 'hello', cols: 80, rows: 24, since: 503 }))
   })
@@ -152,7 +165,7 @@ describe('the socket to an online session', () => {
     const socket = opened(found)
     socket.events.heard(text({ t: 'refused', error: 'list' }))
     socket.events.closed(1008)
-    expect(found.timers).toHaveLength(0)
+    expect(waiting(found)).toHaveLength(0)
 
     link.open()
     await settle()
@@ -178,6 +191,32 @@ describe('the socket to an online session', () => {
     expect(socket.closed).toBe(true)
     expect(link.say({ t: 'in', data: 'x' })).toBe(false)
     socket.events.closed(1000)
-    expect(found.timers).toHaveLength(0)
+    expect(waiting(found)).toHaveLength(0)
+  })
+
+  test('beats while it is open, and a socket that hears nothing for three beats is made again', async () => {
+    const found = fakeWorld()
+    const heard: Heard[] = []
+    const link = new Link('t1', found.world, (one) => heard.push(one), 80, 24)
+    link.open()
+    await settle()
+    const first = opened(found)
+
+    // Answered: it goes on beating.
+    for (let beat = 0; beat < 5; beat++) {
+      waiting(found)[0]?.run()
+      first.events.heard('ok')
+    }
+    expect(first.sent.filter((one) => one === 'beat')).toHaveLength(5)
+    expect(first.closed).toBe(false)
+
+    // Nothing comes back: the third silent beat drops it and a new one is made.
+    for (let beat = 0; beat < 3; beat++) waiting(found)[0]?.run()
+    expect(first.closed).toBe(true)
+    expect(heard.at(-1)).toEqual({ t: 'dropped' })
+    waiting(found)[0]?.run()
+    await settle()
+    expect(found.sockets).toHaveLength(2)
+    expect(link.live).toBe(false)
   })
 })

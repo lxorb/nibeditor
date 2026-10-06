@@ -2147,6 +2147,7 @@ export const fil: Dictionary = {
   'Restoring…': 'Ibinabalik…',
   'Try again': 'Subukang muli',
   'Your machine could not start': 'Hindi masimulan ang iyong makina',
+  'Your home folder could not be restored': 'Hindi maibalik ang iyong home folder',
   Machine: 'Makina',
   Awake: 'Gising',
   Starting: 'Nagsisimula',

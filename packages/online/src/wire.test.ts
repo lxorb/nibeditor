@@ -77,6 +77,7 @@ describe('the app socket', () => {
     { t: 'browse', url: 'https://github.com/login/device' },
     { t: 'called', url: 'http://127.0.0.1:1455/auth/callback?code=x', status: 302 },
     { t: 'called', url: 'http://localhost:1/x', status: 0 },
+    { t: 'note', note: 'restore' },
   ]
 
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
@@ -128,6 +129,7 @@ describe('the app socket', () => {
     '{"t":"browse","url":"javascript:alert(1)"}',
     '{"t":"browse"}',
     '{"t":"called","url":"https://claude.ai/","status":200}',
+    '{"t":"note","note":"anything"}',
     '{"t":"called","url":"http://localhost:1/","status":-1}',
   ])('drops a server frame that does not check: %s', (raw) => {
     expect(serverFrameOf(raw)).toBeNull()
@@ -187,6 +189,7 @@ describe('the link', () => {
     { t: 'want', session: 's_1', since: 123_456 },
     { t: 'close', session: 's_1' },
     { t: 'sleep' },
+    { t: 'ping' },
     { t: 'callback', session: 's_1', url: 'http://localhost:54545/callback?code=x' },
   ]
 
@@ -213,6 +216,7 @@ describe('the link', () => {
     { t: 'ended', session: 's_1', code: null },
     { t: 'activity', activity: { at: 1, output: 0, cpu: 0.25, net: 51_200, homeBytes: 2 ** 32 } },
     { t: 'saved' },
+    { t: 'pong' },
     { t: 'browse', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
     { t: 'called', session: 's_1', url: 'http://localhost:54545/callback', status: 200 },
   ]

@@ -9,6 +9,11 @@
  *    sessions' parent and one child per session, so ending a session is the kernel's
  *    `cgroup.kill` and nothing it started survives. Where the filesystem is read-only
  *    (a container that was not given its cgroup), there is none;
+ *  - **memory**: the same cgroup's `memory.max`, the machine's memory less what `nibd`
+ *    needs to keep answering, so a build or an agent that eats it all is ended by the
+ *    kernel inside the sessions, and the machine never thrashes to a halt around a
+ *    `nibd` that can no longer say so. Best effort: a kernel without the controller
+ *    has the pids fence alone;
  *  - **`RLIMIT_NPROC`** on every shell, set by `prlimit` before the shell starts, so
  *    the limit holds even where the cgroup could not be made. It counts the user's
  *    processes across sessions, which on a machine with one user is the same thing.
@@ -28,6 +33,19 @@ import { join } from 'node:path'
 import { sessionProcesses } from './proc'
 
 export const PIDS_MAX = 4096
+
+/** What the sessions leave of the machine's memory: `nibd` itself, its screens, and the
+ *  kernel's own room to work. */
+const KEPT_FOR_NIBD = 512 * 1024 * 1024
+
+/** The sessions' memory ceiling for a machine whose `/proc/meminfo` says `meminfo`, or
+ *  null where it does not say or is too small to fence. */
+export function memoryMax(meminfo: string): number | null {
+  const kib = Number(/^MemTotal:\s+(\d+) kB$/m.exec(meminfo)?.[1])
+  if (!Number.isSafeInteger(kib) || kib <= 0) return null
+  const most = kib * 1024 - KEPT_FOR_NIBD
+  return most >= KEPT_FOR_NIBD ? most : null
+}
 
 /** The machine's one user, as `/etc/passwd` has them. */
 export interface User {
@@ -97,9 +115,10 @@ export class Cgroups {
     const base = join(root, 'nibd')
     try {
       mkdirSync(base, { recursive: true })
-      enablePids(root)
+      enable(root, '+pids')
       appendFileSync(join(base, 'cgroup.subtree_control'), '+pids')
       writeFileSync(join(base, 'pids.max'), String(pidsMax))
+      fenceMemory(root, base)
       return new Cgroups(base)
     } catch {
       // Read-only, or a kernel without the pids controller: the rlimit fences alone.
@@ -139,12 +158,24 @@ export class Cgroups {
   }
 }
 
-/** The pids controller handed down from the cgroup root. A root that is a container's
+/** The sessions' memory ceiling, where the kernel offers the controller. */
+function fenceMemory(root: string, base: string): void {
+  try {
+    const most = memoryMax(readFileSync('/proc/meminfo', 'utf8'))
+    if (most === null) return
+    enable(root, '+memory')
+    writeFileSync(join(base, 'memory.max'), String(most))
+  } catch {
+    // No memory controller here: the machine's own limit is the only one.
+  }
+}
+
+/** A controller handed down from the cgroup root. A root that is a container's
  *  namespace, not the machine's, may not hand controllers down while processes sit in
  *  it, so they are moved into a cgroup of their own first. */
-function enablePids(root: string): void {
+function enable(root: string, controller: string): void {
   try {
-    appendFileSync(join(root, 'cgroup.subtree_control'), '+pids')
+    appendFileSync(join(root, 'cgroup.subtree_control'), controller)
     return
   } catch {
     // EBUSY: processes in the root. Move them and try again.
@@ -159,7 +190,7 @@ function enablePids(root: string): void {
       // A kernel thread, or gone.
     }
   }
-  appendFileSync(join(root, 'cgroup.subtree_control'), '+pids')
+  appendFileSync(join(root, 'cgroup.subtree_control'), controller)
 }
 
 /** Every process in the shell's kernel session, killed until none is left: the end of a

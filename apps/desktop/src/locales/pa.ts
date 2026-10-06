@@ -2114,6 +2114,7 @@ export const pa: Dictionary = {
   'Restoring…': 'ਬਹਾਲ ਹੋ ਰਿਹਾ ਹੈ…',
   'Try again': 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'Your machine could not start': 'ਤੁਹਾਡੀ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕੀ',
+  'Your home folder could not be restored': 'ਤੁਹਾਡਾ ਹੋਮ ਫੋਲਡਰ ਮੁੜ-ਬਹਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   Machine: 'ਮਸ਼ੀਨ',
   Awake: 'ਜਾਗਦੀ',
   Starting: 'ਸ਼ੁਰੂ ਹੋ ਰਹੀ ਹੈ',

@@ -2158,6 +2158,7 @@ export const ptPT: Dictionary = {
   'Restoring…': 'A restaurar…',
   'Try again': 'Tentar novamente',
   'Your machine could not start': 'Não foi possível iniciar a sua máquina',
+  'Your home folder could not be restored': 'Não foi possível restaurar a sua pasta pessoal',
   Machine: 'Máquina',
   Awake: 'Ativa',
   Starting: 'A iniciar',

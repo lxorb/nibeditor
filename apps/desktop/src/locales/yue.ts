@@ -2058,6 +2058,7 @@ export const yue: Dictionary = {
   'Restoring…': '還原緊…',
   'Try again': '再試一次',
   'Your machine could not start': '開唔到你部機器',
+  'Your home folder could not be restored': '還原唔到你嘅主資料夾',
   Machine: '機器',
   Awake: '運行中',
   Starting: '開緊',

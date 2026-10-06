@@ -2084,6 +2084,7 @@ export const am: Dictionary = {
   'Restoring…': 'በመመለስ ላይ…',
   'Try again': 'እንደገና ይሞክሩ',
   'Your machine could not start': 'ማሽንዎ መጀመር አልቻለም',
+  'Your home folder could not be restored': 'የቤት አቃፊዎን መመለስ አልተቻለም',
   Machine: 'ማሽን',
   Awake: 'ነቅቷል',
   Starting: 'በመጀመር ላይ',

@@ -2109,6 +2109,7 @@ export const fa: Dictionary = {
   'Restoring…': 'در حال بازیابی…',
   'Try again': 'تلاش دوباره',
   'Your machine could not start': 'ماشین شما راه‌اندازی نشد',
+  'Your home folder could not be restored': 'پوشه خانگی شما بازیابی نشد',
   Machine: 'ماشین',
   Awake: 'بیدار',
   Starting: 'در حال روشن شدن',

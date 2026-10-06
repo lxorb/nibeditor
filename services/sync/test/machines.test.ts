@@ -7,7 +7,8 @@ import { subprotocol } from '@nib/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { resumeOf } from '../src/machines/machine'
+import { PING_EVERY, SILENT_FOR } from '@nib/online/wire'
+import { Machine, resumeOf } from '../src/machines/machine'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { doorway, fire, join, machine, nibd, say } from './machine-fakes'
 
@@ -646,8 +647,8 @@ describe('a machine', () => {
     expect(running.host.calls).toEqual([
       'start machine',
       'link',
-      'backup /home/nib',
       'snapshot',
+      'backup /home/nib',
       'stop',
     ])
     const row = machineRow()
@@ -688,6 +689,163 @@ describe('a machine', () => {
     await running.machine.wake()
     expect(running.host.calls[0]).toBe('start machine')
     expect(running.host.calls[1]).toMatch(/^restore backup .*backup-1/)
+  })
+
+  /* ── Health (2026-10-06: a frozen terminal, a stuck start, failed saves) ── */
+
+  /** Timers the test moves, as well as the date. */
+  function clock() {
+    const now = Date.now()
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    })
+    vi.setSystemTime(now)
+  }
+
+  const events = () =>
+    env.db
+      .prepare('select kind, detail from machine_events where machine = ? order by id')
+      .all(ID) as { kind: string; detail: string | null }[]
+
+  test('a link that goes quiet is made again, its sockets told starting and then awake', async () => {
+    clock()
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
+
+    // Answering pings, the link stays.
+    await vi.advanceTimersByTimeAsync(SILENT_FOR * 2)
+    expect(running.host.calls).toEqual(['start machine', 'link'])
+
+    // Frozen: no pong, nothing else either.
+    const frozen = running.host.link_
+    if (frozen) frozen.silent = true
+    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+
+    expect(frozen?.closed).toBe(true)
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
+    expect(owner.of('machine').slice(-2)).toEqual([
+      { t: 'machine', state: 'starting' },
+      { t: 'machine', state: 'awake' },
+    ])
+    expect(await running.machine.state()).toBe('awake')
+    // Every session somebody is on is opened on the new link and sent its screen.
+    expect(running.host.link_?.take()).toEqual(
+      expect.arrayContaining([
+        { t: 'open', session: 'session-1', cols: 80, rows: 24 },
+        { t: 'want', session: 'session-1', since: 0 },
+      ]),
+    )
+    expect(events().map((one) => one.kind)).toContain('relink')
+  })
+
+  test('a link that cannot be made again restarts the machine from a snapshot taken first', async () => {
+    clock()
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    if (running.host.link_) running.host.link_.silent = true
+    running.host.failLinks = 1
+    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+
+    expect(running.host.calls).toEqual([
+      'start machine',
+      'link',
+      'link',
+      'snapshot',
+      'stop',
+      'restore snapshot snap-1',
+      'start machine',
+      'link',
+    ])
+    expect(await running.machine.state()).toBe('awake')
+    // Starting until it is back, and never asleep on the way.
+    const states = owner.of('machine').map((one) => one.state)
+    expect(states.slice(states.indexOf('awake') + 1)).toEqual([
+      'starting',
+      'starting',
+      'starting',
+      'awake',
+    ])
+    expect(events()).toEqual(
+      expect.arrayContaining([
+        { kind: 'failed', detail: 'link: Error nibd answered 401' },
+        { kind: 'sleep', detail: 'restart' },
+        { kind: 'wake', detail: 'snapshot' },
+      ]),
+    )
+  })
+
+  test('a terminal opened while the link is gone makes it again at once', async () => {
+    const running = await machine(env, ID, user)
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    // The object restarted (a deploy): its storage says awake, it holds no link.
+    const again = { ...running, machine: new Machine(running.state as never, env, running.host) }
+    const owner = await join(again, { who: user, owns: true, role: 'owner' })
+    await say(again, owner, { t: 'hello', cols: 80, rows: 24 })
+    await vi.waitFor(() => {
+      expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+    })
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
+  })
+
+  test('a wake finds the instance a cut-short sleep left running and links to it as it is', async () => {
+    const running = await machine(env, ID, user)
+    running.host.up = true
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(await running.machine.state()).toBe('awake')
+    expect(running.host.calls).toEqual(['link'])
+    expect(events()).toEqual(expect.arrayContaining([{ kind: 'wake', detail: 'running' }]))
+  })
+
+  test('a restore that never answers holds neither the wake nor the machine', async () => {
+    const running = await machine(env, ID, user)
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await running.machine.sleep('stopped')
+    env.db.prepare('update machines set snapshot = null where id = ?').run(ID)
+    running.host.calls.length = 0
+    running.host.hangRestore = true
+
+    clock()
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
+    expect(await running.machine.state()).toBe('awake')
+    expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+    // No shell is started in a home about to be replaced.
+    expect(running.host.link_?.take().filter((one) => one.t === 'open')).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(owner.of('note')).toEqual([{ t: 'note', note: 'restore' }])
+    expect(running.host.link_?.take()).toEqual(
+      expect.arrayContaining([{ t: 'open', session: 'session-1', cols: 80, rows: 24 }]),
+    )
+    expect(events()).toEqual(
+      expect.arrayContaining([
+        { kind: 'failed', detail: 'restore: Error restore took longer than 120000 ms' },
+      ]),
+    )
+  })
+
+  test('a backup that fails says why, without a word of the home', async () => {
+    const running = await machine(env, ID, user)
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    running.host.failBackup = Object.assign(
+      new Error('sandbox-shim returned truncated control data at /home/nib/secret-plans.md'),
+      { name: 'SandboxProtocolError', code: 'SANDBOX_PROTOCOL_ERROR' },
+    )
+    await running.machine.sleep('stopped')
+
+    expect(events().filter((one) => one.kind === 'failed')).toEqual([
+      {
+        kind: 'failed',
+        detail:
+          'backup: SandboxProtocolError SANDBOX_PROTOCOL_ERROR sandbox-shim returned truncated control data at ~',
+      },
+    ])
+    // The snapshot went first, and was kept.
+    expect(running.host.calls.indexOf('snapshot')).toBeLessThan(
+      running.host.calls.indexOf('backup /home/nib'),
+    )
+    expect(machineRow().snapshot).toBe('snap-1')
   })
 
   test('the service switched off stops every machine at its next minute', async () => {

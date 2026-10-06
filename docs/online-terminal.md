@@ -680,6 +680,41 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   this computer can open; forwarding any other port (ports, 4.10's later); and asking a
   browser build's permission to notify, which the page does not ask for a terminal.
 
+### 4.14 Never frozen
+
+2026-10-06: after seven awake hours Emil's terminal stopped answering - no output, keys going
+nowhere, new terminals loading for ever - and the Stop that followed saved neither the home nor
+the disk. An awake machine either works or says it does not, and comes back by itself
+(Kubernetes' liveness probe, systemd's watchdog, mosh's "last contact").
+
+- **The link is pinged.** `Machine` pings `nibd` every 15 s (`PING_EVERY`); a link that says
+  nothing at all for 40 s (`SILENT_FOR`: no pong, no output, no activity) is dead whether or
+  not it ever closes. `nibd` drops a link that pinged and then fell silent, so ptys paused
+  behind a half-open link are read again.
+- **A dead link is made again** (`recover`): every socket is told `starting` at once, the
+  link is made again within 20 s, and the sockets are told `awake`. Where it cannot be, the
+  machine **restarts**: a snapshot first (60 s at most), the stop, a wake from that snapshot -
+  `starting` all the way, never `asleep` in between. A terminal opened or typed in while the
+  link is gone starts this at once rather than at the next minute.
+- **A restarted object adopts its instance.** Every deploy restarts `Machine`; the first link
+  after one sets the inactivity timeout and the backups' route again (Cloudflare stops a
+  container whose object went quiet without them), and a wake that finds an instance still
+  running (a sleep a deploy cut short) links to it as it is.
+- **`nibd` watches itself.** A worker thread ends `nibd` when its event loop has not turned
+  for a minute (`watchdog.ts`); the entrypoint starts it again in the same machine, so the
+  disk and the home stay, and the screens come back from a save at most five minutes old.
+  Five ends in ten minutes end the machine instead, which `Machine` answers with a restart.
+  The sessions' cgroup gets the machine's memory less 512 MiB, so a build that eats it all
+  is ended by the kernel inside the sessions, not by a machine thrashing around `nibd`.
+- **The app's socket beats** every 10 s, answered by the runtime without waking the object;
+  three unanswered beats drop and reopen it. A live terminal told `starting` shows the card
+  again over its dimmed screen until its session's screen is back.
+- **Saves in the right order.** A sleep snapshots first (what the next wake boots from), then
+  backs the home up if due. A wake from a backup never waits for it: the machine is awake at
+  once, the sessions open once the home is back or could not be (then one dim line, _Your
+  home folder could not be restored_). Every failure is written to `machine_events` with its
+  reason (`failureOf`: the step, the error's name and code, its words with home paths cut).
+
 ## 5. What nib does not do
 
 - **Machines per space**, or machines several people pay for (4.1).

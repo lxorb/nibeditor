@@ -2106,6 +2106,7 @@ export const hi: Dictionary = {
   'Restoring…': 'पुनर्स्थापित हो रहा है…',
   'Try again': 'फिर से कोशिश करें',
   'Your machine could not start': 'आपकी मशीन शुरू नहीं हो सकी',
+  'Your home folder could not be restored': 'आपका होम फ़ोल्डर पुनर्स्थापित नहीं हो सका',
   Machine: 'मशीन',
   Awake: 'जागी हुई',
   Starting: 'शुरू हो रही है',

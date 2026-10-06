@@ -2093,6 +2093,7 @@ export const jv: Dictionary = {
   'Restoring…': 'Mbalekake…',
   'Try again': 'Coba maneh',
   'Your machine could not start': 'Mesin sampeyan ora bisa diwiwiti',
+  'Your home folder could not be restored': 'Folder omah sampeyan ora bisa dibalèkaké',
   Machine: 'Mesin',
   Awake: 'Melek',
   Starting: 'Lagi diwiwiti',

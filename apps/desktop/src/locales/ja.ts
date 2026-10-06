@@ -2096,6 +2096,7 @@ export const ja: Dictionary = {
   'Restoring…': '復元中…',
   'Try again': '再試行',
   'Your machine could not start': 'マシンを起動できませんでした',
+  'Your home folder could not be restored': 'ホームフォルダーを復元できませんでした',
   Machine: 'マシン',
   Awake: '稼働中',
   Starting: '起動中',

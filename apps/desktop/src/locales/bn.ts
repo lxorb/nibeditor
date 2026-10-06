@@ -2107,6 +2107,7 @@ export const bn: Dictionary = {
   'Restoring…': 'পুনরুদ্ধার করা হচ্ছে…',
   'Try again': 'আবার চেষ্টা করুন',
   'Your machine could not start': 'আপনার মেশিন চালু করা যায়নি',
+  'Your home folder could not be restored': 'আপনার হোম ফোল্ডার পুনরুদ্ধার করা যায়নি',
   Machine: 'মেশিন',
   Awake: 'সক্রিয়',
   Starting: 'চালু হচ্ছে',

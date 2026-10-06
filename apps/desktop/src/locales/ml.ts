@@ -2130,6 +2130,7 @@ export const ml: Dictionary = {
   'Restoring…': 'പുനഃസ്ഥാപിക്കുന്നു…',
   'Try again': 'വീണ്ടും ശ്രമിക്കുക',
   'Your machine could not start': 'നിങ്ങളുടെ മെഷീൻ ആരംഭിക്കാനായില്ല',
+  'Your home folder could not be restored': 'നിങ്ങളുടെ ഹോം ഫോൾഡർ പുനഃസ്ഥാപിക്കാനായില്ല',
   Machine: 'മെഷീൻ',
   Awake: 'ഉണർന്നിരിക്കുന്നു',
   Starting: 'ആരംഭിക്കുന്നു',

@@ -2100,6 +2100,7 @@ export const gu: Dictionary = {
   'Restoring…': 'પુનઃસ્થાપિત થઈ રહ્યું છે…',
   'Try again': 'ફરી પ્રયાસ કરો',
   'Your machine could not start': 'તમારું મશીન શરૂ થઈ શક્યું નહીં',
+  'Your home folder could not be restored': 'તમારું હોમ ફોલ્ડર પુનઃસ્થાપિત થઈ શક્યું નહીં',
   Machine: 'મશીન',
   Awake: 'જાગૃત',
   Starting: 'શરૂ થઈ રહ્યું છે',

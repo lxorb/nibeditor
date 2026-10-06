@@ -2145,6 +2145,7 @@ export const ptBR: Dictionary = {
   'Restoring…': 'Restaurando…',
   'Try again': 'Tentar novamente',
   'Your machine could not start': 'Não foi possível iniciar sua máquina',
+  'Your home folder could not be restored': 'Não foi possível restaurar sua pasta pessoal',
   Machine: 'Máquina',
   Awake: 'Ativa',
   Starting: 'Iniciando',

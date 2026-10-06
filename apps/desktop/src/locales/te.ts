@@ -2117,6 +2117,7 @@ export const te: Dictionary = {
   'Restoring…': 'పునరుద్ధరిస్తోంది…',
   'Try again': 'మళ్లీ ప్రయత్నించండి',
   'Your machine could not start': 'మీ మెషీన్ ప్రారంభం కాలేదు',
+  'Your home folder could not be restored': 'మీ హోమ్ ఫోల్డర్‌ను పునరుద్ధరించలేకపోయాము',
   Machine: 'మెషీన్',
   Awake: 'మేల్కొని ఉంది',
   Starting: 'ప్రారంభమవుతోంది',

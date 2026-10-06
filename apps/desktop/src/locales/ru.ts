@@ -2190,6 +2190,7 @@ export const ru: Dictionary = {
   'Restoring…': 'Восстановление…',
   'Try again': 'Повторить',
   'Your machine could not start': 'Не удалось запустить вашу машину',
+  'Your home folder could not be restored': 'Не удалось восстановить вашу домашнюю папку',
   Machine: 'Машина',
   Awake: 'Работает',
   Starting: 'Запускается',

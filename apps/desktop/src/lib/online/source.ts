@@ -16,6 +16,7 @@ import { termOf, termText } from '@nib/online/term'
 import { inputChunks, MOST_INPUT, INPUT_RATE, type ServerFrame } from '@nib/online/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
+import { t } from '../i18n.svelte'
 import type { Said, Source } from '../terminal/source'
 import { isDesktop, isNative } from '../tauri'
 import { viewport } from '../viewport.svelte'
@@ -222,6 +223,10 @@ export class OnlineSource implements Source {
         return
       case 'called':
         this.opener.called(frame.url, frame.status)
+        return
+      // This wake's home is the image's fresh one: its backup could not be put back.
+      case 'note':
+        said({ note: t('Your home folder could not be restored') })
         return
       // Who is here, and whose input came last: the people popover's and the cursor's,
       // which come later (4.6).

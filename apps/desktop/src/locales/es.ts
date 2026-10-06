@@ -2162,6 +2162,7 @@ export const es: Dictionary = {
   'Restoring…': 'Restaurando…',
   'Try again': 'Reintentar',
   'Your machine could not start': 'No se pudo iniciar tu máquina',
+  'Your home folder could not be restored': 'No se pudo restaurar tu carpeta personal',
   Machine: 'Máquina',
   Awake: 'Activa',
   Starting: 'Iniciando',

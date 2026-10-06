@@ -2106,6 +2106,7 @@ export const ur: Dictionary = {
   'Restoring…': 'بحال ہو رہا ہے…',
   'Try again': 'دوبارہ کوشش کریں',
   'Your machine could not start': 'آپ کی مشین شروع نہیں ہو سکی',
+  'Your home folder could not be restored': 'آپ کا ہوم فولڈر بحال نہیں ہو سکا',
   Machine: 'مشین',
   Awake: 'جاگ رہی ہے',
   Starting: 'شروع ہو رہی ہے',

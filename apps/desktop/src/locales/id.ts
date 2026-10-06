@@ -2101,6 +2101,7 @@ export const id: Dictionary = {
   'Restoring…': 'Memulihkan…',
   'Try again': 'Coba lagi',
   'Your machine could not start': 'Mesin Anda tidak dapat dimulai',
+  'Your home folder could not be restored': 'Folder beranda Anda tidak dapat dipulihkan',
   Machine: 'Mesin',
   Awake: 'Aktif',
   Starting: 'Memulai',

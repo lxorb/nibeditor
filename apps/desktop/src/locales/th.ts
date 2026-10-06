@@ -2070,6 +2070,7 @@ export const th: Dictionary = {
   'Restoring…': 'กำลังกู้คืน…',
   'Try again': 'ลองอีกครั้ง',
   'Your machine could not start': 'เริ่มเครื่องของคุณไม่ได้',
+  'Your home folder could not be restored': 'กู้คืนโฟลเดอร์หลักของคุณไม่ได้',
   Machine: 'เครื่อง',
   Awake: 'ทำงานอยู่',
   Starting: 'กำลังเริ่ม',

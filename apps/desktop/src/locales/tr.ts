@@ -2115,6 +2115,7 @@ export const tr: Dictionary = {
   'Restoring…': 'Geri yükleniyor…',
   'Try again': 'Tekrar dene',
   'Your machine could not start': 'Makineniz başlatılamadı',
+  'Your home folder could not be restored': 'Ana klasörünüz geri yüklenemedi',
   Machine: 'Makine',
   Awake: 'Uyanık',
   Starting: 'Başlatılıyor',

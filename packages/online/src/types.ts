@@ -77,6 +77,9 @@ export type SpaceRole = 'read' | 'write' | 'owner'
 export interface MachineHost {
   start(id: string, image: string, env: Record<string, string>): Promise<void>
   stop(id: string, grace: number): Promise<void>
+  /** Whether an instance runs now: one a sleep cut short by a deploy left behind, which a
+   *  wake links to as it is rather than starting another. */
+  running(id: string): Promise<boolean>
   /** A socket to the machine's `nibd`. */
   link(id: string): Promise<WebSocket>
   snapshot(id: string): Promise<string>

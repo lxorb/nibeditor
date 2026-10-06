@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Arrival, PATIENCE, statusLine } from './arrival.svelte'
+import { Arrival, BOOT_PATIENCE, PATIENCE, statusLine } from './arrival.svelte'
 import { refusalWords } from './words'
 
 /** A clock that runs only when told: what is due, and the time it is due at. */
@@ -86,11 +86,25 @@ describe('an online terminal on its way to its screen', () => {
     arrival.linkedNow(true)
     clock.pass(PATIENCE - 1)
     arrival.machine('starting')
-    clock.pass(PATIENCE - 1)
+    // A machine starting is given longer: its start is bounded on the server.
+    clock.pass(BOOT_PATIENCE - 1)
     expect(arrival.failure).toBeNull()
 
     clock.pass(1)
     expect(arrival.status).toEqual({ failed: 'Could not reach your machine' })
+  })
+
+  test('a live terminal whose machine starts again waits for it once more', () => {
+    const { clock, arrival } = arriving()
+    arrival.linkedNow(true)
+    arrival.arrived()
+    clock.pass(PATIENCE * 2)
+
+    arrival.lost()
+    arrival.machine('starting')
+    expect(arrival.status).toEqual({ waiting: 'starting' })
+    arrival.machine('asleep', 'restart')
+    expect(arrival.status).toEqual({ failed: 'Your machine could not start' })
   })
 
   test('never gives up on a terminal whose screen is here, until its socket drops', () => {

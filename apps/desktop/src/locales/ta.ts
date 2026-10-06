@@ -2138,6 +2138,7 @@ export const ta: Dictionary = {
   'Restoring…': 'மீட்டமைக்கிறது…',
   'Try again': 'மீண்டும் முயலவும்',
   'Your machine could not start': 'உங்கள் இயந்திரத்தைத் தொடங்க முடியவில்லை',
+  'Your home folder could not be restored': 'உங்கள் முகப்புக் கோப்புறையை மீட்டெடுக்க முடியவில்லை',
   Machine: 'இயந்திரம்',
   Awake: 'விழிப்பில்',
   Starting: 'தொடங்குகிறது',

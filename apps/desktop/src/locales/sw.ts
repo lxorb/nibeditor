@@ -2137,6 +2137,7 @@ export const sw: Dictionary = {
   'Restoring…': 'Inarejesha…',
   'Try again': 'Jaribu tena',
   'Your machine could not start': 'Mashine yako imeshindwa kuwaka',
+  'Your home folder could not be restored': 'Folda yako ya nyumbani imeshindwa kurejeshwa',
   Machine: 'Mashine',
   Awake: 'Iko macho',
   Starting: 'Inawaka',

@@ -2137,6 +2137,7 @@ export const ha: Dictionary = {
   'Restoring…': 'Ana maidowa…',
   'Try again': 'Sake gwadawa',
   'Your machine could not start': 'Na’urarka ta kasa farawa',
+  'Your home folder could not be restored': 'An kasa maido da babban fayil ɗinka na gida',
   Machine: 'Na’ura',
   Awake: 'A farke',
   Starting: 'Tana farawa',

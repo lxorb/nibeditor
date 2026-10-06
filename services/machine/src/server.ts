@@ -5,13 +5,20 @@
  *  `Authorization: Bearer <secret>`, compared in constant time; without a secret set,
  *  no link is taken at all. One link at a time: a second one with the secret is
  *  `Machine` coming back after its own restart, so it replaces the first. `/health`
- *  answers anybody, says nothing, and is what the host waits on before it links. */
+ *  answers anybody, says nothing, and is what the host waits on before it links.
+ *
+ *  A link can die without closing: a TCP connection half open after the far end went,
+ *  which neither side hears about for minutes. Here that is worse than a dead link,
+ *  because the ptys stop being read while the link is behind, and a link nobody reads
+ *  is behind for ever: every program on the machine blocks on its next write. So a
+ *  ping is answered at once, and a link that has pinged and then said nothing for
+ *  `SILENT_FOR` is dropped, which lets the ptys go and waits for the next link. */
 
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { WebSocketServer, type WebSocket } from 'ws'
-import { linkFrame, machineFrameOf } from '@nib/online/wire'
+import { linkFrame, machineFrameOf, SILENT_FOR } from '@nib/online/wire'
 import type { Nibd } from './nibd'
 
 /** Past this much unsent on the link the ptys stop being read; under the lower mark
@@ -32,28 +39,45 @@ function allowed(request: IncomingMessage, secret: string): boolean {
   return given !== undefined && timingSafeEqual(digest(given), digest(secret))
 }
 
-export function serve(nibd: Nibd, secret: string): Server {
+export interface Options {
+  /** How long a link that pings may say nothing before it is dropped; the tests' is short. */
+  silentFor?: number
+}
+
+export function serve(nibd: Nibd, secret: string, options: Options = {}): Server {
+  const silentFor = options.silentFor ?? SILENT_FOR
   const sockets = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 })
   let current: WebSocket | null = null
   let paused = false
+  /** When the current link last said anything, and whether it ever pinged: a link from a
+   *  `Machine` that predates the ping is never judged by its silence. */
+  let heard = 0
+  let pinged = false
 
   const watch = setInterval(() => {
     const behind = current?.bufferedAmount ?? 0
     if (!paused && behind > BEHIND) nibd.pause((paused = true))
     else if (paused && behind < CAUGHT_UP) nibd.pause((paused = false))
+    if (current && pinged && Date.now() - heard > silentFor) current.terminate()
   }, 50)
   watch.unref()
 
   sockets.on('connection', (socket) => {
     current?.close(4000, 'replaced')
     current = socket
+    heard = Date.now()
+    pinged = false
     nibd.attach((frame) => {
       if (socket.readyState === socket.OPEN) socket.send(linkFrame(frame))
     })
     socket.on('message', (data, binary) => {
+      if (current === socket) heard = Date.now()
       if (!binary || !(data instanceof Buffer)) return
       const frame = machineFrameOf(new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
-      if (frame) void nibd.receive(frame)
+      if (frame?.t === 'ping') {
+        if (current === socket) pinged = true
+        if (socket.readyState === socket.OPEN) socket.send(linkFrame({ t: 'pong' }))
+      } else if (frame) void nibd.receive(frame)
     })
     socket.on('close', () => {
       if (current !== socket) return

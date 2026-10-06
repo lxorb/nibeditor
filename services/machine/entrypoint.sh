@@ -41,4 +41,34 @@ if [ "${NIB_AGENTS:-1}" != 0 ]; then
     nice -n 10 /usr/local/bin/nib-agents >/tmp/nib-agents.log 2>&1 &
 fi
 
-exec node /opt/nibd/nibd.cjs
+# nibd, started again in this machine when it ends of its own accord - a crash, the kernel's
+# OOM killer, its own watchdog (src/watchdog.ts) - so the disk and the home stay and the
+# screens come back from its last save; Machine links again within seconds. A nibd that
+# keeps ending (five times in ten minutes) ends the machine instead, which Machine sees
+# and answers with a fresh start. The host's SIGTERM is passed on and waited for, so the
+# screens are saved as before; an exit of 0 is nibd asked to stop, and ends the machine.
+nibd=
+stopping=
+trap 'stopping=1; [ -n "$nibd" ] && kill -TERM "$nibd" 2>/dev/null' TERM INT
+ends=()
+while :; do
+  node /opt/nibd/nibd.cjs &
+  nibd=$!
+  code=0
+  wait "$nibd" || code=$?
+  # A signal for this script interrupts `wait`: wait again for nibd's own save and exit.
+  if [ -n "$stopping" ]; then
+    wait "$nibd" 2>/dev/null || true
+    exit 0
+  fi
+  [ "$code" = 0 ] && exit 0
+  now=$(date +%s)
+  recent=()
+  for at in "${ends[@]}" "$now"; do
+    [ $((now - at)) -lt 600 ] && recent+=("$at")
+  done
+  ends=("${recent[@]}")
+  echo "nib-entrypoint: nibd ended with $code (${#ends[@]} in ten minutes)" >&2
+  [ "${#ends[@]}" -ge 5 ] && exit "$code"
+  sleep 1
+done

@@ -16,8 +16,12 @@ import { t } from '../i18n.svelte'
 import type { Machine } from '../terminal/source'
 import { refusalWords } from './words'
 
-/** How long a wait may go without a word from the socket before it is given up on. */
+/** How long a wait may go without a word from the socket before it is given up on; and
+ *  once the machine said it is starting, how long its start may take - a restart after
+ *  its link died saves and boots it again, each step bounded on the server, and the home
+ *  is put back from its backup after that. */
 export const PATIENCE = 45_000
+export const BOOT_PATIENCE = 3 * 60_000
 
 /** What a terminal is waiting on. */
 type Waiting = 'connecting' | 'starting' | 'restoring'
@@ -111,6 +115,15 @@ export class Arrival {
     this.heard()
   }
 
+  /** A terminal that was live, whose machine is starting again (its link to the machine
+   *  died): waiting once more, so a frozen screen never looks live. */
+  lost(): void {
+    this.here = false
+    this.booted = false
+    this.failure = null
+    this.wait()
+  }
+
   /** The wait ends without the screen, and why. */
   fail(words: string): void {
     this.stop()
@@ -138,7 +151,8 @@ export class Arrival {
 
   private wait(): void {
     this.stop()
-    this.giveUp = this.clock.after(PATIENCE, () => {
+    const patience = this.booted ? BOOT_PATIENCE : PATIENCE
+    this.giveUp = this.clock.after(patience, () => {
       this.giveUp = null
       this.fail(refusalWords('other') ?? '')
     })

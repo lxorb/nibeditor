@@ -11,6 +11,10 @@
  *  - **Dropping** brings it back by itself, sooner first and then less often: a laptop
  *    that slept, a train in a tunnel. Not after a refusal that waiting cannot change - no
  *    role, not on the list, the month's hours used - which waits for the reader instead.
+ *  - **A heartbeat** every ten seconds, which the `Machine` answers without waking: a
+ *    socket that has heard nothing for three of them is dead whether or not the browser
+ *    ever says so - a laptop's Wi-Fi on a plane, a network that changed under it - and
+ *    is dropped and made again, so a terminal never looks live on a dead socket.
  *
  *  Pure of the page: the socket, the clock and the token are the world's, so the tests
  *  drive it with a fake (link.test.ts). */
@@ -24,7 +28,8 @@ import {
   socketPath,
   text,
 } from '@nib/online/wire'
-import { roomDelay } from '../backoff'
+import { BEAT } from '@nib/sync-core/wire'
+import { BEAT_EVERY, roomDelay } from '../backoff'
 
 /** What a socket looks like from here; the browser's, or the tests'. */
 export interface LinkSocket {
@@ -60,6 +65,9 @@ export type Heard =
   /** The socket dropped and is coming back by itself. */
   | { t: 'dropped' }
 
+/** Beats with nothing heard after which a socket is counted dead. */
+const SILENT_BEATS = 3
+
 /** Refusals that the same socket, asked again later, would get again. */
 const FINAL: readonly Refusal[] = ['gone', 'list', 'allowance', 'budget', 'off', 'flag']
 
@@ -73,6 +81,9 @@ export class Link {
   /** Why the last refusal that waits for the reader was given, if one was. */
   private stopped: Refusal | null = null
   private size: { cols: number; rows: number }
+  /** Beats since anything was heard, and what stops the next one. */
+  private quiet = 0
+  private stopBeat: (() => void) | null = null
 
   constructor(
     private readonly term: string,
@@ -105,8 +116,10 @@ export class Link {
         try {
           socket = this.world.socket(url, [`nib.token.${token}`, `nib.device.${device}`], {
             opened: () => {
-              if (this.socket !== socket) return
+              if (this.socket !== socket || !socket) return
               this.tries = 0
+              this.quiet = 0
+              this.beat(socket)
               this.say({
                 t: 'hello',
                 ...this.size,
@@ -115,7 +128,9 @@ export class Link {
               this.heard({ t: 'open' })
             },
             heard: (data) => {
-              if (this.socket === socket) this.hear(data)
+              if (this.socket !== socket) return
+              this.quiet = 0
+              this.hear(data)
             },
             closed: () => {
               if (this.socket !== socket) return
@@ -136,8 +151,29 @@ export class Link {
     )
   }
 
+  /** The next beat, and a socket silent for `SILENT_BEATS` of them dropped and made
+   *  again. Anything heard is an answer: the `ok` to a beat, output, a frame. */
+  private beat(socket: LinkSocket): void {
+    this.stopBeat?.()
+    this.stopBeat = this.world.after(BEAT_EVERY, () => {
+      this.stopBeat = null
+      if (this.socket !== socket) return
+      this.quiet += 1
+      if (this.quiet >= SILENT_BEATS) {
+        this.socket = null
+        socket.close()
+        this.again()
+        return
+      }
+      socket.send(BEAT)
+      this.beat(socket)
+    })
+  }
+
   /** Back after a wait that grows with each try, unless it was closed or refused. */
   private again(): void {
+    this.stopBeat?.()
+    this.stopBeat = null
     if (this.closed || this.stopped || this.retry) return
     this.heard({ t: 'dropped' })
     this.tries += 1
@@ -197,6 +233,8 @@ export class Link {
 
   close(): void {
     this.closed = true
+    this.stopBeat?.()
+    this.stopBeat = null
     this.retry?.()
     this.retry = null
     const socket = this.socket

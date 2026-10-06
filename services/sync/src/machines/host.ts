@@ -84,6 +84,11 @@ export class ContainerHost implements MachineHost {
   /** A snapshot to boot the next start from, set by `restore`. */
   private boot: string | null = null
   private backups: Backups | null = null
+  /** Whether this object set up the running instance: its inactivity timeout and its
+   *  routes out. A Durable Object that restarted (every deploy restarts it) finds its
+   *  container running with neither, and Cloudflare stops such a container shortly
+   *  after the object goes quiet; so the first link after a restart sets them again. */
+  private ready = false
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -119,25 +124,36 @@ export class ContainerHost implements MachineHost {
     }
 
     try {
-      // The backups' intercept first: an intercept registered after the catch-all
-      // never receives anything.
-      await this.backupsOf().intercept()
-      if (egressOf(this.env) === 'web' && wiring) {
-        const outbound = wiring.outbound(this.ctx)
-        await container.interceptAllOutboundHttp(outbound)
-        await container.interceptOutboundHttps('*', outbound)
-      }
-      await container.setInactivityTimeout(BACKSTOP)
+      await this.setUp(container)
     } catch (error) {
       await container.destroy()
       throw error
     }
   }
 
+  /** The running instance's routes out and its inactivity timeout. */
+  private async setUp(container: Container): Promise<void> {
+    // The backups' intercept first: an intercept registered after the catch-all never
+    // receives anything.
+    await this.backupsOf().intercept()
+    if (egressOf(this.env) === 'web' && wiring) {
+      const outbound = wiring.outbound(this.ctx)
+      await container.interceptAllOutboundHttp(outbound)
+      await container.interceptOutboundHttps('*', outbound)
+    }
+    await container.setInactivityTimeout(BACKSTOP)
+    this.ready = true
+  }
+
+  running(): Promise<boolean> {
+    return Promise.resolve(this.ctx.container?.running === true)
+  }
+
   async stop(_id: string, grace: number): Promise<void> {
     const container = this.container
     // Read afresh each time: `running` is the runtime's, and changes under us.
     const running = () => container.running
+    this.ready = false
     if (!running()) return
     container.signal(15)
     const until = Date.now() + grace
@@ -146,6 +162,7 @@ export class ContainerHost implements MachineHost {
   }
 
   async link(_id: string): Promise<WebSocket> {
+    if (!this.ready && this.container.running) await this.setUp(this.container)
     const secret = await this.ctx.storage.get<string>(SECRET)
     let last: unknown = null
     for (let tried = 0; tried < LINK_TRIES; tried++) {
@@ -217,6 +234,11 @@ export class DevHost implements MachineHost {
 
   stop(): Promise<void> {
     return Promise.resolve()
+  }
+
+  /** The drive's own `nibd`, which is started with its own secret: always a fresh start. */
+  running(): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
   async link(): Promise<WebSocket> {

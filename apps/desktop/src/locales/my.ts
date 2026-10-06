@@ -2093,6 +2093,7 @@ export const my: Dictionary = {
   'Restoring…': 'ပြန်လည်ရယူနေသည်…',
   'Try again': 'ထပ်စမ်းကြည့်ပါ',
   'Your machine could not start': 'သင့်စက်ကို စတင်၍ မရပါ',
+  'Your home folder could not be restored': 'သင့်ပင်မဖိုင်တွဲကို ပြန်ယူ၍ မရပါ',
   Machine: 'စက်',
   Awake: 'နိုးနေသည်',
   Starting: 'စတင်နေသည်',

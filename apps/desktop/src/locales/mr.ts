@@ -2111,6 +2111,7 @@ export const mr: Dictionary = {
   'Restoring…': 'पुनर्संचयित होत आहे…',
   'Try again': 'पुन्हा प्रयत्न करा',
   'Your machine could not start': 'तुमची मशीन सुरू होऊ शकली नाही',
+  'Your home folder could not be restored': 'तुमचे होम फोल्डर पुनर्संचयित होऊ शकले नाही',
   Machine: 'मशीन',
   Awake: 'जागे',
   Starting: 'सुरू होत आहे',

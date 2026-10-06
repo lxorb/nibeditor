@@ -2215,6 +2215,7 @@ export const ar: Dictionary = {
   'Restoring…': 'جارٍ الاستعادة…',
   'Try again': 'إعادة المحاولة',
   'Your machine could not start': 'تعذّر تشغيل جهازك',
+  'Your home folder could not be restored': 'تعذّرت استعادة مجلدك الرئيسي',
   Machine: 'الجهاز',
   Awake: 'يعمل',
   Starting: 'جارٍ التشغيل',

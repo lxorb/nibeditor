@@ -1,5 +1,5 @@
 /** `nibd` started: its settings from the environment the entrypoint gave it, the server,
- *  and the save on SIGTERM.
+ *  its own watchdog (watchdog.ts), and the save on SIGTERM.
  *
  *  The secret is read once and taken out of the environment before any shell starts,
  *  so no session inherits it. Every session gets a small environment of its own
@@ -11,6 +11,7 @@ import { Cgroups, PIDS_MAX, userOf } from './limits'
 import { Nibd } from './nibd'
 import { listenOpener, OPEN_SOCKET, serveOpener } from './opener'
 import { serve } from './server'
+import { watch } from './watchdog'
 
 const PORT = 7680
 
@@ -73,7 +74,9 @@ function main(): void {
     cgroups: root ? Cgroups.open(pidsMax) : null,
     activityEvery: numberOf(env.NIBD_ACTIVITY_MS, 30_000),
     homeEvery: numberOf(env.NIBD_HOME_MS, 60 * 60_000),
+    saveEvery: numberOf(env.NIBD_SAVE_MS, 5 * 60_000),
   })
+  watch()
 
   const server = serve(nibd, secret)
   server.listen(numberOf(env.NIBD_PORT, PORT), env.NIBD_HOST ?? '0.0.0.0')

@@ -111,3 +111,42 @@ test('a second link replaces the first: Machine back after its own restart', asy
   expect(await arriving).toEqual({ t: 'saved' })
   second.close()
 })
+
+test('a ping is answered at once, before anything else is done with it', async () => {
+  const { url, received } = await started()
+  const socket = await linked(url, SECRET)
+  const arriving = next(socket)
+  socket.send(linkFrame({ t: 'ping' }))
+  expect(await arriving).toEqual({ t: 'pong' })
+  expect(received).toEqual([])
+  socket.close()
+})
+
+test('a link that pinged and then fell silent is dropped and let go of', async () => {
+  const attached: unknown[] = []
+  const { nibd } = fake()
+  ;(nibd as unknown as { attach: (to: unknown) => void }).attach = (to) => attached.push(to)
+  const server = serve(nibd, SECRET, { silentFor: 300 })
+  servers.push(server)
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as AddressInfo
+  const socket = await linked(`ws://127.0.0.1:${String(port)}`, SECRET)
+  const closed = new Promise<void>((resolve) => socket.once('close', () => resolve()))
+
+  socket.send(linkFrame({ t: 'ping' }))
+  await closed
+  // Attached on the link, then let go of when it was dropped.
+  await expect.poll(() => attached.at(-1)).toBeNull()
+})
+
+test('a link that never pinged is never judged by its silence', async () => {
+  const machine = fake()
+  const server = serve(machine.nibd, SECRET, { silentFor: 100 })
+  servers.push(server)
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+  const { port } = server.address() as AddressInfo
+  const socket = await linked(`ws://127.0.0.1:${String(port)}`, SECRET)
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  expect(socket.readyState).toBe(WebSocket.OPEN)
+  socket.close()
+})

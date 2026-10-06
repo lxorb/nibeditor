@@ -48,6 +48,8 @@ export type Said =
   | { typing: boolean }
   /** The source cannot go on, and why, in words to show under the screen. */
   | { refused: string }
+  /** One line worth saying under the session's screen once it is drawn. */
+  | { note: string }
 
 export interface Source {
   /** True for a session on another machine, whose programs and folders nothing on this

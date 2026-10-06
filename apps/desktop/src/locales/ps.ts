@@ -2111,6 +2111,7 @@ export const ps: Dictionary = {
   'Restoring…': 'بیا راګرځول کېږي…',
   'Try again': 'بیا هڅه وکړئ',
   'Your machine could not start': 'ستاسو ماشین پیل نه شو',
+  'Your home folder could not be restored': 'ستاسو کور فولډر بیرته رانه غی',
   Machine: 'ماشین',
   Awake: 'ویښ',
   Starting: 'پیلېږي',

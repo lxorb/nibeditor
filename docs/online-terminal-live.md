@@ -67,6 +67,34 @@ and the container application, which the first `wrangler deploy` of the machines
    from the backup; egress as chosen above. Then a week of Emil's own use before the
    allow-list grows.
 
+## What the first week taught (2026-10-05 and 06, from Workers Logs)
+
+- **Deploys cut sleeps short.** Every push to main redeploys the Worker and restarts every
+  `Machine` ("Durable Object reset because its code was updated"). 18:11 on the 5th, mid-
+  snapshot ("Network connection lost."); 06:51 on the 6th, a backup that had run 146 s
+  ("sandbox-shim returned truncated control data"), after which the snapshot found the
+  container gone ("cannot be called on a container that is not running"). So no snapshot was
+  ever kept, and the home's last backup was from 18:11. A sleep now snapshots first, and a
+  restarted object adopts its running instance (`docs/online-terminal.md` 4.14).
+- **A backup can be slow.** The home is compressed with zstd on half a vCPU; how long a real
+  home takes is the thing to measure next (below).
+- To read these again: Workers Logs, filter `$workers.entrypoint = Machine`, or
+  `select at, kind, detail from machine_events where machine = ? order by at desc`, whose
+  `failed` rows now carry the reason.
+
+## Checks after the health changes go live
+
+1. Open a terminal; in `machine_events`, a `wake` and no `failed`.
+2. `kill -STOP $(pgrep -f nibd.cjs)` in the machine (as root, `sudo`): within about a
+   minute the terminal shows _Starting machine…_, then `relink` fails and the machine
+   restarts (`failed` with `link: …`, `sleep restart`, `wake snapshot`); the screen comes back
+   with the dim line from the last save. `kill -CONT` is not needed: the stop ended it.
+3. `sudo pkill -KILL -f nibd.cjs`: within seconds a `relink` row, no restart, the same disk.
+4. Stop the machine from Settings: `snapshot` then `backup` (or a `failed` row saying why),
+   then `sleep`. Time it; the backup's time is the number for "a backup can be slow".
+5. Push anything while a terminal is open: the terminal shows _Starting machine…_ for a
+   moment and comes back, with a `relink` row and no `failed`.
+
 ## A drive against a local `nibd`, before any of that
 
 No container and no Cloudflare resource: the `Machine` object drives a `nibd` already running

@@ -161,6 +161,8 @@ class Session {
   /** For an online terminal: whether a screen the session sent has been drawn, after
    *  which a reconnect is sent only what it missed. */
   private screened = false
+  /** Lines the session's machine had to say before its screen was here: said under it. */
+  private readonly notes: string[] = []
   /** For an online terminal: whether keys typed here reach the session, which is the
    *  machine's owner's alone unless they let the space's writers in. */
   private mayType = true
@@ -811,14 +813,25 @@ class Session {
       this.named()
     } else if ('machine' in what) {
       this.machine = what.machine
-      if (this.online) this.arrival.machine(what.machine, what.reason)
+      if (this.online) {
+        // Live, and its machine starting again because its link died: the screen is no
+        // longer the session's, so the card says so until the session's is back.
+        if (what.machine === 'starting' && this.live) {
+          this.live = false
+          this.arrival.lost()
+        }
+        this.arrival.machine(what.machine, what.reason)
+      }
       this.named()
     } else if ('connected' in what) {
       this.arrival.linkedNow(what.connected)
       if (what.connected && this.screened) this.landed()
       else this.live = false
     } else if ('typing' in what) this.mayType = what.typing
-    else if (this.online && !this.live) this.arrival.fail(what.refused)
+    else if ('note' in what) {
+      if (this.live) this.say(what.note)
+      else this.notes.push(what.note)
+    } else if (this.online && !this.live) this.arrival.fail(what.refused)
     else {
       this.say(what.refused)
       this.wait()
@@ -830,6 +843,7 @@ class Session {
     this.screened = true
     this.live = true
     this.arrival.arrived()
+    for (const note of this.notes.splice(0)) this.say(note)
   }
 
   /** An online session's whole screen, drawn in place of whatever was: the cached one,

@@ -33,6 +33,22 @@ docker run -d --name nib-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
 NIBD_URL=ws://127.0.0.1:7680 NIBD_TRACED_URL=ws://127.0.0.1:7681 NIBD_SECRET=$secret \
   pnpm exec vitest run --config vitest.image.config.ts
 
+# nibd ended under a machine that goes on (a crash, the OOM killer, its own watchdog) is
+# started again in the same machine by the entrypoint, and answers within seconds.
+before=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs)
+docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs
+again=
+for _ in $(seq 1 30); do
+  sleep 1
+  now=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs || true)
+  if [ -n "$now" ] && [ "$now" != "$before" ] && curl -fs http://127.0.0.1:7680/health >/dev/null; then
+    again=1
+    break
+  fi
+done
+[ -n "$again" ] && [ "$(docker inspect -f '{{.State.Running}}' nib-machine)" = true ]
+echo "nibd started again in the same machine"
+
 # The agents' checksums, against what their makers publish: Claude Code's binary against
 # the SHA-256 in its release manifest, every Codex package against the registry's
 # SHA-512 integrity.

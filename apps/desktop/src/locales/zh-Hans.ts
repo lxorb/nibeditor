@@ -2058,6 +2058,7 @@ export const zhHans: Dictionary = {
   'Restoring…': '正在恢复…',
   'Try again': '重试',
   'Your machine could not start': '无法启动你的机器',
+  'Your home folder could not be restored': '无法恢复你的主文件夹',
   Machine: '机器',
   Awake: '运行中',
   Starting: '正在启动',

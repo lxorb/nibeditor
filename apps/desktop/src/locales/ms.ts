@@ -2101,6 +2101,7 @@ export const ms: Dictionary = {
   'Restoring…': 'Memulihkan…',
   'Try again': 'Cuba lagi',
   'Your machine could not start': 'Mesin anda tidak dapat dimulakan',
+  'Your home folder could not be restored': 'Folder rumah anda tidak dapat dipulihkan',
   Machine: 'Mesin',
   Awake: 'Aktif',
   Starting: 'Sedang dimulakan',

@@ -2082,6 +2082,7 @@ export const ko: Dictionary = {
   'Restoring…': '복원 중…',
   'Try again': '다시 시도',
   'Your machine could not start': '머신을 시작할 수 없습니다',
+  'Your home folder could not be restored': '홈 폴더를 복원할 수 없습니다',
   Machine: '머신',
   Awake: '실행 중',
   Starting: '시작 중',

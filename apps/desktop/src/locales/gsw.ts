@@ -2119,6 +2119,7 @@ export const gsw: Dictionary = {
   'Restoring…': 'Wird widerhergstellt…',
   'Try again': 'Nomol probiere',
   'Your machine could not start': 'Dini Maschine het nöd chöne starte',
+  'Your home folder could not be restored': 'Din Home-Ordner het nöd chöne wiederhergstellt wärde',
   Machine: 'Maschine',
   Awake: 'Wach',
   Starting: 'Startet',

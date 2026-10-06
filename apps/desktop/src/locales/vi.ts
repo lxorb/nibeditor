@@ -2089,6 +2089,7 @@ export const vi: Dictionary = {
   'Restoring…': 'Đang khôi phục…',
   'Try again': 'Thử lại',
   'Your machine could not start': 'Không thể khởi động máy của bạn',
+  'Your home folder could not be restored': 'Không thể khôi phục thư mục chính của bạn',
   Machine: 'Máy',
   Awake: 'Đang chạy',
   Starting: 'Đang khởi động',

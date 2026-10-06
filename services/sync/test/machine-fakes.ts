@@ -4,23 +4,35 @@
  *  clock Vitest's. */
 
 import type { MachineHost } from '@nib/online'
-import { type MachineFrame, type NibdFrame } from '@nib/online/wire'
+import { linkFrame, type MachineFrame, type NibdFrame } from '@nib/online/wire'
 import { unframe } from '@nib/sync-core/wire'
 import { Machine, type Viewer } from '../src/machines/machine'
 import type { Env } from '../src/types'
 import { HubState } from './hub-fakes'
 
-/** The link to `nibd`: what `Machine` sent down it, and a way to close it. */
+/** The link to `nibd`: what `Machine` sent down it, and a way to close it. A ping is
+ *  answered with a pong, as `nibd` answers it, until the link is made `silent`: a
+ *  `nibd` that froze, or a connection half open. */
 class FakeLink {
   readonly sent: MachineFrame[] = []
   /** What `nibd` answers a `sleep` with, as it does: every screen saved. */
   onSleep: (() => void) | null = null
+  silent = false
+  closed = false
   private readonly listeners = new Map<string, ((event: unknown) => void)[]>()
 
   send(bytes: Uint8Array) {
     const frame = unframe(bytes) as MachineFrame
     this.sent.push(frame)
     if (frame.t === 'sleep') queueMicrotask(() => this.onSleep?.())
+    if (frame.t === 'ping' && !this.silent) queueMicrotask(() => this.say({ t: 'pong' }))
+  }
+
+  /** A frame from `nibd`, as the runtime hands a link's message over. */
+  say(frame: NibdFrame) {
+    const bytes = linkFrame(frame)
+    const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    for (const one of this.listeners.get('message') ?? []) one({ data })
   }
 
   addEventListener(kind: string, listener: (event: unknown) => void) {
@@ -28,6 +40,8 @@ class FakeLink {
   }
 
   close() {
+    if (this.closed) return
+    this.closed = true
     for (const one of this.listeners.get('close') ?? []) one({})
   }
 
@@ -39,13 +53,20 @@ class FakeLink {
 /** The host: what it was asked, in order, and the link it handed out. */
 class FakeHost implements MachineHost {
   readonly calls: string[] = []
-  running = false
+  /** Whether an instance runs. */
+  up = false
   link_: FakeLink | null = null
   onSleep: (() => void) | null = null
   snapshots = 0
   backups = 0
   /** Set to make the next start throw. */
   failStart = false
+  /** How many of the next links fail. */
+  failLinks = 0
+  /** What the next backup throws, if anything. */
+  failBackup: Error | null = null
+  /** Set to make a restore from a backup never answer. */
+  hangRestore = false
 
   start(_id: string, image: string): Promise<void> {
     this.calls.push(`start ${image}`)
@@ -53,18 +74,26 @@ class FakeHost implements MachineHost {
       this.failStart = false
       return Promise.reject(new Error('no room'))
     }
-    this.running = true
+    this.up = true
     return Promise.resolve()
   }
 
   stop(): Promise<void> {
     this.calls.push('stop')
-    this.running = false
+    this.up = false
     return Promise.resolve()
+  }
+
+  running(): Promise<boolean> {
+    return Promise.resolve(this.up)
   }
 
   link(): Promise<WebSocket> {
     this.calls.push('link')
+    if (this.failLinks > 0) {
+      this.failLinks -= 1
+      return Promise.reject(new Error('nibd answered 401'))
+    }
     this.link_ = new FakeLink()
     this.link_.onSleep = this.onSleep
     return Promise.resolve(this.link_ as unknown as WebSocket)
@@ -77,6 +106,9 @@ class FakeHost implements MachineHost {
 
   backup(_id: string, dir: string): Promise<string> {
     this.calls.push(`backup ${dir}`)
+    const failure = this.failBackup
+    this.failBackup = null
+    if (failure) return Promise.reject(failure)
     const id = `backup-${String(++this.backups)}`
     return Promise.resolve(JSON.stringify({ id, key: `${id}.tar.zst` }))
   }
@@ -85,6 +117,7 @@ class FakeHost implements MachineHost {
     this.calls.push(
       from.snapshot ? `restore snapshot ${from.snapshot}` : `restore backup ${from.backup ?? ''}`,
     )
+    if (from.backup && this.hangRestore) return new Promise<void>(() => undefined)
     return Promise.resolve()
   }
 

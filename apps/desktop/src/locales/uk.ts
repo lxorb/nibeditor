@@ -2184,6 +2184,7 @@ export const uk: Dictionary = {
   'Restoring…': 'Відновлення…',
   'Try again': 'Спробувати ще раз',
   'Your machine could not start': 'Не вдалося запустити вашу машину',
+  'Your home folder could not be restored': 'Не вдалося відновити вашу домашню теку',
   Machine: 'Машина',
   Awake: 'Працює',
   Starting: 'Запускається',
