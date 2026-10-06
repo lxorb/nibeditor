@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cpuMicros, netBytes } from './activity'
+import { cpuMicros, diskOf, netBytes } from './activity'
 
 function files(map: Record<string, string>): (file: string) => string {
   return (file) => {
@@ -39,4 +39,16 @@ test("the network is every interface's bytes in and out, loopback left out", () 
     ].join('\n'),
   })
   expect(netBytes(read)).toBe(1000 + 500 + 20 + 30)
+})
+
+test('the disk is its blocks less what the user may still write, and nothing where unread', () => {
+  const stats = { blocks: 100, bavail: 30, bsize: 4096 }
+  expect(diskOf('/home/nib', (() => stats) as never)).toEqual({
+    used: 70 * 4096,
+    total: 100 * 4096,
+  })
+  const gone = () => {
+    throw new Error('ENOENT')
+  }
+  expect(diskOf('/nowhere', gone as never)).toBeNull()
 })

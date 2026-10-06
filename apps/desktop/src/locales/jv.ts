@@ -2103,5 +2103,10 @@ export const jv: Dictionary = {
   CPU: 'CPU',
   Home: 'Folder home',
   Web: 'Web',
+  Restart: 'Wiwiti maneh',
+  Disk: 'Disk',
+  'Your machine’s disk is almost full': 'Disk mesin sampeyan meh kebak',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} saben sasi',
   'Starts again {date}': 'Diwiwiti maneh {date}',
 }

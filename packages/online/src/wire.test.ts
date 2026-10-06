@@ -78,6 +78,7 @@ describe('the app socket', () => {
     { t: 'called', url: 'http://127.0.0.1:1455/auth/callback?code=x', status: 302 },
     { t: 'called', url: 'http://localhost:1/x', status: 0 },
     { t: 'note', note: 'restore' },
+    { t: 'note', note: 'disk' },
   ]
 
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
@@ -189,6 +190,7 @@ describe('the link', () => {
     { t: 'want', session: 's_1', since: 123_456 },
     { t: 'close', session: 's_1' },
     { t: 'sleep' },
+    { t: 'restart' },
     { t: 'ping' },
     { t: 'callback', session: 's_1', url: 'http://localhost:54545/callback?code=x' },
   ]
@@ -215,6 +217,17 @@ describe('the link', () => {
     { t: 'ended', session: 's_1', code: 0 },
     { t: 'ended', session: 's_1', code: null },
     { t: 'activity', activity: { at: 1, output: 0, cpu: 0.25, net: 51_200, homeBytes: 2 ** 32 } },
+    {
+      t: 'activity',
+      activity: {
+        at: 1,
+        output: 0,
+        cpu: 0,
+        net: 0,
+        homeBytes: 0,
+        disk: { used: 17e9, total: 160e9 },
+      },
+    },
     { t: 'saved' },
     { t: 'pong' },
     { t: 'browse', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
@@ -257,6 +270,10 @@ describe('the link', () => {
     [
       'a negative CPU',
       { t: 'activity', activity: { at: 1, output: 0, cpu: -1, net: 0, homeBytes: 0 } },
+    ],
+    [
+      'a disk that does not read',
+      { t: 'activity', activity: { at: 1, output: 0, cpu: 0, net: 0, homeBytes: 0, disk: 5 } },
     ],
     ['an ended with no session', { t: 'ended', code: 0 }],
     ['an unknown kind', { t: 'hello' }],

@@ -2117,5 +2117,10 @@ export const bn: Dictionary = {
   CPU: 'CPU',
   Home: 'হোম ফোল্ডার',
   Web: 'ওয়েব',
+  Restart: 'রিস্টার্ট',
+  Disk: 'ডিস্ক',
+  'Your machine’s disk is almost full': 'আপনার মেশিনের ডিস্ক প্রায় পূর্ণ',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'মাসে {price}',
   'Starts again {date}': '{date} আবার শুরু হবে',
 }

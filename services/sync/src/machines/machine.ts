@@ -24,7 +24,13 @@
  *  What the door decided about a socket lives on the socket, and the minute alarm asks
  *  the rows again for all of them at once, so a file trashed or a person taken out of a
  *  space closes what it should within a minute even when nothing told the object; the
- *  routes that change access tell it at once besides (`revoke`, `typing`, `end`). */
+ *  routes that change access tell it at once besides (`revoke`, `typing`, `end`).
+ *
+ *  A machine on a host that is always on (a Hetzner server, 4.15) is never put to sleep
+ *  but by a kill switch, and keeps no snapshot or backup: its disk is a disk. It is awake
+ *  once `nibd` answers; a server still setting itself up, or one whose `nibd` stopped
+ *  answering, is waited for on the alarm (`waitForNibd`), and one that does not come
+ *  back is power-cycled through the host's API. */
 
 import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
 import { randomToken } from '../crypto'
@@ -34,12 +40,16 @@ import type { Env } from '../types'
 import { audit, type Detail, failureOf, type Step } from './audit'
 import { budgetLeft } from './budget'
 import { whyNotWake } from './gate'
-import { ContainerHost, DevHost, SECRET } from './host'
+import { HostRefused } from './hetzner-host'
+import { hostOf, SECRET } from './host'
 import { meter, usedOf } from './meter'
 import {
   type Activity,
   awake,
   ALLOWANCE,
+  type Disk,
+  diskFull,
+  type HostKind,
   type MachineHost,
   type MachineState,
   mayType,
@@ -117,8 +127,24 @@ const SEEN_EVERY = MINUTE
 const OPENS_A_MINUTE = 10
 const CALLBACKS_A_MINUTE = 10
 
+/** How often a machine that is always on is asked for `nibd` while it is set up or comes
+ *  back; how long its first boot may take (cloud-init installs everything, a few
+ *  minutes); how long one that stopped answering is waited for before it is
+ *  power-cycled, and then for its reboot. */
+const PROVISION_EVERY = 10_000
+const FIRST_BOOT_LIMIT = 20 * MINUTE
+const REBOOT_AFTER = 3 * MINUTE
+const REBOOT_LIMIT = 10 * MINUTE
+/** A `nibd` that goes quiet again this soon after it was linked again is restarted. */
+const SILENT_AGAIN = 5 * MINUTE
+
 /** Storage keys. */
 const ME = 'me'
+/** The machine's host kind, kept here too: an erased account's row is gone before its
+ *  object is emptied, and the object must still know what to take away. */
+const HOST = 'host'
+/** An always-on machine being waited for (`Provision`). */
+const PROVISION = 'provision'
 const STATE = 'state'
 const DOWN = 'down'
 const RECENT = 'recent'
@@ -128,6 +154,8 @@ const RESTORED = 'restored'
 
 /** What a wake reads of the machine's row: its snapshot and backup. */
 interface Booted {
+  /** The Hetzner server under it, where there is one already (4.15). */
+  server_id: number | null
   snapshot: string | null
   snapshot_at: number | null
   snapshot_image: string | null
@@ -154,6 +182,14 @@ export interface Viewer {
 interface Me {
   id: string
   user: string
+}
+
+/** An always-on machine being waited for: since when, why - a `boot` (made, or powered
+ *  on) or a `recover` (its `nibd` stopped answering) - and whether it was power-cycled. */
+interface Provision {
+  since: number
+  why: 'boot' | 'recover'
+  rebooted: boolean
 }
 
 /** What a session last said, kept for the joiners after it. */
@@ -186,7 +222,10 @@ function viewerOf(socket: WebSocket): Viewer | null {
 }
 
 export class Machine implements DurableObject {
-  private readonly host: MachineHost
+  /** The host a test handed in, which every other choice yields to. */
+  private readonly given: MachineHost | null
+  /** The host, once its kind is known: machines.host, kept in storage as well. */
+  private made: { kind: HostKind; host: MachineHost } | null = null
   private link: WebSocket | null = null
   private waking: Promise<void> | null = null
   /** Each socket's next offset: what it has drawn up to; -1 for a socket waiting for a
@@ -217,15 +256,45 @@ export class Machine implements DurableObject {
   private recovering: Promise<void> | null = null
   /** The home being put back from its backup after a fresh start; sessions open after. */
   private restoring: Promise<void> | null = null
+  /** The disk `nibd` last said, and whether its being full was said to the sockets. */
+  private disk: Disk | null = null
+  private diskSaid = false
+  /** When a link that went quiet was last made again, for one that keeps going quiet. */
+  private relinked = 0
+  /** A sleep that backs the home up whatever its age: before the machine moves host. */
+  private backupNow = false
 
   constructor(
     private readonly ctx: DurableObjectState,
     private readonly env: Env,
     host?: MachineHost,
   ) {
-    this.host = host ?? DevHost.of(env) ?? new ContainerHost(ctx, env)
+    this.given = host ?? null
     // The app's heartbeat, answered without waking the object (lib/online/link.ts).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
+  }
+
+  /** The host this machine runs on (4.15): asked of its row once, then kept. */
+  private async host(): Promise<MachineHost> {
+    if (this.given) return this.given
+    const kind = await this.kind()
+    if (this.made?.kind !== kind) this.made = { kind, host: hostOf(kind, this.ctx, this.env) }
+    return this.made.host
+  }
+
+  private async kind(): Promise<HostKind> {
+    if (this.made) return this.made.kind
+    const me = await this.me()
+    const row = me
+      ? await this.env.DB.prepare('select host from machines where id = ?')
+          .bind(me.id)
+          .first<{ host: HostKind }>()
+      : null
+    if (row) {
+      await this.ctx.storage.put(HOST, row.host)
+      return row.host
+    }
+    return (await this.ctx.storage.get<HostKind>(HOST)) ?? 'cloudflare'
   }
 
   /* ── Requests ─────────────────────────────────────────────────────────── */
@@ -254,7 +323,16 @@ export class Machine implements DurableObject {
         this.end(headers.get('x-nib-session') ?? '')
         return new Response(null, { status: 204 })
       case 'erase':
-        return await this.erase()
+        return await this.erase(headers.get('x-nib-id'))
+      case 'restart':
+        await this.restartNibd(headers.get('x-nib-who'))
+        return Response.json({ state: await this.state() })
+      case 'reboot':
+        await this.reboot()
+        return Response.json({ state: await this.state() })
+      case 'host':
+        await this.move(headers.get('x-nib-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
+        return Response.json({ state: await this.state() })
       default:
         return new Response('not something a machine does', { status: 400 })
     }
@@ -297,6 +375,7 @@ export class Machine implements DurableObject {
     if (news?.size) this.say(server, news.size)
     if (news?.program) this.say(server, news.program)
     if (news?.ended) this.say(server, news.ended)
+    if (this.diskSaid) this.say(server, { t: 'note', note: 'disk' })
     this.people(viewer.session)
 
     const me = await this.me()
@@ -548,7 +627,7 @@ export class Machine implements DurableObject {
   private async attachLink(): Promise<void> {
     const me = await this.me()
     if (!me) throw new Error('a machine that does not know its id')
-    const asked = this.host.link(me.id)
+    const asked = (await this.host()).link(me.id)
     let link: WebSocket
     try {
       link = await capped(asked, LINK_LIMIT, 'link')
@@ -733,6 +812,16 @@ export class Machine implements DurableObject {
     this.pending.cpuS += one.cpu * SMALL.vcpu * 30
     this.pending.egressBytes += one.net
     this.pending.homeBytes = one.homeBytes
+    if (one.disk) this.diskIs(one.disk)
+  }
+
+  /** The disk as `nibd` said it: kept for the row, and said under every screen once it
+   *  is nearly full, and to every socket that joins while it is (4.15). */
+  private diskIs(disk: Disk): void {
+    this.disk = disk
+    const full = diskFull(disk)
+    if (full && !this.diskSaid) this.everybody({ t: 'note', note: 'disk' })
+    this.diskSaid = full
   }
 
   /** The link went quiet or closed under an awake machine, or an object that restarted
@@ -767,6 +856,7 @@ export class Machine implements DurableObject {
       if ((await this.state()) !== 'awake') return
       await audit(this.env, me.id, 'relink')
       this.everybody({ t: 'machine', state: 'awake' })
+      await this.quietAgain(me)
       return
     } catch (error) {
       await this.failed(me, 'link', error)
@@ -774,10 +864,40 @@ export class Machine implements DurableObject {
     await this.restart(me)
   }
 
-  /** A machine whose `nibd` will not link: what is on its disk snapshotted if it still
-   *  runs (the home, and the screens `nibd` saved minutes ago), the instance stopped,
-   *  and a wake from that snapshot. */
+  /** A `nibd` that went quiet again within minutes of being linked again answers its
+   *  link but not much else - a loop starved, a session wedged in it - so it is
+   *  restarted: told down the fresh link, it saves every screen and its supervisor
+   *  starts it again in a moment, and the link is made again after it (4.14). Only on a
+   *  machine that is always on; a container is restarted whole instead. */
+  private async quietAgain(me: Me): Promise<void> {
+    const now = Date.now()
+    const again = now - this.relinked < SILENT_AGAIN
+    this.relinked = now
+    if (!again || !(await this.host()).alwaysOn) return
+    this.relinked = 0
+    this.tell('', { t: 'restart' })
+    await audit(this.env, me.id, 'restart', { detail: 'silent' })
+  }
+
+  /** The owner's Restart on a machine that is always on, which stops nothing else: `nibd`
+   *  saves every screen and starts again, ending the shells, and the link is made again. */
+  private async restartNibd(who: string | null): Promise<void> {
+    const me = await this.me()
+    if (!me || !this.link) return
+    this.tell('', { t: 'restart' })
+    await audit(this.env, me.id, 'restart', { who, detail: 'stopped' })
+  }
+
+  /** A machine whose `nibd` will not link. A container: what is on its disk snapshotted
+   *  if it still runs (the home, and the screens `nibd` saved minutes ago), the instance
+   *  stopped, and a wake from that snapshot. A server that is always on: waited for on
+   *  the alarm while its supervisor starts `nibd` again, and power-cycled if it does not
+   *  come back (`waitForNibd`). */
   private async restart(me: Me): Promise<void> {
+    if ((await this.host()).alwaysOn) {
+      await this.waitFor('recover', false)
+      return
+    }
     const restarting = (async () => {
       await this.setState('starting')
       await this.keep(me, 'awake', { screens: false, backup: false, limit: RESTART_SAVE_LIMIT })
@@ -794,6 +914,103 @@ export class Machine implements DurableObject {
     if ((await this.ctx.storage.get<MachineState>(STATE)) === 'starting') {
       await this.setState('asleep', 'restart')
     }
+  }
+
+  /** An always-on machine waited for on the alarm, `starting` meanwhile: a server
+   *  setting itself up (`boot`), or one whose `nibd` stopped answering (`recover`). */
+  private async waitFor(why: Provision['why'], rebooted: boolean): Promise<void> {
+    const now = Date.now()
+    await this.ctx.storage.put(PROVISION, { since: now, why, rebooted } satisfies Provision)
+    await this.setState('starting')
+    await this.ctx.storage.setAlarm(now + PROVISION_EVERY)
+  }
+
+  /** One look for `nibd` on an always-on machine being waited for: linked, and awake;
+   *  or, for one that stopped answering, power-cycled once it has been gone a few
+   *  minutes - its supervisor starts a `nibd` that merely ended within seconds; or,
+   *  past every limit, asleep with `restart`, which its terminals offer to try again. */
+  private async waitForNibd(): Promise<void> {
+    const me = await this.me()
+    const waiting = await this.ctx.storage.get<Provision>(PROVISION)
+    if (!me || !waiting) return
+    const now = Date.now()
+    try {
+      await this.attachLink()
+      await this.ctx.storage.delete(PROVISION)
+      await this.awoke(me, now, waiting.why === 'boot' ? 'fresh' : 'restart')
+      if (waiting.why === 'recover') await audit(this.env, me.id, 'relink')
+      return
+    } catch {
+      // Not yet: said below, once it is late.
+    }
+    const waited = now - waiting.since
+    if (waiting.why === 'recover' && !waiting.rebooted && waited >= REBOOT_AFTER) {
+      await this.powerCycle(me)
+      return
+    }
+    const limit = waiting.why === 'boot' ? FIRST_BOOT_LIMIT : REBOOT_LIMIT
+    if (waited >= limit) {
+      await this.failed(
+        me,
+        'link',
+        new Error(`nibd did not answer in ${String(Math.round(waited / MINUTE))} minutes`),
+      )
+      await this.ctx.storage.delete(PROVISION)
+      await this.setState('asleep', 'restart')
+      return
+    }
+    // Still starting, said again: a terminal waiting on a first boot's few minutes hears
+    // that it is not forgotten, and keeps waiting (lib/online/arrival.svelte.ts).
+    this.everybody({ t: 'machine', state: 'starting' })
+    await this.ctx.storage.setAlarm(now + PROVISION_EVERY)
+  }
+
+  /** The server power-cycled through its host's API, and waited for again. */
+  private async powerCycle(me: Me): Promise<void> {
+    const host = await this.host()
+    try {
+      if (!host.reboot) throw new Error('this host cannot reboot a machine')
+      await capped(host.reboot(me.id), START_LIMIT, 'reboot')
+      await audit(this.env, me.id, 'reboot')
+    } catch (error) {
+      await this.failed(me, 'start', error)
+    }
+    await this.waitFor('recover', true)
+  }
+
+  /** The admin's Reboot: an always-on machine power-cycled now, its link dropped, and
+   *  waited for as it comes back. Nothing on a host that sleeps. */
+  private async reboot(): Promise<void> {
+    const me = await this.me()
+    if (!me || !(await this.host()).alwaysOn) return
+    const link = this.link
+    this.link = null
+    try {
+      link?.close(1000, 'reboot')
+    } catch {
+      // Already closed.
+    }
+    this.everybody({ t: 'machine', state: 'starting' })
+    await this.powerCycle(me)
+  }
+
+  /** The machine moved to another host (4.15): asleep on the one it was on first - a
+   *  container saved one last time, its home backed up to R2 whatever the backup's age,
+   *  where it stays to be fetched by hand - then its row and this object pointed at the
+   *  other. Its owner's next terminal starts it there. */
+  private async move(kind: HostKind): Promise<void> {
+    const me = await this.me()
+    if (!me) return
+    this.backupNow = true
+    try {
+      await this.sleep('stopped')
+    } finally {
+      this.backupNow = false
+    }
+    await this.env.DB.prepare('update machines set host = ?2 where id = ?1').bind(me.id, kind).run()
+    await this.ctx.storage.put(HOST, kind)
+    await this.ctx.storage.delete(PROVISION)
+    this.made = null
   }
 
   /** A host call that failed, written down with why (audit.ts's `failureOf`). */
@@ -825,24 +1042,41 @@ export class Machine implements DurableObject {
 
     await this.setState('starting')
     const row = await this.env.DB.prepare(
-      'select snapshot, snapshot_at, snapshot_image, backup from machines where id = ?',
+      'select server_id, snapshot, snapshot_at, snapshot_image, backup from machines where id = ?',
     )
       .bind(me.id)
       .first<Booted>()
 
     const now = Date.now()
     const at: { step: Step } = { step: 'start' }
+    const host = await this.host()
     let from: Detail
     try {
       from = await this.boot(me, row, now, at)
     } catch (error) {
-      await this.failed(me, at.step, error)
-      await this.host.stop(me.id, 0).catch(() => undefined)
       this.link = null
+      if (error instanceof HostRefused) {
+        this.everybody({ t: 'refused', error: error.refusal })
+        await this.setState('asleep', error.refusal === 'budget' ? 'budget' : 'restart')
+        return
+      }
+      // A server that is there and not answering yet is waited for, not given up on:
+      // one just made sets itself up for minutes; one made before is power-cycled if
+      // it does not answer soon.
+      if (host.alwaysOn && at.step === 'link') {
+        await this.waitFor(row?.server_id ? 'recover' : 'boot', false)
+        return
+      }
+      await this.failed(me, at.step, error)
+      if (!host.alwaysOn) await host.stop(me.id, 0).catch(() => undefined)
       await this.setState('asleep', 'restart')
       return
     }
+    await this.awoke(me, now, from)
+  }
 
+  /** The machine linked: written down, and the minute's alarm set. */
+  private async awoke(me: Me, now: number, from: Detail): Promise<void> {
     await this.env.DB.prepare(
       `update machines set woke_at = ?2,
          snapshot_at = case when ?3 = 'snapshot' then ?2 else snapshot_at end
@@ -862,19 +1096,29 @@ export class Machine implements DurableObject {
    *  everything back in one step; or a fresh one, whose home comes back from its backup
    *  behind the wake (4.3, `restoreHome`). `at` says which step a throw came from. */
   private async boot(me: Me, row: Booted | null, now: number, at: { step: Step }): Promise<Detail> {
-    if (await this.host.running(me.id)) {
+    const host = await this.host()
+    // Always on: whatever is missing made, the server powered on if it is off, and the
+    // link to the `nibd` that has been running there all along.
+    if (host.alwaysOn) {
+      await capped(host.start(me.id, IMAGE, await this.bootEnv(me, host)), START_LIMIT, 'start')
+      at.step = 'link'
+      await this.attachLink()
+      return 'running'
+    }
+
+    if (await host.running(me.id)) {
       try {
         at.step = 'link'
         await this.attachLink()
         return 'running'
       } catch (error) {
         await this.failed(me, 'link', error)
-        await capped(this.host.stop(me.id, 0), STOP_GRACE, 'stop').catch(() => undefined)
+        await capped(host.stop(me.id, 0), STOP_GRACE, 'stop').catch(() => undefined)
       }
     }
 
     at.step = 'start'
-    const env = await this.bootEnv(me)
+    const env = await this.bootEnv(me, host)
     let from: Detail = 'fresh'
     const snapshot = row?.snapshot
     const good =
@@ -884,15 +1128,15 @@ export class Machine implements DurableObject {
       now - row.snapshot_at < SNAPSHOT_KEPT
     if (good) {
       try {
-        await capped(this.host.restore(me.id, { snapshot }), RESTORE_LIMIT, 'snapshot restore')
-        await capped(this.host.start(me.id, IMAGE, env), START_LIMIT, 'start')
+        await capped(host.restore(me.id, { snapshot }), RESTORE_LIMIT, 'snapshot restore')
+        await capped(host.start(me.id, IMAGE, env), START_LIMIT, 'start')
         from = 'snapshot'
       } catch (error) {
         await this.failed(me, 'snapshot', error)
       }
     }
     if (from !== 'snapshot') {
-      await capped(this.host.start(me.id, IMAGE, env), START_LIMIT, 'start')
+      await capped(host.start(me.id, IMAGE, env), START_LIMIT, 'start')
       if (row?.backup) {
         from = 'backup'
         this.restoring = this.restoreHome(me, row.backup)
@@ -905,10 +1149,12 @@ export class Machine implements DurableObject {
 
   /** What a new instance starts with: a new link secret, and the machine's clock in its
    *  owner's zone (4.2) - the zone their newest device that said one is in, as push keeps
-   *  it; UTC for an account none of whose devices did. */
-  private async bootEnv(me: Me): Promise<Record<string, string>> {
-    const secret = randomToken()
-    await this.ctx.storage.put(SECRET, secret)
+   *  it; UTC for an account none of whose devices did. A server that is always on keeps
+   *  the secret it was made with, which is in its own files and nowhere else. */
+  private async bootEnv(me: Me, host: MachineHost): Promise<Record<string, string>> {
+    const kept = host.alwaysOn ? await this.ctx.storage.get<string>(SECRET) : undefined
+    const secret = kept ?? randomToken()
+    if (!kept) await this.ctx.storage.put(SECRET, secret)
     const zone = await this.env.DB.prepare(
       `select zone from push_targets where user_id = ? and zone is not null
         order by created_at desc limit 1`,
@@ -924,7 +1170,7 @@ export class Machine implements DurableObject {
    *  replaced; a failed one is a line under each screen, and the fresh home stays. */
   private async restoreHome(me: Me, backup: string): Promise<void> {
     try {
-      await capped(this.host.restore(me.id, { backup }), RESTORE_LIMIT, 'restore')
+      await capped((await this.host()).restore(me.id, { backup }), RESTORE_LIMIT, 'restore')
       await audit(this.env, me.id, 'restore', { detail: 'backup' })
     } catch (error) {
       await this.failed(me, 'restore', error)
@@ -941,9 +1187,14 @@ export class Machine implements DurableObject {
     return me ? await whyNotWake(this.env, me.user, Date.now()) : 'gone'
   }
 
-  /** The minute: count what was used, ask the rows again, and decide. */
+  /** The minute: count what was used, ask the rows again, and decide. Sooner while an
+   *  always-on machine is waited for. */
   async alarm(): Promise<void> {
     const state = await this.state()
+    if (state === 'starting' && (await this.ctx.storage.get<Provision>(PROVISION))) {
+      await this.waitForNibd()
+      return
+    }
     if (state !== 'awake') return
     const me = await this.me()
     if (!me) return
@@ -981,6 +1232,8 @@ export class Machine implements DurableObject {
     // The service or the account switched off is an allowance of nothing, which the
     // rule answers `off`.
     const on = service.on && row?.online === 1
+    // Always on, and paid by the month: nothing but a kill switch puts it down.
+    if ((await this.host()).alwaysOn) return on ? null : 'off'
     const recent = (await this.ctx.storage.get<Activity[]>(RECENT)) ?? []
     const answer = awake(
       now,
@@ -1069,9 +1322,13 @@ export class Machine implements DurableObject {
     }
 
     const now = Date.now()
-    if (state === 'awake') {
+    const host = await this.host()
+    // A disk of its own needs no snapshot or backup, and a server that is always on is
+    // not stopped: put down by a kill switch, it is only unlinked.
+    const keeps = state === 'awake' && !host.alwaysOn
+    if (keeps) {
       try {
-        const snapshot = await capped(this.host.snapshot(me.id), how.limit, 'snapshot')
+        const snapshot = await capped(host.snapshot(me.id), how.limit, 'snapshot')
         await this.env.DB.prepare(
           'update machines set snapshot = ?2, snapshot_at = ?3, snapshot_image = ?4 where id = ?1',
         )
@@ -1086,9 +1343,10 @@ export class Machine implements DurableObject {
     const row = await this.env.DB.prepare('select backup_at, backup_key from machines where id = ?')
       .bind(me.id)
       .first<{ backup_at: number | null; backup_key: string | null }>()
-    if (how.backup && state === 'awake' && (row?.backup_at ?? 0) < now - BACKUP_EVERY) {
+    const due = this.backupNow || (row?.backup_at ?? 0) < now - BACKUP_EVERY
+    if (how.backup && keeps && due) {
       try {
-        const record = await capped(this.host.backup(me.id, HOME), how.limit, 'backup')
+        const record = await capped(host.backup(me.id, HOME), how.limit, 'backup')
         const key = keyOf(record)
         await this.env.DB.prepare(
           'update machines set backup = ?2, backup_key = ?3, backup_at = ?4 where id = ?1',
@@ -1110,7 +1368,7 @@ export class Machine implements DurableObject {
       // Already closed.
     }
     try {
-      await capped(this.host.stop(me.id, STOP_GRACE), STOP_GRACE + 15_000, 'stop')
+      if (!host.alwaysOn) await capped(host.stop(me.id, STOP_GRACE), STOP_GRACE + 15_000, 'stop')
     } catch (error) {
       await this.failed(me, 'stop', error)
     }
@@ -1123,16 +1381,23 @@ export class Machine implements DurableObject {
     if (!me) return
     const now = Date.now()
     const from = (await this.ctx.storage.get<number>(METERED)) ?? now
-    const host = await this.host.usage(me.id, from).catch(() => ({ cpuS: 0, egressBytes: 0 }))
+    const host = await this.host()
+    const said = await host.usage(me.id, from).catch(() => ({ cpuS: 0, egressBytes: 0 }))
     const used = {
       awakeS: Math.max(0, (now - from) / 1000),
-      cpuS: Math.max(host.cpuS, this.pending.cpuS),
-      egressBytes: Math.max(host.egressBytes, this.pending.egressBytes),
+      cpuS: Math.max(said.cpuS, this.pending.cpuS),
+      egressBytes: Math.max(said.egressBytes, this.pending.egressBytes),
     }
     const home = this.pending.homeBytes
     this.pending = { cpuS: 0, egressBytes: 0, homeBytes: -1 }
-    await meter(this.env, me.user, now, used)
+    // A server's month is its price, whatever it did (budget.ts); a container's is metered.
+    if (!host.alwaysOn) await meter(this.env, me.user, now, used)
     await this.ctx.storage.put(METERED, now)
+    if (this.disk) {
+      await this.env.DB.prepare('update machines set disk_used = ?2, disk_total = ?3 where id = ?1')
+        .bind(me.id, this.disk.used, this.disk.total)
+        .run()
+    }
     if (home >= 0) {
       await this.env.DB.prepare('update machines set home_bytes = ?2 where id = ?1')
         .bind(me.id, home)
@@ -1213,8 +1478,12 @@ export class Machine implements DurableObject {
     }
   }
 
-  private async erase(): Promise<Response> {
+  /** The machine gone for good: its sockets, its link, its instance or its server with
+   *  everything made for it, and the object's storage. A server that could not be deleted
+   *  yet answers 503, and the account's leftovers ask again tomorrow. */
+  private async erase(id: string | null): Promise<Response> {
     const me = await this.me()
+    const machine = me?.id ?? id
     for (const socket of this.ctx.getWebSockets()) socket.close(1008, 'no longer a machine')
     try {
       this.link?.close(1000, 'erased')
@@ -1222,7 +1491,19 @@ export class Machine implements DurableObject {
       // Already closed.
     }
     this.link = null
-    if (me) await this.host.stop(me.id, 0).catch(() => undefined)
+    if (machine) {
+      const host = await this.host()
+      if (!host.alwaysOn) await host.stop(machine, 0).catch(() => undefined)
+      try {
+        if (host.remove) await host.remove(machine)
+        // Whatever kind it was last known as, a server labelled with it is looked for
+        // wherever Hetzner is set up: a machine that moved leaves nothing behind.
+        else if (!this.given) await hostOf('hetzner', this.ctx, this.env).remove?.(machine)
+      } catch (error) {
+        note(`machine ${machine} erase`, error, null)
+        return new Response('the server is still there', { status: 503 })
+      }
+    }
     await this.ctx.storage.deleteAlarm()
     await this.ctx.storage.deleteAll()
     return new Response(null, { status: 204 })
@@ -1238,7 +1519,10 @@ export class Machine implements DurableObject {
     const kept = (await this.ctx.storage.get<MachineState>(STATE)) ?? 'asleep'
     // A deploy or eviction mid-sleep or mid-wake leaves `stopping` or `starting` behind
     // with nothing in this instance finishing it.
-    const orphan = (kept === 'stopping' && !this.sleeping) || (kept === 'starting' && !this.waking)
+    // An always-on machine waited for on the alarm is starting with nothing running here.
+    const orphan =
+      (kept === 'stopping' && !this.sleeping) ||
+      (kept === 'starting' && !this.waking && !(await this.ctx.storage.get(PROVISION)))
     if (orphan) {
       await this.ctx.storage.put(STATE, 'asleep')
       return 'asleep'

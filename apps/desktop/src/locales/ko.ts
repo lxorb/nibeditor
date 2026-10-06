@@ -2092,5 +2092,10 @@ export const ko: Dictionary = {
   CPU: 'CPU',
   Home: '홈',
   Web: '웹',
+  Restart: '다시 시작',
+  Disk: '디스크',
+  'Your machine’s disk is almost full': '머신의 디스크가 거의 가득 찼습니다',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '월 {price}',
   'Starts again {date}': '{date}에 초기화',
 }

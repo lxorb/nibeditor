@@ -2124,5 +2124,10 @@ export const pa: Dictionary = {
   CPU: 'CPU',
   Home: 'ਹੋਮ ਫੋਲਡਰ',
   Web: 'ਵੈੱਬ',
+  Restart: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
+  Disk: 'ਡਿਸਕ',
+  'Your machine’s disk is almost full': 'ਤੁਹਾਡੀ ਮਸ਼ੀਨ ਦੀ ਡਿਸਕ ਲਗਭਗ ਭਰ ਗਈ ਹੈ',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} ਪ੍ਰਤੀ ਮਹੀਨਾ',
   'Starts again {date}': '{date} ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗਾ',
 }

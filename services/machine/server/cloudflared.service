@@ -1,0 +1,20 @@
+# The machine's one way in (docs/online-terminal.md 4.15): a Cloudflare Tunnel dialled
+# out to Cloudflare, so the server's firewall lets nothing in at all. Its token is this
+# machine's tunnel's alone, written by cloud-init into a file only root reads.
+[Unit]
+Description=Cloudflare Tunnel to nibd
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/cloudflared/env
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/cloudflared/env
+ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run
+Restart=always
+RestartSec=5
+OOMScoreAdjust=-900
+
+[Install]
+WantedBy=multi-user.target

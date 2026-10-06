@@ -50,7 +50,40 @@ describe("the account's answer about the machine", () => {
 
   test('reads as the machine and the month', () => {
     const { resetAt, ...rest } = month
-    expect(onlineOf(month)).toEqual({ ...rest, resets: resetAt })
+    expect(onlineOf(month)).toEqual({
+      ...rest,
+      machine: { ...rest.machine, host: 'cloudflare', server: null, disk: null },
+      resets: resetAt,
+    })
+  })
+
+  /** A server of its own (4.15): what it is, what it costs, and how full its disk is. */
+  test('with the server under it and its disk', () => {
+    const server = {
+      type: 'cx43',
+      cores: 8,
+      memoryGb: 16,
+      diskGb: 160,
+      price: 14.27,
+      currency: 'EUR',
+    }
+    const read = onlineOf({
+      ...month,
+      machine: { ...month.machine, host: 'hetzner', server, disk: { used: 17e9, total: 160e9 } },
+    })?.machine
+    expect(read).toEqual({
+      id: 'm1',
+      state: 'asleep',
+      held: false,
+      host: 'hetzner',
+      server,
+      disk: { used: 17e9, total: 160e9 },
+    })
+    const unpriced = onlineOf({
+      ...month,
+      machine: { ...month.machine, host: 'hetzner', server: { ...server, price: null } },
+    })?.machine
+    expect(unpriced?.server?.price).toBeNull()
   })
 
   test('with no machine yet', () => {

@@ -1,0 +1,18 @@
+# Claude Code and Codex in the home, installed on the first boot and brought up to date
+# on every other (agents.sh), as the user, never in the way of the terminal.
+[Unit]
+Description=Claude Code and Codex for the machine's user
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=nib
+Group=nib
+Environment=HOME=/home/nib USER=nib LOGNAME=nib LANG=C.UTF-8
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Nice=10
+ExecStart=/usr/local/bin/nib-agents
+
+[Install]
+WantedBy=multi-user.target

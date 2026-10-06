@@ -4,10 +4,14 @@
    *  starts again (docs/online-terminal.md 4.9, 4.10). A bar turns amber past 80%, which
    *  is also when a tab's mark does.
    *
+   *  A server of its own (4.15) has no allowance to meter: it is one line of what it is
+   *  and costs a month, Restart in place of Stop, and its disk, the bar that matters,
+   *  amber at 80% as every disk's is.
+   *
    *  Fetched as it is opened, never before. */
   import { readableSize as bytes } from '../usage.svelte'
   import { i18n, t } from '../i18n.svelte'
-  import { shares } from '@nib/online'
+  import { diskNear, diskShare, shares } from '@nib/online'
   import { machine } from './machine.svelte'
   import { refusalWords } from './words'
 
@@ -18,6 +22,30 @@
   const known = $derived(machine.known)
   const state = $derived(known?.machine?.state ?? null)
   const awake = $derived(state === 'awake' || state === 'starting')
+  const server = $derived(known?.machine?.host === 'hetzner')
+
+  /** Gigabytes as Hetzner counts them, whole. */
+  const gb = (value: number) => `${i18n.amount(Math.round(value))} GB`
+
+  /** What the server is and costs, one line: CX43 · 8 vCPU · 16 GB · 160 GB · €14.27 a month. */
+  const spec = $derived.by(() => {
+    const about = known?.machine?.server
+    if (!about) return null
+    const parts = [
+      about.type.toUpperCase(),
+      t('{cores} vCPU', { cores: i18n.amount(about.cores) }),
+      gb(about.memoryGb),
+      gb(about.diskGb),
+    ]
+    if (about.price !== null && about.currency) {
+      const price = new Intl.NumberFormat(i18n.language, {
+        style: 'currency',
+        currency: about.currency,
+      }).format(about.price)
+      parts.push(t('{price} a month', { price }))
+    }
+    return parts.join(' · ')
+  })
 
   const stateWords = $derived(
     state === 'awake'
@@ -35,35 +63,53 @@
 
   const share = $derived(known ? shares(known.used, known.limit) : null)
 
-  const meters = $derived(
-    known && share
+  const disk = $derived(known?.machine?.disk ?? null)
+
+  const diskMeter = $derived(
+    disk
       ? [
           {
-            label: t('Hours'),
-            share: share.awakeS,
-            near: machine.near,
-            words: `${hours(known.used.awakeS)} / ${hours(known.limit.awakeS)} h`,
-          },
-          {
-            label: t('CPU'),
-            share: share.cpuS,
-            near: false,
-            words: `${hours(known.used.cpuS)} / ${hours(known.limit.cpuS)} h`,
-          },
-          {
-            label: t('Home'),
-            share: share.homeBytes,
-            near: false,
-            words: `${bytes(known.used.homeBytes)} / ${bytes(known.limit.homeBytes)}`,
-          },
-          {
-            label: t('Web'),
-            share: share.egressBytes,
-            near: false,
-            words: `${bytes(known.used.egressBytes)} / ${bytes(known.limit.egressBytes)}`,
+            label: t('Disk'),
+            share: diskShare(disk),
+            near: diskNear(disk),
+            words: `${gb(disk.used / 1e9)} / ${gb(disk.total / 1e9)}`,
           },
         ]
       : [],
+  )
+
+  const meters = $derived(
+    server
+      ? diskMeter
+      : known && share
+        ? [
+            {
+              label: t('Hours'),
+              share: share.awakeS,
+              near: machine.near,
+              words: `${hours(known.used.awakeS)} / ${hours(known.limit.awakeS)} h`,
+            },
+            {
+              label: t('CPU'),
+              share: share.cpuS,
+              near: false,
+              words: `${hours(known.used.cpuS)} / ${hours(known.limit.cpuS)} h`,
+            },
+            {
+              label: t('Home'),
+              share: share.homeBytes,
+              near: false,
+              words: `${bytes(known.used.homeBytes)} / ${bytes(known.limit.homeBytes)}`,
+            },
+            {
+              label: t('Web'),
+              share: share.egressBytes,
+              near: false,
+              words: `${bytes(known.used.egressBytes)} / ${bytes(known.limit.egressBytes)}`,
+            },
+            ...diskMeter,
+          ]
+        : [],
   )
 
   const refusal = $derived(
@@ -82,11 +128,13 @@
         <span class="name">
           {t('Machine')}
           <small>{stateWords}</small>
+          {#if spec}<small>{spec}</small>{/if}
         </span>
         <button
           class="nib-action"
-          disabled={machine.busy || state === 'stopping'}
-          onclick={() => void machine.startStop(!awake)}>{awake ? t('Stop') : t('Start')}</button
+          disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
+          onclick={() => void machine.startStop(!awake)}
+          >{awake ? (server ? t('Restart') : t('Stop')) : t('Start')}</button
         >
       </div>
     </div>
@@ -112,7 +160,7 @@
           </div>
         </div>
       {/each}
-      {#if known}
+      {#if known && !server}
         <p class="hint">
           {t('Starts again {date}', { date: i18n.when(known.resets, { dateStyle: 'medium' }) })}
         </p>

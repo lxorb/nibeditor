@@ -2194,5 +2194,10 @@ export const uk: Dictionary = {
   CPU: 'CPU',
   Home: 'Домашня тека',
   Web: 'Мережа',
+  Restart: 'Перезапустити',
+  Disk: 'Диск',
+  'Your machine’s disk is almost full': 'Диск вашої машини майже заповнений',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} на місяць',
   'Starts again {date}': 'Оновиться {date}',
 }

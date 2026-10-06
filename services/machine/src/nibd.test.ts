@@ -14,7 +14,10 @@ afterEach(() => {
 })
 
 /** A `nibd` with no session yet, whose callbacks are answered by `call`. */
-function machine(call: (url: string) => Promise<number> = () => Promise.resolve(200)) {
+function machine(
+  call: (url: string) => Promise<number> = () => Promise.resolve(200),
+  restart?: () => void,
+) {
   const state = mkdtempSync(join(tmpdir(), 'nibd-state-'))
   const nibd = new Nibd({
     state,
@@ -27,6 +30,7 @@ function machine(call: (url: string) => Promise<number> = () => Promise.resolve(
     activityEvery: 60_000,
     homeEvery: 60_000,
     call,
+    ...(restart ? { restart } : {}),
   })
   made.push({ nibd, state })
   const said: NibdFrame[] = []
@@ -64,4 +68,22 @@ test('opens nothing with no link to say it on, or no session to say it for', () 
   attach()
   expect(nibd.open('https://a.b/', 's_1')).toBe(false)
   expect(said).toEqual([])
+})
+
+test('restart saves every screen and hands nibd to its supervisor, saying nothing', async () => {
+  let restarted = 0
+  const { nibd, said, attach } = machine(undefined, () => {
+    restarted += 1
+  })
+  attach()
+  await nibd.receive({ t: 'restart' })
+  expect(restarted).toBe(1)
+  expect(said).toEqual([])
+})
+
+test('every report says the disk the home is on', () => {
+  const { nibd } = machine()
+  const disk = nibd.activity().disk
+  expect(disk?.total).toBeGreaterThan(0)
+  expect(disk?.used).toBeLessThanOrEqual(disk?.total ?? 0)
 })

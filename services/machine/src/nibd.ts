@@ -10,7 +10,7 @@
 import type { Activity } from '@nib/online/types'
 import { isLoopbackUrl } from '@nib/online/urls'
 import type { MachineFrame, NibdFrame } from '@nib/online/wire'
-import { Meter, homeSize } from './activity'
+import { diskOf, Meter, homeSize } from './activity'
 import type { Cgroups, User } from './limits'
 import { Saves, isSessionId, type Saved } from './saves'
 import { Session } from './session'
@@ -33,6 +33,9 @@ export interface Options {
   saveEvery?: number
   /** Makes a callback's request on this machine; `fetch`, or the tests' stand-in. */
   call?: (url: string) => Promise<number>
+  /** Ends `nibd` for its supervisor to start again (systemd on a server, the entrypoint in
+   *  a container), once every screen is saved: `restart` from the link. */
+  restart?: () => void
 }
 
 /** How long a callback's request may take: a program's sign-in listener answers at
@@ -118,6 +121,11 @@ export class Nibd {
       await this.saveAll()
       return
     }
+    if (frame.t === 'restart') {
+      await this.saveAll(false)
+      this.options.restart?.()
+      return
+    }
     // Answered by the server as it arrives (server.ts); here only from a test.
     if (frame.t === 'ping') {
       this.send({ t: 'pong' })
@@ -188,7 +196,8 @@ export class Nibd {
     const { cpu, net } = this.meter.since(now)
     let output = 0
     for (const session of this.sessions.values()) output += session.taken()
-    return { at: now, output, cpu, net, homeBytes: this.homeBytes }
+    const disk = diskOf(this.options.home)
+    return { at: now, output, cpu, net, homeBytes: this.homeBytes, ...(disk ? { disk } : {}) }
   }
 
   private report(): void {

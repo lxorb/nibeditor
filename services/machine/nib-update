@@ -1,0 +1,25 @@
+#!/bin/bash
+# nibd as the Worker hands it out now, put in place before every start of nibd on a
+# server of its own (docs/online-terminal.md 4.15; nibd.service's ExecStartPre). The
+# Worker serves the bundle it was deployed with and says its SHA-256; the bundle is
+# fetched, checked against it, and its files installed (install.sh --files). Never in
+# the way: anything that fails leaves the nibd that is there, and nibd starts.
+set -euo pipefail
+[ -r /etc/nib/machine ] || exit 0
+# shellcheck source=/dev/null
+. /etc/nib/machine
+[ -n "${NIB_ORIGIN:-}" ] || exit 0
+
+sha=$(curl -fsS --max-time 10 "$NIB_ORIGIN/v2/online/machine/current" || true)
+[[ "$sha" =~ ^[0-9a-f]{64}$ ]] || exit 0
+[ "$sha" = "$(cat /opt/nibd/bundle 2>/dev/null || true)" ] && exit 0
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+curl -fsS --max-time 120 -o "$work/machine.bin" "$NIB_ORIGIN/v2/online/machine/$sha.bin"
+echo "$sha  $work/machine.bin" | sha256sum -c --quiet -
+mkdir "$work/bundle"
+tar -xzf "$work/machine.bin" -C "$work/bundle"
+bash "$work/bundle/install.sh" --files
+echo "$sha" >/opt/nibd/bundle
+echo "nib-update: nibd is now ${sha:0:12}"

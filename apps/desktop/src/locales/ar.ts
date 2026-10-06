@@ -2225,5 +2225,10 @@ export const ar: Dictionary = {
   CPU: 'CPU',
   Home: 'المجلد الرئيسي',
   Web: 'الويب',
+  Restart: 'إعادة التشغيل',
+  Disk: 'القرص',
+  'Your machine’s disk is almost full': 'قرص جهازك ممتلئ تقريبًا',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} شهريًا',
   'Starts again {date}': 'يبدأ من جديد {date}',
 }

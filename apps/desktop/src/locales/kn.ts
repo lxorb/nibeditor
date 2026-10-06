@@ -2137,5 +2137,10 @@ export const kn: Dictionary = {
   CPU: 'CPU',
   Home: 'ಹೋಮ್ ಫೋಲ್ಡರ್',
   Web: 'ವೆಬ್',
+  Restart: 'ಮರುಪ್ರಾರಂಭಿಸಿ',
+  Disk: 'ಡಿಸ್ಕ್',
+  'Your machine’s disk is almost full': 'ನಿಮ್ಮ ಯಂತ್ರದ ಡಿಸ್ಕ್ ಬಹುತೇಕ ತುಂಬಿದೆ',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'ತಿಂಗಳಿಗೆ {price}',
   'Starts again {date}': '{date} ರಂದು ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತದೆ',
 }

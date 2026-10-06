@@ -2103,5 +2103,10 @@ export const my: Dictionary = {
   CPU: 'CPU',
   Home: 'ပင်မ ဖိုင်တွဲ',
   Web: 'ဝဘ်',
+  Restart: 'ပြန်စတင်ရန်',
+  Disk: 'ဒစ်',
+  'Your machine’s disk is almost full': 'သင့်စက်၏ ဒစ် ပြည့်လုနီးပါးဖြစ်နေသည်',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'တစ်လ {price}',
   'Starts again {date}': '{date} တွင် ပြန်စမည်',
 }

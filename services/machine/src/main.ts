@@ -14,6 +14,8 @@ import { serve } from './server'
 import { watch } from './watchdog'
 
 const PORT = 7680
+/** The code `nibd` ends with when asked to restart: EX_TEMPFAIL, "try again". */
+const RESTART = 75
 
 /** What every shell is given from `nibd`'s environment: the language, the time zone, and
  *  the certificates the entrypoint put in place for the host's HTTPS (4.2, 4.8). */
@@ -75,6 +77,11 @@ function main(): void {
     activityEvery: numberOf(env.NIBD_ACTIVITY_MS, 30_000),
     homeEvery: numberOf(env.NIBD_HOME_MS, 60 * 60_000),
     saveEvery: numberOf(env.NIBD_SAVE_MS, 5 * 60_000),
+    // Not 0, which both supervisors read as "asked to stop": started again at once.
+    restart: () => {
+      nibd.stop()
+      process.exit(RESTART)
+    },
   })
   watch()
 

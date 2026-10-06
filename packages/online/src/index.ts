@@ -2,6 +2,8 @@ export type {
   Activity,
   Allowance,
   AwakeAnswer,
+  Disk,
+  HostKind,
   MachineHost,
   MachineState,
   SleepReason,
@@ -12,6 +14,7 @@ export type {
   Watcher,
 } from './types'
 export { ACTIVITY_EVERY_MS, awake, IDLE_MS, OFF } from './awake'
+export { diskFull, diskNear, diskShare } from './disk'
 export { sizeOf } from './size'
 export { mayType } from './typing'
 export { TERM_EXTENSION, termOf, termText } from './term'

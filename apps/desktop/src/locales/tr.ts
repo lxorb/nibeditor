@@ -2125,5 +2125,10 @@ export const tr: Dictionary = {
   CPU: 'CPU',
   Home: 'Ev dizini',
   Web: 'Web',
+  Restart: 'Yeniden başlat',
+  Disk: 'Disk',
+  'Your machine’s disk is almost full': 'Makinenizin diski neredeyse dolu',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'Aylık {price}',
   'Starts again {date}': '{date} tarihinde yenilenir',
 }

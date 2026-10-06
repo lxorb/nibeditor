@@ -180,10 +180,11 @@ export type ServerFrame =
   | { t: 'note'; note: Note }
 
 /** Something worth one line under the screen: `restore`, the home could not be put back
- *  from its backup, so this wake has the image's fresh one. */
-export type Note = 'restore'
+ *  from its backup, so this wake has the image's fresh one; `disk`, the machine's disk
+ *  is nearly full (`diskFull`), which is how a machine froze on 2026-10-06. */
+export type Note = 'restore' | 'disk'
 
-const NOTES: readonly Note[] = ['restore']
+const NOTES: readonly Note[] = ['restore', 'disk']
 
 /** A text frame of either side, as it goes on the socket. */
 export function text(value: ClientFrame | ServerFrame): string {
@@ -223,6 +224,9 @@ export type MachineFrame =
   | { t: 'callback'; session: string; url: string }
   /** Are you there: answered with `pong` at once. */
   | { t: 'ping' }
+  /** Every screen saved, then `nibd` ends itself for its supervisor to start again: the
+   *  owner's Restart, and the health path's answer to a `nibd` that keeps going quiet. */
+  | { t: 'restart' }
 
 /** What `nibd` tells `Machine`: output from an offset; a whole screen; the program in
  *  front; a shell that ended; the last 30 seconds' activity; that every screen is
@@ -360,10 +364,13 @@ function personOf(value: unknown): Person | null {
 
 function activityOf(value: unknown): Activity | null {
   if (!isRecord(value)) return null
-  const { at, output, cpu, net, homeBytes } = value
+  const { at, output, cpu, net, homeBytes, disk } = value
   if (!isTime(at) || !isCount(output) || !isCount(net) || !isCount(homeBytes)) return null
   if (typeof cpu !== 'number' || !Number.isFinite(cpu) || cpu < 0) return null
-  return { at, output, cpu, net, homeBytes }
+  if (disk === undefined) return { at, output, cpu, net, homeBytes }
+  // Said by a `nibd` new enough to: the disk, or nothing of it where it does not read.
+  if (!isRecord(disk) || !isCount(disk.used) || !isCount(disk.total)) return null
+  return { at, output, cpu, net, homeBytes, disk: { used: disk.used, total: disk.total } }
 }
 
 /** A text frame from the app, as `Machine` reads it. */
@@ -456,7 +463,7 @@ export function serverFrameOf(raw: string): ServerFrame | null {
 export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
-  if (value.t === 'sleep' || value.t === 'ping') return { t: value.t }
+  if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart') return { t: value.t }
 
   const { session } = value
   if (!isId(session)) return null

@@ -1,0 +1,35 @@
+# nibd on a server of its own (docs/online-terminal.md 4.15): started at boot, started
+# again whenever it ends - a crash, the kernel's OOM killer, its own watchdog
+# (src/watchdog.ts), or the Restart the owner or the health path asks for - and brought
+# up to date with the Worker's own build first (nib-update). Never given up on: the
+# Machine object decides when a server needs more than this (a reboot).
+[Unit]
+Description=nibd, the online terminal's sessions
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# The link's secret and the time zone, written by cloud-init, root's alone.
+EnvironmentFile=/etc/nibd/env
+# Reached only through cloudflared on this machine; nothing listens outside it.
+Environment=NIBD_HOST=127.0.0.1 LANG=C.UTF-8 LC_ALL=C.UTF-8
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStartPre=-/usr/local/bin/nib-update
+ExecStart=/usr/local/bin/node /opt/nibd/nibd.cjs
+Restart=always
+RestartSec=2
+# The screens are saved on SIGTERM; nibd's own cap is eight seconds.
+KillMode=mixed
+TimeoutStopSec=15
+# The kernel ends a session's build before it ends what answers for the machine. The
+# sessions' own memory ceiling is nibd's cgroup fence (src/limits.ts).
+OOMScoreAdjust=-900
+RuntimeDirectory=nibd
+RuntimeDirectoryMode=0755
+StateDirectory=nibd
+StateDirectoryMode=0700
+
+[Install]
+WantedBy=multi-user.target

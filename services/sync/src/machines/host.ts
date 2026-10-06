@@ -13,7 +13,10 @@
  *  docs/online-terminal-live.md. */
 
 import type { Env } from '../types'
-import type { MachineHost } from '@nib/online'
+import type { HostKind, MachineHost } from '@nib/online'
+import { mayCost } from './budget'
+import { HetznerHost, setupOf } from './hetzner-host'
+import { serviceOf } from './service'
 
 /** The port `nibd` listens on in the machine, and the path its link answers. */
 const NIBD_PORT = 7680
@@ -36,7 +39,7 @@ const SMALL_INSTANCE = 'standard-1' as const
 export const SECRET = 'secret'
 
 /** The SDK's directory backups, as the host needs them; see entry.ts. */
-export interface Backups {
+interface Backups {
   /** Routes the container's backup traffic to the gateway; before any other intercept. */
   intercept(): Promise<void>
   /** Answers the backup's record, serialised. */
@@ -80,7 +83,7 @@ function egressOf(env: Env): Egress {
 }
 
 /** The host over `ctx.container`. Ids are the object's own: one container per object. */
-export class ContainerHost implements MachineHost {
+class ContainerHost implements MachineHost {
   /** A snapshot to boot the next start from, set by `restore`. */
   private boot: string | null = null
   private backups: Backups | null = null
@@ -266,6 +269,19 @@ export class DevHost implements MachineHost {
   usage(): Promise<{ cpuS: number; egressBytes: number }> {
     return Promise.resolve({ cpuS: 0, egressBytes: 0 })
   }
+}
+
+/** The host a machine of this kind runs on: a dev `nibd` where `.dev.vars` names one, a
+ *  Hetzner server (4.15), or a Cloudflare container. */
+export function hostOf(kind: HostKind, ctx: DurableObjectState, env: Env): MachineHost {
+  const dev = DevHost.of(env)
+  if (dev) return dev
+  if (kind === 'hetzner') {
+    const budget = async (monthly: number, currency: string) =>
+      await mayCost(env, (await serviceOf(env)).ceiling, Date.now(), monthly, currency)
+    return new HetznerHost(env, ctx.storage, setupOf(env, budget))
+  }
+  return new ContainerHost(ctx, env)
 }
 
 function wait(ms: number): Promise<void> {

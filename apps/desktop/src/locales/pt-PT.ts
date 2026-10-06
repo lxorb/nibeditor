@@ -2168,5 +2168,10 @@ export const ptPT: Dictionary = {
   CPU: 'CPU',
   Home: 'Pasta pessoal',
   Web: 'Web',
+  Restart: 'Reiniciar',
+  Disk: 'Disco',
+  'Your machine’s disk is almost full': 'O disco da sua máquina está quase cheio',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} por mês',
   'Starts again {date}': 'Renova a {date}',
 }

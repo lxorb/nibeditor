@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`cloud-init > as a server gets it, its secrets redacted 1`] = `
+"#cloud-config
+# A nib online terminal machine (docs/online-terminal.md 4.15).
+hostname: nib
+disable_root: true
+ssh_pwauth: false
+package_update: true
+package_upgrade: true
+write_files:
+  - path: /etc/nibd/env
+    owner: root:root
+    permissions: '0600'
+    content: |
+      NIBD_SECRET=<nibd secret>
+      TZ=Europe/Zurich
+  - path: /etc/cloudflared/env
+    owner: root:root
+    permissions: '0600'
+    content: |
+      TUNNEL_TOKEN=<tunnel token>
+  - path: /etc/nib/machine
+    owner: root:root
+    permissions: '0644'
+    content: |
+      NIB_ORIGIN=https://nibeditor.com
+runcmd:
+  - [bash, -c, "set -euo pipefail; curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin https://nibeditor.com/v2/online/machine/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin; echo 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  /root/machine.bin' | sha256sum -c -; mkdir -p /root/machine /opt/nibd; tar -xzf /root/machine.bin -C /root/machine; echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >/opt/nibd/bundle; bash /root/machine/install.sh --server; rm -rf /root/machine /root/machine.bin; rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i"]
+"
+`;

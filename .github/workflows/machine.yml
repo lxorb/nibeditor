@@ -83,3 +83,98 @@ jobs:
         run: |
           cat machine.log || true
           tail -n 200 trace.log || true
+
+  # A Hetzner machine's setup (docs/online-terminal.md 4.15) on a fresh x86 Ubuntu, as its
+  # cloud-init runs it: the bundle the Worker carries, unpacked, and install.sh --server
+  # as root. Then nibd answering on the loopback alone under systemd, started again when
+  # it ends, Claude Code and Codex in the user's home with their makers' checksums, and
+  # the hardening in place. No cloud: the tunnel's unit stays off without its token.
+  server:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: nibd and the bundle
+        run: pnpm --filter @nib/machine build
+
+      - name: Installed as cloud-init installs it
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/bundle"
+          mkdir -p "$bundle"
+          tar -xzf services/machine/dist/machine.bin -C "$bundle"
+          sudo install -d -m 755 /etc/nibd
+          printf 'NIBD_SECRET=ci-secret\nTZ=Europe/Zurich\n' | sudo tee /etc/nibd/env >/dev/null
+          sudo chmod 600 /etc/nibd/env
+          sudo bash "$bundle/install.sh" --server
+
+      - name: nibd answers, on the loopback alone, and comes back when it ends
+        run: |
+          set -euo pipefail
+          health() { curl -fs --max-time 3 http://127.0.0.1:7680/health >/dev/null; }
+          for _ in $(seq 1 30); do health && break; sleep 1; done
+          health
+          link() {
+            curl -s -o /dev/null -w '%{http_code}' --max-time 3 \
+              -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
+              -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' "$@" http://127.0.0.1:7680/link || true
+          }
+          [ "$(link)" = 401 ]
+          [ "$(link -H 'Authorization: Bearer ci-secret')" = 101 ]
+          outside=$(hostname -I | awk '{print $1}')
+          ! curl -fs --max-time 3 "http://$outside:7680/health"
+          before=$(systemctl show -p MainPID --value nibd)
+          sudo kill -KILL "$before"
+          for _ in $(seq 1 30); do
+            sleep 1
+            now=$(systemctl show -p MainPID --value nibd)
+            [ "$now" != 0 ] && [ "$now" != "$before" ] && health && break
+          done
+          [ "$(systemctl show -p MainPID --value nibd)" != "$before" ]
+          health
+          echo "nibd started again by systemd"
+
+      - name: Claude Code and Codex, checked against their makers'
+        run: |
+          set -euo pipefail
+          sudo systemctl start nib-agents.service
+          sudo -u nib -i bash -lc '
+            set -euo pipefail
+            claude --version
+            codex --version
+            version=$(claude --version | cut -d" " -f1)
+            expected=$(curl -fsSL "https://downloads.claude.ai/claude-code-releases/$version/manifest.json" |
+              jq -r ".platforms[\"linux-x64\"].checksum")
+            actual=$(sha256sum "$(readlink -f ~/.local/bin/claude)" | cut -d" " -f1)
+            [ "$expected" = "$actual" ]
+            echo "claude $version: $actual"
+          '
+
+      - name: Hardened
+        run: |
+          set -euo pipefail
+          sudo sshd -T | grep -qx 'permitrootlogin no'
+          sudo sshd -T | grep -qx 'passwordauthentication no'
+          grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
+          grep -q 'Automatic-Reboot "false"' /etc/apt/apt.conf.d/52nib-upgrades
+          swapon --show=NAME --noheadings | grep -q swap
+          systemctl is-enabled nibd cloudflared nib-agents
+          [ "$(sudo passwd -S root | cut -d' ' -f2)" = L ]
+          [ "$(stat -c %a /etc/nibd/env)" = 600 ]
+          cloudflared --version
+
+      - name: What the machine said
+        if: failure()
+        run: sudo journalctl -u nibd -u nib-agents -u cloudflared --no-pager | tail -n 300

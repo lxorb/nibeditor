@@ -6,16 +6,38 @@
  *  Read rather than trusted, as every answer from the service is checked into its type
  *  or into null. */
 
-import { type Allowance, type MachineState, type Term, termOf } from '@nib/online'
+import {
+  type Allowance,
+  type Disk,
+  type HostKind,
+  type MachineState,
+  type Term,
+  termOf,
+} from '@nib/online'
 import { account } from '../account.svelte'
 import { ApiError, request } from '../api'
 import { isNumber, isRecord, isString } from '../stored'
+
+/** The server under a machine that is always on (4.15): its type, cores, memory and disk
+ *  in GB, and what it costs a month, as Hetzner said them when it was made. */
+interface ServerInfo {
+  type: string
+  cores: number
+  memoryGb: number
+  diskGb: number
+  price: number | null
+  currency: string | null
+}
 
 interface MachineInfo {
   id: string
   state: MachineState
   /** Stopped by a flag, until it is let go (4.8). */
   held: boolean
+  host: HostKind
+  server: ServerInfo | null
+  /** The disk the home is on, as nibd last said it; null before it has. */
+  disk: Disk | null
 }
 
 /** Everything Settings and the tab ask about: whether the account may have a machine at
@@ -44,10 +66,37 @@ function allowanceOf(value: unknown): Allowance | null {
   return { awakeS, cpuS, homeBytes, egressBytes }
 }
 
+function serverOf(value: unknown): ServerInfo | null {
+  if (!isRecord(value) || !isString(value.type)) return null
+  const { cores, memoryGb, diskGb, price, currency } = value
+  if (!isNumber(cores) || !isNumber(memoryGb) || !isNumber(diskGb)) return null
+  return {
+    type: value.type,
+    cores,
+    memoryGb,
+    diskGb,
+    price: isNumber(price) ? price : null,
+    currency: isString(currency) ? currency : null,
+  }
+}
+
+function diskOf(value: unknown): Disk | null {
+  if (!isRecord(value) || !isNumber(value.used) || !isNumber(value.total)) return null
+  return { used: value.used, total: value.total }
+}
+
 function machineOf(value: unknown): MachineInfo | null {
   if (!isRecord(value) || !isString(value.id)) return null
   const state = STATES.find((one) => one === value.state)
-  return state ? { id: value.id, state, held: value.held === true } : null
+  if (!state) return null
+  return {
+    id: value.id,
+    state,
+    held: value.held === true,
+    host: value.host === 'hetzner' ? 'hetzner' : 'cloudflare',
+    server: serverOf(value.server),
+    disk: diskOf(value.disk),
+  }
 }
 
 /** The account's answer to `GET /v2/online/machine`, or null for one that does not read. */
@@ -105,7 +154,7 @@ export async function termSession(term: string | null): Promise<Term> {
   return found
 }
 
-/** Start or Stop. */
+/** Start or Stop; on a machine that is always on, Stop is Restart (4.15). */
 export async function startStop(start: boolean): Promise<void> {
   await request<unknown>(`/v2/online/machine/${start ? 'start' : 'stop'}`, {
     method: 'POST',

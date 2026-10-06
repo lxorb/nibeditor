@@ -2080,5 +2080,10 @@ export const th: Dictionary = {
   CPU: 'CPU',
   Home: 'โฟลเดอร์โฮม',
   Web: 'เว็บ',
+  Restart: 'เริ่มใหม่',
+  Disk: 'ดิสก์',
+  'Your machine’s disk is almost full': 'ดิสก์ของเครื่องคุณใกล้เต็มแล้ว',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} ต่อเดือน',
   'Starts again {date}': 'เริ่มใหม่ {date}',
 }

@@ -20,6 +20,15 @@ const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'
 const READER = 'reader@example.com'
 
+/** What a Worker set up for Hetzner machines has (4.15); the values are never used, since
+ *  every host here is a fake. */
+const HETZNER = {
+  HETZNER_TOKEN: 'hetzner-token',
+  MACHINE_TUNNEL_TOKEN: 'tunnel-token',
+  CF_ACCOUNT_ID: 'account',
+  CF_ZONE_ID: 'zone',
+}
+
 let env: TestEnv
 let door: ReturnType<typeof doorway>
 
@@ -101,7 +110,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(Date.UTC(2026, 9, 5, 12))
   door = doorway()
-  env = testEnv({ MACHINES: door.MACHINES })
+  env = testEnv({ MACHINES: door.MACHINES, ...HETZNER })
 })
 
 afterEach(() => {
@@ -1052,6 +1061,402 @@ describe('a machine', () => {
     await askMachine(placed, ID, 'state')
     expect(asked).toEqual([`eu ${ID}`])
     placed.close()
+  })
+})
+
+describe('a machine on a server of its own', () => {
+  const ID = 'm_server'
+  let user: string
+  let owner: string
+
+  beforeEach(async () => {
+    ;({ owner } = await world())
+    serviceOn()
+    allow(OWNER)
+    user = idOf(OWNER)
+    env.db
+      .prepare(
+        `insert into machines (id, user_id, created_at, host, server_id, price_month, price_currency)
+         values (?, ?, 1, 'hetzner', 77, 14.5, 'EUR')`,
+      )
+      .run(ID, user)
+    env.db
+      .prepare(
+        `insert into term_sessions (term, machine, session, user_id, created_at)
+         values ('term-1', ?, 'session-1', ?, 1)`,
+      )
+      .run(ID, user)
+  })
+
+  function clock() {
+    const now = Date.now()
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    })
+    vi.setSystemTime(now)
+  }
+
+  async function server() {
+    const running = await machine(env, ID, user)
+    running.host.alwaysOn = true
+    return running
+  }
+
+  const events = () =>
+    (
+      env.db
+        .prepare('select kind, detail from machine_events where machine = ? order by id')
+        .all(ID) as { kind: string; detail: string | null }[]
+    ).map((one) => (one.detail ? `${one.kind} ${one.detail}` : one.kind))
+
+  test('never sleeps, and keeps no snapshot, backup or meter of its own', async () => {
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(await running.machine.state()).toBe('awake')
+
+    // Nobody here and nothing working for an hour: a container would have slept.
+    socket.close()
+    for (let minute = 1; minute <= 60; minute++) {
+      vi.setSystemTime(Date.now() + 60_000)
+      await fire(running)
+    }
+    expect(await running.machine.state()).toBe('awake')
+    expect(running.host.calls).toEqual(['start machine', 'link'])
+    expect(env.db.prepare('select * from machine_usage where user_id = ?').all(user)).toEqual([])
+  })
+
+  test('a kill switch unlinks it and leaves the server as it is', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    env.db.prepare("update online_service set value = 'off' where key = 'online'").run()
+    vi.setSystemTime(Date.now() + 60_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('asleep')
+    expect(running.host.calls).toEqual(['start machine', 'link'])
+    expect(running.host.link_?.closed).toBe(true)
+  })
+
+  test('a server still setting itself up is waited for on the alarm, then awake', async () => {
+    env.db.prepare('update machines set server_id = null where id = ?').run(ID)
+    const running = await server()
+    running.host.failLinks = 3
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(await running.machine.state()).toBe('starting')
+    expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'starting' })
+
+    for (let tries = 0; tries < 3; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+    expect(await running.machine.state()).toBe('awake')
+    expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link', 'link', 'link'])
+    expect(events()).toContain('wake fresh')
+    expect(events().filter((one) => one.startsWith('failed'))).toEqual([])
+  })
+
+  test('a server that never comes up says so after twenty minutes', async () => {
+    env.db.prepare('update machines set server_id = null where id = ?').run(ID)
+    const running = await server()
+    running.host.failLinks = 1000
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    for (let tries = 0; tries <= 120 && (await running.machine.state()) === 'starting'; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+    expect(await running.machine.state()).toBe('asleep')
+    expect(socket.of('machine').at(-1)).toEqual({
+      t: 'machine',
+      state: 'asleep',
+      reason: 'restart',
+    })
+    expect(running.host.calls).not.toContain('reboot')
+  })
+
+  test('one made before that does not answer its wake is power-cycled', async () => {
+    const running = await server()
+    running.host.failLinks = 1000
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(await running.machine.state()).toBe('starting')
+    for (let tries = 0; tries < 18; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+    expect(running.host.calls).toContain('reboot')
+    running.host.failLinks = 0
+    vi.setSystemTime(Date.now() + 10_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('awake')
+  })
+
+  test('the health path: a nibd that keeps going quiet is restarted through its link', async () => {
+    clock()
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
+
+    // Quiet once: linked again, nothing restarted.
+    const first = running.host.link_
+    if (first) first.silent = true
+    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
+    expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(false)
+
+    // Quiet again a minute later: the fresh link carries a restart.
+    const second = running.host.link_
+    if (second) second.silent = true
+    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link', 'link'])
+    expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(true)
+    expect(events()).toEqual(expect.arrayContaining(['relink', 'restart silent']))
+    expect(await running.machine.state()).toBe('awake')
+  })
+
+  test('a nibd that will not link is waited for, then the server power-cycled', async () => {
+    clock()
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    if (running.host.link_) running.host.link_.silent = true
+    running.host.failLinks = 1000
+    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    expect(await running.machine.state()).toBe('starting')
+    // No snapshot, no stop: the server keeps everything while it is waited for.
+    expect(running.host.calls).not.toContain('snapshot')
+    expect(running.host.calls).not.toContain('stop')
+
+    for (let tries = 0; tries < 18; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+    expect(running.host.calls).toContain('reboot')
+    expect(events()).toContain('reboot')
+
+    running.host.failLinks = 0
+    vi.setSystemTime(Date.now() + 10_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('awake')
+    const states = socket.of('machine').map((one) => one.state)
+    expect(states.slice(states.indexOf('awake') + 1)).not.toContain('asleep')
+  })
+
+  test('its owner’s Stop is Restart: nibd starts again, the server stays', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    door.asked.length = 0
+    const answer = await call(env, '/v2/online/machine/stop', { token: owner, body: {} })
+    expect(answer.status).toBe(200)
+    expect(door.asked.at(-1)?.headers.get('x-nib-machine')).toBe('restart')
+
+    await running.machine.fetch(
+      new Request('https://machine.invalid/restart', {
+        headers: { 'x-nib-machine': 'restart', 'x-nib-who': user },
+      }),
+    )
+    expect(running.host.link_?.sent.at(-1)).toEqual({ t: 'restart' })
+    expect(await running.machine.state()).toBe('awake')
+  })
+
+  test('the admin’s Reboot power-cycles it and waits for it', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await running.machine.fetch(
+      new Request('https://machine.invalid/reboot', { headers: { 'x-nib-machine': 'reboot' } }),
+    )
+    expect(running.host.calls.at(-1)).toBe('reboot')
+    expect(await running.machine.state()).toBe('starting')
+    vi.setSystemTime(Date.now() + 10_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('awake')
+  })
+
+  test('a disk nearly full is said under every screen, and to whoever joins', async () => {
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const activity = (used: number) => ({
+      at: Date.now(),
+      output: 0,
+      cpu: 0,
+      net: 0,
+      homeBytes: 1,
+      disk: { used, total: 160e9 },
+    })
+    await nibd(running, { t: 'activity', activity: activity(100e9) })
+    expect(socket.of('note')).toEqual([])
+    await nibd(running, { t: 'activity', activity: activity(150e9) })
+    await nibd(running, { t: 'activity', activity: activity(151e9) })
+    expect(socket.of('note')).toEqual([{ t: 'note', note: 'disk' }])
+
+    const late = await join(running, { who: user, owns: true, role: 'owner' })
+    expect(late.of('note')).toEqual([{ t: 'note', note: 'disk' }])
+
+    vi.setSystemTime(Date.now() + 60_000)
+    await fire(running)
+    const row = env.db.prepare('select disk_used, disk_total from machines where id = ?').get(ID)
+    expect(row).toEqual({ disk_used: 151e9, disk_total: 160e9 })
+  })
+
+  test('the cost gate: a server is made only while its price fits under the ceiling', async () => {
+    // Paid for already: a spent budget never keeps its owner from it.
+    env.db
+      .prepare(
+        "insert into machine_usage (user_id, month, awake_s, mem_gib_s) values ('someone', '2026-10', 1, 1e9)",
+      )
+      .run()
+    await knock('term-1', owner)
+    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('yes')
+
+    // No server yet: the spent budget refuses one.
+    env.db.prepare('update machines set server_id = null where id = ?').run(ID)
+    await knock('term-1', owner)
+    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('budget')
+
+    // The month's fixed prices count: thirty servers at €14.50 are past $30.
+    env.db.prepare('delete from machine_usage').run()
+    const { budgetLeft, mayCost } = await import('../src/machines/budget')
+    expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30)
+    expect(await mayCost(env, 30, Date.now(), 14.5, 'EUR')).toBe(true)
+    expect(await mayCost(env, 30, Date.now(), 25, 'EUR')).toBe(false)
+    env.db.prepare('update machines set server_id = 77 where id = ?').run(ID)
+    expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30 - 14.5 * 1.25)
+  })
+
+  test('a start the host refuses for the budget tells the socket and sleeps', async () => {
+    const { HostRefused } = await import('../src/machines/hetzner-host')
+    const running = await server()
+    running.host.start = () => Promise.reject(new HostRefused('budget'))
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    expect(socket.of('refused')).toEqual([{ t: 'refused', error: 'budget' }])
+    expect(await running.machine.state()).toBe('asleep')
+  })
+
+  test('without its secrets a Hetzner machine is refused as off, and the admin is told why', async () => {
+    const bare = testEnv({ MACHINES: door.MACHINES })
+    const { whyNotWake } = await import('../src/machines/gate')
+    bare.db.prepare("update online_service set value = 'on' where key = 'online'").run()
+    bare.db
+      .prepare("insert into users (id, email, created_at, online) values ('u1', 'a@b.ch', 1, 1)")
+      .run()
+    bare.db
+      .prepare(
+        "insert into machines (id, user_id, created_at, host) values ('m_1', 'u1', 1, 'hetzner')",
+      )
+      .run()
+    expect(await whyNotWake(bare, 'u1', Date.now())).toBe('off')
+    const { hetznerMissing } = await import('../src/machines/hetzner-host')
+    expect(hetznerMissing(bare)).toEqual([
+      'HETZNER_TOKEN',
+      'MACHINE_TUNNEL_TOKEN',
+      'CF_ACCOUNT_ID',
+      'CF_ZONE_ID',
+    ])
+    // A Cloudflare machine is not touched by any of it.
+    bare.db.prepare("update machines set host = 'cloudflare' where id = 'm_1'").run()
+    expect(await whyNotWake(bare, 'u1', Date.now())).toBeNull()
+    bare.close()
+  })
+
+  test('a machine made from now on is a Hetzner one', async () => {
+    env.db.prepare('delete from term_sessions').run()
+    env.db.prepare('delete from machines').run()
+    await call(env, '/v2/online/terms', { token: owner, body: {} })
+    const row = env.db.prepare('select host from machines where user_id = ?').get(user)
+    expect(row).toEqual({ host: 'hetzner' })
+  })
+
+  test('erasing it takes the server and everything made for it', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const answer = await running.machine.fetch(
+      new Request('https://machine.invalid/erase', {
+        headers: { 'x-nib-machine': 'erase', 'x-nib-id': ID },
+      }),
+    )
+    expect(answer.status).toBe(204)
+    expect(running.host.calls.at(-1)).toBe('remove')
+    expect(running.host.calls).not.toContain('stop')
+  })
+
+  test('a server that cannot be deleted yet answers so, and is asked again', async () => {
+    const running = await server()
+    running.host.remove = () => Promise.reject(new Error('rate_limit_exceeded'))
+    const answer = await running.machine.fetch(
+      new Request('https://machine.invalid/erase', {
+        headers: { 'x-nib-machine': 'erase', 'x-nib-id': ID },
+      }),
+    )
+    expect(answer.status).toBe(503)
+  })
+
+  test('the admin’s routes: Reboot, the host, the emergency key, the server removed', async () => {
+    env.db.prepare("update online_service set value = ? where key = 'admin'").run(user)
+    const admin = (path: string, body: object = {}) =>
+      call(env, `/v2/online/admin${path}`, { token: owner, body })
+    const asked = () => door.asked.at(-1)?.headers
+
+    expect((await call(env, '/v2/online/admin', { token: owner })).json).toMatchObject({
+      hetzner: { missing: [] },
+    })
+
+    expect((await admin(`/machines/${ID}/reboot`)).status).toBe(200)
+    expect(asked()?.get('x-nib-machine')).toBe('reboot')
+
+    expect((await admin(`/machines/${ID}/host`, { host: 'cloudflare' })).json).toEqual({
+      host: 'cloudflare',
+    })
+    expect(asked()?.get('x-nib-host')).toBe('cloudflare')
+    expect((await admin(`/machines/${ID}/host`, { host: 'aws' })).status).toBe(400)
+
+    // The key opens port 22 on the server's firewall, and taking it away closes it.
+    const { Cloud } = await import('./hetzner-cloud')
+    const cloud = new Cloud()
+    cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'nib-machine': ID }, rules: [] })
+    vi.stubGlobal('fetch', cloud.fetch)
+    try {
+      expect((await admin(`/machines/${ID}/ssh`, { key: 'not a key' })).status).toBe(400)
+      const key =
+        'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q e@x'
+      expect((await admin(`/machines/${ID}/ssh`, { key })).json).toEqual({ ssh: true })
+      expect(cloud.firewalls[0]?.rules).toEqual([expect.objectContaining({ port: '22' })])
+      expect(env.db.prepare('select ssh_key from machines where id = ?').get(ID)).toEqual({
+        ssh_key: key,
+      })
+      expect((await admin(`/machines/${ID}/ssh`, { key: '' })).json).toEqual({ ssh: false })
+      expect(cloud.firewalls[0]?.rules).toEqual([])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+
+    expect((await admin(`/machines/${ID}/remove`)).json).toEqual({ removed: true })
+    expect(asked()?.get('x-nib-machine')).toBe('erase')
+    expect(
+      env.db.prepare('select server_id, price_month, state from machines where id = ?').get(ID),
+    ).toEqual({ server_id: null, price_month: null, state: 'asleep' })
+  })
+
+  test('moving a container here saves its home once more, whatever its age', async () => {
+    env.db
+      .prepare(
+        "update machines set host = 'cloudflare', server_id = null, backup_at = ? where id = ?",
+      )
+      .run(Date.now(), ID)
+    const running = await machine(env, ID, user)
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await running.machine.fetch(
+      new Request('https://machine.invalid/host', {
+        headers: { 'x-nib-machine': 'host', 'x-nib-host': 'hetzner' },
+      }),
+    )
+    expect(running.host.calls).toEqual([
+      'start machine',
+      'link',
+      'snapshot',
+      'backup /home/nib',
+      'stop',
+    ])
+    expect(env.db.prepare('select host from machines where id = ?').get(ID)).toEqual({
+      host: 'hetzner',
+    })
+    expect(running.state.kept.get('host')).toBe('hetzner')
   })
 })
 

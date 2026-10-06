@@ -2147,5 +2147,10 @@ export const ha: Dictionary = {
   CPU: 'CPU',
   Home: 'Babban fayil na gida',
   Web: 'Yanar gizo',
+  Restart: 'Sake farawa',
+  Disk: 'Faifai',
+  'Your machine’s disk is almost full': 'Faifan na’urarka ya kusa cika',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} a wata',
   'Starts again {date}': 'Zai sake farawa {date}',
 }

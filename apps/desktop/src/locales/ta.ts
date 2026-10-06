@@ -2148,5 +2148,10 @@ export const ta: Dictionary = {
   CPU: 'CPU',
   Home: 'முகப்புக் கோப்புறை',
   Web: 'இணையம்',
+  Restart: 'மீண்டும் தொடங்கு',
+  Disk: 'வட்டு',
+  'Your machine’s disk is almost full': 'உங்கள் இயந்திரத்தின் வட்டு கிட்டத்தட்ட நிரம்பிவிட்டது',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'மாதம் {price}',
   'Starts again {date}': '{date} அன்று மீண்டும் தொடங்கும்',
 }

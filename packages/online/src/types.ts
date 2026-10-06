@@ -22,15 +22,24 @@ export interface Term {
   session: string
 }
 
+/** The filesystem the home is on: bytes used and its size. What fills it is what froze
+ *  a machine on 2026-10-06, so it is said every 30 seconds, cheaply (`statfs`). */
+export interface Disk {
+  used: number
+  total: number
+}
+
 /** What `nibd` says every 30 seconds about the last stretch (4.4): when, how many
  *  bytes the sessions printed, the CPU share used (0 to 1 of the machine's vCPUs), the
- *  bytes moved over the network, and the home's size. */
+ *  bytes moved over the network, the home's size, and the disk, where `nibd` is new
+ *  enough to say it. */
 export interface Activity {
   at: number
   output: number
   cpu: number
   net: number
   homeBytes: number
+  disk?: Disk
 }
 
 /** One socket open on a machine's terminal, as the awake rule sees it: whose, from
@@ -72,8 +81,12 @@ export interface Typed {
  *  null for no role at all (a link guest's socket carries the link's role). */
 export type SpaceRole = 'read' | 'write' | 'owner'
 
-/** The host behind `Machine`: Cloudflare's Sandbox SDK, a fake for the tests, or Fly
- *  one day - one file each (6.1). */
+/** Where a machine runs (docs/online-terminal.md 4.15): a Cloudflare container that
+ *  sleeps, or a Hetzner server of its own that is always on. */
+export type HostKind = 'cloudflare' | 'hetzner'
+
+/** The host behind `Machine`: Cloudflare's containers, a Hetzner server, a fake for the
+ *  tests - one file each (6.1). */
 export interface MachineHost {
   start(id: string, image: string, env: Record<string, string>): Promise<void>
   stop(id: string, grace: number): Promise<void>
@@ -86,4 +99,11 @@ export interface MachineHost {
   backup(id: string, dir: string): Promise<string>
   restore(id: string, from: { snapshot?: string; backup?: string }): Promise<void>
   usage(id: string, since: number): Promise<{ cpuS: number; egressBytes: number }>
+  /** A machine of its own that is never put to sleep, snapshotted or backed up: its disk
+   *  is kept by being a disk (4.15). */
+  readonly alwaysOn?: boolean
+  /** Power-cycles the machine: the last step of the health path for one that is always on. */
+  reboot?(id: string): Promise<void>
+  /** Everything the host made for the machine, gone for good: the account erased. */
+  remove?(id: string): Promise<void>
 }

@@ -2111,5 +2111,10 @@ export const ms: Dictionary = {
   CPU: 'CPU',
   Home: 'Folder home',
   Web: 'Web',
+  Restart: 'Mula semula',
+  Disk: 'Cakera',
+  'Your machine’s disk is almost full': 'Cakera mesin anda hampir penuh',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} sebulan',
   'Starts again {date}': 'Bermula semula {date}',
 }

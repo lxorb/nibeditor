@@ -2121,5 +2121,10 @@ export const ps: Dictionary = {
   CPU: 'CPU',
   Home: 'کور فولډر',
   Web: 'وېب',
+  Restart: 'بیا پیلول',
+  Disk: 'ډیسک',
+  'Your machine’s disk is almost full': 'ستاسو د ماشین ډیسک نږدې ډک دی',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'په میاشت کې {price}',
   'Starts again {date}': 'په {date} بیا پیلېږي',
 }

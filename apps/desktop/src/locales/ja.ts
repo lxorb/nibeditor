@@ -2106,5 +2106,10 @@ export const ja: Dictionary = {
   CPU: 'CPU',
   Home: 'ホーム',
   Web: 'Web',
+  Restart: '再起動',
+  Disk: 'ディスク',
+  'Your machine’s disk is almost full': 'マシンのディスクがほぼいっぱいです',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '月額 {price}',
   'Starts again {date}': '{date}にリセット',
 }

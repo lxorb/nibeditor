@@ -2140,5 +2140,10 @@ export const ml: Dictionary = {
   CPU: 'CPU',
   Home: 'ഹോം ഫോൾഡർ',
   Web: 'വെബ്',
+  Restart: 'പുനരാരംഭിക്കുക',
+  Disk: 'ഡിസ്ക്',
+  'Your machine’s disk is almost full': 'നിങ്ങളുടെ മെഷീന്റെ ഡിസ്ക് ഏതാണ്ട് നിറഞ്ഞു',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'മാസം {price}',
   'Starts again {date}': '{date} ന് വീണ്ടും ആരംഭിക്കും',
 }

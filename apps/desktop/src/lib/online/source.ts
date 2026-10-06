@@ -127,6 +127,8 @@ export class OnlineSource implements Source {
   private readonly opener: Opener
   /** This second's input frames, for the pace a paste goes at. */
   private sent = { second: 0, count: 0 }
+  /** Whether this tab said its machine's disk is nearly full: once a tab is enough. */
+  private diskSaid = false
 
   /** `path` is the `.term` file's, read as it starts: a file renamed or moved keeps its
    *  id, and the socket with it. */
@@ -224,9 +226,14 @@ export class OnlineSource implements Source {
       case 'called':
         this.opener.called(frame.url, frame.status)
         return
-      // This wake's home is the image's fresh one: its backup could not be put back.
+      // This wake's home is the image's fresh one: its backup could not be put back. Or
+      // the machine's disk is nearly full, which is how one froze (4.15).
       case 'note':
-        said({ note: t('Your home folder could not be restored') })
+        if (frame.note === 'restore') said({ note: t('Your home folder could not be restored') })
+        else if (!this.diskSaid) {
+          this.diskSaid = true
+          said({ note: t('Your machine’s disk is almost full') })
+        }
         return
       // Who is here, and whose input came last: the people popover's and the cursor's,
       // which come later (4.6).

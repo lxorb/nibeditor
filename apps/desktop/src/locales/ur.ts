@@ -2116,5 +2116,10 @@ export const ur: Dictionary = {
   CPU: 'CPU',
   Home: 'ہوم فولڈر',
   Web: 'ویب',
+  Restart: 'دوبارہ شروع کریں',
+  Disk: 'ڈسک',
+  'Your machine’s disk is almost full': 'آپ کی مشین کی ڈسک تقریباً بھر چکی ہے',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} ماہانہ',
   'Starts again {date}': '{date} کو دوبارہ شروع ہوگا',
 }

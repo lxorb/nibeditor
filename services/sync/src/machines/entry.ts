@@ -5,7 +5,8 @@
  *  binds: `Machine`, the Sandbox SDK's `DirectoryBackupGateway` (which carries a home's
  *  backup between the container and R2, reaching only the one object each operation
  *  names), and `Egress`, the outbound gateway a machine uses when `MACHINE_EGRESS` is
- *  `web`. Kept out of src/index.ts because the SDK imports `cloudflare:workers`, which
+ *  `web`; and the machine's bundle a Hetzner server is set up from (bundle.ts). Kept out
+ *  of src/index.ts because the SDK imports `cloudflare:workers`, which
  *  neither the deploy CI runs nor the tests can load; the host is wired here, once, as
  *  the module loads. */
 
@@ -16,8 +17,11 @@ import {
   type DirectoryBackupRecord,
 } from '@cloudflare/sandbox'
 import { WorkerEntrypoint } from 'cloudflare:workers'
+// The machine's bundle, written by `pnpm --filter @nib/machine build` (4.15).
+import machine from '../../../machine/dist/machine.bin'
 import worker from '../index'
 import type { Env } from '../types'
+import { carry } from './bundle'
 import { wire } from './host'
 
 /** What the machines' entry exports, as `ctx.exports` hands them back. */
@@ -58,6 +62,8 @@ export class Egress extends WorkerEntrypoint<Env> {
     return await fetch(request)
   }
 }
+
+carry(machine)
 
 wire({
   backups: (container, ctx) => {

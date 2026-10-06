@@ -2110,5 +2110,10 @@ export const gu: Dictionary = {
   CPU: 'CPU',
   Home: 'હોમ ફોલ્ડર',
   Web: 'વેબ',
+  Restart: 'ફરી શરૂ કરો',
+  Disk: 'ડિસ્ક',
+  'Your machine’s disk is almost full': 'તમારા મશીનની ડિસ્ક લગભગ ભરાઈ ગઈ છે',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'મહિને {price}',
   'Starts again {date}': '{date} એ ફરી શરૂ થશે',
 }

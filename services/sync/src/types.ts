@@ -31,6 +31,22 @@ export interface Env {
   MACHINE_DEV_NIBD?: string
   MACHINE_DEV_SECRET?: string
 
+  /** Hetzner machines (docs/online-terminal.md 4.15), each a secret the manager sets:
+   *  the Hetzner Cloud project's API token, and a Cloudflare token that may edit Cloudflare
+   *  Tunnels on the account and DNS on the zone. With either missing, a Hetzner machine is
+   *  refused a start and says so to the admin route; see machines/hetzner-host.ts. */
+  HETZNER_TOKEN?: string
+  MACHINE_TUNNEL_TOKEN?: string
+  /** The Cloudflare account the tunnels are made in. Not a secret. */
+  CF_ACCOUNT_ID?: string
+  /** The Access service token the link to a Hetzner machine is sent with (secrets), and
+   *  the Access team and application audience `cloudflared` checks it against (vars).
+   *  Optional: without them the link is guarded by `nibd`'s own secret alone. */
+  MACHINE_ACCESS_ID?: string
+  MACHINE_ACCESS_SECRET?: string
+  MACHINE_ACCESS_TEAM?: string
+  MACHINE_ACCESS_AUD?: string
+
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside

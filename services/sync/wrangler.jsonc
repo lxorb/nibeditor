@@ -139,6 +139,16 @@
     "MAIL_FROM": "nibeditor <nib@nibeditor.com>",
     // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
     "MACHINE_EGRESS": "open",
+    // The account the Hetzner machines' Cloudflare Tunnels are made in (4.15). Their
+    // secrets, set by hand, never here (docs/online-terminal-live.md):
+    //   wrangler secret put HETZNER_TOKEN           the Hetzner Cloud project's, read and write
+    //   wrangler secret put MACHINE_TUNNEL_TOKEN    Cloudflare Tunnel Edit + this zone's DNS Edit
+    //   wrangler secret put MACHINE_ACCESS_ID       the Access service token's id and secret,
+    //   wrangler secret put MACHINE_ACCESS_SECRET   which the link to a machine is sent with
+    //   wrangler secret put MACHINE_ACCESS_TEAM     the Access team name and the application's
+    //   wrangler secret put MACHINE_ACCESS_AUD      audience tag, which cloudflared checks
+    // Without the first two, a Hetzner machine is refused a start as `off`.
+    "CF_ACCOUNT_ID": "b0e98c15b1f905a394ecd6a849e8e99f",
   },
 
   // The catch-all is what lets a custom hostname reach the Worker: a request

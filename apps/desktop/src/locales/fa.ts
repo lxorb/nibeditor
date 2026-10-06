@@ -2119,5 +2119,10 @@ export const fa: Dictionary = {
   CPU: 'CPU',
   Home: 'پوشهٔ خانه',
   Web: 'وب',
+  Restart: 'راه‌اندازی دوباره',
+  Disk: 'دیسک',
+  'Your machine’s disk is almost full': 'دیسک ماشین شما تقریباً پر است',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'ماهانه {price}',
   'Starts again {date}': 'از {date} دوباره شروع می‌شود',
 }

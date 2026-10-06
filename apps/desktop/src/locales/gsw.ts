@@ -2129,5 +2129,10 @@ export const gsw: Dictionary = {
   CPU: 'CPU',
   Home: 'Home',
   Web: 'Web',
+  Restart: 'Neu starte',
+  Disk: 'Festplatte',
+  'Your machine’s disk is almost full': 'D Festplatte vo dinere Maschine isch fasch voll',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} im Monet',
   'Starts again {date}': 'Fangt am {date} wieder aa',
 }

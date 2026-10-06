@@ -29,7 +29,9 @@ import { devices } from './hub/devices'
 import { hubDoor } from './hub/door'
 import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
+import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
+import { isMachineHost } from './machines/hetzner-host'
 import { online } from './machines/routes'
 import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
@@ -120,6 +122,9 @@ app.route('/v2/hub', hubDoor)
 // subprotocol. Only `/:term/socket` is answered here; the rest of `/v2/online` is
 // behind the guard below. See machines/door.ts and docs/online-terminal.md.
 app.route('/v2/online', onlineDoor)
+// The machine's bundle, which a Hetzner server fetches with no session; see
+// machines/bundle.ts.
+app.route('/v2/online/machine', machineBundle)
 
 // A link somebody was sent to a shared space. Both halves sit outside the guard
 // below, because a link is its own proof: what it is about is answered to
@@ -409,7 +414,17 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   context.waitUntil(fillFronts(env, null))
 }
 
-export default { fetch: app.fetch, scheduled }
+/** Every request. A machine's own hostname (`m-<id>.nibeditor.com`, 4.15) is matched by
+ *  the zone's catch-all route like every other name, but the Worker has nothing there:
+ *  its origin is the machine's tunnel, so the request goes on to it as it came. That is
+ *  how `Machine`'s link reaches `nibd` whichever way Cloudflare routes it, and anybody
+ *  else meets Access and `nibd`'s own secret there, never the Worker. */
+function serve(request: Request, env: Env, context?: ExecutionContext) {
+  if (isMachineHost(new URL(request.url).hostname, env.APP_ORIGIN)) return fetch(request)
+  return app.fetch(request, env, context)
+}
+
+export default { fetch: serve, scheduled }
 
 // Named at the top level because a Durable Object class is looked up on the
 // module, not through a binding.

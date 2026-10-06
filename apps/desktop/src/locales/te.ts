@@ -2127,5 +2127,10 @@ export const te: Dictionary = {
   CPU: 'CPU',
   Home: 'హోమ్ ఫోల్డర్',
   Web: 'వెబ్',
+  Restart: 'పునఃప్రారంభించు',
+  Disk: 'డిస్క్',
+  'Your machine’s disk is almost full': 'మీ మెషీన్ డిస్క్ దాదాపు నిండిపోయింది',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'నెలకు {price}',
   'Starts again {date}': '{date}న మళ్లీ ప్రారంభమవుతుంది',
 }

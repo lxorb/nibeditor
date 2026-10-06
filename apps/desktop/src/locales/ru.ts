@@ -2200,5 +2200,10 @@ export const ru: Dictionary = {
   CPU: 'CPU',
   Home: 'Домашняя папка',
   Web: 'Сеть',
+  Restart: 'Перезапустить',
+  Disk: 'Диск',
+  'Your machine’s disk is almost full': 'Диск вашей машины почти заполнен',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} в месяц',
   'Starts again {date}': 'Обновится {date}',
 }

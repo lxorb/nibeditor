@@ -2178,5 +2178,10 @@ export const it: Dictionary = {
   CPU: 'CPU',
   Home: 'Cartella home',
   Web: 'Web',
+  Restart: 'Riavvia',
+  Disk: 'Disco',
+  'Your machine’s disk is almost full': 'Il disco della tua macchina è quasi pieno',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} al mese',
   'Starts again {date}': 'Si rinnova il {date}',
 }

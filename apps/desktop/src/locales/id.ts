@@ -2111,5 +2111,10 @@ export const id: Dictionary = {
   CPU: 'CPU',
   Home: 'Folder home',
   Web: 'Web',
+  Restart: 'Mulai ulang',
+  Disk: 'Disk',
+  'Your machine’s disk is almost full': 'Disk mesin Anda hampir penuh',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} per bulan',
   'Starts again {date}': 'Dimulai lagi {date}',
 }

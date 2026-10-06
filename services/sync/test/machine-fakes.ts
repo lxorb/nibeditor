@@ -67,6 +67,18 @@ class FakeHost implements MachineHost {
   failBackup: Error | null = null
   /** Set to make a restore from a backup never answer. */
   hangRestore = false
+  /** A server of its own (4.15): never slept, snapshotted or backed up. */
+  alwaysOn = false
+
+  reboot(): Promise<void> {
+    this.calls.push('reboot')
+    return Promise.resolve()
+  }
+
+  remove(): Promise<void> {
+    this.calls.push('remove')
+    return Promise.resolve()
+  }
 
   start(_id: string, image: string): Promise<void> {
     this.calls.push(`start ${image}`)

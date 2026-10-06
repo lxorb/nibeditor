@@ -2099,5 +2099,10 @@ export const vi: Dictionary = {
   CPU: 'CPU',
   Home: 'Thư mục home',
   Web: 'Web',
+  Restart: 'Khởi động lại',
+  Disk: 'Ổ đĩa',
+  'Your machine’s disk is almost full': 'Ổ đĩa của máy bạn sắp đầy',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} mỗi tháng',
   'Starts again {date}': 'Làm mới vào {date}',
 }

@@ -2069,5 +2069,10 @@ export const zhHant: Dictionary = {
   CPU: 'CPU',
   Home: '主資料夾',
   Web: '網路',
+  Restart: '重新啟動',
+  Disk: '磁碟',
+  'Your machine’s disk is almost full': '你的機器磁碟快滿了',
+  '{cores} vCPU': '{cores} 個 vCPU',
+  '{price} a month': '每月 {price}',
   'Starts again {date}': '{date} 重新計算',
 }

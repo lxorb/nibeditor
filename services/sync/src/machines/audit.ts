@@ -29,6 +29,12 @@ export type EventKind =
   | 'failed'
   /** The link to `nibd` went quiet or closed under an awake machine and was made again. */
   | 'relink'
+  /** `nibd` asked to restart: by its owner, or after going quiet again (4.14, 4.15). */
+  | 'restart'
+  /** An always-on machine power-cycled through its host's API (4.15). */
+  | 'reboot'
+  /** The machine moved to another host (4.15). */
+  | 'host'
 
 /** What an event may say about itself. */
 export type Detail =
@@ -49,6 +55,9 @@ export type Detail =
   | 'writers'
   | 'guest'
   | 'running'
+  | 'silent'
+  | 'cloudflare'
+  | 'hetzner'
   | Failure
   | number
   | null

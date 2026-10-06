@@ -2094,5 +2094,10 @@ export const am: Dictionary = {
   CPU: 'CPU',
   Home: 'መነሻ አቃፊ',
   Web: 'ድር',
+  Restart: 'እንደገና አስጀምር',
+  Disk: 'ዲስክ',
+  'Your machine’s disk is almost full': 'የማሽንዎ ዲስክ ሊሞላ ነው',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} በወር',
   'Starts again {date}': '{date} እንደገና ይጀምራል',
 }

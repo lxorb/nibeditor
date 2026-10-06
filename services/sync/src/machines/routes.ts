@@ -16,7 +16,7 @@ import { audit } from './audit'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
-import { ALLOWANCE, resetAt } from '@nib/online'
+import { ALLOWANCE, type HostKind, resetAt } from '@nib/online'
 import { usedOf } from './meter'
 import { MOST_SESSIONS, type Refusal } from '@nib/online/wire'
 import { allowed, serviceOf } from './service'
@@ -44,24 +44,35 @@ interface MachineRow {
   home_bytes: number
   backup_at: number | null
   held: string | null
+  host: HostKind
+  size: string
+  region: string
+  spec: string | null
+  price_month: number | null
+  price_currency: string | null
+  server_id: number | null
+  disk_used: number
+  disk_total: number
 }
 
 async function machineOf(env: Env, userId: string): Promise<MachineRow | null> {
   return await env.DB.prepare(
-    `select id, user_id, state, created_at, woke_at, slept_at, home_bytes, backup_at, held
+    `select id, user_id, state, created_at, woke_at, slept_at, home_bytes, backup_at, held,
+            host, size, region, spec, price_month, price_currency, server_id, disk_used, disk_total
        from machines where user_id = ?`,
   )
     .bind(userId)
     .first<MachineRow>()
 }
 
-/** The account's machine, made the first time it is needed. */
+/** The account's machine, made the first time it is needed: on a Hetzner server of its
+ *  own (4.15). */
 async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
   const had = await machineOf(env, userId)
   if (had) return had
   const id = `m_${newId().replaceAll('-', '')}`
   await env.DB.prepare(
-    `insert into machines (id, user_id, created_at) values (?, ?, ?)
+    `insert into machines (id, user_id, created_at, host) values (?, ?, ?, 'hetzner')
      on conflict(user_id) do nothing`,
   )
     .bind(id, userId, now())
@@ -73,6 +84,31 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
 }
 
 const asked = (machine: MachineRow) => ({ 'x-nib-user': machine.user_id })
+
+/** The server under a machine, for Settings' one line about it: its type, its size and
+ *  what it costs a month, as Hetzner said them when it was made; null for none. */
+function serverOf(machine: MachineRow) {
+  if (machine.server_id === null || !machine.spec) return null
+  let spec: unknown
+  try {
+    spec = JSON.parse(machine.spec)
+  } catch {
+    return null
+  }
+  const { cores, memory, disk } = (spec ?? {}) as Record<string, unknown>
+  if (typeof cores !== 'number' || typeof memory !== 'number' || typeof disk !== 'number') {
+    return null
+  }
+  return {
+    type: machine.size,
+    location: machine.region,
+    cores,
+    memoryGb: memory,
+    diskGb: disk,
+    price: machine.price_month,
+    currency: machine.price_currency,
+  }
+}
 
 /** A refusal as the app reads it: one of `@nib/online`'s codes, which the app turns into
  *  words, rather than a sentence of the Worker's. */
@@ -94,6 +130,9 @@ online.get('/machine', async (context) => {
       sleptAt: machine.slept_at,
       homeBytes: machine.home_bytes,
       backupAt: machine.backup_at,
+      host: machine.host,
+      server: serverOf(machine),
+      disk: machine.disk_total > 0 ? { used: machine.disk_used, total: machine.disk_total } : null,
     },
     used: await usedOf(context.env, user.id, at),
     limit: ALLOWANCE,
@@ -119,6 +158,17 @@ online.post('/machine/stop', async (context) => {
   const user = context.get('user')
   const machine = await machineOf(context.env, user.id)
   if (!machine) return context.json({ error: NOT_FOUND }, 404)
+  // A server that is always on is never stopped by its owner: Stop is Restart, which
+  // starts `nibd` again and keeps the server and everything on its disk (4.15).
+  if (machine.host === 'hetzner') {
+    const answer = await askMachine(context.env, machine.id, 'restart', {
+      ...asked(machine),
+      'x-nib-who': user.id,
+    })
+    return context.json({
+      state: answer ? (await answer.json<{ state: string }>()).state : machine.state,
+    })
+  }
   await audit(context.env, machine.id, 'stop', { who: user.id, detail: 'stopped' })
   await askMachine(context.env, machine.id, 'stop', {
     ...asked(machine),

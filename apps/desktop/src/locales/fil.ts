@@ -2157,5 +2157,10 @@ export const fil: Dictionary = {
   CPU: 'CPU',
   Home: 'Home folder',
   Web: 'Web',
+  Restart: 'I-restart',
+  Disk: 'Disk',
+  'Your machine’s disk is almost full': 'Halos puno na ang disk ng iyong makina',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} kada buwan',
   'Starts again {date}': 'Magsisimula muli sa {date}',
 }

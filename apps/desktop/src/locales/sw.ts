@@ -2147,5 +2147,10 @@ export const sw: Dictionary = {
   CPU: 'CPU',
   Home: 'Folda ya nyumbani',
   Web: 'Wavuti',
+  Restart: 'Anzisha upya',
+  Disk: 'Diski',
+  'Your machine’s disk is almost full': 'Diski ya mashine yako karibu imejaa',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': '{price} kwa mwezi',
   'Starts again {date}': 'Inaanza upya {date}',
 }

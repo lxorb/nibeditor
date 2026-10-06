@@ -2068,5 +2068,10 @@ export const zhHans: Dictionary = {
   CPU: 'CPU',
   Home: '主目录',
   Web: '网络',
+  Restart: '重新启动',
+  Disk: '磁盘',
+  'Your machine’s disk is almost full': '你的机器磁盘快满了',
+  '{cores} vCPU': '{cores} 个 vCPU',
+  '{price} a month': '每月 {price}',
   'Starts again {date}': '{date} 重新计算',
 }

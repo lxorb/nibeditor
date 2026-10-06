@@ -9,8 +9,9 @@
  *  every file and is asked once an hour. */
 
 import { execFile } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, statfsSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
+import type { Disk } from '@nib/online/types'
 
 /** Microseconds of CPU used so far, by the machine's cgroup or the kernel's count. */
 export function cpuMicros(
@@ -67,6 +68,21 @@ export function homeSize(home: string): Promise<number | null> {
       },
     )
   })
+}
+
+/** The filesystem the home is on, used and whole, in bytes: what filled up and froze a
+ *  machine on 2026-10-06 (docs/online-terminal.md 4.15). One `statfs`, so it is asked
+ *  with every report. Used counts what is reserved for root too, as `df` does not, so a
+ *  disk reads full when the user can write no more. */
+export function diskOf(path: string, statfs = statfsSync): Disk | null {
+  try {
+    const stats = statfs(path)
+    const total = stats.blocks * stats.bsize
+    const used = (stats.blocks - stats.bavail) * stats.bsize
+    return Number.isSafeInteger(total) && total > 0 ? { used, total } : null
+  } catch {
+    return null
+  }
 }
 
 /** The counters as they stood at the last report, and the differences since. */

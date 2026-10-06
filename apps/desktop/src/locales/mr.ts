@@ -2121,5 +2121,10 @@ export const mr: Dictionary = {
   CPU: 'CPU',
   Home: 'होम फोल्डर',
   Web: 'वेब',
+  Restart: 'पुन्हा सुरू करा',
+  Disk: 'डिस्क',
+  'Your machine’s disk is almost full': 'तुमच्या मशीनची डिस्क जवळजवळ भरली आहे',
+  '{cores} vCPU': '{cores} vCPU',
+  '{price} a month': 'दरमहा {price}',
   'Starts again {date}': '{date} रोजी पुन्हा सुरू होईल',
 }
