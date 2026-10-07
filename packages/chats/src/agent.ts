@@ -89,7 +89,7 @@ export function chatsText(chats: readonly Listed[]): string {
 
 /** One message: a head line of what it is, and its words, marked where they are not the
  *  reader's. */
-export function messageText(chat: string, message: Message, reading: Reading): string {
+function messageText(chat: string, message: Message, reading: Reading): string {
   const mine = message.author === reading.me
   const name = reading.nameOf(message.author)
   const reactions = Object.entries(message.reactions)
