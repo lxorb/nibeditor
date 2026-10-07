@@ -8,9 +8,14 @@ import { store } from '../../src/lib/themes/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
 
 // What the picker and a theme tried on fetch the first time they are wanted - the
-// wallpaper's sheet and its settings, the tokens a card is drawn from - fetched before
-// any test: a machine running three gates took longer over them than a poll waits.
+// wallpaper's sheet and its settings, glass's and the effect it follows what is open
+// with, the tokens a card is drawn from - fetched before any test: a machine running
+// three gates took longer over them than a poll waits, and an arrow that tried glass on
+// left its follower still loading once the file was torn down.
 await Promise.all([
+  import('@nib/themes/glass'),
+  import('../../src/lib/glass/settings'),
+  import('../../src/lib/glass/follow.svelte'),
   import('../../src/lib/wallpaper/sheet'),
   import('../../src/lib/wallpaper/settings'),
   import('../../src/lib/wallpaper/wallpaper.svelte'),
