@@ -90,10 +90,12 @@ class Caret extends NibWidget {
 
     const tag = caret.appendChild(document.createElement('span'))
     tag.className = 'cm-nib-caret-name'
+    // A picture as a background rather than an image, so no rule a note's own
+    // pictures are drawn by can reach it.
     if (this.face) {
-      const face = tag.appendChild(document.createElement('img'))
-      face.src = this.face
-      face.alt = ''
+      const face = tag.appendChild(document.createElement('span'))
+      face.className = 'cm-nib-caret-face'
+      face.style.backgroundImage = `url("${this.face}")`
     }
     tag.append(this.name)
 
@@ -231,12 +233,14 @@ const style = EditorView.baseTheme({
 
   // A person's face in front of their name, as tall as the label's line and round
   // as a face is everywhere.
-  '.cm-nib-caret-name img': {
+  '.cm-nib-caret-face': {
+    display: 'inline-block',
     width: '13px',
     height: '13px',
     margin: '0 3px 0 -2px',
     borderRadius: '50%',
-    objectFit: 'cover',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     verticalAlign: '-2px',
   },
 
