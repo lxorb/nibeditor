@@ -2160,6 +2160,9 @@ class Workspace {
       case 'chat':
         if (!__EVEN_PLUGIN__) (await import('./chats/view/open')).openChat(path, options)
         return
+      case 'term':
+        if (!__EVEN_PLUGIN__) (await import('./online/open')).openTerm(path, options)
+        return
       case 'note':
         await this.open(path, options)
         return

@@ -44,6 +44,13 @@ describe('what opens a path in the app', () => {
     expect(opener('Boards/Plan.canvas')).toBe('canvas')
   })
 
+  test('an online terminal opens as its terminal, not as the words that name it', () => {
+    // A `.term` clicked in the list opened as a note: its JSON in an editor, the shell
+    // nowhere, and a stray keystroke away from a file that names no session.
+    expect(opener('Terms/Build.term')).toBe('term')
+    expect(opener('Terms/Build.TERM')).toBe('term')
+  })
+
   test('and everything else opens as a note', () => {
     expect(opener('Read me.md')).toBe('note')
     expect(opener('notes/Kestrel.md')).toBe('note')
@@ -82,6 +89,10 @@ describe('in front of a pair of glasses', () => {
     expect(opener('Papers/Kestrel.pdf', PLUGIN)).toBeNull()
     expect(opener('Boards/Plan.canvas', PLUGIN)).toBeNull()
     expect(opener('Sketches/Wind.pages', PLUGIN)).toBeNull()
+  })
+
+  test('an online terminal opens nothing, having no terminal to open in', () => {
+    expect(opener('Terms/Build.term', PLUGIN)).toBeNull()
   })
 
   test('a note still opens', () => {
