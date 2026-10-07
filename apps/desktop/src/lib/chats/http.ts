@@ -6,7 +6,7 @@
  *  (`429`, `5xx`, no network): the caller tries again later. A refusal it can act on is
  *  an `ApiError` with the account's own word in it. */
 
-import type { Event, Message, Notify, Pointer, Who } from '@nib/chats'
+import type { Event, Notify, Pointer } from '@nib/chats'
 import { chatOf } from '@nib/chats'
 import {
   chatListOf,
@@ -66,9 +66,7 @@ export async function eventsOf(
   limit = 500,
 ): Promise<EventsPage | null> {
   const query = new URLSearchParams({ limit: String(limit) })
-  for (const [key, value] of Object.entries(where)) {
-    if (value !== undefined) query.set(key, String(value))
-  }
+  for (const [key, value] of Object.entries(where)) query.set(key, String(value))
   return eventsPageOf(await ask(`${chatPath(chat)}/events?${query.toString()}`))
 }
 
@@ -179,6 +177,3 @@ export async function fileOf(chat: string, hash: string): Promise<Blob | null> {
     return null
   }
 }
-
-/** A message's words as somebody sees them on the account, for a hit. */
-export type { Message, Who }

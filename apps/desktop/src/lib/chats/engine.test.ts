@@ -107,7 +107,7 @@ class Account {
         }),
       post: (_chat, events) =>
         reach(() => ({ results: events.map((event) => this.place(who, event)) })),
-      read: () => reach(() => true),
+      read: () => reach(() => true).then(Boolean),
     }
   }
 }
@@ -177,7 +177,10 @@ async function expectOneState(account: Account, devices: readonly Device[]): Pro
     expect(await kept(one), one.who).toEqual(truth)
     // What is left is only what crossed a delete on another device: refused as gone.
     const left = one.engine.pending(CHAT).map((row) => row.refused)
-    expect(left.filter((refused) => refused !== 'gone'), one.who).toEqual([])
+    expect(
+      left.filter((refused) => refused !== 'gone'),
+      one.who,
+    ).toEqual([])
   }
 }
 
@@ -195,7 +198,7 @@ describe('three devices in one chat', () => {
       const id = () => ulid((clock += 1), next)
 
       for (let step = 0; step < 60; step++) {
-        const one = devices[Math.floor(next() * devices.length)] as Device
+        const one = devices[Math.floor(next() * devices.length)]!
         const roll = next()
         if (roll < 0.1) {
           one.online = !one.online
@@ -225,7 +228,8 @@ describe('three devices in one chat', () => {
           event = { kind: 'react', id: id(), target: target.id, emoji: '👍', on: next() < 0.7 }
         }
         // An edit or a delete of somebody else's message is one the composer never offers.
-        if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who) continue
+        if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who)
+          continue
         await one.engine.queue(CHAT, event)
       }
 

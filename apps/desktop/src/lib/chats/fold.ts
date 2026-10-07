@@ -80,11 +80,15 @@ export async function foldAll(
     get: async (id) => (gone.has(id) ? undefined : (kept.get(id) ?? (await lookup.get(id)))),
     newestReply: async (parent, except) => {
       // The replies folded here stand as they are here, whatever the lookup holds.
-      const here = [...kept.values()].map((one) => one.message).filter((one) => one.parent === parent)
+      const here = [...kept.values()]
+        .map((one) => one.message)
+        .filter((one) => one.parent === parent)
       const passed = new Set([...except, ...gone, ...here.map((one) => one.id)])
       const there = await lookup.newestReply(parent, passed)
-      return [...here.filter((one) => !one.deleted && !except.has(one.id)), ...(there ? [there] : [])]
-        .sort((a, b) => b.seq - a.seq)[0]
+      return [
+        ...here.filter((one) => !one.deleted && !except.has(one.id)),
+        ...(there ? [there] : []),
+      ].sort((a, b) => b.seq - a.seq)[0]
     },
   }
   for (const event of events) {
@@ -130,7 +134,8 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       if (event.poll) message.poll = { ...event.poll, votes: {} }
       const out: Kept[] = [{ message, upto: event.seq, marks: { r: [], v: [] } }]
 
-      const parent = event.parent === undefined ? undefined : await fresh(lookup, event.parent, event)
+      const parent =
+        event.parent === undefined ? undefined : await fresh(lookup, event.parent, event)
       if (parent) {
         const was = parent.message
         out.push({
@@ -150,7 +155,8 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       const kept = await fresh(lookup, event.target, event)
       if (!kept) return []
       const was = kept.message
-      if (was.deleted || was.author !== event.author || event.seq <= was.seq) return [touched(kept, event)]
+      if (was.deleted || was.author !== event.author || event.seq <= was.seq)
+        return [touched(kept, event)]
       const message: Message = {
         ...was,
         body: event.body,

@@ -143,7 +143,7 @@ describe('folding in order is the reducer', () => {
       const log = logOf(seed, 120)
       const store = new Store()
       const next = random(seed * 31)
-      for (let at = 0; at < log.length; ) {
+      for (let at = 0; at < log.length;) {
         const size = 1 + Math.floor(next() * 30)
         const page = log.slice(at, at + size)
         await store.fold(page)

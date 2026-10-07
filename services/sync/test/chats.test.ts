@@ -433,6 +433,18 @@ describe('chats', () => {
       const page = await state(people.owner, chat)
       expect(page.messages.find((one) => one.id === top.message)?.replies).toBe(1)
     })
+
+    test('a deleted message takes no more replies or quotes', async () => {
+      const chat = await chatOfOwner()
+      const top = postOf('soon gone')
+      await send(people.owner, chat, top)
+      await send(people.owner, chat, { kind: 'delete', id: id(), target: top.message })
+      for (const extra of [{ parent: top.message }, { quote: top.message }]) {
+        expect(
+          (await send(people.writer, chat, postOf('too late', extra))).results[0],
+        ).toMatchObject({ refused: 'gone' })
+      }
+    })
   })
 
   describe('live', () => {

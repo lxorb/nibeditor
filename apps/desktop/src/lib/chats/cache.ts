@@ -174,7 +174,9 @@ export class MemoryCache implements ChatCache {
         found.push({ chat, kept })
       }
     }
-    found.sort((a, b) => b.kept.message.at - a.kept.message.at || b.kept.message.seq - a.kept.message.seq)
+    found.sort(
+      (a, b) => b.kept.message.at - a.kept.message.at || b.kept.message.seq - a.kept.message.seq,
+    )
     return Promise.resolve(found.slice(0, ask.limit))
   }
 
@@ -205,7 +207,7 @@ export class MemoryCache implements ChatCache {
           break
         case 'message': {
           let rows = this.rows.get(change.chat)
-          if (!rows) this.rows.set(change.chat, (rows = new Map()))
+          if (!rows) this.rows.set(change.chat, (rows = new Map<string, Kept>()))
           rows.set(change.kept.message.id, change.kept)
           break
         }

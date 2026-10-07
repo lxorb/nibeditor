@@ -235,9 +235,11 @@ export class ChatEngine {
   private async firstCopy(chat: CachedChat): Promise<boolean> {
     const page = await this.remote.state(chat.id)
     if (!page) return false
-    const kept = page.messages.map(
-      (message): Kept => ({ message, upto: page.seq, marks: marksOf(message, page.seq) }),
-    )
+    const kept = page.messages.map((message): Kept => ({
+      message,
+      upto: page.seq,
+      marks: marksOf(message, page.seq),
+    }))
     chat.seq = page.seq
     chat.older = page.next
     chat.complete = page.next === null
@@ -261,9 +263,12 @@ export class ChatEngine {
       const page = await this.remote.state(id, chat.older ?? undefined)
       if (!page) return true
       const have = new Set(
-        (await this.cache.messages(id, page.messages.map((one) => one.id))).map(
-          (one) => one.message.id,
-        ),
+        (
+          await this.cache.messages(
+            id,
+            page.messages.map((one) => one.id),
+          )
+        ).map((one) => one.message.id),
       )
       // As they stood when the page was read, which may be after the place the store
       // holds: the events between are in them already, and `upto` says so.
@@ -300,7 +305,8 @@ export class ChatEngine {
     const me = this.me()
     const fresh = events.filter((one) => one.seq > chat.seq)
     for (const event of fresh) {
-      if (event.kind === 'meta' && chat.row) chat.row = { ...chat.row, meta: metaWith(chat.row.meta, event) }
+      if (event.kind === 'meta' && chat.row)
+        chat.row = { ...chat.row, meta: metaWith(chat.row.meta, event) }
       if (event.author === me && chat.row) {
         chat.row = { ...chat.row, readSeq: Math.max(chat.row.readSeq, event.seq) }
       }
@@ -308,7 +314,12 @@ export class ChatEngine {
     chat.seq = seq
     if (chat.row && seq > chat.row.lastSeq) {
       const last = fresh.at(-1)
-      chat.row = { ...chat.row, lastSeq: seq, lastAt: last?.at ?? null, lastBy: last?.author ?? null }
+      chat.row = {
+        ...chat.row,
+        lastSeq: seq,
+        lastAt: last?.at ?? null,
+        lastBy: last?.author ?? null,
+      }
     }
 
     await this.cache.write([
@@ -385,7 +396,9 @@ export class ChatEngine {
 
   /** Every chat with something to send, sent. */
   async flushAll(): Promise<void> {
-    await Promise.all([...new Set(this.outbox.map((row) => row.chat))].map((chat) => this.flush(chat)))
+    await Promise.all(
+      [...new Set(this.outbox.map((row) => row.chat))].map((chat) => this.flush(chat)),
+    )
   }
 
   /** A chat's outbox, sent in order a batch at a time, until it is empty, refused, or
@@ -494,6 +507,11 @@ export class ChatEngine {
     void this.cache.write([{ t: 'chat', chat: { ...chat } }])
     this.say({ t: 'list' })
     return true
+  }
+
+  /** A read place told to the account over HTTP, from a chat with no socket open. */
+  tellRead(chat: string, seq: number, back: boolean): Promise<boolean> {
+    return this.remote.read(chat, seq, back)
   }
 }
 

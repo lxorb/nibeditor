@@ -4,7 +4,8 @@
  *  `eventOf`, so a row a newer nib wrote that this one cannot read is left out rather
  *  than trusted. */
 
-import { eventOf, messageOf, REFUSALS, type Refusal, chatRowOf } from '@nib/chats/wire'
+import { chatRowOf, eventOf, messageOf, REFUSALS } from '@nib/chats/wire'
+import { isRecord } from '../stored'
 import { invoke } from '../tauri'
 import {
   type CacheChange,
@@ -18,7 +19,6 @@ import {
   type WindowAsk,
 } from './cache'
 import type { Kept, Marks } from './fold'
-import { isRecord } from '../stored'
 
 type Row = Record<string, unknown>
 
@@ -35,7 +35,8 @@ function parsed(text: unknown): unknown {
 }
 
 function marksOf(value: unknown): Marks {
-  if (!isRecord(value) || !Array.isArray(value.r) || !Array.isArray(value.v)) return { r: [], v: [] }
+  if (!isRecord(value) || !Array.isArray(value.r) || !Array.isArray(value.v))
+    return { r: [], v: [] }
   return value as unknown as Marks
 }
 
@@ -68,7 +69,7 @@ function outboxOf(row: Row): OutboxRow | null {
     event,
     madeAt: num(row.made_at),
     tries: num(row.tries),
-    refused: refused as Refusal | null,
+    refused,
   }
 }
 
@@ -121,7 +122,10 @@ function wired(change: CacheChange): Row {
     }
     case 'draft':
       return { t: 'draft', ...change.draft }
-    default:
+    case 'unmessage':
+    case 'unqueue':
+    case 'undraft':
+    case 'forget':
       return change
   }
 }
@@ -150,9 +154,11 @@ export function nativeCache(account: string): ChatCache {
     unread: async (chat, after, me) => num(await read({ t: 'unread', chat, after, me })),
     outbox: async () => (await rows({ t: 'outbox' })).flatMap((row) => outboxOf(row) ?? []),
     drafts: async () =>
-      (await rows({ t: 'drafts' })).map(
-        (row): DraftRow => ({ chat: str(row.chat), text: str(row.text), at: num(row.at) }),
-      ),
+      (await rows({ t: 'drafts' })).map((row): DraftRow => ({
+        chat: str(row.chat),
+        text: str(row.text),
+        at: num(row.at),
+      })),
     write: async (changes) => {
       if (changes.length) await invoke('chat_store_write', { account, changes: changes.map(wired) })
     },
