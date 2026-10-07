@@ -1363,6 +1363,12 @@ pub mod window {
         ("read_terminal", Some(Scope::Context)),
         ("type_terminal", Some(Scope::Terminal)),
         ("recently_deleted", Some(Scope::Tree)),
+        ("list_chats", Some(Scope::ChatsRead)),
+        ("read_chat", Some(Scope::ChatsRead)),
+        ("search_chats", Some(Scope::ChatsRead)),
+        ("draft_message", Some(Scope::ChatsWrite)),
+        ("post_message", Some(Scope::ChatsWrite)),
+        ("react", Some(Scope::ChatsWrite)),
     ];
 
     /// The reader's web tabs, of every space's set, with what only the window knows

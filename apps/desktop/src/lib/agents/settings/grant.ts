@@ -16,6 +16,7 @@ import type { Category, Grant, Scope, SiteRule } from '../verbs'
 /** What each scope reaches through, any one of them. */
 const NEEDS: Partial<Record<Scope, readonly Scope[]>> = {
   'notes.write': ['notes.read'],
+  'chats.write': ['chats.read'],
   'workspace.focus': ['workspace'],
   'browser.network': ['browser', 'browser.reader'],
   'browser.script': ['browser', 'browser.reader'],
@@ -26,6 +27,7 @@ const NEEDS: Partial<Record<Scope, readonly Scope[]>> = {
  *  about them, from their own words out to the whole machine. */
 export const SCOPE_GROUPS = [
   { id: 'notes', scopes: ['notes.read', 'notes.write'] },
+  { id: 'chats', scopes: ['chats.read', 'chats.write'] },
   { id: 'workspace', scopes: ['context', 'tree', 'workspace', 'workspace.focus'] },
   { id: 'browser', scopes: ['browser', 'browser.network'] },
   { id: 'tabs', scopes: ['browser.reader', 'browser.storage'] },
@@ -41,6 +43,8 @@ const ALL_SCOPES: readonly Scope[] = [
   'context',
   'notes.read',
   'notes.write',
+  'chats.read',
+  'chats.write',
   'tree',
   'workspace',
   'workspace.focus',
@@ -60,7 +64,7 @@ const ALL_SCOPES: readonly Scope[] = [
 export const ASKS: readonly { category: Category; needs: readonly Scope[] }[] = [
   { category: 'paying', needs: ['browser', 'browser.reader'] },
   { category: 'sending', needs: ['browser', 'browser.reader'] },
-  { category: 'publishing', needs: ['workspace'] },
+  { category: 'publishing', needs: ['workspace', 'chats.write'] },
   { category: 'deleting', needs: ['browser', 'browser.reader', 'tree'] },
   { category: 'files', needs: ['browser', 'browser.reader'] },
   { category: 'settings', needs: ['settings'] },
@@ -243,12 +247,16 @@ export function ownGrant(id: string, client: string, created: number): Grant {
 }
 
 /** The grant a token made by hand gets: somebody else's tool, without the reader's
- *  screen or tabs, asking for every write. `Grant::third_party` in grants.rs. */
+ *  screen, tabs or chats, asking for every write. `Grant::third_party` in grants.rs.
+ *  Chats are other people's words, so a tool the reader did not pair starts without
+ *  them (docs/chats.md 4.14). */
 export function thirdPartyGrant(id: string, client: string, created: number): Grant {
   const own = ownGrant(id, client, created)
   return {
     ...own,
-    scopes: own.scopes.filter((one) => one !== 'context' && one !== 'browser.reader'),
+    scopes: own.scopes.filter(
+      (one) => !['context', 'browser.reader', 'chats.read', 'chats.write'].includes(one),
+    ),
     mode: 'confirm',
   }
 }

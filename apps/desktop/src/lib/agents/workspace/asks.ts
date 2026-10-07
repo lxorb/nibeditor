@@ -35,11 +35,14 @@ function ordered(value: unknown): unknown {
 /** Whether the call may go ahead: null when it may, and otherwise what it answers.
  *
  *  `category` is what the call always asks about, or null for a write that asks only
- *  in `confirm` mode. The reader's own command line is never asked anything. */
+ *  in `confirm` mode. `site` is what "Always" is about, where the question offers it:
+ *  `chat:<id>` for a chat, so the reader can let an agent post in one chat for good.
+ *  The reader's own command line is never asked anything. */
 export async function asked(
   call: Call,
   category: Category | null,
   summary: string,
+  site?: string,
 ): Promise<AgentAnswer | null> {
   const agent = call.caller.agent
   if (agent === null || agent.mode === 'autonomous') return null
@@ -52,6 +55,7 @@ export async function asked(
     category: about,
     summary,
     key: keyOf(call),
+    ...(site ? { site } : {}),
   }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) }))
 
   return answered(said)

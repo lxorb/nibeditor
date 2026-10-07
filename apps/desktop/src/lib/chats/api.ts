@@ -104,6 +104,24 @@ export interface Scheduled {
   post: Post
 }
 
+/** Which messages `history` answers: the newest `limit`, or those before or after a
+ *  place in the log, or around one message; of the chat itself, or of one message's
+ *  replies. */
+export interface HistoryAsk {
+  limit: number
+  before?: number
+  after?: number
+  around?: string
+  parent?: string
+}
+
+/** Words offered to a composer: the chat's, or one message's replies'. */
+export interface Offer {
+  chat: string
+  parent?: string
+  text: string
+}
+
 /** One message a search found, and the chat it is in. */
 export interface Hit {
   chat: string
@@ -224,9 +242,20 @@ export interface Chats {
    *  from chats (4.13). */
   linking(names: readonly string[]): Promise<Hit[]>
 
+  /** Messages of a chat as they stand, oldest first, from the device's store once it has
+   *  caught up: the newest, or those before or after a place, or around a message; or
+   *  one message's replies. What the agent and the AI commands read (4.14). */
+  history(chat: string, ask: HistoryAsk): Promise<Message[]>
+
   /** The composer's words for a chat, kept on the device after the quiet pause. */
   draft(chat: string): string
   keepDraft(chat: string, text: string): void
+  /** Words put into a chat's composer from outside it - an agent's draft, the AI
+   *  sidebar's answer, a quote sent from a note - for the reader to send. `parent` puts
+   *  them in that message's replies. Kept as the draft, and heard by an open composer. */
+  offer(chat: string, text: string, parent?: string): void
+  /** Hears every offer; answers how to stop. */
+  offers(listener: (offer: Offer) => void): () => void
 
   /** A file's bytes up to the account under their hash, for a message to name; null
    *  where it could not go. */

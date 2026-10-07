@@ -20,8 +20,12 @@
 
   const { activity, approval }: { activity: Activity; approval: Approval } = $props()
 
+  /** A chat the question is about, whose "Always" is for that chat (docs/chats.md 4.14):
+   *  its name is in the summary, so the head names the agent. */
+  const chat = $derived(approval.site?.startsWith('chat:') === true)
+
   /** The site, as its name: a question may carry a whole address. */
-  const site = $derived(approval.site === undefined ? null : hostOf(approval.site))
+  const site = $derived(approval.site === undefined || chat ? null : hostOf(approval.site))
 
   /** The site's own mark, where one of the reader's tabs has found it or this device has
    *  seen it before. Nothing is fetched for a question: a globe stands in. */
@@ -58,7 +62,9 @@
 
 <div class="question" transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}>
   <p class="what">
-    {#if icon && marked}
+    {#if chat}
+      <FileMark mark="chat" />
+    {:else if icon && marked}
       <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {:else}
       <FileMark mark="web" />
@@ -84,11 +90,12 @@
       </button>
     {/if}
   </div>
-  {#if site !== null && approval.category !== 'takeover' && approval.category !== 'showing'}
+  {#if (site !== null || chat) && approval.category !== 'takeover' && approval.category !== 'showing'}
     <!-- The third answer, under the two: a promise about every question to come on the
-         site rather than an answer to this one, so it is the quietest of them. -->
+         site, or in the chat, rather than an answer to this one, so it is the quietest
+         of them. -->
     <button class="always" disabled={answering} onclick={() => void answer(true, true)}>
-      {t('Always on this site')}
+      {chat ? t('Always in this chat') : t('Always on this site')}
     </button>
   {/if}
 </div>

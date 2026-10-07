@@ -91,6 +91,14 @@
     if (id) return onScreen(id)
   })
 
+  // Words offered into one message's replies open them, so the composer they wait in is
+  // on screen.
+  $effect(() =>
+    store().offers((offer) => {
+      if (page && offer.chat === page.id && offer.parent) page.replying = offer.parent
+    }),
+  )
+
   onDestroy(() => page?.close())
 
   function boxOf(element: Element): Box {

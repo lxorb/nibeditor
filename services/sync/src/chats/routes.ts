@@ -20,7 +20,7 @@ import { NO_SUCH_SPACE } from '../refused'
 import { allows, reachedSpace, refusal } from '../spaces/space'
 import { blobKey, BYTES, NO_SUCH_FILE } from '../sync2/files'
 import { deviceOf } from '../sync2/device'
-import type { Env, Variables } from '../types'
+import type { Env, Variables, Whoever } from '../types'
 import { askChat, CHAT_AWAY, chatsMoved } from './ask'
 import { INVALID, RATE } from './placing'
 import { askingOf, reachChat, type Reached } from './reach'
@@ -48,7 +48,7 @@ const HASH = /^[a-f0-9]{64}$/
 export const chats = new Hono<App>()
 
 /** What the object is told about whoever a route is asking for. */
-function asking(reached: Reached, device?: string): Record<string, string> {
+export function asking(reached: Reached, device?: string): Record<string, string> {
   return {
     'x-nib-space': reached.space,
     'x-nib-who': reached.id,
@@ -154,7 +154,7 @@ function rowOf(row: ListedRow) {
   }
 }
 
-async function listed(env: Env, who: Variables['who'], space: string | null) {
+export async function listed(env: Env, who: Whoever, space: string | null) {
   const { results } = await env.DB.prepare(LISTED)
     .bind(...askingOf(who), space)
     .all<ListedRow>()
@@ -371,7 +371,7 @@ interface Member {
   role: (typeof ROLES)[number]
 }
 
-async function membersOf(env: Env, chat: string): Promise<Member[]> {
+export async function membersOf(env: Env, chat: string): Promise<Member[]> {
   const { results } = await env.DB.prepare(MEMBERS)
     .bind(chat)
     .all<{ id: string; guest: number; rank: number; name: string | null }>()
@@ -405,9 +405,9 @@ function dayIn(zone: string | undefined): (at: number) => string {
 
 /** One search over some chats: the query as `@nib/chats` reads it, the candidates each
  *  chat's words index gives, answered with `matches`, newest first (4.12). */
-async function searched(
+export async function searched(
   env: Env,
-  who: Variables['who'],
+  who: Whoever,
   query: (name: string) => string | undefined,
   picked: readonly { id: string; reached: Reached }[],
 ): Promise<{ chat: string; message: Message }[]> {

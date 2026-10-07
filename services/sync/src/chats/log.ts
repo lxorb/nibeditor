@@ -51,6 +51,7 @@ export type ChatAsk =
   | 'send'
   | 'events'
   | 'state'
+  | 'message'
   | 'search'
   | 'read'
   | 'scheduled'
@@ -164,6 +165,7 @@ export class ChatLog implements DurableObject {
     const query = new URL(request.url).searchParams
     if (ask === 'events') return Response.json(this.eventsPage(query))
     if (ask === 'state') return Response.json(this.statePage(query))
+    if (ask === 'message') return Response.json({ message: this.messageById(query.get('id')) })
     if (ask === 'search') return Response.json({ messages: this.candidates(await request.json()) })
 
     const person = personOf(headers)
@@ -650,18 +652,32 @@ export class ChatLog implements DurableObject {
     return { events: rows.map(loggedOf), more }
   }
 
+  /** One message as it stands, by its id: where an agent's `before` or `around` is. */
+  private messageById(id: string | null): Message | null {
+    if (!id) return null
+    const row = this.sql
+      .exec<{ json: string }>('select json from messages where id = ?', id)
+      .toArray()[0]
+    return row ? (JSON.parse(row.json) as Message) : null
+  }
+
   /** Messages as they stand, newest first, for a first copy (4.5): a message deleted
    *  with nothing under it is left out, one with replies kept as the line they hang
-   *  from. `next` is the `before` of the following page. */
+   *  from. `next` is the `before` of the following page. `parent` narrows it to one
+   *  message's replies, which the account connector reads (4.14). */
   private statePage(query: URLSearchParams) {
     const limit = Math.max(1, Math.min(wholeIn(query.get('limit')) ?? MOST_MESSAGES, MOST_MESSAGES))
     const before = wholeIn(query.get('before')) ?? Number.MAX_SAFE_INTEGER
+    const parent = query.get('parent')
     const head = this.head()
     const rows = this.sql
       .exec<{ seq: number; json: string }>(
         `select seq, json from messages where seq < ? and (deleted = 0 or replies > 0)
+            and (? is null or parent = ?)
           order by seq desc limit ?`,
         before,
+        parent,
+        parent,
         limit + 1,
       )
       .toArray()

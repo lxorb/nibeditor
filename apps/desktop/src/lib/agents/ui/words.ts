@@ -83,6 +83,12 @@ const WORDS: Readonly<Record<string, string>> = {
   read_terminal: READING,
   type_terminal: TYPING,
   recently_deleted: WRITING,
+  list_chats: READING,
+  read_chat: READING,
+  search_chats: key('Searching'),
+  draft_message: WRITING,
+  post_message: WRITING,
+  react: WRITING,
 }
 
 /** The word for a verb, translated, or null for bookkeeping. */

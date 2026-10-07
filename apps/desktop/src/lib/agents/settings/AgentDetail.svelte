@@ -61,6 +61,18 @@
   )
 
   const sites = $derived(sitesOf(grant))
+
+  /** A chat said "Always in this chat" to, by its name: its id is what the grant keeps
+   *  (`chat:<id>`). The chats' store is fetched only for a grant that has one. */
+  let chatNames = $state.raw<Record<string, string>>({})
+  $effect(() => {
+    if (__EVEN_PLUGIN__ || !sites.some((one) => one.site.startsWith('chat:'))) return
+    void import('../../chats/store.svelte').then(({ chats }) => {
+      chatNames = Object.fromEntries(
+        chats.list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]),
+      )
+    })
+  })
   const asked = $derived(ASKS.filter((one) => askApplies(grant, one.category)))
   const ruleChoices = $derived(
     (['allow', 'deny', 'agent-store'] as const).map((value) => ({
@@ -231,7 +243,7 @@
   {#each sites as { site, rule, always } (site)}
     <div class="nib-setting site">
       <span class="name">
-        <span class="what"><bdi>{site}</bdi></span>
+        <span class="what"><bdi>{chatNames[site] ?? site}</bdi></span>
         {#if always.length}
           <span class="always">
             {#each always as category (category)}

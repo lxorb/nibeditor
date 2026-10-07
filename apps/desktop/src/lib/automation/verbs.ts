@@ -217,6 +217,12 @@ const VERBS: Record<string, Verb> = {
   read_terminal: needs('context'),
   type_terminal: needs('terminal'),
   recently_deleted: needs('tree'),
+  list_chats: needs('chats.read'),
+  read_chat: needs('chats.read'),
+  search_chats: needs('chats.read'),
+  draft_message: needs('chats.write'),
+  post_message: needs('chats.write'),
+  react: needs('chats.write'),
 
   // What the crate asks the window on an agent's behalf, each optional: the crate has
   // an answer of its own when the window gives none (docs/agent-native.md 13.1). The

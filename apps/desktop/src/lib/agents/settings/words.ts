@@ -11,6 +11,7 @@ import type { Limit, ScopeGroup } from './grant'
 
 export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   notes: () => t('Notes'),
+  chats: () => t('Chats'),
   workspace: () => t('Workspace'),
   browser: () => t('Browser'),
   tabs: () => t('Your tabs'),
@@ -22,6 +23,8 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
 export const SCOPE_WORDS: Record<Scope, () => string> = {
   'notes.read': () => t('Read notes'),
   'notes.write': () => t('Change notes'),
+  'chats.read': () => t('Read chats'),
+  'chats.write': () => t('Post in chats'),
   context: () => t('See what you are looking at'),
   tree: () => t('Move and rename files'),
   workspace: () => t('Open tabs and bookmarks'),

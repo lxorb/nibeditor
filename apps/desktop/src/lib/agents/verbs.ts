@@ -91,6 +91,12 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   read_terminal: 'context',
   type_terminal: 'terminal',
   recently_deleted: 'tree',
+  list_chats: 'chats.read',
+  read_chat: 'chats.read',
+  search_chats: 'chats.read',
+  draft_message: 'chats.write',
+  post_message: 'chats.write',
+  react: 'chats.write',
 }
 
 /** The window's verbs the crate asks on an agent's behalf. Each is optional: a window
@@ -116,6 +122,8 @@ export type Scope =
   | 'context'
   | 'notes.read'
   | 'notes.write'
+  | 'chats.read'
+  | 'chats.write'
   | 'tree'
   | 'workspace'
   | 'workspace.focus'

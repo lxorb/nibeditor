@@ -27,6 +27,18 @@ use crate::agents::verbs::Dialog;
 /// Where the contract's answer is, under a result's `_meta`.
 pub const META: &str = "ch.emilvinu.nib/answer";
 
+/// The chats' tools, whose window answers the text itself (`@nib/chats/agent`, the
+/// account connector's words too), each message of somebody else's inside its own
+/// untrusted mark naming the chat and the person: passed through as it is.
+const CHATS: [&str; 6] = [
+    "list_chats",
+    "read_chat",
+    "search_chats",
+    "draft_message",
+    "post_message",
+    "react",
+];
+
 /// A call's outcome, whichever road it took.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Outcome {
@@ -295,6 +307,9 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
                 )),
             ]
         }
+        tool if CHATS.contains(&tool) && result.is_string() => {
+            vec![text(result.as_str().unwrap_or_default())]
+        }
         _ => {
             let said = shared::text(tool, args, result).unwrap_or_else(|| result.to_string());
             if from_outside {
@@ -412,6 +427,23 @@ mod tests {
         assert_eq!(result["isError"], false);
         assert_eq!(result["_meta"][META]["result"]["title"], "Shop");
         assert!(result.get("structuredContent").is_none());
+    }
+
+    #[test]
+    fn a_chat_is_the_windows_own_words_with_its_marks_inside() {
+        let words = "#thesis
+- A · 2026-10-07T14:40Z · Lucile
+<untrusted source=\"chat:thesis from:Lucile\">
+hi
+</untrusted>";
+        let answer = Answer::Ok {
+            result: json!(words),
+            untrusted: None,
+            dialog: None,
+        };
+        let result = rendered("read_chat", &json!({ "chat": "thesis" }), &contract(&answer));
+        assert_eq!(first_text(&result), words);
+        assert_eq!(result["isError"], false);
     }
 
     #[test]

@@ -20,6 +20,7 @@ import { bookmarks } from './bookmarks'
 import { type Call, done } from './call'
 import { readCanvas, editCanvas } from './canvas'
 import { captureToNote } from './capture'
+import { draftMessage, listChats, postMessage, react, readChat, searchChats } from './chats'
 import { runCommand } from './commands'
 import { listBacklinks, searchNotes } from './find'
 import { attachAgentLog } from './log'
@@ -97,6 +98,12 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   read_terminal: readTerminal,
   type_terminal: typeTerminal,
   recently_deleted: recentlyDeleted,
+  list_chats: listChats,
+  read_chat: readChat,
+  search_chats: searchChats,
+  draft_message: draftMessage,
+  post_message: postMessage,
+  react,
 }
 
 /** Every verb here, by name: the dispatcher's agent rows, which a test holds to this. */

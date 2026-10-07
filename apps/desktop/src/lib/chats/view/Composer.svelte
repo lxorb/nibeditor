@@ -120,7 +120,16 @@
     made.dispatch({ effects: modeEffects(modes.settings) })
     empty = made.state.doc.length === 0
     editor = made
+    // Words offered from outside - an agent's draft, the AI sidebar's answer, a quote
+    // sent from a note - take the field over, for the reader to send or change.
+    const unoffer = store().offers((offer) => {
+      if (offer.chat !== page.id || offer.parent !== parent) return
+      if (editingAside()) before = offer.text
+      else setText(offer.text)
+      focus()
+    })
     return () => {
+      unoffer()
       keep.cancel()
       if (!editingAside()) store().keepDraft(draftKey, made.state.doc.toString())
       made.destroy()

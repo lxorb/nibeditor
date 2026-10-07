@@ -31,7 +31,17 @@ import { keep, storedText } from '../stored'
 import { sync } from '../sync.svelte'
 import { isNative } from '../tauri'
 import { workspace } from '../workspace.svelte'
-import type { ChatEntry, ChatMember, Chats, ChatView, Draft, Hit, Scheduled } from './api'
+import type {
+  ChatEntry,
+  ChatMember,
+  Chats,
+  ChatView,
+  Draft,
+  HistoryAsk,
+  Hit,
+  Offer,
+  Scheduled,
+} from './api'
 import { type ChatCache, MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
@@ -568,11 +578,51 @@ class ChatsStore implements Chats {
     return hits.sort((a, b) => b.message.at - a.message.at)
   }
 
+  async history(chat: string, ask: HistoryAsk): Promise<Message[]> {
+    const engine = this.engine
+    const cache = this.cache
+    if (!engine || !cache) return []
+    // Caught up first, so an agent asking about a chat reads what is there now.
+    await engine.sync(chat).catch(() => undefined)
+    const limit = Math.max(1, ask.limit)
+    let around: number | undefined
+    let parent = ask.parent
+    if (ask.around !== undefined) {
+      const found = (await cache.messages(chat, [ask.around]))[0]?.message
+      if (!found) return []
+      around = found.seq
+      // Around a reply is among its parent's replies, where it is shown.
+      if (found.parent && !found.alsoToChat) parent ??= found.parent
+    }
+    const kept = await cache.window({
+      chat,
+      limit,
+      ...(parent !== undefined ? { parent } : {}),
+      ...(around !== undefined ? { around } : {}),
+      ...(ask.after !== undefined ? { after: ask.after } : {}),
+      ...(ask.before !== undefined ? { before: ask.before } : {}),
+    })
+    return kept.map((one) => one.message)
+  }
+
   // -------------------------------------------------------------------------
   // Drafts, files, previews, pointers
 
   draft(chat: string): string {
     return this.drafts.get(chat) ?? ''
+  }
+
+  private readonly offered = new Set<(offer: Offer) => void>()
+
+  offer(chat: string, text: string, parent?: string): void {
+    this.keepDraft(parent ? `${chat}/${parent}` : chat, text)
+    const offer: Offer = { chat, text, ...(parent ? { parent } : {}) }
+    for (const hear of this.offered) hear(offer)
+  }
+
+  offers(listener: (offer: Offer) => void): () => void {
+    this.offered.add(listener)
+    return () => this.offered.delete(listener)
   }
 
   keepDraft(chat: string, text: string): void {

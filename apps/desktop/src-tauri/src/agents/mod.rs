@@ -533,7 +533,8 @@ pub fn agents_answer(
 
 /// A question the window raises for one of its own verbs on an agent's behalf (writing
 /// a setting, publishing): `ok` when the reader already allowed this very call, which
-/// spends the allowance, and `needs_approval` otherwise.
+/// spends the allowance, or said "Always" for what `site` names (`chat:<id>`, a chat
+/// the reader let the agent post in for good), and `needs_approval` otherwise.
 #[tauri::command(async)]
 pub fn agents_ask(
     webview: tauri::Webview,
@@ -542,6 +543,7 @@ pub fn agents_ask(
     category: Category,
     summary: String,
     key: String,
+    site: Option<String>,
 ) -> Answer {
     if let Err(why) = from_the_app(&webview) {
         return Answer::error(Code::NotGranted, why);
@@ -552,7 +554,8 @@ pub fn agents_ask(
     let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
         return Answer::error(Code::NotGranted, "there is no such agent");
     };
-    if !grant.asks(category) {
+    if !grant.asks(category) || site.as_deref().is_some_and(|site| grant.always(site, category))
+    {
         return Answer::ok(verbs::Nothing {});
     }
     approvals::ask(
@@ -562,7 +565,7 @@ pub fn agents_ask(
             name: &grant.name,
             category,
             summary,
-            site: None,
+            site,
             tab: None,
             key,
         },

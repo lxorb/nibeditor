@@ -931,6 +931,86 @@
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
   {
+    "name": "list_chats",
+    "description": "The chats you reach, a line each: name, id, space, people, unread.",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "space": { "type": "string" }, "unread": { "type": "boolean" } }
+    },
+    "annotations": { "readOnlyHint": true }
+  },
+  {
+    "name": "read_chat",
+    "description": "A chat's messages (by name or id), oldest first: the newest, around, before or after a message id, or replies_of one. Other people's words come marked untrusted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "chat": { "type": "string" },
+        "around": { "type": "string" },
+        "before": { "type": "string" },
+        "after": { "type": "string" },
+        "replies_of": { "type": "string" },
+        "limit": { "type": "integer" }
+      },
+      "required": ["chat"]
+    },
+    "annotations": { "readOnlyHint": true }
+  },
+  {
+    "name": "search_chats",
+    "description": "Messages matching words, \"a phrase\", from:@name, in:#chat, has:link|file|image|pin, is:reply, mentions:me, before:/after:/on: a date.",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "query": { "type": "string" }, "limit": { "type": "integer" } },
+      "required": ["query"]
+    },
+    "annotations": { "readOnlyHint": true }
+  },
+  {
+    "name": "draft_message",
+    "description": "Put text in the reader's composer for a chat, or for reply_to's replies, to send themselves. Never sends.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "chat": { "type": "string" },
+        "text": { "type": "string" },
+        "reply_to": { "type": "string" }
+      },
+      "required": ["chat", "text"]
+    },
+    "annotations": { "destructiveHint": false }
+  },
+  {
+    "name": "post_message",
+    "description": "Send text in a chat as the reader, marked as yours; reply_to or quote a message id. Where others read it, it may ask the reader first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "chat": { "type": "string" },
+        "text": { "type": "string" },
+        "reply_to": { "type": "string" },
+        "quote": { "type": "string" }
+      },
+      "required": ["chat", "text"]
+    },
+    "annotations": { "destructiveHint": false }
+  },
+  {
+    "name": "react",
+    "description": "Put an emoji on a message, or take it off with on false. May ask first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "chat": { "type": "string" },
+        "message": { "type": "string" },
+        "emoji": { "type": "string" },
+        "on": { "type": "boolean" }
+      },
+      "required": ["chat", "message", "emoji"]
+    },
+    "annotations": { "destructiveHint": false }
+  },
+  {
     "name": "create_folder",
     "description": "Make a folder.",
     "inputSchema": {

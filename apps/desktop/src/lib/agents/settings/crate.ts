@@ -77,6 +77,8 @@ const SCOPES: readonly Scope[] = [
   'context',
   'notes.read',
   'notes.write',
+  'chats.read',
+  'chats.write',
   'tree',
   'workspace',
   'workspace.focus',

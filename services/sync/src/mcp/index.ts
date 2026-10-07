@@ -10,6 +10,7 @@ import { SIGN_IN } from '../refused'
 import { challenge } from '../oauth'
 import type { Env } from '../types'
 import { bearer } from './tokens'
+import { CHAT_TOOLS, callChatTool } from './chats'
 import { callTaskTool, TASK_TOOLS } from './tasks'
 import { callTool, TOOLS } from './tools'
 
@@ -76,7 +77,7 @@ mcp.post('/', async (context) => {
       return reply({})
 
     case 'tools/list':
-      return reply({ tools: [...TOOLS, ...TASK_TOOLS] })
+      return reply({ tools: [...TOOLS, ...TASK_TOOLS, ...CHAT_TOOLS] })
 
     case 'tools/call': {
       const params = fields(request.params)
@@ -86,7 +87,9 @@ mcp.post('/', async (context) => {
       try {
         const text = TASK_TOOLS.some((tool) => tool.name === name)
           ? await callTaskTool(context.env, token, name, args)
-          : await callTool(context.env, token, name, args)
+          : CHAT_TOOLS.some((tool) => tool.name === name)
+            ? await callChatTool(context.env, token, name, args)
+            : await callTool(context.env, token, name, args)
         return reply({ content: [{ type: 'text', text }] })
       } catch {
         // Whatever went wrong is ours to read in the logs, not the model's to

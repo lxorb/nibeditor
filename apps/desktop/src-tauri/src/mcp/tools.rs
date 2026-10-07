@@ -458,7 +458,10 @@ mod tests {
     /// to 28 000 on 2026-10-03 for every kind of tab (Emil: the agent reaches every tab,
     /// terminals among them): three tools and the tab verbs' new arguments. Raised to
     /// 31 000 on 2026-10-04 for the to-dos and bases (Emil: "my agent in here can
-    /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens.
+    /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens. Raised
+    /// to 33 000 on 2026-10-07 for chats (docs/chats.md 4.14, "the agent reads and posts",
+    /// Emil's ask): six tools, 2 101 characters, about 530 tokens, and listed only to a
+    /// grant holding chats.read or chats.write.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -467,7 +470,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 31_000,
+            total < 33_000,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

@@ -38,7 +38,9 @@ import type {
   Chats,
   ChatView,
   Draft,
+  HistoryAsk,
   Hit,
+  Offer,
   Presence,
   RepliesView,
   Scheduled,
@@ -308,6 +310,7 @@ export class FixtureChats implements Chats {
       ...(draft.files?.length ? { files: draft.files } : {}),
       ...(draft.poll ? { poll: draft.poll } : {}),
       ...(draft.preview ? { preview: draft.preview } : {}),
+      ...(draft.via ? { via: draft.via } : {}),
       ...(draft.parent && draft.alsoToChat ? { alsoToChat: true } : {}),
       ...(mentions.length ? { mentions } : {}),
     }
@@ -425,6 +428,42 @@ export class FixtureChats implements Chats {
   keepDraft(chat: string, text: string): void {
     if (text) this.drafts.set(chat, text)
     else this.drafts.delete(chat)
+  }
+
+  private readonly offered = new Set<(offer: Offer) => void>()
+
+  offer(chat: string, text: string, parent?: string): void {
+    this.keepDraft(parent ? `${chat}/${parent}` : chat, text)
+    for (const hear of this.offered) hear({ chat, text, ...(parent ? { parent } : {}) })
+  }
+
+  offers(listener: (offer: Offer) => void): () => void {
+    this.offered.add(listener)
+    return () => this.offered.delete(listener)
+  }
+
+  history(chat: string, ask: HistoryAsk): Promise<Message[]> {
+    const state = this.must(chat).state
+    const asked = ask.around === undefined ? undefined : state.messages.get(ask.around)
+    if (ask.around !== undefined && !asked) return Promise.resolve([])
+    const parent = ask.parent ?? (asked?.parent && !asked.alsoToChat ? asked.parent : undefined)
+    const all = [...state.messages.values()]
+      .filter((one) =>
+        parent === undefined ? !one.parent || one.alsoToChat : one.parent === parent,
+      )
+      .sort((a, b) => a.seq - b.seq)
+    if (ask.around !== undefined) {
+      const at = all.findIndex((one) => one.id === ask.around)
+      if (at < 0) return Promise.resolve([])
+      const from = Math.max(0, at - Math.floor(ask.limit / 2))
+      return Promise.resolve(all.slice(from, from + ask.limit))
+    }
+    if (ask.after !== undefined) {
+      const after = ask.after
+      return Promise.resolve(all.filter((one) => one.seq > after).slice(0, ask.limit))
+    }
+    const before = ask.before ?? Number.MAX_SAFE_INTEGER
+    return Promise.resolve(all.filter((one) => one.seq < before).slice(-ask.limit))
   }
 
   upload(bytes: Uint8Array): Promise<string | null> {

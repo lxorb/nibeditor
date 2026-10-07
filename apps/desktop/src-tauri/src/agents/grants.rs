@@ -38,6 +38,12 @@ pub enum Scope {
     /// Writing notes.
     #[serde(rename = "notes.write")]
     NotesWrite,
+    /// Reading chats: other people's words, marked as theirs (docs/chats.md 4.14).
+    #[serde(rename = "chats.read")]
+    ChatsRead,
+    /// Posting, reacting and drafting in chats, as the reader.
+    #[serde(rename = "chats.write")]
+    ChatsWrite,
     /// The file tree: moving, renaming, folders.
     #[serde(rename = "tree")]
     Tree,
@@ -72,10 +78,12 @@ pub enum Scope {
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 13] = [
+    pub const ALL: [Scope; 15] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
+        Scope::ChatsRead,
+        Scope::ChatsWrite,
         Scope::Tree,
         Scope::Workspace,
         Scope::WorkspaceFocus,
@@ -239,12 +247,16 @@ impl Grant {
     }
 
     /// A grant for somebody else's tool, made by hand: the same, without the reader's
-    /// screen or tabs, and asking for every write (9.1).
+    /// screen, tabs or chats, and asking for every write (9.1). Chats are other
+    /// people's words, so a tool the reader did not pair starts without them.
     pub fn third_party(id: String, client: &str) -> Self {
         let mut grant = Grant::own(id, client);
-        grant
-            .scopes
-            .retain(|one| !matches!(one, Scope::Context | Scope::BrowserReader));
+        grant.scopes.retain(|one| {
+            !matches!(
+                one,
+                Scope::Context | Scope::BrowserReader | Scope::ChatsRead | Scope::ChatsWrite
+            )
+        });
         grant.mode = Mode::Confirm;
         grant
     }
@@ -283,6 +295,27 @@ struct Kept {
 struct File {
     #[serde(default)]
     agents: Vec<Kept>,
+    /// Whether its grants have been given the chats' scopes, which came after them:
+    /// absent in a file written before chats were.
+    #[serde(default)]
+    chats: bool,
+}
+
+/// A grant kept from before chats, given them the way it holds notes: a grant of the
+/// reader's own clients (it sees the screen) reads and posts in chats where it reads
+/// and writes notes; somebody else's tool, which never had the screen, gets neither.
+fn with_chats(grant: &mut Grant) {
+    if !grant.holds(Scope::Context) {
+        return;
+    }
+    for (notes, chats) in [
+        (Scope::NotesRead, Scope::ChatsRead),
+        (Scope::NotesWrite, Scope::ChatsWrite),
+    ] {
+        if grant.holds(notes) && !grant.holds(chats) {
+            grant.scopes.push(chats);
+        }
+    }
 }
 
 /// Every grant, read from the file the first time an agent asks and written back on
@@ -441,7 +474,15 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
     std::fs::read_to_string(path)
         .ok()
         .and_then(|text| serde_json::from_str::<File>(&text).ok())
-        .map(|file| file.agents)
+        .map(|file| {
+            let mut agents = file.agents;
+            if !file.chats {
+                for one in &mut agents {
+                    with_chats(&mut one.grant);
+                }
+            }
+            agents
+        })
         .unwrap_or_default()
 }
 
@@ -452,6 +493,7 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     }
     let text = serde_json::to_string_pretty(&File {
         agents: kept.to_vec(),
+        chats: true,
     })
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
@@ -602,6 +644,7 @@ mod tests {
                 grant: grant.clone(),
                 token: hashed("t"),
             }],
+            chats: true,
         })
         .expect("json");
         let back: File = serde_json::from_str(&text).expect("read");
@@ -618,6 +661,38 @@ mod tests {
             .as_array()
             .expect("scopes")
             .contains(&"browser.reader".into()));
+    }
+
+    #[test]
+    fn a_grant_from_before_chats_reads_and_posts_where_it_reads_and_writes_notes() {
+        let mut own = Grant::own("a".into(), "A");
+        own.scopes
+            .retain(|one| !matches!(one, Scope::ChatsRead | Scope::ChatsWrite | Scope::NotesWrite));
+        let mut other = Grant::own("b".into(), "B");
+        other.scopes.retain(|one| {
+            !matches!(one, Scope::Context | Scope::ChatsRead | Scope::ChatsWrite)
+        });
+        let kept = |grant: &Grant| Kept {
+            grant: grant.clone(),
+            token: hashed("t"),
+        };
+        let text = serde_json::json!({ "agents": [kept(&own), kept(&other)] }).to_string();
+        let dir = std::env::temp_dir().join(format!("nib-grants-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let path = dir.join("agents.json");
+        std::fs::write(&path, text).expect("write");
+
+        let read = read(&path);
+        assert!(read[0].grant.holds(Scope::ChatsRead));
+        assert!(!read[0].grant.holds(Scope::ChatsWrite));
+        assert!(!read[1].grant.holds(Scope::ChatsRead));
+
+        // Once written with the mark, a scope the reader took away stays away.
+        let mut taken = read.clone();
+        taken[0].grant.scopes.retain(|one| *one != Scope::ChatsRead);
+        write(&path, &taken).expect("write again");
+        assert!(!super::read(&path)[0].grant.holds(Scope::ChatsRead));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -641,6 +716,7 @@ mod tests {
         assert!(!own.holds(Scope::BrowserStorage));
         assert!(!own.holds(Scope::Settings));
         assert!(!own.holds(Scope::Terminal));
+        assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
         assert_eq!(
@@ -655,6 +731,7 @@ mod tests {
         let other = Grant::third_party("b".into(), "B");
         assert!(!other.holds(Scope::Context));
         assert!(!other.holds(Scope::BrowserReader));
+        assert!(!other.holds(Scope::ChatsRead) && !other.holds(Scope::ChatsWrite));
         assert_eq!(other.mode, Mode::Confirm);
     }
 
