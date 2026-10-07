@@ -2177,4 +2177,14 @@ export const pa: Dictionary = {
   'Also send to {chat}': '{chat} ਵਿੱਚ ਵੀ ਭੇਜੋ',
   'Skin tone': 'ਚਮੜੀ ਦਾ ਰੰਗ',
   'Deleted account': 'ਮਿਟਾਇਆ ਖਾਤਾ',
+  // Chats: notifications
+  Mute: 'ਮਿਊਟ ਕਰੋ',
+  Unmute: 'ਅਨਮਿਊਟ ਕਰੋ',
+  'New message': 'ਨਵਾਂ ਸੁਨੇਹਾ',
+  'My keywords': 'ਮੇਰੇ ਕੀਵਰਡ',
+  Previews: 'ਪੂਰਵਦਰਸ਼ਨ',
+  Sound: 'ਅਵਾਜ਼',
+  Weekdays: 'ਕੰਮ ਦੇ ਦਿਨ',
+  Starts: 'ਸ਼ੁਰੂ',
+  Ends: 'ਅੰਤ',
 }

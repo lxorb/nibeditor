@@ -2169,4 +2169,14 @@ export const hi: Dictionary = {
   'Also send to {chat}': '{chat} में भी भेजें',
   'Skin tone': 'त्वचा का रंग',
   'Deleted account': 'हटाया गया खाता',
+  // Chats: notifications
+  Mute: 'म्यूट करें',
+  Unmute: 'अनम्यूट करें',
+  'New message': 'नया संदेश',
+  'My keywords': 'मेरे कीवर्ड',
+  Previews: 'पूर्वावलोकन',
+  Sound: 'ध्वनि',
+  Weekdays: 'कार्यदिवस',
+  Starts: 'शुरू',
+  Ends: 'समाप्त',
 }

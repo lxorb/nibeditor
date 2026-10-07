@@ -2122,4 +2122,14 @@ export const zhHant: Dictionary = {
   'Also send to {chat}': '同時傳送到 {chat}',
   'Skin tone': '膚色',
   'Deleted account': '已刪除的帳號',
+  // Chats: notifications
+  Mute: '靜音',
+  Unmute: '取消靜音',
+  'New message': '新訊息',
+  'My keywords': '我的關鍵字',
+  Previews: '預覽',
+  Sound: '聲音',
+  Weekdays: '平日',
+  Starts: '開始',
+  Ends: '結束',
 }

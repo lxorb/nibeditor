@@ -178,6 +178,12 @@ export interface Chats {
    *  notification reads. Answers how to stop. */
   heard(listener: (chat: string, messages: readonly Message[]) => void): () => void
   entry(chat: string): ChatEntry | null
+  /** One message as this device holds it, or null: what a notification reads a reply's
+   *  parent by. */
+  message(chat: string, id: string): Promise<Message | null>
+  /** The read place moved up to `seq` with no tab of the chat open: a reply sent from
+   *  its notification. */
+  markRead(chat: string, seq: number): Promise<void>
   /** The reader's switch for read receipts, reciprocal (4.10). */
   receipts: boolean
 

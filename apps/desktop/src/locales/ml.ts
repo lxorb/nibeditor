@@ -2193,4 +2193,14 @@ export const ml: Dictionary = {
   'Also send to {chat}': '{chat}-ലേക്കും അയയ്ക്കുക',
   'Skin tone': 'ചർമ്മത്തിന്റെ നിറം',
   'Deleted account': 'ഇല്ലാതാക്കിയ അക്കൗണ്ട്',
+  // Chats: notifications
+  Mute: 'നിശബ്ദമാക്കുക',
+  Unmute: 'ശബ്ദം ഓണാക്കുക',
+  'New message': 'പുതിയ സന്ദേശം',
+  'My keywords': 'എന്റെ കീവേഡുകൾ',
+  Previews: 'പ്രിവ്യൂകൾ',
+  Sound: 'ശബ്ദം',
+  Weekdays: 'പ്രവൃത്തി ദിവസങ്ങൾ',
+  Starts: 'ആരംഭം',
+  Ends: 'അവസാനം',
 }

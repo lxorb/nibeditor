@@ -2190,4 +2190,14 @@ export const kn: Dictionary = {
   'Also send to {chat}': '{chat}ಗೂ ಕಳುಹಿಸಿ',
   'Skin tone': 'ಚರ್ಮದ ಬಣ್ಣ',
   'Deleted account': 'ಅಳಿಸಿದ ಖಾತೆ',
+  // Chats: notifications
+  Mute: 'ಮ್ಯೂಟ್ ಮಾಡಿ',
+  Unmute: 'ಅನ್‌ಮ್ಯೂಟ್ ಮಾಡಿ',
+  'New message': 'ಹೊಸ ಸಂದೇಶ',
+  'My keywords': 'ನನ್ನ ಕೀವರ್ಡ್‌ಗಳು',
+  Previews: 'ಮುನ್ನೋಟಗಳು',
+  Sound: 'ಶಬ್ದ',
+  Weekdays: 'ಕೆಲಸದ ದಿನಗಳು',
+  Starts: 'ಆರಂಭ',
+  Ends: 'ಅಂತ್ಯ',
 }

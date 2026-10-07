@@ -2200,4 +2200,14 @@ export const ha: Dictionary = {
   'Also send to {chat}': 'Aika zuwa {chat} ma',
   'Skin tone': 'Launin fata',
   'Deleted account': 'Asusun da aka share',
+  // Chats: notifications
+  Mute: 'Yi shiru',
+  Unmute: 'Dawo da sauti',
+  'New message': 'Sabon saƙo',
+  'My keywords': 'Kalmomina',
+  Previews: 'Samfoti',
+  Sound: 'Sauti',
+  Weekdays: 'Ranakun aiki',
+  Starts: 'Farawa',
+  Ends: 'Ƙarshe',
 }

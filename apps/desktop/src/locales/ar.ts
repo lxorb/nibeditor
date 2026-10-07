@@ -2278,4 +2278,14 @@ export const ar: Dictionary = {
   'Also send to {chat}': 'أرسل أيضًا إلى {chat}',
   'Skin tone': 'لون البشرة',
   'Deleted account': 'حساب محذوف',
+  // Chats: notifications
+  Mute: 'كتم',
+  Unmute: 'إلغاء الكتم',
+  'New message': 'رسالة جديدة',
+  'My keywords': 'كلماتي المفتاحية',
+  Previews: 'المعاينات',
+  Sound: 'الصوت',
+  Weekdays: 'أيام العمل',
+  Starts: 'يبدأ',
+  Ends: 'ينتهي',
 }

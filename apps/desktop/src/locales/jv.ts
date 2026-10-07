@@ -2156,4 +2156,14 @@ export const jv: Dictionary = {
   'Also send to {chat}': 'Kirim uga menyang {chat}',
   'Skin tone': 'Warna kulit',
   'Deleted account': 'Akun sing wis dibusak',
+  // Chats: notifications
+  Mute: 'Bisokake',
+  Unmute: 'Uripake swara',
+  'New message': 'Pesen anyar',
+  'My keywords': 'Tembung kunciku',
+  Previews: 'Pratinjau',
+  Sound: 'Swara',
+  Weekdays: 'Dina kerja',
+  Starts: 'Wiwit',
+  Ends: 'Rampung',
 }

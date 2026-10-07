@@ -2147,4 +2147,14 @@ export const am: Dictionary = {
   'Also send to {chat}': 'ወደ {chat} ደግሞ ላክ',
   'Skin tone': 'የቆዳ ቀለም',
   'Deleted account': 'የተሰረዘ መለያ',
+  // Chats: notifications
+  Mute: 'ድምፅ አጥፋ',
+  Unmute: 'ድምፅ አብራ',
+  'New message': 'አዲስ መልዕክት',
+  'My keywords': 'የእኔ ቁልፍ ቃላት',
+  Previews: 'ቅድመ እይታዎች',
+  Sound: 'ድምፅ',
+  Weekdays: 'የሥራ ቀናት',
+  Starts: 'ይጀምራል',
+  Ends: 'ያበቃል',
 }

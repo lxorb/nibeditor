@@ -22,6 +22,7 @@
   import Glyph from './Glyph.svelte'
   import Lightbox from './Lightbox.svelte'
   import { isPicture, isVideo } from './media'
+  import { onScreen } from '../on-screen'
   import { hearJumps, takeJump } from './open'
   import type { Box } from './place'
   import PollSheet from './PollSheet.svelte'
@@ -82,6 +83,13 @@
       if (tab.path && samePath(path, tab.path)) jumpWaiting()
     }),
   )
+
+  // Drawn is on screen: a pane draws the tab in front of it and no other, and nothing
+  // pings for a chat the reader is looking at (docs/chats.md 4.11).
+  $effect(() => {
+    const id = page?.id
+    if (id) return onScreen(id)
+  })
 
   onDestroy(() => page?.close())
 

@@ -2133,4 +2133,14 @@ export const th: Dictionary = {
   'Also send to {chat}': 'ส่งไปที่ {chat} ด้วย',
   'Skin tone': 'สีผิว',
   'Deleted account': 'บัญชีที่ถูกลบ',
+  // Chats: notifications
+  Mute: 'ปิดเสียง',
+  Unmute: 'เปิดเสียง',
+  'New message': 'ข้อความใหม่',
+  'My keywords': 'คำสำคัญของฉัน',
+  Previews: 'ตัวอย่าง',
+  Sound: 'เสียง',
+  Weekdays: 'วันทำงาน',
+  Starts: 'เริ่ม',
+  Ends: 'สิ้นสุด',
 }

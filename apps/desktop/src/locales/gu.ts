@@ -2163,4 +2163,14 @@ export const gu: Dictionary = {
   'Also send to {chat}': '{chat}માં પણ મોકલો',
   'Skin tone': 'ત્વચાનો રંગ',
   'Deleted account': 'કાઢી નાખેલું ખાતું',
+  // Chats: notifications
+  Mute: 'મ્યૂટ કરો',
+  Unmute: 'અનમ્યૂટ કરો',
+  'New message': 'નવો સંદેશ',
+  'My keywords': 'મારા કીવર્ડ',
+  Previews: 'પૂર્વાવલોકન',
+  Sound: 'અવાજ',
+  Weekdays: 'કામકાજના દિવસો',
+  Starts: 'શરૂ',
+  Ends: 'અંત',
 }

@@ -2169,4 +2169,14 @@ export const ur: Dictionary = {
   'Also send to {chat}': '{chat} میں بھی بھیجیں',
   'Skin tone': 'جلد کی رنگت',
   'Deleted account': 'حذف شدہ اکاؤنٹ',
+  // Chats: notifications
+  Mute: 'خاموش کریں',
+  Unmute: 'آواز کھولیں',
+  'New message': 'نیا پیغام',
+  'My keywords': 'میرے کلیدی الفاظ',
+  Previews: 'پیش منظر',
+  Sound: 'آواز',
+  Weekdays: 'کام کے دن',
+  Starts: 'شروع',
+  Ends: 'اختتام',
 }

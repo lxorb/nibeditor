@@ -2152,4 +2152,14 @@ export const vi: Dictionary = {
   'Also send to {chat}': 'Gửi cả vào {chat}',
   'Skin tone': 'Màu da',
   'Deleted account': 'Tài khoản đã xóa',
+  // Chats: notifications
+  Mute: 'Tắt tiếng',
+  Unmute: 'Bật tiếng',
+  'New message': 'Tin nhắn mới',
+  'My keywords': 'Từ khóa của tôi',
+  Previews: 'Xem trước',
+  Sound: 'Âm thanh',
+  Weekdays: 'Ngày thường',
+  Starts: 'Bắt đầu',
+  Ends: 'Kết thúc',
 }

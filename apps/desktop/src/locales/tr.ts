@@ -2178,4 +2178,14 @@ export const tr: Dictionary = {
   'Also send to {chat}': '{chat} sohbetine de gönder',
   'Skin tone': 'Ten rengi',
   'Deleted account': 'Silinmiş hesap',
+  // Chats: notifications
+  Mute: 'Sessize al',
+  Unmute: 'Sesi aç',
+  'New message': 'Yeni mesaj',
+  'My keywords': 'Anahtar kelimelerim',
+  Previews: 'Önizlemeler',
+  Sound: 'Ses',
+  Weekdays: 'Hafta içi',
+  Starts: 'Başlangıç',
+  Ends: 'Bitiş',
 }

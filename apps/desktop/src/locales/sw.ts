@@ -2200,4 +2200,14 @@ export const sw: Dictionary = {
   'Also send to {chat}': 'Tuma pia kwa {chat}',
   'Skin tone': 'Rangi ya ngozi',
   'Deleted account': 'Akaunti iliyofutwa',
+  // Chats: notifications
+  Mute: 'Nyamazisha',
+  Unmute: 'Rejesha sauti',
+  'New message': 'Ujumbe mpya',
+  'My keywords': 'Maneno yangu muhimu',
+  Previews: 'Onyesho la awali',
+  Sound: 'Sauti',
+  Weekdays: 'Siku za kazi',
+  Starts: 'Inaanza',
+  Ends: 'Inaisha',
 }

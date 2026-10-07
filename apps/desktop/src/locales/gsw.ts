@@ -2182,4 +2182,14 @@ export const gsw: Dictionary = {
   'Also send to {chat}': 'Au i {chat} schicke',
   'Skin tone': 'Hutfarb',
   'Deleted account': 'Glöschts Konto',
+  // Chats: notifications
+  Mute: 'Stummschalte',
+  Unmute: 'Stummschaltig ufhebe',
+  'New message': 'Neui Nachricht',
+  'My keywords': 'Mini Stichwörter',
+  Previews: 'Vorschau',
+  Sound: 'Ton',
+  Weekdays: 'Wärchtigs',
+  Starts: 'Fangt aa',
+  Ends: 'Hört uf',
 }

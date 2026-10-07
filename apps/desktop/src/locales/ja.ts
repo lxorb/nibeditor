@@ -2159,4 +2159,14 @@ export const ja: Dictionary = {
   'Also send to {chat}': '{chat} にも送信',
   'Skin tone': '肌の色',
   'Deleted account': '削除されたアカウント',
+  // Chats: notifications
+  Mute: 'ミュート',
+  Unmute: 'ミュート解除',
+  'New message': '新着メッセージ',
+  'My keywords': 'マイキーワード',
+  Previews: 'プレビュー',
+  Sound: 'サウンド',
+  Weekdays: '平日',
+  Starts: '開始',
+  Ends: '終了',
 }

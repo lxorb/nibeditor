@@ -2156,4 +2156,14 @@ export const my: Dictionary = {
   'Also send to {chat}': '{chat} သို့လည်း ပို့ရန်',
   'Skin tone': 'အသားအရောင်',
   'Deleted account': 'ဖျက်ထားသောအကောင့်',
+  // Chats: notifications
+  Mute: 'အသံပိတ်',
+  Unmute: 'အသံဖွင့်',
+  'New message': 'မက်ဆေ့ချ်အသစ်',
+  'My keywords': 'ကျွန်ုပ်၏ သော့ချက်စကားလုံးများ',
+  Previews: 'အစမ်းကြည့်',
+  Sound: 'အသံ',
+  Weekdays: 'ရုံးဖွင့်ရက်',
+  Starts: 'စတင်',
+  Ends: 'ပြီးဆုံး',
 }

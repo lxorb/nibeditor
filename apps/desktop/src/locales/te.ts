@@ -2180,4 +2180,14 @@ export const te: Dictionary = {
   'Also send to {chat}': '{chat}కి కూడా పంపు',
   'Skin tone': 'చర్మం రంగు',
   'Deleted account': 'తొలగించిన ఖాతా',
+  // Chats: notifications
+  Mute: 'మ్యూట్ చేయి',
+  Unmute: 'అన్‌మ్యూట్ చేయి',
+  'New message': 'కొత్త సందేశం',
+  'My keywords': 'నా కీవర్డ్‌లు',
+  Previews: 'ప్రివ్యూలు',
+  Sound: 'శబ్దం',
+  Weekdays: 'పని దినాలు',
+  Starts: 'ప్రారంభం',
+  Ends: 'ముగింపు',
 }

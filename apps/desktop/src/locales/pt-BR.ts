@@ -2208,4 +2208,14 @@ export const ptBR: Dictionary = {
   'Also send to {chat}': 'Enviar também para {chat}',
   'Skin tone': 'Tom de pele',
   'Deleted account': 'Conta excluída',
+  // Chats: notifications
+  Mute: 'Silenciar',
+  Unmute: 'Reativar som',
+  'New message': 'Nova mensagem',
+  'My keywords': 'Minhas palavras-chave',
+  Previews: 'Prévias',
+  Sound: 'Som',
+  Weekdays: 'Dias úteis',
+  Starts: 'Começa',
+  Ends: 'Termina',
 }

@@ -1,12 +1,14 @@
 <script lang="ts">
   /** A chat's head (docs/chats.md 4.15): its name and topic, who is in it, and what is
-   *  pinned. The topic is written in place by whoever may set it; the faces open the
-   *  members, active first; the pin opens the pinned messages, each a jump. */
-  import type { Message } from '@nib/chats'
+   *  pinned, and what pings for it. The topic is written in place by whoever may set it; the
+   *  faces open the members, active first; the pin opens the pinned messages, each a jump;
+   *  the bell is the chat's level and mute (../Bell.svelte, 4.11). */
+  import type { Message, Notify } from '@nib/chats'
   import { may } from '@nib/chats'
   import { LONGEST_TOPIC } from '@nib/chats/limits'
   import { amount, t } from '../../i18n.svelte'
   import Avatar from '../../people/Avatar.svelte'
+  import Bell from '../Bell.svelte'
   import { showProfile } from '../../people/card.svelte'
   import { people } from '../../people/people.svelte'
   import type { ChatPage } from './chat.svelte'
@@ -15,6 +17,7 @@
   import { firstLine } from './body'
   import { accountOf, faceOf, nameOf } from './people'
   import type { Box } from './place'
+  import { store } from './source.svelte'
   import { tip } from './tips.svelte'
 
   const { page, space }: { page: ChatPage; space: string | null } = $props()
@@ -125,6 +128,13 @@
     use:tip={() => t('Pinned')}
     onclick={(event) => void showPins(event.currentTarget)}><Glyph name="pin" /></button
   >
+  <Bell
+    notify={page.entry?.notify ?? null}
+    mutedUntil={page.entry?.mutedUntil ?? null}
+    members={page.entry?.members ?? page.members.length}
+    onchange={(notify: Notify | null, mutedUntil: number | null) =>
+      void store().notifyFor(page.id, notify, mutedUntil)}
+  />
 </header>
 
 <Float

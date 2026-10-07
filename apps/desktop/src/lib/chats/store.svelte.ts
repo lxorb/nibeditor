@@ -203,6 +203,16 @@ class ChatsStore implements Chats {
     return this.list.find((one) => one.id === chat) ?? null
   }
 
+  async message(chat: string, id: string): Promise<Message | null> {
+    const kept = await this.cache?.messages(chat, [id]).catch(() => [])
+    return kept?.[0]?.message ?? null
+  }
+
+  async markRead(chat: string, seq: number): Promise<void> {
+    const engine = this.engine
+    if (engine?.readTo(chat, seq)) await engine.tellRead(chat, seq, false).catch(() => false)
+  }
+
   private drawList(): void {
     const engine = this.engine
     if (!engine) return

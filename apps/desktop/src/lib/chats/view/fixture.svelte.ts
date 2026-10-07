@@ -242,6 +242,16 @@ export class FixtureChats implements Chats {
     return this.list.find((one) => one.id === chat) ?? null
   }
 
+  message(chat: string, id: string): Promise<Message | null> {
+    const held = this.held.get(chat)
+    return Promise.resolve(held?.state.messages.get(id) ?? null)
+  }
+
+  markRead(chat: string, seq: number): Promise<void> {
+    if (seq > (this.entry(chat)?.readSeq ?? 0)) this.readHere(chat, seq)
+    return Promise.resolve()
+  }
+
   open(chat: string): ChatView {
     const view = new FixtureView(this, chat)
     void view.open()

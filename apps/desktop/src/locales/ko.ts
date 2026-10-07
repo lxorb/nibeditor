@@ -2145,4 +2145,14 @@ export const ko: Dictionary = {
   'Also send to {chat}': '{chat}에도 보내기',
   'Skin tone': '피부색',
   'Deleted account': '삭제된 계정',
+  // Chats: notifications
+  Mute: '알림 끄기',
+  Unmute: '알림 켜기',
+  'New message': '새 메시지',
+  'My keywords': '내 키워드',
+  Previews: '미리보기',
+  Sound: '소리',
+  Weekdays: '평일',
+  Starts: '시작',
+  Ends: '종료',
 }

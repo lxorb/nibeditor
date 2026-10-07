@@ -2164,4 +2164,14 @@ export const ms: Dictionary = {
   'Also send to {chat}': 'Hantar juga ke {chat}',
   'Skin tone': 'Warna kulit',
   'Deleted account': 'Akaun dipadam',
+  // Chats: notifications
+  Mute: 'Senyapkan',
+  Unmute: 'Nyahsenyap',
+  'New message': 'Mesej baharu',
+  'My keywords': 'Kata kunci saya',
+  Previews: 'Pratonton',
+  Sound: 'Bunyi',
+  Weekdays: 'Hari bekerja',
+  Starts: 'Mula',
+  Ends: 'Tamat',
 }

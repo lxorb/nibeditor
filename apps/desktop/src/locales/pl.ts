@@ -2255,4 +2255,14 @@ export const pl: Dictionary = {
   'Also send to {chat}': 'Wyślij też do {chat}',
   'Skin tone': 'Odcień skóry',
   'Deleted account': 'Usunięte konto',
+  // Chats: notifications
+  Mute: 'Wycisz',
+  Unmute: 'Wyłącz wyciszenie',
+  'New message': 'Nowa wiadomość',
+  'My keywords': 'Moje słowa kluczowe',
+  Previews: 'Podglądy',
+  Sound: 'Dźwięk',
+  Weekdays: 'Dni robocze',
+  Starts: 'Początek',
+  Ends: 'Koniec',
 }

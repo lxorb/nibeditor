@@ -2201,4 +2201,14 @@ export const ta: Dictionary = {
   'Also send to {chat}': '{chat}-க்கும் அனுப்பு',
   'Skin tone': 'தோல் நிறம்',
   'Deleted account': 'நீக்கப்பட்ட கணக்கு',
+  // Chats: notifications
+  Mute: 'ஒலியடக்கு',
+  Unmute: 'ஒலியை இயக்கு',
+  'New message': 'புதிய செய்தி',
+  'My keywords': 'என் முக்கியச் சொற்கள்',
+  Previews: 'முன்னோட்டங்கள்',
+  Sound: 'ஒலி',
+  Weekdays: 'வேலை நாட்கள்',
+  Starts: 'தொடக்கம்',
+  Ends: 'முடிவு',
 }

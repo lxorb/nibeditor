@@ -2231,4 +2231,14 @@ export const it: Dictionary = {
   'Also send to {chat}': 'Invia anche in {chat}',
   'Skin tone': 'Tonalità della pelle',
   'Deleted account': 'Account eliminato',
+  // Chats: notifications
+  Mute: 'Silenzia',
+  Unmute: 'Riattiva',
+  'New message': 'Nuovo messaggio',
+  'My keywords': 'Le mie parole chiave',
+  Previews: 'Anteprime',
+  Sound: 'Suono',
+  Weekdays: 'Giorni feriali',
+  Starts: 'Inizia',
+  Ends: 'Finisce',
 }

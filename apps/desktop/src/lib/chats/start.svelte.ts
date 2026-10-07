@@ -11,12 +11,16 @@
  *  - The network coming back sends the outbox.
  *  - Signing out deletes the device's store of the account's chats.
  *
+ *  - The notifications, desktop and browser only: a phone's are the activity's, and
+ *    its push is off (docs/chats.md 4.11). See notices.ts.
+ *
  *  Importing this is starting it. */
 
 import { untrack } from 'svelte'
 import { CHAT_EXTENSION } from '@nib/chats'
 import { account } from '../account.svelte'
 import { hub } from '../sync2/hub.svelte'
+import { isMobile } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { chats } from './store.svelte'
@@ -57,3 +61,4 @@ workspace.fileOps.follow(followed)
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => void chats.reconnected())
 }
+if (!isMobile) void import('./notices')

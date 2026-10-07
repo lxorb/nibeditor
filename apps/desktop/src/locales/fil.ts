@@ -2210,4 +2210,14 @@ export const fil: Dictionary = {
   'Also send to {chat}': 'Ipadala rin sa {chat}',
   'Skin tone': 'Kulay ng balat',
   'Deleted account': 'Binurang account',
+  // Chats: notifications
+  Mute: 'I-mute',
+  Unmute: 'I-unmute',
+  'New message': 'Bagong mensahe',
+  'My keywords': 'Aking mga keyword',
+  Previews: 'Mga preview',
+  Sound: 'Tunog',
+  Weekdays: 'Mga araw ng trabaho',
+  Starts: 'Magsisimula',
+  Ends: 'Matatapos',
 }

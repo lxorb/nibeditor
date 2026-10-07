@@ -2121,4 +2121,14 @@ export const zhHans: Dictionary = {
   'Also send to {chat}': '同时发送到 {chat}',
   'Skin tone': '肤色',
   'Deleted account': '已删除的账户',
+  // Chats: notifications
+  Mute: '静音',
+  Unmute: '取消静音',
+  'New message': '新消息',
+  'My keywords': '我的关键词',
+  Previews: '预览',
+  Sound: '声音',
+  Weekdays: '工作日',
+  Starts: '开始',
+  Ends: '结束',
 }

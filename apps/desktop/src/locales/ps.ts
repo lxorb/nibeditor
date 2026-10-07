@@ -2174,4 +2174,14 @@ export const ps: Dictionary = {
   'Also send to {chat}': '{chat} ته هم ولېږئ',
   'Skin tone': 'د پوستکي رنګ',
   'Deleted account': 'ړنګ شوی حساب',
+  // Chats: notifications
+  Mute: 'غلی کول',
+  Unmute: 'غږ خلاصول',
+  'New message': 'نوی پیغام',
+  'My keywords': 'زما کلیدي کلمې',
+  Previews: 'مخکتنې',
+  Sound: 'غږ',
+  Weekdays: 'کاري ورځې',
+  Starts: 'پیل',
+  Ends: 'پای',
 }

@@ -2253,4 +2253,14 @@ export const ru: Dictionary = {
   'Also send to {chat}': 'Отправить и в {chat}',
   'Skin tone': 'Тон кожи',
   'Deleted account': 'Удалённый аккаунт',
+  // Chats: notifications
+  Mute: 'Без звука',
+  Unmute: 'Включить звук',
+  'New message': 'Новое сообщение',
+  'My keywords': 'Мои ключевые слова',
+  Previews: 'Превью',
+  Sound: 'Звук',
+  Weekdays: 'Будни',
+  Starts: 'Начало',
+  Ends: 'Конец',
 }

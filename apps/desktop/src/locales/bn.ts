@@ -2170,4 +2170,14 @@ export const bn: Dictionary = {
   'Also send to {chat}': '{chat}-এও পাঠান',
   'Skin tone': 'ত্বকের রং',
   'Deleted account': 'মুছে ফেলা অ্যাকাউন্ট',
+  // Chats: notifications
+  Mute: 'মিউট করুন',
+  Unmute: 'আনমিউট করুন',
+  'New message': 'নতুন বার্তা',
+  'My keywords': 'আমার কীওয়ার্ড',
+  Previews: 'প্রিভিউ',
+  Sound: 'শব্দ',
+  Weekdays: 'কর্মদিবস',
+  Starts: 'শুরু',
+  Ends: 'শেষ',
 }

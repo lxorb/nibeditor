@@ -2172,4 +2172,14 @@ export const fa: Dictionary = {
   'Also send to {chat}': 'به {chat} هم بفرست',
   'Skin tone': 'رنگ پوست',
   'Deleted account': 'حساب حذف‌شده',
+  // Chats: notifications
+  Mute: 'بی‌صدا',
+  Unmute: 'باصدا',
+  'New message': 'پیام تازه',
+  'My keywords': 'کلیدواژه‌های من',
+  Previews: 'پیش‌نمایش‌ها',
+  Sound: 'صدا',
+  Weekdays: 'روزهای کاری',
+  Starts: 'شروع',
+  Ends: 'پایان',
 }

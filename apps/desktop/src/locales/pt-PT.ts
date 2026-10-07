@@ -2221,4 +2221,14 @@ export const ptPT: Dictionary = {
   'Also send to {chat}': 'Enviar também para {chat}',
   'Skin tone': 'Tom de pele',
   'Deleted account': 'Conta eliminada',
+  // Chats: notifications
+  Mute: 'Silenciar',
+  Unmute: 'Reativar som',
+  'New message': 'Nova mensagem',
+  'My keywords': 'As minhas palavras-chave',
+  Previews: 'Pré-visualizações',
+  Sound: 'Som',
+  Weekdays: 'Dias úteis',
+  Starts: 'Começa',
+  Ends: 'Termina',
 }

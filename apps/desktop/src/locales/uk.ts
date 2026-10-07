@@ -2247,4 +2247,14 @@ export const uk: Dictionary = {
   'Also send to {chat}': 'Надіслати також у {chat}',
   'Skin tone': 'Тон шкіри',
   'Deleted account': 'Видалений обліковий запис',
+  // Chats: notifications
+  Mute: 'Вимкнути звук',
+  Unmute: 'Увімкнути звук',
+  'New message': 'Нове повідомлення',
+  'My keywords': 'Мої ключові слова',
+  Previews: 'Попередній перегляд',
+  Sound: 'Звук',
+  Weekdays: 'Будні',
+  Starts: 'Початок',
+  Ends: 'Кінець',
 }

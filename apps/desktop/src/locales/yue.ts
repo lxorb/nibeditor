@@ -2121,4 +2121,14 @@ export const yue: Dictionary = {
   'Also send to {chat}': '都發去{chat}',
   'Skin tone': '膚色',
   'Deleted account': '刪咗嘅帳戶',
+  // Chats: notifications
+  Mute: '靜音',
+  Unmute: '取消靜音',
+  'New message': '新訊息',
+  'My keywords': '我嘅關鍵字',
+  Previews: '預覽',
+  Sound: '聲音',
+  Weekdays: '平日',
+  Starts: '開始',
+  Ends: '結束',
 }
