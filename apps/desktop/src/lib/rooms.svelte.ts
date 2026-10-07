@@ -44,6 +44,20 @@ interface Open {
   version: number
 }
 
+/** The open notes in a room of this store's. A file shared on its own is in its room
+ *  under either engine: it has no file here, so the room is all that carries and keeps
+ *  its words. Any other note is in one while v1 tracks it; under v2 `tracked` is null,
+ *  since the engine joins those itself (sync2/runner.svelte.ts). */
+export function inRooms(
+  open: readonly { key: string; path: string; note: NoteDoc }[],
+  tracked: ((path: string) => { id: string; version: number; hash: string | null } | null) | null,
+): Open[] {
+  return open.flatMap(({ key, path, note }) => {
+    const held = note.shared ? { id: note.shared, version: 0, hash: null } : tracked?.(path)
+    return held ? [{ key, note, noteId: held.id, hash: held.hash, version: held.version }] : []
+  })
+}
+
 /** One file in a room: the room, which file the room is about - so a document that
  *  has moved on to another file is noticed and rejoined - and which shape of room it
  *  is, so a file whose name crossed the two is noticed the same way.

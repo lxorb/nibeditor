@@ -33,7 +33,7 @@
   import { reloading } from './lib/reloading.svelte'
   import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/showing.svelte'
-  import { rooms } from './lib/rooms.svelte'
+  import { inRooms, rooms } from './lib/rooms.svelte'
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/prompt.svelte'
@@ -448,33 +448,10 @@
   // Last of the things a launch does, because it is the only one of them nobody is
   // looking at: a socket per open note, opened into a window that is already being
   // read and written in. See startup.svelte.ts for the order and why.
+  // Which of them is `inRooms`'s.
   $effect(() => {
-    // A file somebody shared on its own has no file here for the mirror to know
-    // about, and its room is the whole of how its words travel: it says its own
-    // id, with no hash, because there is no copy on this machine to compare.
-    // Under sync v2 a note's room is its document's socket, which the engine joins
-    // itself; see sync2/runner.svelte.ts.
-    const open =
-      account.syncable && startup.reached('rooms') && sync.version === 1
-        ? workspace.openNotes.map((one) => ({
-            ...one,
-            tracked: one.note.shared
-              ? { id: one.note.shared, version: 0, hash: null }
-              : sync.tracked(one.path),
-          }))
-        : []
-
-    rooms.follow(
-      open
-        .filter((one) => one.tracked !== null)
-        .map((one) => ({
-          key: one.key,
-          note: one.note,
-          noteId: one.tracked?.id ?? '',
-          hash: one.tracked?.hash ?? null,
-          version: one.tracked?.version ?? 0,
-        })),
-    )
+    const open = account.syncable && startup.reached('rooms') ? workspace.openNotes : []
+    rooms.follow(inRooms(open, sync.version === 1 ? (path) => sync.tracked(path) : null))
   })
 
   // A caret is drawn in the shade its colour needs on this background, so the

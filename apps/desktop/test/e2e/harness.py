@@ -1052,6 +1052,7 @@ class Worker:
             "--assets",
             str(assets or WORKER_DIST),
             "--show-interactive-dev-session=false",
+            "--enable-containers=false",
             *(["--local-upstream", upstream] if upstream else []),
         ]
         for key, value in self.variables.items():

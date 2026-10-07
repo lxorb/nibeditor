@@ -107,7 +107,7 @@ vi.mock('../busy.svelte', () => ({
   },
 }))
 
-const { rooms } = await import('../rooms.svelte')
+const { inRooms, rooms } = await import('../rooms.svelte')
 const { record } = await import('../sync/record.svelte')
 const { NoteDoc } = await import('../workspace/documents.svelte')
 
@@ -552,5 +552,76 @@ describe('a room that will take no more keystrokes', () => {
     note.flush()
 
     expect(words(note)).toBe('# A\nstill typing\n')
+  })
+})
+
+/** A file somebody shared on its own: one note out of their space, with no file here
+ *  and no row in any sync. Its room is the whole of how its words travel and are kept,
+ *  so it is in its room whichever engine runs. Under sync v2 it used to be in none -
+ *  the engine joins only notes it has an entry for, and this has no path - so what was
+ *  typed into it went nowhere. See `inRooms` in rooms.svelte.ts. */
+describe('a file shared on its own', () => {
+  const ID = 'shared-1'
+  const tracked = (path: string) => ({ id: `tracked:${path}`, version: 3, hash: 'h' })
+
+  function sharedNote(words: string): Doc {
+    return new NoteDoc(
+      { kind: 'note', path: null, name: 'one', text: words, dirty: false, shared: ID },
+      () => undefined,
+    )
+  }
+
+  /** The open notes as the workspace lists them: a shared one says an empty path. */
+  function tabs(...notes: Doc[]) {
+    return notes.map((note) => ({ key: note.key, path: note.path ?? '', note }))
+  }
+
+  test('is in its room under v2, and the notes the engine carries are not', () => {
+    const mine = documentOn('/Notes/a.md', '# A\n')
+    const theirs = sharedNote('# One\n')
+
+    const v2 = inRooms(tabs(mine, theirs), null)
+    expect(v2).toEqual([{ key: theirs.key, note: theirs, noteId: ID, hash: null, version: 0 }])
+
+    // Under v1 both are, the tracked one as the file sync knows it.
+    const v1 = inRooms(tabs(mine, theirs), tracked)
+    expect(v1.map((one) => one.noteId)).toEqual(['tracked:/Notes/a.md', ID])
+  })
+
+  test('carries what is typed into it to the room under v2', async () => {
+    const note = sharedNote('# One\n')
+    const server = new Server('# One\n')
+    rooms.follow(inRooms(tabs(note), null))
+
+    const socket = latest()
+    expect(socket.noteId).toBe(ID)
+    socket.arrive()
+    carry(socket, server)
+    await until(() => rooms.carries(ID), 'the room to catch up')
+    carry(socket, server)
+
+    note.live.replace('# One\nfrom the one person\n')
+    note.flush()
+    carry(socket, server)
+
+    expect(server.file).toBe('# One\nfrom the one person\n')
+  })
+
+  test('keeps its room when the engine changes under it', async () => {
+    const note = sharedNote('# One\n')
+    const server = new Server('# One\n')
+    rooms.follow(inRooms(tabs(note), tracked))
+    const socket = latest()
+    socket.arrive()
+    carry(socket, server)
+    await until(() => rooms.carries(ID), 'the room to catch up')
+
+    // v1 handing over to v2, and back: the same room, never joined again.
+    rooms.follow(inRooms(tabs(note), null))
+    rooms.follow(inRooms(tabs(note), tracked))
+
+    expect(sockets.opened).toHaveLength(1)
+    expect(socket.open).toBe(true)
+    expect(rooms.carries(ID)).toBe(true)
   })
 })
