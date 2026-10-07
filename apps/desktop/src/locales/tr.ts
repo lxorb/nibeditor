@@ -2131,4 +2131,8 @@ export const tr: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'Aylık {price}',
   'Starts again {date}': '{date} tarihinde yenilenir',
+  '{tool} conflict copy · not synced': '{tool} çakışma kopyası · eşitlenmiyor',
+  'Compare with original': 'Orijinalle karşılaştır',
+  'Conflict copies from other apps': 'Diğer uygulamaların çakışma kopyaları',
+  'Remove from sync': 'Eşitlemeden çıkar',
 }

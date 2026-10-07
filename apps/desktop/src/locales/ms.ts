@@ -2117,4 +2117,8 @@ export const ms: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} sebulan',
   'Starts again {date}': 'Bermula semula {date}',
+  '{tool} conflict copy · not synced': 'Salinan konflik {tool} · tidak disegerakkan',
+  'Compare with original': 'Bandingkan dengan asal',
+  'Conflict copies from other apps': 'Salinan konflik daripada apl lain',
+  'Remove from sync': 'Keluarkan daripada penyegerakan',
 }

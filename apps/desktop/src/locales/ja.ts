@@ -2112,4 +2112,8 @@ export const ja: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '月額 {price}',
   'Starts again {date}': '{date}にリセット',
+  '{tool} conflict copy · not synced': '{tool} の競合コピー · 同期されません',
+  'Compare with original': '元のファイルと比較',
+  'Conflict copies from other apps': 'ほかのアプリの競合コピー',
+  'Remove from sync': '同期から外す',
 }

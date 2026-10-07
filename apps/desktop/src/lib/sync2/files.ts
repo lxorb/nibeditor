@@ -120,7 +120,7 @@ export async function settleFiles(
   const wanted = space.paths()
   for (const entry of [...space.entries.values()]) {
     if (entry.kind !== 'file' || entry.deleted || entry.seq === null) continue
-    if (core.isHeld(entry.id) || !space.isLive(entry.id)) continue
+    if (core.isHeld(entry.id) || !space.isLive(entry.id) || space.foreign(entry.id)) continue
     // A create still on its way: its bytes go up with it (`sendMade`).
     if (waitingCreate(space, entry.id)) continue
     const path = entry.local_path || wanted.get(entry.id)

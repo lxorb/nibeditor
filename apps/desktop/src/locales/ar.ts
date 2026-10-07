@@ -2231,4 +2231,8 @@ export const ar: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} شهريًا',
   'Starts again {date}': 'يبدأ من جديد {date}',
+  '{tool} conflict copy · not synced': 'نسخة تعارض من {tool} · غير متزامنة',
+  'Compare with original': 'قارن بالأصل',
+  'Conflict copies from other apps': 'نسخ تعارض من تطبيقات أخرى',
+  'Remove from sync': 'إزالة من المزامنة',
 }

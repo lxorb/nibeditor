@@ -2127,4 +2127,8 @@ export const ps: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'په میاشت کې {price}',
   'Starts again {date}': 'په {date} بیا پیلېږي',
+  '{tool} conflict copy · not synced': 'د {tool} د ټکر لمېسه · همغږې شوې نه ده',
+  'Compare with original': 'له اصلي سره پرتله کړئ',
+  'Conflict copies from other apps': 'د نورو اپونو د ټکر لمېسې',
+  'Remove from sync': 'له همغږۍ لرې کړئ',
 }

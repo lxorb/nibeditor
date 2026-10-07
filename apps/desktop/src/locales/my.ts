@@ -2109,4 +2109,8 @@ export const my: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'တစ်လ {price}',
   'Starts again {date}': '{date} တွင် ပြန်စမည်',
+  '{tool} conflict copy · not synced': '{tool} ပဋိပက္ခ မိတ္တူ · ချိန်ကိုက်မထားပါ',
+  'Compare with original': 'မူရင်းနှင့် နှိုင်းယှဉ်ပါ',
+  'Conflict copies from other apps': 'အခြားအက်ပ်များမှ ပဋိပက္ခ မိတ္တူများ',
+  'Remove from sync': 'ချိန်ကိုက်မှုမှ ဖယ်ရှားပါ',
 }

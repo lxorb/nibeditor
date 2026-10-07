@@ -320,6 +320,8 @@ async function settleDisk(core: Core, space: SpaceState) {
  *  made while apart: those go up first and meet the account's words as `moved`. */
 function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null || !space.isLive(entry.id)) return false
+  // Another sync tool's copy is never brought here (`foreign` in places.ts).
+  if (space.foreign(entry.id)) return false
   if (core.isHeld(entry.id) || core.carried.has(entry.id) || core.hasPending(entry.id)) return false
   return core.wanted(space.id).has(entry.id) || !core.hasDoc(entry.id)
 }

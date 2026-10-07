@@ -33,7 +33,8 @@ export async function project(
   entry: EntryRow,
   doc: Doc,
 ): Promise<Change[]> {
-  if (core.pinned.has(entry.id)) return []
+  // Nor over another sync tool's copy, which is that tool's (`foreign` in places.ts).
+  if (core.pinned.has(entry.id) || space.foreign(entry.id)) return []
   const path = entry.local_path || space.paths().get(entry.id)
   if (!path) return []
   // Another entry's file is still where this one is going: it moves on first.

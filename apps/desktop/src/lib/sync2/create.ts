@@ -21,6 +21,7 @@
  *  was there, three ways against that text (section 5.9). */
 
 import { fileMade } from './files'
+import { inForeignCopy } from '@nib/sync-core/foreign'
 import { kindOfName } from '@nib/sync-core/tree'
 import type { EntryKind, Op } from '@nib/sync-core/wire'
 import type { Core } from './core'
@@ -113,6 +114,10 @@ export async function made(
   space: SpaceState,
   what: Made,
 ): Promise<{ id: string; changes: Change[] }> {
+  // Another sync tool's copy stays on this disk alone, the way a file too large to
+  // travel does: an id, and nothing made (@nib/sync-core/foreign). Whichever way it
+  // came - the watcher, the first pass, a file made in the list - this is where.
+  if (inForeignCopy(what.path)) return { id: freshId(core), changes: [] }
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(what.path), changes)
   const name = nameOf(what.path)
@@ -171,6 +176,10 @@ function atOrUnder(space: SpaceState, path: string): EntryRow[] {
 export function moved(core: Core, space: SpaceState, from: string, to: string): Change[] {
   const entry = space.at(from)
   if (!entry) return []
+  // Put aside under another sync tool's name - Proton does that to its side of a
+  // clash before it writes the other - is not the note being renamed: it keeps its
+  // place, and the file that arrives there is read as an edit to it.
+  if (inForeignCopy(to) && !inForeignCopy(from)) return []
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(to), changes)
   const name = nameOf(to)
@@ -194,6 +203,24 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
     if (shown?.name !== name) op.name = name
     changes.push(...queue(core, space, op))
   }
+  space.changed()
+  return changes
+}
+
+/** Another sync tool's copy taken off the account, which the person asked for in the
+ *  Sync pane: it goes to the account's Recently deleted and its file stays where it is,
+ *  here and on every disk (`settle` in places.ts). Seen up to the cursor, because this
+ *  device pulls nothing of such a copy's words and it is meant to go whatever they say. */
+export function unsynced(core: Core, space: SpaceState, entry: EntryRow): Change[] {
+  const changes: Change[] = []
+  if (entry.local_path) {
+    entry.local_path = ''
+    changes.push(put('entries', { ...entry }))
+  }
+  changes.push(...core.letGoChanges(entry.id))
+  if (entry.kind !== 'folder') changes.push(...core.forgetChanges(entry.id))
+  const seen = space.row.cursor
+  changes.push(...queue(core, space, { op: core.nextId('o'), t: 'delete', id: entry.id, seen }))
   space.changed()
   return changes
 }

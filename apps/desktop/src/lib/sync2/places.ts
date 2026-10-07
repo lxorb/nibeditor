@@ -14,6 +14,7 @@
  *  device has written in them since, when the edit beats the delete and they stay. */
 
 import { type OpResult, type Op } from '@nib/sync-core/wire'
+import { inForeignCopy } from '@nib/sync-core/foreign'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@nib/sync-core/tree'
 import type { Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
@@ -179,6 +180,14 @@ export class SpaceState {
     return entry?.kind === 'folder' && !entry.deleted ? entry.id : undefined
   }
 
+  /** Whether an entry is another sync tool's copy, or inside one: sync v2 never carries
+   *  one either way (@nib/sync-core/foreign, docs/sync-v2.md "Other sync tools"). By
+   *  where it is shown, else where it last was on this disk. */
+  foreign(id: string): boolean {
+    const path = this.paths().get(id) ?? this.entries.get(id)?.local_path ?? ''
+    return inForeignCopy(path)
+  }
+
   /** Whether an entry is live in what the person sees. */
   isLive(id: string): boolean {
     const entry = this.shown().entries.get(id)
@@ -256,7 +265,9 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     // A folder goes once nothing it holds is staying.
     if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
 
-    if (await how.disk.exists(full(entry.local_path))) {
+    // Another sync tool's copy stays: the account letting go of one is not anybody
+    // deleting a file, and the tool that made it would carry a delete to every disk.
+    if (!inForeignCopy(entry.local_path) && (await how.disk.exists(full(entry.local_path)))) {
       await how.disk.remove(full(entry.local_path), entry.kind === 'folder' ? 'folder' : 'file')
     }
     if (entry.kind === 'folder') forgetUnder(space, entry.local_path, moved, how)

@@ -2109,4 +2109,8 @@ export const jv: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} saben sasi',
   'Starts again {date}': 'Diwiwiti maneh {date}',
+  '{tool} conflict copy · not synced': 'Salinan konflik {tool} · ora diselarasake',
+  'Compare with original': 'Bandhingake karo asline',
+  'Conflict copies from other apps': 'Salinan konflik saka aplikasi liya',
+  'Remove from sync': 'Copot saka panyelarasan',
 }

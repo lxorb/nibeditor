@@ -2074,4 +2074,8 @@ export const zhHans: Dictionary = {
   '{cores} vCPU': '{cores} 个 vCPU',
   '{price} a month': '每月 {price}',
   'Starts again {date}': '{date} 重新计算',
+  '{tool} conflict copy · not synced': '{tool} 冲突副本 · 未同步',
+  'Compare with original': '与原文件比较',
+  'Conflict copies from other apps': '其他应用的冲突副本',
+  'Remove from sync': '移出同步',
 }

@@ -2143,4 +2143,8 @@ export const kn: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'ತಿಂಗಳಿಗೆ {price}',
   'Starts again {date}': '{date} ರಂದು ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತದೆ',
+  '{tool} conflict copy · not synced': '{tool} ಸಂಘರ್ಷ ನಕಲು · ಸಿಂಕ್ ಆಗಿಲ್ಲ',
+  'Compare with original': 'ಮೂಲದೊಂದಿಗೆ ಹೋಲಿಸಿ',
+  'Conflict copies from other apps': 'ಇತರ ಆಪ್‌ಗಳ ಸಂಘರ್ಷ ನಕಲುಗಳು',
+  'Remove from sync': 'ಸಿಂಕ್‌ನಿಂದ ತೆಗೆದುಹಾಕಿ',
 }

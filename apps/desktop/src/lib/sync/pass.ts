@@ -21,12 +21,14 @@
 
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
+import { inForeignCopy } from '@nib/sync-core/foreign'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { sha256 } from '../bytes'
 import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
+import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
@@ -220,7 +222,7 @@ export async function pull(
     // list can be drawn from it while the bodies below take as long as they take.
     waiting?.listed?.(
       page.notes
-        .filter((one) => !one.deleted && placeable(one.path))
+        .filter((one) => !one.deleted && placeable(one.path) && !inForeignCopy(one.path))
         .map((one) => joinPath(root, one.path)),
     )
 
@@ -228,6 +230,15 @@ export async function pull(
       // A name that would land outside the space is left where it is; see
       // `placeable`.
       if (!placeable(remote.path)) continue
+
+      // Another sync tool's copy is never carried; see `inForeignCopy`. The account
+      // letting go of one is forgotten here, and the file, where there is one, stays.
+      if (inForeignCopy(remote.path)) {
+        if (remote.deleted && mirror.notes[remote.path]?.id === remote.id) {
+          mirror.notes = without(mirror.notes, remote.path)
+        }
+        continue
+      }
 
       const target = joinPath(root, remote.path)
 
@@ -535,6 +546,9 @@ async function movedOne(mirror: Mirror, token: string, was: string, now: string)
   // A note the account has never been handed has no identity to keep. It goes up
   // under its new name the first time a push meets it, which is right.
   if (!tracked) return false
+  // Moved aside under another sync tool's name - Proton does this to its side of a
+  // clash - is not this note being renamed: the account keeps the note where it was.
+  if (inForeignCopy(now) && !inForeignCopy(was)) return false
 
   const content = await invoke<string>('read_note', {
     path: joinPath(mirror.root, now),
@@ -615,7 +629,12 @@ export async function push(
   // The copies of web notes earlier passes made, folded back into their notes before
   // anything is offered: a copy that went is a file that vanished here, which the
   // loop at the bottom deletes on the account. See web-copies.ts.
-  const everything = flatten(tree)
+  // Another sync tool's copies are left out from the start, whether the account has
+  // ever had one or not: nothing about one is sent, and the loop at the bottom deletes
+  // none (`inForeignCopy`). Meeting one fetches the mark the file list gives them.
+  const all = flatten(tree)
+  const everything = all.filter((one) => !inForeignCopy(relativeTo(root, one.path)))
+  if (!__EVEN_PLUGIN__ && everything.length < all.length) void syncMark.ask()
   const folded = await foldWebCopies(everything)
   for (const one of folded) sending.folded?.(one)
   const listed = everything.filter((one) => !folded.some((fold) => fold.gone === one.path))
@@ -699,7 +718,7 @@ export async function push(
 
   // A file that vanished locally is a delete, not a gap.
   for (const [path, tracked] of Object.entries(mirror.notes)) {
-    if (seen.has(path)) continue
+    if (seen.has(path) || inForeignCopy(path)) continue
 
     if (!(await deletedOnAccount(token, tracked.id))) continue
 

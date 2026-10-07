@@ -28,7 +28,7 @@ import { message, t } from '../i18n.svelte'
 import { howFor } from '../new-tab'
 import { overlays } from '../overlays'
 import { settings } from '../settings.svelte'
-import { heldMark, undoToastNotice } from '../surfaces.svelte'
+import { syncMark, undoToastNotice } from '../surfaces.svelte'
 import { afterQuiet } from '../timing'
 import { workspace } from '../workspace.svelte'
 import type { LogRow, SyncStore } from './store'
@@ -87,11 +87,21 @@ export interface EngineEvents {
   pass: LogRow
 }
 
+/** The copies, and taking every one of them off the account; see `foreignCopies` in
+ *  engine.ts. */
+export interface ForeignCopies {
+  foreignCopies(): readonly unknown[]
+  unsync(): Promise<number>
+}
+
 /** The v2 engine, as the notes' side of the interface sees it. */
 export interface Engine {
   held: HeldNotes
   /** Its store, which the Sync pane reads the pass log from. */
   store: Pick<SyncStore, 'read'>
+  /** Another sync tool's copies the account holds, which the Sync pane offers to take
+   *  off it (foreign/synced.ts). */
+  copies?: ForeignCopies
   on<T extends keyof EngineEvents>(type: T, listener: (event: EngineEvents[T]) => void): () => void
 }
 
@@ -159,7 +169,7 @@ class Asking {
     const watched = $effect.root(() => {
       // The sheet and the mark are fetched the first time anything is held.
       $effect(() => {
-        if (this.held.length) untrack(() => void Promise.all([sheet(), heldMark.ask()]))
+        if (this.held.length) untrack(() => void Promise.all([sheet(), syncMark.ask()]))
       })
 
       let was: string | null = null

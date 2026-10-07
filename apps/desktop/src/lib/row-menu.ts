@@ -17,6 +17,7 @@
  *  what a row can be moved into are all true only then. */
 
 import { noteLinksCode } from '@nib/editor'
+import { foreignCopy } from '@nib/sync-core/foreign'
 import { copyText } from './clipboard'
 import { pickedLink } from './composer'
 import { folderNote, linkedFiles, nestedIn } from './folder-notes'
@@ -37,7 +38,7 @@ import { howFor } from './new-tab'
 import { rowName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
-import { isDesktop, platform } from './tauri'
+import { isDesktop, joinPath, platform } from './tauri'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
@@ -64,6 +65,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   return [
     { label: t('Open'), run: () => void workspace.openRow(entry.path) },
     ...openElsewhere(entry, own),
+    ...compareEntry(entry),
     DIVIDER,
     ...(holds
       ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
@@ -168,6 +170,23 @@ function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
     behind,
     { label: t('Open to the side'), run: () => void workspace.openAside(own?.path ?? entry.path) },
   ]
+}
+
+/** Another sync tool's copy beside the note it was made of: the note in front and the
+ *  copy to the side, which is how two versions of one note are read against each other
+ *  here, and Delete below is the rest of what there is to do with it. Offered only
+ *  while the note is still there. See @nib/sync-core/foreign. */
+function compareEntry(entry: Entry): MenuEntry[] {
+  const copy = entry.is_dir ? null : foreignCopy(entry.name)
+  const original = copy && entryAt(workspace.tree, joinPath(folderOf(entry.path), copy.original))
+  if (!original || original.is_dir) return []
+
+  return [{ label: t('Compare with original'), run: () => void compare(original.path, entry.path) }]
+}
+
+async function compare(original: string, copy: string) {
+  await workspace.openRow(original)
+  await workspace.openAside(copy)
 }
 
 /** Every row of the selection in a tab, in the order they were picked, landing on

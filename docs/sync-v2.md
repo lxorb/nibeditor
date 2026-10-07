@@ -628,6 +628,57 @@ is recognised by hash against what was deleted in the same scan.
 With `no-local-files` shipping, nib opens nothing outside a space, so `watch.svelte.ts`'s
 clash for outside files is retired and this is the only road for foreign edits.
 
+#### Other sync tools
+
+A space folder is often inside Proton Drive, Dropbox, OneDrive or Syncthing as well, and
+each of those keeps both sides of its own clash by writing one under a new name beside the
+file. Syncing that copy is how one clash on one machine became a stray file on every device
+(Emil, 2026-10-05: seven `Hackathon List (# Name clash 2026-10-05 …C #).md`). So such a
+name is never carried, either way, and never taken off a disk by nib. One matcher says
+which names those are, for both engines and the file list: `foreignCopy` and
+`inForeignCopy` in `@nib/sync-core/foreign`.
+
+| Tool | The name it writes | Source |
+| --- | --- | --- |
+| Proton Drive | `Plan (# Name clash 2026-10-05 k3x9qaC #).md`, and `Edit conflict`, `Delete conflict`, `Temporary renamed`; `Plan.md (# Deleted … #)` | ProtonDriveApps windows-drive `SyncAgentFactory.cs`, mac-drive `NSFileProviderItem+ConflictName.swift` |
+| Dropbox | `Plan (Emil's conflicted copy 2026-10-05).md`, ` (1)` inside for a second | help.dropbox.com, "conflicted copy" |
+| Nextcloud, ownCloud ≥ 2.5 | `Plan (conflicted copy 2026-10-05 093612).md` | Nextcloud desktop manual, "Conflicts" |
+| ownCloud < 2.5 | `Plan_conflict-20261005-093612.md` | ownCloud client |
+| Syncthing | `Plan.sync-conflict-20261005-093612-CEIVOCO.md` | docs.syncthing.net, "Understanding Synchronization" |
+| Seafile | `Plan.md (SFConflict emil@example.com 2026-10-05-09-36-12)` | help.seafile.com, "File conflicts" |
+| OneDrive | `Plan-DESKTOP-4F2K9QX.md`, `Plan-LAPTOP-487LQ0T.md` | learn.microsoft.com, "Resolve sync issues in OneDrive": the copy on the computer gets its name appended |
+
+Only names nobody types. Google Drive's `Plan (1).md` and iCloud's `Plan 2.md` are left
+out because people name their own notes that way, and so is a OneDrive copy named after a
+computer somebody renamed: the name is a word, and `Plan-A.md` is a note. OneDrive is matched
+only for the names Windows gives a computer itself (`DESKTOP-` or `LAPTOP-` and seven or
+eight random characters). A folder with such a name is a copy, and so is everything in it.
+nib's own `(from another device …)` is not on the list; it is a note.
+
+What the engine does with one:
+
+- **Made here**: `made` in `create.ts` answers an id and makes nothing, the way it does for
+  a file too large to travel, so a file the watcher, the launch scan, the first pass or the
+  list makes never becomes an entry. The watcher does not hear one at all (`watching.ts`).
+- **Put aside**: a note renamed to such a name is Proton moving its side of a clash out of
+  the way before writing the other. The entry keeps its place (`moved` in `create.ts`), and
+  the file that arrives there is an edit to it.
+- **Already on the account** (carried before this rule): `entryAt` answers none for it, so
+  nothing heard about it is sent and no tab holding it joins a room; it is never pulled
+  (`pullable`), never written (`project`), and its bytes neither go up nor come down
+  (`settleFiles`). A device that does not have the file never gets it.
+- **Let go of by the account**: `settle` forgets the entry and leaves the file. The tool
+  that made it syncs the folder too, and would carry nib's delete to every disk.
+- **Taken off on request**: the Sync pane counts them (`Engine.foreignCopies`, a folder once)
+  and offers *Remove from sync*, which queues an ordinary `delete` for each (`unsynced`):
+  Recently deleted on the account, restorable, and every file stays where it is. Nothing
+  removes one by itself, because which of two files is the stray is a person's call.
+
+In the list such a file is drawn faint with a struck-through cloud, the tooltip saying
+`Proton conflict copy · not synced` (`foreign/ForeignMark.svelte`, fetched through the
+same door as the held mark the first time sync meets one). Its menu adds *Compare with
+original* while the note it was made of is there: the note in front, the copy to the side.
+
 ### 5.6 Canvases and page notes
 
 A canvas is already a Yjs map of objects by id (`packages/rooms/src/plane.ts`), merged

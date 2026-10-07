@@ -2086,4 +2086,8 @@ export const th: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} ต่อเดือน',
   'Starts again {date}': 'เริ่มใหม่ {date}',
+  '{tool} conflict copy · not synced': 'สำเนาขัดแย้งของ {tool} · ไม่ได้ซิงก์',
+  'Compare with original': 'เทียบกับต้นฉบับ',
+  'Conflict copies from other apps': 'สำเนาขัดแย้งจากแอปอื่น',
+  'Remove from sync': 'นำออกจากการซิงก์',
 }

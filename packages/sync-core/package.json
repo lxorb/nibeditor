@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./diverge": "./src/diverge.ts",
+    "./foreign": "./src/foreign.ts",
     "./merge3": "./src/merge3.ts",
     "./outbox": "./src/outbox.ts",
     "./plane-diverge": "./src/plane-diverge.ts",

@@ -20,6 +20,8 @@ import {
   unwatchSpaces,
   watchSpaces,
 } from '../space-watch'
+import { inForeignCopy } from '@nib/sync-core/foreign'
+import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { kindOfName } from './create'
@@ -36,10 +38,19 @@ function hidden(path: string): boolean {
     .some((part) => part.startsWith('.'))
 }
 
+/** Whether a path is another sync tool's copy, which the engine never keeps
+ *  (@nib/sync-core/foreign). Hearing one is what fetches the mark the file list gives
+ *  it, once. */
+function foreign(path: string): boolean {
+  if (!inForeignCopy(path)) return false
+  void syncMark.ask()
+  return true
+}
+
 /** Whether a path is something the engine keeps: a folder, a document, or - where the
  *  world carries bytes - any other file (files.ts). */
 function kept(engine: Engine, path: string, dir: boolean): boolean {
-  if (hidden(path)) return false
+  if (hidden(path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
 }
 
@@ -164,7 +175,7 @@ async function scanned(how: Watching, root: string): Promise<void> {
   // Asked of the disk once more first: a pass may have moved a file since the listing.
   for (const entry of [...space.entries.values()]) {
     if (!entry.local_path || entry.deleted || seen.has(space.key(entry.local_path))) continue
-    if (hidden(entry.local_path)) continue
+    if (hidden(entry.local_path) || inForeignCopy(entry.local_path)) continue
     const full = engine.core.world.join(root, entry.local_path)
     if (how.own(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)

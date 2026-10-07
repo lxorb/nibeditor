@@ -2154,4 +2154,8 @@ export const ta: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'மாதம் {price}',
   'Starts again {date}': '{date} அன்று மீண்டும் தொடங்கும்',
+  '{tool} conflict copy · not synced': '{tool} முரண் நகல் · ஒத்திசைக்கப்படவில்லை',
+  'Compare with original': 'மூலத்துடன் ஒப்பிடு',
+  'Conflict copies from other apps': 'பிற ஆப்களின் முரண் நகல்கள்',
+  'Remove from sync': 'ஒத்திசைவிலிருந்து நீக்கு',
 }

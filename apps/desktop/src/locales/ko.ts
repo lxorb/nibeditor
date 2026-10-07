@@ -2098,4 +2098,8 @@ export const ko: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '월 {price}',
   'Starts again {date}': '{date}에 초기화',
+  '{tool} conflict copy · not synced': '{tool} 충돌 사본 · 동기화 안 됨',
+  'Compare with original': '원본과 비교',
+  'Conflict copies from other apps': '다른 앱의 충돌 사본',
+  'Remove from sync': '동기화에서 제외',
 }

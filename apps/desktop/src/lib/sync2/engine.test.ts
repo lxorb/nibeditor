@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@nib/editor'
 import { TEXT } from '@nib/rooms'
 import { hash32 } from '@nib/sync-core/seed'
-import { Clock, ReferenceAccount, SEEDED } from '@nib/sync-core/sim'
+import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@nib/sync-core/sim'
 import { type DocRefusal, frame, type PushRequest, unframe } from '@nib/sync-core/wire'
 import { attach } from './binding'
 import { inline } from './classify'
@@ -46,10 +46,12 @@ interface Device {
   launch(): Promise<Engine>
 }
 
-/** One device holding the simulator's two seeded notes, the way a migrated one does. */
+/** One device holding the simulator's two seeded notes, the way a migrated one does, or
+ *  the notes it is handed; none is a device that has never synced the space. */
 async function device(
   account = new ReferenceAccount(new Clock(), SEEDED),
   id = 'd0',
+  seeded: readonly Seeded[] = SEEDED,
 ): Promise<Device> {
   const store = new MemoryStore(id)
   const disk = new MemoryDisk()
@@ -58,13 +60,13 @@ async function device(
     put('spaces', {
       space_id: SPACE,
       root: ROOT,
-      cursor: SEEDED.length,
+      cursor: seeded.length,
       role: 'owner',
       store: null,
     }),
     put('meta', wantedRow(SPACE, new Map())),
   ]
-  SEEDED.forEach((note, index) => {
+  seeded.forEach((note, index) => {
     const confirmed = seedUpdate(note.id, 1, note.text)
     changes.push(
       put('entries', {
@@ -460,5 +462,84 @@ describe('the folder watcher', () => {
     )
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
+  })
+})
+
+/** A copy another sync tool made beside a note: never made on the account, never
+ *  written onto a disk that does not have it, never sent when it changes, and never
+ *  taken off a disk when the account lets go of one - which happens only when somebody
+ *  asks, from the Sync pane. See @nib/sync-core/foreign. */
+describe('another sync tool’s copy', () => {
+  const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
+  const WITH_CLASH: readonly Seeded[] = [...SEEDED, { id: 'n9', name: CLASH, text: 'theirs\n' }]
+
+  const names = async (account: ReferenceAccount) =>
+    (await account.view()).entries.map((entry) => entry.name)
+
+  test('made here never reaches the account, and is not an entry here', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account)
+    here.disk.files.set(`${ROOT}/${CLASH}`, 'theirs\n')
+
+    await here.engine.created(`${ROOT}/${CLASH}`, false, 'theirs\n')
+    await here.engine.created(`${ROOT}/Old (# Name clash 2026-10-05 a1b2c3C #)`, true)
+    await here.engine.pass(SPACE)
+
+    expect(await names(account)).toEqual(['Plan.md', 'Ideas.md'])
+    expect(here.engine.entryAt(`${ROOT}/${CLASH}`)).toBeNull()
+    expect(here.engine.waiting(SPACE)).toBe(false)
+  })
+
+  test('one the account has from before is not written onto a disk without it', async () => {
+    const account = new ReferenceAccount(new Clock(), WITH_CLASH)
+    const fresh = await device(account, 'd1', [])
+
+    await fresh.engine.pass(SPACE)
+
+    expect(fresh.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+    expect(fresh.disk.files.has(`${ROOT}/${CLASH}`)).toBe(false)
+  })
+
+  test('and is not sent when it changes here', async () => {
+    const account = new ReferenceAccount(new Clock(), WITH_CLASH)
+    const here = await device(account, 'd0', WITH_CLASH)
+    here.disk.files.set(`${ROOT}/${CLASH}`, 'theirs, edited\n')
+
+    await here.engine.foreign(`${ROOT}/${CLASH}`)
+    await here.engine.saved(`${ROOT}/${CLASH}`, 'theirs, edited\n')
+    await here.engine.pass(SPACE)
+
+    expect(await textOn(account, 'n9')).toBe('theirs\n')
+  })
+
+  test('is counted, and taken off the account on request with every file left', async () => {
+    const account = new ReferenceAccount(new Clock(), WITH_CLASH)
+    const here = await device(account, 'd0', WITH_CLASH)
+    const there = await device(account, 'd1', WITH_CLASH)
+    expect(here.engine.foreignCopies().map(({ entry }) => entry.name)).toEqual([CLASH])
+
+    expect(await here.engine.unsync()).toBe(1)
+    await here.engine.pass(SPACE)
+    await there.engine.pass(SPACE)
+
+    expect(await names(account)).toEqual(['Plan.md', 'Ideas.md'])
+    expect(here.disk.files.get(`${ROOT}/${CLASH}`)).toBe('theirs\n')
+    expect(there.disk.files.get(`${ROOT}/${CLASH}`)).toBe('theirs\n')
+    expect(here.engine.foreignCopies()).toEqual([])
+    expect(there.engine.foreignCopies()).toEqual([])
+  })
+
+  test('is not what a note becomes when the tool puts it aside under that name', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account)
+    const words = here.disk.files.get(`${ROOT}/Plan.md`) ?? ''
+    here.disk.files.delete(`${ROOT}/Plan.md`)
+    here.disk.files.set(`${ROOT}/${CLASH}`, words)
+
+    await here.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/${CLASH}`)
+    await here.engine.pass(SPACE)
+
+    expect(await names(account)).toEqual(['Plan.md', 'Ideas.md'])
+    expect(here.engine.core.spaces.get(SPACE)?.entries.get(PLAN)?.local_path).toBe('Plan.md')
   })
 })

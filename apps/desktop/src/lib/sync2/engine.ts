@@ -17,9 +17,10 @@
  *  - create.ts - this device's own tree operations;
  *  - migrate.ts - the first v2 pass of a space that v1 kept, and the way back. */
 
+import { foreignCopy, inForeignCopy } from '@nib/sync-core/foreign'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { made, moved, removed } from './create'
+import { made, moved, removed, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { foldIn } from './ingest'
@@ -28,7 +29,7 @@ import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
 import { rejoin } from './rejoin'
 import { againstBytes } from './records'
-import { put, type Change, type LogRow, type SyncStore } from './store'
+import { put, type Change, type EntryRow, type LogRow, type SyncStore } from './store'
 import type { World } from './world'
 
 type Listeners = { [T in keyof EngineEvents]: Set<(event: EngineEvents[T]) => void> }
@@ -146,10 +147,38 @@ export class Engine implements AskedEngine {
     return null
   }
 
-  /** The entry a file on this disk is. */
+  /** The entry a file on this disk is. None for another sync tool's copy, even one the
+   *  account has from before nib knew better: nothing heard about one is sent, and no
+   *  tab holding one joins a room (@nib/sync-core/foreign). */
   entryAt(path: string) {
     const placed = this.placed(path)
-    return placed ? placed.space.at(placed.path) : null
+    if (!placed || inForeignCopy(placed.path)) return null
+    return placed.space.at(placed.path)
+  }
+
+  /** Another sync tool's copies the account holds, a folder once for everything in it:
+   *  what the Sync pane offers to take off. */
+  foreignCopies(): { space: SpaceState; entry: EntryRow }[] {
+    const found: { space: SpaceState; entry: EntryRow }[] = []
+    for (const space of this.core.spaces.values()) {
+      for (const entry of space.entries.values()) {
+        if (entry.seq === null || !space.isLive(entry.id)) continue
+        if (!foreignCopy(entry.name) || (entry.parent && space.foreign(entry.parent))) continue
+        found.push({ space, entry })
+      }
+    }
+    return found
+  }
+
+  /** Takes every one of them off the account, into its Recently deleted; the files stay.
+   *  Answers how many went, which the next pass sends. */
+  unsync(): Promise<number> {
+    return this.core.use(async () => {
+      const copies = this.foreignCopies()
+      const changes = copies.flatMap(({ space, entry }) => unsynced(this.core, space, entry))
+      await this.core.commit(changes)
+      return copies.length
+    })
   }
 
   // -------------------------------------------------------------------------
@@ -237,7 +266,7 @@ export class Engine implements AskedEngine {
 
   private async wroteDown(path: string, text: string): Promise<void> {
     const placed = this.placed(path)
-    const entry = placed?.space.at(placed.path)
+    const entry = this.entryAt(path)
     if (!placed || !entry) return
     const doc = this.core.docs.get(entry.id)
     // A document joined to the note it is: what was typed is in it already.
@@ -293,7 +322,7 @@ export class Engine implements AskedEngine {
   foreign(path: string): Promise<void> {
     return this.core.use(async () => {
       const placed = this.placed(path)
-      const entry = placed?.space.at(placed.path)
+      const entry = this.entryAt(path)
       if (!placed || !entry) return
       // A file that is not a document is read for its hash by the next pass.
       if (entry.kind === 'file') {

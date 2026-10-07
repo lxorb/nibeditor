@@ -2127,4 +2127,8 @@ export const mr: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'दरमहा {price}',
   'Starts again {date}': '{date} रोजी पुन्हा सुरू होईल',
+  '{tool} conflict copy · not synced': '{tool} विरोधी प्रत · सिंक नाही',
+  'Compare with original': 'मूळ प्रतीशी तुलना करा',
+  'Conflict copies from other apps': 'इतर ॲप्सच्या विरोधी प्रती',
+  'Remove from sync': 'सिंकमधून काढा',
 }

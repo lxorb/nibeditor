@@ -339,3 +339,52 @@ describe('the archive', () => {
     expect(labels(loose)).toContain('Delete 1 item')
   })
 })
+
+/** A copy another sync tool made beside a note: the same menu, and one more entry that
+ *  puts the two side by side, while the note it was made of is there to compare with.
+ *  See @nib/sync-core/foreign. */
+describe('another sync tool’s copy', () => {
+  const clash = note('/s/loose (# Name clash 2026-10-05 a1b2c3C #).md')
+  const orphan = note('/s/gone (# Name clash 2026-10-05 a1b2c3C #).md')
+
+  beforeEach(() => {
+    workspace.tree = folder('/s', [nested, plain, loose, paper, clash, orphan])
+  })
+
+  test('offers to compare it with the note it was made of, after the ways to open it', () => {
+    const said = labels(clash)
+
+    expect(said.slice(0, 4)).toEqual([
+      'Open',
+      'Open in new tab',
+      'Open to the side',
+      'Compare with original',
+    ])
+    expect(said.at(-1)).toBe('Delete')
+  })
+
+  test('and opens the note with the copy to its side', async () => {
+    const opened: string[] = []
+    const openRow = vi.spyOn(workspace, 'openRow').mockImplementation((path) => {
+      opened.push(`here ${path}`)
+      return Promise.resolve()
+    })
+    const openAside = vi.spyOn(workspace, 'openAside').mockImplementation((path) => {
+      opened.push(`aside ${path}`)
+      return Promise.resolve()
+    })
+
+    rowMenu(clash)
+      .find((one) => one?.label === 'Compare with original')
+      ?.run()
+    await vi.waitFor(() => expect(opened).toHaveLength(2))
+
+    expect(opened).toEqual(['here /s/loose.md', `aside ${clash.path}`])
+    openRow.mockRestore()
+    openAside.mockRestore()
+  })
+
+  test('is the plain menu once the note it was made of has gone', () => {
+    expect(labels(orphan)).toEqual(labels(loose))
+  })
+})

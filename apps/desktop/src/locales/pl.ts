@@ -2208,4 +2208,8 @@ export const pl: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} miesięcznie',
   'Starts again {date}': 'Odnawia się {date}',
+  '{tool} conflict copy · not synced': 'Kopia konfliktowa z {tool} · niesynchronizowana',
+  'Compare with original': 'Porównaj z oryginałem',
+  'Conflict copies from other apps': 'Kopie konfliktowe z innych aplikacji',
+  'Remove from sync': 'Usuń z synchronizacji',
 }

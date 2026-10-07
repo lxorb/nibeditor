@@ -303,9 +303,9 @@ export const terminalMark = held(() =>
 /** A tab's name typed where it is written, fetched with the first rename. */
 export const tabNameField = held(() => import('./tab-strip/TabNameField.svelte'))
 
-/** A held note's mark; see sync2/asking.svelte.ts. */
-export const heldMark = latched(() =>
-  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./sync2/HeldMark.svelte'),
+/** Sync's mark on a row or a tab; see SyncMark.svelte. */
+export const syncMark = latched(() =>
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
 )
 
 /** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,

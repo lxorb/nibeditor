@@ -2130,4 +2130,8 @@ export const pa: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} ਪ੍ਰਤੀ ਮਹੀਨਾ',
   'Starts again {date}': '{date} ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਵੇਗਾ',
+  '{tool} conflict copy · not synced': '{tool} ਟਕਰਾਅ ਨਕਲ · ਸਮਕਾਲ ਨਹੀਂ',
+  'Compare with original': 'ਮੂਲ ਨਾਲ ਤੁਲਨਾ ਕਰੋ',
+  'Conflict copies from other apps': 'ਹੋਰ ਐਪਾਂ ਦੀਆਂ ਟਕਰਾਅ ਨਕਲਾਂ',
+  'Remove from sync': 'ਸਮਕਾਲ ਤੋਂ ਹਟਾਓ',
 }

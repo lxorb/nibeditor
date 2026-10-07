@@ -2116,4 +2116,8 @@ export const gu: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'મહિને {price}',
   'Starts again {date}': '{date} એ ફરી શરૂ થશે',
+  '{tool} conflict copy · not synced': '{tool} સંઘર્ષ નકલ · સમન્વયિત નથી',
+  'Compare with original': 'મૂળ સાથે સરખાવો',
+  'Conflict copies from other apps': 'અન્ય ઍપની સંઘર્ષ નકલો',
+  'Remove from sync': 'સમન્વયમાંથી દૂર કરો',
 }

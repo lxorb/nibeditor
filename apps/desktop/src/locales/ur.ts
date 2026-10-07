@@ -2122,4 +2122,8 @@ export const ur: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} ماہانہ',
   'Starts again {date}': '{date} کو دوبارہ شروع ہوگا',
+  '{tool} conflict copy · not synced': '{tool} تنازع نقل · سنک نہیں',
+  'Compare with original': 'اصل سے موازنہ کریں',
+  'Conflict copies from other apps': 'دوسری ایپس کی تنازع نقلیں',
+  'Remove from sync': 'سنک سے ہٹائیں',
 }

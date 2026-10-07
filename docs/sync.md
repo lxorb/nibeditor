@@ -237,6 +237,37 @@ Which is the whole of the promise, stated as one sentence: **no write anywhere -
 not a pass, not a room, not a push - ever replaces a copy that is not the copy both
 sides started from.** Where it cannot merge, it keeps.
 
+## Other sync tools
+
+A space folder is often inside Proton Drive, Dropbox, OneDrive or Syncthing as well,
+and each of those keeps both sides of its own clash by writing one under a new name:
+`Plan (# Name clash 2026-10-05 k3x9qaC #).md`, `Plan (Emil's conflicted copy
+2026-10-05).md`, `Plan.sync-conflict-20261005-093612-CEIVOCO.md`. A pass that sent
+such a copy up is how one clash on one machine became a stray file on every device -
+Proton once made seven of one note, and every device of Emil's got all seven.
+
+So a pass never carries one, in either direction, and never takes one off a disk:
+
+- `push` leaves them out of what it reads, so none is created on the account, none
+  that is already there is sent again, and none that went from the folder is
+  deleted there;
+- `pull` writes none, whether the device has the file or not, and when the account
+  lets go of one it forgets the entry and leaves the file;
+- a note renamed to such a name - Proton moving its side of a clash out of the way -
+  is not renamed on the account; the note keeps its name and the file that arrives
+  there is the note again.
+
+Which names those are is one matcher, `@nib/sync-core/foreign`, which the v2 engine
+and the file list read too; docs/sync-v2.md, "Other sync tools", has the table and
+the names deliberately left out (`Plan (1).md`, `Plan 2.md`). In the file list such a
+file is faint, with a struck-through cloud whose tooltip names the tool, and its menu
+offers *Compare with original*: the note, and the copy beside it.
+
+Copies the account already holds from before stay there until somebody asks. `Sync`
+counts the ones this device's mirrors track and offers *Remove from sync*, which
+deletes each on the account - Recently deleted, restorable - and leaves every file
+where it is (`foreign/synced.ts`).
+
 ## What synced
 
 The light in the corner says syncing, or failed. That is the right amount to say in

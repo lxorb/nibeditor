@@ -147,6 +147,7 @@ class Runner {
           answer: (id, answer) => this.answer(id, answer),
         },
         store: engine.store,
+        copies: engine,
         on: (type, listener) => engine.on(type, listener),
       }),
     )

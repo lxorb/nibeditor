@@ -1303,3 +1303,95 @@ describe('a web note’s old copies', () => {
     expect(fake.trash.size).toBe(0)
   })
 })
+
+/** A copy another sync tool made beside a note is never carried, either way, and
+ *  never deleted from a disk: Proton Drive syncing the same folder once wrote seven
+ *  `(# Name clash … #)` copies of one note and this pass spread them to every device.
+ *  See @nib/sync-core/foreign. */
+describe('another sync tool’s copy', () => {
+  const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
+
+  /** A mirror from before nib knew better: it tracks the copy as a note. */
+  async function tracking() {
+    const id = fake.addRemote(CLASH, 'theirs\n')
+    fake.disk.set(`${ROOT}/${CLASH}`, 'theirs\n')
+    const mirror = newMirror('s-one', ROOT)
+    mirror.notes[CLASH] = { id, version: 1, hash: await sha(CLASH, 'theirs\n') }
+    return { mirror, id }
+  }
+
+  async function sha(_path: string, content: string): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content))
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  }
+
+  test('is never sent to the account', async () => {
+    const mirror = newMirror('s-one', ROOT)
+    fake.disk.set(`${ROOT}/${CLASH}`, 'theirs\n')
+    fake.disk.set(`${ROOT}/Kept (conflicted copy 2026-10-05 093612)/inside.md`, 'x\n')
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual([])
+  })
+
+  test('while the note beside it goes up as ever', async () => {
+    const mirror = newMirror('s-one', ROOT)
+    fake.disk.set(`${ROOT}/Plan.md`, 'mine\n')
+    fake.disk.set(`${ROOT}/${CLASH}`, 'theirs\n')
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual(['createNote Plan.md'])
+  })
+
+  test('is not written onto a disk that does not have it', async () => {
+    fake.addRemote(CLASH, 'theirs\n')
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.has(`${ROOT}/${CLASH}`)).toBe(false)
+    expect(mirror.notes[CLASH]).toBeUndefined()
+  })
+
+  test('one the account has from before is neither sent nor deleted there', async () => {
+    const { mirror } = await tracking()
+    fake.disk.set(`${ROOT}/${CLASH}`, 'theirs, edited\n')
+    await push(mirror, 'token', NOBODY)
+    fake.disk.delete(`${ROOT}/${CLASH}`)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual([])
+  })
+
+  test('stays on this disk when the account lets go of it', async () => {
+    const { mirror, id } = await tracking()
+    fake.deleteRemote(id)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/${CLASH}`)).toBe('theirs\n')
+    expect(fake.trash.size).toBe(0)
+    expect(mirror.notes[CLASH]).toBeUndefined()
+  })
+
+  test('is not written over by the account either', async () => {
+    const { mirror, id } = await tracking()
+    fake.editRemote(id, 'from elsewhere\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/${CLASH}`)).toBe('theirs\n')
+  })
+
+  test('is not what a note becomes when the tool puts it aside under that name', async () => {
+    const { mirror } = await paired('Plan.md', 'mine\n')
+    fake.disk.set(`${ROOT}/${CLASH}`, 'mine\n')
+    fake.disk.delete(`${ROOT}/Plan.md`)
+
+    expect(await movedHere(mirror, 'token', `${ROOT}/Plan.md`, `${ROOT}/${CLASH}`)).toBe(false)
+    expect(fake.calls).toEqual([])
+    expect(Object.keys(mirror.notes)).toEqual(['Plan.md'])
+  })
+})

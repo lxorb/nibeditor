@@ -5,7 +5,8 @@
    *  same note was written in two places, which is the one real choice; whatever
    *  is waiting for an answer, which is the only thing here that is urgent; and
    *  what the last few passes did, which is what somebody reads when syncing
-   *  looks stuck.
+   *  looks stuck. Between the last two, only while there are some, the copies other
+   *  sync tools made that the account holds from before nib left them alone.
    *
    *  And, at the foot, the one rescue: a space put back to how it read at a
    *  moment. It is last because it is the thing nobody wants and somebody
@@ -22,7 +23,7 @@
 
   import { account } from './account.svelte'
   import { api } from './api'
-  import { plural, t } from './i18n.svelte'
+  import { amount, plural, t } from './i18n.svelte'
   import { when } from './when'
   import { log } from './log'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
@@ -32,6 +33,7 @@
   import type { Answer, Clash } from './sync/conflicts'
   import { sync } from './sync.svelte'
   import { nameOf } from './space-paths'
+  import { syncedCopies } from './foreign/synced'
   import { asking, type Engine } from './sync2/asking.svelte'
   import { scan } from './sync2/store'
   import { workspace } from './workspace.svelte'
@@ -187,6 +189,24 @@
     }
   }
 
+  /** Other sync tools' copies on the account, counted as the pane opens and when the
+   *  engine changes. */
+  const copies = $derived(syncedCopies(asking.engine))
+  let removing = $state(false)
+  let copiesGone = $state(false)
+
+  async function removeCopies() {
+    removing = true
+    try {
+      await copies.remove()
+      copiesGone = true
+    } catch (error) {
+      log('warn', `sync: conflict copies stayed on the account - ${String(error)}`)
+    } finally {
+      removing = false
+    }
+  }
+
   async function settle(clash: Clash, answer: Answer) {
     await record.settle(clash, answer)
     sync.nudge()
@@ -286,6 +306,20 @@
         </div>
       </div>
     {/each}
+  </div>
+{/if}
+
+<!-- Copies other sync tools made that the account still holds from before nib left
+     them alone: one press takes them off it, into Recently deleted, and every file
+     stays where it is. Only while there are some. See foreign/synced.ts. -->
+{#if copies.count && !copiesGone}
+  <h3 transition:fade={{ duration: dur(130) }}>{t('Conflict copies from other apps')}</h3>
+
+  <div class="card" transition:fade={{ duration: dur(130) }}>
+    <button class="nib-action held" disabled={removing} onclick={() => void removeCopies()}>
+      <span class="name">{t('Remove from sync')}</span>
+      <span class="hint">{amount(copies.count)}</span>
+    </button>
   </div>
 {/if}
 

@@ -2153,4 +2153,8 @@ export const sw: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} kwa mwezi',
   'Starts again {date}': 'Inaanza upya {date}',
+  '{tool} conflict copy · not synced': 'Nakala ya mgongano ya {tool} · haijasawazishwa',
+  'Compare with original': 'Linganisha na asili',
+  'Conflict copies from other apps': 'Nakala za mgongano za programu nyingine',
+  'Remove from sync': 'Ondoa kwenye usawazishaji',
 }

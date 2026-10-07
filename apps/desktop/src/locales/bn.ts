@@ -2123,4 +2123,8 @@ export const bn: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'মাসে {price}',
   'Starts again {date}': '{date} আবার শুরু হবে',
+  '{tool} conflict copy · not synced': '{tool} দ্বন্দ্ব কপি · সিংক হয়নি',
+  'Compare with original': 'মূলের সাথে তুলনা করুন',
+  'Conflict copies from other apps': 'অন্য অ্যাপের দ্বন্দ্ব কপি',
+  'Remove from sync': 'সিংক থেকে সরান',
 }

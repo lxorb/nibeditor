@@ -2133,4 +2133,8 @@ export const te: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'నెలకు {price}',
   'Starts again {date}': '{date}న మళ్లీ ప్రారంభమవుతుంది',
+  '{tool} conflict copy · not synced': '{tool} వైరుధ్య నకలు · సింక్ కాలేదు',
+  'Compare with original': 'మూలంతో పోల్చు',
+  'Conflict copies from other apps': 'ఇతర యాప్‌ల వైరుధ్య నకలులు',
+  'Remove from sync': 'సింక్ నుండి తీసివేయి',
 }

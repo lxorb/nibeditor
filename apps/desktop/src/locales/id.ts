@@ -2117,4 +2117,8 @@ export const id: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} per bulan',
   'Starts again {date}': 'Dimulai lagi {date}',
+  '{tool} conflict copy · not synced': 'Salinan konflik {tool} · tidak disinkronkan',
+  'Compare with original': 'Bandingkan dengan aslinya',
+  'Conflict copies from other apps': 'Salinan konflik dari aplikasi lain',
+  'Remove from sync': 'Keluarkan dari sinkronisasi',
 }

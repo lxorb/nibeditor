@@ -2105,4 +2105,8 @@ export const vi: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': '{price} mỗi tháng',
   'Starts again {date}': 'Làm mới vào {date}',
+  '{tool} conflict copy · not synced': 'Bản xung đột của {tool} · không đồng bộ',
+  'Compare with original': 'So sánh với bản gốc',
+  'Conflict copies from other apps': 'Bản xung đột từ ứng dụng khác',
+  'Remove from sync': 'Bỏ khỏi đồng bộ',
 }

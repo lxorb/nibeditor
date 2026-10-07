@@ -2146,4 +2146,8 @@ export const ml: Dictionary = {
   '{cores} vCPU': '{cores} vCPU',
   '{price} a month': 'മാസം {price}',
   'Starts again {date}': '{date} ന് വീണ്ടും ആരംഭിക്കും',
+  '{tool} conflict copy · not synced': '{tool} പൊരുത്തക്കേട് പകർപ്പ് · സിങ്ക് ചെയ്തിട്ടില്ല',
+  'Compare with original': 'യഥാർത്ഥവുമായി താരതമ്യം ചെയ്യുക',
+  'Conflict copies from other apps': 'മറ്റ് ആപ്പുകളിലെ പൊരുത്തക്കേട് പകർപ്പുകൾ',
+  'Remove from sync': 'സിങ്കിൽ നിന്ന് നീക്കുക',
 }

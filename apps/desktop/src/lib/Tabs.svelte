@@ -14,7 +14,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import SharedMark from './SharedMark.svelte'
-  import { heldMark, soundMark, tabNameField } from './surfaces.svelte'
+  import { syncMark, soundMark, tabNameField } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -965,8 +965,8 @@
           {#if tab.note.shared && parts.title}
             <SharedMark label={t('Shared with you')} />
           {/if}
-          {#if heldMark.asked && parts.title}
-            {#await heldMark.asked then Held}<Held path={tab.path} />{/await}
+          {#if syncMark.asked && parts.title}
+            {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
           {/if}
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are
