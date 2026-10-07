@@ -40,6 +40,7 @@ import type {
   Post,
   Posting,
   Preview,
+  Role,
   Who,
   Wording,
 } from './types'
@@ -120,6 +121,8 @@ export interface ChatPoke {
 export interface ChatRow {
   id: string
   space: string
+  /** The asker's role in the chat's space, which `may` decides by. */
+  role: Role
   members: number
   lastSeq: number
   lastAt: number | null
@@ -629,6 +632,8 @@ function chatRowOf(value: unknown): ChatRow | null {
   const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } =
     value
   if (!isChatId(id) || !isLine(space, LONGEST_DEVICE) || !isCount(members)) return null
+  const role = value.role
+  if (!oneOf<Role>(['read', 'write', 'owner'], role)) return null
   if (
     !isCount(lastSeq) ||
     !(lastAt === null || isTime(lastAt)) ||
@@ -643,6 +648,7 @@ function chatRowOf(value: unknown): ChatRow | null {
   return {
     id,
     space,
+    role,
     members,
     lastSeq,
     lastAt,
