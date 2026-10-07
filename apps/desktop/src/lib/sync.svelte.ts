@@ -69,6 +69,9 @@ class Sync {
   /** Passes in a row that found nothing. Each one waits longer than the last. */
   private quiet = 0
   private reconciledAt = 0
+  /** The pairing in the air, which a second pass waits on rather than starting its own:
+   *  two at once both read an account without the folder's space, and each made one. */
+  private reconciling: Promise<void> | null = null
 
   /** Which run of the loop this is. Bumped by every start and every stop, so a
    *  pass still in flight when syncing was turned off can tell that what it is
@@ -487,7 +490,12 @@ class Sync {
     }
   }
 
-  private async reconcile() {
+  private reconcile(): Promise<void> {
+    this.reconciling ??= this.reconcileOnce().finally(() => (this.reconciling = null))
+    return this.reconciling
+  }
+
+  private async reconcileOnce() {
     const token = account.token
     if (!token) return
 

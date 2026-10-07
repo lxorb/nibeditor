@@ -1568,6 +1568,37 @@ describe('the first pass, which somebody is waiting on', () => {
   })
 })
 
+describe('two passes asked for at once', () => {
+  test('make a folder the account has never seen into one space, not two', async () => {
+    // A save nudges the loop while the first pass after signing in is still pairing,
+    // and the nudge runs a second pass beside it. Both read the account before
+    // either has made the space, and each made one: the folder went up twice and
+    // came back down as `Notes 2`, every note in it twice over.
+    await machineWithNotes()
+    await signIn()
+    account.settled()
+
+    const real = fake.api.createSpace
+    fake.api.createSpace = async (token: string, name: string) => {
+      await new Promise((settle) => setTimeout(settle, 50))
+      return await real(token, name)
+    }
+    try {
+      await Promise.all([sync.pass(), sync.pass()])
+      await noPassInTheAir()
+      await sync.pass()
+    } finally {
+      fake.api.createSpace = real
+    }
+
+    expect(fake.remote.calls.filter((call) => call.startsWith('createSpace'))).toEqual([
+      'createSpace Notes',
+    ])
+    expect(fake.remote.spaces.map((space) => space.name)).toEqual(['Notes'])
+    expect(workspace.spaces.map((space) => space.name)).toEqual(['Notes'])
+  })
+})
+
 describe('a pass that fails partway through', () => {
   /** The state the app holds the whole surface for; see arriving.svelte.ts. */
   let arriving: typeof import('./arriving.svelte').arriving
