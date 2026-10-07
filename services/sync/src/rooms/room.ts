@@ -1179,11 +1179,17 @@ export class NoteRoom implements DurableObject {
     }
 
     // Written in before the note was last written by somebody else: kept beside it,
-    // since there is no ancestor to fold it in against.
+    // since there is no ancestor to fold it in against. Unless one of the two holds
+    // every word of the other, which is what nib's own echo looks like - the same
+    // words reaching the note by another road a keystroke apart - and then the fuller
+    // one is the note, and a copy would be a copy of nobody's words but its own. The
+    // same test as `keptBeside`, for the same reason.
     let target = body
     if (carried !== null) {
+      const words = held.kind === 'words'
       if (held.hash === undefined || held.hash === bodyHash) target = carried
-      else await this.besideTheNote(held, carried)
+      else if (words && inside(body, carried)) target = carried
+      else if (!words || !inside(carried, body)) await this.besideTheNote(held, carried)
     }
 
     await this.closeForEpoch(epoch, base)
@@ -1519,10 +1525,7 @@ export class NoteRoom implements DurableObject {
       //
       // Words only. A plane's file is a serialisation rather than prose, and two of
       // them sharing a front and a back says nothing about the objects on it.
-      if (kind === 'words') {
-        const change = fold(wrote, settling)
-        if (!change || change.from === change.to) return
-      }
+      if (kind === 'words' && inside(wrote, settling)) return
 
       if (!(await noteBeside(this.env, file, wrote))) {
         throw new Error('there was nowhere free to keep it')
@@ -1531,6 +1534,12 @@ export class NoteRoom implements DurableObject {
       noted(`room ${file.id}`, wrong instanceof Error ? wrong : new Error(String(wrong)), null)
     }
   }
+}
+
+/** Whether turning `from` into `to` only inserts: every word of `from` is in `to`. */
+function inside(from: string, to: string): boolean {
+  const change = fold(from, to)
+  return !change || change.from === change.to
 }
 
 function placedOf(note: Note): Placed {

@@ -122,6 +122,42 @@ describe('a file that is not a note, under v2', () => {
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(5))
   })
 
+  test('replaced here with the answer lost, it is in step next time, not held', async () => {
+    let lose = false
+    const made = await (
+      await kit()
+    ).testDevice({
+      fetch: async (request) => {
+        const replacing = request.method === 'PUT' && request.url.includes('/v2/files/')
+        const answer = await app.fetch(request, env)
+        if (lose && replacing) throw new TypeError('the answer was lost')
+        return answer
+      },
+      token,
+      name: 'laptop',
+      files: { 'photo.png': picture(3) },
+    })
+    const core = made.engine.core
+    await core.commit(core.addSpace(space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await passed(made)
+
+    await made.disk.writeBytes(`${made.root}/photo.png`, picture(5))
+    await made.engine.foreign(`${made.root}/photo.png`)
+    lose = true
+    expect((await made.engine.pass(space))?.finished).toBe(false)
+    lose = false
+    await made.engine.foreign(`${made.root}/photo.png`)
+    await passed(made)
+
+    // The feed names its own bytes before the file is read again: nothing to ask.
+    expect(made.engine.held.notes).toHaveLength(0)
+    expect(made.engine.core.held.size).toBe(0)
+    const phone = await device('phone')
+    await passed(phone)
+    expect(bytesAt(phone, 'photo.png')).toEqual(picture(5))
+  })
+
   test('replaced on both while apart, it is held and asked; Keep both keeps both', async () => {
     const laptop = await device('laptop', { 'photo.png': picture(3) })
     const phone = await device('phone')

@@ -112,7 +112,23 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   if (change.kind === 'created') await made(engine, change.path, change.dir)
 }
 
+/** Whether the tree already has a folder where `path` is: the engine makes one on this
+ *  disk a moment before it writes down where (a note moving into a folder another
+ *  device made, places.ts `settle`), and hearing that back is its own echo, never a
+ *  second folder of the same name. */
+function wantedFolder(engine: Engine, path: string): boolean {
+  const placed = engine.placed(path)
+  if (!placed) return false
+  const { space } = placed
+  const key = space.key(placed.path)
+  for (const [id, want] of space.paths()) {
+    if (space.key(want) === key && space.entries.get(id)?.kind === 'folder') return true
+  }
+  return false
+}
+
 async function made(engine: Engine, path: string, dir: boolean) {
+  if (dir && wantedFolder(engine, path)) return
   if (dir || !holdsDocument(kindOfName(path))) {
     await engine.created(path, dir)
     return

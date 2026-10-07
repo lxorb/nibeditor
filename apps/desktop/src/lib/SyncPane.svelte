@@ -300,7 +300,7 @@
         <span class="at">{when(pass.at, 'short')}</span>
         <span class="what">
           {#if pass.failed}
-            {pass.failed}
+            {t(pass.failed)}
           {:else}
             {[
               pass.pulled ? t('{count} down', { count: pass.pulled }) : '',

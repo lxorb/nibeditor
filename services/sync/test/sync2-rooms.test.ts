@@ -328,6 +328,59 @@ describe('an epoch starting', () => {
     expect(merged.getText(TEXT).toJSON()).toBe('one\nunsettled\n')
   })
 
+  /** A v1 room holding `one\nunsettled\n` it never settled, the note written to `saved`
+   *  by another road meanwhile, and then the epoch. Answers the note's words after it
+   *  and the paths of the space. */
+  async function startedOver(saved: string): Promise<{ words: string; paths: string[] }> {
+    const id = await made('Plan.md', 'one\n')
+    const { room, state } = rooms.of(id)
+    const socket = await join(room, { id, spaceId: space })
+    const device = new Y.Doc()
+    const awareness = new Awareness(device)
+    await say(room, state, socket, syncStep1(device))
+    for (const message of socket.take()) receive(message, device, awareness, 'room')
+    const before = Y.encodeStateVector(device)
+    device.getText(TEXT).insert(4, 'unsettled\n')
+    await say(room, state, socket, syncUpdate(Y.encodeStateAsUpdate(device, before)))
+    state.takeAlarm()
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: saved, baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+
+    await prepare()
+    await room.alarm()
+    await state.idle()
+    await rooms.settle()
+    expect(socket.closedWith?.code).toBe(1012)
+
+    const paths = env.db
+      .prepare('select path from notes where space_id = ? and deleted = 0 order by path')
+      .all(space) as { path: string }[]
+    return { words: await body(id), paths: paths.map((one) => one.path) }
+  }
+
+  test('keeps no copy of words the note already holds, which is nib’s own echo', async () => {
+    const after = await startedOver('one\nunsettled\nand more from the same hand\n')
+    expect(after.paths).toEqual(['Plan.md'])
+    expect(after.words).toBe('one\nunsettled\nand more from the same hand\n')
+  })
+
+  test('keeps no copy where the room holds every word the note does', async () => {
+    const after = await startedOver('one\nunset')
+    expect(after.paths).toEqual(['Plan.md'])
+    expect(after.words).toBe('one\nunsettled\n')
+  })
+
+  test('keeps the room’s words beside the note where the two really parted', async () => {
+    const after = await startedOver('two\n')
+    expect(after.paths).toHaveLength(2)
+    expect(after.words).toBe('two\n')
+  })
+
   test('closes a v2 socket with the new epoch and 4001', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()

@@ -64,6 +64,25 @@ export interface Joining extends Entering {
   holds: () => boolean
 }
 
+/** How long the words a rebuilt room shared with this device are kept for the room that
+ *  replaces it: the join that follows is at once. */
+const REMEMBERED = 60_000
+
+/** Per note, the words this device and its room held together when the service threw the
+ *  room away (`REBUILT` in door.ts, which is also how a v1 app hears its note start a
+ *  sync v2 document). The next room for the note reads them as one more copy both sides
+ *  started from: a room holding exactly them holds nothing this device has not seen, and
+ *  a note still reading them wrote nothing since. Without them the account's older hash
+ *  was the only base, and this device's own words, typed into the old room and not yet
+ *  settled, came back from the new one as somebody else's - a copy of itself. */
+const shared = new Map<string, { words: string; at: number }>()
+
+function sharedBefore(noteId: string): string | null {
+  const kept = shared.get(noteId)
+  shared.delete(noteId)
+  return kept && Date.now() - kept.at < REMEMBERED ? kept.words : null
+}
+
 export class Room extends JoinedRoom {
   private unbind: (() => void) | null = null
   /** Whether this room and this device disagreed about the words and the reader's rule
@@ -158,6 +177,7 @@ export class Room extends JoinedRoom {
    *  changed since is no longer the copy the account handed over. */
   private async startedFrom(): Promise<Base | null | undefined> {
     const { note, hash, digest } = this.joining
+    const before = sharedBefore(this.joining.noteId)
     if (!this.holds()) return undefined
     if (hash === null) return null
 
@@ -167,9 +187,15 @@ export class Room extends JoinedRoom {
     if (!this.holds()) return undefined
 
     return {
-      mine: mine === hash && note.text.toString() === asked,
-      theirs: theirs === hash && this.text.toJSON() === asksRoom,
+      mine: (mine === hash || asked === before) && note.text.toString() === asked,
+      theirs: (theirs === hash || asksRoom === before) && this.text.toJSON() === asksRoom,
     }
+  }
+
+  /** The words this note and the room hold together, for the room that replaces it; see
+   *  `shared`. Only while bound: a room the note never met holds nothing they shared. */
+  protected override rebuilt() {
+    if (this.unbind) shared.set(this.joining.noteId, { words: this.text.toJSON(), at: Date.now() })
   }
 
   /** The meeting, carried out against the words as they now stand. Answers whether

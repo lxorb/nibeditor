@@ -46,7 +46,10 @@ export abstract class JoinedRoom {
       who: entering.who,
       caughtUp: () => this.together(),
       present: () => this.showPresent(),
-      gone: () => entering.gone(),
+      gone: () => {
+        this.rebuilt()
+        entering.gone()
+      },
       refused: (said) => entering.refused(said),
     })
   }
@@ -76,6 +79,12 @@ export abstract class JoinedRoom {
    *  is done to what the file holds; see `Entering.holds`. */
   protected holds(): boolean {
     return !this.left && this.entering.holds()
+  }
+
+  /** The room is being thrown away, a moment before whoever joined it joins again; see
+   *  `REBUILT` in door.ts. What it held is still here to be read. */
+  protected rebuilt(): void {
+    // Nothing for a room that keeps nothing across a rebuild.
   }
 
   /** The room has said what it holds, so this device's copy is brought together with

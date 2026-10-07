@@ -24,7 +24,7 @@ import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
-import { pass, type Passed } from './pass'
+import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
 import { rejoin } from './rejoin'
 import { againstBytes } from './records'
@@ -124,7 +124,12 @@ export class Engine implements AskedEngine {
     if (!space) return false
     if (space.outbox.length) return true
     for (const entry of space.entries.values()) {
-      if (this.core.hasPending(entry.id) && !this.core.isHeld(entry.id)) return true
+      if (
+        this.core.hasPending(entry.id) &&
+        !this.core.isHeld(entry.id) &&
+        !resting(this.core, entry.id)
+      )
+        return true
     }
     return false
   }

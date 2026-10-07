@@ -372,6 +372,71 @@ describe('a room the service threw away and will build again', () => {
     expect(words(note)).toBe('# A\ntyped while it was away\n')
   })
 
+  test('takes its own words back from the new room as its own, never as a copy', async () => {
+    // A v1 app whose note starts a sync v2 document: the room is closed 1012 holding
+    // words typed here and not settled yet, and the new one is seeded with them. The
+    // account's hash is still the old words, so without the words both last shared the
+    // new room read as somebody else's and this device's own paragraph became a copy.
+    const { modes } = await import('../modes.svelte')
+    modes.conflicts = 'ask'
+    try {
+      const note = documentOn('/Notes/a.md', '# A\n')
+      const server = new Server('# A\n')
+      const socket = await following(note, server)
+      note.live.replace('# A\ntyped in the room\n')
+      note.flush()
+      carry(socket, server)
+      expect(server.file).toBe('# A\ntyped in the room\n')
+
+      socket.went(1012)
+      note.live.replace('# A\ntyped in the room\nand after it went\n')
+      note.flush()
+
+      const rebuilt = new Server('# A\ntyped in the room\n')
+      const back = latest()
+      back.arrive()
+      carry(back, rebuilt)
+      await until(() => rooms.carries('note-1'), 'the new room to catch up')
+      carry(back, rebuilt)
+
+      expect(record.clashes).toEqual([])
+      expect(rebuilt.file).toBe('# A\ntyped in the room\nand after it went\n')
+      expect(words(note)).toBe('# A\ntyped in the room\nand after it went\n')
+    } finally {
+      modes.conflicts = 'both'
+      record.forgetEverything()
+    }
+  })
+
+  test('takes the new room’s words when nothing was typed here since', async () => {
+    const { modes } = await import('../modes.svelte')
+    modes.conflicts = 'ask'
+    try {
+      const note = documentOn('/Notes/a.md', '# A\n')
+      const server = new Server('# A\n')
+      const socket = await following(note, server)
+      note.live.replace('# A\ntyped in the room\n')
+      note.flush()
+      carry(socket, server)
+
+      socket.went(1012)
+
+      // The service kept the room's words beside the note and seeded the new room from
+      // what somebody else wrote: this note wrote nothing since, so it takes them.
+      const rebuilt = new Server('# A\nfrom the phone\n')
+      const back = latest()
+      back.arrive()
+      carry(back, rebuilt)
+      await until(() => rooms.carries('note-1'), 'the new room to catch up')
+
+      expect(record.clashes).toEqual([])
+      expect(words(note)).toBe('# A\nfrom the phone\n')
+    } finally {
+      modes.conflicts = 'both'
+      record.forgetEverything()
+    }
+  })
+
   test('stays out of its room while a reader is being asked, and rejoins after', async () => {
     // The rule that asks. The device wrote while it was away and so did the room, so
     // neither copy may be written over: the note waits, out of its room, and the file

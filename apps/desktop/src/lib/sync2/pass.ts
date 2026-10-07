@@ -10,7 +10,7 @@
  *  5. every document the feed said moved, pulled 200 at a time and written to its file;
  *  6. a day's note the account merged into one that was already there;
  *  7. every document with pending edits, pushed 50 at a time: `ok` confirms them,
- *     `moved` is classified (rejoin.ts).
+ *     `moved` is classified (rejoin.ts), `refused` waits, longer each time (`Refusal`).
  *
  *  A pass stops quietly the moment a request goes unanswered - offline, or lost - and
  *  the next one starts where the store says this one got to. A document a live room's
@@ -19,6 +19,7 @@
 import { sendMade, settleFiles } from './files'
 import { coalesce } from '@nib/sync-core/outbox'
 import {
+  type DocRefusal,
   feedPageOf,
   type FeedItem,
   OPS_BATCH,
@@ -503,8 +504,77 @@ async function mergeDays(core: Core, space: SpaceState) {
 
 function pushable(core: Core, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null) return false
-  if (core.isHeld(entry.id) || core.carried.has(entry.id)) return false
+  if (core.isHeld(entry.id) || core.carried.has(entry.id) || resting(core, entry.id)) return false
   return core.hasPending(entry.id)
+}
+
+/** A document whose pushes the account keeps refusing: a space this device may only
+ *  read, an update past the ceiling, a note it does not have. Asking again every two
+ *  seconds changes none of that, so it waits longer each time (`AGAIN`, up to `LONGEST`)
+ *  and the log says so once a streak. `gone` is said only after `GONE_SAID` in a row,
+ *  since a room that did not answer reads as `gone` too. Any other answer ends it. The
+ *  words stay here, pending, the whole time. Memory only: a launch asks again. */
+interface Refusal {
+  why: DocRefusal
+  times: number
+  until: number
+  said: boolean
+}
+
+const AGAIN = 2_000
+const LONGEST = 30 * 60_000
+const GONE_SAID = 3
+
+const refusals = new WeakMap<Core, Map<string, Refusal>>()
+
+function refusalsOf(core: Core): Map<string, Refusal> {
+  let held = refusals.get(core)
+  if (!held) {
+    held = new Map()
+    refusals.set(core, held)
+  }
+  return held
+}
+
+/** Whether a document's push waits out a refusal: not pushed, and no reason for another
+ *  pass (`Engine.waiting`). */
+export function resting(core: Core, id: string): boolean {
+  const one = refusals.get(core)?.get(id)
+  return one !== undefined && one.until > core.world.now()
+}
+
+/** A refusal written down. Answers whether it is the one to say. */
+function refusedAgain(core: Core, id: string, why: DocRefusal): boolean {
+  const held = refusalsOf(core)
+  const before = held.get(id)
+  const one: Refusal = before?.why === why ? before : { why, times: 0, until: 0, said: false }
+  one.times += 1
+  one.until = core.world.now() + Math.min(AGAIN * 4 ** (one.times - 1), LONGEST)
+  held.set(id, one)
+  if (one.said || (why === 'gone' && one.times < GONE_SAID)) return false
+  one.said = true
+  return true
+}
+
+/** The account's own words for a refusal, which the Sync pane translates as it does
+ *  every message the account sends. */
+const REFUSED: Record<DocRefusal, string> = {
+  role: 'you can only read this space',
+  large: 'that note is too large',
+  gone: 'no such note',
+}
+
+/** A line in the log for each reason, under the space the log row names. */
+function refusalRows(core: Core, space: SpaceState, said: Set<DocRefusal>): Change[] {
+  return [...said].map((why) =>
+    put('log', {
+      at: core.world.now(),
+      space: space.id,
+      pulled: null,
+      pushed: null,
+      failed: REFUSED[why],
+    }),
+  )
 }
 
 /** Answers how many documents went up, or null when the account did not answer. */
@@ -514,6 +584,7 @@ async function pushDocs(
   alive: () => boolean,
 ): Promise<number | null> {
   const due = [...space.entries.values()].filter((entry) => pushable(core, entry))
+  const said = new Set<DocRefusal>()
   let pushed = 0
 
   for (let at = 0; at < due.length; at += PUSH_BATCH) {
@@ -554,6 +625,14 @@ async function pushDocs(
       const entry = space.entries.get(one.id)
       // Deleted here while the push was in the air: nothing of it goes on.
       if (!doc || !entry || !core.current(doc)) continue
+      if ('refused' in one) {
+        // What it holds stays here, pending, and waits; see `Refusal`.
+        doc.land()
+        if (refusedAgain(core, one.id, one.refused)) said.add(one.refused)
+        changes.push(...core.docChanges(doc))
+        continue
+      }
+      refusals.get(core)?.delete(one.id)
       if ('ok' in one) {
         doc.confirmFlight(one.seq)
         pushed += 1
@@ -564,18 +643,14 @@ async function pushDocs(
           changes.push(...(await rejoin(core, space, doc, one.moved, one.seq, one.at, by)).changes)
           if (!core.isHeld(one.id)) changes.push(...(await project(core, space, entry, doc)))
         }
-      } else if ('epoch' in one) {
+      } else {
         doc.land()
         changes.push(...(await newEpoch(core, space, entry, doc, one.epoch)))
-      } else {
-        // Refused: a note gone from the account, one this device may only read, or an
-        // update past the ceiling. What it holds stays here, pending, and says so in
-        // the log rather than being thrown away.
-        doc.land()
       }
       changes.push(...core.docChanges(doc))
     }
-    await core.commit(changes)
+    await core.commit([...changes, ...refusalRows(core, space, said)])
+    said.clear()
     if (!alive()) return null
   }
   return pushed

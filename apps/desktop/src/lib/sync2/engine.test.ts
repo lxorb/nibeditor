@@ -1,27 +1,37 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@nib/editor'
 import { TEXT } from '@nib/rooms'
 import { hash32 } from '@nib/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED } from '@nib/sync-core/sim'
-import { frame, unframe } from '@nib/sync-core/wire'
+import { type DocRefusal, frame, type PushRequest, unframe } from '@nib/sync-core/wire'
 import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
 import { Engine } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
-import { put, StoreError, type Change } from './store'
+import { put, scan, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@nib/sync-core/seed'
 import type { World } from './world'
+import type { SpaceNews } from '../space-watch'
 import * as Y from 'yjs'
+
+const watch = vi.hoisted(() => vi.fn())
+vi.mock('../space-watch', () => ({
+  watchSpaces: watch,
+  unwatchSpaces: () => Promise.resolve(),
+  scanSpace: () => Promise.resolve([]),
+}))
+const { watchFolders } = await import('./watching')
 
 /** The engine's own promises, held to one device with an account in memory (the
  *  simulator kit's reference one): what a keystroke costs, what a crash loses, when a
  *  client id turns over, what an open note hears from another device, and that a held
  *  note neither goes up nor takes anything in (docs/sync-v2.md sections 5.2 to 5.4 and
- *  9.3), and that a full store loses nothing (road 7). The simulator's walks are
- *  sim.test.ts and walks/walk.ts. */
+ *  9.3), that a full store loses nothing (road 7), that a refused push waits rather than
+ *  asking every pass, and that the folder watcher never hears the engine's own folder as
+ *  a new one. The simulator's walks are sim.test.ts and walks/walk.ts. */
 
 const ROOT = '/device/space'
 const SPACE = 'sim'
@@ -327,5 +337,128 @@ describe('a held note', () => {
     await here.engine.held.answer(PLAN, 'mine')
     await here.engine.pass(SPACE)
     expect(await textOn(account, PLAN)).toContain('Let us hold the whole release')
+  })
+})
+
+describe('a push the account refuses', () => {
+  /** A device whose pushes are answered `refused` while `why` is set, and whose clock
+   *  the test moves. */
+  async function refusing(why: DocRefusal) {
+    const one = await device()
+    const world = one.engine.core.world
+    const ask = world.account.ask.bind(world.account)
+    let clock = 1000
+    const said = { why: why as DocRefusal | null }
+    world.now = () => clock
+    world.account.ask = async (route, body, space) => {
+      if (route !== 'push' || !said.why || !one.online) return await ask(route, body, space)
+      one.routes.push(route)
+      const docs = (body as PushRequest).docs.map((doc) => ({ id: doc.id, refused: said.why }))
+      return { docs }
+    }
+    const doc = await one.engine.hold(PLAN)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    const pushes = () => one.routes.filter((route) => route === 'push').length
+    const logged = async () =>
+      (await one.engine.core.store.read([scan('log')]))[0].flatMap((row) => row.failed ?? [])
+    return {
+      one,
+      said,
+      pushes,
+      logged,
+      later: (ms: number) => (clock += ms),
+    }
+  }
+
+  test('waits longer each time instead of asking every pass, and says so once', async () => {
+    const { one, pushes, logged, later } = await refusing('role')
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+    expect(one.engine.waiting(SPACE)).toBe(false)
+    expect(await logged()).toEqual(['you can only read this space'])
+
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+
+    later(2_001)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(2)
+    later(2_001)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(2)
+    later(6_000)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(3)
+    expect(await logged()).toHaveLength(1)
+    // The words never left.
+    expect((await one.engine.core.doc(PLAN))?.text().startsWith('kept ')).toBe(true)
+  })
+
+  test('goes up once the account takes it, and the wait is over', async () => {
+    const { one, said, pushes, later } = await refusing('large')
+    await one.engine.pass(SPACE)
+    said.why = null
+    later(2_001)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(2)
+    expect(await textOn(one.account, PLAN)).toContain('kept We ship')
+    expect(one.engine.waiting(SPACE)).toBe(false)
+  })
+
+  test('says `gone` only once it has come back three times', async () => {
+    const { one, logged, later } = await refusing('gone')
+    for (const wait of [0, 2_001, 8_001]) {
+      later(wait)
+      expect(await logged()).toEqual([])
+      await one.engine.pass(SPACE)
+    }
+    expect(await logged()).toEqual(['no such note'])
+  })
+})
+
+describe('the folder watcher', () => {
+  test('hears the engine’s own new folder as that folder, never a second one', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await there.engine.pass(SPACE)
+
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    const stop = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    // The folder is made for the note moving into it, and the watcher says so while the
+    // pass is still on its way to writing down where that folder is.
+    const mkdir = here.disk.mkdir.bind(here.disk)
+    let echoed: Promise<void> = Promise.resolve()
+    here.disk.mkdir = async (path) => {
+      await mkdir(path)
+      if (path !== `${ROOT}/Work`) return
+      const change = { kind: 'created', path, dir: true, size: 0, mtime: 0, id: null } as const
+      for (const hear of heard) hear({ root: ROOT, changes: [change], scan: false, gone: false })
+      echoed = new Promise((resolve) => setTimeout(resolve, 20))
+      await echoed
+    }
+    await here.engine.pass(SPACE)
+    await echoed
+    await here.engine.pass(SPACE)
+    stop()
+
+    const space = here.engine.core.spaces.get(SPACE)
+    const folders = [...(space?.entries.values() ?? [])].filter(
+      (entry) => entry.kind === 'folder' && !entry.deleted,
+    )
+    expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
+    expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
 })
