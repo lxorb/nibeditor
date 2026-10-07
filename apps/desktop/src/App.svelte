@@ -52,6 +52,7 @@
     spacePickerDialog,
     hostPickerDialog,
     paletteDoor,
+    paletteWords,
     promptSheet,
     publishSheet,
     quickAddSheet,
@@ -390,6 +391,11 @@
   // opens as it lands, since it arrives already open. See surfaces.svelte.ts.
   $effect(() => {
     if (palette) void paletteDoor.ask()
+  })
+  // Asked to open on words from elsewhere (a chat's Ctrl+F): open, and the palette
+  // takes them.
+  $effect(() => {
+    if (paletteWords.words !== null) palette = true
   })
   // And the same for a question asked before then.
   $effect(() => {

@@ -29,6 +29,8 @@
   import { followHref, followNote } from '../../open-link'
   import { PROPERTY_CHOICES } from '../../property-choices'
   import { shortcuts } from '../../shortcuts.svelte'
+  import { insideSpace } from '../../space-paths'
+  import { workspace } from '../../workspace.svelte'
   import { afterQuiet } from '../../timing'
   import Avatar from '../../people/Avatar.svelte'
   import { Attachments } from './attachments.svelte'
@@ -45,6 +47,7 @@
   } from './compose'
   import Glyph from './Glyph.svelte'
   import MentionMenu from './MentionMenu.svelte'
+  import NoteReach from './NoteReach.svelte'
   import { faceOf, nameOf } from './people'
   import Recorder from './Recorder.svelte'
   import { store } from './source.svelte'
@@ -87,8 +90,23 @@
   let before: string | null = null
   const attachments = new Attachments()
 
+  /** The note the words link, whose reach the bar over the field shows: one sent to the
+   *  chat (`offered`), or the first `[[` the words hold, read on the quiet pause. */
+  let offered: string | null = null
+  let dropped = $state<string | null>(null)
+
+  function linkedNote(words: string): string | null {
+    const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
+    const root = workspace.activeSpace?.root
+    const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
+    return found && root ? insideSpace(root, found) : null
+  }
+
   const keep = afterQuiet(() => {
-    if (editor && !editingAside()) store().keepDraft(draftKey, editor.state.doc.toString())
+    if (!editor) return
+    const words = editor.state.doc.toString()
+    dropped = linkedNote(words) ?? (words.trim() ? offered : null)
+    if (!editingAside()) store().keepDraft(draftKey, words)
   }, 600)
 
   /** The aside is the chat's, so a reply pane's composer never takes it. */
@@ -131,8 +149,14 @@
     editor = made
     // Words offered from outside - an agent's draft, the AI sidebar's answer, a quote
     // sent from a note - take the field over, for the reader to send or change.
+    const take = (offer: { note?: string } | null) => {
+      offered = offer?.note ?? null
+      if (offered) dropped = offered
+    }
+    take(store().takeOffer(page.id, parent))
     const unoffer = store().offers((offer) => {
       if (offer.chat !== page.id || offer.parent !== parent) return
+      take(store().takeOffer(page.id, parent))
       if (editingAside()) before = offer.text
       else setText(offer.text)
       focus()
@@ -230,6 +254,8 @@
       ...(parent ? { parent, alsoToChat } : {}),
       files: attachments.refs,
     })
+    offered = null
+    dropped = null
     attachments.clear()
     setText('')
     store().keepDraft(draftKey, '')
@@ -435,6 +461,10 @@
         onclick={() => (page.aside = null)}><Glyph name="close" /></button
       >
     </div>
+  {/if}
+
+  {#if dropped && !parent}
+    <NoteReach chat={page.id} path={dropped} members={page.members} {space} />
   {/if}
 
   {#if attachments.list.length}

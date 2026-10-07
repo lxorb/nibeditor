@@ -2,7 +2,8 @@
   /** A chat's head (docs/chats.md 4.15): its name and topic, who is in it, and what is
    *  pinned, and what pings for it. The topic is written in place by whoever may set it; the
    *  faces open the members, active first; the pin opens the pinned messages, each a jump;
-   *  the bell is the chat's level and mute (../Bell.svelte, 4.11). */
+   *  the bell is the chat's level and mute (../Bell.svelte, 4.11); the glass searches the
+   *  chat, in the palette with the chat filled in. */
   import type { Message, Notify } from '@nib/chats'
   import { may } from '@nib/chats'
   import { LONGEST_TOPIC } from '@nib/chats/limits'
@@ -11,6 +12,7 @@
   import Bell from '../Bell.svelte'
   import { showProfile } from '../../people/card.svelte'
   import { people } from '../../people/people.svelte'
+  import { shortcuts } from '../../shortcuts.svelte'
   import type { ChatPage } from './chat.svelte'
   import Float from './Float.svelte'
   import Glyph from './Glyph.svelte'
@@ -135,6 +137,13 @@
     onchange={(notify: Notify | null, mutedUntil: number | null) =>
       void store().notifyFor(page.id, notify, mutedUntil)}
   />
+  <button
+    type="button"
+    class="nib-glyph"
+    aria-label={t('Search this chat')}
+    use:tip={() => shortcuts.tooltip(t('Search this chat'), 'chat.search')}
+    onclick={() => page.search()}><Glyph name="search" /></button
+  >
 </header>
 
 <Float

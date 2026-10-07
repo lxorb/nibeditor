@@ -30,10 +30,13 @@ export const linkOpener = Facet.define<
 
 /** What a link's target is to a browser, or null when it is not one: a
  *  relative path or a `#heading` belongs to the note, not to the web. A bare
- *  `www.` address is how people write a web address without its scheme. */
+ *  `www.` address is how people write a web address without its scheme. A message
+ *  in one of nib's chats, `nib://chat/<chat>/<message>`, is followed the same way,
+ *  by the host, which opens the chat at it. */
 export function hrefOf(target: string): string | null {
   const trimmed = target.trim()
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
+  if (/^nib:\/\/chat\//i.test(trimmed)) return trimmed
   if (/^www\./i.test(trimmed)) return `https://${trimmed}`
   return null
 }

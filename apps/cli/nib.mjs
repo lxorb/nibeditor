@@ -142,6 +142,7 @@ const USAGE = `nib - drive the running nibeditor
   tasks add <text> [--note N] [--under H]
   tasks done <at> [--undo]
   base query <path> [--view V]
+  react --chat C --message M --emoji E [--on false]
   eval <code> --yes
   verbs
 

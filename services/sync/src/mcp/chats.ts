@@ -127,7 +127,7 @@ async function chatsOf(env: Env, who: Whoever): Promise<Known[]> {
         mentions: row.mentions,
         lastAt: row.lastAt,
         role: row.role,
-        posting: row.meta.posting,
+        posting: row.meta.posting === 'owner' ? 'owner' : 'writers',
       },
     ]
   })

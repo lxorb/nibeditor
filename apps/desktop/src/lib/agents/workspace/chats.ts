@@ -185,7 +185,7 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
     const { openChat } = await import('../../chats/view/open')
     openChat(chat.entry.path, { activate: false })
   }
-  store.offer(chat.entry.id, words, parent)
+  store.offer(chat.entry.id, words, parent ? { parent } : {})
   return done(`Drafted in #${chat.name}. The reader sends it.`)
 }
 

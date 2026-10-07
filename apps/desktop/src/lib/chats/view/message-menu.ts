@@ -39,6 +39,8 @@ export function messageMenu(
       ? [{ label: message.pinned ? t('Unpin') : t('Pin'), run: () => page.pin(message) }]
       : []),
     { label: t('Save'), checked: page.isSaved(message), run: () => page.save(message) },
+    { label: t('Add as task'), run: () => page.addAsTask(message) },
+    { label: t('Save as note'), run: () => void page.saveAsNote(message) },
     { label: t('Mark unread'), run: () => page.markUnread(message) },
     DIVIDER,
     ...(mine && may(role, 'edit-own', posting) && !message.poll

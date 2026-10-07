@@ -24,6 +24,8 @@
   import Gallery from './Gallery.svelte'
   import Glyph from './Glyph.svelte'
   import { markMentions } from './marks'
+  import NoteCard from './NoteCard.svelte'
+  import { cardTarget } from './note-card'
   import { sortFiles } from './media'
   import { accountOf, faceOf, nameOf } from './people'
   import PollCard from './PollCard.svelte'
@@ -87,6 +89,8 @@
     ),
   )
   const big = $derived(!message.files.length && onlyEmoji(message.body))
+  /** The note the message is about, drawn as a live card under its words. */
+  const linked = $derived(message.deleted ? null : cardTarget(message.body))
 
   /** The words, drawn, with the names they call marked. Run again when they change. */
   function words(node: HTMLElement, said: { body: string; edited: boolean }) {
@@ -119,8 +123,8 @@
     if (!anchor || !href) return
     event.preventDefault()
     const link = chatLinkOf(href)
-    if (link) {
-      if (link.chat === page.id && link.message) void page.jump(link.message)
+    if (link?.chat === page.id && link.message) {
+      void page.jump(link.message)
       return
     }
     if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) followHref(href, event)
@@ -217,6 +221,10 @@
           use:words={{ body: message.body, edited: message.editedAt !== undefined }}
           onclick={follow}
         ></div>
+      {/if}
+
+      {#if linked}
+        <NoteCard target={linked} />
       {/if}
 
       {#if files.seen.length}

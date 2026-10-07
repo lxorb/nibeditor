@@ -68,7 +68,7 @@ export async function draftReply(
   const ended = await sendWith(panel, thread, asked, part ? [part] : [])
   const answer = answerOf(ended?.turn ?? null)
   if (!answer) return false
-  ;(await chatsStore()).offer(chat, answer, parent)
+  ;(await chatsStore()).offer(chat, answer, parent ? { parent } : {})
   return true
 }
 

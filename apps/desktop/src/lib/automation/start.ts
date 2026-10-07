@@ -143,6 +143,14 @@ async function follow(uri: string, depth = 0): Promise<void> {
   // which the crate hands over as a file. Nothing to say about it here.
   if (isFileUri(uri)) return
 
+  // A message in one of the reader's chats, copied with Copy link: no verb but a place,
+  // opened as a press on it in a note opens it (docs/chats.md 4.13).
+  if (/^nib:\/\/chat\//i.test(uri.trim())) {
+    const opening = __EVEN_PLUGIN__ ? null : import('../chats/view/open')
+    await opening?.then(({ openChatLink }) => openChatLink(uri.trim()))
+    return
+  }
+
   const link = readUri(uri)
   if (!link) {
     refuse(uri, 'not a nib link')

@@ -31,6 +31,8 @@ export interface Hands {
   /** A terminal on a host, by its id, or on a destination nobody has kept yet. */
   openHost(id: string): void
   connect(wanted: Destination): void
+  /** A chat opened at one of its messages. */
+  openMessage(path: string, message: string, how: OpenHow): void
 }
 
 /** Whether the palette closes after, stays up, or nothing happened at all. */
@@ -90,6 +92,9 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return 'close'
     case 'connect':
       hands.connect(row.wanted)
+      return 'close'
+    case 'message':
+      hands.openMessage(row.path, row.id, howFor(ask))
       return 'close'
   }
 }

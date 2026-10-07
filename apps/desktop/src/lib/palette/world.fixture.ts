@@ -103,5 +103,7 @@ export function named(row: Row): string {
       return `host ${row.host.name}`
     case 'connect':
       return `ssh ${row.said}`
+    case 'message':
+      return `message ${row.line}`
   }
 }

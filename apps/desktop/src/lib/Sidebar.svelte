@@ -308,6 +308,7 @@
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
+      ...newChat(),
     ]
   }
 
@@ -359,6 +360,18 @@
     ]
   }
 
+  /** A chat in the space, made by the account and opened (docs/chats.md 4.13): offered
+   *  to somebody signed in to one, whose chats they are, and never in the glasses'
+   *  plugin, which carries none. */
+  function newChat(): MenuEntry[] {
+    if (__EVEN_PLUGIN__ || !account.accountToken) return []
+    const run = () => {
+      const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
+      void opening?.then(({ makeChat }) => makeChat())
+    }
+    return [{ label: t('New chat'), run }]
+  }
+
   /** What the space itself offers, wherever in the panel you ask for it.
    *
    *  The kinds of note to make. A folder is not one of them: a note that holds notes
@@ -371,6 +384,7 @@
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
+      ...newChat(),
     ]
   }
 

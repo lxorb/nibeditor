@@ -334,6 +334,8 @@
         return act(() => page.pin(one))
       case 's':
         return act(() => page.save(one))
+      case 't':
+        return act(() => page.addAsTask(one))
       case 'delete':
       case 'backspace':
         return mine ? act(() => page.remove(one.id)) : undefined

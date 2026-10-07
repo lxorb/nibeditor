@@ -37,6 +37,7 @@ import {
   showPicture,
   turnBlocksInto,
 } from '@nib/editor/menu'
+import { account } from './account.svelte'
 import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { copyPicture } from './copy-picture'
@@ -336,6 +337,23 @@ async function rewrite(view: EditorView) {
   rewriting.show(view)
 }
 
+/** The selection, quoted into a chat the reader picks (docs/chats.md 4.13). A row only
+ *  for a note with a file and somebody signed in to an account, whose chats these are;
+ *  never in the glasses' plugin, which carries none. */
+function sendEntry(view: EditorView): MenuEntry[] {
+  const tab = workspace.active
+  const note = tab?.kind === 'note' ? tab.path : null
+  if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
+  const run = () => {
+    const range = view.state.selection.main
+    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
+    void sending?.then(({ sendSelection }) =>
+      sendSelection(note, view.state.doc.toString(), range.from, range.to),
+    )
+  }
+  return [{ label: t('Send to chat'), run }]
+}
+
 function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
   const selected = !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
@@ -396,6 +414,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
           // `selected` is what says there is a view: it is false without one, which
           // is why nothing here has to ask again.
           { label: t('Rewrite…'), run: () => void rewrite(view) },
+          ...sendEntry(view),
         ]
       : []),
     DIVIDER,

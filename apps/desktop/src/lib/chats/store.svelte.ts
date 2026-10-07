@@ -613,16 +613,45 @@ class ChatsStore implements Chats {
   }
 
   private readonly offered = new Set<(offer: Offer) => void>()
+  private readonly waitingOffers = new Map<string, Offer>()
 
-  offer(chat: string, text: string, parent?: string): void {
-    this.keepDraft(parent ? `${chat}/${parent}` : chat, text)
-    const offer: Offer = { chat, text, ...(parent ? { parent } : {}) }
+  offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
+    const key = more.parent ? `${chat}/${more.parent}` : chat
+    this.keepDraft(key, text)
+    const offer: Offer = { chat, text, ...more }
+    this.waitingOffers.set(key, offer)
     for (const hear of this.offered) hear(offer)
   }
 
   offers(listener: (offer: Offer) => void): () => void {
     this.offered.add(listener)
     return () => this.offered.delete(listener)
+  }
+
+  takeOffer(chat: string, parent?: string): Offer | null {
+    const key = parent ? `${chat}/${parent}` : chat
+    const offer = this.waitingOffers.get(key) ?? null
+    this.waitingOffers.delete(key)
+    return offer
+  }
+
+  /** A note's space on the account and its own id there, or null for one that is not
+   *  the account's yet. */
+  private remoteNote(path: string): { space: string; note: string } | null {
+    const root = workspace.spaces.find((one) => within(one.root, path) !== null)?.root
+    const space = root ? this.remoteOf(root) : null
+    const note = sync.tracked(path)?.id
+    return space && note ? { space, note } : null
+  }
+
+  async noteReach(chat: string, path: string) {
+    const at = this.remoteNote(path)
+    return at ? await http.noteReachOf(chat, at.space, at.note) : null
+  }
+
+  async shareNote(chat: string, path: string): Promise<boolean> {
+    const at = this.remoteNote(path)
+    return at ? await http.shareNote(chat, at.space, at.note) : false
   }
 
   keepDraft(chat: string, text: string): void {

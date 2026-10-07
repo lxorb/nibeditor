@@ -12,7 +12,7 @@
  *  signed in to; those still call `openExternal` where they stand. */
 
 import type { LinkPress, NoteJump } from '@nib/editor'
-import { linkAsk, type TabAsk, tabAsk } from './new-tab'
+import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -75,9 +75,18 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 
+/** A message in one of nib's chats, `nib://chat/<chat>/<message>`: nib's own, opened in
+ *  the chat's tab at the message (docs/chats.md 4.13). */
+const CHAT_LINK = /^nib:\/\/chat\//i
+
 /** A link the reader pressed, followed. What every surface hands its own event to. */
 export function followHref(href: string, press: LinkPress): void {
   const ask = tabAsk(press, true)
+  if (CHAT_LINK.test(href)) {
+    const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
+    void opening?.then(({ openChatLink }) => openChatLink(href, howFor(ask)))
+    return
+  }
   const place = placeFor(href, ask)
   if (place === 'nowhere') return
 

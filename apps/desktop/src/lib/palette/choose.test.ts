@@ -29,6 +29,7 @@ function hands(): { asked: string[]; hands: Hands } {
       goto: say('goto'),
       openHost: say('host'),
       connect: say('connect'),
+      openMessage: say('message'),
     },
   }
 }

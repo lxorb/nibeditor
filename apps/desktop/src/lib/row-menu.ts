@@ -18,6 +18,7 @@
 
 import { noteLinksCode } from '@nib/editor'
 import { foreignCopy } from '@nib/sync-core/foreign'
+import { account } from './account.svelte'
 import { copyText } from './clipboard'
 import { pickedLink } from './composer'
 import { folderNote, linkedFiles, nestedIn } from './folder-notes'
@@ -96,6 +97,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // A link to the row, spelled the way the Links setting says and the `[[`
     // popup writes it, to paste into any note.
     { label: t('Copy link'), run: () => void copyLinks([entry.path]) },
+    ...sendEntry(marked),
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
     {
@@ -109,6 +111,20 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),
   ]
+}
+
+/** A note sent to a chat the reader picks, where it shows as a live card (docs/chats.md
+ *  4.13). A note's row only, with somebody signed in to the account the chats are;
+ *  never in the glasses' plugin, which carries no chats. */
+function sendEntry(entry: Entry): MenuEntry[] {
+  if (__EVEN_PLUGIN__ || entry.is_dir || !isMarkdownPath(entry.name) || !account.accountToken) {
+    return []
+  }
+  const run = () => {
+    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
+    void sending?.then(({ sendToChat }) => sendToChat(entry.path))
+  }
+  return [{ label: t('Send to chat'), run }]
 }
 
 /** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */

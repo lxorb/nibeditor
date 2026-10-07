@@ -430,11 +430,35 @@ export class FixtureChats implements Chats {
     else this.drafts.delete(chat)
   }
 
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who to tell
   private readonly offered = new Set<(offer: Offer) => void>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
+  private readonly waitingOffers = new Map<string, Offer>()
+  /** Who cannot open a note, by its path, for a test or a drive to say. */
+  reaches: Record<string, { missing: ChatMember[]; share: boolean }> = {}
 
-  offer(chat: string, text: string, parent?: string): void {
-    this.keepDraft(parent ? `${chat}/${parent}` : chat, text)
-    for (const hear of this.offered) hear({ chat, text, ...(parent ? { parent } : {}) })
+  offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
+    const key = more.parent ? `${chat}/${more.parent}` : chat
+    this.keepDraft(key, text)
+    const offer: Offer = { chat, text, ...more }
+    this.waitingOffers.set(key, offer)
+    for (const hear of this.offered) hear(offer)
+  }
+
+  takeOffer(chat: string, parent?: string): Offer | null {
+    const key = parent ? `${chat}/${parent}` : chat
+    const offer = this.waitingOffers.get(key) ?? null
+    this.waitingOffers.delete(key)
+    return offer
+  }
+
+  noteReach(_chat: string, path: string) {
+    return Promise.resolve(this.reaches[path] ?? null)
+  }
+
+  shareNote(_chat: string, path: string): Promise<boolean> {
+    delete this.reaches[path]
+    return Promise.resolve(true)
   }
 
   offers(listener: (offer: Offer) => void): () => void {

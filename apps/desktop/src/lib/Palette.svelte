@@ -41,6 +41,7 @@
   import { type Look, lookOf } from './palette/trying'
   import { preferences } from './preferences'
   import { search } from './search.svelte'
+  import { paletteWords } from './surfaces.svelte'
   import { settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
@@ -212,6 +213,39 @@
     return [...found, { kind: 'connect', wanted, said: said(wanted) }]
   }
 
+  /** Messages in the reader's chats the words find (docs/chats.md 4.12), asked of the
+   *  chats' store a moment after the typing pauses and drawn under everything else; a
+   *  query with a chat's modifiers (`in:`, `from:`, `has:`) finds messages alone.
+   *  Never in the glasses' plugin, which carries no chats. */
+  let messages = $state.raw<{ rows: Row[]; only: boolean; term: string }>({
+    rows: [],
+    only: false,
+    term: '',
+  })
+  $effect(() => {
+    const words = term.trim()
+    if (!open || mode !== 'everything' || words.length < 3) {
+      messages = { rows: [], only: false, term: '' }
+      return
+    }
+    let current = true
+    const timer = setTimeout(() => {
+      const finding = __EVEN_PLUGIN__ ? null : import('./chats/view/palette-hits')
+      void finding
+        ?.then(({ messageHits }) => messageHits(words))
+        .then((found) => {
+          if (current) messages = { ...found, term: words }
+        })
+    }, 150)
+    return () => {
+      current = false
+      clearTimeout(timer)
+    }
+  })
+
+  /** The messages found for what is typed now: none for words typed since. */
+  const found = $derived(messages.term === term.trim() ? messages : { rows: [], only: false })
+
   const results = $derived.by((): Row[] => {
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
@@ -227,8 +261,12 @@
     }
 
     if (!term) return world ? resting(offered, world, (key) => frecency.last(key), MOST) : []
+    if (found.only) return found.rows
 
-    return withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes)
+    return [
+      ...withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes),
+      ...found.rows,
+    ]
   })
 
   /** What a row is called. */
@@ -256,6 +294,8 @@
         return row.host.name
       case 'connect':
         return row.said
+      case 'message':
+        return row.line
     }
   }
 
@@ -280,6 +320,8 @@
         return row.make.folder || null
       case 'host':
         return row.host.detail
+      case 'message':
+        return row.where
       case 'command':
       case 'place':
       case 'address':
@@ -323,6 +365,17 @@
     if (open) input?.focus()
   })
 
+  // Words asked for from outside, taken as they would be typed: the caret after them.
+  $effect(() => {
+    const words = paletteWords.words
+    if (!open || words === null) return
+    untrack(() => {
+      query = words
+      paletteWords.words = null
+      void tick().then(() => input?.setSelectionRange(words.length, words.length))
+    })
+  })
+
   let list = $state<HTMLElement>()
 
   // The row the arrows are on stays in view, or walking past the tenth result
@@ -364,6 +417,7 @@
     row.kind === 'tab' ||
     row.kind === 'page' ||
     row.kind === 'address' ||
+    row.kind === 'message' ||
     (row.kind === 'bookmark' && (row.mark.kind === 'heading' || row.mark.kind === 'block'))
 
   /** What there is to act with; see palette/choose.ts. */
@@ -398,6 +452,10 @@
     goto: (line) => ongoto?.(line),
     openHost: (id) => void import('./remote/open').then(({ openRemote }) => openRemote(id)),
     connect: (wanted) => void import('./remote/open').then(({ connectTo }) => connectTo(wanted)),
+    openMessage: (path, message, how) => {
+      const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
+      void opening?.then(({ openChat }) => openChat(path, how, message))
+    },
   }
 
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
@@ -627,6 +685,8 @@
                 <svg class="mark drawn" viewBox="0 0 13 13"><path d={OUTLINE_MARK} /></svg>
               {:else if row.kind === 'make'}
                 <span class="mark quiet"><Icon icon={null} fallback={FilePlus} /></span>
+              {:else if row.kind === 'message'}
+                <FileMark mark="chat" />
               {:else if row.kind === 'host' || row.kind === 'connect'}
                 {@const colour = row.kind === 'host' ? row.host.colour : null}
                 <span class="mark" style:color={colour ? `var(--canvas-${colour})` : undefined}

@@ -1006,6 +1006,25 @@ function spaceCommands(): Command[] {
   ]
 }
 
+/** The note in front sent to a chat, or what is selected in it quoted (docs/chats.md
+ *  4.13): for a note with a file, with somebody signed in to the account the chats are;
+ *  never in the glasses' plugin. */
+function sendToChatCommand(view?: EditorView): Command[] {
+  const tab = workspace.active
+  const note = tab?.kind === 'note' ? tab.path : null
+  if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
+  const run = () => {
+    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
+    const range = view?.state.selection.main
+    void sending?.then(({ sendSelection, sendToChat }) =>
+      view && range && !range.empty
+        ? sendSelection(note, view.state.doc.toString(), range.from, range.to)
+        : sendToChat(note),
+    )
+  }
+  return [{ id: 'send-to-chat', label: t('Send to chat'), run }]
+}
+
 export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
 
@@ -1042,6 +1061,7 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => showQuickAdd(),
           },
         ]),
+    ...sendToChatCommand(view),
     {
       id: 'new-unique',
       label: t('New unique note'),

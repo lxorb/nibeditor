@@ -110,6 +110,29 @@ export async function membersOf(chat: string): Promise<ChatMember[] | null> {
   })
 }
 
+/** Who in a chat cannot open a note of a space, and whether the reader may share it
+ *  with them (docs/chats.md 4.13). */
+export async function noteReachOf(
+  chat: string,
+  space: string,
+  note: string,
+): Promise<{ missing: ChatMember[]; share: boolean } | null> {
+  const query = new URLSearchParams({ space, note }).toString()
+  const said = await ask(`${chatPath(chat)}/note?${query}`).catch(() => null)
+  if (!isRecord(said) || !Array.isArray(said.missing)) return null
+  const missing = said.missing.flatMap((one): ChatMember[] =>
+    isRecord(one) && isWho(one.who)
+      ? [{ who: one.who, name: typeof one.name === 'string' ? one.name : null, role: 'read' }]
+      : [],
+  )
+  return { missing, share: said.share === true }
+}
+
+/** That note shared, to read, with everybody in the chat who could not open it. */
+export async function shareNote(chat: string, space: string, note: string): Promise<boolean> {
+  return (await ask(`${chatPath(chat)}/note`, { body: { space, note } }).catch(() => null)) !== null
+}
+
 /** The reader's posts waiting for their time. */
 export async function scheduledOf(chat: string): Promise<Scheduled[] | null> {
   const said = await ask(`${chatPath(chat)}/scheduled`)

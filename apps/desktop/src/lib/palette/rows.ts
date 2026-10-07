@@ -52,3 +52,6 @@ export type Row =
   | { kind: 'host'; host: Host }
   /** A destination typed after `ssh` that no host has yet, kept and connected to. */
   | { kind: 'connect'; wanted: Destination; said: string }
+  /** A message in one of the reader's chats, found by its words (docs/chats.md 4.12):
+   *  its first line, and where it is - the chat and who wrote it. */
+  | { kind: 'message'; chat: string; id: string; path: string; line: string; where: string }

@@ -22,7 +22,7 @@
   import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
-  import { onMount, tick } from 'svelte'
+  import { onMount, tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
@@ -54,8 +54,9 @@
     onpicking?: (open: boolean) => void
   } = $props()
 
-  let text = $state('')
-  let description = $state<string | null>(null)
+  // What the opener knew, taken once: the sheet is made again for every opening.
+  let text = $state(untrack(() => prefill.text ?? ''))
+  let description = $state<string | null>(untrack(() => prefill.description ?? null))
   /** Spans turned back into words. */
   let keep = $state<Span[]>([])
   /** What the controls picked, over whatever the words say. `null` takes a field away. */

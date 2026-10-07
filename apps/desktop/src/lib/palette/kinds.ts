@@ -106,6 +106,7 @@ export function rowKey(row: Row): string | null {
     case 'make':
     case 'address':
     case 'connect':
+    case 'message':
       return null
   }
 }

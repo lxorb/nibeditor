@@ -926,6 +926,15 @@ const APP_ENTRIES: Shortcut[] = [
           key: 'Mod-Shift-m',
           contextual: true,
         } satisfies Shortcut,
+        // A chat's own search is the palette's, with the chat filled in (4.12).
+        {
+          id: 'chat.search',
+          label: () => t('Search this chat'),
+          category: 'view',
+          scope: 'panel',
+          key: 'Mod-f',
+          contextual: true,
+        } satisfies Shortcut,
       ]),
   {
     id: 'app.ask',

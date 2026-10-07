@@ -115,11 +115,13 @@ export interface HistoryAsk {
   parent?: string
 }
 
-/** Words offered to a composer: the chat's, or one message's replies'. */
+/** Words offered to a composer: the chat's, or one message's replies'; and the note
+ *  they link, where they are a note sent to the chat. */
 export interface Offer {
   chat: string
   parent?: string
   text: string
+  note?: string
 }
 
 /** One message a search found, and the chat it is in. */
@@ -251,11 +253,20 @@ export interface Chats {
   draft(chat: string): string
   keepDraft(chat: string, text: string): void
   /** Words put into a chat's composer from outside it - an agent's draft, the AI
-   *  sidebar's answer, a quote sent from a note - for the reader to send. `parent` puts
-   *  them in that message's replies. Kept as the draft, and heard by an open composer. */
-  offer(chat: string, text: string, parent?: string): void
+   *  sidebar's answer, a note or a quote sent to the chat - for the reader to send.
+   *  `parent` puts them in that message's replies; `note` is the note they link, whose
+   *  reach the composer shows. Kept as the draft, heard by an open composer, and held
+   *  for one that opens after (`takeOffer`). */
+  offer(chat: string, text: string, more?: { parent?: string; note?: string }): void
   /** Hears every offer; answers how to stop. */
   offers(listener: (offer: Offer) => void): () => void
+  /** The offer waiting for a composer that was not open when it came, taken once. */
+  takeOffer(chat: string, parent?: string): Offer | null
+  /** Who in a chat cannot open a note on this device, and whether the reader may share
+   *  it with them; null where nobody can be told (the note is not the account's). */
+  noteReach(chat: string, path: string): Promise<{ missing: ChatMember[]; share: boolean } | null>
+  /** That note shared, to read, with them (docs/chats.md 4.13). */
+  shareNote(chat: string, path: string): Promise<boolean>
 
   /** A file's bytes up to the account under their hash, for a message to name; null
    *  where it could not go. */

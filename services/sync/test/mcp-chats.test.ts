@@ -47,8 +47,12 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
 }
 
 async function state(token: string) {
-  const { json } = await call(env, `/v2/chats/${chat}/state`, { token })
-  return (json as { messages: { id: string; body: string; via?: { agent: string } }[] }).messages
+  const { json } = await call<{ messages: { id: string; body: string; via?: { agent: string } }[] }>(
+    env,
+    `/v2/chats/${chat}/state`,
+    { token },
+  )
+  return json.messages
 }
 
 beforeEach(async () => {
@@ -74,7 +78,8 @@ beforeEach(async () => {
   reader = await signIn(env, 'mia@example.com')
   at(100_000)
 
-  chat = (await call(env, '/v2/chats', { token: owner, body: { space } })).json.chat
+  chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json
+    .chat
   // The pointer, which names the chat; the account links it as it arrives.
   await call(env, `/v1/spaces/${space}/notes`, {
     token: owner,

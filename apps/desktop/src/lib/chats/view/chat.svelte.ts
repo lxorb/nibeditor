@@ -12,6 +12,7 @@ import type { FileRef, Member, Message, Poll, Preview, Who } from '@nib/chats'
 import { chatLink } from '@nib/chats/links'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
+import { paletteWords } from '../../surfaces.svelte'
 import type { ChatEntry, ChatView, Shown } from '../api'
 import { trimmed } from './compose'
 import { type Item, rowsOf } from './rows'
@@ -190,8 +191,25 @@ export class ChatPage {
     saved.toggle(this.id, message)
   }
 
+  /** The message as a task, through quick add, linking back to it. */
+  addAsTask(message: Message): void {
+    void import('./keep').then((keep) => keep.addAsTask(this, message, this.entry?.space ?? null))
+  }
+
+  /** The message and its replies as a note beside the chat, linking back to it. */
+  async saveAsNote(message: Message): Promise<void> {
+    const keep = await import('./keep')
+    await keep.saveAsNote(this, message, this.entry?.space ?? null)
+  }
+
   isSaved(message: Message): boolean {
     return saved.has(this.id, message.id)
+  }
+
+  /** This chat's search: the palette, with the chat filled in (4.12). */
+  search(): void {
+    const name = this.entry?.name ?? ''
+    paletteWords.words = /[\s"]/.test(name) ? `in:"${name.replace(/"/g, '')}" ` : `in:#${name} `
   }
 
   copyLink(message: Message): Promise<void> {

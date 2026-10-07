@@ -13,7 +13,8 @@
 
   import { type NoteGraph, without } from './graph'
   import { neighbourhood } from './graph-walk'
-  import { graphSurface } from './surfaces.svelte'
+  import { account } from './account.svelte'
+  import { chatLinks, graphSurface } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -155,6 +156,13 @@
   {#if mentions.length}
     {@render heading(t('Mentions'), mentions.length)}
     {@render hits(mentions)}
+  {/if}
+
+  <!-- The messages in the reader's chats that link the note; see chats/view/ChatLinks. -->
+  {#if account.accountToken && !__EVEN_PLUGIN__}
+    {#await chatLinks() then ChatLinks}
+      <ChatLinks {path} />
+    {/await}
   {/if}
 
   {#if links.scanning}

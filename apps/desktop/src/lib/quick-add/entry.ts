@@ -5,9 +5,13 @@
 export { type Entry, linesOf, placeIn } from '@nib/bases/tasks'
 
 /** What a view's add button already knows: its note, its tag, its day. A task typed
- *  there lands where the view is looking, unless the words say otherwise. */
+ *  there lands where the view is looking, unless the words say otherwise. A chat's
+ *  message made a task brings its words and a link back to it as the description
+ *  (docs/chats.md 4.13). */
 export interface Prefill {
   note?: string
   tags?: string[]
   due?: string
+  text?: string
+  description?: string
 }

@@ -125,6 +125,10 @@
       event.preventDefault()
       event.stopPropagation()
       timeline?.toNew()
+    } else if (shortcuts.pressed('chat.search', event)) {
+      event.preventDefault()
+      event.stopPropagation()
+      page.search()
     }
   }
 

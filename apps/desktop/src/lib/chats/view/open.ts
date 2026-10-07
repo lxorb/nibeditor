@@ -7,7 +7,9 @@
  *  composer. Ctrl+T's card on M, the plus in the Chats panel and the file list's New
  *  all come here. */
 
+import { chatLinkOf } from '@nib/chats/links'
 import { account } from '../../account.svelte'
+import { busy } from '../../busy.svelte'
 import type { OpenHow } from '../../new-tab'
 import { nameOf as fileName, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
@@ -38,6 +40,21 @@ export function openChat(path: string, how: OpenHow = {}, message?: string): voi
     return
   }
   workspace.openView('', chatName(path), path, how, 'channel')
+}
+
+/** A link to a chat or a message in it, `nib://chat/<chat>/<message>`, followed: from a
+ *  note, a message, the AI sidebar's answer or another program. The chats' store is
+ *  waited for a few seconds on a launch the link arrived with. */
+export async function openChatLink(href: string, how: OpenHow = {}): Promise<void> {
+  const link = chatLinkOf(href)
+  if (!link) return
+  const chats = store()
+  for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  const path = chats.entry(link.chat)?.path
+  if (path) openChat(path, how, link.message)
+  else busy.failed(t('that link could not be followed'))
 }
 
 /** The open chat tabs, told when a jump is waiting for one of them. */

@@ -133,7 +133,7 @@ async function itemsShared(env: Env, spaceId: string): Promise<Set<string>> {
 /** Whether one more of this space's files may be shared. Nothing is refused
  *  about a file that is already shared: what is bounded is how many of them
  *  there are, not how many people are in one. */
-async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<boolean> {
+export async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<boolean> {
   if (!item) return true
 
   const held = await itemsShared(env, spaceId)
@@ -141,7 +141,7 @@ async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<b
 }
 
 /** What a sheet is told when a space is sharing as many of its files as it can. */
-const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
+export const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
 
 /** Who somebody with an account is, beside the address they were given things under:
  *  their id, and the face they chose. Null throughout for an address nobody has made an

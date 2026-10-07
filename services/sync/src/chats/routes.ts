@@ -17,6 +17,7 @@ import { Hono } from 'hono'
 import { newId, now } from '../crypto'
 import { within } from '../limits'
 import { NO_SUCH_SPACE } from '../refused'
+import { roomForAnItem, TOO_MANY_ITEMS } from '../spaces/share'
 import { allows, reachedSpace, refusal } from '../spaces/space'
 import { blobKey, BYTES, NO_SUCH_FILE } from '../sync2/files'
 import { deviceOf } from '../sync2/device'
@@ -387,6 +388,102 @@ chats.get('/:chat/members', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return context.json({ members: await membersOf(context.env, reached.chat) })
+})
+
+/* ── A note dropped in ─────────────────────────────────────────────────── */
+
+/** The people of a chat, with an account, who cannot open one note: not its space's
+ *  owner, and no membership of its space or of the note alone (`?2` the space, `?3` the
+ *  note, `?1` the chat). A guest is not among them: nothing can be shared with a guest
+ *  but by a link. */
+const MISSING = `with c as (
+  select sp.id as space_id, sp.user_id as owner, f.id as file_id
+    from chats ch join spaces sp on sp.id = ch.space_id
+    left join notes f on f.id = ch.file_id and f.space_id = ch.space_id and f.deleted = 0
+   where ch.id = ?1 and ch.ended_at is null
+),
+people as (
+  select owner as id from c
+  union select u.id from c
+    join space_members m on m.space_id = c.space_id and (m.item = '' or m.item = c.file_id)
+    join users u on u.email = m.email
+)
+select u.id as id, u.email as email, u.name as name
+  from people p join users u on u.id = p.id
+ where u.id <> (select user_id from spaces where id = ?2)
+   and not exists (select 1 from space_members m where m.space_id = ?2 and m.email = u.email
+                     and (m.item = '' or m.item = ?3))
+ order by u.name limit 200`
+
+/** The note a request names, in the space it names, as the asker reaches that space. */
+async function droppedNote(
+  env: Env,
+  who: Whoever,
+  space: unknown,
+  note: unknown,
+): Promise<{ space: string; note: string; owner: boolean } | null> {
+  if (typeof space !== 'string' || typeof note !== 'string') return null
+  const reached = await reachedSpace(env, who, space)
+  if (!reached) return null
+  const found = await env.DB.prepare(
+    'select id from notes where id = ? and space_id = ? and deleted = 0',
+  )
+    .bind(note, space)
+    .first<{ id: string }>()
+  return found ? { space, note, owner: reached.role === 'owner' } : null
+}
+
+/** Who in the chat cannot open a note dropped into it (docs/chats.md 4.13), by name, and
+ *  whether the asker may share it with them: what the composer shows over the field
+ *  before the message goes. Asked only by somebody who reaches the note themselves. */
+chats.get('/:chat/note', async (context) => {
+  const env = context.env
+  const reached = await reachedOf(context, context.req.param('chat'))
+  if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
+  const dropped = await droppedNote(
+    env,
+    context.get('who'),
+    context.req.query('space'),
+    context.req.query('note'),
+  )
+  if (!dropped) return context.json({ error: NO_SUCH_SPACE }, 404)
+  const { results } = await env.DB.prepare(MISSING)
+    .bind(reached.chat, dropped.space, dropped.note)
+    .all<{ id: string; name: string | null }>()
+  return context.json({
+    missing: results.map((one) => ({ who: `user:${one.id}`, name: one.name })),
+    share: dropped.owner,
+  })
+})
+
+/** A note dropped into a chat shared, to read, with everybody in the chat who could not
+ *  open it: Slack's one press when a file's link goes where some cannot follow it. By
+ *  the note's owner only, as every share is; no mail goes, because the message they
+ *  are about to read is the news. */
+chats.post('/:chat/note', async (context) => {
+  const env = context.env
+  const reached = await reachedOf(context, context.req.param('chat'))
+  if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
+  const sent = (await context.req.json().catch(() => null)) as Record<string, unknown> | null
+  const dropped = await droppedNote(env, context.get('who'), sent?.space, sent?.note)
+  if (!dropped) return context.json({ error: NO_SUCH_SPACE }, 404)
+  if (!dropped.owner) return context.json({ error: refusal('owner') }, 403)
+  if (!(await roomForAnItem(env, dropped.space, dropped.note))) {
+    return context.json({ error: TOO_MANY_ITEMS }, 409)
+  }
+  const { results } = await env.DB.prepare(MISSING)
+    .bind(reached.chat, dropped.space, dropped.note)
+    .all<{ email: string }>()
+  const at = now()
+  for (const one of results) {
+    await env.DB.prepare(
+      `insert into space_members (space_id, email, item, role, joined_at, created_at)
+       values (?, ?, ?, 'read', ?, ?) on conflict(space_id, email, item) do nothing`,
+    )
+      .bind(dropped.space, one.email, dropped.note, at, at)
+      .run()
+  }
+  return context.json({ shared: results.length })
 })
 
 /* ── Search ────────────────────────────────────────────────────────────── */

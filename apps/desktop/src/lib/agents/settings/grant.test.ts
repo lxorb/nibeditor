@@ -35,6 +35,8 @@ describe('the defaults', () => {
       'context',
       'notes.read',
       'notes.write',
+      'chats.read',
+      'chats.write',
       'tree',
       'workspace',
       'workspace.focus',
@@ -48,10 +50,12 @@ describe('the defaults', () => {
     expect(asks(grant, 'paying')).toBe(true)
   })
 
-  it('keep somebody else’s tool off the screen and the reader’s tabs, and asking for every write', () => {
+  it('keep somebody else’s tool off the screen, the reader’s tabs and chats, and asking for every write', () => {
     const grant = thirdPartyGrant('script', 'A script', 1)
     expect(grant.scopes).not.toContain('context')
     expect(grant.scopes).not.toContain('browser.reader')
+    expect(grant.scopes).not.toContain('chats.read')
+    expect(grant.scopes).not.toContain('chats.write')
     expect(grant.scopes).toContain('notes.read')
     expect(grant.mode).toBe('confirm')
   })
