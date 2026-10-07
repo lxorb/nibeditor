@@ -19,17 +19,21 @@
  *    or held for the question. With no ancestor to be had, a text that holds the other
  *    whole wins quietly, and otherwise the note is held.
  *
- *  A file the account has no entry for is a create; a note v1 tracked whose file is gone
- *  is a delete, which the account refuses where somebody else wrote in it since (an edit
- *  beats a delete). `nib:mirrors` is read and never written: it is the way back.
+ *  A file the account has no entry for is a create, unless it is a note v1 renamed or
+ *  moved while offline, found by its words: then it is that note, moved. A note v1
+ *  tracked whose file is gone is a delete, which the account refuses where somebody else
+ *  wrote in it since (an edit beats a delete); one another device deleted that v1 never
+ *  heard of goes here too, unless it was written in since. `nib:mirrors` is read and
+ *  never written here: it is the way back.
  *
- *  **The way back**, when an account's switch goes to 1 again: the mirrors are written
- *  from the store - each note's id, and the digest of the words the account confirmed -
- *  so v1 meets every file it finds agreeing as a note it already knows. */
+ *  **The way back**, when an account's switch goes to 1 again or this device signs out:
+ *  the mirrors are written from the store and the account's own listing, so v1 meets
+ *  every file it finds agreeing as a note it already knows, at the version the account
+ *  holds (`mirrorsFrom`). */
 
 import type { Mirror, Tracked } from '../sync/mirror'
 import type { Core } from './core'
-import { kindOfName, made } from './create'
+import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
 import { readFeed } from './pass'
 import { fileOfUpdates, judge, seedOf, shapeOf, turn, unixLines } from './kinds'
@@ -67,6 +71,7 @@ export async function firstPass(
   const life = core.life
   const alive = () => core.life === life
   const world = core.world
+  const full = (path: string) => world.join(space.row.root, path)
 
   if ((await world.account.ask('prepare', {}, space.id)) === null || !alive()) return false
 
@@ -85,6 +90,17 @@ export async function firstPass(
     const entry = tracked ? space.entries.get(tracked.id) : undefined
     return entry && !entry.deleted && !claimed.has(entry.id) ? entry : null
   }
+  // A note v1 knew at a path that another device deleted after v1's last pass, its file
+  // still saying what v1 last agreed on: the delete is this device's too, and the pass
+  // that follows takes the file to the trash. Written in since, the edit beats the delete
+  // and the file is a new note.
+  const deletedUnseen = async (path: string): Promise<EntryRow | null> => {
+    const tracked = v1?.notes[path]
+    const entry = tracked ? space.entries.get(tracked.id) : undefined
+    if (!tracked || !entry?.deleted || claimed.has(entry.id)) return null
+    const read = await world.disk.read(full(path))
+    return read !== null && (await hashesOf(core, read)).includes(tracked.hash) ? entry : null
+  }
   // Which entry goes at a path by its account names.
   const byPlace = (path: string, folder: boolean): EntryRow | null => {
     const key = space.key(path)
@@ -95,9 +111,24 @@ export async function firstPass(
     }
     return null
   }
+  // A document's file, matched to its entry. What nib last wrote is the file as v1 left
+  // it: the words the next pull is measured against, so a file v1 merely fell behind on
+  // is written over and not read as edits.
+  const match = async (entry: EntryRow, file: string, tracked: Tracked | undefined) => {
+    changes.push(...(await wrote(core, entry, file)))
+    const item = items.get(entry.id)
+    if (item && shapeOf(entry.kind)) matched.push({ entry, item, file, tracked })
+  }
 
   const strays: { path: string; dir: boolean }[] = []
   for (const listed of listing) {
+    const gone = listed.dir ? null : await deletedUnseen(listed.path)
+    if (gone) {
+      claimed.add(gone.id)
+      gone.local_path = listed.path
+      changes.push(...core.entryChanges([gone]))
+      continue
+    }
     const entry = listed.dir
       ? byPlace(listed.path, true)
       : (byTracked(listed.path) ?? byPlace(listed.path, false))
@@ -108,15 +139,30 @@ export async function firstPass(
     claimed.add(entry.id)
     entry.local_path = listed.path
     changes.push(...core.entryChanges([entry]))
-    const item = items.get(entry.id)
-    if (listed.dir || !item || !shapeOf(entry.kind)) continue
-    const read = await world.disk.read(world.join(space.row.root, listed.path))
-    if (read === null) continue
-    const file = unixLines(read)
-    // What nib last wrote is the file as v1 left it: the words the next pull is measured
-    // against, so a file v1 merely fell behind on is written over and not read as edits.
-    changes.push(...(await wrote(core, entry, file)))
-    matched.push({ entry, item, file, tracked: v1?.notes[listed.path] })
+    if (listed.dir || !shapeOf(entry.kind)) continue
+    const read = await world.disk.read(full(listed.path))
+    if (read !== null) await match(entry, unixLines(read), v1?.notes[listed.path])
+  }
+
+  // Folders the account has never heard of are made there first, shallow before deep, so
+  // whatever moved into them has somewhere to go.
+  for (const stray of strays) {
+    if (!stray.dir || space.folderAt(stray.path) !== undefined) continue
+    changes.push(...(await made(core, space, { path: stray.path, folder: true })).changes)
+  }
+
+  // Notes v1 renamed or moved while it could not reach the account: v1 still knows each
+  // by its old name, its file is gone from there, and a file nobody knows says the same
+  // words. That is the note, moved - its id and its history kept - rather than a new
+  // note beside a delete.
+  const vacated = new Set<string>()
+  const renamed = await renamedHere(core, space, v1, strays, claimed)
+  for (const { entry, from, path, file, tracked } of renamed) {
+    claimed.add(entry.id)
+    if (entry.parent !== null) vacated.add(entry.parent)
+    entry.local_path = from
+    changes.push(...moved(core, space, from, path))
+    await match(entry, file, tracked)
   }
 
   // The account's words for every note whose file moved: one pull, in batches.
@@ -158,24 +204,35 @@ export async function firstPass(
     for (const tracked of Object.values(v1.notes)) {
       const entry = space.entries.get(tracked.id)
       if (!entry || entry.deleted || claimed.has(entry.id)) continue
+      if (entry.parent !== null) vacated.add(entry.parent)
       const op: Op = { op: core.nextId('o'), t: 'delete', id: entry.id, seen: v1.cursor }
-      const { one, change } = core.outgoing(space, { t: 'op', op }, v1.cursor)
-      space.queue(one)
-      changes.push(change, core.counterRow())
+      changes.push(...send(core, space, op))
     }
   }
 
-  // And a file the account has never heard of is made there, folders first.
+  // A folder v1 emptied - everything in it renamed away or deleted, and the folder gone
+  // from this disk - goes too, rather than coming back empty with the next pass. Only one
+  // this pass emptied: an empty folder another device made is left alone. Seen as v1
+  // last saw the space, so a note somebody wrote in it since keeps it, as it keeps a note.
+  for (const id of vacated) {
+    const folder = space.entries.get(id)
+    if (!v1 || folder?.kind !== 'folder' || claimed.has(id) || !space.isLive(id)) continue
+    const shown = space.shown()
+    if ([...shown.entries.values()].some((one) => one.parent === id && !one.deleted)) continue
+    changes.push(...send(core, space, { op: core.nextId('o'), t: 'delete', id, seen: v1.cursor }))
+    if (folder.parent !== null) vacated.add(folder.parent)
+  }
+
+  // And a file the account has never heard of is made there.
   // Any other file goes too where this world carries bytes (files.ts).
   for (const stray of strays) {
-    const document = !stray.dir && !!shapeOf(kindOfName(stray.path))
-    if (!stray.dir && !document && !world.blobs) continue
-    const text = document
-      ? await world.disk.read(world.join(space.row.root, stray.path))
-      : undefined
+    if (stray.dir || renamed.some((one) => one.path === stray.path)) continue
+    const document = !!shapeOf(kindOfName(stray.path))
+    if (!document && !world.blobs) continue
+    const text = document ? await world.disk.read(full(stray.path)) : undefined
     const madeHere = await made(core, space, {
       path: stray.path,
-      folder: stray.dir,
+      folder: false,
       ...(text === null || text === undefined ? {} : { text: unixLines(text) }),
     })
     changes.push(...madeHere.changes)
@@ -184,6 +241,72 @@ export async function firstPass(
   changes.push(core.wantChange(space.id))
   await core.commit(changes)
   return alive()
+}
+
+/** A note v1 renamed or moved, found under its new name. */
+interface Renamed {
+  entry: EntryRow
+  /** Where the account has it. */
+  from: string
+  path: string
+  file: string
+  tracked: Tracked
+}
+
+/** The stray files that are notes v1 knew under another name: a note whose file is gone
+ *  from its old path, and one file that says exactly the words v1 last agreed on for it.
+ *  Words two notes or two files share name nothing, and are left as they are. */
+async function renamedHere(
+  core: Core,
+  space: SpaceState,
+  v1: V1Space | null,
+  strays: readonly { path: string; dir: boolean }[],
+  claimed: ReadonlySet<string>,
+): Promise<Renamed[]> {
+  const left = new Map<string, Tracked[]>()
+  for (const tracked of Object.values(v1?.notes ?? {})) {
+    const entry = space.entries.get(tracked.id)
+    if (!entry || entry.deleted || claimed.has(entry.id) || !shapeOf(entry.kind)) continue
+    left.set(tracked.hash, [...(left.get(tracked.hash) ?? []), tracked])
+  }
+  if (!left.size) return []
+
+  const loose: { path: string; file: string; hashes: string[] }[] = []
+  for (const stray of strays) {
+    if (stray.dir || !shapeOf(kindOfName(stray.path))) continue
+    const read = await core.world.disk.read(core.world.join(space.row.root, stray.path))
+    if (read === null) continue
+    loose.push({ path: stray.path, file: unixLines(read), hashes: await hashesOf(core, read) })
+  }
+
+  const out: Renamed[] = []
+  for (const one of loose) {
+    const known = [...new Set(one.hashes.flatMap((hash) => left.get(hash) ?? []))]
+    const twins = loose.filter((other) => other.hashes.some((hash) => one.hashes.includes(hash)))
+    const tracked = known.length === 1 && twins.length === 1 ? known[0] : undefined
+    const entry = tracked && space.entries.get(tracked.id)
+    const from = entry && space.paths().get(entry.id)
+    if (tracked && entry && from !== undefined) {
+      out.push({ entry, from, path: one.path, file: one.file, tracked })
+    }
+  }
+  return out
+}
+
+/** The digests a file's words may have been written down under: as they are, and with
+ *  Windows line ends made plain, which is how v1 compared them. */
+async function hashesOf(core: Core, text: string): Promise<string[]> {
+  const plain = unixLines(text)
+  const hashes = [await core.world.digest(text)]
+  if (plain !== text) hashes.push(await core.world.digest(plain))
+  return hashes
+}
+
+/** An op of this pass's own, waiting in the outbox. */
+function send(core: Core, space: SpaceState, op: Op): Change[] {
+  const { one, change } = core.outgoing(space, { t: 'op', op }, op.seen)
+  space.queue(one)
+  return [change, core.counterRow()]
 }
 
 /** The file is the epoch's words: the document is their seed, made here. */
@@ -269,28 +392,58 @@ function hold(core: Core, id: string, base: string, local: string): Change[] {
   })
 }
 
-/** The mirrors v1 starts from after an account goes back to it: each space's cursor,
- *  and each note's id and the digest of the words the account confirmed, by the path
- *  its file has here. A file that still says them is a note v1 knows; one written in
- *  since is a note v1 sends. */
-export async function mirrorsFrom(core: Core): Promise<Record<string, Mirror>> {
+/** A note as v1's own listing of a space names it (`GET /v1/spaces/:id/changes`). */
+interface V1Note {
+  id: string
+  path: string
+  version: number
+  hash: string
+  seq: number
+  deleted: boolean
+}
+
+/** The whole of v1's listing of a space, from the beginning, and the cursor at its end. */
+export interface V1Listing {
+  cursor: number
+  notes: readonly V1Note[]
+}
+
+/** The version a mirror gives a note nobody could prove one for. The account hands out
+ *  none like it, so v1's next pull reads the note again and judges it by its words. */
+const UNPROVEN = 0
+
+/** The mirrors v1 starts from once this device stops running v2: each space's cursor,
+ *  and each note's id, version and the digest of the words this device and the account
+ *  last agreed on, by the path its file has here. `done` says which spaces v2 kept; the
+ *  rest keep whatever v1 last wrote for them.
+ *
+ *  With the account's listing (the way back, online), a note whose file or confirmed
+ *  words say what the account holds takes the account's version, so v1's next write
+ *  lands on it rather than beside it. A note nobody can prove - unknown here, at another
+ *  path, unreadable, held, or moved on up there past what this device confirmed - is
+ *  left for v1 to judge: the cursor goes back to before it, so its first pull reads it
+ *  again as it reads any note, against the words this device confirmed.
+ *
+ *  Without the listing (signing out, when there is no account to ask), every note is
+ *  unproven and the cursor is nought: v1's first pull, or v2's next first pass, reads
+ *  every note again, and a file written in since is this device's edit on what it
+ *  confirmed, never a stranger's. */
+export async function mirrorsFrom(
+  core: Core,
+  listings: ReadonlyMap<string, V1Listing> | null,
+  done: (space: string) => boolean = () => true,
+): Promise<Record<string, Mirror>> {
   const out: Record<string, Mirror> = {}
   for (const space of core.spaces.values()) {
-    const notes: Record<string, Tracked> = {}
-    for (const entry of space.entries.values()) {
-      if (entry.deleted || !entry.local_path || entry.seq === null || !shapeOf(entry.kind)) continue
-      const doc = await core.doc(entry.id)
-      if (!doc) continue
-      notes[entry.local_path] = {
-        id: entry.id,
-        version: 0,
-        hash: await core.world.digest(doc.confirmedText()),
-      }
-    }
+    if (!done(space.id)) continue
+    const listing = listings?.get(space.id)
+    const { cursor, notes } = listing
+      ? await proven(core, space, listing)
+      : { cursor: 0, notes: await confirmed(core, space) }
     out[space.row.root] = {
       spaceId: space.id,
       root: space.row.root,
-      cursor: space.row.cursor,
+      cursor,
       notes,
       offered: {},
       files: {},
@@ -299,4 +452,56 @@ export async function mirrorsFrom(core: Core): Promise<Record<string, Mirror>> {
     }
   }
   return out
+}
+
+/** Every note the account confirmed here, by its path here, at the words confirmed. */
+async function confirmed(core: Core, space: SpaceState): Promise<Record<string, Tracked>> {
+  const notes: Record<string, Tracked> = {}
+  for (const entry of space.entries.values()) {
+    if (entry.deleted || !entry.local_path || entry.seq === null || !shapeOf(entry.kind)) continue
+    const doc = await core.doc(entry.id)
+    if (!doc) continue
+    notes[entry.local_path] = {
+      id: entry.id,
+      version: UNPROVEN,
+      hash: core.isHeld(entry.id) ? '' : await core.world.digest(doc.confirmedText()),
+    }
+  }
+  return notes
+}
+
+/** The account's listing met with what this device holds. */
+async function proven(
+  core: Core,
+  space: SpaceState,
+  listing: V1Listing,
+): Promise<{ cursor: number; notes: Record<string, Tracked> }> {
+  const notes: Record<string, Tracked> = {}
+  let cursor = listing.cursor
+  for (const remote of listing.notes) {
+    if (remote.deleted) continue
+    const tracked = await provenOne(core, space, remote)
+    if (tracked) notes[remote.path] = tracked
+    if (tracked?.version !== remote.version) cursor = Math.min(cursor, remote.seq - 1)
+  }
+  return { cursor: Math.max(0, cursor), notes }
+}
+
+async function provenOne(core: Core, space: SpaceState, remote: V1Note): Promise<Tracked | null> {
+  const entry = space.entries.get(remote.id)
+  if (!entry || entry.deleted || entry.local_path !== remote.path || !shapeOf(entry.kind)) {
+    return null
+  }
+  const doc = await core.doc(entry.id)
+  const read = await core.world.disk.read(core.world.join(space.row.root, entry.local_path))
+  if (!doc || read === null) return null
+  // Held for the question: two sides wrote two things, and v1 asks in its own way.
+  if (core.isHeld(entry.id)) return { id: entry.id, version: UNPROVEN, hash: '' }
+  const agreed = await core.world.digest(doc.confirmedText())
+  // The file says what the account holds, or this device confirmed it and wrote on top:
+  // v1 knows the note at the account's version, and sends what was written.
+  if (agreed === remote.hash || (await hashesOf(core, read)).includes(remote.hash)) {
+    return { id: entry.id, version: remote.version, hash: remote.hash }
+  }
+  return { id: entry.id, version: UNPROVEN, hash: agreed }
 }

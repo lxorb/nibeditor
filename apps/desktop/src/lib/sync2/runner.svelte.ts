@@ -18,7 +18,7 @@
 
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
-import { ApiError } from '../api'
+import { api, ApiError } from '../api'
 import { pollDelay, RECONCILE_INTERVAL } from '../backoff'
 import { log } from '../log'
 import { type Pairing, pairSpaces } from '../space-pairing'
@@ -28,6 +28,7 @@ import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
 import { isDesktop } from '../tauri'
+import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
@@ -40,7 +41,7 @@ import { kindOfName } from './create'
 import { Engine } from './engine'
 import { holdsDocument } from './kinds'
 import { hub } from './hub.svelte'
-import { firstPass, mirrorsFrom, type V1Space } from './migrate'
+import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
 
@@ -54,7 +55,8 @@ const NUDGE = 2_000
 const FALLBACK = 5 * 60_000
 
 /** v1's mirrors: what the first pass of each space starts from, never written while v2
- *  runs, and written from the store only when the account goes back to v1. */
+ *  runs, and written from the store only when the account goes back to v1 or this device
+ *  signs out. */
 const MIRRORS = 'nib:mirrors'
 
 /** The meta row that says a space's first pass is done. */
@@ -224,28 +226,96 @@ class Runner {
     )
   }
 
-  /** The account went back to v1: whatever this device has pending goes up first, then
-   *  v1's mirrors are written from the store, so v1 meets each note as one it knows and
-   *  writes no copy of anything (docs/sync-v2.md section 11). Nothing here if this device
-   *  never kept a space under v2. */
-  async rollBack(): Promise<void> {
+  /** The account went back to v1 (docs/sync-v2.md section 11): whatever this device has
+   *  pending goes up first, then v1's mirrors are written from the store and the
+   *  account's own listing, so v1 meets each note as one it knows, at the version the
+   *  account holds, and writes no copy of anything. The store goes once they are written:
+   *  v1 moves the files on from here, and a later switch to v2 starts again from v1's
+   *  word, as the first switch did.
+   *
+   *  Answers whether v1 may start. Not while the account cannot be reached: v1 starting
+   *  from mirrors older than what v2 did here would delete every note v2 renamed. */
+  async rollBack(): Promise<boolean> {
     const user = account.user
-    if (!user) return
+    const token = account.token
+    if (!user || !token) return false
     const store = await openSyncStore(user.id)
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
       store,
     )
+    let back = false
     try {
-      if (!engine.core.spaces.size) return
-      for (const id of engine.core.spaces.keys()) await engine.pass(id).catch(() => null)
-      const mirrors = await mirrorsFrom(engine.core)
-      keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))
+      const done = await this.kept(engine)
+      if (!done.size) return (back = true)
+      if (!(await sentAll(engine, done))) return false
+      const listings = await listingsOf(token, done)
+      const mirrors = await this.mirrorsNow(engine, user.id, listings, done)
+      back = keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))
+      return back
+    } catch (error) {
+      log('warn', `sync: the way back to v1 waits - ${String(error)}`)
+      return false
     } finally {
       await engine.quit().catch(() => undefined)
       engine.stop()
       await store.close().catch(() => undefined)
+      if (back) {
+        this.firsts.clear()
+        await forgetSyncStore(user.id).catch(() => undefined)
+      }
     }
+  }
+
+  /** The spaces v2 kept here: the ones whose first pass is done. */
+  private async kept(engine: Engine): Promise<ReadonlySet<string>> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
+    const done = new Set<string>()
+    for (const id of engine.core.spaces.keys()) {
+      if (await this.firstDone(engine, id)) done.add(id)
+    }
+    return done
+  }
+
+  /** v1's mirrors as they stand now: the spaces v2 kept, written from the store, and
+   *  every other space as v1 last wrote it. */
+  private async mirrorsNow(
+    engine: Engine,
+    accountId: string,
+    listings: ReadonlyMap<string, V1Listing> | null,
+    done: ReadonlySet<string>,
+  ): Promise<Record<string, unknown>> {
+    const out: Record<string, unknown> = {}
+    const saved = stored(MIRRORS)
+    if (isRecord(saved) && (typeof saved.account !== 'string' || saved.account === accountId)) {
+      const held = isRecord(saved.mirrors) ? saved.mirrors : saved
+      for (const [root, one] of Object.entries(held)) {
+        const mirror = readMirror(root, one)
+        if (mirror && !done.has(mirror.spaceId)) out[root] = one
+      }
+    }
+    return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
+  }
+
+  /** Signing out: the store goes, as it empties the vault (docs/sync-v2.md section 10),
+   *  but first v1's mirrors are written from it. Words typed and not sent yet are on the
+   *  disk, and the mirrors say what the account had confirmed under them, so the next
+   *  first pass - or v1 - sends them as this device's edits rather than meeting them as
+   *  a stranger's. */
+  async signedOut(accountId: string): Promise<void> {
+    const engine = this.engine
+    if (engine) {
+      try {
+        const done = await this.kept(engine)
+        const mirrors = done.size ? await this.mirrorsNow(engine, accountId, null, done) : null
+        if (mirrors) keep(MIRRORS, JSON.stringify({ account: accountId, seen: true, mirrors }))
+      } catch (error) {
+        log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
+      }
+    }
+    await this.stop()
+    this.firsts.clear()
+    await forgetSyncStore(accountId)
   }
 
   // -------------------------------------------------------------------------
@@ -706,9 +776,55 @@ export const runner = new Runner()
 
 owesLast(() => runner.parting())
 
+/** How many rounds of passes the way back gives what is pending to go up and be taken. */
+const SENDING_ROUNDS = 4
+
+/** How long between them: a room takes what was pushed a moment after the push. */
+const SETTLING = 1_500
+
+/** Passes over the spaces until nothing in them waits to go up, or a few rounds have
+ *  gone by. Answers false where the account could not be reached. What still waits
+ *  after that - refused, or held for the question - is left to v1's own judgement,
+ *  through the words the mirrors say this device confirmed. */
+async function sentAll(engine: Engine, spaces: ReadonlySet<string>): Promise<boolean> {
+  for (let round = 0; round < SENDING_ROUNDS; round += 1) {
+    if (round) await waited(SETTLING)
+    for (const id of spaces) {
+      const passed = await engine.pass(id)
+      if (!passed?.finished) return false
+    }
+    if (![...spaces].some((id) => engine.waiting(id))) return true
+  }
+  return true
+}
+
+/** v1's whole listing of each space. */
+async function listingsOf(
+  token: string,
+  spaces: ReadonlySet<string>,
+): Promise<ReadonlyMap<string, V1Listing>> {
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
+  const out = new Map<string, V1Listing>()
+  for (const id of spaces) out.set(id, await listingOf(token, id))
+  return out
+}
+
+/** v1's whole listing of a space, deleted notes too, page by page. */
+async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
+  const notes: V1Listing['notes'][number][] = []
+  let cursor = 0
+  for (;;) {
+    const page = await api.changes(token, spaceId, cursor)
+    notes.push(...page.notes)
+    const asked = cursor
+    cursor = page.cursor
+    if (!page.more || cursor === asked) return { cursor, notes }
+  }
+}
+
 // Signing out deletes the account's sync store, as it empties the vault (docs/sync-v2.md
 // section 10): what is in it is the account's, and the next account is somebody else.
 account.forgetWithSession(() => {
   const id = runner.accountNow
-  if (id) void runner.stop().then(() => forgetSyncStore(id))
+  if (id) void runner.signedOut(id)
 })

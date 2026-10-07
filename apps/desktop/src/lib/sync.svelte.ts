@@ -128,11 +128,22 @@ class Sync {
     return said === 2
   }
 
+  /** Whether this device last kept its spaces under v2 and has not walked the way back
+   *  yet: the word is put down as v2 starts and taken back only once v1's mirrors have
+   *  been written from the sync store, so no launch - online, offline, the account known
+   *  at once or not - starts v1 over what v2 did. Never a guest, who has no store. */
+  private owesRollBack(): boolean {
+    return V2 && !account.guest && storedText(VERSION) === '2'
+  }
+
   start() {
     this.generation++
-    if (account.user) keep(VERSION, String(account.user.syncVersion ?? 1))
     if (this.wantsV2()) {
       this.startV2()
+      return
+    }
+    if (this.owesRollBack()) {
+      this.startRollBack()
       return
     }
     this.startV1()
@@ -140,9 +151,8 @@ class Sync {
 
   /** v2, after the first paint: the runner fetched at the launch's `rooms` turn and
    *  started once the account is known. An account that has gone back to v1 meanwhile
-   *  is handed back: the mirrors are written from the sync store first, so v1 meets
-   *  every note as one it knows (section 11's rollback). Never in the glasses' plugin,
-   *  whose package must not carry the engine at all. */
+   *  is handed back (`walkBack`). Never in the glasses' plugin, whose package must not
+   *  carry the engine at all. */
   private startV2() {
     if (!V2) return
     const mine = this.generation
@@ -153,14 +163,11 @@ class Sync {
       const { runner } = await import('./sync2/runner.svelte')
       await known()
       if (mine !== this.generation || !account.user) return
-      keep(VERSION, String(account.user.syncVersion ?? 1))
       if (account.user.syncVersion !== 2) {
-        await runner.rollBack()
-        if (mine !== this.generation) return
-        this.version = 1
-        this.startV1()
+        await this.walkBack(runner, mine)
         return
       }
+      keep(VERSION, '2')
       this.v2 = runner
       this.unmirror = $effect.root(() => {
         $effect(() => {
@@ -176,6 +183,46 @@ class Sync {
       })
       await runner.start()
     })()
+  }
+
+  /** The account went back to v1 while this device kept its spaces under v2: after the
+   *  first paint, the way back is walked before v1 starts (section 11's rollback). */
+  private startRollBack() {
+    const mine = this.generation
+    this.version = 2
+    arriving.settled()
+    void (async () => {
+      await startup.turn('rooms')
+      const { runner } = await import('./sync2/runner.svelte')
+      await known()
+      await this.walkBack(runner, mine)
+    })()
+  }
+
+  /** What is pending goes up, v1's mirrors are written from the sync store, and v1
+   *  starts. Until the account can be reached, nothing starts and the light is hollow,
+   *  and the way back is tried again at v1's cadence. Kept on v2 all the same if the
+   *  account has gone back to it meanwhile. */
+  private async walkBack(runner: Runner, mine: number, tries = 0): Promise<void> {
+    if (mine !== this.generation) return
+    if (account.user?.syncVersion === 2) {
+      this.startV2()
+      return
+    }
+    this.status = 'syncing'
+    const back = await runner.rollBack().catch(() => false)
+    if (mine !== this.generation) return
+    if (back) {
+      keep(VERSION, '1')
+      this.version = 1
+      this.startV1()
+      return
+    }
+    this.status = 'offline'
+    this.timer = setTimeout(
+      () => void this.walkBack(runner, mine, tries + 1),
+      pollDelay(tries, document.hidden),
+    )
   }
 
   private startV1() {
