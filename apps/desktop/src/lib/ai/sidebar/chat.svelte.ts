@@ -47,7 +47,7 @@ import { draftOf, type Front } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
 import { effortFor, lastMode, openIn, rememberEffort, rememberMode, rememberOpen } from './prefs'
-import type { Ended, Once, Panel } from '../commands/types'
+import type { Attached, Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
 import { editMessage, lastMessage, openRewind } from '../review'
@@ -448,11 +448,26 @@ class Chat implements Panel {
    *  the field sends them, and how that send ended (docs/ai-sidebar.md 6.5). `once` is
    *  that send's own mode, model and effort, and the signal that stops it alone. */
   turn(thread: Thread, text: string, once?: Once): Promise<Ended> {
+    return this.turnWith(thread, text, [], once)
+  }
+
+  /** The same, with words attached as chips of fixed words. */
+  turnWith(
+    thread: Thread,
+    text: string,
+    attached: readonly Attached[],
+    once?: Once,
+  ): Promise<Ended> {
     return new Promise((settle) => {
       this.enqueue(thread, {
         id: crypto.randomUUID(),
         text,
-        chips: [],
+        chips: attached.map((one) => ({
+          kind: 'words' as const,
+          id: one.label,
+          label: one.label,
+          text: one.text,
+        })),
         around: { front: null, selection: '' },
         ...(once ? { once } : {}),
         settle,

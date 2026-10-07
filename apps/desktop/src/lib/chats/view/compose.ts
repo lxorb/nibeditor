@@ -43,13 +43,26 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
   return { from: caret - query.length - 1, query }
 }
 
+/** What an `@` may call besides a person: the reader's own agent at the start of a
+ *  message (docs/chats.md 4.14), everybody with a device active, everybody. */
+export type Special = 'nib' | 'here' | 'everyone'
+
+/** Whether words are a question to the reader's own agent rather than a message:
+ *  `@nib` first, then the question. Nothing is sent; the AI sidebar answers it. */
+export function nibAsked(words: string): string | null {
+  const found = /^\s*@nib(?:\s+([\s\S]*))?$/i.exec(words)
+  return found ? (found[1] ?? '').trim() : null
+}
+
 /** Who a mention could be: people whose name or nickname starts with what was typed,
- *  then whose name has a word that does, and `here` and `everyone` where they fit. */
+ *  then whose name has a word that does, and the specials where they fit: `nib` only
+ *  at the start of a message (`first`), which is where it asks. */
 export function mentionChoices(
   query: string,
   members: readonly Member[],
   me: Who | null,
-): (Member | 'here' | 'everyone')[] {
+  first = false,
+): (Member | Special)[] {
   const wanted = fold(query)
   const named = members.filter((one) => one.who !== me)
   const starts = named.filter((one) =>
@@ -66,12 +79,14 @@ export function mentionChoices(
             .some((word) => word.startsWith(wanted)),
       ),
   )
-  const specials = (['here', 'everyone'] as const).filter((one) => one.startsWith(wanted))
+  const specials = (['nib', 'here', 'everyone'] as const).filter(
+    (one) => one.startsWith(wanted) && (first || one !== 'nib'),
+  )
   return [...starts, ...inside, ...specials].slice(0, 8)
 }
 
 /** What a chosen mention writes: `@` and the name the chat shows them by, and a space. */
-export function mentionText(choice: Member | 'here' | 'everyone'): string {
+export function mentionText(choice: Member | Special): string {
   return typeof choice === 'string' ? `@${choice} ` : `@${choice.nick ?? choice.name} `
 }
 

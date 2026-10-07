@@ -33,6 +33,12 @@ export interface Ended {
   limit?: Limit
 }
 
+/** Words a send carries beside the message, under a label. */
+export interface Attached {
+  label: string
+  text: string
+}
+
 /** The panel, as a command sees it. */
 export interface Panel {
   // The panel's own controls (lane 4's `PanelActions`).
@@ -66,6 +72,9 @@ export interface Panel {
   /** Sends words in a thread, the open one or another, exactly as the field does (queued
    *  behind a running turn, drawn while it runs), and resolves once its turn is over. */
   turn?(thread: Thread, text: string, once?: Once): Promise<Ended>
+  /** The same, with words attached the way the field's chips attach them: a chat's
+   *  messages for `/catchup`, `/reply` and `@nib` in a chat (docs/chats.md 4.14). */
+  turnWith?(thread: Thread, text: string, attached: readonly Attached[], once?: Once): Promise<Ended>
   /** A thread a command made (a fork, a subtask): into the list, and to the front with
    *  `open`. */
   adopt?(thread: Thread, open?: boolean): void

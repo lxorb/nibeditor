@@ -11,6 +11,7 @@ import { isEffort } from '../chat/effort'
 import type { Effort, Thread } from '../chat/types'
 import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
+import { catchup, reply } from './chats'
 import { autocompact, copy, exportThread, listJobs, recap } from './conversation'
 import { foundNow } from './found'
 import { batch, fork, research, subtask } from './helpers'
@@ -201,6 +202,14 @@ const RUNS: Record<string, Run> = {
     if (thread) await showTasks(host, thread, context.args)
   },
   today: ({ args, thread }, host) => planDay(host, thread, args),
+  catchup: async (context, host) => {
+    const thread = threadOf(context)
+    if (thread) await catchup(host, thread, context.args)
+  },
+  reply: async (context, host) => {
+    const thread = threadOf(context)
+    if (thread) await reply(host, thread, context.args)
+  },
   status: (context, host) =>
     report(host, context, status(context.thread, host.panel.provider ?? null)),
   usage: (context, host) =>

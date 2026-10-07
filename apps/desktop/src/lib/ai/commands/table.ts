@@ -91,6 +91,8 @@ export const ROWS: readonly Row[] = [
   // 3.6 Account and app
   row('app', 'tasks', [], key('To-dos'), '[filter|words]'),
   row('app', 'today', ['plan-day'], key('Plan my day'), '[wishes]'),
+  row('app', 'catchup', [], key('What I missed in chats'), '[chat]'),
+  row('app', 'reply', [], key('A reply for this chat'), '[wishes]'),
   row('app', 'status', [], key('Status')),
   row('app', 'usage', ['cost', 'stats', 'rate-limit-options'], key('Usage')),
   row('app', 'login', [], key('Sign in')),

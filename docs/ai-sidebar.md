@@ -363,6 +363,8 @@ reviewable diff, not a reply.
 | --- | --- | --- | --- | --- | --- | --- |
 | `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | nib | nib | nib |
 | `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Agent mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
+| `/catchup [chat]` | - | Slack's recaps | what the reader missed: the unread part of every chat (or the one named) attached, each other person's words inside an untrusted mark, and the model writes what each holds for them, headed by a link to where it starts (`docs/chats.md` 4.14) | nib | nib | nib |
+| `/reply [wishes]` | - | Slack's AI replies | a draft for the chat in front: its unread part (or its newest messages) attached, and the model's answer put in that chat's composer for the reader to send; `@nib` in a chat asks the same from the composer | nib | nib | nib |
 | `/status` | - | CC, Cx | provider, model, effort, account and plan, grant, program version | `claude auth status --json` | `codex login status` | Settings > AI's row |
 | `/usage` | `/cost`, `/stats`, `/rate-limit-options` | CC `/usage` (`/cost`, `/stats`), Cx `/usage` | tokens in this thread and today; a plan's state and reset time; money only where the provider says it | `total_cost_usd`, `rate_limit_event` | rate limits from the app-server | `usage`; OpenRouter's `cost` |
 | `/login` | - | CC | the provider's own sign-in road (`docs/ai.md`, "Your own plan") | `claude auth login` in a terminal tab | `codex login` in a terminal tab | ChatGPT: Continue with ChatGPT; keys: Settings > AI |
@@ -374,7 +376,7 @@ reviewable diff, not a reply.
 | `/vim` | - | Cx (CC took its out) | vim keys in the field, using nib's vim mode | nib | nib | nib |
 | `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | nib | nib | nib |
 
-That is **60 commands** and **43 synonyms**. A custom command (4.7) is one more row, and a
+That is **62 commands** and **43 synonyms**. A custom command (4.7) is one more row, and a
 custom command with a vendor's name wins over nothing but itself: built-ins keep their
 names.
 

@@ -66,8 +66,9 @@
    *  (`chat:<id>`). The chats' store is fetched only for a grant that has one. */
   let chatNames = $state.raw<Record<string, string>>({})
   $effect(() => {
-    if (__EVEN_PLUGIN__ || !sites.some((one) => one.site.startsWith('chat:'))) return
-    void import('../../chats/store.svelte').then(({ chats }) => {
+    if (!sites.some((one) => one.site.startsWith('chat:'))) return
+    const store = __EVEN_PLUGIN__ ? null : import('../../chats/store.svelte')
+    void store?.then(({ chats }) => {
       chatNames = Object.fromEntries(
         chats.list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]),
       )

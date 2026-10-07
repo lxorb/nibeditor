@@ -1,6 +1,6 @@
 import type { Member } from '@nib/chats'
 import { describe, expect, test } from 'vitest'
-import { enterDoes, mentionAt, mentionChoices, mentionText, trimmed } from './compose'
+import { enterDoes, mentionAt, mentionChoices, mentionText, nibAsked, trimmed } from './compose'
 
 const plain = { shift: false, mod: false }
 
@@ -51,10 +51,25 @@ describe('mentions', () => {
     expect(who('')).toEqual(['user:lucile', 'user:mia', 'user:eve', 'here', 'everyone'])
   })
 
+  test('offers the reader’s own agent at the start of a message, and nowhere else', () => {
+    const first = mentionChoices('n', members, 'user:emil', true)
+    expect(first).toEqual(['nib'])
+    expect(mentionChoices('n', members, 'user:emil')).toEqual([])
+    expect(mentionText('nib')).toBe('@nib ')
+  })
+
   test('writes the name the chat shows', () => {
     expect(mentionText(members[1]!)).toBe('@Lu ')
     expect(mentionText(members[2]!)).toBe('@Mia Lucas ')
     expect(mentionText('here')).toBe('@here ')
+  })
+
+  test('@nib first is a question to the reader’s agent, not a message', () => {
+    expect(nibAsked('@nib what did we decide?')).toBe('what did we decide?')
+    expect(nibAsked(' @NIB\nsum it up ')).toBe('sum it up')
+    expect(nibAsked('@nib')).toBe('')
+    expect(nibAsked('thanks @nib')).toBeNull()
+    expect(nibAsked('@nibble')).toBeNull()
   })
 
   test('a message is sent without blank lines either side', () => {

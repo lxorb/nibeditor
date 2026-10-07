@@ -35,7 +35,14 @@
   import type { Scheduled } from '../api'
   import { firstLine } from './body'
   import type { ChatPage } from './chat.svelte'
-  import { enterDoes, mentionAt, mentionChoices, mentionText } from './compose'
+  import {
+    enterDoes,
+    mentionAt,
+    mentionChoices,
+    mentionText,
+    nibAsked,
+    type Special,
+  } from './compose'
   import Glyph from './Glyph.svelte'
   import MentionMenu from './MentionMenu.svelte'
   import { faceOf, nameOf } from './people'
@@ -87,7 +94,9 @@
   /** The aside is the chat's, so a reply pane's composer never takes it. */
   const aside = $derived(parent ? null : page.aside)
   const editingAside = () => aside?.kind === 'edit'
-  const choices = $derived(mention ? mentionChoices(mention.query, page.members, page.me) : [])
+  const choices = $derived(
+    mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [],
+  )
 
   onMount(() => {
     if (!host) return
@@ -195,6 +204,16 @@
       return
     }
     if (!words.trim() && !attachments.refs.length) return
+    // `@nib` and a question asks the reader's own agent, in the AI sidebar, and nothing
+    // is sent: the answer comes back here as a draft (docs/chats.md 4.14).
+    const question = nibAsked(words)
+    if (question !== null && !attachments.refs.length) {
+      setText('')
+      store().keepDraft(draftKey, '')
+      const { askNib } = await import('./nib')
+      await askNib(page.id, question, parent)
+      return
+    }
     if (/(?:^|\s)@(?:here|everyone)\b/.test(words) && page.members.length > ASK_EVERYONE_PAST) {
       const { prompt } = await import('../../prompt.svelte')
       const said = await prompt.choose({
@@ -221,7 +240,7 @@
     page.post('', { ...(parent ? { parent } : {}), files: [file] })
   }
 
-  function pick(choice: Member | 'here' | 'everyone') {
+  function pick(choice: Member | Special) {
     if (!editor || !mention) return
     const caret = editor.state.selection.main.head
     const words = mentionText(choice)

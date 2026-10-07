@@ -1,8 +1,10 @@
 <script lang="ts">
   /** Who an `@` could be, over the composer (docs/chats.md 3, #36): each person's face
-   *  and the name the chat calls them, then @here and @everyone. The composer keeps
+   *  and the name the chat calls them, then @nib (the reader's own agent, at the start
+   *  of a message), @here and @everyone. The composer keeps
    *  the keys; this draws the list and takes a press. */
   import type { Member } from '@nib/chats'
+  import type { Special } from './compose'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { dur } from '../../motion'
@@ -16,11 +18,11 @@
     space,
     onpick,
   }: {
-    choices: (Member | 'here' | 'everyone')[]
+    choices: (Member | Special)[]
     lit: number
     members: readonly Member[]
     space: string | null
-    onpick: (choice: Member | 'here' | 'everyone') => void
+    onpick: (choice: Member | Special) => void
   } = $props()
 
   /** Each choice as a row: a person of the chat, or @here and @everyone. */
@@ -60,6 +62,9 @@
         {#if row.member.nick && row.member.nick !== row.member.name}
           <span class="nib-row-meta">{row.member.name}</span>
         {/if}
+      {:else if row.key === 'nib'}
+        <span class="nib-row-mark at">✦</span>
+        <span class="nib-row-label">@nib</span>
       {:else}
         <span class="nib-row-mark at">@</span>
         <span class="nib-row-label">@{row.key}</span>
