@@ -267,6 +267,16 @@ class Runner {
     }
   }
 
+  /** The way back, tried until it is walked, at v1's cadence while the account cannot be
+   *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
+  async walkBack(alive: () => boolean): Promise<boolean> {
+    for (let tries = 0; alive(); tries += 1) {
+      if (await this.rollBack().catch(() => false)) return alive()
+      await waited(pollDelay(tries, document.hidden))
+    }
+    return false
+  }
+
   /** The spaces v2 kept here: the ones whose first pass is done. */
   private async kept(engine: Engine): Promise<ReadonlySet<string>> {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it

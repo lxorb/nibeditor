@@ -1669,69 +1669,114 @@ describe('a pass that fails partway through', () => {
 })
 
 describe('an account gone back to v1 on a device that kept its spaces under v2', () => {
-  test('walks the way back before v1 starts, and v1 waits while it cannot', async () => {
-    const rollBack = vi.fn(() => Promise.resolve(false))
-    vi.doMock('./sync2/runner.svelte', () => ({ runner: { rollBack } }))
+  /** The runner, stood in for: its way back answers when the test says. */
+  function wayBack() {
+    let walked: (back: boolean) => void = () => undefined
+    const walkBack = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          walked = resolve
+        }),
+    )
+    vi.doMock('./sync2/runner.svelte', () => ({ runner: { walkBack } }))
+    return { walkBack, walk: (back: boolean) => walked(back) }
+  }
+
+  /** Counted where v1's pass begins: it asks the account for its spaces first. */
+  function countingV1() {
+    const real = fake.api.listSpaces
+    const counted = { asked: 0, restore: () => (fake.api.listSpaces = real) }
+    fake.api.listSpaces = () => {
+      counted.asked++
+      return real()
+    }
+    return counted
+  }
+
+  async function launched() {
+    sync.start()
+    const { startup } = await import('./startup.svelte')
+    await startup.shown()
+  }
+
+  async function until(done: () => boolean) {
+    for (let at = 0; at < 200 && !done(); at++) await vi.advanceTimersByTimeAsync(10)
+  }
+
+  test('walks the way back before v1 starts, and v1 waits until it is walked', async () => {
+    const { walkBack, walk } = wayBack()
     standInForTheWindow()
     accountWithNotes()
     await signIn()
     account.settled()
     localStorage.setItem('nib:sync-version', '2')
-
-    // Counted where v1's pass begins: it asks the account for its spaces first.
-    const real = fake.api.listSpaces
-    let asked = 0
-    fake.api.listSpaces = () => {
-      asked++
-      return real()
-    }
+    const v1 = countingV1()
 
     try {
-      sync.start()
-      const { startup } = await import('./startup.svelte')
-      await startup.shown()
-      for (let at = 0; at < 50 && !rollBack.mock.calls.length; at++) {
-        await vi.advanceTimersByTimeAsync(10)
-      }
+      await launched()
+      await until(() => walkBack.mock.calls.length > 0)
 
-      // The account out of reach: v1 has not started over what v2 did, and the word
+      // Walking: v1 has not started over what v2 did, the light is hollow, and the word
       // that the way back is owed is still there for the next launch.
-      expect(rollBack).toHaveBeenCalledTimes(1)
+      expect(walkBack).toHaveBeenCalledTimes(1)
       expect(sync.status).toBe('offline')
       expect(localStorage.getItem('nib:sync-version')).toBe('2')
-      expect(asked).toBe(0)
-
-      rollBack.mockImplementation(() => Promise.resolve(true))
       await vi.advanceTimersByTimeAsync(60_000)
+      expect(v1.asked).toBe(0)
 
-      expect(rollBack).toHaveBeenCalledTimes(2)
+      walk(true)
+      await until(() => v1.asked > 0)
       expect(localStorage.getItem('nib:sync-version')).toBe('1')
       expect(sync.version).toBe(1)
-      for (let at = 0; at < 200 && !asked; at++) await vi.advanceTimersByTimeAsync(10)
-      expect(asked).toBeGreaterThan(0)
+      expect(v1.asked).toBeGreaterThan(0)
     } finally {
       sync.stop()
-      fake.api.listSpaces = real
+      v1.restore()
+      vi.doUnmock('./sync2/runner.svelte')
+      vi.unstubAllGlobals()
+    }
+  })
+
+  test('starts nothing when the session ends before the way back is walked', async () => {
+    const { walkBack, walk } = wayBack()
+    standInForTheWindow()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    localStorage.setItem('nib:sync-version', '2')
+    const v1 = countingV1()
+
+    try {
+      await launched()
+      await until(() => walkBack.mock.calls.length > 0)
+      sync.stop()
+      walk(false)
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(v1.asked).toBe(0)
+      expect(localStorage.getItem('nib:sync-version')).toBe('2')
+    } finally {
+      v1.restore()
       vi.doUnmock('./sync2/runner.svelte')
       vi.unstubAllGlobals()
     }
   })
 
   test('starts v1 at once where this device never ran v2', async () => {
-    const rollBack = vi.fn(() => Promise.resolve(true))
-    vi.doMock('./sync2/runner.svelte', () => ({ runner: { rollBack } }))
+    const { walkBack } = wayBack()
     standInForTheWindow()
     accountWithNotes()
     await signIn()
     account.settled()
+    const v1 = countingV1()
 
     try {
       sync.start()
       await vi.advanceTimersByTimeAsync(0)
-      expect(sync.status).not.toBe('offline')
-      expect(rollBack).not.toHaveBeenCalled()
+      expect(v1.asked).toBe(1)
+      expect(walkBack).not.toHaveBeenCalled()
     } finally {
       sync.stop()
+      v1.restore()
       vi.doUnmock('./sync2/runner.svelte')
       vi.unstubAllGlobals()
     }
