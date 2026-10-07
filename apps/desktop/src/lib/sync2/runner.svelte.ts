@@ -45,6 +45,7 @@ import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
 import { Refused } from './transport'
+import { pairsFromV1 } from './v1-pairs'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
@@ -525,6 +526,15 @@ class Runner {
         space.row = { ...space.row, role }
         changes.push(put('spaces', { ...space.row }))
       },
+    }
+    // The folders v1 had paired, for a store that has paired none of them yet (v1-pairs.ts).
+    if (this.accountId) {
+      const paired = pairing.pairs()
+      const local = workspace.spaces.map((space) => space.root)
+      const remote = account.spaces.map((space) => ({ id: space.id, role: space.role }))
+      for (const one of pairsFromV1(stored(MIRRORS), this.accountId, local, remote, paired)) {
+        changes.push(...core.addSpace(one.spaceId, one.root, one.role))
+      }
     }
     await pairSpaces(token, pairing)
     await core.commit(changes)
