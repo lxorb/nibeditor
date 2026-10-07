@@ -11,7 +11,10 @@ three browsers, each signed in as one of them:
   unread with a mention badge;
 - Lucile goes offline, posts, comes back: the message is placed exactly once, and Emil
   sees it once;
-- Mia's chat has no composer, and the account refuses her post.
+- Mia's chat has no composer, and the account refuses her post;
+- Emil finds a message in the palette and with the chat's own Ctrl+F, makes a task of
+  one whose link in the inbox opens it again, and sends a note to the chat, where it is
+  drawn as a live card.
 
 Everything is the real thing: the built web app, the Worker under `wrangler dev` on
 workerd, the chat's `ChatLog` and each account's hub as Durable Objects, D1 with every
@@ -169,6 +172,103 @@ def type_in(page: Page, words: str, where: str = ".chat-tab .main .composer .cm-
 
 def row_of(page: Page, words: str):  # noqa: ANN201 - a locator
     return page.locator(".chat-tab .main .message", has=page.locator(".body", has_text=words)).first
+
+
+def everywhere(owner: Page, chat: dict[str, str]) -> None:
+    """Emil finds a message with the palette and with the chat's own search, makes a task
+    of it whose link opens it again, and sends a note to the chat as a live card."""
+    owner.keyboard.press("Escape")
+    owner.keyboard.press("Control+o")
+    owner.keyboard.type("second draft", delay=10)
+    found = came(
+        owner,
+        "() => [...document.querySelectorAll('#nib-palette-list .nib-row')]"
+        ".some((one) => one.textContent.includes('the second draft') && one.textContent.includes('#Chat'))",
+        "[Emil] the message in the palette",
+    )
+    if found is not None:
+        DRIVE.shot(owner, "emil-palette")
+        say("the palette found the message beside the notes")
+    owner.keyboard.press("Escape")
+
+    owner.click(".chat-tab .main .composer .cm-content")
+    owner.keyboard.press("Control+f")
+    came(
+        owner,
+        "() => document.querySelector('.palette input')?.value === 'in:#Chat '",
+        "[Emil] Ctrl+F in the chat, the palette on it",
+    )
+    owner.keyboard.type("figures", delay=10)
+    came(
+        owner,
+        "() => { const rows = [...document.querySelectorAll('#nib-palette-list .nib-row')];"
+        " return rows.length > 0 && rows.every((one) => one.textContent.includes('#Chat')) }",
+        "[Emil] the chat's own search, messages alone",
+    )
+    DRIVE.shot(owner, "emil-chat-search")
+    owner.keyboard.press("Enter")
+    came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the hit flashed")
+
+    # A message made a task, with its link back.
+    row_of(owner, "could you look at the figures").click(button="right")
+    owner.get_by_role("menuitem", name="Add as task").click()
+    came(
+        owner,
+        "() => [...document.querySelectorAll('[role=dialog] input')].some((one) => one.value.includes('could you look'))",
+        "[Emil] quick add, filled with the message",
+    )
+    DRIVE.shot(owner, "emil-quick-add")
+    owner.keyboard.press("Enter")
+    inbox = wait(
+        owner,
+        "async () => { const text = await window.nibApp.workspace.noteText('/Team/Inbox.md');"
+        " return text && text.includes('nib://chat/') ? text : null }",
+        "[Emil] the task in the inbox, with its link",
+    )
+    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("nib://chat/")), "")
+    say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
+    # Quick add stays up for the next task, as Todoist's does.
+    owner.keyboard.press("Escape")
+    came(owner, "() => !document.querySelector('.nib-scrim')", "[Emil] quick add put away")
+    owner.evaluate("() => window.nibApp.workspace.closeActive()")
+    owner.evaluate("async (link) => (await window.nibApp.chats()).openChatLink(link)", link)
+    came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the task's link, opening the message")
+
+    # A note sent to the chat, drawn as a live card.
+    owner.evaluate(
+        "async () => { const { writeFile } = await window.nibApp.tasks();"
+        " await writeFile('/Team/Plan.md', '# Plan\\n\\nThe figures go in on Friday.\\n');"
+        " await window.nibApp.workspace.fileCame('/Team/Plan.md', 'file');"
+        " await window.nibApp.workspace.loadTree() }"
+    )
+    tree = "() => { const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []; return walk(window.nibApp.workspace.tree) }"
+    try:
+        wait(owner, f"() => ({tree})().some((one) => one.endsWith('/Plan.md'))", "[Emil] the note Plan")
+    except SystemExit:
+        say(f"[Emil] the tree: {owner.evaluate(tree)}")
+        raise
+    owner.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    plan = owner.locator(".row[data-path$='Plan.md']").first
+    plan.wait_for(timeout=10_000)
+    plan.click(button="right")
+    owner.get_by_role("menuitem", name="Send to chat").click()
+    owner.keyboard.type("Chat", delay=10)
+    owner.keyboard.press("Enter")
+    came(
+        owner,
+        "() => document.querySelector('.chat-tab .main .composer .cm-content')?.textContent.includes('Plan')",
+        "[Emil] the composer, holding the note's link",
+    )
+    owner.click(".chat-tab .main .composer .cm-content")
+    owner.keyboard.press("End")
+    owner.keyboard.type("for tomorrow", delay=10)
+    owner.keyboard.press("Enter")
+    came(
+        owner,
+        "() => [...document.querySelectorAll('.chat-tab .main .message .card strong')].some((one) => one.textContent === 'Plan')",
+        "[Emil] the note as a live card",
+    )
+    DRIVE.shot(owner, "emil-note-card")
 
 
 # ---------------------------------------------------------------- the drive
@@ -364,6 +464,9 @@ def main() -> int:
         else:
             say(f"the account refused Mia's post: {result['refused']}")
         DRIVE.shot(reader, "mia-reads")
+
+        # ── Everywhere: the palette, a task, a note sent to the chat ────
+        everywhere(owner, chat)
 
     return DRIVE.verdict("a chat made, written in, reacted to, edited and deleted live between three browsers")
 

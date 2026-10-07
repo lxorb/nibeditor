@@ -4,7 +4,7 @@ import { noteNameOf, quoted, taskWords } from './keep-words'
 describe('a message kept outside its chat', () => {
   test('as a task: its first line, and a +Name for each person it called', () => {
     expect(taskWords('- Send the figures to @Lucile Martin\nby Friday', ['Lucile Martin'])).toBe(
-      'Send the figures to @Lucile Martin +Lucile',
+      'Send the figures to +Lucile',
     )
     expect(taskWords('', [])).toBe('')
   })

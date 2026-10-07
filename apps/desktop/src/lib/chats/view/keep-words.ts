@@ -8,11 +8,12 @@ const firstLine = (body: string) => body.split('\n')[0] ?? ''
 const NAME_WORDS = 8
 const NAME_LENGTH = 60
 
-/** The task a message makes: its first line, and `+Name` for each person it called. */
+/** The task a message makes: its first line, and `+Name` for each person it called in
+ *  place of the `@Name` it called them by, which quick add would read as a label. */
 export function taskWords(body: string, called: readonly string[]): string {
-  const line = firstLine(body)
-    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/, '')
-    .trim()
+  let line = firstLine(body).replace(/^\s*(?:[-*+]|\d+[.)])\s+/, '')
+  for (const name of called) line = line.split(`@${name}`).join(' ')
+  line = line.replace(/\s+/g, ' ').trim()
   const people = called.map((name) => `+${name.split(/\s+/)[0] ?? name}`)
   return [line, ...people].filter(Boolean).join(' ')
 }
