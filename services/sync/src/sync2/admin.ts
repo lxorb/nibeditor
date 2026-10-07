@@ -39,7 +39,7 @@ interface Admin {
 }
 
 /** The first release whose app runs the v2 engine at all. No `min` may be below it. */
-export const FIRST_V2_APP = '0.12.0'
+const FIRST_V2_APP = '0.12.0'
 
 /** How a version is written: `0.13.0` for a release, `0.13.1-57` for a build of main
  *  (scripts/build-version.sh). Anything else is a version nobody can vouch for. */
@@ -173,7 +173,8 @@ async function read(
         lastUsedAt: one.last_used_at,
         allowed: allow.has(one.id),
       }
-      if (!view.allowed) blockers.push({ kind: 'session', id: one.id, name: one.name, why: 'no device' })
+      if (!view.allowed)
+        blockers.push({ kind: 'session', id: one.id, name: one.name, why: 'no device' })
       return view
     })
 
@@ -189,7 +190,8 @@ async function read(
 
 /** `min` as given, or the first v2 release; an error for one below it or unreadable. */
 function minimum(given: string | undefined): { min: string } | { error: string } {
-  const min = given?.trim() || FIRST_V2_APP
+  const asked = given?.trim() ?? ''
+  const min = asked === '' ? FIRST_V2_APP : asked
   if (!versionOf(min)) return { error: 'min is a version like 0.14.0 or 0.13.1-57' }
   if (!atLeastVersion(min, FIRST_V2_APP)) return { error: `min is at least ${FIRST_V2_APP}` }
   return { min }
@@ -265,6 +267,6 @@ syncAdmin.post('/sync-version', async (context) => {
   if (!changed) return context.json({ error: 'the account changed meanwhile; ask again' }, 409)
 
   // What `wrangler tail` shows, so a flip is on record beside the requests it caused.
-  console.log(`[sync-version] ${reading.email} ${reading.version} -> ${to} (min ${judged.min})`)
+  console.warn(`[sync-version] ${reading.email} ${reading.version} -> ${to} (min ${judged.min})`)
   return context.json({ ...shown, version: to, to, changed })
 })

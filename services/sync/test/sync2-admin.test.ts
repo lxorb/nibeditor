@@ -100,6 +100,17 @@ describe('the door', () => {
     expect(versionOf(MOVER)).toBe(1)
   })
 
+  test('is closed to a program token, even the admin’s own', async () => {
+    const minted = await call<{ token: string }>(env, '/v1/mcp/token', {
+      token: admin,
+      body: { readOnly: false },
+    })
+    const program = minted.json.token
+
+    expect((await flip({ email: MOVER, to: 2, min: '0.14.0' }, program)).status).toBe(403)
+    expect(versionOf(MOVER)).toBe(1)
+  })
+
   test('says which account it does not know', async () => {
     const answer = await flip({ email: 'nobody@example.com', to: 2, min: '0.14.0' })
     expect(answer.status).toBe(404)
