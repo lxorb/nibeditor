@@ -14,6 +14,21 @@ import { doorway, fire, join, machine, nibd, say } from './machine-fakes'
 
 const DEVICE = 'device-laptop'
 
+// A socket refused at the door is a 101 with a socket in it, which only the runtime can
+// make: here it is a 200 that names its refusal and the protocol it names back. What the
+// socket says is refuse.test.ts's.
+vi.mock('../src/machines/refuse', async (real) => ({
+  ...(await real<typeof import('../src/machines/refuse')>()),
+  refusedSocket: (error: string, protocol: string) =>
+    new Response(null, {
+      status: 200,
+      headers: { 'x-refused': error, 'sec-websocket-protocol': protocol },
+    }),
+}))
+
+/** What the door refused a socket with, or null for one it let through. */
+const refusal = (answer: { headers: Headers }) => answer.headers.get('x-refused')
+
 /** Everybody 4.6's table is about: the machine's owner (who owns the space too), a
  *  writer and a reader of the space, and a guest at each role. */
 const OWNER = 'owner@example.com'
@@ -314,7 +329,7 @@ describe('the door', () => {
     expect((await knock(alone.json.session, owner)).status).toBe(200)
     expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
     expect(door.asked[0]?.headers.get('x-nib-session')).toBe(alone.json.session)
-    expect((await knock(alone.json.session, writer)).status).toBe(404)
+    expect(refusal(await knock(alone.json.session, writer))).toBe('gone')
 
     // Not on the list, not even that.
     const stranger = await session('stranger@example.com')
@@ -325,21 +340,38 @@ describe('the door', () => {
 
   test('a copied .term reaches nothing: access is the file’s id, never its text', async () => {
     const { owner } = await made()
-    expect((await knock('copy-1', owner)).status).toBe(404)
+    expect(refusal(await knock('copy-1', owner))).toBe('gone')
   })
 
   test('a trashed file closes to everybody but the machine’s owner', async () => {
     const { owner, writer } = await made()
     env.db.prepare("update notes set deleted = 1 where id = 'term-1'").run()
-    expect((await knock('term-1', writer)).status).toBe(404)
-    expect((await knock('term-1', owner)).status).toBe(200)
+    expect(refusal(await knock('term-1', writer))).toBe('gone')
+    const owned = await knock('term-1', owner)
+    expect(owned.status).toBe(200)
+    expect(refusal(owned)).toBeNull()
   })
 
-  test('a socket with no session is told to sign in, one with no role is told nothing', async () => {
+  test('a socket with no session is told to sign in, one with no role that it is gone', async () => {
     await made()
     expect((await knock('term-1', 'nobody')).status).toBe(401)
     const stranger = await session('stranger@example.com')
-    expect((await knock('term-1', stranger)).status).toBe(404)
+    const refused = await knock('term-1', stranger)
+    expect(refusal(refused)).toBe('gone')
+    // Named back by its device, never by its token.
+    expect(refused.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
+  })
+
+  /** 2026-10-07: a tab whose session was gone - its machine replaced - was answered 404,
+   *  which a page reads as a dropped socket and tries again, silently and forever. */
+  test('a session ended, or never made, is gone, on a socket the app can read', async () => {
+    const { owner } = await made()
+    env.db.prepare("update term_sessions set ended_at = 1 where term = 'term-1'").run()
+    door.asked.length = 0
+    expect(refusal(await knock('term-1', owner))).toBe('gone')
+    expect(refusal(await knock('never-1', owner))).toBe('gone')
+    // The machine is never asked about a session that is not there.
+    expect(door.asked).toEqual([])
   })
 
   test('typing switched to writers is the owner’s to switch, and the machine is told', async () => {

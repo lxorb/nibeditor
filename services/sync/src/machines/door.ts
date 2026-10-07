@@ -8,7 +8,8 @@
  *  the machine; everybody else watches it as it is.
  *
  *  While the service is off, or wherever the `MACHINES` binding is absent,
- *  this answers 404 like a route that does not exist. */
+ *  this answers 404 like a route that does not exist. A terminal it reaches no session of
+ *  is refused on a socket instead, which the app can read (refuse.ts). */
 
 import { Hono } from 'hono'
 import { tokenOf } from '@nib/rooms'
@@ -19,6 +20,7 @@ import type { Env } from '../types'
 import { askMachine } from './ask'
 import { whyNotWake } from './gate'
 import { DOOR, reachedOf, type Row, WHO } from './reach'
+import { refusedSocket } from './refuse'
 import { serviceOf } from './service'
 
 const DEVICE_PROTOCOL = 'nib.device.'
@@ -48,16 +50,18 @@ onlineDoor.get('/:term/socket', async (context) => {
   const term = context.req.param('term')
 
   const row = await env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>()
-  if (!row) {
-    // Told apart: no session is a sign-in, and a file nobody shared is no file.
-    const who = await env.DB.prepare(WHO).bind(hash, at).first<{ who: string }>()
-    return who ? context.json({ error: NOT_FOUND }, 404) : context.json({ error: SIGN_IN }, 401)
+  // Told apart: no session is a sign-in.
+  if (!row && !(await env.DB.prepare(WHO).bind(hash, at).first<{ who: string }>())) {
+    return context.json({ error: SIGN_IN }, 401)
   }
-  const reached = reachedOf(row)
-  if (!reached) return context.json({ error: NOT_FOUND }, 404)
 
   const device = deviceProtocol(offered)
   if (!device) return context.json({ error: 'an online terminal socket names its device' }, 400)
+
+  // No live session for the file, or a file this person does not reach: one answer for
+  // both, on a socket the app can read it from (refuse.ts).
+  const reached = row ? reachedOf(row) : null
+  if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
   const wake = reached.owns ? ((await whyNotWake(env, reached.owner, at)) ?? 'yes') : 'no'
   const answer = await askMachine(env, reached.machine, 'join', {

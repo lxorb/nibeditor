@@ -426,7 +426,10 @@ terminal's selection is a local thing.
   binary output frames (8 bytes of `seq`, then bytes), `screen {seq, cols, rows, data}`,
   `size {cols, rows, by}`, `people [{who, device, typing}]`, `typed {who, seq}`,
   `program {name, title, mark}`, `machine {state, reason?}`, `role {type}`, `ended {code}`,
-  `refused {error}`.
+  `refused {error}`. A terminal with no live session, or one the person no longer reaches,
+  is let in only to be told `refused gone` and closed with 4404: a page never sees a
+  refused upgrade's status, and would try a 404 again forever (2026-10-07). Its tab says
+  "This terminal is gone" and offers New online terminal, which takes the tab's place.
 - Between `Machine` and `nibd`, one socket, every frame naming its session: `open`, `in`,
   `size`, `want {since}`, `close`, `sleep`; and back `out`, `screen`, `program`, `ended`,
   `activity`, `saved`. `nibd` takes the link only with the secret `Machine` hands it at boot.
