@@ -102,6 +102,9 @@ importers:
       '@nib/bases':
         specifier: workspace:*
         version: link:../../packages/bases
+      '@nib/chats':
+        specifier: workspace:*
+        version: link:../../packages/chats
       '@nib/editor':
         specifier: workspace:*
         version: link:../../packages/editor

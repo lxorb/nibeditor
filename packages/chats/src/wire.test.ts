@@ -371,6 +371,7 @@ describe('HTTP', () => {
   const row = {
     id: CHAT,
     space: 'space-1',
+    role: 'write',
     members: 4,
     lastSeq: 9,
     lastAt: 90,
@@ -383,7 +384,11 @@ describe('HTTP', () => {
   }
 
   it('lists chats, leaving out a row that does not read', () => {
-    expect(chatListOf(wired({ chats: [row, { ...row, id: 'nope' }] }))).toEqual({ chats: [row] })
+    expect(
+      chatListOf(wired({ chats: [row, { ...row, id: 'nope' }, { ...row, role: 'admin' }] })),
+    ).toEqual({
+      chats: [row],
+    })
     expect(chatListOf({ chats: 'all' })).toBeNull()
   })
 

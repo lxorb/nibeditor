@@ -53,6 +53,8 @@ mod appearance;
 mod apple_notes;
 #[cfg(desktop)]
 mod chatgpt;
+#[cfg(desktop)]
+mod link_preview;
 // Where the database holding the notes is, that is a Mac: SQLite, a group
 // container and a permission no other system has, all of which is `apple_notes`.
 // What is *on* a row is a gzipped protobuf, and unpacking one is arithmetic over
@@ -278,6 +280,9 @@ macro_rules! commands {
             sync_store::sync_store_write,
             sync_store::sync_store_clean_exit,
             sync_store::sync_store_forget,
+            sync_store::chats::chat_store_read,
+            sync_store::chats::chat_store_write,
+            sync_store::chats::chat_store_forget,
             space_watch::space_watch,
             space_watch::space_unwatch,
             space_watch::space_scan,
@@ -338,6 +343,7 @@ macro_rules! desktop_commands {
             chatgpt::chatgpt_account,
             chatgpt::chatgpt_token,
             chatgpt::chatgpt_sign_out,
+            link_preview::link_preview,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_material,

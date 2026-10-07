@@ -48,6 +48,9 @@ export type FromHub =
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
   | { t: 'refused'; to: string; key: string | null; error: string }
+  /** A chat moved on (`ChatPoke` in @nib/chats/wire): handed on unread, because the
+   *  chats read it with their own check, fetched with them after the launch. */
+  | { t: 'chat'; said: Record<string, unknown> }
 
 export type HubType = FromHub['t']
 
@@ -128,6 +131,9 @@ export function readHubFrame(said: string): FromHub | null {
 
     case 'key-settled':
       return device(one.device) ? { t: 'key-settled', device: one.device } : null
+
+    case 'chat':
+      return { t: 'chat', said: one }
 
     case 'refused':
       return text(one.to) && text(one.error)
