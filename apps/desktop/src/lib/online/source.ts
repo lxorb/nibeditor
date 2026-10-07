@@ -10,9 +10,10 @@
  *
  *  A device on sync v1 has no file id the account knows, so there the file's words are the
  *  name: the session it says, or a new one of the asker's own, written into it. Shared
- *  with nobody until the account moves to v2 (services/sync/src/machines/routes.ts). */
+ *  with nobody until the account moves to v2, where the file's id adopts the session its
+ *  words name, and the shell in it goes on (services/sync/src/machines/routes.ts). */
 
-import { termOf, termText } from '@nib/online/term'
+import { termOf } from '@nib/online/term'
 import { inputChunks, MOST_INPUT, INPUT_RATE, type ServerFrame } from '@nib/online/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
@@ -25,7 +26,7 @@ import { refusedOf, termSession } from './calls'
 import { Link, pageWorld } from './link'
 import { machine } from './machine.svelte'
 import { type Build, Opener } from './opening.svelte'
-import { ownSession } from './own'
+import { namedSession, ownSession, wordsFor } from './own'
 import { refusalWords } from './words'
 
 /** How long a new file is waited for, by sync and then by the account, and how often. */
@@ -45,19 +46,19 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
   }
 }
 
-/** The file's session, asked of the account, and written into the file where it does not
- *  say it yet. Answers the refusal's words instead where there is one; null otherwise -
- *  including somebody else's terminal, which the account names no session of this
- *  person's for, and whose socket decides what they may do. */
+/** The file's session, asked of the account with the one its words name - which the
+ *  account adopts where its owner made it on sync v1 - and written into the file where it
+ *  does not say that one. Answers the refusal's words instead where there is one; null
+ *  otherwise - including somebody else's terminal, which the account names no session of
+ *  this person's for, and whose socket decides what they may do. */
 async function sessionOf(id: string, path: string, until: number): Promise<string | null> {
   const { runner } = await import('../sync2/runner.svelte')
+  const { invoke } = await import('../tauri')
+  const words = await invoke<string>('read_note', { path }).catch(() => null)
   for (;;) {
     try {
-      const term = await termSession(id)
-      const { invoke } = await import('../tauri')
-      const words = await invoke<string>('read_note', { path }).catch(() => null)
-      if (words !== null && termOf(words) === null) {
-        const text = termText(term)
+      const text = wordsFor(words, await termSession(id, namedSession(words)))
+      if (text !== null) {
         await writeFile(path, text)
         void runner.wrote(path, text)
       }

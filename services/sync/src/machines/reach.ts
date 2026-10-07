@@ -51,7 +51,7 @@ select p.who as who, p.term as term, p.guest as guest,
        (select online from users where id = t.user_id) as listed,
        (select held from machines where id = t.machine) as held
   from pairs p
-  join term_sessions t on t.term = p.term and t.ended_at is null
+  join term_sessions t on (t.term = p.term or (t.session = p.term and t.user_id = p.who and p.guest = 0)) and t.ended_at is null
                       and (${machine} = '' or t.machine = ${machine})
   left join notes n on n.id = t.term
   left join spaces sp on sp.id = n.space_id and sp.deleted = 0

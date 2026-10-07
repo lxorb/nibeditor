@@ -9,6 +9,7 @@ import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
 import { PING_EVERY, SILENT_FOR } from '@nib/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
+import { reachAgain } from '../src/machines/reach'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { doorway, fire, join, machine, nibd, say } from './machine-fakes'
 
@@ -433,6 +434,143 @@ describe('the door', () => {
     expect(ninth.status).toBe(409)
     expect(ninth.json.error).toBe('sessions')
     expect(ninth.json.sessions).toHaveLength(8)
+  })
+})
+
+/** 2026-10-07: under v2 a `.term` made on sync v1 was asked for by its file's id, which
+ *  no row had, so it got a new shell beside the old one, which went on counting toward
+ *  the eight. The file's words name the old one; its owner adopts it. */
+describe('a session made on sync v1, asked for by its file under v2', () => {
+  interface Term {
+    v: number
+    machine: string
+    session: string
+  }
+  const live = () =>
+    env.db.prepare('select term, session from term_sessions where ended_at is null').all()
+  /** What a session's row is keyed by now. */
+  const keyOf = (session: string) =>
+    (
+      env.db.prepare('select term from term_sessions where session = ?').get(session) as {
+        term: string
+      }
+    ).term
+
+  async function v1() {
+    const people = await world()
+    serviceOn()
+    allow(OWNER)
+    const made = await call<Term>(env, '/v2/online/terms', { token: people.owner, body: {} })
+    expect(made.status).toBe(200)
+    return { ...people, v1: made.json }
+  }
+
+  test('is the same session, now the file’s, and the count stays', async () => {
+    const { owner, writer, v1: old } = await v1()
+    const asked = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    expect(asked.json).toEqual(old)
+    expect(live()).toEqual([{ term: 'term-1', session: old.session }])
+
+    // Asked again, by the file alone or with its words, the same.
+    expect(
+      (await call(env, '/v2/online/terms', { token: owner, body: { term: 'term-1' } })).json,
+    ).toEqual(old)
+    expect(
+      (
+        await call(env, '/v2/online/terms', {
+          token: owner,
+          body: { term: 'term-1', session: old.session },
+        })
+      ).json,
+    ).toEqual(old)
+    expect(live()).toHaveLength(1)
+
+    // The file's people reach it by the file now; by the session, its owner alone.
+    door.asked.length = 0
+    expect((await knock('term-1', writer)).status).toBe(200)
+    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
+    expect(door.asked[0]?.headers.get('x-nib-role')).toBe('write')
+    expect(refusal(await knock(old.session, writer))).toBe('gone')
+  })
+
+  test('a socket still named by the session goes on: a device not yet on v2, or back on v1', async () => {
+    const { owner, v1: old } = await v1()
+    await call(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    door.asked.length = 0
+    const knocked = await knock(old.session, owner)
+    expect(refusal(knocked)).toBeNull()
+    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
+    expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
+
+    // `Machine`'s minute check keeps the socket it already holds.
+    const again = await reachAgain(env, old.machine, [
+      { who: idOf(OWNER), term: old.session, guest: false },
+    ])
+    expect(again.map((one) => one.session)).toEqual([old.session])
+  })
+
+  test('is adopted once: another file naming it gets a session of its own', async () => {
+    const { owner, v1: old } = await v1()
+    await call(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    const copy = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'copy-1', session: old.session },
+    })
+    expect(copy.status).toBe(200)
+    expect(copy.json.session).not.toBe(old.session)
+    expect(keyOf(old.session)).toBe('term-1')
+  })
+
+  test('is never somebody else’s to adopt', async () => {
+    const { writer, v1: old } = await v1()
+    allow(WRITER)
+    const theirs = await call<Term>(env, '/v2/online/terms', {
+      token: writer,
+      body: { term: 'term-1', session: old.session },
+    })
+    expect(theirs.status).toBe(200)
+    expect(theirs.json.session).not.toBe(old.session)
+    expect(keyOf(old.session)).toBe(old.session)
+  })
+
+  test('one ended, or never made, is a new session as before', async () => {
+    const { owner, v1: old } = await v1()
+    env.db.prepare('update term_sessions set ended_at = 1 where session = ?').run(old.session)
+    const fresh = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    expect(fresh.status).toBe(200)
+    expect(fresh.json.session).not.toBe(old.session)
+    const unknown = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'copy-1', session: 's_nobody' },
+    })
+    expect(unknown.status).toBe(200)
+    expect(live()).toHaveLength(2)
+  })
+
+  test('never over a session the file already has', async () => {
+    const { owner, v1: old } = await v1()
+    const had = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1' },
+    })
+    const asked = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    expect(asked.json).toEqual(had.json)
+    expect(keyOf(old.session)).toBe(old.session)
   })
 })
 

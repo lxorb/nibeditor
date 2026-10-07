@@ -159,15 +159,16 @@ export async function online(): Promise<Online | null> {
 
 /** The session a `.term` names, by the file's id on the account: made on the asker's own
  *  machine the first time - and the machine with it, if there is none yet - and the same
- *  one every time after. A file the account has not been sent yet answers 404.
+ *  one every time after; or `session`, the one the file's words name, where its owner
+ *  made it on sync v1. A file the account has not been sent yet answers 404.
  *
  *  With no id (`null`), a new session of the asker's alone, in no space: what a device on
  *  sync v1 makes, whose files have no id the account knows. Its own id names its socket. */
-export async function termSession(term: string | null): Promise<Term> {
+export async function termSession(term: string | null, session?: string): Promise<Term> {
   const said = await request<unknown>('/v2/online/terms', {
     method: 'POST',
     token: token(),
-    body: term === null ? {} : { term },
+    body: term === null ? {} : { term, ...(session ? { session } : {}) },
   })
   const found = termOf(JSON.stringify(said))
   if (!found) throw new ApiError(500, 'no session')

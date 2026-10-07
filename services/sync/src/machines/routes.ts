@@ -181,6 +181,10 @@ online.post('/machine/stop', async (context) => {
  *  first, by sync, in a space the maker may write in; this names its session. Asking
  *  again for the same file answers the same session.
  *
+ *  `session` is the one the file's words name, if any: a session its owner made on sync
+ *  v1, keyed by its own id, is adopted by the file's id the first time the owner asks by
+ *  it, rather than a new shell made beside it (`adopt`).
+ *
  *  With no `term`, a session of the maker's alone, in no space: what a device still on
  *  sync v1 makes, having no file id the account knows. Its socket is named by the
  *  session (`/v2/online/<session>/socket`), and only its owner reaches it; it is shared
@@ -191,6 +195,7 @@ online.post('/terms', async (context) => {
   const who = context.get('who')
   const body = await readBody(context)
   const term = body.text('term', 200)
+  const named = body.text('session', 200)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
@@ -205,6 +210,9 @@ online.post('/terms', async (context) => {
   if (!file || !reached) return context.json({ error: NOT_FOUND }, 404)
   if (reached.role === 'read') return context.json(refused('role'), 403)
 
+  const adopted = named ? await adopt(env, user.id, term, named) : null
+  if (adopted) return context.json(adopted)
+
   const had = await env.DB.prepare(
     'select machine, session, user_id, ended_at from term_sessions where term = ?',
   )
@@ -217,6 +225,25 @@ online.post('/terms', async (context) => {
 
   return await makeSession(context, env, user.id, term)
 })
+
+/** The session a device on sync v1 made for this file, now asked for by the file's id:
+ *  its row re-keyed from the session's own id to the file's, so the shell in it goes on
+ *  and the account's count of sessions stays as it was. Only the asker's own live
+ *  session, only one still keyed by itself (so adopted once, by the first file to ask),
+ *  and never over a session the file already has. Its owner's sockets named by the
+ *  session still reach it (reach.ts), so a device not yet on v2, or back on v1, keeps
+ *  it. */
+async function adopt(env: Env, userId: string, term: string, session: string) {
+  const row = await env.DB.prepare(
+    `update term_sessions set term = ?1
+      where term = ?2 and session = ?2 and user_id = ?3 and ended_at is null
+        and not exists (select 1 from term_sessions where term = ?1)
+     returning machine, session`,
+  )
+    .bind(term, session, userId)
+    .first<{ machine: string; session: string }>()
+  return row && { v: 1, machine: row.machine, session: row.session }
+}
 
 /** A new session on the account's machine, for a file or (`term` null) for none, in
  *  which case the session's own id names it. */
