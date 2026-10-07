@@ -1754,6 +1754,17 @@ browser (a Web Locks leader) rather than one per tab.
 - **Rollback**: setting 1 again makes the client rebuild `nib:mirrors` from the store (each
   note's id, version and the hash of its confirmed text) before the v1 loop starts, so v1
   resumes without a conflict copy.
+- **Flipping**: `scripts/sync-flip.mjs` through `/v2/admin/sync-version`, which refuses 2
+  while a live device runs an app below `--min` or a live session has no device, and names
+  each; 1 is never refused. The route answers only the service admin, so a test account is
+  flipped by SQL on its own row. A device reads the version at its next launch.
+- **Proven on production (2026-10-08)**, two test accounts, each through a v1 history, the
+  flip, v2, the way back and v2 again, with two desktop probes and a v0.11 browser client:
+  every check held but copies the v0.11 client made by itself. Asked about after a flip:
+  the notes edited on both sides, plus a note edited on both within five minutes of the last
+  v1 version (the account keeps one per five minutes, so there is no ancestor) and a name
+  made on both. v1 never meets a `.term` (its feed and routes hide them), since a v1 app
+  that did deleted it.
 
 ### Older apps in the wild
 
