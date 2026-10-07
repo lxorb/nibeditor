@@ -2102,4 +2102,15 @@ export const zhHantHK: Dictionary = {
   'that picture could not be opened': '無法開啟該圖片',
   'the camera could not be opened': '無法開啟相機',
   'that picture is too big': '該圖片太大',
+  // Chats: notifications
+  Mute: '靜音',
+  Unmute: '取消靜音',
+  Reply: '回覆',
+  'New message': '新訊息',
+  'My keywords': '我的關鍵字',
+  Previews: '預覽',
+  Sound: '聲音',
+  Weekdays: '平日',
+  Starts: '開始',
+  Ends: '結束',
 }

@@ -2181,4 +2181,15 @@ export const sw: Dictionary = {
   'that picture could not be opened': 'picha hiyo haikuweza kufunguliwa',
   'the camera could not be opened': 'kamera haikuweza kufunguliwa',
   'that picture is too big': 'picha hiyo ni kubwa mno',
+  // Chats: notifications
+  Mute: 'Nyamazisha',
+  Unmute: 'Rejesha sauti',
+  Reply: 'Jibu',
+  'New message': 'Ujumbe mpya',
+  'My keywords': 'Maneno yangu muhimu',
+  Previews: 'Onyesho la awali',
+  Sound: 'Sauti',
+  Weekdays: 'Siku za kazi',
+  Starts: 'Inaanza',
+  Ends: 'Inaisha',
 }

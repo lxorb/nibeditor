@@ -14,7 +14,7 @@
 //! for one ends the process; there the answer is no, and the page rings the plan itself.
 
 use std::sync::mpsc;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::Duration;
 
 use block2::RcBlock;
@@ -50,8 +50,16 @@ const PATIENCE: Duration = Duration::from_secs(2);
 /// The app, for the delegate, which the system calls with nothing of ours.
 static APP: OnceLock<AppHandle> = OnceLock::new();
 
+/// The words each category's buttons are drawn in, the reminders' and a notice's answer
+/// field: the centre holds one set of categories for the whole app, so setting either
+/// sets both.
+static WORDS: Mutex<Said> = Mutex::new((None, None));
+
+/// The reminders' words, and a notice's placeholder and Send.
+type Said = (Option<Words>, Option<(String, String)>);
+
 /// Whether this process is a bundle the notification centre will answer.
-fn bundled() -> bool {
+pub fn bundled() -> bool {
     NSBundle::mainBundle().bundleIdentifier().is_some()
 }
 
@@ -104,7 +112,8 @@ fn delegate() -> Retained<Delegate> {
 }
 
 /// Listens for presses from the launch on, so a press that started the app is heard:
-/// the system hands it over once the delegate is set.
+/// the system hands it over once the delegate is set. Once; a notice asks again before
+/// it shows (notices/macos.rs), where reminders were never handed over.
 pub fn listen(app: &AppHandle) {
     if !bundled() || APP.set(app.clone()).is_err() {
         return;
@@ -120,9 +129,12 @@ fn answered(response: &UNNotificationResponse) {
     let Some(app) = APP.get() else {
         return;
     };
-    let action = response.actionIdentifier().to_string();
     let request = response.notification().request();
     let id = request.identifier().to_string();
+    if crate::notices::macos::answer(app, response, &id) {
+        return;
+    }
+    let action = response.actionIdentifier().to_string();
     // A snooze of a snooze is the same reminder.
     let id = id.split('-').next().unwrap_or(&id).to_string();
 
@@ -147,6 +159,59 @@ fn answered(response: &UNNotificationResponse) {
     }
 }
 
+/// A notice's answer field in the reader's words, and the categories set again where
+/// they changed.
+pub fn reply_words(placeholder: &str, send: &str) {
+    let wanted = Some((placeholder.to_string(), send.to_string()));
+    {
+        let mut words = WORDS.lock().unwrap_or_else(PoisonError::into_inner);
+        if words.1 == wanted {
+            return;
+        }
+        words.1 = wanted;
+    }
+    categorise(&UNUserNotificationCenter::currentNotificationCenter());
+}
+
+/// Every category the app has words for: a reminder's Done and snoozes, and a notice's
+/// field to answer in.
+fn categorise(centre: &UNUserNotificationCenter) {
+    let (reminders, reply) = WORDS.lock().unwrap_or_else(PoisonError::into_inner).clone();
+    let category = |id: &str, actions: &[Retained<UNNotificationAction>]| {
+        UNNotificationCategory::categoryWithIdentifier_actions_intentIdentifiers_options(
+            &NSString::from_str(id),
+            &NSArray::from_retained_slice(actions),
+            &NSArray::new(),
+            UNNotificationCategoryOptions::empty(),
+        )
+    };
+    let mut categories = Vec::new();
+    if let Some(words) = reminders {
+        let action = |id: &str, title: &str| {
+            UNNotificationAction::actionWithIdentifier_title_options(
+                &NSString::from_str(id),
+                &NSString::from_str(title),
+                UNNotificationActionOptions::empty(),
+            )
+        };
+        categories.push(category(
+            CATEGORY,
+            &[
+                action(DONE, &words.done),
+                action(LATER, &format!("{} {}", words.snooze, words.minutes)),
+                action(HOUR, &format!("{} {}", words.snooze, words.hour)),
+            ],
+        ));
+    }
+    if let Some((placeholder, send)) = reply {
+        categories.push(category(
+            crate::notices::macos::CATEGORY,
+            &[crate::notices::macos::reply_action(&placeholder, &send)],
+        ));
+    }
+    centre.setNotificationCategories(&NSSet::from_retained_slice(&categories));
+}
+
 /// The schedule of this app's bundle.
 pub struct Requests {
     centre: Retained<UNUserNotificationCenter>,
@@ -168,26 +233,8 @@ impl Requests {
             &asked,
         );
 
-        let action = |id: &str, title: &str| {
-            UNNotificationAction::actionWithIdentifier_title_options(
-                &NSString::from_str(id),
-                &NSString::from_str(title),
-                UNNotificationActionOptions::empty(),
-            )
-        };
-        let actions = NSArray::from_retained_slice(&[
-            action(DONE, &words.done),
-            action(LATER, &format!("{} {}", words.snooze, words.minutes)),
-            action(HOUR, &format!("{} {}", words.snooze, words.hour)),
-        ]);
-        let category =
-            UNNotificationCategory::categoryWithIdentifier_actions_intentIdentifiers_options(
-                &NSString::from_str(CATEGORY),
-                &actions,
-                &NSArray::new(),
-                UNNotificationCategoryOptions::empty(),
-            );
-        centre.setNotificationCategories(&NSSet::from_retained_slice(&[category]));
+        WORDS.lock().unwrap_or_else(PoisonError::into_inner).0 = Some(words.clone());
+        categorise(&centre);
 
         Ok(Self { centre })
     }

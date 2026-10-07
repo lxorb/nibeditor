@@ -2133,4 +2133,15 @@ export const vi: Dictionary = {
   'that picture could not be opened': 'không mở được ảnh đó',
   'the camera could not be opened': 'không mở được máy ảnh',
   'that picture is too big': 'ảnh đó quá lớn',
+  // Chats: notifications
+  Mute: 'Tắt tiếng',
+  Unmute: 'Bật tiếng',
+  Reply: 'Trả lời',
+  'New message': 'Tin nhắn mới',
+  'My keywords': 'Từ khóa của tôi',
+  Previews: 'Xem trước',
+  Sound: 'Âm thanh',
+  Weekdays: 'Ngày thường',
+  Starts: 'Bắt đầu',
+  Ends: 'Kết thúc',
 }

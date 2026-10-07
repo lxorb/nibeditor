@@ -2150,4 +2150,15 @@ export const ur: Dictionary = {
   'that picture could not be opened': 'وہ تصویر کھل نہیں سکی',
   'the camera could not be opened': 'کیمرا کھل نہیں سکا',
   'that picture is too big': 'وہ تصویر بہت بڑی ہے',
+  // Chats: notifications
+  Mute: 'خاموش کریں',
+  Unmute: 'آواز کھولیں',
+  Reply: 'جواب دیں',
+  'New message': 'نیا پیغام',
+  'My keywords': 'میرے کلیدی الفاظ',
+  Previews: 'پیش منظر',
+  Sound: 'آواز',
+  Weekdays: 'کام کے دن',
+  Starts: 'شروع',
+  Ends: 'اختتام',
 }

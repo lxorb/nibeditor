@@ -2206,4 +2206,15 @@ export const es: Dictionary = {
   'that picture could not be opened': 'no se pudo abrir esa imagen',
   'the camera could not be opened': 'no se pudo abrir la cámara',
   'that picture is too big': 'esa imagen es demasiado grande',
+  // Chats: notifications
+  Mute: 'Silenciar',
+  Unmute: 'Activar sonido',
+  Reply: 'Responder',
+  'New message': 'Mensaje nuevo',
+  'My keywords': 'Mis palabras clave',
+  Previews: 'Vistas previas',
+  Sound: 'Sonido',
+  Weekdays: 'Días laborables',
+  Starts: 'Empieza',
+  Ends: 'Termina',
 }

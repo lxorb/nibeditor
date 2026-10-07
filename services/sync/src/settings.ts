@@ -7,6 +7,7 @@ import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
 import { REMIND_BEFORE } from './push/reminders'
+import { isHours, isKeywords, LONGEST_KEYWORD, MOST_KEYWORDS } from '@nib/chats/notify'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
@@ -241,6 +242,21 @@ const KNOWN: Record<string, Check> = {
   hardBreaks: switched('hardBreaks'),
   linkFormat: wordOf('linkFormat', LINK_FORMATS),
   properties: wordOf('properties', PROPERTIES_MODES),
+  // What pings for every chat at once (docs/chats.md 4.11): the words that call for the
+  // reader as their name does, the hours pings are let through, and whether a
+  // notification shows the words and makes a sound. On the account, so every device
+  // holds back the same pings; the checks are @nib/chats/notify's, which the decision
+  // reads them by.
+  chatKeywords: (value) =>
+    isKeywords(value)
+      ? null
+      : `chatKeywords holds at most ${MOST_KEYWORDS} words of at most ${LONGEST_KEYWORD} characters`,
+  chatHours: (value) =>
+    value === null || isHours(value)
+      ? null
+      : 'chatHours must be days of the week and two minutes of the day, or null',
+  chatPreviews: switched('chatPreviews'),
+  chatSound: switched('chatSound'),
 }
 
 /** How much of any of this an account may hold.

@@ -14,6 +14,7 @@ import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './paper'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { hasTray, residency } from './reminders/residency.svelte'
+import { chatsGroups } from './chats-settings'
 import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
@@ -607,6 +608,12 @@ export function preferences(view?: EditorView): Pane[] {
         // The automatic reminder, and the tray or the alarms that keep reminders ringing;
         // never the glasses' plugin, which rings nothing.
         ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
+
+        // What pings for every chat, where a chat can ping at all: a desktop and the
+        // browser, never a phone, whose push is off (docs/chats.md decision 7.4). None in
+        // the glasses' plugin, whose twin of the module has no chats; see
+        // chats-settings.even.ts.
+        ...(isMobile ? [] : chatsGroups()),
 
         // Which shell a new terminal opens, how large its type is and whether its lines
         // come back after a restart: this machine's, like the release channel below,

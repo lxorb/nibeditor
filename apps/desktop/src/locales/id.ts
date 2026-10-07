@@ -2145,4 +2145,15 @@ export const id: Dictionary = {
   'that picture could not be opened': 'gambar itu tidak bisa dibuka',
   'the camera could not be opened': 'kamera tidak bisa dibuka',
   'that picture is too big': 'gambar itu terlalu besar',
+  // Chats: notifications
+  Mute: 'Bisukan',
+  Unmute: 'Bunyikan',
+  Reply: 'Balas',
+  'New message': 'Pesan baru',
+  'My keywords': 'Kata kunci saya',
+  Previews: 'Pratinjau',
+  Sound: 'Suara',
+  Weekdays: 'Hari kerja',
+  Starts: 'Mulai',
+  Ends: 'Selesai',
 }

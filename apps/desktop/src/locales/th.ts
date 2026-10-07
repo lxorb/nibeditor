@@ -2114,4 +2114,15 @@ export const th: Dictionary = {
   'that picture could not be opened': 'เปิดรูปนั้นไม่ได้',
   'the camera could not be opened': 'เปิดกล้องไม่ได้',
   'that picture is too big': 'รูปนั้นใหญ่เกินไป',
+  // Chats: notifications
+  Mute: 'ปิดเสียง',
+  Unmute: 'เปิดเสียง',
+  Reply: 'ตอบกลับ',
+  'New message': 'ข้อความใหม่',
+  'My keywords': 'คำสำคัญของฉัน',
+  Previews: 'ตัวอย่าง',
+  Sound: 'เสียง',
+  Weekdays: 'วันทำงาน',
+  Starts: 'เริ่ม',
+  Ends: 'สิ้นสุด',
 }

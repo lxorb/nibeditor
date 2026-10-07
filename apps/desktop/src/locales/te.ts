@@ -2161,4 +2161,15 @@ export const te: Dictionary = {
   'that picture could not be opened': 'ఆ చిత్రాన్ని తెరవలేకపోయాం',
   'the camera could not be opened': 'కెమెరాను తెరవలేకపోయాం',
   'that picture is too big': 'ఆ చిత్రం చాలా పెద్దది',
+  // Chats: notifications
+  Mute: 'మ్యూట్ చేయి',
+  Unmute: 'అన్‌మ్యూట్ చేయి',
+  Reply: 'ప్రత్యుత్తరం',
+  'New message': 'కొత్త సందేశం',
+  'My keywords': 'నా కీవర్డ్‌లు',
+  Previews: 'ప్రివ్యూలు',
+  Sound: 'శబ్దం',
+  Weekdays: 'పని దినాలు',
+  Starts: 'ప్రారంభం',
+  Ends: 'ముగింపు',
 }

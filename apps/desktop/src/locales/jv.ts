@@ -2137,4 +2137,15 @@ export const jv: Dictionary = {
   'that picture could not be opened': 'gambar kuwi ora bisa dibukak',
   'the camera could not be opened': 'kamera ora bisa dibukak',
   'that picture is too big': 'gambar kuwi kegedhen',
+  // Chats: notifications
+  Mute: 'Bisokake',
+  Unmute: 'Uripake swara',
+  Reply: 'Wangsuli',
+  'New message': 'Pesen anyar',
+  'My keywords': 'Tembung kunciku',
+  Previews: 'Pratinjau',
+  Sound: 'Swara',
+  Weekdays: 'Dina kerja',
+  Starts: 'Wiwit',
+  Ends: 'Rampung',
 }

@@ -2191,4 +2191,15 @@ export const fil: Dictionary = {
   'that picture could not be opened': 'hindi mabuksan ang larawang iyon',
   'the camera could not be opened': 'hindi mabuksan ang camera',
   'that picture is too big': 'masyadong malaki ang larawang iyon',
+  // Chats: notifications
+  Mute: 'I-mute',
+  Unmute: 'I-unmute',
+  Reply: 'Sumagot',
+  'New message': 'Bagong mensahe',
+  'My keywords': 'Aking mga keyword',
+  Previews: 'Mga preview',
+  Sound: 'Tunog',
+  Weekdays: 'Mga araw ng trabaho',
+  Starts: 'Magsisimula',
+  Ends: 'Matatapos',
 }

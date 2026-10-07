@@ -56,12 +56,6 @@ export function show(one: Reminder, opened: (press: Pressed) => void) {
   })
 }
 
-/** Asks the browser, once, whether the page may show a notification at all. */
-export function askToShow() {
-  if (isDesktop || typeof Notification === 'undefined') return
-  if (Notification.permission === 'default') void Notification.requestPermission()
-}
-
 /** The presses waiting for the page: the crate's on a desktop, the activity's on a
  *  phone. Each is handed over once. */
 export async function taken(): Promise<Pressed[]> {

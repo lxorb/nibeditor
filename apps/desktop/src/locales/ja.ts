@@ -2140,4 +2140,15 @@ export const ja: Dictionary = {
   'that picture could not be opened': 'その画像を開けませんでした',
   'the camera could not be opened': 'カメラを開けませんでした',
   'that picture is too big': 'その画像は大きすぎます',
+  // Chats: notifications
+  Mute: 'ミュート',
+  Unmute: 'ミュート解除',
+  Reply: '返信',
+  'New message': '新着メッセージ',
+  'My keywords': 'マイキーワード',
+  Previews: 'プレビュー',
+  Sound: 'サウンド',
+  Weekdays: '平日',
+  Starts: '開始',
+  Ends: '終了',
 }

@@ -2189,4 +2189,15 @@ export const ptBR: Dictionary = {
   'that picture could not be opened': 'não foi possível abrir a imagem',
   'the camera could not be opened': 'não foi possível abrir a câmera',
   'that picture is too big': 'a imagem é grande demais',
+  // Chats: notifications
+  Mute: 'Silenciar',
+  Unmute: 'Reativar som',
+  Reply: 'Responder',
+  'New message': 'Nova mensagem',
+  'My keywords': 'Minhas palavras-chave',
+  Previews: 'Prévias',
+  Sound: 'Som',
+  Weekdays: 'Dias úteis',
+  Starts: 'Começa',
+  Ends: 'Termina',
 }

@@ -2126,4 +2126,15 @@ export const ko: Dictionary = {
   'that picture could not be opened': '그 사진을 열 수 없습니다',
   'the camera could not be opened': '카메라를 열 수 없습니다',
   'that picture is too big': '그 사진이 너무 큽니다',
+  // Chats: notifications
+  Mute: '알림 끄기',
+  Unmute: '알림 켜기',
+  Reply: '답장',
+  'New message': '새 메시지',
+  'My keywords': '내 키워드',
+  Previews: '미리보기',
+  Sound: '소리',
+  Weekdays: '평일',
+  Starts: '시작',
+  Ends: '종료',
 }

@@ -2155,4 +2155,15 @@ export const ps: Dictionary = {
   'that picture could not be opened': 'هغه انځور پرانیستل نه شو',
   'the camera could not be opened': 'کمره پرانیستل نه شوه',
   'that picture is too big': 'هغه انځور ډېر لوی دی',
+  // Chats: notifications
+  Mute: 'غلی کول',
+  Unmute: 'غږ خلاصول',
+  Reply: 'ځواب',
+  'New message': 'نوی پیغام',
+  'My keywords': 'زما کلیدي کلمې',
+  Previews: 'مخکتنې',
+  Sound: 'غږ',
+  Weekdays: 'کاري ورځې',
+  Starts: 'پیل',
+  Ends: 'پای',
 }

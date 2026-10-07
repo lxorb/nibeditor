@@ -2158,4 +2158,15 @@ export const pa: Dictionary = {
   'that picture could not be opened': 'ਉਹ ਤਸਵੀਰ ਖੁੱਲ੍ਹ ਨਹੀਂ ਸਕੀ',
   'the camera could not be opened': 'ਕੈਮਰਾ ਖੁੱਲ੍ਹ ਨਹੀਂ ਸਕਿਆ',
   'that picture is too big': 'ਉਹ ਤਸਵੀਰ ਬਹੁਤ ਵੱਡੀ ਹੈ',
+  // Chats: notifications
+  Mute: 'ਮਿਊਟ ਕਰੋ',
+  Unmute: 'ਅਨਮਿਊਟ ਕਰੋ',
+  Reply: 'ਜਵਾਬ ਦਿਓ',
+  'New message': 'ਨਵਾਂ ਸੁਨੇਹਾ',
+  'My keywords': 'ਮੇਰੇ ਕੀਵਰਡ',
+  Previews: 'ਪੂਰਵਦਰਸ਼ਨ',
+  Sound: 'ਅਵਾਜ਼',
+  Weekdays: 'ਕੰਮ ਦੇ ਦਿਨ',
+  Starts: 'ਸ਼ੁਰੂ',
+  Ends: 'ਅੰਤ',
 }

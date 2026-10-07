@@ -2163,4 +2163,15 @@ export const gsw: Dictionary = {
   'that picture could not be opened': 'das Bild het nöd chöne göffnet wärde',
   'the camera could not be opened': 'd Kamera het nöd chöne göffnet wärde',
   'that picture is too big': 'das Bild isch z gross',
+  // Chats: notifications
+  Mute: 'Stummschalte',
+  Unmute: 'Stummschaltig ufhebe',
+  Reply: 'Antworte',
+  'New message': 'Neui Nachricht',
+  'My keywords': 'Mini Stichwörter',
+  Previews: 'Vorschau',
+  Sound: 'Ton',
+  Weekdays: 'Wärchtigs',
+  Starts: 'Fangt aa',
+  Ends: 'Hört uf',
 }

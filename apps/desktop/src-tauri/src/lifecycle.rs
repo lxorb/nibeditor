@@ -105,6 +105,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             // And the next launch, where the engine is being switched; see
             // engine_switch.rs.
             crate::engine_switch::on_leaving();
+            // And no notice left on the screen to answer into a nib that has gone; see
+            // notices.rs.
+            crate::notices::clear_all(app);
         }
 
         RunEvent::WindowEvent {
