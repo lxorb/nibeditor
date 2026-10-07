@@ -347,7 +347,9 @@ depends on the file's.
 - **Finding chats.** The Chats panel lists the pointers in the spaces the device holds,
   joined by chat id with `GET /v2/chats` (counts, last message, read place), which answers
   every chat of every space the account reaches. A chat the account lists with no pointer on
-  this device yet is shown once its space has synced.
+  this device yet asks the space's sync for a pass and is looked for again until it comes;
+  a pointer that arrives for a chat the list does not hold yet (made on another device,
+  nobody has posted in it) asks the account for the list again, since no poke says so.
 - **Moving and copying.** Move to space moves the pointer and re-homes the chat,
   `PATCH /v2/chats/:id {space}` by a writer of both spaces, so its history goes with it and
   its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
