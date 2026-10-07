@@ -12,6 +12,7 @@
       "ignoreDependencies": ["vite"]
     },
     "packages/bases": {},
+    "packages/chats": {},
     "packages/editor": {},
     "packages/glasses": {},
     "packages/markdown": {},
