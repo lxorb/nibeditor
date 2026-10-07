@@ -76,6 +76,11 @@ export const PATH_LIMIT = 400
  *  (docs/chats.md 4.1). It travels here so that a chat made on a device still on sync
  *  v1 reaches every device of the space. The chat itself is its `ChatLog`'s, never
  *  this file's, and a copy of the file names the same chat to nobody new. */
+/** The kinds of sync v2's tree a v1 app never meets: a file is bytes, and a `.term`
+ *  is a name `NOTE_PATH` refuses, so v1 carries neither. */
+const HIDDEN_FROM_V1: ReadonlySet<string> = new Set(['file', 'term'])
+const V1_HIDDEN = "('file', 'term')"
+
 const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat)$/i
 
 /** Paths are relative, forward-slashed and named like a note. Nothing escapes
@@ -425,10 +430,12 @@ notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context
   const asked = Math.floor(Number(context.req.query('since') ?? 0))
   const since = Number.isFinite(asked) && asked > 0 ? asked : 0
 
-  // Never a file of sync v2's tree: a v1 app reads every row here as a note whose words
-  // it fetches, and a file's bytes are a blob.
+  // Only what v1 carries: a v1 app reads every row here as a note whose words it fetches
+  // and keeps. Never a file of sync v2's tree, whose bytes are a blob, nor an online
+  // terminal, whose name v1's routes refuse: a v1 app kept one nowhere it lists, read it
+  // as a file deleted on its own disk, and deleted it on the account (V1_HIDDEN).
   const { results } = await context.env.DB.prepare(
-    `select * from notes where space_id = ? and seq > ? and kind != 'file'
+    `select * from notes where space_id = ? and seq > ? and kind not in ${V1_HIDDEN}
       order by seq limit 1000`,
   )
     .bind(space.id, since)
@@ -515,8 +522,9 @@ async function reachedNote(
 ): Promise<{ note: Note; space: Reached; only: boolean } | null> {
   const note = await noteById(env, noteId)
 
-  // A file of sync v2's tree is a blob by hash, never words to read or write here.
-  if (!note || note.kind === 'file') return null
+  // A file of sync v2's tree is a blob by hash, and an online terminal is never v1's:
+  // neither is words to read, write or delete here.
+  if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
 
   const space = await reachedSpace(env, who, note.space_id)
   if (space) return { note, space, only: false }

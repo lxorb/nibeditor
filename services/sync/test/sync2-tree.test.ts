@@ -412,6 +412,22 @@ describe('tree operations', () => {
     expect(v1.json.notes.map((one) => one.id)).not.toContain('pic')
     expect((await call(env, '/v1/notes/pic', { token })).status).toBe(404)
   })
+
+  test('keep an online terminal out of what a v1 app reads', async () => {
+    // v1 never carries a `.term` (its routes refuse the name), so a v1 app that met one
+    // in its feed kept it nowhere it lists, read it as a file deleted on its own disk,
+    // and deleted it on the account: every terminal of the account, on every device,
+    // the moment one device still on v1 - the glasses' plugin is v1 for good - passed.
+    const result = await one(
+      op('create', { id: 't', kind: 'term', parent: null, name: 'Build.term' }),
+    )
+    expect(result).toMatchObject({ ok: true })
+
+    const v1 = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
+    expect(v1.json.notes.map((note) => note.id)).not.toContain('t')
+    expect((await call(env, '/v1/notes/t', { method: 'DELETE', token })).status).toBe(404)
+    expect(row('t').deleted).toBe(0)
+  })
 })
 
 describe('the feed', () => {
