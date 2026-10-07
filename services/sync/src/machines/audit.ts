@@ -35,6 +35,11 @@ export type EventKind =
   | 'reboot'
   /** The machine moved to another host (4.15). */
   | 'host'
+  /** A server made for a machine that is always on, and where (4.15). */
+  | 'server'
+
+/** Where a Hetzner server is made, nearest Zurich first (4.15). */
+export type Place = 'nbg1' | 'fsn1'
 
 /** What an event may say about itself. */
 export type Detail =
@@ -58,6 +63,7 @@ export type Detail =
   | 'silent'
   | 'cloudflare'
   | 'hetzner'
+  | Place
   | Failure
   | number
   | null

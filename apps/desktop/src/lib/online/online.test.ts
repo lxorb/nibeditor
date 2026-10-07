@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { terminalMark } from '../terminal/naming'
-import { onlineOf } from './calls'
+import { cityOf, onlineOf } from './calls'
 import { ownSession } from './own'
 import { isMadeName, isOnlineTab, isTermTarget, termName } from './path'
 import { resumeCommand } from './resume'
@@ -61,6 +61,7 @@ describe("the account's answer about the machine", () => {
   test('with the server under it and its disk', () => {
     const server = {
       type: 'cx43',
+      location: 'fsn1',
       cores: 8,
       memoryGb: 16,
       diskGb: 160,
@@ -84,6 +85,18 @@ describe("the account's answer about the machine", () => {
       machine: { ...month.machine, host: 'hetzner', server: { ...server, price: null } },
     })?.machine
     expect(unpriced?.server?.price).toBeNull()
+    // A service from before it said where.
+    const unplaced = onlineOf({
+      ...month,
+      machine: { ...month.machine, host: 'hetzner', server: { ...server, location: undefined } },
+    })?.machine
+    expect(unplaced?.server?.location).toBeNull()
+  })
+
+  test('says where a server is by its city', () => {
+    expect(cityOf('nbg1')).toBe('Nuremberg')
+    expect(cityOf('fsn1')).toBe('Falkenstein')
+    expect(cityOf('xyz9')).toBe('xyz9')
   })
 
   test('with no machine yet', () => {

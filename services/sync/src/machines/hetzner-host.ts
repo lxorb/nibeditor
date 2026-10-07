@@ -16,6 +16,7 @@
 import type { Env } from '../types'
 import type { MachineHost } from '@nib/online'
 import type { Refusal } from '@nib/online/wire'
+import { audit, type Place } from './audit'
 import { bundleSha } from './bundle'
 import { cloudInit, sshKeyOf } from './cloudinit'
 import { Hetzner, HetznerError, type ServerType } from './hetzner'
@@ -24,7 +25,7 @@ import { type Access, Tunnels } from './tunnel'
 /** The server type, and where it is made, nearest Zurich first: Nuremberg answered a
  *  connection in 16.6 ms from ETH Zurich and Falkenstein in 18.4 ms (2026-10-06). */
 const SERVER_TYPE = 'cx43'
-const LOCATIONS = ['nbg1', 'fsn1']
+const LOCATIONS: readonly Place[] = ['nbg1', 'fsn1']
 
 /** The label every Hetzner resource of a machine carries. */
 const LABEL = 'nib-machine'
@@ -238,15 +239,18 @@ export class HetznerHost implements MachineHost {
           firewall,
         })
         const ip = location === first ? ipv4 : (await setup.hetzner.ipv4(location)).monthly
+        // Where it went, in the audit as well: Nuremberg can have none to give (2026-10-06).
+        const place = LOCATIONS.find((one) => one === made.location) ?? location
         await this.record(id, {
           server_id: made.id,
           server_status: made.status,
-          region: made.location || location,
+          region: place,
           size: SERVER_TYPE,
           spec: JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk }),
           price_month: Math.round((priceIn(type, location) + ip) * 100) / 100,
           price_currency: currency,
         })
+        await audit(this.env, id, 'server', { detail: place })
         return
       } catch (error) {
         if (!(error instanceof HetznerError) || !UNAVAILABLE.has(error.code)) throw error

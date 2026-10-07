@@ -52,6 +52,14 @@ function host(given: Setup | null = setup()): HetznerHost {
 const row = () =>
   env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
 
+/** The servers the audit says were made, by where. */
+const made = () =>
+  (
+    env.db
+      .prepare("select detail from machine_events where machine = ? and kind = 'server'")
+      .all(ID) as { detail: string }[]
+  ).map((one) => one.detail)
+
 beforeEach(async () => {
   env = testEnv()
   cloud = new Cloud()
@@ -122,6 +130,7 @@ describe('a Hetzner machine', () => {
       price_month: 14.27,
       price_currency: 'EUR',
     })
+    expect(made()).toEqual(['nbg1'])
   })
 
   test('a start asked again finds what is there and makes nothing twice', async () => {
@@ -136,6 +145,7 @@ describe('a Hetzner machine', () => {
     expect(cloud.firewalls).toHaveLength(1)
     expect(cloud.asked.filter((one) => one.startsWith('POST'))).toEqual([])
     expect(costs).toHaveLength(1)
+    expect(made()).toEqual(['nbg1'])
   })
 
   test('a start that died after the tunnel finishes the job without a second tunnel', async () => {
@@ -163,6 +173,7 @@ describe('a Hetzner machine', () => {
     await host().start(ID, 'machine', BOOT)
     expect(cloud.servers.map((one) => one.location)).toEqual(['fsn1'])
     expect(row().region).toBe('fsn1')
+    expect(made()).toEqual(['fsn1'])
 
     // And a type Hetzner says is not to be had in Nuremberg is not asked for there.
     cloud.servers.length = 0

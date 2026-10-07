@@ -18,10 +18,13 @@ import { account } from '../account.svelte'
 import { ApiError, request } from '../api'
 import { isNumber, isRecord, isString } from '../stored'
 
-/** The server under a machine that is always on (4.15): its type, cores, memory and disk
- *  in GB, and what it costs a month, as Hetzner said them when it was made. */
+/** The server under a machine that is always on (4.15): its type, where it is, its cores,
+ *  memory and disk in GB, and what it costs a month, as Hetzner said them when it was
+ *  made. */
 interface ServerInfo {
   type: string
+  /** Hetzner's name for the place, `nbg1`; null from a service that does not say. */
+  location: string | null
   cores: number
   memoryGb: number
   diskGb: number
@@ -72,6 +75,7 @@ function serverOf(value: unknown): ServerInfo | null {
   if (!isNumber(cores) || !isNumber(memoryGb) || !isNumber(diskGb)) return null
   return {
     type: value.type,
+    location: isString(value.location) && value.location ? value.location : null,
     cores,
     memoryGb,
     diskGb,
@@ -97,6 +101,22 @@ function machineOf(value: unknown): MachineInfo | null {
     server: serverOf(value.server),
     disk: diskOf(value.disk),
   }
+}
+
+/** Hetzner's places by the city they are in, as Hetzner names them; a place not here is
+ *  its own name. */
+const CITIES: Record<string, string> = {
+  nbg1: 'Nuremberg',
+  fsn1: 'Falkenstein',
+  hel1: 'Helsinki',
+  ash: 'Ashburn',
+  hil: 'Hillsboro',
+  sin: 'Singapore',
+}
+
+/** Where a server is, for Settings' line about it. */
+export function cityOf(location: string): string {
+  return CITIES[location] ?? location
 }
 
 /** The account's answer to `GET /v2/online/machine`, or null for one that does not read. */
