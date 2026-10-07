@@ -75,8 +75,7 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 
-/** A message in one of nib's chats, `nib://chat/<chat>/<message>`: nib's own, opened in
- *  the chat's tab at the message (docs/chats.md 4.13). */
+/** A message in a chat, opened at it (docs/chats.md 4.13). */
 const CHAT_LINK = /^nib:\/\/chat\//i
 
 /** A link the reader pressed, followed. What every surface hands its own event to. */

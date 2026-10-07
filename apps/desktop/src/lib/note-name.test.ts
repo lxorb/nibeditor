@@ -150,6 +150,10 @@ describe('the name a document is listed under', () => {
     expect(shownName('Page.webloc')).toBe('Page')
   })
 
+  test('drops a chat’s pointer, which the chat is named by', () => {
+    expect(shownName('Team.chat')).toBe('Team')
+  })
+
   /** A paper, a picture and anything else nib did not write are files from
    *  somewhere else with no title behind them, so the name is the file's own -
    *  which is what Obsidian shows and what Emil asked for on 2026-09-14. The mark

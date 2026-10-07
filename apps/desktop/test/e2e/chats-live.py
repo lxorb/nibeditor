@@ -124,7 +124,23 @@ OPEN = "async (path) => { const one = await window.nibApp.chats(); one.openChat(
 
 def open_chat(page: Page, label: str, name: str) -> dict[str, str]:
     """The chat, found by its pointer once that has synced here, and opened."""
-    found = wait(page, CHAT_PATH, f"[{label}] the chat's pointer", name, patience=SYNCED)
+    try:
+        found = wait(page, CHAT_PATH, f"[{label}] the chat's pointer", name, patience=SYNCED)
+    except SystemExit:
+        said = page.evaluate(
+            "async () => { const { chats } = await window.nibApp.chats();"
+            " const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : [];"
+            " return { list: chats.list.map((e) => [e.id, e.root, e.path, e.name]), ready: chats.ready,"
+            " tree: walk(window.nibApp.workspace.tree), spaces: window.nibApp.workspace.spaces.map((s) => s.root) } }"
+        )
+        say(f"[{label}] holds {json.dumps(said)}")
+        again = page.evaluate(
+            "async () => { const { chats } = await window.nibApp.chats(); await chats.lookAgain();"
+            " const one = chats.list.map((e) => [e.id, e.path]); await chats.reconnected();"
+            " return [one, chats.list.map((e) => [e.id, e.path]), window.nibApp.account.user?.email] }"
+        )
+        say(f"[{label}] looked again: {json.dumps(again)}")
+        raise
     page.evaluate(OPEN, found["path"])
     wait(page, "() => !!document.querySelector('.chat-tab .timeline, .chat-tab .waiting, .chat-tab .main')", f"[{label}] the chat's tab")
     return found  # type: ignore[no-any-return]
@@ -288,6 +304,15 @@ def main() -> int:
         # ── Lucile offline, then back ────────────────────────────────────
         open_chat(member, "Lucile", "Chat")
         came(member, has_row("could you look at the figures"), "[Lucile] the mention, in the chat")
+        member.bring_to_front()
+        took = came(
+            member,
+            "() => [...document.querySelectorAll('.chats .entry')].every((one) =>"
+            " !one.classList.contains('unread') && !one.querySelector('.badge'))",
+            "[Lucile] the chat read, once it is open in front",
+        )
+        if took is not None:
+            say(f"Lucile's panel showed the chat read after {took:.2f}s")
         member_context.set_offline(True)
         member.evaluate("() => window.dispatchEvent(new Event('offline'))")
         type_in(member, "Sent while offline")

@@ -21,7 +21,7 @@ import { CHAT_EXTENSION } from '@nib/chats'
 import { account } from '../account.svelte'
 import { hub } from '../sync2/hub.svelte'
 import { isMobile } from '../tauri'
-import { workspace } from '../workspace.svelte'
+import { type Entry, workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { chats } from './store.svelte'
 
@@ -46,7 +46,21 @@ function followed(op: FileOp): void {
   void chats.lookAgain()
 }
 
+/** The pointers in a file list. */
+function pointersIn(entry: Entry | null, out: string[] = []): string[] {
+  for (const child of entry?.children ?? []) {
+    if (child.is_dir) pointersIn(child, out)
+    else if (isPointer(child.path)) out.push(child.path)
+  }
+  return out
+}
+
 $effect.root(() => {
+  // A pointer the space's sync brought: its chat listed and placed.
+  $effect(() => {
+    const pointers = pointersIn(workspace.tree)
+    untrack(() => chats.pointersSeen(pointers))
+  })
   $effect(() => {
     // Whoever is signed in now, user or guest; the store stops the last one first.
     const who = account.user?.id ?? account.guest?.id ?? null

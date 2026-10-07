@@ -392,8 +392,7 @@
   $effect(() => {
     if (palette) void paletteDoor.ask()
   })
-  // Asked to open on words from elsewhere (a chat's Ctrl+F): open, and the palette
-  // takes them.
+  // Asked to open on words (a chat's Ctrl+F).
   $effect(() => {
     if (paletteWords.words !== null) palette = true
   })
@@ -569,7 +568,6 @@
               import('./lib/views/open'),
               import('./lib/workspace/write-file'),
             ]).then(([{ rows }, views, { writeFile }]) => ({ rows, ...views, writeFile })),
-          // The chats' store and their tabs, the same way: see test/e2e/chats-live.py.
           chats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no chats in the Even Realities plugin'))

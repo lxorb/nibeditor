@@ -360,9 +360,7 @@
     ]
   }
 
-  /** A chat in the space, made by the account and opened (docs/chats.md 4.13): offered
-   *  to somebody signed in to one, whose chats they are, and never in the glasses'
-   *  plugin, which carries none. */
+  /** A chat, for somebody signed in (docs/chats.md 4.13). */
   function newChat(): MenuEntry[] {
     if (__EVEN_PLUGIN__ || !account.accountToken) return []
     const run = () => void import('./chats/view/open').then(({ makeChat }) => makeChat())

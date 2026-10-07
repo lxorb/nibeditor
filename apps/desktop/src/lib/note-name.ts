@@ -9,7 +9,7 @@
  *  here, so a document is called one thing wherever it is listed. */
 
 /** The endings a document is known by rather than named after: markdown's four, a
- *  canvas, a page note, and the two a website is written as.
+ *  canvas, a page note, the two a website is written as, and a chat's pointer.
  *
  *  These are the kinds nib writes and titles from the inside, so the ending is the
  *  file's own business: the reader named the document, the app chose what to keep it
@@ -24,7 +24,7 @@
  *
  *  Either way the file on disk keeps every character of its name, so a vault opened
  *  next door reads exactly what this wrote. Only what is shown changes. */
-const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc)$/i
+const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat)$/i
 
 /** A document's name as everything that lists one shows it.
  *

@@ -14,7 +14,7 @@
   import { type NoteGraph, without } from './graph'
   import { neighbourhood } from './graph-walk'
   import { account } from './account.svelte'
-  import { chatLinks, graphSurface } from './surfaces.svelte'
+  import { graphSurface, held } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -48,6 +48,11 @@
   const root = $derived(workspace.activeSpace?.root ?? null)
 
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
+
+  /** The messages that link the note (docs/chats.md 4.13), fetched with the panel. */
+  const chatLinks = held(() =>
+    __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatLinks.svelte'),
+  )
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
 
   /** Whether the card has asked for the files the notes embed.

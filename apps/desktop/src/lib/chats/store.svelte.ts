@@ -104,6 +104,8 @@ class ChatsStore implements Chats {
   private readonly views = new Map<string, { view: View; holds: number }>()
   private places = new Map<string, Place>()
   private readonly unread = new Map<string, number>()
+  /** The read place each chat's unread count was worked out from. */
+  private readonly countedAt = new Map<string, number>()
   private readonly drafts = new Map<string, string>()
   private readonly people = new Map<string, Promise<ChatMember[]>>()
   private readonly listeners = new Set<() => void>()
@@ -178,6 +180,7 @@ class ChatsStore implements Chats {
     this.account = null
     this.places = new Map()
     this.unread.clear()
+    this.countedAt.clear()
     this.drafts.clear()
     this.people.clear()
     this.list = []
@@ -245,6 +248,10 @@ class ChatsStore implements Chats {
         if (root) spaces.set(row.space, root)
       }
       const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me
+      // Read since the count was made, here or on another device: counted again, and
+      // nothing unread meanwhile where the read place is the head.
+      if (this.countedAt.get(chat.id) !== row.readSeq) this.countLater(chat.id)
+      const counted = row.readSeq >= row.lastSeq ? 0 : (this.unread.get(chat.id) ?? 0)
       entries.push({
         id: chat.id,
         space: row.space,
@@ -257,7 +264,7 @@ class ChatsStore implements Chats {
         lastAt: row.lastAt,
         lastBy: row.lastBy,
         readSeq: row.readSeq,
-        unread: Math.max(this.unread.get(chat.id) ?? 0, behind && chat.seq < row.lastSeq ? 1 : 0),
+        unread: Math.max(counted, behind && chat.seq < row.lastSeq ? 1 : 0),
         mentions: row.mentions,
         notify: row.notify,
         mutedUntil: row.mutedUntil,
@@ -267,13 +274,13 @@ class ChatsStore implements Chats {
     entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
     this.list = entries
     for (const listener of this.listeners) listener()
-    if (entries.some((one) => !one.path && one.root)) this.awaitPointers()
+    if (entries.some((one) => !one.path)) this.awaitPointers()
     else this.lookWait = LOOK_FIRST
   }
 
-  /** A chat the account lists in a space this device holds, whose pointer is not here
-   *  yet: it was just made on another device, and its pointer is on its way through the
-   *  space's sync. The sync is asked for a pass now rather than at its idle interval,
+  /** A chat the account lists whose pointer is not on this device yet: it was just made
+   *  on another device, or its space has only just been shared here, and the pointer is
+   *  on its way through the space's sync. The sync is asked for a pass now rather than at its idle interval,
    *  and the pointers are looked for again, sooner at first, until it has come. */
   private awaitPointers(): void {
     if (this.looking) return
@@ -307,6 +314,7 @@ class ChatsStore implements Chats {
       const row = engine?.chats.get(chat)?.row
       if (!engine || !me || !row || !this.cache) return
       const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+      this.countedAt.set(chat, row.readSeq)
       if (this.unread.get(chat) === count) return
       this.unread.set(chat, count)
       this.drawList()
@@ -315,9 +323,20 @@ class ChatsStore implements Chats {
 
   private async lookForPointers(): Promise<void> {
     const found = await findPointers().catch(() => null)
-    if (!found || !this.engine) return
+    const engine = this.engine
+    if (!found || !engine) return
     this.places = found
+    // A pointer to a chat the account has not listed here yet: made on another device
+    // since the list was asked for, which no poke says until somebody posts in it.
+    if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
     this.drawList()
+  }
+
+  /** The pointers a space's file list holds now: one this device has not placed - come
+   *  by the sync, a move, a copy - is looked for, and its chat listed. */
+  pointersSeen(paths: readonly string[]): void {
+    const placed = new Set([...this.places.values()].map((one) => one.path))
+    if (this.engine && paths.some((path) => !placed.has(path))) void this.lookForPointers()
   }
 
   // -------------------------------------------------------------------------

@@ -82,6 +82,8 @@
     flex: 1;
     display: flex;
     align-items: center;
+    /* A second row of cards sits under the first rather than at the pane's foot. */
+    align-content: center;
     justify-content: center;
     gap: var(--space-3);
     flex-wrap: wrap;
