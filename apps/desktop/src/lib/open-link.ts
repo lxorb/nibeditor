@@ -75,13 +75,11 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 
-/** A message in a chat, opened at it (docs/chats.md 4.13). */
-const CHAT_LINK = /^nib:\/\/chat\//i
-
 /** A link the reader pressed, followed. What every surface hands its own event to. */
 export function followHref(href: string, press: LinkPress): void {
   const ask = tabAsk(press, true)
-  if (CHAT_LINK.test(href)) {
+  // A chat's message (docs/chats.md 4.13).
+  if (/^nib:\/\/chat\//i.test(href)) {
     const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
     void opening?.then(({ openChatLink }) => openChatLink(href, howFor(ask)))
     return

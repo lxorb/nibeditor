@@ -64,7 +64,7 @@
         {/if}
       {:else if row.key === 'nib'}
         <span class="nib-row-mark at">✦</span>
-        <span class="nib-row-label">@nib</span>
+        <span class="nib-row-label">@{row.key}</span>
       {:else}
         <span class="nib-row-mark at">@</span>
         <span class="nib-row-label">@{row.key}</span>

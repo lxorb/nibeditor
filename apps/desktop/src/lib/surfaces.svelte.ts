@@ -353,7 +353,7 @@ export const promptSheet = latched(() => import('./PromptSheet.svelte'))
  *  front of that fetches it and opens it as it lands; see App.svelte. */
 export const paletteDoor = latched(() => import('./Palette.svelte'))
 
-/** Words the palette opens on, from outside it: a chat's Ctrl+F (docs/chats.md 4.12). */
+/** Words the palette opens on: a chat's Ctrl+F. */
 export const paletteWords = $state<{ words: string | null }>({ words: null })
 
 /** The menu a right click or a long press opens, over whatever it was pressed on.

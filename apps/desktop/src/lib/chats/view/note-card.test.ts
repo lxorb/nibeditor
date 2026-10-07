@@ -29,7 +29,7 @@ describe('which note a message is about', () => {
   test('the first link to one, outside code, embeds and quotes', () => {
     expect(cardTarget('see [[Chapter 3#Figures|the figures]] and [[Plan]]')).toBe('Chapter 3')
     expect(cardTarget('`[[not]]` then ![[pic.png]] then [[Plan]]')).toBe('Plan')
-    expect(cardTarget('> quoted\n> — [[Source]]\n\nmine')).toBeNull()
+    expect(cardTarget('> quoted\n> - [[Source]]\n\nmine')).toBeNull()
     expect(cardTarget('```\n[[code]]\n```')).toBeNull()
     expect(cardTarget('no link')).toBeNull()
   })
