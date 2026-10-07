@@ -18,6 +18,7 @@ import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second
 import { devicesEnded } from './hub/devices'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
+import { startingVersion } from './sync2/rollout'
 import { deviceIn } from './versions'
 import type { Env, User, Variables, Whoever } from './types'
 
@@ -137,10 +138,14 @@ export async function accountFor(
   // back as a 500 on somebody's very first sign-in. The address is the account,
   // so the second insert is not a mistake to report; it is the same account,
   // already made.
+  //
+  // And it starts on whichever sync the service's switch says an account made now
+  // starts on (sync2/rollout.ts): a new account has no v1 history to carry over.
   const wrote = await env.DB.prepare(
-    'insert into users (id, email, created_at) values (?, ?, ?) on conflict(email) do nothing',
+    `insert into users (id, email, created_at, sync_version) values (?, ?, ?, ?)
+     on conflict(email) do nothing`,
   )
-    .bind(user.id, user.email, user.created_at)
+    .bind(user.id, user.email, user.created_at, await startingVersion(env))
     .run()
 
   // Whichever request wrote the row, this is the account: the id to carry on with

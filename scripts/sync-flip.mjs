@@ -1,12 +1,25 @@
 #!/usr/bin/env node
-/** One account moved to sync v2, or back, through the admin's route
- *  (`/v2/admin/sync-version`, services/sync/src/sync2/admin.ts).
+/** Accounts moved to sync v2, or back, through the admin's routes
+ *  (`/v2/admin/sync-version` and `/v2/admin/sync-rollout`, services/sync/src/sync2/admin.ts).
  *
- *  Usage:
+ *  Usage, one account:
  *
  *    node scripts/sync-flip.mjs status someone@example.com [--min 0.14.0]
  *    node scripts/sync-flip.mjs to2 someone@example.com --min 0.14.0 [--allow <id>]... [--dry]
  *    node scripts/sync-flip.mjs to1 someone@example.com [--min 0.14.0]
+ *
+ *  Everybody (services/sync/src/sync2/rollout.ts):
+ *
+ *    node scripts/sync-flip.mjs rollout                 the switch, the counts, the last moves
+ *    node scripts/sync-flip.mjs rollout off             nothing moves by itself
+ *    node scripts/sync-flip.mjs rollout new             new accounts start on v2
+ *    node scripts/sync-flip.mjs rollout all --min 0.13.1-573
+ *                                                       and v1 accounts move at a device's hello
+ *                                                       once every live device runs >= min
+ *    node scripts/sync-flip.mjs everyone-to1 [--dry]    every v2 account back to 1, switch off
+ *
+ *  Setting the switch moves nobody by itself, and setting it back moves nobody back:
+ *  `everyone-to1` is the way back for all.
  *
  *  `to2` is refused while a device of the account whose session is live runs an app
  *  older than `--min`, or a live session has no device behind it (an app from before
@@ -78,6 +91,33 @@ function when(at) {
   return at ? new Date(at).toISOString().slice(0, 16).replace('T', ' ') : 'never'
 }
 
+function showRollout(json) {
+  say(`rollout ${json.mode}${json.min ? ` (min ${json.min})` : ''}  since ${when(json.since)}`)
+  if (json.accounts) say(`  accounts: v1 ${json.accounts.v1}, v2 ${json.accounts.v2}`)
+  if (json.moved !== undefined)
+    say(`  ${json.dry ? 'would move' : 'moved'} ${json.moved} back to v1`)
+  for (const one of json.moves ?? []) {
+    say(
+      `  ${when(one.at)}  ${one.email}  ${one.from} -> ${one.to}  ${one.why}${one.min ? ` (min ${one.min})` : ''}`,
+    )
+  }
+}
+
+/** The switch for everybody: read, set, or every account back. */
+async function rollout(what, mode, flags, token) {
+  if (what === 'everyone-to1') {
+    return await ask('/v2/admin/sync-rollout/back', token, {
+      everyone: true,
+      ...(flags.dry ? { dry: true } : {}),
+    })
+  }
+  if (!mode) return await ask('/v2/admin/sync-rollout', token)
+  return await ask('/v2/admin/sync-rollout', token, {
+    mode,
+    ...(flags.min ? { min: flags.min } : {}),
+  })
+}
+
 function show(answer, what) {
   const { json } = answer
   if (json.email) say(`${json.email}: sync v${json.version} (min ${json.min})`)
@@ -119,9 +159,16 @@ async function main() {
     else words.push(one)
   }
   const [what, email] = words
-  if (!['status', 'to1', 'to2'].includes(what) || !email) {
+  // `rollout`'s second word is a mode, not an address.
+  const mode = email
+  const everybody = what === 'rollout' || what === 'everyone-to1'
+  if (
+    !(everybody || (['status', 'to1', 'to2'].includes(what) && email)) ||
+    (what === 'rollout' && mode && !['off', 'new', 'all'].includes(mode))
+  ) {
     throw new Error(
-      'usage: sync-flip.mjs status|to1|to2 <email> [--min X] [--allow id]... [--dry] [--sign-in admin@email]',
+      'usage: sync-flip.mjs status|to1|to2 <email> [--min X] [--allow id]... [--dry] [--sign-in admin@email]\n' +
+        '       sync-flip.mjs rollout [off|new|all] [--min X] | everyone-to1 [--dry]',
     )
   }
 
@@ -130,6 +177,13 @@ async function main() {
   if (!token) throw new Error('NIB_TOKEN is not set (or pass --sign-in)')
 
   try {
+    if (everybody) {
+      const answer = await rollout(what, mode, flags, token)
+      if (answer.status !== 200) throw new Error(answer.json.error ?? String(answer.status))
+      showRollout(answer.json)
+      return
+    }
+
     let answer
     if (what === 'status') {
       const query = new URLSearchParams({ email })

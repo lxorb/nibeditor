@@ -173,6 +173,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['machines', 'delete from machines where user_id = ?1'],
   // Whether it was here; its face is two rows of `blobs`, above.
   ['presence', 'delete from presence where user_id = ?1'],
+  // When it moved between sync v1 and v2; see sync2/gate.ts.
+  ['sync_flips', 'delete from sync_flips where user_id = ?1'],
   ['users', 'delete from users where id = ?1'],
 ]
 

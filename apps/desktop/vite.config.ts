@@ -9,6 +9,26 @@ import { CSP } from './src/csp'
 
 const host = process.env.TAURI_DEV_HOST
 
+/** The version this build is, as the installer and the updater know it.
+ *
+ *  A build of main is given its number on the command line (`tauri build --config
+ *  '{"version":"0.13.1-573"}'`, scripts/build-version.sh), and the Tauri CLI hands that
+ *  to this build as `TAURI_CONFIG`. The file only says the last release, so every build
+ *  of main said `0.13.0` to the account's hub, and the account could not tell a build
+ *  with the sync v2 fixes from one without (services/sync/src/sync2/gate.ts). A build
+ *  with no number given, the web's included, says the last release: never more than
+ *  it is. */
+function appVersion(): string {
+  try {
+    const given: unknown = JSON.parse(process.env.TAURI_CONFIG ?? '{}')
+    const version = (given as { version?: unknown } | null)?.version
+    if (typeof version === 'string' && version.trim()) return version.trim()
+  } catch {
+    // Not JSON, or a path: the file's version is the one to say.
+  }
+  return tauri.version
+}
+
 /** Which code this is, in one line, baked in where a screenshot can read it.
  *
  *  A build installed on a phone has no other way of saying which build it is,
@@ -74,9 +94,9 @@ export default defineConfig(({ command, mode }) => ({
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',
-    // The version the installer carries, for the one place the app says it: under
-    // the name on the space chooser, where Obsidian's vault chooser says its own.
-    __APP_VERSION__: JSON.stringify(tauri.version),
+    // The version the installer carries: under the name on the space chooser, where
+    // Obsidian's vault chooser says its own, and in the hub's hello (sync2/hub.svelte.ts).
+    __APP_VERSION__: JSON.stringify(appVersion()),
     // Whether Settings > AI offers Claude Code. On unless the build is made with
     // `NIB_CLAUDE_CODE=off`, which the crate reads too; see env.d.ts and docs/ai.md.
     __CLAUDE_CODE__: JSON.stringify(

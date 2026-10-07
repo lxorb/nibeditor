@@ -3,7 +3,7 @@
  *  src/sync2/admin.ts. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { atLeastVersion } from '../src/sync2/admin'
+import { atLeastVersion } from '../src/sync2/gate'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 interface Blocker {

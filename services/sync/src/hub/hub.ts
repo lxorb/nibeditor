@@ -20,6 +20,7 @@ import { isWho } from '@nib/chats/wire'
 import { note } from '../failed'
 import { FENCED, SIGN_IN_TO_DO_THAT } from '../refused'
 import { mayAcquire } from '../limits'
+import { rollOn } from '../sync2/rollout'
 import type { Env } from '../types'
 import { collectChunks, putState } from './bucket'
 import { markSeen, register } from './devices'
@@ -257,6 +258,9 @@ export class AccountHub implements DurableObject {
     const now = { ...me, hello: true, name: known.name, keyed: known.key !== null }
     attach(socket, now)
     await this.present(me.who)
+    // The moment a device says which app it runs is when its account may have become
+    // safe to move to sync v2; see sync2/rollout.ts. Never in the way of the hello.
+    await rollOn(this.env, me.who).catch((error: unknown) => note('sync rollout', error, null))
 
     if (known.key) {
       say(socket, { t: 'key', wrapped: known.key.wrapped, generation: known.key.generation })

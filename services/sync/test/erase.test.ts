@@ -19,6 +19,7 @@ const HOLDS_NOTHING: Record<string, string> = {
   oauth_clients: 'a client registered itself; its row names a program, never a person',
   leftovers: 'what is still to go, written by the deletion itself and emptied after it',
   online_service: "the online terminal service's own switches, about no account",
+  sync_rollout: "sync v2's switch for the whole service, about no account",
 }
 
 /** The columns that say whose a row is or what it is inside. A table with one of

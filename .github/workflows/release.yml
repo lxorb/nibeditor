@@ -224,8 +224,12 @@ jobs:
             apps/desktop/src-tauri/cef
           key: chromium-${{ matrix.target }}
 
-      # The interface the engine build embeds, as the installers do.
+      # The interface the engine build embeds, as the installers do, and with the number
+      # they carry: the Tauri CLI hands `--config` to the frontend build as TAURI_CONFIG,
+      # and this build has no CLI to do it (apps/desktop/vite.config.ts, `appVersion`).
       - name: The frontend
+        env:
+          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
         run: |
           pnpm install --frozen-lockfile
           pnpm --filter @nib/desktop build

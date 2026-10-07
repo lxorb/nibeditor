@@ -1749,7 +1749,7 @@ browser (a Web Locks leader) rather than one per tab.
 
 - `sync_version` per account: 1 (v1), 2 (v2). Flipped for Emil's account first, then
   accounts whose devices all run a v2 app (the hub knows every device's `app` version),
-  then everybody. The client reads it at start; a change takes effect at the next launch.
+  then everybody (see "Rollout to everybody" below). The client reads it at start; a change takes effect at the next launch.
 - `web_sync` per account, separately, desktop only, after `sync_version = 2`.
 - **Rollback**: setting 1 again makes the client rebuild `nib:mirrors` from the store (each
   note's id, version and the hash of its confirmed text) before the v1 loop starts, so v1
@@ -1765,6 +1765,43 @@ browser (a Web Locks leader) rather than one per tab.
   v1 version (the account keeps one per five minutes, so there is no ancestor) and a name
   made on both. v1 never meets a `.term` (its feed and routes hide them), since a v1 app
   that did deleted it.
+
+### Rollout to everybody
+
+One switch for the whole service, a row in `sync_rollout` set through
+`/v2/admin/sync-rollout` (`services/sync/src/sync2/rollout.ts`), shipped at `off`:
+
+- `off`: nothing moves by itself; only the per-account route above moves an account.
+- `new`: an account made from now on starts at `sync_version = 2` (`accountFor` in
+  `auth.ts`). Its first app reads 2 from `/v1/me` before its first pass.
+- `all`: that, and an account on v1 moves by itself when one of its devices says hello to
+  the hub with its app version, judged by the same gate as the admin's route
+  (`sync2/gate.ts`) against the switch's `min`: every live device at `min` or newer. A
+  live session with no device behind it (the Even plugin, an app from before the hub)
+  never says what it runs, so the rollout lets it pass rather than hold its account for
+  good; v1's routes stay for it. A hello is the natural moment: it is when the facts the
+  gate reads change, and a device reads the version at its launch anyway. There is no
+  nightly sweep: an account none of whose devices connects has nothing to move for.
+
+Every move, by the route, a hello or the way back, is a row in `sync_flips` (who, when,
+from, to, why, min), listed by `node scripts/sync-flip.mjs rollout`. An account a person
+moved back after the mode was last set stays on v1 until the mode is set again.
+
+The way back for all is `/v2/admin/sync-rollout/back` (`sync-flip.mjs everyone-to1`): one
+transaction turns the switch `off` and sets every v2 account to 1, so no hello moves one
+forward again in between. Each app walks back at its next launch, when `/v1/me` says 1,
+as for one account. Setting the switch to `off` or `new` by itself moves nobody back.
+
+The version a device says is `__APP_VERSION__`: the number its build was given
+(`TAURI_CONFIG`, scripts/build-version.sh), or the last release where none was. Builds
+before that fix said the last release (`0.13.0`) whatever they were, so they hold their
+account back until they update. Phones count their builds of main on their own workflow,
+behind the desktop's (the build of 9d52d7b05 is desktop `0.13.1-573`, phone `0.13.1-488`),
+and the web says the last release; both only ever say less than they are, so a `min` that
+names a desktop build holds them back until the next release, never lets one through
+early. A release with the fixes (0.13.1 or 0.14.0) clears every one of them, and is also
+what the stable channel installs: until it is out, an app downloaded from the stable
+channel onto an account that is already on v2 runs the engine without the fixes.
 
 ### Older apps in the wild
 
