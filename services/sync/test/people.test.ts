@@ -350,6 +350,33 @@ describe('the routes', () => {
     expect(await read(member)).toBe('active')
   })
 
+  test('a change is told to every chat open in the spaces the person is in', async () => {
+    const memberId = await idOf(member)
+    const asked: { chat: string; ask: string | null; who: string | null }[] = []
+    env.CHATS = {
+      idFromName: (name: string) => name,
+      get: (chat: string) => ({
+        fetch: (request: Request) => {
+          asked.push({
+            chat,
+            ask: request.headers.get('x-nib-chat-ask'),
+            who: request.headers.get('x-nib-profile'),
+          })
+          return Promise.resolve(new Response(null, { status: 204 }))
+        },
+      }),
+    } as unknown as DurableObjectNamespace
+    env.db
+      .prepare(
+        `insert into chat_sockets (chat_id, space_id, who, opened_at)
+         values ('c_open', ?, 'user:someone', 1), ('c_elsewhere', 'another-space', 'user:x', 1)`,
+      )
+      .run(space)
+
+    await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { pronouns: 'he' } })
+    expect(asked).toEqual([{ chat: 'c_open', ask: 'profile', who: `user:${memberId}` }])
+  })
+
   test('a guest reaches none of it', async () => {
     const link = await call<PeopleReply>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',

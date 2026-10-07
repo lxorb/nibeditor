@@ -745,7 +745,9 @@ switcher's row of a shared space, and a chat's rows once there are chats.
   as gone by the service once it passes, so nothing runs at the minute it ends; and
   the zone of the device last connected, so a card says the time where they are
   when it is an hour or more from the reader's. `PUT /v2/me/profile`, answered with
-  the profile as it stands; `/v1/me` carries it to every device.
+  the profile as it stands; `/v1/me` carries it to every device, and every chat open
+  in the spaces the person is in hears `profile {who}` and asks for them again
+  (`people/told.ts`).
 - **A name per space**: `PUT /v2/spaces/:id/nick` from the space menu's Nickname,
   `GET /v2/spaces/:id/nicks` for everybody's in a space, and `/v1/me`'s `nicks`
   for the account's own.

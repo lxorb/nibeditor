@@ -25,6 +25,7 @@ import {
   type ProfileRow,
 } from './profile'
 import { MOST_PEOPLE, seenAmong } from './seen'
+import { profileTold } from './told'
 
 export const people = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -102,6 +103,7 @@ people.put('/me/profile', async (context) => {
     await context.env.DB.prepare(`update users set ${sets.join(', ')} where id = ?`)
       .bind(...values, user.id)
       .run()
+    await profileTold(context.env, user)
   }
 
   return context.json({ profile: await own(context.env, user) })
@@ -136,6 +138,7 @@ people.put('/me/avatar', async (context) => {
     .bind(JSON.stringify({ s: small, l: large }), user.id)
     .run()
   await giveBack(context.env, user.id, avatarIn(before?.avatar ?? null), [small, large])
+  await profileTold(context.env, user)
 
   return context.json({ profile: await own(context.env, user) })
 })
@@ -146,6 +149,7 @@ people.delete('/me/avatar', async (context) => {
   const before = await ownProfile(context.env, user.id)
   await context.env.DB.prepare('update users set avatar = null where id = ?').bind(user.id).run()
   await giveBack(context.env, user.id, avatarIn(before?.avatar ?? null), [])
+  await profileTold(context.env, user)
   return context.json({ profile: await own(context.env, user) })
 })
 
@@ -186,6 +190,7 @@ people.put('/spaces/:id/nick', atLeast('read'), async (context) => {
       .bind(space.id, user.id)
       .run()
   }
+  await profileTold(context.env, user, space.id)
   return context.json({ nick: nick || null })
 })
 
