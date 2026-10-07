@@ -97,6 +97,7 @@ function kindOf(value: string, name: string): FeedItem['kind'] {
     case 'pages':
     case 'url':
     case 'term':
+    case 'chat':
     case 'file':
       return value
     default:

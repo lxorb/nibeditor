@@ -54,10 +54,11 @@ export const DOCUMENT_KINDS: ReadonlySet<string> = new Set([
   'pages',
   'url',
   'term',
+  'chat',
 ])
 
-/** The same five, as SQL, for the statements that ask. */
-export const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term')"
+/** The same six, as SQL, for the statements that ask. */
+export const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term', 'chat')"
 
 /** What an entry is, read off its name: sync-core's rule, which the app reads by too. */
 export { kindOfName }

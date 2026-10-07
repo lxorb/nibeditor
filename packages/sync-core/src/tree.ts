@@ -81,13 +81,16 @@ export function nameKey(name: string): string {
 
 /** What an entry is, read off its name: the one rule the app and the account both
  *  read a name by, so a file made on one is the same kind on the other. Anything that
- *  is not one of the document kinds, or an online terminal's `.term`, is a file. */
+ *  is not one of the document kinds, an online terminal's `.term` or a chat's `.chat`,
+ *  is a file. A chat is found by the id its pointer's words name, never by this entry
+ *  (docs/chats.md 4.2): the kind only says what the file is. */
 export function kindOfName(name: string): Exclude<EntryKind, 'folder'> {
   if (/\.(md|markdown|mdown|mkd)$/i.test(name)) return 'note'
   if (/\.canvas$/i.test(name)) return 'canvas'
   if (/\.pages$/i.test(name)) return 'pages'
   if (/\.(url|webloc)$/i.test(name)) return 'url'
   if (/\.term$/i.test(name)) return 'term'
+  if (/\.chat$/i.test(name)) return 'chat'
   return 'file'
 }
 

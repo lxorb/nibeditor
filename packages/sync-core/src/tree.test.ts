@@ -465,3 +465,81 @@ describe('an online terminal in the tree', () => {
     expect(create(state, 'n', 'build.term')).toMatchObject({ name: 'build 2.term' })
   })
 })
+
+describe('a chat in the tree', () => {
+  function chat(state: TreeState, id: string, name: string, parent: string | null = null) {
+    return applyOp(
+      state,
+      { op: opId(), t: 'create', id, kind: 'chat', parent, name, seen: state.cursor },
+      OWNER,
+    )
+  }
+
+  test('is named by its pointer file, read off the extension', () => {
+    expect(kindOfName('thesis.chat')).toBe('chat')
+    expect(kindOfName('THESIS.CHAT')).toBe('chat')
+    expect(kindOfName('thesis.chat.md')).toBe('note')
+    expect(kindOfName('chat')).toBe('file')
+  })
+
+  test('a second Chat is numbered before its extension, as the Ctrl+T card names it', () => {
+    const state = treeState()
+    chat(state, 'a', 'Chat.chat')
+    expect(chat(state, 'b', 'Chat.chat')).toMatchObject({ ok: true, name: 'Chat 2.chat' })
+    expect(state.entries.get('b')?.kind).toBe('chat')
+  })
+
+  test('renamed, it keeps its id and its kind', () => {
+    const state = treeState()
+    chat(state, 'c', 'Chat.chat')
+    applyOp(
+      state,
+      { op: opId(), t: 'rename', id: 'c', name: 'thesis.chat', seen: state.cursor },
+      OWNER,
+    )
+    expect(state.entries.get('c')).toMatchObject({
+      name: 'thesis.chat',
+      kind: 'chat',
+      deleted: false,
+    })
+  })
+
+  test('moved into another folder, and beside a chat of its name, it steps aside', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Thesis')
+    chat(state, 'there', 'thesis.chat', 'f')
+    chat(state, 'c', 'thesis.chat')
+    applyOp(state, { op: opId(), t: 'move', id: 'c', parent: 'f', seen: state.cursor }, OWNER)
+    expect(state.entries.get('c')).toMatchObject({
+      parent: 'f',
+      name: 'thesis 2.chat',
+      kind: 'chat',
+    })
+  })
+
+  test('trashed and restored, and trashed with its folder', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Thesis')
+    chat(state, 'c', 'thesis.chat', 'f')
+    applyOp(state, { op: opId(), t: 'delete', id: 'c', seen: state.cursor }, OWNER)
+    expect(live(state, 'c')).toBe(false)
+    applyOp(state, { op: opId(), t: 'restore', id: 'c', seen: state.cursor }, OWNER)
+    expect(live(state, 'c')).toBe(true)
+
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor }, OWNER)
+    expect(live(state, 'c')).toBe(false)
+    applyOp(state, { op: opId(), t: 'restore', id: 'f', seen: state.cursor }, OWNER)
+    expect(live(state, 'c')).toBe(true)
+  })
+
+  test('a reader can neither make nor move one', () => {
+    const state = treeState()
+    expect(
+      applyOp(
+        state,
+        { op: opId(), t: 'create', id: 'c', kind: 'chat', parent: null, name: 'x.chat', seen: 0 },
+        { role: 'read' },
+      ),
+    ).toMatchObject({ refused: 'role' })
+  })
+})

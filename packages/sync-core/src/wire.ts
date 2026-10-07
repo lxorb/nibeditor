@@ -17,9 +17,10 @@
 
 /** What an entry in a space's tree is. A note, a canvas and a page note are
  *  documents; a `.url` is a small last-writer-wins file, and so is a `.term`, an
- *  online terminal naming its session (docs/online-terminal.md 4.5); `file` is any
+ *  online terminal naming its session (docs/online-terminal.md 4.5), and a `.chat`,
+ *  the pointer naming a chat the account made (docs/chats.md 4.2); `file` is any
  *  other file, a blob by hash; `folder` holds the others. */
-export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'file' | 'folder'
+export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'chat' | 'file' | 'folder'
 
 export const ENTRY_KINDS: readonly EntryKind[] = [
   'note',
@@ -27,6 +28,7 @@ export const ENTRY_KINDS: readonly EntryKind[] = [
   'pages',
   'url',
   'term',
+  'chat',
   'file',
   'folder',
 ]

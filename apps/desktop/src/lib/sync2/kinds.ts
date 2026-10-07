@@ -9,7 +9,8 @@
  *  last-writer-wins: nobody writes it but the device whose tab follows the page, so two
  *  versions of it never ask anybody anything, and the later arrival stands. An online
  *  terminal's `.term` is the same shape for the same reason: three fields written once,
- *  never by hand (docs/online-terminal.md 4.5).
+ *  never by hand (docs/online-terminal.md 4.5), and so is a chat's `.chat` pointer
+ *  (docs/chats.md 4.2).
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
@@ -36,6 +37,7 @@ export function shapeOf(kind: string): Shape | null {
       return 'plane'
     case 'url':
     case 'term':
+    case 'chat':
       return 'link'
     default:
       return null
