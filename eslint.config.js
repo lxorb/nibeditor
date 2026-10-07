@@ -150,6 +150,29 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // The Worker's `fetch` throws "Illegal invocation" when it is called as a method of
+    // anything but the global scope: kept as a default or a property and called as
+    // `this.fetcher(...)`, it took every Hetzner start down in production (2026-10-06,
+    // 7b62c5477). Stored, it is wrapped, `(input, init) => fetch(input, init)`, which
+    // calls it plainly wherever it is called from.
+    files: ['services/sync/src/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...[
+          'AssignmentPattern > Identifier.right',
+          'AssignmentExpression > Identifier.right',
+          'Property > Identifier.value',
+          'PropertyDefinition > Identifier.value',
+        ].map((where) => ({
+          selector: `${where}[name='fetch']`,
+          message: 'Wrap a stored fetch: (input, init) => fetch(input, init).',
+        })),
+      ],
+    },
+  },
+  {
     files: ['**/*.test.ts', '**/test/**/*.ts'],
     rules: {
       // A stub standing in for a promise-returning API is written `async`

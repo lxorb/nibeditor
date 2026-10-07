@@ -63,7 +63,7 @@ export async function push(
   target: Target,
   message: Message,
   now: number,
-  send: typeof fetch = fetch,
+  send: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<Delivery> {
   const data = {
     kind: message.kind,

@@ -188,7 +188,11 @@ interface Due {
 
 /** Every reminder due by now, pushed once to every device of its account. Answers how
  *  many were sent. */
-export async function sendDue(env: Env, now: number, send: typeof fetch = fetch): Promise<number> {
+export async function sendDue(
+  env: Env,
+  now: number,
+  send: typeof fetch = (input, init) => fetch(input, init),
+): Promise<number> {
   await env.DB.prepare('delete from push_reminders where at < ?')
     .bind(now - KEPT_FOR)
     .run()
