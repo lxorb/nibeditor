@@ -176,8 +176,11 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
     if (messageIn(sql, post.message) || heldFor(sql, post.message, asker.who) === 'other') {
       return 'invalid'
     }
-    if (post.parent !== undefined && !messageIn(sql, post.parent)) return 'gone'
-    if (post.quote !== undefined && !messageIn(sql, post.quote)) return 'gone'
+    // A deleted message takes no more replies or quotes: a device that saw it go keeps
+    // no row for it, and a reply under a row it does not have is a reply it cannot place.
+    for (const named of [post.parent, post.quote]) {
+      if (named !== undefined && !(messageIn(sql, named)?.deleted === false)) return 'gone'
+    }
     if (meta.slowmode > 0 && asker.role !== 'owner' && event.kind === 'post') {
       if (!paced(sql, asker.who, 'slow', 1, meta.slowmode * 1000, at)) return 'slow'
     }
