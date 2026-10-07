@@ -2094,7 +2094,7 @@ export const fa: Dictionary = {
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',
   Resume: 'ادامه',
-  'This terminal is not shared with you': 'این ترمینال با شما به اشتراک گذاشته نشده است',
+  'This terminal is gone': 'این ترمینال دیگر وجود ندارد',
   'Online terminals are not open to your account yet':
     'ترمینال‌های آنلاین هنوز برای حساب شما باز نشده‌اند',
   'This month’s online hours are used': 'ساعت‌های آنلاین این ماه تمام شده است',

@@ -139,7 +139,7 @@ describe('the refusal lines', () => {
       'This month’s online hours are used',
       'Online terminals are paused for now',
       'This machine is stopped',
-      'This terminal is not shared with you',
+      'This terminal is gone',
       'Sign in to use an online terminal',
     ])
     expect(refusalWords('off')).toBe(refusalWords('budget'))
@@ -149,5 +149,23 @@ describe('the refusal lines', () => {
     const { arrival } = arriving()
     arrival.fail('')
     expect(arrival.failure).toBe('Could not reach your machine')
+  })
+})
+
+describe('a terminal whose session is gone', () => {
+  test('ends the wait for good, with no Try again, and a new wait forgets it', () => {
+    const { clock, arrival } = arriving()
+    arrival.fail(refusalWords('gone') ?? '', true)
+    expect(arrival.status).toEqual({ failed: 'This terminal is gone', gone: true })
+
+    // Nothing after it waits again or gives up a second time.
+    arrival.heard()
+    clock.pass(BOOT_PATIENCE)
+    expect(arrival.status).toEqual({ failed: 'This terminal is gone', gone: true })
+
+    arrival.begin()
+    expect(arrival.status).toEqual({ waiting: 'connecting' })
+    arrival.fail('Could not reach your machine')
+    expect(arrival.status).toEqual({ failed: 'Could not reach your machine' })
   })
 })

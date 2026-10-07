@@ -2092,7 +2092,7 @@ export const bn: Dictionary = {
   'Start online machine': 'অনলাইন মেশিন চালু করুন',
   'Stop online machine': 'অনলাইন মেশিন বন্ধ করুন',
   Resume: 'আবার শুরু করুন',
-  'This terminal is not shared with you': 'এই টার্মিনাল আপনার সাথে শেয়ার করা হয়নি',
+  'This terminal is gone': 'এই টার্মিনালটি আর নেই',
   'Online terminals are not open to your account yet':
     'অনলাইন টার্মিনাল এখনও আপনার অ্যাকাউন্টের জন্য খোলা হয়নি',
   'This month’s online hours are used': 'এই মাসের অনলাইন ঘণ্টা শেষ',

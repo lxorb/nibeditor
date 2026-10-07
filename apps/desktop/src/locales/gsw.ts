@@ -2104,7 +2104,7 @@ export const gsw: Dictionary = {
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',
   Resume: 'Wiitermache',
-  'This terminal is not shared with you': 'Das Terminal isch nöd mit dir teilt',
+  'This terminal is gone': 'Das Terminal gits nüme',
   'Online terminals are not open to your account yet':
     'Online-Terminals sind für dis Konto no nöd freigschaltet',
   'This month’s online hours are used': 'D’Online-Stunde vo dem Monet sind ufbrucht',

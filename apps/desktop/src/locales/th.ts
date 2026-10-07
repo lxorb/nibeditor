@@ -2055,7 +2055,7 @@ export const th: Dictionary = {
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',
   Resume: 'ทำต่อ',
-  'This terminal is not shared with you': 'เทอร์มินัลนี้ไม่ได้แชร์กับคุณ',
+  'This terminal is gone': 'เทอร์มินัลนี้ไม่มีอยู่แล้ว',
   'Online terminals are not open to your account yet':
     'เทอร์มินัลออนไลน์ยังไม่เปิดให้บัญชีของคุณใช้',
   'This month’s online hours are used': 'ชั่วโมงออนไลน์ของเดือนนี้หมดแล้ว',

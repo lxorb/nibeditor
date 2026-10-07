@@ -2070,7 +2070,7 @@ export const am: Dictionary = {
   'Start online machine': 'የመስመር ላይ ማሽን አስጀምር',
   'Stop online machine': 'የመስመር ላይ ማሽን አቁም',
   Resume: 'ቀጥል',
-  'This terminal is not shared with you': 'ይህ ተርሚናል ከእርስዎ ጋር አልተጋራም',
+  'This terminal is gone': 'ይህ ተርሚናል ከእንግዲህ የለም',
   'Online terminals are not open to your account yet': 'የመስመር ላይ ተርሚናሎች ለመለያዎ ገና አልተከፈቱም',
   'This month’s online hours are used': 'የዚህ ወር የመስመር ላይ ሰዓቶች አልቀዋል',
   'Online terminals are paused for now': 'የመስመር ላይ ተርሚናሎች ለጊዜው ቆመዋል',

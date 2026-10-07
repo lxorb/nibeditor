@@ -2175,7 +2175,7 @@ export const ru: Dictionary = {
   'Start online machine': 'Запустить онлайн-машину',
   'Stop online machine': 'Остановить онлайн-машину',
   Resume: 'Продолжить',
-  'This terminal is not shared with you': 'Этот терминал вам не доступен',
+  'This terminal is gone': 'Этого терминала больше нет',
   'Online terminals are not open to your account yet':
     'Онлайн-терминалы пока не открыты для вашего аккаунта',
   'This month’s online hours are used': 'Онлайн-часы этого месяца исчерпаны',

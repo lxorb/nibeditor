@@ -2115,7 +2115,7 @@ export const ml: Dictionary = {
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',
-  'This terminal is not shared with you': 'ഈ ടെർമിനൽ നിങ്ങളുമായി പങ്കിട്ടിട്ടില്ല',
+  'This terminal is gone': 'ഈ ടെർമിനൽ ഇനി നിലവിലില്ല',
   'Online terminals are not open to your account yet':
     'ഓൺലൈൻ ടെർമിനലുകൾ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിന് തുറന്നിട്ടില്ല',
   'This month’s online hours are used': 'ഈ മാസത്തെ ഓൺലൈൻ മണിക്കൂറുകൾ തീർന്നു',

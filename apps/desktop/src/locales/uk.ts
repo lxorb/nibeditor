@@ -2169,7 +2169,7 @@ export const uk: Dictionary = {
   'Start online machine': 'Запустити онлайн-машину',
   'Stop online machine': 'Зупинити онлайн-машину',
   Resume: 'Продовжити',
-  'This terminal is not shared with you': 'Цей термінал вам не надано',
+  'This terminal is gone': 'Цього термінала більше немає',
   'Online terminals are not open to your account yet':
     'Онлайн-термінали ще не відкриті для вашого облікового запису',
   'This month’s online hours are used': 'Онлайн-години цього місяця вичерпано',

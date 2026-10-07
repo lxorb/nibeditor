@@ -1,7 +1,8 @@
 <script lang="ts">
   /** Over an online terminal until its session's screen is there: one line saying what
    *  it waits on, with the line the app draws for work worth waiting on under it - or,
-   *  once the wait ended without the screen, why, and Try again, which Enter is too.
+   *  once the wait ended without the screen, why, and Try again, which Enter is too - or,
+   *  for a session that is no more, New online terminal in its place.
    *  Centred over the pane, over the cached screen dimmed where there is one, and never
    *  an empty pane in its place. See arrival.svelte.ts.
    *
@@ -15,12 +16,15 @@
   const { status, onretry }: { status: Status; onretry: () => void } = $props()
 
   const failed = $derived('failed' in status)
+  const gone = $derived('gone' in status)
 </script>
 
 <div class="status" class:failed role="status">
   <p>{statusLine(status)}</p>
   {#if failed}
-    <button type="button" class="nib-button" onclick={onretry}>{t('Try again')}</button>
+    <button type="button" class="nib-button" onclick={onretry}
+      >{gone ? t('New online terminal') : t('Try again')}</button
+    >
   {:else}
     <div class="sweep"><Sweep /></div>
   {/if}

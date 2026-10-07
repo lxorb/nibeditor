@@ -2081,7 +2081,7 @@ export const ja: Dictionary = {
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',
   Resume: '再開',
-  'This terminal is not shared with you': 'このターミナルはあなたと共有されていません',
+  'This terminal is gone': 'このターミナルはもうありません',
   'Online terminals are not open to your account yet':
     'オンラインターミナルはまだあなたのアカウントで利用できません',
   'This month’s online hours are used': '今月のオンライン時間を使い切りました',

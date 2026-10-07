@@ -18,7 +18,8 @@
    *  and again while its socket is down; and after its machine's restart stopped an agent,
    *  the same quiet bar offers Resume. See docs/online-terminal.md 4.7 and 4.10. Until its
    *  session's screen is there, a line over it says what it waits on, or why it stopped,
-   *  with Try again; see online/OnlineStatus.svelte. */
+   *  with Try again, or New online terminal where its session is gone; see
+   *  online/OnlineStatus.svelte. */
 
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -71,7 +72,7 @@
   <div class="place" class:is-waiting={!session.live} bind:this={place}></div>
 
   {#if session.status}
-    <OnlineStatus status={session.status} onretry={() => session.reconnect()} />
+    <OnlineStatus status={session.status} onretry={() => session.retry()} />
   {/if}
 
   {#if session.offline}

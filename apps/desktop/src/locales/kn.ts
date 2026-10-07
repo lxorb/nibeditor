@@ -2112,7 +2112,7 @@ export const kn: Dictionary = {
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',
   Resume: 'ಮುಂದುವರಿಸಿ',
-  'This terminal is not shared with you': 'ಈ ಟರ್ಮಿನಲ್ ಅನ್ನು ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಿಕೊಂಡಿಲ್ಲ',
+  'This terminal is gone': 'ಈ ಟರ್ಮಿನಲ್ ಇನ್ನು ಇಲ್ಲ',
   'Online terminals are not open to your account yet':
     'ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್‌ಗಳು ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಗೆ ತೆರೆದಿಲ್ಲ',
   'This month’s online hours are used': 'ಈ ತಿಂಗಳ ಆನ್‌ಲೈನ್ ಗಂಟೆಗಳು ಮುಗಿದಿವೆ',

@@ -2091,7 +2091,7 @@ export const hi: Dictionary = {
   'Start online machine': 'ऑनलाइन मशीन शुरू करें',
   'Stop online machine': 'ऑनलाइन मशीन रोकें',
   Resume: 'फिर से शुरू करें',
-  'This terminal is not shared with you': 'यह टर्मिनल आपके साथ साझा नहीं है',
+  'This terminal is gone': 'यह टर्मिनल अब नहीं है',
   'Online terminals are not open to your account yet':
     'ऑनलाइन टर्मिनल अभी आपके खाते के लिए खुले नहीं हैं',
   'This month’s online hours are used': 'इस महीने के ऑनलाइन घंटे खत्म हो गए हैं',

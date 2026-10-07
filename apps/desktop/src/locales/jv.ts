@@ -2078,7 +2078,7 @@ export const jv: Dictionary = {
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',
   Resume: 'Terusake',
-  'This terminal is not shared with you': 'Terminal iki ora dienggo bareng karo sampeyan',
+  'This terminal is gone': 'Terminal iki wis ora ana',
   'Online terminals are not open to your account yet':
     'Terminal online durung dibukak kanggo akun sampeyan',
   'This month’s online hours are used': 'Jam online sasi iki wis entek',

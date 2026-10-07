@@ -216,7 +216,9 @@ export class OnlineSource implements Source {
       case 'refused': {
         if (frame.error === 'role') said({ typing: false })
         const words = refusalWords(frame.error)
-        if (words) said({ refused: words })
+        // The session is no more, and the link has stopped: only a new one answers.
+        if (words)
+          said(frame.error === 'gone' ? { refused: words, gone: true } : { refused: words })
         return
       }
       // A program on the machine asked for a browser: this computer's (4.13).

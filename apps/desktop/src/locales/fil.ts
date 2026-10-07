@@ -2132,7 +2132,7 @@ export const fil: Dictionary = {
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',
-  'This terminal is not shared with you': 'Hindi ibinahagi sa iyo ang terminal na ito',
+  'This terminal is gone': 'Wala na ang terminal na ito',
   'Online terminals are not open to your account yet':
     'Hindi pa bukas ang mga online na terminal sa iyong account',
   'This month’s online hours are used': 'Naubos na ang mga online na oras ngayong buwan',

@@ -102,3 +102,19 @@ test('silence for too long is a failure too', () => {
   flushSync()
   expect(line()).toBe('Could not reach your machine')
 })
+
+/** 2026-10-07: a tab whose session was gone - its machine replaced - retried silently
+ *  forever. It says so in one line, and offers the one thing that helps. */
+test('a session that is gone offers a new online terminal', () => {
+  const arrival = new Arrival({ after: () => () => undefined })
+  arrival.begin()
+  const renew = vi.fn()
+  shown(arrival, renew)
+  arrival.fail('This terminal is gone', true)
+  flushSync()
+  expect(line()).toBe('This terminal is gone')
+  expect(button()?.textContent).toBe('New online terminal')
+
+  button()?.click()
+  expect(renew).toHaveBeenCalledOnce()
+})

@@ -2123,7 +2123,7 @@ export const ta: Dictionary = {
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
   Resume: 'தொடர்',
-  'This terminal is not shared with you': 'இந்த முனையம் உங்களுடன் பகிரப்படவில்லை',
+  'This terminal is gone': 'இந்த முனையம் இப்போது இல்லை',
   'Online terminals are not open to your account yet':
     'ஆன்லைன் முனையங்கள் உங்கள் கணக்கிற்கு இன்னும் திறக்கப்படவில்லை',
   'This month’s online hours are used': 'இந்த மாதத்தின் ஆன்லைன் மணிநேரங்கள் தீர்ந்துவிட்டன',

@@ -46,8 +46,9 @@ export type Said =
   | { connected: boolean }
   /** Whether keys typed here reach the session. */
   | { typing: boolean }
-  /** The source cannot go on, and why, in words to show under the screen. */
-  | { refused: string }
+  /** The source cannot go on, and why, in words to show under the screen. `gone` is an
+   *  online terminal whose session is no more, which only a new one answers. */
+  | { refused: string; gone?: boolean }
   /** One line worth saying under the session's screen once it is drawn. */
   | { note: string }
 

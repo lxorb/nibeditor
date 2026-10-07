@@ -2099,7 +2099,7 @@ export const pa: Dictionary = {
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',
   Resume: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
-  'This terminal is not shared with you': 'ਇਹ ਟਰਮੀਨਲ ਤੁਹਾਡੇ ਨਾਲ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ',
+  'This terminal is gone': 'ਇਹ ਟਰਮੀਨਲ ਹੁਣ ਨਹੀਂ ਹੈ',
   'Online terminals are not open to your account yet':
     'ਔਨਲਾਈਨ ਟਰਮੀਨਲ ਅਜੇ ਤੁਹਾਡੇ ਖਾਤੇ ਲਈ ਖੁੱਲ੍ਹੇ ਨਹੀਂ ਹਨ',
   'This month’s online hours are used': 'ਇਸ ਮਹੀਨੇ ਦੇ ਔਨਲਾਈਨ ਘੰਟੇ ਖ਼ਤਮ ਹੋ ਗਏ ਹਨ',

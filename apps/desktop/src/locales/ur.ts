@@ -2091,7 +2091,7 @@ export const ur: Dictionary = {
   'Start online machine': 'آن لائن مشین شروع کریں',
   'Stop online machine': 'آن لائن مشین روکیں',
   Resume: 'دوبارہ شروع کریں',
-  'This terminal is not shared with you': 'یہ ٹرمینل آپ کے ساتھ شیئر نہیں کیا گیا',
+  'This terminal is gone': 'یہ ٹرمینل اب موجود نہیں',
   'Online terminals are not open to your account yet':
     'آن لائن ٹرمینل ابھی آپ کے اکاؤنٹ کے لیے کھلے نہیں ہیں',
   'This month’s online hours are used': 'اس مہینے کے آن لائن گھنٹے ختم ہو گئے ہیں',

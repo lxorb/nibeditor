@@ -2044,7 +2044,7 @@ export const yue: Dictionary = {
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',
-  'This terminal is not shared with you': '呢個終端機冇同你共用',
+  'This terminal is gone': '呢個終端機已經冇咗',
   'Online terminals are not open to your account yet': '網上終端機仲未開放俾你個帳戶',
   'This month’s online hours are used': '今個月嘅網上時數已經用晒',
   'Online terminals are paused for now': '網上終端機暫時停咗',

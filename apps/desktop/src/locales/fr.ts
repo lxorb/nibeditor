@@ -2155,7 +2155,7 @@ export const fr: Dictionary = {
   'Start online machine': 'Démarrer la machine en ligne',
   'Stop online machine': 'Arrêter la machine en ligne',
   Resume: 'Reprendre',
-  'This terminal is not shared with you': 'Ce terminal n’est pas partagé avec vous',
+  'This terminal is gone': 'Ce terminal n’existe plus',
   'Online terminals are not open to your account yet':
     'Les terminaux en ligne ne sont pas encore ouverts à votre compte',
   'This month’s online hours are used': 'Les heures en ligne de ce mois sont épuisées',

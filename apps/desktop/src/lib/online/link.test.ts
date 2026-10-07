@@ -172,6 +172,25 @@ describe('the socket to an online session', () => {
     expect(found.sockets).toHaveLength(2)
   })
 
+  /** 2026-10-07: a tab whose session was gone - its machine replaced - retried silently
+   *  forever, since the door's 404 reached the page as a drop. The door says it now. */
+  test('stops for good once its session is gone, and never says it dropped', async () => {
+    const found = fakeWorld()
+    const heard: Heard[] = []
+    const link = new Link('t1', found.world, (what) => heard.push(what), 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+    socket.events.heard(text({ t: 'refused', error: 'gone' }))
+    socket.events.closed(4404)
+    await settle()
+
+    expect(waiting(found)).toHaveLength(0)
+    expect(found.sockets).toHaveLength(1)
+    expect(heard.map((one) => one.t)).toEqual(['open', 'refused'])
+    expect(link.live).toBe(false)
+  })
+
   test('types, sizes, and nothing once closed', async () => {
     const found = fakeWorld()
     const link = new Link('t1', found.world, () => undefined, 80, 24)

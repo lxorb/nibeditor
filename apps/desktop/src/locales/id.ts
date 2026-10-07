@@ -2086,7 +2086,7 @@ export const id: Dictionary = {
   'Start online machine': 'Mulai mesin online',
   'Stop online machine': 'Hentikan mesin online',
   Resume: 'Lanjutkan',
-  'This terminal is not shared with you': 'Terminal ini tidak dibagikan dengan Anda',
+  'This terminal is gone': 'Terminal ini sudah tidak ada',
   'Online terminals are not open to your account yet':
     'Terminal online belum dibuka untuk akun Anda',
   'This month’s online hours are used': 'Jam online bulan ini sudah habis',

@@ -2122,7 +2122,7 @@ export const sw: Dictionary = {
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',
   Resume: 'Endelea',
-  'This terminal is not shared with you': 'Terminali hii haijashirikiwa nawe',
+  'This terminal is gone': 'Terminali hii haipo tena',
   'Online terminals are not open to your account yet':
     'Terminali za mtandaoni bado hazijafunguliwa kwa akaunti yako',
   'This month’s online hours are used': 'Saa za mtandaoni za mwezi huu zimekwisha',

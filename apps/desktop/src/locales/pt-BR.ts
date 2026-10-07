@@ -2130,7 +2130,7 @@ export const ptBR: Dictionary = {
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',
-  'This terminal is not shared with you': 'Este terminal não está compartilhado com você',
+  'This terminal is gone': 'Este terminal não existe mais',
   'Online terminals are not open to your account yet':
     'Os terminais online ainda não estão liberados para sua conta',
   'This month’s online hours are used': 'As horas online deste mês acabaram',

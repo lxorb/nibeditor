@@ -2044,7 +2044,7 @@ export const zhHans: Dictionary = {
   'Start online machine': '启动在线机器',
   'Stop online machine': '停止在线机器',
   Resume: '继续',
-  'This terminal is not shared with you': '此终端未与你共享',
+  'This terminal is gone': '此终端已不存在',
   'Online terminals are not open to your account yet': '在线终端尚未向你的账户开放',
   'This month’s online hours are used': '本月的在线时长已用完',
   'Online terminals are paused for now': '在线终端暂时暂停',

@@ -2078,7 +2078,7 @@ export const my: Dictionary = {
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',
   Resume: 'ဆက်လုပ်ရန်',
-  'This terminal is not shared with you': 'ဤတာမင်နယ်ကို သင်နှင့် မျှဝေထားခြင်း မရှိပါ',
+  'This terminal is gone': 'ဤတာမင်နယ် မရှိတော့ပါ',
   'Online terminals are not open to your account yet':
     'အွန်လိုင်း တာမင်နယ်များကို သင့်အကောင့်အတွက် မဖွင့်ရသေးပါ',
   'This month’s online hours are used': 'ဤလ၏ အွန်လိုင်း နာရီများ ကုန်သွားပါပြီ',

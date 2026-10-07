@@ -1,6 +1,6 @@
 /** An online terminal on its way to its session's screen: what it waits on, said over
- *  the screen while it does, or why it stopped, with Try again under it. See
- *  OnlineStatus.svelte.
+ *  the screen while it does, or why it stopped, with Try again under it - or New online
+ *  terminal, where the session is no more. See OnlineStatus.svelte.
  *
  *  Never an empty pane: from the moment the tab opens until the session's own screen is
  *  drawn there is a line saying what is happening - the socket connecting, the machine
@@ -26,8 +26,9 @@ export const BOOT_PATIENCE = 3 * 60_000
 /** What a terminal is waiting on. */
 type Waiting = 'connecting' | 'starting' | 'restoring'
 
-/** What is said over the screen. */
-export type Status = { waiting: Waiting } | { failed: string }
+/** What is said over the screen. A failure that is `gone` is a session that is no more,
+ *  which Try again cannot bring back: a new online terminal is offered instead. */
+export type Status = { waiting: Waiting } | { failed: string; gone?: true }
 
 interface Clock {
   /** Calls `run` after `ms`; answers what cancels it. */
@@ -64,6 +65,8 @@ function downWords(reason: DownReason | undefined): string {
 export class Arrival {
   /** Why the wait ended without the screen, in words; null while it goes on. */
   failure = $state<string | null>(null)
+  /** Whether it ended because the session is no more. */
+  gone = $state(false)
   /** Whether the socket is open. */
   private linked = $state(false)
   /** The machine's state, as the socket last said it. */
@@ -79,7 +82,8 @@ export class Arrival {
   constructor(private readonly clock: Clock = timers) {}
 
   get status(): Status {
-    if (this.failure !== null) return { failed: this.failure }
+    if (this.failure !== null)
+      return this.gone ? { failed: this.failure, gone: true } : { failed: this.failure }
     if (this.linked && this.state === 'starting') return { waiting: 'starting' }
     if (this.linked && this.booted) return { waiting: 'restoring' }
     return { waiting: 'connecting' }
@@ -88,6 +92,7 @@ export class Arrival {
   /** A new wait: the tab opening, Try again, Reconnect. */
   begin(): void {
     this.failure = null
+    this.gone = false
     this.linked = false
     this.state = null
     this.booted = false
@@ -121,13 +126,15 @@ export class Arrival {
     this.here = false
     this.booted = false
     this.failure = null
+    this.gone = false
     this.wait()
   }
 
-  /** The wait ends without the screen, and why. */
-  fail(words: string): void {
+  /** The wait ends without the screen, and why; `gone` where the session is no more. */
+  fail(words: string, gone = false): void {
     this.stop()
     this.failure = words || (refusalWords('other') ?? '')
+    this.gone = gone
   }
 
   /** Something came from the socket, which gives it `PATIENCE` again. */
@@ -141,6 +148,7 @@ export class Arrival {
     this.booted = false
     this.stop()
     this.failure = null
+    this.gone = false
   }
 
   /** The tab or its source is gone. */

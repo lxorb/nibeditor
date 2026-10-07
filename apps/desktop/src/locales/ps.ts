@@ -2096,7 +2096,7 @@ export const ps: Dictionary = {
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',
   Resume: 'بیا پیل',
-  'This terminal is not shared with you': 'دا ټرمینل له تاسو سره شریک شوی نه دی',
+  'This terminal is gone': 'دا ټرمینل نور نشته',
   'Online terminals are not open to your account yet':
     'آنلاین ټرمینلونه لا ستاسو د حساب لپاره نه دي پرانیستل شوي',
   'This month’s online hours are used': 'د دې میاشتې آنلاین ساعتونه پای ته رسېدلي',

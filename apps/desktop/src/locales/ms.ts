@@ -2086,7 +2086,7 @@ export const ms: Dictionary = {
   'Start online machine': 'Mulakan mesin dalam talian',
   'Stop online machine': 'Hentikan mesin dalam talian',
   Resume: 'Sambung semula',
-  'This terminal is not shared with you': 'Terminal ini tidak dikongsi dengan anda',
+  'This terminal is gone': 'Terminal ini sudah tiada',
   'Online terminals are not open to your account yet':
     'Terminal dalam talian belum dibuka untuk akaun anda',
   'This month’s online hours are used': 'Jam dalam talian bulan ini telah habis',

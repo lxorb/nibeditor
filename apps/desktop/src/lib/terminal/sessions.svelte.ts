@@ -611,6 +611,21 @@ class Session {
     this.focus()
   }
 
+  /** The online card's button, and Enter under it: Try again, or - where the session is
+   *  no more, which trying again cannot change - a new online terminal in this tab's
+   *  place, as a deleted codespace offers a new one where it was. */
+  retry() {
+    if (!this.arrival.gone) {
+      this.reconnect()
+      return
+    }
+    workspace.activeTabId = this.tab.id
+    void import('../online/open').then(async ({ openOnline }) => {
+      // Refused (signed out, not on the list) says so itself, and leaves this tab be.
+      if (await openOnline(true)) workspace.close(this.tab.id, false)
+    })
+  }
+
   /** What is switched on in the terminal as it stands. */
   private left(): Left {
     return { modes: this.term.modes, alternate: this.term.buffer.active.type === 'alternate' }
@@ -831,8 +846,12 @@ class Session {
     else if ('note' in what) {
       if (this.live) this.say(what.note)
       else this.notes.push(what.note)
-    } else if (this.online && !this.live) this.arrival.fail(what.refused)
-    else {
+    } else if (this.online && (!this.live || what.gone === true)) {
+      // A session that is no more ends a live screen as it ends a wait: on the card, with
+      // a new terminal under it rather than a Reconnect that would find nothing.
+      this.live = false
+      this.arrival.fail(what.refused, what.gone === true)
+    } else {
       this.say(what.refused)
       this.wait()
     }
@@ -1006,7 +1025,7 @@ class Session {
    *  after one ended, and otherwise the session's - if this window may type in it. */
   private typedOnline(data: string, binary: boolean) {
     if (this.offline || this.arrival.failure !== null) {
-      if (data === '\r') this.reconnect()
+      if (data === '\r') this.retry()
       return
     }
     if (this.resumable !== null && data === '\r') {

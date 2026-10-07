@@ -10,7 +10,7 @@ import type { Refused } from './calls'
 export function refusalWords(why: Refused | Refusal): string | null {
   switch (why) {
     case 'gone':
-      return t('This terminal is not shared with you')
+      return t('This terminal is gone')
     case 'list':
       return t('Online terminals are not open to your account yet')
     case 'allowance':

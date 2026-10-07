@@ -2122,7 +2122,7 @@ export const ha: Dictionary = {
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',
   Resume: 'Ci gaba',
-  'This terminal is not shared with you': 'Ba a raba wannan tashar da kai ba',
+  'This terminal is gone': 'Wannan tashar ba ta nan kuma',
   'Online terminals are not open to your account yet':
     'Ba a buɗe tashoshin kan layi ga asusunka ba tukuna',
   'This month’s online hours are used': 'An gama awannin kan layi na wannan wata',

@@ -2085,7 +2085,7 @@ export const gu: Dictionary = {
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',
   Resume: 'ફરી ચાલુ કરો',
-  'This terminal is not shared with you': 'આ ટર્મિનલ તમારી સાથે શેર કરેલ નથી',
+  'This terminal is gone': 'આ ટર્મિનલ હવે નથી',
   'Online terminals are not open to your account yet':
     'ઑનલાઇન ટર્મિનલ હજી તમારા એકાઉન્ટ માટે ખુલ્લા નથી',
   'This month’s online hours are used': 'આ મહિનાના ઑનલાઇન કલાકો વપરાઈ ગયા છે',

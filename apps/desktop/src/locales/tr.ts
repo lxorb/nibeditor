@@ -2100,7 +2100,7 @@ export const tr: Dictionary = {
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',
-  'This terminal is not shared with you': 'Bu terminal sizinle paylaşılmadı',
+  'This terminal is gone': 'Bu terminal artık yok',
   'Online terminals are not open to your account yet':
     'Çevrimiçi terminaller hesabınıza henüz açılmadı',
   'This month’s online hours are used': 'Bu ayın çevrimiçi saatleri doldu',

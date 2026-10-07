@@ -2201,7 +2201,7 @@ export const ar: Dictionary = {
   'Start online machine': 'تشغيل الجهاز عبر الإنترنت',
   'Stop online machine': 'إيقاف الجهاز عبر الإنترنت',
   Resume: 'استئناف',
-  'This terminal is not shared with you': 'هذه الطرفية غير مشتركة معك',
+  'This terminal is gone': 'لم تعد هذه الطرفية موجودة',
   'Online terminals are not open to your account yet': 'الطرفيات عبر الإنترنت غير متاحة لحسابك بعد',
   'This month’s online hours are used': 'نفدت ساعات هذا الشهر عبر الإنترنت',
   'Online terminals are paused for now': 'الطرفيات عبر الإنترنت متوقفة مؤقتًا',

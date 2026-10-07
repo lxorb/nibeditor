@@ -2074,7 +2074,7 @@ export const vi: Dictionary = {
   'Start online machine': 'Khởi động máy trực tuyến',
   'Stop online machine': 'Dừng máy trực tuyến',
   Resume: 'Tiếp tục',
-  'This terminal is not shared with you': 'Terminal này không được chia sẻ với bạn',
+  'This terminal is gone': 'Terminal này không còn nữa',
   'Online terminals are not open to your account yet':
     'Terminal trực tuyến chưa được mở cho tài khoản của bạn',
   'This month’s online hours are used': 'Đã dùng hết giờ trực tuyến của tháng này',

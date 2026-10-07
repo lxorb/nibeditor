@@ -2067,7 +2067,7 @@ export const ko: Dictionary = {
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',
   Resume: '이어서 하기',
-  'This terminal is not shared with you': '이 터미널은 나와 공유되지 않았습니다',
+  'This terminal is gone': '이 터미널은 더 이상 없습니다',
   'Online terminals are not open to your account yet':
     '온라인 터미널은 아직 내 계정에서 사용할 수 없습니다',
   'This month’s online hours are used': '이번 달 온라인 시간을 모두 사용했습니다',

@@ -2102,7 +2102,7 @@ export const te: Dictionary = {
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',
   Resume: 'కొనసాగించండి',
-  'This terminal is not shared with you': 'ఈ టెర్మినల్ మీతో షేర్ చేయబడలేదు',
+  'This terminal is gone': 'ఈ టెర్మినల్ ఇక లేదు',
   'Online terminals are not open to your account yet':
     'ఆన్‌లైన్ టెర్మినల్‌లు ఇంకా మీ ఖాతాకు తెరవబడలేదు',
   'This month’s online hours are used': 'ఈ నెల ఆన్‌లైన్ గంటలు అయిపోయాయి',

@@ -2044,7 +2044,7 @@ export const zhHantHK: Dictionary = {
   'Start online machine': '啟動網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',
-  'This terminal is not shared with you': '此終端機未與你共用',
+  'This terminal is gone': '此終端機已不存在',
   'Online terminals are not open to your account yet': '網上終端機尚未開放給你的帳戶',
   'This month’s online hours are used': '本月的網上時數已用完',
   'Online terminals are paused for now': '網上終端機暫時停止',
