@@ -555,9 +555,16 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
+class Server(http.server.ThreadingHTTPServer):
+    """A backlog the size of a page's first burst of chunks. The default of five
+    refuses most of them on Windows, and the plugin never finds its bridge."""
+
+    request_queue_size = 256
+
+
+def serve() -> tuple[str, Server]:
     port = free_port()
-    server = http.server.ThreadingHTTPServer(
+    server = Server(
         ("127.0.0.1", port), functools.partial(Quiet, directory=str(DIST))
     )
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -1417,7 +1424,7 @@ def main() -> int:
                 page.evaluate("document.documentElement.hasAttribute('data-drawer')"),
             )
 
-            press(page, "Show sidebar")
+            press(page, "Show left sidebar")
             page.wait_for_timeout(500)
             report.ok(
                 "and the card is not drawn at all while it is over the note",
@@ -1431,7 +1438,7 @@ def main() -> int:
                 ),
             )
 
-            press(page, "Hide sidebar")
+            press(page, "Hide left sidebar")
             page.wait_for_timeout(600)
             report.ok(
                 "and comes back when the note is bare again",
@@ -1461,7 +1468,7 @@ def main() -> int:
             page.wait_for_timeout(700)
             page.reload()
             page.wait_for_timeout(1500)
-            press(page, "Show sidebar")
+            press(page, "Show left sidebar")
             page.wait_for_timeout(400)
 
             # The rail of squares is gone: the spaces are a switcher at the top of the
@@ -1641,7 +1648,7 @@ def press(page, name: str) -> bool:
     """Presses the first button by that name a finger could actually reach.
 
     Not simply the first in the document: the rail lives inside the drawer, so on a
-    phone layout there are two buttons called `Show sidebar` and the one in the closed
+    phone layout there are two buttons called `Show left sidebar` and the one in the closed
     drawer is `inert` - which is right, and is not what a reader would press."""
     for one in page.get_by_role("button", name=name).all():
         # Visible is not the same as reachable: what is inside the closed drawer is
@@ -1664,7 +1671,7 @@ def open_note(page, name: str) -> None:
     By its row in the file list rather than by its words anywhere on the page: the
     note's own heading says the same thing, and a click that lands in the editor
     instead of on the list opens nothing."""
-    if press(page, "Show sidebar"):
+    if press(page, "Show left sidebar"):
         page.wait_for_timeout(300)
 
     row = page.locator(f'.row[data-path$="/{name}.md"]')
@@ -1689,4 +1696,6 @@ def naming(bands: dict) -> dict:
 
 
 if __name__ == "__main__":
+    # The report quotes the panel, arrows and all, and a Windows console is not UTF-8.
+    sys.stdout.reconfigure(encoding="utf-8")
     sys.exit(main())
