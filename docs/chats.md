@@ -793,10 +793,14 @@ Settings, and one function decides.
 - **Link a message from a note**: Copy link on a message copies `nib://chat/<chat>/<message>`;
   in a note it opens the chat at the message. Outside nib it is an address nothing else
   opens, which is honest: the message lives in the account, not in a file.
-- **Ctrl+T's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's): a new
-  tab with the chat's name field and, under it, who is in it (the space's people, or
-  "Only…" to pick). Like every new kind it writes nothing until it is named or its first
-  message is sent. The file list's New has Chat too.
+- **Ctrl+T's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's), the
+  Chats panel's plus and the file list's New all make a chat the way the file list makes
+  a file: the list is shown and a row waits for the name in the folder it was asked in (the
+  space's top from Ctrl+T and the plus); the name typed makes the chat, writes its pointer
+  there and only then opens its tab. Emil, 2026-10-08: a chat always has its place from the
+  start, so unlike every other new kind it is never a tab without a file, never a draft
+  and never wears the unsaved dot. Where no list can take the row it is made at once under
+  a stepped name, as a note is (`makeChat` in `chats/view/open.ts`).
 - **The Chats panel**: a left panel, `'chats'` in `Panel`
   (`apps/desktop/src/lib/workspace.svelte.ts`) beside the Tasks panel's `'tasks'`, 4.15.
 

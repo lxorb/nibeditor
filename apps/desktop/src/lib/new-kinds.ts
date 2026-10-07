@@ -12,10 +12,9 @@
  *  makes one, in the order a reader is offered them: a note first, which is what a
  *  strip is mostly filled with.
  *
- *  Every one of them opens a tab and writes nothing: no file in the space and no row in
- *  the list until somebody saves it. The file list's own New rows are the other gesture
- *  and still make a named file where they are asked to; see `newCanvas` and
- *  `createCanvas` in workspace.svelte.ts.
+ *  Every one but a chat opens a tab and writes nothing until somebody saves it. The file
+ *  list's own New rows are the other gesture and make a named file where they are asked
+ *  to, and a chat is always made that way; see chats/view/open.ts.
  *
  *  Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you
  *  should be able to choose between the different things (note, canvas, web note
@@ -42,7 +41,7 @@ import { type NewKind, workspace } from './workspace.svelte'
 
 /** What a new tab can be: the kinds the file list also makes, and a terminal here or on
  *  another machine, which is a tab and never a file. */
-export type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online' | 'chat'
+export type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online'
 
 export interface NewKindRow {
   kind: NewKindName

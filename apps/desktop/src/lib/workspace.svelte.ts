@@ -158,13 +158,13 @@ export type Panel =
  *  workspace/zones.ts. */
 export type PanelSide = 'left' | 'right'
 
-/** The four things the file list makes, each of which arrives as a row waiting
+/** The five things the file list makes, each of which arrives as a row waiting
  *  for a name; see `startNaming`.
  *
  *  No folder among them. A note that holds notes is how a space is organised, so
  *  the folders on disk are made by nesting and by nothing else; see
  *  folder-notes.ts and docs/tree.md. */
-export type NewKind = 'note' | 'canvas' | 'pages' | 'web'
+export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat'
 
 /** A row of the file list waiting for a name, or a space's own name in the header
  *  being typed. One at a time, whichever it is; see `startNaming`. */
@@ -183,6 +183,7 @@ const PLACEHOLDER: Record<NewKind, string> = {
   canvas: 'Untitled.canvas',
   pages: 'Untitled.pages',
   web: 'Untitled.url',
+  chat: 'Chat.chat',
 }
 
 export type { Heading } from './outline'
@@ -3572,11 +3573,10 @@ class Workspace {
    *  make it. Answers whether the list took it: with no file list on screen there
    *  is nowhere to type, and the caller makes the thing itself.
    *
-   *  The row is the optimistic insert every other file operation does - a row is
-   *  in the tree before the disk has answered, and the listing that follows is what
-   *  settles it - put in one step earlier: in its sorted place, in the folder it
-   *  belongs to, with that folder open, before there is anything on disk at all. */
-  private startNaming(kind: NewKind, dir: string): boolean {
+   *  The row is the optimistic insert every other file operation does, one step
+   *  earlier: in its sorted place and folder, that folder open, before anything is on
+   *  disk. */
+  startNaming(kind: NewKind, dir: string): boolean {
     if (this.panel !== 'tree' || !this.tree) return false
 
     // A second gesture before the first had a name leaves no row behind it: a row
@@ -3605,7 +3605,8 @@ class Workspace {
     if (naming.making === 'canvas') await this.createCanvas(dir, name)
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
-    else await this.createNote(dir, name)
+    else if (naming.making !== 'chat') await this.createNote(dir, name)
+    else if (!__EVEN_PLUGIN__) await (await import('./chats/view/open')).makeChat(dir, name)
   }
 
   /** The field is done and there is nothing to write: Escape, a name that cannot

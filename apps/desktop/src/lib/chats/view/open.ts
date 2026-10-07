@@ -3,9 +3,8 @@
  *  A `.chat` file opens as a chat tab, one tab per file as a PDF has, so opening it again
  *  brings the one there is forward; at a message, where a link or a search hit named
  *  one. A new chat is the store's to make (`ChatsSource.make`: the account makes the id,
- *  the pointer is written in the space); here it is opened, and the keyboard put in its
- *  composer. Ctrl+T's card on M, the plus in the Chats panel and the file list's New
- *  all come here. */
+ *  the pointer is written in the space); here it is placed, named and opened. Ctrl+T's
+ *  card on M, the plus in the Chats panel and the file list's New all come here. */
 
 import { chatLinkOf } from '@nib/chats/links'
 import { account } from '../../account.svelte'
@@ -69,17 +68,35 @@ function jumpOpen(path: string) {
   for (const hear of hearers) hear(path)
 }
 
-/** A new chat in the space in front, opened. Signed out it asks for the account. */
-export async function makeChat(): Promise<void> {
+/** A new chat, which has its place before it has a tab. Emil, 2026-10-08: *"A chat must
+ *  always be created so that it directly has a save location, e.g. through the
+ *  sidebar."* So there is no chat tab without a file, and no draft of one.
+ *
+ *  Asked without a name - Ctrl+T's M, the Chats panel's plus, the file list's New - it is
+ *  the file list's own gesture for a new file, as Finder and VS Code have it: the list is
+ *  shown and a row waits for the name in the folder it was asked in, the space's top
+ *  where it was asked nowhere in particular. The name typed comes back here; the account
+ *  makes the chat, its pointer is written there, and only then does its tab open, under
+ *  that name. Where the list cannot take the row, it is made at once under a stepped
+ *  name, as a note is. Signed out it asks for the account. */
+export async function makeChat(folder?: string, named?: string): Promise<void> {
   if (!account.accountToken) {
     account.ask('sign-in')
     return
   }
-  const root = workspace.activeSpace?.root
-  if (!root) return
-  const name = chatName(workspace.freeName(root, `${t('Chat')}.chat`))
-  const path = await store().make(root, name)
-  if (!path) return
+  const dir = folder ?? workspace.activeSpace?.root
+  if (!dir) return
+  if (named === undefined) {
+    workspace.showPanel('tree')
+    if (workspace.startNaming('chat', dir)) return
+  }
+
+  const name = chatName(named ?? workspace.freeName(dir, `${t('Chat')}.chat`))
+  const path = await store().make(dir, name)
+  if (!path) {
+    busy.failed(t('{name} could not be written.', { name }))
+    return
+  }
   openChat(path)
   void workspace.loadTree()
 }

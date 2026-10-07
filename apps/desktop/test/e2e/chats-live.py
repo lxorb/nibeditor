@@ -3,7 +3,7 @@
 Emil owns a space and shares it: Lucile may write in it and Mia may only read. In
 three browsers, each signed in as one of them:
 
-- Emil makes a chat in the space, with the Chats panel's own road;
+- Emil makes a chat in the space, with the Chats panel's own road: named in the file list;
 - it arrives on Lucile's and Mia's devices by its pointer, and opens;
 - Emil posts, Lucile replies in the message's replies, Lucile reacts, Emil edits and
   deletes - and each is seen live on the other side, timed;
@@ -304,7 +304,11 @@ def main() -> int:
         # ── Emil makes a chat ────────────────────────────────────────────
         show_space(owner, "Emil", space["id"])
         wait(owner, "async () => (await window.nibApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
+        # Named in the file list first, as every new chat is: it has its place before its tab.
         owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
+        field = owner.locator("input[aria-label='Name']")
+        field.fill("Chat")
+        field.press("Enter")
         chat = open_chat(owner, "Emil", "Chat")
         say(f"Emil made {chat['id']} at {chat['path']}")
         made = worker.query(f"select space_id, file_id from chats where id = '{chat['id']}'")
