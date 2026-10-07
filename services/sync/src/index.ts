@@ -37,6 +37,7 @@ import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
+import { syncAdmin } from './sync2/admin'
 import { v2Blobs, v2Files } from './sync2/files'
 import { v2Maps } from './sync2/maps'
 import { sweepTreeOps } from './sync2/tree'
@@ -295,6 +296,7 @@ app.route('/v2/spaces', v2Maps)
 app.route('/v2/docs', v2Docs)
 app.route('/v2/files', v2Files)
 app.route('/v2/blobs', v2Blobs)
+app.route('/v2/admin', syncAdmin)
 
 // Where each device can be pushed to: reminders now, chats next. See push/.
 app.route('/v2/push', push)
