@@ -27,6 +27,18 @@ describe('readHubFrame', () => {
     for (const frame of frames) expect(readHubFrame(JSON.stringify(frame))).toEqual(frame)
   })
 
+  test('hands a chat’s poke on whole, for the chats to read', () => {
+    const poke = {
+      t: 'chat',
+      chat: `c_${'1'.repeat(32)}`,
+      seq: 4,
+      at: 9,
+      by: 'user:a',
+      mention: true,
+    }
+    expect(readHubFrame(JSON.stringify(poke))).toEqual({ t: 'chat', said: poke })
+  })
+
   test('says a grant asks for a rotation only when it does', () => {
     const plain = readHubFrame(JSON.stringify({ t: 'granted', key: KEY, fence: 1, version: 0 }))
     expect(plain).toMatchObject({ rotate: false })

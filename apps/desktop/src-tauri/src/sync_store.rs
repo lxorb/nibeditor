@@ -19,6 +19,7 @@
 //! One store is open at a time, because one account is signed in at a time. The
 //! browser build keeps the same tables in `IndexedDB`; see `src/lib/web/sync-store.ts`.
 
+pub mod chats;
 mod store;
 mod tables;
 mod wire;
@@ -33,9 +34,10 @@ use crate::paths::cannot;
 use store::{files_of, set_aside, Failed, Opened, Store};
 use wire::{frame, unframe, Change, Query};
 
-/// The store that is open, if one is, and whose it is.
+/// The store that is open, if one is, and whose it is; and the chats' store beside it
+/// (chats.rs), which keeps its own.
 #[derive(Default)]
-pub struct Stores(Mutex<Option<Held>>);
+pub struct Stores(Mutex<Option<Held>>, chats::ChatStores);
 
 struct Held {
     account: String,
