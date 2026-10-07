@@ -32,18 +32,26 @@
  *
  *  The few URLs that are left after that are a library's own error links, and they
  *  are rewritten where the folder is staged; see scripts/even-stage.mjs. Two tests
- *  hold the staged folder to both findings. */
+ *  hold the staged folder to both findings.
+ *
+ *  And what is left is held to a list: even-contents.ts names every library, package
+ *  and folder of the app's that may come in, and a budget for each part of the
+ *  package, so the next thing the desktop gains fails a test by name in the change
+ *  that brought it, rather than whichever later change crosses the ceiling. */
 
+import { existsSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig, type Plugin, type Rollup } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { onlyRows, serverWords, stringsIn } from './even-catalogues.ts'
+import { englishIn, handedTo, inColumn, serverWords, stringsIn } from './even-catalogues.ts'
+import { KEYS_MARK } from './src/lib/even/catalogue-keys.ts'
 import manifest from './even.app.json'
 
 /** Modules the plugin does not have, by the specifier that asks for them.
  *
- *  Only libraries: our own code is left out by `__EVEN_PLUGIN__` instead, so that
- *  the app knows not to offer what is missing rather than finding out by throwing.
+ *  Only libraries: our own code is left out by a twin (see `twinOf`) or by
+ *  `__EVEN_PLUGIN__`, so that the app knows not to offer what is missing rather than
+ *  finding out by throwing.
  *  Each one is here because it brought a URL or a way of evaluating a string, and
  *  because nothing the plugin does needs it. */
 const LEFT_OUT = new Set([
@@ -196,6 +204,34 @@ const NOT_DRAWN = new Set([
   'ur',
 ])
 
+/** Our own module's plugin twin: `x.ts` is answered by `x.even.ts` beside it, when
+ *  there is one, for every importer but the twin itself.
+ *
+ *  The way a module of ours goes, as `LEFT_OUT` is the way a library goes, and the
+ *  one to reach for before another `__EVEN_PLUGIN__` branch: a branch has to be
+ *  written at every door into a module and is only as good as the last door anybody
+ *  remembered, where a twin is one file at the module itself. Each twin answers to
+ *  the real module's types (`typeof Real.x` on every export), and
+ *  src/lib/even/twins.test.ts holds the two to the same names. React Native's
+ *  `.ios.ts` beside `.ts`, for the same reason: a platform that is the app minus a
+ *  few modules says so at the modules. */
+function twinOf(path: string, importer: string | undefined): string | null {
+  if (path.includes('/node_modules/')) return null
+  const twin = path.replace(/\.(ts|svelte)$/, '.even.$1')
+  if (twin === path || importer?.replace(/\\/g, '/') === twin) return null
+
+  return existsSync(twin) ? twin : null
+}
+
+/** KaTeX's faces, in the one format every WebView the plugin runs in reads.
+ *
+ *  Its stylesheet offers each face three times, woff2 then woff then ttf, and a
+ *  browser takes the first it can read; Chromium on Android and WebKit on iOS both
+ *  read woff2, so the other two are never fetched. They were packed all the same:
+ *  40 files and 816,780 bytes, a tenth of the package. */
+const KATEX_SHEET = /\/katex\/dist\/katex(?:\.min)?\.css$/
+const OLDER_FACES = /,\s*url\([^)]+\.(?:woff|ttf)\)\s*format\(["'](?:woff|truetype)["']\)/g
+
 function withoutWhatTheGlassesCannotUse() {
   const absent = '\0nib-absent'
   const runner = '\0nib-no-running'
@@ -226,7 +262,12 @@ function withoutWhatTheGlassesCannotUse() {
 
       if (EMOJI_TABLE.test(path)) return `${emoji}${path.replace(/\/index\.js$/, '')}`
 
-      return path.includes(RUNNER) ? runner : null
+      if (path.includes(RUNNER)) return runner
+
+      return twinOf(path, importer)
+    },
+    transform(code: string, id: string) {
+      return KATEX_SHEET.test(id.split('?')[0] ?? id) ? code.replace(OLDER_FACES, '') : null
     },
     load(asked: string) {
       if (asked === absent) return ABSENT
@@ -248,44 +289,93 @@ function withoutWhatTheGlassesCannotUse() {
   }
 }
 
-/** The catalogues that are shipped, trimmed to the rows the plugin can ask for; see
- *  even-catalogues.ts for which those are.
+/** Where the English of every shipped catalogue is written once; see the module. */
+const KEYS_MODULE = resolve(import.meta.dirname, 'src/lib/even/catalogue-keys.ts').replace(
+  /\\/g,
+  '/',
+)
+
+/** The catalogues that are shipped, trimmed to the rows the plugin can ask for and
+ *  written as columns under one list of English; see even-catalogues.ts for which
+ *  rows those are, and catalogue-keys.ts for why the English is written once.
  *
- *  At the end of the build rather than as each catalogue is loaded: a row is kept
- *  for what the rest of the package says, and the package is only known once it has
- *  been shaken down. `modules[...].code` is each module as it goes into its chunk,
- *  after the shaking, so a string left behind in a branch `__EVEN_PLUGIN__` turned
- *  off keeps no row. And in `renderChunk`, before the hash is taken, so a catalogue
- *  that loses a row is a file of a new name rather than an old name with new words
- *  in it. */
+ *  Each catalogue is handed to `rowsOf` as it is loaded, so that every one of them
+ *  imports the module the keys go into and the bundler puts that module in a chunk
+ *  of its own. Then at the end of the build, the rows: a row is kept for what the
+ *  rest of the package says, and the package is only known once it has been shaken
+ *  down. `modules[...].code` is each module as it goes into its chunk, after the
+ *  shaking, so a string left behind in a branch `__EVEN_PLUGIN__` turned off keeps
+ *  no row. And in `renderChunk`, before the hash is taken, so a catalogue that loses
+ *  a row is a file of a new name rather than an old name with new words in it. */
 function onlyTheRowsItAsksFor(): Plugin {
-  let asked: Set<string> | undefined
+  let keys: string[] | undefined
 
   const shipped = (chunk: { facadeModuleId: string | null }) =>
     CATALOGUE.test(chunk.facadeModuleId?.replace(/\\/g, '/') ?? '')
 
-  const askedIn = (chunks: Rollup.RenderedChunk[]) => {
-    const found = serverWords()
+  /** The rows any shipped catalogue has that something in the package can ask for,
+   *  in one order every catalogue is written in. */
+  const keysIn = (chunks: Rollup.RenderedChunk[]) => {
+    const asked = serverWords()
+    const written = new Set<string>()
     for (const chunk of chunks) {
-      if (shipped(chunk)) continue
       for (const one of Object.values(chunk.modules)) {
-        if (one.code) for (const text of stringsIn(one.code)) found.add(text)
+        if (!one.code) continue
+        if (shipped(chunk)) for (const english of englishIn(one.code)) written.add(english)
+        else for (const text of stringsIn(one.code)) asked.add(text)
       }
     }
 
-    return found
+    return [...written].filter((english) => asked.has(english)).sort()
   }
+
+  const placeholder = new RegExp(`\\[\\s*(["'\`])${KEYS_MARK}\\1\\s*\\]`)
 
   return {
     name: 'nib-even-rows',
+    transform(code, id) {
+      if (!CATALOGUE.test(id.replace(/\\/g, '/'))) return null
+
+      return `import { rowsOf as nibRowsOf } from ${JSON.stringify(KEYS_MODULE)}\n${handedTo(code, 'nibRowsOf')}`
+    },
     renderStart() {
-      asked = undefined
+      keys = undefined
     },
     renderChunk(code, chunk, _options, meta) {
-      if (!shipped(chunk)) return null
+      const holdsKeys = Object.keys(chunk.modules).some(
+        (id) => id.replace(/\\/g, '/') === KEYS_MODULE,
+      )
+      if (!holdsKeys && !shipped(chunk)) return null
 
-      const words = (asked ??= askedIn(Object.values(meta.chunks)))
-      return onlyRows(code, (english) => words.has(english))
+      keys ??= keysIn(Object.values(meta.chunks))
+      if (shipped(chunk)) return inColumn(code, keys)
+
+      if (!placeholder.test(code)) throw new Error('catalogue-keys.ts has no place for its keys')
+      return code.replace(placeholder, JSON.stringify(keys))
+    },
+  }
+}
+
+/** Every module that went into the package and its weight, written to `file` when
+ *  one is named: what src/lib/even/bundle.test.ts holds to the list in
+ *  even-contents.ts. Outside the package, so the package is the same either way. */
+function whatWentIn(file: string | undefined): Plugin {
+  const repo = resolve(import.meta.dirname, '../..').replace(/\\/g, '/')
+
+  return {
+    name: 'nib-even-contents',
+    generateBundle(_options, bundle) {
+      if (!file) return
+
+      const modules: Record<string, number> = {}
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type !== 'chunk') continue
+        for (const [id, { renderedLength }] of Object.entries(chunk.modules)) {
+          const path = id.replace(/\\/g, '/').replace(`${repo}/`, '')
+          modules[path] = (modules[path] ?? 0) + renderedLength
+        }
+      }
+      writeFileSync(file, JSON.stringify(modules))
     },
   }
 }
@@ -301,7 +391,12 @@ interface Resolver {
 }
 
 export default defineConfig({
-  plugins: [svelte(), withoutWhatTheGlassesCannotUse(), onlyTheRowsItAsksFor()],
+  plugins: [
+    svelte(),
+    withoutWhatTheGlassesCannotUse(),
+    onlyTheRowsItAsksFor(),
+    whatWentIn(process.env.NIB_EVEN_CONTENTS),
+  ],
   define: {
     // The plugin's own version, so a screenshot of a phone says which build is on
     // it, and the flag every branch below reads.

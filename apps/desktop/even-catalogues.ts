@@ -16,6 +16,9 @@
  *  A row left out reads in English, which is what `t()` answers for any row a
  *  catalogue has not got; and nothing left out is anything the plugin can ask.
  *
+ *  And the rows that are kept are written as a column: the English once, in
+ *  src/lib/even/catalogue-keys.ts, and each catalogue as its words in the same order.
+ *
  *  vite.even.config.ts trims with this, and src/lib/even/bundle.test.ts holds the
  *  staged package to both halves of it: nothing the plugin asks for missing, and
  *  nothing it cannot ask for shipped. */
@@ -76,34 +79,67 @@ export function serverWords(): Set<string> {
   return found
 }
 
-/** A catalogue's module with only the rows `keep` says yes to, each one exactly as
- *  it was written.
+/** The one table a catalogue's module is, and its rows by their English.
  *
  *  A catalogue is one object, keyed by its English, as every file in src/locales is
- *  written. Anything else would be a new way of writing one, which this should hear
- *  about rather than pass over whole. */
-export function onlyRows(code: string, keep: (english: string) => boolean): string {
-  const tables = parsed(code, 'js').body.flatMap((statement) =>
-    statement.type === 'VariableDeclaration'
-      ? statement.declarations.flatMap((one) =>
-          one.init?.type === 'ObjectExpression' ? [one.init] : [],
-        )
-      : [],
-  )
+ *  written - exported or not, and handed to `rowsOf` once the build has wrapped it.
+ *  Anything else would be a new way of writing one, which this should hear about
+ *  rather than pass over whole. */
+function tableIn(code: string, lang: 'js' | 'ts') {
+  const tables = parsed(code, lang).body.flatMap((statement) => {
+    const declared = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement
+    if (declared?.type !== 'VariableDeclaration') return []
+
+    return declared.declarations.flatMap(({ init }) => {
+      if (init?.type === 'ObjectExpression') return [init]
+      const [only, ...more] = init?.type === 'CallExpression' ? init.arguments : []
+      return only?.type === 'ObjectExpression' && !more.length ? [only] : []
+    })
+  })
   const [table, ...more] = tables
   if (!table || more.length) throw new Error(`a catalogue is one table, not ${tables.length}`)
 
   // The English a row is filed under is its key, however the key is spelled.
-  const kept = table.properties.filter((row) => {
+  const rows = table.properties.map((row) => {
     if (row.type === 'Property' && !row.computed) {
-      if (row.key.type === 'Identifier') return keep(row.key.name)
-      if (row.key.type === 'Literal' && typeof row.key.value === 'string') {
-        return keep(row.key.value)
-      }
+      const { key } = row
+      const english =
+        key.type === 'Identifier'
+          ? key.name
+          : key.type === 'Literal' && typeof key.value === 'string'
+            ? key.value
+            : null
+      if (english !== null) return { english, text: code.slice(row.value.start, row.value.end) }
     }
     throw new Error('a catalogue row is `English: text`')
   })
-  const rows = kept.map((row) => code.slice(row.start, row.end)).join(',')
 
-  return code.slice(0, table.start + 1) + rows + code.slice(table.end - 1)
+  return { start: table.start, end: table.end, rows }
+}
+
+/** The English of every row a catalogue's module has, in the order it has them. */
+export function englishIn(code: string): string[] {
+  return tableIn(code, 'js').rows.map((row) => row.english)
+}
+
+/** A catalogue as written, with its table handed to `helper` - which the build points
+ *  at catalogue-keys.ts, so that the module that will hold the English is one every
+ *  shipped catalogue imports. */
+export function handedTo(code: string, helper: string): string {
+  const { start, end } = tableIn(code, 'ts')
+
+  return `${code.slice(0, start)}${helper}(${code.slice(start, end)})${code.slice(end)}`
+}
+
+/** A catalogue's module with its table as a column: the rows `keys` names, in that
+ *  order, each exactly as it was written, and nothing where it has no row. The English
+ *  is the keys and is not repeated: written once in catalogue-keys.ts rather than in
+ *  each of 24 catalogues, which is 550 KB of the same strings. */
+export function inColumn(code: string, keys: readonly string[]): string {
+  const { start, end, rows } = tableIn(code, 'js')
+  const text = new Map(rows.map((row) => [row.english, row.text]))
+  // A row that is not here is a hole, which `rowsOf` passes over.
+  const column = keys.map((english) => text.get(english) ?? '').join(',')
+
+  return `${code.slice(0, start)}[${column}]${code.slice(end)}`
 }

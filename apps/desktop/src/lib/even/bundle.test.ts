@@ -7,6 +7,15 @@ import { pathToFileURL } from 'node:url'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { undrawable } from '@nib/glasses'
 import { serverWords, stringsIn } from '../../../even-catalogues'
+import {
+  APP_FOLDERS,
+  BUDGETS,
+  LIBRARIES,
+  PACKAGES,
+  type Part,
+  partOf,
+  sourceOf,
+} from '../../../even-contents'
 import manifest from '../../../even.app.json'
 import type { Dictionary } from '../i18n.svelte'
 
@@ -35,6 +44,9 @@ const app = resolve(import.meta.dirname, '../../..')
  *  runs in one checkout - a gate and a single file run beside it - emptied it under each
  *  other halfway through a read. */
 const staged = mkdtempSync(join(tmpdir(), 'nib-even-'))
+/** Every module the build put into the package, with its weight; see `whatWentIn` in
+ *  vite.even.config.ts. Beside the package rather than in it. */
+const contents = `${staged}.json`
 
 /** The origins the manifest allows. Anything else must not be in the package at
  *  all, whether or not it is ever asked for. */
@@ -60,6 +72,10 @@ const languageOf = (path: string) => /([\w-]+)\.ts$/.exec(path)?.[1] ?? path
 /** The staged chunk that is each catalogue, by its language. */
 const catalogues = new Map<string, string>()
 
+/** The English every staged catalogue is filed under, written once; see
+ *  src/lib/even/catalogue-keys.ts. */
+const KEYS_CHUNK = /^catalogue-keys-[\w-]{8}\.js$/
+
 /** What the plugin can ask a catalogue for: what the server says, and every string in
  *  the plugin's own code but its catalogues. */
 let asked = new Set<string>()
@@ -82,7 +98,7 @@ beforeAll(() => {
       // has NODE_ENV=test, which this build would inherit and keep: every component
       // compiled for development, with its file name and its checks in it, 120 KB a
       // release never ships. That is what this file measured until 2026-10-03.
-      env: { ...process.env, NODE_ENV: 'production' },
+      env: { ...process.env, NODE_ENV: 'production', NIB_EVEN_CONTENTS: contents },
     },
   )
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {
@@ -106,6 +122,9 @@ beforeAll(() => {
     if (chunk) catalogues.set(id, chunk.name)
   }
   const shipping = new Set(catalogues.values())
+  // And not the English itself, which is every row the catalogues keep: read as
+  // something the plugin can ask for, it would answer for all of them.
+  for (const one of code) if (KEYS_CHUNK.test(basename(one.name))) shipping.add(one.name)
   asked = serverWords()
   for (const one of code) {
     if (shipping.has(one.name)) continue
@@ -115,6 +134,7 @@ beforeAll(() => {
 
 afterAll(() => {
   rmSync(staged, { recursive: true, force: true })
+  rmSync(contents, { force: true })
 })
 
 describe('the bundle a package is made of', () => {
@@ -366,6 +386,64 @@ describe('the bundle a package is made of', () => {
     )
   })
 
+  /** Everything in the package is something even-contents.ts names, and everything it
+   *  names is in the package: a library, a package of ours or a folder of the app's
+   *  that comes in is a decision made in the change that brought it, rather than the
+   *  weight a later change finds at the ceiling. */
+  describe('what came in', () => {
+    const allowed = new Set([
+      ...LIBRARIES.map((name) => `library ${name}`),
+      ...PACKAGES.map((name) => `package ${name}`),
+      ...APP_FOLDERS.map((name) => `folder ${name}`),
+    ])
+    const found = () => {
+      const modules = JSON.parse(readFileSync(contents, 'utf8')) as Record<string, number>
+      return new Set(Object.keys(modules).flatMap((one) => sourceOf(one) ?? []))
+    }
+
+    test('is all named in even-contents.ts', () => {
+      expect([...found()].filter((one) => !allowed.has(one))).toEqual([])
+    })
+
+    test('and nothing named there has gone', () => {
+      const here = found()
+      expect([...allowed].filter((one) => !here.has(one))).toEqual([])
+    })
+  })
+
+  test('weighs what each part of it may', () => {
+    const parts: Record<Part, number> = { code: 0, catalogues: 0, styles: 0, fonts: 0, pages: 0 }
+    const catalogue = new Set(catalogues.values())
+    for (const path of walk(staged)) {
+      const name = path.slice(staged.length + 1)
+      const words = catalogue.has(name) || KEYS_CHUNK.test(basename(name))
+      parts[partOf(name, words)] += statSync(path).size
+    }
+
+    const over = Object.entries(parts)
+      .filter(([part, bytes]) => bytes > BUDGETS[part as Part])
+      .map(([part, bytes]) => `${part}: ${bytes} of ${BUDGETS[part as Part]}`)
+    expect(over).toEqual([])
+  })
+
+  /** KaTeX names each face in three formats and a WebView reads the first, woff2; the
+   *  other two were 816,780 bytes nothing fetched. See `OLDER_FACES`. */
+  test('carries the maths faces once, as woff2', () => {
+    const names = walk(staged).map((one) => basename(one))
+    expect(names.filter((one) => /\.(woff|ttf)$/.test(one))).toEqual([])
+    expect(names.filter((one) => one.startsWith('KaTeX_')).length).toBeGreaterThan(10)
+  })
+
+  /** And the catalogues' English once, not in each of them; see catalogue-keys.ts. */
+  test('writes the English its catalogues share once', () => {
+    const keys = files.filter((one) => KEYS_CHUNK.test(basename(one.name)))
+    expect(keys).toHaveLength(1)
+    const german = files.find((one) => one.name === catalogues.get('de'))
+    expect(keys[0]?.text).toContain('Add task')
+    expect(german?.text).toContain('Aufgabe hinzufügen')
+    expect(german?.text).not.toContain('Add task')
+  })
+
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
     // 7.82 MiB as this is written: 8,200,559 bytes, measured on 2026-09-14. The
@@ -439,6 +517,13 @@ describe('the bundle a package is made of', () => {
     // the plugin never opens, is behind `__EVEN_PLUGIN__` now (and Todoist's reader with
     // it), and Today is read off the link index's scan and answered without the rows
     // store or the engine (even/today-tasks.ts, `todayTasks` in @nib/bases/tasks).
+    //
+    // **6,617,351 bytes** on 2026-10-07, from 8,387,810 for main at 094363246, which
+    // was 798 under: 1.69 MiB of room, and the parts' budgets in even-contents.ts are
+    // what spends it now, each by name, rather than this line. Three cuts, none of
+    // them anything a reader sees: KaTeX's faces as woff2 alone (816,780), math-fonts'
+    // twin, which bakes no faces into a document the plugin never writes (376,274),
+    // and the catalogues' English written once rather than in each of 24 (577,405).
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 

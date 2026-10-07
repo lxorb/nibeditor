@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { onlyRows, serverWords, stringsIn } from '../../../even-catalogues'
+import { englishIn, handedTo, inColumn, serverWords, stringsIn } from '../../../even-catalogues'
+import { rowsOf } from './catalogue-keys'
 
 /** The two halves of trimming a catalogue for the plugin, on code small enough to
  *  read; bundle.test.ts asks the same of the package itself. */
@@ -28,7 +29,7 @@ describe('what the server can say', () => {
   })
 })
 
-describe('a catalogue with only some of its rows', () => {
+describe('a catalogue as a column', () => {
   const WRITTEN = `const de = {
   // A comment, which goes.
   Save: 'Speichern',
@@ -37,21 +38,44 @@ describe('a catalogue with only some of its rows', () => {
 };
 export { de };`
 
-  test('keeps each row it keeps exactly as it was written', () => {
-    const kept = onlyRows(WRITTEN, (english) => english !== 'Open file')
+  test('reads the English of every row, however it is spelled', () => {
+    expect(englishIn(WRITTEN)).toEqual(['Save', 'Open file', '{count} notes'])
+  })
 
-    expect(kept).toBe(
-      "const de = {Save: 'Speichern','{count} notes': { one: '{count} Notiz', other: '{count} Notizen' }};\nexport { de };",
+  test('keeps the rows the keys name, in their order, each exactly as it was written', () => {
+    const column = inColumn(WRITTEN, ['{count} notes', 'New', 'Save'])
+
+    expect(column).toBe(
+      "const de = [{ one: '{count} Notiz', other: '{count} Notizen' },,'Speichern'];\nexport { de };",
     )
   })
 
   test('is still a catalogue with none of them', () => {
-    expect(onlyRows(WRITTEN, () => false)).toBe('const de = {};\nexport { de };')
+    expect(inColumn(WRITTEN, [])).toBe('const de = [];\nexport { de };')
+  })
+
+  test('reads a table that has been handed to `rowsOf`', () => {
+    const handed = handedTo(
+      "import type { Dictionary } from './i18n'\nexport const de: Dictionary = { Save: 'Speichern' }\n",
+      'rowsOf',
+    )
+
+    expect(handed).toBe(
+      "import type { Dictionary } from './i18n'\nexport const de: Dictionary = rowsOf({ Save: 'Speichern' })\n",
+    )
+    expect(inColumn('const de = rowsOf({ Save: `Speichern` });', ['Save'])).toBe(
+      'const de = rowsOf([`Speichern`]);',
+    )
   })
 
   test('refuses a catalogue it cannot read row by row', () => {
-    expect(() => onlyRows('const de = { ...other }', () => true)).toThrow()
-    expect(() => onlyRows("const de = { ['Save']: 'x' }", () => true)).toThrow()
-    expect(() => onlyRows('const a = {}, b = {}', () => true)).toThrow()
+    expect(() => englishIn('const de = { ...other }')).toThrow()
+    expect(() => englishIn("const de = { ['Save']: 'x' }")).toThrow()
+    expect(() => englishIn('const a = {}, b = {}')).toThrow()
+  })
+
+  test('and `rowsOf` passes a table it is handed as a table straight through', () => {
+    const table = { Save: 'Speichern' }
+    expect(rowsOf(table)).toBe(table)
   })
 })

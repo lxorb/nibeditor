@@ -328,6 +328,14 @@ show it: on 2026-09-30, 1,264 rows of 1,372 in each. See
 `apps/desktop/even-catalogues.ts`, and the bundle test, which holds the package to it
 both ways round.
 
+And the English of those rows is written once. A catalogue is a table keyed by its
+English, so 24 of them carried the same keys 24 times: 579 KB of the package, for
+words that are already the keys. The build writes the keys into one chunk,
+`catalogue-keys`, and each catalogue as a column of its words in the same order;
+`rowsOf` in `lib/even/catalogue-keys.ts` puts the table back together when a reader
+loads one. The table that comes out is the one that was written, row for row, which
+is what the bundle test reads back out of the package.
+
 ### The one fact nobody publishes
 
 **A codepoint the firmware has no glyph for is drawn as nothing at all.** Zero
@@ -1342,6 +1350,28 @@ brought it to **7.36 MB**, measured on 2026-09-12. What is left that is not the 
 is node-emoji's table, 1.1 MB, which is what writes an emoji the font cannot draw as
 its own `:name:` rather than as a box.
 
+By 2026-10-07 it was back at **8,387,810 bytes, 798 under the 8 MiB ceiling**, and every
+change that added anything at all broke the test. Three cuts took it to **6,617,351**,
+none of them anything a reader sees:
+
+| Cut | Bytes |
+| --- | --- |
+| KaTeX's faces as woff2 alone: its stylesheet names each face three times, and both WebViews read the first | 816,780 |
+| `math-fonts.even.ts`: no faces baked into a document the plugin never writes | 376,274 |
+| the catalogues' English written once rather than in each of 24 | 577,405 |
+
+The second is the way a module of ours now goes. `x.even.ts` beside `x.ts` stands in
+for it in the plugin's build and nowhere else (`twinOf` in `vite.even.config.ts`), typed
+by the real module's exports and held to the same names by `lib/even/twins.test.ts`: one
+file at the module, where a `__EVEN_PLUGIN__` branch has to be written at every door
+into it and is only as good as the last door anybody remembered.
+
+And so the room is not spent by accident, `apps/desktop/even-contents.ts` names every
+library, package of ours and folder of the app's that may be in the package, and a
+budget for each part of it - code, catalogues, styles, fonts, pages - that adds up to
+1.29 MiB under the ceiling. A desktop feature that brings a library or a folder into the
+plugin fails the bundle test by name, in the change that brought it.
+
 The few URLs left after that are a library's own error links, and they are
 rewritten where the folder is staged, which is the only place they can be touched
 without changing the code the editor runs. Svelte names its errors by a link, so
@@ -1373,7 +1403,8 @@ questions has an answer. It holds it to both findings and to the consequences: n
 URL outside the manifest's own whitelist (read from `even.app.json`, so the two
 cannot drift), no `new Function`, `Function(`, `eval(` or timer given a string, no
 play button and none of the sandbox's protocol in any `.js`, none of the named
-libraries, and under 8 MB. It is the slowest test in the repository and it is the
+libraries, nothing `even-contents.ts` does not name, each part within its budget, and
+under 8 MiB. It is the slowest test in the repository and it is the
 only one that could have caught either finding before an upload did.
 
 One thing it deliberately does not check: the panel's CSS. The rules come from the
