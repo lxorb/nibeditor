@@ -201,8 +201,19 @@ class Runner {
     return copy
   }
 
-  /** Lets the engine go: signing out, or the account going back to v1. */
-  async stop(): Promise<void> {
+  /** Lets the engine go: signing out, or the account going back to v1. While signing
+   *  out is writing v1's mirrors from the store, it is the one that lets go: syncing is
+   *  told to stop in the same moment (the account's session has gone), and a stop that
+   *  closed the store under it left the mirrors unwritten and the words typed offline
+   *  with nothing saying they were this device's. */
+  stop(): Promise<void> {
+    return this.leaving ?? this.halt()
+  }
+
+  /** Signing out, while it runs. */
+  private leaving: Promise<void> | null = null
+
+  private async halt(): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
@@ -319,7 +330,12 @@ class Runner {
    *  disk, and the mirrors say what the account had confirmed under them, so the next
    *  first pass - or v1 - sends them as this device's edits rather than meeting them as
    *  a stranger's. */
-  async signedOut(accountId: string): Promise<void> {
+  signedOut(accountId: string): Promise<void> {
+    this.leaving ??= this.leave(accountId).finally(() => (this.leaving = null))
+    return this.leaving
+  }
+
+  private async leave(accountId: string): Promise<void> {
     const engine = this.engine
     if (engine) {
       try {
@@ -330,7 +346,7 @@ class Runner {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
     }
-    await this.stop()
+    await this.halt()
     this.firsts.clear()
     await forgetSyncStore(accountId)
   }
