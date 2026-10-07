@@ -21,13 +21,8 @@ export interface Vault {
   clear(): Promise<void>
 }
 
-/** How long to keep trying to reach the account before leaving it for the next
- *  launch, and the waits between tries.
- *
- *  A cold start can begin before the network does, which on a phone is the usual
- *  case rather than the odd one. Three tries over about four seconds is the
- *  difference between a session that settles a moment late and a session the
- *  reader has to type an emailed code to get back. */
+/** The waits between a launch's first tries to reach the account: a cold start can
+ *  begin before the network does, as on a phone it usually does. Then at sync's pace. */
 const TRIES = [400, 1200, 2500]
 
 /** The statuses that mean the token itself is finished. Anything else is about
@@ -151,37 +146,27 @@ class Session {
     keep(STORAGE_KEY, saved)
     this.token = saved
 
-    for (const [attempt, pause] of [0, ...TRIES].entries()) {
+    for (const pause of [0, ...TRIES]) {
       if (pause) await waited(pause)
-
-      try {
-        // Either kind of session answers here, and which one it is decides what
-        // the app offers: a guest is somebody in a space, not an account.
-        const who = await api.me(saved)
-        this.user = who.user ?? null
-        this.guest = who.guest ?? null
-        break
-      } catch (error) {
-        // Only the account saying so signs anybody out. A request that never
-        // arrived says nothing about the token, and throwing one away because
-        // the radio was not ready yet costs a reader their session for the
-        // sake of a second.
-        if (rejected(error)) {
-          this.forget()
-          return
-        }
-
-        if (attempt === TRIES.length) {
-          this.askLater(saved)
-          return
-        }
-      }
+      if (await this.asked(saved)) return
     }
+    this.askLater(saved)
+  }
 
-    // The same reasoning as signing in: the spaces are wanted, and failing to
-    // list them is not a failed session. This used to share the catch above,
-    // which turned one unreachable listing into a sign-out.
+  /** Whether the account said whose the session is, or refused it: only that signs out. */
+  private async asked(token: string): Promise<boolean> {
+    try {
+      const who = await api.me(token)
+      if (this.token !== token) return true
+      this.user = who.user ?? null
+      this.guest = who.guest ?? null
+    } catch (error) {
+      if (!rejected(error)) return false
+      if (this.token === token) this.forget()
+      return true
+    }
     await this.loadSpaces().catch(() => undefined)
+    return true
   }
 
   async requestCode() {
@@ -384,32 +369,17 @@ class Session {
     await sharedWithYou.load()
   }
 
-  /** The session the launch's tries could not ask about, asked about again at sync's
-   *  own cadence for as long as it is the session here and nobody has answered: an app
-   *  opened before its network came back - a laptop on a train - used to stay signed
-   *  out until it was restarted, and nothing synced meanwhile. The token stays, as
-   *  above; only the account refusing it lets it go. */
-  private asking: ReturnType<typeof setTimeout> | undefined
+  private asking?: ReturnType<typeof setTimeout>
 
   private askLater(token: string, tries = 0) {
     clearTimeout(this.asking)
-    this.asking = setTimeout(() => void this.askAgain(token, tries), pollDelay(tries, false))
-  }
-
-  private async askAgain(token: string, tries: number) {
-    if (this.token !== token || this.user || this.guest) return
-    try {
-      const who = await api.me(token)
-      if (this.token !== token) return
-      this.user = who.user ?? null
-      this.guest = who.guest ?? null
-    } catch (error) {
-      if (this.token !== token) return
-      if (rejected(error)) this.forget()
-      else this.askLater(token, tries + 1)
-      return
-    }
-    await this.loadSpaces().catch(() => undefined)
+    this.asking = setTimeout(
+      () => {
+        if (this.token !== token || this.user || this.guest) return
+        void this.asked(token).then((done) => done || this.askLater(token, tries + 1))
+      },
+      pollDelay(tries, false),
+    )
   }
 
   private forget() {

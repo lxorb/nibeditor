@@ -1,8 +1,8 @@
 /** Which opener a row of the file list is for.
  *
  *  A PDF opens in the viewer, a `.url` in the browser, a page note in the
- *  handwriting surface, a canvas on the plane, a `.base` as its view, a `.term` as
- *  its online terminal, and everything else as a note. The
+ *  handwriting surface, a canvas on the plane, a `.base` as its view, and everything
+ *  else as a note. The
  *  routing is one decision made from three facts - the path, whether a `url:` note
  *  sits at it, and which build this is - and it was a ladder of `if`s buried in the
  *  middle of `openEntry`, where the one part of opening that is a decision rather
@@ -21,7 +21,6 @@ import {
   isPdfTarget,
   isWebTarget,
 } from '@nib/markdown/links'
-import { isTermTarget } from './online/path'
 import { isMarkdownPath } from './space-paths'
 
 /** What opens a path, or null where this build cannot show it. */
@@ -67,8 +66,7 @@ export function openerFor(
   // A base is a view of rows, a board or a calendar, which the glasses cannot draw.
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
   if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
-  // An online terminal is its shell, and the glasses have no terminal to show it in.
-  if (isTermTarget(path)) return build.isPlugin ? null : 'term'
+  if (/.term$/i.test(path)) return build.isPlugin ? null : 'term'
 
   return 'note'
 }

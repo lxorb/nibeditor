@@ -23,10 +23,25 @@ export interface Pairing {
   share(root: string, shared: boolean): void
 }
 
+/** The pairing in the air for each engine's `Pairing`. A second pass asking meanwhile - a
+ *  save nudging the loop while the first pass after signing in is still pairing - waits on
+ *  it rather than starting its own: two at once both read an account without the new
+ *  folder's space, and each made one, so the folder went up twice and came back down as
+ *  `Notes 2` with every note in it twice over. */
+const inTheAir = new WeakMap<Pairing, Promise<void>>()
+
 /** Pairs every local space with a remote one, makes what is missing on either side, and
  *  takes the account's icons, bookmarks and order. Asked only when the listing is due;
  *  answers whether it was. */
-export async function pairSpaces(token: string, pairing: Pairing): Promise<void> {
+export function pairSpaces(token: string, pairing: Pairing): Promise<void> {
+  const running = inTheAir.get(pairing)
+  if (running) return running
+  const now = pairOnce(token, pairing).finally(() => inTheAir.delete(pairing))
+  inTheAir.set(pairing, now)
+  return now
+}
+
+async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   const plan = planSpaces({
     local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
     remote: account.spaces.map((space) => ({

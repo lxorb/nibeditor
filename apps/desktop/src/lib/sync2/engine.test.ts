@@ -478,15 +478,13 @@ describe('the folder watcher', () => {
       ready: () => true,
       changed: () => undefined,
     })
-    expect(watch.mock.calls.map(([roots]) => roots)).toEqual([[ROOT]])
+    const watchedRoots = () => watch.mock.calls.map((call: unknown[]) => call[0])
+    expect(watchedRoots()).toEqual([[ROOT]])
 
     await here.engine.core.commit(here.engine.core.addSpace('later', '/device/later', 'owner'))
     watched.follow()
     watched.follow()
-    expect(watch.mock.calls.map(([roots]) => roots)).toEqual([
-      [ROOT],
-      ['/device/later', ROOT].sort(),
-    ])
+    expect(watchedRoots()).toEqual([[ROOT], ['/device/later', ROOT].sort()])
     watched.stop()
   })
 })
