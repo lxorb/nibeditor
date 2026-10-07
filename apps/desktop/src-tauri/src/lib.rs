@@ -649,7 +649,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // space_watch.rs.
     let builder = builder
         .manage(sync_store::Stores::default())
-        .manage(sync_store::chats::ChatStores::default())
         .manage(space_watch::Watching::default());
 
     // What the `nib` command's requests wait in while the window answers them.

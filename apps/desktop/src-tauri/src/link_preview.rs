@@ -67,7 +67,10 @@ async fn preview(url: &str) -> Option<Page> {
         title: clipped(&title, 300),
         site: head
             .meta("og:site_name")
-            .or_else(|| url.host_str().map(|host| host.trim_start_matches("www.").to_owned()))
+            .or_else(|| {
+                url.host_str()
+                    .map(|host| host.trim_start_matches("www.").to_owned())
+            })
             .map(|site| clipped(&site, 100)),
         text: head
             .meta("og:description")
@@ -84,8 +87,10 @@ async fn preview(url: &str) -> Option<Page> {
         .or_else(|| head.meta("twitter:image"))
         .and_then(|found| url.join(&found).ok());
     if let Some(picture) = picture {
-        if let Some((_, (bytes, kind))) =
-            fetched(picture.as_str(), MOST_PICTURE, |kind| kind.starts_with("image/")).await
+        if let Some((_, (bytes, kind))) = fetched(picture.as_str(), MOST_PICTURE, |kind| {
+            kind.starts_with("image/")
+        })
+        .await
         {
             page.picture = Some(base64::engine::general_purpose::STANDARD.encode(bytes));
             page.picture_type = Some(kind);
@@ -159,7 +164,10 @@ async fn fetched(
 
 /// The address a name resolves to, if every address it resolves to is public.
 async fn public_address(host: &str, port: u16) -> Option<SocketAddr> {
-    let named = host.trim_start_matches('[').trim_end_matches(']').to_owned();
+    let named = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_owned();
     let found: Vec<SocketAddr> = tauri::async_runtime::spawn_blocking(move || {
         (named.as_str(), port)
             .to_socket_addrs()
@@ -346,7 +354,10 @@ mod tests {
         );
         assert_eq!(head.title.as_deref(), Some("Plain & simple"));
         assert_eq!(head.meta("og:title").as_deref(), Some("The \"real\" title"));
-        assert_eq!(head.meta("description").as_deref(), Some("A line \u{2014} with a dash"));
+        assert_eq!(
+            head.meta("description").as_deref(),
+            Some("A line \u{2014} with a dash")
+        );
         assert_eq!(head.meta("og:image").as_deref(), Some("/pic.png"));
         assert_eq!(head.metas.len(), 3, "nothing from the body");
     }
@@ -373,7 +384,10 @@ mod tests {
             "fe80::1",
             "::ffff:192.168.0.1",
         ] {
-            assert!(!is_public(private.parse().expect("an address")), "{private}");
+            assert!(
+                !is_public(private.parse().expect("an address")),
+                "{private}"
+            );
         }
         for public in ["93.184.216.34", "1.1.1.1", "2606:4700:4700::1111"] {
             assert!(is_public(public.parse().expect("an address")), "{public}");
@@ -382,6 +396,9 @@ mod tests {
 
     #[test]
     fn entities_are_decoded_and_odd_ones_kept() {
-        assert_eq!(decoded("a &lt;b&gt; &#x41; &unknown; & c"), "a <b> A &unknown; & c");
+        assert_eq!(
+            decoded("a &lt;b&gt; &#x41; &unknown; & c"),
+            "a <b> A &unknown; & c"
+        );
     }
 }

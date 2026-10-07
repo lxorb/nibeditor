@@ -36,7 +36,7 @@ async function opened(account: Account, readSeq = 0) {
     members: () => Promise.resolve([]),
     receipts: () => true,
     profile: () => undefined,
-    closed: () => undefined,
+    release: () => true,
   }
   const view = new View(CHAT, host)
   view.lineAt = readSeq

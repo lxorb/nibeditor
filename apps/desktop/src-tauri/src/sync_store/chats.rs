@@ -39,7 +39,8 @@ const PATIENCE: Duration = Duration::from_secs(5);
 /// thousand or two.
 const MOST_ROWS: u32 = 5000;
 
-/// The chats' store that is open, and whose it is.
+/// The chats' store that is open, and whose it is: held beside the sync store's own in
+/// `Stores`.
 #[derive(Default)]
 pub struct ChatStores(Mutex<Option<(String, PathBuf, ChatStore)>>);
 
@@ -99,7 +100,11 @@ pub enum Ask {
         limit: u32,
     },
     /// How many of a chat's own messages after a place are somebody else's.
-    Unread { chat: String, after: i64, me: String },
+    Unread {
+        chat: String,
+        after: i64,
+        me: String,
+    },
     /// The outbox, oldest first.
     Outbox,
     /// Every draft.
@@ -146,7 +151,10 @@ pub enum Change {
         marks: Option<String>,
     },
     /// A message gone from the device.
-    Unmessage { chat: String, id: String },
+    Unmessage {
+        chat: String,
+        id: String,
+    },
     /// An outbox row, whole.
     Queue {
         id: String,
@@ -157,11 +165,21 @@ pub enum Change {
         #[serde(default)]
         refused: Option<String>,
     },
-    Unqueue { id: String },
-    Draft { chat: String, text: String, at: i64 },
-    Undraft { chat: String },
+    Unqueue {
+        id: String,
+    },
+    Draft {
+        chat: String,
+        text: String,
+        at: i64,
+    },
+    Undraft {
+        chat: String,
+    },
     /// Everything of one chat: its row, messages and draft. Its outbox is the outbox's.
-    Forget { chat: String },
+    Forget {
+        chat: String,
+    },
 }
 
 /// An open chats' store.
@@ -294,13 +312,12 @@ fn rows(conn: &Connection, sql: &str, values: &[Sql]) -> Result<Vec<Json>, Faile
         let mut object = Map::with_capacity(names.len());
         for (at, name) in names.iter().enumerate() {
             let value = match row.get_ref(at)? {
-                rusqlite::types::ValueRef::Null => Json::Null,
+                rusqlite::types::ValueRef::Null | rusqlite::types::ValueRef::Blob(_) => Json::Null,
                 rusqlite::types::ValueRef::Integer(number) => json!(number),
                 rusqlite::types::ValueRef::Real(number) => json!(number),
                 rusqlite::types::ValueRef::Text(bytes) => {
                     Json::String(String::from_utf8_lossy(bytes).into_owned())
                 }
-                rusqlite::types::ValueRef::Blob(_) => Json::Null,
             };
             object.insert(name.clone(), value);
         }
@@ -323,7 +340,15 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
             after,
             around,
             limit,
-        } => Json::Array(window(conn, chat, parent.as_deref(), *before, *after, *around, *limit)?),
+        } => Json::Array(window(
+            conn,
+            chat,
+            parent.as_deref(),
+            *before,
+            *after,
+            *around,
+            *limit,
+        )?),
         Ask::Messages { chat, ids } => {
             if ids.is_empty() {
                 return Ok(Json::Array(Vec::new()));
@@ -336,65 +361,7 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
             values.extend(ids.iter().map(|id| text(id)));
             Json::Array(rows(conn, &sql, &values)?)
         }
-        Ask::Search {
-            chats,
-            words,
-            phrases,
-            has,
-            authors,
-            reply,
-            since,
-            until,
-            limit,
-        } => {
-            let mut filters = Vec::new();
-            let mut values = Vec::new();
-            let matched: Vec<String> = words
-                .iter()
-                .filter(|one| !one.trim().is_empty())
-                .map(|one| quoted(one, true))
-                .chain(
-                    phrases
-                        .iter()
-                        .filter(|one| !one.trim().is_empty())
-                        .map(|one| quoted(one, false)),
-                )
-                .collect();
-            if !matched.is_empty() {
-                filters.push("rowid in (select rowid from words where words match ?)".to_owned());
-                values.push(Sql::Text(matched.join(" ")));
-            }
-            if !chats.is_empty() {
-                filters.push(format!("chat in ({})", slots(chats.len())));
-                values.extend(chats.iter().map(|one| text(one)));
-            }
-            if !authors.is_empty() {
-                filters.push(format!("author in ({})", slots(authors.len())));
-                values.extend(authors.iter().map(|one| text(one)));
-            }
-            for one in has {
-                filters.push("has like ?".to_owned());
-                values.push(Sql::Text(format!("% {one} %")));
-            }
-            if *reply {
-                filters.push("parent is not null".to_owned());
-            }
-            if let Some(since) = since {
-                filters.push("at >= ?".to_owned());
-                values.push(whole(*since));
-            }
-            if let Some(until) = until {
-                filters.push("at < ?".to_owned());
-                values.push(whole(*until));
-            }
-            filters.push("deleted = 0".to_owned());
-            values.push(whole(i64::from((*limit).min(MOST_ROWS))));
-            let sql = format!(
-                "select {MESSAGE} from messages where {} order by at desc, seq desc limit ?",
-                filters.join(" and ")
-            );
-            Json::Array(rows(conn, &sql, &values)?)
-        }
+        Ask::Search { .. } => search(conn, ask)?,
         Ask::Unread { chat, after, me } => {
             let count: i64 = conn.query_row(
                 "select count(*) from messages
@@ -411,6 +378,71 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
         )?),
         Ask::Drafts => Json::Array(rows(conn, "select chat, text, at from drafts", &[])?),
     })
+}
+
+/// The candidates of a search, newest first.
+fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
+    let Ask::Search {
+        chats,
+        words,
+        phrases,
+        has,
+        authors,
+        reply,
+        since,
+        until,
+        limit,
+    } = ask
+    else {
+        return Ok(Json::Null);
+    };
+    let mut filters = Vec::new();
+    let mut values = Vec::new();
+    let matched: Vec<String> = words
+        .iter()
+        .filter(|one| !one.trim().is_empty())
+        .map(|one| quoted(one, true))
+        .chain(
+            phrases
+                .iter()
+                .filter(|one| !one.trim().is_empty())
+                .map(|one| quoted(one, false)),
+        )
+        .collect();
+    if !matched.is_empty() {
+        filters.push("rowid in (select rowid from words where words match ?)".to_owned());
+        values.push(Sql::Text(matched.join(" ")));
+    }
+    if !chats.is_empty() {
+        filters.push(format!("chat in ({})", slots(chats.len())));
+        values.extend(chats.iter().map(|one| text(one)));
+    }
+    if !authors.is_empty() {
+        filters.push(format!("author in ({})", slots(authors.len())));
+        values.extend(authors.iter().map(|one| text(one)));
+    }
+    for one in has {
+        filters.push("has like ?".to_owned());
+        values.push(Sql::Text(format!("% {one} %")));
+    }
+    if *reply {
+        filters.push("parent is not null".to_owned());
+    }
+    if let Some(since) = since {
+        filters.push("at >= ?".to_owned());
+        values.push(whole(*since));
+    }
+    if let Some(until) = until {
+        filters.push("at < ?".to_owned());
+        values.push(whole(*until));
+    }
+    filters.push("deleted = 0".to_owned());
+    values.push(whole(i64::from((*limit).min(MOST_ROWS))));
+    let sql = format!(
+        "select {MESSAGE} from messages where {} order by at desc, seq desc limit ?",
+        filters.join(" and ")
+    );
+    Ok(Json::Array(rows(conn, &sql, &values)?))
 }
 
 /// A window of rows by `seq`, oldest first.
@@ -435,7 +467,11 @@ fn window(
             "select {MESSAGE} from messages where chat = ?1 and {which} and seq < ?3
               order by seq desc limit ?4"
         );
-        let mut found = rows(conn, &sql, &[text(chat), key.clone(), whole(from), whole(many)])?;
+        let mut found = rows(
+            conn,
+            &sql,
+            &[text(chat), key.clone(), whole(from), whole(many)],
+        )?;
         found.reverse();
         Ok(found)
     };
@@ -444,7 +480,11 @@ fn window(
             "select {MESSAGE} from messages where chat = ?1 and {which} and seq > ?3
               order by seq limit ?4"
         );
-        rows(conn, &sql, &[text(chat), key.clone(), whole(from), whole(many)])
+        rows(
+            conn,
+            &sql,
+            &[text(chat), key.clone(), whole(from), whole(many)],
+        )
     };
 
     if let Some(around) = around {
@@ -460,7 +500,8 @@ fn window(
 }
 
 fn run(conn: &Connection, sql: &str, values: &[Sql]) -> Result<(), Failed> {
-    conn.prepare_cached(sql)?.execute(params_from_iter(values))?;
+    conn.prepare_cached(sql)?
+        .execute(params_from_iter(values))?;
     Ok(())
 }
 
@@ -488,47 +529,7 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
                 maybe_text(row.as_ref()),
             ],
         ),
-        Change::Message {
-            chat,
-            id,
-            seq,
-            at,
-            author,
-            parent,
-            main,
-            deleted,
-            body,
-            has,
-            upto,
-            json,
-            marks,
-        } => run(
-            // An upsert rather than a replace, so the row keeps its rowid and the words'
-            // triggers see an update: a replace deletes without telling them.
-            conn,
-            "insert into messages
-               (chat, id, seq, at, author, parent, main, deleted, body, has, upto, json, marks)
-             values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-             on conflict (chat, id) do update set seq = excluded.seq, at = excluded.at,
-               author = excluded.author, parent = excluded.parent, main = excluded.main,
-               deleted = excluded.deleted, body = excluded.body, has = excluded.has,
-               upto = excluded.upto, json = excluded.json, marks = excluded.marks",
-            &[
-                text(chat),
-                text(id),
-                whole(*seq),
-                whole(*at),
-                text(author),
-                maybe_text(parent.as_ref()),
-                whole(i64::from(*main)),
-                whole(i64::from(*deleted)),
-                text(body),
-                text(has),
-                whole(*upto),
-                text(json),
-                maybe_text(marks.as_ref()),
-            ],
-        ),
+        Change::Message { .. } => message(conn, change),
         Change::Unmessage { chat, id } => run(
             conn,
             "delete from messages where chat = ? and id = ?",
@@ -555,7 +556,11 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
             ],
         ),
         Change::Unqueue { id } => run(conn, "delete from outbox where id = ?", &[text(id)]),
-        Change::Draft { chat, text: words, at } => run(
+        Change::Draft {
+            chat,
+            text: words,
+            at,
+        } => run(
             conn,
             "insert or replace into drafts (chat, text, at) values (?, ?, ?)",
             &[text(chat), text(words), whole(*at)],
@@ -567,6 +572,55 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
             run(conn, "delete from chats where id = ?", &[text(chat)])
         }
     }
+}
+
+/// A message as it now stands: an upsert rather than a replace, so the row keeps its
+/// rowid and the words' triggers see an update, where a replace deletes without telling
+/// them.
+fn message(conn: &Connection, change: &Change) -> Result<(), Failed> {
+    let Change::Message {
+        chat,
+        id,
+        seq,
+        at,
+        author,
+        parent,
+        main,
+        deleted,
+        body,
+        has,
+        upto,
+        json,
+        marks,
+    } = change
+    else {
+        return Ok(());
+    };
+    run(
+        conn,
+        "insert into messages
+           (chat, id, seq, at, author, parent, main, deleted, body, has, upto, json, marks)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         on conflict (chat, id) do update set seq = excluded.seq, at = excluded.at,
+           author = excluded.author, parent = excluded.parent, main = excluded.main,
+           deleted = excluded.deleted, body = excluded.body, has = excluded.has,
+           upto = excluded.upto, json = excluded.json, marks = excluded.marks",
+        &[
+            text(chat),
+            text(id),
+            whole(*seq),
+            whole(*at),
+            text(author),
+            maybe_text(parent.as_ref()),
+            whole(i64::from(*main)),
+            whole(i64::from(*deleted)),
+            text(body),
+            text(has),
+            whole(*upto),
+            text(json),
+            maybe_text(marks.as_ref()),
+        ],
+    )
 }
 
 /// Where an account's chats are kept: beside its sync store.
@@ -584,8 +638,8 @@ fn with_chats<T>(
     act: impl FnOnce(&mut ChatStore) -> Result<T, Failed>,
 ) -> Result<T, String> {
     let path = chats_path(app, account)?;
-    let stores = app.state::<ChatStores>();
-    let mut held = stores.lock();
+    let stores = app.state::<super::Stores>();
+    let mut held = stores.1.lock();
     if held.as_ref().is_none_or(|(open, ..)| open != account) {
         if let Some((_, _, other)) = held.take() {
             other.close()?;
@@ -618,7 +672,11 @@ pub fn chat_store_read(app: AppHandle, account: String, asks: Vec<Ask>) -> Resul
 
 /// Applies a list of changes to an account's chats, all or nothing.
 #[tauri::command(async)]
-pub fn chat_store_write(app: AppHandle, account: String, changes: Vec<Change>) -> Result<(), String> {
+pub fn chat_store_write(
+    app: AppHandle,
+    account: String,
+    changes: Vec<Change>,
+) -> Result<(), String> {
     with_chats(&app, &account, |store| store.write(&changes))
 }
 
@@ -627,8 +685,8 @@ pub fn chat_store_write(app: AppHandle, account: String, changes: Vec<Change>) -
 pub fn chat_store_forget(app: AppHandle, account: String) -> Result<(), String> {
     let path = chats_path(&app, &account)?;
     {
-        let stores = app.state::<ChatStores>();
-        let mut held = stores.lock();
+        let stores = app.state::<super::Stores>();
+        let mut held = stores.1.lock();
         if held.as_ref().is_some_and(|(open, ..)| *open == account) {
             if let Some((_, _, open)) = held.take() {
                 open.close()?;
@@ -695,15 +753,30 @@ mod tests {
         let all: Vec<Json> = (1..=20).map(|seq| message("c", seq, "hello")).collect();
         write(&mut store, Json::Array(all));
 
-        let newest = ask(&mut store, json!({ "t": "window", "chat": "c", "limit": 3 }));
+        let newest = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "limit": 3 }),
+        );
         assert_eq!(seqs(&newest), [18, 19, 20]);
-        let before = ask(&mut store, json!({ "t": "window", "chat": "c", "before": 5, "limit": 3 }));
+        let before = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "before": 5, "limit": 3 }),
+        );
         assert_eq!(seqs(&before), [2, 3, 4]);
-        let after = ask(&mut store, json!({ "t": "window", "chat": "c", "after": 18, "limit": 9 }));
+        let after = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "after": 18, "limit": 9 }),
+        );
         assert_eq!(seqs(&after), [19, 20]);
-        let around = ask(&mut store, json!({ "t": "window", "chat": "c", "around": 10, "limit": 4 }));
+        let around = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "around": 10, "limit": 4 }),
+        );
         assert_eq!(seqs(&around), [8, 9, 10, 11]);
-        let other = ask(&mut store, json!({ "t": "window", "chat": "d", "limit": 3 }));
+        let other = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "d", "limit": 3 }),
+        );
         assert_eq!(seqs(&other), Vec::<i64>::new());
     }
 
@@ -714,12 +787,20 @@ mod tests {
         let mut reply = message("c", 2, "a reply");
         reply["parent"] = json!("m1");
         reply["main"] = json!(false);
-        write(&mut store, json!([message("c", 1, "a question"), reply, message("c", 3, "on")]));
+        write(
+            &mut store,
+            json!([message("c", 1, "a question"), reply, message("c", 3, "on")]),
+        );
 
-        let chat = ask(&mut store, json!({ "t": "window", "chat": "c", "limit": 10 }));
+        let chat = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "limit": 10 }),
+        );
         assert_eq!(seqs(&chat), [1, 3]);
-        let replies =
-            ask(&mut store, json!({ "t": "window", "chat": "c", "parent": "m1", "limit": 10 }));
+        let replies = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "parent": "m1", "limit": 10 }),
+        );
         assert_eq!(seqs(&replies), [2]);
     }
 
@@ -736,29 +817,53 @@ mod tests {
             ]),
         );
 
-        let found = ask(&mut store, json!({ "t": "search", "words": ["cafe"], "limit": 10 }));
+        let found = ask(
+            &mut store,
+            json!({ "t": "search", "words": ["cafe"], "limit": 10 }),
+        );
         assert_eq!(seqs(&found), [3, 1], "newest first, across chats");
         let one = ask(
             &mut store,
             json!({ "t": "search", "words": ["caf"], "chats": ["c"], "limit": 10 }),
         );
         assert_eq!(seqs(&one), [1]);
-        let phrase = ask(&mut store, json!({ "t": "search", "phrases": ["at the cafe"], "limit": 10 }));
+        let phrase = ask(
+            &mut store,
+            json!({ "t": "search", "phrases": ["at the cafe"], "limit": 10 }),
+        );
         assert_eq!(seqs(&phrase), [1]);
-        let links = ask(&mut store, json!({ "t": "search", "has": ["link"], "limit": 10 }));
+        let links = ask(
+            &mut store,
+            json!({ "t": "search", "has": ["link"], "limit": 10 }),
+        );
         assert_eq!(seqs(&links), [2]);
-        let odd = ask(&mut store, json!({ "t": "search", "words": ["\"NEAR(("], "limit": 10 }));
+        let odd = ask(
+            &mut store,
+            json!({ "t": "search", "words": ["\"NEAR(("], "limit": 10 }),
+        );
         assert_eq!(seqs(&odd), Vec::<i64>::new(), "typed syntax is only words");
 
         // An edit takes the old words out of the index and puts the new ones in.
         write(&mut store, json!([message("c", 1, "Meet at the bar")]));
-        let gone = ask(&mut store, json!({ "t": "search", "words": ["cafe"], "chats": ["c"], "limit": 10 }));
+        let gone = ask(
+            &mut store,
+            json!({ "t": "search", "words": ["cafe"], "chats": ["c"], "limit": 10 }),
+        );
         assert_eq!(seqs(&gone), Vec::<i64>::new());
-        let now = ask(&mut store, json!({ "t": "search", "words": ["bar"], "limit": 10 }));
+        let now = ask(
+            &mut store,
+            json!({ "t": "search", "words": ["bar"], "limit": 10 }),
+        );
         assert_eq!(seqs(&now), [1]);
 
-        write(&mut store, json!([{ "t": "unmessage", "chat": "c", "id": "m1" }]));
-        let none = ask(&mut store, json!({ "t": "search", "words": ["bar"], "limit": 10 }));
+        write(
+            &mut store,
+            json!([{ "t": "unmessage", "chat": "c", "id": "m1" }]),
+        );
+        let none = ask(
+            &mut store,
+            json!({ "t": "search", "words": ["bar"], "limit": 10 }),
+        );
         assert_eq!(seqs(&none), Vec::<i64>::new());
     }
 
@@ -768,7 +873,10 @@ mod tests {
         let mut store = opened(&dir.path().join("a.chats.db"));
         let all: Vec<Json> = (1..=10).map(|seq| message("c", seq, "x")).collect();
         write(&mut store, Json::Array(all));
-        let unread = ask(&mut store, json!({ "t": "unread", "chat": "c", "after": 4, "me": "user:a" }));
+        let unread = ask(
+            &mut store,
+            json!({ "t": "unread", "chat": "c", "after": 4, "me": "user:a" }),
+        );
         assert_eq!(unread, json!(3), "5, 7 and 9 are user:b's");
     }
 
@@ -799,10 +907,21 @@ mod tests {
             .collect();
         assert_eq!(ids, ["e1", "e2"]);
         assert_eq!(outbox[0]["refused"], json!("rate"));
-        assert_eq!(ask(&mut again, json!({ "t": "drafts" }))[0]["text"], json!("half a thought"));
+        assert_eq!(
+            ask(&mut again, json!({ "t": "drafts" }))[0]["text"],
+            json!("half a thought")
+        );
 
-        write(&mut again, json!([{ "t": "unqueue", "id": "e1" }, { "t": "forget", "chat": "c" }]));
-        assert_eq!(ask(&mut again, json!({ "t": "outbox" })).as_array().map(Vec::len), Some(1));
+        write(
+            &mut again,
+            json!([{ "t": "unqueue", "id": "e1" }, { "t": "forget", "chat": "c" }]),
+        );
+        assert_eq!(
+            ask(&mut again, json!({ "t": "outbox" }))
+                .as_array()
+                .map(Vec::len),
+            Some(1)
+        );
         assert_eq!(ask(&mut again, json!({ "t": "drafts" })), json!([]));
     }
 
@@ -828,10 +947,16 @@ mod tests {
             write(&mut store, Json::Array(batch));
         }
         // Warm the statement and the pages, as an open chat has.
-        ask(&mut store, json!({ "t": "window", "chat": "c", "around": 50_000, "limit": 100 }));
+        ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "around": 50_000, "limit": 100 }),
+        );
 
         let started = Instant::now();
-        let around = ask(&mut store, json!({ "t": "window", "chat": "c", "around": 73_210, "limit": 100 }));
+        let around = ask(
+            &mut store,
+            json!({ "t": "window", "chat": "c", "around": 73_210, "limit": 100 }),
+        );
         let took = started.elapsed();
         assert_eq!(seqs(&around).len(), 100);
         assert!(took.as_millis() < 10, "the window took {took:?}");

@@ -46,8 +46,8 @@ export interface Host {
   receipts(): boolean
   /** Somebody changed their profile. */
   profile(who: Who): void
-  /** The view was let go of by its last holder. */
-  closed(chat: string): void
+  /** One holder let the view go: answers whether it was the last. */
+  release(chat: string): boolean
 }
 
 /** A window of one list of a chat, kept current. */
@@ -358,14 +358,15 @@ export class View extends Listing implements ChatView {
     if (this.socket?.typing(parent)) this.typedAt = now
   }
 
-  /** Taken back by its last holder: the socket goes, and the store stops telling it. */
+  /** Let go of by one holder; by the last, the socket goes and the store stops telling
+   *  it. */
   close(): void {
+    if (this.closed || !this.host.release(this.chat)) return
     this.closed = true
     this.socket?.close()
     this.socket = null
     this.stopListening?.()
     clearTimeout(this.typingTimer)
-    this.host.closed(this.chat)
   }
 
   private readTimer: ReturnType<typeof setTimeout> | undefined

@@ -151,7 +151,10 @@ class ChatsStore implements Chats {
 
   private stop(): void {
     for (const stop of this.stops.splice(0)) stop()
-    for (const { view } of this.views.values()) view.close()
+    for (const held of [...this.views.values()]) {
+      held.holds = 1
+      held.view.close()
+    }
     this.views.clear()
     this.engine?.stop()
     this.engine = null
@@ -316,7 +319,12 @@ class ChatsStore implements Chats {
         void import('../people/people.svelte').then(({ people }) => people.refresh(who.slice(5)))
         this.people.clear()
       },
-      closed: (chat) => this.views.delete(chat),
+      release: (chat) => {
+        const held = this.views.get(chat)
+        if (held && --held.holds > 0) return false
+        this.views.delete(chat)
+        return true
+      },
     }
   }
 
