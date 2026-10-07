@@ -174,7 +174,12 @@ export interface Chats {
   readonly me: Who | null
   /** Hears every change of `list`; answers how to stop. */
   watch(listener: () => void): () => void
+  /** Hears new messages by others once the device holds them, in order: what a
+   *  notification reads. Answers how to stop. */
+  heard(listener: (chat: string, messages: readonly Message[]) => void): () => void
   entry(chat: string): ChatEntry | null
+  /** The reader's switch for read receipts, reciprocal (4.10). */
+  receipts: boolean
 
   /** Opens a chat: the same view for the same chat while any surface holds it. */
   open(chat: string): ChatView
@@ -209,6 +214,9 @@ export interface Chats {
   search(query: string, chat?: string): Promise<Hit[]>
   /** The query as the store reads it, for a surface that shows what was understood. */
   parse(query: string): SearchQuery
+  /** Messages that link a note by one of its names, `[[name]]`: the note's backlinks
+   *  from chats (4.13). */
+  linking(names: readonly string[]): Promise<Hit[]>
 
   /** The composer's words for a chat, kept on the device after the quiet pause. */
   draft(chat: string): string
@@ -222,9 +230,10 @@ export interface Chats {
   /** A link's preview, made on this device (4.8); null for none. */
   preview(url: string): Promise<Preview | null>
 
-  /** A new chat in a space's folder: made on the account, its pointer written. Answers
-   *  the pointer's path, or null where none was made. */
-  make(root: string, name: string): Promise<string | null>
+  /** A new chat in a folder of a space: made on the account, its pointer `name.chat`
+   *  written there. Answers the pointer's path, or null where none was made (the space
+   *  is not on the account, or the account would not). */
+  make(folder: string, name: string): Promise<string | null>
   /** The chat a `.chat` file names, or null for a file that is not a pointer. */
   chatAt(path: string): Promise<string | null>
 }

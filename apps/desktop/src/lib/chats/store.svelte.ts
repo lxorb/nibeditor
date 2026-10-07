@@ -42,6 +42,9 @@ import { type Host, View } from './view.svelte'
  *  they see nobody's. */
 const RECEIPTS = 'nib:chat-receipts'
 
+/** A wikilink's target: what `[[` holds up to a heading, a block, an alias or its end. */
+const WIKILINK = /\[\[([^\]|#^]+)/g
+
 /** How often the pointers are looked for again when a chat turns up without one. */
 const LOOK_AGAIN = 30_000
 
@@ -524,6 +527,27 @@ class ChatsStore implements Chats {
       )
       .slice(0, 100)
       .map(({ chat: id, kept }) => ({ chat: id, message: kept.message }))
+  }
+
+  async linking(names: readonly string[]): Promise<Hit[]> {
+    const cache = this.cache
+    if (!cache) return []
+    const wanted = new Set(names.map((name) => name.trim().toLowerCase()).filter(Boolean))
+    const hits: Hit[] = []
+    for (const name of wanted) {
+      // The store finds the messages with the name's words; the link itself decides.
+      const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+      if (!words.length) continue
+      for (const { chat, kept } of await cache.search({ words, limit: 500 })) {
+        const linked = [...kept.message.body.matchAll(WIKILINK)].some((found) =>
+          wanted.has((found[1] ?? '').trim().toLowerCase()),
+        )
+        if (linked && !hits.some((one) => one.message.id === kept.message.id)) {
+          hits.push({ chat, message: kept.message })
+        }
+      }
+    }
+    return hits.sort((a, b) => b.message.at - a.message.at)
   }
 
   // -------------------------------------------------------------------------

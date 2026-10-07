@@ -254,14 +254,15 @@ export class ChatEngine {
     return true
   }
 
-  /** One older page of a chat's past into the store; answers whether there is more. */
+  /** One older page of a chat's past into the store; answers whether one came in: not
+   *  once the chat's first message is here, before its first copy, or while the account
+   *  cannot be reached. */
   fill(id: string): Promise<boolean> {
     return this.line(id, async () => {
       const chat = this.chatOf(id)
-      if (chat.complete) return false
-      if (chat.seq === 0) return true
+      if (chat.complete || (chat.seq === 0 && chat.older === null)) return false
       const page = await this.remote.state(id, chat.older ?? undefined)
-      if (!page) return true
+      if (!page) return false
       const have = new Set(
         (
           await this.cache.messages(
@@ -282,7 +283,7 @@ export class ChatEngine {
         ...kept.map((one): CacheChange => ({ t: 'message', chat: id, kept: one })),
       ])
       this.say({ t: 'messages', chat: id, kept, gone: [], arrived: [] })
-      return !chat.complete
+      return true
     })
   }
 

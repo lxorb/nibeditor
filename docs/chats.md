@@ -920,26 +920,46 @@ says so and the lane picks the next free one.
 - **Out of the first paint.** The Chats panel, the chat view, the composer's editor, the
   emoji data and `@nib/chats` are fetched when first asked for; `GET /v2/chats` runs after the
   launch order; `apps/desktop/test/weight.test.ts` is not raised.
-- **The device's store** (`docs/sync-v2.md` 9.2, `sync/<account>.db`, which a device on sync
-  v1 opens for its chats alone) gains:
+- **The device's store** is a file of its own beside the sync store, `sync/<account>.chats.db`
+  (`src-tauri/src/sync_store/chats.rs`), opened the first time a chat asks, on a v1 account as
+  on a v2 one, and deleted when the account signs out. Not more tables in `sync/<account>.db`:
+  that file is sync v2's, whose engine closes it when it stops, counts every opening as an
+  unclean session until it says otherwise (and then rotates every document's client id), and
+  deletes it on the way back to v1, which would take an outbox's words with it. It holds:
 
   ```sql
-  create table chats (id text primary key, space_id text not null,
+  create table chats (id text primary key, space text not null,
                       seq integer not null default 0, read_seq integer not null default 0,
-                      complete integer not null default 0, meta text);
-  create table chat_messages (chat text not null, id text not null, seq integer not null,
-                              author text not null, at integer not null, parent text,
-                              body text not null, extra blob, primary key (chat, id));
-  create index chat_messages_seq on chat_messages(chat, seq);
-  create index chat_messages_parent on chat_messages(chat, parent, seq);
-  create virtual table chat_words using fts5(body, content='chat_messages');
-  create table chat_outbox (id text primary key, chat text not null, event blob not null,
-                            made_at integer not null, tries integer not null default 0,
-                            refused text);
-  create table chat_drafts (chat text primary key, text text not null, at integer not null);
+                      oldest integer, complete integer not null default 0, row text);
+  create table messages (chat text not null, id text not null, seq integer not null,
+                         at integer not null, author text not null, parent text,
+                         main integer not null, deleted integer not null, body text not null,
+                         has text not null, upto integer not null, json text not null,
+                         marks text, primary key (chat, id));
+  create index messages_main on messages (chat, main, seq);
+  create index messages_parent on messages (chat, parent, seq);
+  create virtual table words using fts5(body, content = 'messages',
+                                        tokenize = 'unicode61 remove_diacritics 2');
+  create table outbox (id text primary key, chat text not null, event text not null,
+                       made_at integer not null, tries integer not null default 0,
+                       refused text);
+  create table drafts (chat text primary key, text text not null, at integer not null);
   ```
 
-  The browser build keeps the same as IndexedDB stores and searches through the Worker.
+  `seq` is the place of the log every message here is current to: a device folds the
+  events after it in the log's order (`lib/chats/fold.ts`, held to `apply` by a property
+  test), keeping beside each message only what the next event needs (when each reaction and
+  vote was set) and the place it is current to (`upto`), so a state page read after an
+  event and the event itself are folded once. `main` is whether the chat itself shows the
+  message, `has` is `hasOf`. The browser build keeps the same in memory for the visit and
+  searches through the Worker: it is online whenever it is open, and the account is its
+  store, as Slack's web client's is.
+- **The outbox posts over HTTP**, `POST /v2/chats/:id/events`, one request at a time per chat
+  and each answer waited for, as Slack's clients post through its API and listen on its
+  socket; the socket carries what the log says, typing and read places. So one device's
+  events reach the log in the order they were said, whatever a socket's two ends do.
+- **A deleted message takes no more replies or quotes** (`gone`): a device keeps no row for a
+  deleted message without replies, and could not count a reply under it.
 - **Opening a chat** reads the 100 rows around the read place from the store by `seq` (an
   index read), draws them, and opens the socket after the first frame. Budget: the rows on
   screen within 50 ms of the press, for a chat of 100,000.

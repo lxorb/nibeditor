@@ -126,12 +126,8 @@ class Listing implements MessageList {
     const first = this.window[0]?.message.seq
     if (first === undefined) return
     await this.loadingWith(async () => {
-      let rows = await this.rows({ before: first, limit: PAGE })
-      // The store has none older yet: a page from the account, then the store again.
-      while (rows.length < PAGE && (await this.host.engine.fill(this.chat))) {
-        rows = await this.rows({ before: first, limit: PAGE })
-      }
-      this.atStart = rows.length < PAGE
+      const rows = await this.filled({ before: first, limit: PAGE }, (some) => some.length >= PAGE)
+      this.atStart = rows.length < PAGE && this.complete()
       this.window = [...rows, ...this.window]
       if (this.window.length > MOST_HELD) {
         this.window = this.window.slice(0, MOST_HELD)
@@ -156,7 +152,7 @@ class Listing implements MessageList {
 
   async latest(): Promise<void> {
     await this.loadingWith(async () => {
-      const rows = await this.rows({ limit: OPENING })
+      const rows = await this.filled({ limit: OPENING }, (some) => some.length >= OPENING)
       this.window = rows
       this.atEnd = true
       this.atStart = rows.length < OPENING && this.complete()
@@ -166,17 +162,30 @@ class Listing implements MessageList {
   /** The window around one place. */
   protected async around(seq: number): Promise<void> {
     await this.loadingWith(async () => {
-      const rows = await this.rows({ around: seq, limit: OPENING })
+      const half = OPENING / 2
+      const older = (some: readonly Kept[]) => some.filter((one) => one.message.seq < seq).length
+      const rows = await this.filled({ around: seq, limit: OPENING }, (some) => older(some) >= half)
       this.window = rows
-      const before = rows.filter((one) => one.message.seq < seq).length
+      const before = older(rows)
       const after = rows.length - before
-      this.atStart = before < OPENING / 2 && this.complete()
-      this.atEnd = after < OPENING - OPENING / 2
+      this.atStart = before < half && this.complete()
+      this.atEnd = after < OPENING - half
     })
   }
 
   private complete(): boolean {
     return this.host.engine.chats.get(this.chat)?.complete === true
+  }
+
+  /** Rows from the store, the account's older pages filled in first while the store
+   *  has fewer than `enough` asks for. */
+  private async filled(
+    where: { before?: number; around?: number; limit: number },
+    enough: (rows: readonly Kept[]) => boolean,
+  ): Promise<Kept[]> {
+    let rows = await this.rows(where)
+    while (!enough(rows) && (await this.host.engine.fill(this.chat))) rows = await this.rows(where)
+    return rows
   }
 
   private rows(where: { before?: number; after?: number; around?: number; limit: number }) {
