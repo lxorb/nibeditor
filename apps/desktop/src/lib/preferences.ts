@@ -450,7 +450,7 @@ function chatsGroup(): Group {
         kind: 'text',
         label: t('Keywords'),
         words: ['chat', 'notification', 'mention', 'highlight', 'alert'],
-        placeholder: '',
+        placeholder: t('None'),
         initial: '',
         get: () => hush.keywords.join(', '),
         set: (line) => hush.setKeywords(line),

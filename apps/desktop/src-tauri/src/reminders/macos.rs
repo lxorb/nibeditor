@@ -53,7 +53,10 @@ static APP: OnceLock<AppHandle> = OnceLock::new();
 /// The words each category's buttons are drawn in, the reminders' and a notice's answer
 /// field: the centre holds one set of categories for the whole app, so setting either
 /// sets both.
-static WORDS: Mutex<(Option<Words>, Option<(String, String)>)> = Mutex::new((None, None));
+static WORDS: Mutex<Said> = Mutex::new((None, None));
+
+/// The reminders' words, and a notice's placeholder and Send.
+type Said = (Option<Words>, Option<(String, String)>);
 
 /// Whether this process is a bundle the notification centre will answer.
 pub fn bundled() -> bool {

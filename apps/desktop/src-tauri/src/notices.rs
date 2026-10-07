@@ -148,9 +148,10 @@ fn probing() -> bool {
     crate::placement::away().is_some()
 }
 
-/// Shows one notice. On the window's own thread, where Linux's notification plugin is
-/// added and whose apartment Windows' notifier is reached through.
-#[tauri::command]
+/// Shows one notice. On a thread of the runtime's: Windows' notifier is reached through
+/// the apartment the `windows` crate joins for a thread that has none, a Mac's centre
+/// answers any thread, and Linux's plugin is added on the window's own.
+#[tauri::command(async)]
 pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> Result<(), String> {
     crate::agents::from_the_app(&webview)?;
     if !plain(&notice) {
@@ -175,7 +176,10 @@ pub fn notice_clear(webview: tauri::Webview, app: AppHandle, tag: String) -> Res
     #[cfg(windows)]
     windows::clear(&app, &tag)?;
     #[cfg(target_os = "macos")]
-    macos::clear(&tag);
+    {
+        let _ = app;
+        macos::clear(&tag);
+    }
     #[cfg(not(any(windows, target_os = "macos")))]
     let _ = (app, tag);
     Ok(())
@@ -195,6 +199,13 @@ pub fn clear_all(app: &AppHandle) {
     let _ = app;
 }
 
+#[cfg_attr(
+    not(any(windows, target_os = "macos")),
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "Linux hands the plugin a notification that cannot fail to be asked for"
+    )
+)]
 fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     #[cfg(windows)]
     {
@@ -206,7 +217,10 @@ fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     }
     #[cfg(not(any(windows, target_os = "macos")))]
     {
-        crate::agents::shell::notify(app, notice.title.clone(), notice.body.clone());
+        let (app, title, body) = (app.clone(), notice.title.clone(), notice.body.clone());
+        let on_the_window = app.clone();
+        let _ = on_the_window
+            .run_on_main_thread(move || crate::agents::shell::notify(&app, title, body));
         Ok(())
     }
 }
