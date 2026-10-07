@@ -433,7 +433,7 @@ describe('the folder watcher', () => {
       heard.push(hear)
       return Promise.resolve()
     })
-    const stop = watchFolders({
+    const watched = watchFolders({
       engine: here.engine,
       own: () => false,
       ready: () => true,
@@ -454,7 +454,7 @@ describe('the folder watcher', () => {
     await here.engine.pass(SPACE)
     await echoed
     await here.engine.pass(SPACE)
-    stop()
+    watched.stop()
 
     const space = here.engine.core.spaces.get(SPACE)
     const folders = [...(space?.entries.values() ?? [])].filter(
@@ -462,6 +462,32 @@ describe('the folder watcher', () => {
     )
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
+  })
+
+  test('watches a space paired after it started, once', async () => {
+    // A device's first v2 launch starts the engine with no space in its store; the
+    // spaces are paired by the first pass, after the watch began. Watched by the roots it
+    // had at the start, it heard nothing for the whole session, and every edit another
+    // program made - or one made while offline - stayed off the account.
+    const here = await device()
+    watch.mockReset()
+    watch.mockImplementation(() => Promise.resolve())
+    const watched = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    expect(watch.mock.calls.map(([roots]) => roots)).toEqual([[ROOT]])
+
+    await here.engine.core.commit(here.engine.core.addSpace('later', '/device/later', 'owner'))
+    watched.follow()
+    watched.follow()
+    expect(watch.mock.calls.map(([roots]) => roots)).toEqual([
+      [ROOT],
+      ['/device/later', ROOT].sort(),
+    ])
+    watched.stop()
   })
 })
 

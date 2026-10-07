@@ -64,8 +64,17 @@ export interface Watching {
   changed(): void
 }
 
-/** Watches every space the engine keeps. Answers how to stop. */
-export function watchFolders(how: Watching): () => void {
+/** The watch, and the two things asked of it. */
+export interface Watched {
+  /** Watches the spaces the engine keeps now, where they are not the ones it watches:
+   *  a space paired after the watch began - every space, on a device's first v2 launch -
+   *  or one whose folder moved. */
+  follow(): void
+  stop(): void
+}
+
+/** Watches every space the engine keeps. */
+export function watchFolders(how: Watching): Watched {
   const queue: (() => Promise<void>)[] = []
   let draining = false
   let stopped = false
@@ -92,11 +101,26 @@ export function watchFolders(how: Watching): () => void {
     void drain()
   }
 
-  const roots = [...how.engine.core.spaces.values()].map((space) => space.row.root)
-  void watchSpaces(roots, heard).catch(() => undefined)
-  return () => {
-    stopped = true
-    void unwatchSpaces().catch(() => undefined)
+  // The roots watched, said as one string so a follow that changes nothing does nothing.
+  let watched: string | null = null
+  const follow = () => {
+    if (stopped) return
+    const roots = [...how.engine.core.spaces.values()].map((space) => space.row.root).sort()
+    const said = JSON.stringify(roots)
+    if (said === watched) return
+    watched = said
+    // A watch the crate refused is asked for again at the next follow.
+    void watchSpaces(roots, heard).catch(() => {
+      if (watched === said) watched = null
+    })
+  }
+  follow()
+  return {
+    follow,
+    stop: () => {
+      stopped = true
+      void unwatchSpaces().catch(() => undefined)
+    },
   }
 }
 

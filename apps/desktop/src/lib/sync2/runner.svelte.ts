@@ -32,6 +32,7 @@ import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
+import type { Watched } from './watching'
 import { rooms } from '../rooms.svelte'
 import * as Y from 'yjs'
 import { asking, type Held, type HeldAnswer } from './asking.svelte'
@@ -114,6 +115,8 @@ class Runner {
     { id: string; part: () => void; plane?: PlaneJoin | null }
   >()
   private binding = Promise.resolve()
+  /** The space folders' watch, on the desktop; see watching.ts. */
+  private watched: Watched | null = null
 
   /** Starts the engine for the account signed in. */
   async start(): Promise<void> {
@@ -168,14 +171,17 @@ class Runner {
     this.stops.push(() => (rooms.drawn = null))
     if (isDesktop) {
       const { watchFolders } = await import('./watching')
-      this.stops.push(
-        watchFolders({
-          engine,
-          own: (path) => this.ownPath(path),
-          ready: (id) => this.firsts.has(id),
-          changed: () => this.nudge(),
-        }),
-      )
+      const watched = watchFolders({
+        engine,
+        own: (path) => this.ownPath(path),
+        ready: (id) => this.firsts.has(id),
+        changed: () => this.nudge(),
+      })
+      this.watched = watched
+      this.stops.push(() => {
+        watched.stop()
+        this.watched = null
+      })
     }
 
     this.status = 'idle'
@@ -417,6 +423,7 @@ class Runner {
           }
           await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
           this.firsts.add(id)
+          this.watched?.follow()
         }
         const passed = await engine.pass(id)
         if (!passed?.finished) offline = true
@@ -505,6 +512,7 @@ class Runner {
     }
     await pairSpaces(token, pairing)
     await core.commit(changes)
+    this.watched?.follow()
     for (const id of core.spaces.keys()) this.due.add(id)
   }
 
