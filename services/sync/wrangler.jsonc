@@ -39,12 +39,17 @@
       { "name": "HUB", "class_name": "AccountHub" },
       // One per online terminal machine, named by its id, in the EU (decision 6).
       { "name": "MACHINES", "class_name": "Machine" },
+      // One per chat, named by its id: the log that orders its events, every message
+      // as it stands with a full-text index, and its sockets (docs/chats.md 4.3).
+      // SQLite-backed and hibernating, as the rooms and the hubs are; its own tag.
+      { "name": "CHATS", "class_name": "ChatLog" },
     ],
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["NoteRoom"] },
     { "tag": "v2", "new_sqlite_classes": ["AccountHub"] },
     { "tag": "v3", "new_sqlite_classes": ["Machine"] },
+    { "tag": "v4", "new_sqlite_classes": ["ChatLog"] },
   ],
 
   // The machines' container application. `durable_object` scheduling: each `Machine`

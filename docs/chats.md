@@ -410,22 +410,25 @@ create table meta (key text primary key, value text);   -- topic, posting, slowm
   is cut in practice); ten files a message; 600 events a minute per account; 10 posts in 10 s
   per person per chat. The composer offers a long paste as a file before the limit.
 
-**In D1**, the next free migration number (`0046` is taken; the lane says which):
+**In D1**, `0047_chats.sql` (lane 2), and lane 3's own migration for the people:
 
 ```sql
 create table chats (
   id text primary key,                                     -- c_<32 hex>, the account's (4.2)
   space_id text not null references spaces(id) on delete cascade,
   file_id text,                                            -- the pointer's note row, once seen
-  created_by text not null, created_at integer not null,
+  created_at integer not null,
   last_seq integer not null default 0, last_at integer, last_by text,
+  topic text, posting text, slowmode integer,              -- the object's settings, for listing
   ended_at integer                                         -- the pointer purged: erased later
 );
-create table chat_reads (chat_id text, user_id text, read_seq integer not null default 0,
+create table chat_reads (chat_id text, who text, read_seq integer not null default 0,
   mentions integer not null default 0, notify text, muted_until integer,
-  primary key (chat_id, user_id));
+  primary key (chat_id, who));                             -- who: an account's or a guest's id
 create table chat_files (chat_id text, hash text, size integer, type text, name text,
-  by text, at integer, primary key (chat_id, hash));
+  at integer, primary key (chat_id, hash));
+create table chat_sockets (chat_id text, space_id text, who text, opened_at integer,
+  primary key (chat_id, who));                             -- who has it open, for revocation
 create table presence (user_id text primary key, state text not null, at integer not null);
 create table space_nicks (space_id text, user_id text, nick text not null,
   primary key (space_id, user_id));
@@ -487,7 +490,14 @@ it is on (no route here asks `sync_version`):
 - `GET /v2/chats/:id/search?q=` (the object's FTS5), and `GET /v2/chats/search?q=` across the
   account's chats for the browser build.
 - `GET /v2/chats/:id/files/:hash` for members; uploads are sync v2's `PUT /v2/blobs/:hash`
-  and parts routes, and the event names the hash, which `chat_files` records.
+  and parts routes, and the event names the hash, which `chat_files` records. A guest holds
+  no blobs and so attaches none.
+- `GET /v2/chats/:id/members` (names and roles, no addresses), `POST /v2/chats/:id/read
+  {seq, back?}` (a read place without a socket; `back` is Mark unread), `PUT
+  /v2/chats/:id/me {notify?, mutedUntil?}` and `GET /v2/chats/:id/scheduled` (the asker's
+  posts waiting for their time). A `schedule` is held by the object and logged only when its
+  post goes, as a post of its own; it and a `delete` that takes it back are answered with
+  `seq` 0.
 - `GET /v2/presence?ids=` (at most 200), `PUT /v2/me/profile`, `PUT /v2/me/avatar`,
   `PUT /v2/spaces/:id/nick` (lane 3).
 

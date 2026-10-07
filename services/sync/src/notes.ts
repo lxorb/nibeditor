@@ -7,6 +7,7 @@ import { readBody } from './body'
 import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
+import { linkPointer } from './chats/pointer'
 import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
@@ -69,8 +70,13 @@ export const PATH_LIMIT = 400
  *  three lines of text with an address in one of them, and it is a document of the
  *  space like any other - it goes up, comes back down, keeps its versions and can be
  *  put in the trash and taken out again. It is never in a room, which is the one way
- *  it differs from the two planes; see rooms/kind.ts. */
-const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc)$/i
+ *  it differs from the two planes; see rooms/kind.ts.
+ *
+ *  A chat's file is the same again: one line naming the chat, made by the account
+ *  (docs/chats.md 4.1). It travels here so that a chat made on a device still on sync
+ *  v1 reaches every device of the space. The chat itself is its `ChatLog`'s, never
+ *  this file's, and a copy of the file names the same chat to nobody new. */
+const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat)$/i
 
 /** Paths are relative, forward-slashed and named like a note. Nothing escapes
  *  the space.
@@ -180,6 +186,8 @@ export async function addNote(
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
   // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
   await keepReminders(env, note, content).catch(() => undefined)
+  // And, for a chat's pointer, the chat it names; see chats/pointer.ts.
+  await linkPointer(env, note, content).catch(() => undefined)
 
   return note
 }
@@ -217,6 +225,7 @@ async function placeNote(
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
   await keepReminders(env, note, content).catch(() => undefined)
+  await linkPointer(env, note, content).catch(() => undefined)
   return note
 }
 
@@ -384,6 +393,7 @@ export async function saveNote(
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
   await keepReminders(env, updated, content).catch(() => undefined)
+  await linkPointer(env, updated, content).catch(() => undefined)
 
   return updated
 }

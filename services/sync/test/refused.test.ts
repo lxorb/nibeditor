@@ -21,6 +21,7 @@ describe('what the service refuses with', () => {
   test('is these words, in these bytes', () => {
     expect(refused.NOT_AN_OBJECT).toBe('send an object')
     expect(refused.NO_SUCH_NOTE).toBe('no such note')
+    expect(refused.NO_SUCH_SPACE).toBe('no such space')
     expect(refused.SIGN_IN).toBe('sign in first')
     expect(refused.WRONG_CODE).toBe('that code is not right')
     expect(refused.TRY_IN_AN_HOUR).toBe('too many tries - try again in an hour')

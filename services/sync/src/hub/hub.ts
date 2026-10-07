@@ -16,6 +16,7 @@
  *  guest's hub hears pokes and nothing else: a guest has no web logins to lock and
  *  no key to be given. See docs/sync-v2.md sections 5.12 and 6. */
 
+import { isWho } from '@nib/chats/wire'
 import { note } from '../failed'
 import { FENCED, SIGN_IN_TO_DO_THAT } from '../refused'
 import { mayAcquire } from '../limits'
@@ -127,6 +128,9 @@ export class AccountHub implements DurableObject {
         return await this.erase()
       case 'machine':
         this.machine(headers)
+        return new Response(null, { status: 204 })
+      case 'chat':
+        this.chat(headers)
         return new Response(null, { status: 204 })
       default:
         return new Response('not something a hub does', { status: 400 })
@@ -352,6 +356,22 @@ export class AccountHub implements DurableObject {
     }
     for (const { socket, attached } of everySocket(this.ctx)) {
       if (!attached.guest) say(socket, { t: 'machine', state })
+    }
+  }
+
+  /** A chat this account reaches moved while none of its devices had it open: every
+   *  device hears it, coalesced by the chat's `ChatLog` (chats/log.ts), and moves the
+   *  chat's count; the words are pulled when it notifies or the chat opens. */
+  private chat(headers: Headers): void {
+    const chat = headers.get('x-nib-chat') ?? ''
+    const seq = Number(headers.get('x-nib-seq') ?? '')
+    const at = Number(headers.get('x-nib-at') ?? '')
+    const by = headers.get('x-nib-by')
+    if (!chat || !isWho(by) || !Number.isSafeInteger(seq) || !Number.isSafeInteger(at)) return
+
+    const mention = headers.get('x-nib-mention') === 'yes'
+    for (const { socket } of everySocket(this.ctx)) {
+      say(socket, { t: 'chat', chat, seq, at, by, mention })
     }
   }
 

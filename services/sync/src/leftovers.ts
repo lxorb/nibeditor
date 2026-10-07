@@ -12,6 +12,7 @@
  *  the next one. */
 
 import { askInChunks, chunks, places } from './bound'
+import { eraseChats } from './chats/ask'
 import { eraseHubs } from './hub/reach'
 import { eraseMachines } from './machines/ask'
 import type { Env } from './types'
@@ -33,12 +34,14 @@ const ROOM = 'rooms/'
 const HUB = 'hubs/'
 /** An online terminal machine, whose object holds its container; see machines/. */
 const MACHINE = 'machines/'
+/** A chat's `ChatLog`, which keeps the chat's log in storage of its own; see chats/. */
+const CHAT = 'chats/'
 /** A machine home's backup, in the homes bucket rather than the notes one. */
 const HOME = 'homes/'
 
 /** Whether a name is an object's storage rather than the bucket's. */
 const isObject = (name: string) =>
-  name.startsWith(ROOM) || name.startsWith(HUB) || name.startsWith(MACHINE)
+  name.startsWith(ROOM) || name.startsWith(HUB) || name.startsWith(MACHINE) || name.startsWith(CHAT)
 
 /** Empties the oldest of what the list names, as much as one sweep takes on, and
  *  answers how many it crossed off. */
@@ -46,20 +49,21 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const taken = async (sql: string, most: number) =>
     (
       await env.DB.prepare(sql)
-        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, most)
+        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, most)
         .all<{ what: string }>()
     ).results
 
   const results = [
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
-          and what not like ?3
-        order by since, what limit ?4`,
+          and what not like ?3 and what not like ?4
+        order by since, what limit ?5`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
       `select what from leftovers where what like ?1 or what like ?2 or what like ?3
-        order by since, what limit ?4`,
+          or what like ?4
+        order by since, what limit ?5`,
       ROOMS_AT_ONCE,
     )),
   ]
@@ -93,6 +97,7 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await eraseRooms(env, of(ROOM))).map((id) => ROOM + id),
     ...(await eraseHubs(env, of(HUB))).map((id) => HUB + id),
     ...(await eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
+    ...(await eraseChats(env, of(CHAT))).map((id) => CHAT + id),
     ...(homesBucket ? homes : []),
   ])
 
@@ -123,6 +128,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
   const byNote = new Map<string, string>()
   const versions = new Map<string, string>()
   const blobs = new Map<string, string>()
+  const chats = new Map<string, string>()
 
   for (const name of names) {
     const [kind, ...rest] = name.split('/')
@@ -131,6 +137,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     if (kind === 'spaces' || kind === 'rooms' || kind === 'crdt') byNote.set(name, last)
     else if (kind === 'versions') versions.set(name, last)
     else if (kind === 'blobs') blobs.set(name, last)
+    else if (kind === 'chats') chats.set(name, last)
   }
 
   const notes = await askIn(env, 'select id as one from notes where id in', byNote)
@@ -140,8 +147,10 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     versions,
   )
   const heldBlobs = await askIn(env, 'select distinct hash as one from blobs where hash in', blobs)
+  // A chat whose row is back - restored before the sweep reached it - is not erased.
+  const heldChats = await askIn(env, 'select id as one from chats where id in', chats)
 
-  return new Set([...notes, ...heldVersions, ...heldBlobs])
+  return new Set([...notes, ...heldVersions, ...heldBlobs, ...heldChats])
 }
 
 /** The names whose key one question still finds a row for. */

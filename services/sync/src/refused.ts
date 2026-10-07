@@ -18,6 +18,9 @@
  *  `objectBody` in body.ts. */
 export const NOT_AN_OBJECT = 'send an object'
 
+/** A space id nobody in this account can reach, said the same way as a note's. */
+export const NO_SUCH_SPACE = 'no such space'
+
 /** A note id nobody in this account can reach. Not "you may not": whether a note
  *  exists is itself something a stranger should not learn. */
 export const NO_SUCH_NOTE = 'no such note'

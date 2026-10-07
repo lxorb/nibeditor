@@ -193,6 +193,17 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'POST', path: /^\/v2\/docs\/(pull|push|keep)$/ },
   { method: 'GET', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
   { method: 'PUT', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
+  // The chats of the spaces their links granted, as a person at their role: each route
+  // asks the chat's own reach, and a reader's events are refused by the chat itself
+  // (docs/chats.md 4.6). A guest holds no blobs, so it attaches no files.
+  { method: 'GET', path: /^\/v2\/chats$/ },
+  { method: 'POST', path: /^\/v2\/chats$/ },
+  { method: 'GET', path: /^\/v2\/chats\/search$/ },
+  { method: 'GET', path: /^\/v2\/chats\/[^/]+\/(members|events|state|search|scheduled)$/ },
+  { method: 'GET', path: /^\/v2\/chats\/[^/]+\/files\/[^/]+$/ },
+  { method: 'POST', path: /^\/v2\/chats\/[^/]+\/(events|read)$/ },
+  { method: 'PUT', path: /^\/v2\/chats\/[^/]+\/me$/ },
+  { method: 'PATCH', path: /^\/v2\/chats\/[^/]+$/ },
   // Deliberately nothing under `/v2/online`. A guest only ever watches an online
   // terminal, through its socket, which is let in ahead of this guard; making a
   // session, Start and Stop, typing and the machine's month are an account's, because

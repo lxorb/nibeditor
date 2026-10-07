@@ -22,6 +22,9 @@ import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { tasks } from './tasks'
+import { chatDoor } from './chats/door'
+import { chats } from './chats/routes'
+import { sweepChats } from './chats/sweep'
 import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
@@ -118,6 +121,10 @@ app.route('/rooms', rooms)
 // and the web key's relay. A socket for the same reason as a room's, so it is let
 // in ahead of the guard as well; see hub/door.ts.
 app.route('/v2/hub', hubDoor)
+
+// A chat's socket, for the same reason: only `/:chat/socket` is answered here, and
+// the rest of `/v2/chats` is behind the guard below. See chats/door.ts.
+app.route('/v2/chats', chatDoor)
 
 // An online terminal's socket, for the same reason: the token rides in the
 // subprotocol. Only `/:term/socket` is answered here; the rest of `/v2/online` is
@@ -301,6 +308,10 @@ app.route('/v2/admin', syncAdmin)
 // Where each device can be pushed to: reminders now, chats next. See push/.
 app.route('/v2/push', push)
 
+// Chats: a channel people write in together, kept in a space; see chats/ and
+// docs/chats.md. The socket is let in ahead of the guard, above.
+app.route('/v2/chats', chats)
+
 // The online terminal: the account's machine, its sessions and its month, and Emil's
 // switches ahead of them, which stay open while the service is off. Every other route
 // here answers 404 until it is on; see machines/.
@@ -402,6 +413,9 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   // And what readers typed into forms, once it is older than a space keeps it; see
   // spaces/answers.ts.
   context.waitUntil(sweepAnswers(env, at))
+  // And the chats whose file or space went for good, erased 30 days after; see
+  // chats/sweep.ts.
+  context.waitUntil(sweepChats(env, at))
   // And the online terminal's audit past its 90 days; see machines/audit.ts.
   context.waitUntil(sweepAudit(env, at))
   context.waitUntil(forgetHalfDone(env, at))
@@ -432,3 +446,4 @@ export default { fetch: serve, scheduled }
 // module, not through a binding.
 export { NoteRoom } from './rooms/room'
 export { AccountHub } from './hub/hub'
+export { ChatLog } from './chats/log'

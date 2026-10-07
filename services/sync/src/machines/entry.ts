@@ -90,6 +90,6 @@ wire({
 })
 
 export { DirectoryBackupGateway }
-export { AccountHub, NoteRoom } from '../index'
+export { AccountHub, ChatLog, NoteRoom } from '../index'
 export { Machine } from './machine'
 export default worker

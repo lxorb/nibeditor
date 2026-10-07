@@ -23,8 +23,9 @@ import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import type { Env, Note } from '../types'
+import { chatsRevoked } from '../chats/ask'
 import { machinesRevoked } from '../machines/revoke'
-import { roomKind } from './kind'
+import { isChatPointer, roomKind } from './kind'
 import type { Ingested } from './room'
 
 /** All three halves of the question in one round trip: whether the session is
@@ -173,6 +174,8 @@ rooms.get('/:noteId', async (context) => {
   // A note in a space nobody shared is indistinguishable from one that is not
   // there, exactly as it is over the rest of the API.
   if (!allowed.space_id) return context.json({ error: NO_SUCH_NOTE }, 404)
+  // A chat's pointer is never a room; see `isChatPointer`.
+  if (isChatPointer(allowed.path ?? '')) return context.json({ error: NO_SUCH_NOTE }, 404)
 
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)
@@ -352,6 +355,8 @@ export async function roomsRevoked(
 ): Promise<void> {
   // And the online terminals of the space they may be watching; see machines/revoke.ts.
   await machinesRevoked(env, spaceId, who, role, item)
+  // And its chats they have open; see chats/ask.ts.
+  if (who) await chatsRevoked(env, spaceId, who, role, item)
 
   const namespace = env.ROOMS
   if (!namespace || !who) return
@@ -473,10 +478,12 @@ const MOST_SPACES = 100
  *  a reconnect nobody sees, against a socket that would otherwise stay open for as
  *  long as the note stayed open. */
 export async function roomsSignedOut(env: Env, who: string): Promise<void> {
-  if (!env.ROOMS || !who) return
+  if ((!env.ROOMS && !env.CHATS) || !who) return
 
+  // The spaces with a note or a chat of theirs open.
   const { results } = await env.DB.prepare(
-    'select distinct space_id from room_sockets where who = ? limit ?',
+    `select space_id from room_sockets where who = ?1
+     union select space_id from chat_sockets where who = ?1 limit ?2`,
   )
     .bind(who, MOST_SPACES)
     .all<{ space_id: string }>()

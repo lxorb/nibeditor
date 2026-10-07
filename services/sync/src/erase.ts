@@ -22,6 +22,7 @@ import { note } from './failed'
 import { releaseDomain } from './hostnames'
 import { sweepLeftovers } from './leftovers'
 import { noteKey } from './notes'
+import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
 import { readSpaceFiles } from './spaces/files'
 import type { Env, User } from './types'
@@ -34,6 +35,8 @@ const OWNED_NOTES = `select id from notes where space_id in (${OWNED})`
  *  address: it is what a sign-in there would claim for the account, and a fresh
  *  account at the same address starts with nothing. */
 const GUESTS_AT = 'select id from guests where email = ?2'
+/** The chats of those spaces; see chats/. */
+const OWNED_CHATS = `select id from chats where space_id in (${OWNED})`
 
 /** What the rows are the only record of, written down before they go. */
 const NOTED: readonly string[] = [
@@ -64,6 +67,20 @@ const NOTED: readonly string[] = [
      select 'homes/' || backup_key, ?3 from machines where user_id = ?1 and backup_key is not null`,
   `insert or ignore into leftovers (what, since)
      select 'hubs/' || id, ?3 from guests where email = ?2`,
+  // The chats of its spaces, whose objects keep their logs in storage of their own.
+  `insert or ignore into leftovers (what, since) select 'chats/' || id, ?3 from (${OWNED_CHATS})`,
+  // And the files it posted into chats of other people's spaces, handed to each space's
+  // owner as a picture in their note is (`handedOn`): the message stays, so the file does.
+  `insert into blobs (hash, user_id, size, type, created_at)
+     select b.hash, sp.user_id, b.size, b.type, ?3
+       from blobs b join chat_files f on f.hash = b.hash
+       join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
+      where b.user_id = ?1 and sp.user_id <> ?1
+   on conflict(hash, user_id) do nothing`,
+  // Its messages in other people's chats stay, as a deleted account's (decision 7.8);
+  // the line saying who wrote a chat's last one names nobody now.
+  `update chats set last_by = null
+    where last_by = 'user:' || ?1 or last_by in (select 'guest:' || id from guests where email = ?2)`,
 ]
 
 /** Every table an account leaves a row in, and the statement that takes those rows
@@ -80,6 +97,19 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
     'room_sockets',
     `delete from room_sockets where space_id in (${OWNED}) or who = ?1 or who in (${GUESTS_AT})`,
   ],
+  // Its spaces' chats, and its read places and open sockets in everybody's. Its
+  // messages in other people's chats stay, as a deleted account's (docs/chats.md 4.18).
+  [
+    'chat_reads',
+    `delete from chat_reads where chat_id in (${OWNED_CHATS}) or who = ?1 or who in (${GUESTS_AT})`,
+  ],
+  ['chat_files', `delete from chat_files where chat_id in (${OWNED_CHATS})`],
+  [
+    'chat_sockets',
+    `delete from chat_sockets
+      where chat_id in (${OWNED_CHATS}) or who = ?1 or who in (${GUESTS_AT})`,
+  ],
+  ['chats', `delete from chats where space_id in (${OWNED})`],
   // Everybody's way into this account's spaces, and this account's way into
   // everybody else's: an invitation to it, a request it made, a file it was given.
   ['space_members', `delete from space_members where space_id in (${OWNED}) or email = ?2`],
@@ -164,6 +194,12 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
     .bind(user.id, user.email)
     .all<{ note_id: string; who: string }>()
 
+  const { results: chatting } = await env.DB.prepare(
+    `select chat_id, who from chat_sockets where who = ?1 or who in (${GUESTS_AT})`,
+  )
+    .bind(user.id, user.email)
+    .all<{ chat_id: string; who: string }>()
+
   const handed = await handedOn(env, user, at)
 
   await env.DB.batch([
@@ -177,6 +213,7 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
   // nightly job rather than answered as a failure to delete.
   try {
     await closeRooms(env, open)
+    await closeChats(env, chatting)
     for (const { domain } of domains) await releaseDomain(env, domain)
     await sweepLeftovers(env)
   } catch (error) {

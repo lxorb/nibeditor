@@ -16,6 +16,11 @@ export interface Env {
    *  hub is a poke nobody hears, which polling covers. */
   HUB?: DurableObjectNamespace
 
+  /** One `ChatLog` per chat (docs/chats.md 4.3): its log, its messages and its sockets.
+   *  Where it is absent a chat's routes answer that the chat is not answering, and the
+   *  tests that need one hand in their own; see chats/log.ts. */
+  CHATS?: DurableObjectNamespace
+
   /** One `Machine` per online terminal machine (docs/online-terminal.md): where it is
    *  absent, the online routes answer 404. See machines/. */
   MACHINES?: DurableObjectNamespace

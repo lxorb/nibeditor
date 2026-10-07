@@ -47,7 +47,14 @@ export function roomKind(path: string): RoomKind {
  *  room for one. A `.url` file holds an address and no words, so there is no document
  *  in it for two people to be in at once - the app refuses it at both ends, in
  *  `holdsWords` and in its own rooms/kind.ts, and a file the door is never asked
- *  about needs no shape here. It syncs like every other note; see notes.ts. */
+ *  about needs no shape here. It syncs like every other note; see notes.ts.
+ *
+ *  A chat's `.chat` pointer is the same, and the door refuses a socket for one outright
+ *  (`isChatPointer`): the pointer names a chat, whose live half is its own object
+ *  (chats/log.ts), and a room typing into the pointer would only break the name. */
+export function isChatPointer(path: string): boolean {
+  return /.chat$/i.test(path)
+}
 
 /** A kind that came off a header or out of storage, which is to say a kind that
  *  has not been checked yet. Anything unrecognised is words: that is what a room

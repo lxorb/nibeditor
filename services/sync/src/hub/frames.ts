@@ -7,6 +7,8 @@
  *  carries a time, because every time the hub decides by is its own. See
  *  docs/sync-v2.md section 7. */
 
+import type { ChatPoke } from '@nib/chats/wire'
+
 /** A lease key or a chunk name: an HMAC a device made, which the service never
  *  reads. Held to a shape all the same, because it becomes part of an object's name
  *  in the bucket, and a key with a slash in it could reach into another's. */
@@ -57,6 +59,9 @@ export type FromHub =
   /** The account's online terminal machine changed state, to every device of its
    *  owner at once, so a status dot changes everywhere (docs/online-terminal.md, 4.6). */
   | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
+  /** A chat this account reaches moved while none of its devices had it open
+   *  (docs/chats.md 4.4): `ChatPoke`, which never carries words. */
+  | ChatPoke
 
 type Fields = Record<string, unknown>
 

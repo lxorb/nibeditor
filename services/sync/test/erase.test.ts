@@ -297,6 +297,30 @@ function seed(database: DatabaseSync, who: Person): void {
     who.id,
     who.note,
   )
+  // A chat in its space, its own read place in it, a file a message there names, and
+  // its socket on it; see chats/.
+  run(
+    `insert into chats (id, space_id, file_id, created_at, last_by)
+     values ('chat-' || ?1, ?2, ?3, 1, 'user:' || ?1)`,
+    who.id,
+    who.space,
+    who.note,
+  )
+  run(
+    "insert into chat_reads (chat_id, who, read_seq, notify) values ('chat-' || ?1, ?1, 3, 'all')",
+    who.id,
+  )
+  run(
+    `insert into chat_files (chat_id, hash, size, type, name, at)
+     values ('chat-' || ?1, ?2, 3, 'image/png', 'a.png', 1)`,
+    who.id,
+    who.blob,
+  )
+  run(
+    "insert into chat_sockets (chat_id, space_id, who, opened_at) values ('chat-' || ?1, ?2, ?1, 1)",
+    who.id,
+    who.space,
+  )
 }
 
 /** The ways the two reach each other: each is a member of the other's space, has
@@ -326,6 +350,18 @@ function entangle(database: DatabaseSync, one: Person, other: Person): void {
   run(
     'insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)',
     other.note,
+    other.space,
+    one.id,
+  )
+  // And has the other's chat open, read to somewhere.
+  run(
+    "insert into chat_reads (chat_id, who, read_seq) values ('chat-' || ?, ?, 1)",
+    other.id,
+    one.id,
+  )
+  run(
+    "insert into chat_sockets (chat_id, space_id, who, opened_at) values ('chat-' || ?, ?, ?, 1)",
+    other.id,
     other.space,
     one.id,
   )
@@ -386,6 +422,18 @@ describe('deleting one of two accounts', () => {
     expect(theirs()).toEqual(before)
     // Machines and programs are nobody's: a ceiling counted against a machine stays.
     expect(before.length).toBeGreaterThan(20)
+  })
+
+  test('leaves its words in the other’s chat, and the last word in it nobody’s', async () => {
+    env.db
+      .prepare("update chats set last_by = 'user:' || ? where id = 'chat-' || ?")
+      .run(LEAVING.id, STAYING.id)
+
+    await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
+
+    expect(
+      env.db.prepare("select last_by from chats where id = 'chat-' || ?").get(STAYING.id),
+    ).toEqual({ last_by: null })
   })
 
   test('empties the bucket of it, and of nothing somebody else still names', async () => {

@@ -45,7 +45,7 @@ const LARGEST = 1024 * 1024 * 1024
 
 /** A file nobody can reach, or one that is not a file. A reader can bring it about -
  *  opening a file somebody removed a moment ago - so it has a row in every catalogue. */
-const NO_SUCH_FILE = 'no such file'
+export const NO_SUCH_FILE = 'no such file'
 
 /** Bytes whose hash is not the name they arrived under. A correct client never sends
  *  these, so it reaches no reader and stays English. */

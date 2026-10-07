@@ -1302,6 +1302,34 @@ The online terminal (`docs/online-terminal.md`, lane `online-machine`,
 - The hub says `{t:'machine', state}` to every device of the owner when the machine's
   state changes.
 
+### Chats
+
+Chats (`docs/chats.md`, lane `chats-server`, `services/sync/src/chats/`) answer every
+account alike, on sync v1 or v2; no route asks `sync_version`. Every shape is
+`@nib/chats/wire`'s, and every refusal of an event is a `Refusal` code the app words.
+
+- `GET /v2/chats/:chat/socket`, upgraded, ahead of the guard like the hub: `nib.token.<token>`
+  and `nib.device.<id>`. One query (`chats/reach.ts`) decides the role: the chat's space
+  (`chats.space_id`), or an item share of its pointer's note row (`chats.file_id`). Frames are
+  `ClientFrame` and `ServerFrame`; a reader's socket is refused every event (`role`).
+- Behind the guard, accounts and guests (no program): `GET /v2/chats` (`ChatRow`s, with the
+  asker's `role`; `?space=` narrows); `POST /v2/chats {space}` (a writer; answers the
+  pointer `{v: 1, chat}`); `PATCH /v2/chats/:chat` (`{space}` moves it, a writer of both
+  spaces; `{topic|posting|slowmode}` is placed as a `meta` event); `GET .../events`,
+  `GET .../state`, `POST .../events` (at most 50, refused whole if one does not check,
+  answered `{results}`); `GET .../search` and `GET /v2/chats/search` (`q` in the search
+  language, `today` and `zone` for its days); `GET .../files/:hash`; and four the
+  contract leaves to this lane: `GET .../members` (names and roles, never addresses),
+  `POST .../read {seq, back?}` (a read place without a socket; `back` is Mark unread),
+  `PUT .../me {notify?, mutedUntil?}` and `GET .../scheduled` (the asker's held posts).
+- A `schedule` event is held by the object, never logged until its post goes as a post of
+  its own at `sendAt`; its answer, and a `delete` that takes it back, carry `seq` 0.
+- The `.chat` pointer travels as a v1 note (`NOTE_PATH` gains `chat`) and a v2 entry of
+  kind `chat`, never in a room (the rooms' door refuses one). Whichever write brings it into
+  its chat's own space links `chats.file_id` (`chats/pointer.ts`, beside the reminders).
+- The hub says `ChatPoke` (`{t:'chat', chat, seq, at, by, mention}`) to every device of a
+  person the chat reaches with no socket open to it, at most one every two seconds.
+
 ### What a program token may reach
 
 `nib_...` tokens (`programs.ts`) reach the feed, `/v2/docs/pull`, and the v1 note routes they
@@ -1468,6 +1496,17 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
   `0045_machines.sql` adds `machines`, `machine_usage`, `machine_events`, `term_sessions`,
   `online_service` and `users.online`; `erase.ts` takes the first four and leaves
   `machines/<id>` and `homes/<key>` in `leftovers`.
+
+- `ChatLog` (chats, migration tag `v4`, `new_sqlite_classes`): one per chat, named by its id.
+  Its SQLite holds the log (`events`), every message as `apply` from `@nib/chats` makes it
+  (`messages`, replayed per message from the events about it), an FTS5 index over their
+  words (proved under workerd on day one), each person's read place and the posts that call
+  them, held posts and its own pace counters. An alarm coalesces its writes to D1 (once a
+  second) and its hub pokes (once every two seconds a person) and places held posts.
+  Migration `0047_chats.sql` adds `chats`, `chat_reads`, `chat_files` and `chat_sockets`;
+  `erase.ts` takes all four for the account's spaces (its messages in other people's chats
+  stay, as a deleted account's) and leaves `chats/<id>` in `leftovers`; the nightly job ends
+  a chat whose pointer or space was purged and erases it 30 days later (`chats/sweep.ts`).
 
 ### R2
 

@@ -29,6 +29,7 @@
     "@lezer/xml": "^1.0.6",
     "@lezer/yaml": "^1.0.4",
     "@nib/bases": "workspace:*",
+    "@nib/chats": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@nib/online": "workspace:*",
     "@nib/rooms": "workspace:*",

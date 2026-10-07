@@ -10,6 +10,7 @@
 
 import type { Context, MiddlewareHandler } from 'hono'
 import { askInChunks, AT_A_TIME, places } from '../bound'
+import { NO_SUCH_SPACE } from '../refused'
 import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, Variables, Whoever } from '../types'
@@ -232,7 +233,7 @@ export function atLeast(
   return async (context, next) => {
     const asked = context.req.param(param) ?? ''
     const space = await reachedSpace(context.env, context.get('who'), asked)
-    if (!space) return context.json({ error: 'no such space' }, 404)
+    if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(space.role, needed)) return context.json({ error: refusal(needed) }, 403)
 
     context.set('space', space)
