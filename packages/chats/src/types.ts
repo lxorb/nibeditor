@@ -111,8 +111,8 @@ export type Event =
   | { kind: 'vote'; id: string; target: string; answers: number[] }
   /** The chat's settings, each key last writer by order. */
   | { kind: 'meta'; id: string; topic?: string; posting?: Posting; slowmode?: number }
-  /** A post to place at `at`, held by the object's alarm and editable until then. */
-  | { kind: 'schedule'; id: string; at: number; post: Post }
+  /** A post to place at `sendAt`, held by the object's alarm and editable until then. */
+  | { kind: 'schedule'; id: string; sendAt: number; post: Post }
 
 /** What `ChatLog` adds as it appends an event: its place, when it arrived (the time
  *  everybody is shown), who sent it from which device, and when it was written if that

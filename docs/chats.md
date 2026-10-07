@@ -1048,7 +1048,7 @@ type Event =
   | { kind: 'pin'; id: string; target: string; on: boolean }
   | { kind: 'vote'; id: string; target: string; answers: number[] }   // [] takes it back
   | { kind: 'meta'; id: string; topic?: string; posting?: Posting; slowmode?: number }
-  | { kind: 'schedule'; id: string; at: number; post: Post }
+  | { kind: 'schedule'; id: string; sendAt: number; post: Post }
 
 interface Placed { seq: number; at: number; author: Who; device?: string; madeAt?: number }
 type Logged = Event & Placed
