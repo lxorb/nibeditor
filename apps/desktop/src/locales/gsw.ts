@@ -2192,4 +2192,16 @@ export const gsw: Dictionary = {
   Weekdays: 'Wärchtigs',
   Starts: 'Fangt aa',
   Ends: 'Hört uf',
+  // Chats: everywhere
+  'Read chats': 'Chats läse',
+  'Post in chats': 'I Chats schriibe',
+  'Always in this chat': 'Immer i dem Chat',
+  'Open a chat first': 'Zerscht en Chat uftue',
+  'Nothing unread': 'Nüt ungläse',
+  'What I missed in chats': 'Was ich i Chats verpasst ha',
+  'A reply for this chat': 'E Antwort für dä Chat',
+  'Send to chat': 'An Chat schicke',
+  'Search this chat': 'Dä Chat dursueche',
+  'Add as task': 'Als Ufgab hinzuefüege',
+  'Save as note': 'Als Notiz speichere',
 }

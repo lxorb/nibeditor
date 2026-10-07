@@ -2257,4 +2257,16 @@ export const uk: Dictionary = {
   Weekdays: 'Будні',
   Starts: 'Початок',
   Ends: 'Кінець',
+  // Chats: everywhere
+  'Read chats': 'Читати чати',
+  'Post in chats': 'Писати в чати',
+  'Always in this chat': 'Завжди в цьому чаті',
+  'Open a chat first': 'Спершу відкрийте чат',
+  'Nothing unread': 'Немає непрочитаного',
+  'What I missed in chats': 'Що я пропустив у чатах',
+  'A reply for this chat': 'Відповідь для цього чату',
+  'Send to chat': 'Надіслати в чат',
+  'Search this chat': 'Шукати в цьому чаті',
+  'Add as task': 'Додати як завдання',
+  'Save as note': 'Зберегти як нотатку',
 }

@@ -2180,4 +2180,16 @@ export const bn: Dictionary = {
   Weekdays: 'কর্মদিবস',
   Starts: 'শুরু',
   Ends: 'শেষ',
+  // Chats: everywhere
+  'Read chats': 'চ্যাট পড়া',
+  'Post in chats': 'চ্যাটে লেখা',
+  'Always in this chat': 'এই চ্যাটে সবসময়',
+  'Open a chat first': 'আগে একটি চ্যাট খুলুন',
+  'Nothing unread': 'অপঠিত কিছু নেই',
+  'What I missed in chats': 'চ্যাটে যা মিস করেছি',
+  'A reply for this chat': 'এই চ্যাটের জন্য একটি উত্তর',
+  'Send to chat': 'চ্যাটে পাঠান',
+  'Search this chat': 'এই চ্যাটে খুঁজুন',
+  'Add as task': 'কাজ হিসেবে যোগ করুন',
+  'Save as note': 'নোট হিসেবে সংরক্ষণ করুন',
 }

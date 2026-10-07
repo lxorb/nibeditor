@@ -2200,4 +2200,16 @@ export const kn: Dictionary = {
   Weekdays: 'ಕೆಲಸದ ದಿನಗಳು',
   Starts: 'ಆರಂಭ',
   Ends: 'ಅಂತ್ಯ',
+  // Chats: everywhere
+  'Read chats': 'ಚಾಟ್‌ಗಳನ್ನು ಓದುವುದು',
+  'Post in chats': 'ಚಾಟ್‌ಗಳಲ್ಲಿ ಬರೆಯುವುದು',
+  'Always in this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಯಾವಾಗಲೂ',
+  'Open a chat first': 'ಮೊದಲು ಒಂದು ಚಾಟ್ ತೆರೆಯಿರಿ',
+  'Nothing unread': 'ಓದದಿರುವುದು ಏನೂ ಇಲ್ಲ',
+  'What I missed in chats': 'ಚಾಟ್‌ಗಳಲ್ಲಿ ನಾನು ತಪ್ಪಿಸಿಕೊಂಡದ್ದು',
+  'A reply for this chat': 'ಈ ಚಾಟ್‌ಗೆ ಒಂದು ಉತ್ತರ',
+  'Send to chat': 'ಚಾಟ್‌ಗೆ ಕಳುಹಿಸಿ',
+  'Search this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಹುಡುಕಿ',
+  'Add as task': 'ಕೆಲಸವಾಗಿ ಸೇರಿಸಿ',
+  'Save as note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಿ',
 }

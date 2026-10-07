@@ -2132,4 +2132,16 @@ export const zhHant: Dictionary = {
   Weekdays: '平日',
   Starts: '開始',
   Ends: '結束',
+  // Chats: everywhere
+  'Read chats': '讀取聊天',
+  'Post in chats': '在聊天中發言',
+  'Always in this chat': '在此聊天中一律允許',
+  'Open a chat first': '請先開啟一個聊天',
+  'Nothing unread': '沒有未讀內容',
+  'What I missed in chats': '我在聊天中錯過的內容',
+  'A reply for this chat': '此聊天的回覆',
+  'Send to chat': '傳送到聊天',
+  'Search this chat': '在此聊天中搜尋',
+  'Add as task': '新增為任務',
+  'Save as note': '儲存為筆記',
 }

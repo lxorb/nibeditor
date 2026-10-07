@@ -2243,4 +2243,16 @@ export const fr: Dictionary = {
   Weekdays: 'En semaine',
   Starts: 'Début',
   Ends: 'Fin',
+  // Chats: everywhere
+  'Read chats': 'Lire les discussions',
+  'Post in chats': 'Écrire dans les discussions',
+  'Always in this chat': 'Toujours dans cette discussion',
+  'Open a chat first': 'Ouvrez d’abord une discussion',
+  'Nothing unread': 'Rien de non lu',
+  'What I missed in chats': 'Ce que j’ai manqué dans les discussions',
+  'A reply for this chat': 'Une réponse pour cette discussion',
+  'Send to chat': 'Envoyer dans une discussion',
+  'Search this chat': 'Rechercher dans cette discussion',
+  'Add as task': 'Ajouter comme tâche',
+  'Save as note': 'Enregistrer comme note',
 }

@@ -2210,4 +2210,16 @@ export const sw: Dictionary = {
   Weekdays: 'Siku za kazi',
   Starts: 'Inaanza',
   Ends: 'Inaisha',
+  // Chats: everywhere
+  'Read chats': 'Kusoma mazungumzo',
+  'Post in chats': 'Kuandika katika mazungumzo',
+  'Always in this chat': 'Daima katika mazungumzo haya',
+  'Open a chat first': 'Fungua mazungumzo kwanza',
+  'Nothing unread': 'Hakuna ambacho hakijasomwa',
+  'What I missed in chats': 'Nilichokosa katika mazungumzo',
+  'A reply for this chat': 'Jibu kwa mazungumzo haya',
+  'Send to chat': 'Tuma kwenye mazungumzo',
+  'Search this chat': 'Tafuta katika mazungumzo haya',
+  'Add as task': 'Ongeza kama kazi',
+  'Save as note': 'Hifadhi kama dokezo',
 }

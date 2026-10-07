@@ -2174,4 +2174,16 @@ export const id: Dictionary = {
   Weekdays: 'Hari kerja',
   Starts: 'Mulai',
   Ends: 'Selesai',
+  // Chats: everywhere
+  'Read chats': 'Membaca obrolan',
+  'Post in chats': 'Menulis di obrolan',
+  'Always in this chat': 'Selalu di obrolan ini',
+  'Open a chat first': 'Buka obrolan dulu',
+  'Nothing unread': 'Tidak ada yang belum dibaca',
+  'What I missed in chats': 'Yang terlewat di obrolan',
+  'A reply for this chat': 'Balasan untuk obrolan ini',
+  'Send to chat': 'Kirim ke obrolan',
+  'Search this chat': 'Cari di obrolan ini',
+  'Add as task': 'Tambahkan sebagai tugas',
+  'Save as note': 'Simpan sebagai catatan',
 }

@@ -2220,4 +2220,16 @@ export const fil: Dictionary = {
   Weekdays: 'Mga araw ng trabaho',
   Starts: 'Magsisimula',
   Ends: 'Matatapos',
+  // Chats: everywhere
+  'Read chats': 'Basahin ang mga chat',
+  'Post in chats': 'Magsulat sa mga chat',
+  'Always in this chat': 'Palagi sa chat na ito',
+  'Open a chat first': 'Magbukas muna ng chat',
+  'Nothing unread': 'Walang hindi pa nababasa',
+  'What I missed in chats': 'Ang hindi ko nakita sa mga chat',
+  'A reply for this chat': 'Isang sagot para sa chat na ito',
+  'Send to chat': 'Ipadala sa chat',
+  'Search this chat': 'Maghanap sa chat na ito',
+  'Add as task': 'Idagdag bilang gawain',
+  'Save as note': 'I-save bilang tala',
 }

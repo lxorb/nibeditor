@@ -2155,4 +2155,16 @@ export const ko: Dictionary = {
   Weekdays: '평일',
   Starts: '시작',
   Ends: '종료',
+  // Chats: everywhere
+  'Read chats': '채팅 읽기',
+  'Post in chats': '채팅에 쓰기',
+  'Always in this chat': '이 채팅에서 항상',
+  'Open a chat first': '먼저 채팅을 여세요',
+  'Nothing unread': '읽지 않은 항목 없음',
+  'What I missed in chats': '채팅에서 놓친 것',
+  'A reply for this chat': '이 채팅에 보낼 답장',
+  'Send to chat': '채팅으로 보내기',
+  'Search this chat': '이 채팅에서 검색',
+  'Add as task': '할 일로 추가',
+  'Save as note': '노트로 저장',
 }

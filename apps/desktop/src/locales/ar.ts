@@ -2288,4 +2288,16 @@ export const ar: Dictionary = {
   Weekdays: 'أيام العمل',
   Starts: 'يبدأ',
   Ends: 'ينتهي',
+  // Chats: everywhere
+  'Read chats': 'قراءة الدردشات',
+  'Post in chats': 'الكتابة في الدردشات',
+  'Always in this chat': 'دائمًا في هذه الدردشة',
+  'Open a chat first': 'افتح دردشة أولًا',
+  'Nothing unread': 'لا شيء غير مقروء',
+  'What I missed in chats': 'ما فاتني في الدردشات',
+  'A reply for this chat': 'رد لهذه الدردشة',
+  'Send to chat': 'إرسال إلى دردشة',
+  'Search this chat': 'البحث في هذه الدردشة',
+  'Add as task': 'إضافة كمهمة',
+  'Save as note': 'حفظ كملاحظة',
 }

@@ -2131,4 +2131,16 @@ export const yue: Dictionary = {
   Weekdays: '平日',
   Starts: '開始',
   Ends: '結束',
+  // Chats: everywhere
+  'Read chats': '睇傾偈',
+  'Post in chats': '喺傾偈度講嘢',
+  'Always in this chat': '喺呢個傾偈度一律准',
+  'Open a chat first': '請先開一個傾偈',
+  'Nothing unread': '冇未讀嘢',
+  'What I missed in chats': '我喺傾偈度錯過咗嘅嘢',
+  'A reply for this chat': '呢個傾偈嘅回覆',
+  'Send to chat': '傳去傾偈',
+  'Search this chat': '喺呢個傾偈度搵',
+  'Add as task': '加做任務',
+  'Save as note': '儲存做筆記',
 }

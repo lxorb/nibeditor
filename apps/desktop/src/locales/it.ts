@@ -2241,4 +2241,16 @@ export const it: Dictionary = {
   Weekdays: 'Giorni feriali',
   Starts: 'Inizia',
   Ends: 'Finisce',
+  // Chats: everywhere
+  'Read chats': 'Leggere le chat',
+  'Post in chats': 'Scrivere nelle chat',
+  'Always in this chat': 'Sempre in questa chat',
+  'Open a chat first': 'Apri prima una chat',
+  'Nothing unread': 'Niente da leggere',
+  'What I missed in chats': 'Cosa mi sono perso nelle chat',
+  'A reply for this chat': 'Una risposta per questa chat',
+  'Send to chat': 'Invia a una chat',
+  'Search this chat': 'Cerca in questa chat',
+  'Add as task': 'Aggiungi come attività',
+  'Save as note': 'Salva come nota',
 }

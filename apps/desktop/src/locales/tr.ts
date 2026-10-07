@@ -2188,4 +2188,16 @@ export const tr: Dictionary = {
   Weekdays: 'Hafta içi',
   Starts: 'Başlangıç',
   Ends: 'Bitiş',
+  // Chats: everywhere
+  'Read chats': 'Sohbetleri okuma',
+  'Post in chats': 'Sohbetlere yazma',
+  'Always in this chat': 'Bu sohbette her zaman',
+  'Open a chat first': 'Önce bir sohbet açın',
+  'Nothing unread': 'Okunmamış bir şey yok',
+  'What I missed in chats': 'Sohbetlerde kaçırdıklarım',
+  'A reply for this chat': 'Bu sohbet için bir yanıt',
+  'Send to chat': 'Sohbete gönder',
+  'Search this chat': 'Bu sohbette ara',
+  'Add as task': 'Görev olarak ekle',
+  'Save as note': 'Not olarak kaydet',
 }

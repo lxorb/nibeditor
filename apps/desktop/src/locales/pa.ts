@@ -2187,4 +2187,16 @@ export const pa: Dictionary = {
   Weekdays: 'ਕੰਮ ਦੇ ਦਿਨ',
   Starts: 'ਸ਼ੁਰੂ',
   Ends: 'ਅੰਤ',
+  // Chats: everywhere
+  'Read chats': 'ਚੈਟਾਂ ਪੜ੍ਹਨਾ',
+  'Post in chats': 'ਚੈਟਾਂ ਵਿੱਚ ਲਿਖਣਾ',
+  'Always in this chat': 'ਇਸ ਚੈਟ ਵਿੱਚ ਹਮੇਸ਼ਾ',
+  'Open a chat first': 'ਪਹਿਲਾਂ ਇੱਕ ਚੈਟ ਖੋਲ੍ਹੋ',
+  'Nothing unread': 'ਕੁਝ ਵੀ ਅਣਪੜ੍ਹਿਆ ਨਹੀਂ',
+  'What I missed in chats': 'ਚੈਟਾਂ ਵਿੱਚ ਜੋ ਮੇਰੇ ਤੋਂ ਛੁੱਟ ਗਿਆ',
+  'A reply for this chat': 'ਇਸ ਚੈਟ ਲਈ ਜਵਾਬ',
+  'Send to chat': 'ਚੈਟ ਵਿੱਚ ਭੇਜੋ',
+  'Search this chat': 'ਇਸ ਚੈਟ ਵਿੱਚ ਖੋਜੋ',
+  'Add as task': 'ਕੰਮ ਵਜੋਂ ਜੋੜੋ',
+  'Save as note': 'ਨੋਟ ਵਜੋਂ ਸੰਭਾਲੋ',
 }

@@ -2174,4 +2174,16 @@ export const ms: Dictionary = {
   Weekdays: 'Hari bekerja',
   Starts: 'Mula',
   Ends: 'Tamat',
+  // Chats: everywhere
+  'Read chats': 'Membaca sembang',
+  'Post in chats': 'Menulis dalam sembang',
+  'Always in this chat': 'Sentiasa dalam sembang ini',
+  'Open a chat first': 'Buka sembang dahulu',
+  'Nothing unread': 'Tiada yang belum dibaca',
+  'What I missed in chats': 'Apa yang saya terlepas dalam sembang',
+  'A reply for this chat': 'Balasan untuk sembang ini',
+  'Send to chat': 'Hantar ke sembang',
+  'Search this chat': 'Cari dalam sembang ini',
+  'Add as task': 'Tambah sebagai tugasan',
+  'Save as note': 'Simpan sebagai nota',
 }

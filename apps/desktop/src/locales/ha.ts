@@ -2210,4 +2210,16 @@ export const ha: Dictionary = {
   Weekdays: 'Ranakun aiki',
   Starts: 'Farawa',
   Ends: 'Ƙarshe',
+  // Chats: everywhere
+  'Read chats': 'Karanta hirarraki',
+  'Post in chats': 'Rubuta a hirarraki',
+  'Always in this chat': 'Kullum a wannan hira',
+  'Open a chat first': 'Fara buɗe hira',
+  'Nothing unread': 'Babu abin da ba a karanta ba',
+  'What I missed in chats': 'Abin da na rasa a hirarraki',
+  'A reply for this chat': 'Amsa don wannan hira',
+  'Send to chat': 'Aika zuwa hira',
+  'Search this chat': 'Bincika wannan hira',
+  'Add as task': 'Ƙara a matsayin aiki',
+  'Save as note': 'Ajiye a matsayin bayani',
 }

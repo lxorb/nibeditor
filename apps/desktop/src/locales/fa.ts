@@ -2182,4 +2182,16 @@ export const fa: Dictionary = {
   Weekdays: 'روزهای کاری',
   Starts: 'شروع',
   Ends: 'پایان',
+  // Chats: everywhere
+  'Read chats': 'خواندن گفتگوها',
+  'Post in chats': 'نوشتن در گفتگوها',
+  'Always in this chat': 'همیشه در این گفتگو',
+  'Open a chat first': 'اول یک گفتگو باز کنید',
+  'Nothing unread': 'چیز خوانده‌نشده‌ای نیست',
+  'What I missed in chats': 'آنچه در گفتگوها از دست دادم',
+  'A reply for this chat': 'پاسخی برای این گفتگو',
+  'Send to chat': 'فرستادن به گفتگو',
+  'Search this chat': 'جستجو در این گفتگو',
+  'Add as task': 'افزودن به‌عنوان کار',
+  'Save as note': 'ذخیره به‌عنوان یادداشت',
 }

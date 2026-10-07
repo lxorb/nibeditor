@@ -2211,4 +2211,16 @@ export const ta: Dictionary = {
   Weekdays: 'வேலை நாட்கள்',
   Starts: 'தொடக்கம்',
   Ends: 'முடிவு',
+  // Chats: everywhere
+  'Read chats': 'அரட்டைகளைப் படித்தல்',
+  'Post in chats': 'அரட்டைகளில் எழுதுதல்',
+  'Always in this chat': 'இந்த அரட்டையில் எப்போதும்',
+  'Open a chat first': 'முதலில் ஓர் அரட்டையைத் திறக்கவும்',
+  'Nothing unread': 'படிக்காதது எதுவுமில்லை',
+  'What I missed in chats': 'அரட்டைகளில் நான் தவறவிட்டவை',
+  'A reply for this chat': 'இந்த அரட்டைக்கு ஒரு பதில்',
+  'Send to chat': 'அரட்டைக்கு அனுப்பு',
+  'Search this chat': 'இந்த அரட்டையில் தேடு',
+  'Add as task': 'பணியாகச் சேர்',
+  'Save as note': 'குறிப்பாகச் சேமி',
 }

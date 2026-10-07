@@ -2265,4 +2265,16 @@ export const pl: Dictionary = {
   Weekdays: 'Dni robocze',
   Starts: 'Początek',
   Ends: 'Koniec',
+  // Chats: everywhere
+  'Read chats': 'Czytanie czatów',
+  'Post in chats': 'Pisanie na czatach',
+  'Always in this chat': 'Zawsze na tym czacie',
+  'Open a chat first': 'Najpierw otwórz czat',
+  'Nothing unread': 'Nic nieprzeczytanego',
+  'What I missed in chats': 'Co przegapiłem na czatach',
+  'A reply for this chat': 'Odpowiedź na tym czacie',
+  'Send to chat': 'Wyślij na czat',
+  'Search this chat': 'Szukaj na tym czacie',
+  'Add as task': 'Dodaj jako zadanie',
+  'Save as note': 'Zapisz jako notatkę',
 }

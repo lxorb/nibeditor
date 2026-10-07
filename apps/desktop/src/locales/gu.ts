@@ -2173,4 +2173,16 @@ export const gu: Dictionary = {
   Weekdays: 'કામકાજના દિવસો',
   Starts: 'શરૂ',
   Ends: 'અંત',
+  // Chats: everywhere
+  'Read chats': 'ચેટ વાંચવી',
+  'Post in chats': 'ચેટમાં લખવું',
+  'Always in this chat': 'આ ચેટમાં હંમેશા',
+  'Open a chat first': 'પહેલા એક ચેટ ખોલો',
+  'Nothing unread': 'કંઈ ન વાંચેલું નથી',
+  'What I missed in chats': 'ચેટમાં મારાથી જે છૂટી ગયું',
+  'A reply for this chat': 'આ ચેટ માટે જવાબ',
+  'Send to chat': 'ચેટમાં મોકલો',
+  'Search this chat': 'આ ચેટમાં શોધો',
+  'Add as task': 'કાર્ય તરીકે ઉમેરો',
+  'Save as note': 'નોંધ તરીકે સાચવો',
 }

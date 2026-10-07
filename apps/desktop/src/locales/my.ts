@@ -2166,4 +2166,16 @@ export const my: Dictionary = {
   Weekdays: 'ရုံးဖွင့်ရက်',
   Starts: 'စတင်',
   Ends: 'ပြီးဆုံး',
+  // Chats: everywhere
+  'Read chats': 'ချက်များ ဖတ်ရန်',
+  'Post in chats': 'ချက်များတွင် ရေးရန်',
+  'Always in this chat': 'ဤချက်တွင် အမြဲ',
+  'Open a chat first': 'ချက်တစ်ခုကို အရင်ဖွင့်ပါ',
+  'Nothing unread': 'မဖတ်ရသေးသည် မရှိပါ',
+  'What I missed in chats': 'ချက်များတွင် လွတ်သွားသည်များ',
+  'A reply for this chat': 'ဤချက်အတွက် အကြောင်းပြန်ချက်',
+  'Send to chat': 'ချက်သို့ ပို့ရန်',
+  'Search this chat': 'ဤချက်တွင် ရှာရန်',
+  'Add as task': 'လုပ်ငန်းအဖြစ် ထည့်ရန်',
+  'Save as note': 'မှတ်စုအဖြစ် သိမ်းရန်',
 }

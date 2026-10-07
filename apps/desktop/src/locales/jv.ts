@@ -2166,4 +2166,16 @@ export const jv: Dictionary = {
   Weekdays: 'Dina kerja',
   Starts: 'Wiwit',
   Ends: 'Rampung',
+  // Chats: everywhere
+  'Read chats': 'Maca obrolan',
+  'Post in chats': 'Nulis ing obrolan',
+  'Always in this chat': 'Tansah ing obrolan iki',
+  'Open a chat first': 'Bukak obrolan dhisik',
+  'Nothing unread': 'Ora ana sing durung diwaca',
+  'What I missed in chats': 'Sing kliwat ing obrolan',
+  'A reply for this chat': 'Wangsulan kanggo obrolan iki',
+  'Send to chat': 'Kirim menyang obrolan',
+  'Search this chat': 'Golek ing obrolan iki',
+  'Add as task': 'Tambahake minangka tugas',
+  'Save as note': 'Simpen minangka cathetan',
 }

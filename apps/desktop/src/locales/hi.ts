@@ -2179,4 +2179,16 @@ export const hi: Dictionary = {
   Weekdays: 'कार्यदिवस',
   Starts: 'शुरू',
   Ends: 'समाप्त',
+  // Chats: everywhere
+  'Read chats': 'चैट पढ़ना',
+  'Post in chats': 'चैट में लिखना',
+  'Always in this chat': 'इस चैट में हमेशा',
+  'Open a chat first': 'पहले एक चैट खोलें',
+  'Nothing unread': 'कुछ भी अनपढ़ा नहीं',
+  'What I missed in chats': 'चैट में जो मुझसे छूट गया',
+  'A reply for this chat': 'इस चैट के लिए जवाब',
+  'Send to chat': 'चैट में भेजें',
+  'Search this chat': 'इस चैट में खोजें',
+  'Add as task': 'काम के रूप में जोड़ें',
+  'Save as note': 'नोट के रूप में सहेजें',
 }

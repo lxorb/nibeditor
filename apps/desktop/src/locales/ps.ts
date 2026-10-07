@@ -2184,4 +2184,16 @@ export const ps: Dictionary = {
   Weekdays: 'کاري ورځې',
   Starts: 'پیل',
   Ends: 'پای',
+  // Chats: everywhere
+  'Read chats': 'چټونه لوستل',
+  'Post in chats': 'په چټونو کې لیکل',
+  'Always in this chat': 'تل په دې چټ کې',
+  'Open a chat first': 'لومړی یو چټ پرانیزئ',
+  'Nothing unread': 'هیڅ نالوستی نشته',
+  'What I missed in chats': 'څه چې په چټونو کې رانه پاتې شول',
+  'A reply for this chat': 'د دې چټ لپاره ځواب',
+  'Send to chat': 'چټ ته لېږل',
+  'Search this chat': 'په دې چټ کې لټون',
+  'Add as task': 'د دندې په توګه زیاتول',
+  'Save as note': 'د یادښت په توګه ساتل',
 }

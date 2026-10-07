@@ -2263,4 +2263,16 @@ export const ru: Dictionary = {
   Weekdays: 'Будни',
   Starts: 'Начало',
   Ends: 'Конец',
+  // Chats: everywhere
+  'Read chats': 'Читать чаты',
+  'Post in chats': 'Писать в чаты',
+  'Always in this chat': 'Всегда в этом чате',
+  'Open a chat first': 'Сначала откройте чат',
+  'Nothing unread': 'Нет непрочитанного',
+  'What I missed in chats': 'Что я пропустил в чатах',
+  'A reply for this chat': 'Ответ для этого чата',
+  'Send to chat': 'Отправить в чат',
+  'Search this chat': 'Искать в этом чате',
+  'Add as task': 'Добавить как задачу',
+  'Save as note': 'Сохранить как заметку',
 }

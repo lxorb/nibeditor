@@ -2169,4 +2169,16 @@ export const ja: Dictionary = {
   Weekdays: '平日',
   Starts: '開始',
   Ends: '終了',
+  // Chats: everywhere
+  'Read chats': 'チャットを読む',
+  'Post in chats': 'チャットに書き込む',
+  'Always in this chat': 'このチャットでは常に',
+  'Open a chat first': '先にチャットを開いてください',
+  'Nothing unread': '未読はありません',
+  'What I missed in chats': 'チャットで見逃したこと',
+  'A reply for this chat': 'このチャットへの返信',
+  'Send to chat': 'チャットに送る',
+  'Search this chat': 'このチャットを検索',
+  'Add as task': 'タスクとして追加',
+  'Save as note': 'ノートとして保存',
 }

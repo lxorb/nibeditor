@@ -2203,4 +2203,16 @@ export const ml: Dictionary = {
   Weekdays: 'പ്രവൃത്തി ദിവസങ്ങൾ',
   Starts: 'ആരംഭം',
   Ends: 'അവസാനം',
+  // Chats: everywhere
+  'Read chats': 'ചാറ്റുകൾ വായിക്കുക',
+  'Post in chats': 'ചാറ്റുകളിൽ എഴുതുക',
+  'Always in this chat': 'ഈ ചാറ്റിൽ എപ്പോഴും',
+  'Open a chat first': 'ആദ്യം ഒരു ചാറ്റ് തുറക്കുക',
+  'Nothing unread': 'വായിക്കാത്തതൊന്നുമില്ല',
+  'What I missed in chats': 'ചാറ്റുകളിൽ എനിക്ക് നഷ്ടമായത്',
+  'A reply for this chat': 'ഈ ചാറ്റിനുള്ള മറുപടി',
+  'Send to chat': 'ചാറ്റിലേക്ക് അയയ്ക്കുക',
+  'Search this chat': 'ഈ ചാറ്റിൽ തിരയുക',
+  'Add as task': 'ജോലിയായി ചേർക്കുക',
+  'Save as note': 'കുറിപ്പായി സംരക്ഷിക്കുക',
 }

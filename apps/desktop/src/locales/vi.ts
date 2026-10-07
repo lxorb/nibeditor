@@ -2162,4 +2162,16 @@ export const vi: Dictionary = {
   Weekdays: 'Ngày thường',
   Starts: 'Bắt đầu',
   Ends: 'Kết thúc',
+  // Chats: everywhere
+  'Read chats': 'Đọc trò chuyện',
+  'Post in chats': 'Viết trong trò chuyện',
+  'Always in this chat': 'Luôn trong cuộc trò chuyện này',
+  'Open a chat first': 'Hãy mở một cuộc trò chuyện trước',
+  'Nothing unread': 'Không có gì chưa đọc',
+  'What I missed in chats': 'Những gì tôi đã bỏ lỡ trong trò chuyện',
+  'A reply for this chat': 'Một câu trả lời cho cuộc trò chuyện này',
+  'Send to chat': 'Gửi tới trò chuyện',
+  'Search this chat': 'Tìm trong cuộc trò chuyện này',
+  'Add as task': 'Thêm thành việc cần làm',
+  'Save as note': 'Lưu thành ghi chú',
 }

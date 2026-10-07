@@ -2190,4 +2190,16 @@ export const te: Dictionary = {
   Weekdays: 'పని దినాలు',
   Starts: 'ప్రారంభం',
   Ends: 'ముగింపు',
+  // Chats: everywhere
+  'Read chats': 'చాట్‌లు చదవడం',
+  'Post in chats': 'చాట్‌లలో రాయడం',
+  'Always in this chat': 'ఈ చాట్‌లో ఎల్లప్పుడూ',
+  'Open a chat first': 'ముందు ఒక చాట్ తెరవండి',
+  'Nothing unread': 'చదవనిది ఏమీ లేదు',
+  'What I missed in chats': 'చాట్‌లలో నేను మిస్ అయినవి',
+  'A reply for this chat': 'ఈ చాట్ కోసం ఒక జవాబు',
+  'Send to chat': 'చాట్‌కి పంపు',
+  'Search this chat': 'ఈ చాట్‌లో వెతుకు',
+  'Add as task': 'పనిగా జోడించు',
+  'Save as note': 'గమనికగా సేవ్ చేయి',
 }

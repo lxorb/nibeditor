@@ -2143,4 +2143,16 @@ export const th: Dictionary = {
   Weekdays: 'วันทำงาน',
   Starts: 'เริ่ม',
   Ends: 'สิ้นสุด',
+  // Chats: everywhere
+  'Read chats': 'อ่านแชท',
+  'Post in chats': 'เขียนในแชท',
+  'Always in this chat': 'ในแชทนี้เสมอ',
+  'Open a chat first': 'เปิดแชทก่อน',
+  'Nothing unread': 'ไม่มีอะไรที่ยังไม่ได้อ่าน',
+  'What I missed in chats': 'สิ่งที่ฉันพลาดในแชท',
+  'A reply for this chat': 'คำตอบสำหรับแชทนี้',
+  'Send to chat': 'ส่งไปที่แชท',
+  'Search this chat': 'ค้นหาในแชทนี้',
+  'Add as task': 'เพิ่มเป็นงาน',
+  'Save as note': 'บันทึกเป็นโน้ต',
 }

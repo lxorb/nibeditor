@@ -2222,4 +2222,16 @@ export const de: Dictionary = {
   Weekdays: 'Werktags',
   Starts: 'Beginnt',
   Ends: 'Endet',
+  // Chats: everywhere
+  'Read chats': 'Chats lesen',
+  'Post in chats': 'In Chats schreiben',
+  'Always in this chat': 'Immer in diesem Chat',
+  'Open a chat first': 'Zuerst einen Chat öffnen',
+  'Nothing unread': 'Nichts ungelesen',
+  'What I missed in chats': 'Was ich in Chats verpasst habe',
+  'A reply for this chat': 'Eine Antwort für diesen Chat',
+  'Send to chat': 'An Chat senden',
+  'Search this chat': 'Diesen Chat durchsuchen',
+  'Add as task': 'Als Aufgabe hinzufügen',
+  'Save as note': 'Als Notiz speichern',
 }

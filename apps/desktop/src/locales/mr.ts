@@ -2184,4 +2184,16 @@ export const mr: Dictionary = {
   Weekdays: 'कामाचे दिवस',
   Starts: 'सुरुवात',
   Ends: 'शेवट',
+  // Chats: everywhere
+  'Read chats': 'चॅट वाचणे',
+  'Post in chats': 'चॅटमध्ये लिहिणे',
+  'Always in this chat': 'या चॅटमध्ये नेहमी',
+  'Open a chat first': 'आधी एक चॅट उघडा',
+  'Nothing unread': 'काहीही न वाचलेले नाही',
+  'What I missed in chats': 'चॅटमध्ये माझे जे सुटले',
+  'A reply for this chat': 'या चॅटसाठी उत्तर',
+  'Send to chat': 'चॅटला पाठवा',
+  'Search this chat': 'या चॅटमध्ये शोधा',
+  'Add as task': 'काम म्हणून जोडा',
+  'Save as note': 'नोंद म्हणून जतन करा',
 }

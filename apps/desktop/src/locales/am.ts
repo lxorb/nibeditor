@@ -2157,4 +2157,16 @@ export const am: Dictionary = {
   Weekdays: 'የሥራ ቀናት',
   Starts: 'ይጀምራል',
   Ends: 'ያበቃል',
+  // Chats: everywhere
+  'Read chats': 'ውይይቶችን ማንበብ',
+  'Post in chats': 'በውይይቶች መጻፍ',
+  'Always in this chat': 'ሁልጊዜ በዚህ ውይይት',
+  'Open a chat first': 'መጀመሪያ ውይይት ይክፈቱ',
+  'Nothing unread': 'ያልተነበበ የለም',
+  'What I missed in chats': 'በውይይቶች ያመለጠኝ',
+  'A reply for this chat': 'ለዚህ ውይይት መልስ',
+  'Send to chat': 'ወደ ውይይት ላክ',
+  'Search this chat': 'በዚህ ውይይት ፈልግ',
+  'Add as task': 'እንደ ተግባር አክል',
+  'Save as note': 'እንደ ማስታወሻ አስቀምጥ',
 }

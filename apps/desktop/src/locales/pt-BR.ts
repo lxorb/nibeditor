@@ -2218,4 +2218,16 @@ export const ptBR: Dictionary = {
   Weekdays: 'Dias úteis',
   Starts: 'Começa',
   Ends: 'Termina',
+  // Chats: everywhere
+  'Read chats': 'Ler conversas',
+  'Post in chats': 'Escrever em conversas',
+  'Always in this chat': 'Sempre nesta conversa',
+  'Open a chat first': 'Abra uma conversa primeiro',
+  'Nothing unread': 'Nada não lido',
+  'What I missed in chats': 'O que perdi nas conversas',
+  'A reply for this chat': 'Uma resposta para esta conversa',
+  'Send to chat': 'Enviar para uma conversa',
+  'Search this chat': 'Pesquisar nesta conversa',
+  'Add as task': 'Adicionar como tarefa',
+  'Save as note': 'Salvar como nota',
 }

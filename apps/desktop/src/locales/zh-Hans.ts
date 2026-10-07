@@ -2131,4 +2131,16 @@ export const zhHans: Dictionary = {
   Weekdays: '工作日',
   Starts: '开始',
   Ends: '结束',
+  // Chats: everywhere
+  'Read chats': '读取聊天',
+  'Post in chats': '在聊天中发言',
+  'Always in this chat': '在此聊天中始终允许',
+  'Open a chat first': '请先打开一个聊天',
+  'Nothing unread': '没有未读内容',
+  'What I missed in chats': '我在聊天中错过的内容',
+  'A reply for this chat': '此聊天的回复',
+  'Send to chat': '发送到聊天',
+  'Search this chat': '在此聊天中搜索',
+  'Add as task': '添加为任务',
+  'Save as note': '保存为笔记',
 }
