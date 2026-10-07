@@ -10,6 +10,7 @@
     "./limits": "./src/limits.ts",
     "./links": "./src/links.ts",
     "./mentions": "./src/mentions.ts",
+    "./notify": "./src/notify.ts",
     "./pointer": "./src/pointer.ts",
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",
