@@ -11,6 +11,7 @@ import { ApiError, BASE, request } from '../api'
 import { isRecord, isString, parsed } from '../stored'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { GraphSettings } from '../workspace/graph-settings.svelte'
+import type { Avatar, Status } from '../people/face'
 
 export interface Account {
   id: string
@@ -25,6 +26,19 @@ export interface Account {
    *  moved, 2 once it is. Read as the app starts; see sync.svelte.ts and
    *  docs/sync-v2.md section 11. */
   syncVersion?: number
+  /** The profile as its owner edits it, absent from a build of the service older than
+   *  this app; see lib/people and docs/chats.md 4.9. */
+  avatar?: Avatar | null
+  pronouns?: string | null
+  bio?: string | null
+  status?: Status | null
+  accent?: string | null
+  zone?: string | null
+  /** Appear offline. */
+  hidden?: boolean
+  /** What the account is called in each space where it chose something else, by the
+   *  space's id. */
+  nicks?: Record<string, string>
 }
 
 /** What this account may do in a space: its own, one somebody shared to write
@@ -46,6 +60,11 @@ export interface Guest {
  *  them: somebody invited by address is the first, somebody the space's own link
  *  let in is the second. */
 export interface Member {
+  /** Their account, where they have one, and the face they chose: what the row draws
+   *  and what a press on it opens the card of. Absent from an older service. */
+  id?: string | null
+  avatar?: Avatar | null
+  accent?: string | null
   email: string | null
   /** Their guest id, when a link is how they got here. */
   guest: string | null
@@ -68,6 +87,9 @@ export interface ShareLink {
 /** Somebody who followed a link that asks first. Named the same two ways a
  *  member is: an address they proved, or the guest a link handed out. */
 interface JoinRequest {
+  id?: string | null
+  avatar?: Avatar | null
+  accent?: string | null
   email: string | null
   guest: string | null
   name: string | null
@@ -78,7 +100,13 @@ interface JoinRequest {
 /** Who else may reach a space, or one file of it, which is the whole of what the
  *  Share sheet draws and what every change to it answers with. */
 export interface Sharing {
-  owner: { email: string; name: string | null }
+  owner: {
+    email: string
+    name: string | null
+    id?: string | null
+    avatar?: Avatar | null
+    accent?: string | null
+  }
   /** Which file this is about, when it is about one file rather than the whole
    *  space. Null for the space, which is what every sheet was about before. */
   item: { id: string; path: string } | null
@@ -174,6 +202,9 @@ export interface RemoteSpace {
    *  the switcher. About the space itself: a file of it shared on its own is a
    *  mark on that row, and does not make the whole space shared. */
   shared: boolean
+  /** Up to three of the others in it, owner first, by account id: the faces the
+   *  switcher draws beside the shared mark. Absent from an older service. */
+  people?: string[]
   /** Which of its files are shared on their own, by note id, so the tree can
    *  mark those rows. Empty for a space somebody else owns, and absent from a
    *  build of the service older than this app. */

@@ -465,6 +465,8 @@ describe('the switch', () => {
       'lib/agents/settings/AgentDetail.svelte',
       // Fast, in the AI panel's model popover.
       'lib/ai/sidebar/ModelPicker.svelte',
+      // Do not disturb and Appear offline, under the account's name.
+      'lib/people/ProfileRows.svelte',
       // A host pinned, in Settings > Remote.
       'lib/remote/HostDetail.svelte',
       // An extension on or off, in Settings > General > Browser.

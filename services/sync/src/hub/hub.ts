@@ -26,6 +26,7 @@ import { markSeen, register } from './devices'
 import { type FromDevice, type FromHub, readFrame, say } from './frames'
 import { denyKey, forgetWant, grantKey, type Relay, wantedOf, wantKey } from './keys'
 import { HUB_AWAY } from './reach'
+import { keepPresence, presenceOf } from '../people/presence'
 import {
   acquire,
   due,
@@ -255,6 +256,7 @@ export class AccountHub implements DurableObject {
     const known = await register(this.env, me.who, me.session, frame)
     const now = { ...me, hello: true, name: known.name, keyed: known.key !== null }
     attach(socket, now)
+    await this.present(me.who)
 
     if (known.key) {
       say(socket, { t: 'key', wrapped: known.key.wrapped, generation: known.key.generation })
@@ -268,6 +270,7 @@ export class AccountHub implements DurableObject {
     if (me.active === active) return
     attach(socket, { ...me, active })
     await this.settleWatched(this.world())
+    if (!me.guest) await this.present(me.who)
   }
 
   /** A socket that closed, or broke. Its device is not alive any more unless it has
@@ -280,6 +283,15 @@ export class AccountHub implements DurableObject {
     if (me && !me.guest && me.hello && !socketOf(this.ctx, me.device, socket)) {
       await markSeen(this.env, me.who, me.device)
     }
+    if (me && !me.guest) await this.present(me.who, socket)
+  }
+
+  /** Whether the account's person is here, written down when it changed: active while
+   *  a device is in use, away while one is connected, offline with none. See
+   *  people/presence.ts. */
+  private async present(user: string, closing?: WebSocket): Promise<void> {
+    const state = presenceOf(everySocket(this.ctx, closing).map(({ attached }) => attached))
+    await keepPresence(this.env, user, state)
   }
 
   /** A device was ended from another: its sockets closed, every lease it held let

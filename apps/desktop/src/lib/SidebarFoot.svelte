@@ -13,6 +13,7 @@
    *  the same three controls in the same order. */
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
+  import { BASE } from './api'
   import { arriving } from './arriving.svelte'
   import { initial } from './icons'
   import { longPress } from './longpress'
@@ -26,6 +27,8 @@
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
   const who = $derived(account.name)
+  /** Their face, where they chose one: the small picture; see people/face.ts. */
+  const face = $derived(account.user?.avatar && `${BASE}/i/${account.user.avatar.s}.webp`)
 
   /** The settings button doubles as the sync light, so its tooltip says what
    *  the light means rather than leaving a colour to be guessed at, and while it
@@ -63,8 +66,10 @@
     disabled={account.restoring}
     onclick={() => settings.show('account')}
   >
-    <span class="nib-badge" aria-hidden="true">
-      {#if who}
+    <span class="nib-badge" class:person={!!who} aria-hidden="true">
+      {#if face}
+        <img src={face} alt="" draggable="false" />
+      {:else if who}
         {initial(who)}
       {:else}
         <svg viewBox="0 0 14 14"
@@ -198,8 +203,19 @@
     flex: 0 1 auto;
   }
 
-  /* The letter whoever is here is known by, in the square a space wears its own
-     mark in, so the two marks in the panel are the same shape. */
+  /* Whoever is here, round as every face is (people/Avatar.svelte): their picture,
+     or the letter they are known by. */
+  .person {
+    overflow: hidden;
+    border-radius: 50%;
+  }
+
+  .person img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   /* Still asking the stores whether there is a session. Not a spinner and not a
      sentence: the row that would sign you in simply waits, and breathes while
      it does. */

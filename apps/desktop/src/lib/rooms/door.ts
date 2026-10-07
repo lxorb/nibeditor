@@ -67,6 +67,11 @@ export interface Who {
   name: string
   accent: string
   person?: string | undefined
+  /** The account, its picture's hash and its accent, for the face the others draw;
+   *  see rooms/who.ts. */
+  id?: string | undefined
+  face?: string | undefined
+  tint?: string | undefined
 }
 
 export interface Opening {

@@ -47,6 +47,17 @@ export function personName(): string | undefined {
   return account.name ?? undefined
 }
 
+/** And the face the others draw them by: the account, its small picture and its accent
+ *  (docs/chats.md 4.9). Nothing while signed out or a guest, whose face is an initial. */
+export function personFace(): {
+  id?: string
+  face?: string | undefined
+  tint?: string | undefined
+} {
+  const user = account.user
+  return user ? { id: user.id, face: user.avatar?.s, tint: user.accent ?? undefined } : {}
+}
+
 /** One of the accent colours, chosen once for this device and kept. Which one is
  *  random rather than derived from anything: two devices picking their own is how
  *  they end up different, and a name or an id would put every Windows machine on

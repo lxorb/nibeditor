@@ -11,6 +11,7 @@ import { readBody } from '../body'
 import { chunks } from '../bound'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
+import { facesIn } from '../people/seen'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
 import { webStoreOf } from './web-store'
@@ -111,6 +112,13 @@ spaces.get('/', async (context) => {
   // who else was given a note of somebody else's space is that owner's to see.
   const items = await itemsSharedIn(context.env, own)
 
+  // And up to three faces of the others in each shared space, which the switcher draws
+  // beside its mark. An account's alone; a guest has nobody's profile to read.
+  const together = results
+    .filter((one) => one.user_id !== mine || shared.has(one.id))
+    .map((one) => one.id)
+  const faces = mine ? await facesIn(context.env, mine, together) : new Map<string, string[]>()
+
   // A space somebody shared leaves the same marker for everybody who was in it.
   const gone = await reachable(context.env, who, 1)
 
@@ -141,6 +149,7 @@ spaces.get('/', async (context) => {
         // Which web store the space's pages live in on every computer, the owner's
         // choice for everybody in it; see web-store.ts.
         webStore: webStoreOf(one.web_store),
+        people: faces.get(one.id) ?? [],
       }
 
       return asking ? withoutSetup(view) : view

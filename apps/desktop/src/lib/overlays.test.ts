@@ -175,6 +175,7 @@ describe('what hides a web page', () => {
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
+    'lib/people/ProfileCard.svelte': "a person's card, beside the face that was pressed",
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/remote/HostPicker.svelte': 'dialog',

@@ -50,6 +50,7 @@
   import { pinnedRun } from './workspace/pinning'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
+  import { initial } from './icons'
   import { dur } from './motion'
   import Cross from './Cross.svelte'
 
@@ -817,9 +818,12 @@
     use:longPress={showStripMenu}
   >
     {#each tabs as tab, at (tab.id)}
-      <!-- How many other devices are in this note, once and at most three: the
-           expression below it allocated a fresh array-like per tab per render. -->
-      {@const elsewhere = Math.min(rooms.present[tab.note.key] ?? 0, 3)}
+      <!-- Who else is in this note, once and at most three of each: the other people,
+           and this account's own other devices. The expression below it allocated a
+           fresh array-like per tab per render. -->
+      {@const seen = rooms.seen[tab.note.key]}
+      {@const faces = seen?.people.slice(0, 3) ?? []}
+      {@const elsewhere = Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3)}
       {@const box = layout.boxes[tab.id] ?? { x: 0, width: 0 }}
       {@const parts = partsFor(
         box.width,
@@ -968,16 +972,24 @@
           {#if syncMark.asked && parts.title}
             {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
           {/if}
-          <!-- Who else is in this note: one dot per other device, in the accent,
-               and nothing at all while nobody is. No word, because the dots are
-               already the whole sentence. -->
-          {#if elsewhere && parts.title}
+          <!-- Who else is in this note: a face per other person and a dot per other
+               device of this account, in the accent, and nothing at all while
+               nobody is. No word, because the faces and dots are the sentence. -->
+          {#if (elsewhere || faces.length) && parts.title}
             <span
               class="here"
               role="img"
               aria-label={t('Also open elsewhere')}
               title={t('Also open elsewhere')}
             >
+              {#each faces as one (one.key)}
+                <span
+                  class="who face"
+                  style:--fill={one.fill}
+                  style:background-image={one.face && `url("${one.face}")`}
+                  transition:fade={{ duration: dur(190) }}>{one.face ? '' : initial(one.name)}</span
+                >
+              {/each}
               {#each { length: elsewhere } as _, at (at)}
                 <span class="who" transition:fade={{ duration: dur(190) }}></span>
               {/each}
@@ -1406,6 +1418,17 @@
     /* A ring in the tab's own colour, so two dots against each other still read
        as two. */
     box-shadow: 0 0 0 1.5px var(--bg);
+  }
+
+  /* Another person: their face, or their initial on their colour; see people/. */
+  .who.face {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    background: var(--fill) center / cover;
+    color: var(--accent-ink);
+    font: var(--weight-strong) 9px var(--font-ui);
   }
 
   /* The close button: sixteen pixels and round, at the end of the body, lit by a

@@ -111,3 +111,8 @@ export const RELEASE_AFTER = 3_000
  *  the two seconds it already waits for the engine to keep its session cookies. What
  *  does not make it is the last upload from before, at most `LIGHT_EVERY` old. */
 export const HANDS_BACK_WITHIN = 2_000
+
+/** How often a list of people on screen asks again whether each is here: the service
+ *  writes presence when it changes and tells nobody, so whoever is looking asks, Slack's
+ *  minute. See lib/people/people.svelte.ts and docs/chats.md 4.10. */
+export const PRESENCE_EVERY = 60_000

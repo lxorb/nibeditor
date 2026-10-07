@@ -195,9 +195,9 @@ export class CarriedRoom extends JoinedRoom {
   }
 
   protected showPresent() {
-    const { present, carets } = peersIn(this.door.awareness, this.door.doc, this.scheme)
+    const { present, carets, seen } = peersIn(this.door.awareness, this.door.doc, this.scheme)
     this.carried.note.announce([setPeers.of(carets)])
-    this.carried.onPeers(present)
+    this.carried.onPeers(present, seen)
   }
 }
 
@@ -244,8 +244,8 @@ export class CarriedPlaneRoom extends JoinedRoom {
   }
 
   protected showPresent() {
-    const { present, hands } = handsIn(this.door.awareness, this.door.doc, this.scheme)
+    const { present, hands, seen } = handsIn(this.door.awareness, this.door.doc, this.scheme)
     this.carried.surface.handsAre(hands)
-    this.carried.onPeers(present)
+    this.carried.onPeers(present, seen)
   }
 }

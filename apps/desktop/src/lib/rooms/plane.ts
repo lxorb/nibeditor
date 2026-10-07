@@ -94,9 +94,9 @@ export class PlaneRoom extends JoinedRoom implements SharedPlane {
 
   /** Who is on the plane, for the surface to draw and for the tab to count. */
   protected showPresent() {
-    const { present, hands } = handsIn(this.door.awareness, this.door.doc, this.scheme)
+    const { present, hands, seen } = handsIn(this.door.awareness, this.door.doc, this.scheme)
 
     this.joining.surface.handsAre(hands)
-    this.joining.onPeers(present)
+    this.joining.onPeers(present, seen)
   }
 }

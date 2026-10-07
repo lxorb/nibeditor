@@ -22,7 +22,11 @@ function pair(words: string) {
 describe('who else is in a note', () => {
   test('is nobody when nobody has said anything', () => {
     const { two } = pair('words\n')
-    expect(peersIn(two.awareness, two.doc, 'dark')).toEqual({ present: 0, carets: [] })
+    expect(peersIn(two.awareness, two.doc, 'dark')).toEqual({
+      present: 0,
+      carets: [],
+      seen: { people: [], mine: 0 },
+    })
   })
 
   test('never counts the device asking', () => {
@@ -242,5 +246,65 @@ describe('an unreadable presence', () => {
     receive(awarenessUpdate(theirs, [other.clientID]), two.doc, two.awareness, 'room')
 
     expect(peersIn(two.awareness, two.doc, 'dark').present).toBe(0)
+  })
+})
+
+describe('the faces of who else is in a note', () => {
+  const FACE = 'f'.repeat(64)
+
+  /** One device saying who it is, heard by another that is somebody else. */
+  function heard(who: Record<string, unknown>, mine: Record<string, unknown>) {
+    const { one, two } = pair('words\n')
+    one.awareness.setLocalStateField('who', who)
+    one.awareness.setLocalStateField('caret', {
+      anchor: relative(one.text, 0),
+      head: relative(one.text, 0),
+    })
+    two.awareness.setLocalStateField('who', mine)
+    receive(awarenessUpdate(one.awareness, [one.doc.clientID]), two.doc, two.awareness, 'room')
+    return peersIn(two.awareness, two.doc, 'dark')
+  }
+
+  test('are another person’s, by their account, with their picture', () => {
+    const found = heard(
+      { name: 'Mac', accent: 'blue', person: 'Lucile', id: 'u-lucile', face: FACE, tint: 'teal' },
+      { name: 'Windows', accent: 'red', person: 'Emil', id: 'u-emil' },
+    )
+
+    expect(found.seen).toEqual({
+      people: [
+        {
+          key: 'u-lucile',
+          name: 'Lucile',
+          face: `https://nibeditor.com/i/${FACE}.webp`,
+          fill: '#33c7ba',
+        },
+      ],
+      mine: 0,
+    })
+    expect(found.carets[0]).toMatchObject({
+      name: 'Lucile',
+      face: `https://nibeditor.com/i/${FACE}.webp`,
+    })
+  })
+
+  test('leave this account’s own other devices as dots, named by the device', () => {
+    const found = heard(
+      { name: 'Phone', accent: 'blue', person: 'Emil', id: 'u-emil', face: FACE },
+      { name: 'Windows', accent: 'red', person: 'Emil', id: 'u-emil' },
+    )
+
+    expect(found.seen).toEqual({ people: [], mine: 1 })
+    expect(found.carets[0]).toMatchObject({ name: 'Phone', face: undefined })
+  })
+
+  test('take nothing for a face that is not a hash', () => {
+    const found = heard(
+      { name: 'Mac', accent: 'blue', person: 'Mia', id: 'u-mia', face: 'javascript:alert(1)' },
+      { name: 'Windows', accent: 'red', person: 'Emil', id: 'u-emil' },
+    )
+
+    expect(found.seen.people[0]?.face).toBeNull()
+    expect(found.carets[0]?.face).toBeUndefined()
   })
 })

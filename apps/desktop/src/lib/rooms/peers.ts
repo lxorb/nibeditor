@@ -1,11 +1,11 @@
 /** Who else is in a note, and where.
  *
- *  What travels is a name, an accent and two positions. The positions are Yjs's
- *  own relative ones rather than offsets: a caret that says "after this character"
- *  is still in the right place once somebody has written a paragraph above it,
- *  where a number would have slid. Each end turns them back into offsets against
- *  the text it holds, which is why nobody has to agree about anything but the
- *  characters themselves.
+ *  What travels is a name, an accent, a person's face where they have one, and two
+ *  positions. The positions are Yjs's own relative ones rather than offsets: a caret
+ *  that says "after this character" is still in the right place once somebody has
+ *  written a paragraph above it, where a number would have slid. Each end turns them
+ *  back into offsets against the text it holds, which is why nobody has to agree
+ *  about anything but the characters themselves.
  *
  *  The accent travels as its name, not as a colour. The shade a colour needs to
  *  be readable on white is not the shade it needs on black, so which shade is
@@ -14,7 +14,8 @@
 import type { Peer } from '@nib/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
-import { accentColour } from '../accents'
+import { accentColour, accentFor } from '../accents'
+import { BASE } from '../api'
 import { isNumber, isRecord, isString } from '../stored'
 
 /** What one device says about itself. Everything in it is JSON, because that is
@@ -32,6 +33,27 @@ interface Named {
   accent: string
   /** Whoever is at it, when there is an account to say. */
   person?: string
+  /** That account, its small picture's hash and its own accent: the face a tab and a
+   *  caret draw for a person; see who.ts. */
+  id?: string
+  face?: string
+  tint?: string
+}
+
+/** Another person in a room, as the tab draws them: a face, or an initial on their
+ *  colour. */
+interface Someone {
+  key: string
+  name: string
+  face: string | null
+  fill: string
+}
+
+/** Who else is in a room, for the tab: the other people, and how many of this
+ *  account's own other devices, which stay dots. */
+export interface Seen {
+  people: Someone[]
+  mine: number
 }
 
 /** One other device in a room: who it says it is, and everything else it said.
@@ -97,17 +119,49 @@ function absolute(doc: Y.Doc, held: unknown): number | null {
  *  paragraph: what arrives is whatever another machine chose to send, and it is
  *  drawn in the note. */
 const LONGEST_NAME = 64
+const HASH = /^[a-f0-9]{64}$/
+const WORD = /^[\w-]{1,64}$/
 
 function namedIn(value: unknown): Named | null {
   if (!isRecord(value) || !isRecord(value.who)) return null
   if (!isString(value.who.name) || !isString(value.who.accent)) return null
 
-  const person = value.who.person
+  const { person, id, face, tint } = value.who
   return {
     name: value.who.name.slice(0, LONGEST_NAME),
     accent: value.who.accent,
     ...(isString(person) ? { person: person.slice(0, LONGEST_NAME) } : {}),
+    // A face is only ever a hash, so what another machine sent can only ever be a
+    // picture this service holds.
+    ...(isString(id) && WORD.test(id) ? { id } : {}),
+    ...(isString(face) && HASH.test(face) ? { face } : {}),
+    ...(isString(tint) && WORD.test(tint) ? { tint } : {}),
   }
+}
+
+/** Where a face's small picture is; see people/face.ts. */
+const faceUrl = (hash: string | undefined) => (hash ? `${BASE}/i/${hash}.webp` : undefined)
+
+/** The people among `here` who are not this account, one each however many devices they
+ *  have, and how many of this account's own devices are left over. */
+function seenIn(here: readonly Here[], mine: Named | null, scheme: 'dark' | 'light'): Seen {
+  const self = mine?.id ?? mine?.person
+  const people = new Map<string, Someone>()
+  let own = 0
+  for (const { who } of here) {
+    const key = who.id ?? who.person
+    if (!key || key === self) {
+      own++
+      continue
+    }
+    people.set(key, {
+      key,
+      name: who.person ?? who.name,
+      face: faceUrl(who.face) ?? null,
+      fill: who.tint ? accentColour(who.tint, scheme) : accentFor(key, scheme),
+    })
+  }
+  return { people: [...people.values()], mine: own }
 }
 
 /** Everybody in the room but us, and which of the two names to draw them by.
@@ -118,7 +172,8 @@ function namedIn(value: unknown): Named | null {
 export function whoElse(
   awareness: Awareness,
   doc: Y.Doc,
-): { here: Here[]; nameOf: (who: Named) => string } {
+  scheme: 'dark' | 'light',
+): { here: Here[]; nameOf: (who: Named) => string; seen: Seen } {
   const here: Here[] = []
 
   for (const [id, state] of awareness.getStates()) {
@@ -130,14 +185,19 @@ export function whoElse(
 
   // Our own counts: a file this account has open on two machines and somebody
   // else has open on one is a room with two people in it.
+  const mine = namedIn(awareness.getLocalState())
   const people = new Set(
-    [namedIn(awareness.getLocalState()), ...here.map((one) => one.who)]
+    [mine, ...here.map((one) => one.who)]
       .map((one) => one?.person)
       .filter((one): one is string => !!one),
   )
   const byPerson = people.size > 1
 
-  return { here, nameOf: (who) => (byPerson ? who.person : who.name) ?? who.name }
+  return {
+    here,
+    nameOf: (who) => (byPerson ? who.person : who.name) ?? who.name,
+    seen: seenIn(here, mine, scheme),
+  }
 }
 
 /** Everybody in the note but us, as the editor draws them. A device that has
@@ -148,8 +208,8 @@ export function peersIn(
   awareness: Awareness,
   doc: Y.Doc,
   scheme: 'dark' | 'light',
-): { present: number; carets: Peer[] } {
-  const { here, nameOf } = whoElse(awareness, doc)
+): { present: number; carets: Peer[]; seen: Seen } {
+  const { here, nameOf, seen } = whoElse(awareness, doc, scheme)
   const carets: Peer[] = []
 
   for (const { id, who, said } of here) {
@@ -159,14 +219,17 @@ export function peersIn(
     const anchor = absolute(doc, said.caret.anchor)
     if (head === null) continue
 
+    // A person's label wears their face; a device's stays a word.
+    const name = nameOf(who)
     carets.push({
       id,
-      name: nameOf(who),
+      name,
       colour: accentColour(who.accent, scheme),
+      face: name === who.person ? faceUrl(who.face) : undefined,
       head,
       anchor: anchor ?? head,
     })
   }
 
-  return { present: here.length, carets }
+  return { present: here.length, carets, seen }
 }

@@ -6,10 +6,10 @@
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
-import { without } from '../records'
 import { rooms } from '../rooms.svelte'
 import type { Carrying } from '../rooms/carried'
-import { deviceAccent, deviceName, personName } from '../rooms/who'
+import type { Seen } from '../rooms/peers'
+import { deviceAccent, deviceName, personFace, personName } from '../rooms/who'
 import { theme } from '../theme.svelte'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { InkStroke } from '../canvas/format'
@@ -39,10 +39,15 @@ export async function carry(
   const entering = {
     noteId: carried.noteId,
     token,
-    who: { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() },
+    who: {
+      name: deviceName(t('Browser')),
+      accent: deviceAccent(),
+      person: personName(),
+      ...personFace(),
+    },
     scheme: theme.current,
-    onPeers: (count: number) => {
-      rooms.present = count ? { ...rooms.present, [key]: count } : without(rooms.present, key)
+    onPeers: (count: number, seen?: Seen) => {
+      rooms.heard(key, count, seen)
     },
     gone: () => {
       uncarry(key)
@@ -71,5 +76,5 @@ export function uncarry(key: string): void {
   if (!carried) return
   carried.room.leave()
   rooms.carried.delete(key)
-  rooms.present = without(rooms.present, key)
+  rooms.heard(key, 0)
 }

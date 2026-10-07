@@ -24,7 +24,7 @@ import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'
 import type { Hand } from '../canvas/shared'
 import { isRecord } from '../stored'
-import { whoElse } from './peers'
+import { type Seen, whoElse } from './peers'
 
 /** The field a device's hand travels in. */
 export const HAND = 'hand'
@@ -79,8 +79,8 @@ export function handsIn(
   awareness: Awareness,
   doc: Y.Doc,
   scheme: 'dark' | 'light',
-): { present: number; hands: Hand[] } {
-  const { here, nameOf } = whoElse(awareness, doc)
+): { present: number; hands: Hand[]; seen: Seen } {
+  const { here, nameOf, seen } = whoElse(awareness, doc, scheme)
   const hands: Hand[] = []
 
   for (const { id, who, said } of here) {
@@ -96,5 +96,5 @@ export function handsIn(
     })
   }
 
-  return { present: here.length, hands }
+  return { present: here.length, hands, seen }
 }

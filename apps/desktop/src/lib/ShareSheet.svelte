@@ -15,14 +15,11 @@
    *  so there is no Done button. The cross, Escape, back and the scrim all close
    *  it. Drawn in the box every space sheet is drawn in; see Sheet.svelte. */
   import { fade, scale } from 'svelte/transition'
-  import { accentFor } from './accents'
   import { fileMark } from './file-mark'
   import { t } from './i18n.svelte'
-  import { initial } from './icons'
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
   import { isShared, share } from './sharing.svelte'
-  import { theme } from './theme.svelte'
   import { called } from './person'
   import type { GivenRole, Member, Sharing } from './api'
   import Copyable from './Copyable.svelte'
@@ -30,6 +27,8 @@
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import SpaceMark from './SpaceMark.svelte'
+  import { initial } from './icons'
+  import type { Face } from './people/face'
   import { dur } from './motion'
 
   /** What somebody may do, as the two words a person reads rather than the two
@@ -78,10 +77,32 @@
    *  says a request is about, so the row being changed is the row that shows it. */
   const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
 
-  /** The colour of the square with their initial in it. Derived from whatever
-   *  names them, so a person is one colour on every device; see accents.ts. */
-  const colourOf = (person: Member | Waiting) =>
-    accentFor(person.email ?? person.guest ?? '', theme.current)
+  /** Their face: the picture they chose, else their initial on their accent, derived
+   *  from whatever names them where they chose none, so a person is one colour on every
+   *  device; see people/Avatar.svelte. */
+  const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
+    name: named,
+    avatar: person.avatar ?? null,
+    accent: person.accent ?? null,
+    key: person.id ?? person.email ?? ('guest' in person ? person.guest : null) ?? '',
+  })
+
+  /** A press on somebody's face is their card, where they have an account to show. */
+  const pressFor = (person: { id?: string | null }) => {
+    const id = person.id
+    return id && !__EVEN_PLUGIN__
+      ? (event: MouseEvent) => {
+          const from = event.currentTarget as Element
+          void import('./people/card.svelte').then((card) => {
+            card.showProfile(id, from, share.spaceId)
+          })
+        }
+      : undefined
+  }
+
+  /** The face, fetched with the sheet. Never in the glasses' plugin, which has no room
+   *  for faces and draws each person's initial; see docs/even.md. */
+  const avatars = __EVEN_PLUGIN__ ? null : import('./people/Avatar.svelte')
 
   /** Everything that can be done to one person, in one menu at the end of their
    *  row: what they may do, the invitation again if they have not opened it, and
@@ -114,6 +135,17 @@
     void share.setLink(link.role, link.mode === 'approval' ? 'open' : 'approval')
   }
 </script>
+
+<!-- A person's face, or their initial where the faces are not here. -->
+{#snippet face(worn: Face, press: ((event: MouseEvent) => void) | undefined)}
+  {#await avatars then got}
+    {#if got}
+      <got.default face={worn} onpress={press} />
+    {:else}
+      <span class="nib-badge" aria-hidden="true">{initial(worn.name)}</span>
+    {/if}
+  {/await}
+{/snippet}
 
 <Sheet open={share.open} title={t('Share {name}', { name: subject })} onclose={() => share.close()}>
   {#snippet mark()}
@@ -224,12 +256,7 @@
             class:waiting={share.waiting(keyOf(person))}
             transition:fade={{ duration: dur(130) }}
           >
-            <span
-              class="nib-badge"
-              style:--badge-fill={colourOf(person)}
-              style:--badge-ink="var(--accent-ink)"
-              aria-hidden="true">{initial(name(person))}</span
-            >
+            {@render face(faceOf(person, name(person)), pressFor(person))}
             <span class="name">
               {name(person)}
               <small>{person.email ?? t('Guest')}</small>
@@ -255,12 +282,7 @@
       <h3>{t('Who has access')}</h3>
 
       <div class="row person">
-        <span
-          class="nib-badge"
-          style:--badge-fill={accentFor(who.owner.email, theme.current)}
-          style:--badge-ink="var(--accent-ink)"
-          aria-hidden="true">{initial(called(who.owner))}</span
-        >
+        {@render face(faceOf(who.owner, called(who.owner)), pressFor(who.owner))}
         <span class="name">
           <span class="named">{called(who.owner)} <small class="you">{t('(you)')}</small></span>
           <small>{who.owner.email}</small>
@@ -274,14 +296,11 @@
           class:waiting={share.waiting(keyOf(person))}
           transition:fade={{ duration: dur(130) }}
         >
-          <!-- Somebody who has not opened the space yet wears their colour
+          <!-- Somebody who has not opened the space yet wears their face
                faintly: they are in the list, and they are not here. -->
-          <span
-            class="nib-badge"
-            style:--badge-fill={person.pending ? 'var(--surface-3)' : colourOf(person)}
-            style:--badge-ink={person.pending ? colourOf(person) : 'var(--accent-ink)'}
-            aria-hidden="true">{initial(name(person))}</span
-          >
+          <span class="worn" class:pending={person.pending}>
+            {@render face(faceOf(person, name(person)), pressFor(person))}
+          </span>
           <span class="name">
             {name(person)}
             <small>{subtitle(person)}</small>
@@ -437,6 +456,15 @@
     padding: var(--space-1) 0;
   }
 
+  /* An invitation nobody has opened: the face, faintly. */
+  .worn {
+    display: contents;
+  }
+
+  .worn.pending > :global(*) {
+    opacity: 0.45;
+  }
+
   /* Somebody waiting on an answer, which is the one row here that is a question.
      The accent behind it, at the strength a picked row wears. */
   .asking {
@@ -545,9 +573,9 @@
 
   .bone.face {
     flex: none;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    border-radius: calc(var(--row-height-sm) * 0.32);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
   }
 
   .bone.words {

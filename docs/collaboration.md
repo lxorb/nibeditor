@@ -229,8 +229,9 @@ is for, because everything on it already has an id. See the Canvas section below
 ## Carets and presence
 
 A thin bar in the other device's colour where its caret is, a wash over what it
-has selected, and its name above the bar for a second and a half after it moves.
-No chat, no comments, no avatars, no toolbar.
+has selected, and its name above the bar for a second and a half after it moves,
+with the person's face in front of the name where the label names a person who
+chose a picture. No chat, no comments, no toolbar.
 
 Positions travel as Yjs relative positions rather than offsets, so a caret that
 says "after this character" is still in the right place once somebody has written
@@ -257,11 +258,17 @@ come from. A person's name is the one on their account, or the part of their
 address in front of the at sign; never the whole address, which is not a name
 and which the other people in a space were not necessarily given.
 
-In the tab, one small dot per other device, in the accent, overlapping into a
-stack, and nothing at all when nobody else is there. Three dots is as many as it
+The face travels the same way: the account's id, its small picture's hash and its
+own accent ride beside the two names (`personFace` in `rooms/who.ts`), and the
+reader turns the hash into a picture only where it is a hash, so another machine
+can name nothing but a picture the service holds. A device's label stays a word.
+
+In the tab, the other people's faces, small and overlapping, and one small dot per
+other device of the reader's own account, in the accent; nothing at all when nobody
+else is there. A person on two devices is one face. Three of each is as many as it
 draws: past that the stack would be wider than the name it sits beside, and the
-answer a reader wants from it is whether anybody else is in here rather than how
-many.
+answer a reader wants from it is who else is in here rather than how many. See
+`seenIn` in `rooms/peers.ts`.
 
 **Undo stays yours.** A change that arrives from the room is applied to the shared
 document with `addToHistory` off, so pressing undo takes back what you wrote and
@@ -716,6 +723,61 @@ seen in is a piece of work of its own, and this is the same thing that has alway
 happened to an image in a published blog. It is the only edge here that ends with
 somebody looking at a broken picture rather than at a refusal.
 
+## People
+
+A person is a face, a name and a line, the same wherever they are drawn
+(docs/chats.md 4.9): the Share sheet, the panel's foot, a caret's label, a tab, the
+switcher's row of a shared space, and a chat's rows once there are chats.
+
+- **The face** is two pictures the device made, 96 and 512 pixels, cropped in a
+  round window (`AvatarSheet.svelte`) from a file picked, dropped or pasted, or
+  from the camera, decoded the right way up and encoded again so nothing but pixels
+  leaves the device; `carriesMetadata` in `people/encode.ts` looks through the
+  bytes before they go. WebP, or JPEG where WebKit's canvas cannot write WebP.
+  Uploaded as blobs of the account (`PUT /v1/blobs/:hash`), worn with
+  `PUT /v2/me/avatar`, served by hash from `/i/:hash`, and given back when
+  replaced or removed. Without one, a person is their initial on their accent: the
+  one they chose, else one derived from their account, so a person is one colour on
+  every device.
+- **The words**: pronouns (40 characters), a bio (190, addresses become links), and
+  a status with an emoji, Do not disturb, and when it clears (30 minutes, an hour,
+  four hours, today, this week or never), worked out on the setter's device and read
+  as gone by the service once it passes, so nothing runs at the minute it ends; and
+  the zone of the device last connected, so a card says the time where they are
+  when it is an hour or more from the reader's. `PUT /v2/me/profile`, answered with
+  the profile as it stands; `/v1/me` carries it to every device.
+- **A name per space**: `PUT /v2/spaces/:id/nick` from the space menu's Nickname,
+  `GET /v2/spaces/:id/nicks` for everybody's in a space, and `/v1/me`'s `nicks`
+  for the account's own.
+- **Who may read it**: the people the account shares something with - a space or a
+  file of one, either way round, or both let into the same thing - and itself.
+  `GET /v2/people?ids=` answers those and leaves everybody else out, as if the id
+  named nobody, and never says an address. A guest reaches none of it and has no
+  face but its initial. See `services/sync/src/people/seen.ts`.
+- **Whether they are here**: active while any device of theirs is in use, away
+  while one is connected and none is, offline with none. The account's hub works it
+  out from the `active` and `idle` every signed-in device now says (one
+  `Activity` per device, `people/here.ts`, which web logins that travel share)
+  and writes `presence` only when the answer changes. Nobody is told: whoever has a
+  person on screen asks `GET /v2/presence?ids=` at most once a minute
+  (`people.watch`). Appear offline is offline to everybody but the person.
+
+Every surface asks one store, `people` in `apps/desktop/src/lib/people/people.svelte.ts`:
+`people.of(id)` answers at once with what is known and asks the service for the
+rest, one request for everything asked in a turn; `people.called(id, space)` is the
+name with the space's nickname; `people.watch(ids)` keeps presence fresh while a
+surface is up. The account's own card is the account itself. A press on a face opens
+the card (`showProfile`, `ProfileCard.svelte`): the face, the name, pronouns,
+status, local time and bio; on one's own, Edit. There is no Message: chats are
+channels in spaces, never direct.
+
+The glasses' plugin draws no faces beyond a caret's and a tab's: the Share sheet's
+rows are initials there, and the card, the profile rows and the switcher's faces are
+left out of its package, which sits just under the platform's ceiling (docs/even.md).
+
+Migration `0048_profiles.sql`: the profile columns on `users`, `presence` and
+`space_nicks`, all three on `ERASED` in `erase.ts`.
+
 ## What it looks like
 
 One sheet, from the space's own menu and from the palette, and two cards in it.
@@ -725,9 +787,9 @@ sheet is opened for: one field with the role inside it at the right end, Enter o
 the arrow beside it to send, several addresses at once separated by commas,
 semicolons or spaces, and a quiet line under it for something that is not an
 address - which is said here rather than after a round trip. Then `Who has
-access`: the owner with `(you)` and a fixed `Owner`, then everybody else, each a
-rounded square with their initial in their own colour, their name, their address
-under it, and one menu at the far end holding what they may do, the invitation
+access`: the owner with `(you)` and a fixed `Owner`, then everybody else, each
+their face (their picture, or their initial on their accent; see *People* below),
+which opens their card when pressed, their name, their address under it, and one menu at the far end holding what they may do, the invitation
 again if they have not opened it, and `Remove` in red. Whoever is waiting on a
 link that asks first sits at the top of that card, in the accent, with Accept and
 Decline.

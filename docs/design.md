@@ -813,19 +813,38 @@ and that the note never followed the interface.
 
 ### Badges
 
-The rounded square in front of a name that belongs to somebody or somewhere
-rather than to a file: a space's mark in the switcher, the face in the panel's
-foot, a person in the Share sheet. `.nib-badge` in `base.css`, at
+The rounded square in front of a name that belongs to somewhere rather than to a
+file: a space's mark in the switcher and the header over the file list. A person
+is round; see *Faces* below. `.nib-badge` in `base.css`, at
 `--row-height-sm` with a corner a third of its side and a mark of `--icon-md`
 inside it, so it is the same object at 24px under a pointer and at 48 under a
 thumb. What fills it is the caller's: `--badge-fill` and `--badge-ink` per badge,
 `is-on` for the accent, `is-quiet` for a badge that is only a place for a mark.
 
-A person's colour is derived from their address rather than picked, in
-`accents.ts`: the same person is the same colour on every device and after every
-reload, which is the opposite of how a device chooses the colour of its caret -
-two of one person's machines have to differ, two people looking at one list have
-to agree.
+### Faces
+
+A person is round, where a place is a rounded square, so the two are told apart by
+shape before anything is read (Discord's rule): `people/Avatar.svelte`, the one
+face, at 16 beside a caret's name, 20 in a tab, 24 in a row, 32 in a list of people
+and 80 on a card. Their picture, faded in over their initial so a slow one is the
+initial and then the face, never a blank; or their initial alone, in
+`--accent-ink` on their accent. A dot in the corner, ringed in the ground it sits
+on, says whether they are here: `--success` filled while active, a ring while
+away, a moon in `--callout-warning` for Do not disturb, nothing while offline. A
+face that is a button presses in like every button and opens the person's card.
+
+A person's colour is the accent they chose, or one derived from their account
+rather than picked, in `accents.ts`: the same person is the same colour on every
+device and after every reload, which is the opposite of how a device chooses the
+colour of its caret - two of one person's machines have to differ, two people
+looking at one list have to agree.
+
+Several people together overlap, each ringed in the ground (`people/Faces.svelte`):
+the switcher's row of a shared space draws up to three of the others in it, owner
+first, beside the shared mark.
+
+The avatar sheet is the picture under a round window, dimmed outside it, the zoom
+slider and the turn button under it, and Keep: nothing else (docs/chats.md 4.15).
 
 A mark inside a badge is `display: block`, and that is load-bearing rather than
 tidy. An `svg` is an inline element: it sits on the text baseline of whatever
@@ -870,9 +889,10 @@ document shared on its own, which has no row in the list to carry it. A dot in
 the accent used to say the first of those, which meant the one shape the app had
 for a fact about a file was saying two unrelated things at once.
 
-How many of them there are is the one thing the mark cannot say, and that is
-what the stack of accent dots on a tab is for: one per other device in the note,
-three at most, beside the mark rather than instead of it.
+Who they are is the one thing the mark cannot say, and that is what the stack on
+a tab is for: a face per other person in the note and an accent dot per other
+device of the reader's own, three of each at most, beside the mark rather than
+instead of it.
 
 The note's half is asked of the rooms rather than of the account, and that is the
 whole of why it is not noise: a note in a shared space that nobody else has open
@@ -1137,7 +1157,8 @@ time, which the marker never was.
 `--header-height` tall, so the list sits between two bars of one height, with a
 hairline over it and the safe-area inset under it. Three things, and the same
 three on every device, because it is one component: the account at the left as a
-face and a name, opening the account pane - signing in, the name a shared space
+face and a name - their picture, round, once they chose one - opening the account
+pane - signing in, the name a shared space
 shows, storage and signing out are all there, so who you are is one place rather
 than a sheet here and a pane there; then the theme and the settings at the right,
 where a switch goes. The theme is off while the theme in force has only the one

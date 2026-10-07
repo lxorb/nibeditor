@@ -17,7 +17,8 @@
  *  code, on a canvas in the app and on a canvas on the page. */
 
 import { framing, nodeAt } from '../lib/camera'
-import { type NoteGraph, neighbours } from '../lib/graph'
+import type { NoteGraph } from '../lib/graph'
+import { neighbours } from '../lib/graph-walk'
 import { Layout } from '../lib/graph-layout'
 import { paint, radiusOf } from '../lib/graph-paint'
 

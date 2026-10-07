@@ -21,9 +21,10 @@ import { busy } from './busy.svelte'
 import { sha256 } from './bytes'
 import { without } from './records'
 import { roomKind } from './rooms/kind'
+import type { Seen } from './rooms/peers'
 import type { PlaneRoom } from './rooms/plane'
 import type { Room } from './rooms/room'
-import { deviceAccent, deviceName, personName } from './rooms/who'
+import { deviceAccent, deviceName, personFace, personName } from './rooms/who'
 import { t } from './i18n.svelte'
 import { type Scheme, theme } from './theme.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
@@ -93,6 +94,14 @@ class Rooms {
   /** How many other devices are in each open file, by document key. Where the tab
    *  gets its dots. */
   present = $state<Record<string, number>>({})
+  /** And which of them are other people, by document key: the faces on the tab. */
+  seen = $state<Record<string, Seen>>({})
+
+  /** What a room said about who else is in its file; nobody, once it is left. */
+  heard(key: string, count: number, seen?: Seen) {
+    this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
+    this.seen = count && seen ? { ...this.seen, [key]: seen } : without(this.seen, key)
+  }
 
   /** The engine, once it is here, and the one fetch of it. Plain fields rather than
    *  state: nothing on the page draws either of them, and `follow` works the pairing
@@ -167,7 +176,7 @@ class Rooms {
 
       joined.room.leave()
       this.held.delete(key)
-      this.present = without(this.present, key)
+      this.heard(key, 0)
     }
 
     if (!token) return
@@ -307,7 +316,7 @@ class Rooms {
 
     joined.room.leave()
     this.held.delete(key)
-    this.present = without(this.present, key)
+    this.heard(key, 0)
     return true
   }
 
@@ -316,14 +325,19 @@ class Rooms {
     const engine = this.engine
     if (!engine) return
 
-    const onPeers = (count: number) => {
-      this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
+    const onPeers = (count: number, seen?: Seen) => {
+      this.heard(key, count, seen)
     }
 
     // Both names, because a caret and a pointer answer a different question
     // depending on who else is there; which one is drawn is decided by whoever is
     // looking. See rooms/peers.ts.
-    const who = { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() }
+    const who = {
+      name: deviceName(t('Browser')),
+      accent: deviceAccent(),
+      person: personName(),
+      ...personFace(),
+    }
     const gone = () => this.rebuild(key)
 
     // The room will take no more keystrokes. Its own sentence is wire text for a

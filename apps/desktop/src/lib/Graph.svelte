@@ -17,7 +17,8 @@
 
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
-  import { type NoteGraph, neighbours, signature } from './graph'
+  import type { NoteGraph } from './graph'
+  import { neighbours, signature } from './graph-walk'
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'

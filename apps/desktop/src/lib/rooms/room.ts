@@ -230,9 +230,9 @@ export class Room extends JoinedRoom {
 
   /** Who is in the note, told to every pane showing it and counted for the tab. */
   protected showPresent() {
-    const { present, carets } = peersIn(this.door.awareness, this.door.doc, this.scheme)
+    const { present, carets, seen } = peersIn(this.door.awareness, this.door.doc, this.scheme)
 
     this.joining.note.announce([setPeers.of(carets)])
-    this.joining.onPeers(present)
+    this.joining.onPeers(present, seen)
   }
 }

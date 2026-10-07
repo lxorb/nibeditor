@@ -11,6 +11,8 @@ import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
+import { people, ownProfile } from './people/routes'
+import { presentOwnProfile } from './people/profile'
 import { push } from './push/targets'
 import { sendDue } from './push/reminders'
 import { fillFronts } from './blog/fill'
@@ -220,11 +222,21 @@ app.get('/v1/me', async (context) => {
   )
     .bind(who.user.id)
     .first<{ web_sync: number; sync_version: number }>()
+  // And the profile as its owner edits it, with what it is called in each space where
+  // it chose something else; see people/.
+  const [profile, nicks] = await Promise.all([
+    ownProfile(context.env, who.user.id),
+    context.env.DB.prepare('select space_id, nick from space_nicks where user_id = ?')
+      .bind(who.user.id)
+      .all<{ space_id: string; nick: string }>(),
+  ])
   return context.json({
     user: {
       ...presentUser(who.user),
       webSync: flags?.web_sync === 1,
       syncVersion: flags?.sync_version === 2 ? 2 : 1,
+      ...(profile ? presentOwnProfile(profile, Date.now()) : {}),
+      nicks: Object.fromEntries(nicks.results.map((row) => [row.space_id, row.nick])),
     },
   })
 })
@@ -311,6 +323,10 @@ app.route('/v2/push', push)
 // Chats: a channel people write in together, kept in a space; see chats/ and
 // docs/chats.md. The socket is let in ahead of the guard, above.
 app.route('/v2/chats', chats)
+
+// People: the account's own profile and face, the people it shares something with,
+// whether they are here, and what each is called in a space. See people/.
+app.route('/v2', people)
 
 // The online terminal: the account's machine, its sessions and its month, and Emil's
 // switches ahead of them, which stay open while the service is off. Every other route

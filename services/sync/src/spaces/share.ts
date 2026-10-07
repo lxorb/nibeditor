@@ -28,6 +28,7 @@ import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { forgetMailed, inviteMessage, mailer, mayMail, refusedMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
 import { machineOf } from '../limits'
+import { avatarIn } from '../people/avatar'
 import { roomsRevoked } from '../rooms'
 import type { Env, Note, Space, User, Variables } from '../types'
 import { atLeast, isGiven, MOST_ITEMS, spaceOf, type Given } from './space'
@@ -142,18 +143,36 @@ async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<b
 /** What a sheet is told when a space is sharing as many of its files as it can. */
 const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
 
-interface MemberRow {
+/** Who somebody with an account is, beside the address they were given things under:
+ *  their id, and the face they chose. Null throughout for an address nobody has made an
+ *  account at yet. See people/. */
+interface FaceColumns {
+  user_id: string | null
+  avatar: string | null
+  accent: string | null
+}
+
+interface MemberRow extends FaceColumns {
   email: string
   role: Given
   joined_at: number | null
   name: string | null
 }
 
-interface RequestRow {
+interface RequestRow extends FaceColumns {
   email: string
   role: Given
   created_at: number
   name: string | null
+}
+
+/** The face columns of the account at `u`, for a listing of people. */
+const FACE = 'u.id as user_id, u.avatar, u.accent'
+
+/** What a row of the sheet draws a person's face with: who they are, so a press can
+ *  open their card, and the picture and accent they chose. */
+function faceOf(row: FaceColumns) {
+  return { id: row.user_id, avatar: avatarIn(row.avatar), accent: row.accent }
 }
 
 interface LinkRow {
@@ -215,7 +234,7 @@ async function accountAt(env: Env, email: string): Promise<string | null> {
 
 async function membersOf(env: Env, spaceId: string, item: string): Promise<MemberRow[]> {
   const { results } = await env.DB.prepare(
-    `select m.email, m.role, m.joined_at, u.name
+    `select m.email, m.role, m.joined_at, u.name, ${FACE}
        from space_members m
        left join users u on u.email = m.email
       where m.space_id = ? and m.item = ?
@@ -229,7 +248,7 @@ async function membersOf(env: Env, spaceId: string, item: string): Promise<Membe
 
 async function requestsOf(env: Env, spaceId: string, item: string): Promise<RequestRow[]> {
   const { results } = await env.DB.prepare(
-    `select r.email, r.role, r.created_at, u.name
+    `select r.email, r.role, r.created_at, u.name, ${FACE}
        from space_requests r
        left join users u on u.email = r.email
       where r.space_id = ? and r.item = ?
@@ -267,6 +286,7 @@ async function linkOf(env: Env, spaceId: string, item: string): Promise<LinkRow 
  *  a guest is an id, and the sheet keys its rows on whichever it got. */
 function presentMember(member: MemberRow) {
   return {
+    ...faceOf(member),
     email: member.email,
     guest: null,
     name: member.name,
@@ -279,6 +299,9 @@ function presentMember(member: MemberRow) {
 
 function presentGuest(guest: GuestRow) {
   return {
+    id: null,
+    avatar: null,
+    accent: null,
     email: guest.email,
     guest: guest.guest_id,
     name: guest.name,
@@ -298,15 +321,22 @@ function presentLink(env: Env, link: LinkRow) {
  *  owner is being asked is the same question either way, and a sheet with two
  *  Waiting sections would be saying so twice. */
 async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
-  const [members, requests, guests, link] = await Promise.all([
+  const [members, requests, guests, link, face] = await Promise.all([
     membersOf(env, space.id, scope.id),
     requestsOf(env, space.id, scope.id),
     guestsOf(env, space.id, scope.id),
     linkOf(env, space.id, scope.id),
+    env.DB.prepare(`select ${FACE} from users u where u.id = ?`)
+      .bind(owner.id)
+      .first<FaceColumns>(),
   ])
 
   return {
-    owner: { email: owner.email, name: owner.name },
+    owner: {
+      email: owner.email,
+      name: owner.name,
+      ...faceOf(face ?? { user_id: owner.id, avatar: null, accent: null }),
+    },
     /** Which file this is about, so the sheet's head can say so. Null for the
      *  space, which the sheet already knows it is in. */
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
@@ -316,6 +346,7 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
     ],
     requests: [
       ...requests.map((one) => ({
+        ...faceOf(one),
         email: one.email,
         guest: null,
         name: one.name,
@@ -325,6 +356,9 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
       ...guests
         .filter((one) => one.joined_at === null)
         .map((one) => ({
+          id: null,
+          avatar: null,
+          accent: null,
           email: one.email,
           guest: one.guest_id,
           name: one.name,

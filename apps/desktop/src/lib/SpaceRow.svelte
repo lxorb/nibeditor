@@ -7,10 +7,12 @@
    *  digit is typed or while Alt is held (SpacePlace.svelte). What was typed shows as the
    *  hits it is, the palette's own bold, since no field holds it; see space-pick.ts.
    *
-   *  At the end, what a space has to add about itself: somebody else can reach it, or -
-   *  in the place of that - it is somebody else's to write and yours only to read; and
-   *  a page of it out of sight playing. */
+   *  At the end, what a space has to add about itself: who else is in it, up to three
+   *  faces, and the mark saying somebody else can reach it, or - in the place of that -
+   *  it is somebody else's to write and yours only to read; and a page of it out of
+   *  sight playing. */
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
+  import { account } from './account.svelte'
   import { t } from './i18n.svelte'
   import { pieces } from './palette/pieces'
   import SharedMark from './SharedMark.svelte'
@@ -19,6 +21,7 @@
   import SpacePlace from './SpacePlace.svelte'
   import { isNumber } from './space-pick'
   import { spaceSound } from './surfaces.svelte'
+  import { sync } from './sync.svelte'
   import type { Space } from './workspace.svelte'
 
   const {
@@ -33,6 +36,11 @@
     isNumber(typed) ? [{ text: space.name, hit: false }] : pieces(space.name, typed),
   )
   const reads = $derived(roleOf(space.root) === 'read')
+  /** The others in it, by account, as the listing names them. */
+  const others = $derived.by(() => {
+    const id = sync.remoteIdFor(space.root)
+    return (id ? account.spaces.find((one) => one.id === id)?.people : undefined) ?? []
+  })
 </script>
 
 <SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
@@ -40,6 +48,11 @@
   >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
       >{:else}{piece.text}{/if}{/each}</span
 >
+<!-- Fetched with the first shared space the list draws, and never in the glasses'
+     plugin, which shows nobody's face; see people/Faces.svelte. -->
+{#if !__EVEN_PLUGIN__ && others.length}
+  {#await import('./people/Faces.svelte') then faces}<faces.default ids={others} />{/await}
+{/if}
 {#if reads}
   <SharedMark icon={Eye} label={t('Read-only')} />
 {:else if isShared(space.root)}

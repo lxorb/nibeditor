@@ -2,7 +2,7 @@ import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
-import { canPublish, canShare, roleOf, share } from './sharing.svelte'
+import { canPublish, canShare, isShared, roleOf, share } from './sharing.svelte'
 import { isDesktop } from './tauri'
 import { type Space, workspace } from './workspace.svelte'
 
@@ -119,6 +119,16 @@ export function spaceMenu(space: Space): MenuEntry[] {
             label: t('Web data'),
             keep: true,
             run: () => void choices().then((one) => one.showWebData(space)),
+          },
+        ]
+      : []),
+    // What you are called in it, where anybody else is there to call you anything;
+    // see people/nickname.ts.
+    ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))
+      ? [
+          {
+            label: t('Nickname'),
+            run: () => void import('./people/nickname').then((one) => one.nameHere(space)),
           },
         ]
       : []),

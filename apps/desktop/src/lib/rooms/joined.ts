@@ -8,6 +8,7 @@
  *  and how the others are drawn - is each kind's own, in room.ts and plane.ts. */
 
 import { type Opening, RoomDoor, type Who } from './door'
+import type { Seen } from './peers'
 
 /** What any room is joined on behalf of. */
 export interface Entering {
@@ -15,8 +16,9 @@ export interface Entering {
   token: string
   who: Who
   scheme: 'dark' | 'light'
-  /** Told how many other devices are on the file, whenever that changes. */
-  onPeers: (present: number) => void
+  /** Told how many other devices are on the file, and which other people, whenever
+   *  that changes. */
+  onPeers: (present: number, seen?: Seen) => void
   /** The room was thrown away and another will be built out of the file; see
    *  `REBUILT` in door.ts. Nothing this room holds can carry on, so what answers is
    *  whoever paired the two: it lets this one go and joins again. */

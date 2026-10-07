@@ -91,6 +91,7 @@ vi.mock('./who', () => ({
   deviceName: () => 'Windows',
   deviceAccent: () => 'blue',
   personName: () => undefined,
+  personFace: () => ({}),
 }))
 vi.mock('../account.svelte', () => ({ account: { token: 'session', name: null } }))
 vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))

@@ -11,7 +11,8 @@
    *  middle, what it is linked to around it, and nothing else. It comes from the
    *  same index the lists do, so the two cannot disagree about the space. */
 
-  import { neighbourhood, type NoteGraph, without } from './graph'
+  import { type NoteGraph, without } from './graph'
+  import { neighbourhood } from './graph-walk'
   import { graphSurface } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'

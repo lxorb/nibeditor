@@ -6,6 +6,11 @@ import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
+/** What a row of the sheet says about a face: none for an address nobody has an account
+ *  at, and the account's id with no picture for one that does. */
+const NO_FACE = { id: null, avatar: null, accent: null }
+const A_FACE = { id: expect.any(String), avatar: null, accent: null }
+
 const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'
 const READER = 'reader@example.com'
@@ -620,7 +625,7 @@ describe('an invitation', () => {
 
     const { json } = await shareView()
     expect(json.members).toEqual([
-      { email: READER, guest: null, name: null, role: 'read', pending: true },
+      { ...NO_FACE, email: READER, guest: null, name: null, role: 'read', pending: true },
     ])
   })
 
@@ -1061,7 +1066,7 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', pending: false },
     ])
 
     const wrote = await call(env, `/v1/notes/${note}`, {
@@ -1111,7 +1116,7 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', pending: false },
     ])
   })
 

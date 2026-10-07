@@ -928,6 +928,15 @@
         </div>
       </div>
 
+      <!-- What the others see: the face, a few words, a status. Fetched with the pane;
+           see people/ProfileRows.svelte. Never in the glasses' plugin, which has no room
+           for it and shows nobody's face. -->
+      {#if !__EVEN_PLUGIN__}
+        {#await import('./people/ProfileRows.svelte') then rows}
+          <rows.default />
+        {/await}
+      {/if}
+
       <!-- Notes and images together, which is what the limit counts. Having
            an account is what syncing means, so there is nothing to switch:
            the pane only says where things stand. -->

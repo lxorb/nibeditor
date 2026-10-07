@@ -18,7 +18,7 @@ import { hub } from '../sync2/hub.svelte'
 import { invoke } from '../tauri'
 import { waited } from '../timing'
 import { workspace } from '../workspace.svelte'
-import { Activity, listenForInput, readSystemInput } from './activity'
+import { busyWhile, deviceActivity } from '../people/here'
 import { accountDevices, Approval } from './approval.svelte'
 import { carriedIn, carriedOut } from './carried'
 import { download, upload } from './lease-transfer'
@@ -66,19 +66,16 @@ async function begin(): Promise<void> {
   })
 
   const leases = new Leases(leaseWorld(approval))
-  const activity = new Activity({
-    now: () => Date.now(),
-    system: async () => readSystemInput(await invoke<unknown>('input_idle')),
-    busy: () =>
+  // The device's one answer to whether somebody is at it, which the others' view of
+  // this person reads too; a page playing sound or an agent at work keeps it in use.
+  // See people/here.ts.
+  busyWhile(
+    () =>
       pages.each().some(([, page]) => page.playing) ||
       agentMarks.holding ||
       Object.values(agentMarks.on).some((one) => !one.stopped),
-    listen: listenForInput,
-    every: (ms, tick) => {
-      const timer = setInterval(tick, ms)
-      return () => clearInterval(timer)
-    },
-  })
+  )
+  const activity = deviceActivity()
 
   pages.watch = {
     admit: (tab, page) => leases.admit(tab, page),
@@ -102,7 +99,6 @@ async function begin(): Promise<void> {
 
   approval.start()
   leases.start()
-  activity.start()
   activity.changed((active) => {
     leases.activity(active)
   })

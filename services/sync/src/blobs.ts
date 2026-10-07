@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { OUT_OF_SPACE } from './refused'
+import { NOT_A_HASH, OUT_OF_SPACE } from './refused'
 import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
@@ -56,7 +56,7 @@ export const blobs = new Hono<{ Bindings: Env; Variables: Variables }>()
 blobs.put('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
-  if (!HASH.test(hash)) return context.json({ error: 'that is not a hash' }, 400)
+  if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
 
   const type = typeOf(context.req.header('content-type') ?? '')
   const limit = LIMITS[type]
@@ -109,19 +109,24 @@ blobs.delete('/:hash', async (context) => {
   const hash = context.req.param('hash').toLowerCase()
   // Checked as it is on the way in, so a name that could never have been
   // stored cannot become a delete against the bucket.
-  if (!HASH.test(hash)) return context.json({ error: 'that is not a hash' }, 400)
+  if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
 
-  await context.env.DB.prepare('delete from blobs where hash = ? and user_id = ?')
-    .bind(hash, user.id)
-    .run()
+  await letGo(context.env, user.id, hash)
+  return context.json({ ok: true })
+})
 
-  const others = await context.env.DB.prepare('select 1 from blobs where hash = ? limit 1')
+/** One account stops keeping a file: its row goes, and the object with it once no
+ *  other account keeps the same bytes. What a face that was replaced is given back
+ *  through as well; see people/routes.ts. */
+export async function letGo(env: Env, userId: string, hash: string): Promise<void> {
+  await env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId).run()
+
+  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
     .bind(hash)
     .first()
 
-  if (!others) await context.env.NOTES.delete(key(hash))
-  return context.json({ ok: true })
-})
+  if (!others) await env.NOTES.delete(key(hash))
+}
 
 /** Serving, which carries no session: a note is read by whoever it was shared
  *  with, and a published blog has no reader to authenticate. The hash is the

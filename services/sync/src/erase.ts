@@ -128,6 +128,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['tree_ops', `delete from tree_ops where space_id in (${OWNED})`],
   ['space_entries', `delete from space_entries where space_id in (${OWNED})`],
   ['space_cursor', `delete from space_cursor where space_id in (${OWNED})`],
+  // What it was called in each space it was in, and what everybody was called in its own.
+  ['space_nicks', `delete from space_nicks where user_id = ?1 or space_id in (${OWNED})`],
   // The ceilings counted against the account, its address and its spaces - and a
   // site's password guesses, which are counted per space and machine. What is
   // counted against a machine stays: that is about the machine.
@@ -169,6 +171,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['term_sessions', 'delete from term_sessions where user_id = ?1'],
   ['machine_usage', 'delete from machine_usage where user_id = ?1'],
   ['machines', 'delete from machines where user_id = ?1'],
+  // Whether it was here; its face is two rows of `blobs`, above.
+  ['presence', 'delete from presence where user_id = ?1'],
   ['users', 'delete from users where id = ?1'],
 ]
 

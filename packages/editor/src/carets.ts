@@ -1,9 +1,9 @@
 /** Where the other people in a note are.
  *
  *  A thin bar in their colour where their caret is, a wash over what they have
- *  selected, and their name above the bar for as long as it has just moved. That
- *  is the whole of it: no chat, no avatars, no bubbles following the pointer
- *  about. Somebody else writing in the note should read as somebody else writing
+ *  selected, and their name above the bar for as long as it has just moved, with
+ *  their face in front of it where it is a person's. That is the whole of it: no
+ *  chat, no bubbles following the pointer about. Somebody else writing in the note should read as somebody else writing
  *  in the note.
  *
  *  Two things keep this from costing anything. Positions arrive as plain offsets
@@ -33,6 +33,8 @@ export interface Peer {
   name: string
   /** One of the accent colours, as a hex string. */
   colour: string
+  /** Their picture's address, where the label names a person who chose one. */
+  face?: string | undefined
   /** Where their caret sits, and where their selection started. */
   head: number
   anchor: number
@@ -65,6 +67,7 @@ class Caret extends NibWidget {
     private readonly at: number,
     /** An agent's, which fades on its own; see `setAgents`. */
     private readonly passing: boolean,
+    private readonly face?: string,
   ) {
     super()
   }
@@ -74,7 +77,8 @@ class Caret extends NibWidget {
       other.name === this.name &&
       other.colour === this.colour &&
       other.at === this.at &&
-      other.passing === this.passing
+      other.passing === this.passing &&
+      other.face === this.face
     )
   }
 
@@ -86,7 +90,12 @@ class Caret extends NibWidget {
 
     const tag = caret.appendChild(document.createElement('span'))
     tag.className = 'cm-nib-caret-name'
-    tag.textContent = this.name
+    if (this.face) {
+      const face = tag.appendChild(document.createElement('img'))
+      face.src = this.face
+      face.alt = ''
+    }
+    tag.append(this.name)
 
     return caret
   }
@@ -130,7 +139,7 @@ function marksFor(
 
     marks.push(
       Decoration.widget({
-        widget: new Caret(peer.name, peer.colour, head, agent.has(peer)),
+        widget: new Caret(peer.name, peer.colour, head, agent.has(peer), peer.face),
         side: 1,
       }).range(head),
     )
@@ -218,6 +227,17 @@ const style = EditorView.baseTheme({
     // Shown as the caret lands and gone on its own. `forwards` is what leaves it
     // gone rather than snapping back at the end.
     animation: `cm-nib-caret-name ${NAME_SHOWN} var(--ease-out) forwards`,
+  },
+
+  // A person's face in front of their name, as tall as the label's line and round
+  // as a face is everywhere.
+  '.cm-nib-caret-name img': {
+    width: '13px',
+    height: '13px',
+    margin: '0 3px 0 -2px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    verticalAlign: '-2px',
   },
 
   // An agent's caret, name and all, stays while it writes and goes when it stops.

@@ -14,6 +14,7 @@ import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { keep, storedText } from '../stored'
 import { isDesktop } from '../tauri'
+import { startHere } from '../people/here'
 import { hub } from './hub.svelte'
 
 /** The last thing the account said about its switch. */
@@ -32,11 +33,13 @@ export function travels(
   return token !== null && remembered === 'on'
 }
 
-/** Starts the hub, and web logins where they travel. Once. */
+/** Starts the hub, whether somebody is at this device (people/here.ts), and web logins
+ *  where they travel. Once. */
 export function connect(): void {
   if (connected) return
   connected = true
   hub.start()
+  startHere()
   if (!isDesktop) return
 
   $effect.root(() => {

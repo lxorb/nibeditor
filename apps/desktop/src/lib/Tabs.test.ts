@@ -34,7 +34,7 @@ vi.mock('./file-mark', async (importOriginal) => {
 
 /** The stores the strip reads, stood in for: what is under test is the markup, and
  *  none of these has anything to do with the counting. */
-vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, seen: {}, following: null } }))
 
 const { workspace } = await import('./workspace.svelte')
 const Tabs = (await import('./Tabs.svelte')).default

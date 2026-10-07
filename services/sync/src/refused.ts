@@ -45,6 +45,8 @@ export const NOT_A_PATH = 'that path is not usable'
 /** The account has no room for what is arriving. 507: the storage is at fault
  *  rather than the request. */
 export const OUT_OF_SPACE = 'out of space'
+/** A file named by anything but its hash, which a correct client never sends. */
+export const NOT_A_HASH = 'that is not a hash'
 
 export const SPACE_IS_FULL = 'that is as many people as one space holds'
 export const NOT_AN_EMAIL = 'enter a valid email address'

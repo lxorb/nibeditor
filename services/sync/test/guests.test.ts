@@ -13,6 +13,11 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
+/** What a row of the Share sheet says about a face: none for a guest or an address
+ *  nobody has an account at, and the account's id with no picture for one that does. */
+const NO_FACE = { id: null, avatar: null, accent: null }
+const A_FACE = { id: expect.any(String), avatar: null, accent: null }
+
 const OWNER = 'owner@example.com'
 const GUEST = 'guest@example.com'
 const STRANGER = 'nobody@example.com'
@@ -272,7 +277,14 @@ describe('a link anybody may follow', () => {
 
     const { json: who } = await shareView()
     expect(who.members).toEqual([
-      { email: null, guest: json.guest.id, name: json.guest.name, role: 'write', pending: false },
+      {
+        ...NO_FACE,
+        email: null,
+        guest: json.guest.id,
+        name: json.guest.name,
+        role: 'write',
+        pending: false,
+      },
     ])
 
     const { json: rails } = await rail(owner)
@@ -661,7 +673,7 @@ describe('a guest becoming an account', () => {
     // And the sheet says one person, by address, rather than two.
     const { json: who } = await shareView()
     expect(who.members).toEqual([
-      { email: GUEST, guest: null, name: null, role: 'write', pending: false },
+      { ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false },
     ])
   })
 

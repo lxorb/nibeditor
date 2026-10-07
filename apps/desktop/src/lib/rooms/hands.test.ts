@@ -50,7 +50,11 @@ function stroke(count: number): InkStroke {
 describe('whose hand is on the plane', () => {
   test('is nobody when nobody has said anything', () => {
     const { two } = pair()
-    expect(handsIn(two.awareness, two.doc, 'dark')).toEqual({ present: 0, hands: [] })
+    expect(handsIn(two.awareness, two.doc, 'dark')).toEqual({
+      present: 0,
+      hands: [],
+      seen: { people: [], mine: 0 },
+    })
   })
 
   test('never counts the device asking', () => {
