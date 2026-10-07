@@ -674,29 +674,62 @@ optional presence dot; an optional mark in its corner) is the face of a person i
 
 ### 4.11 Notifications
 
-- **What pings**, per chat (the bell in its head): **All**, **Mentions** (your name, @here
-  while you are active, @everyone, replies to you, your keywords) or **Nothing**, and **Mute
-  until** (1 h, 8 h, a day, a week, until turned back). A chat of more than ten people
-  defaults to Mentions, the rest to All. Kept in `chat_reads.notify` so every device agrees.
-- **Keywords** and the **quiet schedule** (days and hours, Slack's [schedule][sl-dnd]) are in
-  Settings > Chats, in the account's settings, merged per key as `docs/sync-v2.md` 5.11 does.
-- **Desktop**, while nib runs: the hub's poke arrives, the app decides (the chat is not on
-  screen in a window in front, the level says yes, not muted, not quiet) and shows the
-  system's notification through `tauri-plugin-notification`, with the sender's avatar and
-  the first line; a press opens the chat at the message; Reply answers inline where the
-  system offers it. One per chat, replaced rather than stacked.
-- **The tray**: closing the window while any chat exists keeps nib in the tray, said once:
-  the same question `docs/tasks.md` decision 6 and `docs/agent-native.md` question 6 ask,
-  answered once for all three.
-- **Phones and the browser build: off for now** (decision 7.4). Push needs a Firebase
-  project, an APNs key and VAPID keys, and none of them exists. The seam stays:
-  `services/sync/src/push` (built by tasks' lane 5, 2026-10-04) sends to a target of any
-  kind, and a chat would add only a `Message` with `kind: 'chat'`; `push_targets` is in
-  `0044_push.sql`. The decision the app makes for a desktop notification is a pure function
-  of the poke, the level, mute, quiet and focus, so the day the keys exist the Worker asks
-  the same function, adds whether a desktop of the person's was active in the last two
-  minutes (the hub knows), and pushes only if not: Slack's rule. Until then a phone hears a
-  chat only while nib is open on it.
+Slack's model, kept in fewer places: Slack spreads its notification settings over four
+screens (2.1), Discord's mute is a menu of its own, and both let a mention through a mute in
+some places and not in others. Here a chat has one bell and the account one group in
+Settings, and one function decides.
+
+- **What pings**, per chat (the bell in its head, `lib/chats/Bell.svelte`): **All**,
+  **Mentions** (your name, @everyone, @here while somebody is at one of your devices, replies
+  to you, your keywords) or **Nothing**, and **Mute**: until turned back from the row, or for
+  1 h, 8 h, a day or seven days from its chevron (Discord's lengths). A muted chat says
+  nothing, a mention included; its counts and mention badge still move (Slack's). A chat of
+  more than ten people defaults to Mentions, the rest to All. Kept in `chat_reads.notify` and
+  `muted_until` (`PUT /v2/chats/:id/me`) so every device agrees. The bell draws the level in
+  force: a bell, a bell with the accent's dot for Mentions, a struck bell for Nothing or a
+  mute.
+- **For every chat at once**, Settings > General > Chats, on the account (`chatKeywords`,
+  `chatHours`, `chatPreviews`, `chatSound`, merged per key as `docs/sync-v2.md` 5.11 does;
+  `lib/chats/hush.svelte.ts`): **Keywords**, a line of words separated by commas that call
+  for you as your name does, whole words in any case; **Hours**, Slack's notification
+  schedule: always, every day or weekdays, from and to, outside which nothing pings and counts
+  still move (a window past midnight belongs to the day it starts); **Previews**, off for
+  "New message" with neither words nor name (Signal's); **Sound**, one quiet sound, off by
+  default.
+- **Do not disturb** is the reader's status (`status.quiet`, 4.10): while it stands nothing
+  pings, on every device, until its time.
+- **The decision** is `decide` in `@nib/chats/notify`, a pure function of the message (its
+  author, words, mentions and the author it replies to), the chat's level and mute, the
+  keywords, the hours, Do not disturb, whether somebody is at the device, and whether the
+  chat is on screen in a window in front. It answers `show` or the first reason it does not,
+  in the order a person would give: your own message, a chat you are looking at, a mute, the
+  level, Do not disturb, the hours. Its table is its test.
+- **Desktop**, while nib runs: the hub's poke arrives in the window that holds the hub's
+  socket, the newest messages after the read place are fetched (a poke carries no words),
+  newest first, and the first that `decide` shows is shown through the crate's own
+  notification (`notices.rs`): the sender's name, the first line of the words with the marks
+  taken off, and the chat's name under them. One per chat, replaced rather than stacked, and
+  taken back once the chat is read here or elsewhere, or comes on screen. A press opens the
+  chat at the message. **Reply** answers inline where the system has a field for it, Windows'
+  toasts and a Mac's notifications: the words go into the same place (the message's replies,
+  for a reply), and the chat is marked read up to it, as WhatsApp does. Presses are heard in
+  the process (a toast's own activation, the notification centre's delegate), never as a
+  `nib://` link another program could write, and every notification is taken off the screen
+  as nib quits, so no reply field is left in the action centre with nobody to answer it.
+  Linux shows the plain notification. A chat open in a background tab hears its messages on
+  its socket, and the chats' store hands them to the same decision (`chatNotices.arrived`).
+- **The tray**: while the account has any chat, closing the window keeps nib in the tray
+  (the reminders' `residency`, `docs/tasks.md` decision 6), because a chat pings only while
+  nib runs. The one switch, Stay in the tray, answers it for reminders, the quick add key and
+  chats at once.
+- **Phones and the browser build** (decision 7.4). Push needs a Firebase project, an APNs key
+  and VAPID keys, and none of them exists, so a phone hears nothing of a chat: its
+  notifications are the activity's, and the page does not ring them. The browser build shows
+  the browser's own notification while its tab is open, once the reader allowed it (asked the
+  first time the bell is pressed). The seam stays: `services/sync/src/push` sends to a target
+  of any kind, a chat adds only a `Message` with `kind: 'chat'`, and the day the keys exist
+  the Worker asks the same `decide` and pushes only where `owesPush` says so, where no desktop
+  of the person's was active in the last two minutes (`DESKTOP_ACTIVE_WITHIN`, Slack's rule).
 - **Activity** (the Chats panel): mentions of you, replies to you and reactions to your
   messages, newest first, each opening the message.
 

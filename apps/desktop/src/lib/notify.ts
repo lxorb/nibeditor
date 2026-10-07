@@ -35,6 +35,8 @@ export interface Notice {
 /** The ones a press may still answer, by id, and the id each tag is showing. */
 const answering = new Map<string, Notice>()
 const showing = new Map<string, string>()
+/** A browser's notification still up, by tag, so it can be taken back. */
+const up = new Map<string, Notification>()
 let listening: Promise<unknown> | null = null
 
 /** The short form every older caller uses. */
@@ -60,10 +62,19 @@ export function show(one: Notice): void {
     one.opened?.()
     shown.close()
   }
+  if (one.tag) up.set(one.tag, shown)
+}
+
+/** Asks the browser, once, whether the page may show a notification at all. */
+export function askToShow(): void {
+  if (isDesktop || typeof Notification === 'undefined') return
+  if (Notification.permission === 'default') void Notification.requestPermission()
 }
 
 /** Takes back whatever is showing under a tag: the chat it was about has been read. */
 export function unshow(tag: string): void {
+  up.get(tag)?.close()
+  up.delete(tag)
   const id = showing.get(tag)
   if (id === undefined) return
   showing.delete(tag)

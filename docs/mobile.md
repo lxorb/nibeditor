@@ -324,11 +324,21 @@ which is in the repository:
 4. `pnpm --filter @nib/sync migrate:remote` for `0044_push.sql`, and a deploy, which also
    adds the minute's cron.
 
-What is not built yet, and belongs to the client half (docs/chats.md lane 6): the
+What is not built, by Emil's decision (docs/chats.md 7.4: none of the keys exist): the
 browser build's subscription in its service worker, and the Android and iPhone token
 registration with the FCM service that shows a data message unless `Reminders.known`
 says the phone rang it already. Without them no device registers a target, and the
 Worker keeps and sends nothing.
+
+**Chats ping the desktop only, for now.** A chat's notification is the desktop's own
+(docs/chats.md 4.11): the hub pokes every signed-in device, the window decides by
+`decide` in `@nib/chats/notify` and shows it through the crate (`notices.rs`), with
+Reply in the notification on Windows and a Mac. A phone hears nothing of a chat while
+the app is closed, and nothing while it is open either: its notifications are the
+activity's, and the page does not ring them. The seam is kept for the day the keys
+exist: `push/send.ts` already takes a `Message` of `kind: 'chat'`, and the Worker would
+ask the same `decide` for the message and push only where `owesPush` says so, which is
+where no desktop of the person's was active in the last two minutes (Slack's rule).
 
 ## The tiles, and the widget
 

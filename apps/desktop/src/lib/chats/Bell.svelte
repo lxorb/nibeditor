@@ -7,6 +7,7 @@
   import type { Notify } from '@nib/chats'
   import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
   import { plural, t } from '../i18n.svelte'
+  import { askToShow } from '../notify'
   import { MUTE_HOURS, mutedUntil as muteFor, ringOf } from './bell'
 
   const {
@@ -38,6 +39,8 @@
   }
 
   function open(event: MouseEvent) {
+    // A browser asks before it shows anything, and a press is the moment it may ask.
+    askToShow()
     const level = ringOf(notify, null, members, now)
     const levels: [Notify, string][] = [
       ['all', t('All')],
