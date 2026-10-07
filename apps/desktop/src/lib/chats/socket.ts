@@ -50,7 +50,7 @@ export type Dial = (
 ) => Wire
 
 /** The browser's own WebSocket. */
-export const dialWebSocket: Dial = (url, protocols, on) => {
+const dialWebSocket: Dial = (url, protocols, on) => {
   const socket = new WebSocket(url, protocols)
   socket.onopen = () => on.opened()
   socket.onmessage = (event: MessageEvent<unknown>) => {

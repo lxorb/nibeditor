@@ -80,9 +80,3 @@ export async function findPointers(): Promise<Map<string, Place>> {
   }
   return found
 }
-
-/** The account's id of the space a folder is in, for a chat moved into it. */
-export function remoteSpaceOf(folder: string): string | null {
-  const space = spaceOf(folder)
-  return space ? sync.remoteIdFor(space.root) : null
-}

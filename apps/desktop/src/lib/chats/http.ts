@@ -97,11 +97,6 @@ export async function putMe(
   )
 }
 
-/** A chat's settings: topic, who may post, slowmode. */
-export async function patchChat(chat: string, body: Record<string, unknown>): Promise<boolean> {
-  return (await ask(chatPath(chat), { method: 'PATCH', body })) !== null
-}
-
 const ROLES = ['read', 'write', 'owner'] as const
 
 /** The chat's people, by name. */

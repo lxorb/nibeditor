@@ -9,7 +9,7 @@
 
 import { type Event, type Has, hasOf, type Message, type Who } from '@nib/chats'
 import type { ChatRow, Refusal } from '@nib/chats/wire'
-import type { Kept, Marks } from './fold'
+import type { Kept } from './fold'
 
 /** One chat as the device holds it: the log's place every message here is current to,
  *  the reader's read place, where the next older page starts (`older`, the account's
@@ -243,9 +243,4 @@ export class MemoryCache implements ChatCache {
     this.drafted.clear()
     return Promise.resolve()
   }
-}
-
-/** The marks a kept message carries when the cache has none written. */
-export function noMarks(): Marks {
-  return { r: [], v: [] }
 }
