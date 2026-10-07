@@ -34,7 +34,7 @@ function asked(change: {
   members?: number
   keywords?: string[]
   hours?: Hours | null
-  pausedUntil?: number | null
+  dndUntil?: number | null
   moment?: Asked['moment']
   active?: boolean
   seen?: boolean
@@ -55,7 +55,7 @@ function asked(change: {
     hush: {
       keywords: change.keywords ?? [],
       hours: change.hours ?? null,
-      pausedUntil: change.pausedUntil ?? null,
+      dndUntil: change.dndUntil ?? null,
     },
     moment: change.moment ?? TUESDAY_TWO,
     active: change.active ?? true,
@@ -66,7 +66,7 @@ function asked(change: {
 const WORKING: Hours = { days: [1, 2, 3, 4, 5], from: 9 * 60, to: 18 * 60 }
 
 describe('decide', () => {
-  // Every row of the table: the level, mute, the pause, the hours and focus, each
+  // Every row of the table: the level, mute, do not disturb, the hours and focus, each
   // against a message that calls for the reader and one that does not.
   it.each<[string, Parameters<typeof asked>[0], Ping]>([
     ['a message in a small chat', {}, 'show'],
@@ -102,27 +102,27 @@ describe('decide', () => {
     ['a big chat by default, naming you', { members: 11, mentions: [ME] }, 'show'],
     ['a chat of ten by default', { members: 10 }, 'show'],
     ['a big chat set to all', { members: 200, notify: 'all' }, 'show'],
-    ['paused', { pausedUntil: NOW + 60_000 }, 'paused'],
-    ['paused, naming you', { pausedUntil: NOW + 60_000, mentions: [ME] }, 'paused'],
-    ['a pause that has run out', { pausedUntil: NOW - 1 }, 'show'],
+    ['do not disturb', { dndUntil: NOW + 60_000 }, 'dnd'],
+    ['do not disturb, naming you', { dndUntil: NOW + 60_000, mentions: [ME] }, 'dnd'],
+    ['do not disturb that has run out', { dndUntil: NOW - 1 }, 'show'],
     [
-      'paused, but the level says nothing anyway',
-      { pausedUntil: NOW + 1, notify: 'nothing' },
+      'do not disturb, but the level says nothing anyway',
+      { dndUntil: NOW + 1, notify: 'nothing' },
       'level',
     ],
     ['inside the hours', { hours: WORKING }, 'show'],
     [
       'outside the hours',
       { hours: WORKING, moment: { now: NOW, day: 2, minute: 20 * 60 } },
-      'quiet',
+      'hours',
     ],
     [
       'outside the hours, naming you',
       { hours: WORKING, mentions: [ME], moment: { now: NOW, day: 0, minute: 10 * 60 } },
-      'quiet',
+      'hours',
     ],
     [
-      'muted outweighs quiet',
+      'muted outweighs the hours',
       { hours: WORKING, mutedUntil: NOW + 1, moment: { now: NOW, day: 0, minute: 0 } },
       'muted',
     ],
@@ -204,7 +204,7 @@ describe('owesPush', () => {
   it('pushes only what pings and only where no desktop was active', () => {
     expect(owesPush('show', false)).toBe(true)
     expect(owesPush('show', true)).toBe(false)
-    expect(owesPush('quiet', false)).toBe(false)
+    expect(owesPush('hours', false)).toBe(false)
   })
 })
 

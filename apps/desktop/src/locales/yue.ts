@@ -2102,4 +2102,15 @@ export const yue: Dictionary = {
   'that picture could not be opened': '開唔到呢張圖',
   'the camera could not be opened': '開唔到相機',
   'that picture is too big': '呢張圖太大',
+  // Chats: notifications
+  Mute: '靜音',
+  Unmute: '取消靜音',
+  Reply: '回覆',
+  'New message': '新訊息',
+  Keywords: '關鍵字',
+  Previews: '預覽',
+  Sound: '聲音',
+  Weekdays: '平日',
+  From: '由',
+  To: '至',
 }

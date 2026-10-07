@@ -7,6 +7,7 @@ import { BEAT_ANSWER, readHubFrame } from './hub-frames'
 
 const KEY = 'a'.repeat(64)
 const DEVICE = 'laptop-0001'
+const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
 describe('readHubFrame', () => {
   test('reads every frame the hub sends', () => {
@@ -23,6 +24,7 @@ describe('readHubFrame', () => {
       { t: 'key-denied' },
       { t: 'key-settled', device: DEVICE },
       { t: 'refused', to: 'acquire', key: KEY, error: 'too many tries' },
+      { t: 'chat', chat: CHAT, seq: 12, at: 1_790_000_000_000, by: 'user:lucile', mention: true },
     ]
     for (const frame of frames) expect(readHubFrame(JSON.stringify(frame))).toEqual(frame)
   })
@@ -52,6 +54,11 @@ describe('readHubFrame', () => {
       readHubFrame(JSON.stringify({ t: 'granted', key: KEY, fence: -1, version: 0 })),
     ).toBeNull()
     expect(readHubFrame(JSON.stringify({ t: 'key', wrapped: 'x', generation: 0 }))).toBeNull()
+    expect(
+      readHubFrame(
+        JSON.stringify({ t: 'chat', chat: 'thesis', seq: 1, at: 1, by: 'user:a', mention: false }),
+      ),
+    ).toBeNull()
   })
 
   test('a busy with no name still names the device, with an empty name', () => {

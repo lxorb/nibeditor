@@ -2155,4 +2155,15 @@ export const mr: Dictionary = {
   'that picture could not be opened': 'ते चित्र उघडता आले नाही',
   'the camera could not be opened': 'कॅमेरा उघडता आला नाही',
   'that picture is too big': 'ते चित्र खूप मोठे आहे',
+  // Chats: notifications
+  Mute: 'म्यूट करा',
+  Unmute: 'अनम्यूट करा',
+  Reply: 'उत्तर द्या',
+  'New message': 'नवा संदेश',
+  Keywords: 'कीवर्ड',
+  Previews: 'पूर्वावलोकन',
+  Sound: 'आवाज',
+  Weekdays: 'कामाचे दिवस',
+  From: 'पासून',
+  To: 'पर्यंत',
 }

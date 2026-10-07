@@ -119,6 +119,10 @@ pub mod mcp;
 #[cfg(desktop)]
 mod menu_bar;
 mod notes;
+// Notifications the page shows that answer back: a press opens what it was about, and a
+// chat's can be answered in place; see notices.rs and docs/chats.md 4.11.
+#[cfg(desktop)]
+mod notices;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
@@ -321,8 +325,9 @@ macro_rules! desktop_commands {
             agents::shell::tray_keep,
             reminders::reminders_set,
             reminders::reminders_taken,
-            reminders::reminders_ring,
             reminders::reminders_quietly,
+            notices::notice_show,
+            notices::notice_clear,
             mcp::program::mcp_program,
             ai_agent::ai_agent_tools,
             ai_agent::ai_agent_call,

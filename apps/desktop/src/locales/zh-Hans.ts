@@ -2102,4 +2102,15 @@ export const zhHans: Dictionary = {
   'that picture could not be opened': '无法打开该图片',
   'the camera could not be opened': '无法打开相机',
   'that picture is too big': '该图片太大',
+  // Chats: notifications
+  Mute: '静音',
+  Unmute: '取消静音',
+  Reply: '回复',
+  'New message': '新消息',
+  Keywords: '关键词',
+  Previews: '预览',
+  Sound: '声音',
+  Weekdays: '工作日',
+  From: '从',
+  To: '到',
 }

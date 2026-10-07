@@ -2128,4 +2128,15 @@ export const am: Dictionary = {
   'that picture could not be opened': 'ያ ስዕል ሊከፈት አልቻለም',
   'the camera could not be opened': 'ካሜራው ሊከፈት አልቻለም',
   'that picture is too big': 'ያ ስዕል በጣም ትልቅ ነው',
+  // Chats: notifications
+  Mute: 'ድምፅ አጥፋ',
+  Unmute: 'ድምፅ አብራ',
+  Reply: 'መልስ',
+  'New message': 'አዲስ መልዕክት',
+  Keywords: 'ቁልፍ ቃላት',
+  Previews: 'ቅድመ እይታዎች',
+  Sound: 'ድምፅ',
+  Weekdays: 'የሥራ ቀናት',
+  From: 'ከ',
+  To: 'እስከ',
 }

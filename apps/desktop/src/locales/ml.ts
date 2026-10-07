@@ -2174,4 +2174,15 @@ export const ml: Dictionary = {
   'that picture could not be opened': 'ആ ചിത്രം തുറക്കാനായില്ല',
   'the camera could not be opened': 'ക്യാമറ തുറക്കാനായില്ല',
   'that picture is too big': 'ആ ചിത്രം വളരെ വലുതാണ്',
+  // Chats: notifications
+  Mute: 'നിശബ്ദമാക്കുക',
+  Unmute: 'ശബ്ദം ഓണാക്കുക',
+  Reply: 'മറുപടി',
+  'New message': 'പുതിയ സന്ദേശം',
+  Keywords: 'കീവേഡുകൾ',
+  Previews: 'പ്രിവ്യൂകൾ',
+  Sound: 'ശബ്ദം',
+  Weekdays: 'പ്രവൃത്തി ദിവസങ്ങൾ',
+  From: 'മുതൽ',
+  To: 'വരെ',
 }

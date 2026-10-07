@@ -2159,4 +2159,15 @@ export const tr: Dictionary = {
   'that picture could not be opened': 'bu resim açılamadı',
   'the camera could not be opened': 'kamera açılamadı',
   'that picture is too big': 'bu resim çok büyük',
+  // Chats: notifications
+  Mute: 'Sessize al',
+  Unmute: 'Sesi aç',
+  Reply: 'Yanıtla',
+  'New message': 'Yeni mesaj',
+  Keywords: 'Anahtar kelimeler',
+  Previews: 'Önizlemeler',
+  Sound: 'Ses',
+  Weekdays: 'Hafta içi',
+  From: 'Başlangıç',
+  To: 'Bitiş',
 }

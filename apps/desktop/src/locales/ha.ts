@@ -2181,4 +2181,15 @@ export const ha: Dictionary = {
   'that picture could not be opened': 'ba a iya buɗe wannan hoton ba',
   'the camera could not be opened': 'ba a iya buɗe kyamara ba',
   'that picture is too big': 'wannan hoton ya yi girma da yawa',
+  // Chats: notifications
+  Mute: 'Yi shiru',
+  Unmute: 'Dawo da sauti',
+  Reply: 'Amsa',
+  'New message': 'Sabon saƙo',
+  Keywords: 'Kalmomin bincike',
+  Previews: 'Samfoti',
+  Sound: 'Sauti',
+  Weekdays: 'Ranakun aiki',
+  From: 'Daga',
+  To: 'Zuwa',
 }

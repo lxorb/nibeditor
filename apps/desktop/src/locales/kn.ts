@@ -2171,4 +2171,15 @@ export const kn: Dictionary = {
   'that picture could not be opened': 'ಆ ಚಿತ್ರವನ್ನು ತೆರೆಯಲಾಗಲಿಲ್ಲ',
   'the camera could not be opened': 'ಕ್ಯಾಮೆರಾ ತೆರೆಯಲಾಗಲಿಲ್ಲ',
   'that picture is too big': 'ಆ ಚಿತ್ರ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ',
+  // Chats: notifications
+  Mute: 'ಮ್ಯೂಟ್ ಮಾಡಿ',
+  Unmute: 'ಅನ್‌ಮ್ಯೂಟ್ ಮಾಡಿ',
+  Reply: 'ಉತ್ತರಿಸಿ',
+  'New message': 'ಹೊಸ ಸಂದೇಶ',
+  Keywords: 'ಕೀವರ್ಡ್‌ಗಳು',
+  Previews: 'ಮುನ್ನೋಟಗಳು',
+  Sound: 'ಶಬ್ದ',
+  Weekdays: 'ಕೆಲಸದ ದಿನಗಳು',
+  From: 'ಇಂದ',
+  To: 'ವರೆಗೆ',
 }

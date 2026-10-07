@@ -2144,4 +2144,15 @@ export const gu: Dictionary = {
   'that picture could not be opened': 'તે ચિત્ર ખોલી શકાયું નહીં',
   'the camera could not be opened': 'કૅમેરા ખોલી શકાયો નહીં',
   'that picture is too big': 'તે ચિત્ર ખૂબ મોટું છે',
+  // Chats: notifications
+  Mute: 'મ્યૂટ કરો',
+  Unmute: 'અનમ્યૂટ કરો',
+  Reply: 'જવાબ આપો',
+  'New message': 'નવો સંદેશ',
+  Keywords: 'કીવર્ડ',
+  Previews: 'પૂર્વાવલોકન',
+  Sound: 'અવાજ',
+  Weekdays: 'કામકાજના દિવસો',
+  From: 'થી',
+  To: 'સુધી',
 }

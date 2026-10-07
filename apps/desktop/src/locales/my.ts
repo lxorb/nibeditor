@@ -2137,4 +2137,15 @@ export const my: Dictionary = {
   'that picture could not be opened': 'ထိုပုံကို ဖွင့်၍မရပါ',
   'the camera could not be opened': 'ကင်မရာကို ဖွင့်၍မရပါ',
   'that picture is too big': 'ထိုပုံ ကြီးလွန်းသည်',
+  // Chats: notifications
+  Mute: 'အသံပိတ်',
+  Unmute: 'အသံဖွင့်',
+  Reply: 'ပြန်စာ',
+  'New message': 'မက်ဆေ့ချ်အသစ်',
+  Keywords: 'သော့ချက်စကားလုံးများ',
+  Previews: 'အစမ်းကြည့်',
+  Sound: 'အသံ',
+  Weekdays: 'ရုံးဖွင့်ရက်',
+  From: 'မှ',
+  To: 'အထိ',
 }

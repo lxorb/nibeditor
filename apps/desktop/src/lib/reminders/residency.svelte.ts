@@ -1,8 +1,9 @@
-/** Whether nib stays in the tray when its window is closed (docs/tasks.md decision 6).
+/** Whether nib stays in the tray when its window is closed (docs/tasks.md decision 6,
+ *  docs/chats.md 4.11).
  *
- *  Todoist's way: on by default while there is a reason, a reminder waiting or the
- *  global quick add key held, and off otherwise; one switch in Settings makes it the
- *  reader's choice from then on. A desktop with a tray only, Windows and a Mac, where
+ *  Todoist's way: on by default while there is a reason, a reminder waiting, the global
+ *  quick add key held or a chat to be told about, and off otherwise; one switch in
+ *  Settings makes it the reader's choice from then on. A desktop with a tray only, Windows and a Mac, where
  *  the crate holds the one tray the agents use as well (agents/shell.rs). On Windows and
  *  a Mac a reminder rings from the system's own schedule either way; the tray is what
  *  keeps Done and the quick add key a moment away. */
@@ -38,11 +39,15 @@ class Residency {
   /** Whether the global quick add key is held: the quick add says. */
   quickAdd = $state(false)
 
+  /** Whether the account has any chat, whose messages ping only while nib runs: the
+   *  chats' notifications say (chats/notices.ts). */
+  chats = $state(false)
+
   /** Whether nib stays in the tray now. */
   get on(): boolean {
     if (!hasTray) return false
     if (this.choice !== 'auto') return this.choice === 'on'
-    return this.waiting || this.quickAdd
+    return this.waiting || this.quickAdd || this.chats
   }
 
   /** The switch in Settings: the reader's choice from now on. */

@@ -2151,4 +2151,15 @@ export const bn: Dictionary = {
   'that picture could not be opened': 'ছবিটি খোলা যায়নি',
   'the camera could not be opened': 'ক্যামেরা খোলা যায়নি',
   'that picture is too big': 'ছবিটি খুব বড়',
+  // Chats: notifications
+  Mute: 'মিউট করুন',
+  Unmute: 'আনমিউট করুন',
+  Reply: 'উত্তর দিন',
+  'New message': 'নতুন বার্তা',
+  Keywords: 'কীওয়ার্ড',
+  Previews: 'প্রিভিউ',
+  Sound: 'শব্দ',
+  Weekdays: 'কর্মদিবস',
+  From: 'থেকে',
+  To: 'পর্যন্ত',
 }

@@ -8,6 +8,7 @@
  *  understood, the way the hub drops one of ours. Pure, so the reading is tested
  *  without a socket. */
 
+import { chatPokeOf, type ChatPoke } from '@nib/chats/wire'
 import { isRecord } from '../stored'
 
 /** The heartbeat and its answer, as the runtime on the other end answers it. */
@@ -48,6 +49,9 @@ export type FromHub =
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
   | { t: 'refused'; to: string; key: string | null; error: string }
+  /** A chat moved while none of this account's devices had it open (docs/chats.md
+   *  4.4): read by `@nib/chats/wire`, which the hub's own half writes it by. */
+  | ChatPoke
 
 export type HubType = FromHub['t']
 
@@ -133,6 +137,9 @@ export function readHubFrame(said: string): FromHub | null {
       return text(one.to) && text(one.error)
         ? { t: 'refused', to: one.to, key: opaque(one.key) ? one.key : null, error: one.error }
         : null
+
+    case 'chat':
+      return chatPokeOf(one)
 
     default:
       return null

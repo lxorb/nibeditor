@@ -2182,4 +2182,15 @@ export const ta: Dictionary = {
   'that picture could not be opened': 'அந்தப் படத்தைத் திறக்க முடியவில்லை',
   'the camera could not be opened': 'கேமராவைத் திறக்க முடியவில்லை',
   'that picture is too big': 'அந்தப் படம் மிகப் பெரியது',
+  // Chats: notifications
+  Mute: 'ஒலியடக்கு',
+  Unmute: 'ஒலியை இயக்கு',
+  Reply: 'பதிலளி',
+  'New message': 'புதிய செய்தி',
+  Keywords: 'முக்கியச் சொற்கள்',
+  Previews: 'முன்னோட்டங்கள்',
+  Sound: 'ஒலி',
+  Weekdays: 'வேலை நாட்கள்',
+  From: 'இருந்து',
+  To: 'வரை',
 }

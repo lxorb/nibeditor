@@ -2259,4 +2259,15 @@ export const ar: Dictionary = {
   'that picture could not be opened': 'تعذّر فتح تلك الصورة',
   'the camera could not be opened': 'تعذّر فتح الكاميرا',
   'that picture is too big': 'تلك الصورة كبيرة جدًا',
+  // Chats: notifications
+  Mute: 'كتم',
+  Unmute: 'إلغاء الكتم',
+  Reply: 'رد',
+  'New message': 'رسالة جديدة',
+  Keywords: 'كلمات مفتاحية',
+  Previews: 'المعاينات',
+  Sound: 'الصوت',
+  Weekdays: 'أيام العمل',
+  From: 'من',
+  To: 'إلى',
 }

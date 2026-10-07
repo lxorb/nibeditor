@@ -22,7 +22,7 @@
 
 pub(crate) mod link;
 #[cfg(target_os = "macos")]
-mod macos;
+pub(crate) mod macos;
 #[cfg_attr(
     not(any(windows, target_os = "macos")),
     allow(dead_code, reason = "Linux has no schedule to hand a notification to")
@@ -298,21 +298,6 @@ fn handed(app: &AppHandle, wanted: &[(Planned, String)], words: &Words, now: i64
         let _ = (app, wanted, words, now);
         false
     }
-}
-
-/// One reminder rung by the page itself, where the system holds none (`reminders_set`
-/// answered no): a notification with its words, and nothing to press but the
-/// notification. On the window's own thread, where the notification plugin is added.
-#[tauri::command]
-pub fn reminders_ring(
-    webview: tauri::Webview,
-    app: AppHandle,
-    title: String,
-    body: String,
-) -> Result<(), String> {
-    crate::agents::from_the_app(&webview)?;
-    crate::agents::shell::notify(&app, title, body);
-    Ok(())
 }
 
 /// The presses waiting, taken: each is answered once, and only one whose nonce is the

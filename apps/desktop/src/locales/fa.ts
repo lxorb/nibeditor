@@ -2153,4 +2153,15 @@ export const fa: Dictionary = {
   'that picture could not be opened': 'آن تصویر باز نشد',
   'the camera could not be opened': 'دوربین باز نشد',
   'that picture is too big': 'آن تصویر خیلی بزرگ است',
+  // Chats: notifications
+  Mute: 'بی‌صدا',
+  Unmute: 'باصدا',
+  Reply: 'پاسخ',
+  'New message': 'پیام تازه',
+  Keywords: 'کلیدواژه‌ها',
+  Previews: 'پیش‌نمایش‌ها',
+  Sound: 'صدا',
+  Weekdays: 'روزهای کاری',
+  From: 'از',
+  To: 'تا',
 }

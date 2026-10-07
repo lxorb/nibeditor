@@ -19,6 +19,7 @@
     "@evenrealities/even_hub_sdk": "^0.0.15",
     "@iconify-json/flat-color-icons": "^1.2.3",
     "@nib/bases": "workspace:*",
+    "@nib/chats": "workspace:*",
     "@nib/editor": "workspace:*",
     "@nib/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",

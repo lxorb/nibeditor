@@ -243,7 +243,7 @@ const KNOWN: Record<string, Check> = {
   linkFormat: wordOf('linkFormat', LINK_FORMATS),
   properties: wordOf('properties', PROPERTIES_MODES),
   // What pings for every chat at once (docs/chats.md 4.11): the words that call for the
-  // reader as their name does, the hours pings are let through, a pause, and whether a
+  // reader as their name does, the hours pings are let through, and whether a
   // notification shows the words and makes a sound. On the account, so every device
   // holds back the same pings; the checks are @nib/chats/notify's, which the decision
   // reads them by.
@@ -255,10 +255,6 @@ const KNOWN: Record<string, Check> = {
     value === null || isHours(value)
       ? null
       : 'chatHours must be days of the week and two minutes of the day, or null',
-  chatPausedUntil: (value) =>
-    value === null || (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
-      ? null
-      : 'chatPausedUntil must be a moment or null',
   chatPreviews: switched('chatPreviews'),
   chatSound: switched('chatSound'),
 }

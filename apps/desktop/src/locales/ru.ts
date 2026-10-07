@@ -2234,4 +2234,15 @@ export const ru: Dictionary = {
   'that picture could not be opened': 'не удалось открыть изображение',
   'the camera could not be opened': 'не удалось открыть камеру',
   'that picture is too big': 'изображение слишком большое',
+  // Chats: notifications
+  Mute: 'Без звука',
+  Unmute: 'Включить звук',
+  Reply: 'Ответить',
+  'New message': 'Новое сообщение',
+  Keywords: 'Ключевые слова',
+  Previews: 'Превью',
+  Sound: 'Звук',
+  Weekdays: 'Будни',
+  From: 'С',
+  To: 'До',
 }

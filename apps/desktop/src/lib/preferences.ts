@@ -14,6 +14,7 @@ import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './paper'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { hasTray, residency } from './reminders/residency.svelte'
+import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats/hush.svelte'
 import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
@@ -428,6 +429,87 @@ function remindersGroup(): Group {
   }
 }
 
+/** What pings for every chat at once (docs/chats.md 4.11): the reader's keywords, the
+ *  hours pings are let through, and whether a notification shows the words and makes a
+ *  sound. A chat's own level and mute are the bell in its head (chats/Bell.svelte), and
+ *  Do not disturb is the reader's status. On the account; see chats/hush.svelte.ts. */
+function chatsGroup(): Group {
+  const days = hush.hours?.days.join() ?? ''
+  const hoursOf = (value: string) =>
+    value === 'weekdays' ? WEEKDAYS : value === 'every' ? EVERY_DAY : null
+  const hourOptions = Array.from({ length: 24 }, (_, hour) => ({
+    value: String(hour * 60),
+    label: i18n.when(new Date(2000, 0, 1, hour).getTime(), { timeStyle: 'short' }),
+  }))
+  const hours = hush.hours
+
+  return {
+    title: t('Chats'),
+    fields: [
+      {
+        kind: 'text',
+        label: t('Keywords'),
+        words: ['chat', 'notification', 'mention', 'highlight', 'alert'],
+        placeholder: '',
+        initial: '',
+        get: () => hush.keywords.join(', '),
+        set: (line) => hush.setKeywords(line),
+      },
+      {
+        kind: 'select',
+        label: t('Hours'),
+        words: ['chat', 'notification', 'schedule', 'quiet', 'do not disturb', 'night'],
+        options: [
+          { value: 'always', label: t('Always') },
+          { value: 'every', label: t('Every day') },
+          { value: 'weekdays', label: t('Weekdays') },
+        ],
+        initial: 'always',
+        get: () =>
+          days === WEEKDAYS.join() ? 'weekdays' : days === EVERY_DAY.join() ? 'every' : 'always',
+        set: (value) => {
+          const chosen = hoursOf(value)
+          hush.setHours(chosen ? { ...(hush.hours ?? WORKING_HOURS), days: chosen } : null)
+        },
+      },
+      ...(hours
+        ? ([
+            {
+              kind: 'select',
+              label: t('From'),
+              options: hourOptions,
+              get: () => String(hours.from),
+              set: (value) => hush.setHours({ ...hours, from: Number(value) }),
+            },
+            {
+              kind: 'select',
+              label: t('To'),
+              options: hourOptions,
+              get: () => String(hours.to),
+              set: (value) => hush.setHours({ ...hours, to: Number(value) }),
+            },
+          ] satisfies Field[])
+        : []),
+      {
+        kind: 'switch',
+        label: t('Previews'),
+        words: ['chat', 'notification', 'privacy', 'hide', 'message'],
+        initial: true,
+        get: () => hush.previews,
+        set: (on) => hush.setPreviews(on),
+      },
+      {
+        kind: 'switch',
+        label: t('Sound'),
+        words: ['chat', 'notification', 'audio', 'ping'],
+        initial: false,
+        get: () => hush.sound,
+        set: (on) => hush.setSound(on),
+      },
+    ],
+  }
+}
+
 /** Built against a live view so a change lands in the editor on screen. */
 export function preferences(view?: EditorView): Pane[] {
   // One moment for every example on the pane, so the options read as one set of
@@ -607,6 +689,10 @@ export function preferences(view?: EditorView): Pane[] {
         // The automatic reminder, and the tray or the alarms that keep reminders ringing;
         // never the glasses' plugin, which rings nothing.
         ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
+
+        // What pings for every chat, where a chat can ping at all: a desktop and the
+        // browser, never a phone, whose push is off (docs/chats.md decision 7.4).
+        ...(__EVEN_PLUGIN__ || isMobile ? [] : [chatsGroup()]),
 
         // Which shell a new terminal opens, how large its type is and whether its lines
         // come back after a restart: this machine's, like the release channel below,

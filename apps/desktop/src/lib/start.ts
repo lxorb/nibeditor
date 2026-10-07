@@ -189,6 +189,13 @@ export function start(): () => void {
     void startup.turn('right').then(() => import('./reminders/start.svelte'))
   }
 
+  // A chat's notifications, which hear the hub's pokes, at the last turn of the launch
+  // order; never the glasses' plugin, and never a phone, whose push is off (docs/chats.md
+  // 4.11 and decision 7.4). See chats/notices.ts.
+  if (!__EVEN_PLUGIN__ && !isMobile) {
+    void startup.turn('right').then(() => import('./chats/notices'))
+  }
+
   // The account's hub, beside the sockets the open notes join, after the first paint;
   // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
   if (!__EVEN_PLUGIN__) {

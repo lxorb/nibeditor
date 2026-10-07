@@ -2228,4 +2228,15 @@ export const uk: Dictionary = {
   'that picture could not be opened': 'не вдалося відкрити зображення',
   'the camera could not be opened': 'не вдалося відкрити камеру',
   'that picture is too big': 'зображення завелике',
+  // Chats: notifications
+  Mute: 'Вимкнути звук',
+  Unmute: 'Увімкнути звук',
+  Reply: 'Відповісти',
+  'New message': 'Нове повідомлення',
+  Keywords: 'Ключові слова',
+  Previews: 'Попередній перегляд',
+  Sound: 'Звук',
+  Weekdays: 'Будні',
+  From: 'З',
+  To: 'До',
 }

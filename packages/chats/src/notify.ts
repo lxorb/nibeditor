@@ -10,8 +10,8 @@
  *
  *  The order of the questions is the order a person would give: their own words never
  *  ping them; a chat they are looking at is already seen; a muted chat says nothing;
- *  the chat's level decides what reaches them (all, or only what calls for them); a
- *  pause and the hours they allow come last, because those hold back what would
+ *  the chat's level decides what reaches them (all, or only what calls for them); Do
+ *  not disturb and the hours they allow come last, because those hold back what would
  *  otherwise ping, never what would not. */
 
 import { MENTIONS_ONLY_PAST } from './limits'
@@ -34,8 +34,9 @@ export interface Hush {
   keywords: readonly string[]
   /** The hours pings are let through; null for every hour. */
   hours: Hours | null
-  /** Nothing pings before this moment: Slack's "pause notifications". */
-  pausedUntil: number | null
+  /** Do not disturb, the reader's status (docs/chats.md 4.10): nothing pings before
+   *  this moment. */
+  dndUntil: number | null
 }
 
 /** A message, as much of it as the decision reads. */
@@ -78,7 +79,7 @@ export interface Asked {
 }
 
 /** What the decision says: `show`, or the first reason it does not. */
-export type Ping = 'show' | 'own' | 'seen' | 'muted' | 'level' | 'paused' | 'quiet'
+export type Ping = 'show' | 'own' | 'seen' | 'muted' | 'level' | 'dnd' | 'hours'
 
 /** Why a message calls for the reader in particular: their name, `@everyone`, `@here`
  *  while they are active, a reply to them, or one of their keywords. */
@@ -167,8 +168,8 @@ export function decide(asked: Asked): Ping {
   if (level === 'mentions' && callOf(message, me, asked.active, hush.keywords) === null)
     return 'level'
 
-  if (hush.pausedUntil !== null && hush.pausedUntil > moment.now) return 'paused'
-  return inHours(hush.hours, moment) ? 'show' : 'quiet'
+  if (hush.dndUntil !== null && hush.dndUntil > moment.now) return 'dnd'
+  return inHours(hush.hours, moment) ? 'show' : 'hours'
 }
 
 /** Whether a message that pings is owed a phone push: only where no desktop of the

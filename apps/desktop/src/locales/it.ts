@@ -2212,4 +2212,15 @@ export const it: Dictionary = {
   'that picture could not be opened': 'impossibile aprire l’immagine',
   'the camera could not be opened': 'impossibile aprire la fotocamera',
   'that picture is too big': 'l’immagine è troppo grande',
+  // Chats: notifications
+  Mute: 'Silenzia',
+  Unmute: 'Riattiva',
+  Reply: 'Rispondi',
+  'New message': 'Nuovo messaggio',
+  Keywords: 'Parole chiave',
+  Previews: 'Anteprime',
+  Sound: 'Suono',
+  Weekdays: 'Giorni feriali',
+  From: 'Dalle',
+  To: 'Alle',
 }

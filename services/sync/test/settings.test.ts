@@ -177,12 +177,11 @@ describe('modal editing on an account', () => {
 /** What pings for every chat at once (docs/chats.md 4.11), on the account so every
  *  device holds back the same pings. */
 describe('what an account lets ping about its chats', () => {
-  test('keeps keywords, hours, a pause, previews and sound', async () => {
+  test('keeps keywords, hours, previews and sound', async () => {
     const hours = { days: [1, 2, 3, 4, 5], from: 540, to: 1080 }
     const set = await patch({
       chatKeywords: ['thesis', 'final draft'],
       chatHours: hours,
-      chatPausedUntil: 1_790_000_000_000,
       chatPreviews: false,
       chatSound: true,
     })
@@ -190,15 +189,13 @@ describe('what an account lets ping about its chats', () => {
     expect(set.json.settings).toEqual({
       chatKeywords: ['thesis', 'final draft'],
       chatHours: hours,
-      chatPausedUntil: 1_790_000_000_000,
       chatPreviews: false,
       chatSound: true,
     })
 
-    // Every hour again, and no pause: both are null, which travels as a choice.
-    const cleared = await patch({ chatHours: null, chatPausedUntil: null })
+    // Every hour again: null, which travels as a choice.
+    const cleared = await patch({ chatHours: null })
     expect(cleared.json.settings.chatHours).toBeNull()
-    expect(cleared.json.settings.chatPausedUntil).toBeNull()
   })
 
   test('refuses what the decision could not read', async () => {
@@ -207,7 +204,6 @@ describe('what an account lets ping about its chats', () => {
     expect((await patch({ chatKeywords: ['x'.repeat(61)] })).status).toBe(400)
     expect((await patch({ chatHours: { days: [8], from: 0, to: 60 } })).status).toBe(400)
     expect((await patch({ chatHours: { days: [1], from: 0, to: 1440 } })).status).toBe(400)
-    expect((await patch({ chatPausedUntil: -1 })).status).toBe(400)
     expect((await patch({ chatPreviews: 'no' })).status).toBe(400)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })

@@ -216,6 +216,10 @@
         toolbar.receive(remote)
         pull.receive(remote)
         recovery.receive(remote)
+        // What pings for every chat, fetched with the chats rather than in front of the
+        // first paint; see lib/chats/hush.svelte.ts.
+        if (!__EVEN_PLUGIN__)
+          void import('./lib/chats/hush.svelte').then(({ hush }) => hush.receive(remote))
       })
     }
   })
