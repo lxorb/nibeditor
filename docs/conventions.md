@@ -28,6 +28,7 @@ same commands on every push to `main`.
 | `packages/bases` | Rows, views and the Bases expression language: a note or a task line as a row, Obsidian's `.base` file read and written, filters, formulas, groups and summaries, recurrence, and Todoist's filter language. Pure, no DOM; see `docs/tasks.md`. The task line itself is `packages/markdown`'s (`task-line.ts`, `task-edits.ts`). |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
+| `packages/chats` | The chats' shared half, `@nib/chats` (`docs/chats.md`): the types the app, the Worker's `ChatLog` and the connector meet at (`types.ts`), the one reducer every end applies a chat's events with (`reduce.ts`), who may do what (`roles.ts`), the search language (`search.ts`), mentions, ids, a `.chat` pointer's text, message links, the limits, and every frame and HTTP shape with its check (`wire.ts`). Pure, no DOM, no dependencies. |
 | `packages/online` | The online terminal's shared half, `@nib/online` (`docs/online-terminal.md`): the types the app, the Worker's `Machine` and the machine's `nibd` meet at (`types.ts`), every frame of both sockets with its check (`wire.ts`), a `.term` file's text (`term.ts`), and the rules all three decide by: `awake` (whether a machine stays awake), `sizeOf` (whose size the pty takes), `mayType` (who types), and a month's usage and its price (`usage.ts`). Pure, no DOM; a shape any two of them share is spelled here and nowhere else. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |
 | `apps/cli` | `nib`, which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
@@ -1011,6 +1012,8 @@ Keep one word per term. nib's own vocabulary, and what to follow:
 | foot row | the strip of state under the note | de `Fußzeile`, fr `Barre d'état` |
 | online terminal | a terminal whose shell runs on the person's machine in the cloud, kept as a `.term` file in a space; never "cloud shell" or "remote terminal", which is Remote's (SSH) | Codespaces' *terminal*. de `Online-Terminal`, fr `Terminal en ligne` |
 | machine | the one Linux computer in the cloud an account's online terminals run on; never "container", "sandbox" or "VM" on screen | Codespaces' *codespace*. de `Maschine`, fr `Machine` |
+| chat | a channel people write in together, kept as a `.chat` file in a space; never "channel", "conversation" or "DM" on screen | Slack's *channel*. de `Chat`, fr `Discussion` |
+| reply | a message written under another, in the replies pane; never "thread", which is an AI conversation's word | Slack's *reply*. de `Antwort`, fr `Réponse` |
 
 `Nib`, `nibeditor`, format names (`Markdown`, `PDF`, `HTML`), other products
 (`Obsidian`, `Notion`, `OpenAI`) and key names (`Ctrl`, `Enter`, `⌘`) are never

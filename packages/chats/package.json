@@ -6,9 +6,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ids": "./src/ids.ts",
     "./limits": "./src/limits.ts",
+    "./links": "./src/links.ts",
+    "./mentions": "./src/mentions.ts",
     "./pointer": "./src/pointer.ts",
-    "./types": "./src/types.ts"
+    "./reduce": "./src/reduce.ts",
+    "./roles": "./src/roles.ts",
+    "./search": "./src/search.ts",
+    "./types": "./src/types.ts",
+    "./wire": "./src/wire.ts"
   },
   "scripts": {
     "test": "vitest run",

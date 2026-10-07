@@ -1071,8 +1071,8 @@ function chatState(): ChatState                      // { messages, meta, seq } 
 function apply(state: ChatState, event: Logged): Message[]
 
 // roles.ts: 4.6's table, which the object decides by and the app draws by.
-function may(role: Role | null, action: Action, chat: { posting: Posting; mine?: boolean }): boolean
-function actionOf(event: Event, mine: boolean): Action
+function may(role: Role | null, action: Action, posting: Posting): boolean
+function mayEvent(role: Role | null, event: Event, mine: boolean, posting: Posting): boolean
 
 // search.ts: 4.12. Days are the reader's calendar days, `since` inclusive, `until` not.
 function parseSearch(query: string, today: string): SearchQuery
