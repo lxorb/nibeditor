@@ -34,6 +34,10 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter as _, Manager as _};
 
 /// What the page is told when a notice was pressed.
+#[cfg_attr(
+    not(any(windows, target_os = "macos")),
+    allow(dead_code, reason = "Linux hears no presses")
+)]
 const PRESSED: &str = "nib://notice";
 
 /// The longest tag the system keeps: Windows' own limit for a toast's.
@@ -55,11 +59,21 @@ pub struct Notice {
         allow(dead_code, reason = "only a Windows toast has a line for it")
     )]
     pub from: String,
+    #[cfg_attr(
+        not(any(windows, target_os = "macos", test)),
+        allow(
+            dead_code,
+            reason = "Linux shows the plugin's notification, with its own sound"
+        )
+    )]
     pub silent: bool,
     /// A field to answer in, where the system has one.
     #[cfg_attr(
         not(any(windows, target_os = "macos", test)),
-        allow(dead_code, reason = "Linux shows a notification with nothing to type in")
+        allow(
+            dead_code,
+            reason = "Linux shows a notification with nothing to type in"
+        )
     )]
     pub reply: Option<Reply>,
 }
@@ -68,7 +82,10 @@ pub struct Notice {
 #[derive(Clone, Debug, Deserialize)]
 #[cfg_attr(
     not(any(windows, target_os = "macos", test)),
-    allow(dead_code, reason = "Linux shows a notification with nothing to type in")
+    allow(
+        dead_code,
+        reason = "Linux shows a notification with nothing to type in"
+    )
 )]
 pub struct Reply {
     pub placeholder: String,
@@ -89,6 +106,10 @@ pub enum Act {
 
 /// What the page is told.
 #[derive(Clone, Debug, Serialize)]
+#[cfg_attr(
+    not(any(windows, target_os = "macos")),
+    allow(dead_code, reason = "Linux hears no presses")
+)]
 struct Answer {
     id: String,
     act: Act,
@@ -130,11 +151,7 @@ fn probing() -> bool {
 /// Shows one notice. On the window's own thread, where Linux's notification plugin is
 /// added and whose apartment Windows' notifier is reached through.
 #[tauri::command]
-pub fn notice_show(
-    webview: tauri::Webview,
-    app: AppHandle,
-    notice: Notice,
-) -> Result<(), String> {
+pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> Result<(), String> {
     crate::agents::from_the_app(&webview)?;
     if !plain(&notice) {
         return Err("a notice is named by plain characters".into());
@@ -239,7 +256,10 @@ mod tests {
 
     #[test]
     fn a_notice_is_named_by_plain_characters() {
-        assert!(plain(&notice("00ff00ff00ff00ff", "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e")));
+        assert!(plain(&notice(
+            "00ff00ff00ff00ff",
+            "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"
+        )));
         assert!(plain(&notice("ab", "terminal-12")));
         assert!(!plain(&notice("", "a")));
         assert!(!plain(&notice("ab", "")));

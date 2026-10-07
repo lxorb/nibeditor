@@ -34,7 +34,8 @@ pub fn show(app: &AppHandle, notice: &Notice, quietly: bool) -> Result<(), Strin
     document
         .LoadXml(&HSTRING::from(toast::xml(notice)))
         .map_err(|error| failed(&error))?;
-    let shown = ToastNotification::CreateToastNotification(&document).map_err(|error| failed(&error))?;
+    let shown =
+        ToastNotification::CreateToastNotification(&document).map_err(|error| failed(&error))?;
     shown
         .SetTag(&HSTRING::from(notice.tag.as_str()))
         .map_err(|error| failed(&error))?;
@@ -42,18 +43,19 @@ pub fn show(app: &AppHandle, notice: &Notice, quietly: bool) -> Result<(), Strin
         .SetGroup(&HSTRING::from(GROUP))
         .map_err(|error| failed(&error))?;
     if quietly {
-        shown.SetSuppressPopup(true).map_err(|error| failed(&error))?;
+        shown
+            .SetSuppressPopup(true)
+            .map_err(|error| failed(&error))?;
     }
 
     let app_for_press = app.clone();
     let id = notice.id.clone();
-    let heard = TypedEventHandler::<ToastNotification, windows::core::IInspectable>::new(
-        move |_, args| {
+    let heard =
+        TypedEventHandler::<ToastNotification, windows::core::IInspectable>::new(move |_, args| {
             let (act, text) = pressed(args.as_ref());
             super::answered(&app_for_press, &id, act, text);
             Ok(())
-        },
-    );
+        });
     shown.Activated(&heard).map_err(|error| failed(&error))?;
 
     ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(
