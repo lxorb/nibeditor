@@ -32,6 +32,10 @@ export function noteNameOf(body: string, fallback: string): string {
 
 /** One message as a quote under its writer's name and time, its files' embeds in it. */
 export function quoted(who: string, at: string, body: string, files: readonly string[]): string {
-  const lines = [`**${who}** · ${at}`, ...(body ? body.split('\n') : []), ...files.map((one) => `![[${one}]]`)]
+  const lines = [
+    `**${who}** · ${at}`,
+    ...(body ? body.split('\n') : []),
+    ...files.map((one) => `![[${one}]]`),
+  ]
   return lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
 }

@@ -454,6 +454,26 @@ are `lib/task-actions.ts`.
 | `list_versions` | `path` | the versions, with who wrote each (8.5) |
 | `restore_version` | `path`, `version` | asks first (9.3) |
 
+**Chats** (`docs/chats.md` 4.14), behind their own two scopes, `chats.read` and
+`chats.write` (9.1). A chat is named by its id or its name, with or without `#`; one in a
+space the grant does not reach does not exist. Every message the reader did not write
+comes back inside an untrusted mark naming the chat and the person, `<untrusted
+source="chat:thesis from:Lucile">`, so another person's words are never an agent's
+instructions (9.6); the words are `@nib/chats/agent`'s, the account connector's too.
+
+| tool | arguments | what it does |
+| --- | --- | --- |
+| `list_chats` | `space`?, `unread`? | the chats, a line each: name, id, space, people, unread, mentions, the last message's time |
+| `read_chat` | `chat`, `around`? or `before`? or `after`? (message ids), `replies_of`?, `limit`? (to 200) | messages oldest first, from the device's store once it has caught up |
+| `search_chats` | `query` (the search panel's language: `from:`, `in:`, `has:`, `is:reply`, `mentions:`, dates), `limit`? | hits, newest first, each under its chat |
+| `draft_message` | `chat`, `text`, `reply_to`? | words into the reader's composer for that chat (or one message's replies), the chat opened behind the tab in front; never sends, never asks |
+| `post_message` | `chat`, `text`, `reply_to`?, `quote`? | a message as the reader, marked as the agent's (`via`); in a chat anybody else reads it is Publishing (9.3): asked in Approve mode with **Always in this chat** as the third answer, never in Agent mode; the chat with yourself asks nothing |
+| `react` | `chat`, `message`, `emoji`, `on`? | one reaction put on or taken off, asked as a post is |
+
+`@nib` in a chat is not a tool: the reader's own Enter in the reader's own composer asks
+the AI sidebar, with the chat attached, and the answer comes back as a draft (decision
+7.7 of `docs/chats.md`). Nothing anybody else writes ever starts an agent.
+
 ### 5.4 The rest of the workspace
 
 | tool | arguments | what it does |
@@ -944,14 +964,19 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal` | all but `browser.script`, `browser.storage`, `settings`, `terminal` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal` | all but `browser.script`, `browser.storage`, `settings`, `terminal` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
 | asks | the categories in 9.3, each on or off | all on |
 | limits | tabs, calls a minute, pages a minute | 4 tabs, 600 calls, 60 navigations |
 
-A third-party agent starts with `context` off, `browser.reader` off and `confirm` mode.
+A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
+(a chat is other people's words) and `confirm` mode. A grant kept from before chats were
+is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
+the reader's own (it holds `context`); once the file has been written with them, a scope
+taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under
+`chat:<id>`.
 
 The AI sidebar's own agents (one built-in grant per provider, "nib · Claude") ask as the
 thread's mode says rather than as the grant does (docs/ai-sidebar.md 4.4), so Settings >

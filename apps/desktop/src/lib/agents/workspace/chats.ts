@@ -68,7 +68,8 @@ function chatFor(call: Call, store: Chats): Seen {
     seen.find((one) => one.entry.id === named) ??
     seen.find((one) => one.name.toLowerCase() === folded && one.entry.root === front) ??
     seen.find((one) => one.name.toLowerCase() === folded)
-  if (!found) throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
+  if (!found)
+    throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
   return found
 }
 

@@ -55,7 +55,9 @@ const RECEIPTS = 'nib:chat-receipts'
 /** A wikilink's target: what `[[` holds up to a heading, a block, an alias or its end. */
 const WIKILINK = /\[\[([^\]|#^]+)/g
 
-/** How often the pointers are looked for again when a chat turns up without one. */
+/** How soon the pointers are looked for again when a chat in a space on this device
+ *  turns up without one, doubling to the longest wait while it does not come. */
+const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
 
 /** The account, over HTTP, as the engine asks it. */
@@ -106,7 +108,8 @@ class ChatsStore implements Chats {
   private readonly people = new Map<string, Promise<ChatMember[]>>()
   private readonly listeners = new Set<() => void>()
   private readonly arrivals = new Set<(chat: string, messages: readonly Message[]) => void>()
-  private lookedAt = 0
+  private looking: ReturnType<typeof setTimeout> | null = null
+  private lookWait = LOOK_FIRST
   private stops: (() => void)[] = []
 
   get me(): Who | null {
@@ -166,6 +169,9 @@ class ChatsStore implements Chats {
       held.view.close()
     }
     this.views.clear()
+    if (this.looking) clearTimeout(this.looking)
+    this.looking = null
+    this.lookWait = LOOK_FIRST
     this.engine?.stop()
     this.engine = null
     this.cache = null
@@ -261,9 +267,22 @@ class ChatsStore implements Chats {
     entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
     this.list = entries
     for (const listener of this.listeners) listener()
-    if (entries.some((one) => !one.path) && Date.now() - this.lookedAt > LOOK_AGAIN) {
+    if (entries.some((one) => !one.path && one.root)) this.awaitPointers()
+    else this.lookWait = LOOK_FIRST
+  }
+
+  /** A chat the account lists in a space this device holds, whose pointer is not here
+   *  yet: it was just made on another device, and its pointer is on its way through the
+   *  space's sync. The sync is asked for a pass now rather than at its idle interval,
+   *  and the pointers are looked for again, sooner at first, until it has come. */
+  private awaitPointers(): void {
+    if (this.looking) return
+    sync.nudge()
+    this.looking = setTimeout(() => {
+      this.looking = null
+      this.lookWait = Math.min(this.lookWait * 2, LOOK_AGAIN)
       void this.lookForPointers()
-    }
+    }, this.lookWait)
   }
 
   /** A space's id on the account: the same under either sync. */
@@ -295,7 +314,6 @@ class ChatsStore implements Chats {
   }
 
   private async lookForPointers(): Promise<void> {
-    this.lookedAt = Date.now()
     const found = await findPointers().catch(() => null)
     if (!found || !this.engine) return
     this.places = found

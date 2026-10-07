@@ -435,7 +435,8 @@ export class FixtureChats implements Chats {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly waitingOffers = new Map<string, Offer>()
   /** Who cannot open a note, by its path, for a test or a drive to say. */
-  reaches: Record<string, { missing: ChatMember[]; share: boolean }> = {}
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the fixture's own books
+  readonly reaches = new Map<string, { missing: ChatMember[]; share: boolean }>()
 
   offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
     const key = more.parent ? `${chat}/${more.parent}` : chat
@@ -453,11 +454,11 @@ export class FixtureChats implements Chats {
   }
 
   noteReach(_chat: string, path: string) {
-    return Promise.resolve(this.reaches[path] ?? null)
+    return Promise.resolve(this.reaches.get(path) ?? null)
   }
 
   shareNote(_chat: string, path: string): Promise<boolean> {
-    delete this.reaches[path]
+    this.reaches.delete(path)
     return Promise.resolve(true)
   }
 

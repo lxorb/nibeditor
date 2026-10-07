@@ -22,11 +22,14 @@
 
   $effect(() => store().heard(() => heard++))
 
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
+
   $effect(() => {
     const root = workspace.activeSpace?.root
     const names = [withoutExtension(fileName(path))]
     if (root) names.push(withoutExtension(relativeTo(root, path)))
-    void heard
+    follows(heard)
     let current = true
     void store()
       .linking(names)

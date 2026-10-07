@@ -569,6 +569,14 @@
               import('./lib/views/open'),
               import('./lib/workspace/write-file'),
             ]).then(([{ rows }, views, { writeFile }]) => ({ rows, ...views, writeFile })),
+          // The chats' store and their tabs, the same way: see test/e2e/chats-live.py.
+          chats: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no chats in the Even Realities plugin'))
+              : Promise.all([
+                  import('./lib/chats/store.svelte'),
+                  import('./lib/chats/view/open'),
+                ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
           importing,

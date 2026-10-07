@@ -218,3 +218,23 @@ describe('another machine', () => {
     expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`])
   })
 })
+
+describe('a message in a chat', () => {
+  test('opens its chat at it, in a tab of its own behind with Ctrl', () => {
+    const { asked, hands: hand } = hands()
+    const row: Row = {
+      kind: 'message',
+      chat: 'c_1',
+      id: '01K6Z8',
+      path: '/s/Team/thesis.chat',
+      line: 'the figures',
+      where: '#thesis · Lucile',
+    }
+    expect(choose(row, undefined, hand)).toBe('close')
+    expect(choose(row, key({ ctrl: true }), hand)).toBe('close')
+    expect(asked).toEqual([
+      'message ["/s/Team/thesis.chat","01K6Z8",{}]',
+      'message ["/s/Team/thesis.chat","01K6Z8",{"activate":false,"beside":true}]',
+    ])
+  })
+})

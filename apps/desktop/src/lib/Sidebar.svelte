@@ -365,10 +365,7 @@
    *  plugin, which carries none. */
   function newChat(): MenuEntry[] {
     if (__EVEN_PLUGIN__ || !account.accountToken) return []
-    const run = () => {
-      const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
-      void opening?.then(({ makeChat }) => makeChat())
-    }
+    const run = () => void import('./chats/view/open').then(({ makeChat }) => makeChat())
     return [{ label: t('New chat'), run }]
   }
 

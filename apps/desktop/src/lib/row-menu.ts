@@ -120,10 +120,7 @@ function sendEntry(entry: Entry): MenuEntry[] {
   if (__EVEN_PLUGIN__ || entry.is_dir || !isMarkdownPath(entry.name) || !account.accountToken) {
     return []
   }
-  const run = () => {
-    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
-    void sending?.then(({ sendToChat }) => sendToChat(entry.path))
-  }
+  const run = () => void import('./chats/send').then(({ sendToChat }) => sendToChat(entry.path))
   return [{ label: t('Send to chat'), run }]
 }
 

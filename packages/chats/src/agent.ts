@@ -28,7 +28,7 @@ function inert(words: string): string {
 /** A source as an attribute's value: one line, its quotes and brackets as entities,
  *  and short. */
 function attribute(source: string): string {
-  return [...source]
+  return Array.from(source)
     .slice(0, 300)
     .map((one) => {
       if (one === '&') return '&amp;'

@@ -554,7 +554,10 @@ pub fn agents_ask(
     let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
         return Answer::error(Code::NotGranted, "there is no such agent");
     };
-    if !grant.asks(category) || site.as_deref().is_some_and(|site| grant.always(site, category))
+    if !grant.asks(category)
+        || site
+            .as_deref()
+            .is_some_and(|site| grant.always(site, category))
     {
         return Answer::ok(verbs::Nothing {});
     }

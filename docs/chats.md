@@ -492,6 +492,10 @@ it is on (no route here asks `sync_version`):
 - `GET /v2/chats/:id/files/:hash` for members; uploads are sync v2's `PUT /v2/blobs/:hash`
   and parts routes, and the event names the hash, which `chat_files` records. A guest holds
   no blobs and so attaches none.
+- `GET /v2/chats/:id/note?space=&note=` (who in the chat cannot open a note dropped into
+  it, and whether the asker owns it) and `POST /v2/chats/:id/note {space, note}` (the
+  owner's one press that shares it, to read, with them; no mail goes, since the message
+  is the news), 4.13.
 - `GET /v2/chats/:id/members` (names and roles, no addresses), `POST /v2/chats/:id/read
   {seq, back?}` (a read place without a socket; `back` is Mark unread), `PUT
   /v2/chats/:id/me {notify?, mutedUntil?}` and `GET /v2/chats/:id/scheduled` (the asker's
@@ -736,9 +740,12 @@ Settings, and one function decides.
 
 ### 4.12 Search
 
-- **In the search panel**, chats beside notes. Messages are found in the device's store
-  (4.17), never in files: nothing of a chat is written into the space but its pointer. A hit
-  is drawn as a message (avatar, name, time, the line) and opens the chat at it.
+- **In the palette** (Shift Shift, the app's one search over everything), chats beside
+  notes: from three letters, a few messages under the notes, and messages alone for a
+  query with any of the modifiers below. Messages are found in the device's store (4.17),
+  never in files: nothing of a chat is written into the space but its pointer. A hit is a
+  row with the chat's mark, the message's first line, the chat and who wrote it, and
+  opens the chat at it.
 - **Modifiers** (Slack's [search][sl-search]), parsed by `parseSearch` in `@nib/chats` and
   answered from the device's store of messages: `from:@Lucile` (or `from:me`),
   `in:#thesis`, `has:link`, `has:file`, `has:image`, `has:video`, `has:voice`, `has:poll`,
@@ -748,7 +755,8 @@ Settings, and one function decides.
   own calendar day, so the parser answers days, never instants, and the store turns them
   into times in the reader's zone. What a message has is `hasOf` in the same package, so a
   store's columns and a filter agree. A modifier switches the panel to messages only.
-- **In one chat**: Ctrl+F in a chat is the search panel scoped to it, `in:` filled in.
+- **In one chat**: Ctrl+F in a chat (or the glass in its head) is the palette with `in:`
+  filled in.
 - **The store** keeps every message of every chat with an FTS5 index (4.17); the browser
   build asks `GET /v2/chats/search`.
 - **A hit** loads the rows around the message from the store, scrolls it to the middle and
@@ -762,10 +770,13 @@ Settings, and one function decides.
   screen; a press opens the note beside the chat. If some members cannot open the note (it
   is in another space, or the chat is shared on its own with somebody outside the space), the
   composer shows their avatars over the field with **Share** (to read) before sending,
-  Slack's file-access prompt; sending without it sends the link alone.
-- **Quote a selection.** The editor's context menu and the palette gain **Send to chat**:
-  pick a chat in the switcher (4.16) and its composer opens with the selection as a quote and
-  a link to the note at that heading. Nothing is sent until Enter.
+  Slack's file-access prompt; sending without it sends the link alone. Share is offered to
+  the note's owner, as every share is (the routes in 4.4), and what it grants is the
+  note alone, to read.
+- **Quote a selection.** The editor's context menu, a note's row in the file list and the
+  palette gain **Send to chat**: pick a chat by name (the note's own space's first, a new
+  chat in it last) and its composer opens with the selection as a quote and a link to the
+  note at that heading, or the note's link alone. Nothing is sent until Enter.
 - **@-mention a note**: `[[` as above. The message keeps it as a wikilink, and the link
   index reads links out of the store's messages as it reads them out of notes, so the note's
   backlinks list the chat and the message, and a rename of the note is followed there too.
@@ -804,7 +815,13 @@ the note verbs are) and, where marked, the account connector (`services/sync/src
 
 - **Two new scopes**, `chats.read` and `chats.write`, in the grant (`docs/agent-native.md` 9.1).
   Emil's default has both on, with the asks below; a third-party agent starts with both off.
-  A space the agent was not granted has no chats to it.
+  A space the agent was not granted has no chats to it. The six tools cost the table 2,101
+  characters, about 530 tokens, and are listed only to a grant holding the scopes; the
+  table's ceiling went from 31,000 to 33,000 for them.
+- **The connector** answers in the same words (`@nib/chats/agent`) and has no reader to
+  ask: posting and reacting through it need a token that may write, which is the account
+  saying yes to an agent writing as it, and every message it sends says it came by way of
+  the connector. It has no `draft_message`, there being no composer there.
 - **Posting asks first.** `post_message`, `react`, `edit_message` and `delete_message` in a
   chat anybody else can read are the **Publishing** category of `docs/agent-native.md` 9.3
   ("anything in nib that puts words where somebody else can read them"): the call answers
@@ -822,7 +839,8 @@ the note verbs are) and, where marked, the account connector (`services/sync/src
 - **`@nib` in a chat** is the asker's own agent, on the asker's machine. `@nib what did we
   decide about the figures?` and Enter sends nothing: it opens the AI sidebar with the chat
   attached (the unread part, or the last 200 messages) and the question, and the answer
-  comes back as a draft in the composer, sent with Enter. Nobody else's message ever starts
+  comes back as a draft in the composer, sent with Enter. `@nib` is offered by the `@`
+  menu only at the start of a message, which is where it asks. Nobody else's message ever starts
   anybody's agent: an agent answering strangers' words with its owner's notes is the
   injection `docs/agent-native.md` 9.6 describes (decision 7.7).
 - **The AI sidebar** gains a chat as context (an `@` chip) and two commands for

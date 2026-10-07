@@ -39,17 +39,21 @@ export function addAsTask(page: ChatPage, message: Message, space: string | null
     .filter((who) => who !== page.me)
     .map((who) => nameOf(who, page.members, space))
   showQuickAdd({
-    text: taskWords(message.body || (message.files[0]?.name ?? ''), called),
+    text: taskWords(message.body || (message.files.at(0)?.name ?? ''), called),
     description: linkBack(page, message),
   })
 }
 
 /** Save as note: written beside the chat, and opened. */
-export async function saveAsNote(page: ChatPage, message: Message, space: string | null): Promise<void> {
-  const pointer = page.entry?.path
-  if (!pointer) return
-  const folder = folderOf(pointer)
-  const name = noteNameOf(message.body, page.entry?.name ?? t('Chat'))
+export async function saveAsNote(
+  page: ChatPage,
+  message: Message,
+  space: string | null,
+): Promise<void> {
+  const entry = page.entry
+  if (!entry?.path) return
+  const folder = folderOf(entry.path)
+  const name = noteNameOf(message.body, entry.name ?? t('Chat'))
   const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
 
   const replies = message.replies
@@ -60,7 +64,11 @@ export async function saveAsNote(page: ChatPage, message: Message, space: string
     const files: string[] = []
     for (const file of one.files) {
       const url = await store().fileUrl(page.id, file.hash)
-      const bytes = url ? await fetch(url).then((answer) => answer.arrayBuffer()).catch(() => null) : null
+      const bytes = url
+        ? await fetch(url)
+            .then((answer) => answer.arrayBuffer())
+            .catch(() => null)
+        : null
       const kept = bytes ? await storeBeside(bytes, path, file.name) : null
       if (kept) files.push(kept)
     }

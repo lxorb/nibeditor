@@ -43,8 +43,12 @@ export async function makePointer(folder: string, name: string): Promise<Place |
   if (!pointer) return null
 
   const path = joinPath(folder, workspace.freeName(folder, `${name}${CHAT_EXTENSION}`))
-  await writeFile(path, chatText(pointer))
+  const text = chatText(pointer)
+  await writeFile(path, text)
   await workspace.fileCame(path, 'file')
+  // Told to the sync at once, as a saved note is, so the chat's pointer reaches the
+  // others' devices with the next pass rather than at the idle one's leisure.
+  sync.wrote(path, text)
   return { root: space.root, path }
 }
 

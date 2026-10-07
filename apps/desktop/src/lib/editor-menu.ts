@@ -346,8 +346,7 @@ function sendEntry(view: EditorView): MenuEntry[] {
   if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
   const run = () => {
     const range = view.state.selection.main
-    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
-    void sending?.then(({ sendSelection }) =>
+    void import('./chats/send').then(({ sendSelection }) =>
       sendSelection(note, view.state.doc.toString(), range.from, range.to),
     )
   }

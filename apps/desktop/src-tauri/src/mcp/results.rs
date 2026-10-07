@@ -441,7 +441,11 @@ hi
             untrusted: None,
             dialog: None,
         };
-        let result = rendered("read_chat", &json!({ "chat": "thesis" }), &contract(&answer));
+        let result = rendered(
+            "read_chat",
+            &json!({ "chat": "thesis" }),
+            &contract(&answer),
+        );
         assert_eq!(first_text(&result), words);
         assert_eq!(result["isError"], false);
     }

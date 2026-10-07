@@ -118,6 +118,17 @@ pub fn is_base(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("base"))
 }
 
+/// Whether a path names a chat's pointer: one line of JSON naming the chat the account
+/// made (docs/chats.md 4.2). Text, so `read_note` and `write_note` carry it; the crate
+/// has to agree it is a file the window lists and opens, and the mirror sends up, since
+/// the mirror walks the tree this crate builds - which it did not, and a chat made on
+/// one device never reached another.
+pub fn is_chat(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("chat"))
+}
+
 /// Whether a path names a website: a shortcut file rather than words.
 ///
 /// `.url` is the Windows Internet Shortcut - an INI file with an address in it,

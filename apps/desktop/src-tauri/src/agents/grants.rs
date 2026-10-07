@@ -666,12 +666,16 @@ mod tests {
     #[test]
     fn a_grant_from_before_chats_reads_and_posts_where_it_reads_and_writes_notes() {
         let mut own = Grant::own("a".into(), "A");
-        own.scopes
-            .retain(|one| !matches!(one, Scope::ChatsRead | Scope::ChatsWrite | Scope::NotesWrite));
-        let mut other = Grant::own("b".into(), "B");
-        other.scopes.retain(|one| {
-            !matches!(one, Scope::Context | Scope::ChatsRead | Scope::ChatsWrite)
+        own.scopes.retain(|one| {
+            !matches!(
+                one,
+                Scope::ChatsRead | Scope::ChatsWrite | Scope::NotesWrite
+            )
         });
+        let mut other = Grant::own("b".into(), "B");
+        other
+            .scopes
+            .retain(|one| !matches!(one, Scope::Context | Scope::ChatsRead | Scope::ChatsWrite));
         let kept = |grant: &Grant| Kept {
             grant: grant.clone(),
             token: hashed("t"),

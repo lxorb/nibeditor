@@ -95,7 +95,7 @@
   // on screen.
   $effect(() =>
     store().offers((offer) => {
-      if (page && offer.chat === page.id && offer.parent) page.replying = offer.parent
+      if (page?.id === offer.chat && offer.parent) page.replying = offer.parent
     }),
   )
 

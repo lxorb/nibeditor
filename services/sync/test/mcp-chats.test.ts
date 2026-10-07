@@ -47,11 +47,9 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
 }
 
 async function state(token: string) {
-  const { json } = await call<{ messages: { id: string; body: string; via?: { agent: string } }[] }>(
-    env,
-    `/v2/chats/${chat}/state`,
-    { token },
-  )
+  const { json } = await call<{
+    messages: { id: string; body: string; via?: { agent: string } }[]
+  }>(env, `/v2/chats/${chat}/state`, { token })
   return json.messages
 }
 

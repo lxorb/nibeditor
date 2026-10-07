@@ -28,8 +28,7 @@ beforeEach(async () => {
   env.HUB = hubs(env).HUB
 
   owner = await signIn(env, 'owner@example.com')
-  thesis = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space
-    .id
+  thesis = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space.id
   notes = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
   for (const [email, step] of [
     ['lucile@example.com', 1],

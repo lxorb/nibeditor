@@ -1014,9 +1014,8 @@ function sendToChatCommand(view?: EditorView): Command[] {
   const note = tab?.kind === 'note' ? tab.path : null
   if (__EVEN_PLUGIN__ || !note || !account.accountToken) return []
   const run = () => {
-    const sending = __EVEN_PLUGIN__ ? null : import('./chats/send')
     const range = view?.state.selection.main
-    void sending?.then(({ sendSelection, sendToChat }) =>
+    void import('./chats/send').then(({ sendSelection, sendToChat }) =>
       view && range && !range.empty
         ? sendSelection(note, view.state.doc.toString(), range.from, range.to)
         : sendToChat(note),

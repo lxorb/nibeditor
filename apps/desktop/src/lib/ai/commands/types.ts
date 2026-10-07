@@ -74,7 +74,12 @@ export interface Panel {
   turn?(thread: Thread, text: string, once?: Once): Promise<Ended>
   /** The same, with words attached the way the field's chips attach them: a chat's
    *  messages for `/catchup`, `/reply` and `@nib` in a chat (docs/chats.md 4.14). */
-  turnWith?(thread: Thread, text: string, attached: readonly Attached[], once?: Once): Promise<Ended>
+  turnWith?(
+    thread: Thread,
+    text: string,
+    attached: readonly Attached[],
+    once?: Once,
+  ): Promise<Ended>
   /** A thread a command made (a fork, a subtask): into the list, and to the front with
    *  `open`. */
   adopt?(thread: Thread, open?: boolean): void

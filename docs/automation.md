@@ -30,6 +30,7 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://add-task?text=Call%20mum%20%F0%9F%93%85%202026-10-06` | adds a to-do line to the open space's inbox (`Inbox.md`), or to `space`'s; the words may carry the Tasks plugin's marks, as quick add writes them |
 | `nib://search?query=tag:%23work` | opens the search panel on that query |
 | `nib://command?id=new` | runs one command out of the registry |
+| `nib://chat/c_3f9a…/01K6Z8…` | opens the chat at that message: what a message's Copy link writes. It is a place rather than a verb, so it takes no callbacks; one naming a chat this account does not reach, or one whose pointer is not on this device yet, says so on the line across the top (`docs/chats.md` 4.13) |
 
 `nib://command` takes the ids the palette knows, minus the handful only somebody at
 the keyboard may press: **Record**, **Dictate**, **Photo** and **Sign
@@ -148,6 +149,7 @@ listen on. Run against the web app it says so rather than failing to connect.
 | `tasks add <text> [--note N] [--under H]` | a to-do line, in the space's inbox unless a note is named |
 | `tasks done <at> [--undo]` | ticks one, writing a recurring task's next line; `--undo` opens it again |
 | `base query <path> [--view V]` | a view of a `.base` file: its groups, rows and summaries |
+| `react --chat C --message M --emoji E [--on false]` | a reaction on a message in a chat, as the agents' `react` (`docs/chats.md` 4.14); the other chat verbs (`list_chats`, `read_chat`, `search_chats`, `draft_message`, `post_message`) are spelt the Model Context Protocol's way and taken the same way, `--chat` and the rest |
 | `eval <code>` | runs JavaScript in the window |
 | `verbs` | the app's own list of these |
 
