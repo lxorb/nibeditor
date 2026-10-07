@@ -49,6 +49,7 @@
     archivedStrip,
     askPanel,
     canvasSurface,
+    chatSurface,
     emptySurface,
     findBar,
     graphSurface,
@@ -564,6 +565,14 @@
     {#key tab.id}
       {#await viewSurface() then ViewTab}
         <ViewTab {tab} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'channel'}
+    {#key tab.id}
+      {#await chatSurface() then ChatTab}
+        <ChatTab {tab} />
       {:catch}
         {@render unreachable()}
       {/await}

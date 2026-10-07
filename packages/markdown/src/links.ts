@@ -128,6 +128,11 @@ export function isBaseTarget(target: string): boolean {
   return /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
 }
 
+/** Whether a target names a chat: its `.chat` pointer (docs/chats.md 4.2). */
+export function isChatTarget(target: string): boolean {
+  return /\.chat$/i.test(target)
+}
+
 /** Whether a target names a page note: pages of paper written on with a pen, which
  *  Nib keeps in a `.pages` file.
  *

@@ -158,7 +158,12 @@ describe('where a panel lives until somebody moves it', () => {
       'ask',
       'agents',
     ])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'tasks'])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual([
+      'tree',
+      'search',
+      'tasks',
+      'chats',
+    ])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {

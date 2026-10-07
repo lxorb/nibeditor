@@ -116,6 +116,7 @@ export function exportKindOf(open: Open | null): ExportKind {
     case 'terminal':
     case 'view':
     case 'chat':
+    case 'channel':
       return 'none'
   }
 }

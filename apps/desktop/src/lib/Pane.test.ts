@@ -21,6 +21,7 @@ describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
     expect(SURFACES.map(([, door]) => door).sort()).toEqual([
       'canvasSurface',
+      'chatSurface',
       'emptySurface',
       'graphSurface',
       'pagesSurface',

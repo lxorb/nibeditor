@@ -219,6 +219,21 @@ async function loadEmoji(): Promise<LoadedSet> {
   }
 }
 
+/** The emoji a skin tone applies to, out of the same index: what a chat's picker
+ *  offers tones for (lib/emoji/data.ts). The one module that reads the file is this. */
+export async function tonedEmoji(): Promise<Set<string>> {
+  const groups = (await import('unicode-emoji-json/data-by-group.json')).default as Toned[]
+  return new Set(
+    groups.flatMap((group) =>
+      group.emojis.filter((one) => one.skin_tone_support).map((one) => one.emoji),
+    ),
+  )
+}
+
+interface Toned {
+  emojis: { emoji: string; skin_tone_support: boolean }[]
+}
+
 async function loadLucide(): Promise<LoadedSet> {
   const [library, tags] = await Promise.all([loadIcons(), loadTags()])
 

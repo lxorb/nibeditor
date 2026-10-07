@@ -860,9 +860,10 @@ the avatar and name, the rest only their words, with the time in the gutter on h
   the recorder; ➤ sends, and its chevron schedules. A file dropped anywhere on the chat
   lands in the composer as a chip and goes with the words. Drafts are kept per chat after
   the quiet pause.
-- **The replies pane** is the right panel slot the AI sidebar and the outline share, so a
-  reply and a note can sit side by side; its composer has "also to #thesis" as a checkbox
-  (Slack's).
+- **The replies pane** slides in at the chat tab's right edge (on a phone it is the page);
+  its composer has "also to #thesis" as a checkbox (Slack's). Built inside the tab rather
+  than in the right panel slot, so a chat in each of two panes keeps its own replies and
+  the outline and the AI sidebar keep their side.
 - **The pills**: when the new line is above the screen, a pill at the top with the count, ↑
   and ✦ (the summary); when the reader has scrolled up and messages arrive, a pill at the
   bottom with ↓ and the count.
@@ -913,7 +914,7 @@ says so and the lane picks the next free one.
 | Ctrl+Z | the composer, within 15 s of sending | unsend |
 | Ctrl+Shift+M | a chat | record a voice message; again to send |
 | Ctrl+F | a chat | search this chat |
-| Ctrl+Shift+L | anywhere in nib | the Chats panel |
+| Ctrl+Shift+U | anywhere in nib | the Chats panel (Ctrl+Shift+L is the sidebar's) |
 
 ### 4.17 Fast
 

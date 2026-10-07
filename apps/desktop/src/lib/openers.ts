@@ -16,6 +16,7 @@
 import {
   isBaseTarget,
   isCanvasTarget,
+  isChatTarget,
   isPagesTarget,
   isPdfTarget,
   isWebTarget,
@@ -23,7 +24,7 @@ import {
 import { isMarkdownPath } from './space-paths'
 
 /** What opens a path, or null where this build cannot show it. */
-export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'note'
+export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'note'
 
 /** What the build is, for the two kinds a pair of glasses cannot draw.
  *
@@ -64,6 +65,7 @@ export function openerFor(
   if (isCanvasTarget(path)) return build.isPlugin ? null : 'canvas'
   // A base is a view of rows, a board or a calendar, which the glasses cannot draw.
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
+  if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
 
   return 'note'
 }

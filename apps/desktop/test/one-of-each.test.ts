@@ -465,6 +465,8 @@ describe('the switch', () => {
       'lib/agents/settings/AgentDetail.svelte',
       // Fast, in the AI panel's model popover.
       'lib/ai/sidebar/ModelPicker.svelte',
+      // One answer or several, in a new poll.
+      'lib/chats/view/PollSheet.svelte',
       // Do not disturb and Appear offline, under the account's name.
       'lib/people/ProfileRows.svelte',
       // A host pinned, in Settings > Remote.
@@ -723,7 +725,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the eleven that show one wear the class rather than a card of their own', () => {
+  test('and the twelve that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -734,6 +736,8 @@ describe('the bubble a sentence appears in', () => {
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
+      // A chat's one bubble: who reacted, when a message was written, what it said before.
+      'lib/chats/view/Tip.svelte',
       // Chrome's hover card under a tab: a name and where it lives.
       'lib/tab-strip/TabCard.svelte',
       // Another computer asking for the web logins, in the same shape as a program.

@@ -175,6 +175,8 @@ describe('what hides a web page', () => {
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
+    'lib/chats/view/Float.svelte': "a chat's small layer: the emoji picker, the pins, the members",
+    'lib/chats/view/Lightbox.svelte': "a message's pictures, one at a time, over everything",
     'lib/people/ProfileCard.svelte': "a person's card, beside the face that was pressed",
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/QuitSheet.svelte': 'dialog',

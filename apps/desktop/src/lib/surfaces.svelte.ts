@@ -95,6 +95,13 @@ export const viewSurface = held(() =>
 export const tasksPanel = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./views/TasksPanel.svelte'),
 )
+/** A chat tab and the Chats panel (docs/chats.md 4.15); never the plugin's. */
+export const chatSurface = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatTab.svelte'),
+)
+export const chatsPanel = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatsPanel.svelte'),
+)
 
 /** Pages of paper, for a note laid out rather than flowed. Never the plugin's, for
  *  the canvas's reason: it opens no page note either. */

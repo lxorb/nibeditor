@@ -137,6 +137,7 @@ async function selectionIn(tab: Tab): Promise<unknown> {
     case 'graph':
     case 'view':
     case 'chat':
+    case 'channel':
       return null
   }
 }

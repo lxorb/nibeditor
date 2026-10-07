@@ -30,6 +30,7 @@
  *  the default shell and its chevron lists the rest; see `others` and docs/terminal.md. */
 
 import type { IconNode } from 'lucide'
+import { account } from './account.svelte'
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
 import { menu, type MenuEntry } from './menu.svelte'
@@ -41,7 +42,7 @@ import { type NewKind, workspace } from './workspace.svelte'
 
 /** What a new tab can be: the kinds the file list also makes, and a terminal here or on
  *  another machine, which is a tab and never a file. */
-export type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online'
+export type NewKindName = NewKind | 'private' | 'terminal' | 'remote' | 'online' | 'chat'
 
 export interface NewKindRow {
   kind: NewKindName
@@ -140,6 +141,20 @@ export function newKinds(): NewKindRow[] {
     // one terminal a phone and a browser can have. O for Online. See
     // docs/online-terminal.md 4.10.
     ...(__EVEN_PLUGIN__ ? [] : [onlineRow()]),
+    // A chat with the space's people, made by the account; M, since C is the canvas's.
+    // See docs/chats.md 4.13.
+    ...(__EVEN_PLUGIN__ || !account.accountToken
+      ? []
+      : [
+          {
+            kind: 'chat' as const,
+            label: () => t('New chat'),
+            mark: 'chat' as const,
+            letter: 'm',
+            make: (paneId?: string) =>
+              inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat())),
+          },
+        ]),
   ]
 }
 

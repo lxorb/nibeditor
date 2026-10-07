@@ -1119,6 +1119,43 @@ view's own search field; and the plus. The body swaps with the app's swap motion
 A base in a note, a ` ```base ` fence or `![[Bugs.base#Board]]`, is the same frame with
 the head at the row's size and a hairline round it.
 
+### The Chats panel and a chat
+
+The Chats panel (`lib/chats/view/ChatsPanel.svelte`) is the list panel's tab after Tasks,
+a speech bubble, shown while somebody is signed in. Like the Tasks panel it is
+navigation: a field that narrows the list, Activity (the reader's mentions, newest first)
+and Saved, then a section label, Chats, with its plus, and a `.nib-row` per chat with
+`#` for its mark. Discord's three states, and no other colour: read is `--muted`,
+unread is `--text-strong` at the strong weight with its count as the row's meta, a
+mention is a badge in the accent. A muted chat fades to 55%.
+
+A chat tab (`lib/chats/view/ChatTab.svelte`) is a head, the rows and the composer, with
+one message's replies beside them (on a phone, in their place).
+
+- **The head** is `#`, the name, the topic as a quiet line written in place, the first
+  three faces overlapping (ringed in the ground, as the switcher's are) with the count,
+  and the pin. Each opens a `.nib-layer` under it (`Float.svelte`).
+- **A row** is Discord's: a 32 px face and the name on the first row of a group (one
+  person within five minutes), then only the words, with the time in the gutter on
+  hover. The words are the notes' renderer at the row's size (`.nib-rendered`), a
+  mention a wash of the accent and the reader's own a fill of it. Under them: pictures
+  at the size the sender stated, a voice message as a pill with 64 bars and the accent
+  filling them, a file as a card, a preview with a 3px accent edge, a poll as answers
+  with bars of `--accent-soft`, reactions as round chips (the reader's own ringed in the
+  accent, a new one popping from 80%), and the count of replies in the accent. A day is
+  a centred label between hairlines; the New line is the accent's hairline with "New".
+- **The hover bar** is one `.nib-layer` riding the row under the pointer: three
+  reactions, the picker, Reply, Quote, ⋯.
+- **The composer** is a `--radius-lg` box with the ground inside it, ringed in
+  `--accent-soft` while it has the keyboard and in the accent while it edits; ⊕, the
+  words, ☺, and the microphone, which turns into ➤ and its chevron once there is
+  something to send.
+- **Pills** are `.nib-pill`s at the top (the New line above, in the accent) and the foot
+  (messages below).
+- **Motion**: an arrival rises 6 px over `dur(160)`, a reaction pops, the replies slide
+  in 24 px, a jumped-to row's accent wash fades over a second; reduced motion makes each
+  a cut.
+
 ### The rail is gone
 
 There were two ways to choose a space, and the header's is the better one,

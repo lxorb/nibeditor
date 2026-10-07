@@ -142,7 +142,16 @@ export interface Space {
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel =
-  'tree' | 'outline' | 'search' | 'tasks' | 'links' | 'footnotes' | 'properties' | 'ask' | 'agents'
+  | 'tree'
+  | 'outline'
+  | 'search'
+  | 'tasks'
+  | 'chats'
+  | 'links'
+  | 'footnotes'
+  | 'properties'
+  | 'ask'
+  | 'agents'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
@@ -1493,8 +1502,14 @@ class Workspace {
    *  the graph is one: `words` say which view (lib/views/spec.ts) and `path` is the
    *  base file it shows, or null for a view nib ships. Whether one is open already is the views'
    *  question, asked before this; see lib/views/open.ts. */
-  openView(words: string, name: string, path: string | null, how: OpenHow = {}): Tab {
-    const file = this.document({ kind: 'view', path, name, text: words, dirty: false })
+  openView(
+    words: string,
+    name: string,
+    path: string | null,
+    how: OpenHow = {},
+    kind?: 'channel',
+  ): Tab {
+    const file = this.document({ kind: kind ?? 'view', path, name, text: words, dirty: false })
     const tab = new Tab(file, this.panes.focusedId)
     this.arrive(tab, how)
     if (how.activate !== false) this.showNote()
@@ -2142,6 +2157,9 @@ class Workspace {
         openBaseFile(path, options)
         return
       }
+      case 'chat':
+        if (!__EVEN_PLUGIN__) (await import('./chats/view/open')).openChat(path, options)
+        return
       case 'note':
         await this.open(path, options)
         return

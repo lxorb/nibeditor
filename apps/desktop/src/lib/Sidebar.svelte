@@ -10,9 +10,11 @@
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
   import { agentMarks } from './agent-marks.svelte'
+  import { account } from './account.svelte'
   import {
     AGENTS_MARK,
     ASK_MARK,
+    CHATS_MARK,
     FILES_MARK,
     FOLD_MARK,
     FOOTNOTES_MARK,
@@ -35,6 +37,7 @@
     agentsPanel,
     archiveSection,
     askPanel,
+    chatsPanel,
     linksPanel,
     pagesNavigator,
     propertiesPanel,
@@ -180,7 +183,12 @@
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
     // The views are the app's alone; the glasses' plugin has no Tasks panel.
-    ...(__EVEN_PLUGIN__ ? [] : [{ id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK }]),
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          { id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK },
+          { id: 'chats' as const, label: t('Chats'), path: CHATS_MARK },
+        ]),
     { id: 'links', label: t('Links'), path: LINKS_MARK },
     { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
     { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
@@ -202,6 +210,7 @@
         (one) =>
           one.id === id &&
           (id !== 'agents' || agentMarks.heard) &&
+          (id !== 'chats' || !!account.accountToken) &&
           // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
           (id !== 'ask' || !__EVEN_PLUGIN__),
       ),
@@ -1111,6 +1120,10 @@
                  docs/tasks.md 5.5. -->
             {#await tasksPanel() then TasksPanel}
               <TasksPanel {side} />
+            {/await}
+          {:else if showing === 'chats'}
+            {#await chatsPanel() then ChatsPanel}
+              <ChatsPanel />
             {/await}
           {:else if showing === 'agents'}
             {#await agentsPanel() then AgentsPanel}

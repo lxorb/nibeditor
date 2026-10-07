@@ -14,7 +14,7 @@
  *  fields it does have. */
 
 import type { FoldLines } from '@nib/editor'
-import { isBaseTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
 import { isNumber, isRecord, isString, keep, stringList } from '../stored'
@@ -160,6 +160,7 @@ const TAB_KINDS: readonly TabKind[] = [
   'terminal',
   'view',
   'chat',
+  'channel',
 ]
 
 /** Which kind of tab an entry is, which is its file's name first and what the entry
@@ -187,6 +188,7 @@ function tabKind(value: unknown, path: unknown): TabKind {
   // A base is drawn as its view whatever the entry says: a `.base` opened as a note
   // would put its YAML in front of somebody who asked for a board.
   if (isBaseTarget(path)) return 'view'
+  if (isChatTarget(path)) return 'channel'
 
   // The two planes are one room and two surfaces, so the extension is asked twice:
   // once for the shape of the document, which `roomKind` answers, and once for who

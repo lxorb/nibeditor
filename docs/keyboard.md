@@ -262,6 +262,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+A | Ask, the conversation about the space |
 | Ctrl Ctrl | **a quick question**, Claude Code's /btw: Ctrl pressed twice on its own (Cmd twice on a Mac), the shape Claude's own quick entry and JetBrains' Run Anything have. No chord a note, a shell or a site uses, so it works everywhere: the window hears it on its capturing turn, a terminal included, and a web page's own script says it too (`nib-twice-ctrl`, web_opens.rs). Pressed again, it goes away. See docs/ai.md |
 | Ctrl+Shift+X | **the scratchpad**, the one note in no space, its card up and away again; up with the keyboard elsewhere, the keyboard into it. A terminal hands Ctrl+Shift to the app; a web page keeps it, as every app key but the browser's, and Shift twice reaches its palette row there |
+| Ctrl+Shift+U | **Chats**, the list of the account's chats, its Activity and Saved (docs/chats.md 4.15). Ctrl+Shift+L, which the chats design first named, was the sidebar's already |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 | Ctrl+Alt+B | show or hide the right side, VS Code's key for its secondary side bar |
 | no key | Show in the file list: the note in front, its rows unfolded and scrolled to. Collapse the file list: every row folded |
@@ -579,6 +580,20 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 
 AltGr is never a chord: Windows says it as Ctrl and Alt, and a key that came out as
 anything but its own letter or digit is somebody typing `@` or `{`.
+
+**A chat** (docs/chats.md 4.16)
+
+| | |
+| --- | --- |
+| Enter, Shift+Enter, Ctrl+Enter in the composer | send; a new line; send from inside a fence or a list, where Enter goes on writing it |
+| ↑ in an empty composer | edit the last message of one's own; Escape leaves the edit and gives the draft back |
+| Ctrl+Z in an empty composer | Unsend: the last message, within fifteen seconds, back into the field |
+| `@`, `[[`, `:` in the composer | a person of the chat, a note of the space, an emoji; ↑ ↓ and Enter or Tab choose |
+| Tab in an empty composer | the rows: ↑ ↓ walk them, and on the lit one R replies, Q quotes, E edits, P pins, S saves, Delete deletes, + reacts; Escape is the composer again |
+| Ctrl+J | to the New line (`chat.jump-new`), which is a chat's own key: the composer is a small editor, and the editor's Ctrl+J gives way there |
+| Escape in the composer | to the bottom of the chat; in the replies, closes them |
+| Ctrl+Shift+M | record a voice message (`chat.record`); Enter or the key again sends it, Escape throws it away |
+| ← → in the lightbox | the previous and next picture; Escape closes it |
 
 **The spaces**
 

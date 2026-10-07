@@ -168,6 +168,21 @@ button {
   pointer-events: none;
 }
 
+/* The same shape to press: a chat's way to its New line and to its newest message,
+   floating over the rows. It takes the pointer, and answers it as a button does. */
+.nib-pill.is-pressable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  pointer-events: auto;
+  cursor: default;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+
+.nib-pill.is-pressable:active {
+  transform: scale(0.95);
+}
+
 /* ── Dropdowns ───────────────────────────────────────────────────── */
 
 /* One rule for every dropdown in the app. The native control brings the
@@ -1470,7 +1485,7 @@ select:focus-visible,
     textarea,
     input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
   ):not(.nib-field *):focus,
-.nib-field:has(:is(input, textarea):focus) {
+.nib-field:has(:is(input, textarea, [contenteditable]):focus) {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);

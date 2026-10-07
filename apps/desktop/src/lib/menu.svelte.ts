@@ -1,7 +1,6 @@
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
-import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
 import { links } from './link-index.svelte'
@@ -171,7 +170,11 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   if (!path) return []
   if (!folder && !isMarkdownPath(path) && !isCanvasTarget(path) && !isPagesTarget(path)) return []
 
-  const take = () => (folder ? workspace.setFolderIcon(path, null) : void setFileIcon(path, null))
+  // The writing is fetched by the press, as a cover's is below: every menu carried it.
+  const take = () =>
+    folder
+      ? workspace.setFolderIcon(path, null)
+      : void import('./file-icon').then((one) => one.setFileIcon(path, null))
 
   return [
     {

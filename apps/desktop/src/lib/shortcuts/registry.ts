@@ -901,6 +901,31 @@ const APP_ENTRIES: Shortcut[] = [
           key: 'Mod-Shift-y',
           run: () => revealPanel('tasks'),
         } satisfies Shortcut,
+        // The Chats panel, and two keys a chat answers itself (docs/chats.md 4.16).
+        {
+          id: 'app.chats',
+          label: () => t('Chats'),
+          category: 'view',
+          scope: 'app',
+          key: 'Mod-Shift-u',
+          run: () => revealPanel('chats'),
+        } satisfies Shortcut,
+        {
+          id: 'chat.jump-new',
+          label: () => t('New'),
+          category: 'view',
+          scope: 'panel',
+          key: 'Mod-j',
+          contextual: true,
+        } satisfies Shortcut,
+        {
+          id: 'chat.record',
+          label: () => t('Voice message'),
+          category: 'view',
+          scope: 'panel',
+          key: 'Mod-Shift-m',
+          contextual: true,
+        } satisfies Shortcut,
       ]),
   {
     id: 'app.ask',

@@ -13,6 +13,7 @@
 import {
   isBaseTarget,
   isCanvasTarget,
+  isChatTarget,
   isImageTarget,
   isPagesTarget,
   isPdfTarget,
@@ -30,6 +31,7 @@ import File from 'lucide/dist/esm/icons/file.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Globe from 'lucide/dist/esm/icons/globe.mjs'
 import Image from 'lucide/dist/esm/icons/image.mjs'
+import MessageSquare from 'lucide/dist/esm/icons/message-square.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
 import Server from 'lucide/dist/esm/icons/server.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
@@ -84,7 +86,17 @@ const Workflow: IconNode = [
  *  its front matter, and the row had to ask the link index what the file said - and
  *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
 export type FileMark =
-  'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web' | 'terminal' | 'remote' | 'base'
+  | 'note'
+  | 'canvas'
+  | 'pages'
+  | 'pdf'
+  | 'picture'
+  | 'file'
+  | 'web'
+  | 'terminal'
+  | 'remote'
+  | 'base'
+  | 'chat'
 
 /** The mark a file's name earns it.
  *
@@ -99,6 +111,7 @@ export function fileMark(name: string): FileMark {
   if (isPagesTarget(name)) return 'pages'
   if (isPdfTarget(name)) return 'pdf'
   if (isBaseTarget(name)) return 'base'
+  if (isChatTarget(name)) return 'chat'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
   return 'file'
@@ -113,6 +126,7 @@ export function fileMark(name: string): FileMark {
  *  a file in it. */
 export function markOf(kind: TabKind): FileMark | null {
   if (kind === 'view') return 'base'
+  if (kind === 'channel') return 'chat'
   return kind === 'graph' || kind === 'chat' ? null : kind
 }
 
@@ -155,4 +169,6 @@ export const MARKS: Record<FileMark, IconNode> = {
   // A grid of rows and columns: a base, and a view of rows in a tab, Obsidian's mark
   // for a base and the shape a table, a board and a calendar all share.
   base: Table,
+  // A speech bubble: a chat (docs/chats.md).
+  chat: MessageSquare,
 }
