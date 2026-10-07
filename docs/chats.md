@@ -2,8 +2,9 @@
 
 A design and a plan. It decides how nib gets a new kind of document, the chat: a channel
 people write in together, as Slack's channels, Discord's text channels and a WhatsApp group
-are, kept in a space beside the notes, readable as markdown, and reachable by the agent.
-Section 6 is the plan the lanes build from.
+are, kept in a space beside the notes and reachable by the agent. Section 6 is the plan the
+lanes build from; section 7 is what Emil decided, and where it differs from an earlier draft,
+the decision is what this document now says.
 
 Emil, 2026-10-03:
 
@@ -22,17 +23,18 @@ them.
 
 ## The short version
 
-1. **A chat is a document in a space**, `Team.chat`, made from Ctrl+T's new Chat card or the
+1. **A chat is a channel in a space**, `Team.chat`, made from Ctrl+T's new Chat card or the
    file list's New, renamed, moved, bookmarked, archived and shared like a note. Everybody
    who can reach the space can reach its chats; a chat shared on its own (an item share,
-   `docs/sharing.md`) is a private channel. A **direct message** is a chat between people
-   that belongs to no space.
-2. **The log is the truth, the markdown is its shadow.** Every chat is an append-only log of
-   events (post, edit, delete, react, pin, vote) held by one Durable Object per chat,
-   `ChatLog`, which gives every event its place in one order. Every device keeps the whole log
-   in its sync store and writes it into the space as **month files of plain markdown**,
-   `Team.chat/2026-10.md`: who, when, the words, a block id per message. Obsidian, git, grep,
-   nib's search, the link index and the agent read those. Nothing ever reads them back.
+   `docs/sharing.md`) is a private channel. There are **no direct messages** and no group
+   messages between people outside a space: two people who want to talk share a space and
+   make a chat in it (decision 7.1).
+2. **The log is the truth, and it lives only in the synced store.** Every chat is an
+   append-only log of events (post, edit, delete, react, pin, vote) held by one Durable Object
+   per chat, `ChatLog`, which gives every event its place in one order. Every device keeps the
+   log in its sync store. Nothing is written into the space as markdown: search, the agent and
+   backlinks read the store (decision 7.2). The `.chat` file in the space is a pointer of one
+   line, `{"v":1,"chat":"c_…"}`, that names the chat the account made (4.2).
 3. **Not a CRDT, on purpose.** A chat is many short messages each with one author, so a
    server order and last-writer-wins per message is exact, where a Yjs document of 100,000
    messages would be a document nobody could open. Offline, messages wait in an outbox with
@@ -41,18 +43,17 @@ them.
 4. **Live by the sockets nib already has.** An open chat holds a hibernating socket to its
    `ChatLog`, for messages, typing and who is here; every other chat hears through the
    account's hub as a poke with its new count, as notes already do. Nothing is polled.
-5. **Not end-to-end encrypted by default**, as Slack, Discord and Teams are not, and as nib's
-   notes are not: the server reads a chat so it can push a preview to a phone, the account
-   connector can answer from it with nib closed, and search covers years. A secret chat with
-   end-to-end encryption (MLS, RFC 9420) is later and decision 7.3.
+5. **Not end-to-end encrypted**, as Slack, Discord and Teams are not, and as nib's notes are
+   not: the account connector can answer from a chat with nib closed, and search covers
+   years. There is no "secret chat" later either (decision 7.3).
 6. **Everything Slack and Discord do that a channel needs**: markdown typed and drawn as it is
    written (the composer is a small nib editor), replies in a side pane, quotes, edits with
    "edited", delete for everyone, reactions with who reacted, @people, @here and @everyone,
    pins, saved messages, scheduled send, drafts per chat, files to 64 MB and more in parts,
    galleries, video, voice messages with a waveform and a transcript, link previews made by
    the sender, polls, typing, presence, custom status, unread lines, jump to unread, read
-   receipts in small chats, per-chat notifications, keywords, a quiet schedule, search with
-   `from:`, `in:`, `has:`, and message links.
+   receipts in chats of up to ten, per-chat notifications, keywords, a quiet schedule, search
+   with `from:`, `in:`, `has:`, and message links.
 7. **A profile is a picture, a name and a line.** The account gains an avatar (picked, dropped,
    pasted or taken with the camera, cropped in a round mask, kept as two small WebP blobs),
    pronouns, a short bio, a status with an emoji and a time it clears, and a nickname per
@@ -69,15 +70,17 @@ them.
    `docs/agent-native.md` 9.3 and asks first unless the reader allowed it for that chat; a
    draft into the composer never asks, because the reader presses Send. In a chat, `@nib`
    asks the asker's own agent, on their machine, and its answer is posted as theirs.
-10. **Notifications reach the phone.** Desktop notifications from the hub while nib runs (and
-    from the tray when the window is closed); phones and the browser build through push from
-    the Worker (FCM, APNs, Web Push), built once for chats and tasks' reminders together
-    (decision 7.4). A phone stays quiet while a desktop is in use.
+10. **Notifications on the desktop.** The system's notifications from the hub while nib runs
+    (and from the tray when the window is closed). Phone push is off: nib has no Firebase,
+    APNs or VAPID keys, so the seam is kept and nothing is sent (decision 7.4).
 11. **Fast at any size.** The first paint does not grow. A chat of 100,000 messages opens at
     its unread line in one frame from the device's store, renders a window of rows, and pages
     from the store as the reader scrolls; typing sends nothing but a typing frame every three
     seconds.
-12. **Counted**: of the 117 features in section 3, 63 are must, 29 should, 14 later and 11
+12. **Sync v1 and v2 alike.** A chat's identity and its people are the account's (`chats` in
+    D1, keyed by the space), never sync v2's tree ids, so a chat works the same for an account
+    on either (decision 7.12).
+13. **Counted**: of the 117 features in section 3, 59 are must, 29 should, 14 later and 15
     dropped, each with its reason. Calls, video and screen share are later (decision 7.6).
 
 ---
@@ -87,9 +90,9 @@ them.
 Three readers, one need. A small team or a family that shares a nib space and today keeps
 the conversation about it in a second app; somebody who writes alone and wants a running log
 to throw links, pictures and thoughts into (Signal's Note to Self, Telegram's Saved
-Messages); and two people who just want to message each other without leaving the place
-their work is. Each of them wants the conversation next to the notes it is about, on every
-device, searchable, readable by their agent, and not locked in somebody else's database.
+Messages); and two people working on one thing, who share its space and want to talk there
+rather than in another app. Each of them wants the conversation next to the notes it is
+about, on every device, searchable and readable by their agent.
 
 What matters to them, in order:
 
@@ -101,8 +104,8 @@ What matters to them, in order:
    busy chat quiet.
 3. **The conversation and the work are one place.** A message about a note links to it; a
    decision in a chat becomes a task; a note can be dropped in to discuss it.
-4. **It is theirs.** History forever, on their disk as markdown, exportable, and gone when
-   they delete it.
+4. **It is theirs.** History forever, on every device of theirs, and gone when they delete
+   it.
 5. **People look like people.** A face and a name beside every message, and a profile card
    one press away.
 6. **It never slows nib down.** A busy chat costs the editor nothing.
@@ -138,7 +141,9 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
   Nitro-style shop items (animated avatars, super reactions, banners as a product);
   stickers; forum channels (a note is the long-form answer); announcements and "urgent"
   repeat pings; disappearing messages on a chat the server can read anyway; a bot
-  marketplace, where `nib mcp`, the connector and program tokens are the integration.
+  marketplace, where `nib mcp`, the connector and program tokens are the integration. And,
+  by Emil's decisions (section 7): direct and group messages outside a space, a transcript
+  on disk, end-to-end encryption, and phone push for now.
 
 ## 3. Every feature, marked
 
@@ -151,7 +156,7 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 1 | Markdown typed and drawn | Discord | the composer is a small nib editor with live preview: bold, italic, strike, code, links, lists, quotes, headings, tables, math; a sent message is drawn by the reading view's renderer | must | nib is a markdown editor; one renderer |
 | 2 | Formatting toolbar | Slack | the editor's format bar on a selection in the composer (`FormatBar.svelte`) | should | exists; markdown covers it first |
 | 3 | Code blocks with a language | Discord | fenced code, highlighted as in notes, a copy button | must | free from the renderer |
-| 4 | Spoilers `\|\|x\|\|` | Discord | drawn blurred until pressed; written as-is in the transcript | should | small; not markdown elsewhere |
+| 4 | Spoilers `\|\|x\|\|` | Discord | drawn blurred until pressed; kept as written | should | small; not markdown elsewhere |
 | 5 | Subtext `-#` | Discord | none | drop | not markdown anywhere else; Obsidian would show the marks |
 | 6 | Enter sends, Shift+Enter a new line, a long message grows the field | Slack | the same; inside a fence or a list Enter continues it, Ctrl+Enter sends | must | the habit |
 | 7 | Edit your own message, "edited" | Slack | no time limit; "edited" after the words; the history kept and shown to members on the mark's hover | must | Slack has no limit; Signal's 24 h protects nothing on a server-read chat |
@@ -173,9 +178,9 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 23 | Silent message | Telegram | none | later | rare |
 | 24 | Important, urgent | Teams | none | drop | a repeated ping is the opposite of calm |
 | 25 | Announcement post | Teams | none | drop | a chat where only the owner posts (#83) is the announcement channel |
-| 26 | Copy link to a message | Slack | `nib://chat/<chat>/<message>`, and the transcript's `[[Team.chat/2026-10#^m…]]` | must | |
+| 26 | Copy link to a message | Slack | `nib://chat/<chat>/<message>`, which a note links to as it links any address | must | |
 | 27 | Translate a message | WhatsApp | through the AI sidebar's provider | later | needs a provider |
-| 28 | Disappearing messages | Signal | none | drop | meaningless where the server and the transcript keep it |
+| 28 | Disappearing messages | Signal | none | drop | meaningless where the server keeps it |
 | 29 | Live block in a message | Teams | a note dropped in is a live card (#108) | should | nib's version of Loop |
 | | **Reactions** | | | | |
 | 30 | Emoji reactions, recent ones first | Slack | the hover bar's three recent, then the picker; a reaction pressed again is taken back | must | |
@@ -208,7 +213,7 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 54 | Appear offline | Discord | a status that sends no presence | should | |
 | 55 | Custom status with emoji, clears after | Slack | an emoji and a line, cleared after 30 min, 1 h, 4 h, today, this week or never | should | |
 | 56 | Do not disturb | Slack | a status and the quiet schedule (#65) | must | |
-| 57 | Read receipts, "seen by" | WhatsApp | in DMs and chats of up to ten people, avatars under the last message each has read; a switch in Settings, reciprocal as Signal's | should | privacy first, then the feature |
+| 57 | Read receipts, "seen by" | WhatsApp | in chats of up to ten people, avatars under the last message each has read; a switch in Settings, reciprocal as Signal's | should | decision 7.5 |
 | 58 | Sending, sent | WhatsApp | a faint clock while in the outbox, nothing once placed | must | the one state that matters |
 | 59 | Delivered ticks | WhatsApp | none | drop | every device of a member reads the same log; "delivered" says nothing |
 | 60 | New-messages line | Slack | a thin line in the accent with "New" at the reader's last read place | must | |
@@ -216,11 +221,11 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 62 | Unread counts, mention badges | Discord | bold row and a count in the Chats panel; mentions as a badge in the accent | must | |
 | 63 | Read state across devices | Slack | the read place is the account's, kept by `ChatLog` | must | |
 | | **Notifications** | | | | |
-| 64 | Per chat: all, mentions, nothing; mute until | Slack | the bell in the chat's head; DMs default to all, chats of more than ten to mentions | must | |
+| 64 | Per chat: all, mentions, nothing; mute until | Slack | the bell in the chat's head; chats of more than ten people default to mentions, the rest to all | must | |
 | 65 | Quiet schedule | Slack | days and hours in Settings; outside them nothing pings, counts still move | should | |
 | 66 | Desktop notification | Slack | the system's, with the avatar; a press opens the message | must | |
-| 67 | Reply from the notification | WhatsApp | inline reply where the system has it (Windows, macOS, Android) | should | |
-| 68 | Phone push | WhatsApp | FCM, APNs and Web Push from the Worker; quiet while a desktop is active | must | decision 7.4 |
+| 67 | Reply from the notification | WhatsApp | inline reply where the system has it (Windows, macOS) | should | |
+| 68 | Phone push | WhatsApp | none for now; the seam in the Worker is kept | later | decision 7.4: no Firebase, APNs or VAPID keys exist |
 | 69 | Activity view | Slack | mentions, replies to you, reactions to you, in the Chats panel | must | |
 | 70 | Hide previews | Signal | a switch: "New message" without words or name | should | |
 | 71 | Sounds | Discord | one quiet sound, off by default | should | |
@@ -232,24 +237,24 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | | **Chats, people and moderation** | | | | |
 | 76 | Channels in a space | Slack | a `.chat` in a space; every member of the space is in it | must | |
 | 77 | Private channels | Slack | a chat shared on its own (item share) | must | the share exists |
-| 78 | DMs | every one | a chat between two accounts outside every space, one per pair | must | |
-| 79 | Group DMs | Slack | the same with up to 20 people; members added later see the history | must | |
-| 80 | A chat with yourself | Signal | a chat in a space nobody else is in; works signed out | must | the solo reader's chat |
+| 78 | DMs | every one | none | drop | decision 7.1: a chat is a channel in a space; two people share a space |
+| 79 | Group DMs | Slack | none | drop | decision 7.1 |
+| 80 | A chat with yourself | Signal | a chat in a space nobody else is in | must | the solo reader's chat; a chat needs an account, as its log is the account's |
 | 81 | Topic and description | Slack | a line under the name in the head, set by writers | must | |
 | 82 | Members list | Discord | the right panel: online first, then the rest, with roles | must | |
 | 83 | Who may post | Discord | writers (default), or the owner only | must | announcements without a new type |
 | 84 | Roles and per-chat overwrites | Discord | none | drop | the space's three roles answer it |
-| 85 | Invites | Slack | the share sheet of the space or the chat; a DM by picking a person | must | exists |
+| 85 | Invites | Slack | the share sheet of the space or the chat | must | exists |
 | 86 | Slowmode | Discord | a minimum gap per person, set by the owner | later | big public chats are not nib's first readers |
 | 87 | Delete anybody's message | Slack | the space's owner | must | |
 | 88 | Remove somebody | Discord | the share sheet's Remove | must | exists |
 | 89 | Timeout | Discord | none | later | with slowmode |
 | 90 | AutoMod | Discord | none | drop | a moderation product |
-| 91 | Block a person | WhatsApp | in a DM: they cannot message you, their DMs to you are refused | must | the one safety tool a DM needs |
-| 92 | Report | Discord | none | later | nib has no trust and safety team to report to; a DM block is the tool |
+| 91 | Block a person | WhatsApp | none | drop | decision 7.1: with no DMs, the space owner's Remove is the tool |
+| 92 | Report | Discord | none | later | nib has no trust and safety team to report to; the space owner's Remove is the tool |
 | 93 | Sections of chats | Slack | folders, and bookmarks first, in the Chats panel | should | folders exist |
 | 94 | Archive a chat | Slack | the archive that exists: read-only, out of the panel | should | |
-| 95 | Leave a chat | Slack | a DM or group DM: leave; a space's chat: mute (leaving is leaving the space) | must | |
+| 95 | Leave a chat | Slack | mute it; leaving is leaving the space | must | |
 | 96 | Forum channels | Discord | none | drop | a note is the long post |
 | | **Profiles** | | | | |
 | 97 | Avatar, uploaded and cropped | every one | 4.9 | must | Emil's ask |
@@ -259,7 +264,7 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 101 | Banner | Discord | none | later | a profile card is enough |
 | 102 | Nickname per space | Discord | set from the space's menu | should | |
 | 103 | Avatar per space | Discord | none | later | Discord charges for it; one face is enough |
-| 104 | Profile card | Slack | a press on a name or avatar: picture, name, pronouns, status, local time, bio, Message | must | |
+| 104 | Profile card | Slack | a press on a name or avatar: picture, name, pronouns, status, local time, bio | must | |
 | | **Calls** | | | | |
 | 105 | Voice call, huddle | Slack | none | later | decision 7.6 |
 | 106 | Video | Discord | none | later | decision 7.6 |
@@ -274,15 +279,15 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 114 | Bots by token | Slack | a program token posts as "via <name>" with `chats.write` | should | program tokens exist |
 | 115 | Slash commands | Slack | `/task`, `/poll`, `/remind`, `/me`, `/shrug`, and the reader's own AI commands | should | |
 | | **Everything else** | | | | |
-| 116 | History forever, offline, every device | Discord | the log on every device, the transcript on disk | must | |
-| 117 | End-to-end encryption | Signal | none by default; a secret DM later | later | decision 7.3 |
+| 116 | History forever, offline, every device | Discord | the log in every device's store | must | |
+| 117 | End-to-end encryption | Signal | none | drop | decision 7.3 |
 
 Rows not numbered above because they are the ground every chat stands on, all must: date
 separators, consecutive messages from one person grouped under one avatar and name within
 five minutes, the hover bar, keyboard shortcuts (4.16), a screen reader's log (4.15),
 multi-device, and the offline queue (4.5).
 
-**Count: 63 must, 29 should, 14 later, 11 drop.** Of the musts, Slack charges for history past
+**Count: 59 must, 29 should, 14 later, 15 drop.** Of the musts, Slack charges for history past
 90 days, Discord for the per-server profile and long uploads; here they are free.
 
 ## 4. The design
@@ -293,92 +298,65 @@ multi-device, and the offline queue (4.5).
 | --- | --- | --- | --- |
 | **chat** | a `.chat` entry in a space's tree, beside notes | everybody who can reach the space, at their role | Ctrl+T's Chat card, the file list's New, the Chats panel's plus |
 | **private chat** | the same entry, shared on its own | the people it is shared with (an item share, `docs/sharing.md`) and the owner | the chat's Share, or "Only…" when making it |
-| **direct message** | the account, in no space | two accounts, one chat per pair | Message on a profile card, the palette's Message…, the panel's plus |
-| **group message** | the account, in no space | up to 20 accounts | the same, with several people |
+
+There is no third kind. No direct message and no group message outside a space (decision
+7.1): two people who want to talk share a space, which already decides who reaches what.
 
 A chat in a space nobody else is in is the chat with yourself: a running log for links,
-pictures and thoughts, synced to every device, which works signed out too.
+pictures and thoughts, synced to every device. A chat needs an account, because its log is
+the account's; signed out, the Chat card is not offered.
 
 **One word per term** (`docs/conventions.md`): **chat** is the kind; a message's side
 conversation is its **replies**, never "thread", because `docs/ai-sidebar.md` 4.11 already
-calls an AI conversation a thread; a **direct message** is a chat with one person. The
-vocabulary table gains `chat` and `reply`. The Durable Object is `ChatLog`, not a room,
-because "room" is the word for a live note (`docs/collaboration.md`).
+calls an AI conversation a thread. The vocabulary table gains `chat` and `reply`. The
+Durable Object is `ChatLog`, not a room, because "room" is the word for a live note
+(`docs/collaboration.md`).
 
-A chat in a space is an entry of a new kind, `chat`, in sync v2's tree (`docs/sync-v2.md` 5.9),
-so it already has what every entry has: an id that survives a rename and a move, Recently
-deleted, bookmarks, the manual order, an icon and colour, archiving, and item shares keyed by
-that id. Deleting it sends it to Recently deleted; its log is kept 30 days after it is
-purged, then erased with the other leftovers.
+### 4.2 Who a chat is, on sync v1 and v2: the pointer
 
-### 4.2 On disk: the transcript
+Emil's account is on sync v1, and v2 is not switched on for anybody yet, so a chat cannot be
+an entry whose identity is a v2 tree id. The online terminal met the same question and
+answered it with a server-side id and a small file (`docs/online-terminal.md` 4.5,
+`POST /v2/online/terms`); a chat takes the same shape, with one difference: its id never
+depends on the file's.
 
-The log (4.3) is the truth. Each device that holds a space writes every chat of it into the
-space as a folder of month files, so the conversation is in the place the notes are:
+- **The account makes the chat.** `POST /v2/chats {space}` by a writer of the space answers
+  `{v: 1, chat: "c_<32 hex>"}` and writes the `chats` row (4.3) with that `space_id`. The id
+  is the account's and is never derived from a path, a v1 note id or a v2 tree id.
+- **The space holds a pointer.** The app writes `Thesis/thesis.chat`, one line of JSON and a
+  newline, read strictly as a `.term` is (`chatOf` and `chatText` in `@nib/chats/pointer`):
 
-```
-Thesis/
-  Chapter 3.md
-  thesis.chat/
-    2026-09.md
-    2026-10.md
-```
+  ```json
+  {"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}
+  ```
 
-```md
----
-chat: thesis
-month: 2026-10
-nib: transcript
----
+  The pointer is the chat's name and place: renaming it renames the chat, and the file list,
+  bookmarks, the manual order, Recently deleted, search by name, the session restore and
+  Reopen closed tab carry it as they carry any file. It is written once and never by hand.
+- **Both syncs carry it.** Under v1 it is a small text document the v1 mirror sends through
+  `/notes` like a `.url` (the Worker's `NOTE_PATH` gains `chat`, and a `.chat` is never in a
+  room, as a `.url` is not). Under v2 it is an entry of the tree kind `chat`
+  (`kindOfName` in `packages/sync-core/src/tree.ts`), a small last-writer-wins file of the
+  `link` shape, as `.url` and `.term` are. Neither sync gives it anything but a place.
+- **Access is the chat's space, never the file.** The door asks `reachedSpace` for
+  `chats.space_id`, so a copy of a pointer pasted into another space reaches nothing for the
+  people of that space, and a pointer read by somebody who can reach the chat's space works
+  wherever it lies. A **private chat** is an item share of the pointer's note row: the account
+  links `chats.file_id` when the pointer first arrives in its own space by either sync, and
+  the door asks `reachedItem` for that row only after `reachedSpace` said no.
+- **Finding chats.** The Chats panel lists the pointers in the spaces the device holds,
+  joined by chat id with `GET /v2/chats` (counts, last message, read place), which answers
+  every chat of every space the account reaches. A chat the account lists with no pointer on
+  this device yet is shown once its space has synced.
+- **Moving and copying.** Move to space moves the pointer and re-homes the chat,
+  `PATCH /v2/chats/:id {space}` by a writer of both spaces, so its history goes with it and
+  its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
+  one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
+  the account erases its log 30 days later with the other leftovers.
+- **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count.
 
-## Thursday 2 October 2026
-
-**Emil** 16:40 ^m01j9qk3v8a
-Draft of chapter 3 is up: [[Chapter 3]]
-👍 2 · 👀 1
-
-**Lucile** 16:52 ^m01j9qm0c2d
-Reading it tonight
-
-↳ **Mia** 17:02 ^m01j9qmy7r1
-> **Lucile**: Reading it tonight
-
-Same, the figures look off on page 4.
-[figure-4.png](nib://chat/c8f2/m01j9qmy7r1/0)
-
-**Mia** 17:30 ^m01j9qp2k9x
-🎙 0:42
-```
-
-- **Plain markdown Obsidian reads**: a heading per day, a line per message with the name,
-  the time and an [Obsidian block id][ob-blocks] (`^m` and the message id, lower case), then
-  the words as written. So `[[thesis.chat/2026-10#^m01j9qk3v8a]]` is a link to one message
-  in Obsidian and in nib, where it opens the chat at that message.
-- **Replies are written under their parent**, each with `↳`, in the parent's month file, so
-  a conversation reads in one place. A quote reply carries the quoted line as a quote.
-- **The latest words only**: an edited message is written as edited and marked `(edited)`; a
-  deleted one is gone; reactions are one line under the words; a poll is its question and
-  its counts; a voice message its length.
-- **A heading inside a message** is written as a bold line, so the month's outline stays
-  days. Nothing else in the words is changed.
-- **Attachments** are links to `nib://chat/...`, by name. The bytes stay in the device's
-  blob store and are not copied into the space a second time; "Save to space" on an
-  attachment copies one in as a file.
-- **Derived, never read back.** The front matter says `nib: transcript`. Sync never sends
-  these files (the space watcher and the file sync skip every path under a `.chat` entry), so
-  two devices never meet over them; each writes the same bytes from the same log. An edit
-  made in Obsidian is written over at the next change of that month, which is what a derived
-  file is. A month is rewritten only when an event in it arrives, on the autosave pause,
-  never per keystroke. A person's name is the one they have when the month is written; a
-  rename rewrites the months that name them in idle time.
-- **What reading them gives for free**: the search panel finds messages with the words it
-  already finds in notes; the link index makes every `[[note]]` in a chat a backlink of that
-  note; the agent's `read_note` and the connector read a chat as text; git keeps history;
-  Obsidian, a phone's file app and grep read it.
-- **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count,
-  never as a folder. Obsidian draws it as a folder of months, which is honest.
-- **Direct messages have no space** and so no transcript by default; Settings > Chats can
-  keep them in a chosen space, under `Direct/` (decision 7.1).
+Nothing about a chat is written into the space beyond the pointer. Search, backlinks, the
+agent and the connector read the device's store or the account (decision 7.2).
 
 ### 4.3 The log
 
@@ -425,34 +403,29 @@ create table meta (key text primary key, value text);   -- topic, posting, slowm
   (`emoji`, `on`), `pin` (`on`), `vote` (`options`), `meta` (topic, who may post, slowmode),
   `schedule` (a post to place later, placed by the object's alarm). The object applies each
   to `messages` in the transaction that appends it, so a page of current state is one
-  indexed read.
+  indexed read. Every device applies the same events with the same reducer, `apply` in
+  `@nib/chats`, which gives one state for the same set of placed events in any order
+  (4.5).
 - **Limits**: 16,000 characters of words (Discord's 2,000 is too few for code, Slack's 40,000
   is cut in practice); ten files a message; 600 events a minute per account; 10 posts in 10 s
   per person per chat. The composer offers a long paste as a file before the limit.
 
-**In D1**, migration `0044_chats.sql` (or the next free number; the lane says which):
+**In D1**, the next free migration number (`0046` is taken; the lane says which):
 
 ```sql
 create table chats (
-  id text primary key,
-  space_id text references spaces(id) on delete cascade,  -- null for a direct message
-  entry_id text,                                           -- the tree entry, for a space's chat
-  pair_key text unique,                                    -- two account ids sorted, for a DM
+  id text primary key,                                     -- c_<32 hex>, the account's (4.2)
+  space_id text not null references spaces(id) on delete cascade,
+  file_id text,                                            -- the pointer's note row, once seen
   created_by text not null, created_at integer not null,
-  last_seq integer not null default 0, last_at integer, last_by text
+  last_seq integer not null default 0, last_at integer, last_by text,
+  ended_at integer                                         -- the pointer purged: erased later
 );
-create table chat_members (chat_id text, user_id text, joined_at integer not null,
-  left_at integer, primary key (chat_id, user_id));        -- direct and group messages only
 create table chat_reads (chat_id text, user_id text, read_seq integer not null default 0,
   mentions integer not null default 0, notify text, muted_until integer,
   primary key (chat_id, user_id));
 create table chat_files (chat_id text, hash text, size integer, type text, name text,
   by text, at integer, primary key (chat_id, hash));
-create table blocked (user_id text, blocked_id text, at integer,
-  primary key (user_id, blocked_id));
-create table push_targets (id text primary key, user_id text not null, device_id text,
-  kind text not null check (kind in ('fcm', 'apns', 'webpush')), token text not null,
-  created_at integer not null, failed_at integer);
 create table presence (user_id text primary key, state text not null, at integer not null);
 create table space_nicks (space_id text, user_id text, nick text not null,
   primary key (space_id, user_id));
@@ -466,21 +439,24 @@ alter table users add column accent text;     -- the person's own accent, for th
 `chats.last_*` and `chat_reads` are written by `ChatLog` at most once a second (an alarm
 coalesces them), so the Chats panel's counts for every chat are one query and no object is
 woken to list them. Every new table goes on `ERASED` in `erase.ts` and the objects into
-`leftovers`, as `docs/sync-v2.md` section 8 requires. The profile columns and
+`leftovers`, as `docs/sync-v2.md` section 8 requires. The profile columns, `presence` and
 `space_nicks` are lane 3's own migration (6.2), so they can land without the rest.
+`push_targets` exists already (`0044_push.sql`, tasks' reminders) and is left alone while
+phone push is off (decision 7.4).
 
 ### 4.4 Live
 
 **An open chat** holds one socket to its `ChatLog`, `GET /v2/chats/:id/socket`, with the token
 and `nib.device.<id>` in the subprotocol as a room's socket has. The door is the rooms' door
-(`rooms/index.ts`): one query for the session, the chat's reach (space role, item share, or
-membership of a direct message) and whether this person may post, passed to the object in
-headers. Frames:
+(`rooms/index.ts`): one query for the session, the chat's reach (the role in `chats.space_id`,
+or an item share of its pointer, 4.2) and whether this person may post, passed to the object
+in headers. Frames, every one JSON text and typed and checked in `@nib/chats/wire`; a chat
+carries no bytes of its own (files go up as blobs), so nothing needs the framed envelope:
 
 | from the device | from `ChatLog` |
 | --- | --- |
-| `hello {since}` | `events [...]` after that seq, or `behind` when it is too far behind (the device pages by HTTP) |
-| `send {event}` | `placed {id, seq, at}` to the sender, `events [e]` to everybody else |
+| `hello {since}` | `events [...]` after that seq, or `behind {seq}` when it is more than 10,000 behind (the device pages by HTTP) |
+| `send {event}` | `placed {id, seq, at}` to the sender, `events [e]` to everybody else, or `refused {id, error}` |
 | `typing {parent?}` | `typing {who, parent?}`, never stored |
 | `read {seq}` | `read {who, seq}` to the sender's other sockets, and to everybody where receipts are on (4.10) |
 | | `here [who]` when somebody opens or leaves the chat; `profile {who}` when a member's profile changed |
@@ -489,7 +465,9 @@ The socket hibernates as a room's does, and the object keeps nothing in fields.
 
 **Every other chat** hears through the account's hub (`docs/sync-v2.md` 5.12): on a post,
 `ChatLog` tells the hub of each member with no socket open to it `{t: 'chat', chat, seq, at,
-by, mention}`, coalesced per member to one frame every two seconds. The app moves that
+by, mention}` (`ChatPoke` in `@nib/chats/wire`, which the hub's frames and the app's read),
+coalesced per member to one frame every two seconds. The hub is every signed-in device's,
+on sync v1 as on v2, so the pokes reach both. The app moves that
 chat's count and badge, and, if the reader should be told (4.11), shows a notification. A
 poke never carries words; the app pulls them when it notifies or the chat opens.
 
@@ -497,10 +475,12 @@ poke never carries words; the app pulls them when it notifies or the chat opens.
 `last_at`, `read_seq`, `mentions`, `notify` and `muted_until`, one D1 query, fetched after
 the first paint and kept current by pokes.
 
-**Routes**, behind the session guard under `/v2`:
+**Routes**, behind the session guard under `/v2`, answered for every account whichever sync
+it is on (no route here asks `sync_version`):
 
-- `GET /v2/chats`; `POST /v2/chats` (a direct or group message, `{with: [ids]}`, answering the
-  existing one for a pair); `PATCH /v2/chats/:id` (topic, who may post, slowmode).
+- `GET /v2/chats`; `POST /v2/chats {space}` (a new chat in a space the asker writes in,
+  answered with its pointer, 4.2); `PATCH /v2/chats/:id` (topic, who may post, slowmode, and
+  `space` for Move to space).
 - `GET /v2/chats/:id/events?after=|before=|around=&limit=` (at most 500);
   `GET /v2/chats/:id/state?before=` (messages as they stand, newest first, 4 MB pages, for a
   first copy); `POST /v2/chats/:id/events` (at most 50 from the outbox, idempotent by id).
@@ -509,8 +489,7 @@ the first paint and kept current by pokes.
 - `GET /v2/chats/:id/files/:hash` for members; uploads are sync v2's `PUT /v2/blobs/:hash`
   and parts routes, and the event names the hash, which `chat_files` records.
 - `GET /v2/presence?ids=` (at most 200), `PUT /v2/me/profile`, `PUT /v2/me/avatar`,
-  `PUT /v2/spaces/:id/nick`, `POST /v2/push/targets`, `DELETE /v2/push/targets/:id`,
-  `PUT /v2/blocked/:id`, `DELETE /v2/blocked/:id`.
+  `PUT /v2/spaces/:id/nick` (lane 3).
 
 Every refusal a person can cause is an English sentence with a row in every catalogue, as
 `docs/sync-v2.md` section 7 asks.
@@ -524,12 +503,16 @@ Every refusal a person can cause is an English sentence with a row in every cata
 - **Seen at once.** A message is drawn the moment Enter is pressed, from the outbox, at the
   bottom; placed, it takes its place in the order, which is almost always where it already
   is. A reaction and an edit are drawn at once the same way.
-- **Refused** (the role was taken away, the chat deleted, a block, a limit): the row stays,
+- **Refused** (the role was taken away, the chat deleted, a limit): the row stays,
   marked, with Retry and Delete in its menu, and the words are never lost.
 - **Conflicts are small by construction.** A message has one author, so an edit is the
   author's and the later by `seq` stands; a delete stands over an edit in either order; a
   reaction is a set per person and emoji, the later `on` or off standing; a vote is a set
   per person; a pin, the later. The chat's settings are last writer per key. Nothing asks.
+  `apply` holds every one of these rules, so the same placed events give the same state in
+  whatever order a device happens to apply them: an edit, a reaction or a reply that arrives
+  before its message waits for it, and a lower `seq` arriving late never undoes a higher
+  one.
 - **Catching up**: a device holds a `seq` per chat and asks for the events after it, in
   pages, the chat on screen first. A device more than 10,000 events behind, or new to the
   chat, takes the messages as they stand, newest first, so the chat opens at once and the
@@ -554,40 +537,35 @@ The space's roles (`docs/collaboration.md`, Sharing) answer it, with one setting
   read is a chat to read.
 - A guest is a person at their role (`guestMayReach` gains the chat routes), named by their
   device's name, with their initial for a face.
-- **Direct and group messages** have no owner: everybody in one posts, edits and deletes
-  their own, adds people (a group message) and leaves. People added later read the whole
-  history, as Slack's group messages do.
+- The table is `may` in `@nib/chats/roles`: the object decides by it and the app hides what
+  it says no to, so the two never disagree.
+- People added to a space later read the chat's whole history, as Slack's channels do.
 - Taking somebody out of a space or a chat closes their sockets in the same request, as
   `roomsRevoked` does for notes.
 
 ### 4.7 Encryption
 
-**Decision: not end-to-end encrypted by default** (decision 7.3).
+**Decision: not end-to-end encrypted, and no secret chat later** (decision 7.3).
 
-- **What it would cost.** A chat the server cannot read cannot push a preview, cannot be
-  searched or answered by the account connector with nib closed, and loses its history on
-  every new device unless a key backup is built (Matrix's recurring "unable to decrypt",
-  [Element][el-security]). Groups need MLS ([RFC 9420][mls]) or WhatsApp's per-device
-  fan-out ([multi-device][wa-multi]), each a project of its own.
+- **What it would cost.** A chat the server cannot read cannot be searched or answered by the
+  account connector with nib closed, and loses its history on every new device unless a key
+  backup is built (Matrix's recurring "unable to decrypt", [Element][el-security]). Groups
+  need MLS ([RFC 9420][mls]) or WhatsApp's per-device fan-out ([multi-device][wa-multi]),
+  each a project of its own.
 - **What it would protect.** The same people's notes beside the chat are not end-to-end
   encrypted (`docs/sync-v2.md` 6.6 encrypts web logins only, because they are live
-  credentials), and every device writes the transcript to its disk as plain markdown. Slack,
-  Discord and Teams make the same choice, and Telegram for its cloud chats.
+  credentials). Slack, Discord and Teams make the same choice, and Telegram for its cloud
+  chats.
 - **What is done**: TLS on the wire, Cloudflare's encryption at rest, no third party sees a
   message (link previews are made by the sender, no GIF service), and the person's own
   controls in 4.18.
-- **Later**: a **secret** direct message, end-to-end encrypted with MLS between the two
-  people's devices, using the device keys sync v2 already registers (X25519, in the
-  keychain), with no transcript, no push preview, no connector, and history only on the
-  devices that were there. Telegram's model: a separate, honest kind, rather than a promise
-  stretched over all of them.
 
 ### 4.8 Attachments, voice, previews, polls
 
 - **Files** go up as sync v2 blobs (`PUT /v2/blobs/:hash` to 64 MB, 8 MB parts above,
   `docs/sync-v2.md` 7), then the `post` names them: `{hash, name, size, type, width?,
-  height?, preview?, seconds?, wave?}`. Counted against the space owner's quota for a
-  space's chat, as a note's pictures are, and against the sender's for a direct message. Up
+  height?, preview?, seconds?, wave?}`. Counted against the space owner's quota, as a note's
+  pictures are. The blob routes answer a v1 account as a v2 one. Up
   to 2 GB a file through parts; a bigger drop is refused with its size beside its name.
 - **Pictures and video**: the sender makes a preview (480 px WebP, a video's first frame),
   sends it as its own blob and states width and height, so a row is the right size before
@@ -678,7 +656,7 @@ optional presence dot; an optional mark in its corner) is the face of a person i
   the device sends `read`, the account keeps it per chat, and every device of the reader
   follows. The new-messages line stands where the read place was when the chat was opened
   and stays until it is left. Mark unread moves it back.
-- **Receipts** ("seen by"): in direct messages and chats of up to ten people, each other
+- **Receipts** ("seen by"): in chats of up to ten people (`RECEIPTS_UP_TO`), each other
   person's avatar (16 px) sits under the newest message they have read, sliding down as they
   read: Messenger's shape, quieter than ticks. A switch in Settings, reciprocal
   ([Signal][sg-receipts]): off, nobody sees yours and you see nobody's. On by default
@@ -688,9 +666,8 @@ optional presence dot; an optional mark in its corner) is the face of a person i
 
 - **What pings**, per chat (the bell in its head): **All**, **Mentions** (your name, @here
   while you are active, @everyone, replies to you, your keywords) or **Nothing**, and **Mute
-  until** (1 h, 8 h, a day, a week, until turned back). Direct messages default to All, a
-  chat of more than ten people to Mentions, the rest to All. Kept in `chat_reads.notify` so
-  every device agrees.
+  until** (1 h, 8 h, a day, a week, until turned back). A chat of more than ten people
+  defaults to Mentions, the rest to All. Kept in `chat_reads.notify` so every device agrees.
 - **Keywords** and the **quiet schedule** (days and hours, Slack's [schedule][sl-dnd]) are in
   Settings > Chats, in the account's settings, merged per key as `docs/sync-v2.md` 5.11 does.
 - **Desktop**, while nib runs: the hub's poke arrives, the app decides (the chat is not on
@@ -701,35 +678,35 @@ optional presence dot; an optional mark in its corner) is the face of a person i
 - **The tray**: closing the window while any chat exists keeps nib in the tray, said once:
   the same question `docs/tasks.md` decision 6 and `docs/agent-native.md` question 6 ask,
   answered once for all three.
-- **Phones and the browser build**: push from the Worker (decision 7.4). A phone registers a
-  token (FCM on Android, APNs on iOS) and the browser build a Web Push subscription (VAPID)
-  in `push_targets`. When `ChatLog` pokes a member who should be told, the Worker checks
-  whether a desktop of theirs was active in the last two minutes (the hub knows) and pushes
-  only if not, so the phone is quiet while the person is at their desk, Slack's rule. The
-  payload carries the chat, the sender's name and the first 100 characters, unless Hide
-  previews is on. A token that fails is dropped.
-- **One push for nib**: `docs/tasks.md` 5.10 needs the same for reminders; lane 6 builds it
-  once (`push/` in the Worker) and tasks' reminders use it. Built first by tasks' lane 5
-  (2026-10-04): `services/sync/src/push` sends to a target of any kind (`push` in
-  `send.ts`, a `Message` with `kind: 'chat'` is all a chat adds), and `push_targets` is
-  in `0044_push.sql`, so the chats migration leaves it out. What is left for this lane is
-  the clients' registration and the desktop-active rule; see docs/mobile.md, *Push*.
+- **Phones and the browser build: off for now** (decision 7.4). Push needs a Firebase
+  project, an APNs key and VAPID keys, and none of them exists. The seam stays:
+  `services/sync/src/push` (built by tasks' lane 5, 2026-10-04) sends to a target of any
+  kind, and a chat would add only a `Message` with `kind: 'chat'`; `push_targets` is in
+  `0044_push.sql`. The decision the app makes for a desktop notification is a pure function
+  of the poke, the level, mute, quiet and focus, so the day the keys exist the Worker asks
+  the same function, adds whether a desktop of the person's was active in the last two
+  minutes (the hub knows), and pushes only if not: Slack's rule. Until then a phone hears a
+  chat only while nib is open on it.
 - **Activity** (the Chats panel): mentions of you, replies to you and reactions to your
-  messages, newest first, each opening the message; requests from strangers (4.18) on top.
+  messages, newest first, each opening the message.
 
 ### 4.12 Search
 
-- **In the search panel**, chats beside notes. Words are found the way notes' words are,
-  because the transcripts are markdown in the space; a hit inside `*.chat/` is drawn as a
-  message (avatar, name, time, the line) and opens the chat at it.
-- **Modifiers** (Slack's [search][sl-search]), parsed by `@nib/chats` and answered from the
-  device's store of messages: `from:@Lucile`, `in:#thesis` (`in:@Lucile` for a direct
-  message), `has:link`, `has:file`, `has:image`, `has:voice`, `has:pin`, `has:reaction`,
-  `is:reply`, `mentions:me`, `before:`, `after:`, `on:`, `during:october`. A modifier
-  switches the panel to messages only.
+- **In the search panel**, chats beside notes. Messages are found in the device's store
+  (4.17), never in files: nothing of a chat is written into the space but its pointer. A hit
+  is drawn as a message (avatar, name, time, the line) and opens the chat at it.
+- **Modifiers** (Slack's [search][sl-search]), parsed by `parseSearch` in `@nib/chats` and
+  answered from the device's store of messages: `from:@Lucile` (or `from:me`),
+  `in:#thesis`, `has:link`, `has:file`, `has:image`, `has:video`, `has:voice`, `has:poll`,
+  `has:pin`, `has:reaction`, `is:reply`, `mentions:me` (or `mentions:@Lucile`), `before:`,
+  `after:`, `on:` (a date, `today` or `yesterday`), `during:october` (a month, `2026-10` or a
+  year). `"several words"` is a phrase and `-word` leaves a word out. A date is the reader's
+  own calendar day, so the parser answers days, never instants, and the store turns them
+  into times in the reader's zone. What a message has is `hasOf` in the same package, so a
+  store's columns and a filter agree. A modifier switches the panel to messages only.
 - **In one chat**: Ctrl+F in a chat is the search panel scoped to it, `in:` filled in.
 - **The store** keeps every message of every chat with an FTS5 index (4.17); the browser
-  build, with no transcripts on disk, asks `GET /v2/chats/search`.
+  build asks `GET /v2/chats/search`.
 - **A hit** loads the rows around the message from the store, scrolls it to the middle and
   flashes its row in the accent's tint.
 
@@ -739,24 +716,26 @@ optional presence dot; an optional mark in its corner) is the face of a person i
   pick one (completion from the chat's space), and the message carries a **live card**: the
   note's icon, name, folder and first lines, kept current from the link index while it is on
   screen; a press opens the note beside the chat. If some members cannot open the note (it
-  is in another space, or the chat is a direct message with somebody outside the space), the
+  is in another space, or the chat is shared on its own with somebody outside the space), the
   composer shows their avatars over the field with **Share** (to read) before sending,
   Slack's file-access prompt; sending without it sends the link alone.
 - **Quote a selection.** The editor's context menu and the palette gain **Send to chat**:
   pick a chat in the switcher (4.16) and its composer opens with the selection as a quote and
   a link to the note at that heading. Nothing is sent until Enter.
-- **@-mention a note**: `[[` as above; in the transcript it is a wikilink, so the note's
-  backlinks list the chat's month and the message.
+- **@-mention a note**: `[[` as above. The message keeps it as a wikilink, and the link
+  index reads links out of the store's messages as it reads them out of notes, so the note's
+  backlinks list the chat and the message, and a rename of the note is followed there too.
 - **A message becomes a task**: ⋯ **Add as task** on a row (or T, or `/task` in the composer)
   opens quick add (`docs/tasks.md` 5.6) filled with the message's words, `+Name` for a person
-  it mentioned, and a link back, `[[thesis.chat/2026-10#^m…]]`, as the task's description
+  it mentioned, and a link back, `[thesis](nib://chat/c_…/01J…)`, as the task's description
   line. Enter writes it to the inbox, or wherever `>Note` says. **Remind me** is the same
   with the reminder chip open.
 - **A message becomes a note**: **Save as note** makes a note named from the first words,
   with the message and its replies as quotes (name, time), attachments copied beside it, and
   a link back; it opens in a tab.
-- **Link a message from a note**: Copy link on a message copies the transcript wikilink; in a
-  note it opens the chat at the message, and in Obsidian the transcript at that line.
+- **Link a message from a note**: Copy link on a message copies `nib://chat/<chat>/<message>`;
+  in a note it opens the chat at the message. Outside nib it is an address nothing else
+  opens, which is honest: the message lives in the account, not in a file.
 - **Ctrl+T's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's): a new
   tab with the chat's name field and, under it, who is in it (the space's people, or
   "Only…" to pick). Like every new kind it writes nothing until it is named or its first
@@ -781,8 +760,7 @@ the note verbs are) and, where marked, the account connector (`services/sync/src
 
 - **Two new scopes**, `chats.read` and `chats.write`, in the grant (`docs/agent-native.md` 9.1).
   Emil's default has both on, with the asks below; a third-party agent starts with both off.
-  A space the agent was not granted has no chats to it, and direct messages need the grant's
-  own switch, off by default.
+  A space the agent was not granted has no chats to it.
 - **Posting asks first.** `post_message`, `react`, `edit_message` and `delete_message` in a
   chat anybody else can read are the **Publishing** category of `docs/agent-native.md` 9.3
   ("anything in nib that puts words where somebody else can read them"): the call answers
@@ -828,9 +806,6 @@ unread bright with a count, a mention a badge in the accent.
 │  #  thesis                    12  │   unread: bright, a count
 │  #  design                    @2  │   mentions: the accent
 │  #  planning     ⛬                │   shared on its own: the shared mark
-│ DIRECT                        ⊕   │
-│  (L)• Lucile                   1  │   the avatar and its presence dot
-│  (M)(P) Mia, Paul                 │   a group: two avatars overlapped
 └───────────────────────────────────┘
 ```
 
@@ -893,7 +868,7 @@ the avatar and name, the rest only their words, with the time in the gutter on h
 │ 15:42                            │
 │ Second year, thesis on sparse    │
 │ solvers.                         │
-│ [ Message ]                  ⋯   │   ⋯: nickname here, block, copy address
+│                              ⋯   │   ⋯: nickname here, copy address
 └──────────────────────────────────┘
 ```
 
@@ -935,10 +910,11 @@ says so and the lane picks the next free one.
 - **Out of the first paint.** The Chats panel, the chat view, the composer's editor, the
   emoji data and `@nib/chats` are fetched when first asked for; `GET /v2/chats` runs after the
   launch order; `apps/desktop/test/weight.test.ts` is not raised.
-- **The device's store** (`docs/sync-v2.md` 9.2, `sync/<account>.db`) gains:
+- **The device's store** (`docs/sync-v2.md` 9.2, `sync/<account>.db`, which a device on sync
+  v1 opens for its chats alone) gains:
 
   ```sql
-  create table chats (id text primary key, space_id text, entry_id text, kind text not null,
+  create table chats (id text primary key, space_id text not null,
                       seq integer not null default 0, read_seq integer not null default 0,
                       complete integer not null default 0, meta text);
   create table chat_messages (chat text not null, id text not null, seq integer not null,
@@ -969,8 +945,7 @@ says so and the lane picks the next free one.
   typing sends at most one frame every 3 s; the draft is stored on the quiet pause
   (`afterQuiet`, `lib/timing.ts`).
 - **Arrivals**: one event, one row inserted, one store write (batched per frame when a
-  catch-up brings hundreds); transcript months are written on the autosave pause, the month
-  that changed only.
+  catch-up brings hundreds).
 - **Budgets**, measured in the lanes' drives with a seeded chat of 100,000 messages: open at
   the read place under 50 ms; scroll through history at 60 fps; a message from another
   device on screen under 300 ms on a normal connection; a catch-up of 10,000 events applied
@@ -978,39 +953,35 @@ says so and the lane picks the next free one.
 
 ### 4.18 Privacy, safety, moderation
 
-- **Who can message you directly**: by default, people you share a space or a shared item
-  with. Anybody else who has your address can send one **request**: the first message waits
-  in your Activity with Accept and Block, and no second one can be sent until you accept
-  (Signal's message requests). Settings opens it to anybody or closes it to nobody.
-- **Block**, from a profile card or a request: their direct messages to you are refused, your
-  shared chats fold their messages to one quiet row that opens on a press (Discord's), and
-  they are not told.
+- **Nobody reaches you outside a space.** With no direct messages there is nobody to block
+  and no request to accept: everybody who can write to you in a chat is somebody a space's
+  owner let in, and that owner can take them out.
 - **Removal**: a space's owner deletes any message and removes people from the share sheet;
   removal closes their sockets at once.
 - **Your switches**: read receipts, typing, appear offline, previews in notifications, link
-  previews, who may message you. Reciprocal wherever they are about seeing others.
+  previews. Reciprocal wherever they are about seeing others.
 - **What leaves the device**: messages and files, to the account; link previews made here
   and nowhere else; no GIF service; no analytics on messages; pictures without metadata.
 - **Deleting a message** removes it from the object, its file rows when no other message
-  names the hash, and every device's store and transcript at their next catch-up; the blob
+  names the hash, and every device's store at its next catch-up; the blob
   goes with the other unreferenced blobs.
-- **Deleting your account** deletes your direct and group messages for everybody; your
-  messages in other people's spaces stay, shown as "Deleted account" without an avatar
-  (Discord's way, decision 7.8). `erase.ts` and its test cover every new table.
+- **Deleting your account** deletes the chats of your own spaces with them; your messages in
+  other people's spaces stay, shown as "Deleted account" without an avatar (Discord's way,
+  decision 7.8). `erase.ts` and its test cover every new table.
 - **Agents** (4.14): other people's words are untrusted; posting asks.
-- **Ceilings**: a chat holds the space's 200 people; a group message 20; 600 events a minute
-  per account; 10 posts in 10 s per person per chat; 30 requests to strangers a day per
-  account; uploads count against storage.
+- **Ceilings**: a chat holds the space's 200 people; 600 events a minute per account; 10
+  posts in 10 s per person per chat; uploads count against storage. The numbers are
+  `@nib/chats/limits`, which the object enforces and the composer warns by.
 
 ### 4.19 The phone and the glasses
 
 - **Phone**: the Chats panel is a drawer tab; a chat is the page; the composer sits on the
   keyboard; long press for the menu, swipe right to reply, hold the microphone to record,
-  slide up to lock, slide left to cancel; the lightbox swipes; push (4.11) with Reply from
-  the notification. The share sheet gains "Send to chat".
-- **Even G2**: later. A row in the modal, **Chats**: the unread direct messages, a line each;
+  slide up to lock, slide left to cancel; the lightbox swipes. No push while it is off
+  (4.11). The share sheet gains "Send to chat".
+- **Even G2**: later. A row in the modal, **Chats**: the unread mentions, a line each;
   a tap reads the last messages on the panel's eight lines, and the microphone row replies
-  when what was said starts with "reply" ("Antwort"). After the phone's push exists.
+  when what was said starts with "reply" ("Antwort").
 
 ## 5. What nib does not do
 
@@ -1021,10 +992,15 @@ says so and the lane picks the next free one.
 - **A shop**: animated avatars, super reactions, stickers, banners as a purchase.
 - **Forum channels and announcements as types.** A note is the long post; an owner-only chat
   is the announcement channel.
-- **Disappearing messages** while chats are readable by the server and written to disk.
+- **Disappearing messages** while chats are readable by the server.
 - **Stories, channels with subscribers, communities with discovery.** nib's chats are among
   people who already share something.
 - **A bot marketplace.** `nib mcp`, the connector and program tokens are the integration.
+- **Direct and group messages** between people outside a space, and with them "who can
+  message you", requests and blocking (decision 7.1).
+- **A transcript on disk.** Chats are not written into the space as markdown; the log lives
+  in the account and every device's store (decision 7.2).
+- **End-to-end encryption**, now or as a secret chat later (decision 7.3).
 
 ## 6. The implementation plan
 
@@ -1037,11 +1013,19 @@ packages/chats, published in the workspace as `@nib/chats`.
 
 ### 6.1 The interfaces the lanes meet at
 
-Written first, by lane 1, in `@nib/chats`'s `types.ts`, before any other lane builds on them;
-the others code against fixtures until it lands.
+Written first, by lane 1, in `@nib/chats` (`packages/chats/src`), before any other lane
+builds on them; the others code against fixtures until it lands. Every shape is spelled once,
+in `types.ts`, and every module beside it is pure.
 
 ```ts
+// types.ts
 type Who = `user:${string}` | `guest:${string}` | `program:${string}`
+type Mention = Who | 'here' | 'everyone'
+type Role = 'read' | 'write' | 'owner'
+type Posting = 'writers' | 'owner'
+type Notify = 'all' | 'mentions' | 'nothing'
+
+interface Pointer { v: 1; chat: string }                // a .chat file's text, 4.2
 
 interface FileRef {
   hash: string; name: string; size: number; type: string
@@ -1052,36 +1036,61 @@ interface FileRef {
 interface Preview { url: string; title: string; site?: string; text?: string; picture?: string }
 interface Poll { question: string; answers: string[]; several: boolean; ends?: number }
 
+interface Post { kind: 'post'; id: string; message: string; body: string; parent?: string
+  quote?: string; files?: FileRef[]; poll?: Poll; preview?: Preview
+  via?: { agent: string }; alsoToChat?: boolean; mentions?: Mention[] }
+
 type Event =
-  | { kind: 'post'; id: string; message: string; body: string; parent?: string
-      quote?: string; files?: FileRef[]; poll?: Poll; preview?: Preview
-      via?: { agent: string }; alsoToChat?: boolean; mentions?: Who[] }
+  | Post
   | { kind: 'edit'; id: string; target: string; body: string; files?: FileRef[] }
   | { kind: 'delete'; id: string; target: string }
   | { kind: 'react'; id: string; target: string; emoji: string; on: boolean }
   | { kind: 'pin'; id: string; target: string; on: boolean }
-  | { kind: 'vote'; id: string; target: string; answers: number[] }
-  | { kind: 'meta'; id: string; topic?: string; posting?: 'writers' | 'owner'; slowmode?: number }
-  | { kind: 'schedule'; id: string; at: number; post: Extract<Event, { kind: 'post' }> }
+  | { kind: 'vote'; id: string; target: string; answers: number[] }   // [] takes it back
+  | { kind: 'meta'; id: string; topic?: string; posting?: Posting; slowmode?: number }
+  | { kind: 'schedule'; id: string; at: number; post: Post }
 
 interface Placed { seq: number; at: number; author: Who; device?: string; madeAt?: number }
 type Logged = Event & Placed
 
 interface Message {
   id: string; seq: number; at: number; author: Who; body: string
-  parent?: string; quote?: string; files: FileRef[]; poll?: Poll & { votes: Record<Who, number[]> }
-  preview?: Preview; via?: { agent: string }; reactions: Record<string, Who[]>
-  pinned: boolean; editedAt?: number; deleted: boolean; replies: number; lastReplyAt?: number
+  parent?: string; quote?: string; alsoToChat: boolean; files: FileRef[]
+  poll?: Poll & { votes: Record<Who, number[]> }; preview?: Preview; via?: { agent: string }
+  mentions: Mention[]; reactions: Record<string, Who[]>; pinned: boolean
+  editedAt?: number; history: { body: string; at: number }[]   // earlier words, oldest first
+  deleted: boolean; replies: number; lastReplyAt?: number
 }
 
-function apply(state: Map<string, Message>, event: Logged): Message | null  // the one reducer
-function transcript(month: string, messages: readonly Message[], names: Names): string
-function parseSearch(query: string): SearchQuery     // words and 4.12's modifiers
-function mentionsIn(body: string, members: readonly Member[]): Who[]
+interface Meta { topic: string; posting: Posting; slowmode: number }
+interface Member { who: Who; name: string; nick?: string }
+
+// reduce.ts: the one reducer. Every message the event changed, as it now stands (a reply
+// changes its parent's count too); the same placed events give the same state in any order.
+function chatState(): ChatState                      // { messages, meta, seq } and its marks
+function apply(state: ChatState, event: Logged): Message[]
+
+// roles.ts: 4.6's table, which the object decides by and the app draws by.
+function may(role: Role | null, action: Action, chat: { posting: Posting; mine?: boolean }): boolean
+function actionOf(event: Event, mine: boolean): Action
+
+// search.ts: 4.12. Days are the reader's calendar days, `since` inclusive, `until` not.
+function parseSearch(query: string, today: string): SearchQuery
+function hasOf(message: Message): Has[]
+function matches(query: SearchQuery, hit: Hit): boolean
+
+// mentions.ts, ids.ts, pointer.ts, links.ts, limits.ts
+function mentionsIn(body: string, members: readonly Member[]): Mention[]
 function ulid(now: number, random: () => number): string
+function chatOf(text: string): Pointer | null; function chatText(pointer: Pointer): string
+function chatLink(chat: string, message?: string): string   // nib://chat/<chat>/<message>
 ```
 
-The wire frames of 4.4 are typed in `@nib/chats/wire`, framed with `@nib/sync-core/wire`. The
+The wire of 4.4 is `@nib/chats/wire`: `ClientFrame` and `ServerFrame` for the socket, as
+JSON text, with `clientFrameOf` and `serverFrameOf`; `eventOf` and `loggedOf`, which every
+end checks an event with before anything trusts it; the HTTP shapes (`ChatRow`,
+`EventsPage`, `StatePage`, `PostEvents` and its `Results`) with a check each; and
+`ChatPoke`, the hub's `chat` frame, which the hub's frames and the app's both import. The
 client store (lane 4) is `chats.list()`, `chats.open(id)` (a window of messages and a
 `watch`), `chats.send(chat, event)` (the one write path, through the outbox), and
 `chats.search(query)`. The profile store (lane 3) is `people.of(who)` and `people.watch`,
@@ -1091,26 +1100,25 @@ which every surface showing a person reads.
 
 | lane | owns | builds | tests | wave |
 | --- | --- | --- | --- | --- |
-| **1 `chats-core`** | packages/chats (new, `@nib/chats`); `packages/sync-core/src/tree.ts` (the `chat` kind) | the types above; the reducer for every event and the conflict rules of 4.5; the transcript writer (4.2) with block ids, replies under parents, headings as bold, reactions and polls; the search language (4.12); mention parsing; ULIDs; the wire frames | the reducer against every ordering of a post, edits, a delete, reactions and votes (property tests: any order of placed events gives one state); transcript fixtures opened in Obsidian (block links resolve) and byte-identical across two runs; the search parser per modifier; `tree.test.ts` with chat entries moved, renamed and deleted | 1 |
-| **2 `chats-server`** | `chats/` in the Worker (new): `ChatLog`, its routes and door; the Durable Object binding and migration tag in `wrangler.jsonc`; migration `0044_chats.sql` (the chat tables); the hub's `chat` frame (`hub/frames.ts`, `hub/poke.ts`); `guestMayReach`; `erase.ts` and `leftovers` for the new tables | 4.3's object (events, messages, FTS5, members, scheduled posts on its alarm), 4.4's routes and socket, the door through the rooms' one query, pokes coalesced per member, `chat_reads` and heads coalesced to D1, DMs unique per pair, blocks and requests, file access through `chat_files`, limits | route tests against real SQL as the Worker's are: the role table of 4.6 for five holders (two guests); idempotent resend; a reader's socket refused a post; revocation closes sockets; a DM pair made twice is one chat; a blocked sender refused; `erase.test.ts` green with every new table; `wrangler deploy --dry-run` with the new class; FTS5 proved in a SQLite-backed object on day one (fallback: a words table) | 1 |
+| **1 `chats-core`** | packages/chats (new, `@nib/chats`); the `chat` kind: `packages/sync-core/src/tree.ts` and `wire.ts`, and the kind lists that name every kind (`services/sync/src/sync2/tree.ts`, `feed.ts`, `apps/desktop/src/lib/sync2/kinds.ts`), as the `term` kind was added | the types above; the reducer for every event and the conflict rules of 4.5; the search language (4.12) and what a message has; mention parsing; ULIDs; the pointer and message links; the roles table of 4.6; the limits; the wire frames, HTTP shapes and the hub's poke, each with its check | the reducer against every ordering of posts, replies, edits, deletes, reactions, pins and votes (property tests: any order of placed events gives one state); the search parser per modifier; codec round trips and refusals; `tree.test.ts` with chat entries moved, renamed and deleted | 1 |
+| **2 `chats-server`** | `chats/` in the Worker (new): `ChatLog`, its routes and door; the Durable Object binding and migration tag in `wrangler.jsonc`; the next free migration (the chat tables of 4.3); `NOTE_PATH` and `rooms/kind.ts` for the `.chat` pointer under v1, and linking `chats.file_id` when a pointer arrives by either sync; the hub's `chat` frame (`hub/frames.ts`, `hub/poke.ts`, reading `ChatPoke`); `guestMayReach`; `erase.ts` and `leftovers` for the new tables | 4.3's object (events, messages, FTS5, members, scheduled posts on its alarm, `apply` and `may` from `@nib/chats`), 4.4's routes and socket for v1 and v2 accounts alike, `POST /v2/chats {space}` and Move to space, the door through the rooms' one query with item shares by `file_id`, pokes coalesced per member, `chat_reads` and heads coalesced to D1, file access through `chat_files`, limits | route tests against real SQL as the Worker's are: the role table of 4.6 for five holders (two guests); idempotent resend; a reader's socket refused a post; revocation closes sockets; a pointer copied into another space reaching nothing; a v1 account making, posting and listing; `erase.test.ts` green with every new table; `wrangler deploy --dry-run` with the new class; FTS5 proved in a SQLite-backed object on day one (fallback: a words table) | 1 |
 | **3 `profiles`** | `lib/people/` (new: `Avatar.svelte`, `AvatarSheet.svelte`, `ProfileCard.svelte`, the people store); the profile and presence routes in `services/sync/src/account.ts` and `presence.ts` (new) in the Worker (new); its own migration for the `users` columns, `presence` and `space_nicks`; the hub's presence writes (`hub/hub.ts`, agreed with lane 2); the surfaces of 4.9's table outside chats (the share sheet, the panel's foot, `rooms/who.ts` and the caret label in `packages/editor/src/carets.ts`, the tab's people, the versions list, the switcher) | the avatar from file, drop, paste and camera; the crop sheet; two WebP sizes with metadata stripped; pronouns, bio, status with its clearing, accent, nickname per space; presence from the hub; Settings > Account's rows; `Avatar` in every place of 4.9 | crop maths and the WebP output's sizes; EXIF stripped (a fixture with GPS); status clears at its time; presence transitions written once; a drive: set an avatar, see it in the share sheet and on a caret in a second browser on the same space; `weight.test.ts` unchanged | 1 |
-| **4 `chats-client`** | `lib/chats/` (new: the store, socket, outbox, catch-up, transcript projection, search); `src-tauri/src/sync_store.rs` (the tables of 4.17) and `lib/web/sync-store.ts`; `lib/sync2/kinds.ts`, `lib/sync2/watching.ts` and `src-tauri/src/space_watch.rs` (a `.chat` entry and the paths under it skipped); the link preview fetch in `src-tauri/src` (new file) | the store and its one write path; the socket with `hello since`, pages and `behind`; the outbox with placing, refusal and retry; first copies newest first; the transcript months written on the pause and never synced; the search modifiers over FTS5 and the browser build's route; the link preview made by the crate; drafts kept and synced through account settings | simulator tests in the style of `sync2/sim.test.ts`: three devices, offline posts, edits and deletes crossing, every device ending with one state and byte-identical transcripts; the outbox across a crash; cargo tests for the store's tables and FTS5; a perf test: 100,000 messages, the window around a read place under 10 ms; a draft-PR CI for the crate | 2 |
+| **4 `chats-client`** | `lib/chats/` (new: the store, socket, outbox, catch-up, search, the pointer made and read); `src-tauri/src/sync_store.rs` (the tables of 4.17, opened on a v1 account too) and `lib/web/sync-store.ts`; the link index reading messages' links out of the store (beside the notes' own); the link preview fetch in `src-tauri/src` (new file) | the store and its one write path; the socket with `hello since`, pages and `behind`; the outbox with placing, refusal and retry; first copies newest first; the search modifiers over FTS5 and the browser build's route; backlinks from messages; the link preview made by the crate; drafts kept and synced through account settings | simulator tests in the style of `sync2/sim.test.ts`: three devices, offline posts, edits and deletes crossing, every device ending with one state; the outbox across a crash; a v1 account and a v2 account in one chat; cargo tests for the store's tables and FTS5; a perf test: 100,000 messages, the window around a read place under 10 ms; a draft-PR CI for the crate | 2 |
 | **5 `chats-ui`** | `lib/chats/view/` (new); the `'chats'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `workspace/panels.ts`; the chat kind in `lib/new-kinds.ts`, `lib/openers.ts` and `lib/file-mark.ts`; the emoji picker (new, `lib/emoji/`); the chat keys in `lib/shortcuts/registry.ts` | the Chats panel, the chat tab, the measured window, grouping and separators, the new line and pills, the hover bar and menus, the composer on `@nib/editor` with mentions, `[[`, `:` and `/` completion, attachments, galleries and the lightbox, the voice recorder and player, polls, the replies pane, members, pins, Saved and Activity, the Ctrl+T card, the phone's layout, motion and the screen reader's log | component tests per surface; a drive `test/e2e/chats.py`: two browsers on one shared space, a message, a reply, a reaction and an edit seen on the other within a second, a picture and a voice message, the new line and Ctrl+J, a search hit opening the message; the same at phone width; 100,000 seeded messages scrolled at 60 fps | 2 |
-| **6 `chats-notify`** | `push/` in the Worker (new: FCM, APNs, Web Push, the desktop-active rule); `lib/chats/notify.ts` (new); the Android and iOS token registration (Kotlin beside `Widgets.kt`, the iOS app delegate); the tray residency setting with `docs/tasks.md` lane 5 | per-chat levels, mute, keywords, the quiet schedule, hidden previews; desktop notifications with inline reply; the tray; push to phones and the browser build, quiet while a desktop is active; the one push module tasks' reminders also use | the decision table (level, mute, quiet, focus, desktop active) as a pure function with every row; push requests against recorded FCM, APNs and Web Push answers, a dead token dropped; a probe with its own identifier (never Emil's nib) that a notification is raised and pressing it opens the chat | 2 |
+| **6 `chats-notify`** | `lib/chats/notify.ts` (new); the tray residency setting with `docs/tasks.md` lane 5 | per-chat levels, mute, keywords, the quiet schedule, hidden previews; desktop notifications with inline reply; the tray; the decision as a pure function the Worker can ask the day push is switched on (4.11). No push to phones or the browser build: no keys exist (decision 7.4) | the decision table (level, mute, quiet, focus) as a pure function with every row; a probe with its own identifier (never Emil's nib) that a notification is raised and pressing it opens the chat | 2 |
 | **7 `chats-everywhere`** | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/chats.ts`, new); the grant's scopes (`src-tauri/src/agents/grants.rs`, `verbs.rs`: posting as Publishing); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` section 3 (`/catchup`, `/reply`); the search panel's chat hits (`lib/search/`); Send to chat in the editor's menu; Add as task and Save as note; program tokens' `chats.write` | the verbs of 4.14 on both servers, the asks and "Always in this chat", `<untrusted>` marks; `@nib` in the composer handed to the sidebar; the live note card and the share prompt; quoting a selection; a message to a task through quick add and to a note; the catch-up summary | verb tests through the MCP harness: a post asks, a draft does not, a chat with yourself does not, a grant without the space sees no chats, another person's words come back marked; the AI command table test green with the new rows; a drive: a message to a task lands in the inbox with its link, and the link opens the message | 3 |
 
 **Wave 1** is lanes 1, 2 and 3 together: a pure package, the Worker and the profiles, which
 meet at 6.1's types and nothing else. **Wave 2** is lanes 4, 5 and 6 once lanes 1 and 2 are
 on main (lane 3 may still be running: that is six), each against fixtures until the other
 lands; lane 5 draws what lane 4 stores and owns none of its logic. **Wave 3** is lane 7,
-after lanes 4 and 5. If `docs/tasks.md`'s wave 2 runs at the same time, its lane 5 and this
-lane 6 are one push module: whichever starts first builds it, the other uses it.
+after lanes 4 and 5.
 
 Docs each lane updates: lane 1 `docs/conventions.md` (the package and the words `chat` and
 `reply`); lane 2 `docs/sync-v2.md` sections 7 and 8 (the routes, the object, the tables);
 lane 3 `docs/collaboration.md` ("Carets and presence": avatars) and `docs/design.md`; lane 5
 `docs/design.md` (the panel and the chat) and `docs/keyboard.md`; lane 6 `docs/mobile.md`
-(push); lane 7 `docs/agent-native.md` 5.3 and 9.1, `docs/ai-sidebar.md` section 3 and
+(desktop notifications, push still off); lane 7 `docs/agent-native.md` 5.3 and 9.1, `docs/ai-sidebar.md` section 3 and
 `docs/automation.md`.
 
 ### 6.3 Risks
@@ -1122,41 +1130,40 @@ lane 3 `docs/collaboration.md` ("Carets and presence": avatars) and `docs/design
   `wrangler deploy --dry-run` before anything else, as `NoteRoom` was.
 - **Variable-height virtualisation** is where chat clients stutter. Lane 5 builds the measured
   window first, against 100,000 seeded rows, before any styling.
-- **The transcript and other writers.** Obsidian or a sync tool editing a month file is
-  overwritten at the next change; the watcher must never read it as a foreign edit (lane 4's
-  test).
-- **Push needs accounts nib does not have yet**: a Firebase project, an APNs key (the Apple
-  developer account `docs/mobile.md` already waits on) and VAPID keys as Worker secrets.
-  Lane 6 builds against recorded answers and ships what the secrets allow.
+- **Two syncs at once.** A chat must work for an account on v1 beside one on v2 in the same
+  space. Nothing about a chat but its pointer goes through either sync, and the pointer is
+  read by its text, not its tree id, so the one risk is the pointer not arriving: lane 2's
+  `NOTE_PATH` and lane 4's simulator hold both roads.
 - **Fan-out cost.** A post in a chat of 200 is up to 200 hub pokes; coalescing per member per
   two seconds bounds it, and the ceiling of 200 people is the space's.
 
-## 7. Decisions for Emil
+## 7. Decisions
 
-1. **Direct messages live in the account, not in a space**, as Slack's and Discord's do; their
-   transcript is written only if Settings keeps them in a chosen space (`Direct/`). Or make a
-   DM a chat in the starter's space, shared on its own?
-2. **Transcripts on disk**: every device writes each chat as month files of markdown, derived
-   and never synced, so Obsidian, search, backlinks and the agent read chats as text. Or keep
-   chats out of the space folder entirely, with an export?
-3. **No end-to-end encryption by default**, as Slack, Discord and Teams; a secret direct
-   message with MLS later, as Telegram's secret chats. Or encrypt every chat end to end now,
-   at the cost of push previews, the connector, server search and history on new devices?
-4. **Push from the Worker now** (FCM, APNs, Web Push), shared with tasks' reminders. Without
-   it a phone hears nothing unless nib is open on it. Build it in this round, or later?
-5. **Read receipts on by default** in direct messages and chats of up to ten, reciprocal. Or
-   off by default?
-6. **Calls, video and screen share later**, through Cloudflare's realtime SFU when the chats
-   are in use, rather than in this round. Or drop them and leave calls to other apps?
+Emil decided these on 2026-10-04 and 2026-10-05; the document above is written to them.
+
+1. **No direct messages or group messages between people.** Only chats, as channels inside
+   spaces. Every feature that only a direct message needed is dropped with it: who can
+   message you, requests, blocking, a profile card's Message.
+2. **No transcript files.** A chat lives only in the synced store: the `ChatLog` object and
+   every device's cache of it. Search, the agent and backlinks read that store.
+3. **No end-to-end encryption**, and no secret chat later either.
+4. **Phone push is off.** The Firebase, APNs and VAPID keys do not exist. Desktop
+   notifications only, and the seam in the Worker is kept for the day they do.
+5. **Read receipts on** in chats of up to ten people, reciprocal; accepted for now.
+6. **Calls, video and screen share later**; accepted for now.
 7. **`@nib` runs only the asker's own agent**, and nothing anybody else writes ever starts an
-   agent. Or allow a shared agent as a chat member (Slack's agents in channels), with its
-   owner's grant?
-8. **A deleted account's messages in other people's chats stay** as "Deleted account"
-   (Discord). Or delete them with the account?
-9. **"Replies", not "threads"**, because the AI sidebar's conversations are threads. Agreed?
-10. **Who can message you**: people you share something with, plus one request from anybody
-    with your address. Or anybody, or only people you share with?
-11. **The Ctrl+T letter is M** (C is the canvas). Agreed?
+   agent; accepted for now.
+8. **A deleted account's messages stay** in other people's chats as "Deleted account";
+   accepted for now.
+9. **"Replies", not "threads"**; accepted.
+10. (Was "who can message you": gone with decision 1.)
+11. **The Ctrl+T letter is M**; accepted.
+12. **Chats work on sync v1.** Emil's account is on v1 and v2 is not switched on, so a chat's
+    identity and membership never depend on v2's tree ids. The account makes the chat's id
+    (`POST /v2/chats {space}`), access is the role in the chat's space, and a `.chat`
+    pointer of one line in the space gives it a name and a place under either sync, the way
+    a `.term` names its session (4.2). The tree kind `chat` exists so v2 carries the
+    pointer as what it is, and is never what a chat is found by.
 
 ## Sources
 
@@ -1209,4 +1216,3 @@ lane 3 `docs/collaboration.md` ("Carets and presence": avatars) and `docs/design
 [el-security]: https://docs.element.io/latest/element-support/matrix-account-management/securing-a-matrix-account/
 [mls]: https://datatracker.ietf.org/doc/html/rfc9420
 [do-limits]: https://developers.cloudflare.com/durable-objects/platform/limits/
-[ob-blocks]: https://help.obsidian.md/Linking+notes+and+files/Internal+links#Link+to+a+block+in+a+note
