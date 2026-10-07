@@ -84,7 +84,20 @@ export function turn(shape: Shape, doc: Y.Doc, from: string, to: string, origin:
     }, origin)
     return
   }
-  textops(doc.getText(TEXT), unixLines(from), unixLines(to), origin)
+  const text = doc.getText(TEXT)
+  textops(text, wordsOf(text, from), unixLines(to), origin)
+}
+
+/** What a document reads, as `textops` needs it: the caller's copy where it is that, with
+ *  its line ends made Unix ones the way every file is read. A document can hold Windows
+ *  line ends itself - seeded at the switch to v2 from words v1 carried as another program
+ *  on Windows wrote them - and then only its own words say what it reads; read back once,
+ *  and the edit made from them turns its line ends Unix ones too. */
+function wordsOf(text: Y.Text, from: string): string {
+  const said = unixLines(from)
+  if (text.length === said.length) return said
+  if (text.length === from.length) return from
+  return text.toJSON()
 }
 
 /** The CRDT's merge of two texts made from one ancestor, where there is no document

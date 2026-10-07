@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { writeShortcut } from '../web-tab/shortcut'
-import { judge } from './kinds'
+import { TEXT } from '@nib/rooms'
+import * as Y from 'yjs'
+import { MINE } from './docs'
+import { judge, turn } from './kinds'
 
 /** A web note under v2 settles the way v1's does since 2026-10-03: the newer copy
  *  stands and nothing is kept beside it (web-tab/settle.ts). */
@@ -40,5 +43,29 @@ describe('a web note changed on two devices', () => {
       verdict: 'clean',
       resolution: there,
     })
+  })
+})
+
+/** A note whose words the account holds with Windows line ends: written by another
+ *  program on Windows and sent up by v1, which carries the bytes as they are, so the
+ *  epoch at the switch to v2 is seeded with them. */
+describe('a note seeded with Windows line ends', () => {
+  function seeded(words: string): Y.Doc {
+    const doc = new Y.Doc()
+    doc.getText(TEXT).insert(0, words)
+    return doc
+  }
+
+  test('takes another program’s edit, rather than refusing every one after', () => {
+    const held = '# Plan\r\n\r\nline one\r\n'
+    const doc = seeded(held)
+    turn('words', doc, held, '# Plan\r\n\r\nline one\r\n\r\nadded offline\r\n', MINE)
+    expect(doc.getText(TEXT).toJSON()).toBe('# Plan\n\nline one\n\nadded offline\n')
+  })
+
+  test('and an edit worked out against its words with Unix line ends', () => {
+    const doc = seeded('# Plan\r\n\r\nline one\r\n')
+    turn('words', doc, '# Plan\n\nline one\n', '# Plan\n\nline one\nline two\n', MINE)
+    expect(doc.getText(TEXT).toJSON()).toBe('# Plan\n\nline one\nline two\n')
   })
 })
