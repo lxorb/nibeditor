@@ -65,6 +65,14 @@ class People {
     return known
   }
 
+  /** Somebody changed their profile (a chat's `profile` frame): asked for again, and
+   *  drawn as known until the answer lands. The account's own is the account's. */
+  refresh(id: string): void {
+    if (this.mine?.id === id) return
+    this.asked.delete(id)
+    this.ask(id)
+  }
+
   /** What to call somebody: their name in this space where they chose one there, else
    *  their name. */
   called(id: string, space?: string | null): string | undefined {

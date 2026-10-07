@@ -627,7 +627,8 @@ export function chatPokeOf(value: unknown): ChatPoke | null {
   return { t: 'chat', chat, seq, at, by, mention }
 }
 
-function chatRowOf(value: unknown): ChatRow | null {
+/** One row of `GET /v2/chats`, as a device reads it. */
+export function chatRowOf(value: unknown): ChatRow | null {
   if (!isRecord(value)) return null
   const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } =
     value

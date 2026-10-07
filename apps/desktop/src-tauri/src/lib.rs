@@ -278,6 +278,9 @@ macro_rules! commands {
             sync_store::sync_store_write,
             sync_store::sync_store_clean_exit,
             sync_store::sync_store_forget,
+            sync_store::chats::chat_store_read,
+            sync_store::chats::chat_store_write,
+            sync_store::chats::chat_store_forget,
             space_watch::space_watch,
             space_watch::space_unwatch,
             space_watch::space_scan,
@@ -643,6 +646,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // space_watch.rs.
     let builder = builder
         .manage(sync_store::Stores::default())
+        .manage(sync_store::chats::ChatStores::default())
         .manage(space_watch::Watching::default());
 
     // What the `nib` command's requests wait in while the window answers them.

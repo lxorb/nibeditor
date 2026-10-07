@@ -19,6 +19,7 @@
 //! One store is open at a time, because one account is signed in at a time. The
 //! browser build keeps the same tables in `IndexedDB`; see `src/lib/web/sync-store.ts`.
 
+pub mod chats;
 mod store;
 mod tables;
 mod wire;
