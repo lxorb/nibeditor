@@ -1,5 +1,6 @@
 import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api'
 import { arriving } from './arriving.svelte'
+import { pollDelay } from './backoff'
 import { called } from './person'
 import { forget, keep, storedText } from './stored'
 import { waited } from './timing'
@@ -170,7 +171,10 @@ class Session {
           return
         }
 
-        if (attempt === TRIES.length) return
+        if (attempt === TRIES.length) {
+          this.askLater(saved)
+          return
+        }
       }
     }
 
@@ -380,7 +384,36 @@ class Session {
     await sharedWithYou.load()
   }
 
+  /** The session the launch's tries could not ask about, asked about again at sync's
+   *  own cadence for as long as it is the session here and nobody has answered: an app
+   *  opened before its network came back - a laptop on a train - used to stay signed
+   *  out until it was restarted, and nothing synced meanwhile. The token stays, as
+   *  above; only the account refusing it lets it go. */
+  private asking: ReturnType<typeof setTimeout> | undefined
+
+  private askLater(token: string, tries = 0) {
+    clearTimeout(this.asking)
+    this.asking = setTimeout(() => void this.askAgain(token, tries), pollDelay(tries, false))
+  }
+
+  private async askAgain(token: string, tries: number) {
+    if (this.token !== token || this.user || this.guest) return
+    try {
+      const who = await api.me(token)
+      if (this.token !== token) return
+      this.user = who.user ?? null
+      this.guest = who.guest ?? null
+    } catch (error) {
+      if (this.token !== token) return
+      if (rejected(error)) this.forget()
+      else this.askLater(token, tries + 1)
+      return
+    }
+    await this.loadSpaces().catch(() => undefined)
+  }
+
   private forget() {
+    clearTimeout(this.asking)
     arriving.reset()
     forget(STORAGE_KEY)
     void this.vault?.clear().catch(() => undefined)

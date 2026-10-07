@@ -375,6 +375,52 @@ describe('restoring a session', () => {
     expect(localStorage.getItem('nib:session')).toBe('session')
   })
 
+  test('signs in later in the same launch once the account can be reached again', async () => {
+    // A laptop opened on a train: every try of the launch's ladder failed, and the
+    // network came back a minute later. The session was never asked about again,
+    // so the app stayed signed out, and nothing synced, until it was restarted.
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = 6
+
+    vi.useFakeTimers()
+    try {
+      const restoring = account.restore()
+      await vi.advanceTimersByTimeAsync(10_000)
+      await restoring
+      expect(account.signedIn).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      expect(account.signedIn).toBe(true)
+      expect(account.user?.id).toBe('u1')
+      const asked = server.meCalls
+
+      // Answered is answered: nothing keeps asking.
+      await vi.advanceTimersByTimeAsync(10 * 60_000)
+      expect(server.meCalls).toBe(asked)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('stops asking about a session that was signed out meanwhile', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = Infinity
+
+    vi.useFakeTimers()
+    try {
+      const restoring = account.restore()
+      await vi.advanceTimersByTimeAsync(10_000)
+      await restoring
+      await account.signOut()
+      const asked = server.meCalls
+      await vi.advanceTimersByTimeAsync(10 * 60_000)
+      expect(server.meCalls).toBe(asked)
+      expect(account.signedIn).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('signs out only when the account refuses the token', async () => {
     localStorage.setItem('nib:session', 'session')
     server.meFails = Infinity
