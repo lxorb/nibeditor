@@ -141,7 +141,7 @@ listen on. Run against the web app it says so rather than failing to connect.
 | `words [path]` | what the status bar counts |
 | `commands list` | every command the palette would offer, with its key |
 | `commands run <id>` | runs one |
-| `sync status` / `sync now` | the light in the corner, and a pass now |
+| `sync status` / `sync now` | where sync is, and a pass now |
 | `publish status` / `publish now` | whether the space is on the web, and a pass |
 | `window` | where the window is and how big |
 | `screenshot [--out FILE]` | a picture of the window |

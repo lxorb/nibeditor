@@ -872,9 +872,9 @@ nothing to slip, in the box the two share so the name beside them does not move.
 
 ### Dots, and what is not a dot
 
-A dot is one fact: something is still under way. The two lights that are about
-work in progress rather than about a file - a request waiting to be let in, the
-foot's sync light - wear it, and so does a tab with no file yet: a new note, plane or
+A dot is one fact: something is still under way. The light that is about work in
+progress rather than about a file - a request waiting to be let in - wears it, and so
+does a tab with no file yet: a new note, plane or
 page note has not been given a place, which is the one thing about it still to do
 (`.nib-unsaved`, see `UnsavedDot.svelte`). A tab with a file wears none - every note
 writes itself a moment after it changes - and nor does a web tab nobody has kept,
@@ -1173,7 +1173,7 @@ a home:
 | A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |
 | Reordering by dragging | `Move up` and `Move down` in that menu, on every device |
 | The account | The left of the panel's foot row, as a face and a name |
-| The theme, and settings with its sync light | The right of that same row |
+| The theme, and settings | The right of that same row |
 | The three bars | The left end of the title bar, which is the corner of the screen they were already in |
 | The sidebar button, where the panel is a drawer | The drawer's own head, which is the corner of the screen it was already in |
 
@@ -1199,8 +1199,10 @@ pane - signing in, the name a shared space
 shows, storage and signing out are all there, so who you are is one place rather
 than a sheet here and a pane there; then the theme and the settings at the right,
 where a switch goes. The theme is off while the theme in force has only the one
-scheme. The settings button carries the sync light, as it did in the rail. The
-GitHub mark does not come back: it is a row in Help.
+scheme. The settings button carries no sync light any more: Emil, 2026-10-06 (#206),
+_"indicator dot next to settings should be removed (it blinks sometimes)"_. What a
+pass did is the Sync pane's to say. The GitHub mark does not come back: it is a row
+in Help.
 
 ### The theme picker
 

@@ -830,11 +830,10 @@
       )
   }
 
-  /** What the app tells somebody with a colour: the gear in the panel's foot is lit
-   *  while a pass is running and red when the last one failed. It has no words
-   *  anywhere in the page, so it reached no reader who is listening.
+  /** Where sync is, for a reader who is listening: a pass running, the last one
+   *  failed, the account out of reach. Nothing on screen says it.
    *
-   *  Said here rather than in the component, because the region is one region: see
+   *  Said here rather than in a component, because the region is one region: see
    *  said.svelte.ts. */
   $effect(() => {
     const status = sync.status
