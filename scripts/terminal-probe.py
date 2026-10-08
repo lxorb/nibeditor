@@ -15,11 +15,12 @@ the window itself, and so reaches what the window reaches; see docs/terminal.md)
 * **PowerShell** does the same, and says how wide its console is before and after the
   window is made narrower: the resize reaches the shell.
 * **A running command** is busy (`ping`), Ctrl+C stops it, and then it is not.
-* **Ctrl+T** in a terminal is the app's, and its dialog has the terminal's card;
+* **Ctrl+T** in a terminal is both the app's and the shell's, so the first press asks
+  which; answered New tab, it is a new tab whose cards have the terminal's.
   **Ctrl+W** is the shell's and closes nothing.
 * **A right click** is the terminal's own menu, and **a row of the file list dropped** on
   it is its quoted path at the prompt.
-* **The plus** has the terminal's row, and its chevron lists every shell found.
+* **The plus** is a new tab too, and the chevron on its terminal card lists every shell found.
 * **`exit`** in PowerShell closes its own tab; **quitting** asks nothing and leaves no
   shell running; **the next launch** puts the terminal back in the folder it was last in,
   with its last lines; and **closing the tab** ends its shell, with no shell and no
@@ -368,31 +369,44 @@ def main() -> int:
         before = shells_of(app.pid)
         say(f"running below the app: {before}")
 
-        # Ctrl+T is the app's: the dialog comes up over the terminal.
+        # Ctrl+T is both the app's and the shell's: the first press asks which, and New tab
+        # is a new tab whose cards have the terminal's. See lib/terminal/two-ways.ts.
         window.chord("t", "KeyT", 84)
-        dialog = until(
-            lambda: window.run("!!document.querySelector('[role=dialog][aria-label=\"New\"]')") is True, 5
+        asked = until(
+            lambda: window.run(
+                "!!document.querySelector('[role=dialog][aria-label=\"Ctrl+T in a terminal\"]')"
+            )
+            is True,
+            5,
         )
-        check(bool(dialog), "Ctrl+T in a terminal opens the new-tab dialog")
-        cards = window.run(
-            "JSON.stringify([...document.querySelectorAll('[role=dialog] .kind')].map((one) => one.textContent.trim()))"
+        check(bool(asked), "Ctrl+T in a terminal asks whose it is")
+        tabs.shoot(app.pid, shots / "terminal-both.png")
+        window.run(
+            "(() => { [...document.querySelectorAll('[role=dialog] .row button')]"
+            ".find((one) => one.textContent.trim() === 'New tab')?.click(); return true })()"
         )
-        check(isinstance(cards, str) and "New terminal" in cards, f"the terminal is one of its cards ({cards})")
+        cards = until(
+            lambda: (lambda said: said if isinstance(said, str) and "New terminal" in said else None)(
+                window.run(
+                    "JSON.stringify([...document.querySelectorAll('[data-new-here] .kind .nib-row-label')]"
+                    ".map((one) => one.textContent.trim()))"
+                )
+            ),
+            5,
+        )
+        check(bool(cards), f"the new tab's cards have the terminal's ({cards})")
         time.sleep(0.4)
         tabs.shoot(app.pid, shots / "terminal-new-kinds.png")
-        window.run(
-            "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); "
-            "window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', bubbles: true })); return true })()"
-        )
+        window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
         time.sleep(0.5)
 
-        # The plus: the terminal's row, with the chevron to the other shells, which shows
-        # them in the menu's place.
-        window.run("(() => { document.querySelector('button.new').click(); return true })()")
-        until(lambda: window.run("!!document.querySelector('.menu [data-more]')") is True, 5)
+        # The plus is the same new tab, and the chevron on its terminal card lists the
+        # other shells, in a menu at the card.
+        window.run("(() => { document.querySelector('.strip button.new').click(); return true })()")
+        until(lambda: window.run("!!document.querySelector('[data-new-here] [data-more]')") is True, 5)
         time.sleep(0.3)
         tabs.shoot(app.pid, shots / "terminal-plus.png")
-        window.run("(() => { document.querySelector('.menu [data-more]').click(); return true })()")
+        window.run("(() => { document.querySelector('[data-new-here] [data-more]').click(); return true })()")
         rows = until(
             lambda: (lambda said: said if isinstance(said, str) and "Command Prompt" in said else None)(
                 window.run(
@@ -407,6 +421,8 @@ def main() -> int:
         window.run(
             "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true })()"
         )
+        time.sleep(0.4)
+        window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
         time.sleep(0.4)
 
         # -- PowerShell -----------------------------------------------------------

@@ -72,7 +72,7 @@ tunnel's route again, so Access can also be added later.
    answer's `machines`). If the container is awake it is saved one last time - a snapshot,
    and the home to `nib-homes` whatever the last backup's age - and stopped. Its 17 GB home
    is in R2 under the row's `backup_key` from then on.
-2. Open an online terminal (Ctrl+T, then O). The first start makes the tunnel, the hostname,
+2. Open an online terminal (Ctrl+T, Escape to leave the address field, then O). The first start makes the tunnel, the hostname,
    the firewall and the server; the terminal says _Starting machine…_ for the five to ten
    minutes cloud-init takes (packages, node, cloudflared, nibd, swap), and is live after.
    Then Claude Code and Codex install in the background.

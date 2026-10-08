@@ -1728,6 +1728,8 @@ export const es: Dictionary = {
   'Command Prompt': 'Símbolo del sistema',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} en el terminal',
+  'Always ask': 'Preguntar siempre',
   'Open another': 'Abrir otro',
   'Open in terminal': 'Abrir en el terminal',
   Clear: 'Borrar',

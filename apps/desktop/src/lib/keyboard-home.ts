@@ -9,8 +9,8 @@
  *  Two moments read it. **The window coming back** with nothing focused here - the
  *  engine keeps the focused element across a switch of windows, so this is a net under
  *  it - puts the keyboard back in the note, the terminal or the field it was in. **One of
- *  the app's own layers closing** - the palette, a menu, a sheet, a site's question, the
- *  chooser Ctrl+T opens - with the keyboard nowhere, because what had it was the layer:
+ *  the app's own layers closing** - the palette, a menu, a sheet, a site's question -
+ *  with the keyboard nowhere, because what had it was the layer:
  *  once the layer has gone, the keyboard goes back to the site it was in, or to the
  *  element here. A layer that put the keyboard somewhere on its way out, a note it
  *  opened or a name to type, keeps it there.

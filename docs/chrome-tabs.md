@@ -186,7 +186,7 @@ are one key both ways; VS Code's layout buttons sit in the same corner:
   opening its file from anywhere (a search hit, an agent) shows the card. A Scratchpad
   tab an older session left is dropped on the way in, its unwritten words written first.
 - **The switch, the key, Escape.** The glyph shows and hides it and leaves the keyboard
-  where it is. Ctrl+Shift+X and the palette's **Scratchpad** do the same, but with the
+  where it is. Ctrl+N (Ctrl+Shift+X as its second key) and the palette's **Scratchpad** do the same, but with the
   card up and the keyboard elsewhere they put the keyboard in it, as VS Code's terminal
   key does. Escape inside puts it away. Shown by a person it takes the keyboard, and
   hidden it hands it back where it was.

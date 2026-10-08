@@ -282,16 +282,6 @@ function runPrint() {
   })
 }
 
-/** The dialog Ctrl+T holds up, from a command: the palette and a press of the key
- *  before the chord has landed. Fetched for the same reason as the export above; it
- *  has landed by the time anybody could ask, because the chord that is its first
- *  reader is fetched at the launch's last turn. See new-kind-sheet.svelte.ts. */
-export function chooseNewKind(paneId?: string) {
-  void import('../new-kind-sheet.svelte').then(({ newKindSheet }) => {
-    newKindSheet.show(paneId)
-  })
-}
-
 /** Asked at the press rather than as this module loads, so a test can be a Mac. */
 const onMac = () => isDesktop && platform() === 'macos'
 
@@ -299,32 +289,30 @@ const onMac = () => isDesktop && platform() === 'macos'
  *  the context; everything else reaches the stores directly, the way the
  *  command palette does. */
 const APP_ENTRIES: Shortcut[] = [
+  // Ctrl+Alt+N since Ctrl+N went to the scratchpad (Emil, issue #213): the same letter,
+  // one modifier further, and nothing else in the app or any keyboard held it. AltGr
+  // typing a letter is never this chord; see `typedWithAltGr` in keys.ts. The file list
+  // reads the same key for a note in the folder it is on; see Tree.svelte. The keyboards
+  // that have New note on Ctrl+N put it back there; see presets.ts.
   {
     id: 'app.new',
     label: () => t('New note'),
     category: 'file',
     scope: 'app',
-    key: 'Mod-n',
+    key: 'Mod-Alt-n',
     run: () => workspace.openBlank(),
   },
-  // Ctrl+T asks what kind, in a dialog in the middle of the window standing on a web
-  // page: Emil, 2026-09-27, *"Ctrl + T should always open a webpage by default"*. It
-  // was a second key for New note before it asked at all; see new-kind-sheet.svelte.ts
-  // and the list in new-kinds.ts.
-  //
-  // From a key it is more than this: tapped, it makes the web page outright, the way a
-  // browser does; held, it is Alt+Tab's shape - the dialog stays up while Ctrl is down,
-  // each further T steps it round, and letting go chooses. That half cannot live here,
-  // because a command is handed the app's context and not the keystroke, and all of it
-  // turns on the keystroke: see new-kind-chord.ts. The entry stays what it was for the
-  // palette, which has no modifier to hold.
+  // Ctrl+T is a new tab, as in every browser: the kinds a tab can be under an address
+  // field that has the keyboard, which is what the plus makes too (Emil, issue #213).
+  // See `newTab` in workspace.svelte.ts and NewHere.svelte. A terminal asks once whether
+  // the key is this or the shell's; see terminal/two-ways.ts.
   {
     id: 'app.new-kind',
-    label: () => t('New'),
+    label: () => t('New tab'),
     category: 'file',
     scope: 'app',
     key: 'Mod-t',
-    run: () => chooseNewKind(),
+    run: () => workspace.newTab(),
   },
   {
     // No key since the private tab took Chrome's for it (docs/backlog.md, Q3): Ctrl+N is
@@ -973,15 +961,26 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod Mod',
     run: () => askQuickly(),
   },
-  // The one note in no space, its card up and away again. Ctrl+Shift, which a
-  // terminal hands the app, and no browser's or any other app's key nib keeps a
-  // keyboard of. See scratchpad/pad.ts.
+  // The one note in no space, its card up and away again: Ctrl+N, Emil's (issue #213),
+  // which no browser lets a page keep. Ctrl+Shift+X, its key before, stays as its second:
+  // a terminal hands Ctrl+Shift to the app without asking, where Ctrl+N is a key the
+  // shell reads too and is asked about once; see terminal/two-ways.ts and
+  // scratchpad/pad.ts.
   {
     id: 'app.scratchpad',
     label: () => t('Scratchpad'),
     category: 'view',
     scope: 'app',
+    key: 'Mod-n',
+    run: () => toggleScratchpad(),
+  },
+  {
+    id: 'app.scratchpad.alt',
+    label: () => t('Scratchpad'),
+    category: 'view',
+    scope: 'app',
     key: 'Mod-Shift-x',
+    alias: true,
     run: () => toggleScratchpad(),
   },
   // No key of its own, as Footnotes has none; a row to put one on.

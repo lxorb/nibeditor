@@ -61,7 +61,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | done `3864ecf8` | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
 | Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | done `3864ecf8`; the toggle went to Ctrl+Shift+Enter 2026-10-04, Ctrl+Space is the space switcher | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
 | Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | done `3864ecf8` | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
-| Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | done `3864ecf8` | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
+| Files | Ctrl+Alt+N (New note's key, Ctrl+N until issue #213) with the list focused makes the note inside the focused folder | VS Code, Obsidian | done `3864ecf8` | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
 | Files | Ctrl+D duplicates the selected note | Finder, Notion | done `3864ecf8`; the key went to Deselect tab 2026-09-30, the row stays | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
 
 ## Batch 4: everywhere

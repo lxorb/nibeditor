@@ -37,10 +37,9 @@ vi.mock('./remote/picker.svelte', () => ({
   hostPicker: { show: (paneId?: string) => void shownPicker.push(paneId) },
 }))
 
-const { newKindMenu, newKinds } = await import('./new-kinds')
+const { kindLines, newKinds } = await import('./new-kinds')
 
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
-const terminalRow = () => newKindMenu()[newKinds().findIndex((one) => one.kind === 'terminal')]
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 
@@ -50,20 +49,15 @@ afterEach(() => {
 })
 
 describe('a terminal, as a kind a new tab can be', () => {
-  test('is the fifth, after the four the file list also makes, then Remote and Online', () => {
-    expect(newKinds().map((one) => one.kind)).toEqual([
-      'note',
-      'canvas',
-      'web',
-      'private',
-      'pages',
-      'terminal',
-      'remote',
-      'online',
+  test('starts the second line, with Remote and Online after it', () => {
+    expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
+      ['note', 'canvas', 'pages'],
+      ['terminal', 'remote', 'online'],
+      ['web', 'private'],
     ])
   })
 
-  /** T is the chord's own step, so the terminal's key is R - Run, on Windows, for thirty
+  /** T is the new tab's own key, so the terminal's is R - Run, on Windows, for thirty
    *  years - and no two kinds share one. */
   test('on R, its own letter', () => {
     const letters = newKinds().map((one) => one.letter)
@@ -96,7 +90,7 @@ describe('a terminal, as a kind a new tab can be', () => {
 
   /** VS Code's `+ ˅`: the row makes the default, and the others are a chevron away. */
   test('and any other shell a chevron away', async () => {
-    const more = terminalRow()?.more
+    const more = terminalKind()?.others
     expect(more).toBeDefined()
 
     const others = more ? await more() : []
@@ -109,9 +103,9 @@ describe('a terminal, as a kind a new tab can be', () => {
 
   test('the other kinds have no chevron', () => {
     expect(
-      newKindMenu()
-        .filter((_, at) => newKinds()[at]?.kind !== 'terminal')
-        .every((row) => row && !('more' in row)),
+      newKinds()
+        .filter((one) => one.kind !== 'terminal')
+        .every((one) => one.others === undefined),
     ).toBe(true)
   })
 })

@@ -20,13 +20,6 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The dialog Ctrl+T holds up, stood in for: which pane it was asked for is the whole
- *  of what this menu decides about it. */
-const shown = vi.hoisted((): (string | undefined)[] => [])
-vi.mock('../new-kind-sheet.svelte', () => ({
-  newKindSheet: { show: (paneId?: string) => void shown.push(paneId) },
-}))
-
 const { stripMenu } = await import('./strip-menu')
 const { workspace } = await import('../workspace.svelte')
 const { shortcuts } = await import('../shortcuts.svelte')
@@ -45,7 +38,6 @@ function row(label: string): MenuItem {
 }
 
 beforeEach(() => {
-  shown.length = 0
   workspace.closed.restore([])
 })
 
@@ -71,9 +63,14 @@ describe("the empty strip's menu", () => {
 })
 
 describe('New tab', () => {
-  test("asks what kind, in the strip's own pane", async () => {
+  /** Which pane it was asked for is the whole of what this menu decides about it; what a
+   *  new tab is, is `newTab`'s. */
+  test("is a new tab, in the strip's own pane", () => {
+    const asked: (string | undefined)[] = []
+    vi.spyOn(workspace, 'newTab').mockImplementation((paneId) => void asked.push(paneId))
+
     row('New tab').run()
-    await vi.waitFor(() => expect(shown).toEqual([PANE]))
+    expect(asked).toEqual([PANE])
   })
 })
 

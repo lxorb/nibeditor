@@ -315,16 +315,8 @@ export const syncMark = latched(() =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
 )
 
-/** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,
- *  as cards, on the website. Latched like the sheets, and asked for at the launch's
- *  last turn rather than behind the first press, because that press is a hand holding
- *  Ctrl and a dialog that arrived a frame late would be the one hitch in the gesture.
- *  See NewKindSheet.svelte and new-kind-sheet.svelte.ts. */
-export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
-
 /** The switcher in the middle of the window, Ctrl+Space: every space, a digit
- *  away. Latched and asked for at the launch's last turn, as the dialog above is, since
- *  the press it answers is a hand that expects the rows under it at once. See
+ *  away. Latched and asked for at the launch's last turn, since the press it answers is a hand that expects the rows under it at once. See
  *  SpacePicker.svelte and space-picker.svelte.ts. */
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
@@ -392,24 +384,6 @@ export function showQuickAdd(prefill: import('./quick-add/entry').Prefill = {}):
     void quickAddSheet.ask()
     void import('./quick-add/asked.svelte').then(({ quickAdd }) => quickAdd.show(prefill))
   }
-}
-
-/** The held form of the new-tab chord: the state a hand is in between pressing Ctrl+T
- *  and letting go of Ctrl, which is Alt+Tab's shape applied to the dialog above. See
- *  new-kind-chord.ts.
- *
- *  A door of a sort, but not one anything can wait at: a keystroke is answered in the
- *  frame it arrives in, so what is here is the function once it has landed and a way
- *  for the window's handler to ask whether this press is the chord's. Warmed below with
- *  the rest, because the press it has to answer is the first one; until it lands, the
- *  key is the plain command in the registry, which opens the same dialog on the same
- *  card and has no modifier to wait for. Fetched rather than carried because it is a
- *  state machine for a gesture, and a window that opens on a note should not read one
- *  before it draws; see App.svelte and test/weight.test.ts. */
-let heldChooser: ((event: KeyboardEvent) => boolean) | null = null
-
-export function newKindChord(event: KeyboardEvent): boolean {
-  return heldChooser?.(event) ?? false
 }
 
 /** What a window a tab fills keeps of its chrome, and full screen's way out: neither is
@@ -482,11 +456,6 @@ export async function warmDoors(): Promise<void> {
     // nobody has typed yet. Until it lands a `/` offers nothing; see slash.ts in
     // @nib/editor.
     import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
-    // The held chooser and the dialog it holds up, which are here rather than behind
-    // their own first press because the first press is the one they exist to answer;
-    // see above.
-    import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
-    newKindDialog.ask(),
     spacePickerDialog.ask(),
     spacesMenu(),
     paletteDoor.ask(),

@@ -1694,6 +1694,8 @@ export const gsw: Dictionary = {
   'Command Prompt': 'Iigabeufforderig',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} im Terminal',
+  'Always ask': 'Immer frööge',
   'Open another': 'No eis ufmache',
   'Open in terminal': 'Im Terminal ufmache',
   Clear: 'Leere',

@@ -1687,6 +1687,8 @@ export const mr: Dictionary = {
   'Command Prompt': 'कमांड प्रॉम्प्ट',
   Terminal: 'टर्मिनल',
   Shell: 'शेल',
+  '{key} in a terminal': 'टर्मिनलमध्ये {key}',
+  'Always ask': 'नेहमी विचारा',
   'Open another': 'आणखी एक उघडा',
   'Open in terminal': 'टर्मिनलमध्ये उघडा',
   Clear: 'साफ करा',

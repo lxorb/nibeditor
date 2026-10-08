@@ -112,17 +112,6 @@
     )
   }
 
-  /** A held finger is the right click a touch screen has, and the menu key is the one
-   *  a keyboard has: all three ask for the same list, at the plus. What the list holds
-   *  is new-kinds.ts - one list for the plus, the Ctrl+T dialog and the buttons an
-   *  empty pane shows - fetched like the tab's own menu above, and already here by the
-   *  first press: the dialog brings it as the launch ends. */
-  function showNewMenu(event: MouseEvent) {
-    event.preventDefault()
-    event.stopPropagation()
-    void import('./new-kinds').then(({ showNewKinds }) => showNewKinds(event, paneId))
-  }
-
   /* ── Where the tabs are ───────────────────────────────────────────
      Chrome's layout, which is tab-strip/layout.ts. Every tab is placed by hand -
      absolutely, at a transform along the strip - rather than by a flex row, because
@@ -1019,10 +1008,9 @@
       </div>
     {/each}
 
-    <!-- A press opens the chooser: note, canvas, website, page note. The right
-         click, the held finger and the menu key open the same list, so the plus
-         answers every way of asking with the one gesture Emil asked for.
-         Right after the last tab, and moving with it, as Chrome's does.
+    <!-- A new tab, as Ctrl+T makes one (Emil, issue #213): the kinds a tab can be under
+         an address field, in this pane, and no menu of its own any more. Right after the
+         last tab, and moving with it, as Chrome's does.
          Left out on a phone and a tablet, which hold one document at a time: a
          plus has no second tab to open, and the round button over the note is
          what makes one there. Left out rather than hidden, so no key reaches it
@@ -1030,13 +1018,10 @@
     {#if !viewport.touch}
       <button
         class="new"
-        title={shortcuts.tooltip(t('New'), 'app.new-kind')}
-        aria-label={t('New')}
-        aria-haspopup="menu"
+        title={shortcuts.tooltip(t('New tab'), 'app.new-kind')}
+        aria-label={t('New tab')}
         style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"
-        onclick={showNewMenu}
-        oncontextmenu={showNewMenu}
-        use:longPress={showNewMenu}
+        onclick={() => workspace.newTab(paneId)}
       >
         <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
       </button>

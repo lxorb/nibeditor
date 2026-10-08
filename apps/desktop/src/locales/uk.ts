@@ -1750,6 +1750,8 @@ export const uk: Dictionary = {
   'Command Prompt': 'Командний рядок',
   Terminal: 'Термінал',
   Shell: 'Оболонка',
+  '{key} in a terminal': '{key} у терміналі',
+  'Always ask': 'Завжди питати',
   'Open another': 'Відкрити ще один',
   'Open in terminal': 'Відкрити в терміналі',
   Clear: 'Очистити',

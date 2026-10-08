@@ -293,31 +293,25 @@ describe('what the plus in the tab strip offers', () => {
     tabs.indexOf('</button>', tabs.indexOf('class="new"')),
   )
 
-  /** Which kinds are offered is new-kinds.ts now and has its own test beside it:
-   * three ways in - the plus, the Ctrl+T dialog, and the buttons a pane with nothing
-   * open shows - and a list written in any one of them is a list the other two can
-   * disagree with. What is left to read here is that the plus asks the shared one,
-   * fetched with the press as the tab's own menu is, so the list is not in front of
-   * the first paint. */
-  test('the kinds out of the one list, and no list of its own', () => {
-    expect(tabs).toContain("import('./new-kinds').then(({ showNewKinds })")
-    expect(tabs).toContain('showNewKinds(event, paneId)')
-    expect(tabs).not.toContain("from './new-kinds'")
+  /** Which kinds are offered is new-kinds.ts and has its own test beside it, and the
+   *  plus offers none of them itself any more: it makes a new tab, as Ctrl+T does, and
+   *  the tab offers the kinds under its address field (Emil, issue #213). So the strip
+   *  holds no list of kinds, nor a menu of them. */
+  test('a new tab, as Ctrl+T makes one, and no list of its own', () => {
+    expect(plus).toContain('workspace.newTab(paneId)')
+    expect(plus).not.toContain('aria-haspopup')
+    expect(tabs).not.toContain('new-kinds')
     expect(tabs).not.toContain("t('New canvas')")
   })
 
   /** Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you
    *  should be able to choose between the different things (note, canvas, web note
-   *  etc.)."* So a press opens the chooser rather than making a note outright; a note
-   *  is the first row, which is the tab a strip is mostly filled with. */
-  test('a press opens the chooser, the gesture Emil asked for', () => {
-    expect(plus).toContain('onclick={showNewMenu}')
-  })
-
-  /** A right click, the menu key a keyboard has - both arrive as `contextmenu` -
-   *  and a held finger, which is the right click a touch screen has. */
-  test('asked for the way every other menu in the app is', () => {
-    expect(plus).toContain('oncontextmenu={showNewMenu}')
-    expect(plus).toContain('use:longPress={showNewMenu}')
+   *  etc.)."* The choice is still there, in the tab the plus makes rather than in a menu
+   *  hung from it: *"when clicking the + in the top right it should do the same as when
+   *  pressing Ctrl + T, so remove that dropdown"* (issue #213). */
+  test('a press is the new tab, with nothing hung from it', () => {
+    expect(plus).toContain('onclick={() => workspace.newTab(paneId)}')
+    expect(plus).not.toContain('oncontextmenu')
+    expect(plus).not.toContain('longPress')
   })
 })

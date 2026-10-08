@@ -1666,6 +1666,8 @@ export const ko: Dictionary = {
   'Command Prompt': '명령 프롬프트',
   Terminal: '터미널',
   Shell: '셸',
+  '{key} in a terminal': '터미널에서 {key}',
+  'Always ask': '항상 묻기',
   'Open another': '하나 더 열기',
   'Open in terminal': '터미널에서 열기',
   Clear: '지우기',

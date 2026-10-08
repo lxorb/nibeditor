@@ -155,12 +155,22 @@
 
       <div class="row">
         {#if prompt.mode === 'choose'}
+          <!-- A box about the answer itself, at the start of the row as the quit sheet
+               has its own; the keyboard lands on the answer rather than on it. See
+               `chooseTicking` in prompt.svelte.ts. -->
+          {#if prompt.tick}
+            <label class="tick">
+              <input type="checkbox" class="nib-checkbox" bind:checked={prompt.ticked} />
+              {prompt.tick}
+            </label>
+          {/if}
           {#each answers as option (option.id)}
             <button
               type="button"
               class="nib-button"
               class:is-danger={option.danger}
               class:is-quiet={!option.primary && !option.danger}
+              data-lands={prompt.tick && option.primary ? '' : undefined}
               onclick={() => prompt.pick(option.id)}
             >
               {t(option.label)}
@@ -293,8 +303,19 @@
 
   .row {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
     gap: var(--space-2);
+  }
+
+  .tick {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-end: auto;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
   }
 
   /* The three buttons a question ever offers are `.nib-button` in the themes

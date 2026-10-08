@@ -47,8 +47,6 @@
     iconPicker,
     joinSheet,
     importSheet,
-    newKindChord,
-    newKindDialog,
     spacePickerDialog,
     hostPickerDialog,
     paletteDoor,
@@ -765,13 +763,6 @@
     // note is being presented the only app key is the one that stops.
     if (present.on && !shortcuts.pressed('app.present', event)) return
 
-    // The new-tab chooser stays up while the modifier of its own chord is held and
-    // chooses when that is let go, so it is the one command that has to read the
-    // keystroke rather than be dispatched from it: a repeat is not a second press. It
-    // is fetched rather than carried, and a press in front of that falls through to
-    // the plain command below. See new-kind-chord.ts and surfaces.svelte.ts.
-    if (newKindChord(event)) return
-
     // Ctrl+S last, and only where no command took the chord; see `writeKey`.
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
@@ -1216,14 +1207,8 @@
     <PromptSheet />
   {/await}
 {/if}
-<!-- What a new tab should be, from Ctrl+T: mounted at the launch's last turn, so the
-     first press already has it; see surfaces.svelte.ts. -->
-{#if newKindDialog.asked}
-  {#await newKindDialog.asked then NewKindSheet}
-    <NewKindSheet />
-  {/await}
-{/if}
-<!-- Another space, from Ctrl+Space: mounted at the launch's last turn too. -->
+<!-- Another space, from Ctrl+Space: mounted at the launch's last turn, so the first press
+     already has it; see surfaces.svelte.ts. -->
 {#if spacePickerDialog.asked}
   {#await spacePickerDialog.asked then SpacePicker}
     <SpacePicker />

@@ -1,8 +1,8 @@
 /** A private tab: Chrome's Incognito window, as a tab.
  *
  *  Emil's browser vision (2026-09-13) keeps incognito inside the browser, "as an
- *  ephemeral profile". Ctrl+Shift+N, Chrome's own key for it (docs/backlog.md, Q3), the
- *  plus chooser and the palette open one; a link out of one opens privately too, as a
+ *  ephemeral profile". Ctrl+Shift+N, Chrome's own key for it (docs/backlog.md, Q3), a
+ *  new tab's card and the palette open one; a link out of one opens privately too, as a
  *  link out of a private window does.
  *
  *  **What it keeps is nothing.** The page runs in the engine's own private mode - the

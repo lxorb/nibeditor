@@ -1678,6 +1678,8 @@ export const jv: Dictionary = {
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} ing terminal',
+  'Always ask': 'Tansah takon',
   'Open another': 'Bukak siji maneh',
   'Open in terminal': 'Bukak ing terminal',
   Clear: 'Resiki',

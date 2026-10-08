@@ -19,7 +19,7 @@ const invoke = vi.fn((command: string) => {
 
 vi.mock('../tauri', () => ({ isDesktop: true, invoke }))
 
-const { shellName, shells, SIZES } = await import('./shells.svelte')
+const { shellName, shells, SIZES, waysOf } = await import('./shells.svelte')
 
 beforeEach(() => {
   invoke.mockClear()
@@ -68,5 +68,32 @@ describe('the shells', () => {
     shells.setSize(14.4)
     expect(shells.size).toBe(14)
     expect(store.get('nib:terminal-size')).toBe('14')
+  })
+})
+
+/** Whose a key that is both is, once somebody said; see two-ways.ts. */
+describe('the keys that are both', () => {
+  test('are asked about until somebody answers, and the answer is kept', () => {
+    expect(shells.ways['app.scratchpad']).toBeUndefined()
+
+    shells.setWay('app.scratchpad', 'shell')
+    expect(shells.ways['app.scratchpad']).toBe('shell')
+    expect(JSON.parse(store.get('nib:terminal-keys') ?? '{}')).toEqual({
+      'app.scratchpad': 'shell',
+    })
+
+    // Back to asking every time.
+    shells.setWay('app.scratchpad', null)
+    expect(shells.ways['app.scratchpad']).toBeUndefined()
+    expect(JSON.parse(store.get('nib:terminal-keys') ?? '{}')).toEqual({})
+  })
+
+  test('are read rather than trusted', () => {
+    expect(waysOf({ 'app.new-kind': 'app', 'app.scratchpad': 'shell', other: 'both' })).toEqual({
+      'app.new-kind': 'app',
+      'app.scratchpad': 'shell',
+    })
+    expect(waysOf(['app'])).toEqual({})
+    expect(waysOf(null)).toEqual({})
   })
 })

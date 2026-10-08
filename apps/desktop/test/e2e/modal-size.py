@@ -15,8 +15,8 @@ pixels with fewer CSS pixels in it), walks every pane, and fails on:
   - a sheet closer to the window's edge than `--screen-gutter`;
   - a control's words - a segmented half, a key, a button, a setting's name, a pane in
     the list - on more than one line, or cut off;
-  - the same, for the other layers in the middle of the window: Ctrl+T's cards, the
-    palette, the theme picker, a question, the sync question, the icon picker, and
+  - the same, for the other layers in the middle of the window: the palette, the
+    theme picker, a question, the sync question, the icon picker, and
     the theme store, which has to stand inside the settings it is opened over.
 
 With `--shots`, it photographs Settings and those layers at 1280x720 and 2000x1125 in
@@ -272,25 +272,6 @@ def settings(page, label: str) -> None:
     page.wait_for_selector(SETTINGS, state="detached")
 
 
-def chooser(page, label: str, photograph: str | None) -> None:
-    """Ctrl+T held: the cards in the middle of the window."""
-    page.keyboard.down("Control")
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(500)
-    selector = '[role="dialog"]:has(.kind)'
-    if page.query_selector(selector) is None:
-        wrong(f"[{label}] Ctrl+T held drew no dialog")
-    else:
-        quiet(page)
-        inside(f"[{label}] Ctrl+T", page.evaluate(BOX, selector))
-        unwrapped(page, f"[{label}] Ctrl+T", selector)
-        if photograph:
-            shot(page, f"{photograph}-ctrl-t")
-    page.keyboard.press("Escape")
-    page.keyboard.up("Control")
-    page.wait_for_timeout(300)
-
-
 def palette(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
@@ -437,7 +418,6 @@ def drive(browser) -> None:
             label = f"{width}x{height}@{round(scale * 100)}%"
             say(f"--- {label}: {viewport['width']}x{viewport['height']} CSS pixels")
             settings(page, label)
-            chooser(page, label, None)
             palette(page, label, None)
             picker(page, label, None)
             question(page, label, None)
@@ -462,7 +442,6 @@ def drive(browser) -> None:
                     shot(page, f"{name}-settings-general")
                     page.keyboard.press("Escape")
                     page.wait_for_selector(SETTINGS, state="detached")
-                    chooser(page, name, name)
                     palette(page, name, name)
                     picker(page, name, name)
                     question(page, name, name)

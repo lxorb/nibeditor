@@ -168,9 +168,11 @@ it is given is the title, and the shortcut is written the moment there is one. T
 address is what the bar asks for next. The row is in the list from that first moment,
 which is the whole point of naming a thing before making it.
 
-**A new tab** - the strip's plus, Ctrl+T, the palette, the buttons a pane with
-nothing open shows - is the other way round, and is a browser tab: a live page with an
-address field and **no file at all**, and no dot after its name, since a browser tab has
+**A new tab** - Ctrl+T, the strip's plus, the palette, a card a pane with nothing open
+shows - is the other way round, and is a browser tab: an address field and **no file at
+all**. Until an address is typed the pane under the field offers the kinds a tab can be,
+and one chosen there takes the tab's place (docs/keyboard.md, _Ctrl+T is a new tab_); once
+it has one it is a live page. It wears no dot after its name, since a browser tab has
 nothing unwritten in it. Nothing is written while somebody is only reading. **Save** -
 Ctrl+S, the tab's own menu, the palette - is the moment they say to keep it, the way
 Chrome's star keeps a bookmark: a small layer under the tab with the page's title as the
@@ -573,7 +575,7 @@ Emil, 2026-09-17: _"Browser tabs take AN ETERNITY to load."_ The eternity was no
 load. Every way of opening a website except clicking its row in the file list goes
 through a layer, and a layer that has closed is still in the document for the 120 to 190
 milliseconds it takes to play its way out: the palette's scrim, the app menu's, the
-chooser Ctrl+T opens, a row's own menu. The pane mounted under one of those, and the tab
+chooser Ctrl+T used to open, a row's own menu. The pane mounted under one of those, and the tab
 then sat on an empty pane until the reader happened to press something - which is what
 finally made the page arrive, because a press is one of the few things that asks again.
 
@@ -1163,7 +1165,7 @@ names. The browser build has no engine of its own behind its pages, so its dialo
 the history alone.
 
 **A private tab is Chrome's Incognito window as a tab** (`web-tab/private.ts`): Ctrl+Shift+N
-(docs/backlog.md, Q3), the plus chooser's New private tab, the dots and the palette. Its
+(docs/backlog.md, Q3), a new tab's New private tab card (I), the dots and the palette. Its
 page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
 of the page's own on a Mac and on Linux, a profile with no folder on nib's own Chromium -
 so nothing it stores reaches the disk. And nib writes nothing of it either: no history, no

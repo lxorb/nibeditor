@@ -1738,6 +1738,8 @@ export const fr: Dictionary = {
   'Command Prompt': 'Invite de commandes',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} dans le terminal',
+  'Always ask': 'Toujours demander',
   'Open another': 'En ouvrir un autre',
   'Open in terminal': 'Ouvrir dans le terminal',
   Clear: 'Effacer',

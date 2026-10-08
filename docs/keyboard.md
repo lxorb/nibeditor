@@ -199,7 +199,7 @@ entries, so a rebind of one is a rebind of both.
 | F2 | rename |
 | Delete, Backspace | delete the selection |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
-| Ctrl+N | a new note in the folder the row is, or sits in, waiting for its name |
+| Ctrl+Alt+N | a new note in the folder the row is, or sits in, waiting for its name: New note's key, wherever it is bound |
 | Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
 | Alt+Up, Alt+Down | move the row in the order somebody arranged |
 
@@ -261,7 +261,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+A | Ask, the conversation about the space |
 | Ctrl Ctrl | **a quick question**, Claude Code's /btw: Ctrl pressed twice on its own (Cmd twice on a Mac), the shape Claude's own quick entry and JetBrains' Run Anything have. No chord a note, a shell or a site uses, so it works everywhere: the window hears it on its capturing turn, a terminal included, and a web page's own script says it too (`nib-twice-ctrl`, web_opens.rs). Pressed again, it goes away. See docs/ai.md |
-| Ctrl+Shift+X | **the scratchpad**, the one note in no space, its card up and away again; up with the keyboard elsewhere, the keyboard into it. A terminal hands Ctrl+Shift to the app; a web page keeps it, as every app key but the browser's, and Shift twice reaches its palette row there |
+| Ctrl+N, Ctrl+Shift+X | **the scratchpad**, the one note in no space, its card up and away again; up with the keyboard elsewhere, the keyboard into it. Ctrl+N since Emil's issue #213; a browser's own chord, which a page in a web tab is not offered where the engine lets nib take it (web_keys.rs), so it reaches the scratchpad over a site there too. Ctrl+Shift+X, its key before, stays as its second: a browser keeps Ctrl+N for its own new window, so in nib on the web that is the one that works, and a terminal hands Ctrl+Shift to the app without asking. A terminal asks once whose Ctrl+N is; see *A terminal* below |
 | Ctrl+Shift+U | **Chats**, the list of the account's chats, its Activity and Saved (docs/chats.md 4.15). Ctrl+Shift+L, which the chats design first named, was the sidebar's already |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 | Ctrl+Alt+B | show or hide the right side, VS Code's key for its secondary side bar |
@@ -319,9 +319,9 @@ stops nothing, and the app still gets the key.
 
 | | |
 | --- | --- |
-| Ctrl+N | a new note |
+| Ctrl+Alt+N | a new note. It was Ctrl+N until that went to the scratchpad (Emil, issue #213): the same letter, one modifier along, and nothing in the app or in any of the keyboards held it. AltGr typing a letter is never this chord (`typedWithAltGr` in keys.ts), so a Polish ń is still a ń. The file list reads the same key for a note in the folder it is on. Cmd+Option+N on a Mac |
 | Ctrl+Shift+N | a new window |
-| Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note, a terminal - standing on the website |
+| Ctrl+T | **a new tab**, the way every browser answers it: an address field that has the keyboard, and under it the kinds a tab can be, each with its letter. The plus at the end of the strip makes the same tab. See *Ctrl+T is a new tab* below |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Alt+1 to 9, Alt+0 | the tab at that place along the focused pane's strip, the last tab. Pinned tabs count, and a place past the end does nothing |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the same eight places and the last, as second keys |
@@ -385,31 +385,53 @@ takes Alt and a digit and says it as itself, on both engines (`told` and `meanin
 web_keys.rs); a terminal shows them too, since it hands Alt and a digit to the app rather
 than to the shell. See `lib/tab-strip/numbers.svelte.ts`.
 
-**Ctrl+T is a browser's key first.** Emil, 2026-09-27: *"Ctrl + T should always open
-a webpage by default. And that should always be the selected option in the modal when
-holding the Ctrl."* Tapped, it makes a web page and draws nothing. Held, it is Alt+Tab's
-shape: after a beat a dialog comes up in the middle of the window with the kinds as
-cards and the website standing, each further T steps one along (Shift+T back), the
-arrows walk them too, and letting Ctrl go makes the one that stands. Each card's letter
-- N, C, W, P, R for a terminal, since T is the chord's own step, and S (SSH) for Remote,
-which opens the host picker (docs/terminal.md, _Another machine_), and O for an online
-terminal, on every device (docs/terminal.md, _An online terminal_) - makes it outright,
-Enter and a click make the one pressed, Escape makes nothing. The terminal's card has a
-chevron in its corner: pressed, or Shift held with R, Enter or a click, it lists the
-other shells instead of starting the default one (see docs/terminal.md). A phone has no web tab, so there the note stands. The palette's New opens the
-same dialog on the same card. See `new-kind-chord.ts`, `NewKindSheet.svelte` and
-`new-kind-choice.ts`.
+**Ctrl+T is a new tab.** Emil, issue #213: *"when creating a new tab, i.e. when pressing
+Ctrl + T then it should show a the same view as when pressed Ctrl + D with the only
+difference being that the navbar at the top where you can enter a url is still there"*. So
+Ctrl+T makes a web tab with nowhere to go yet, and its address field takes the keyboard,
+as a browser's new tab does; where the page would be, the pane offers the kinds a tab can
+be - the cards a pane with nothing open shows, in the same three lines. Typing an address
+goes there in this tab. A kind chosen instead is made in this tab's place in the strip,
+and the empty web tab goes without a trace, the way a site chosen on Chrome's new tab page
+opens where that page was (`chosenOn` in workspace.svelte.ts). Nothing is built for the
+page until an address is typed, so nothing native is over the cards.
 
-The plus keeps its menu at the pointer, because that is where the hand already is; the
-dialog is the keyboard's. Both read the one list in `new-kinds.ts`, and so do the
-buttons a pane with nothing open shows. Nothing remembers which kind was made last any
-more: every door opens on a place that never moves.
+The plus at the end of the strip is the same tab in its own pane: *"when clicking the +
+in the top right it should do the same as when pressing Ctrl + T, so remove that
+dropdown"*. It has no menu any more, nor does a right click or a held finger on it. The
+strip's own menu, the palette's New tab and a Mac's File, New tab make the same tab.
+Where there is no web tab to make - a phone, the glasses' plugin - it is Ctrl+D's view
+itself. See `newTab` in workspace.svelte.ts, WebTab.svelte and NewHere.svelte.
+
+**The kinds stand in three lines**, Emil's: *"Note, Canvas, Page Note | Terminal, Remote,
+Online Terminal | Web Note, Private Web Note"* - what is written, what runs, and the web,
+with a chat at the end of the first line where the account has chats, and a line a device
+has nothing in left out (a browser has no shell of its own, a phone no web tab). See
+`kindLines` in new-kinds.ts.
+
+**Each card wears its letter, and the letter makes it**: N a note, C a canvas, P a page
+note, M a chat, R a terminal (T is the new tab's own key, and R is what Run has been on
+Windows for thirty years), S Remote (SSH, which opens the host picker; docs/terminal.md,
+_Another machine_), O an online terminal (docs/terminal.md, _An online terminal_), W a web
+note and I a private tab (Incognito, since P is the page note's). With Shift, the terminal's
+letter lists the other shells instead of starting the default one, as its chevron does. The
+letters are the cards' only while the keyboard is in no field: *"these shortcuts should only
+work if you first click out of the url input in the top that should already be selected
+after pressing ctrl + T"*. So in a new tab they work once Escape has given the address field
+the keyboard back, a press has landed on the pane's own ground, or Tab has reached a card;
+in a pane with nothing open the keyboard is already on the first card. Typing into the
+address field, a note or a terminal never makes anything, and nor does a letter under Ctrl,
+Alt or Cmd. A screen reader is told each card's key (`aria-keyshortcuts`). See
+new-kind-keys.ts.
+
+The dialog Ctrl+T used to hold up in the middle of the window while Ctrl was held - each
+further T a step, letting go the choice - is gone, and so is the plus's menu: one view of
+the kinds, in two places, is the whole of the design now.
 
 **A pane with nothing open is a state the window is allowed to be in.** Closing the
-last note used to make a blank one; now the pane shows those same kinds as buttons and
-makes nothing until one is pressed. The keyboard lands on the first button and the
-arrows walk them. They are the dialog's cards, drawn in the pane; see `NewHere.svelte`
-and `KindCard.svelte`.
+last note used to make a blank one; now the pane shows those same kinds as cards and
+makes nothing until one is pressed. The keyboard lands on the first card and the
+arrows walk them. See `NewHere.svelte` and `KindCard.svelte`.
 
 **Ctrl+D is that state with the tabs still open.** Emil, 2026-09-30: *"add Ctrl + D as
 a shortcut. Effectively it just deselects the currently selected tab. This leads to no
@@ -548,9 +570,8 @@ Ctrl+Space and Ctrl+Shift+Space, the space switcher, which Google Sheets selects
 column and everything with and Colab completes with. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
-on itself - so it goes through the same handler, the same bindings and the same held
-Ctrl+T as anywhere else. A Ctrl let go of in the page is said too, which is the release
-a held Ctrl+T chooses on. F5 and Ctrl+R need nothing: pressed in a page they are the
+on itself - so it goes through the same handler and the same bindings as anywhere
+else. F5 and Ctrl+R need nothing: pressed in a page they are the
 engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among them, is
 the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
 `WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
@@ -564,11 +585,12 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 
 | | |
 | --- | --- |
-| Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
+| Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
+| Ctrl+T, Ctrl+N | **both**: a new tab and the scratchpad, and the shell's swapped letters and next line. The first press asks which, and the answer is kept; see below |
 | Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too, and Ctrl+Shift+Space opens the space switcher |
 | Ctrl+Space | **the shell's**: NUL, which Emacs sets its mark with and PowerShell opens its completions with, as in Windows Terminal and VS Code. Ctrl+Shift+Space is the space switcher here |
-| Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+W, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
@@ -580,6 +602,23 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 
 AltGr is never a chord: Windows says it as Ctrl and Alt, and a key that came out as
 anything but its own letter or digit is somebody typing `@` or `{`.
+
+**A key that is both is asked about, once.** Emil, issue #213: *"when pressing a shortcut
+in a terminal like interface or anywhere where it could have mulitple meanings then there
+should be a quick modal asking you which of the two should be used from now on (or you can
+tick always ask)"*. Two keys are both in a terminal: Ctrl+T, a new tab, which bash and zsh
+swap two letters with and fzf finds a file with, and Ctrl+N, the scratchpad, which is the
+shell's next line of history. The first press of either in a terminal - local, Remote or
+online - gives the press to neither and asks, in the app's one small question: *Ctrl+N in a
+terminal*, with the app's command (Scratchpad, New tab) and Terminal as the answers and an
+*Always ask* box beside them. The answer is the press: the app's is played on the window as
+the key it was, the terminal's is typed into the shell as the character it would have been
+(SO, DC4). It is kept for every terminal from then on unless the box was ticked, and Settings,
+General, Terminal has a row for each key - Always ask, the command, or Terminal - that shows
+the answer and takes it back. Escape answers nothing and sends the press nowhere. Only while
+the command is on Ctrl and a letter: a rebound one, Ctrl+Shift+X, and Cmd on a Mac are chords
+no shell has, and the app's without asking. See `TWO_WAYS` in `lib/terminal/keys.ts` and
+`lib/terminal/two-ways.ts`.
 
 **A chat** (docs/chats.md 4.16)
 
@@ -856,8 +895,7 @@ its field loses it. So the menu is walked from the field. The arrows, Home and
 End light a row, Enter chooses it, Escape closes the menu and nothing else, and
 any other key closes it and goes on into the field. See `lib/field-menu.ts`.
 
-A layer opened while a site in a web tab had the keyboard - the chooser Ctrl+T opens
-there, a menu, a site's own question or permission bubble - hands it back to the site,
+A layer opened while a site in a web tab had the keyboard - a menu, the palette, a site's own question or permission bubble - hands it back to the site,
 not to whatever the app's page last had focused: the app's page only held it to open the
 layer. The same when a web tab's find bar closes, as in Chrome.
 
@@ -970,7 +1008,9 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/keyboard-home.ts` | where the keyboard was in the app's own page, back as the window or a layer gives it back |
 | `apps/desktop/src-tauri/src/keyboard.rs` | which webview of a window had the keyboard, back as the window comes back. The record is tested |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
-| `apps/desktop/src/lib/terminal/keys.ts` | which of them a terminal lets the app have. Pure, tested |
+| `apps/desktop/src/lib/terminal/keys.ts` | which of them a terminal lets the app have, and which are both. Pure, tested |
+| `apps/desktop/src/lib/terminal/two-ways.ts` | the question a key that is both asks in a terminal, and the answer kept |
+| `apps/desktop/src/lib/new-kind-keys.ts` | the letter on each card where the kinds are offered, and where the keyboard has to be for it to count |
 | `apps/desktop/src/lib/tab-fill/rules.ts` | when a tab fills the window, when it stops, and when Escape is its. Pure, tested |
 | `apps/desktop/src/lib/text-size.ts` | Ctrl and the wheel over the note, and what it does not touch |
 | `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |

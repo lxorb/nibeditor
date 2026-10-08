@@ -1648,6 +1648,8 @@ export const zhHans: Dictionary = {
   'Command Prompt': '命令提示符',
   Terminal: '终端',
   Shell: 'Shell',
+  '{key} in a terminal': '终端中的 {key}',
+  'Always ask': '每次询问',
   'Open another': '再打开一个',
   'Open in terminal': '在终端中打开',
   Clear: '清除',

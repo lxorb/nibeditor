@@ -1726,6 +1726,8 @@ export const ptPT: Dictionary = {
   'Command Prompt': 'Linha de Comandos',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} no terminal',
+  'Always ask': 'Perguntar sempre',
   'Open another': 'Abrir outro',
   'Open in terminal': 'Abrir no terminal',
   Clear: 'Limpar',

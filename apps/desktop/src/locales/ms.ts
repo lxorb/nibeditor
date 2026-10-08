@@ -1685,6 +1685,8 @@ export const ms: Dictionary = {
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} dalam terminal',
+  'Always ask': 'Sentiasa tanya',
   'Open another': 'Buka satu lagi',
   'Open in terminal': 'Buka dalam terminal',
   Clear: 'Kosongkan',

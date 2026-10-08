@@ -1690,6 +1690,8 @@ export const pa: Dictionary = {
   'Command Prompt': 'ਕਮਾਂਡ ਪ੍ਰੋਂਪਟ',
   Terminal: 'ਟਰਮੀਨਲ',
   Shell: 'ਸ਼ੈੱਲ',
+  '{key} in a terminal': 'ਟਰਮੀਨਲ ਵਿੱਚ {key}',
+  'Always ask': 'ਹਮੇਸ਼ਾ ਪੁੱਛੋ',
   'Open another': 'ਇੱਕ ਹੋਰ ਖੋਲ੍ਹੋ',
   'Open in terminal': 'ਟਰਮੀਨਲ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   Clear: 'ਸਾਫ਼ ਕਰੋ',

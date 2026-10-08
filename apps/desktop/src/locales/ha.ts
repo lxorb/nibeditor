@@ -1713,6 +1713,8 @@ export const ha: Dictionary = {
   'Command Prompt': 'Wurin umarni',
   Terminal: 'Tasha',
   Shell: 'Harsashi',
+  '{key} in a terminal': '{key} a tasha',
+  'Always ask': 'Koyaushe a tambaya',
   'Open another': 'Buɗe wata',
   'Open in terminal': 'Buɗe a tasha',
   Clear: 'Share',

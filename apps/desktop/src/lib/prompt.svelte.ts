@@ -41,6 +41,12 @@ interface Choose {
   options: Choice[]
 }
 
+/** A `choose` with a box under the answers that says something about the answer
+ *  itself: "Always ask", under a question whose answer is otherwise kept. */
+interface ChooseTicking extends Choose {
+  tick: string
+}
+
 /** One of many, found by typing rather than by reading a list of them. */
 interface Find {
   title: string
@@ -64,6 +70,10 @@ class Prompt {
   confirmLabel = $state('')
   danger = $state(false)
   lands = $state(false)
+  /** The box under a `chooseTicking`'s answers, and whether it is ticked; empty for
+   *  every other question, which has none. */
+  tick = $state('')
+  ticked = $state(false)
 
   private pending: Pending = null
 
@@ -104,6 +114,18 @@ class Prompt {
     return this.show() as Promise<string | null>
   }
 
+  /** A `choose` with a box to tick under the answers, unticked as it opens. Resolves
+   *  the chosen id and whether the box was ticked, or null if the question was
+   *  dismissed. */
+  async chooseTicking(options: ChooseTicking): Promise<{ id: string; ticked: boolean } | null> {
+    const asked = this.choose(options)
+    this.tick = options.tick
+    this.ticked = false
+
+    const id = await asked
+    return id === null ? null : { id, ticked: this.ticked }
+  }
+
   /** Too many to read at once: the same sheet with a field above the list, and
    *  the list narrowing as it is typed into. Resolves the chosen id, or null.
    *
@@ -131,6 +153,7 @@ class Prompt {
     // A second question replaces the first rather than stacking on it.
     this.pending?.resolve(null)
     this.open = true
+    this.tick = ''
 
     return new Promise((resolve) => {
       this.pending = { resolve }

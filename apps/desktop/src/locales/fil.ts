@@ -1717,6 +1717,8 @@ export const fil: Dictionary = {
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} sa terminal',
+  'Always ask': 'Laging magtanong',
   'Open another': 'Magbukas ng isa pa',
   'Open in terminal': 'Buksan sa terminal',
   Clear: 'I-clear',

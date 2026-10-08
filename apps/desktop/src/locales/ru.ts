@@ -1755,6 +1755,8 @@ export const ru: Dictionary = {
   'Command Prompt': 'Командная строка',
   Terminal: 'Терминал',
   Shell: 'Оболочка',
+  '{key} in a terminal': '{key} в терминале',
+  'Always ask': 'Всегда спрашивать',
   'Open another': 'Открыть ещё один',
   'Open in terminal': 'Открыть в терминале',
   Clear: 'Очистить',

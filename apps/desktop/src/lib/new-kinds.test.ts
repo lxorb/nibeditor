@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *
  *  Five places offered these and no two offered the same set: the strip's plus had
  *  four, the File menu the same four with no phone in mind, the sidebar's two menus
- *  three with page notes left out. There are three ways in now - the plus, Ctrl+T and
- *  the buttons an empty pane shows - so what this pins is that there is one list and
- *  they all read it. */
+ *  three with page notes left out. Two places draw them now - a new tab under its
+ *  address field and a pane with nothing open - so what this pins is that there is one
+ *  list, in the lines Emil gave it (issue #213). */
 
 /** The store reads the browser's storage the moment it is made, and there is none
  *  under node - which is why it is imported below rather than at the top. */
@@ -37,10 +37,9 @@ vi.mock('./online/open', () => ({
   },
 }))
 
-const { newKindMenu, newKinds } = await import('./new-kinds')
+const { kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
-const { isSubmenu } = await import('./menu-item')
 
 let was: 'phone' | 'tablet' | 'desktop'
 
@@ -75,16 +74,27 @@ function makers(): string[] {
 
 describe('the kinds a new tab can be', () => {
   test('are the four, and an online terminal, in the order a reader is offered them', () => {
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'web', 'pages', 'online'])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'web'])
+  })
+
+  /** *"Note, Canvas, Page Note | Terminal, Remote, Online Terminal | Web Note, Private Web
+   *  Note"*: what is written, what runs, the web - with a line a page has nothing in left
+   *  out rather than drawn empty. */
+  test('stand in three lines: what is written, what runs, and the web', () => {
+    expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
+      ['note', 'canvas', 'pages'],
+      ['online'],
+      ['web'],
+    ])
   })
 
   test('read as the words every menu in the app already uses', () => {
     expect(newKinds().map((one) => one.label())).toEqual([
       'New note',
       'New canvas',
-      'New web note',
       'New page note',
       'Online terminal',
+      'New web note',
     ])
   })
 
@@ -94,9 +104,9 @@ describe('the kinds a new tab can be', () => {
     expect(newKinds().map((one) => one.mark)).toEqual([
       'note',
       'canvas',
-      'web',
       'pages',
       'terminal',
+      'web',
     ])
   })
 
@@ -111,7 +121,10 @@ describe('the kinds a new tab can be', () => {
     const made = makers()
     for (const one of newKinds()) one.make()
 
-    await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'web', 'pages', 'online']))
+    // The online terminal's maker is fetched, so it arrives after the ones behind it.
+    await vi.waitFor(() =>
+      expect([...made].sort()).toEqual(['canvas', 'note', 'online', 'pages', 'web']),
+    )
   })
 
   /** The pane whose plus was pressed takes the keyboard first, so a plus in the other
@@ -132,26 +145,12 @@ describe('the kinds a new tab can be', () => {
     expect(focused).not.toHaveBeenCalled()
   })
 
-  /** A letter each in the Ctrl+T dialog, and no two the same, or a key would have two
-   *  kinds to make. See NewKindSheet.svelte. */
+  /** A letter each on its card, and no two the same, or a key would have two kinds to
+   *  make. See NewHere.svelte. */
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'w', 'p', 'o'])
+    expect(letters).toEqual(['n', 'c', 'p', 'o', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
-  })
-
-  test('are the rows of the chooser, in the same order and the same words', () => {
-    const rows = newKindMenu().map((one) => (one !== null && !isSubmenu(one) ? one.label : null))
-    expect(rows).toEqual(newKinds().map((one) => one.label()))
-  })
-
-  test('and a row of it makes its kind', async () => {
-    const made = makers()
-    for (const row of newKindMenu()) {
-      if (row !== null && !isSubmenu(row)) row.run()
-    }
-
-    await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'web', 'pages', 'online']))
   })
 })
