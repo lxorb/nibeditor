@@ -725,7 +725,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the twelve that show one wear the class rather than a card of their own', () => {
+  test('and the thirteen that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
