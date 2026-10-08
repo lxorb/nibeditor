@@ -26,6 +26,22 @@ PLAN = "# Plan\n\nWhat we are doing this week, and why it matters.\n"
 GLYPH = "header button.pad"
 CARD = "[data-scratchpad] .cm-content"
 
+# A phone says so in its user agent, and only then is the layout a phone's: with the
+# headless desktop agent, a narrow touch window is still a desktop with a strip of tabs.
+# See `deviceFor` in viewport.svelte.ts.
+PHONE_AGENT = (
+    "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
+    " Chrome/140.0.0.0 Mobile Safari/537.36"
+)
+
+# What is drawn in the middle of the card, so a card under something else is caught.
+ON_TOP = """() => {
+  const card = document.querySelector('[data-scratchpad]')?.getBoundingClientRect()
+  if (!card || !card.width || !card.height) return false
+  const at = document.elementFromPoint(card.x + card.width / 2, card.y + card.height / 2)
+  return !!at?.closest('[data-scratchpad]')
+}"""
+
 STATE = """() => ({
   pressed: document.querySelector('header button.pad')?.getAttribute('aria-pressed'),
   card: !!document.querySelector('[data-scratchpad] .cm-content'),
@@ -43,6 +59,7 @@ def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
         color_scheme=scheme,
         has_touch=phone,
         is_mobile=phone,
+        **({"user_agent": PHONE_AGENT} if phone else {}),
     )
     DRIVE.open(page)
     DRIVE.seed(page, PLAN)
@@ -115,9 +132,13 @@ def desktop(browser: Browser, scheme: str) -> None:
 
 def phone(browser: Browser) -> None:
     page = opened(browser, "light", phone=True)
-    page.locator(GLYPH).click()
+    if page.evaluate("document.documentElement.dataset.device") != "phone":
+        wrong("[phone] the page is not laid out as a phone")
+    page.locator(GLYPH).tap()
     wait_for(page, f"document.querySelector('{CARD}')", "the card on a phone")
     page.wait_for_timeout(400)
+    if not page.evaluate(ON_TOP):
+        wrong("[phone] the card is up but something else is drawn over it")
     no_tab(page, "phone")
     shot(page, "light/05-a-phone")
     page.context.close()
