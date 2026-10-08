@@ -1005,6 +1005,11 @@
           {#if !__EVEN_PLUGIN__}
             <FirstScreen />
           {/if}
+          <!-- What the app says about itself, over the foot of the panes rather than
+               shoving them up (#218); a web page is cut round it (web-tab/covers.ts). -->
+          {#if !viewport.drawer}
+            {@render notices()}
+          {/if}
         </div>
 
         <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
@@ -1042,15 +1047,6 @@
         {/if}
       </div>
 
-      <!-- What the app says about itself, in a row under the panes rather than over
-           them: a web page is a native webview that draws above all of this, so a
-           card over it blanked the page and a pill over it was hidden. Empty, the
-           row has no height. See docs/web-tabs.md. Where the panels are a drawer
-           it is under both instead; see below. -->
-      {#if !viewport.drawer}
-        {@render notices()}
-      {/if}
-
       <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
@@ -1082,16 +1078,15 @@
     </div>
   </div>
 
-  <!-- Under the drawer as well as the note, and over it: in the note the row slid off
-       the screen with it whenever the list was out, and a file deleted from the list
-       was gone with its Undo somewhere nobody could see or press. -->
+  <!-- Over the drawer as well: in the note the row slid off with it whenever the list
+       was out, and an Undo with it. -->
   {#if viewport.drawer}
     {@render notices()}
   {/if}
 </main>
 
 {#snippet notices()}
-  <div class="notices" class:over={viewport.drawer}>
+  <div class="notices" data-notices class:over={viewport.drawer}>
     <StorageWarning />
     {#if undoToastNotice.asked}
       {#await undoToastNotice.asked then UndoToast}
@@ -1322,12 +1317,22 @@
     display: flex;
   }
 
-  /* Start, middle and end, whichever of them is up; each card names its track. */
+  /* Start, middle and end, whichever of them is up; each card names its track.
+     Floating, so nothing under it moves; only the cards take the pointer. */
   .notices {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--z-notice);
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: end;
     gap: var(--space-2);
+    pointer-events: none;
+  }
+
+  .notices > :global(*) {
+    pointer-events: auto;
   }
 
   /* One column on a phone, where the cards stack. */
@@ -1344,10 +1349,9 @@
     grid-column: 1;
   }
 
-  /* Above the drawer, which is fixed over the whole height of the window. */
+  /* Over the drawer, which is fixed over the whole height of the window. */
   .notices.over {
-    position: relative;
-    z-index: var(--z-notice);
+    position: fixed;
   }
 
   /* Room only around something. `:global`, or the compiler drops a rule about
@@ -1355,6 +1359,13 @@
   .notices:has(> :global(*)) {
     padding: var(--space-2) max(var(--space-4), var(--inset-end))
       calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
+  }
+
+  /* Clear of the new-note button in the same corner. */
+  main:has(.fab) .notices:has(> :global(*)) {
+    padding-inline-end: calc(
+      max(var(--space-4), var(--inset-end)) + var(--touch-row) + var(--space-2)
+    );
   }
 
   /* Full screen: the panes are the whole window, so what the system keeps for

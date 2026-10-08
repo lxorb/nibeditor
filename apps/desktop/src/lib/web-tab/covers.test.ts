@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { describe, expect, test } from 'vitest'
-import { cutOf, type Layer } from './covers'
+import { cutOf, layersOver, noticeRows, type Layer } from './covers'
 
 const PAGE = { x: 300, y: 100, width: 900, height: 600 }
 
@@ -51,5 +52,33 @@ describe('what of a page the app is over', () => {
 
   test('a layer only touching the edge of the page is not over it', () => {
     expect(cutOf(PAGE, [float(100, 100, 200, 100)])).toBeNull()
+  })
+})
+
+/** A toast floats over the foot of the panes (#218), so a page under it is cut round
+ *  it like any other layer - each card, and not the row, whose empty tracks are the
+ *  page's own. Which elements are found is all jsdom can say: it has no layout. */
+describe("the notices row's cards", () => {
+  function row(): { hole: HTMLElement; notices: HTMLElement; toast: HTMLElement } {
+    document.body.innerHTML = `
+      <div data-panes>
+        <div class="hole"></div>
+        <div class="notices" data-notices><div class="toast" role="status"><p>Deleted</p></div></div>
+      </div>`
+    const find = (selector: string) => document.querySelector<HTMLElement>(selector)!
+    return { hole: find('.hole'), notices: find('[data-notices]'), toast: find('.toast') }
+  }
+
+  test('each card is a layer the page is cut round, and the row is not', () => {
+    const { hole, notices, toast } = row()
+    const found = layersOver(hole)
+    expect(found.map((one) => one.node)).toEqual([toast])
+    expect(found[0]?.scrim).toBe(false)
+    expect(found.some((one) => one.node === notices)).toBe(false)
+  })
+
+  test('the row is what a page watches to hear a card come or go', () => {
+    const { notices } = row()
+    expect(noticeRows()).toEqual([notices])
   })
 })

@@ -524,6 +524,17 @@ was written to stop being. They are fixed where they came from:
   height of whatever is in the row and the page keeps every pixel it is given, live.
   Empty, the row is nothing: no padding of its own and no height. On every kind of tab,
   so a note and a page are laid out by one rule. See `.notices` in `App.svelte`.
+
+  That held until the page could be cut instead of hidden (see "Glued to the pane"), and
+  then the row was the thing in the way. Emil, 2026-10-08 (#218): *"toasts or smaller
+  messages and similar stuff don't properly display on top of open tabs, they push them
+  away instead"* - every Undo shoved every tab in the window up by its height and back
+  down again five seconds later. So the row **floats over the foot of the panes** now, as
+  a toast does in every other app, and is not there to a pointer but for the cards in it.
+  Each card is one of the layers a page is cut round (`[data-notices] > *` in
+  `web-tab/covers.ts`), and a page watches the row's size to hear a card come or go
+  without a press. Where the engine cannot cut, a card over a page hides it behind its
+  still picture while the card is up, as a menu does.
 - **Full screen is a mode and not an overlay.** It draws nothing over the document - the
   document is the whole of what is left - and it was on that stack for one line of
   Escape. Escape leaves it from the window's own key handler now, under the line that
@@ -540,14 +551,15 @@ a menu, a dropdown, a sheet, a dialog, the address field's suggestions, a bubble
 the bar, a site's question, a drawer, a deck - and each of those over the page is cut out
 of it, or hides it with its still picture standing in where the engine cannot cut; see
 "Glued to the pane". A picture is of one size
-of page: once the page is shown at another - the row came or went, a divider moved - it
+of page: once the page is shown at another - a divider moved - it
 is dropped and the next cover waits for a fresh one, or the menu after **Later** stood
 over a picture with a band of empty pane under it. `overlays.test.ts` names
 every caller of the stack with what it is, so the next one fails until somebody has said
-which kind it is, and holds the furniture to the row: on no stack, positioned over
-nothing. The layout itself cannot be unit tested - jsdom has none, so a card over a pane
-and a card beside it are the same object graph there - so
-`apps/desktop/test/e2e/notices.py` asks it at the same nine points in a real browser, and
+which kind it is, and holds the furniture to the row: on no stack, placed by the row and
+not by itself. The layout itself cannot be unit tested - jsdom has none, so a card over a
+pane and a card beside it are the same object graph there - so
+`apps/desktop/test/e2e/notices.py` asks it at the same nine points in a real browser
+(the page keeps its height while a notice is up, and nothing over it is a stranger), and
 `scripts/web-furniture-probe.py` photographs the installed shape of it: a page with the
 update notice up, and the same page under a menu.
 
@@ -667,9 +679,10 @@ opens over it (see `.column` in Sidebar.svelte and `scripts/sidebar-smooth-drive
 used to hide every page in the window behind its still picture: a tab's hover card over
 the strip, a menu over the file list, the address field's suggestions. A page with no
 picture yet - and a picture is thrown away whenever the page changes size, which the
-notices row does as a toast comes and goes - was a blank pane for as long as the layer
+notices row did as a toast came and went - was a blank pane for as long as the layer
 was up. Now each page asks which of the app's layers are over _it_ (`.nib-layer`,
-`.nib-bubble`, `.nib-screen` and `.nib-scrim`, `web-tab/covers.ts`): one beside the page
+`.nib-bubble`, `.nib-screen`, `.nib-scrim` and the notices row's cards,
+`web-tab/covers.ts`): one beside the page
 leaves it alone, and one over it is cut out of the page's window in its own rounded shape
 (`SetWindowRgn`, `src-tauri/src/web_cut.rs`), so the page stays live round it - scrolling,
 playing, never hidden and so never repainted when the layer goes. A scrim covers the whole

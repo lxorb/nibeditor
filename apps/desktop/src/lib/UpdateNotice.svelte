@@ -29,8 +29,8 @@
 </div>
 
 <style>
-  /* The last track of the notices row, which is the corner it used to float in. It
-     takes its room rather than covering the pane; App.svelte says why. */
+  /* The last track of the notices row, which floats over the foot of the panes;
+     App.svelte places it. */
   .notice {
     grid-column: 3;
     justify-self: end;
