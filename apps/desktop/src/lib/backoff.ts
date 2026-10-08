@@ -51,6 +51,20 @@ export function roomDelay(tries: number, spread = Math.random()): number {
   return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
 }
 
+/** An online terminal's socket (lib/online/link.ts): a room's waiting, but sooner, since
+ *  a terminal is something a person is staring at, keys in hand. A quarter of a second
+ *  first, then doubling to five seconds while the window is on screen - a deploy of the
+ *  service or a nibd that restarts is back within that - and to a room's twenty while it
+ *  is not. Coming back on screen, or the network coming back, tries at once anyway. */
+const LINK_FIRST = 250
+const LINK_MAX = 5_000
+
+export function linkDelay(tries: number, hidden: boolean, spread = Math.random()): number {
+  const most = hidden ? ROOM_MAX : LINK_MAX
+  const wait = Math.min(LINK_FIRST * 2 ** Math.max(0, tries - 1), most)
+  return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
+}
+
 /** How long after the last change a document is written, in milliseconds.
  *
  *  Short, because nothing else keeps the words: a window killed a second after the

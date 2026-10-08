@@ -1,8 +1,10 @@
 import { outFrame, text } from '@nib/online/wire'
 import { describe, expect, test } from 'vitest'
-import { type Heard, Link, type LinkWorld } from './link'
+import { BEAT_EVERY } from '../backoff'
+import { type Heard, Link, type LinkWorld, OPEN_WITHIN, PROBE_WITHIN } from './link'
 
-/** A world with sockets nobody opens until told, and a clock that runs when asked. */
+/** A world with sockets nobody opens until told, and a clock that runs when asked: a
+ *  timer runs by hand, or with the time it was set for by `pass`. */
 function fakeWorld(token: string | null = 'tok') {
   const sockets: {
     url: string
@@ -10,9 +12,12 @@ function fakeWorld(token: string | null = 'tok') {
     sent: (string | Uint8Array)[]
     open: boolean
     closed: boolean
+    buffered: number
     events: { opened(): void; heard(data: string | ArrayBuffer): void; closed(code: number): void }
   }[] = []
-  const timers: { ms: number; run: () => void; cancelled: boolean; ran: boolean }[] = []
+  const timers: { ms: number; at: number; run: () => void; cancelled: boolean; ran: boolean }[] = []
+  const clock = { now: 0, hidden: false }
+  const backs: (() => void)[] = []
 
   const world: LinkWorld = {
     base: 'https://nib.test',
@@ -25,12 +30,16 @@ function fakeWorld(token: string | null = 'tok') {
         sent: [] as (string | Uint8Array)[],
         open: false,
         closed: false,
+        buffered: 0,
         events,
       }
       sockets.push(one)
       return {
         get open() {
           return one.open
+        },
+        get buffered() {
+          return one.buffered
         },
         send: (data) => void one.sent.push(data),
         close: () => {
@@ -42,6 +51,7 @@ function fakeWorld(token: string | null = 'tok') {
     after: (ms, run) => {
       const timer = {
         ms,
+        at: clock.now + ms,
         run: () => {
           timer.ran = true
           run()
@@ -54,10 +64,38 @@ function fakeWorld(token: string | null = 'tok') {
         timer.cancelled = true
       }
     },
+    now: () => clock.now,
+    hidden: () => clock.hidden,
+    watch: (back) => {
+      backs.push(back)
+      return () => backs.splice(backs.indexOf(back), 1)
+    },
   }
 
-  return { world, sockets, timers }
+  /** The network back, or the window looked at again. */
+  const back = () => {
+    for (const one of [...backs]) one()
+  }
+
+  return { world, sockets, timers, clock, back, backs }
 }
+
+/** The clock moved on by `ms`, every timer that falls due on the way run at its time. */
+function pass(found: ReturnType<typeof fakeWorld>, ms: number) {
+  const until = found.clock.now + ms
+  for (;;) {
+    const next = waiting(found)
+      .filter((one) => one.at <= until)
+      .sort((a, b) => a.at - b.at)[0]
+    if (!next) break
+    found.clock.now = Math.max(found.clock.now, next.at)
+    next.run()
+  }
+  found.clock.now = until
+}
+
+const beats = (socket: { sent: (string | Uint8Array)[] }) =>
+  socket.sent.filter((one) => one === 'beat').length
 
 const settle = () => new Promise((done) => setTimeout(done, 0))
 
@@ -203,6 +241,8 @@ describe('the socket to an online session', () => {
     link.resize(120, 40)
     expect(socket.sent.slice(1)).toEqual([
       text({ t: 'in', data: 'ls\r' }),
+      // The look a key brings, that the socket still answers.
+      'beat',
       text({ t: 'size', cols: 120, rows: 40 }),
     ])
 
@@ -237,5 +277,196 @@ describe('the socket to an online session', () => {
     await settle()
     expect(found.sockets).toHaveLength(2)
     expect(link.live).toBe(false)
+  })
+
+  /** Issue 208: a laptop back on the network waited out a backoff of up to twenty
+   *  seconds while every website loaded at once. */
+  test('tries at once when the network comes back, rather than waiting out its wait', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    // Six failures in a row: the wait is at its longest.
+    for (let tried = 0; tried < 6; tried++) {
+      found.sockets.at(-1)?.events.closed(1006)
+      waiting(found)
+        .find((one) => one.ms <= 6_500)
+        ?.run()
+      await settle()
+    }
+    found.sockets.at(-1)?.events.closed(1006)
+    const before = found.sockets.length
+    expect(waiting(found).map((one) => one.ms)).toEqual([expect.any(Number)])
+
+    found.back()
+    await settle()
+    expect(found.sockets).toHaveLength(before + 1)
+    // No wait left over: only the new socket's own limit to open.
+    expect(waiting(found).map((one) => one.ms)).toEqual([OPEN_WITHIN])
+    opened(found)
+    expect(link.live).toBe(true)
+  })
+
+  test('waits five seconds at most between tries while on screen', async () => {
+    const found = fakeWorld()
+    new Link('t1', found.world, () => undefined, 80, 24).open()
+    await settle()
+    const waits: number[] = []
+    for (let tried = 0; tried < 10; tried++) {
+      found.sockets.at(-1)?.events.closed(1006)
+      const retry = waiting(found).find((one) => one.ms !== OPEN_WITHIN)
+      if (!retry) throw new Error('no retry')
+      waits.push(retry.ms)
+      retry.run()
+      await settle()
+    }
+    expect(waits[0]).toBeLessThan(400)
+    expect(Math.max(...waits)).toBeLessThanOrEqual(6_500)
+  })
+
+  test('gives up on a socket that never opens and makes another', async () => {
+    const found = fakeWorld()
+    const heard: Heard[] = []
+    new Link('t1', found.world, (one) => heard.push(one), 80, 24).open()
+    await settle()
+    const stuck = found.sockets[0]
+    pass(found, OPEN_WITHIN - 1)
+    expect(stuck?.closed).toBe(false)
+
+    pass(found, 1)
+    expect(stuck?.closed).toBe(true)
+    expect(heard).toEqual([{ t: 'dropped' }])
+    pass(found, 1_000)
+    await settle()
+    expect(found.sockets).toHaveLength(2)
+  })
+
+  test('a socket being made on the network that went is made again when it comes back', async () => {
+    const found = fakeWorld()
+    new Link('t1', found.world, () => undefined, 80, 24).open()
+    await settle()
+
+    // A moment after it was begun, a look at the window leaves it be.
+    pass(found, 500)
+    found.back()
+    expect(found.sockets[0]?.closed).toBe(false)
+
+    pass(found, PROBE_WITHIN)
+    found.back()
+    await settle()
+    expect(found.sockets[0]?.closed).toBe(true)
+    expect(found.sockets).toHaveLength(2)
+  })
+
+  test('looks at an open socket when the window comes back, and keeps one that answers', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+
+    found.back()
+    expect(beats(socket)).toBe(1)
+    // One look at a time.
+    found.back()
+    expect(beats(socket)).toBe(1)
+    pass(found, 200)
+    socket.events.heard('ok')
+    pass(found, PROBE_WITHIN)
+    expect(socket.closed).toBe(false)
+    expect(link.live).toBe(true)
+  })
+
+  test('drops a socket that does not answer a look, and is back at once', async () => {
+    const found = fakeWorld()
+    const heard: Heard[] = []
+    const link = new Link('t1', found.world, (one) => heard.push(one), 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+
+    found.back()
+    pass(found, PROBE_WITHIN - 1)
+    expect(socket.closed).toBe(false)
+    pass(found, 1)
+    expect(socket.closed).toBe(true)
+    expect(heard.at(-1)).toEqual({ t: 'dropped' })
+
+    // Seconds, not the half a minute three silent beats take.
+    pass(found, 400)
+    await settle()
+    expect(found.sockets).toHaveLength(2)
+    expect(link.live).toBe(false)
+  })
+
+  test('keys typed into a socket that is gone bring it back within seconds', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+
+    link.say({ t: 'in', data: 'l' })
+    link.sayBytes(new Uint8Array([115]))
+    expect(beats(socket)).toBe(1)
+    // The echo is an answer.
+    socket.events.heard(at(0, 'ls'))
+    pass(found, PROBE_WITHIN)
+    expect(socket.closed).toBe(false)
+
+    // The next keys go nowhere.
+    link.say({ t: 'in', data: '\r' })
+    pass(found, PROBE_WITHIN)
+    expect(socket.closed).toBe(true)
+  })
+
+  test('gives a socket still sending a long paste longer to answer', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+
+    socket.buffered = 64 * 1024
+    link.say({ t: 'in', data: 'x'.repeat(1000) })
+    pass(found, PROBE_WITHIN * 2)
+    expect(socket.closed).toBe(false)
+    socket.buffered = 0
+    pass(found, PROBE_WITHIN)
+    expect(socket.closed).toBe(true)
+  })
+
+  test('a computer back from sleep looks at its socket at once', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+
+    // Asleep for an hour: the beat set before it runs as the computer wakes.
+    found.clock.now += 60 * 60_000
+    const beat = waiting(found).find((one) => one.ms === BEAT_EVERY)
+    beat?.run()
+    expect(beats(socket)).toBe(1)
+    pass(found, PROBE_WITHIN)
+    expect(socket.closed).toBe(true)
+    expect(link.live).toBe(false)
+  })
+
+  test('stops listening for the network once closed, and a refusal is not undone by it', async () => {
+    const found = fakeWorld()
+    const link = new Link('t1', found.world, () => undefined, 80, 24)
+    link.open()
+    await settle()
+    const socket = opened(found)
+    socket.events.heard(text({ t: 'refused', error: 'list' }))
+    socket.events.closed(1008)
+
+    found.back()
+    await settle()
+    expect(found.sockets).toHaveLength(1)
+
+    link.close()
+    expect(found.backs).toHaveLength(0)
   })
 })

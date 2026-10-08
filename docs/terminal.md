@@ -282,7 +282,10 @@ front of the first paint. The socket opens at `/v2/online/<file id>/socket` with
 account's token and the device, says `hello` with the screen's size and the first byte it
 has not drawn, and is sent only what it missed - or the whole screen, serialised by the
 machine's headless xterm, drawn in place of what is there. A drop comes back by itself,
-sooner first and then less often; a refusal that waiting cannot change (no role, not on the
+sooner first and then less often (five seconds apart at most while it is on screen), and at
+once when the network comes back or the window is looked at again; a socket that stops
+answering is found out within seconds of a key, a wake from sleep or a return to the window
+(docs/online-terminal.md 4.14). A refusal that waiting cannot change (no role, not on the
 list, the month's hours used) waits for Reconnect instead.
 
 **Its screen at once.** The last screen of the session is cached like a local terminal's

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { NUDGE_DELAY, nudgeDelay, pollDelay, roomDelay, saveRetryDelay } from './backoff'
+import { linkDelay, NUDGE_DELAY, nudgeDelay, pollDelay, roomDelay, saveRetryDelay } from './backoff'
 
 const SECOND = 1000
 
@@ -87,6 +87,36 @@ describe('how long a room waits before trying again', () => {
     for (const tries of [0, 1, 2, 9, 60, 5000]) {
       for (const spread of [0, 0.5, 1]) {
         const delay = roomDelay(tries, spread)
+        expect(Number.isFinite(delay), `${tries}/${spread}`).toBe(true)
+        expect(delay).toBeGreaterThan(0)
+      }
+    }
+  })
+})
+
+describe('how long an online terminal waits before trying again', () => {
+  test('tries again in a quarter of a second, then doubles', () => {
+    expect([1, 2, 3, 4, 5].map((tries) => linkDelay(tries, false, 0.5))).toEqual([
+      250, 500, 1000, 2000, 4000,
+    ])
+  })
+
+  /** Issue 208: a room's twenty seconds left a terminal waiting long after the network
+   *  and the service were back. */
+  test('never waits more than five seconds while it is on screen', () => {
+    expect(linkDelay(6, false, 0.5)).toBe(5 * SECOND)
+    expect(linkDelay(400, false, 0.5)).toBe(5 * SECOND)
+    expect(linkDelay(400, false, 1)).toBeLessThanOrEqual(6.5 * SECOND)
+  })
+
+  test('waits as a room does while nobody can see it', () => {
+    expect(linkDelay(400, true, 0.5)).toBe(20 * SECOND)
+  })
+
+  test('never returns something a timer cannot use', () => {
+    for (const tries of [0, 1, 2, 9, 60, 5000]) {
+      for (const spread of [0, 0.5, 1]) {
+        const delay = linkDelay(tries, tries % 2 === 0, spread)
         expect(Number.isFinite(delay), `${tries}/${spread}`).toBe(true)
         expect(delay).toBeGreaterThan(0)
       }
