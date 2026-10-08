@@ -240,7 +240,7 @@ Notes, planes and page notes may still be shown in two panes, as they always cou
 | Windows           | a child webview: WebView2, Chromium                           | the only embedding that renders a site the way a browser does                            |
 | macOS             | a child webview: WKWebView, WebKit                            | same, with Safari's engine                                                               |
 | Linux             | a child webview: WebKitGTK                                    | same                                                                                     |
-| the browser build | a card, and a sandboxed `<iframe>` once the reader presses it | a page in a browser has nowhere else to go, and no way to know whether a frame will work |
+| the browser build | a web note: a browser tab of its own; a tab with no file: a card, and a sandboxed `<iframe>` once the reader presses it | the browser nib is in is the best place for a page; a frame is all a pane can hold, with no way to know whether it will work |
 | Android and iOS   | the system browser, not a tab                                 | see below                                                                                |
 
 ### A desktop: a webview over the pane
@@ -941,7 +941,17 @@ The file is still theirs in the space: the shortcut is a bookmark on a phone, wh
 is what a website on a phone is worth being - and a `.url` is a bookmark to the
 phone's own system too. Making one is not offered there, because the address is
 asked for in a bar and there is no bar; a tablet gets both, and the frame and the
-card, because it has the room.
+card, because it has the room - but a web note with an address goes to the system
+browser on a tablet too, and a shortcut nobody has given one yet opens its tab there
+for its bar.
+
+**A web note in a browser build opens a browser tab.** Emil, 2026-10-06 (#206): _"on
+mobile web notes should just open in your default browser - also when nib is open in
+a browser, clicking on them should just open a new tab."_ So only the desktop app
+draws a web note's page; everywhere else its address is handed to the browser - the
+system's from the phone and tablet app, a new tab beside nib's own from a browser.
+Links in a note and a new web tab keep the card and the frame above. See `openSite`
+in `workspace.svelte.ts`.
 
 ## The bar
 

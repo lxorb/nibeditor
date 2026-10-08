@@ -49,8 +49,11 @@ const holding: { write: Promise<void> | null; read: Promise<void> | null; readPa
  *  file left there. */
 const trash: { id: string; path: string; content: string }[] = []
 
+// The desktop app, the one build that holds a web note's page in a tab of its own;
+// see `openWeb` in the workspace.
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
+  isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     sent.push({
       command,

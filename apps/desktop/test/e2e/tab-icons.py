@@ -110,8 +110,18 @@ async (where) => {
   await ws.createPages(root, 'Lecture.pages')
   await ws.openEntry(where.pdf, {})
   ws.openGraph()
-  await ws.openWeb(where.marked)
-  await ws.openWeb(where.plain)
+
+  // A web note in a browser build opens a browser tab rather than one of nib's
+  // (docs/web-tabs.md), so the two websites come in the way a sitting puts them back:
+  // written into the arrangement, as the desktop app's session holds them.
+  const layout = ws.layout()
+  const pane = layout.frame.pane
+  for (const [path, name] of [[where.marked, 'A site with a mark'], [where.plain, 'A site with no mark']]) {
+    const doc = (await ws.noteText(path)) ?? ''
+    pane.tabs.push({ kind: 'web', path, name, doc, dirty: false, cursor: 0, scroll: 0 })
+  }
+  pane.active = pane.tabs.length - 1
+  await ws.applyLayout(layout)
 
   return ws.tabs.map((one) => [one.kind, one.shown])
 }

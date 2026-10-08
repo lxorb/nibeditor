@@ -1730,12 +1730,11 @@ class Workspace {
    *  it points at rather than as the three lines in the file. One tab per file, the
    *  way a canvas is one.
    *
-   *  A phone opens the system browser instead, and that is the answer rather than a
-   *  gap. A phone app's webview is the app's own: no extensions, no ad blocking, none
-   *  of the reader's logins, and no way to hand a page on to anything else. Their
-   *  browser has all four, and the file is still theirs in the space - so a website is
-   *  a bookmark there, which is what a website on a phone is worth being. Tauri has
-   *  no child webviews on a phone either; see docs/web-tabs.md. */
+   *  Only the desktop app draws the page; elsewhere the browser opens it, which is
+   *  the answer rather than a gap. A phone app's webview has no extensions, no ad
+   *  blocking and none of the reader's logins, and Tauri has no child webviews there;
+   *  a nib in a browser tab opens a tab beside itself. The file stays a bookmark in
+   *  the space. See docs/web-tabs.md. */
   async openWeb(asked: string, how: OpenHow = {}) {
     // Not in front of a pair of glasses, for the reason a canvas is not: there is no
     // page on seven lines of a heads-up display, and the viewer is not in that build
@@ -1780,9 +1779,8 @@ class Workspace {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
 
-    if (viewport.device === 'phone') {
-      // A shortcut nobody has given an address yet has nothing to open there, and a
-      // phone has no bar to type one into.
+    // A shortcut with no address yet opens in a tab, for its bar; a phone has none.
+    if (!isDesktop && (said || viewport.device === 'phone')) {
       if (said) await openExternal(said.url)
       this.remember(opening)
       return null
