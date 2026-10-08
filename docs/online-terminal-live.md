@@ -202,8 +202,8 @@ and the container application, which the first `wrangler deploy` of the machines
 ## Checks after the health changes go live
 
 1. Open a terminal; in `machine_events`, a `wake` and no `failed`.
-2. `kill -STOP $(pgrep -f nibd.cjs)` in the machine (as root, `sudo`): within about a
-   minute the terminal shows _Starting machine…_, then `relink` fails and the machine
+2. `kill -STOP $(pgrep -f nibd.cjs)` in the machine (as root, `sudo`): within about 25
+   seconds the terminal shows _Starting machine…_, then `relink` fails and the machine
    restarts (`failed` with `link: …`, `sleep restart`, `wake snapshot`); the screen comes back
    with the dim line from the last save. `kill -CONT` is not needed: the stop ended it.
 3. `sudo pkill -KILL -f nibd.cjs`: within seconds a `relink` row, no restart, the same disk.

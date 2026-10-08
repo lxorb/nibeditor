@@ -7,7 +7,7 @@ import { subprotocol } from '@nib/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { PING_EVERY, SILENT_FOR } from '@nib/online/wire'
+import { PING_EVERY, QUIET_FOR } from '@nib/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -893,13 +893,14 @@ describe('a machine', () => {
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
 
     // Answering pings, the link stays.
-    await vi.advanceTimersByTimeAsync(SILENT_FOR * 2)
+    await vi.advanceTimersByTimeAsync(QUIET_FOR * 2)
     expect(running.host.calls).toEqual(['start machine', 'link'])
 
-    // Frozen: no pong, nothing else either.
+    // Frozen: no pong, nothing else either. Found out within 25 seconds (issue 208: it
+    // was up to 55).
     const frozen = running.host.link_
     if (frozen) frozen.silent = true
-    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    await vi.advanceTimersByTimeAsync(25_000)
 
     expect(frozen?.closed).toBe(true)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
@@ -924,7 +925,7 @@ describe('a machine', () => {
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
     running.host.failLinks = 1
-    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
 
     expect(running.host.calls).toEqual([
       'start machine',
@@ -1368,17 +1369,85 @@ describe('a machine on a server of its own', () => {
     // Quiet once: linked again, nothing restarted.
     const first = running.host.link_
     if (first) first.silent = true
-    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
     expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(false)
 
     // Quiet again a minute later: the fresh link carries a restart.
     const second = running.host.link_
     if (second) second.silent = true
-    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link', 'link'])
     expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(true)
     expect(events()).toEqual(expect.arrayContaining(['relink', 'restart silent']))
+    expect(await running.machine.state()).toBe('awake')
+  })
+
+  /** Issue 208: a `nibd` that ended (a Restart, its watchdog, an update) is back in about
+   *  three seconds, and was looked for again only ten seconds after the first try. */
+  test('a nibd that ended is linked again within seconds of being back', async () => {
+    clock()
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
+
+    // Still starting again when the link closes: the first try finds nothing.
+    running.host.failLinks = 1
+    running.host.link_?.close()
+    await vi.waitFor(async () => {
+      expect(await running.machine.state()).toBe('starting')
+    })
+    expect(running.state.alarm).not.toBeNull()
+    expect((running.state.alarm ?? 0) - Date.now()).toBeLessThanOrEqual(1_000)
+
+    vi.setSystemTime(Date.now() + 1_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('awake')
+    expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+    expect(running.host.calls).toEqual(['start machine', 'link', 'link', 'link'])
+  })
+
+  test('looks for one that stays away less often as time goes on, and every ten seconds at most', async () => {
+    clock()
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    running.host.failLinks = 1000
+    running.host.link_?.close()
+    await vi.waitFor(async () => {
+      expect(await running.machine.state()).toBe('starting')
+    })
+
+    const gaps: number[] = []
+    for (let look = 0; look < 12; look++) {
+      const due = running.state.alarm ?? 0
+      gaps.push(due - Date.now())
+      vi.setSystemTime(due)
+      await fire(running)
+    }
+    expect(gaps[0]).toBeLessThanOrEqual(1_000)
+    for (let at = 1; at < gaps.length; at++) {
+      expect(gaps[at]).toBeGreaterThanOrEqual(gaps[at - 1] ?? 0)
+    }
+    expect(gaps.at(-1)).toBe(10_000)
+  })
+
+  /** Issue 208: a link that closed - the edge, the tunnel, a deploy - counted toward
+   *  "quiet again", and the second within five minutes restarted nibd, ending every
+   *  shell on the machine. */
+  test('a link that closes twice in a minute is made again both times, and nibd keeps its shells', async () => {
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
+
+    for (let closes = 1; closes <= 2; closes++) {
+      running.host.link_?.close()
+      await vi.waitFor(() => {
+        expect(running.host.calls.filter((one) => one === 'link')).toHaveLength(1 + closes)
+        expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+      })
+    }
+    expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(false)
+    expect(events()).not.toContain('restart silent')
     expect(await running.machine.state()).toBe('awake')
   })
 
@@ -1388,7 +1457,7 @@ describe('a machine on a server of its own', () => {
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
     running.host.failLinks = 1000
-    await vi.advanceTimersByTimeAsync(SILENT_FOR + PING_EVERY)
+    await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(await running.machine.state()).toBe('starting')
     // No snapshot, no stop: the server keeps everything while it is waited for.
     expect(running.host.calls).not.toContain('snapshot')

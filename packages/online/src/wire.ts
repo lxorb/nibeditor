@@ -258,10 +258,18 @@ export type NibdFrame =
   | { t: 'pong' }
 
 /** How often `Machine` asks `nibd` whether it is there, and how long a link may say
- *  nothing at all before either end counts it dead: two pings missed, and a little.
- *  `nibd` reports activity every 30 s, so even one that predates the ping is never
- *  silent that long while it answers. */
-export const PING_EVERY = 15_000
+ *  nothing at all before `Machine` counts it dead and makes it again: four pings
+ *  missed. A ping is a few bytes on a link that is open anyway, and a terminal on a dead
+ *  link looks live with keys going nowhere until this runs out (issue 208: it was 40 s
+ *  and a 15 s ping, up to 55 s). */
+export const PING_EVERY = 5_000
+export const QUIET_FOR = 20_000
+
+/** How long `nibd` lets a link that pinged say nothing before it drops it, to read its
+ *  ptys again. Longer than `QUIET_FOR`, so a `Machine` deployed before it, which pinged
+ *  every 15 s, is never dropped between two of its pings; a new link replaces the old
+ *  one at once anyway. `nibd` reports activity every 30 s, so even a `Machine` that
+ *  predates the ping hears it more often than this while it answers. */
 export const SILENT_FOR = 40_000
 
 /** A link frame as its bytes. */

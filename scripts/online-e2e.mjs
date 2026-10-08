@@ -118,15 +118,23 @@ async function socket(session, since) {
   const url = `${BASE.replace(/^http/, 'ws')}/v2/online/${encodeURIComponent(session)}/socket`
   const ws = new WebSocket(url, [`nib.token.${TOKEN}`, `nib.device.${DEVICE}`])
   ws.binaryType = 'arraybuffer'
-  const heard = { frames: [], out: [], closed: false }
+  const born = performance.now()
+  /** Milliseconds from the socket's making to its opening, its first frame of each kind
+   *  and its first output: where a connect's time goes. */
+  const at = {}
+  const first = (what) => (at[what] ??= Math.round(performance.now() - born))
+  const heard = { frames: [], out: [], closed: false, at }
   /** Those waiting for output with something in it; see `echoOf`. */
   const waiting = new Set()
   opened.push(heard)
   ws.onmessage = (event) => {
     if (typeof event.data === 'string') {
-      heard.frames.push(JSON.parse(event.data))
+      const frame = JSON.parse(event.data)
+      first(frame.t === 'machine' ? `machine ${frame.state}` : frame.t)
+      heard.frames.push(frame)
       return
     }
+    first('out')
     const bytes = new Uint8Array(event.data)
     const seq = new DataView(bytes.buffer, bytes.byteOffset).getFloat64(0)
     const data = Buffer.from(bytes.subarray(8)).toString('utf8')
@@ -135,7 +143,10 @@ async function socket(session, since) {
   }
   ws.onclose = () => (heard.closed = true)
   await new Promise((opened, failed) => {
-    ws.onopen = opened
+    ws.onopen = () => {
+      first('open')
+      opened()
+    }
     ws.onerror = () =>
       void refusal(url).then((why) => failed(new Error(`socket to ${url} failed: ${why}`)))
   })
@@ -273,12 +284,13 @@ async function main() {
   log('Worker up')
 
   // 1. A session the way a device on sync v1 makes one: no file id.
+  const asked = performance.now()
   const made = await api('/v2/online/terms', { method: 'POST', body: '{}' })
   const term = await made.json()
   if (made.status !== 200 || term.v !== 1 || !term.machine || !term.session) {
     throw new Error(`POST /v2/online/terms {} answered ${made.status} ${JSON.stringify(term)}`)
   }
-  log('session', term.session, 'on', term.machine)
+  log('session', term.session, 'on', term.machine, `in ${Math.round(performance.now() - asked)} ms`)
 
   // 2. Opened, typed into, answered.
   const first = await socket(term.session)
@@ -287,6 +299,8 @@ async function main() {
     () => first.heard.frames.some((one) => one.t === 'machine' && one.state === 'awake'),
     60_000,
   )
+  await until('the prompt', () => first.heard.at.out !== undefined, 30_000)
+  log('connect, ms from the socket made:', JSON.stringify(first.heard.at))
   first.type('echo hi-$((6*7))\r')
   await until('hi-42 printed', () => first.text().includes('hi-42'), 30_000)
   first.typeBytes('echo bytes-$((5*5))\r')
@@ -301,6 +315,7 @@ async function main() {
   await pause(5000)
   const back = await socket(term.session, since)
   await until('the rest after a reconnect', () => back.text().includes('later-42'), 30_000)
+  log('reconnect, ms from the socket made:', JSON.stringify(back.heard.at))
   const resent = back.heard.out.filter((one) => one.seq < since && one.seq + one.length <= since)
   if (back.text().includes('hi-42') || resent.length > 0) {
     throw new Error(

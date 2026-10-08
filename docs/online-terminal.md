@@ -624,6 +624,12 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   with the first online terminal.
 - The last screen is drawn from the local cache before the socket opens, so a tab is never
   blank, and a sleeping machine's 1-3 s start is spent looking at it.
+- A new terminal waits on nothing it need not (issue 208): a window that heard from the
+  account that it may have a machine makes the file without asking again first (the socket
+  says any refusal since); the file's id is looked for every 100 ms, since it is this
+  computer's own; and the account, which answers 404 until sync has sent the file, is asked
+  again as soon as the pass that sends it is done rather than on a blind half second. The
+  door asks the switch and the socket's rows at once.
 - Machines in the EU: an object is placed where its first request came from, in the EU
   jurisdiction, and its container beside it (the first machine, from Zurich: both in Prague,
   read 2026-10-05). Containers that `Machine` starts itself take no placement constraint
@@ -692,10 +698,12 @@ nowhere, new terminals loading for ever - and the Stop that followed saved neith
 the disk. An awake machine either works or says it does not, and comes back by itself
 (Kubernetes' liveness probe, systemd's watchdog, mosh's "last contact").
 
-- **The link is pinged.** `Machine` pings `nibd` every 15 s (`PING_EVERY`); a link that says
-  nothing at all for 40 s (`SILENT_FOR`: no pong, no output, no activity) is dead whether or
-  not it ever closes. `nibd` drops a link that pinged and then fell silent, so ptys paused
-  behind a half-open link are read again.
+- **The link is pinged.** `Machine` pings `nibd` every 5 s (`PING_EVERY`); a link that says
+  nothing at all for 20 s (`QUIET_FOR`: no pong, no output, no activity) is dead whether or
+  not it ever closes. (Until issue 208 it was a ping every 15 s and 40 s of silence: a dead
+  link looked live for up to 55 s.) `nibd` drops a link that pinged and then fell silent for
+  40 s (`SILENT_FOR`, longer, so a `Machine` deployed before it is never dropped between its
+  pings), so ptys paused behind a half-open link are read again.
 - **A dead link is made again** (`recover`): every socket is told `starting` at once, the
   link is made again within 20 s, and the sockets are told `awake`. Where it cannot be, the
   machine **restarts**: a snapshot first (60 s at most), the stop, a wake from that snapshot -
@@ -712,8 +720,16 @@ the disk. An awake machine either works or says it does not, and comes back by i
   The sessions' cgroup gets the machine's memory less 512 MiB, so a build that eats it all
   is ended by the kernel inside the sessions, not by a machine thrashing around `nibd`.
 - **The app's socket beats** every 10 s, answered by the runtime without waking the object;
-  three unanswered beats drop and reopen it. A live terminal told `starting` shows the card
-  again over its dimmed screen until its session's screen is back.
+  three unanswered beats drop and reopen it. Where half a minute would be felt it looks at
+  once (issue 208): the network coming back (`online`), the window looked at again, a
+  computer back from sleep (a beat that fires far later than it was set), and keys typed each
+  send a beat, and a socket that answers nothing within 3 s (`PROBE_WITHIN`) is dropped and
+  made again - one still sending a long paste gets longer. A socket that has not opened in
+  10 s (`OPEN_WITHIN`) is given up rather than left to the browser, which can wait minutes
+  on a network that went. Between tries it waits a quarter of a second, doubling to 5 s while
+  the window is on screen and a room's 20 s while it is not (`linkDelay`); the network
+  coming back or the window looked at again tries at once. A live terminal told `starting`
+  shows the card again over its dimmed screen until its session's screen is back.
 - **Saves in the right order.** A sleep snapshots first (what the next wake boots from), then
   backs the home up if due. A wake from a backup never waits for it: the machine is awake at
   once, the sessions open once the home is back or could not be (then one dim line, _Your
@@ -789,9 +805,14 @@ killed, and the warning that a firewall change can lock its owner out).
   (the service, the account, a hold) puts the machine down, and then it is only unlinked - the
   server runs on. It is `awake` once `nibd` answers. A server being made is `starting` for its
   first boot's few minutes, waited for on the alarm every 10 seconds (never inside a request),
-  and `starting` is said again each time, so a waiting terminal keeps waiting.
-- **The health path** (4.14) on a server: a link that goes quiet is made again; a `nibd` that
-  goes quiet again within five minutes is told `restart` down the fresh link (it saves every
+  and `starting` is said again each time, so a waiting terminal keeps waiting. One whose
+  `nibd` stopped answering is looked for sooner (`nextLook`): after a second, then at half
+  the time waited so far, up to the same 10 seconds - a `nibd` that ended is started again
+  by systemd in about three, and a flat 10 s made a Restart take fifteen (issue 208).
+- **The health path** (4.14) on a server: a link that goes quiet or closes is made again; a
+  `nibd` whose link goes quiet again within five minutes is told `restart` down the fresh link
+  - one that merely closed is not counted, since a close says more of the way there (the
+  edge, the tunnel) than of `nibd`, and a restart ends every shell (issue 208) (it saves every
   screen and ends, and systemd starts it again, `nib-update` first); one that will not link is
   waited for while systemd restarts it, and after three minutes the server is **power-cycled**
   through the API; ten minutes after that it is `asleep` with `restart`, which its terminals

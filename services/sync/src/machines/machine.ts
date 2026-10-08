@@ -73,10 +73,10 @@ import {
   type NibdFrame,
   outFrame,
   PING_EVERY,
+  QUIET_FOR,
   type Refusal,
   REFUSALS,
   type ServerFrame,
-  SILENT_FOR,
   text,
 } from '@nib/online/wire'
 import { reachAgain } from './reach'
@@ -132,6 +132,11 @@ const CALLBACKS_A_MINUTE = 10
  *  minutes); how long one that stopped answering is waited for before it is
  *  power-cycled, and then for its reboot. */
 const PROVISION_EVERY = 10_000
+/** One that stopped answering is looked for sooner at first: a `nibd` that ended is
+ *  started again by systemd in about three seconds (`RestartSec=2`, then `nib-update`),
+ *  which a flat ten seconds between looks turned into fifteen (issue 208). The looks
+ *  come at half the time waited so far, from one second up to `PROVISION_EVERY`. */
+const FIRST_LOOK = 1_000
 const FIRST_BOOT_LIMIT = 20 * MINUTE
 const REBOOT_AFTER = 3 * MINUTE
 const REBOOT_LIMIT = 10 * MINUTE
@@ -677,7 +682,7 @@ export class Machine implements DurableObject {
   }
 
   /** The heartbeat (docs/online-terminal.md 4.6): a ping down the link, and a link that
-   *  has said nothing at all for `SILENT_FOR` - no pong, no output, no activity - is
+   *  has said nothing at all for `QUIET_FOR` - no pong, no output, no activity - is
    *  dead whether or not it ever closes. A half-open link is what 2026-10-06's frozen
    *  terminal was: no output, keys going nowhere, new terminals waiting for ever. */
   private pulse(link: WebSocket, beat: ReturnType<typeof setInterval>): void {
@@ -685,9 +690,9 @@ export class Machine implements DurableObject {
       clearInterval(beat)
       return
     }
-    if (Date.now() - this.heard > SILENT_FOR) {
+    if (Date.now() - this.heard > QUIET_FOR) {
       clearInterval(beat)
-      void this.recover()
+      void this.recover(true)
       return
     }
     this.tell('', { t: 'ping' })
@@ -824,18 +829,18 @@ export class Machine implements DurableObject {
     this.diskSaid = full
   }
 
-  /** The link went quiet or closed under an awake machine, or an object that restarted
-   *  (every deploy restarts it) has none: made again, and where that fails, the machine
-   *  restarted. Its sockets are told `starting` meanwhile, so a frozen terminal never
-   *  looks alive, and `awake` once it is back. Once, however many ask. */
-  private recover(): Promise<void> {
-    this.recovering ??= this.recoverNow().finally(() => {
+  /** The link went quiet (`silent`) or closed under an awake machine, or an object that
+   *  restarted (every deploy restarts it) has none: made again, and where that fails,
+   *  the machine restarted. Its sockets are told `starting` meanwhile, so a frozen
+   *  terminal never looks alive, and `awake` once it is back. Once, however many ask. */
+  private recover(silent = false): Promise<void> {
+    this.recovering ??= this.recoverNow(silent).finally(() => {
       this.recovering = null
     })
     return this.recovering
   }
 
-  private async recoverNow(): Promise<void> {
+  private async recoverNow(silent: boolean): Promise<void> {
     // A sleep or a wake running here has the link in hand already.
     if (this.sleeping || this.waking) return
     const dead = this.link
@@ -856,7 +861,10 @@ export class Machine implements DurableObject {
       if ((await this.state()) !== 'awake') return
       await audit(this.env, me.id, 'relink')
       this.everybody({ t: 'machine', state: 'awake' })
-      await this.quietAgain(me)
+      // Only a link that went quiet says anything about `nibd`: one that closed was the
+      // way to it (the edge, the tunnel), and restarting `nibd` for that would end every
+      // shell on the machine for nothing (issue 208).
+      if (silent) await this.quietAgain(me)
       return
     } catch (error) {
       await this.failed(me, 'link', error)
@@ -864,8 +872,8 @@ export class Machine implements DurableObject {
     await this.restart(me)
   }
 
-  /** A `nibd` that went quiet again within minutes of being linked again answers its
-   *  link but not much else - a loop starved, a session wedged in it - so it is
+  /** A `nibd` whose link went quiet again within minutes of the last one that did answers
+   *  its link but not much else - a loop starved, a session wedged in it - so it is
    *  restarted: told down the fresh link, it saves every screen and its supervisor
    *  starts it again in a moment, and the link is made again after it (4.14). Only on a
    *  machine that is always on; a container is restarted whole instead. */
@@ -920,9 +928,10 @@ export class Machine implements DurableObject {
    *  setting itself up (`boot`), or one whose `nibd` stopped answering (`recover`). */
   private async waitFor(why: Provision['why'], rebooted: boolean): Promise<void> {
     const now = Date.now()
-    await this.ctx.storage.put(PROVISION, { since: now, why, rebooted } satisfies Provision)
+    const waiting = { since: now, why, rebooted } satisfies Provision
+    await this.ctx.storage.put(PROVISION, waiting)
     await this.setState('starting')
-    await this.ctx.storage.setAlarm(now + PROVISION_EVERY)
+    await this.ctx.storage.setAlarm(now + nextLook(waiting, now))
   }
 
   /** One look for `nibd` on an always-on machine being waited for: linked, and awake;
@@ -962,7 +971,8 @@ export class Machine implements DurableObject {
     // Still starting, said again: a terminal waiting on a first boot's few minutes hears
     // that it is not forgotten, and keeps waiting (lib/online/arrival.svelte.ts).
     this.everybody({ t: 'machine', state: 'starting' })
-    await this.ctx.storage.setAlarm(now + PROVISION_EVERY)
+    const after = Date.now()
+    await this.ctx.storage.setAlarm(after + nextLook(waiting, after))
   }
 
   /** The server power-cycled through its host's API, and waited for again. */
@@ -1593,6 +1603,15 @@ export class Machine implements DurableObject {
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
+
+/** How long until an always-on machine being waited for is looked for again: a server
+ *  setting itself up every `PROVISION_EVERY`, since its first boot takes minutes; one
+ *  that stopped answering at half the time waited so far, from `FIRST_LOOK` up to the
+ *  same, so a `nibd` that is back in seconds is linked in seconds. */
+function nextLook(waiting: Provision, now: number): number {
+  if (waiting.why === 'boot') return PROVISION_EVERY
+  return Math.min(PROVISION_EVERY, Math.max(FIRST_LOOK, Math.round((now - waiting.since) / 2)))
+}
 
 function maySocketType(viewer: Viewer): boolean {
   return mayType(viewer.role, viewer.guest, viewer.owns, viewer.typing)
