@@ -10,8 +10,8 @@ What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_sw
   - the page script in a site's page says each sideways scroll the page left over, and
     says that the page took it where a scroller in the page could still move, where the
     page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
-    where the page's own handler took the wheel; and says nothing for a scroll down or a
-    tilted wheel's notch.
+    where the page's own handler took the wheel; and says nothing for a scroll down - one
+    that drifts sideways as it goes included - or a tilted wheel's notch.
 
 The sweeps are Chromium's own smooth scroll gestures from the protocol
 (`Input.synthesizeScrollGesture`), whose wheel events are trusted and precise - a pixel
@@ -203,7 +203,8 @@ def page_script(browser: Browser) -> None:
             page.mouse.wheel(-across, -down)
         else:
             sweep(page, x, y, across, down)
-        time.sleep(0.1)
+        # Past the page's own quiet, so the next gesture is a stream of its own.
+        time.sleep(0.2)
         return list(page.evaluate("window.said"))
 
     plain = heard("#words", 100)
@@ -228,6 +229,11 @@ def page_script(browser: Browser) -> None:
 
     if heard("#words", 0, 100):
         wrong("a scroll down was said")
+    drifting = heard("#words", 60, 400)
+    if drifting:
+        wrong(f"a scroll down that drifted sideways was said: {json.dumps(drifting)}")
+    else:
+        say("ok   a scroll down that drifts sideways says nothing")
     if heard("#words", 100, notch=True):
         wrong("a tilted wheel's notch was said")
     page.evaluate("document.documentElement.style.overscrollBehaviorX = 'none'")

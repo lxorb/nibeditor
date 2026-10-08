@@ -1,9 +1,10 @@
 ;(function () {
   // What a page in a web tab says about a swipe, from nib's own world in it; see
-  // web_swipe.rs. Every sideways scroll the page leaves over, and a finger from the
-  // side of the screen, is said to the app, which decides
-  // (apps/desktop/src/lib/back-swipe). Nothing the page does is changed: every
-  // listener is passive and only reads.
+  // web_swipe.rs. Every stream of scroll that goes sideways before it goes down - from its
+  // first step, so the app reads which way it went the way it reads a note's - and a
+  // finger from the side of the screen, is said to the app, which decides
+  // (apps/desktop/src/lib/back-swipe). A scroll down a page says nothing. Nothing the page
+  // does is changed: every listener is passive and only reads.
 
   // How near the side of the screen a finger has to land to be a swipe and not a pan.
   const SIDE = 24
@@ -63,6 +64,18 @@
     return [left, right]
   }
 
+  // The app's own QUIET, START and RATIO (lib/back-swipe/gesture.ts): how long the wheel
+  // stops for before the fingers count as lifted, and how far down, and how much further
+  // down than sideways, a stream goes before it is a scroll down to its end.
+  const QUIET = 120
+  const START = 60
+  const RATIO = 2.5
+
+  // The stream of scroll the wheel is in: when it last moved, how far it has gone each
+  // way, whether it has said anything, and whether it went down first, which makes the
+  // rest of it the page's own and says nothing at all.
+  let stream = null
+
   // A frame's worth of scroll, said once: a touchpad reports faster than a page draws.
   let heard = null
   let waiting = 0
@@ -70,35 +83,61 @@
   function flush() {
     waiting = 0
     const one = heard
-    heard = null
     if (!one) return
     // Asked after every handler in the page has had the scroll: one that took it for
     // itself - a map, a slideshow - keeps it.
-    const taken = one.events.some(function (event) {
-      return event.defaultPrevented
-    })
+    one.kept =
+      one.kept ||
+      one.events.some(function (event) {
+        return event.defaultPrevented
+      })
+    one.events = []
+    // Not sideways on purpose yet: what came so far waits, and goes with the first frame
+    // that is, so the app reads the stream from its first step without being told every
+    // scroll down a page. Until then the app would only have been adding it up too.
+    const sideways = Math.abs(stream.across) > Math.abs(stream.down) * RATIO
+    if (!stream.said && !sideways) return
+    heard = null
+    stream.said = true
     say({
       k: 'w',
       dx: one.dx,
       dy: one.dy,
       t: one.t,
-      l: taken || one.l,
-      r: taken || one.r,
+      l: one.kept || one.l,
+      r: one.kept || one.r,
     })
   }
 
   addEventListener(
     'wheel',
     function (event) {
-      if (!event.isTrusted || event.deltaMode !== 0 || !event.deltaX) return
+      if (!event.isTrusted || event.deltaMode !== 0) return
+      if (!event.deltaX && !event.deltaY) return
       if (event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) return
       // A tilted wheel turns in notches; Chrome never swipes on a mouse.
       if (event.wheelDeltaX && event.wheelDeltaX % NOTCH === 0) return
-      const free = takes(event.target)
-      if (!heard) heard = { dx: 0, dy: 0, t: 0, l: false, r: false, events: [] }
+      const at = event.timeStamp
+      if (!stream || at - stream.last > QUIET) {
+        stream = { last: at, across: 0, down: 0, said: false, downFirst: false }
+        heard = null
+      }
+      stream.last = at
+      if (stream.downFirst) return
+      stream.across += event.deltaX
+      stream.down += event.deltaY
+      const down = Math.abs(stream.down)
+      if (!stream.said && down > START && down > Math.abs(stream.across) * RATIO) {
+        stream.downFirst = true
+        heard = null
+        return
+      }
+      // Only a sideways step asks which way the page would take it.
+      const free = event.deltaX ? takes(event.target) : [false, false]
+      if (!heard) heard = { dx: 0, dy: 0, t: 0, l: false, r: false, kept: false, events: [] }
       heard.dx += event.deltaX
       heard.dy += event.deltaY
-      heard.t = event.timeStamp
+      heard.t = at
       heard.l = heard.l || free[0]
       heard.r = heard.r || free[1]
       heard.events.push(event)

@@ -47,7 +47,7 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 }
 
 const { listen, pageSaid, PLAYS } = await import('../../src/lib/back-swipe/swipes')
-const { QUIET } = await import('../../src/lib/back-swipe/gesture')
+const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
 
@@ -145,6 +145,20 @@ test('a short sweep shows the arrow and goes nowhere', () => {
   expect(arrow()?.classList.contains('stayed')).toBe(true)
 })
 
+test('the ring round the arrow fills with the way to where letting go goes', () => {
+  const left = () =>
+    Number(document.querySelector<SVGElement>('.ring circle')?.style.strokeDashoffset)
+  sweep(words, 12, -10)
+  expect(swiping.progress).toBeGreaterThan(0)
+  expect(swiping.progress).toBeLessThan(1)
+  expect(left()).toBeCloseTo(1 - swiping.progress)
+
+  sweep(words, 40, -10)
+  expect(left()).toBe(0)
+  expect(arrow()?.classList.contains('armed')).toBe(true)
+  letGo()
+})
+
 test('nowhere to go forward is no arrow at all', () => {
   sweep(words, 40, 10)
   expect(arrow()).toBeNull()
@@ -216,6 +230,44 @@ test('a page that took the scroll says so, and keeps it', () => {
   }
   letGo()
   expect(pressed).toEqual([])
+})
+
+test('a scroll down that drifts sideways is a scroll down, to its end', () => {
+  // Straight down first, then a hand that wanders: no arrow, and nowhere to go.
+  sweep(words, 10, 0, { deltaY: 10 })
+  sweep(words, 40, -10, { deltaY: 1 })
+  expect(arrow()).toBeNull()
+  letGo()
+  expect(pressed).toEqual([])
+
+  // Over a page, said with what went down before the first sideways step.
+  pageSaid({ tab: 'w1', kind: 'wheel', dx: -1, dy: 120, at: 0, left: false, right: false })
+  for (let at = 1; at < 20; at++) {
+    pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
+  }
+  flushSync()
+  expect(arrow()).toBeNull()
+  letGo()
+  expect(pressed).toEqual([])
+})
+
+test('one swipe is one step: the coast that carries on after it is nobody s', () => {
+  const now = vi.spyOn(performance, 'now').mockReturnValue(10_000)
+  sweep(words, 40, -10)
+  letGo()
+  expect(pressed).toEqual(['back n1'])
+
+  // The pad coasting on over the note the step brought, after the gap the step left.
+  sweep(words, 40, -10)
+  letGo()
+  expect(pressed).toEqual(['back n1'])
+
+  // A hand that lifts and sweeps again goes again.
+  now.mockReturnValue(10_000 + SETTLE + 1)
+  sweep(words, 40, -10)
+  letGo()
+  expect(pressed).toEqual(['back n1', 'back n1'])
+  now.mockRestore()
 })
 
 test('a finger from the side of the pane goes back when it lifts far enough along', () => {

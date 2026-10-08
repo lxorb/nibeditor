@@ -14,14 +14,21 @@
  *    before anything shows; a stream that went down first is a scroll down to its end.
  *  - **Shown before it happens.** Past the start the arrow follows the fingers; it goes
  *    when they let go far enough along - three tenths of the window's longer side, less
- *    the start, on a touchpad, and a quarter on a screen - or let go moving towards it at
- *    more than 1100 pixels a second. Let go short of that, or brought back, and nothing
- *    happens.
+ *    the start, on a touchpad, and a quarter on a screen, but never more than `MOST` - or
+ *    let go moving towards it at more than 1100 pixels a second. Let go short of that, or
+ *    brought back, and nothing happens.
  *  - **Nowhere to go is no arrow.** A side with nothing in the history that way never
  *    shows one, and the stream is left alone.
  *
  *  Those numbers are Chromium's own (overscroll_configuration.cc, overscroll_controller.cc
- *  and gesture_nav_simple.cc), so a hand that knows Chrome's swipe knows this one.
+ *  and gesture_nav_simple.cc), so a hand that knows Chrome's swipe knows this one - but for
+ *  `MOST`, because Chrome measures the screen and a touchpad is the same size under a
+ *  window of any width: on a wide window Chrome's share was most of the pad (#209).
+ *
+ *  **Which way, from the first step.** A stream is read from its very first step, a step
+ *  straight down included, so its callers hand every step in: a scroll down a page is a
+ *  scroll down to its end, however far it then drifts sideways, and never brings the
+ *  arrow out half way down (#209).
  *
  *  **When the fingers lift.** A page is never told: a touchpad's scroll arrives as wheel
  *  events and nothing else. So a stream ends when the events stop for a moment (`QUIET`,
@@ -70,6 +77,16 @@ const COAST_KEEPS: readonly [number, number] = [0.55, 0.98]
  *  deliberate sweep rather than a twitch. */
 const LEAST = 80
 
+/** The most it can ask: about a third of a touchpad's width, so a wide window does not
+ *  want the whole pad and then some. */
+export const MOST = 320
+
+/** How long after a swipe that went a new stream is still the last one's: the pad's coast
+ *  carried on over the page the step brought, after the gap the step itself left. Such a
+ *  stream is nobody's, so one swipe is one step. Short of a hand lifting and sweeping
+ *  again, which takes longer. In milliseconds, from the lift. */
+export const SETTLE = 300
+
 /** How heavily the speed follows the newest step, out of one. */
 const FOLLOW = 0.5
 
@@ -106,7 +123,8 @@ export interface Shown {
 
 /** How far the fingers have to travel past the start, in a window of this size. */
 export function distance(source: Source, width: number, height: number): number {
-  return Math.max(LEAST, Math.max(width, height) * SHARE[source] - START[source])
+  const share = Math.max(width, height) * SHARE[source] - START[source]
+  return Math.min(MOST, Math.max(LEAST, share))
 }
 
 /** The side a sideways scroll pushes against: one towards the left overscrolls at the
@@ -139,6 +157,12 @@ export class Swipe {
   /** What there is to draw. */
   get shown(): Shown {
     return { phase: this.phase, side: this.side, progress: this.progress() }
+  }
+
+  /** Whether the next step's `scrolls` is read at all: only until the stream has said
+   *  whose it is. */
+  get asking(): boolean {
+    return this.phase === 'idle' || this.phase === 'gathering'
   }
 
   /** One step of the stream. */
