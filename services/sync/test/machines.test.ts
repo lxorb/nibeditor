@@ -122,8 +122,16 @@ const knock = (term: string, token: string) =>
     },
   })
 
+/** The clock every test runs on: the date, and the timers a `Machine` sets. A linked
+ *  machine pings `nibd` every `PING_EVERY` for as long as it lives, and a test's machine
+ *  is never put away: on the real timers its heartbeat went on after the test, found the
+ *  link quiet by the real date, and wrote its recovery into a database already closed
+ *  (an unhandled rejection that failed CI, issue 208). On these it never fires unless a
+ *  test moves the clock, and `useRealTimers` drops it before the database goes. */
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.useFakeTimers({
+    toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+  })
   vi.setSystemTime(Date.UTC(2026, 9, 5, 12))
   door = doorway()
   env = testEnv({ MACHINES: door.MACHINES, ...HETZNER })
@@ -872,22 +880,12 @@ describe('a machine', () => {
 
   /* ── Health (2026-10-06: a frozen terminal, a stuck start, failed saves) ── */
 
-  /** Timers the test moves, as well as the date. */
-  function clock() {
-    const now = Date.now()
-    vi.useFakeTimers({
-      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
-    })
-    vi.setSystemTime(now)
-  }
-
   const events = () =>
     env.db
       .prepare('select kind, detail from machine_events where machine = ? order by id')
       .all(ID) as { kind: string; detail: string | null }[]
 
   test('a link that goes quiet is made again, its sockets told starting and then awake', async () => {
-    clock()
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
@@ -920,7 +918,6 @@ describe('a machine', () => {
   })
 
   test('a link that cannot be made again restarts the machine from a snapshot taken first', async () => {
-    clock()
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
@@ -985,7 +982,6 @@ describe('a machine', () => {
     running.host.calls.length = 0
     running.host.hangRestore = true
 
-    clock()
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     expect(await running.machine.state()).toBe('awake')
@@ -1140,24 +1136,19 @@ describe('a machine', () => {
   })
 
   test('opens past ten a minute are dropped, and the next minute opens again', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    try {
-      const running = await machine(env, ID, user)
-      const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-      for (let one = 0; one < 15; one++) {
-        await nibd(running, {
-          t: 'browse',
-          session: 'session-1',
-          url: `https://a.b/${String(one)}`,
-        })
-      }
-      expect(owner.of('browse')).toHaveLength(10)
-      vi.setSystemTime(Date.now() + 60_000)
-      await nibd(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
-      expect(owner.of('browse')).toHaveLength(11)
-    } finally {
-      vi.useRealTimers()
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    for (let one = 0; one < 15; one++) {
+      await nibd(running, {
+        t: 'browse',
+        session: 'session-1',
+        url: `https://a.b/${String(one)}`,
+      })
     }
+    expect(owner.of('browse')).toHaveLength(10)
+    vi.setSystemTime(Date.now() + 60_000)
+    await nibd(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
+    expect(owner.of('browse')).toHaveLength(11)
   })
 
   test('a sign-in callback is made on the machine for the owner alone, and its answer is theirs', async () => {
@@ -1259,14 +1250,6 @@ describe('a machine on a server of its own', () => {
       .run(ID, user)
   })
 
-  function clock() {
-    const now = Date.now()
-    vi.useFakeTimers({
-      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
-    })
-    vi.setSystemTime(now)
-  }
-
   async function server() {
     const running = await machine(env, ID, user)
     running.host.alwaysOn = true
@@ -1361,7 +1344,6 @@ describe('a machine on a server of its own', () => {
   })
 
   test('the health path: a nibd that keeps going quiet is restarted through its link', async () => {
-    clock()
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
@@ -1386,7 +1368,6 @@ describe('a machine on a server of its own', () => {
   /** Issue 208: a `nibd` that ended (a Restart, its watchdog, an update) is back in about
    *  three seconds, and was looked for again only ten seconds after the first try. */
   test('a nibd that ended is linked again within seconds of being back', async () => {
-    clock()
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
@@ -1408,7 +1389,6 @@ describe('a machine on a server of its own', () => {
   })
 
   test('looks for one that stays away less often as time goes on, and every ten seconds at most', async () => {
-    clock()
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     running.host.failLinks = 1000
@@ -1452,7 +1432,6 @@ describe('a machine on a server of its own', () => {
   })
 
   test('a nibd that will not link is waited for, then the server power-cycled', async () => {
-    clock()
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
