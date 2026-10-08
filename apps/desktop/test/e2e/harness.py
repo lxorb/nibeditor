@@ -123,6 +123,14 @@ POINTED = ".nib-build"
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
+#: What every browser a drive opens has already said: where its notes come from. The
+#: browser build asks that on the visit that writes the welcome note, over the note, and
+#: a drive's browser is a first visit every time; so each one is a reader who answered
+#: before, written into the page's storage before the app reads it. See
+#: src/lib/first-visit.svelte.ts. Guarded, because a page with no storage of its own
+#: (`about:blank`, a `data:` frame) refuses the setter.
+ANSWERED = "try { localStorage.setItem('nib:first-visit', 'answered') } catch {}"
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
@@ -171,6 +179,29 @@ if os.environ.get("NIB_HANG_AFTER"):
 for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
         _stream.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
+
+
+def answering(browser: Any) -> Any:
+    """The browser, with every context it makes from now on - a drive's own
+    `new_context` and `new_page` included - carrying `ANSWERED`. On the browser rather
+    than in `context`, because most drives make their contexts themselves."""
+    made_context = browser.new_context
+    made_page = browser.new_page
+
+    def new_context(*args: Any, **options: Any) -> Any:
+        context = made_context(*args, **options)
+        context.add_init_script(ANSWERED)
+        return context
+
+    def new_page(*args: Any, **options: Any) -> Any:
+        # Nothing is loaded in the page yet, so a script added now runs before the app.
+        page = made_page(*args, **options)
+        page.context.add_init_script(ANSWERED)
+        return page
+
+    browser.new_context = new_context
+    browser.new_page = new_page
+    return browser
 
 
 # ---------------------------------------------------------------------- the build
@@ -683,7 +714,7 @@ class Drive:
         the machine's Chrome with `NIB_BROWSER=chrome`."""
         channel = os.environ.get("NIB_BROWSER", "chromium")
         options.setdefault("channel", channel)
-        return play.chromium.launch(**options)
+        return answering(play.chromium.launch(**options))
 
     def context(self, browser: Any, **options: Any) -> Any:
         return browser.new_context(**options)
@@ -692,7 +723,9 @@ class Drive:
         """A browser with its profile on disk, for a drive whose question is what
         survives the browser being closed and opened again."""
         options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
-        return play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
+        context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
+        context.add_init_script(ANSWERED)
+        return context
 
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
         """A page in a context of its own. A script error the page throws is a

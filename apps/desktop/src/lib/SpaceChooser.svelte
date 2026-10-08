@@ -4,16 +4,20 @@
    *  The app's mark, its name and its version, then one row per way in - a title on
    *  the left and the button that does it on the right - and the language at the
    *  foot. The first rows are the apps somebody might be coming from (MigrateRows),
-   *  which Obsidian's chooser does not have and the iPhone's setup puts first. Obsidian puts a line of description under each title; nib leaves them
-   *  out, because the words on the buttons already say it and nothing on screen
-   *  here is there to be read rather than pressed.
+   *  which Obsidian's chooser does not have and the iPhone's setup puts first.
+   *  Obsidian puts a line of description under each title; nib leaves them out,
+   *  because the words on the buttons already say it and nothing on screen here is
+   *  there to be read rather than pressed.
    *
    *  A card in the window rather than a window of its own, and not dismissable: with
    *  no space there is nothing behind it to go back to, which is why Obsidian's
    *  cannot be closed either. Escape and back are left alone rather than put on the
    *  overlay stack. It goes the moment a space exists; see space-chooser.svelte.ts.
-   *  App.svelte fetches it only while there is no space, and its transitions are
-   *  global because that `{#if}` can take it away as well as this one. */
+   *  The browser build's first visit is the one exception, with the welcome note's
+   *  space behind it and "Start fresh" the way back to it; see first-visit.svelte.ts.
+   *  App.svelte fetches it only while there is no space or that visit is asking, and
+   *  its transitions are global because that `{#if}` can take it away as well as
+   *  this one. */
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
   import { i18n, t } from './i18n.svelte'
@@ -83,7 +87,7 @@
               type="button"
               data-lands
               disabled={migrating.working}
-              onclick={() => (firstVisit.asking = false)}
+              onclick={() => firstVisit.answered()}
             >
               {t('Continue')}
             </button>

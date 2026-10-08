@@ -5,11 +5,31 @@
  *  no space yet. The browser build always has one - it seeds the welcome note on a
  *  first visit (web/commands.ts) - so it asks the same question on the same card,
  *  once, on the visit that wrote that note, and "Start fresh" leaves the reader on
- *  it. Held for the sitting and never written down: the welcome note is written once
- *  per browser, so the next visit is not a first one. See space-choice.ts. */
+ *  it. See space-choice.ts.
+ *
+ *  Once a browser has answered, it is never asked again, which the welcome note
+ *  already makes true for a reader: it is written once per browser. Written down as
+ *  well because a browser a drive opens is a first visit every time, and every drive
+ *  opens one; the harness answers for it before the page loads, as a reader who has
+ *  been here before (`ANSWERED` in test/e2e/harness.py). */
+
+import { keep, storedText } from './stored'
+
+const KEY = 'nib:first-visit'
 
 class FirstVisit {
   asking = $state(false)
+
+  /** Said on the visit that wrote the welcome note. */
+  ask() {
+    if (storedText(KEY) !== 'answered') this.asking = true
+  }
+
+  /** A fresh start, or notes brought over: either way the question is answered. */
+  answered() {
+    this.asking = false
+    keep(KEY, 'answered')
+  }
 }
 
 export const firstVisit = new FirstVisit()

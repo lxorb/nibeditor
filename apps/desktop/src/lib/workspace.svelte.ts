@@ -710,7 +710,7 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
       // A first visit is asked where its notes are coming from; see first-visit.svelte.ts.
-      if (await seed()) firstVisit.asking = true
+      if (await seed()) firstVisit.ask()
     }
 
     const state = readSession(stored(STORAGE_KEY))

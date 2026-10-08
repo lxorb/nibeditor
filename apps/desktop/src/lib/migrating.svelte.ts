@@ -147,7 +147,7 @@ export async function importAsSpace(
  *  phone the list is a drawer over the note, and opening it would hide the note. */
 export async function arrive(space: Space) {
   // The browser's first visit has had its question answered; see first-visit.svelte.ts.
-  firstVisit.asking = false
+  if (firstVisit.asking) firstVisit.answered()
   // From Settings' Import pane, the new space is what there is to look at.
   const { settings } = await import('./settings.svelte')
   settings.open = false

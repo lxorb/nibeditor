@@ -48,7 +48,9 @@ their own, named after what came in, and lands in it.
 
 - **Where it is asked.** The space chooser on the desktop and the phone, which is
   up while there is no space; the browser build's first visit, beside the welcome
-  note's space, where "Start fresh" stays on that note (`first-visit.svelte.ts`).
+  note's space, where "Start fresh" stays on that note and a browser that has
+  answered is not asked again (`first-visit.svelte.ts`; every drive's browser has
+  answered, see `ANSWERED` in `test/e2e/harness.py`).
   Later, the same rows are Settings > Import (Notion's place for them) and the
   palette's Import from Obsidian and Import from Notion. See `MigrateRows.svelte`
   and `migrating.svelte.ts`.

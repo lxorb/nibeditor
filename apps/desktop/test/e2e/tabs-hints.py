@@ -586,6 +586,9 @@ def main() -> int:
         with sync_playwright() as play:
             browser = play.chromium.launch(channel="chrome")
             context = browser.new_context(viewport={"width": 1280, "height": 820})
+            # A reader who has been here before, as every drive's browser is; see
+            # ANSWERED in harness.py.
+            context.add_init_script("try { localStorage.setItem('nib:first-visit', 'answered') } catch {}")
             page = context.new_page()
             page.on("pageerror", lambda error: wrong(f"page error: {error}"))
             page.on("console", lambda message: say(f"console {message.type}: {message.text[:200]}") if message.type in ("error", "warning") else None)
