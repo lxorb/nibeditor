@@ -185,12 +185,22 @@
     max-width: 100%;
   }
 
+  /* A note, so it stands on the paper a note stands on (Pane.svelte), not the surface a
+     menu floats on: the page's own ground in every theme, and under glass and the
+     wallpaper as see-through as the Content row leaves the note beside it. */
   .card {
     position: relative;
     height: 100%;
     display: flex;
     min-width: 0;
     overflow: hidden;
+    background: var(--content-ground, var(--bg));
+  }
+
+  /* Over the note there, so see-through paper would show the note's words through its
+     own: the same paper, whole. */
+  :global(:is([data-drawer], [data-narrow]) [data-scratchpad]) .card {
+    background: var(--bg);
   }
 
   .host {
