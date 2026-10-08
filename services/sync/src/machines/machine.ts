@@ -82,6 +82,15 @@ import {
 import { reachAgain } from './reach'
 import { serviceOf } from './service'
 
+/** Work nothing waits for - a heartbeat's, a socket's, a link event's - with whatever it
+ *  throws written down. Left to reject on its own, it is an unhandled rejection that
+ *  names neither the machine nor what it was doing. */
+function aside(at: string, work: Promise<unknown>): void {
+  work.catch((error: unknown) => {
+    note(at, error, null)
+  })
+}
+
 /** The image the machine boots, by its name in wrangler.jsonc's `images`. */
 const IMAGE = 'machine'
 
@@ -354,7 +363,10 @@ export class Machine implements DurableObject {
 
   private join(headers: Headers): Response {
     const pair = new WebSocketPair()
-    void this.enter(pair[1], viewerFrom(headers), headers.get('x-nib-wake') ?? 'no')
+    aside(
+      'machine enter',
+      this.enter(pair[1], viewerFrom(headers), headers.get('x-nib-wake') ?? 'no'),
+    )
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
 
@@ -470,7 +482,7 @@ export class Machine implements DurableObject {
     this.tell(viewer.session, { t: 'want', session: viewer.session, since: since ?? 0 })
     // A link gone under an awake machine is made again now, not at the next minute: a
     // terminal opened meanwhile says so and waits a bounded while, never for ever.
-    if (!this.link) void this.recover()
+    if (!this.link) aside('machine recover', this.recover())
 
     // The owner putting a sleeping machine's terminal on screen wakes it.
     if (viewer.owns && (await this.state()) === 'asleep' && (await this.mayWake()) === null) {
@@ -507,7 +519,7 @@ export class Machine implements DurableObject {
     this.typedBy(viewer, now)
     this.ensureOpen(viewer)
     this.tell(viewer.session, { t: 'in', session: viewer.session, data })
-    if (!this.link) void this.recover()
+    if (!this.link) aside('machine recover', this.recover())
 
     if (now - viewer.seen > SEEN_EVERY) socket.serializeAttachment({ ...viewer, seen: now })
     // Said to everybody else: the typist knows they typed, and on a slow link a frame
@@ -669,10 +681,10 @@ export class Machine implements DurableObject {
             ? data
             : null
       const frame = bytes ? nibdFrameOf(bytes) : null
-      if (frame) void this.fromNibd(frame)
+      if (frame) aside('machine nibd', this.fromNibd(frame))
     })
     link.addEventListener('close', () => {
-      if (this.link === link) void this.recover()
+      if (this.link === link) aside('machine recover', this.recover())
     })
     const beat = setInterval(() => {
       this.pulse(link, beat)
@@ -692,7 +704,7 @@ export class Machine implements DurableObject {
     }
     if (Date.now() - this.heard > QUIET_FOR) {
       clearInterval(beat)
-      void this.recover(true)
+      aside('machine recover', this.recover(true))
       return
     }
     this.tell('', { t: 'ping' })
@@ -1026,7 +1038,13 @@ export class Machine implements DurableObject {
   /** A host call that failed, written down with why (audit.ts's `failureOf`). */
   private async failed(me: Me, step: Step, error: unknown): Promise<void> {
     note(`machine ${me.id} ${step}`, error, null)
-    await audit(this.env, me.id, 'failed', { detail: failureOf(step, error) })
+    // Said in the log above whatever becomes of its row: an audit that cannot be written
+    // must neither take the place of what failed nor stop what comes after it, a restart.
+    await audit(this.env, me.id, 'failed', { detail: failureOf(step, error) }).catch(
+      (failed: unknown) => {
+        note(`machine ${me.id} audit`, failed, null)
+      },
+    )
   }
 
   /* ── Awake and asleep ─────────────────────────────────────────────────── */

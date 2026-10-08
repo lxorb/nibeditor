@@ -952,6 +952,36 @@ describe('a machine', () => {
     )
   })
 
+  test('a failure whose audit cannot be written is logged, and the restart goes on', async () => {
+    const running = await machine(env, ID, user)
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    if (running.host.link_) running.host.link_.silent = true
+    running.host.failLinks = 1
+    env.justBefore(/insert into machine_events/, () => {
+      throw new Error('database is not open')
+    })
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      // The heartbeat's recovery is nobody's to await: what it throws must not escape it
+      // (an unhandled rejection), and must not stop it before the restart.
+      await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
+      expect(running.host.calls.slice(-3)).toEqual([
+        'restore snapshot snap-1',
+        'start machine',
+        'link',
+      ])
+      expect(await running.machine.state()).toBe('awake')
+      expect(logged.mock.calls.map(([line]) => String(line))).toEqual(
+        expect.arrayContaining([expect.stringContaining(`"failed":"machine ${ID} audit"`)]),
+      )
+    } finally {
+      logged.mockRestore()
+    }
+    expect(events()).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'failed' })]),
+    )
+  })
+
   test('a terminal opened while the link is gone makes it again at once', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
