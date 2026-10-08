@@ -29,9 +29,16 @@ import { type Build, Opener } from './opening.svelte'
 import { namedSession, ownSession, wordsFor } from './own'
 import { refusalWords } from './words'
 
-/** How long a new file is waited for, by sync and then by the account, and how often. */
+/** How long a new file is waited for, by sync and then by the account. */
 const WAIT = 20_000
-const EVERY = 500
+/** How often this computer's own sync is asked for the file's id: a question of memory,
+ *  answered the moment the file is taken in. */
+const LOOK_EVERY = 100
+/** The account is asked again once the pass that sends the file is done - at most this
+ *  long waited for, and never sooner than `ASK_EVERY` after the last question. Issue 208:
+ *  half a second between blind questions was most of a new terminal's wait. */
+const PASS_AT_MOST = 3_000
+const ASK_EVERY = 250
 
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 
@@ -42,7 +49,7 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
   for (;;) {
     const id = runner.engine?.entryAt(path)?.id ?? null
     if (id || Date.now() >= until) return id
-    await pause(EVERY)
+    await pause(LOOK_EVERY)
   }
 }
 
@@ -64,10 +71,12 @@ async function sessionOf(id: string, path: string, until: number): Promise<strin
       }
       return null
     } catch (error) {
-      // Not on the account yet: sync is asked to send it, and the account asked again.
+      // Not on the account yet: sync is asked to send it now, and the account asked again
+      // as soon as that pass is done.
       if (error instanceof ApiError && error.status === 404 && Date.now() < until) {
-        runner.kick()
-        await pause(EVERY)
+        const asked = Date.now()
+        await Promise.race([runner.passNow(), pause(PASS_AT_MOST)])
+        await pause(Math.max(0, asked + ASK_EVERY - Date.now()))
         continue
       }
       return refusalOf(error)

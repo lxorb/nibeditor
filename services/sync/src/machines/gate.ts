@@ -18,10 +18,16 @@ import { hetznerMissing } from './hetzner-host'
 import { DevHost } from './host'
 import { usedOf } from './meter'
 import type { Refusal } from '@nib/online/wire'
-import { serviceOf } from './service'
+import { type Service, serviceOf } from './service'
 
-export async function whyNotWake(env: Env, userId: string, at: number): Promise<Refusal | null> {
-  const service = await serviceOf(env)
+/** `known` is the service's row where the caller has just read it (the door). */
+export async function whyNotWake(
+  env: Env,
+  userId: string,
+  at: number,
+  known?: Service,
+): Promise<Refusal | null> {
+  const service = known ?? (await serviceOf(env))
   if (!service.on) return 'off'
 
   const row = await env.DB.prepare(

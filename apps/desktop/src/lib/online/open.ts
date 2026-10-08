@@ -32,8 +32,11 @@ export async function openOnline(beside = false): Promise<Tab | null> {
   const root = workspace.activeSpace?.root
   if (!root) return null
 
-  // Not on the list yet, or the service off: said before any file is made.
-  await machine.refresh()
+  // Not on the list yet, or the service off: said before any file is made. Asked again
+  // every time, but waited for only when this window has not heard yes already: the
+  // socket says a refusal that came since, and the terminal is on its way meanwhile.
+  const asking = machine.refresh()
+  if (machine.known?.allowed !== true || machine.refused !== null) await asking
   const why = machine.known?.allowed === false ? 'list' : machine.refused
   if (why) {
     await refused(why)

@@ -39,17 +39,21 @@ export const onlineDoor = new Hono<{ Bindings: Env }>()
 
 onlineDoor.get('/:term/socket', async (context) => {
   const env = context.env
-  if (!(await serviceOf(env)).on) return context.json({ error: NOT_FOUND }, 404)
-  if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
-    return context.json({ error: 'an online terminal is a websocket' }, 426)
-  }
-
   const offered = context.req.header('sec-websocket-protocol')
   const hash = await sha256(tokenOf(offered) ?? '')
   const at = now()
   const term = context.req.param('term')
 
-  const row = await env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>()
+  // The switch and the socket's rows asked at once: two round trips to the database
+  // that wait on nothing of each other, in front of every terminal's connect.
+  const [service, row] = await Promise.all([
+    serviceOf(env),
+    env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>(),
+  ])
+  if (!service.on) return context.json({ error: NOT_FOUND }, 404)
+  if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
+    return context.json({ error: 'an online terminal is a websocket' }, 426)
+  }
   // Told apart: no session is a sign-in.
   if (!row && !(await env.DB.prepare(WHO).bind(hash, at).first<{ who: string }>())) {
     return context.json({ error: SIGN_IN }, 401)
@@ -63,7 +67,7 @@ onlineDoor.get('/:term/socket', async (context) => {
   const reached = row ? reachedOf(row) : null
   if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
-  const wake = reached.owns ? ((await whyNotWake(env, reached.owner, at)) ?? 'yes') : 'no'
+  const wake = reached.owns ? ((await whyNotWake(env, reached.owner, at, service)) ?? 'yes') : 'no'
   const answer = await askMachine(env, reached.machine, 'join', {
     upgrade: 'websocket',
     'x-nib-user': reached.owner,

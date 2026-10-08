@@ -1,14 +1,16 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ServerFrame } from '@nib/online/wire'
+import { ApiError } from '../api'
 import type { Said } from '../terminal/source'
 import { termSession } from './calls'
 import { OnlineSource } from './source'
 
 /** The seams a start goes through under v2: the file's words, sync's id for it, the
  *  account's answer, and the write - the socket itself stays shut. */
-const seen = vi.hoisted((): { words: string | null; written: string[] } => ({
+const seen = vi.hoisted((): { words: string | null; written: string[]; passes: number } => ({
   words: '',
   written: [],
+  passes: 0,
 }))
 
 vi.mock('../account.svelte', () => ({ account: { accountToken: 'token' } }))
@@ -17,6 +19,10 @@ vi.mock('../sync2/runner.svelte', () => ({
   runner: {
     engine: { entryAt: () => ({ id: 'file-1' }) },
     kick: () => undefined,
+    passNow: () => {
+      seen.passes += 1
+      return Promise.resolve(true)
+    },
     wrote: () => Promise.resolve(),
   },
 }))
@@ -115,5 +121,40 @@ describe('an online source starting under v2', () => {
     asked.mockResolvedValue({ v: 1, machine: 'm1', session: 's_new' })
     await source().start(80, 24, () => undefined)
     expect(seen.written).toEqual([])
+  })
+})
+
+/** Issue 208: a new terminal asked the account for its file on a blind half second while
+ *  sync sent it, which was most of its wait. */
+describe('an online source whose file the account does not have yet', () => {
+  const asked = vi.mocked(termSession)
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    asked.mockReset()
+    seen.words = ''
+    seen.passes = 0
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('has sync send it now, and asks again as soon as that pass is done', async () => {
+    asked
+      .mockRejectedValueOnce(new ApiError(404, 'not found'))
+      .mockRejectedValueOnce(new ApiError(404, 'not found'))
+      .mockResolvedValue({ v: 1, machine: 'm1', session: 's_new' })
+    const started = source().start(80, 24, () => undefined)
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(asked).toHaveBeenCalledTimes(1)
+    expect(seen.passes).toBe(1)
+    await vi.advanceTimersByTimeAsync(250)
+    expect(asked).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(250)
+    expect(asked).toHaveBeenCalledTimes(3)
+    await started
+    expect(seen.passes).toBe(2)
   })
 })
