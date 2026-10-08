@@ -151,3 +151,25 @@ describe('what a theme reaches, now that contrast is one', () => {
     expect(offenders, `these still write the attribute: ${offenders.join(', ')}`).toEqual([])
   })
 })
+
+/** A note stands on the note's paper wherever it is written, and the scratchpad is a
+ *  note. Its card stood on `--surface`, the colour a menu floats on, which is opaque in
+ *  every theme: a near-black block beside a see-through note under glass and the
+ *  wallpaper, and a step off the page in the plain themes. */
+describe('the paper a note is written on', () => {
+  const PAPER = 'background: var(--content-ground, var(--bg));'
+
+  /** What one component's top-level rule for a class says. */
+  function ruleOf(name: string, selector: string): string {
+    const text = components.find((one) => one.name === name)?.text ?? ''
+    const opens = new RegExp(`(?:^|\\n)\\s*\\.${selector}\\s*\\{([^}]*)\\}`)
+    return opens.exec(text)?.[1] ?? ''
+  }
+
+  test.each([
+    ['lib/Pane.svelte', 'pane'],
+    ['lib/scratchpad/ScratchpadCard.svelte', 'card'],
+  ])('is what %s lays under .%s', (name, selector) => {
+    expect(ruleOf(name, selector)).toContain(PAPER)
+  })
+})
