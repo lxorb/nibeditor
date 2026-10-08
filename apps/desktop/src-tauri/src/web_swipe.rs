@@ -3,12 +3,15 @@
 //!
 //! Emil, 2026-10-03: *"Swiping (left/right) to go to the previous / redo page."* Chrome and
 //! Edge take a sideways scroll the page left over as Back or Forward, with an arrow that
-//! follows the fingers. `WebView2` has that arrow too, behind `IsSwipeNavigationEnabled`,
-//! and nib leaves it off (wry's default): it walks the engine's own history, and a tab nib
-//! revived after a relaunch has none - its trail is this crate's (`Trail` in
-//! `web_tabs.rs`) - so the engine's swipe would do nothing on most tabs after a restart,
-//! and go the wrong way after any step the crate made itself. nib's own Chromium has no swipe
-//! of its own at all.
+//! follows the fingers. Both of Windows' engines are Chromium and have that swipe too, and
+//! nib starts both without it (`ENGINE_SWIPE` in engine.rs): it walks the engine's own
+//! history, and a tab nib revived after a relaunch has none - its trail is this crate's
+//! (`Trail` in `web_tabs.rs`) - so the engine's swipe did nothing on most tabs after a
+//! restart, went the wrong way after any step the crate made itself, and on the pages where
+//! it did go, went as well as nib's (#209). `IsSwipeNavigationEnabled`, which wry leaves
+//! off, was never all of it: it is documented for a finger on a screen, and #209 was two
+//! fingers on a touchpad going back with it off - Chromium's touchpad overscroll navigation,
+//! which a switch reaches.
 //!
 //! So the page says what it saw and the window decides, the same way for a page as for a
 //! note: a script in nib's world in every page and frame (`SCRIPT`, `web_swipe.js`) hears

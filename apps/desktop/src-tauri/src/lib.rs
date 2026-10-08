@@ -528,6 +528,12 @@ pub fn agent_pages_wanted(config: &std::path::Path) -> bool {
     agents::engines::cef::windowless_wanted(config)
 }
 
+/// Chromium's own swipe between pages, which nib's own Chromium starts without so that
+/// only nib's runs: the feature to disable, and the switch to append with its value. See
+/// `src/engine.rs` and `web_swipe.rs`.
+#[cfg(feature = "cef")]
+pub const ENGINE_SWIPE: (&str, &str, &str) = engine::ENGINE_SWIPE;
+
 /// Starts the app on an engine the binary chose, and exits with a message if the app
 /// could not be built at all.
 ///
