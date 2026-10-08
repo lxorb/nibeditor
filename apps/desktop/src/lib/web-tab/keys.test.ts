@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { readPressed } from './keys'
 
 /** A key the crate took from a page, as the window reads it. What it does once played
- *  is new-kind-chord.effect.test.ts, which plays one through the real window handler;
- *  which keys are taken is `web_keys.rs` and its own tests. */
+ *  is the window's own handler, as for any key pressed in the app; which keys are taken
+ *  is `web_keys.rs` and its own tests. */
 describe('a key out of a page', () => {
   test('is read as the crate sends it', () => {
     expect(
@@ -27,7 +27,7 @@ describe('a key out of a page', () => {
     })
   })
 
-  /** A modifier let go of, which is how a held Ctrl+T chooses. */
+  /** A modifier let go of. */
   test('and a release is a release', () => {
     expect(readPressed({ key: 'Control', code: 'ControlLeft', down: false })).toMatchObject({
       key: 'Control',

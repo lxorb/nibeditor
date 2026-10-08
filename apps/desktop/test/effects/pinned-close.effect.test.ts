@@ -2,9 +2,9 @@
  *
  *  Emil, 2026-09-30, in German: a pinned tab closed with Ctrl+W asks first whether it
  *  should really go, and one closed from its right-click menu does not. What is asked
- *  and why is workspace/closing-pinned.ts; this is the gesture in order, the shape
- *  new-kind-chord.effect.test.ts has: the real window handler as App.svelte writes it,
- *  the real registry, the real question sheet mounted, and real `keydown` events.
+ *  and why is workspace/closing-pinned.ts; this is the gesture in order: the real window
+ *  handler as App.svelte writes it, the real registry, the real question sheet mounted,
+ *  and real `keydown` events.
  *
  *  In the jsdom project because focus, a dialog and a keystroke need a document. */
 

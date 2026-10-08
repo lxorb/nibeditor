@@ -1682,6 +1682,8 @@ export const ur: Dictionary = {
   'Command Prompt': 'کمانڈ پرامپٹ',
   Terminal: 'ٹرمینل',
   Shell: 'شیل',
+  '{key} in a terminal': 'ٹرمینل میں {key}',
+  'Always ask': 'ہمیشہ پوچھیں',
   'Open another': 'ایک اور کھولیں',
   'Open in terminal': 'ٹرمینل میں کھولیں',
   Clear: 'صاف کریں',

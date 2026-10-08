@@ -1663,6 +1663,8 @@ export const am: Dictionary = {
   'Command Prompt': 'የትዕዛዝ መስመር',
   Terminal: 'ተርሚናል',
   Shell: 'ሼል',
+  '{key} in a terminal': '{key} በተርሚናል ውስጥ',
+  'Always ask': 'ሁልጊዜ ጠይቅ',
   'Open another': 'ሌላ ክፈት',
   'Open in terminal': 'በተርሚናል ክፈት',
   Clear: 'አጽዳ',

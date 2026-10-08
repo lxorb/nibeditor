@@ -1673,6 +1673,8 @@ export const vi: Dictionary = {
   'Command Prompt': 'Dấu nhắc Lệnh',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} trong terminal',
+  'Always ask': 'Luôn hỏi',
   'Open another': 'Mở thêm một cái',
   'Open in terminal': 'Mở trong terminal',
   Clear: 'Xóa',

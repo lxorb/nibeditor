@@ -1681,6 +1681,8 @@ export const ja: Dictionary = {
   'Command Prompt': 'コマンド プロンプト',
   Terminal: 'ターミナル',
   Shell: 'シェル',
+  '{key} in a terminal': 'ターミナルでの {key}',
+  'Always ask': '毎回確認する',
   'Open another': 'もう一つ開く',
   'Open in terminal': 'ターミナルで開く',
   Clear: 'クリア',

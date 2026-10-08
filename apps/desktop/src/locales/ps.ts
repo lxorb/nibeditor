@@ -1687,6 +1687,8 @@ export const ps: Dictionary = {
   'Command Prompt': 'د کمانډ پرامپټ',
   Terminal: 'ټرمینل',
   Shell: 'شیل',
+  '{key} in a terminal': 'په ټرمینل کې {key}',
+  'Always ask': 'تل وپوښتئ',
   'Open another': 'بل یو پرانیزئ',
   'Open in terminal': 'په ټرمینل کې پرانیزئ',
   Clear: 'پاکول',

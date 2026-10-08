@@ -1723,6 +1723,8 @@ export const de: Dictionary = {
   'Command Prompt': 'Eingabeaufforderung',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} im Terminal',
+  'Always ask': 'Immer fragen',
   'Open another': 'Noch eins öffnen',
   'Open in terminal': 'Im Terminal öffnen',
   Clear: 'Leeren',

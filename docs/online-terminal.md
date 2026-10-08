@@ -54,7 +54,7 @@ Each has a recommendation, and the design below assumes it.
    Firecracker microVM on Cloudflare (its own kernel, nobody else's processes), Ubuntu 24.04
    with node, python, git and both coding agents, run by a Durable Object, `Machine`, one per
    account, in the EU.
-2. **An online terminal is a document in a space**, `Build.term`, made from Ctrl+T's new card
+2. **An online terminal is a document in a space**, `Build.term`, made from a new tab's card (Ctrl+T or the plus)
    (**O**), renamed, moved, bookmarked and trashed like a note. It names one shell session on
    its owner's machine. Every nib that opens it - another computer of the same person, a phone,
    the browser at nibeditor.com, a colleague in the space - shows the same session.
@@ -329,7 +329,7 @@ renaming the tab; **Move to space** moves the audience; **bookmarks, search by n
 the file list and the session restore** carry it; **Reopen closed tab** reopens it; and
 another device of the same person opens the same file and so the same session.
 
-- **Made** by the Ctrl+T card, in the folder new notes go to, named `Terminal`, `Terminal 2`...
+- **Made** by the new tab's card, in the folder new notes go to, named `Terminal`, `Terminal 2`...
   A session is opened on the maker's own machine, which is started if it sleeps. Making one in
   somebody else's space is making a terminal on **your** machine that their people can watch.
 - **Closing its tab** never ends the session: the shell and everything in it go on, as tmux's
@@ -579,7 +579,7 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
 
 ### 4.10 In the app
 
-- **Ctrl+T**: a card **Online terminal**, letter **O**, after Remote; on the desktop, the phone
+- **Ctrl+T and the plus**: a new tab's card **Online terminal**, letter **O**, after Remote; on the desktop, the phone
   and the browser build (it is the one terminal those two can have). The same row in the tab
   strip's plus menu, the palette (_New online terminal_) and an empty pane. With no machine yet
   it makes one; signed out it opens the account sheet; not allowed yet it says so once.

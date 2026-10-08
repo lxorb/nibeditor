@@ -1685,6 +1685,8 @@ export const fa: Dictionary = {
   'Command Prompt': 'خط فرمان',
   Terminal: 'ترمینال',
   Shell: 'پوسته',
+  '{key} in a terminal': '{key} در ترمینال',
+  'Always ask': 'همیشه بپرس',
   'Open another': 'باز کردن یکی دیگر',
   'Open in terminal': 'باز کردن در ترمینال',
   Clear: 'پاک کردن',

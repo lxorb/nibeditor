@@ -1,6 +1,7 @@
-/** The shells this machine has, and the four things Settings says about terminals: which
+/** The shells this machine has, and the five things Settings says about terminals: which
  *  shell a new one opens, how large its type is, whether a restart puts back what was on
- *  its screen, and when quitting asks first (see lib/quitting).
+ *  its screen, when quitting asks first (see lib/quitting), and whose a key that is both
+ *  the app's and the shell's is (see two-ways.ts).
  *
  *  The list is the crate's (see src-tauri/src/terminal/shells.rs) and is asked for the
  *  first time something needs it - a chooser opening, the settings pane, a terminal
@@ -11,7 +12,8 @@
  *  program on one computer, and the one a laptop has may not be on the desktop. */
 
 import { t } from '../i18n.svelte'
-import { keep, storedText } from '../stored'
+import { withOrWithout } from '../records'
+import { isRecord, keep, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 
 export interface Shell {
@@ -19,11 +21,28 @@ export interface Shell {
   name: string
 }
 
-/** Where the three settings are kept. */
+/** Where the settings are kept. */
 const SHELL_KEY = 'nib:terminal-shell'
 const SIZE_KEY = 'nib:terminal-size'
 const RESTORE_KEY = 'nib:terminal-restore'
 const WARN_KEY = 'nib:terminal-quit-warn'
+const WAYS_KEY = 'nib:terminal-keys'
+
+/** Whose a key that is both is, once somebody has said: the app's command, or the
+ *  shell's character. Not there at all is asking every time. */
+export type Way = 'app' | 'shell'
+
+/** The ways chosen, by command, out of whatever storage handed back: a command keeps
+ *  its answer only where the answer is one of the two. */
+export function waysOf(value: unknown): Record<string, Way> {
+  if (!isRecord(value)) return {}
+
+  const ways: Record<string, Way> = {}
+  for (const [command, way] of Object.entries(value)) {
+    if (way === 'app' || way === 'shell') ways[command] = way
+  }
+  return ways
+}
 
 /** When quitting asks first: whenever a terminal or an AI turn is open, only while
  *  something runs in one, or never. macOS Terminal's three, and its middle one first, as
@@ -77,6 +96,8 @@ class Shells {
   restoring = $state(storedText(RESTORE_KEY) !== 'no')
   /** When quitting asks first; see `WARNINGS`. */
   warning = $state<Warning>(asWarning(storedText(WARN_KEY)))
+  /** Whose each key that is both is, by the app command on it; see two-ways.ts. */
+  ways = $state<Record<string, Way>>(waysOf(stored(WAYS_KEY)))
 
   private asked: Promise<Shell[]> | null = null
 
@@ -119,6 +140,13 @@ class Shells {
   setWarning(warning: Warning) {
     this.warning = warning
     keep(WARN_KEY, warning)
+  }
+
+  /** The key a command is on goes to `way` from now on, or is asked about every time
+   *  again for null. */
+  setWay(command: string, way: Way | null) {
+    this.ways = withOrWithout(this.ways, command, way)
+    keep(WAYS_KEY, JSON.stringify(this.ways))
   }
 
   /** Off forgets every terminal's lines at once, rather than only writing no more of

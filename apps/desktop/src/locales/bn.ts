@@ -1680,6 +1680,8 @@ export const bn: Dictionary = {
   'Command Prompt': 'কমান্ড প্রম্পট',
   Terminal: 'টার্মিনাল',
   Shell: 'শেল',
+  '{key} in a terminal': 'টার্মিনালে {key}',
+  'Always ask': 'সবসময় জিজ্ঞাসা করুন',
   'Open another': 'আরেকটি খুলুন',
   'Open in terminal': 'টার্মিনালে খুলুন',
   Clear: 'মুছুন',

@@ -1698,6 +1698,8 @@ export const kn: Dictionary = {
   'Command Prompt': 'ಕಮಾಂಡ್ ಪ್ರಾಂಪ್ಟ್',
   Terminal: 'ಟರ್ಮಿನಲ್',
   Shell: 'ಶೆಲ್',
+  '{key} in a terminal': 'ಟರ್ಮಿನಲ್‌ನಲ್ಲಿ {key}',
+  'Always ask': 'ಯಾವಾಗಲೂ ಕೇಳಿ',
   'Open another': 'ಇನ್ನೊಂದನ್ನು ತೆರೆಯಿರಿ',
   'Open in terminal': 'ಟರ್ಮಿನಲ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ',
   Clear: 'ತೆರವುಗೊಳಿಸಿ',

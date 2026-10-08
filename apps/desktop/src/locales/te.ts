@@ -1690,6 +1690,8 @@ export const te: Dictionary = {
   'Command Prompt': 'కమాండ్ ప్రాంప్ట్',
   Terminal: 'టెర్మినల్',
   Shell: 'షెల్',
+  '{key} in a terminal': 'టెర్మినల్‌లో {key}',
+  'Always ask': 'ఎల్లప్పుడూ అడుగు',
   'Open another': 'మరొకటి తెరువు',
   'Open in terminal': 'టెర్మినల్‌లో తెరువు',
   Clear: 'క్లియర్ చేయి',

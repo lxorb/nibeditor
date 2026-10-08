@@ -1647,6 +1647,8 @@ export const yue: Dictionary = {
   'Command Prompt': '命令提示字元',
   Terminal: '終端機',
   Shell: 'Shell',
+  '{key} in a terminal': '喺終端機度嘅 {key}',
+  'Always ask': '次次都問',
   'Open another': '再開一個',
   'Open in terminal': '喺終端機度開',
   Clear: '清除',

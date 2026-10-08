@@ -1735,6 +1735,8 @@ export const it: Dictionary = {
   'Command Prompt': 'Prompt dei comandi',
   Terminal: 'Terminale',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} nel terminale',
+  'Always ask': 'Chiedi sempre',
   'Open another': 'Aprine un altro',
   'Open in terminal': 'Apri nel terminale',
   Clear: 'Cancella',

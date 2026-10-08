@@ -1,12 +1,13 @@
 <script lang="ts">
-  /** One kind a new tab can be, as a card: its mark drawn large and its name under it.
+  /** One kind a new tab can be, as a card: its mark drawn large, its name under it and
+   *  its letter in the corner.
    *
-   *  Two places draw the kinds at this size - a pane with nothing open, and the dialog
-   *  Ctrl+T opens in the middle of the window - and they are one card, so the two
-   *  cannot drift into two designs of the same choice. See NewHere.svelte and
-   *  NewKindSheet.svelte; what the kinds are is new-kinds.ts.
+   *  Two places draw the kinds at this size - a pane with nothing open, and a new tab
+   *  under its address field - and they are one view of one card, so the two cannot
+   *  drift into two designs of the same choice. See NewHere.svelte; what the kinds are
+   *  is new-kinds.ts.
    *
-   *  Everything a button takes is handed straight on, so each place says for itself
+   *  Everything a button takes is handed straight on, so the place that draws it says
    *  what a press does and where the keyboard is. */
   import type { HTMLButtonAttributes } from 'svelte/elements'
   import { fly } from 'svelte/transition'
@@ -18,17 +19,11 @@
 
   const {
     one,
-    on,
     letter,
     rise,
     ...rest
   }: {
     one: NewKindRow
-    /** Whether this is the card a release or an Enter would make, where a list keeps
-     *  one selection: lit by that alone, and not by the pointer or the ring, so two
-     *  cards are never lit at once. Absent where the pointer and the keyboard say it
-     *  themselves, which is an empty pane. */
-    on?: boolean
     /** The key that picks it, drawn quietly in the corner. */
     letter?: string
     /** Where it stands in a row that rises one card after another, for the few
@@ -43,8 +38,6 @@
 <button
   type="button"
   class="kind"
-  class:is-choice={on !== undefined}
-  class:is-on={on}
   {...rest}
   in:fly={{
     y: 10,
@@ -113,23 +106,15 @@
     max-width: 100%;
   }
 
-  /* Lit under the pointer - or, where the list keeps one selection, by that and
-     nothing else, so two cards are never lit at once. In colour only: the border stays
-     one hairline and nothing moves, so the card that lights is the same card in the
-     same place. The ring a key leaves is the app's own, drawn inside over the hairline,
-     which is why the chosen card's hairline is the accent: the two are one frame. */
+  /* Lit under the pointer, in colour only: the border stays one hairline and nothing
+     moves, so the card that lights is the same card in the same place. The ring a key
+     leaves is the app's own, drawn inside over the hairline. */
   @media (hover: hover) {
-    .kind:not(.is-choice):hover {
+    .kind:hover {
       background: var(--surface-hover);
       border-color: var(--line-strong);
       color: var(--text-strong);
     }
-  }
-
-  .kind.is-on {
-    background: var(--surface-selected);
-    border-color: var(--accent);
-    color: var(--text-strong);
   }
 
   .kind:active {
@@ -152,13 +137,12 @@
   }
 
   @media (hover: hover) {
-    .kind:not(.is-choice):hover .mark {
+    .kind:hover .mark {
       color: var(--accent);
     }
   }
 
-  .kind:not(.is-choice):focus-visible .mark,
-  .kind.is-on .mark {
+  .kind:focus-visible .mark {
     color: var(--accent);
   }
 
@@ -176,7 +160,13 @@
     color: var(--muted);
   }
 
-  .kind.is-on kbd {
+  @media (hover: hover) {
+    .kind:hover kbd {
+      color: var(--muted-strong);
+    }
+  }
+
+  .kind:focus-visible kbd {
     color: var(--muted-strong);
   }
 

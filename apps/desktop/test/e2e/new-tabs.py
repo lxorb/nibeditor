@@ -8,20 +8,18 @@ What it proves, in order:
 * **Paragraph needs no chord**: Ctrl+1 on a line that is already a first-level heading
   turns it back into prose, and again makes it a heading. That is what freed
   Ctrl+Shift+P for the palette.
-* **Ctrl+T held is Alt+Tab's shape**: Ctrl down and T pressed brings a dialog up in
-  the middle of the window, standing on the web page, each further T steps it round,
-  and letting Ctrl go makes the one that stands. Escape cancels, and the release after
-  it makes nothing.
-* **Ctrl+T tapped makes a web page outright**, with nothing drawn at all, which is the
-  new tab a browser makes and what a fast hand is after.
+* **Ctrl+T is a new tab** (Emil, issue #213): a web tab whose address field has the
+  keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
+  A letter typed is the address field's; once Escape has let go of the field, the letter
+  makes its kind, in the new tab's place. The plus makes the same tab, and hangs no menu.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
   website open with no file in the space and no row in the list.
 * **A new tab waits for a place**: a new note typed into is still a tab with no file and a
   dot after its name; Ctrl+S asks where, in the layer under the tab, and Enter writes it
   there under its first line; Ctrl+S on a note with a file asks nothing; a web tab wears no
   dot, and Ctrl+S and Enter write its shortcut.
-* **A pane with nothing open** shows those same kinds as buttons, with the keyboard on
-  the first, and pressing one makes that kind; Ctrl+T over it is the same dialog.
+* **A pane with nothing open** shows those same kinds as cards, with the keyboard on
+  the first, and pressing one or its letter makes that kind; Ctrl+T over it is a new tab.
 
 Build first, with the app's own handle on the page:
 
@@ -100,22 +98,23 @@ FIELD = """
 }
 """
 
-SHEET = """
+# The new tab in front: whether it is one, where the keyboard is, and the cards under it,
+# line by line.
+NEW_TAB = """
 () => {
-  const dialog = document.querySelector('[role="dialog"]')
-  const name = (one) => one?.querySelector('.nib-row-label')?.textContent.trim() ?? null
-  if (!dialog) return { cards: [], on: null, lit: null, middle: null }
-
-  const box = dialog.getBoundingClientRect()
+  const ws = window.nibApp.workspace
+  const tab = ws.active
+  const pane = document.querySelector(`[data-pane="${ws.panes.focusedId}"]`)
+  const here = pane?.querySelector('[data-new-here]')
+  const name = (one) => one.querySelector('.nib-row-label')?.textContent.trim()
+  const at = document.activeElement
   return {
-    cards: [...dialog.querySelectorAll('button')].map(name),
-    on: name(document.activeElement),
-    lit: name(dialog.querySelector('.is-on')),
-    // How far the dialog's middle is from the window's, in pixels, across and down.
-    middle: [
-      Math.round(box.x + box.width / 2 - innerWidth / 2),
-      Math.round(box.y + box.height / 2 - innerHeight / 2),
-    ],
+    newTab: !!tab && ws.isNewTab(tab),
+    typing: at?.getAttribute('aria-label') === 'Address',
+    typed: at instanceof HTMLInputElement ? at.value : null,
+    lines: here ? [...here.querySelectorAll('.line')].map((line) => [...line.querySelectorAll('.kind')].map(name)) : [],
+    letters: here ? [...here.querySelectorAll('.kind kbd')].map((one) => one.textContent) : [],
+    menu: !!document.querySelector('.menu'),
   }
 }
 """
@@ -126,8 +125,8 @@ HERE = """
   const round = (n) => Math.round(n * 100) / 100
 
   return {
-    buttons: buttons.map((one) => one.textContent.trim()),
-    on: document.activeElement ? document.activeElement.textContent.trim() : null,
+    buttons: buttons.map((one) => one.querySelector('.nib-row-label')?.textContent.trim()),
+    on: document.activeElement?.querySelector('.nib-row-label')?.textContent.trim() ?? null,
     // Each mark's artwork in its own 24 unit grid: where it starts down the box and
     // how much of it it fills. Read off the drawing with `getBBox` rather than off
     // the screen, so it is the ink and not the stroke around it. This is twice the
@@ -236,110 +235,85 @@ def heading_key(page) -> None:
         say(f"Control+1 again        -> {page.evaluate(LINE)!r}")
 
 
+# The kinds a browser build offers, line by line: no shell of its own, so the middle line
+# is the online terminal alone, and no private tab.
+LINES = [["New note", "New canvas", "New page note"], ["Online terminal"], ["New web note"]]
+
+
 def chooser(page) -> None:
-    """Ctrl+T held, which is Alt+Tab's shape, and Ctrl+T tapped, which is a browser's."""
-    say("--- Ctrl+T held ---")
+    """Ctrl+T, a new tab: its address field, and the kinds under it (issue #213)."""
+    say("--- Ctrl+T ---")
 
-    # Ctrl down, T pressed and let go, Ctrl still down: the dialog comes up once the
-    # hold has outlasted the beat. See BEAT in src/lib/new-kind-chord.ts.
-    page.keyboard.down("Control")
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(500)
-    sheet = page.evaluate(SHEET)
-    if sheet["cards"] != ["New note", "New canvas", "New web note", "New page note"]:
-        wrong(f"the held chord did not offer the kinds: {sheet['cards']}")
-    else:
-        say(f"the dialog             -> {sheet['cards']}")
-    if sheet["on"] != "New web note" or sheet["lit"] != "New web note":
-        wrong(f"the dialog did not stand on the web page: {sheet['on']!r}, lit {sheet['lit']!r}")
-    else:
-        say("the keyboard           -> on New web note, lit and ringed")
-    if any(abs(one) > 2 for one in sheet["middle"] or [99]):
-        wrong(f"the dialog is not in the middle of the window: {sheet['middle']}")
-    else:
-        say("where                  -> the middle of the window")
-    page.screenshot(path=str(SHOTS / "chooser.png"))
-
-    # Each further T steps one along while the modifier stays down, round the end.
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(200)
-    if page.evaluate(SHEET)["on"] != "New page note":
-        wrong("a second T did not step the dialog")
-    else:
-        say("T again                -> New page note")
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(200)
-    if page.evaluate(SHEET)["on"] != "New note":
-        wrong("a third T did not step round the end")
-    else:
-        say("T again                -> New note, round the end")
-
-    # And Shift steps back, which is what every switcher under a held modifier does.
-    page.keyboard.press("Shift+KeyT")
-    page.wait_for_timeout(200)
-    if page.evaluate(SHEET)["on"] != "New page note":
-        wrong("Shift did not step the dialog back")
-    else:
-        say("Shift+T                -> New page note")
-
-    # The arrows walk it too, with the modifier still down.
-    page.keyboard.press("ArrowLeft")
-    page.wait_for_timeout(200)
-    if page.evaluate(SHEET)["on"] != "New web note":
-        wrong("an arrow did not step the dialog")
-    else:
-        say("ArrowLeft              -> New web note")
-
-    # The pointer moves the selection, so the card lit under it is the card the
-    # release will choose rather than a second lit card that loses.
-    page.locator('[role="dialog"] button:has-text("New canvas")').first.hover()
-    page.wait_for_timeout(250)
-    if page.evaluate(SHEET)["on"] != "New canvas":
-        wrong("hovering a card did not move the selection onto it")
-    else:
-        say("hover New canvas       -> the selection follows the pointer")
-
-    before = len(page.evaluate(STATE)["tabs"])
-    page.keyboard.up("Control")
-    page.wait_for_timeout(800)
-    state = page.evaluate(STATE)
-    if len(state["tabs"]) != before + 1 or state["active"] != {"kind": "canvas", "path": None}:
-        wrong(f"letting Ctrl go did not make the kind that stood: {state['active']}")
-    else:
-        say("Ctrl let go            -> a plane, with no file")
-    if not settles(page, f"() => ({SHEET})().cards.length === 0"):
-        wrong("the dialog stayed up after the release")
-
-    # Escape closes it and makes nothing, like every other layer the app puts up - and
-    # the release that follows must not make one either.
-    say("--- Escape ---")
-    before = len(page.evaluate(STATE)["tabs"])
-    page.keyboard.down("Control")
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(500)
-    page.keyboard.press("Escape")
-    if not settles(page, f"() => ({SHEET})().cards.length === 0"):
-        wrong("Escape did not close the dialog")
-    page.keyboard.up("Control")
-    page.wait_for_timeout(600)
-    if len(page.evaluate(STATE)["tabs"]) != before:
-        wrong("the release after an Escape made a tab anyway")
-    else:
-        say("Escape then Ctrl up    -> closed, and nothing made")
-
-    # Tapped rather than held: nothing is drawn and a web page is made, which is the tab
-    # a browser makes - whatever was made last, which was the plane above.
-    say("--- Ctrl+T tapped ---")
     before = len(page.evaluate(STATE)["tabs"])
     page.keyboard.press("Control+KeyT")
-    page.wait_for_timeout(600)
+    if not settles(page, f"() => ({NEW_TAB})().lines.length > 0"):
+        wrong(f"Ctrl+T drew no kinds under its address field: {page.evaluate(NEW_TAB)}")
+    new = page.evaluate(NEW_TAB)
     state = page.evaluate(STATE)
-    if page.evaluate(SHEET)["cards"]:
-        wrong("a tap of the chord drew the dialog")
-    if len(state["tabs"]) != before + 1 or state["active"] != {"kind": "web", "path": None}:
-        wrong(f"a tap did not make a web page: {state['active']}")
+    if len(state["tabs"]) != before + 1 or not new["newTab"]:
+        wrong(f"Ctrl+T did not make a new tab: {state['active']}")
     else:
-        say("Control+T              -> a web page at once, nothing drawn")
+        say("Control+T              -> a new tab")
+    if not new["typing"]:
+        wrong("the new tab's address field did not take the keyboard")
+    else:
+        say("the keyboard           -> in the address field")
+    if new["lines"] != LINES:
+        wrong(f"the kinds are not in Emil's lines: {new['lines']}")
+    else:
+        say(f"the lines              -> {new['lines']}")
+    if new["letters"] != ["N", "C", "P", "O", "W"]:
+        wrong(f"the cards do not wear their letters: {new['letters']}")
+    page.screenshot(path=str(SHOTS / "new-tab.png"))
+
+    # A letter typed is the address's, and makes nothing.
+    page.keyboard.press("KeyC")
+    page.wait_for_timeout(300)
+    new = page.evaluate(NEW_TAB)
+    if new["typed"] != "c" or len(page.evaluate(STATE)["tabs"]) != before + 1:
+        wrong(f"a letter in the address field did something else: {new}")
+    else:
+        say("C in the field         -> the address's, nothing made")
+    page.keyboard.press("Backspace")
+
+    # Escape lets go of the field, and the letter is then the card's: a plane, in the new
+    # tab's place, with no empty web tab left behind it.
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    page.keyboard.press("KeyC")
+    if not settles(page, "() => window.nibApp.workspace.active?.kind === 'canvas'"):
+        wrong(f"C after Escape made no plane: {page.evaluate(STATE)['active']}")
+    state = page.evaluate(STATE)
+    if len(state["tabs"]) != before + 1 or any(one["kind"] == "web" for one in state["tabs"]):
+        wrong(f"the plane did not take the new tab's place: {state['tabs']}")
+    else:
+        say("Escape, C              -> a plane, where the new tab was")
+
+    # The plus: the same new tab, and no menu hung from it.
+    say("--- the plus ---")
+    before = len(page.evaluate(STATE)["tabs"])
+    page.locator(".strip button.new").first.click()
+    if not settles(page, f"() => ({NEW_TAB})().lines.length > 0"):
+        wrong("the plus made no new tab")
+    new = page.evaluate(NEW_TAB)
+    if new["menu"]:
+        wrong("the plus still hangs a menu")
+    if not new["newTab"] or len(page.evaluate(STATE)["tabs"]) != before + 1:
+        wrong(f"the plus did not make a new tab: {page.evaluate(STATE)['active']}")
+    else:
+        say("the plus               -> a new tab, no menu")
+
+    # A press on a card is the same as its letter: a web note makes a fresh new tab in
+    # this one's place, the address field taking the keyboard again.
+    page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
+    page.wait_for_timeout(400)
+    state = page.evaluate(STATE)
+    if len(state["tabs"]) != before + 1 or not page.evaluate(NEW_TAB)["typing"]:
+        wrong(f"a web note chosen on a new tab was not a new tab in its place: {state['tabs']}")
+    else:
+        say("New web note pressed   -> a new tab in its place")
+    page.keyboard.press("Control+KeyW")
+    page.wait_for_timeout(300)
 
 
 def unsaved(page) -> None:
@@ -352,14 +326,9 @@ def unsaved(page) -> None:
         ("pages", "New page note"),
         ("web", "New web note"),
     ):
-        # Held rather than tapped, because a tap makes a web page and never draws a
-        # card to press. The click chooses and lets go of the chord with it, so the
-        # release afterwards makes nothing.
-        page.keyboard.down("Control")
-        page.keyboard.press("KeyT")
-        page.wait_for_timeout(500)
-        page.locator(f'[role="dialog"] button:has-text("{row}")').first.click()
-        page.keyboard.up("Control")
+        # A new tab, and the card pressed on it.
+        page.keyboard.press("Control+KeyT")
+        page.locator(f'[data-new-here] .kind:has-text("{row}")').first.click()
         page.wait_for_timeout(800)
 
         state = page.evaluate(STATE)
@@ -477,7 +446,7 @@ def nothing_open(page) -> None:
         say("every tab closed       -> nothing open, and nothing made")
 
     here = page.evaluate(HERE)
-    if here["buttons"] != ["New note", "New canvas", "New web note", "New page note"]:
+    if here["buttons"] != [one for line in LINES for one in line]:
         wrong(f"the empty pane does not offer the kinds: {here['buttons']}")
     else:
         say(f"the buttons            -> {here['buttons']}")
@@ -496,7 +465,10 @@ def nothing_open(page) -> None:
     if any(one is None for one in marks):
         wrong(f"a button wears no mark at all: {marks}")
     else:
-        sizes = {(one["top"], one["tall"]) for one in marks}
+        # The file marks, which is what file-mark.ts holds to one height: the online
+        # terminal wears a drawing of its own (a cloud is wider than it is tall).
+        files = [one for one, name in zip(marks, here["buttons"]) if name != "Online terminal"]
+        sizes = {(one["top"], one["tall"]) for one in files}
         if len(sizes) != 1:
             wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")
         else:
@@ -506,10 +478,16 @@ def nothing_open(page) -> None:
 
     page.keyboard.press("ArrowLeft")
     page.wait_for_timeout(250)
-    if page.evaluate(HERE)["on"] != "New page note":
+    if page.evaluate(HERE)["on"] != "New web note":
         wrong("the arrows do not walk the buttons, or do not wrap")
     else:
-        say("ArrowLeft              -> New page note, round the end")
+        say("ArrowLeft              -> New web note, round the end")
+    page.keyboard.press("ArrowRight")
+    page.keyboard.press("ArrowRight")
+    page.keyboard.press("ArrowRight")
+    page.wait_for_timeout(250)
+    if page.evaluate(HERE)["on"] != "New page note":
+        wrong("the arrows do not walk the buttons across the lines")
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(900)
@@ -523,11 +501,9 @@ def nothing_open(page) -> None:
 
 
 def held_over_the_buttons(page) -> None:
-    """The same chord over a pane with nothing open: the same dialog, on the web page.
-
-    One gesture, one surface: Ctrl+T is the dialog wherever the keyboard is, so a hand
-    never has to know whether the pane under it happens to be empty."""
-    say("--- the chord over an empty pane ---")
+    """Ctrl+T over a pane with nothing open: a new tab, as anywhere, and a letter on the
+    empty pane's own cards makes its kind straight away."""
+    say("--- Ctrl+T over an empty pane ---")
 
     page.evaluate(
         """() => {
@@ -537,24 +513,26 @@ def held_over_the_buttons(page) -> None:
     )
     page.wait_for_timeout(800)
 
-    page.keyboard.down("Control")
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(500)
-    if page.evaluate(SHEET)["on"] != "New web note":
-        wrong(f"the chord over an empty pane did not stand on the web page: {page.evaluate(SHEET)}")
+    # The keyboard is on the first card already, so a letter is the card's.
+    page.keyboard.press("KeyP")
+    if not settles(page, "() => window.nibApp.workspace.active?.kind === 'pages'"):
+        wrong(f"P over an empty pane made no page note: {page.evaluate(STATE)['active']}")
     else:
-        say("Ctrl held, T           -> the dialog, on New web note")
-    page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
+        say("P                      -> a page note")
 
-    page.keyboard.press("KeyT")
-    page.wait_for_timeout(250)
-    page.keyboard.up("Control")
-    page.wait_for_timeout(900)
-    state = page.evaluate(STATE)
-    if state["active"] != {"kind": "pages", "path": None}:
-        wrong(f"letting Ctrl go did not make the card that stood: {state['active']}")
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          for (const tab of [...ws.tabs]) ws.close(tab.id)
+        }"""
+    )
+    page.wait_for_timeout(800)
+    page.keyboard.press("Control+KeyT")
+    if not settles(page, f"() => ({NEW_TAB})().newTab"):
+        wrong("Ctrl+T over an empty pane made no new tab")
     else:
-        say("T, Ctrl let go         -> a page note, with no file")
+        say("Control+T              -> a new tab, as anywhere")
+    page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
 
 
 def drive(browser) -> None:

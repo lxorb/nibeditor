@@ -821,7 +821,7 @@ for clashes before taking it.
 | **Alt+T** | field | next effort level |
 | **Alt+K** | editor | the selection into the field as `@Note:12-14` |
 | **Ctrl+O** | panel | unfold every thinking and tool row |
-| **Ctrl+N** | field | new thread (only with the field focused; Ctrl+N elsewhere is a new note) |
+| **Ctrl+N** | field | new thread (only with the field focused; Ctrl+N elsewhere is the scratchpad) |
 | **J** / **K**, **Y** / **N** | changes list | next / previous change, keep / undo |
 | `/`, `@`, `?` | start of field | commands, mentions, keys |
 

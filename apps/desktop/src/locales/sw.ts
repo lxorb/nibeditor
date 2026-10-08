@@ -1711,6 +1711,8 @@ export const sw: Dictionary = {
   'Command Prompt': 'Kidokezo cha Amri',
   Terminal: 'Terminali',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} kwenye terminali',
+  'Always ask': 'Uliza kila mara',
   'Open another': 'Fungua nyingine',
   'Open in terminal': 'Fungua kwenye terminali',
   Clear: 'Futa',

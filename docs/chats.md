@@ -23,7 +23,7 @@ them.
 
 ## The short version
 
-1. **A chat is a channel in a space**, `Team.chat`, made from Ctrl+T's new Chat card or the
+1. **A chat is a channel in a space**, `Team.chat`, made from a new tab's Chat card or the
    file list's New, renamed, moved, bookmarked, archived and shared like a note. Everybody
    who can reach the space can reach its chats; a chat shared on its own (an item share,
    `docs/sharing.md`) is a private channel. There are **no direct messages** and no group
@@ -296,7 +296,7 @@ multi-device, and the offline queue (4.5).
 
 | kind | where it lives | who is in it | made from |
 | --- | --- | --- | --- |
-| **chat** | a `.chat` entry in a space's tree, beside notes | everybody who can reach the space, at their role | Ctrl+T's Chat card, the file list's New, the Chats panel's plus |
+| **chat** | a `.chat` entry in a space's tree, beside notes | everybody who can reach the space, at their role | a new tab's Chat card, the file list's New, the Chats panel's plus |
 | **private chat** | the same entry, shared on its own | the people it is shared with (an item share, `docs/sharing.md`) and the owner | the chat's Share, or "Only…" when making it |
 
 There is no third kind. No direct message and no group message outside a space (decision
@@ -793,7 +793,7 @@ Settings, and one function decides.
 - **Link a message from a note**: Copy link on a message copies `nib://chat/<chat>/<message>`;
   in a note it opens the chat at the message. Outside nib it is an address nothing else
   opens, which is honest: the message lives in the account, not in a file.
-- **Ctrl+T's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's), the
+- **A new tab's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's, at the end of the first line), the
   Chats panel's plus and the file list's New all make a chat the way the file list makes
   a file: the list is shown and a row waits for the name in the folder it was asked in (the
   space's top from Ctrl+T and the plus); the name typed makes the chat, writes its pointer
@@ -1246,7 +1246,7 @@ Emil decided these on 2026-10-04 and 2026-10-05; the document above is written t
    accepted for now.
 9. **"Replies", not "threads"**; accepted.
 10. (Was "who can message you": gone with decision 1.)
-11. **The Ctrl+T letter is M**; accepted.
+11. **The new tab's letter is M**; accepted.
 12. **Chats work on sync v1.** Emil's account is on v1 and v2 is not switched on, so a chat's
     identity and membership never depend on v2's tree ids. The account makes the chat's id
     (`POST /v2/chats {space}`), access is the role in the chat's space, and a `.chat`

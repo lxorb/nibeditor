@@ -1710,6 +1710,8 @@ export const ta: Dictionary = {
   'Command Prompt': 'கட்டளைத் தூண்டி',
   Terminal: 'முனையம்',
   Shell: 'ஷெல்',
+  '{key} in a terminal': 'முனையத்தில் {key}',
+  'Always ask': 'எப்போதும் கேள்',
   'Open another': 'இன்னொன்றைத் திற',
   'Open in terminal': 'முனையத்தில் திற',
   Clear: 'அழி',

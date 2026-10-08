@@ -109,7 +109,6 @@ describe('every layer in the middle of the window', () => {
       'lib/History.svelte',
       'lib/IconPicker.svelte',
       'lib/JoinSheet.svelte',
-      'lib/NewKindSheet.svelte',
       'lib/Palette.svelte',
       'lib/PromptSheet.svelte',
       'lib/QuickQuestion.svelte',

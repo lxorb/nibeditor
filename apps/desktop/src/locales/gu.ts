@@ -1676,6 +1676,8 @@ export const gu: Dictionary = {
   'Command Prompt': 'કમાન્ડ પ્રોમ્પ્ટ',
   Terminal: 'ટર્મિનલ',
   Shell: 'શેલ',
+  '{key} in a terminal': 'ટર્મિનલમાં {key}',
+  'Always ask': 'હંમેશાં પૂછો',
   'Open another': 'બીજું ખોલો',
   'Open in terminal': 'ટર્મિનલમાં ખોલો',
   Clear: 'સાફ કરો',

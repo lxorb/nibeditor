@@ -1655,6 +1655,8 @@ export const th: Dictionary = {
   'Command Prompt': 'พรอมต์คำสั่ง',
   Terminal: 'เทอร์มินัล',
   Shell: 'เชลล์',
+  '{key} in a terminal': '{key} ในเทอร์มินัล',
+  'Always ask': 'ถามทุกครั้ง',
   'Open another': 'เปิดอีกอัน',
   'Open in terminal': 'เปิดในเทอร์มินัล',
   Clear: 'ล้าง',

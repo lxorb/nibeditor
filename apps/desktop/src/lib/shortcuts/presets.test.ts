@@ -263,8 +263,8 @@ describe('the Obsidian keyboard', () => {
   test('leaves what Nib and Obsidian already agree on alone', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
-    // Ctrl+E reading, Ctrl+N new note, Ctrl+W close, Ctrl+Shift+F search, Ctrl+K
-    // link: all of them are Nib's own already.
+    // Ctrl+E reading, Ctrl+W close, Ctrl+Shift+F search, Ctrl+K link: all of them are
+    // Nib's own already. New note is left where Nib has it too.
     for (const id of ['app.reading', 'app.new', 'app.close', 'format.link']) {
       expect(keys[id], id).toBeUndefined()
     }

@@ -14,12 +14,11 @@ exception is an online terminal, whose shell is a machine of the reader's in the
 
 ## Where one comes from
 
-- **The plus** in the tab strip: _New terminal_, the last row. The chevron at the end of
-  the row, or the right arrow on it, lists every shell instead, with the default ticked -
-  VS Code's `+ ˅` in one row.
-- **Ctrl+T**: the fifth card, on **R** (T is the chord's own step, and R is what Run has
-  been on Windows for thirty years). The chevron in the card's corner, or Shift held with
-  R, Enter or a click, lists the shells.
+- **Ctrl+T, and the plus** in the tab strip: a new tab, whose cards start their second line
+  with _New terminal_, on **R** (T is the new tab's own key, and R is what Run has been on
+  Windows for thirty years). The chevron in the card's corner, or Shift held with R or a
+  click, lists every shell instead, with the default ticked - VS Code's `+ ˅` in one card.
+  See docs/keyboard.md, _Ctrl+T is a new tab_.
 - **An empty pane**: the same card.
 - **The palette**: _New terminal_.
 - **A row of the file list**: _Open in terminal_, in the row's folder - VS Code's _Open
@@ -259,8 +258,8 @@ which opens the file in the system's text editor (nib never writes it).
 A shell on the reader's own machine in the cloud, which goes on when every window is closed:
 the design, the machine and the server are docs/online-terminal.md; this is the tab.
 
-**Where one comes from.** Ctrl+T's card on **O**, after Remote, and the same row in the plus's
-menu, an empty pane and the palette (_New online terminal_) - on the desktop, a phone and the
+**Where one comes from.** A new tab's card on **O**, after Remote, from Ctrl+T or the plus,
+the same card in an empty pane, and the palette (_New online terminal_) - on the desktop, a phone and the
 browser build alike, since it is the one terminal those two can have. A tab's own menu has
 _Open another_ beside it. Signed out, it opens the account sheet; an account not on the list
 yet is told so once, in the question sheet, and nothing is made.
@@ -511,7 +510,7 @@ In the window: `lib/terminal/sessions.svelte.ts` keeps each tab's screen - xterm
 element of its own - alive while its pane is taken apart and made again, so switching
 back finds it running. xterm.js and its addons are fetched with the first terminal, behind
 `terminalSurface` in `lib/surfaces.svelte.ts`; nothing of it is in front of the first
-paint, and the plus's list itself left the first paint to make room for the kind (see
+paint, and the list of kinds left the first paint to make room for the kind (see
 test/weight.test.ts).
 
 ## Not done, and why
@@ -544,6 +543,7 @@ test/weight.test.ts).
 | `apps/desktop/src-tauri/src/terminal/session.rs`   | one shell in one pty, and its four threads                                                                                                                                                                                       |
 | `apps/desktop/src-tauri/src/terminal/process.rs`   | whether anything besides the shell runs, and where it is                                                                                                                                                                         |
 | `apps/desktop/src/lib/new-kinds.ts`                | the terminal as a kind a new tab can be, and its chevron                                                                                                                                                                         |
+| `apps/desktop/src/lib/terminal/two-ways.ts`        | Ctrl+T and Ctrl+N in a terminal, which are both the app's and the shell's: asked once, and the answer kept (docs/keyboard.md, _A terminal_) |
 | `apps/desktop/src/lib/terminal/open.ts`            | making one: which shell, which folder, where in the strip                                                                                                                                                                        |
 | `apps/desktop/src/lib/terminal/spec.ts`            | what a terminal tab's words say, and where one starts                                                                                                                                                                            |
 | `apps/desktop/src/lib/terminal/sessions.svelte.ts` | the screens and their shells                                                                                                                                                                                                     |
@@ -571,7 +571,7 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/closing.ts`         | the question before a busy tab closes                                                                                                                                                                                            |
 | `apps/desktop/src/lib/quitting/`                   | the question before the window closes or the app quits or restarts: what runs, in every window, and the sheet that names it |
 | `scripts/quit-warning-probe.py`                    | quitting driven: the busy terminal named and the idle one not, Cancel and a row keep the app, Quit anyway ends it, and both terminals come back |
-| `scripts/terminal-probe.py`                        | the packaged app driven: Command Prompt and PowerShell answer, a resize reaches the shell, Ctrl+C interrupts, Ctrl+T and Ctrl+W go where they should, a restart puts the terminal back, and no shell outlives its tab or the app |
+| `scripts/terminal-probe.py`                        | the packaged app driven: Command Prompt and PowerShell answer, a resize reaches the shell, Ctrl+C interrupts, Ctrl+T asks whose it is and Ctrl+W goes to the shell, a restart puts the terminal back, and no shell outlives its tab or the app |
 | `scripts/terminal-restore-probe.py` | a restart driven: the lines written as the window goes and read back by the next launch, the fresh shell in the folder the old one was in, the tab in its place, and a closed tab leaving nothing on the disk |
 | `scripts/terminal-modes-probe.py` | a program that leaves the mouse reported: the prompt after it, and the one a restart put back, get nothing typed at them when the mouse moves |
 | `scripts/terminal-names-probe.py` | a tab's name driven: the shell and its folder at the prompt, `node` in front and its mark, a program's title and not after it, a name given by a double click and by F2, given back, and kept through a restart |

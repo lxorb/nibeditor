@@ -53,7 +53,7 @@ import {
   restoredAbove,
   restoredLine,
 } from './history'
-import { type Route, routeKey } from './keys'
+import { controlOf, type Route, routeKey } from './keys'
 import { findColours, monospace, terminalContrast, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
@@ -1163,12 +1163,22 @@ class Session {
   private pressed(event: KeyboardEvent): boolean {
     if (event.type !== 'keydown') return true
 
-    const route = routeKey(
-      event,
-      shortcuts.platform,
-      commandOf(event),
-      shortcuts.pressed('edit.find', event),
-    )
+    const command = commandOf(event)
+    let route = routeKey(event, shortcuts.platform, command, shortcuts.pressed('edit.find', event))
+
+    // A key that is both the app's and the shell's: whichever was chosen, or the
+    // question, with the press held back from both until it is answered. See
+    // two-ways.ts.
+    if (route === 'ask') {
+      const way = command === null ? 'shell' : shells.ways[command]
+      if (way === undefined) {
+        event.preventDefault()
+        event.stopPropagation()
+        if (command !== null) void this.askWhich(command, event)
+        return false
+      }
+      route = way
+    }
 
     // The shell's, and nobody else's: a key xterm.js has no sequence for is still not
     // the window's to act on, or a Ctrl+W it let by would close the tab.
@@ -1185,7 +1195,29 @@ class Session {
     return false
   }
 
-  private act(route: Exclude<Route, 'shell' | 'app' | 'paste'>) {
+  /** A key that is both, asked about; see two-ways.ts. The answer is the press, given
+   *  where it was meant: played on the window as the key it was, where the app reads its
+   *  commands, or typed into the shell as the character it would have been. */
+  private async askWhich(command: string, event: KeyboardEvent) {
+    const pressed = {
+      key: event.key,
+      code: event.code,
+      ctrl: event.ctrlKey,
+      shift: event.shiftKey,
+      alt: event.altKey,
+      repeat: false,
+      down: true,
+    }
+    const { whichWay } = await import('./two-ways')
+    const way = await whichWay(command)
+    if (way === 'app') (await import('../web-tab/keys')).replay(pressed)
+    else if (way === 'shell') {
+      this.focus()
+      this.term.input(controlOf(pressed.key), true)
+    }
+  }
+
+  private act(route: Exclude<Route, 'shell' | 'app' | 'paste' | 'ask'>) {
     switch (route) {
       case 'copy':
         this.copyChosen()

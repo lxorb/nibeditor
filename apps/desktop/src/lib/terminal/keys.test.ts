@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { type Keystroke, routeKey } from './keys'
+import { controlOf, type Keystroke, routeKey, shellReads } from './keys'
 
 /** Which keys a terminal lets the app have: VS Code's split, checked against its own
  *  skip list. See keys.ts, and docs/keyboard.md for the list as a reader sees it. */
@@ -15,7 +15,6 @@ const cmd = { metaKey: true }
 describe('on Windows and Linux', () => {
   test.each(['win', 'linux'] as const)('the tab and window keys are the app’s (%s)', (platform) => {
     for (const [key, held, command] of [
-      ['t', ctrl, 'app.new-kind'],
       ['T', ctrlShift, 'app.reopen'],
       ['Tab', ctrl, 'app.next-note'],
       ['Tab', ctrlShift, 'app.previous-note'],
@@ -28,6 +27,8 @@ describe('on Windows and Linux', () => {
       ['F6', {}, 'app.region-next'],
       ['F11', {}, 'app.fullscreen'],
       ['F11', { shiftKey: true }, 'app.fill-tab'],
+      // The scratchpad's second key: Ctrl+Shift, which no shell has, so nothing to ask.
+      ['X', ctrlShift, 'app.scratchpad.alt'],
       ['X', ctrlShift, 'app.scratchpad'],
       ['3', { altKey: true }, 'app.note-3.alt'],
       ['3', { ctrlKey: true, altKey: true }, 'app.note-3'],
@@ -49,7 +50,7 @@ describe('on Windows and Linux', () => {
   test('and everything a shell reads is the shell’s, Ctrl+W above all', () => {
     for (const [key, command] of [
       ['w', 'app.close'],
-      ['n', 'app.new'],
+      ['p', 'app.print'],
       ['o', 'app.palette.open'],
       ['s', 'app.save'],
       ['r', null],
@@ -65,6 +66,33 @@ describe('on Windows and Linux', () => {
     }
     expect(routeKey(press('a'), 'win', null, false)).toBe('shell')
     expect(routeKey(press('F5'), 'win', null, false)).toBe('shell')
+  })
+
+  /** Emil, issue #213: a key that is both is asked about. Ctrl+T is a new tab and the
+   *  shell's swapped letters, Ctrl+N the scratchpad and its next line; which one it is
+   *  in a terminal is the reader's to say, once. See two-ways.ts. */
+  test('Ctrl+T and Ctrl+N are both, and asked about', () => {
+    expect(routeKey(press('t', ctrl), 'win', 'app.new-kind', false)).toBe('ask')
+    expect(routeKey(press('n', ctrl), 'linux', 'app.scratchpad', false)).toBe('ask')
+    // A command rebound off Ctrl and a letter is a chord no shell has.
+    expect(routeKey(press('T', ctrlShift), 'win', 'app.new-kind', false)).toBe('app')
+    expect(routeKey(press('F9'), 'win', 'app.scratchpad', false)).toBe('app')
+  })
+
+  test('only Ctrl and a letter is a character a shell reads', () => {
+    expect(shellReads(press('n', ctrl))).toBe(true)
+    expect(shellReads(press('N', ctrlShift))).toBe(false)
+    expect(shellReads(press('n', { ctrlKey: true, altKey: true }))).toBe(false)
+    expect(shellReads(press('1', ctrl))).toBe(false)
+    expect(shellReads(press('n', cmd))).toBe(false)
+  })
+
+  /** What the shell would have read, typed once the answer is the shell: DC4 is
+   *  readline's transpose-chars, SO its next-history. */
+  test('the shell is given the character the key would have typed', () => {
+    expect(controlOf('t')).toBe('\x14')
+    expect(controlOf('n')).toBe('\x0e')
+    expect(controlOf('N')).toBe('\x0e')
   })
 
   /** Close window here and Close tab in every terminal there is: neither, then. */
@@ -103,6 +131,8 @@ describe('on a Mac', () => {
   test('every app command on Cmd is the app’s', () => {
     expect(routeKey(press('w', cmd), 'mac', 'app.close', false)).toBe('app')
     expect(routeKey(press('t', cmd), 'mac', 'app.new-kind', false)).toBe('app')
+    // Nothing to ask: Cmd+N never reaches a shell.
+    expect(routeKey(press('n', cmd), 'mac', 'app.scratchpad', false)).toBe('app')
     expect(routeKey(press('Tab', ctrl), 'mac', 'app.next-note', false)).toBe('app')
   })
 

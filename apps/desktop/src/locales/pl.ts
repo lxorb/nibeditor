@@ -1758,6 +1758,8 @@ export const pl: Dictionary = {
   'Command Prompt': 'Wiersz polecenia',
   Terminal: 'Terminal',
   Shell: 'Powłoka',
+  '{key} in a terminal': '{key} w terminalu',
+  'Always ask': 'Zawsze pytaj',
   'Open another': 'Otwórz kolejny',
   'Open in terminal': 'Otwórz w terminalu',
   Clear: 'Wyczyść',

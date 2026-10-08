@@ -1713,6 +1713,8 @@ export const ptBR: Dictionary = {
   'Command Prompt': 'Prompt de Comando',
   Terminal: 'Terminal',
   Shell: 'Shell',
+  '{key} in a terminal': '{key} no terminal',
+  'Always ask': 'Sempre perguntar',
   'Open another': 'Abrir outro',
   'Open in terminal': 'Abrir no terminal',
   Clear: 'Limpar',

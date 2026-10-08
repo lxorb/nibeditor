@@ -1775,6 +1775,8 @@ export const ar: Dictionary = {
   'Command Prompt': 'موجه الأوامر',
   Terminal: 'الطرفية',
   Shell: 'الصدفة',
+  '{key} in a terminal': '{key} في الطرفية',
+  'Always ask': 'اسأل دائمًا',
   'Open another': 'فتح طرفية أخرى',
   'Open in terminal': 'فتح في الطرفية',
   Clear: 'مسح',

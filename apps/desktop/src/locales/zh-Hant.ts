@@ -1649,6 +1649,8 @@ export const zhHant: Dictionary = {
   'Command Prompt': '命令提示字元',
   Terminal: '終端機',
   Shell: 'Shell',
+  '{key} in a terminal': '終端機中的 {key}',
+  'Always ask': '每次詢問',
   'Open another': '再開啟一個',
   'Open in terminal': '在終端機中開啟',
   Clear: '清除',

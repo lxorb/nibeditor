@@ -14,7 +14,6 @@
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu-item'
 import { shortcuts } from '../shortcuts.svelte'
-import { chooseNewKind } from '../shortcuts/registry'
 import { workspace } from '../workspace.svelte'
 
 export function stripMenu(paneId: string): MenuEntry[] {
@@ -25,7 +24,7 @@ export function stripMenu(paneId: string): MenuEntry[] {
     {
       label: t('New tab'),
       hint: shortcuts.hint('app.new-kind'),
-      run: () => chooseNewKind(paneId),
+      run: () => workspace.newTab(paneId),
     },
     {
       label: t('Reopen closed tab'),

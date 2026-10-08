@@ -5,14 +5,15 @@
  *  The crate now takes the chords every browser keeps for itself - a new tab, closing
  *  one, going round them, moving one along, reopening the last, a new window, F6 to the
  *  address field - before the page sees them, hands the keyboard back to the app, and
- *  says which key it was; see web_keys.rs. It also says when a modifier is let go of inside the page, because
- *  Ctrl+T held chooses on that release, and Ctrl+D once the page has let it go by, which
- *  Chrome gives the page first; see web_opens.rs.
+ *  says which key it was; see web_keys.rs. It also says when a modifier is let go of
+ *  inside the page, and Ctrl+D once the page has let it go by, which Chrome gives the
+ *  page first; see web_opens.rs.
  *
  *  What arrives is played on the window as the key it was, so every chord answers the
  *  way it does anywhere else in the app - through App.svelte's own handler, the
- *  registry, a reader's own bindings, and the held form of Ctrl+T - and nothing here
- *  has a list of what the keys mean. */
+ *  registry and a reader's own bindings - and nothing here has a list of what the keys
+ *  mean. A terminal plays a key the same way once it has asked whose it is; see
+ *  terminal/two-ways.ts. */
 
 import { isRecord } from '../stored'
 

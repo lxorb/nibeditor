@@ -1703,6 +1703,8 @@ export const ml: Dictionary = {
   'Command Prompt': 'കമാൻഡ് പ്രോംപ്റ്റ്',
   Terminal: 'ടെർമിനൽ',
   Shell: 'ഷെൽ',
+  '{key} in a terminal': 'ടെർമിനലിൽ {key}',
+  'Always ask': 'എപ്പോഴും ചോദിക്കുക',
   'Open another': 'മറ്റൊന്ന് തുറക്കുക',
   'Open in terminal': 'ടെർമിനലിൽ തുറക്കുക',
   Clear: 'മായ്ക്കുക',

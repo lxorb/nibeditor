@@ -1676,6 +1676,8 @@ export const my: Dictionary = {
   'Command Prompt': 'Command Prompt',
   Terminal: 'တာမင်နယ်',
   Shell: 'Shell',
+  '{key} in a terminal': 'တာမင်နယ်တွင် {key}',
+  'Always ask': 'အမြဲမေးရန်',
   'Open another': 'နောက်တစ်ခု ဖွင့်ရန်',
   'Open in terminal': 'တာမင်နယ်တွင် ဖွင့်ရန်',
   Clear: 'ရှင်းလင်းရန်',

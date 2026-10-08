@@ -1688,6 +1688,8 @@ export const tr: Dictionary = {
   'Command Prompt': 'Komut İstemi',
   Terminal: 'Terminal',
   Shell: 'Kabuk',
+  '{key} in a terminal': 'Terminalde {key}',
+  'Always ask': 'Her zaman sor',
   'Open another': 'Bir tane daha aç',
   'Open in terminal': 'Terminalde aç',
   Clear: 'Temizle',

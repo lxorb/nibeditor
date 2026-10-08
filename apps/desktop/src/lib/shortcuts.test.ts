@@ -255,7 +255,7 @@ describe('choosing a key', () => {
     shortcuts.resetAll()
 
     expect(shortcuts.overrides).toEqual({})
-    expect(shortcuts.keyFor('app.new')).toBe('Mod-n')
+    expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
   })
 
   test('is refused where it would fire while typing', () => {
@@ -857,7 +857,7 @@ describe('the file list', () => {
 
 describe('what a reader is shown', () => {
   test('is the key written the way this machine writes it', () => {
-    expect(registry.shortcuts.hint('app.new')).toBe('Ctrl+N')
+    expect(registry.shortcuts.hint('app.new')).toBe('Ctrl+Alt+N')
     expect(registry.shortcuts.hint('paragraph.heading-1')).toBe('Ctrl+1')
   })
 
@@ -946,13 +946,17 @@ describe('the keys that move the keyboard about', () => {
 
   /** Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there
    *  should be a menu (as if you would click the +) where you can decide what type."*
-   *  So Ctrl+T is a command of its own rather than a second key for New note, and it
-   *  opens the dialog of kinds on a web page; see new-kind-sheet.svelte.ts and the one
-   *  list of kinds in new-kinds.ts. */
-  test('ask what kind a new tab is, and keep Ctrl+N for a note', () => {
+   *  So Ctrl+T is a command of its own rather than a second key for New note: a new tab,
+   *  which offers the kinds under its address field; see `newTab` in workspace.svelte.ts.
+   *  And issue #213 gave Ctrl+N to the scratchpad, which moved New note one modifier
+   *  along and kept the scratchpad's old key as its second. */
+  test('make a new tab on Ctrl+T, the scratchpad on Ctrl+N, and a note on Ctrl+Alt+N', () => {
     const { shortcuts } = registry
     expect(shortcuts.keyFor('app.new-kind')).toBe('Mod-t')
-    expect(shortcuts.keyFor('app.new')).toBe('Mod-n')
+    expect(shortcuts.keyFor('app.scratchpad')).toBe('Mod-n')
+    expect(shortcuts.keyFor('app.scratchpad.alt')).toBe('Mod-Shift-x')
+    expect(registry.SHORTCUTS.find((one) => one.id === 'app.scratchpad.alt')?.alias).toBe(true)
+    expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
 
     const chooser = registry.SHORTCUTS.find((one) => one.id === 'app.new-kind')
     // Its own row in the settings and in the key list, not a second key for another
@@ -1085,10 +1089,15 @@ describe('a question on the side, and the scratchpad', () => {
     expect(registry.shortcuts.hint('app.quick-question')).toBe('Ctrl Ctrl')
   })
 
-  test('the scratchpad is Ctrl+Shift+X, no browser’s and nobody else’s', () => {
-    const key = registry.shortcuts.keyFor('app.scratchpad')
+  /** Ctrl+N, Emil's (issue #213), which a browser keeps for its own new window - so in a
+   *  page in a browser the second key, Ctrl+Shift+X, which it was before, is the one that
+   *  reaches it. That one is no browser's and nobody else's. */
+  test('the scratchpad is Ctrl+N, and Ctrl+Shift+X where a browser keeps Ctrl+N', () => {
+    expect(registry.shortcuts.keyFor('app.scratchpad')).toBe('Mod-n')
+    expect(registry.shortcuts.conflicts('app.scratchpad', 'Mod-n')).toEqual([])
+    const key = registry.shortcuts.keyFor('app.scratchpad.alt')
     expect(key).toBe('Mod-Shift-x')
-    expect(registry.shortcuts.conflicts('app.scratchpad', 'Mod-Shift-x')).toEqual([])
+    expect(registry.shortcuts.conflicts('app.scratchpad.alt', 'Mod-Shift-x')).toEqual([])
     for (const platform of PLATFORMS) {
       expect(BROWSER_KEYS.some((held) => sameCombination(held, key ?? '', platform))).toBe(false)
       expect(SYSTEM_KEYS[platform].some((held) => sameCombination(held, key ?? '', platform))).toBe(
@@ -1214,7 +1223,7 @@ describe('on a Mac', () => {
     const { shortcuts } = await restarted()
 
     expect(shortcuts.platform).toBe('mac')
-    expect(shortcuts.hint('app.new')).toBe('⌘N')
+    expect(shortcuts.hint('app.new')).toBe('⌥⌘N')
     expect(shortcuts.hint('paragraph.code-block')).toBe('⇧⌘K')
     // Cmd+Tab never reaches a window there, so the note switcher is Ctrl+Tab.
     expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')

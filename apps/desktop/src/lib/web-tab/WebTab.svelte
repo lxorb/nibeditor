@@ -74,6 +74,7 @@
   import { extensions, type Extension } from './extensions.svelte'
   import WebLocked from './WebLocked.svelte'
   import WebSite from './WebSite.svelte'
+  import NewHere from '../NewHere.svelte'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -268,12 +269,12 @@
    *  **Whether anything is over the hole decides how the page is placed and never
    *  whether there is one**, which is the whole of the fix for "browser tabs take an
    *  eternity to load". Every way of opening a website except clicking its row in the
-   *  file list goes through a layer - the palette, the app menu, the chooser Ctrl+T
-   *  opens, a row's own menu - and a layer that has closed is still in the document
-   *  while it plays its way out. The pane mounts under it, the hit test says covered,
-   *  and the page was simply not asked for; nothing asked again, because the rectangle
-   *  never changed and the stack was already empty. The tab sat on an empty pane until
-   *  the reader clicked something, which is what made the page arrive. */
+   *  file list goes through a layer - the palette, the app menu, a row's own menu -
+   *  and a layer that has closed is still in the document while it plays its way out.
+   *  The pane mounts under it, the hit test says covered, and the page was simply not
+   *  asked for; nothing asked again, because the rectangle never changed and the stack
+   *  was already empty. The tab sat on an empty pane until the reader clicked
+   *  something, which is what made the page arrive. */
   function look() {
     if (!isDesktop || !ready || own) return
 
@@ -321,6 +322,11 @@
   /** Whether the tab is on one of nib's own pages - History - which the pane draws
    *  itself, with no webview behind it; see own-pages.ts. */
   const own = $derived(isOwnPage(address))
+
+  /** Whether this is a new tab, with nowhere to go yet: what Ctrl+T and the plus make.
+   *  The pane offers the kinds a tab can be under the bar, rather than an empty page;
+   *  see `newTab` and `isNewTab` in workspace.svelte.ts. */
+  const choosing = $derived(workspace.isNewTab(tab))
 
   // nib's own page names itself and wears its own mark, as Chrome's History does; and the
   // address is held as the page's, so the bar and the strip read it before anything
@@ -866,7 +872,12 @@
     {/await}
   {/if}
 
-  {#if own}
+  {#if choosing}
+    <!-- A new tab: the kinds a tab can be, the ones a pane with nothing open shows, and
+         the one chosen takes this tab's place. Nothing is built for the page until an
+         address is typed, so nothing native is over them. See NewHere.svelte. -->
+    <NewHere paneId={tab.paneId} chosenOn={tab.id} />
+  {:else if own}
     <!-- nib's own page, drawn here where a site's would be: History. See own-pages.ts. -->
     {#await import('./WebHistory.svelte') then history}
       <history.default

@@ -349,6 +349,9 @@ class Workspace {
   /** The tab last opened beside another, and which one it was opened from, so the
    *  next opened from the same tab lands after it; see `besideAt` in new-tab.ts. */
   private besideLast: { opener: string; tab: string } | null = null
+  /** A new tab a kind was chosen on, waiting for that kind to take its place; see
+   *  `chosenOn`. */
+  private choosing: string | null = null
   /** The row a name is being typed on, in place: a row that exists and is being
    *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
    *  name that will make it. `making` says which, and what to make.
@@ -1444,13 +1447,69 @@ class Workspace {
   /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
    *  was there goes as this one arrives; see `onlyOne`. */
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
-    this.tabs = opener === null ? [...this.tabs, tab] : this.besideOf(tab, opener)
+    const chosenOn = activate ? this.chosenFor(tab) : null
+    if (chosenOn) {
+      this.tabs = this.placed(tab, tab.paneId, this.tabsIn(tab.paneId).indexOf(chosenOn))
+    } else {
+      this.tabs = opener === null ? [...this.tabs, tab] : this.besideOf(tab, opener)
+    }
     if (activate) {
       this.panes.activate(tab.paneId, tab.id)
       this.onlyOne(tab)
     }
+    // Gone without a trace: nothing was ever on it, and the closed tabs are for things
+    // somebody had.
+    if (chosenOn) this.close(chosenOn.id, false)
 
     return tab
+  }
+
+  /** Ctrl+T and the plus: a new tab, the way a browser makes one. A tab with an address
+   *  field that has the keyboard, and under it the kinds a tab can be, which the pane
+   *  draws where a page would be; one chosen there takes this tab's place. Emil, issue
+   *  #213: *"it should show the same view as when pressed Ctrl + D with the only
+   *  difference being that the navbar at the top where you can enter a url is still
+   *  there"*. Where there is no web tab to make - a phone, the glasses' plugin - it is
+   *  Ctrl+D's view itself. See WebTab.svelte and NewHere.svelte. */
+  newTab(paneId: string = this.panes.focusedId) {
+    this.focusPane(paneId)
+    if (__EVEN_PLUGIN__ || viewport.device === 'phone') this.deselect(paneId)
+    else this.openWebsite()
+  }
+
+  /** A kind was chosen on a new tab's page: the tab it makes next takes that tab's
+   *  place in the strip, as a site chosen on Chrome's new tab page does, rather than
+   *  leaving an empty tab behind it. Kept until the next tab arrives, because some kinds
+   *  arrive after a question - Remote asks which host. */
+  chosenOn(tabId: string) {
+    this.choosing = tabId
+  }
+
+  /** The new tab `tab` takes the place of, and the end of waiting for one: while that
+   *  tab is still in front of the same pane and still has nowhere to go. Anything else
+   *  that happened in the meantime - an address typed into it, another tab brought
+   *  forward - means the choice was given up, and the tab is left as it is. */
+  private chosenFor(tab: Tab): Tab | null {
+    const id = this.choosing
+    if (id === null) return null
+
+    this.choosing = null
+    const chosenOn = this.tabs.find((one) => one.id === id)
+    const inFront = this.panes.at(tab.paneId)?.activeTabId === id
+    return chosenOn?.paneId === tab.paneId && inFront && this.isNewTab(chosenOn) ? chosenOn : null
+  }
+
+  /** Whether a tab is a new tab: a web tab with no file and nowhere to go yet, which
+   *  is where the kinds are offered. A private one is a page somebody asked for on
+   *  purpose, and has only its address field. See WebTab.svelte. */
+  isNewTab(tab: Tab): boolean {
+    return (
+      tab.kind === 'web' &&
+      tab.path === null &&
+      !tab.inPrivate &&
+      !tab.address &&
+      !pages.addressOf(tab.id)
+    )
   }
 
   /** The tab a tab asked for beside another is opened from: the one in front of its

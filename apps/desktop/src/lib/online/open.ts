@@ -1,5 +1,5 @@
-/** Making an online terminal: Ctrl+T's card on O, the plus's row, the palette's New online
- *  terminal and an empty pane all come here (docs/online-terminal.md 4.5, 4.10).
+/** Making an online terminal: a new tab's card on O (Ctrl+T or the plus), the palette's New
+ *  online terminal and an empty pane all come here (docs/online-terminal.md 4.5, 4.10).
  *
  *  A new session on the reader's own machine - made, and started, if there is none yet -
  *  named by a `.term` file in the folder new notes go to, `Terminal`, `Terminal 2`..., and

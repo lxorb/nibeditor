@@ -6,8 +6,8 @@
  *  terminal nobody could type in. So everything goes to the shell except a short list - the one VS Code
  *  keeps for its workbench, checked against its own `DEFAULT_COMMANDS_TO_SKIP_SHELL`:
  *
- *  - the tab and window keys: Ctrl+T (and its held chooser), Ctrl+Shift+T,
- *    Ctrl+Tab, Ctrl+PageUp and PageDown with and without Shift, the numbered tabs;
+ *  - the tab and window keys: Ctrl+Shift+T, Ctrl+Tab, Ctrl+PageUp and PageDown with
+ *    and without Shift, the numbered tabs;
  *  - the palette on Ctrl+Shift+P, and on whichever keys a keyboard gives it
  *    instead, the settings on Ctrl+comma, full screen, and the tab filling the window;
  *  - F6 and Shift+F6, which is how a keyboard leaves the terminal for the rest of the
@@ -18,6 +18,15 @@
  *    window here and Close tab in every terminal there is: sent to neither, it deletes
  *    a word, which loses nothing;
  *  - on a Mac, every app command on Cmd, which no shell ever sees.
+ *
+ *  **Two keys are both**, and the terminal asks once which one is meant (Emil, issue
+ *  #213): Ctrl+T, a new tab and the shell's swapped letters (and fzf's file finder), and
+ *  Ctrl+N, the scratchpad and the shell's next line of history. Pressed in a terminal
+ *  with nothing chosen yet, a small question puts the two side by side, and the answer
+ *  is kept for every terminal from then on unless "Always ask" was ticked; Settings,
+ *  General, Terminal changes it back. Only while the command is on Ctrl and a letter,
+ *  which is a character the shell reads: Ctrl+Shift+X, the scratchpad's second key, is
+ *  the app's as every other Ctrl+Shift is. See `TWO_WAYS` and two-ways.ts.
  *
  *  **Ctrl+W goes to the shell** on Windows and Linux, as it does in VS Code, Windows
  *  Terminal and every emulator: a half-typed command losing its whole tab to a word
@@ -42,6 +51,7 @@ import type { Platform } from '../keys'
 export type Route =
   | 'shell'
   | 'app'
+  | 'ask'
   | 'copy'
   | 'paste'
   | 'find'
@@ -62,7 +72,6 @@ export interface Keystroke {
 
 /** The app's commands a terminal gives way to on any platform. */
 const APP_KEYS = new Set([
-  'app.new-kind',
   'app.reopen',
   'app.new-window',
   'app.next-note',
@@ -81,6 +90,10 @@ const APP_KEYS = new Set([
   'app.region-next',
   'app.region-previous',
 ])
+
+/** The app's commands that are asked about where their key is one the shell reads as
+ *  well: see the top of this file. */
+export const TWO_WAYS = new Set(['app.new-kind', 'app.scratchpad'])
 
 /** Sent to nobody: see the top of this file. */
 const NEITHER = new Set(['app.close-window'])
@@ -127,6 +140,7 @@ export function routeKey(
   const zoom = ZOOM[command]
   if (zoom) return zoom
   if (NEITHER.has(command)) return 'shell'
+  if (TWO_WAYS.has(command)) return shellReads(event) ? 'ask' : 'app'
   if (APP_KEYS.has(command) || command.startsWith('app.note-')) return 'app'
   // The panes, on Ctrl+Alt and an arrow: a named key, so never AltGr typing anything.
   if (!mac && event.ctrlKey && event.altKey) return 'app'
@@ -134,4 +148,17 @@ export function routeKey(
   if (!mac && event.ctrlKey && event.shiftKey) return 'app'
 
   return 'shell'
+}
+
+/** Whether a chord is one a shell reads as a character of its own: Ctrl and a letter
+ *  and nothing else. Anything else an app command is on is a chord no shell has. */
+export function shellReads(event: Keystroke): boolean {
+  const bare = !event.shiftKey && !event.altKey && !event.metaKey
+  return event.ctrlKey && bare && /^[a-z]$/i.test(event.key)
+}
+
+/** The character Ctrl and a letter types, which is what the shell would have read had
+ *  the terminal not asked first: Ctrl+T is DC4, Ctrl+N is SO. */
+export function controlOf(letter: string): string {
+  return String.fromCharCode(letter.toLowerCase().charCodeAt(0) - 96)
 }

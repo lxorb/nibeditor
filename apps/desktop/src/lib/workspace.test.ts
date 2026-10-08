@@ -2104,6 +2104,94 @@ describe('a new tab', () => {
     expect(written()).toEqual([])
   })
 
+  /** Emil, issue #213: Ctrl+T and the plus make the same thing, a web tab with nowhere to
+   *  go, whose pane offers the kinds under its address field. */
+  test('Ctrl+T and the plus are a new tab with nowhere to go yet', () => {
+    workspace.newTab()
+
+    const tab = workspace.active
+    expect(tab?.kind).toBe('web')
+    expect(tab && workspace.isNewTab(tab)).toBe(true)
+  })
+
+  /** Chrome's new tab page: what is chosen on it is opened in its place. */
+  test('and a kind chosen on it takes its place in the strip, leaving nothing behind', async () => {
+    await workspace.newCanvas()
+    const before = workspace.active
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!before || !chosenOn) throw new Error('no tabs')
+
+    workspace.chosenOn(chosenOn.id)
+    workspace.openWebsite(true)
+
+    const strip = workspace.tabsIn(workspace.panes.focusedId)
+    expect(strip.map((one) => one.id)).not.toContain(chosenOn.id)
+    expect(strip.map((one) => one.inPrivate)).toEqual([false, true])
+    expect(strip[0]?.id).toBe(before.id)
+    expect(workspace.active).toMatchObject({ inPrivate: true })
+    // Nothing was ever on it, so there is nothing to bring back.
+    expect(workspace.closed.stack).toEqual([])
+  })
+
+  /** An address typed into it is a page somebody went to, which a later choice made
+   *  elsewhere is not to take away. */
+  test('but not once it has somewhere to go', () => {
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!chosenOn) throw new Error('no new tab')
+
+    workspace.chosenOn(chosenOn.id)
+    chosenOn.address = 'https://example.com/'
+    workspace.openBlank()
+
+    expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
+  })
+
+  /** A choice given up on - Remote's host picker put away - is not kept for the next tab
+   *  opened some other way. */
+  test('and a choice is spent by the next tab, whatever it is', () => {
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!chosenOn) throw new Error('no new tab')
+
+    workspace.chosenOn(chosenOn.id)
+    workspace.openBlank()
+    workspace.newTab()
+    const second = workspace.active
+    workspace.openBlank()
+
+    expect(workspace.tabs).toContain(second)
+  })
+
+  /** A tab a link opened behind is not chosen: the new tab stays in front. */
+  test('nor by a tab that opens behind it', () => {
+    workspace.newTab()
+    const chosenOn = workspace.active
+    if (!chosenOn) throw new Error('no new tab')
+
+    workspace.chosenOn(chosenOn.id)
+    workspace.openPage('https://example.com/', 'behind')
+
+    expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
+    expect(workspace.active).toBe(chosenOn)
+  })
+
+  /** Where there is no web tab to make, Ctrl+T is Ctrl+D's view itself. */
+  test('a phone has no web tab, so a new tab there is the kinds in the pane itself', () => {
+    const was = viewport.device
+    viewport.device = 'phone'
+    try {
+      workspace.openBlank()
+      workspace.newTab()
+
+      expect(workspace.active).toBeNull()
+      expect(workspace.tabs.some((one) => one.kind === 'web')).toBe(false)
+    } finally {
+      viewport.device = was
+    }
+  })
+
   /** A tab and nothing else, however much is in it, until somebody gives it a place:
    *  the words are the session's, the way VS Code's hot exit keeps an untitled editor. */
   test('a note stays a tab with no file however much is written, and asks nothing', async () => {
