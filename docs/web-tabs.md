@@ -852,21 +852,47 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
   `overscroll-behavior-x: contain` or `none` keeps its overscroll, which is the line Google
   Sheets draws, and a page whose own handler took the wheel - a map - keeps it too.
 - **Sideways on purpose.** 60 pixels sideways (50 for a finger), two and a half times as
-  far as down, before anything shows. Shift, Ctrl and a tilted wheel's whole notches are
+  far as down, before anything shows - counted from the stream's very first step, a step
+  straight down included, so a scroll down a page that drifts sideways as it goes is a
+  scroll down to its end and never brings the arrow out half way (#209; until then a step
+  with nothing sideways in it was not counted until one with something was, and a long
+  scroll down could add up enough drift to go back). A page says nothing at all for a
+  scroll down: it adds the stream up itself and says it only once it is sideways on
+  purpose, with what went before. Shift, Ctrl and a tilted wheel's whole notches are
   never a swipe; Chrome never swipes on a mouse.
 - **Shown before it happens.** A circle with an arrow follows the fingers in from the side,
-  fills with the accent once letting go would go, and goes with one burst when it does or
-  slides back out when it does not. It goes at three tenths of the window's longer side
-  less the start (a quarter on a screen), or at any distance for a fling faster than 1100
-  pixels a second. A side with nothing to go to shows no arrow at all.
+  gliding the app's shortest move between two steps so a page's steps, which cross the
+  engine a frame apart and not always evenly, read as one movement. A ring round its edge
+  fills with the accent as the fingers go, so how far is left is in sight; once letting go
+  would go, the circle fills with it and the arrow gives one small push. It goes with one
+  burst when it does or slides back out when it does not. It goes at three tenths of the
+  window's longer side less the start (a quarter on a screen), but never more than 320
+  pixels - Chrome measures the screen, and a touchpad is the same size under a window of
+  any width, so on a wide window Chrome's share was most of the pad - or at any distance
+  for a fling faster than 1100 pixels a second. A side with nothing to go to shows no arrow
+  at all. With reduced motion every one of those moves is a change of state.
+- **One swipe, one step.** The touchpad's coast goes on after a swipe has gone, and the
+  step itself can leave a gap in it - a page replaced, a note drawn - long enough to read as
+  the fingers lifting. A stream that begins within 300 ms of a swipe that went is that
+  coast, and nobody's; a hand that lifts and sweeps again takes longer than that.
 - **Off in Settings > General > Tabs**, _Swipe between pages_ (Safari's words for its own
   switch): Chrome has no such switch, and how to turn its swipe off is one of the things
   people most often ask about it. Not on a phone, whose sides are the system's back.
 
-**Not `WebView2`'s own.** The engine has Chromium's arrow, behind `IsSwipeNavigationEnabled`,
-and wry leaves it off. It walks the engine's history, and a tab revived after a relaunch has
-none - its trail is the crate's (`Trail` in web_tabs.rs) - so it would do nothing on most
-tabs after a restart and go the wrong way after any step the crate made itself. So the page
+**Not the engine's own.** Both of Windows' engines are Chromium and have Chromium's swipe,
+and both are started without it: `TouchpadOverscrollHistoryNavigation` disabled and
+`--overscroll-history-navigation=0` (`ENGINE_SWIPE` in src-tauri/src/engine.rs, in
+`BROWSER_ARGS` for `WebView2` and handed to nib's own Chromium in `cef/src/main.rs`). Emil,
+2026-10-08 (#209): _"edge supports it for some sites while nib supports it as well ...
+sometimes both triggers"_. `IsSwipeNavigationEnabled`, which wry leaves off, is documented
+for a finger on a screen, and #209 is two fingers on a touchpad going back with it off:
+that is Chromium's touchpad overscroll navigation, which a switch reaches and the setting
+did not. The engine's swipe walks the engine's history, and
+a tab revived after a relaunch has none - its trail is the crate's (`Trail` in
+web_tabs.rs) - so it did nothing on most tabs after a restart, went the wrong way after any
+step the crate made itself, and on the pages where it did go, went as well as nib's. A
+Mac's and Linux's engines have their gesture off too (wry's `allowsBackForwardNavigationGestures`
+and WebKitGTK's own, which Tauri never turns on), and nib draws none there. So the page
 says what it saw and the window decides, the same way as for a note: a script in nib's
 world in every page and frame (`src-tauri/src/web_swipe.js`) hears each sideways scroll,
 asks whether anything in the page would take it, and says it a frame at a time; every

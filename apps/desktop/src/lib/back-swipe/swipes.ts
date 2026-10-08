@@ -14,7 +14,12 @@
  *
  *  A step is the tab's own Back or Forward (`workspace.goBack`, `goForward`), so a web
  *  tab walks the trail its arrows walk - a tab revived after a relaunch included - and a
- *  note tab walks the notes it has shown. Fetched as the launch ends; see `warmDoors`. */
+ *  note tab walks the notes it has shown. Fetched as the launch ends; see `warmDoors`.
+ *
+ *  **One swipe, one step.** The touchpad's coast goes on after a swipe has gone, and the
+ *  step itself can leave a gap in it - a page is replaced, a note is drawn - long enough to
+ *  read as the fingers lifting. What arrives within `SETTLE` of that is the same coast, and
+ *  nobody's. */
 
 import { mount, unmount } from 'svelte'
 import { overlays } from '../overlays'
@@ -26,7 +31,7 @@ import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { swipeChoice } from './choice.svelte'
 import { chainOf, taken } from './edge'
-import { QUIET, type Side, type Source, Swipe, type Turn } from './gesture'
+import { QUIET, SETTLE, type Side, type Source, Swipe, type Turn } from './gesture'
 import { type Room, swiping } from './shown.svelte'
 import SwipeArrow from './SwipeArrow.svelte'
 
@@ -38,6 +43,10 @@ export const PLAYS = 210
 
 /** Both ways taken: what a surface that kept the scroll for itself says. */
 const KEPT: Record<Side, boolean> = { left: true, right: true }
+
+/** Neither: what a step that is not asked says, one straight down or one the stream has
+ *  decided already. */
+const NEITHER: Record<Side, boolean> = { left: false, right: false }
 
 /** One step of a swipe, from wherever it was heard. `at` is on the clock of whatever
  *  heard it, which only ever compares it with its own steps. */
@@ -59,6 +68,11 @@ interface Live {
   shown: boolean
   /** Whether a step has been taken for it, so a coast cannot take a second. */
   stepped: boolean
+  /** Whether that step went, so what follows it settles first. */
+  went: boolean
+  /** Whether it began while the last swipe's coast was settling: then it is that coast,
+   *  and every step of it is nobody's. */
+  swallowed: boolean
   /** The last step's time on its own clock, and on this window's. */
   at: number
   heardAt: number
@@ -67,6 +81,8 @@ interface Live {
 let live: Live | null = null
 let quiet: ReturnType<typeof setTimeout> | undefined
 let clearing: ReturnType<typeof setTimeout> | undefined
+/** Until when, on this window's clock, a touchpad's new stream is the last swipe's coast. */
+let settling = 0
 
 /** Which way a side goes: Back at the left, unless the interface reads right to left,
  *  where the history runs the other way across the screen too. */
@@ -132,6 +148,7 @@ function played() {
 function decided(one: Live, phase: 'went' | 'stayed', side: Side) {
   if (one.stepped) return
   one.stepped = true
+  one.went = phase === 'went'
   if (one.shown) {
     swiping.stage = phase
     swiping.turn++
@@ -155,10 +172,20 @@ export function heard(step: Heard): void {
     source: step.source,
     shown: false,
     stepped: false,
+    went: false,
+    swallowed: step.source === 'touchpad' && now < settling,
     at: step.at,
     heardAt: now,
   }
   const one = live
+  one.at = step.at
+  one.heardAt = now
+  // A touchpad never says it was let go of; a finger does. See gesture.ts. Gone quiet,
+  // it was let go of that long after its last step, on that step's own clock.
+  clearTimeout(quiet)
+  if (step.source === 'touchpad') quiet = setTimeout(() => lift(step.at + QUIET), QUIET)
+  if (one.swallowed) return
+
   const turn: Turn = {
     dx: step.dx,
     dy: step.dy,
@@ -167,8 +194,6 @@ export function heard(step: Heard): void {
     goes: goes(step.tab),
   }
   const shown = one.swipe.turn(turn)
-  one.at = step.at
-  one.heardAt = now
 
   if (shown.phase === 'tracking') {
     clearTimeout(clearing)
@@ -178,11 +203,6 @@ export function heard(step: Heard): void {
     if (one.shown) draw(one)
     decided(one, shown.phase, shown.side)
   }
-
-  // A touchpad never says it was let go of; a finger does. See gesture.ts. Gone quiet,
-  // it was let go of that long after its last step, on that step's own clock.
-  clearTimeout(quiet)
-  if (step.source === 'touchpad') quiet = setTimeout(() => lift(step.at + QUIET), QUIET)
 }
 
 /** The fingers have lifted: the stream is decided, and the next step starts another.
@@ -192,13 +212,15 @@ export function lift(at?: number): void {
   clearTimeout(quiet)
   const one = live
   live = null
-  if (!one) return
+  if (!one || one.swallowed) return
   const when = at ?? one.at + (performance.now() - one.heardAt)
   const shown = one.swipe.lift(when)
-  // A stream the content kept, or one a coast decided already, leaves nothing to do.
-  if (shown.phase !== 'went' && shown.phase !== 'stayed') return
-  if (one.shown) draw(one)
-  decided(one, shown.phase, shown.side)
+  // A stream the content kept, or one a coast decided already, leaves nothing to decide.
+  if (shown.phase === 'went' || shown.phase === 'stayed') {
+    if (one.shown) draw(one)
+    decided(one, shown.phase, shown.side)
+  }
+  if (one.went && one.source === 'touchpad') settling = performance.now() + SETTLE
 }
 
 /** The tab a window event is over, when it is one a swipe may start on: inside a pane's
@@ -224,10 +246,20 @@ export function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   return streaming || !(notch !== 0 && notch % 120 === 0)
 }
 
+/** Which way the content under a wheel would take it, asked only where the answer counts:
+ *  a sideways step of a stream that has not decided yet. */
+function scrollsUnder(event: WheelEvent, under: { tab: Tab; pane: HTMLElement; at: Element }) {
+  if (event.defaultPrevented) return KEPT
+  const decided = live?.tab.id === under.tab.id && !live.swipe.asking
+  if (event.deltaX === 0 || decided) return NEITHER
+  return taken(chainOf(under.at, under.pane))
+}
+
 function wheeled(event: WheelEvent) {
   if (!swipeChoice.on || !fromTouchpad(event, live !== null)) return
-  // A stream starts sideways; down alone is only worth hearing inside one.
-  if (event.deltaX === 0 && live === null) return
+  // Every step, one straight down included: which way a stream goes is read from its
+  // first. See gesture.ts.
+  if (event.deltaX === 0 && event.deltaY === 0) return
   const under = tabUnder(event.target)
   if (!under) return
   heard({
@@ -236,7 +268,7 @@ function wheeled(event: WheelEvent) {
     dx: event.deltaX,
     dy: event.deltaY,
     at: event.timeStamp,
-    scrolls: event.defaultPrevented ? KEPT : taken(chainOf(under.at, under.pane)),
+    scrolls: scrollsUnder(event, under),
   })
 }
 
@@ -368,6 +400,7 @@ export function listen(): () => void {
       window.removeEventListener('touchcancel', released, { capture: true })
     }
     lift()
+    settling = 0
     void unmount(arrow)
     target.remove()
   }

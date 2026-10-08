@@ -3,6 +3,7 @@ import {
   coasting,
   distance,
   FLING,
+  MOST,
   QUIET,
   RATIO,
   type Side,
@@ -198,4 +199,31 @@ test('the distance is Chrome s share of the longer side, less the start, never t
   expect(distance('touch', 1000, 700)).toBe(1000 * 0.25 - START.touch)
   expect(distance('touchpad', 200, 150)).toBe(80)
   expect(PAD).toBe(240)
+})
+
+test('a wide window never asks for more of the pad than a third of it', () => {
+  // Chrome's share of a 1920 window would be 516 pixels past the start.
+  expect(distance('touchpad', 1920, 1080)).toBe(MOST)
+  expect(distance('touch', 2560, 1440)).toBe(MOST)
+  expect(MOST).toBeLessThan(1920 * 0.3 - START.touchpad)
+
+  // And a stream that has gone that far on one goes.
+  const wide = new Swipe('touchpad', () => ({ width: 1920, height: 1080 }))
+  const { at } = stream(wide, times(39, [-10, 0]))
+  expect(wide.shown.progress).toBeGreaterThanOrEqual(1)
+  expect(wide.lift(at + QUIET).phase).toBe('went')
+})
+
+test('the content is asked only until the stream has said whose it is', () => {
+  const one = swipe()
+  expect(one.asking).toBe(true)
+  stream(one, times(3, [-10, 0]))
+  expect(one.asking).toBe(true)
+  stream(one, times(5, [-10, 0]), {}, 2000)
+  expect(one.shown.phase).toBe('tracking')
+  expect(one.asking).toBe(false)
+
+  const down = swipe()
+  stream(down, times(8, [0, 10]))
+  expect(down.asking).toBe(false)
 })
