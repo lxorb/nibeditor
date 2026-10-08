@@ -39,7 +39,16 @@
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
-  import { ALL, cutOf, layersOver, moving, strangerOver, type Cut, type Layer } from './covers'
+  import {
+    ALL,
+    cutOf,
+    layersOver,
+    moving,
+    noticeRows,
+    strangerOver,
+    type Cut,
+    type Layer,
+  } from './covers'
   import { ALLOW, SANDBOX } from './frame'
   import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
@@ -157,11 +166,12 @@
    *  grow while it is open - the address field's suggestions as they arrive, a hover
    *  card's words for the next tab - and that is neither a press nor a change to the
    *  overlay stack, so the page was cut round the layer as it had been and the rest of it
-   *  stood behind the page. */
+   *  stood behind the page. And the notices row, whose change of size is how a toast that
+   *  came or went without a press is heard; see `noticeRows`. */
   let watched: Element[] = []
   function watchLayers(layers: readonly Layer[]) {
     if (!watching) return
-    const now = layers.flatMap((one) => (one.node ? [one.node] : []))
+    const now = [...layers.flatMap((one) => (one.node ? [one.node] : [])), ...noticeRows()]
     for (const one of watched) if (!now.includes(one)) watching.unobserve(one)
     for (const one of now) if (!watched.includes(one)) watching.observe(one)
     watched = now

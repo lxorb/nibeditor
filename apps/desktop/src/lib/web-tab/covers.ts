@@ -18,9 +18,11 @@
  *
  *  The layers are found by the shapes the theme package gives them, `.nib-layer`,
  *  `.nib-bubble`, `.nib-screen` and `.nib-scrim`, so a layer written tomorrow in one of
- *  them is covered on the day it is written. Anything else over the page - a drawer, a
- *  deck being presented - is found by the hit test the pane has always done, and covers
- *  all of it, which is the safe answer for a thing nothing here knows the shape of. */
+ *  them is covered on the day it is written - and by the row the app's own notices float
+ *  in over the foot of the panes, whatever each card in it wears (see `.notices` in
+ *  App.svelte). Anything else over the page - a drawer, a deck being presented - is found
+ *  by the hit test the pane has always done, and covers all of it, which is the safe
+ *  answer for a thing nothing here knows the shape of. */
 
 import type { Rect } from './pages.svelte'
 
@@ -45,10 +47,14 @@ export interface Layer {
   node?: Element
 }
 
-/** The shapes the theme package gives every layer that floats (see base.css), and the
- *  arrow a swipe brings in over a page, which is round and moves with the fingers; see
- *  back-swipe/SwipeArrow.svelte. */
-const FLOATING = '.nib-layer, .nib-bubble, .nib-screen, .nib-swipe'
+/** The row the app's notices float in: a toast, the update notice, the storage card,
+ *  the recording pill. See `.notices` in App.svelte. */
+const NOTICES = '[data-notices]'
+
+/** The shapes the theme package gives every layer that floats (see base.css), the
+ *  arrow a swipe brings in over a page, which is round and moves with the fingers (see
+ *  back-swipe/SwipeArrow.svelte), and each card in the notices row. */
+const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, ${NOTICES} > *`
 const SCRIMS = '.nib-scrim'
 
 function meets(one: Rect, other: Rect): boolean {
@@ -129,4 +135,11 @@ export function strangerOver(hole: HTMLElement): boolean {
     }
   }
   return false
+}
+
+/** The rows the app's notices float in. A notice comes and goes without a press and is
+ *  on no overlay stack, so a page hears of one by watching the row change size: empty,
+ *  it has none. */
+export function noticeRows(): Element[] {
+  return [...document.querySelectorAll(NOTICES)]
 }

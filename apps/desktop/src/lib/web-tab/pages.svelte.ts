@@ -911,8 +911,8 @@ class Pages {
     }
     if (one.away) return
 
-    // A picture is of one size of page. Shown at another - the notices row came or
-    // went, a divider moved - it would leave a band of empty pane under the next menu,
+    // A picture is of one size of page. Shown at another - a divider moved, the window
+    // was resized - it would leave a band of empty pane under the next menu,
     // so it goes and the next cover waits for a fresh one.
     if (
       one.visible &&

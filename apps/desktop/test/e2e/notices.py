@@ -17,6 +17,13 @@ was on and so hid the page it exists to fill the screen with. Measured on
 2026-09-18 by asking the pane's own hit test what it found: `['hole' x 8,
 'DIV.notice']`.
 
+The notices then took a row of their own under the panes, and every toast shoved
+every tab up by its height (#218). Since a page is cut round a layer rather than
+hidden for it (web-tab/covers.ts), the row floats over the foot of the panes again,
+and each card in it is a layer the page knows the shape of. So the drive now asks
+that the page keeps its height while a notice is up, and that nothing over it is
+something the page does not know the shape of.
+
 This drive asks the same question the pane asks, of the same nine points, in a real
 browser with a real layout - because nothing in the unit suite can: jsdom has no
 layout, so a card drawn over a pane and a card drawn beside it are the same object
@@ -74,6 +81,8 @@ WHAT_IS_OVER = """
     for (const y of [0.08, 0.5, 0.92]) {
       const on = document.elementFromPoint(rect.x + rect.width * x, rect.y + rect.height * y)
       if (on && web && (on === web || web.contains(on))) continue
+      // A card of the notices row, which the page is cut round; see web-tab/covers.ts.
+      if (on && on.closest('[data-notices] > *')) continue
 
       const name = on === null ? 'nothing' : on.tagName
       const first = on && typeof on.className === 'string' ? on.className.split(' ')[0] : ''
@@ -161,7 +170,7 @@ def drive(browser: Browser) -> None:
     # ── The update notice ────────────────────────────────────────────────
     page.evaluate("() => { window.nibApp.updates.ready = '9.9.9' }")
     wait_for(page, "document.querySelector('.notice')", "the update notice")
-    # The notice flies in over a fifth of a second, and the pane resizes under it.
+    # The notice flies in over a fifth of a second.
     page.wait_for_timeout(500)
     shot(page, "02-notice")
 
@@ -170,21 +179,23 @@ def drive(browser: Browser) -> None:
         raise SystemExit("the update notice never arrived")
 
     noticed = clear_over_the_page(page, "with the update notice up")
-    if overlaps(notice, noticed):
-        wrong("the update notice is drawn over the page's rectangle")
+    if not page.evaluate("() => !!document.querySelector('[data-notices] > .notice')"):
+        wrong("the update notice is not a card of the notices row, so no page is cut round it")
+    elif overlaps(notice, noticed):
+        say("the update notice floats over the page, which is cut round it")
     else:
-        say("the update notice is beside the page's rectangle, not over it")
+        say("the update notice is clear of the page")
 
-    # It took the room rather than borrowing it, which is the whole of the fix: the
-    # page is shorter by the height of the row the notice is in.
+    # It floats rather than taking room, which is the whole of #218: a card coming or
+    # going moves nothing under it.
     shorter = clear["height"] - noticed["height"]
-    if shorter < notice["height"]:
+    if abs(shorter) > 1:
         wrong(
             f"the page lost {shorter:.0f}px to a notice {notice['height']:.0f}px tall,"
-            " so the notice is floating over it"
+            " so the notice pushed it rather than floating over it"
         )
     else:
-        say(f"the page gave up {shorter:.0f}px for a notice {notice['height']:.0f}px tall")
+        say("the page kept its height under the notice")
 
     # ── And the room comes back ──────────────────────────────────────────
     page.evaluate("() => window.nibApp.updates.dismiss()")

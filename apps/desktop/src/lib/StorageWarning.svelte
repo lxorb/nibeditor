@@ -8,7 +8,7 @@
 </script>
 
 <!-- At the start of the notices row, with the update notice at its end; see
-     App.svelte for why none of the row floats over the pane any more. -->
+     `.notices` in App.svelte. -->
 {#if usage.warning}
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>
@@ -34,8 +34,8 @@
 {/if}
 
 <style>
-  /* The first track of the notices row, which is the corner it used to float in. It
-     takes its room rather than covering the pane; App.svelte says why. */
+  /* The first track of the notices row, which floats over the foot of the panes;
+     App.svelte places it. */
   .toast {
     grid-column: 1;
     justify-self: start;

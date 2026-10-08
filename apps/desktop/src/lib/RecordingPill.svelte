@@ -7,11 +7,11 @@
    *  nothing in it is worth a byte before somebody presses Record. The window asks for
    *  this the moment a recording starts and keeps it afterwards; see surfaces.svelte.ts.
    *
-   *  In the middle of the row the app's own notices take under the panes, on every
-   *  kind of tab and in full screen: a red dot somebody started has to be there to be
-   *  pressed, and it used to float over the foot of the note - which over a web tab is
-   *  behind the page, because a native webview draws above every pixel of HTML in the
-   *  window. See `.notices` in App.svelte.
+   *  In the middle of the row the app's own notices float in over the foot of the
+   *  panes, on every kind of tab and in full screen: a red dot somebody started has to
+   *  be there to be pressed, so over a web tab the page is cut round it - a native
+   *  webview draws above every pixel of HTML in the window. See `.notices` in
+   *  App.svelte and web-tab/covers.ts.
    *
    *  Read off the store rather than handed in: a recording belongs to the window
    *  rather than to any one note, and this is the one place that says so. */
@@ -44,8 +44,7 @@
 {/if}
 
 <style>
-  /* The middle track of the notices row, whatever is at either end of it. Laid out
-     rather than floated, so it takes its room instead of covering the pane; see
+  /* The middle track of the notices row, whatever is at either end of it; see
      App.svelte. */
   .recording {
     grid-column: 2;

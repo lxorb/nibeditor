@@ -842,9 +842,10 @@ test('the still picture goes with the pane it was taken for', async () => {
   expect(document.body.innerHTML).not.toContain(shot)
 })
 
-/** A picture is of one size of page. The notices row coming or going, or a divider
- *  moving, puts the page at another, and the old picture under the next menu then left
- *  a band of empty pane below it - seen in the native app once the update notice went. */
+/** A picture is of one size of page. A divider moving, or the notices row coming or
+ *  going while it still took room, puts the page at another, and the old picture under
+ *  the next menu then left a band of empty pane below it - seen in the native app once
+ *  the update notice went. */
 test('a picture of the page goes when the page is shown at another size', async () => {
   const { tab, app } = await opened('https://example.com/resized')
   const shot = 'data:image/png;base64,iVBORw0KGgo='

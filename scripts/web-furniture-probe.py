@@ -4,16 +4,17 @@ Emil, 2026-09-27, in the installed app: the corner notice *"Nib 0.9.1 is ready t
 install"* came up and the whole web page went blank until **Later** was pressed. A web
 tab's page is a native webview, which draws above every pixel of HTML in the window, so
 the pane hides the page while anything of the app's is over it - and the notice floated
-over the pane's corner. It sits in a row of its own under the panes now, beside the page
-rather than over it; see `.notices` in App.svelte and docs/web-tabs.md.
+over the pane's corner. It floats in the notices row over the foot of the panes now, and
+the page is cut round it rather than hidden; see `.notices` in App.svelte,
+web-tab/covers.ts and docs/web-tabs.md.
 
 The drive asks the pixels, the way web-overlays-probe.py does, of a page in one of two
 colours. A photograph cannot tell the page from its still picture - that is the point of
 the picture - so whether the page itself is up is asked of the window manager: wry gives
 every webview a child window and hides a page by hiding it. So:
 
-* **with the notice up** the page is still up, the pane is the page, and the notice's
-  own rectangle is the notice rather than the page;
+* **with the notice up** the page is still up at its full height, the pane is the page,
+  and the notice's own rectangle is the notice rather than the page;
 * **with a menu open** the page is down, the pane is its picture - one of its colours,
   never the window's empty ground - and the menu is in front.
 
@@ -252,8 +253,8 @@ def main() -> int:
         said["the page beside it"] = page
         if not isinstance(notice, list) or not isinstance(page, list):
             raise SystemExit("the notice or the page is not on screen")
-        if notice[1] < page[3]:
-            failures.append("the notice is drawn over the page's rectangle")
+        if page[3] - page[1] < bare[3] - bare[1]:
+            failures.append("the page gave up room to the notice rather than being under it")
 
         shares = photographs(overlays, hwnd, "notice", inset(page))
         said["the page under the notice, four shots"] = [

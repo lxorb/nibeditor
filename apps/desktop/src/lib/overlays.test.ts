@@ -196,7 +196,7 @@ describe('what hides a web page', () => {
     'lib/web-tab/WebSite.svelte': 'bubble',
   }
 
-  /** What stays up without being asked for, and so may never be over a page. */
+  /** What stays up without being asked for, and so may never hide a page. */
   const FURNITURE = [
     'lib/UpdateNotice.svelte',
     'lib/StorageWarning.svelte',
@@ -218,7 +218,7 @@ describe('what hides a web page', () => {
     expect(read('App.svelte')).not.toMatch(/fullscreen\.on \? overlays\.show/)
   })
 
-  test("the app's own furniture is on no stack and floats over nothing", () => {
+  test("the app's own furniture is on no stack and places itself nowhere", () => {
     for (const path of FURNITURE) {
       const text = read(path)
       expect(text, path).not.toContain('overlays')
@@ -226,30 +226,48 @@ describe('what hides a web page', () => {
     }
   })
 
-  test('it takes a row of its own under the panes instead', () => {
+  test('it is in one row, written once', () => {
     const app = read('App.svelte')
-    // Written once, as a snippet: the row is drawn in the note's column, or under the
-    // drawer as well where the panels are one.
-    const row = app.slice(app.indexOf('<div class="notices"'))
+    // Written once, as a snippet: the row is drawn over the panes, or over the drawer
+    // as well where the panels are one.
+    const row = app.slice(app.indexOf('<div class="notices" data-notices'))
     const end = row.indexOf('{/snippet}')
 
     expect(end).toBeGreaterThan(0)
-    for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice']) {
+    for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice', 'UndoToast']) {
       expect(row.slice(0, end), name).toContain(`<${name}`)
       expect(app.split(`<${name}`).length - 1, name).toBe(1)
     }
   })
 
+  /** A toast in a row of its own under the panes shoved every tab up by its height
+   *  as it came and back down as it went (#218). So the row floats, over the foot of
+   *  the panes, and a web page under it is cut round each card in it rather than
+   *  hidden; see web-tab/covers.ts. */
+  test('the row floats over the panes rather than taking room from them', () => {
+    const app = read('App.svelte')
+    const panes = app.slice(app.indexOf('<div class="panes" data-panes>'))
+    const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
+    expect(inPanes).toContain('{#if !viewport.drawer}\n            {@render notices()}')
+
+    const style = app.slice(app.indexOf('<style>'))
+    const row = style.slice(style.indexOf('  .notices {'))
+    const rule = row.slice(0, row.indexOf('}'))
+    expect(rule).toMatch(/position:\s*absolute/)
+    expect(rule).toMatch(/pointer-events:\s*none/)
+  })
+
   /** Where the panels are a drawer, the note slides off the screen to show the list,
    *  and a row inside the note went with it: the Undo for a file deleted from the
    *  list was off the side of a phone, where nobody could see it or press it. */
-  test('where the panels are a drawer it is under the list and the note, not in the note', () => {
+  test('where the panels are a drawer it is over the list and the note, not in the note', () => {
     const app = read('App.svelte')
     const main = app.slice(app.indexOf('<div class="middle"'), app.indexOf('</main>'))
     const after = main.slice(main.lastIndexOf('\n  </div>'))
 
     expect(after).toContain('{#if viewport.drawer}')
     expect(after).toContain('{@render notices()}')
-    expect(app).toContain('{#if !viewport.drawer}\n        {@render notices()}')
+    const style = app.slice(app.indexOf('<style>'))
+    expect(style).toMatch(/\.notices\.over \{\s*position: fixed;/)
   })
 })
