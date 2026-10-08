@@ -166,11 +166,17 @@ fn main() {
         return;
     }
 
+    // Chromium's own swipe between pages is off, so a swipe over a page is nib's alone
+    // (#209); see ENGINE_SWIPE in ../src/engine.rs. Before a run's own switches, which
+    // may say otherwise.
+    let (swipe_feature, swipe_switch, swipe_off) = nib_lib::ENGINE_SWIPE;
     let mut engine = Cef::default()
         .sandbox(sandbox())
         // `nib://` links reach the app the same way they do on the system's engine; the
         // plugin handles the arriving half either way.
         .deep_link_schemes(["nib"])
+        .disable_features([swipe_feature])
+        .command_line_args([(swipe_switch, Some(swipe_off))])
         .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()));
 
     let debugging = debugging();

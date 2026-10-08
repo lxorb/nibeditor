@@ -104,9 +104,35 @@ const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 /// runtime started hiding it. One `--disable-features`, because Chromium reads only the
 /// last of a repeated switch. Every webview on one user data folder must be started with
 /// the same switches, which is why there is one list and not one per caller.
+///
+/// And **the engine's own swipe between pages is off**, both halves of it. Emil,
+/// 2026-10-08 (#209): *"edge supports it for some sites while nib supports it as well
+/// ... sometimes both triggers"*. nib draws the swipe itself (web_swipe.rs) and walks the
+/// tab's own trail; the engine's walks its own history, which a tab revived after a
+/// relaunch does not have, so it went on some pages and not others, and on those it went
+/// as well as nib's. `IsSwipeNavigationEnabled`, which wry leaves off, is documented for a
+/// finger on a screen, and did not reach two on a touchpad: that is Chromium's
+/// `TouchpadOverscrollHistoryNavigation`, and `--overscroll-history-navigation=0` turns
+/// the whole of it off, touchpad and screen alike, whichever of the two a runtime reads.
+/// See [`ENGINE_SWIPE`].
 #[cfg(all(windows, not(feature = "cef")))]
-pub(crate) const BROWSER_ARGS: &str =
-    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping";
+pub(crate) const BROWSER_ARGS: &str = concat!(
+    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping,",
+    "TouchpadOverscrollHistoryNavigation",
+    " --overscroll-history-navigation=0",
+);
+
+/// Chromium's own swipe between pages, which both of Windows' engines would run beside
+/// nib's: the feature that is its touchpad half, and the switch, with its value, that is
+/// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to nib's own
+/// Chromium as it starts (cef/src/main.rs, through `nib_lib::ENGINE_SWIPE`); a test holds
+/// the first to these names.
+#[cfg_attr(not(any(test, feature = "cef")), allow(dead_code))]
+pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
+    "TouchpadOverscrollHistoryNavigation",
+    "overscroll-history-navigation",
+    "0",
+);
 
 /// The folder the web's own storage lives in, made if it is not there yet.
 #[cfg(desktop)]
@@ -333,9 +359,20 @@ mod tests {
         );
     }
 
-    /// The pointer is never hidden by one browser process where another one has it, and
-    /// wry's own three switches survive being replaced: all in the one
-    /// `--disable-features`, because Chromium reads only the last of a repeated switch.
+    /// The engine's own swipe is named the way Chromium reads it, and handed over the way
+    /// both runtimes take a switch with a value: without its dashes.
+    #[test]
+    fn the_engine_s_swipe_is_named_the_way_chromium_reads_it() {
+        let (feature, switch, value) = super::ENGINE_SWIPE;
+        assert_eq!(feature, "TouchpadOverscrollHistoryNavigation");
+        assert_eq!(switch, "overscroll-history-navigation");
+        assert_eq!(value, "0", "the history navigation that is none");
+    }
+
+    /// The pointer is never hidden by one browser process where another one has it,
+    /// wry's own three switches survive being replaced - all in the one
+    /// `--disable-features`, because Chromium reads only the last of a repeated switch -
+    /// and the engine's own swipe is off.
     #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn the_engine_never_hides_the_pointer_and_keeps_wry_s_switches() {
@@ -358,6 +395,18 @@ mod tests {
         ] {
             assert!(off.contains(&feature), "{feature} is not switched off");
         }
+        let (swipe, switch, value) = super::ENGINE_SWIPE;
+        assert!(
+            off.contains(&swipe),
+            "the engine's touchpad swipe is not off"
+        );
+        let wanted = format!("--{switch}={value}");
+        assert!(
+            super::BROWSER_ARGS
+                .split_whitespace()
+                .any(|one| one == wanted),
+            "the engine's swipe is not switched off"
+        );
     }
 
     /// A profile is a direct child of the user data directory, which is the only
