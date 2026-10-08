@@ -270,8 +270,8 @@ where it is (`foreign/synced.ts`).
 
 ## What synced
 
-The light in the corner says syncing, or failed. That is the right amount to say in
-a corner and not enough to act on, so `Sync` lists the last few dozen passes: when,
+Nothing on screen says a pass is running: a light that blinked with every pass
+was noise (#206). So `Sync` lists the last few dozen passes: when,
 which space, how many notes came down, how many went up, and what went wrong in the
 server's own words.
 

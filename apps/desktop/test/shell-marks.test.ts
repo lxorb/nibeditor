@@ -138,11 +138,11 @@ describe('the mark that says shared', () => {
   })
 
   test('and nothing draws a dot for it any more', () => {
-    // A round few pixels filled with the accent is the shape it had. Three
-    // surfaces still draw one, and none of the three is about other people:
-    // the tab's saving dot, which is what a dot means from now on; the pulse on
-    // a request waiting to be let in; and the foot's sync light. The switcher,
-    // which is where the shared dot was, is not among them.
+    // A round few pixels filled with the accent is the shape it had. Two
+    // surfaces still draw one, and neither is about other people: the tab's
+    // saving dot, which is what a dot means from now on, and the pulse on a
+    // request waiting to be let in. The foot's sync light went too (#206), and
+    // the switcher, which is where the shared dot was, is not among them.
     const dots = components
       .filter((one) => {
         const style = declarations(one.style)
@@ -158,7 +158,7 @@ describe('the mark that says shared', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(dots).toEqual(['lib/JoinSheet.svelte', 'lib/SidebarFoot.svelte', 'lib/Tabs.svelte'])
+    expect(dots).toEqual(['lib/JoinSheet.svelte', 'lib/Tabs.svelte'])
   })
 
   test('and the file list says it on the note itself', () => {

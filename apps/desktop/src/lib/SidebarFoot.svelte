@@ -19,7 +19,6 @@
   import { longPress } from './longpress'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
-  import { sync } from './sync.svelte'
   import { t } from './i18n.svelte'
   import { theme } from './theme.svelte'
   import { shortcuts } from './shortcuts.svelte'
@@ -29,16 +28,6 @@
   const who = $derived(account.name)
   /** Their face, where they chose one: the small picture; see people/face.ts. */
   const face = $derived(account.user?.avatar && `${BASE}/i/${account.user.avatar.s}.webp`)
-
-  /** The settings button doubles as the sync light, so its tooltip says what
-   *  the light means rather than leaving a colour to be guessed at, and while it
-   *  means nothing the button's own name and key. */
-  function syncTitle(): string {
-    if (sync.status === 'syncing') return t('Syncing')
-    if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
-    if (sync.status === 'offline') return t('Offline')
-    return shortcuts.tooltip(t('Settings'), 'app.settings')
-  }
 
   /** Every theme, each shown on the whole app while it is pointed at: a right click
    *  on the switch, or a finger held on it. Fetched then; see theme-picker/. */
@@ -117,18 +106,11 @@
       {/if}
     </button>
 
-    <!-- Syncing happens on its own and mostly wants no attention, so its only
-         ambient sign is a mark on the button that leads to it: lit while a pass
-         is running, red when the last one failed, and hollow while the account
-         cannot be reached - which is nothing having gone wrong, so never red. -->
+    <!-- No mark of syncing on it: a pass blinking in the corner was noise (#206). -->
     <button
       class="nib-glyph act"
-      class:syncing={sync.status === 'syncing'}
-      class:failed={sync.status === 'error'}
-      class:offline={sync.status === 'offline'}
-      title={syncTitle()}
+      title={shortcuts.tooltip(t('Settings'), 'app.settings')}
       aria-label={t('Settings')}
-      aria-busy={sync.status === 'syncing'}
       onclick={() => settings.show()}
     >
       <!-- An actual gear: eight teeth around a hub. -->
@@ -256,59 +238,14 @@
   }
 
   /* The two switches are `.nib-glyph` in the themes package, which says why its
-     padding is none. What is left here is the dot in the corner, which needs
-     something to be in the corner of. */
-  .act {
-    position: relative;
-  }
-
+     padding is none. */
   .act .gear {
     stroke-width: 1.6;
   }
 
-  /* A dot in the corner, not a badge: it is there to be noticed out of the
-     corner of an eye and otherwise ignored. */
-  .act.syncing::after,
-  .act.failed::after,
-  .act.offline::after {
-    content: '';
-    position: absolute;
-    inset-inline-end: 2px;
-    bottom: 2px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-
-  .act.syncing::after {
-    animation: breathe 1100ms var(--ease-in-out) infinite;
-  }
-
-  .act.failed::after {
-    background: var(--danger);
-  }
-
-  /* Hollow: everything is kept here and goes up when the account is back. */
-  .act.offline::after {
-    background: transparent;
-    box-shadow: inset 0 0 0 1px var(--muted);
-  }
-
-  @keyframes breathe {
-    50% {
-      opacity: 0.3;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .act.syncing::after,
     .looking {
       animation: none;
-    }
-
-    .act.syncing::after {
-      opacity: 0.6;
     }
   }
 
