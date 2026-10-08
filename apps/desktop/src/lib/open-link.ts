@@ -50,7 +50,7 @@ export function webHref(href: string): string | null {
  *  system browser instead, which is the answer rather than a gap - that browser has
  *  their logins, their extensions and their ad blocking, and Tauri has no child
  *  webviews there anyway - and in front of a pair of glasses there is no page at all.
- *  The same two answers `openWeb` gives; see docs/web-tabs.md. */
+ *  A web note leaves everywhere but the desktop app; see docs/web-tabs.md. */
 function holdsPages(): boolean {
   return !isPlugin() && viewport.device !== 'phone'
 }
