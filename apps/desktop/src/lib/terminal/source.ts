@@ -12,10 +12,12 @@
  *  The pty's source is here; the socket's is lib/online/source.ts, fetched with the
  *  first online terminal and never before. */
 
-import type { DownReason } from '@nib/online/wire'
+import type { DownReason, ImageKind } from '@nib/online/wire'
+import { toBase64 } from '../bytes'
 import { Channel } from '../native'
 import { isNumber, isRecord } from '../stored'
 import { invoke } from '../tauri'
+import { hostIdOf } from './spec'
 
 /** A machine's state as a tab shows it: live, waking, asleep, or out of its allowance
  *  and refused. Null for a terminal on this computer, which has no machine to show. */
@@ -67,6 +69,10 @@ export interface Source {
   /** A new shell where the last one ended, for a source that keeps its session: an
    *  online one. A pty's is a new source. */
   again?(): void
+  /** A picture written to a file on the machine the shell runs on, answering its path
+   *  there; rejects where it could not be. Only for a source on another machine: a shell
+   *  on this one reads this computer's clipboard itself. See images.ts. */
+  image?(bytes: Uint8Array, kind: ImageKind): Promise<string>
 }
 
 /** A shell in a pty on this machine, under the id given. */
@@ -112,6 +118,14 @@ export class PtySource implements Source {
 
   end(): void {
     void invoke('pty_kill', { id: this.id }).catch(() => undefined)
+  }
+
+  /** A picture on the host a remote terminal reaches, through a second `ssh` of its own;
+   *  see `remote_image` in src-tauri/src/terminal/remote.rs. */
+  async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
+    const host = hostIdOf(this.shell)
+    if (host === null) throw new Error('a shell on this computer reads its own clipboard')
+    return invoke<string>('remote_image', { host, kind, base64: toBase64(bytes) })
   }
 
   /** What is in front of the shell, by the kernel; undefined where it could not say. */

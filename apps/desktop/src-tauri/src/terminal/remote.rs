@@ -327,6 +327,19 @@ pub fn connect(webview: &Webview, id: &str) -> Result<Launch, String> {
     })
 }
 
+/// The system's `ssh` and the arguments that reach the host `id` names, for a connection
+/// of nib's own beside the tab's: a picture carried over (`picture.rs`). Nothing is noted
+/// down; refused for an id that names no host, and where there is no `ssh`.
+pub(super) fn reach(webview: &Webview, id: &str) -> Result<(PathBuf, Vec<String>), String> {
+    let places = places(webview)?;
+    let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
+    let kept = read_kept(&places.kept);
+    let target = target(id, &config, &kept).ok_or_else(|| format!("no host {id} here"))?;
+    let args = arguments(&target, places.elsewhere.then_some(places.config.as_path()));
+    let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
+    Ok((program, args))
+}
+
 /// Every host there is: the config's, as it is now, and what nib keeps.
 #[tauri::command(async)]
 pub fn remote_hosts(webview: Webview) -> Result<Hosts, String> {

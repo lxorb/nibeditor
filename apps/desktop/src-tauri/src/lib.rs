@@ -407,6 +407,7 @@ macro_rules! desktop_commands {
             terminal::remote::remote_hosts,
             terminal::remote::remote_keep,
             terminal::remote::remote_config_open,
+            terminal::picture::remote_image,
             updates::check_update,
             web_tabs::web_open,
             // Chrome and Edge extensions in web tabs; see extensions.rs.

@@ -20,7 +20,9 @@
 //! - a shell is started by an id this module found (see shells.rs): the window cannot
 //!   name a program, an argument or a variable of its own. Another machine is the same:
 //!   a host's id, which the crate finds in the reader's ssh config or among the hosts it
-//!   keeps itself, and the system's `ssh` started for it (remote.rs).
+//!   keeps itself, and the system's `ssh` started for it (remote.rs). A picture carried to
+//!   a host is the same id and the same `ssh`, with the picture's bytes the window's only
+//!   words of its own (picture.rs).
 //!
 //! And none of this is reachable from outside the app: the `nib` command and `nib://`
 //! links reach verbs, and no verb opens or types into a terminal; see docs/terminal.md.
@@ -32,6 +34,7 @@
 //! which are kept in the app's local data folder and never in a space (history.rs).
 
 pub mod history;
+pub mod picture;
 pub(crate) mod process;
 pub mod remote;
 mod session;
