@@ -72,7 +72,20 @@ export function userOf(name: string, passwd = '/etc/passwd'): User | null {
 }
 
 const PRLIMIT = '/usr/bin/prlimit'
-const SETPRIV = '/usr/bin/setpriv'
+export const SETPRIV = '/usr/bin/setpriv'
+
+/** `command`, run as `user` with that user's groups rather than as `nibd`: what every
+ *  shell is started through, and anything else `nibd` does in the user's home. */
+export function asUser(user: User, command: string[]): string[] {
+  return [
+    SETPRIV,
+    `--reuid=${String(user.uid)}`,
+    `--regid=${String(user.gid)}`,
+    '--init-groups',
+    '--',
+    ...command,
+  ]
+}
 
 /** The command a session's pty runs: the login shell, fenced, as the user. */
 export function shellCommand(
@@ -88,16 +101,7 @@ export function shellCommand(
     const fence = `${PRLIMIT} --nproc=${String(pidsMax)} --pid $$ 2>/dev/null; exec "$@"`
     command = ['/bin/sh', '-c', fence, 'nib-shell', ...command]
   }
-  if (user && has(SETPRIV)) {
-    command = [
-      SETPRIV,
-      `--reuid=${String(user.uid)}`,
-      `--regid=${String(user.gid)}`,
-      '--init-groups',
-      '--',
-      ...command,
-    ]
-  }
+  if (user && has(SETPRIV)) command = asUser(user, command)
   const [file = shell, ...args] = command
   return { file, args }
 }

@@ -688,8 +688,13 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   a picture's row dropped on the terminal carries the picture up: `image {id, kind, part,
   last}` frames of at most `IMAGE_PART` bytes (`MOST_INPUT` once base64), paced and
   counted as input and refused where input would be; `Machine` passes the bytes down the
-  link, `nibd` writes the file into the user's `~/.cache/nib/images` (theirs, `0600`,
-  never written through, cleared after a day; `services/machine/src/images.ts`) and
+  link, and the file is written into the user's `~/.cache/nib/images` **as the user**:
+  `nibd` is root and the home is theirs, where any folder on the way could be a link to
+  `/etc` and a check before the write is a race, so the folder, the clearing and the write
+  are one `sh` run through the shells' own `setpriv` (`asUser` in limits.ts), the bytes on
+  its input and the path said back, and nothing of root's touches the home. The file is
+  `0600`, never written through (`set -C`), and only pictures of nib's own naming
+  (`NAMED`) are cleared after a day; `services/machine/src/images.ts`. `nibd` then
   answers `image {id, path}`, which `Machine` sends to the sockets that may type. The app
   pastes the path, which the agent takes as an image. 16 MB at most (`MOST_IMAGE`). See
   docs/terminal.md, _Keys, copying, links, finding_.

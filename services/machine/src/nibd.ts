@@ -4,7 +4,7 @@
  *  It knows nothing of nib's accounts, spaces or roles - `Machine` is the door and has
  *  decided all of that before a frame reaches here - and it never opens anything under
  *  the home but what a shell does and the pictures pasted into a session, which it writes
- *  to `~/.cache/nib/images` (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
+ *  to `~/.cache/nib/images` as the user, never as root (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
  *  is read by any code of nib's (4.7). Its whole vocabulary is the link's, from
  *  `@nib/online/wire`. */
 
@@ -169,7 +169,7 @@ export class Nibd {
       }
       case 'image': {
         // A picture pasted in the session, a file here once its last part is (images.ts).
-        const path = this.images.part(frame.id, frame.kind, frame.data, frame.last)
+        const path = await this.images.part(frame.id, frame.kind, frame.data, frame.last)
         if (path !== undefined)
           this.send({ t: 'image', session: frame.session, id: frame.id, path })
         return
