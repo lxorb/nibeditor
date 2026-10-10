@@ -574,35 +574,35 @@ def old_meeting(browser: Browser) -> None:
 
 def phone(browser: Browser) -> None:
     """The same command on a phone, and the same pill on a screen with no hover on it:
-    the numbers in the status bar are a pointer's, the pill is not. Not from the plus:
-    a recording is not a kind of note, and Emil took it off the plus on 2026-09-27
-    (ee9f9005, docs/mobile.md), so the plus offers only what makes a note and the
-    recording goes into the note being written."""
+    the numbers in the status bar are a pointer's, the pill is not. Not from the space's
+    menu of kinds: a recording is not a kind of note, and Emil took it off the plus on
+    2026-09-27 (ee9f9005, docs/mobile.md), so that menu offers only what makes a note and
+    the recording goes into the note being written."""
     say("--- a finger ---")
     page, _whisper = fresh(browser, finger=True)
 
-    # The plus lives at the top of the list panel, which is a drawer on a phone and is
-    # shut until it is asked for.
+    # The kinds are the space's own menu, under the last row of the list panel, which is
+    # a drawer on a phone and is shut until it is asked for.
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(450)
 
     page.evaluate(
         """() => {
-      const plus = document.querySelector('.new')
-      plus.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+      const space = document.querySelector('[data-space-rest]')
+      space.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
     }"""
     )
-    wait_for(page, "document.querySelector('[role=menuitem]')", "the plus's menu")
+    wait_for(page, "document.querySelector('[role=menuitem]')", "the space's menu")
     rows = page.evaluate(
         "() => [...document.querySelectorAll('[role=menu] button, [role=menuitem]')]"
         ".map((one) => one.textContent.trim())"
     )
-    say(f"the plus offers {json.dumps(rows)}")
+    say(f"the space offers {json.dumps(rows)}")
     if "Record" in rows:
-        wrong("the phone's plus offers Record, which is not a kind of note")
+        wrong("the phone's space menu offers Record, which is not a kind of note")
     if any("Meeting" in row for row in rows):
-        wrong(f"the phone's plus still offers a meeting: {rows}")
-    shot(page, "phone-plus")
+        wrong(f"the phone's space menu still offers a meeting: {rows}")
+    shot(page, "phone-kinds")
     page.keyboard.press("Escape")
     page.evaluate("() => window.nibApp.workspace.closePanel()")
     page.wait_for_timeout(450)

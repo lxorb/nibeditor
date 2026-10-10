@@ -578,10 +578,10 @@ paper puts away the one that was there rather than standing it beside it, and
 the title bar is that document's name and mark instead of a strip. There is no
 dragging a tab and no dragging a pane into being; a desktop keeps both.
 
-The plus the strip would have carried moves rather than going: it sits at the
-right of the list panel's header, and it is the only one on the screen. A press
-makes a note; a held finger offers a canvas and a folder too, which is what the
-desktop strip's plus does under a right click. See `docs/design.md`.
+The plus the strip would have carried moves rather than going: it is the round
+button over the note, and it is the only one on the screen. A press makes a note;
+the other kinds are the file list's own menu, a held finger on the Files tab. See
+`docs/design.md`.
 
 ## What the drawer is headed with, and footed with
 
@@ -590,7 +590,7 @@ Discord's channel list has, at the touch scale:
 
 | | |
 | --- | --- |
-| The head | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - then the one plus. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
+| The head | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - and nothing after them. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
 | The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking |
 | The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
 
@@ -744,8 +744,8 @@ been walked on a device yet; it is the one thing in this batch a phone has to co
 
 **Where the command is.** `Record` is in the palette and in the Paragraph menu, out of
 one list, by one id - `record` - which is also what the Android quick settings tile
-calls. It is not on the plus at the top of the list panel: it is not a kind of note,
-and Emil took it off the plus (2026-09-27). It makes a note of its own when there is
+calls. It is not among the kinds the file list's menu makes: it is not a kind of
+note, and Emil took it off them (2026-09-27). It makes a note of its own when there is
 none, which is what a command pressed in a hurry has to do. See
 `apps/desktop/src/lib/recorder/commands.ts`.
 

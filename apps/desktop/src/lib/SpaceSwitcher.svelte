@@ -136,7 +136,7 @@
      while, on the argument that a full-width hover puts a grey block across the
      header; the block is what a row does everywhere else in this panel, and
      missing the button is worse. Still `min-width: 0`, so a long name is cut
-     rather than pushing the plus off the end. */
+     rather than pushing the panel wider. */
   .name {
     flex: 1;
     min-width: 0;

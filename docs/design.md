@@ -1241,8 +1241,9 @@ for the window's own theme on everything that carries the scheme attribute. See
 
 The plus always makes a note, and there is never more than one on screen. On a
 desktop it is at the end of the tab strip, where a browser puts it. On a handheld
-there is no tab strip, so it is at the end of the panel's header, where Discord
-puts it.
+there is no tab strip, so it is the round button over the note, where a thumb
+reaches. The panel's header holds none: a pen beside the space's name made a note
+for a while, and came off at the owner's word (issue #229).
 
 ### Tabs and bars
 
@@ -1280,9 +1281,9 @@ which Discord earns and nib does not:
   four rows the desktop has at the touch scale: the head, the tabs, the search
   pill, the list, and the foot under them.
 - The head carries the sidebar button, then the space's name and its chevron,
-  then the one plus. The button is the same component the title bar has, in the
-  same corner of the screen, so the top left means one thing whether the drawer
-  is open or shut.
+  and nothing after them. The button is the same component the title bar has, in
+  the same corner of the screen, so the top left means one thing whether the
+  drawer is open or shut.
 - **No bottom bar.** Discord earns one because it has three unrelated app-level
   places: servers, notifications, and you. nib has one place - your notes - and
   the other two candidates are already where they belong: search is the pill at

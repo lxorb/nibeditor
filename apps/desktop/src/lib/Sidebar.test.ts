@@ -121,8 +121,8 @@ describe('the panel tabs', () => {
   })
 })
 
-/** The search is a bar over the list rather than a tab in the strip, and the new note
- *  a button at the head of it on every machine, as Apple Notes has both. */
+/** The search is a bar over the list rather than a tab in the strip, and the space's
+ *  name is the head's one control. */
 describe('the head of the list', () => {
   test('has a search bar to type into and no search tab', () => {
     open('# Head\n')
@@ -132,11 +132,20 @@ describe('the head of the list', () => {
     expect(html).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
   })
 
-  test('has the new note button on a desktop as well as a phone', () => {
+  /** A pen beside the space's name made a note, and the owner asked for it gone
+   *  (issue #229): a new note is its key, the palette, the file list's menu and the
+   *  new tab's chooser. The head is the switcher and, in a drawer, the sidebar button. */
+  test('has no new note button beside the space, on a desktop or a phone', () => {
     open('# Head\n')
 
     for (const device of ['desktop', 'phone'] as const) {
-      expect(drawn('tree', device), device).toMatch(/class="new[^"]*"[^>]*aria-label="New note"/)
+      const html = drawn('tree', device)
+      const start = html.indexOf('data-region="space"')
+      const head = html.slice(start, html.indexOf('class="switch', start))
+
+      expect(start, device).toBeGreaterThan(-1)
+      expect(head, device).not.toContain('New note')
+      expect(head, device).not.toMatch(/class="new\b/)
     }
   })
 })

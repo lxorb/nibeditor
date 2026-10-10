@@ -61,7 +61,6 @@
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
   import { dur } from './motion'
-  import { writeNew } from './write-new'
 
   const {
     side = 'left',
@@ -672,9 +671,9 @@
     <!-- The regions of the window carry one attribute each, so the order F6 walks is
        the order the sidebar is built in and cannot drift from it; see focus.ts.
 
-       The space's name, its switcher and the plus belong to one side of the
-       window: a second identity row on the right would be a second switcher for
-       the same space, and the right side is one region of its own. -->
+       The space's name and its switcher belong to one side of the window: a
+       second identity row on the right would be a second switcher for the same
+       space, and the right side is one region of its own. -->
     {#if side === 'left'}
       <div class="head" data-region="space">
         <!-- Where the panel is a drawer over the note it covers the bar the sidebar
@@ -686,24 +685,11 @@
           <SidebarToggle />
         {/if}
 
-        <!-- It takes the width the head has left, so the whole row is the control
-         that opens the list of spaces; the plus below is what "the width left"
-         means. There used to be an empty span here holding the two apart, which
-         was the same arrangement with a spacer in the middle. -->
+        <!-- It takes the rest of the head, so the whole row is the control that
+         opens the list of spaces. Nothing stands beside it: the pen that made a
+         note here is gone (issue #229), and a new note is its key, the
+         palette, the file list's menu and the new tab's chooser. -->
         <SpaceSwitcher />
-
-        <!-- Apple Notes' compose button, on every machine. A held finger or a right
-         click offers the other kinds, as the strip's plus does. -->
-        <button
-          class="new"
-          title={shortcuts.tooltip(t('New note'), 'app.new')}
-          aria-label={t('New note')}
-          onclick={writeNew}
-          oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-          use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-        >
-          <svg viewBox="0 0 13 13"><path d={FRESH_MARK} /></svg>
-        </button>
       </div>
     {/if}
 
@@ -1337,34 +1323,6 @@
     padding-inline-start: var(--traffic-lights);
   }
 
-  .new {
-    flex: none;
-    width: var(--row-height);
-    height: var(--row-height);
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--text);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .new:hover {
-      background: var(--surface-hover);
-      color: var(--text-strong);
-    }
-  }
-
-  .new:active {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
   .hunt {
     position: relative;
     flex: none;
@@ -1661,8 +1619,7 @@
     stroke-linejoin: round;
   }
 
-  .switch svg,
-  .new svg {
+  .switch svg {
     width: var(--icon-lg);
     height: var(--icon-lg);
   }

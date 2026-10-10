@@ -341,7 +341,7 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         pressed(held, "theme:glass", settle=1.0)
         pressed(held, "new-website", settle=1.5)
         photographed(app.pid, "light-glass-web")
-        ran(held, "(() => { document.querySelector('button.new')?.click(); return true })()")
+        ran(held, "(() => { document.querySelector('.tabs button.new')?.click(); return true })()")
         time.sleep(0.8)
         opened = ran(
             held,
