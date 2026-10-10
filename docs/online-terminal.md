@@ -682,6 +682,17 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   frames of at most `MOST_INPUT` (64 KB) of UTF-8, never cut inside a character
   (`inputChunks`), at no more than half the `Machine`'s rate, so a pasted log arrives whole
   inside one pair of paste brackets instead of being refused as one frame `large`.
+- **A picture** for a coding agent (issue 228). Claude Code and Codex read the clipboard
+  themselves when their image key is pressed, and the machine's clipboard is empty. So
+  the agent's key with a picture on the clipboard, a paste with a picture and no text, or
+  a picture's row dropped on the terminal carries the picture up: `image {id, kind, part,
+  last}` frames of at most `IMAGE_PART` bytes (`MOST_INPUT` once base64), paced and
+  counted as input and refused where input would be; `Machine` passes the bytes down the
+  link, `nibd` writes the file into the user's `~/.cache/nib/images` (theirs, `0600`,
+  never written through, cleared after a day; `services/machine/src/images.ts`) and
+  answers `image {id, path}`, which `Machine` sends to the sockets that may type. The app
+  pastes the path, which the agent takes as an image. 16 MB at most (`MOST_IMAGE`). See
+  docs/terminal.md, _Keys, copying, links, finding_.
 - **The clipboard** (OSC 52) and **notifications** (OSC 9, OSC 777, the bell) are every
   terminal's too (docs/terminal.md), with one rule of the online terminal's: OSC 52 is
   written only in a window that may type in the session.

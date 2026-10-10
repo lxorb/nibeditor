@@ -3,14 +3,16 @@
  *
  *  It knows nothing of nib's accounts, spaces or roles - `Machine` is the door and has
  *  decided all of that before a frame reaches here - and it never opens anything under
- *  the home but what a shell does: no file of the agents' (`~/.claude`, `~/.codex`) is
- *  read by any code of nib's (4.7). Its whole vocabulary is the link's, from
+ *  the home but what a shell does and the pictures pasted into a session, which it writes
+ *  to `~/.cache/nib/images` (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
+ *  is read by any code of nib's (4.7). Its whole vocabulary is the link's, from
  *  `@nib/online/wire`. */
 
 import type { Activity } from '@nib/online/types'
 import { isLoopbackUrl } from '@nib/online/urls'
 import type { MachineFrame, NibdFrame } from '@nib/online/wire'
 import { diskOf, Meter, homeSize } from './activity'
+import { Images } from './images'
 import type { Cgroups, User } from './limits'
 import { Saves, isSessionId, type Saved } from './saves'
 import { Session } from './session'
@@ -64,9 +66,11 @@ export class Nibd {
   /** The session typed in last, for an address asked for where none was said. */
   private lastTyped: string | null = null
   private readonly timers: ReturnType<typeof setInterval>[] = []
+  private readonly images: Images
 
   constructor(options: Options) {
     this.options = options
+    this.images = new Images(options.home, options.user)
     this.saves = new Saves(options.state)
     // Every session that was saved as the machine went to sleep comes back now, above a
     // fresh shell, so the first `open` after a wake finds it as it was left.
@@ -161,6 +165,13 @@ export class Nibd {
         if (!isLoopbackUrl(frame.url)) return
         const status = await (this.options.call ?? call)(frame.url)
         this.send({ t: 'called', session: frame.session, url: frame.url, status })
+        return
+      }
+      case 'image': {
+        // A picture pasted in the session, a file here once its last part is (images.ts).
+        const path = this.images.part(frame.id, frame.kind, frame.data, frame.last)
+        if (path !== undefined)
+          this.send({ t: 'image', session: frame.session, id: frame.id, path })
         return
       }
     }

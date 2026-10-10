@@ -68,6 +68,27 @@ export function inputChunks(data: string, most = MOST_INPUT): string[] {
   return chunks
 }
 
+/** The kinds of picture a paste carries to the machine, each the end of its file's name
+ *  there: what a coding agent reads as an image from a path (docs/online-terminal.md
+ *  4.13). */
+export type ImageKind = 'png' | 'jpeg' | 'gif' | 'webp'
+
+export const IMAGE_KINDS: readonly ImageKind[] = ['png', 'jpeg', 'gif', 'webp']
+
+/** The largest picture a paste carries up: a screenshot of a big screen is a few
+ *  megabytes, and an agent scales anything past that down before it sends it on. */
+export const MOST_IMAGE = 16 * 1024 * 1024
+
+/** A picture's bytes a frame at most: `MOST_INPUT` once they are base64, so a picture is
+ *  paced and bounded as a paste is. */
+export const IMAGE_PART = (MOST_INPUT / 4) * 3
+
+/** What a picture on its way is called until the machine has it, and what its file is
+ *  named there: the app's own random letters and digits, so the name is never a path. */
+export function isImageId(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-z0-9]{16,64}$/.test(value)
+}
+
 /** The app socket's address for a `.term` file's id. */
 export function socketPath(term: string): string {
   return `/v2/online/${encodeURIComponent(term)}/socket`
@@ -139,6 +160,9 @@ export type ClientFrame =
   /** A tab this nib opened for the machine landed on the loopback page the opened
    *  address sent it back to: that request, made on the machine instead (urls.ts). */
   | { t: 'callback'; url: string }
+  /** A part of a picture pasted into the session, base64, at most `IMAGE_PART` bytes; the
+   *  machine writes it to a file once the `last` arrives and answers with an `image`. */
+  | { t: 'image'; id: string; kind: ImageKind; part: string; last: boolean }
 
 /** What `Machine` says to the app, as text. Output is not here: it is binary
  *  (`outFrame`).
@@ -157,7 +181,9 @@ export type ClientFrame =
  *  - `browse`: a program on the machine asked for a browser; to one socket of the
  *    machine's owner only;
  *  - `called`: a `callback` was made on the machine, and the HTTP status it was
- *    answered with, 0 where nothing answered. */
+ *    answered with, 0 where nothing answered;
+ *  - `image`: a pasted picture is a file on the machine now, at `path`, or could not be
+ *    written (null); to the sockets that may type, the one that sent it among them. */
 export type ServerFrame =
   | {
       t: 'screen'
@@ -177,6 +203,7 @@ export type ServerFrame =
   | { t: 'refused'; error: Refusal }
   | { t: 'browse'; url: string }
   | { t: 'called'; url: string; status: number }
+  | { t: 'image'; id: string; path: string | null }
   | { t: 'note'; note: Note }
 
 /** Something worth one line under the screen: `restore`, the home could not be put back
@@ -222,6 +249,8 @@ export type MachineFrame =
   | { t: 'close'; session: string }
   | { t: 'sleep' }
   | { t: 'callback'; session: string; url: string }
+  /** A part of a picture pasted in the session, its bytes; see `ClientFrame`. */
+  | { t: 'image'; session: string; id: string; kind: ImageKind; data: Uint8Array; last: boolean }
   /** Are you there: answered with `pong` at once. */
   | { t: 'ping' }
   /** Every screen saved, then `nibd` ends itself for its supervisor to start again: the
@@ -231,7 +260,8 @@ export type MachineFrame =
 /** What `nibd` tells `Machine`: output from an offset; a whole screen; the program in
  *  front; a shell that ended; the last 30 seconds' activity; that every screen is
  *  saved, after a `sleep` or a SIGTERM; an address a program in a session asked a
- *  browser for (`nib-open`); and how a `callback` was answered. */
+ *  browser for (`nib-open`); how a `callback` was answered; and where a pasted picture
+ *  was written, or null where it could not be. */
 export type NibdFrame =
   | { t: 'out'; session: string; seq: number; data: Uint8Array }
   | {
@@ -255,6 +285,7 @@ export type NibdFrame =
   | { t: 'saved' }
   | { t: 'browse'; session: string; url: string }
   | { t: 'called'; session: string; url: string; status: number }
+  | { t: 'image'; session: string; id: string; path: string | null }
   | { t: 'pong' }
 
 /** How often `Machine` asks `nibd` whether it is there, and how long a link may say
@@ -324,6 +355,21 @@ function isScreen(value: unknown): value is string {
 /** An HTTP status, or 0 for none. */
 function isStatus(value: unknown): value is number {
   return isCount(value) && value <= 999
+}
+
+/** A path on the machine: absolute, and no longer than a title. */
+function isPathOrNone(value: unknown): value is string | null {
+  return (
+    value === null ||
+    (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
+  )
+}
+
+/** Base64 text no longer than an input frame. */
+function isPart(value: unknown): value is string {
+  return (
+    typeof value === 'string' && value.length <= MOST_INPUT && /^[A-Za-z0-9+/]*={0,2}$/.test(value)
+  )
 }
 
 function oneOf<T>(list: readonly T[], value: unknown): value is T {
@@ -405,6 +451,11 @@ export function clientFrameOf(raw: string): ClientFrame | null {
       return { t: value.t }
     case 'callback':
       return isLoopbackUrl(value.url) ? { t: 'callback', url: value.url } : null
+    case 'image': {
+      const { id, kind, part, last } = value
+      if (!isImageId(id) || !oneOf(IMAGE_KINDS, kind) || !isPart(part)) return null
+      return typeof last === 'boolean' ? { t: 'image', id, kind, part, last } : null
+    }
     default:
       return null
   }
@@ -460,6 +511,10 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return isLoopbackUrl(value.url) && isStatus(value.status)
         ? { t: 'called', url: value.url, status: value.status }
         : null
+    case 'image':
+      return isImageId(value.id) && isPathOrNone(value.path)
+        ? { t: 'image', id: value.id, path: value.path }
+        : null
     case 'note':
       return oneOf(NOTES, value.note) ? { t: 'note', note: value.note } : null
     default:
@@ -491,6 +546,13 @@ export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
       return { t: 'close', session }
     case 'callback':
       return isLoopbackUrl(value.url) ? { t: 'callback', session, url: value.url } : null
+    case 'image': {
+      const { id, kind, data, last } = value
+      if (!isImageId(id) || !oneOf(IMAGE_KINDS, kind) || typeof last !== 'boolean') return null
+      return data instanceof Uint8Array && data.length <= IMAGE_PART
+        ? { t: 'image', session, id, kind, data, last }
+        : null
+    }
     default:
       return null
   }
@@ -534,6 +596,10 @@ export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
     case 'called':
       return isLoopbackUrl(value.url) && isStatus(value.status)
         ? { t: 'called', session, url: value.url, status: value.status }
+        : null
+    case 'image':
+      return isImageId(value.id) && isPathOrNone(value.path)
+        ? { t: 'image', session, id: value.id, path: value.path }
         : null
     default:
       return null

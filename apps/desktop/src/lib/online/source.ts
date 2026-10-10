@@ -14,9 +14,17 @@
  *  words name, and the shell in it goes on (services/sync/src/machines/routes.ts). */
 
 import { termOf } from '@nib/online/term'
-import { inputChunks, MOST_INPUT, INPUT_RATE, type ServerFrame } from '@nib/online/wire'
+import {
+  IMAGE_PART,
+  type ImageKind,
+  inputChunks,
+  MOST_INPUT,
+  INPUT_RATE,
+  type ServerFrame,
+} from '@nib/online/wire'
 import { account } from '../account.svelte'
 import { ApiError, BASE } from '../api'
+import { toBase64 } from '../bytes'
 import { t } from '../i18n.svelte'
 import type { Said, Source } from '../terminal/source'
 import { isDesktop, isNative } from '../tauri'
@@ -130,6 +138,9 @@ export interface Place {
  *  never meets it whatever is typed beside it. */
 const FRAMES_A_SECOND = INPUT_RATE / 2
 
+/** How long the machine has to say where a picture landed once its last part is sent. */
+const LANDS_WITHIN = 20_000
+
 export class OnlineSource implements Source {
   readonly remote = true
   private link: Link | null = null
@@ -139,6 +150,8 @@ export class OnlineSource implements Source {
   private sent = { second: 0, count: 0 }
   /** Whether this tab said its machine's disk is nearly full: once a tab is enough. */
   private diskSaid = false
+  /** Pictures on their way up, by id, each waiting to hear where it landed. */
+  private readonly pictures = new Map<string, (path: string | null) => void>()
 
   /** `path` is the `.term` file's, read as it starts: a file renamed or moved keeps its
    *  id, and the socket with it. */
@@ -238,6 +251,9 @@ export class OnlineSource implements Source {
       case 'called':
         this.opener.called(frame.url, frame.status)
         return
+      case 'image':
+        this.pictures.get(frame.id)?.(frame.path)
+        return
       // This wake's home is the image's fresh one: its backup could not be put back. Or
       // the machine's disk is nearly full, which is how one froze (4.15).
       case 'note':
@@ -274,6 +290,28 @@ export class OnlineSource implements Source {
     }
   }
 
+  /** A picture up the socket in parts, paced as a paste is, and the path `nibd` wrote it
+   *  to (docs/online-terminal.md 4.13). */
+  async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
+    const id = crypto.randomUUID().replace(/-/g, '')
+    const landed = new Promise<string | null>((settle) => this.pictures.set(id, settle))
+    try {
+      for (let at = 0; ; at += IMAGE_PART) {
+        const last = at + IMAGE_PART >= bytes.length
+        await this.paced()
+        const part = toBase64(bytes.subarray(at, at + IMAGE_PART))
+        if (!this.link?.say({ t: 'image', id, kind, part, last })) throw new Error('not connected')
+        if (last) break
+      }
+      const quiet = new Promise<null>((settle) => setTimeout(() => settle(null), LANDS_WITHIN))
+      const path = await Promise.race([landed, quiet])
+      if (path === null) throw new Error('the machine did not take the picture')
+      return path
+    } finally {
+      this.pictures.delete(id)
+    }
+  }
+
   /** Waits for the next second once this one has had its frames. */
   private async paced(): Promise<void> {
     const now = Date.now()
@@ -302,6 +340,7 @@ export class OnlineSource implements Source {
   /** The socket closed; the session goes on without this window. */
   end(): void {
     this.ended = true
+    for (const settle of this.pictures.values()) settle(null)
     this.opener.end()
     this.link?.close()
     this.link = null

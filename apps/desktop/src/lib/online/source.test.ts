@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { ServerFrame } from '@nib/online/wire'
+import { type ClientFrame, IMAGE_PART, type ServerFrame } from '@nib/online/wire'
 import { ApiError } from '../api'
 import type { Said } from '../terminal/source'
 import { termSession } from './calls'
@@ -156,5 +156,59 @@ describe('an online source whose file the account does not have yet', () => {
     expect(asked).toHaveBeenCalledTimes(3)
     await started
     expect(seen.passes).toBe(2)
+  })
+})
+
+/** Issue 228: a picture pasted into an online terminal is written on the machine, and its
+ *  path is what the terminal pastes. */
+describe('an online source carrying a picture up', () => {
+  interface Inside {
+    link: { say(frame: ClientFrame): boolean } | null
+    heard(frame: ServerFrame, said: (what: Said) => void): void
+  }
+
+  test('sends it in parts no larger than a frame, the last marked, and answers where it landed', async () => {
+    const online = source()
+    const inside = online as unknown as Inside
+    const frames: ClientFrame[] = []
+    inside.link = {
+      say: (frame) => {
+        frames.push(frame)
+        return true
+      },
+    }
+
+    const landed = online.image(new Uint8Array(IMAGE_PART + 3).fill(7), 'png')
+    await vi.waitFor(() => {
+      expect(frames).toHaveLength(2)
+    })
+    const [first, second] = frames as Extract<ClientFrame, { t: 'image' }>[]
+    expect(first?.last).toBe(false)
+    expect(atob(first?.part ?? '')).toHaveLength(IMAGE_PART)
+    expect(second).toEqual({ t: 'image', id: first?.id, kind: 'png', part: 'BwcH', last: true })
+
+    inside.heard({ t: 'image', id: first?.id ?? '', path: '/home/nib/a.png' }, () => undefined)
+    await expect(landed).resolves.toBe('/home/nib/a.png')
+  })
+
+  test('rejects where the machine could not write it, or the socket is not open', async () => {
+    const online = source()
+    const inside = online as unknown as Inside
+    let id = ''
+    inside.link = {
+      say: (frame) => {
+        if (frame.t === 'image') id = frame.id
+        return true
+      },
+    }
+    const refused = online.image(new Uint8Array(1), 'png')
+    await vi.waitFor(() => {
+      expect(id).not.toBe('')
+    })
+    inside.heard({ t: 'image', id, path: null }, () => undefined)
+    await expect(refused).rejects.toThrow()
+
+    inside.link = { say: () => false }
+    await expect(online.image(new Uint8Array(1), 'png')).rejects.toThrow()
   })
 })

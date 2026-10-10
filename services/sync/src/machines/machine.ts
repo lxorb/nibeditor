@@ -62,6 +62,7 @@ import {
   type Watcher,
 } from '@nib/online'
 import {
+  type ClientFrame,
   clientFrameOf,
   type DownReason,
   INPUT_RATE,
@@ -442,6 +443,9 @@ export class Machine implements DurableObject {
       case 'callback':
         this.callback(socket, viewer, frame.url)
         break
+      case 'image':
+        this.image(socket, viewer, frame)
+        break
     }
   }
 
@@ -490,24 +494,31 @@ export class Machine implements DurableObject {
     }
   }
 
-  private input(socket: WebSocket, viewer: Viewer, data: Uint8Array): void {
+  /** Whether a frame of input `size` bytes long may go down the link: from somebody who
+   *  may type, no larger than a frame may be, and inside their rate. Says why not. */
+  private admitted(socket: WebSocket, viewer: Viewer, size: number): boolean {
     if (!maySocketType(viewer)) {
       this.say(socket, { t: 'refused', error: 'role' })
-      return
+      return false
     }
-    if (data.length > MOST_INPUT) {
+    if (size > MOST_INPUT) {
       this.say(socket, { t: 'refused', error: 'large' })
-      return
+      return false
     }
-    const now = Date.now()
-    const second = Math.floor(now / 1000)
+    const second = Math.floor(Date.now() / 1000)
     const counted = this.rate.get(viewer.who)
     const count = counted?.second === second ? counted.count + 1 : 1
     this.rate.set(viewer.who, { second, count })
     if (count > INPUT_RATE) {
       if (count === INPUT_RATE + 1) this.say(socket, { t: 'refused', error: 'rate' })
-      return
+      return false
     }
+    return true
+  }
+
+  private input(socket: WebSocket, viewer: Viewer, data: Uint8Array): void {
+    if (!this.admitted(socket, viewer, data.length)) return
+    const now = Date.now()
 
     // Down the link before anything else is done with it, and nothing on the way waits:
     // no storage, no query, no await. A key is a round trip the typist feels, and the
@@ -577,6 +588,35 @@ export class Machine implements DurableObject {
     this.input(socket, viewer, encoder.encode(command))
     const me = await this.me()
     if (me) await audit(this.env, me.id, 'resume', { who: viewer.who, device: viewer.device })
+  }
+
+  /** A part of a picture pasted into the session (4.13): input, as far as who may send
+   *  it and how often, and down the link as its bytes for `nibd` to write. */
+  private image(
+    socket: WebSocket,
+    viewer: Viewer,
+    frame: Extract<ClientFrame, { t: 'image' }>,
+  ): void {
+    if (!this.admitted(socket, viewer, frame.part.length)) return
+    this.ensureOpen(viewer)
+    this.tell(viewer.session, {
+      t: 'image',
+      session: viewer.session,
+      id: frame.id,
+      kind: frame.kind,
+      data: Uint8Array.from(atob(frame.part), (char) => char.charCodeAt(0)),
+      last: frame.last,
+    })
+    if (!this.link) aside('machine recover', this.recover())
+  }
+
+  /** Where a pasted picture was written: to everybody on the session who may type, which
+   *  is who could have sent it, and who could find it there anyway. */
+  private imaged(session: string, frame: Extract<ServerFrame, { t: 'image' }>): void {
+    for (const socket of this.ctx.getWebSockets(session)) {
+      const viewer = viewerOf(socket)
+      if (viewer && maySocketType(viewer)) this.say(socket, frame)
+    }
   }
 
   /* ── The owner's computer ──────────────────────────────────────────────── */
@@ -779,6 +819,9 @@ export class Machine implements DurableObject {
         return
       case 'called':
         this.called(frame.session, { t: 'called', url: frame.url, status: frame.status })
+        return
+      case 'image':
+        this.imaged(frame.session, { t: 'image', id: frame.id, path: frame.path })
         return
     }
   }

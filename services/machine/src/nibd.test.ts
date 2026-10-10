@@ -81,6 +81,32 @@ test('restart saves every screen and hands nibd to its supervisor, saying nothin
   expect(said).toEqual([])
 })
 
+test('a pasted picture is answered with where it was written, once its last part is here', async () => {
+  const { nibd, said, attach } = machine()
+  attach()
+  const id = '0123456789abcdef0123'
+  const part = (value: number, last: boolean) =>
+    nibd.receive({
+      t: 'image',
+      session: 's_1',
+      id,
+      kind: 'png',
+      data: new Uint8Array([value]),
+      last,
+    })
+  await part(1, false)
+  expect(said).toEqual([])
+  await part(2, true)
+  expect(said).toEqual([
+    {
+      t: 'image',
+      session: 's_1',
+      id,
+      path: expect.stringMatching(/\.cache\/nib\/images\/0123456789abcdef0123\.png$/) as string,
+    },
+  ])
+})
+
 test('every report says the disk the home is on', () => {
   const { nibd } = machine()
   const disk = nibd.activity().disk

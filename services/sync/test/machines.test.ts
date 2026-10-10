@@ -1204,6 +1204,35 @@ describe('a machine', () => {
     expect(writer.of('called')).toEqual([])
   })
 
+  test('a pasted picture goes down as bytes from who may type, and where it landed back to them', async () => {
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const reader = await join(running, { who: 'reader', role: 'read' })
+    const id = '0123456789abcdef0123'
+    running.host.link_?.take()
+
+    await say(running, reader, { t: 'image', id, kind: 'png', part: 'AQI=', last: true })
+    expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
+    expect(running.host.link_?.take()).toEqual([])
+
+    await say(running, owner, { t: 'image', id, kind: 'png', part: 'AQI=', last: true })
+    expect(running.host.link_?.take()).toEqual([
+      {
+        t: 'image',
+        session: 'session-1',
+        id,
+        kind: 'png',
+        data: new Uint8Array([1, 2]),
+        last: true,
+      },
+    ])
+
+    const path = '/home/nib/.cache/nib/images/0123456789abcdef0123.png'
+    await nibd(running, { t: 'image', session: 'session-1', id, path })
+    expect(owner.of('image')).toEqual([{ t: 'image', id, path }])
+    expect(reader.of('image')).toEqual([])
+  })
+
   test('the audit never holds what anybody typed or saw', async () => {
     const secret = 'sk-ant-THIS-IS-A-SECRET-0123456789'
     const running = await machine(env, ID, user)

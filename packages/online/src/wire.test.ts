@@ -3,7 +3,9 @@ import { frame } from '@nib/sync-core/wire'
 import {
   type ClientFrame,
   clientFrameOf,
+  IMAGE_PART,
   inputChunks,
+  isImageId,
   linkFrame,
   type MachineFrame,
   machineFrameOf,
@@ -32,6 +34,8 @@ describe('the app socket', () => {
     { t: 'start' },
     { t: 'resume' },
     { t: 'callback', url: 'http://localhost:54545/callback?code=x&state=y' },
+    { t: 'image', id: '0123456789abcdef0123', kind: 'png', part: 'iVBORw0KGgo=', last: false },
+    { t: 'image', id: '0123456789abcdef0123', kind: 'webp', part: '', last: true },
   ]
 
   it.each(clients)('reads back what the app sent: %j', (one) => {
@@ -79,6 +83,8 @@ describe('the app socket', () => {
     { t: 'called', url: 'http://localhost:1/x', status: 0 },
     { t: 'note', note: 'restore' },
     { t: 'note', note: 'disk' },
+    { t: 'image', id: '0123456789abcdef0123', path: '/home/nib/.cache/nib/images/x.png' },
+    { t: 'image', id: '0123456789abcdef0123', path: null },
   ]
 
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
@@ -104,6 +110,10 @@ describe('the app socket', () => {
     '{"t":"callback","url":"https://claude.ai/x"}',
     '{"t":"callback","url":"http://10.0.0.1:80/"}',
     '{"t":"callback"}',
+    '{"t":"image","id":"../../etc/passwd","kind":"png","part":"","last":true}',
+    '{"t":"image","id":"0123456789abcdef0123","kind":"svg","part":"","last":true}',
+    '{"t":"image","id":"0123456789abcdef0123","kind":"png","part":"not base64!","last":true}',
+    '{"t":"image","id":"0123456789abcdef0123","kind":"png","part":""}',
   ])('drops a client frame that does not check: %s', (raw) => {
     expect(clientFrameOf(raw)).toBeNull()
   })
@@ -111,6 +121,22 @@ describe('the app socket', () => {
   it('drops input larger than a frame may be', () => {
     expect(clientFrameOf(text({ t: 'in', data: 'x'.repeat(MOST_INPUT) }))).not.toBeNull()
     expect(clientFrameOf(text({ t: 'in', data: 'x'.repeat(MOST_INPUT + 1) }))).toBeNull()
+  })
+
+  it('takes a part of a picture no larger than an input frame', () => {
+    const image = (part: string) =>
+      text({ t: 'image', id: '0123456789abcdef0123', kind: 'png', part, last: false })
+    expect(clientFrameOf(image('A'.repeat(MOST_INPUT)))).not.toBeNull()
+    expect(clientFrameOf(image('A'.repeat(MOST_INPUT + 4)))).toBeNull()
+    expect((IMAGE_PART / 3) * 4).toBe(MOST_INPUT)
+  })
+
+  it('names a picture with letters and digits only, so the name is never a path', () => {
+    expect(isImageId('0123456789abcdef')).toBe(true)
+    expect(isImageId('0123456789abcdef/')).toBe(false)
+    expect(isImageId('0123456789ABCDEF')).toBe(false)
+    expect(isImageId('..')).toBe(false)
+    expect(isImageId(7)).toBe(false)
   })
 
   it.each([
@@ -132,6 +158,8 @@ describe('the app socket', () => {
     '{"t":"called","url":"https://claude.ai/","status":200}',
     '{"t":"note","note":"anything"}',
     '{"t":"called","url":"http://localhost:1/","status":-1}',
+    '{"t":"image","id":"0123456789abcdef0123","path":"relative.png"}',
+    '{"t":"image","id":"short","path":null}',
   ])('drops a server frame that does not check: %s', (raw) => {
     expect(serverFrameOf(raw)).toBeNull()
   })
@@ -193,6 +221,14 @@ describe('the link', () => {
     { t: 'restart' },
     { t: 'ping' },
     { t: 'callback', session: 's_1', url: 'http://localhost:54545/callback?code=x' },
+    {
+      t: 'image',
+      session: 's_1',
+      id: '0123456789abcdef0123',
+      kind: 'jpeg',
+      data: bytes(255, 216),
+      last: true,
+    },
   ]
 
   it.each(machines)('nibd reads back what the Machine sent: %j', (one) => {
@@ -232,6 +268,13 @@ describe('the link', () => {
     { t: 'pong' },
     { t: 'browse', session: 's_1', url: 'https://claude.ai/oauth/authorize?code=true' },
     { t: 'called', session: 's_1', url: 'http://localhost:54545/callback', status: 200 },
+    {
+      t: 'image',
+      session: 's_1',
+      id: '0123456789abcdef0123',
+      path: '/home/nib/.cache/nib/images/a.png',
+    },
+    { t: 'image', session: 's_1', id: '0123456789abcdef0123', path: null },
   ]
 
   it.each(nibds)('the Machine reads back what nibd sent: %j', (one) => {
@@ -261,6 +304,20 @@ describe('the link', () => {
   it('nibd drops input larger than a frame may be', () => {
     const data = new Uint8Array(MOST_INPUT + 1)
     expect(machineFrameOf(linkFrame({ t: 'in', session: 's', data }))).toBeNull()
+  })
+
+  it('nibd drops a part of a picture larger than a frame may carry', () => {
+    const part = (size: number) =>
+      linkFrame({
+        t: 'image',
+        session: 's',
+        id: '0123456789abcdef0123',
+        kind: 'png',
+        data: new Uint8Array(size),
+        last: true,
+      })
+    expect(machineFrameOf(part(IMAGE_PART))).not.toBeNull()
+    expect(machineFrameOf(part(IMAGE_PART + 1))).toBeNull()
   })
 
   it.each<[string, unknown]>([
