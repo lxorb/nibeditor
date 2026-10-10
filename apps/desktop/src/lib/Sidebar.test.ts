@@ -121,15 +121,23 @@ describe('the panel tabs', () => {
   })
 })
 
-/** The search is a bar over the list rather than a tab in the strip, and the space's
- *  name is the head's one control. */
+/** The space's name is the head's one control, and the panel tabs are the only row
+ *  between it and the list. */
 describe('the head of the list', () => {
-  test('has a search bar to type into and no search tab', () => {
+  /** A "Search this space" field stood under the tabs, and the owner asked for it
+   *  gone (issue #230): search is its key, the palette, the app menu and, on a
+   *  phone, the pull, each opening the Search panel with its own field. */
+  test('has no search field over the list and no search tab, on a desktop or a phone', () => {
     open('# Head\n')
-    const html = drawn('tree')
 
-    expect(html).toMatch(/<input[^>]*aria-label="Search this space"/)
-    expect(html).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
+    for (const device of ['desktop', 'phone'] as const) {
+      const html = drawn('tree', device)
+
+      expect(html, device).not.toContain('Search this space')
+      expect(html, device).not.toContain('data-region="search"')
+      expect(html, device).not.toMatch(/class="hunt\b/)
+      expect(html, device).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
+    }
   })
 
   /** A pen beside the space's name made a note, and the owner asked for it gone

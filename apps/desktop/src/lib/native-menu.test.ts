@@ -498,7 +498,7 @@ describe('the windows that have a strip of their own', () => {
 })
 
 /** On macOS 26 a key a row holds never reaches the page: the menu bar answers it
- *  first, so a Cmd+B typed into the sidebar's search field arrived as the Bold row
+ *  first, so a Cmd+B typed into the Search panel's field arrived as the Bold row
  *  and bolded the note behind the field. A row of the note's pressed by its key runs
  *  only while the note has the keyboard, which is when the editor's own keymap would
  *  have run it; a row of the window's runs from anywhere. */

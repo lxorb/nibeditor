@@ -715,7 +715,7 @@ failed that on every surface they sat on:
 | `--success` (light) | `#16a06a` | 3.26 | - | `#007640` |
 
 `--muted` is what most of the chrome's second line is written in - a section
-label, a count, a key beside a command, the placeholder in the search pill, the
+label, a count, a key beside a command, the placeholder in a search field, the
 name of a tab you are not in - so one colour was a hundred readings in a single
 pass of the app, and the light side was the worse of the two by a long way.
 
@@ -760,7 +760,7 @@ this file.
 ### Alignment
 
 One starting edge per panel, at `--row-pad` from its side. The header's words, the
-search pill, the section labels and every row's mark all start there, and every
+section labels and every row's mark all start there, and every
 name starts at `--row-pad + --icon-md + --row-gap`. A level of a tree adds
 `--row-indent` and nothing else - no second indent for the mark, because the
 mark's box is a fixed width whether it holds a folder's twist, a file's kind or
@@ -981,8 +981,7 @@ in the tree panel, the two lists of links, a note's name over its search hits.
 
 ### The list panel
 
-Three rows of chrome, in the order identity, action, view - which is Discord's
-order and Notion's:
+Two rows of chrome, in the order identity, view:
 
 1. **The header**, `--header-height`: the space's name at `--text-head` and
    `--weight-strong`, with a chevron beside the word rather than at the far end
@@ -992,12 +991,7 @@ order and Notion's:
    an edge and no second sheet written for a phone. Where the panel is a drawer,
    the sidebar button stands in front of the name, because a drawer covers the
    bar that button otherwise sits in.
-2. **The search entry.** One field, one mechanism. Outside the Search panel it
-   is a pill that opens it; inside, it is the panel's own field, in the same
-   place, at the same height, with the same radius and the same magnifier, drawn
-   from the same `.nib-field` class. It is one control that becomes editable, not
-   two controls that look alike.
-3. **The panel tabs** - the segmented control the settings sheet already uses, so
+2. **The panel tabs** - the segmented control the settings sheet already uses, so
    the tab you are on is raised out of its groove exactly the way every other "this
    one" in the app is, and the raised surface slides between them rather than
    blinking; see "Swapping". The pill is as wide as its tabs, each a mark with
@@ -1010,10 +1004,12 @@ order and Notion's:
    place. VS Code's activity bar does the same. See `tabsShown` in `workspace/panels.ts`, and
    `test/e2e/panel-tabs.py`, which measures it at three widths in both schemes.
 
-The tabs sit between the name and the search entry rather than under both: the
-entry has to be in one place whether it is the pill or the field, and the field
-belongs to the Search panel, which begins under the tabs. So the order on the
-screen is name, tabs, entry, list - and the entry never moves.
+There is no search field over the list: the owner asked for the one that stood
+under the tabs to go (issue #230). The palette finds a note by its name and hands
+words on to a search; Ctrl+Shift+F, Search this space in the palette, Search in the
+app menu, a tag pressed, a bookmarked search and, on a phone, the pull from the
+top each open the Search panel, whose own field is the first thing under the tabs.
+So the order on the screen is name, tabs, list.
 
 ### Either side of the note
 
@@ -1050,9 +1046,7 @@ One component draws both sides; the side is a prop. What differs is what belongs
 to the window rather than to a panel: the identity row - the space's name and its
 switcher - and the foot row of the account, the theme and the settings stay on the
 left, because two of either would be two switchers for one space and two gears for
-one app. The search pill is drawn on whichever side the Search panel itself lives
-on: a door on one side that opens a panel on the other moves the reader's eye
-across the window for nothing. The resize handle is mirrored, and each side
+one app. The resize handle is mirrored, and each side
 remembers its own width - a wide file list is not a wish for a wide outline.
 
 It sits under the window's own bar rather than beside it, which is where the left

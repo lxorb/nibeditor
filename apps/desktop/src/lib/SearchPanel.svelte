@@ -41,8 +41,8 @@
 
   let field = $state<HTMLInputElement>()
 
-  // The field arrives from the search bar with what was typed there already in it,
-  // so the caret goes after it rather than before.
+  // The field can arrive with words already in it - a selection searched for, a
+  // bookmarked search, a tag pressed - so the caret goes after them, not before.
   $effect(() => {
     if (!field) return
     const end = field.value.length

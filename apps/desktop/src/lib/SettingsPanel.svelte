@@ -1500,7 +1500,7 @@
 
   /* The box, the magnifier in it, the words and what all three do when the
      keyboard lands are `.nib-field` in the themes package, the same one the Share
-     sheet's field and the panel's search pill are. What is left here is where it
+     sheet's field and the Search panel's field are. What is left here is where it
      sits in the column above what it searches. */
   .search {
     flex: none;

@@ -1007,7 +1007,7 @@ const APP_ENTRIES: Shortcut[] = [
     desktop: true,
   },
   // Round the regions of the window: the sidebar's header, its panel tabs, the
-  // search pill, the list, the strip of notes, the note, the bar under it.
+  // list, the strip of notes, the note, the bar under it.
   //
   // The one key Tab cannot be. Tab indents in a note - Obsidian and Notion both
   // spend it that way, and a markdown editor has to - so there has to be a key

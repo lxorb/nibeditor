@@ -23,7 +23,6 @@
     ORDER_MARK,
     OUTLINE_MARK,
     PROPERTIES_MARK,
-    SEARCH_MARK,
     TASKS_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
@@ -765,6 +764,22 @@
         {/await}
       {/if}
 
+      <!-- The palette has no button of its own, only its keys; a keyboard is the
+         only place the card would make sense. Under the tabs, where the list starts,
+         since the palette finds what the list holds. -->
+      {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
+        {#await import('./HintCard.svelte') then card}
+          <card.default
+            hint="palette"
+            side="below"
+            text={t('Press {key} to find anything, notes and commands alike.', {
+              key: paletteKey,
+            })}
+            when={!viewport.touch}
+          />
+        {/await}
+      {/if}
+
       <!-- What a panel has to offer goes at the other end of the row its tabs are
          in: whether a panel about one note stays on it, and whether the Links
          panel says what it has to say as a list or as a picture. -->
@@ -900,46 +915,6 @@
         {/if}
       </div>
     </div>
-
-    <!-- The search bar; typed into, it opens the panel, whose field stands in its place.
-
-       On the side the Search panel lives on, and only there: a door on one side
-       that opens a panel on the other is a door that moves the reader's eye
-       across the window for no reason. -->
-    {#if showing !== 'search' && workspace.sideOf('search') === side}
-      <div class="hunt" data-region={side === 'left' ? 'search' : undefined}>
-        <label class="nib-field">
-          <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-          <input
-            value={search.text}
-            placeholder={t('Search this space')}
-            aria-label={t('Search this space')}
-            spellcheck="false"
-            autocapitalize="off"
-            autocorrect="off"
-            onclick={() => workspace.showPanel('search')}
-            oninput={(event) => {
-              search.ask(event.currentTarget.value)
-              workspace.showPanel('search')
-            }}
-          />
-        </label>
-        <!-- The palette has no button of its own, only its keys; a keyboard is the
-           only place the card would make sense. -->
-        {#if !__EVEN_PLUGIN__ && paletteKey && startup.settled}
-          {#await import('./HintCard.svelte') then card}
-            <card.default
-              hint="palette"
-              side="below"
-              text={t('Press {key} to find anything, notes and commands alike.', {
-                key: paletteKey,
-              })}
-              when={!viewport.touch}
-            />
-          {/await}
-        {/if}
-      </div>
-    {/if}
 
     <!-- The same panel for every space, arriving from the side of the switcher the
        new space is on (see `arriving`); and inside it, one panel crossing with the
@@ -1298,13 +1273,12 @@
     background: var(--accent);
   }
 
-  /* The three rows of chrome above the list, in the order identity, action,
-     view. Each is `--space-1` in from the panel's edge and everything inside
-     them is `--row-pad` in from that, so the words in the header, the words in
-     the search pill and the marks in the rows below all start on one line down
-     the panel; see docs/design.md. */
+  /* The two rows of chrome above the list, in the order identity, view. Each is
+     `--space-1` in from the panel's edge and everything inside them is
+     `--row-pad` in from that, so the words in the header and the marks in the
+     rows below all start on one line down the panel; see docs/design.md. */
   /* Positioned, because the list of spaces drops out of it: the head spans the
-     panel, so a list hung from it lines up with the search pill and the rows
+     panel, so a list hung from it lines up with the tabs and the rows
      under it without anything being measured. See SpaceSwitcher.svelte. */
   .head {
     position: relative;
@@ -1321,12 +1295,6 @@
      panel docks at the right and the lights are over the bar instead. */
   :global([data-lights]:not([dir='rtl'])) .head {
     padding-inline-start: var(--traffic-lights);
-  }
-
-  .hunt {
-    position: relative;
-    flex: none;
-    padding: 0 var(--space-1) var(--space-2);
   }
 
   /* A panel's tools on its tabs' line. */
@@ -1442,7 +1410,7 @@
     outline-offset: -1px;
   }
 
-  /* What is left of the panel once the head, the tabs and the search entry have
+  /* What is left of the panel once the head and the tabs have
      had theirs - and the ground the panels cross over. Positioned, so the one
      going and the one coming can be in the same place for the moment they are
      both here; a column would put them one above the other and shove the list

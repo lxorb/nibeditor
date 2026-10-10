@@ -19,9 +19,9 @@ import type { TabKind } from './workspace/documents.svelte'
  *  F6 walks too.
  *
  *  `space` is the sidebar's header, which is the space's name and its switcher;
- *  `panels` is the row of panel tabs; `search` is the pill under them; `list` is
- *  whichever panel is open; `foot` is the row under it, which is the account, the
- *  theme and the settings; `tabs` is the strip of notes; `editor` is the note;
+ *  `panels` is the row of panel tabs; `list` is whichever panel is open, under
+ *  them; `foot` is the row under it, which is the account, the theme and the
+ *  settings; `tabs` is the strip of notes; `editor` is the note;
  *  `status` is the bar under it; `right` is the other side of the window, once
  *  something has been moved over to it.
  *
@@ -33,7 +33,6 @@ import type { TabKind } from './workspace/documents.svelte'
 export const REGIONS = [
   'space',
   'panels',
-  'search',
   'list',
   'foot',
   'tabs',

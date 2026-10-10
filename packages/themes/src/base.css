@@ -1390,8 +1390,7 @@ select option {
 /* ── Fields ────────────────────────────────── */
 
 /* One box for anything typed into or standing in for something typed into: the
-   search pill at the top of the list panel, and the search field itself, which
-   is the same control in the same place once the panel it belongs to is open.
+   Search panel's field, the settings searches and the Share sheet's field.
 
    Worn either by the control or by a wrapper round it, and that is the whole of
    what decides which element the box is - see the focus below, which is the only
@@ -1483,10 +1482,10 @@ textarea.nib-field {
 
    A box you type into, and only that. The caret is the other half of this answer,
    and it is what says which of the two kinds a control is rather than which class
-   it happens to wear: the search pill wore the field for its shape - a button
-   with a magnifier in it, the door to the panel whose own field stands in the
-   same place - and this rule was reaching it and taking the ring away. It was the
-   weakest thing in the app to find with a key. A button gets the ring.
+   it happens to wear: a button can wear the field for its shape - the sidebar's
+   old search pill did, a door to the Search panel - and this rule was reaching it
+   and taking the ring away. It was the weakest thing in the app to find with a
+   key. A button gets the ring.
 
    A slider, a checkbox and a colour are inputs too and none of them holds a
    caret: they are named out here rather than left to be caught by accident, and
