@@ -1,4 +1,4 @@
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget } from '@nib/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -159,8 +159,9 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
  *  every list that shows one can offer it - the tree today, a search result or a
  *  bookmark whenever one of those grows a menu of its own.
  *
- *  A note, a canvas or a folder. Not a PDF and not a picture: those are files with
- *  nowhere to keep an icon - a note has front matter, a canvas has its `nib` key,
+ *  A note, a canvas, a chat or a folder. Not a PDF and not a picture: those are files
+ *  with nowhere to keep an icon - a note has front matter, a canvas has its `nib` key,
+ *  a chat its pointer,
  *  and a folder is not a file at all, so its icon is kept by the space. The two
  *  words are the same either way, which is the point of asking here.
  *
@@ -168,7 +169,10 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
  *  and nothing else about a row differs. */
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
   if (!path) return []
-  if (!folder && !isMarkdownPath(path) && !isCanvasTarget(path) && !isPagesTarget(path)) return []
+  // Not a chat in the glasses' plugin, which carries none.
+  const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
+  const kept = chat || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
+  if (!folder && !kept) return []
 
   // The writing is fetched by the press, as a cover's is below: every menu carried it.
   const take = () =>

@@ -692,7 +692,7 @@
               {:else if row.kind === 'make'}
                 <span class="mark quiet"><Icon icon={null} fallback={FilePlus} /></span>
               {:else if row.kind === 'message'}
-                <FileMark mark="chat" />
+                <FileMark mark="chat" path={row.path} />
               {:else if row.kind === 'host' || row.kind === 'connect'}
                 {@const colour = row.kind === 'host' ? row.host.colour : null}
                 <span class="mark" style:color={colour ? `var(--canvas-${colour})` : undefined}

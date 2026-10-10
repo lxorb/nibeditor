@@ -39,6 +39,7 @@ import {
   type FoundLink,
   freeBlockId,
   isCanvasTarget,
+  isChatTarget,
   isPagesTarget,
   isTabFile,
   isWebTarget,
@@ -628,6 +629,12 @@ class Links {
     // answered. A website just converted, or put back, was missing from them until
     // the next scan.
     if (!isMarkdownPath(relative)) this.fileAdded(relative)
+
+    // A chat's pointer is read there too, in any space: no scan reads one.
+    if (isChatTarget(relative)) {
+      elsewhere.saved(path, content)
+      return
+    }
 
     // A page note too: its pages are file nodes naming the PDF behind them, which
     // is a link out of it exactly as a canvas's cards are.

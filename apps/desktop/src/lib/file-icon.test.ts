@@ -21,6 +21,9 @@ const MARKED_BOARD = `${JSON.stringify(
   '\t',
 )}\n`
 
+/** A chat's id, as the account makes one. */
+const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
+
 /** The space as it stands at the start of every test: a note with no metadata at
  *  all, one with a key of its own, two already wearing an icon, and two canvases -
  *  one bare, one already marked. */
@@ -31,6 +34,8 @@ const SPACE: Record<string, string> = {
   '/space/only.md': '---\nicon: rocket\n---\n\n# Only an icon\n',
   '/space/Board.canvas': BOARD,
   '/space/Marked.canvas': MARKED_BOARD,
+  '/space/Team.chat': `{"v":1,"chat":"${CHAT}"}\n`,
+  '/space/Damaged.chat': 'Team\n',
 }
 
 /** The disk, which every test writes to and every test starts over with. */
@@ -315,5 +320,52 @@ describe('what each kind of icon is written as', () => {
     )
     expect(written.icon).toBe('rocket')
     expect(written.iconColor).toBe('violet')
+  })
+})
+
+/** A chat's one file is its pointer, so the icon goes there beside the id: the same
+ *  write a note's takes, a version kept and one thing to undo, and a reader of the
+ *  pointer that knows nothing of icons still finds the chat. See docs/icons.md. */
+describe('the icon a chat is given', () => {
+  test('goes into its pointer after the id, with its colour', async () => {
+    fresh()
+    await setFileIcon('/space/Team.chat', 'rocket', 'violet')
+
+    expect(written('/space/Team.chat')).toBe(
+      `{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"violet"}\n`,
+    )
+  })
+
+  test('keeps the version that was there before it, and is one thing to undo', async () => {
+    fresh()
+    await setFileIcon('/space/Team.chat', '🚀')
+
+    const touched = sent.filter((one) => one.path === '/space/Team.chat')
+    expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
+    expect(touched[1]?.content).toBe(`{"v":1,"chat":"${CHAT}"}\n`)
+    expect(workspace.undone.stack).toHaveLength(1)
+  })
+
+  test('and taking it away leaves the pointer exactly as it was made', async () => {
+    fresh()
+    await setFileIcon('/space/Team.chat', 'rocket', 'violet')
+    await setFileIcon('/space/Team.chat', null)
+
+    expect(written('/space/Team.chat')).toBe(`{"v":1,"chat":"${CHAT}"}\n`)
+  })
+
+  test('choosing the one it already wears writes nothing at all', async () => {
+    fresh()
+    notes['/space/Team.chat'] = `{"v":1,"chat":"${CHAT}","icon":"rocket"}\n`
+    await setFileIcon('/space/Team.chat', 'rocket')
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+
+  test('a file that is no pointer is not written to', async () => {
+    fresh()
+    await setFileIcon('/space/Damaged.chat', 'rocket')
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })

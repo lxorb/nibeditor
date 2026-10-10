@@ -1,11 +1,10 @@
 /** The icon a row in the file list wears, wherever that icon is kept.
  *
- *  Three kinds of thing can wear one and each keeps it in the only place it has: a
- *  note in its front matter, a canvas under its `nib` key, a folder in the space's
- *  own map, because a folder is not a file. Which of the three a path is matters to
- *  whoever writes the icon and to nobody who draws it, so it is answered here once
- *  and every mark in the app asks this instead of asking three stores in three
- *  different ways.
+ *  Four kinds of thing can wear one and each keeps it in the only place it has: a
+ *  note in its front matter, a canvas under its `nib` key, a chat in its pointer, a
+ *  folder in the space's own map, because a folder is not a file. Which of them a
+ *  path is matters to whoever writes the icon and to nobody who draws it, so it is
+ *  answered here once and every mark in the app asks this.
  *
  *  A path as the app holds one or as the space speaks it, since both stores read
  *  both. See file-icon.ts and workspace/folder-icons.svelte.ts for the writing, and
@@ -20,6 +19,7 @@
  *  front of it, is the open space's, which is the only space a caller holding one can
  *  mean. Every mark in the app asks here, so each of them follows. */
 
+import { isChatTarget } from '@nib/markdown/links'
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
@@ -53,6 +53,8 @@ function awayIn(path: string): string | null {
 }
 
 export function chosenIcon(path: string): string | null {
+  // A chat keeps it in its pointer, which no scan reads; see marks-elsewhere.
+  if (isChatTarget(path)) return elsewhere.of(path)?.icon ?? null
   const away = awayIn(path)
   if (away === null) return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 
@@ -110,6 +112,7 @@ function liveMarkOf(path: string): string | null {
  *  Only a stroked icon takes one; an emoji and a coloured drawing have their own
  *  colours. See `readTint` in icons.ts for which names count. */
 export function chosenTint(path: string): string | null {
+  if (isChatTarget(path)) return elsewhere.of(path)?.iconColor ?? null
   const away = awayIn(path)
   if (away === null) return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
 

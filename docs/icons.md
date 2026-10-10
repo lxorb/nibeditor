@@ -1,7 +1,7 @@
 # Icons
 
-Anything in the file list can wear an icon: a note, a canvas, a folder somebody
-else's vault arrived with, and the space that holds them. One picker chooses it,
+Anything in the file list can wear an icon: a note, a canvas, a chat, a folder
+somebody else's vault arrived with, and the space that holds them. One picker chooses it,
 one component draws it, and one string says what it is.
 
 ## Where each one is kept
@@ -13,6 +13,7 @@ that thing has.
 | --- | --- | --- |
 | a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
 | a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
+| a chat | `icon` and `iconColor` in its `.chat` pointer, after the id | A chat's log is the account's, but the pointer is the one file it has in the space and already carries its name and place (`docs/chats.md` 4.2). So the icon goes wherever the chat goes, by either sync, to everybody who can reach the space, exactly as a canvas's does. A nib from before these keys drops them and reads the same chat. |
 | a folder with no note of its own | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
 | a space | this device's own store, keyed by folder, and the account's `icon` column | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. Keyed by folder here rather than by id, so it survives the ids being handed out again. |
 
@@ -101,8 +102,8 @@ nothing at all. Letters and digits alone decide, so `FileText`, `file-text` and
 `file_text` are one icon.
 
 The colour a stroked icon is drawn in is a second value, never folded into the
-first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`, a space
-and a folder in the columns above. Two keys so that an app reading the note still
+first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`, a chat
+under `iconColor` in its pointer, a space and a folder in the columns above. Two keys so that an app reading the note still
 finds the icon and simply ignores the colour. The value is one of the app's own
 accents by its id, so it has a shade for black and one for white and still means
 something in next year's palette. An emoji and a coloured drawing take no colour:
@@ -128,6 +129,20 @@ than drawing are left out of the Even Realities plugin build: half a megabyte of
 JSON for a picker whose one job on a phone is to put a mark on a folder, while the
 glasses draw a row as words with no mark in it. A set that is not in a build says so
 once rather than loading for ever.
+
+## A chat's
+
+A chat takes the note's picker, through the same row of the file list's menu, and
+the same two values; `setFileIcon` writes the pointer again as the smallest edit there
+is, so a version is kept and one undo takes it back. No scan of a space reads a
+pointer, so what a chat wears is read off the pointer on its own the first time a mark
+asks, in the open space as in any other (`marks-elsewhere.svelte.ts`), and again when
+the app writes it. Every mark asks `chosenIcon`, so the file list, the tab, a bookmark,
+the palette, a search hit, the Chats panel and the chat's own head show it; the last
+two draw the `#` every chat wears where nothing was chosen (`ChatMark.svelte`).
+
+A cover is the one thing a note looks like that a chat does not take: there is no page
+for a picture to go across the top of, only the timeline.
 
 ## What draws them
 

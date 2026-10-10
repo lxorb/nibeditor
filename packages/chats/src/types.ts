@@ -29,10 +29,17 @@ export type Posting = 'writers' | 'owner'
 export type Notify = 'all' | 'mentions' | 'nothing'
 
 /** A `.chat` file's text: the chat the account made, by its id (4.2). The file is the
- *  chat's name and place in the space; access is the chat's space, never the file. */
+ *  chat's name and place in the space; access is the chat's space, never the file.
+ *
+ *  And what the chat wears in every list that shows it, as a canvas keeps it under
+ *  `nib`: the icon in the app's written form (`rocket`, an emoji, `set:name`) and the
+ *  accent a stroked one is drawn in. Both the file's, so they go wherever the pointer
+ *  goes, by either sync, and a nib that knows neither key still reads the chat. */
 export interface Pointer {
   v: 1
   chat: string
+  icon?: string
+  iconColor?: string
 }
 
 /** A file a message carries, sent first as a blob by its hash (4.8). A picture or a

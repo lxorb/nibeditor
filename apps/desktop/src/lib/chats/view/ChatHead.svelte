@@ -15,6 +15,7 @@
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ChatPage } from './chat.svelte'
   import Float from './Float.svelte'
+  import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'
   import { firstLine } from './body'
   import { accountOf, faceOf, nameOf } from './people'
@@ -80,7 +81,7 @@
 </script>
 
 <header class="head">
-  <span class="mark"><Glyph name="hash" /></span>
+  <span class="mark"><ChatMark path={page.entry?.path} /></span>
   <h2 class="name">{page.entry?.name ?? ''}</h2>
   {#if writing}
     <!-- svelte-ignore a11y_autofocus -->

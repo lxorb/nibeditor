@@ -5,8 +5,9 @@
  *  another vault, and Obsidian reads it as metadata like any other. A note says it
  *  under `icon:` in its front matter; a canvas says it under `nib.icon`, because
  *  JSON has no front matter and that key is the one place the JSON Canvas spec
- *  leaves for something no other app has to look at. See icons.ts for what the
- *  value says.
+ *  leaves for something no other app has to look at. A chat says it in its `.chat`
+ *  pointer, beside the id, which is the one file a chat has. See icons.ts for what
+ *  the value says.
  *
  *  A space's icon is a device's own choice and lives in this device's store, and a
  *  folder's is a per-space map, because neither is a file with anywhere to keep
@@ -20,7 +21,8 @@
  *  See tag-edits.ts, which is the same shape of change. */
 
 import { frontMatterEdits } from '@nib/markdown/front-matter'
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget } from '@nib/markdown/links'
+import { oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
@@ -69,8 +71,9 @@ export async function setFileIcon(
   // whole of JSON Canvas, and this one line was the last thing holding it in front of
   // the first paint. Asked for here, where somebody has chosen an icon for a plane, and
   // never for a note; see scan-canvas.ts, which is fetched the same way.
-  const edit =
-    isCanvasTarget(path) || isPagesTarget(path)
+  const edit = isChatTarget(path)
+    ? await chatIconEdit(before, value, colour)
+    : isCanvasTarget(path) || isPagesTarget(path)
       ? (await import('@nib/markdown/canvas')).canvasIconEdit(before, value, colour)
       : frontMatterEdits(before, [
           [ICON_KEY, value],
@@ -83,4 +86,18 @@ export async function setFileIcon(
   } catch (error) {
     settings.error = message(error, key('That icon could not be written.'))
   }
+}
+
+/** A chat's pointer written again wearing the icon, as the smallest edit there is, or
+ *  null where it already does or the file is no pointer. The pointer's reader is the
+ *  chats' own, fetched here as the canvas's is above. */
+async function chatIconEdit(
+  before: string,
+  icon: string | null,
+  colour: string | null,
+): Promise<TextEdit | null> {
+  if (__EVEN_PLUGIN__) return null
+  const { chatOf, chatText, withIcon } = await import('@nib/chats')
+  const pointer = chatOf(before)
+  return pointer && oneEdit(before, chatText(withIcon(pointer, icon, colour)))
 }

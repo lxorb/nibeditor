@@ -176,6 +176,19 @@ describe('a folder nobody has written a note in', () => {
   })
 })
 
+describe('a chat', () => {
+  /** A chat keeps its icon in its `.chat` pointer, so it is offered the icon a note
+   *  is; not the cover, since a chat has no page for a picture to go across the top
+   *  of. See `iconEntries` and docs/icons.md. */
+  test('can wear an icon, and nothing else a note looks like', () => {
+    const said = labels(note('/s/Team.chat'))
+
+    expect(said).toContain('Choose an icon')
+    expect(said).not.toContain('Set cover')
+    expect(said).not.toContain('New note inside')
+  })
+})
+
 describe('a paper', () => {
   /** Nowhere to keep an icon, and a paper cannot hold a note. It copies as the
    *  bytes it is. So the menu is what every row can do and nothing else. */

@@ -11,6 +11,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const FILES: Record<string, string> = {
   '/Work/Plan.md': '---\nicon: rocket\nicon-color: violet\n---\n# Plan\n',
   '/Home/Plan.md': '---\nicon: house\n---\n# Plan\n',
+  '/Work/Team.chat':
+    '{"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e","icon":"rocket","iconColor":"violet"}\n',
+  '/Home/Plain.chat': '{"v":1,"chat":"c_0f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n',
   '/Home/Docs.url':
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Icon=data:image/png;base64,AA\r\n',
 }
@@ -159,5 +162,37 @@ describe('two spaces with a tab each', () => {
     elsewhere.saved('/Home/Plan.md', '---\nicon: tree\n---\n')
 
     await vi.waitFor(() => expect(chosenIcon(home.path ?? '')).toBe('tree'))
+  })
+})
+
+/** A chat keeps what it wears in its `.chat` pointer, which no scan of a space reads: so
+ *  it is read on its own, in the open space as in any other. See chosen-icon.ts. */
+describe('a chat', () => {
+  test('wears the icon and the colour its pointer says, in the open space too', async () => {
+    open('/Work')
+
+    expect(await settled(() => chosenIcon('/Work/Team.chat'))).toBe('rocket')
+    expect(chosenTint('/Work/Team.chat')).toBe('violet')
+    expect(reads).toEqual(['/Work/Team.chat'])
+  })
+
+  test('and one that chose nothing wears nothing, read once however often it is asked', async () => {
+    open('/Work')
+
+    chosenIcon('/Home/Plain.chat')
+    await vi.waitFor(() => expect(reads).toEqual(['/Home/Plain.chat']))
+    expect(chosenIcon('/Home/Plain.chat')).toBeNull()
+    expect(chosenTint('/Home/Plain.chat')).toBeNull()
+    expect(reads).toEqual(['/Home/Plain.chat'])
+  })
+
+  test('a pointer written again is what its mark says next', async () => {
+    open('/Work')
+    await settled(() => chosenIcon('/Work/Team.chat'))
+
+    elsewhere.saved('/Work/Team.chat', '{"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n')
+
+    await vi.waitFor(() => expect(chosenIcon('/Work/Team.chat')).toBeNull())
+    expect(chosenTint('/Work/Team.chat')).toBeNull()
   })
 })

@@ -332,7 +332,11 @@ depends on the file's.
 
   The pointer is the chat's name and place: renaming it renames the chat, and the file list,
   bookmarks, the manual order, Recently deleted, search by name, the session restore and
-  Reopen closed tab carry it as they carry any file. It is written once and never by hand.
+  Reopen closed tab carry it as they carry any file. It is written once and never by hand,
+  but for what the chat wears: choosing an icon writes it again with `icon` and
+  `iconColor` after the id, the two values a note keeps in its front matter
+  (`docs/icons.md`), so the icon travels and syncs with the pointer. A reader that does not
+  know them drops them and reads the same chat.
 - **Both syncs carry it.** Under v1 it is a small text document the v1 mirror sends through
   `/notes` like a `.url` (the Worker's `NOTE_PATH` gains `chat`, and a `.chat` is never in a
   room, as a `.url` is not). Under v2 it is an entry of the tree kind `chat`
@@ -355,7 +359,8 @@ depends on the file's.
   its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
   one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
   the account erases its log 30 days later with the other leftovers.
-- **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count.
+- **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count,
+  or the icon the pointer wears; the tab, the palette and the Chats panel show the same.
 
 Nothing about a chat is written into the space beyond the pointer. Search, backlinks, the
 agent and the connector read the device's store or the account (decision 7.2).

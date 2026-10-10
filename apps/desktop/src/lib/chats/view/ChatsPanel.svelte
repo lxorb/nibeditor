@@ -9,6 +9,7 @@
   import { amount, t } from '../../i18n.svelte'
   import { workspace } from '../../workspace.svelte'
   import type { ChatEntry, Hit } from '../api'
+  import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'
   import { makeChat, openChat } from './open'
   import type { Who } from '@nib/chats'
@@ -109,7 +110,7 @@
         disabled={!chat.path}
         onclick={() => open(chat)}
       >
-        <span class="nib-row-mark"><Glyph name="hash" /></span>
+        <span class="nib-row-mark"><ChatMark path={chat.path} /></span>
         <span class="nib-row-label">{chat.name}</span>
         {#if chat.mentions && !muted}
           <span class="badge">{amount(chat.mentions)}</span>

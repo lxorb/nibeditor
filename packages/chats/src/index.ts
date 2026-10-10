@@ -20,7 +20,7 @@ export type {
 export { isUlid, ulid, ulidTime } from './ids'
 export { chatLink, chatLinkOf } from './links'
 export { mentionsIn } from './mentions'
-export { CHAT_EXTENSION, chatOf, chatText, isChatId } from './pointer'
+export { CHAT_EXTENSION, chatOf, chatText, isChatId, withIcon } from './pointer'
 export { apply, type ChatState, chatState } from './reduce'
 export { type Action, actionsOf, may, mayEvent } from './roles'
 export {

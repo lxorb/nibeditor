@@ -11,10 +11,11 @@
  *  every mark goes through.
  *
  *  Read rather than scanned: a front matter key or two for a note, a few lines for a
- *  website, the `nib` key for a plane - never the space. */
+ *  website, the `nib` key for a plane - never the space. And a chat's pointer in any
+ *  space, open or not, since no scan reads one: a line of JSON each. */
 
 import { frontMatterValue } from '@nib/markdown/front-matter'
-import { isCanvasTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { isMarkdownPath, pathKey, within } from './space-paths'
@@ -34,7 +35,13 @@ const NOTHING: Worn = { icon: null, iconColor: null, favicon: null, address: nul
 /** Whether a file can wear anything at all: a folder, a picture and a PDF cannot,
  *  and are never read. */
 function wears(path: string): boolean {
-  return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
+  return (
+    isMarkdownPath(path) ||
+    isCanvasTarget(path) ||
+    isPagesTarget(path) ||
+    isWebTarget(path) ||
+    isChatTarget(path)
+  )
 }
 
 /** What a file's words say it wears. */
@@ -42,6 +49,13 @@ async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {
     const said = readWebFile(path, content)
     return { ...NOTHING, favicon: said?.icon ?? null, address: said?.url ?? null }
+  }
+
+  // The glasses' plugin carries no chats, nor their reader.
+  if (isChatTarget(path)) {
+    if (__EVEN_PLUGIN__) return NOTHING
+    const pointer = (await import('@nib/chats/pointer')).chatOf(content)
+    return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
   }
 
   if (isCanvasTarget(path) || isPagesTarget(path)) {
