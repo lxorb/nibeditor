@@ -1,3 +1,4 @@
+import { readBase } from '@nib/bases'
 import { describe, expect, test } from 'vitest'
 
 import { notionPage, readNotion } from './notion'
@@ -21,6 +22,13 @@ function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)
   if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
   return found.text
+}
+
+/** What a ` ```base ` fence in a note holds. */
+function fenced(note: string): string {
+  const found = /```base\n([\s\S]*?)\n```/.exec(note)
+  if (!found) throw new Error('no base in the note')
+  return found[1] ?? ''
 }
 
 describe('a Notion export', () => {
@@ -55,31 +63,73 @@ describe('a Notion export', () => {
     expect(text).not.toContain('Status: Done')
   })
 
-  test('a database becomes its folder note, holding every row', async () => {
+  test('a database becomes its folder note, holding a base over its rows', async () => {
     const plan = await readNotion([
       file(`Tasks ${TASKS}.csv`, 'Name,Status\nOne,Done\n'),
-      file(`Tasks ${TASKS}_all.csv`, 'Name,Status\nOne,Done\nTwo,Doing\n'),
+      file(`Tasks ${TASKS}_all.csv`, 'Name,Status,Due\nOne,Done,\nTwo,Doing,"October 10, 2026"\n'),
       file(`Tasks ${TASKS}/One ${ROW}.md`, '# One\nStatus: Done\n\nWords.\n'),
     ])
 
-    expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/One.md'])
+    // Two, which has no page of its own in the export, is a note all the same,
+    // so no row is in Notion's table and missing from nib's.
+    expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/One.md', 'Tasks/Two.md'])
 
-    const table = noteAt(plan, 'Tasks.md')
-    expect(table).toContain('| Name | Status |')
-    expect(table).toContain('| Two | Doing |')
+    const base = readBase(fenced(noteAt(plan, 'Tasks.md')))
+    expect(base.filters).toEqual({ and: ['file.folder + ".md" == this.file.path'] })
+    expect(base.views[0]?.order).toEqual(['file.name', 'note.status', 'note.due'])
+    expect(base.properties['note.status']?.displayName).toBe('Status')
+    expect(noteAt(plan, 'Tasks/Two.md')).toContain('due: 2026-10-10')
     expect(plan.lost[0]?.text).toContain('saved views')
   })
 
-  test('a cell with a pipe or a paragraph in it does not break the table', async () => {
+  test('a row is written as what its column holds', async () => {
     const plan = await readNotion([
-      file(`Tasks ${TASKS}_all.csv`, 'Name,Note\n"A | B","one\ntwo"\n'),
+      file(
+        `Books ${TASKS}_all.csv`,
+        [
+          'Name,Pages,Read,Started,Genre,Author,Code,Note',
+          `Dune,412,Yes,"January 2, 2026 3:30 PM","Sci-fi, Classic",Herbert (People%20${SUB}/Herbert%20${ROW}.md),007,"Long, and worth it"`,
+          'Ubik,224,No,"March 4, 2026","Sci-fi",,12,Short',
+        ].join('\n'),
+      ),
+      file(
+        `Books ${TASKS}/Dune ${ROW}.md`,
+        [
+          '# Dune',
+          'Pages: 412',
+          'Read: Yes',
+          'Started: January 2, 2026 3:30 PM',
+          'Genre: Sci-fi, Classic',
+          `Author: Herbert (People%20${SUB}/Herbert%20${ROW}.md)`,
+          'Code: 007',
+          'Note: Long, and worth it',
+          '',
+          'Words.',
+        ].join('\n'),
+      ),
+      file(`Books ${TASKS}/Ubik ${ROW}.md`, '# Ubik\nPages: 224\nRead: No\nCode: 12\n\nWords.\n'),
     ])
 
-    const table = noteAt(plan, 'Tasks.md')
-    expect(table).toContain('| A \\| B | one two |')
-    // Three rows and no more: the newline inside the paragraph would otherwise
-    // end the row it is in.
-    expect(table.split('\n').filter((one) => one.startsWith('|'))).toHaveLength(3)
+    const dune = noteAt(plan, 'Books/Dune.md')
+    expect(dune).toContain('pages: 412\n')
+    expect(dune).toContain('read: true\n')
+    expect(dune).toContain('started: 2026-01-02T15:30\n')
+    expect(dune).toContain('genre: [Sci-fi, Classic]\n')
+    expect(dune).toContain("author: ['[[Herbert]]']\n")
+    // A leading zero is a code, and a column with one in it is words throughout.
+    expect(dune).toContain("code: '007'\n")
+    expect(dune).toContain('note: Long, and worth it\n')
+    expect(noteAt(plan, 'Books/Ubik.md')).toContain('read: false\n')
+    expect(noteAt(plan, 'Books/Ubik.md')).toContain("code: '12'\n")
+  })
+
+  test('a database with no pages at all still has every row', async () => {
+    const plan = await readNotion([
+      file(`Tasks ${TASKS}_all.csv`, 'Name,Note\n"A | B","one\ntwo"\n,Empty\n'),
+    ])
+
+    expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/A B.md', 'Tasks/Untitled.md'])
+    expect(noteAt(plan, 'Tasks/A B.md')).toContain('note: one two')
   })
 
   test('an HTML export is read as HTML rather than refused', async () => {

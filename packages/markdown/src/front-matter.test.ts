@@ -245,6 +245,16 @@ describe('writing a block', () => {
     ).toBe('---\ndate: 2026-01-02\ntags: [work, a/b]\n---')
   })
 
+  test('a number and a yes-or-no are written as YAML has them, a string as words', () => {
+    expect(
+      writeFrontMatter([
+        ['pages', 412],
+        ['read', true],
+        ['code', '412'],
+      ]),
+    ).toBe("---\npages: 412\nread: true\ncode: '412'\n---")
+  })
+
   test('a block with no rows is no block at all', () => {
     expect(writeFrontMatter([])).toBe('')
   })

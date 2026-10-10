@@ -21,9 +21,13 @@ export interface Meta {
   updated?: string | null
   tags?: readonly string[]
   /** Anything else the export carried under its own name: a database's columns,
-   *  the address a page came from. */
-  extra?: readonly (readonly [string, string])[]
+   *  the address a page came from. A column that held numbers, a yes-or-no or a
+   *  list of pages is written as one; everything else as the words it said. */
+  extra?: readonly (readonly [string, Property])[]
 }
+
+/** What one of those holds. */
+export type Property = FrontMatterRow[1]
 
 /** A front matter block, or nothing at all when there is nothing to say. Which
  *  rows there are is decided here - only what the export knew - and how each value
@@ -40,11 +44,18 @@ export function frontMatterFor(meta: Meta): string {
 
   for (const [key, value] of meta.extra ?? []) {
     const name = propertyName(key)
-    if (name && value.trim()) rows.push([name, value])
+    if (name && said(value)) rows.push([name, value])
   }
 
   const written = writeFrontMatter(rows)
   return written ? `${written}\n\n` : ''
+}
+
+/** Whether a value says anything: a blank one is not written, a `false` is. */
+function said(value: Property): boolean {
+  if (typeof value === 'string') return value.trim() !== ''
+  if (typeof value === 'number' || typeof value === 'boolean') return true
+  return value.length > 0
 }
 
 /** A whole note: its properties, its title as a heading, and its words.

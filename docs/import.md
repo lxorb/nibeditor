@@ -121,8 +121,15 @@ on the end of every name. Take the ids off and that is exactly nib's own shape, 
 note and a folder of the same name, so a Notion workspace arrives as the tree it
 looked like in Notion. A page's properties, which Notion writes as lines under
 the title, become front matter. A database is a CSV beside a folder of its rows'
-pages: the CSV becomes the folder's note, holding the table, and the rows come in
-as the notes they already were. Notion writes the table twice, once as the view
+pages: the CSV becomes the folder's note, holding the table as a ` ```base ` fence
+over the notes in the folder beside it (`file.folder + ".md" == this.file.path`),
+and the rows come in as the notes they already were, so editing a row is editing
+the table. The columns keep Notion's order and names. Notion writes every value
+as words, so what a column holds is judged from all of its rows: dates become ISO
+dates (with the minute where Notion had a time), checkboxes `true` and `false`,
+plain numbers numbers, relations lists of links, and a column of comma-separated
+labels that come back in other rows a list. A row with no page in the export
+still becomes a note. Notion writes the table twice, once as the view
 that was on screen and once as every row; the second is the one that is read,
 because a filtered view is a question somebody asked on a Tuesday and the rows
 are the data.
