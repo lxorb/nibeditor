@@ -81,7 +81,9 @@
   }
 </script>
 
-<!-- The scratchpad's switch. It leaves the keyboard where it is; its menu moves the note. -->
+<!-- The scratchpad's switch. It leaves the keyboard where it is, and has no menu: the
+     scratchpad is in no space, so nothing a tab's or a file's menu offers is its; see
+     scratchpad/pad.ts. -->
 {#snippet padGlyph()}
   {#if !__EVEN_PLUGIN__}
     <button
@@ -92,10 +94,6 @@
       aria-label={t('Scratchpad')}
       onpointerdown={(event) => event.preventDefault()}
       onclick={() => pad.toggle()}
-      oncontextmenu={(event) => {
-        event.preventDefault()
-        void import('./scratchpad/menu').then((one) => one.padMenu(event))
-      }}
     >
       <svg viewBox="0 0 14 14"
         ><rect x="2.5" y="2.5" width="9" height="10" rx="1.6" /><path

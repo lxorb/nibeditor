@@ -199,9 +199,13 @@ are one key both ways; VS Code's layout buttons sit in the same corner:
   is its file's, the same in every language.
 - **Found from every space**: the Search panel reads it with each search
   (`search/scratchpad.ts`), and no replacement across a space touches it.
-- **Move to space makes it a note.** The glyph's right click offers Move to space: it is
-  written into that space's root, named by its first line, opened, and the scratchpad
-  emptied and put away; the space on screen is offered too.
+- **No menu of its own** (lxorb, issue #231). It is in no space and is no tab, so a
+  tab's or a file's rows do not apply: Move to space, Rename, Show in the file list,
+  Archive, Share, Bookmark, Duplicate and Split right would each move, rename or put
+  away the app's own file, or point at a space it is not in. The glyph's
+  right click shows nothing, and the card's editor has no tab menu over it; to keep
+  what is written, copy it into a note. Move to space in the palette takes the tab in
+  front, never the scratchpad.
 - A quick question's **Add to note** with no note in front lands on its end; see
   docs/ai.md.
 - **An agent's too.** The note verbs reach it as `tab: "scratchpad"`: read and edited

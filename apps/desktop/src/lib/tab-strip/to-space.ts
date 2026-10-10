@@ -1,7 +1,7 @@
 /** Move to space, as the tab's menu, a pick of tabs and the palette offer it: which spaces,
  *  the row with them a chevron away, and the question that names one. The move itself is
- *  workspace/moving-space.ts, fetched with the first. The scratchpad, which is no tab,
- *  asks the same way; see scratchpad/menu.ts. */
+ *  workspace/moving-space.ts, fetched with the first. Never the scratchpad's, which is no
+ *  tab and in no space; see scratchpad/pad.ts. */
 
 import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu-item'
@@ -41,10 +41,14 @@ export async function askSpace(ids: readonly string[]): Promise<void> {
   if (space) await toSpace(ids, space)
 }
 
-/** The row: pressed, it asks which space; its chevron lists them. Left out with nowhere
- *  to go. */
-export function spaceRow(spaces: readonly Space[], move: (space: string) => void): MenuEntry[] {
+/** The row for these tabs: pressed, it asks which space; its chevron lists them. Left out
+ *  with nowhere to go. */
+export function spaceEntry(tabs: readonly Tab[]): MenuEntry[] {
+  const spaces = spacesOf(tabs)
   if (!spaces.length) return []
+
+  const ids = tabs.map((one) => one.id)
+  const move = (space: string) => void toSpace(ids, space)
   return [
     {
       label: t('Move to space'),
@@ -54,10 +58,4 @@ export function spaceRow(spaces: readonly Space[], move: (space: string) => void
         Promise.resolve(spaces.map((one) => ({ label: one.name, run: () => move(one.id) }))),
     },
   ]
-}
-
-/** The row for these tabs. */
-export function spaceEntry(tabs: readonly Tab[]): MenuEntry[] {
-  const ids = tabs.map((one) => one.id)
-  return spaceRow(spacesOf(tabs), (space) => void toSpace(ids, space))
 }

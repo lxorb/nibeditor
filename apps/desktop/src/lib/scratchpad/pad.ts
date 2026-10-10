@@ -85,23 +85,6 @@ class Scratchpad {
     this.live?.dispatch({ changes: difference(before, after) })
     await writeFile(path, after)
   }
-
-  /** Makes it a real note in a space: written at the space's root under the name its
-   *  first line gives it, opened, and the scratchpad emptied and put away. Nothing for
-   *  an empty scratchpad, which has no note in it. The space is shown first, so the
-   *  note lands in the listing on screen and in that space's own tabs. */
-  async moveTo(spaceId: string): Promise<void> {
-    const space = workspace.spaces.find((one) => one.id === spaceId)
-    const words = await this.text()
-    if (!space || !words.trim()) return
-
-    if (space.id !== workspace.activeSpaceId) await workspace.selectSpace(space.id)
-    const made = await workspace.noteFrom(words, space.root)
-    if (!made) return
-    await this.write(() => '')
-    if (shown.on) shown.hide()
-    await workspace.open(made)
-  }
 }
 
 export const scratchpad = new Scratchpad()

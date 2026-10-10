@@ -5,8 +5,7 @@ What it proves, in order:
 - the scratchpad: its glyph is in the sidebar's foot; Ctrl+Shift+X opens it as a tab,
   lit on the glyph, and what is typed into it is written down and there again after a
   reload; the key again goes back to the tab before it; the Search panel finds its
-  words from the space; Move to space in its tab's menu makes it a note of the space,
-  opened in its place, and leaves it empty;
+  words from the space; its glyph has no menu (issue #231), so no Move to space;
 - the quick question: with no provider, Ctrl twice says the one line and links to
   Settings > AI; with the fake provider, Ctrl twice over a selection opens the field
   with the selection as its chip, Enter streams the answer in place and the request
@@ -179,34 +178,11 @@ def scratchpad(page: Page) -> None:
         wrong("the search does not find the scratchpad's words")
     page.keyboard.press("Escape")
 
-    page.evaluate(FOCUS_NOTE)
-    page.keyboard.press("Control+Shift+X")
-    wait_for(page, "/Scratchpad\\.md$/.test(window.nibApp.workspace.active?.path ?? '')", "the scratchpad again")
-    tab = page.locator("[data-region=tabs] .tab.active").first
-    tab.click(button="right")
-    row = page.get_by_role("menuitem", name="Move to space")
-    if row.count() == 0:
-        row = page.locator(".menu button", has_text="Move to space")
-    if row.count() == 0:
-        wrong("the scratchpad's tab offers no Move to space")
+    # No menu of its own: it is in no space, so nothing to move to one (issue #231).
+    page.locator("header button.pad").click(button="right")
+    if page.locator(".menu").count():
+        wrong("the scratchpad's glyph has a menu")
         page.keyboard.press("Escape")
-        return
-    row.first.click()
-    wait_for(page, "document.querySelector('.sheet .found-row')", "the spaces to choose from")
-    shot(page, "03-move-to-space")
-    page.keyboard.press("Enter")
-    wait_for(
-        page,
-        "window.nibApp.workspace.notes.some((one) => one.name.startsWith('call Anna'))",
-        "a note made of it in the space",
-    )
-    wait_for(page, "(window.nibApp.workspace.active?.path ?? '').includes('call Anna')", "the note in front")
-    left = page.evaluate(PAD_TEXT)
-    if left.strip():
-        wrong(f"the scratchpad was not emptied: {left!r}")
-    if page.evaluate("window.nibApp.workspace.tabs.some((one) => /Scratchpad\\.md$/.test(one.path ?? ''))"):
-        wrong("the scratchpad's tab stayed beside the note it became")
-    shot(page, "04-moved")
 
 
 def nothing_set_up(page: Page) -> None:

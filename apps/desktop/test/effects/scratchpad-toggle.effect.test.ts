@@ -49,6 +49,9 @@ const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/Scrat
 const { shown, toggleScratchpad } = await import('../../src/lib/scratchpad/is.svelte')
 const { scratchpad } = await import('../../src/lib/scratchpad/pad')
 const { workspace } = await import('../../src/lib/workspace.svelte')
+const { menu } = await import('../../src/lib/menu.svelte')
+const { tabMenu } = await import('../../src/lib/tab-strip/menu')
+type MenuEntry = import('../../src/lib/menu-item').MenuEntry
 
 let target: HTMLElement
 let undo: (() => void)[] = []
@@ -221,4 +224,41 @@ test("with the card away, an agent's edit is written to the file", async () => {
     await scratchpad.replace('First thought\n', [{ from: 14, to: 14, insert: 'More\n' }]),
   ).toBe(true)
   expect(disk.current?.files.get(PAD)).toBe('First thought\nMore\n')
+})
+
+/** A tab's rows that would move, rename or put away the file, or point at a space. */
+const A_FILES_ROWS = ['Move to space', 'Rename', 'Show in the file list', 'Duplicate']
+
+const labels = (entries: readonly MenuEntry[]) => entries.flatMap((one) => (one ? [one.label] : []))
+
+const TWO_SPACES = [
+  { id: 'work', name: 'Work', root: '/spaces/Work' },
+  { id: 'home', name: 'Home', root: '/spaces/Home' },
+]
+
+// lxorb, issue #231: "when right clicking on the scratchpad there's 'move to space' which
+// doesn't make sense". It is in no space and no tab, so a tab's or a file's rows are not its.
+test('a right click on the switch offers nothing, Move to space least of all', async () => {
+  workspace.spaces = TWO_SPACES
+  bar()
+
+  const click = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+  glyph()?.dispatchEvent(click)
+  await vi.dynamicImportSettled()
+  flushSync()
+  expect(menu.open).toBe(false)
+  for (const row of A_FILES_ROWS) expect(labels(menu.items)).not.toContain(row)
+})
+
+test("a note in a space keeps the rows the scratchpad's switch leaves out", async () => {
+  workspace.spaces = TWO_SPACES
+  disk.current?.files.set('/spaces/Work/Plan.md', '# Plan\n')
+  await workspace.loadTree()
+  await workspace.openEntry('/spaces/Work/Plan.md')
+  const plan = workspace.tabs.find((one) => one.path === '/spaces/Work/Plan.md')
+  if (!plan) throw new Error('no tab for the note')
+  undo.push(() => workspace.close(plan.id, false))
+
+  const rows = labels(tabMenu(plan, plan.paneId))
+  for (const row of A_FILES_ROWS) expect(rows).toContain(row)
 })
