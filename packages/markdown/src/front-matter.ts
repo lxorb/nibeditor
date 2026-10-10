@@ -90,8 +90,13 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   return null
 }
 
-/** What a written row holds: one key, and either a value or a list of them. */
-export type FrontMatterRow = readonly [key: string, value: string | readonly string[]]
+/** What a written row holds: one key, and either a value or a list of them. A
+ *  number and a yes-or-no are written as YAML's own, for a column that held one;
+ *  a string is always read back as the words it said. */
+export type FrontMatterRow = readonly [
+  key: string,
+  value: string | number | boolean | readonly string[],
+]
 
 /** A front matter block saying these rows, or nothing at all when there are none:
  *  a note that carries no properties should not carry an empty fence.
@@ -108,13 +113,16 @@ export type FrontMatterRow = readonly [key: string, value: string | readonly str
 export function writeFrontMatter(rows: readonly FrontMatterRow[]): string {
   if (!rows.length) return ''
 
-  const said = rows.map(([key, value]) =>
-    typeof value === 'string'
-      ? `${key}: ${scalar(value)}`
-      : `${key}: [${value.map(flowItem).join(', ')}]`,
-  )
+  const said = rows.map(([key, value]) => `${key}: ${valueOf(value)}`)
 
   return `---\n${said.join('\n')}\n---`
+}
+
+function valueOf(value: FrontMatterRow[1]): string {
+  if (typeof value === 'string') return scalar(value)
+  if (typeof value === 'boolean') return String(value)
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : "''"
+  return `[${value.map(flowItem).join(', ')}]`
 }
 
 /** The block's own lines as text, or null where there is no block. */

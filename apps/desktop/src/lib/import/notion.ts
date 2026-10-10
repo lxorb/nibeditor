@@ -8,25 +8,27 @@
  *  rearranged.
  *
  *  A database is a CSV beside a folder of the rows' own pages. The CSV becomes
- *  the folder's note, holding the table, and the rows come in as the notes they
- *  already were: the database is one thing in the file list that opens into its
- *  rows. Notion writes the table twice, once as the view that was on screen and
- *  once as every row; this reads the second, because a filtered view is a
- *  question somebody asked on a Tuesday and the rows are the data.
+ *  the folder's note, holding the table as a base over the rows, and the rows
+ *  come in as the notes they already were: the database is one thing in the file
+ *  list that opens into its rows, and a row edited is the table edited. See
+ *  notion-database.ts. Notion writes the table twice, once as the view that was
+ *  on screen and once as every row; this reads the second, because a filtered
+ *  view is a question somebody asked on a Tuesday and the rows are the data.
  *
  *  Each page carries its properties as lines under the title, which become front
  *  matter: that is where nib keeps a note's properties, and it is what makes them
- *  searchable with `[key:value]`. */
+ *  searchable with `[key:value]`. A row's values are written as what their column
+ *  holds - a date as a date, a checkbox as a yes-or-no, a relation as links - so
+ *  the base can sort, sum and group them. */
 
 import { key } from '../i18n.svelte'
-import { recordsOf } from './csv'
 import { folderPlan, isJunk } from './folder'
-import { dayOf, type Meta } from './meta'
-import { Names, safeParts, withoutNotionId } from './names'
+import { dayOf, type Meta, noteText, propertyName, type Property } from './meta'
+import { Names, safeName, safeParts, withoutNotionId } from './names'
+import { baseBlock, type Database, databaseOf, type Kind, kindOf, valueAs } from './notion-database'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 import { readPlain } from './plain'
-import { tableOf } from './table'
 
 const HTML = /\.html?$/i
 const MARKDOWN = /\.(md|markdown)$/i
@@ -55,6 +57,15 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
   const kept = usefulCsvs(sources)
   let views = 0
 
+  // Every database is read before any page is, because a row's page is written
+  // with what its column holds, and that is only known from the whole column.
+  const databases = new Map<string, Database>()
+  for (const source of sources) {
+    if (kept.has(source.path)) databases.set(folderOf(source.path), databaseOf(await source.text()))
+  }
+  // Where each database's folder note went, for the rows that have no page.
+  const placed = new Map<string, string>()
+
   const plan = await folderPlan(sources, {
     format: 'notion',
     place: (source) => {
@@ -71,12 +82,14 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
         // the name Notion wrote and `_all` is after it.
         const wanted = source.path.replace(/_all\.csv$/i, '.csv')
         const path = names.free(safeParts(wanted, withoutNotionId).replace(CSV, '.md'))
+        const database = databases.get(folderOf(source.path))
+        if (database) placed.set(folderOf(source.path), path)
         return {
           to: path,
-          read: (text) => {
-            const table = recordsOf(text)
+          read: () => {
             const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
-            return { text: tableOf(table.columns, table.rows), title: name }
+            const text = database ? baseBlock(database, keyOf) : ''
+            return { text, title: name }
           },
         }
       }
@@ -84,15 +97,21 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
       if (!MARKDOWN.test(source.path))
         return { to: names.free(safeParts(source.path, withoutNotionId)) }
 
+      const kinds = databases.get(parentOf(source.path))?.kinds
       return {
         to: names.free(safeParts(source.path, withoutNotionId)),
         read: (text) => {
-          const said = notionPage(text)
+          const said = notionPage(text, kinds)
           return { text: said.body, title: null, meta: said.meta }
         },
       }
     },
   })
+
+  for (const [folder, database] of databases) {
+    const note = placed.get(folder)
+    if (note) plan.files.push(...missingRows(database, folder, note, sources, names))
+  }
 
   if (views) {
     plan.lost.push({
@@ -105,6 +124,69 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
   }
 
   return plan
+}
+
+/** The folder a database's rows are in, in the export: the CSV's own name, which
+ *  is also the folder's, without the `_all` and the extension. */
+function folderOf(csv: string): string {
+  return csv.replace(/(_all)?\.csv$/i, '')
+}
+
+function parentOf(path: string): string {
+  const at = path.lastIndexOf('/')
+  return at === -1 ? '' : path.slice(0, at)
+}
+
+/** The rows the CSV has and no page of the export stands for, as notes of their
+ *  own, so that a row is never in Notion's table and missing from nib's. A page
+ *  is matched to its row by name, the way Notion named the file after the row's
+ *  title; Notion writes a page for every row, so this is usually nothing. */
+function missingRows(
+  database: Database,
+  folder: string,
+  note: string,
+  sources: readonly Source[],
+  names: Names,
+): { kind: 'note'; path: string; text: string }[] {
+  const [title = '', ...rest] = database.columns
+  const pages = sources
+    .filter((one) => MARKDOWN.test(one.path) && parentOf(one.path) === folder)
+    .map((one) => matchable(withoutNotionId(one.path.split('/').pop() ?? '').replace(MARKDOWN, '')))
+  const into = note.replace(MARKDOWN, '')
+  const out: { kind: 'note'; path: string; text: string }[] = []
+
+  for (const row of database.rows) {
+    const name = safeName((row[title] ?? '').split('\n')[0] ?? '')
+    const at = pages.indexOf(matchable(name))
+    if (at !== -1) {
+      pages.splice(at, 1)
+      continue
+    }
+
+    const said = rest.map((column): [string, string] => [column, (row[column] ?? '').trim()])
+    out.push({
+      kind: 'note',
+      path: names.free(`${into}/${name}.md`),
+      text: noteText(name, '', metaOf(said, database.kinds)),
+    })
+  }
+
+  return out
+}
+
+/** A name with nothing in it a file system or an exporter might have changed. */
+function matchable(name: string): string {
+  return name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+}
+
+/** The key a column is written under in a row's front matter: the page's own
+ *  dates and its labels under nib's names for them, every other column under its
+ *  own. */
+function keyOf(column: string): string {
+  if (MADE.test(column)) return 'date'
+  if (CHANGED.test(column)) return 'updated'
+  if (LABELS.test(column)) return 'tags'
+  return propertyName(column)
 }
 
 /** Which of the CSVs to read. Notion writes `Table id.csv` for the view that was
@@ -129,7 +211,10 @@ function usefulCsvs(sources: readonly Source[]): Set<string> {
  *  and nothing is taken from it. One line that is not a property makes the whole
  *  block words again, since half a block of properties is a page that has lost a
  *  sentence. */
-export function notionPage(text: string): { body: string; meta: Meta } {
+export function notionPage(
+  text: string,
+  kinds?: ReadonlyMap<string, Kind>,
+): { body: string; meta: Meta } {
   const lines = text.split('\n')
   let at = 0
 
@@ -153,8 +238,16 @@ export function notionPage(text: string): { body: string; meta: Meta } {
 
   if (!said.length) return { body: text, meta: {} }
 
+  const body = [title, ...lines.slice(scan)].filter((one) => one !== null).join('\n')
+  return { body, meta: metaOf(said, kinds) }
+}
+
+/** A page's properties as front matter: its own dates and labels under nib's
+ *  names, and every other one as what its column holds. A page that is not a row
+ *  of a database read here has its values judged one by one. */
+function metaOf(said: readonly [string, string][], kinds?: ReadonlyMap<string, Kind>): Meta {
   const meta: Meta = {}
-  const extra: [string, string][] = []
+  const extra: [string, Property][] = []
   const tags: string[] = []
 
   for (const [name, value] of said) {
@@ -178,12 +271,10 @@ export function notionPage(text: string): { body: string; meta: Meta } {
       continue
     }
 
-    extra.push([name, plain])
+    extra.push([name, valueAs(kinds?.get(name) ?? kindOf([plain]), plain)])
   }
 
   if (tags.length) meta.tags = tags
   if (extra.length) meta.extra = extra
-
-  const body = [title, ...lines.slice(scan)].filter((one) => one !== null).join('\n')
-  return { body, meta }
+  return meta
 }
