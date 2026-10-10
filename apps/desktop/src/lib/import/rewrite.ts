@@ -53,39 +53,135 @@ export interface Rewriting {
 
 export function rewriteLinks(text: string, at: Rewriting, find: Resolver): string {
   const folder = folderOf(at.now)
+  const code = codeRanges(text)
 
-  const linked = text.replace(LINK, (whole, bang: string, label: string, inside: string) => {
-    const { target, title } = splitTarget(inside)
-    if (!target || isAddress(target)) return whole
+  const linked = text.replace(
+    LINK,
+    (whole, bang: string, label: string, inside: string, offset: number) => {
+      if (inCode(code, offset)) return whole
 
-    const found = find(decoded(target), at.was)
-    if (!found) return whole
+      const { target, title } = splitTarget(inside)
+      if (!target || isAddress(target)) return whole
 
-    // A note is pointed at by name, so the link survives it being renamed - or in
-    // the spelling the Links setting asks for, since `linkTo` is the one place in
-    // the app that writes a link to a note and this is the app writing one.
-    if (isMarkdownPath(found.path)) {
-      return linkTo(found.name, label, { path: found.path, from: at.now, embed: bang === '!' })
-    }
+      // The heading, block or page after the `#` is kept apart from the path, so
+      // the link still goes to the same place in the file once it is found.
+      const { path: written, fragment } = splitFragment(target)
+      const found = find(decoded(written), at.was)
+      if (!found) return whole
 
-    const path = relativePath(folder, found.path)
-    return `${bang}[${label}](${encodeTarget(path)}${title})`
-  })
+      // A note is pointed at by name, so the link survives it being renamed - or in
+      // the spelling the Links setting asks for, since `linkTo` is the one place in
+      // the app that writes a link to a note and this is the app writing one.
+      if (isMarkdownPath(found.path)) {
+        return linkTo(found.name, label, {
+          path: found.path,
+          from: at.now,
+          embed: bang === '!',
+          fragment: fragment === null ? null : decoded(fragment),
+        })
+      }
+
+      const path = relativePath(folder, found.path)
+      const anchor = fragment === null ? '' : `#${fragment}`
+      return `${bang}[${label}](${encodeTarget(path)}${anchor}${title})`
+    },
+  )
 
   // `shown` is the second group, which a link with no `|` in it does not have: the
   // replacer is handed `undefined` there whatever the types say. Through `linkTo`
   // as well, so an import writes one spelling throughout rather than keeping the
-  // exporting app's wherever it happened to match nib's.
-  return linked.replace(WIKILINK, (whole, target: string, shown: string | undefined) => {
-    const found = find(decoded(target.trim()), at.was)
-    if (!found) return whole
+  // exporting app's wherever it happened to match nib's. The code is found again,
+  // because the pass above moved everything after the first link it rewrote.
+  const stillCode = codeRanges(linked)
+  return linked.replace(
+    WIKILINK,
+    (whole, target: string, shown: string | undefined, offset: number) => {
+      if (inCode(stillCode, offset)) return whole
 
-    return linkTo(found.name, shown?.slice(1) ?? null, {
-      path: found.path,
-      from: at.now,
-      embed: whole.startsWith('!'),
-    })
-  })
+      const { path, fragment } = splitFragment(decoded(target.trim()))
+      const found = find(path, at.was)
+      if (!found) return whole
+
+      return linkTo(found.name, shown?.slice(1) ?? null, {
+        path: found.path,
+        from: at.now,
+        embed: whole.startsWith('!'),
+        fragment,
+      })
+    },
+  )
+}
+
+/** A link's target and what follows its `#`: a heading, a `^blockid`, a PDF's
+ *  `page=3`. Null when there is no `#`, so an empty fragment is still told apart
+ *  from none. */
+function splitFragment(target: string): { path: string; fragment: string | null } {
+  const at = target.indexOf('#')
+  if (at < 0) return { path: target, fragment: null }
+  return { path: target.slice(0, at), fragment: target.slice(at + 1) }
+}
+
+/** Where the note's code is, as stretches of its text: fenced blocks and inline code
+ *  spans. A link written there is an example of one, which is words to copy exactly
+ *  as they are, and neither Obsidian nor nib reads it as a link. */
+function codeRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = []
+  let fence: { mark: string; from: number } | null = null
+  let prose = 0
+  let at = 0
+
+  for (const line of text.split('\n')) {
+    const marked = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
+    const mark = marked?.[1] ?? ''
+    const rest = marked?.[2] ?? ''
+
+    if (fence) {
+      // A fence closes on a run of its own mark at least as long, with nothing after.
+      if (
+        mark &&
+        mark.startsWith(fence.mark.charAt(0)) &&
+        mark.length >= fence.mark.length &&
+        !rest.trim()
+      ) {
+        ranges.push([fence.from, at + line.length])
+        fence = null
+        prose = at + line.length
+      }
+    } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
+      spans(text, prose, at, ranges)
+      fence = { mark, from: at }
+    }
+
+    at += line.length + 1
+  }
+
+  // A fence nobody closed runs to the end of the note, which is how markdown reads it.
+  if (fence) ranges.push([fence.from, text.length])
+  else spans(text, prose, text.length, ranges)
+
+  return ranges
+}
+
+/** The inline code spans between `from` and `to`: a run of backticks, up to the
+ *  next run of exactly as many. A run with no partner is only backticks. */
+function spans(text: string, from: number, to: number, ranges: [number, number][]) {
+  const runs = [...text.slice(from, to).matchAll(/`+/g)]
+
+  for (let one = 0; one < runs.length; one++) {
+    const open = runs[one]
+    if (!open) continue
+    const close = runs.findIndex((run, at) => at > one && run[0].length === open[0].length)
+    if (close < 0) continue
+
+    const shut = runs[close]
+    if (!shut) continue
+    ranges.push([from + open.index, from + shut.index + shut[0].length])
+    one = close
+  }
+}
+
+function inCode(ranges: readonly [number, number][], offset: number): boolean {
+  return ranges.some(([from, to]) => offset >= from && offset < to)
 }
 
 /** The target and the title inside a link's brackets, told apart the way every
@@ -143,15 +239,29 @@ export class ExportFiles {
    *  answers with the first, which is what any reader of those spaces does. */
   private readonly byName = new Map<string, Found>()
 
+  /** By name without the extension, which is how a wikilink names a note. */
+  private readonly byStem = new Map<string, Found>()
+
+  /** How many of the files arriving a wikilink would call by each name. */
+  private readonly named = new Map<string, number>()
+
   add(was: string, found: Found) {
     this.byPath.set(was.toLowerCase(), found)
 
     const name = was.split('/').pop()?.toLowerCase() ?? was
     if (!this.byName.has(name)) this.byName.set(name, found)
 
-    // A wikilink writes no extension, so a note answers to its stem as well.
+    // A wikilink writes no extension, so a note answers to its stem as well, and
+    // ahead of a canvas or a paper of the same stem: Obsidian reads a link with no
+    // extension as a link to a note, whichever file sorted first.
     const stem = name.replace(/\.[^.]+$/, '')
-    if (stem !== name && !this.byName.has(stem)) this.byName.set(stem, found)
+    const held = this.byStem.get(stem)
+    if (stem !== name && (!held || (!isMarkdownPath(held.path) && isMarkdownPath(found.path)))) {
+      this.byStem.set(stem, found)
+    }
+
+    const said = found.name.toLowerCase()
+    this.named.set(said, (this.named.get(said) ?? 0) + 1)
   }
 
   /** The resolver `rewriteLinks` asks. */
@@ -160,15 +270,25 @@ export class ExportFiles {
     if (!cleaned) return null
 
     const here = folderOf(from)
-    const tries = [joined(here, cleaned), cleaned]
+    // A wikilink to a note in a folder writes the path without the extension.
+    const tries = [joined(here, cleaned), cleaned].flatMap((one) => [one, `${one}.md`])
 
     for (const one of tries) {
       const found = this.byPath.get(one.toLowerCase())
-      if (found) return found
+      if (found) return this.told(found)
     }
 
     const name = cleaned.split('/').pop()?.toLowerCase() ?? cleaned
-    return this.byName.get(name) ?? this.byName.get(`${name}.md`) ?? null
+    return this.byName.get(name) ?? this.byStem.get(name) ?? null
+  }
+
+  /** A file the link named by its path, with enough of that path kept to say which
+   *  file is meant when another arriving shares its name. The bare name would go to
+   *  whichever of them the space finds first. A link that named only the name is
+   *  left to answer the way it did, so it is not handed here. */
+  private told(found: Found): Found {
+    if ((this.named.get(found.name.toLowerCase()) ?? 0) < 2) return found
+    return { ...found, name: found.path.replace(/\.md$/i, '') }
   }
 }
 

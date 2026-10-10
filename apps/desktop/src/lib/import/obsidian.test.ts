@@ -9,6 +9,14 @@ function file(path: string, body = 'x'): Source {
   return sourceOf(path, new TextEncoder().encode(body))
 }
 
+/** What a note says once a vault holding it and these other files is read. */
+async function noteFrom(path: string, ...files: Source[]): Promise<string> {
+  const plan = await readAs('obsidian', [file('.obsidian/app.json', '{}'), ...files])
+  const found = plan.files.find((one) => one.path === path)
+  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
+  return found.text
+}
+
 describe('an Obsidian vault', () => {
   test('says so by its settings folder, before any folder shape', async () => {
     await expect(detect([file('.obsidian/app.json', '{}'), file('A.md', '# A')])).resolves.toBe(
@@ -110,5 +118,86 @@ describe('what a vault carries into the settings', () => {
     await expect(carriedBy('notion', [])).resolves.toBe(NOTION)
     expect(NOTION).toMatchObject({ quietMarks: true, keys: 'notion' })
     await expect(carriedBy('markdown', [])).resolves.toBeNull()
+  })
+})
+
+describe('the links in a vault', () => {
+  test('keep the heading, block or page they point at', async () => {
+    const note = file('Note.md', '# Note\n\n## Setup\n\nPara ^abc123\n')
+    const paper = file('paper.pdf', '%PDF')
+
+    const said = [
+      '[[Note#Setup]]',
+      '[[Note#Setup|how to set up]]',
+      '[[Note#^abc123]]',
+      '![[Note#Setup]]',
+      '![[paper.pdf#page=3]]',
+    ]
+    for (const link of said) {
+      await expect(noteFrom('A.md', file('A.md', `See ${link}.\n`), note, paper)).resolves.toBe(
+        `See ${link}.\n`,
+      )
+    }
+  })
+
+  test('keep the heading a markdown link to a note points at', async () => {
+    const text = await noteFrom(
+      'A.md',
+      file('A.md', 'See [setup](Note%20name.md#Setup).\n'),
+      file('Note name.md', '# Note\n\n## Setup\n'),
+    )
+    expect(text).toBe('See [[Note name#Setup|setup]].\n')
+  })
+
+  test('keep the folder that says which of two files of one name is meant', async () => {
+    const both = [
+      file('Home/Meeting.md', '# Home meeting\n'),
+      file('Work/Meeting.md', '# Work meeting\n'),
+      file('Home/photo.png', 'P1'),
+      file('Work/photo.png', 'P2'),
+    ]
+    const linked = async (body: string) => noteFrom('A.md', ...both, file('A.md', body))
+
+    await expect(linked('See [[Work/Meeting]].\n')).resolves.toBe('See [[Work/Meeting]].\n')
+    await expect(linked('See [work](Work/Meeting.md).\n')).resolves.toBe(
+      'See [[Work/Meeting|work]].\n',
+    )
+    await expect(linked('![[Work/photo.png|200]]\n')).resolves.toBe('![[Work/photo.png|200]]\n')
+    // A name only one file has stays as short as it was written.
+    await expect(
+      noteFrom('A.md', file('Work/Plan.md', '# Plan\n'), file('A.md', 'See [[Work/Plan]].\n')),
+    ).resolves.toBe('See [[Plan]].\n')
+  })
+
+  test('are left exactly as written inside code', async () => {
+    const kit = file('Kit.md', '# Kit\n')
+    const fenced = 'Example:\n\n```markdown\n[the kit](Kit.md) and [[kit#Tent]]\n```\n'
+    const inline = 'Write `[the kit](Kit.md)` or ``[[kit#Tent]]`` to link [[Kit]].\n'
+
+    await expect(noteFrom('A.md', file('A.md', fenced), kit)).resolves.toBe(fenced)
+    await expect(noteFrom('A.md', file('A.md', inline), kit)).resolves.toBe(inline)
+    // A fence nobody closed is code to the end of the note.
+    await expect(noteFrom('A.md', file('A.md', '~~~\n[[kit]]\n'), kit)).resolves.toBe(
+      '~~~\n[[kit]]\n',
+    )
+  })
+
+  test('with no extension mean the note, whatever file of that stem sorts first', async () => {
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', 'Next: [[Plan]]'),
+        file('Plan.canvas', '{"nodes":[],"edges":[]}'),
+        file('Plan.md', '# Plan'),
+      ),
+    ).resolves.toBe('Next: [[Plan]]\n')
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Attachments/Report.pdf', '%PDF'),
+        file('Home.md', 'Read [[Report]] and [[Report.pdf]]'),
+        file('Notes/Report.md', '# Report'),
+      ),
+    ).resolves.toBe('Read [[Report]] and [[Report.pdf]]\n')
   })
 })
