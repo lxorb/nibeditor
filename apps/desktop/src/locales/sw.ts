@@ -1948,6 +1948,9 @@ export const sw: Dictionary = {
   'No group': 'Hakuna kikundi',
   'Not an address': 'Si anwani',
   'Could not connect to {host}': 'Imeshindwa kuunganisha na {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Inatuma picha',
+  'Could not send the image': 'Imeshindwa kutuma picha',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

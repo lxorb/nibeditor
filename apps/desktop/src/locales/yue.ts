@@ -1874,6 +1874,9 @@ export const yue: Dictionary = {
   'No group': '冇群組',
   'Not an address': '唔係地址',
   'Could not connect to {host}': '連唔到 {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': '正在傳送圖片',
+  'Could not send the image': '傳送唔到圖片',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': '同之後嘅 {count} 個',

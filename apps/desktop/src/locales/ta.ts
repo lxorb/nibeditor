@@ -1947,6 +1947,9 @@ export const ta: Dictionary = {
   'No group': 'குழு இல்லை',
   'Not an address': 'முகவரி அல்ல',
   'Could not connect to {host}': '{host} உடன் இணைக்க முடியவில்லை',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'படத்தை அனுப்புகிறது',
+  'Could not send the image': 'படத்தை அனுப்ப முடியவில்லை',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

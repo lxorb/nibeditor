@@ -1896,6 +1896,9 @@ export const ko: Dictionary = {
   'No group': '그룹 없음',
   'Not an address': '주소가 아닙니다',
   'Could not connect to {host}': '{host}에 연결할 수 없습니다',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': '이미지 보내는 중',
+  'Could not send the image': '이미지를 보낼 수 없습니다',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': '및 그 뒤 {count}개',

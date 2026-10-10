@@ -1979,6 +1979,9 @@ export const fr: Dictionary = {
   'No group': 'Aucun groupe',
   'Not an address': 'Pas une adresse',
   'Could not connect to {host}': 'Impossible de se connecter à {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Envoi de l’image',
+  'Could not send the image': 'Impossible d’envoyer l’image',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

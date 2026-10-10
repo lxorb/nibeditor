@@ -2024,6 +2024,9 @@ export const ar: Dictionary = {
   'No group': 'بلا مجموعة',
   'Not an address': 'ليس عنوانًا',
   'Could not connect to {host}': 'تعذّر الاتصال بـ {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'إرسال الصورة',
+  'Could not send the image': 'تعذّر إرسال الصورة',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

@@ -1929,6 +1929,9 @@ export const gsw: Dictionary = {
   'No group': 'Kei Gruppe',
   'Not an address': 'Kei Adrässe',
   'Could not connect to {host}': 'Kei Verbindig zu {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Bild wird gschickt',
+  'Could not send the image': 'Bild het nöd chöne gschickt wärde',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

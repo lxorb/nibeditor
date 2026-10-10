@@ -1907,6 +1907,9 @@ export const jv: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Dudu alamat',
   'Could not connect to {host}': 'Ora bisa nyambung menyang {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Ngirim gambar',
+  'Could not send the image': 'Ora bisa ngirim gambar',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'lan {count} sawisé',

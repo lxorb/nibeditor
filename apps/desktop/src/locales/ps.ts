@@ -1922,6 +1922,9 @@ export const ps: Dictionary = {
   'No group': 'هیڅ ډله نه',
   'Not an address': 'پته نه ده',
   'Could not connect to {host}': 'له {host} سره وصل نه شو',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'انځور لېږل',
+  'Could not send the image': 'انځور ونه لېږل شو',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

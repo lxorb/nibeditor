@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { controlOf, type Keystroke, routeKey, shellReads } from './keys'
+import { controlOf, imageKey, imageKeyTyped, type Keystroke, routeKey, shellReads } from './keys'
 
 /** Which keys a terminal lets the app have: VS Code's split, checked against its own
  *  skip list. See keys.ts, and docs/keyboard.md for the list as a reader sees it. */
@@ -146,5 +146,46 @@ describe('on a Mac', () => {
     expect(routeKey(press('v', cmd), 'mac', null, false)).toBe('paste')
     expect(routeKey(press('a', cmd), 'mac', null, false)).toBe('select-all')
     expect(routeKey(press('k', cmd), 'mac', null, false)).toBe('clear')
+  })
+})
+
+/** Issue 228: Claude Code pastes a picture on Alt+V on Windows and Ctrl+V elsewhere, and
+ *  reads the clipboard itself. */
+describe('the key an agent pastes a picture with', () => {
+  const alt = { altKey: true }
+
+  test('Alt and a letter is the shell’s in a local terminal, Alt+V included', () => {
+    for (const platform of ['win', 'linux'] as const) {
+      for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
+        expect(routeKey(press(letter, alt), platform, null, false), letter).toBe('shell')
+      }
+      // Claude Code's Alt+K, which the app has too: the shell's in a terminal.
+      expect(routeKey(press('k', alt), platform, 'app.ask-selection', false)).toBe('shell')
+    }
+  })
+
+  test('is Alt+V off a Mac, and Ctrl+V where Ctrl+V is the shell’s', () => {
+    expect(imageKey(press('v', alt), 'win')).toBe(true)
+    expect(imageKey(press('v', alt), 'linux')).toBe(true)
+    expect(imageKey(press('v', ctrl), 'linux')).toBe(true)
+    expect(imageKey(press('v', ctrl), 'mac')).toBe(true)
+    // Windows Terminal's paste, and the terminal's own here; a paste brings a picture.
+    expect(imageKey(press('v', ctrl), 'win')).toBe(false)
+    expect(routeKey(press('v', ctrl), 'win', null, false)).toBe('paste')
+    // Option+V types a character on a Mac.
+    expect(imageKey(press('v', alt), 'mac')).toBe(false)
+  })
+
+  test('and nothing else', () => {
+    expect(imageKey(press('v'), 'win')).toBe(false)
+    expect(imageKey(press('V', { altKey: true, shiftKey: true }), 'win')).toBe(false)
+    expect(imageKey(press('v', { ctrlKey: true, altKey: true }), 'win')).toBe(false)
+    expect(imageKey(press('v', ctrlShift), 'linux')).toBe(false)
+    expect(imageKey(press('b', alt), 'win')).toBe(false)
+  })
+
+  test('types what xterm.js would have where no picture is brought over', () => {
+    expect(imageKeyTyped(press('v', alt))).toBe('\x1bv')
+    expect(imageKeyTyped(press('v', ctrl))).toBe('\x16')
   })
 })

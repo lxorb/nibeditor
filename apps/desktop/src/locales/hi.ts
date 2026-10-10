@@ -1917,6 +1917,9 @@ export const hi: Dictionary = {
   'No group': 'कोई समूह नहीं',
   'Not an address': 'यह पता नहीं है',
   'Could not connect to {host}': '{host} से कनेक्ट नहीं हो सका',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'छवि भेजी जा रही है',
+  'Could not send the image': 'छवि नहीं भेजी जा सकी',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

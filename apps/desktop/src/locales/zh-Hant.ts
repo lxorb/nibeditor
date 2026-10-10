@@ -1875,6 +1875,9 @@ export const zhHant: Dictionary = {
   'No group': '無群組',
   'Not an address': '不是位址',
   'Could not connect to {host}': '無法連線到 {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': '正在傳送圖片',
+  'Could not send the image': '無法傳送圖片',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': '以及之後的 {count} 處',

@@ -1911,6 +1911,9 @@ export const gu: Dictionary = {
   'No group': 'કોઈ જૂથ નથી',
   'Not an address': 'સરનામું નથી',
   'Could not connect to {host}': '{host} સાથે કનેક્ટ થઈ શક્યું નહીં',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ચિત્ર મોકલે છે',
+  'Could not send the image': 'ચિત્ર મોકલી શકાયું નહીં',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

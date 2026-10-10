@@ -1937,6 +1937,9 @@ export const kn: Dictionary = {
   'No group': 'ಗುಂಪು ಇಲ್ಲ',
   'Not an address': 'ವಿಳಾಸವಲ್ಲ',
   'Could not connect to {host}': '{host} ಗೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ಚಿತ್ರ ಕಳುಹಿಸುತ್ತಿದೆ',
+  'Could not send the image': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

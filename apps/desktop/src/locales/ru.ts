@@ -1999,6 +1999,9 @@ export const ru: Dictionary = {
   'No group': 'Без группы',
   'Not an address': 'Это не адрес',
   'Could not connect to {host}': 'Не удалось подключиться к {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Отправка изображения',
+  'Could not send the image': 'Не удалось отправить изображение',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

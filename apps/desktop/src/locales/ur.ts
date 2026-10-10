@@ -1917,6 +1917,9 @@ export const ur: Dictionary = {
   'No group': 'کوئی گروپ نہیں',
   'Not an address': 'یہ پتہ نہیں ہے',
   'Could not connect to {host}': '{host} سے نہیں جڑ سکے',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'تصویر بھیجی جا رہی ہے',
+  'Could not send the image': 'تصویر نہیں بھیج سکے',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

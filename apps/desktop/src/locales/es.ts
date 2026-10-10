@@ -1970,6 +1970,9 @@ export const es: Dictionary = {
   'No group': 'Sin grupo',
   'Not an address': 'No es una dirección',
   'Could not connect to {host}': 'No se pudo conectar a {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Enviando la imagen',
+  'Could not send the image': 'No se pudo enviar la imagen',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

@@ -1906,6 +1906,9 @@ export const my: Dictionary = {
   'No group': 'အုပ်စုမရှိ',
   'Not an address': 'လိပ်စာ မဟုတ်ပါ',
   'Could not connect to {host}': '{host} သို့ ချိတ်ဆက်၍ မရပါ',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ပုံပို့နေသည်',
+  'Could not send the image': 'ပုံကို ပို့၍ မရပါ',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'နှင့် ၎င်းနောက် {count} ခု',

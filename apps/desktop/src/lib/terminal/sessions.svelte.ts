@@ -53,12 +53,13 @@ import {
   restoredAbove,
   restoredLine,
 } from './history'
-import { controlOf, type Route, routeKey } from './keys'
+import type { Picture } from './images'
+import { controlOf, imageKey, imageKeyTyped, type Route, routeKey } from './keys'
 import { findColours, monospace, terminalContrast, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
-import { asksFirst, linesIn, pasted, spokenPath } from './paste'
+import { asksFirst, imageIn, imageKindAt, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -1180,6 +1181,15 @@ class Session {
       route = way
     }
 
+    // The agent's key for a picture, in a terminal whose clipboard is another machine's:
+    // the picture brought over, or with none the key as it was. See images.ts.
+    if (route === 'shell' && this.remote && imageKey(event, shortcuts.platform)) {
+      event.preventDefault()
+      event.stopPropagation()
+      void this.pictureOrKey(imageKeyTyped(event))
+      return false
+    }
+
     // The shell's, and nobody else's: a key xterm.js has no sequence for is still not
     // the window's to act on, or a Ctrl+W it let by would close the tab.
     if (route === 'shell') {
@@ -1251,7 +1261,39 @@ class Session {
   private pasting(event: ClipboardEvent) {
     event.preventDefault()
     event.stopImmediatePropagation()
-    void this.paste(event.clipboardData?.getData('text/plain') ?? '')
+    // A picture and no text, into a terminal on another machine: brought over.
+    const image = this.remote ? imageIn(event.clipboardData) : null
+    if (image) void import('./images').then(({ pictureOf }) => this.carry([pictureOf(image)]))
+    else void this.paste(event.clipboardData?.getData('text/plain') ?? '')
+  }
+
+  /** The menu's Paste: the clipboard's text, or in a terminal on another machine its
+   *  picture where there is no text. */
+  private async pasteFromMenu() {
+    const text = await navigator.clipboard.readText().catch(() => '')
+    if (text || !this.remote) await this.paste(text)
+    else await this.pictureOrKey('')
+  }
+
+  /** The picture on the clipboard, carried over and pasted as its path; with none, `key`
+   *  typed as it would have been. See images.ts. */
+  private async pictureOrKey(key: string) {
+    const { clipboardPicture } = await import('./images')
+    const picture = await clipboardPicture()
+    if (picture) await this.carry([picture])
+    else if (key) this.term.input(key, true)
+  }
+
+  /** Pictures onto the machine this terminal reaches, and their paths at its prompt. */
+  private async carry(pictures: (Picture | null)[]) {
+    const source = this.source
+    const some = pictures.filter((one) => one !== null)
+    if (source === null || !some.length || (this.online && !this.mayType)) return
+
+    const { carried } = await import('./images')
+    const paths = await carried(source, some)
+    if (paths !== null && this.source === source) this.term.paste(paths)
+    this.focus()
   }
 
   /** Text into the shell, asking first where the lines would run as they land. */
@@ -1272,11 +1314,20 @@ class Session {
     this.term.paste(pasted(text))
   }
 
-  /** Rows of the file list, as their paths at the prompt, one space apart. */
+  /** Rows of the file list, as their paths at the prompt, one space apart - or on
+   *  another machine, the pictures among them brought over and their paths there. */
   private dropped(event: DragEvent) {
     const paths = isTreeDrag(event.dataTransfer) ? dragged(event.dataTransfer) : []
+    if (!paths.length || this.pty === null) return
+
+    const pictures = this.remote ? paths.filter((path) => imageKindAt(path) !== null) : []
+    if (pictures.length) {
+      event.preventDefault()
+      void import('./images').then(({ pictureAt }) => this.carry(pictures.map(pictureAt)))
+      return
+    }
     // A path on this computer is nowhere on the online machine.
-    if (!paths.length || this.pty === null || this.online) return
+    if (this.online) return
 
     event.preventDefault()
     const shell = this.spec().shell
@@ -1300,11 +1351,7 @@ class Session {
       {
         label: t('Paste'),
         hint: hint('Ctrl-Shift-v', 'Mod-v'),
-        run: () =>
-          void navigator.clipboard
-            .readText()
-            .then((text) => this.paste(text))
-            .catch(() => undefined),
+        run: () => void this.pasteFromMenu(),
       },
       DIVIDER,
       { label: t('Select all'), run: () => this.term.selectAll() },

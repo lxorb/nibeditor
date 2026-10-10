@@ -14,9 +14,42 @@
  *  And a row of the file list dropped on a terminal is its path, spelled the way the
  *  shell reads one - VS Code's drop into its terminal.
  *
+ *  And a picture - a paste with an image and no text on the clipboard, or a picture's row
+ *  dropped - into a terminal on another machine is brought over and pasted as its path
+ *  there, which a coding agent takes as an image; see images.ts. Here only which pictures
+ *  those are.
+ *
  *  Pure; xterm.js does the rest, turning line breaks into the carriage returns a
  *  terminal expects and wrapping the text in the brackets when the shell asked for
  *  them. */
+
+import type { ImageKind } from '@nib/online/wire'
+
+/** The pictures an agent reads, by their type. */
+const KINDS: Record<string, ImageKind> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpeg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+}
+
+/** A picture's kind by its type, or null for anything else. */
+export function imageKindOf(type: string): ImageKind | null {
+  return KINDS[type.toLowerCase()] ?? null
+}
+
+/** A picture's kind by the end of a file's name, or null for anything else. */
+export function imageKindAt(path: string): ImageKind | null {
+  const end = /\.([a-z0-9]+)$/i.exec(path)?.[1]?.toLowerCase()
+  return imageKindOf(`image/${end === 'jpg' ? 'jpeg' : (end ?? '')}`)
+}
+
+/** The picture a paste carries, where it carries no text: a screenshot, an image copied
+ *  out of a browser or a file manager. Null when there is text, which is the paste. */
+export function imageIn(transfer: DataTransfer | null): File | null {
+  if (!transfer || transfer.getData('text/plain')) return null
+  return [...transfer.files].find((file) => imageKindOf(file.type) !== null) ?? null
+}
 
 /** The text as it is sent. */
 export function pasted(text: string): string {

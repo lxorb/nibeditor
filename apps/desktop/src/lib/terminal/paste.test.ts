@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { asksFirst, linesIn, pasted, spokenPath } from './paste'
+import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath } from './paste'
 
 describe('a paste into a terminal', () => {
   /** Windows Terminal's trimPaste: a command copied with the line break that ended it
@@ -30,5 +30,33 @@ describe('a paste into a terminal', () => {
     expect(asksFirst('a\nb', false)).toBe(true)
     expect(asksFirst('a\nb', true)).toBe(false)
     expect(asksFirst('just this\n', false)).toBe(false)
+  })
+})
+
+/** Issue 228: a picture into a terminal on another machine. */
+describe('a picture in a paste', () => {
+  const transfer = (text: string, ...types: string[]) =>
+    ({
+      getData: (type: string) => (type === 'text/plain' ? text : ''),
+      files: types.map((type) => ({ type })),
+    }) as unknown as DataTransfer
+
+  test('is one an agent reads, by its type or its name', () => {
+    expect(imageKindOf('image/png')).toBe('png')
+    expect(imageKindOf('IMAGE/JPEG')).toBe('jpeg')
+    expect(imageKindOf('image/svg+xml')).toBeNull()
+    expect(imageKindAt('Pictures/shot.PNG')).toBe('png')
+    expect(imageKindAt('a/b.jpg')).toBe('jpeg')
+    expect(imageKindAt('a/b.webp')).toBe('webp')
+    expect(imageKindAt('notes.md')).toBeNull()
+    expect(imageKindAt('png')).toBeNull()
+  })
+
+  test('is the paste only where there is no text', () => {
+    expect(imageIn(transfer('', 'image/png'))?.type).toBe('image/png')
+    expect(imageIn(transfer('', 'text/html', 'image/gif'))?.type).toBe('image/gif')
+    expect(imageIn(transfer('words', 'image/png'))).toBeNull()
+    expect(imageIn(transfer('', 'application/pdf'))).toBeNull()
+    expect(imageIn(null)).toBeNull()
   })
 })

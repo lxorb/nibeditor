@@ -1948,6 +1948,9 @@ export const ha: Dictionary = {
   'No group': 'Babu rukuni',
   'Not an address': 'Ba adireshi ba ne',
   'Could not connect to {host}': 'An kasa haɗawa da {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Ana aika hoton',
+  'Could not send the image': 'An kasa aika hoton',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

@@ -2001,6 +2001,9 @@ export const pl: Dictionary = {
   'No group': 'Bez grupy',
   'Not an address': 'To nie jest adres',
   'Could not connect to {host}': 'Nie można połączyć z {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Wysyłanie obrazu',
+  'Could not send the image': 'Nie można wysłać obrazu',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

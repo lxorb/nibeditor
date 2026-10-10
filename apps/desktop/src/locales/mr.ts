@@ -1922,6 +1922,9 @@ export const mr: Dictionary = {
   'No group': 'गट नाही',
   'Not an address': 'पत्ता नाही',
   'Could not connect to {host}': '{host} शी कनेक्ट करता आले नाही',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'प्रतिमा पाठवत आहे',
+  'Could not send the image': 'प्रतिमा पाठवता आली नाही',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

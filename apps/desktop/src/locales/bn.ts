@@ -1918,6 +1918,9 @@ export const bn: Dictionary = {
   'No group': 'কোনো গ্রুপ নেই',
   'Not an address': 'এটি ঠিকানা নয়',
   'Could not connect to {host}': '{host}-এ সংযোগ করা যায়নি',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ছবি পাঠানো হচ্ছে',
+  'Could not send the image': 'ছবি পাঠানো যায়নি',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

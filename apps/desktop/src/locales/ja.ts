@@ -1910,6 +1910,9 @@ export const ja: Dictionary = {
   'No group': 'グループなし',
   'Not an address': 'アドレスではありません',
   'Could not connect to {host}': '{host} に接続できませんでした',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': '画像を送信中',
+  'Could not send the image': '画像を送信できませんでした',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'とその後の {count} 件',

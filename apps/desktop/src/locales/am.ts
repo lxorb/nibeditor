@@ -1896,6 +1896,9 @@ export const am: Dictionary = {
   'No group': 'ቡድን የለም',
   'Not an address': 'አድራሻ አይደለም',
   'Could not connect to {host}': 'ከ{host} ጋር መገናኘት አልተቻለም',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ምስሉን በመላክ ላይ',
+  'Could not send the image': 'ምስሉን መላክ አልተቻለም',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

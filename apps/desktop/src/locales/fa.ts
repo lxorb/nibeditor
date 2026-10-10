@@ -1920,6 +1920,9 @@ export const fa: Dictionary = {
   'No group': 'بدون گروه',
   'Not an address': 'نشانی نیست',
   'Could not connect to {host}': 'اتصال به {host} ممکن نشد',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'در حال فرستادن تصویر',
+  'Could not send the image': 'فرستادن تصویر ممکن نشد',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

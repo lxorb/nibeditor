@@ -1968,6 +1968,9 @@ export const ptPT: Dictionary = {
   'No group': 'Sem grupo',
   'Not an address': 'Não é um endereço',
   'Could not connect to {host}': 'Não foi possível ligar a {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'A enviar a imagem',
+  'Could not send the image': 'Não foi possível enviar a imagem',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

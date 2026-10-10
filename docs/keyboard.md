@@ -594,6 +594,8 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
+| Alt and a letter | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+K, Alt+P, Alt+T and **Alt+V, which pastes an image** it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
+| Alt+V, Ctrl+V off Windows, or a paste with a picture and no text, in a Remote or online terminal | **the picture carried over**: that machine's clipboard is not this one's, so the picture is written to a file there and its path pasted, which Claude Code and Codex take as an image. With no picture on the clipboard the key goes to the shell as it would have. See *Pictures* in docs/terminal.md |
 | Ctrl+F | find, in nib's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
 | Cmd+A, Cmd+K | select all, clear, on a Mac (Terminal's own) |

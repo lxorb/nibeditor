@@ -1926,6 +1926,9 @@ export const tr: Dictionary = {
   'No group': 'Grup yok',
   'Not an address': 'Adres değil',
   'Could not connect to {host}': '{host} sunucusuna bağlanılamadı',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Resim gönderiliyor',
+  'Could not send the image': 'Resim gönderilemedi',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

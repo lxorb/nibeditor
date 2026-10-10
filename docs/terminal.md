@@ -332,6 +332,8 @@ notifications are every terminal's (below); what the machine adds:
   such an address to the one the program prints.
 - **Long pastes** go up in frames of at most 64 KB at an even pace, so a whole log pasted
   arrives whole, bracketed as one paste, rather than refused as one frame too large.
+- **A picture** pasted for an agent goes up the same way and is written on the machine,
+  its path pasted (_Pictures_, below).
 - A watcher's clipboard is never written by somebody else's program: OSC 52 reaches only a
   window that may type in the session.
 
@@ -442,6 +444,27 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
 - **A row of the file list** dropped on a terminal is its path at the prompt, spelled for
   the shell: quoted where it has a space, `/mnt/c/...` in WSL and `/c/...` in Git Bash -
   VS Code's drop into its terminal. See `spokenPath` in `lib/terminal/paste.ts`.
+- **Pictures**, for a coding agent (Emil, issue 228: _"inserting images into claude session
+  with alt + v should also work"_). Claude Code pastes an image by reading the clipboard
+  itself when its key is pressed - Alt+V on Windows, through PowerShell; Ctrl+V on Linux
+  and a Mac, through `xclip`, `wl-paste` or `osascript` - and Codex the same. In a terminal
+  on this computer the key only has to arrive: Alt and a letter is the shell's, ESC and the
+  letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be,
+  and Ctrl+V is the shell's off Windows. On another machine, a Remote host or the online
+  one, the clipboard the agent reads is that machine's, which is empty. So there the
+  picture is **carried over**: written to a file in that user's cache
+  (`~/.cache/nib/images`) and pasted as its path, which an agent takes as an image the way
+  it takes one dragged onto a terminal - VS Code Remote's answer to the same. Three ways in,
+  each one a terminal already has: the agent's key with a picture on the clipboard (with
+  none, the key goes to the shell as it would have); a paste with a picture and no text
+  (Ctrl+V on Windows, Ctrl+Shift+V, Shift+Insert, Cmd+V, the menu); and a picture's row of
+  the file list dropped on it. PNG, JPEG, GIF and WebP, 16 MB at most. The line across the
+  top of the panes sweeps while it goes and says _Could not send the image_ where it could
+  not. A Remote host is reached by a second `ssh` of the tab's own, in `BatchMode`, so a
+  key, the agent or a shared connection (`ControlMaster`) is enough, and a host that only
+  takes a password refuses at once (`src-tauri/src/terminal/picture.rs`); the online
+  machine takes it up the terminal's own socket (docs/online-terminal.md 4.13). See
+  `lib/terminal/images.ts`.
 - **Find**: Ctrl+F, in nib's find bar, painting what it finds the way a note's find does.
 - **Scrollback**: five thousand lines. VS Code keeps a thousand and Windows Terminal about
   nine; five is a long build log at a few megabytes a terminal.
@@ -556,6 +579,8 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/online/opening.svelte.ts` | an address the machine asked a browser for: where it opens, and a sign-in's way back |
 | `services/machine/nib-open`, `services/machine/src/opener.ts` | the machine's browser: `xdg-open` and `$BROWSER`, and nibd's endpoint for them |
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
+| `apps/desktop/src/lib/terminal/images.ts` | a picture into a terminal on another machine: carried over, and its path pasted |
+| `apps/desktop/src-tauri/src/terminal/picture.rs` | a picture carried to a Remote host, through a second `ssh` |
 | `apps/desktop/src/lib/terminal/modes.ts` | what a program left on, switched off where the prompt begins |
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |
 | `apps/desktop/src/lib/terminal/source.ts` | where a screen is fed from: a pty, or an online session's socket |

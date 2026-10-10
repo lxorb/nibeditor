@@ -1940,6 +1940,9 @@ export const ml: Dictionary = {
   'No group': 'ഗ്രൂപ്പില്ല',
   'Not an address': 'വിലാസമല്ല',
   'Could not connect to {host}': '{host}-ലേക്ക് കണക്റ്റ് ചെയ്യാനായില്ല',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ചിത്രം അയയ്ക്കുന്നു',
+  'Could not send the image': 'ചിത്രം അയയ്ക്കാനായില്ല',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

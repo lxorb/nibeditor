@@ -1925,6 +1925,9 @@ export const pa: Dictionary = {
   'No group': 'ਕੋਈ ਗਰੁੱਪ ਨਹੀਂ',
   'Not an address': 'ਪਤਾ ਨਹੀਂ ਹੈ',
   'Could not connect to {host}': '{host} ਨਾਲ ਕਨੈਕਟ ਨਹੀਂ ਹੋ ਸਕਿਆ',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'ਤਸਵੀਰ ਭੇਜ ਰਿਹਾ ਹੈ',
+  'Could not send the image': 'ਤਸਵੀਰ ਭੇਜੀ ਨਹੀਂ ਜਾ ਸਕੀ',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

@@ -1993,6 +1993,9 @@ export const uk: Dictionary = {
   'No group': 'Без групи',
   'Not an address': 'Це не адреса',
   'Could not connect to {host}': 'Не вдалося підключитися до {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Надсилання зображення',
+  'Could not send the image': 'Не вдалося надіслати зображення',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

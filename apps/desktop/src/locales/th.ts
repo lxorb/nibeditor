@@ -1884,6 +1884,9 @@ export const th: Dictionary = {
   'No group': 'ไม่มีกลุ่ม',
   'Not an address': 'ไม่ใช่ที่อยู่',
   'Could not connect to {host}': 'เชื่อมต่อกับ {host} ไม่ได้',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'กำลังส่งรูป',
+  'Could not send the image': 'ส่งรูปไม่ได้',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'และอีก {count} รายการหลังจากนั้น',

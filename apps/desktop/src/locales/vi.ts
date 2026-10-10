@@ -1902,6 +1902,9 @@ export const vi: Dictionary = {
   'No group': 'Không có nhóm',
   'Not an address': 'Không phải địa chỉ',
   'Could not connect to {host}': 'Không thể kết nối tới {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Đang gửi ảnh',
+  'Could not send the image': 'Không thể gửi ảnh',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'và {count} sau đó',

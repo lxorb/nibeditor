@@ -1958,6 +1958,9 @@ export const fil: Dictionary = {
   'No group': 'Walang grupo',
   'Not an address': 'Hindi isang address',
   'Could not connect to {host}': 'Hindi makakonekta sa {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Ipinapadala ang imahe',
+  'Could not send the image': 'Hindi maipadala ang imahe',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {

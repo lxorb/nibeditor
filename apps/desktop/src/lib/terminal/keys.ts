@@ -38,6 +38,12 @@
  *  size the terminal's type the way they size a note's; and on a Mac Cmd+A and Cmd+K,
  *  Terminal's own select all and clear.
  *
+ *  **Alt and a letter is the shell's** - ESC and the letter, as every terminal sends it,
+ *  and on Windows ConPTY hands it to the program as the Alt chord Windows Terminal's would
+ *  be - so Claude Code's Alt+V pastes an image in a local terminal as it does there. Only
+ *  Alt and a digit, the tabs by number, is the app's. In a terminal on another machine
+ *  the image key brings this computer's picture over instead (`imageKey`, images.ts).
+ *
  *  AltGr is never a chord. Windows says it as Ctrl and Alt, and it is how half of
  *  Europe types `@`, `{` and `\` - so Ctrl and Alt with a key that came out as anything
  *  but its own letter or digit is typing.
@@ -148,6 +154,23 @@ export function routeKey(
   if (!mac && event.ctrlKey && event.shiftKey) return 'app'
 
   return 'shell'
+}
+
+/** Whether a key is the one a coding agent pastes a picture from the clipboard with:
+ *  Claude Code's Alt+V on Windows, and Ctrl+V on Linux and a Mac, where Ctrl+V is the
+ *  shell's (on Windows it is the terminal's own paste, which brings a picture over by
+ *  itself; see images.ts). Alt+V on Linux too, for a hand used to Windows. Not Option+V on
+ *  a Mac, which types a character. */
+export function imageKey(event: Keystroke, platform: Platform): boolean {
+  if (event.key.toLowerCase() !== 'v' || event.shiftKey || event.metaKey) return false
+  if (event.altKey && !event.ctrlKey) return platform !== 'mac'
+  return event.ctrlKey && !event.altKey && platform !== 'win'
+}
+
+/** What the image key types where nothing is brought over: what xterm.js would have
+ *  sent for it - ESC and the letter for Alt, the control character for Ctrl. */
+export function imageKeyTyped(event: Keystroke): string {
+  return event.altKey ? '\x1bv' : controlOf('v')
 }
 
 /** Whether a chord is one a shell reads as a character of its own: Ctrl and a letter

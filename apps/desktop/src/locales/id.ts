@@ -1915,6 +1915,9 @@ export const id: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Bukan alamat',
   'Could not connect to {host}': 'Tidak dapat terhubung ke {host}',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'Mengirim gambar',
+  'Could not send the image': 'Tidak dapat mengirim gambar',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': 'dan {count} sesudahnya',

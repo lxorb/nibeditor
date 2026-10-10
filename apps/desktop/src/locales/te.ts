@@ -1928,6 +1928,9 @@ export const te: Dictionary = {
   'No group': 'సమూహం లేదు',
   'Not an address': 'చిరునామా కాదు',
   'Could not connect to {host}': '{host}కి కనెక్ట్ చేయలేకపోయాం',
+  // A picture pasted into a terminal on another machine, carried there (issue 228)
+  'Sending the image': 'చిత్రం పంపుతోంది',
+  'Could not send the image': 'చిత్రాన్ని పంపలేకపోయాం',
   // The review of the AI sidebar's changes: how many more an undo took, and the
   // rewind sheet's rows
   'and {count} after it': {
