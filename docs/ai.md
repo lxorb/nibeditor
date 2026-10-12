@@ -73,16 +73,16 @@ build switch, on by default, off with `NIB_CLAUDE_CODE=off` (read by `vite.confi
 OpenAI, [ChatGPT plan usage](https://developers.openai.com/siwc/token-sharing-open-source),
 checked 2026-09-30: an open-source app may "request permission to use the user's ChatGPT
 plan for eligible Responses API requests"; "If you're interested in offering it in a paid
-or remotely hosted app, complete the interest form." nibeditor is open source and free,
+or remotely hosted app, complete the interest form." Orden is open source and free,
 and the desktop app is hosted on the reader's own machine, so the desktop app offers
 **ChatGPT**: **Continue with ChatGPT** opens the browser on OpenAI's own sign-in, which
 registers this installation the documented way (`client_id=dynamic_agent_client`, the
-installation's `ext_agent_host_id`, `agent_name_hint=nibeditor`, PKCE, a loopback
+installation's `ext_agent_host_id`, `agent_name_hint=Orden`, PKCE, a loopback
 callback on `127.0.0.1`), and questions go to `api.openai.com/v1/responses` with the token
 it hands back - [sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in),
 [models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference),
 [preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
-The web app at nibeditor.com is remotely hosted and does not offer it. Never the Codex
+The web app at orden.so is remotely hosted and does not offer it. Never the Codex
 CLI's own client id, and never `chatgpt.com/backend-api`: that is the route tools used
 before this existed, and it is somebody else's identity.
 

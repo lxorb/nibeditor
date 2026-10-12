@@ -82,7 +82,7 @@ written runs can be shuffled character by character. YATA has the weaker form of
 it rather than the full one, and Fugue is the accepted answer; neither shows up in
 the case a note actually meets, which is two people writing in different places.
 
-## What Nib does, and why
+## What Orden does, and why
 
 **A CRDT, and Yjs.** Devices go offline and come back, and that is the case OT is
 worst at and a CRDT is best at: a device that wrote for an hour on a train merges
@@ -96,7 +96,7 @@ rather than a CRDT, so nothing is locked in - a room can be thrown away and rese
 from the note at any time.
 
 **Not `y-codemirror.next`.** Its `yCollab` binds one CodeMirror view to a `Y.Text`
-and owns that view's document. Nib already has a document that several views share
+and owns that view's document. Orden already has a document that several views share
 - one note in two panes is one note, with one undo history, and each pane keeps
 its own caret; see `packages/editor/src/shared.ts`. Two bindings over one text
 would each apply the other's changes. So the binding here is between the room and
@@ -439,7 +439,7 @@ what the space is.**
 **A membership is an address, not an account.** `space_members` is keyed by
 `(space_id, email)` and points at no user row at all. Accounts are keyed by the
 same address and there is exactly one address per account, so the two meet on
-their own: a row written for somebody who has never used Nib is already theirs
+their own: a row written for somebody who has never used Orden is already theirs
 the first time they prove that address. Nothing has to be migrated when they sign
 up, and nothing has to be reconciled if they never do. The owner is not a row
 here - a space already says who owns it, and a second copy of that fact is a
@@ -459,7 +459,7 @@ account** below, which is where the rest of that lives.
 
 Two later ones belong to sharing as well. `0018_limits.sql` is `limits`, one row per
 ceiling and per thing counted, and `mailed_days`, which is which addresses have
-heard from Nib today; `0020_room_sockets.sql` is who has a file open, which is what
+heard from Orden today; `0020_room_sockets.sql` is who has a file open, which is what
 lets a revocation reach the sockets it has to close - all of them, in rounds of
 fifty rooms, because the fan-out of one request is what wants a ceiling and how
 much of somebody's access ends does not: fifty rows in one query left the
@@ -535,7 +535,7 @@ whole of it is `services/sync/src/spaces/join.ts`, and the app's side is
 
 **A mailed invitation is proof of its address.** The row is written at once, so
 the owner sees the person in the sheet immediately, and a mail goes out with a
-link to `nibeditor.com/join/<token>`. Following it establishes the session for
+link to `orden.so/join/<token>`. Following it establishes the session for
 that address, the way a magic link does, and lands in the space: no code, no
 sign-up, nothing on screen at all. Holding the mail is holding the address, which
 is the same thing the code was ever checking. The token is random, hashed at
@@ -644,7 +644,7 @@ keeps and for the same reason: it is the person receiving it who is protected,
 whoever asked for the send. Two ceilings sit above that gap, in
 `services/sync/src/limits.ts`, and they are about the service rather than about one
 person: how many messages one machine may cause in an hour, and how many people
-Nib writes to in a day. The gap is silent - saying it would tell an owner whether
+Orden writes to in a day. The gap is silent - saying it would tell an owner whether
 somebody else had just written to that address - and a ceiling answers 429 and says
 which. An owner is also told at most once an hour that somebody is waiting on any
 one space, because what they need to know is that somebody is at the door rather
@@ -994,7 +994,7 @@ real devices look like. The numbers above are from a quiet machine.
   joining cold.
 - `apps/desktop/test/e2e/share.py` - five browsers that know nothing about each
   other, and not one of them types anything to get in. The owner opens the Share
-  sheet from the rail and invites an address; that address has no Nib account,
+  sheet from the rail and invites an address; that address has no Orden account,
   follows the link out of the real message the runtime's mail binding was handed,
   and is in the space with no form on screen - which the run asserts by looking for
   the sign-in's field and its digit boxes and finding neither. They write in the

@@ -444,7 +444,7 @@ Still pandoc's, and offered only where pandoc is installed:
 ## 16. System integration
 
 - [x] Multiple windows, and a window that stays over every other application
-- [x] Open from the shell: `nib://` links and the `nib` command, which name a note
+- [x] Open from the shell: `nib://` links and the `orden` command, which name a note
       inside a space. A path on the command line is not read (Emil, 2026-09-30:
       nib opens nothing from outside its spaces)
 - [ ] ~~File association for `.md`~~ - taken away on purpose, and an install over an
@@ -1176,9 +1176,9 @@ Features Typora does not have, which are the reason this exists.
       palette copies a correct link to what is open, with the heading the caret is
       in on it, which is also how anybody finds out the scheme is there
 - [x] A command line that drives the app that is running, the way Obsidian's does:
-      `nib files read`, `nib search`, `nib backlinks`, `nib orphans`,
-      `nib properties set`, `nib outline`, `nib words`, `nib commands run`,
-      `nib sync now`, `nib screenshot`, twenty-six verbs in all. Over a socket the
+      `orden files read`, `orden search`, `orden backlinks`, `orden orphans`,
+      `orden properties set`, `orden outline`, `orden words`, `orden commands run`,
+      `orden sync now`, `orden screenshot`, twenty-six verbs in all. Over a socket the
       app opens on 127.0.0.1 on a port the system hands out at every launch, behind
       a secret in the app's own config folder, and nothing that changes a note runs
       without `--yes` - which the app enforces rather than the script. The same

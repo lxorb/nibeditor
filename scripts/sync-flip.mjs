@@ -37,7 +37,7 @@
 
 import { createInterface } from 'node:readline/promises'
 
-const API = (process.env.NIB_API || 'https://nibeditor.com').replace(/\/$/, '')
+const API = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
 
 function say(words = '') {
   process.stdout.write(`${words}\n`)

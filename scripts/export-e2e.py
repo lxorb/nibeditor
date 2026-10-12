@@ -49,7 +49,7 @@ date: 2026-09-08
 # Export corpus
 
 Prose with **bold**, *italic*, ~~struck~~, ==marked==, `inline code`, H~2~O,
-x^2^, a [link](https://nibeditor.com), a footnote[^one] and inline maths
+x^2^, a [link](https://orden.so), a footnote[^one] and inline maths
 $E = mc^2$.
 
 [^one]: The footnote's own words.
@@ -297,7 +297,7 @@ WANTED_TEXT = [
     "Prose with bold, italic, struck, marked, inline code",
     # The paragraph wraps in the source, and a plain text export keeps the
     # note's own line breaks rather than reflowing them.
-    "link (https://nibeditor.com)",
+    "link (https://orden.so)",
     "const answer: number = 42",
     "  const indented = true",
     "- [x] done",
@@ -390,7 +390,7 @@ def check_rtf(path: pathlib.Path) -> list[str]:
     for wanted in ["\\fonttbl", "\\colortbl", "\\pngblip", "\\trowd", "\\cell", "\\footnote"]:
         if wanted not in text:
             bad.append(f"no {wanted}")
-    if "HYPERLINK" not in text or "nibeditor.com" not in text:
+    if "HYPERLINK" not in text or "orden.so" not in text:
         bad.append("the link did not survive")
     if "\\u" not in text:
         bad.append("nothing was escaped as Unicode")

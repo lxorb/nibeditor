@@ -1,4 +1,4 @@
-# Nib on a phone
+# Orden on a phone
 
 The same app, the same crate and the same notes, built as a native Android and
 iOS app with Tauri 2. Nothing about it is a separate product: the phone layout,
@@ -13,7 +13,7 @@ One identity across every build, from `src-tauri/tauri.conf.json`.
 | | |
 | --- | --- |
 | Bundle identifier | `ch.emilvinu.nib`, which is also the Android package name |
-| Name | Nib |
+| Name | Orden |
 | Publisher | Emil Vinu |
 | Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
 | Minimum Android | API 24, and API 36 is what it is compiled against |
@@ -43,7 +43,7 @@ every push and would take an APK uploaded beside it with it.
 
 ## Installing the APK on a phone
 
-1. Open the [`mobile-edge` release](https://github.com/lxorb/nibeditor/releases/tag/mobile-edge)
+1. Open the [`mobile-edge` release](https://github.com/lxorb/orden/releases/tag/mobile-edge)
    in the phone's browser and download `Nib_<version>_android-universal.apk`. It
    carries both architectures, so it is the right file for any phone and for an
    emulator; it is around 19 MB.
@@ -149,9 +149,9 @@ them is state a new install needs, so the reader carries them across themselves,
 by sync or by file.
 
 `res/xml/file_paths.xml` is the other half of the same rule: it names the folders
-Nib may hand another app a file out of, and those are Nib's own. Tauri's template
+Orden may hand another app a file out of, and those are Orden's own. Tauri's template
 names the root of shared storage instead, which would offer every photo and
-download on the phone under Nib's authority.
+download on the phone under Orden's authority.
 
 `apps/desktop/test/android.test.ts` holds both switches, and the rules resource,
 so a manifest edited for something else cannot quietly turn the backup back on.
@@ -701,7 +701,7 @@ machine.
 A phone has no keyboard to hang a shortcut off and no room for a row of buttons
 along the top, and there is exactly one movement a thumb can make that means
 nothing else: pulling a surface that is already at its top further down. Obsidian
-spends it on the command palette. Nib spends it on whichever command the reader
+spends it on the command palette. Orden spends it on whichever command the reader
 names in **Settings > Mobile**, and offers **Search this space** to begin with -
 what a thumb reaches for on a phone is a note, and search is how a note is found.
 `none` is a choice too, for somebody who pulls lists about without meaning

@@ -76,9 +76,13 @@ for (const stray of ['manifest.webmanifest', 'sw.js', 'registerSW.js']) {
   rmSync(join(to, stray), { force: true })
 }
 
-/** The origins the manifest allows. Anything else must not be in the package at
- *  all, whether or not it is ever asked for. */
-const ALLOWED = ['https://nibeditor.com']
+/** The origins the manifest allows, read off the manifest itself so the two cannot
+ *  disagree. Anything else must not be in the package at all, whether or not it is
+ *  ever asked for. */
+const MANIFEST = JSON.parse(
+  readFileSync(new URL('../apps/desktop/even.app.json', import.meta.url), 'utf8'),
+)
+const ALLOWED = MANIFEST.permissions.find((one) => one.name === 'network')?.whitelist ?? []
 
 /** The XML namespaces, which look like addresses and are not.
  *

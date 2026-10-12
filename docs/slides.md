@@ -4,9 +4,9 @@ A note with horizontal rules in it is a deck. There is nothing to turn on and no
 front matter to write: put a rule between two things you want on two screens and
 press F5.
 
-That is Obsidian's own convention, which is why it is Nib's: a deck written here
+That is Obsidian's own convention, which is why it is Orden's: a deck written here
 presents in Obsidian's Slides plugin, and one written there presents here.
-Everything Nib reads on top of it had to survive being opened in another editor,
+Everything Orden reads on top of it had to survive being opened in another editor,
 so every mark below is either ordinary markdown or nothing at all.
 
 ## The format
@@ -34,7 +34,7 @@ The last line of a slide
 # The next one
 ```
 
-is not a slide break anywhere: it is an `<h2>`. Nib reads it the same way every
+is not a slide break anywhere: it is an `<h2>`. Orden reads it the same way every
 other renderer does, which is why the rule needs the blank line. Write a deck the
 way you would write a note and this never comes up.
 
@@ -69,12 +69,12 @@ reveal.js and the Obsidian community plugins use `--` for a slide that continues
 the one before it. In CommonMark `--` is too short to be a rule, so it renders as
 a paragraph containing two hyphens; written without a blank line above it, it
 turns the line above into a heading. `***` is a real thematic break, immune to
-that, and it draws a rule in any editor. A deck of Nib's sub-slides presented in
+that, and it draws a rule in any editor. A deck of Orden's sub-slides presented in
 Obsidian is the same deck with a rule where the break was.
 
 ### Why `+` and not a comment
 
-Every other tool marks a revealed item with an HTML comment, which Nib publishes
+Every other tool marks a revealed item with an HTML comment, which Orden publishes
 as visible text: a published page shows a note's raw HTML rather than running it.
 A `+` bullet is one of CommonMark's three bullet markers, so the list renders
 byte for byte as a `-` list would anywhere else. A deck is the only place it

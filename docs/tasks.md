@@ -1389,8 +1389,8 @@ Codex or Claude Code habit still lands. A one-row change in
 `apps/desktop/src/lib/ai/commands/table.ts` and its row in `docs/ai-sidebar.md` 3.1, which
 its table test reads. Decision 8.3.
 
-**The CLI** (`docs/automation.md`): `nib tasks list [--view V] [--filter F]`, `nib tasks add
-<text>`, `nib tasks done <anchor>`, `nib base query <path> [--view V]`, and the link
+**The CLI** (`docs/automation.md`): `orden tasks list [--view V] [--filter F]`, `orden tasks add
+<text>`, `orden tasks done <anchor>`, `orden base query <path> [--view V]`, and the link
 `nib://add-task?text=...`, which the five link verbs gain as their sixth, a write that can
 only add a line to an inbox.
 
@@ -1506,7 +1506,7 @@ one (`TodayWidget.kt`, `res/layout/widget_today.xml`), drawn from the JSON the p
 already hands over (`mobile/widgets.svelte.ts`, its `today`), read again when the rows
 change; a box opens the app with the task's anchor and the page ticks it through the one
 write path (`mobile/handed.ts`), a row's words open its note, the plus is quick add.
-The clipper's menu has **As a task** under nibeditor, a line in the inbox of the space the
+The clipper's menu has **As a task** under Orden, a line in the inbox of the space the
 last clip went to, the page or the link under the cursor linked in it, through the
 Worker's `POST /v1/spaces/:id/tasks` (`services/sync/src/tasks.ts`), which is the
 connector's `add_task` behind the session. On the glasses the modal's fifth row is

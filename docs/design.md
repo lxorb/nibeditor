@@ -268,7 +268,7 @@ Who draws the frame is the reader's, in Settings ▸ Appearance ▸ Window, and 
 machine's rather than the account's: which titlebar somebody wants is a question about
 the desk the window is on.
 
-**Frame.** Nib's own, or the system's. Nib's own is the default and stays the default -
+**Frame.** Orden's own, or the system's. Orden's own is the default and stays the default -
 `--titlebar-height` is the measurement the whole shell is taken from, and the bar it
 names holds the menu, the sidebar toggle, the tabs and the window's three buttons. Under
 the system's frame that bar stays exactly where it is and loses only the three buttons,
@@ -322,7 +322,7 @@ as Safari's compact tab does, because in nib the bar between the tab and the pag
 too, and a neutral tab over a coloured bar would cut the one surface in two. A mark is Chrome's
 and Arc's: a note's cover, its icon's colour, a site's favicon while its page has said
 nothing, else the accent, as a tone mixed into the scheme's own chrome, so a note's frame
-stays calm. Nib's spaces have no colour of their own, so there is no space step.
+stays calm. Orden's spaces have no colour of their own, so there is no space step.
 
 Words always read. The frame wears whichever scheme's words read on the colour - `data-theme`
 on the title bar, the strips, the side panels, the foot row and the web bar, so every token
