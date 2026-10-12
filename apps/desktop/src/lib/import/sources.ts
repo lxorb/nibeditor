@@ -102,7 +102,11 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
 
   const { default: JSZip } = await import('jszip')
-  const zip = await JSZip.loadAsync(bytes)
+  const zip = await JSZip.loadAsync(bytes).catch(() => null)
+  // A zip that does not open - empty, cut short, or a file that only starts the way
+  // one does - is a file like any other: one broken attachment in a vault is not a
+  // reason to bring none of the rest.
+  if (!zip) return [sourceOf(path, bytes)]
   const inside: Source[] = []
   const entries: { path: string; read: () => Promise<Uint8Array> }[] = []
 
@@ -146,14 +150,18 @@ function lazily(path: string, read: () => Promise<Uint8Array>): Source {
 const ZIPPED_DOCUMENT =
   /\.(docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg|epub|pages|numbers|key|vsdx)$/i
 
-/** The two bytes every zip starts with, so a `.enex` somebody renamed is still
- *  read as what it is and a zip with no extension is still opened. A document
- *  that is a zip underneath is not one, because its name says what it is. */
+/** The four bytes every zip starts with, so a `.enex` somebody renamed is still
+ *  read as what it is and a zip with no extension is still opened. All four, not
+ *  the `PK` in front: a note that opens with "PKI is" starts with those two. A
+ *  document that is a zip underneath is not one, because its name says what it is. */
 function isZip(path: string, bytes: Uint8Array): boolean {
-  const named = path.toLowerCase().endsWith('.zip')
-  if (!named && ZIPPED_DOCUMENT.test(path)) return false
-  const stamped = bytes[0] === 0x50 && bytes[1] === 0x4b
-  return stamped || (named && bytes.length === 0)
+  if (!path.toLowerCase().endsWith('.zip') && ZIPPED_DOCUMENT.test(path)) return false
+  // A file's own first entry, or the end of an archive with nothing in it.
+  return (
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    ((bytes[2] === 0x03 && bytes[3] === 0x04) || (bytes[2] === 0x05 && bytes[3] === 0x06))
+  )
 }
 
 /** Windows separators as slashes, no leading one, and the `./` a few exporters

@@ -317,6 +317,26 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('arrive from a picked folder holding a note that opens with PK and a broken zip', async () => {
+    const words = (body: string) => new TextEncoder().encode(body)
+    const sources = await sourcesFrom([
+      picked('.obsidian/app.json', words('{}')),
+      picked('PKI.md', words('PKI is public key infrastructure.\n')),
+      picked('Attachments/placeholder.zip', new Uint8Array()),
+      picked('Attachments/cut.zip', words('PK\u0003\u0004 and then nothing')),
+    ])
+
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Attachments/cut.zip',
+      'Attachments/placeholder.zip',
+      'PKI.md',
+    ])
+    await expect(noteFrom('PKI.md', ...sources)).resolves.toBe(
+      'PKI is public key infrastructure.\n',
+    )
+  })
+
   test('keep their names, a hash at the end of one included', async () => {
     const hashed = 'Attachments/photo-0123456789abcdef0123456789abcdef.jpg'
     await expect(
