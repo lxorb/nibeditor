@@ -293,4 +293,9 @@ describe('the files in a vault', () => {
       'Projects/Plan.md',
     ])
   })
+
+  test('keep a note that opens with an indented code block as code', async () => {
+    const code = '    let x = 1\n    let y = 2\n\nAfter.\n'
+    await expect(noteFrom('Code.md', file('Code.md', code))).resolves.toBe(code)
+  })
 })

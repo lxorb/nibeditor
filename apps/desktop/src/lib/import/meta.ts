@@ -65,7 +65,9 @@ function said(value: Property): boolean {
  *  with nothing at the top. A body that already opens with a heading keeps its
  *  own. */
 export function noteText(title: string | null, body: string, meta: Meta = {}): string {
-  const words = body.replace(/^\s+/, '').replace(/\s+$/, '')
+  // Only the blank lines above the words go: the first line's own indent is what
+  // makes a note that opens with an indented code block open with code.
+  const words = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
 

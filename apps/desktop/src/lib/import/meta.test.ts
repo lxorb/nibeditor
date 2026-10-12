@@ -43,6 +43,12 @@ describe('a whole note', () => {
     expect(noteText('Plan', '# Plan\n\nWords.')).toBe('# Plan\n\nWords.\n')
   })
 
+  test('keeps the indent of a first line, which is what makes it code', () => {
+    expect(noteText(null, '\n\n    let x = 1\n    let y = 2\n\nAfter.\n')).toBe(
+      '    let x = 1\n    let y = 2\n\nAfter.\n',
+    )
+  })
+
   test('a note with no words at all is its heading, the way a new note is', () => {
     expect(noteText('Empty', '   \n\n')).toBe('# Empty\n\n')
   })
