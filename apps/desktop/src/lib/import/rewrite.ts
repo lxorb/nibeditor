@@ -517,7 +517,7 @@ function splitFragment(target: string): { path: string; fragment: string | null 
  *  So is raw HTML whose words are not Markdown: a `<pre>` block, whose sample is
  *  shown exactly as written, and a comment, which is hidden and which nothing in
  *  nib ever rewrites. */
-export function codeRanges(text: string): [number, number][] {
+function codeRanges(text: string): [number, number][] {
   const code = codeOnly(text)
   return [...code, ...htmlRanges(text, code)]
 }
@@ -735,7 +735,7 @@ function paired(text: string, from: number, to: number, ranges: [number, number]
   }
 }
 
-export function inCode(ranges: readonly [number, number][], offset: number): boolean {
+function inCode(ranges: readonly [number, number][], offset: number): boolean {
   return ranges.some(([from, to]) => offset >= from && offset < to)
 }
 
