@@ -92,13 +92,15 @@ export function isNoteFile(path: string): boolean {
 }
 
 /** Files no export meant to hand over: a folder's own metadata, the rubbish two
- *  desktops leave in every folder they touch. */
+ *  desktops leave in every folder they touch. `Icon\r` is where Finder keeps a
+ *  folder's own icon, named with a character Windows cannot write. */
 export function isJunk(path: string): boolean {
   const name = path.split('/').pop() ?? path
   return (
     name === '.DS_Store' ||
     name === 'Thumbs.db' ||
     name === 'desktop.ini' ||
+    name === 'Icon\r' ||
     name.startsWith('._') ||
     path.startsWith('__MACOSX/') ||
     path.includes('/__MACOSX/')

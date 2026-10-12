@@ -74,6 +74,8 @@ describe('a folder of markdown', () => {
       file('.DS_Store', 'junk'),
       file('__MACOSX/._A.md', 'junk'),
       file('Notes/Thumbs.db', 'junk'),
+      file('Icon\r', ''),
+      file('Notes/Icon\r', ''),
     ])
 
     expect(plan.files).toHaveLength(1)

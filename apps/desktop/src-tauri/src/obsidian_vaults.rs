@@ -251,7 +251,10 @@ fn relative(root: &Path, path: &Path) -> Option<String> {
 fn left(relative: &str, is_dir: bool) -> bool {
     let name = relative.rsplit('/').next().unwrap_or(relative);
     // The desktop's rubbish, inside Obsidian's folder as much as anywhere else.
-    let rubbish = name.starts_with('.') || name == "Thumbs.db" || name == "desktop.ini";
+    // `Icon\r` is where Finder keeps a folder's own icon: hidden, empty, and named
+    // with a character Windows cannot write.
+    let rubbish =
+        name.starts_with('.') || name == "Thumbs.db" || name == "desktop.ini" || name == "Icon\r";
 
     if let Some(rest) = relative.strip_prefix(".obsidian/") {
         let top = rest.split('/').next().unwrap_or(rest);
@@ -432,6 +435,8 @@ mod tests {
             ".git/HEAD",
             ".trash/Old.md",
             ".DS_Store",
+            "Icon\r",
+            "Projects/Icon\r",
             "Projects/node_modules/x/index.js",
             "Projects/Sub/Plan.md",
             "Read me.md",
