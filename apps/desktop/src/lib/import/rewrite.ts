@@ -113,14 +113,22 @@ export function rewriteLinks(
   ): string {
     if (inCode(code, offset)) return whole
 
+    // A picture in a link's words, a badge or a cover that opens a page, is pointed at
+    // its file the way a picture on its own is: the link around it is matched whole,
+    // so the picture would otherwise never be read.
+    const words = label.replace(LINK, (one, inner: string, said: string, held: string) =>
+      markdownLink(one, inner, said, held, offset),
+    )
+    const kept = words === label ? whole : `${bang}[${words}](${inside})`
+
     const { target, title } = splitTarget(inside)
-    if (!target || isAddress(target)) return whole
+    if (!target || isAddress(target)) return kept
 
     // The heading, block or page after the `#` is kept apart from the path, so
     // the link still goes to the same place in the file once it is found.
     const { path: written, fragment } = splitFragment(target)
     const found = find(decoded(written), at.was)
-    if (!found) return whole
+    if (!found) return kept
 
     // A note is pointed at by name, so the link survives it being renamed - or in
     // the spelling the Links setting asks for, since `linkTo` is the one place in
@@ -134,10 +142,10 @@ export function rewriteLinks(
     if (
       isMarkdownPath(found.path) &&
       !UNLINKABLE.test(found.name) &&
-      !/[[\]]/.test(label) &&
+      !/[[\]]/.test(words) &&
       reaches(found, at.now)
     ) {
-      const link = linkTo(found.name, label, {
+      const link = linkTo(found.name, words, {
         path: found.path,
         from: at.now,
         embed: bang === '!',
@@ -148,7 +156,7 @@ export function rewriteLinks(
 
     const path = relativePath(folder, found.path)
     const anchor = fragment === null ? '' : `#${fragment}`
-    return `${bang}[${label}](${encodeTarget(path)}${anchor}${title})`
+    return `${bang}[${words}](${encodeTarget(path)}${anchor}${title})`
   }
 
   // Where the links this pass writes sit in what it hands on, so the pass after it

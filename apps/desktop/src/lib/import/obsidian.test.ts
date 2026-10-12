@@ -386,6 +386,23 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('around a picture point the picture at its file', async () => {
+    const pic = file('attachments/pic.png', 'png')
+
+    await expect(
+      noteFrom('A.md', file('A.md', '[![badge](pic.png)](https://example.com)\n'), pic),
+    ).resolves.toBe('[![badge](attachments/pic.png)](https://example.com)\n')
+    // The note keeps a markdown link, since a wikilink cannot show a picture.
+    await expect(
+      noteFrom(
+        'A.md',
+        file('A.md', '[![cover](pic.png)](Plan.md)\n'),
+        file('Plan.md', '# Plan'),
+        pic,
+      ),
+    ).resolves.toBe('[![cover](attachments/pic.png)](Plan.md)\n')
+  })
+
   test('keep pointing at a file whose name holds a percent sign or a hash', async () => {
     await expect(
       noteFrom(
