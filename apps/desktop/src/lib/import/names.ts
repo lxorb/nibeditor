@@ -47,6 +47,16 @@ export function safeName(title: string): string {
   return DEVICES.test(short) ? `${short}-` : short
 }
 
+/** A name a file already had on somebody's disk, changed only as far as a file
+ *  in a space has to be: what Windows forbids, a dot or a space at the end, and a
+ *  device's name. Never shortened and never respaced, because an app that keeps
+ *  its own files, an Obsidian vault, names them in its links and canvases too. */
+export function keptName(name: string): string {
+  const one = withoutForbidden(name).replace(/[. ]+$/, '')
+  if (!one.trim()) return 'Untitled'
+  return DEVICES.test(one) ? `${one}-` : one
+}
+
 /** The name without the id its exporter stuck on the end. */
 export function withoutNotionId(name: string): string {
   const at = name.lastIndexOf('.')
@@ -66,16 +76,22 @@ export function hasNotionId(name: string): boolean {
  *  Three formats need this: a folder of markdown, whose folders were named by
  *  whoever made them, Apple Notes, whose folders are named after the ones in
  *  Notes, and Notion, whose every name carries an id. `each` is what a format does to a part before it is made safe - taking
- *  the id off a Notion name, for one - and nothing by default. */
-export function safeParts(path: string, each: (part: string) => string = (part) => part): string {
+ *  the id off a Notion name, for one - and nothing by default. `named` is how a part
+ *  is made safe: `keptName` for files an app kept for itself, whose names are
+ *  already the ones its links use. */
+export function safeParts(
+  path: string,
+  each: (part: string) => string = (part) => part,
+  named: (part: string) => string = safeName,
+): string {
   const parts = path.split('/').filter(Boolean)
   const last = parts.pop() ?? ''
   const at = last.lastIndexOf('.')
   const stem = at > 0 ? last.slice(0, at) : last
   const extension = at > 0 ? last.slice(at) : ''
 
-  const folders = parts.map((one) => safeName(each(one)))
-  const name = `${safeName(each(stem))}${extension}`
+  const folders = parts.map((one) => named(each(one)))
+  const name = `${named(each(stem))}${extension}`
 
   return [...folders, name].join('/')
 }

@@ -14,7 +14,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'
-import { Names, safeParts, withoutNotionId } from './names'
+import { keptName, Names, safeName, safeParts, withoutNotionId } from './names'
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 
@@ -32,7 +32,8 @@ export interface PlainOptions {
   words?: (text: string, source: Source) => string
   /** Files an app keeps for itself rather than an export it wrote: an Obsidian
    *  vault. Their names are the reader's own, so no exporter's id is taken off
-   *  them, and an HTML file is a page somebody saved, copied as it is rather than
+   *  them and none is shortened or respaced, since the vault's canvases name them
+   *  too, and an HTML file is a page somebody saved, copied as it is rather than
    *  read as a note. */
   asTheyAre?: boolean
 }
@@ -49,7 +50,9 @@ export async function readPlain(
     place: (source) => {
       if (isJunk(source.path) || options.skip?.(source.path)) return { to: null }
 
-      const path = placedPath(source.path, options.asTheyAre ? undefined : withoutNotionId)
+      const path = options.asTheyAre
+        ? placedPath(source.path, undefined, keptName)
+        : placedPath(source.path, withoutNotionId)
       if (path === null) return { to: null }
 
       if (HTML.test(path) && !options.asTheyAre) {
@@ -91,11 +94,15 @@ export async function readPlain(
  *  notes stays one folder. `each` is done to every part first: for an export, the
  *  id Notion leaves on the end of names is taken off wherever it appears, since a
  *  folder of markdown might have come from there through some other tool. */
-function placedPath(path: string, each?: (part: string) => string): string | null {
+function placedPath(
+  path: string,
+  each?: (part: string) => string,
+  named: (part: string) => string = safeName,
+): string | null {
   if (BUNDLE_TEXT.test(path)) {
     // `Trips/Iceland.textbundle/text.md` is the note `Trips/Iceland.md`.
     const bundle = path.replace(/\/text\.(md|markdown|txt)$/i, '')
-    return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each)}.md`
+    return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each, named)}.md`
   }
 
   const inside = /\.textbundle\/(.*)$/i.exec(path)
@@ -103,8 +110,8 @@ function placedPath(path: string, each?: (part: string) => string): string | nul
     const rest = inside[1] ?? ''
     // A bundle's own metadata says what wrote it, which the note does not need.
     if (/^info\.json$/i.test(rest)) return null
-    return safeParts(rest, each)
+    return safeParts(rest, each, named)
   }
 
-  return safeParts(path, each)
+  return safeParts(path, each, named)
 }

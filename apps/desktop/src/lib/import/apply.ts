@@ -8,7 +8,7 @@
  *
  *  Every path is judged here before any of them is written, by the same
  *  `insideOnly` a `nib://` link's path goes through. Each format reader already
- *  puts every part of a name through `safeName`, so this catches nothing an
+ *  puts every part of a name through `safeName` or `keptName`, so this catches nothing an
  *  honest reader does: what it catches is a new reader that forwards a zip
  *  entry's own name, which is a path somebody else wrote and which nothing
  *  further along would refuse - `write_note` and `write_bytes` take whatever path

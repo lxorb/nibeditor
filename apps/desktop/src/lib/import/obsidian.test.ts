@@ -324,6 +324,37 @@ describe('the files in a vault', () => {
     ).resolves.toEqual(['.obsidian/app.json', hashed])
   })
 
+  test('keep a long name and a double space, so a canvas naming them still finds them', async () => {
+    const long =
+      'How to Build a Second Brain - A Proven Method to Organize Your Digital Life and Unlock Your Creative Potential'
+    const stem = `${'A'.repeat(40)} ${'B'.repeat(60)}`
+    const canvas = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: `Clippings/${long}.md` },
+        { id: 'b', type: 'file', file: 'Meeting  notes.md' },
+      ],
+      edges: [],
+    })
+
+    await expect(
+      pathsFrom([
+        file('.obsidian/app.json', '{}'),
+        file(`Clippings/${long}.md`, '# Book'),
+        file('Meeting  notes.md', '# Meeting'),
+        file(`${stem} part one.md`, '1'),
+        file(`${stem} part two.md`, '2'),
+        file('Board.canvas', canvas),
+      ]),
+    ).resolves.toEqual([
+      '.obsidian/app.json',
+      `${stem} part one.md`,
+      `${stem} part two.md`,
+      'Board.canvas',
+      `Clippings/${long}.md`,
+      'Meeting  notes.md',
+    ])
+  })
+
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [
