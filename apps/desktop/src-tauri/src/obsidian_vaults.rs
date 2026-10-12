@@ -457,6 +457,11 @@ mod tests {
             "Projects/Sub/Plan.md",
             "Read me.md",
         ] {
+            // Finder's `Icon\r` is a name Windows cannot hold, so it is not there to
+            // leave behind.
+            if cfg!(windows) && file.ends_with('\r') {
+                continue;
+            }
             fs::write(vault.join(file), "x").expect("a file");
         }
 
