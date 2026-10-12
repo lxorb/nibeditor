@@ -1868,6 +1868,7 @@ export const mr: Dictionary = {
   'A client on another machine?': 'दुसऱ्या मशीनवरील क्लायंट?',
   'Shown only once.': 'फक्त एकदाच दाखवले जाते.',
   'Remove {name}?': '{name} काढायचा?',
+  'End {name}?': '{name} संपवायचा?',
   'Its token stops working.': 'त्याचा टोकन काम करणे थांबवेल.',
   'Added {date}': '{date} रोजी जोडले',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

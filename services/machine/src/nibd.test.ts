@@ -118,3 +118,10 @@ test('every report says the disk the home is on', () => {
   expect(disk?.total).toBeGreaterThan(0)
   expect(disk?.used).toBeLessThanOrEqual(disk?.total ?? 0)
 })
+
+test('asked for its sessions, answers every one it has: none yet', async () => {
+  const { nibd, said, attach } = machine()
+  attach()
+  await nibd.receive({ t: 'list' })
+  expect(said).toEqual([{ t: 'sessions', sessions: [] }])
+})

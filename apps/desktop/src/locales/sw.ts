@@ -1894,6 +1894,7 @@ export const sw: Dictionary = {
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
   'Shown only once.': 'Huonyeshwa mara moja tu.',
   'Remove {name}?': 'Ondoa {name}?',
+  'End {name}?': 'Maliza {name}?',
   'Its token stops working.': 'Tokeni yake itaacha kufanya kazi.',
   'Added {date}': 'Iliongezwa {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

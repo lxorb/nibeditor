@@ -401,6 +401,33 @@ function outOf(frames: readonly NibdFrame[]): Uint8Array[] {
 }
 
 describe.runIf(linux)('the machine', () => {
+  test('lists every session, and every holder still running that nobody opened since', async () => {
+    const state = mkdtempSync(join(tmpdir(), 'nibd-state-'))
+    const options = { ...machine(), state, activityEvery: 60_000, homeEvery: 60 * 60_000 }
+    const first = new Nibd(options)
+    await first.receive({ t: 'open', session: 's_listed', cols: COLS, rows: ROWS })
+    await first.receive({ t: 'in', session: 's_listed', data: bytes('sleep 600\r') })
+    await until(async () =>
+      (await first.list()).some((one) => one.session === 's_listed' && one.program === 'sleep'),
+    )
+    expect((await first.list()).find((one) => one.session === 's_listed')?.at).toBeGreaterThan(0)
+    // Restarted with nothing saved, and nobody has opened it since.
+    first.stop()
+
+    const second = new Nibd(options)
+    ended.push({ end: () => second.stop(true) })
+    expect(await second.list()).toContainEqual({
+      session: 's_listed',
+      program: 'sleep',
+      title: null,
+      alive: true,
+      at: null,
+    })
+    await second.receive({ t: 'close', session: 's_listed' })
+    await until(async () => !(await second.list()).some((one) => one.session === 's_listed'))
+    rmSync(state, { recursive: true, force: true })
+  })
+
   test('counts the output and the CPU of the last stretch', async () => {
     const state = mkdtempSync(join(tmpdir(), 'nibd-state-'))
     const frames: NibdFrame[] = []

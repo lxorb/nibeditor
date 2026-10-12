@@ -9,8 +9,8 @@ date: 2026-09-11
 
 [toc]
 
-A paragraph with **bold**, *italic*, ~~struck~~, ==marked==, `inline code`,
-H~2~O, x^2^, a [link](https://nibeditor.com), a bare https://nibeditor.com,
+A paragraph with **bold**, _italic_, ~~struck~~, ==marked==, `inline code`,
+H~~2~~O, x^2^, a [link](https://nibeditor.com), a bare https://nibeditor.com,
 a wikilink to [[Another note]], an aliased one to [[Another note|the other]],
 a heading link to [[Another note#Why it works]], a footnote[^why], inline
 maths $e^{i\pi} + 1 = 0$, an abbreviation for HTML, and a #tag in prose.

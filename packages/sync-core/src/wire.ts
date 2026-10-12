@@ -334,6 +334,8 @@ export type HubFrame =
   | { t: 'key-denied' }
   /** The account's online terminal machine changed state (docs/online-terminal.md, 4.6). */
   | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
+  /** A session on the account's machine was made or ended (docs/online-terminal.md 4.10). */
+  | { t: 'terms' }
 
 /** One row of `GET /v2/devices`. */
 export interface DeviceRow {
@@ -695,6 +697,8 @@ export function hubFrameOf(value: unknown): HubFrame | null {
         value.state === 'stopping'
         ? { t: 'machine', state: value.state }
         : null
+    case 'terms':
+      return { t: 'terms' }
     default:
       return null
   }

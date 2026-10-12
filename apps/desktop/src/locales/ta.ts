@@ -1893,6 +1893,7 @@ export const ta: Dictionary = {
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
   'Shown only once.': 'ஒருமுறை மட்டுமே காட்டப்படும்.',
   'Remove {name}?': '{name} ஐ அகற்றவா?',
+  'End {name}?': '{name} ஐ முடிக்கவா?',
   'Its token stops working.': 'அதன் டோக்கன் இனி வேலை செய்யாது.',
   'Added {date}': '{date} அன்று சேர்க்கப்பட்டது',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

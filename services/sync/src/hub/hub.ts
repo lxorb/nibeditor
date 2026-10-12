@@ -131,6 +131,11 @@ export class AccountHub implements DurableObject {
       case 'machine':
         this.machine(headers)
         return new Response(null, { status: 204 })
+      case 'terms':
+        for (const { socket, attached } of everySocket(this.ctx)) {
+          if (!attached.guest) say(socket, { t: 'terms' })
+        }
+        return new Response(null, { status: 204 })
       case 'chat':
         this.chat(headers)
         return new Response(null, { status: 204 })

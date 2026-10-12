@@ -8,6 +8,7 @@
 
 import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
+import { askHub } from '../hub/reach'
 import { newId, now } from '../crypto'
 import { reachedItem, reachedSpace } from '../spaces/space'
 import type { Env, Variables } from '../types'
@@ -18,7 +19,7 @@ import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
 import { ALLOWANCE, type HostKind, resetAt } from '@nib/online'
 import { usedOf } from './meter'
-import { MOST_SESSIONS, type Refusal } from '@nib/online/wire'
+import { MOST_SESSIONS, type Refusal, type SessionNow } from '@nib/online/wire'
 import { allowed, serviceOf } from './service'
 
 interface Online {
@@ -226,18 +227,24 @@ online.post('/terms', async (context) => {
   return await makeSession(context, env, user.id, term)
 })
 
-/** The session a device on sync v1 made for this file, now asked for by the file's id:
- *  its row re-keyed from the session's own id to the file's, so the shell in it goes on
- *  and the account's count of sessions stays as it was. Only the asker's own live
- *  session, only one still keyed by itself (so adopted once, by the first file to ask),
- *  and never over a session the file already has. Its owner's sockets named by the
- *  session still reach it (reach.ts), so a device not yet on v2, or back on v1, keeps
- *  it. */
+/** The session the file's words name, taken by this file where no other file has it:
+ *  its row re-keyed to the file's id, so the shell in it goes on and the account's count
+ *  of sessions stays as it was. Two files come here. One a device on sync v1 made, whose
+ *  session is still keyed by its own id. And one moved to another space, which is a new
+ *  file there with a new id and the same words, the one it was made as gone (issue 222's
+ *  orphan: it used to start a fresh shell and leave the program running out of reach).
+ *  Only the asker's own live session, never while the file it is keyed by is still there
+ *  (a copy, or a Duplicate, gets one of its own), and never over a session the file has
+ *  already. Its owner's sockets named by the session still reach it (reach.ts), so a
+ *  device not yet on v2, or back on v1, keeps it. */
 async function adopt(env: Env, userId: string, term: string, session: string) {
   const row = await env.DB.prepare(
     `update term_sessions set term = ?1
-      where term = ?2 and session = ?2 and user_id = ?3 and ended_at is null
-        and not exists (select 1 from term_sessions where term = ?1)
+      where session = ?2 and user_id = ?3 and ended_at is null and term != ?1
+        and not exists (
+          select 1 from notes n where n.id = term_sessions.term and n.deleted = 0
+        )
+        and not exists (select 1 from term_sessions t where t.term = ?1)
      returning machine, session`,
   )
     .bind(term, session, userId)
@@ -272,12 +279,26 @@ async function makeSession(
     .bind(term ?? session, machine.id, session, userId, now())
     .run()
   await audit(env, machine.id, 'session', { who: userId })
+  await askHub(env, userId, 'terms')
   return context.json({ v: 1, machine: machine.id, session })
 }
 
-/** The sessions of the account's machine, for Settings. */
+/** Every session `nibd` has, by its id; null where the machine could not be asked. */
+async function machineSessions(env: Env, userId: string): Promise<Map<string, SessionNow> | null> {
+  const machine = await machineOf(env, userId)
+  if (!machine) return null
+  const answer = await askMachine(env, machine.id, 'sessions', { 'x-nib-user': userId })
+  const said = answer?.ok ? await answer.json<{ sessions: SessionNow[] | null }>() : null
+  return said?.sessions ? new Map(said.sessions.map((one) => [one.session, one])) : null
+}
+
+/** The sessions of the account's machine, for Settings' list: every row the account
+ *  keeps, with what the machine says of each - the program in front, whether a shell
+ *  runs, when it last printed - and every session the machine has that no row names any
+ *  more, which can only be ended. `alive` is null where the machine could not be asked. */
 online.get('/terms', async (context) => {
   const user = context.get('user')
+  const running = machineSessions(context.env, user.id)
   const { results } = await context.env.DB.prepare(
     `select t.term as term, t.session as session, t.typing as typing,
             t.created_at as created_at, n.space_id as space, n.path as path, n.deleted as deleted
@@ -294,16 +315,41 @@ online.get('/terms', async (context) => {
       path: string | null
       deleted: number | null
     }>()
+  const there = await running
+  const named = new Set(results.map((one) => one.session))
+  const nowOf = (session: string) => {
+    const said = there?.get(session)
+    return {
+      program: said?.program ?? null,
+      title: said?.title ?? null,
+      alive: there ? (said?.alive ?? false) : null,
+      at: said?.at ?? null,
+    }
+  }
+  const unnamed = [...(there?.values() ?? [])].filter((one) => !named.has(one.session))
   return context.json({
-    terms: results.map((one) => ({
-      term: one.term,
-      session: one.session,
-      typing: one.typing,
-      createdAt: one.created_at,
-      space: one.space,
-      path: one.path,
-      trashed: one.deleted === 1,
-    })),
+    terms: [
+      ...results.map((one) => ({
+        term: one.term,
+        session: one.session,
+        typing: one.typing,
+        createdAt: one.created_at,
+        space: one.space,
+        path: one.path,
+        trashed: one.deleted === 1,
+        ...nowOf(one.session),
+      })),
+      ...unnamed.map((one) => ({
+        term: null,
+        session: one.session,
+        typing: 'owner',
+        createdAt: null,
+        space: null,
+        path: null,
+        trashed: false,
+        ...nowOf(one.session),
+      })),
+    ],
   })
 })
 
@@ -341,12 +387,32 @@ online.patch('/terms/:term', async (context) => {
   return context.json({ typing })
 })
 
-/** Ending a session: the shell and everything in it (4.5). */
+/** A session on the caller's own machine that no row names any more, by its id: one the
+ *  machine still has, listed in Settings, which its owner may end. */
+const SESSION_ID = /^s_[A-Za-z0-9]{1,64}$/
+
+/** Ending a session: the shell and everything in it (4.5). By its file's id, or by the
+ *  session's own where no row names it any more (`GET /terms`'s `term: null`). */
 online.delete('/terms/:term', async (context) => {
   const user = context.get('user')
   const term = context.req.param('term')
   const own = await ownSession(context.env, user.id, term)
-  if (!own) return context.json({ error: NOT_FOUND }, 404)
+  if (!own) {
+    const machine = SESSION_ID.test(term) ? await machineOf(context.env, user.id) : null
+    if (!machine) return context.json({ error: NOT_FOUND }, 404)
+    await context.env.DB.prepare(
+      'update term_sessions set ended_at = ? where session = ? and user_id = ? and ended_at is null',
+    )
+      .bind(now(), term, user.id)
+      .run()
+    await audit(context.env, machine.id, 'ended', { who: user.id })
+    await askMachine(context.env, machine.id, 'end', {
+      'x-nib-user': user.id,
+      'x-nib-session': term,
+    })
+    await askHub(context.env, user.id, 'terms')
+    return context.json({ ok: true })
+  }
 
   await context.env.DB.prepare('update term_sessions set ended_at = ? where term = ?')
     .bind(now(), term)
@@ -356,6 +422,7 @@ online.delete('/terms/:term', async (context) => {
     'x-nib-user': user.id,
     'x-nib-session': own.session,
   })
+  await askHub(context.env, user.id, 'terms')
   return context.json({ ok: true })
 })
 

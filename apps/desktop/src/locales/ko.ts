@@ -1845,6 +1845,7 @@ export const ko: Dictionary = {
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
   'Shown only once.': '한 번만 표시됩니다.',
   'Remove {name}?': '{name}을(를) 제거할까요?',
+  'End {name}?': '{name}을(를) 종료할까요?',
   'Its token stops working.': '토큰이 더 이상 작동하지 않습니다.',
   'Added {date}': '{date}에 추가됨',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

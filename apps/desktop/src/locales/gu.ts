@@ -1857,6 +1857,7 @@ export const gu: Dictionary = {
   'A client on another machine?': 'બીજા મશીન પરનો ક્લાયન્ટ?',
   'Shown only once.': 'ફક્ત એક જ વાર બતાવાય છે.',
   'Remove {name}?': '{name} દૂર કરીએ?',
+  'End {name}?': '{name} પૂરું કરીએ?',
   'Its token stops working.': 'તેનું ટોકન કામ કરતું બંધ થશે.',
   'Added {date}': '{date}એ ઉમેર્યું',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -14,7 +14,10 @@ width and in every look, and fails on:
     its name, its state and its server's line;
   - the action is the small one at the row's end, not a line across it;
   - every meter's name and numbers share a line, and the bar is as wide as the card;
-  - nothing in the pane is wider than the pane.
+  - nothing in the pane is wider than the pane;
+  - every session on the machine is a row of its own, called by what runs in it, in the
+    order they last printed, with End the small action at its end; and End, once asked
+    and said yes to, ends that session on the account and takes its row away.
 
 From the repository root; the harness builds the app with its handle on the page the
 first time and serves it (see harness.py):
@@ -29,7 +32,7 @@ from __future__ import annotations
 import json
 import time
 
-from playwright.sync_api import Browser, Route
+from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
 from settling import quiet
@@ -82,6 +85,96 @@ MACHINES = {
         "disk": {"used": 131 * GB, "total": 160 * GB},
     },
 }
+
+#: The machine's sessions, as `GET /v2/online/terms` answers them: an agent at work, an
+#: editor, and a shell no file names any more, each with what the machine says of it.
+SESSIONS = [
+    {
+        "term": "note-agent",
+        "session": "s_agent",
+        "typing": "owner",
+        "createdAt": 1_790_000_000_000,
+        "space": "space-1",
+        "path": "Build/Terminal.term",
+        "trashed": False,
+        "program": "claude",
+        "title": "Fix the flaky upload test and the build that goes with it",
+        "alive": True,
+        "at": 1_790_000_900_000,
+    },
+    {
+        "term": "note-editor",
+        "session": "s_editor",
+        "typing": "owner",
+        "createdAt": 1_790_000_100_000,
+        "space": "space-1",
+        "path": "Notes/Terminal 2.term",
+        "trashed": False,
+        "program": "vim",
+        "title": None,
+        "alive": True,
+        "at": 1_790_000_500_000,
+    },
+    {
+        "term": None,
+        "session": "s_orphan",
+        "typing": "owner",
+        "createdAt": None,
+        "space": None,
+        "path": None,
+        "trashed": False,
+        "program": None,
+        "title": None,
+        "alive": True,
+        "at": None,
+    },
+]
+
+#: Their rows' names, in the order the pane lists them.
+NAMES = ["Fix the flaky upload test and the build that goes with it", "vim", "Terminal"]
+
+#: Every session's row: its name, how tall the row is, and its actions, the last of which
+#: should sit at the row's end.
+ROWS = """
+() => {
+  const box = (one) => one.getBoundingClientRect()
+  return [...document.querySelectorAll('.online .nib-setting')].slice(1).map((row) => {
+    const name = row.querySelector('.name')
+    const chips = [...row.querySelectorAll('button')]
+    return {
+      name: name.firstChild.textContent.trim(),
+      height: box(row).height,
+      width: box(row).width,
+      nameWidth: box(name).width,
+      chips: chips.map((chip) => ({
+        label: chip.textContent.trim(),
+        chip: chip.classList.contains('nib-chip'),
+        width: box(chip).width,
+      })),
+      lastRight: chips.length ? box(chips.at(-1)).right : 0,
+      end: box(row).right - parseFloat(getComputedStyle(row).paddingRight),
+    }
+  })
+}
+"""
+
+
+class Account:
+    """The account's sessions, kept as the routes change them: `DELETE` ends one."""
+
+    def __init__(self) -> None:
+        self.sessions = [dict(one) for one in SESSIONS]
+        self.ended: list[str] = []
+
+    def answer(self, route: Route) -> None:
+        if route.request.method == "DELETE":
+            ended = route.request.url.rsplit("/", 1)[-1]
+            self.ended.append(ended)
+            self.sessions = [one for one in self.sessions if (one["term"] or one["session"]) != ended]
+            route.fulfill(status=200, content_type="application/json", body='{"ok": true}')
+            return
+        route.fulfill(status=200, content_type="application/json", body=json.dumps({"terms": self.sessions}))
+
 
 #: Every look: what the window is, how wide, and in which scheme.
 LOOKS = [
@@ -197,6 +290,8 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
     )
     # Playwright tries the newest route first, so the refusal goes in before the answer.
     page.route("https://nibeditor.com/**", lambda route: route.abort())
+    account = Account()
+    page.route("**/v2/online/terms**", account.answer)
     for machine, about in MACHINES.items():
         page.unroute("**/v2/online/machine")
         page.route("**/v2/online/machine", answering(about))
@@ -229,7 +324,53 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         check(f"[{name}] nothing in the pane runs past its side {seen['past']}", not seen["past"])
         check(f"[{name}] the pane does not scroll sideways", not seen["scrolls"])
 
+        every = f"document.querySelectorAll('.online .nib-setting').length === {len(SESSIONS) + 1}"
+        DRIVE.wait_for(page, every, f"[{name}] the sessions")
+        listed = page.evaluate(ROWS)
+        say(f"[{name}] sessions {json.dumps(listed)}")
+        check(
+            f"[{name}] every session is a row, called by what runs in it, last printed first",
+            [one["name"] for one in listed] == NAMES,
+        )
+        for one in listed:
+            label = one["name"][:24]
+            check(f"[{name}] {label}: a row, not a column ({one['height']:.0f}px)", one["height"] <= 140)
+            check(f"[{name}] {label}: its name has room", one["nameWidth"] >= 80)
+            check(
+                f"[{name}] {label}: End is the small action at the row's end",
+                bool(one["chips"])
+                and one["chips"][-1]["label"] == "End"
+                and all(chip["chip"] and chip["width"] < one["width"] / 3 for chip in one["chips"])
+                and abs(one["lastRight"] - one["end"]) <= 1,
+            )
+
+        if kind == "desktop" and width == 1280 and scheme == "light" and machine == "cloud":
+            ending(page, account)
+
     page.context.close()
+
+
+def ending(page: Page, account: Account) -> None:
+    """End on the session no file names: asked first, nothing ended when the question is
+    put away, and ended on the account by its own id once said yes to, its row gone."""
+    danger = "document.querySelector('button.nib-button.is-danger')"
+    last = page.locator(".online .nib-setting").last
+    last.get_by_role("button", name="End").click()
+    DRIVE.wait_for(page, danger, "End's question")
+    shot(page, "end-asked")
+    page.keyboard.press("Escape")
+    DRIVE.wait_for(page, f"!{danger}", "the question put away")
+    check("put away, the question ends nothing", account.ended == [])
+
+    last.get_by_role("button", name="End").click()
+    DRIVE.wait_for(page, danger, "End's question again")
+    page.locator("button.nib-button.is-danger").click()
+    DRIVE.wait_for(page, "document.querySelectorAll('.online .nib-setting').length === 3", "its row gone")
+    check("End ends the session no file names, by its own id", account.ended == ["s_orphan"])
+    shot(page, "end-ended")
+    # Every look after this one lists all three again.
+    account.sessions = [dict(one) for one in SESSIONS]
+    account.ended.clear()
 
 
 def drive(browser: Browser) -> None:

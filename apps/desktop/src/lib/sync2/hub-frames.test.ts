@@ -23,6 +23,7 @@ describe('readHubFrame', () => {
       { t: 'key-denied' },
       { t: 'key-settled', device: DEVICE },
       { t: 'refused', to: 'acquire', key: KEY, error: 'too many tries' },
+      { t: 'terms' },
     ]
     for (const frame of frames) expect(readHubFrame(JSON.stringify(frame))).toEqual(frame)
   })

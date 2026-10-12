@@ -1859,6 +1859,7 @@ export const ja: Dictionary = {
   'A client on another machine?': '別のマシンのクライアントですか？',
   'Shown only once.': '一度だけ表示されます。',
   'Remove {name}?': '{name} を削除しますか？',
+  'End {name}?': '{name} を終了しますか？',
   'Its token stops working.': 'そのトークンは使えなくなります。',
   'Added {date}': '{date} に追加',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

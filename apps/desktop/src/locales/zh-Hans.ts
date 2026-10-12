@@ -1823,6 +1823,7 @@ export const zhHans: Dictionary = {
   'A client on another machine?': '另一台机器上的客户端？',
   'Shown only once.': '只显示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '结束 {name}？',
   'Its token stops working.': '它的令牌将失效。',
   'Added {date}': '添加于 {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

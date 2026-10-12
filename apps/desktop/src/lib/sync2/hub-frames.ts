@@ -48,6 +48,9 @@ export type FromHub =
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
   | { t: 'refused'; to: string; key: string | null; error: string }
+  /** A session on the account's online machine was made or ended, or its shell ended:
+   *  Settings' list of them asks again (docs/online-terminal.md 4.10). */
+  | { t: 'terms' }
   /** A chat moved on (`ChatPoke` in @nib/chats/wire): handed on unread, because the
    *  chats read it with their own check, fetched with them after the launch. */
   | { t: 'chat'; said: Record<string, unknown> }
@@ -128,6 +131,9 @@ export function readHubFrame(said: string): FromHub | null {
 
     case 'key-denied':
       return { t: 'key-denied' }
+
+    case 'terms':
+      return { t: 'terms' }
 
     case 'key-settled':
       return device(one.device) ? { t: 'key-settled', device: one.device } : null

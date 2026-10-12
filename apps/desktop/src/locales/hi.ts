@@ -1863,6 +1863,7 @@ export const hi: Dictionary = {
   'A client on another machine?': 'किसी दूसरी मशीन पर क्लाइंट?',
   'Shown only once.': 'केवल एक बार दिखाया जाता है।',
   'Remove {name}?': '{name} हटाएँ?',
+  'End {name}?': '{name} खत्म करें?',
   'Its token stops working.': 'इसका टोकन काम करना बंद कर देगा।',
   'Added {date}': '{date} को जोड़ा गया',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

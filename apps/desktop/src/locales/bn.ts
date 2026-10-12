@@ -1864,6 +1864,7 @@ export const bn: Dictionary = {
   'A client on another machine?': 'অন্য মেশিনের ক্লায়েন্ট?',
   'Shown only once.': 'শুধু একবার দেখানো হয়।',
   'Remove {name}?': '{name} সরাবেন?',
+  'End {name}?': '{name} শেষ করবেন?',
   'Its token stops working.': 'এর টোকেন আর কাজ করবে না।',
   'Added {date}': '{date} তারিখে যোগ করা',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -1824,6 +1824,7 @@ export const zhHant: Dictionary = {
   'A client on another machine?': '另一台機器上的用戶端？',
   'Shown only once.': '只顯示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '結束 {name}？',
   'Its token stops working.': '它的權杖將失效。',
   'Added {date}': '新增於 {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

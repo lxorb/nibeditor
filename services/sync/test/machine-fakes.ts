@@ -240,20 +240,24 @@ export async function fire(running: Running): Promise<boolean> {
   return true
 }
 
-/** A namespace that keeps what the door told it, as the hub door's test does. */
+/** A namespace that keeps what the door told it, as the hub door's test does, and
+ *  answers every ask with what `answers` says for it, or that it is asleep. */
 export function doorway(): {
   MACHINES: DurableObjectNamespace
   asked: { id: string; headers: Headers }[]
+  answers: Map<string, unknown>
 } {
   const asked: { id: string; headers: Headers }[] = []
+  const answers = new Map<string, unknown>()
   const namespace = {
     idFromName: (name: string) => name,
     get: (id: unknown) => ({
       fetch: (request: Request) => {
         asked.push({ id: String(id), headers: request.headers })
-        return Promise.resolve(Response.json({ state: 'asleep' }))
+        const ask = request.headers.get('x-nib-machine') ?? ''
+        return Promise.resolve(Response.json(answers.get(ask) ?? { state: 'asleep' }))
       },
     }),
   }
-  return { MACHINES: namespace as unknown as DurableObjectNamespace, asked }
+  return { MACHINES: namespace as unknown as DurableObjectNamespace, asked, answers }
 }

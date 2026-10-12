@@ -19,6 +19,7 @@ export type MachineAsk =
   | 'restart'
   | 'reboot'
   | 'host'
+  | 'sessions'
 
 export async function askMachine(
   env: Env,

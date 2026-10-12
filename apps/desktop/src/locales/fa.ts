@@ -1866,6 +1866,7 @@ export const fa: Dictionary = {
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
   'Shown only once.': 'فقط یک بار نشان داده می‌شود.',
   'Remove {name}?': '{name} حذف شود؟',
+  'End {name}?': '{name} پایان یابد؟',
   'Its token stops working.': 'توکن آن دیگر کار نمی‌کند.',
   'Added {date}': 'افزوده در {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

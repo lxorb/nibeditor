@@ -1823,6 +1823,7 @@ export const yue: Dictionary = {
   'A client on another machine?': '另一部機器上面嘅用戶端？',
   'Shown only once.': '只會顯示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '結束 {name}？',
   'Its token stops working.': '佢嘅權杖會失效。',
   'Added {date}': '喺 {date} 加入',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

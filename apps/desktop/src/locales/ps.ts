@@ -1868,6 +1868,7 @@ export const ps: Dictionary = {
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
   'Shown only once.': 'یوازې یو ځل ښودل کېږي.',
   'Remove {name}?': '{name} لرې شي؟',
+  'End {name}?': '{name} پای ته ورسيږي؟',
   'Its token stops working.': 'د هغه ټوکن به کار نه کوي.',
   'Added {date}': 'په {date} زیات شو',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

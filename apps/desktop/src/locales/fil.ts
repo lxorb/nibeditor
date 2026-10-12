@@ -1904,6 +1904,7 @@ export const fil: Dictionary = {
   'A client on another machine?': 'Isang client sa ibang makina?',
   'Shown only once.': 'Ipinapakita nang isang beses lang.',
   'Remove {name}?': 'Alisin ang {name}?',
+  'End {name}?': 'Tapusin ang {name}?',
   'Its token stops working.': 'Hindi na gagana ang token nito.',
   'Added {date}': 'Idinagdag noong {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

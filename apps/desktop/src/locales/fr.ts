@@ -1924,6 +1924,7 @@ export const fr: Dictionary = {
   'A client on another machine?': 'Un client sur une autre machine ?',
   'Shown only once.': 'Affiché une seule fois.',
   'Remove {name}?': 'Retirer {name} ?',
+  'End {name}?': 'Terminer {name} ?',
   'Its token stops working.': 'Son jeton cessera de fonctionner.',
   'Added {date}': 'Ajouté le {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

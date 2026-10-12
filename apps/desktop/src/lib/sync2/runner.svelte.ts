@@ -27,7 +27,7 @@ import { isRecord, keep, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
-import { isDesktop } from '../tauri'
+import { isDesktop, joinPath } from '../tauri'
 import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
@@ -638,6 +638,16 @@ class Runner {
   remoteIdFor(root: string): string | null {
     for (const space of this.engine?.core.spaces.values() ?? []) {
       if (space.row.root === root) return space.id
+    }
+    return null
+  }
+
+  /** The file on this disk an entry of the account is, by its id: null for one that is
+   *  not on this disk, or in no space this device syncs. */
+  fileOf(id: string): string | null {
+    for (const space of this.engine?.core.spaces.values() ?? []) {
+      const local = space.entries.get(id)?.local_path
+      if (local && space.isLive(id)) return joinPath(space.row.root, local)
     }
     return null
   }

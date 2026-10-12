@@ -12,16 +12,17 @@
  *  `nibd`, so a restart of `nibd` - a deploy it picks up, the owner's Restart, its own
  *  watchdog, a crash, systemd after a security update - ends no program (4.16). */
 
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Activity } from '@nib/online/types'
 import { isLoopbackUrl } from '@nib/online/urls'
-import type { MachineFrame, NibdFrame } from '@nib/online/wire'
+import type { MachineFrame, NibdFrame, SessionNow } from '@nib/online/wire'
 import { diskOf, Meter, homeSize } from './activity'
 import { Held, socketOf } from './held'
 import { Images } from './images'
 import type { Cgroups, User } from './limits'
 import { Saves, isSessionId, type Saved } from './saves'
+import { programOf } from './proc'
 import { Session } from './session'
 
 export interface Options {
@@ -145,6 +146,10 @@ export class Nibd {
       this.options.restart?.()
       return
     }
+    if (frame.t === 'list') {
+      this.send({ t: 'sessions', sessions: await this.list() })
+      return
+    }
     // Answered by the server as it arrives (server.ts); here only from a test.
     if (frame.t === 'ping') {
       this.send({ t: 'pong' })
@@ -190,6 +195,40 @@ export class Nibd {
           this.send({ t: 'image', session: frame.session, id: frame.id, path })
         return
       }
+    }
+  }
+
+  /** Every session on the machine, for Settings' list: the ones this `nibd` has, and every
+   *  holder still running that no `open` asked for since it started - a session whose tab
+   *  has been closed all the while is still a program running on the machine. */
+  async list(): Promise<SessionNow[]> {
+    const listed = [...this.sessions.values()].map((one) => one.now())
+    let sockets: string[]
+    try {
+      sockets = readdirSync(this.holds)
+    } catch {
+      sockets = []
+    }
+    const others = sockets
+      .map((name) => name.replace(/.sock$/, ''))
+      .filter((id) => isSessionId(id) && !this.sessions.has(id))
+    const found = await Promise.all(others.map((id) => this.holderOf(id)))
+    return [...listed, ...found.filter((one) => one !== null)]
+  }
+
+  /** A holder nobody opened since this `nibd` started, asked how it is and let go of. */
+  private async holderOf(id: string): Promise<SessionNow | null> {
+    const held = new Held(socketOf(this.holds, id), { out: () => undefined, exit: () => undefined })
+    const hello = await held.find()
+    held.detach()
+    if (!hello) return null
+    const alive = hello.exited === null
+    return {
+      session: id,
+      program: alive ? programOf(hello.shell) : null,
+      title: null,
+      alive,
+      at: null,
     }
   }
 

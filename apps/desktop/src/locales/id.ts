@@ -1864,6 +1864,7 @@ export const id: Dictionary = {
   'A client on another machine?': 'Klien di mesin lain?',
   'Shown only once.': 'Ditampilkan sekali saja.',
   'Remove {name}?': 'Hapus {name}?',
+  'End {name}?': 'Akhiri {name}?',
   'Its token stops working.': 'Tokennya berhenti berfungsi.',
   'Added {date}': 'Ditambahkan {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

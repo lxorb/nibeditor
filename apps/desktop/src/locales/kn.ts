@@ -1883,6 +1883,7 @@ export const kn: Dictionary = {
   'A client on another machine?': 'ಬೇರೆ ಯಂತ್ರದಲ್ಲಿನ ಕ್ಲೈಂಟ್?',
   'Shown only once.': 'ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.',
   'Remove {name}?': '{name} ತೆಗೆದುಹಾಕಬೇಕೆ?',
+  'End {name}?': '{name} ಕೊನೆಗೊಳಿಸಬೇಕೆ?',
   'Its token stops working.': 'ಅದರ ಟೋಕನ್ ಇನ್ನು ಕೆಲಸ ಮಾಡುವುದಿಲ್ಲ.',
   'Added {date}': '{date} ರಂದು ಸೇರಿಸಲಾಗಿದೆ',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

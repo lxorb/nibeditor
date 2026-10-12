@@ -1945,6 +1945,7 @@ export const pl: Dictionary = {
   'A client on another machine?': 'Klient na innym komputerze?',
   'Shown only once.': 'Pokazywany tylko raz.',
   'Remove {name}?': 'Usunąć {name}?',
+  'End {name}?': 'Zakończyć {name}?',
   'Its token stops working.': 'Jego token przestanie działać.',
   'Added {date}': 'Dodano {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

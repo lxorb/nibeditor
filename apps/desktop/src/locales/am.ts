@@ -1842,6 +1842,7 @@ export const am: Dictionary = {
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
   'Shown only once.': 'አንድ ጊዜ ብቻ ይታያል።',
   'Remove {name}?': '{name} ይወገድ?',
+  'End {name}?': '{name} ይብቃ?',
   'Its token stops working.': 'ቶከኑ መሥራት ያቆማል።',
   'Added {date}': 'በ{date} ታክሏል',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

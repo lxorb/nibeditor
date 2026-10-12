@@ -1856,6 +1856,7 @@ export const jv: Dictionary = {
   'A client on another machine?': 'Klien ing mesin liya?',
   'Shown only once.': 'Mung ditampilake sepisan.',
   'Remove {name}?': 'Busak {name}?',
+  'End {name}?': 'Pungkasi {name}?',
   'Its token stops working.': 'Token-e ora bisa digunakake maneh.',
   'Added {date}': 'Ditambahake {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

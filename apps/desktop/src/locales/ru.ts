@@ -1943,6 +1943,7 @@ export const ru: Dictionary = {
   'A client on another machine?': 'Клиент на другом компьютере?',
   'Shown only once.': 'Показывается только один раз.',
   'Remove {name}?': 'Удалить {name}?',
+  'End {name}?': 'Завершить {name}?',
   'Its token stops working.': 'Его токен перестанет работать.',
   'Added {date}': 'Добавлен {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

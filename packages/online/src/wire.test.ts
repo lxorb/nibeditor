@@ -220,6 +220,7 @@ describe('the link', () => {
     { t: 'sleep' },
     { t: 'restart' },
     { t: 'ping' },
+    { t: 'list' },
     { t: 'callback', session: 's_1', url: 'http://localhost:54545/callback?code=x' },
     {
       t: 'image',
@@ -275,6 +276,14 @@ describe('the link', () => {
       path: '/home/nib/.cache/nib/images/a.png',
     },
     { t: 'image', session: 's_1', id: '0123456789abcdef0123', path: null },
+    {
+      t: 'sessions',
+      sessions: [
+        { session: 's_1', program: 'claude', title: 'Fix the build', alive: true, at: 1_700_000 },
+        { session: 's_2', program: null, title: null, alive: false, at: null },
+      ],
+    },
+    { t: 'sessions', sessions: [] },
   ]
 
   it.each(nibds)('the Machine reads back what nibd sent: %j', (one) => {
@@ -336,6 +345,11 @@ describe('the link', () => {
     ['an unknown kind', { t: 'hello' }],
     ['an address that is not the web', { t: 'browse', session: 's', url: 'file:///etc/passwd' }],
     ['an open with no session', { t: 'browse', url: 'https://a.b/' }],
+    ['sessions that are not a list', { t: 'sessions', sessions: 's_1' }],
+    [
+      'a session that does not say whether it runs',
+      { t: 'sessions', sessions: [{ session: 's_1', program: null, title: null, at: null }] },
+    ],
   ])('the Machine drops a frame with %s', (_, value) => {
     expect(nibdFrameOf(frame(value as object))).toBeNull()
   })

@@ -1874,6 +1874,7 @@ export const te: Dictionary = {
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
   'Shown only once.': 'ఒక్కసారి మాత్రమే చూపబడుతుంది.',
   'Remove {name}?': '{name}ని తీసివేయాలా?',
+  'End {name}?': '{name}ని ముగించాలా?',
   'Its token stops working.': 'దాని టోకెన్ ఇక పని చేయదు.',
   'Added {date}': '{date}న జోడించబడింది',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -1922,6 +1922,7 @@ export const it: Dictionary = {
   'A client on another machine?': 'Un client su un’altra macchina?',
   'Shown only once.': 'Mostrato una sola volta.',
   'Remove {name}?': 'Rimuovere {name}?',
+  'End {name}?': 'Terminare {name}?',
   'Its token stops working.': 'Il suo token smetterà di funzionare.',
   'Added {date}': 'Aggiunto il {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

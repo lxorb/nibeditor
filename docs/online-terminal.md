@@ -595,9 +595,21 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   screen dimmed at once (kept in the sync store from the last visit) and wakes the machine
   when it is on screen; it is live 1-3 seconds later.
 - **Settings › Online terminal**: the machine (state, size, region, Start/Stop), the month's
-  usage, the sessions (each with its space, who is watching, End), the audit, **Download
-  home**, **Reset machine**, **Delete machine**. The palette has Start and Stop.
+  usage, the sessions, the audit, **Download home**, **Reset machine**, **Delete machine**.
+  The palette has Start and Stop.
+- **The sessions** (Emil, 2026-10-13) are every one the machine has, a tab open on it or
+  not, one row each: called as its tab would be (the title the program in front set, the
+  program, the file), the file's name and when it last printed under that, and at the end
+  **Open** (its tab, or a new one, in its space) and **End** (asked first; its program ends,
+  and a tab on it says the terminal is gone). What the account keeps (`term_sessions`) is
+  joined with what `nibd` has (`list`, answered `sessions`), so a session no file names any
+  more is listed too, and can be ended by its own id. The account's hub says `terms` to the
+  owner's devices whenever a session is made or ended or its shell ends, and the list asks
+  again; see `lib/online/sessions.svelte.ts` and `listing.ts`.
 - **Move to space** moves the `.term` (4.5); the session goes on, and the audience changes.
+  A file moved to another space is a new file there with a new id, so the account gives the
+  session the new id once the old file is gone (`adopt` in routes.ts); a copy beside a file
+  that is still there gets a session of its own.
 - **Restore** after a restart is the file reopening; its tab draws the cached screen and
   connects when looked at. Split and Open another make a new `.term` beside it.
 - **Closing** an online terminal's tab never asks: nothing ends.

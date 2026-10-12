@@ -1894,6 +1894,7 @@ export const ha: Dictionary = {
   'A client on another machine?': "Abokin ciniki a wata na'ura?",
   'Shown only once.': 'Ana nuna shi sau ɗaya kawai.',
   'Remove {name}?': 'Cire {name}?',
+  'End {name}?': 'Ƙare {name}?',
   'Its token stops working.': 'Alamarsa za ta daina aiki.',
   'Added {date}': 'An ƙara a {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

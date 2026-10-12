@@ -1913,6 +1913,7 @@ export const ptPT: Dictionary = {
   'A client on another machine?': 'Um cliente noutra máquina?',
   'Shown only once.': 'Mostrado apenas uma vez.',
   'Remove {name}?': 'Remover {name}?',
+  'End {name}?': 'Terminar {name}?',
   'Its token stops working.': 'O token dele deixa de funcionar.',
   'Added {date}': 'Adicionado a {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -16,7 +16,7 @@
  *  the saved screen if there is one. Whatever is asked of the session meanwhile waits. */
 
 import { existsSync } from 'node:fs'
-import type { NibdFrame, Restored } from '@nib/online/wire'
+import type { NibdFrame, Restored, SessionNow } from '@nib/online/wire'
 import { Coalescer } from './coalesce'
 import { Held, socketOf } from './held'
 import type { Hello } from './hold-wire'
@@ -77,6 +77,8 @@ export class Session {
   private scanned = 0
   /** The offset after the last byte the holder sent: where the next one goes on. */
   private heard = 0
+  /** When the shell last printed anything, by this `nibd`'s clock. */
+  private printedAt: number | null = null
 
   constructor(id: string, cols: number, rows: number, machine: Machine, saved?: Saved) {
     this.id = id
@@ -246,6 +248,7 @@ export class Session {
     const fresh = data.subarray(this.heard - seq)
     this.heard = seq + data.length
     this.printed += fresh.length
+    this.printedAt = Date.now()
     this.scanner.feed(fresh)
     this.coalescer.push(fresh)
     this.ask()
@@ -346,6 +349,19 @@ export class Session {
    *  rest at the next frame, so a screen taken here is never cut through an escape. */
   private toSafePoint(): void {
     this.coalescer.flush(Math.max(0, this.scanned + this.scanner.safe - this.ring.end))
+  }
+
+  /** The session as Settings lists it: what is in front, asked now rather than at the
+   *  next output, whether a shell runs, and when it last printed. */
+  now(): SessionNow {
+    const shell = this.shell
+    return {
+      session: this.id,
+      program: shell === undefined ? null : programOf(shell),
+      title: this.over ? null : this.screen.title,
+      alive: this.held !== null,
+      at: this.printedAt,
+    }
   }
 
   /** The bytes printed since the last time this was asked. */

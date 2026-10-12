@@ -13,16 +13,69 @@
    *  about it, as the AI pane's account rows are. The bars are a card of their own, with
    *  the day they start again under it.
    *
+   *  Under the machine, every session on it, a tab open on it or not, one row each: what
+   *  runs in it, the file's name and when it last printed, and at the end Open (its tab,
+   *  or a new one) and End, which ends its program and asks first as every ending does.
+   *  The list follows sessions made and ended on any device (sessions.svelte.ts).
+   *
    *  Fetched as it is opened, never before. */
   import { i18n, t } from '../i18n.svelte'
   import { diskNear, diskShare, shares } from '@nib/online'
+  import { prompt } from '../prompt.svelte'
+  import { settings } from '../settings.svelte'
+  import { within } from '../space-paths'
+  import { runner } from '../sync2/runner.svelte'
+  import { workspace } from '../workspace.svelte'
   import { cityOf } from './calls'
+  import { opens, rowsOf, type SessionRow } from './listing'
   import { machine } from './machine.svelte'
+  import { sessions } from './sessions.svelte'
   import { refusalWords } from './words'
 
   $effect(() => {
     void machine.refresh()
   })
+
+  $effect(() => {
+    void sessions.refresh()
+    return sessions.watch()
+  })
+
+  const rows = $derived(rowsOf(sessions.list ?? []))
+
+  /** Where Open goes for each session: its file on this disk, or nowhere - a file in the
+   *  trash, in a space this device does not sync, or no file at all. */
+  const files = $derived(
+    new Map(
+      (sessions.list ?? []).map((one) => [
+        one.session,
+        one.term !== null && opens(one) ? runner.fileOf(one.term) : null,
+      ]),
+    ),
+  )
+
+  const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
+
+  /** The file's name and when it last printed, as the row's second line. */
+  const detail = (row: SessionRow) =>
+    [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null).join(' · ')
+
+  /** Its tab, in front, or a new tab for it, in the space it is in; Settings goes. */
+  async function open(path: string) {
+    const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+    if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
+    await workspace.openEntry(path, { activate: true })
+    settings.open = false
+  }
+
+  async function end(row: SessionRow) {
+    const sure = await prompt.confirm({
+      title: t('End {name}?', { name: row.name ?? t('Terminal') }),
+      confirmLabel: t('End'),
+      danger: true,
+    })
+    if (sure) await sessions.end(row.listed)
+  }
 
   const known = $derived(machine.known)
   const state = $derived(known?.machine?.state ?? null)
@@ -157,6 +210,26 @@
           >
         </div>
       </div>
+    </div>
+  {/if}
+
+  {#if rows.length}
+    <div class="card">
+      {#each rows as row (row.key)}
+        {@const file = files.get(row.key) ?? null}
+        <div class="nib-setting setting">
+          <span class="name">
+            {row.name ?? t('Terminal')}
+            {#if detail(row)}<small>{detail(row)}</small>{/if}
+          </span>
+          <div class="row">
+            {#if file}
+              <button class="nib-chip" onclick={() => void open(file)}>{t('Open')}</button>
+            {/if}
+            <button class="nib-chip" onclick={() => void end(row)}>{t('End')}</button>
+          </div>
+        </div>
+      {/each}
     </div>
   {/if}
 

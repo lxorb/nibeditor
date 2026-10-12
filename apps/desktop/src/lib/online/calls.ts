@@ -182,3 +182,62 @@ export async function startStop(start: boolean): Promise<void> {
     token: token(),
   })
 }
+
+/** A session on the account's machine, as Settings lists it (`GET /v2/online/terms`): the
+ *  `.term` that names it (null for one no file names any more, which can only be ended),
+ *  where that file is on the account, and what the machine says of it now - null for
+ *  `alive` where the machine could not be asked. */
+export interface Listed {
+  term: string | null
+  session: string
+  createdAt: number | null
+  space: string | null
+  path: string | null
+  trashed: boolean
+  program: string | null
+  title: string | null
+  alive: boolean | null
+  at: number | null
+}
+
+const orNull = <T>(value: unknown, is: (one: unknown) => one is T): T | null =>
+  is(value) ? value : null
+
+function listedOf(value: unknown): Listed | null {
+  if (!isRecord(value) || !isString(value.session)) return null
+  return {
+    term: orNull(value.term, isString),
+    session: value.session,
+    createdAt: orNull(value.createdAt, isNumber),
+    space: orNull(value.space, isString),
+    path: orNull(value.path, isString),
+    trashed: value.trashed === true,
+    program: orNull(value.program, isString),
+    title: orNull(value.title, isString),
+    alive: typeof value.alive === 'boolean' ? value.alive : null,
+    at: orNull(value.at, isNumber),
+  }
+}
+
+/** Every session the account answered about, read; the ones that do not read left out. */
+export function listOf(value: unknown): Listed[] {
+  if (!isRecord(value) || !Array.isArray(value.terms)) return []
+  return value.terms.flatMap((one) => {
+    const read = listedOf(one)
+    return read ? [read] : []
+  })
+}
+
+/** The sessions on the account's machine, open in a tab or not. */
+export async function listed(): Promise<Listed[]> {
+  return listOf(await request<unknown>('/v2/online/terms', { token: token() }))
+}
+
+/** A session ended, and its program: by its file's id, or by its own where no file names
+ *  it. */
+export async function endSession(id: string): Promise<void> {
+  await request<unknown>(`/v2/online/terms/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    token: token(),
+  })
+}

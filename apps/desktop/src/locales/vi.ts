@@ -1851,6 +1851,7 @@ export const vi: Dictionary = {
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
   'Shown only once.': 'Chỉ hiện một lần.',
   'Remove {name}?': 'Gỡ {name}?',
+  'End {name}?': 'Kết thúc {name}?',
   'Its token stops working.': 'Mã thông báo của nó sẽ ngừng hoạt động.',
   'Added {date}': 'Đã thêm {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -1875,6 +1875,7 @@ export const gsw: Dictionary = {
   'A client on another machine?': 'En Client uf eme andere Grät?',
   'Shown only once.': 'Wird nume einisch azeigt.',
   'Remove {name}?': '{name} entferne?',
+  'End {name}?': '{name} beände?',
   'Its token stops working.': 'Sis Token funktioniert dänn nüm.',
   'Added {date}': 'Dezuegfüegt am {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

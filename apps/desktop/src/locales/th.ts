@@ -1833,6 +1833,7 @@ export const th: Dictionary = {
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
   'Shown only once.': 'แสดงเพียงครั้งเดียว',
   'Remove {name}?': 'นำ {name} ออกไหม',
+  'End {name}?': 'สิ้นสุด {name} ไหม',
   'Its token stops working.': 'โทเค็นของมันจะใช้งานไม่ได้อีก',
   'Added {date}': 'เพิ่มเมื่อ {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

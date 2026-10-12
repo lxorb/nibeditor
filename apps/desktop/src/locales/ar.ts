@@ -1966,6 +1966,7 @@ export const ar: Dictionary = {
   'A client on another machine?': 'عميل على جهاز آخر؟',
   'Shown only once.': 'يُعرض مرة واحدة فقط.',
   'Remove {name}?': 'إزالة {name}؟',
+  'End {name}?': 'إنهاء {name}؟',
   'Its token stops working.': 'سيتوقف رمزه عن العمل.',
   'Added {date}': 'أُضيف في {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

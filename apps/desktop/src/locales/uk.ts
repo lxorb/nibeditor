@@ -1937,6 +1937,7 @@ export const uk: Dictionary = {
   'A client on another machine?': 'Клієнт на іншому комп’ютері?',
   'Shown only once.': 'Показується лише один раз.',
   'Remove {name}?': 'Видалити {name}?',
+  'End {name}?': 'Завершити {name}?',
   'Its token stops working.': 'Його токен перестане працювати.',
   'Added {date}': 'Додано {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

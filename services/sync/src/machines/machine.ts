@@ -78,6 +78,7 @@ import {
   type Refusal,
   REFUSALS,
   type ServerFrame,
+  type SessionNow,
   text,
 } from '@nib/online/wire'
 import { reachAgain } from './reach'
@@ -136,6 +137,9 @@ const SEEN_EVERY = MINUTE
  *  a few tabs and then nothing, never a wall of them (docs/online-terminal.md 4.13). */
 const OPENS_A_MINUTE = 10
 const CALLBACKS_A_MINUTE = 10
+
+/** How long Settings' list waits for `nibd` to say what it has. */
+const LIST_WAIT = 3_000
 
 /** How often a machine that is always on is asked for `nibd` while it is set up or comes
  *  back; how long its first boot may take (cloud-init installs everything, a few
@@ -280,6 +284,8 @@ export class Machine implements DurableObject {
   private relinked = 0
   /** A sleep that backs the home up whatever its age: before the machine moves host. */
   private backupNow = false
+  /** Settings' lists waiting for `nibd` to say every session it has. */
+  private listing: ((sessions: SessionNow[] | null) => void)[] = []
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -350,6 +356,8 @@ export class Machine implements DurableObject {
       case 'host':
         await this.move(headers.get('x-nib-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
         return Response.json({ state: await this.state() })
+      case 'sessions':
+        return Response.json({ sessions: await this.sessions() })
       default:
         return new Response('not something a machine does', { status: 400 })
     }
@@ -673,6 +681,20 @@ export class Machine implements DurableObject {
     this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
   }
 
+  /** Every session `nibd` has, tabs open on it or not, for Settings' list; null where
+   *  there is no link to ask (a machine asleep, or one being made again). */
+  private sessions(): Promise<SessionNow[] | null> {
+    if (!this.link) return Promise.resolve(null)
+    const answered = new Promise<SessionNow[] | null>((resolve) => {
+      this.listing.push(resolve)
+      setTimeout(() => {
+        resolve(null)
+      }, LIST_WAIT)
+    })
+    this.tell('', { t: 'list' })
+    return answered
+  }
+
   /** One frame down the link, if there is one. */
   private tell(_session: string, frame: MachineFrame): void {
     if (!this.link) return
@@ -812,6 +834,9 @@ export class Machine implements DurableObject {
         this.news.set(frame.session, { ...this.news.get(frame.session), ended: said })
         this.opened.delete(frame.session)
         this.toSession(frame.session, said)
+        // Settings' list says which sessions have a shell running.
+        const me = await this.me()
+        if (me) await askHub(this.env, me.user, 'terms')
         return
       }
       case 'activity':
@@ -821,6 +846,9 @@ export class Machine implements DurableObject {
         this.saved?.()
         return
       case 'pong':
+        return
+      case 'sessions':
+        for (const resolve of this.listing.splice(0)) resolve(frame.sessions)
         return
       case 'browse':
         this.browse(frame.session, frame.url)

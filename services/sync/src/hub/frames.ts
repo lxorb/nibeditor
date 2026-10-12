@@ -59,6 +59,9 @@ export type FromHub =
   /** The account's online terminal machine changed state, to every device of its
    *  owner at once, so a status dot changes everywhere (docs/online-terminal.md, 4.6). */
   | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
+  /** A session on the account's machine was made or ended, or its shell ended: Settings'
+   *  list asks again (docs/online-terminal.md 4.10). Says nothing of which. */
+  | { t: 'terms' }
   /** A chat this account reaches moved while none of its devices had it open
    *  (docs/chats.md 4.4): `ChatPoke`, which never carries words. */
   | ChatPoke

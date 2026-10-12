@@ -1871,6 +1871,7 @@ export const pa: Dictionary = {
   'A client on another machine?': 'ਕਿਸੇ ਹੋਰ ਮਸ਼ੀਨ ਉੱਤੇ ਕਲਾਇੰਟ?',
   'Shown only once.': 'ਸਿਰਫ਼ ਇੱਕ ਵਾਰ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ।',
   'Remove {name}?': '{name} ਹਟਾਉਣਾ ਹੈ?',
+  'End {name}?': '{name} ਮੁਕਾਉਣਾ ਹੈ?',
   'Its token stops working.': 'ਇਸ ਦਾ ਟੋਕਨ ਕੰਮ ਕਰਨਾ ਬੰਦ ਕਰ ਦੇਵੇਗਾ।',
   'Added {date}': '{date} ਨੂੰ ਜੋੜਿਆ',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

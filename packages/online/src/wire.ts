@@ -256,6 +256,23 @@ export type MachineFrame =
   /** Every screen saved, then `nibd` ends itself for its supervisor to start again: the
    *  owner's Restart, and the health path's answer to a `nibd` that keeps going quiet. */
   | { t: 'restart' }
+  /** Every session the machine has: answered with `sessions`, for Settings' list. */
+  | { t: 'list' }
+
+/** A session as the machine has it now, whether any tab is open on it or not: what is in
+ *  front of its shell and the title that set, whether a shell is running in it at all,
+ *  and when it last printed anything, if it has since `nibd` started (ms). */
+export interface SessionNow {
+  session: string
+  program: string | null
+  title: string | null
+  alive: boolean
+  at: number | null
+}
+
+/** The most sessions a `sessions` answer carries: a machine has `MOST_SESSIONS`, and a
+ *  few more that ended without their row hearing of it. */
+const MOST_LISTED = 64
 
 /** What `nibd` tells `Machine`: output from an offset; a whole screen; the program in
  *  front; a shell that ended; the last 30 seconds' activity; that every screen is
@@ -287,6 +304,7 @@ export type NibdFrame =
   | { t: 'called'; session: string; url: string; status: number }
   | { t: 'image'; session: string; id: string; path: string | null }
   | { t: 'pong' }
+  | { t: 'sessions'; sessions: SessionNow[] }
 
 /** How often `Machine` asks `nibd` whether it is there, and how long a link may say
  *  nothing at all before `Machine` counts it dead and makes it again: four pings
@@ -400,6 +418,14 @@ function screenOf(
   if (value.restored === undefined) return { seq, cols, rows, data }
   const restored = restoredOf(value.restored)
   return restored ? { seq, cols, rows, data, restored } : null
+}
+
+function sessionNowOf(value: unknown): SessionNow | null {
+  if (!isRecord(value)) return null
+  const { session, program, title, alive, at } = value
+  if (!isId(session) || !isShort(program) || !isShort(title) || typeof alive !== 'boolean')
+    return null
+  return at === null || isCount(at) ? { session, program, title, alive, at } : null
 }
 
 function programOf(
@@ -526,7 +552,8 @@ export function serverFrameOf(raw: string): ServerFrame | null {
 export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
-  if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart') return { t: value.t }
+  if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart' || value.t === 'list')
+    return { t: value.t }
 
   const { session } = value
   if (!isId(session)) return null
@@ -570,6 +597,12 @@ export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
     case 'saved':
     case 'pong':
       return { t: value.t }
+    case 'sessions': {
+      const { sessions } = value
+      if (!Array.isArray(sessions) || sessions.length > MOST_LISTED) return null
+      const read = sessions.map(sessionNowOf)
+      return read.every((one) => one !== null) ? { t: 'sessions', sessions: read } : null
+    }
     default:
       break
   }

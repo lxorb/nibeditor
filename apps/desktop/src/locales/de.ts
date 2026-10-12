@@ -1904,6 +1904,7 @@ export const de: Dictionary = {
   'A client on another machine?': 'Ein Client auf einem anderen Gerät?',
   'Shown only once.': 'Wird nur einmal angezeigt.',
   'Remove {name}?': '{name} entfernen?',
+  'End {name}?': '{name} beenden?',
   'Its token stops working.': 'Sein Token funktioniert dann nicht mehr.',
   'Added {date}': 'Hinzugefügt am {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

@@ -1872,6 +1872,7 @@ export const tr: Dictionary = {
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
   'Shown only once.': 'Yalnızca bir kez gösterilir.',
   'Remove {name}?': '{name} kaldırılsın mı?',
+  'End {name}?': '{name} bitirilsin mi?',
   'Its token stops working.': 'Belirteci artık çalışmaz.',
   'Added {date}': '{date} tarihinde eklendi',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

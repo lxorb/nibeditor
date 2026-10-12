@@ -1886,6 +1886,7 @@ export const ml: Dictionary = {
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
   'Shown only once.': 'ഒരിക്കൽ മാത്രം കാണിക്കും.',
   'Remove {name}?': '{name} നീക്കം ചെയ്യണോ?',
+  'End {name}?': '{name} അവസാനിപ്പിക്കണോ?',
   'Its token stops working.': 'അതിന്റെ ടോക്കൺ ഇനി പ്രവർത്തിക്കില്ല.',
   'Added {date}': '{date}-ന് ചേർത്തു',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

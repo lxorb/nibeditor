@@ -1863,6 +1863,7 @@ export const ur: Dictionary = {
   'A client on another machine?': 'کسی دوسری مشین پر کلائنٹ؟',
   'Shown only once.': 'صرف ایک بار دکھایا جاتا ہے۔',
   'Remove {name}?': '{name} کو ہٹائیں؟',
+  'End {name}?': '{name} ختم کریں؟',
   'Its token stops working.': 'اس کا ٹوکن کام کرنا بند کر دے گا۔',
   'Added {date}': '{date} کو شامل کیا گیا',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

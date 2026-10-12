@@ -1855,6 +1855,7 @@ export const my: Dictionary = {
   'A client on another machine?': 'အခြားစက်ပေါ်ရှိ client လား။',
   'Shown only once.': 'တစ်ကြိမ်သာ ပြသည်။',
   'Remove {name}?': '{name} ကို ဖယ်ရှားမလား။',
+  'End {name}?': '{name} ကို အဆုံးသတ်မလား။',
   'Its token stops working.': '၎င်း၏ token အလုပ်မလုပ်တော့ပါ။',
   'Added {date}': '{date} တွင် ထည့်ခဲ့သည်',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':

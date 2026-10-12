@@ -418,6 +418,83 @@ describe('the door', () => {
     expect(revoked?.headers.get('x-nib-terms')).toBe('term-1')
   })
 
+  test('Settings’ list is every session with what the machine says of it, and those no row names', async () => {
+    const { owner, term } = await made()
+    door.answers.set('sessions', {
+      sessions: [
+        { session: term.session, program: 'claude', title: 'Fix the build', alive: true, at: 7 },
+        { session: 's_orphan', program: 'sleep', title: null, alive: true, at: null },
+      ],
+    })
+    const listed = await call<{ terms: Record<string, unknown>[] }>(env, '/v2/online/terms', {
+      token: owner,
+    })
+    expect(listed.json.terms).toEqual([
+      expect.objectContaining({
+        term: 'term-1',
+        session: term.session,
+        program: 'claude',
+        title: 'Fix the build',
+        alive: true,
+        at: 7,
+        trashed: false,
+      }),
+      expect.objectContaining({ term: null, session: 's_orphan', program: 'sleep', alive: true }),
+    ])
+
+    // A machine that could not be asked says nothing of any, rather than that none runs.
+    door.answers.set('sessions', { sessions: null })
+    const blind = await call<{ terms: Record<string, unknown>[] }>(env, '/v2/online/terms', {
+      token: owner,
+    })
+    expect(blind.json.terms).toEqual([expect.objectContaining({ term: 'term-1', alive: null })])
+  })
+
+  test('a session no row names is ended by its own id, on its owner’s machine alone', async () => {
+    const { owner, writer, term } = await made()
+    door.asked.length = 0
+    expect(
+      (await call(env, '/v2/online/terms/s_orphan', { method: 'DELETE', token: writer })).status,
+    ).toBe(404)
+    expect(
+      (await call(env, '/v2/online/terms/not-a-session', { method: 'DELETE', token: owner }))
+        .status,
+    ).toBe(404)
+    expect(door.asked).toEqual([])
+
+    const ended = await call(env, '/v2/online/terms/s_orphan', { method: 'DELETE', token: owner })
+    expect(ended.status).toBe(200)
+    expect(door.asked.at(-1)?.id).toBe(term.machine)
+    expect(door.asked.at(-1)?.headers.get('x-nib-machine')).toBe('end')
+    expect(door.asked.at(-1)?.headers.get('x-nib-session')).toBe('s_orphan')
+  })
+
+  test('a file moved to another space keeps its session, and a copy beside it gets its own', async () => {
+    const { owner, term } = await made()
+    const ask = (id: string) =>
+      call<{ session: string }>(env, '/v2/online/terms', {
+        token: owner,
+        body: { term: id, session: term.session },
+      })
+
+    // A copy while the file it was made for is still there: a session of its own.
+    expect((await ask('copy-1')).json.session).not.toBe(term.session)
+
+    // Moved: the file it was made for is gone, and the new one, with a new id and the
+    // same words, is the same session, the shell in it going on.
+    env.db
+      .prepare(
+        `insert into notes (id, space_id, path, seq, updated_at, size, hash)
+         values ('moved-1', 'space-1', 'Elsewhere/Build.term', 3, 1, 0, 'h')`,
+      )
+      .run()
+    env.db.prepare(`update notes set deleted = 1 where id = 'term-1'`).run()
+    expect((await ask('moved-1')).json).toEqual(term)
+    expect(
+      env.db.prepare('select term from term_sessions where session = ?').get(term.session),
+    ).toEqual({ term: 'moved-1' })
+  })
+
   test('a ninth session is refused with the list of the eight', async () => {
     const { owner } = await made()
     for (let at = 2; at <= 9; at++) {
@@ -1561,6 +1638,29 @@ describe('a machine on a server of its own', () => {
     expect(running.host.link_?.sent).not.toContainEqual({ t: 'close', session: 'session-1' })
   })
 
+  test('Settings’ list is what nibd says it has, asked down the link; nothing without one', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const ask = () =>
+      running.machine.fetch(
+        new Request('https://machine.invalid/sessions', {
+          headers: { 'x-nib-machine': 'sessions' },
+        }),
+      )
+    const asked = ask()
+    await vi.waitFor(() => {
+      expect(running.host.link_?.sent).toContainEqual({ t: 'list' })
+    })
+    const sessions = [{ session: 'session-1', program: 'vim', title: null, alive: true, at: 3 }]
+    await nibd(running, { t: 'sessions', sessions })
+    expect(await (await asked).json()).toEqual({ sessions })
+
+    // nibd that never answers is not waited on for ever.
+    const unanswered = ask()
+    await vi.advanceTimersByTimeAsync(3_000)
+    expect(await (await unanswered).json()).toEqual({ sessions: null })
+  })
+
   test('the admin’s Reboot power-cycles it and waits for it', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1783,6 +1883,14 @@ describe('the hub’s machine frame', () => {
     const { hubFrameOf } = await import('@nib/sync-core/wire')
     expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
+
+    // A session made or ended: every device of the owner's asks Settings' list again.
+    await made.fetch(
+      new Request('https://hub.invalid/terms', { headers: { 'x-nib-hub': 'terms' } }),
+    )
+    expect(laptop.take()).toEqual([{ t: 'terms' }])
+    expect(guest.take()).toEqual([])
+    expect(hubFrameOf({ t: 'terms' })).toEqual({ t: 'terms' })
   })
 })
 
