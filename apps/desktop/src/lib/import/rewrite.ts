@@ -258,7 +258,7 @@ function codeRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
   const lines = text.split('\n')
   const properties = propertiesEnd(lines)
-  let fence: { mark: string; from: number; loose: boolean } | null = null
+  let fence: { mark: string; from: number; loose: boolean; depth: number } | null = null
   let indented: { from: number; to: number } | null = null
   // An indented block needs a blank line above it, since an indented line straight
   // under a paragraph is more of the paragraph, and it cannot sit in a list item,
@@ -270,8 +270,22 @@ function codeRanges(text: string): [number, number][] {
 
   for (const [index, whole] of lines.entries()) {
     // A callout's or a quote's `>` comes off first: its code is code all the same.
-    const line = whole.replace(QUOTED, '')
+    // So does the `\r` a note written on Windows ends every line with, which would
+    // otherwise be read as words after a fence.
+    const quoted = QUOTED.exec(whole)?.[0] ?? ''
+    const depth = quoted.split('>').length - 1
+    const line = whole.slice(quoted.length).replace(/\r$/, '')
     const empty = !line.trim()
+
+    // A fence opened inside a callout or a quote closes when that ends, whether or
+    // not its closing line came, the way CommonMark and Obsidian read it: what follows
+    // the callout is the note's own words again.
+    if (fence && depth < fence.depth) {
+      ranges.push([fence.from, at])
+      fence = null
+      prose = at
+    }
+
     // A fence can open on a list item's own line, after its marker, and inside a
     // list item it sits as far in as the item's words, which is past the three
     // spaces a fence may have anywhere else: `1. Write:` then `    ~~~` is a code
@@ -313,7 +327,7 @@ function codeRanges(text: string): [number, number][] {
         // Still in the block.
       } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
         spans(text, prose, at, ranges)
-        fence = { mark, from: at, loose }
+        fence = { mark, from: at, loose, depth }
         if (!INDENTED.test(line)) listed = item !== null
       } else if (!empty && INDENTED.test(line) && blank && !listed) {
         spans(text, prose, at, ranges)
@@ -356,9 +370,27 @@ function propertiesTo(text: string): number {
   return lines.slice(0, propertiesEnd(lines)).join('\n').length
 }
 
-/** The inline code spans between `from` and `to`: a run of backticks, up to the
- *  next run of exactly as many. A run with no partner is only backticks. */
+/** The inline code spans between `from` and `to`, a paragraph at a time. A code
+ *  span cannot cross a blank line, in CommonMark and in Obsidian alike, so a lone
+ *  backtick in one paragraph is only a backtick and does not pair with the opening
+ *  one of a span further down. A blank line inside a callout or a quote is one too. */
 function spans(text: string, from: number, to: number, ranges: [number, number][]) {
+  let paragraph = from
+  let at = from
+  for (const line of text.slice(from, to).split('\n')) {
+    if (!line.replace(QUOTED, '').trim()) {
+      paired(text, paragraph, at, ranges)
+      paragraph = at + line.length + 1
+    }
+    at += line.length + 1
+  }
+  paired(text, paragraph, to, ranges)
+}
+
+/** The inline code spans in one paragraph: a run of backticks, up to the next run
+ *  of exactly as many. A run with no partner is only backticks. */
+function paired(text: string, from: number, to: number, ranges: [number, number][]) {
+  if (from >= to) return
   const runs = [...text.slice(from, to).matchAll(/`+/g)]
 
   for (let one = 0; one < runs.length; one++) {

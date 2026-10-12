@@ -313,6 +313,40 @@ describe('the links in a vault', () => {
     ).resolves.toBe(`${opened}   and [[Plan|the plan]]\n`)
   })
 
+  test('are left exactly as written in inline code after a lone backtick a paragraph above', async () => {
+    const plan = file('Plan.md', '# Plan')
+    const body =
+      'Press the backtick (`) key to open the console.\n\nIn code: `[the plan](Plan.md)` is a markdown link.\n'
+
+    await expect(noteFrom('Notes/A.md', file('Notes/A.md', body), plan)).resolves.toBe(body)
+  })
+
+  test('after a lone backtick are still pointed at their files', async () => {
+    const body = 'Press the backtick (`) key.\n\n![](Screenshot%202.png)\n\nUse `x` here.\n'
+
+    await expect(
+      noteFrom('Notes/A.md', file('Notes/A.md', body), file('Attachments/Screenshot 2.png', 'png')),
+    ).resolves.toBe(
+      'Press the backtick (`) key.\n\n![](../Attachments/Screenshot%202.png)\n\nUse `x` here.\n',
+    )
+  })
+
+  test('after a fence left open inside a callout are pointed at their files', async () => {
+    const body = '> [!note]\n> ```\n> code\n\n![](pic.png)\n'
+
+    await expect(
+      noteFrom('Notes/A.md', file('Notes/A.md', body), file('Attachments/pic.png', 'png')),
+    ).resolves.toBe('> [!note]\n> ```\n> code\n\n![](../Attachments/pic.png)\n')
+  })
+
+  test('are left exactly as written in a tilde fence of a note with Windows line endings', async () => {
+    const body = '~~~\r\n![](pic.png)\r\n~~~\r\n'
+
+    await expect(
+      noteFrom('Notes/Guide.md', file('Notes/Guide.md', body), file('Attachments/pic.png', 'p')),
+    ).resolves.toBe(body)
+  })
+
   test('in a table cell keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const table = (link: string) => `| Who | Link |\n| --- | --- |\n| me | ${link} |\n`
