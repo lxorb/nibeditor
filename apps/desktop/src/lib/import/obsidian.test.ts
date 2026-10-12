@@ -341,6 +341,23 @@ describe('the links in a vault', () => {
     ).resolves.toBe('See [[50%25 off]].\n')
   })
 
+  test('keep pointing at a file whose name holds a bracket alone', async () => {
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', 'Read [the intro](1%29%20Intro.pdf) first.\n'),
+        file('1) Intro.pdf', '%PDF'),
+      ),
+    ).resolves.toBe('Read [the intro](1%29%20Intro.pdf) first.\n')
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', '![scan](%28draft%20scan.png)\n'),
+        file('(draft scan.png', 'png'),
+      ),
+    ).resolves.toBe('![scan](%28draft%20scan.png)\n')
+  })
+
   test('with no extension mean the note, whatever file of that stem sorts first', async () => {
     await expect(
       noteFrom(
@@ -419,6 +436,17 @@ describe('the links in a vault', () => {
       await expect(
         noteFrom('Home.md', file('Home.md', '![[photo.png|300]]\n'), file('photo.png', 'png')),
       ).resolves.toBe('![[photo.png|300]]\n')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
+  test('to a file whose name holds a bracket alone work when the Links setting writes markdown', async () => {
+    setLinkWriting('shortest')
+    try {
+      await expect(
+        noteFrom('Home.md', file('Home.md', 'Read ![[1) Intro.pdf]]\n'), file('1) Intro.pdf', 'x')),
+      ).resolves.toBe('Read ![1) Intro.pdf](1%29%20Intro.pdf)\n')
     } finally {
       setLinkWriting('wikilink')
     }

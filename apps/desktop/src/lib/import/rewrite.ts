@@ -413,12 +413,18 @@ function decoded(target: string): string {
   }
 }
 
-/** A space encoded again on the way out, and the two characters a link cannot hold
- *  as themselves: a `%`, which would start an escape, and a `#`, which would start a
- *  heading. Nothing else, so a reader who opens the note sees the file name they
- *  would see in the file list. */
+/** A space encoded again on the way out, and the characters a link cannot hold as
+ *  themselves: a `%`, which would start an escape, a `#`, which would start a
+ *  heading, and a bracket, since a `)` the name holds alone would end the link
+ *  there and the links read here hold none. Nothing else, so a reader who opens the
+ *  note sees the file name they would see in the file list. */
 function encodeTarget(path: string): string {
-  return path.replace(/%/g, '%25').replace(/#/g, '%23').replace(/ /g, '%20')
+  return path
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/ /g, '%20')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
 }
 
 /** Finding a link's target among the files an export held.

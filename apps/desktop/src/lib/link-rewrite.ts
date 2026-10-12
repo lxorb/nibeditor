@@ -67,10 +67,15 @@ function targetFor(link: FoundLink, source: string, move: Move): string {
 
 /** A path as a markdown target: the characters a browser or an editor would
  *  otherwise read as something else. `#` opens a fragment and a space ends the
- *  target, so both have to be written out.
+ *  target, so both have to be written out, and so do the brackets: a `)` the name
+ *  holds alone, as in `1) Intro.pdf`, would end the link there.
  *
  *  Exported because the markdown export writes targets too: a `[[wikilink]]`
  *  that becomes a real link has to be spelled the same way a renamed one is. */
 export function encodeTarget(path: string): string {
-  return encodeURI(path).replace(/#/g, '%23').replace(/\?/g, '%3F')
+  return encodeURI(path)
+    .replace(/#/g, '%23')
+    .replace(/\?/g, '%3F')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
 }
