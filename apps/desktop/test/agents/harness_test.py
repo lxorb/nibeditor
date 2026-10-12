@@ -29,7 +29,7 @@ VERBS = {
     "browser_upload", "browser_screenshot", "browser_console", "browser_network",
     "browser_evaluate", "browser_dialog", "browser_downloads", "browser_storage",
     "browser_close", "browser_show", "browser_takeover", "agent_status", "approval_status",
-    "read_note", "edit_note",
+    "read_note", "edit_note", "run_agent", "agent_result",
 }  # fmt: skip
 
 
