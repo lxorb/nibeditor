@@ -617,6 +617,7 @@ export const bn: Dictionary = {
   '{done} of {total}': '{total}-এর {done}',
   'Sync failed': 'সিংক ব্যর্থ',
   '{name} could not be written.': '{name} লেখা গেল না।',
+  '{name} could not be read.': '{name} পড়া গেল না।',
   'Text size': 'টেক্সটের আকার',
   'Line spacing': 'লাইন ফাঁক',
   'Line width': 'লাইনের চওড়া',

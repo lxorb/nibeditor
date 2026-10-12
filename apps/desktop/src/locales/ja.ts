@@ -614,6 +614,7 @@ export const ja: Dictionary = {
   '{done} of {total}': '{total} 件中 {done} 件',
   'Sync failed': '同期に失敗しました',
   '{name} could not be written.': '{name} を書き込めませんでした。',
+  '{name} could not be read.': '{name} を読み込めませんでした。',
   'Text size': '文字サイズ',
   'Line spacing': '行間',
   'Line width': '行幅',

@@ -620,6 +620,7 @@ export const ml: Dictionary = {
   '{done} of {total}': '{total}ൽ {done}',
   'Sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   '{name} could not be written.': '{name} എഴുതാനായില്ല.',
+  '{name} could not be read.': '{name} വായിക്കാനായില്ല.',
   'Text size': 'ടെക്സ്റ്റ് വലുപ്പം',
   'Line spacing': 'വരി അന്തരം',
   'Line width': 'വരി വീതി',

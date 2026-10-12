@@ -648,6 +648,7 @@ export const uk: Dictionary = {
   '{done} of {total}': '{done} з {total}',
   'Sync failed': 'Збій синхронізації',
   '{name} could not be written.': 'Не вдалося записати {name}.',
+  '{name} could not be read.': 'Не вдалося прочитати {name}.',
   'Text size': 'Розмір тексту',
   'Line spacing': 'Міжрядковий інтервал',
   'Line width': 'Ширина рядка',

@@ -617,6 +617,7 @@ export const ps: Dictionary = {
   '{done} of {total}': '{done} له {total}',
   'Sync failed': 'همغږي پاتې راغله',
   '{name} could not be written.': '{name} ونه ليکل شو.',
+  '{name} could not be read.': '{name} ونه لوستل شو.',
   'Text size': 'د متن کچه',
   'Line spacing': 'د کرښو واټن',
   'Line width': 'د کرښې پلنوالی',

@@ -649,6 +649,7 @@ export const ru: Dictionary = {
   '{done} of {total}': '{done} из {total}',
   'Sync failed': 'Сбой синхронизации',
   '{name} could not be written.': 'Не удалось записать {name}.',
+  '{name} could not be read.': 'Не удалось прочитать {name}.',
   'Text size': 'Размер текста',
   'Line spacing': 'Межстрочный интервал',
   'Line width': 'Ширина строки',

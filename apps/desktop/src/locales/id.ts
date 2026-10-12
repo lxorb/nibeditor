@@ -614,6 +614,7 @@ export const id: Dictionary = {
   '{done} of {total}': '{done} dari {total}',
   'Sync failed': 'Sinkronisasi gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',
+  '{name} could not be read.': '{name} tidak dapat dibaca.',
   'Text size': 'Ukuran teks',
   'Line spacing': 'Spasi baris',
   'Line width': 'Lebar baris',

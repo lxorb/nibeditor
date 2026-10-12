@@ -613,6 +613,7 @@ export const vi: Dictionary = {
   '{done} of {total}': '{done} trên {total}',
   'Sync failed': 'Đồng bộ thất bại',
   '{name} could not be written.': 'Không ghi được {name}.',
+  '{name} could not be read.': 'Không đọc được {name}.',
   'Text size': 'Cỡ chữ',
   'Line spacing': 'Giãn dòng',
   'Line width': 'Bề rộng dòng',

@@ -45,9 +45,14 @@ export async function vaultSources(vault: Vault): Promise<Source[]> {
 
   return files.map((file) => {
     let held: Promise<Uint8Array> | null = null
+    // The crate's refusal is a bare string, which the import's message would drop
+    // for its own about writing; the file that could not be read is the news.
     const once = () =>
       (held ??= invoke<string>('read_obsidian_file', { vault: vault.path, path: file.path }).then(
         fromBase64,
+        () => {
+          throw new Error(t('{name} could not be read.', { name: file.path }))
+        },
       ))
 
     return {

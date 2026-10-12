@@ -612,6 +612,7 @@ export const zhHans: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失败',
   '{name} could not be written.': '无法写入 {name}。',
+  '{name} could not be read.': '无法读取 {name}。',
   'Text size': '字号',
   'Line spacing': '行距',
   'Line width': '行宽',

@@ -614,6 +614,7 @@ export const my: Dictionary = {
   '{done} of {total}': '{total} အထဲ {done}',
   'Sync failed': 'ချိန်ကိုက်မှုမအောင်',
   '{name} could not be written.': '{name} ကို ရေးမရပါ။',
+  '{name} could not be read.': '{name} ကို ဖတ်မရပါ။',
   'Text size': 'စာလုံးအရွယ်',
   'Line spacing': 'လိုင်းအကွာ',
   'Line width': 'လိုင်းအကျယ်',

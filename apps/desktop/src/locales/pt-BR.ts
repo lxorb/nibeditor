@@ -626,6 +626,7 @@ export const ptBR: Dictionary = {
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'Falha na sincronização',
   '{name} could not be written.': 'Não foi possível gravar {name}.',
+  '{name} could not be read.': 'Não foi possível ler {name}.',
   'Text size': 'Tamanho do texto',
   'Line spacing': 'Entrelinha',
   'Line width': 'Largura da linha',

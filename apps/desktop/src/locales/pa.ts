@@ -620,6 +620,7 @@ export const pa: Dictionary = {
   '{done} of {total}': '{total} ਵਿੱਚੋਂ {done}',
   'Sync failed': 'ਸਮਕਾਲ ਨਾਕਾਮ',
   '{name} could not be written.': '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ।',
+  '{name} could not be read.': '{name} ਨਹੀਂ ਪੜ੍ਹੀ ਜਾ ਸਕੀ।',
   'Text size': 'ਲਿਖਤ ਦਾ ਆਕਾਰ',
   'Line spacing': 'ਲਾਈਨ ਵਿੱਥ',
   'Line width': 'ਲਾਈਨ ਚੌੜਾਈ',

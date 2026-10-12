@@ -617,6 +617,7 @@ export const mr: Dictionary = {
   '{done} of {total}': '{total} पैकी {done}',
   'Sync failed': 'सिंक अयशस्वी',
   '{name} could not be written.': '{name} लिहिता आले नाही.',
+  '{name} could not be read.': '{name} वाचता आले नाही.',
   'Text size': 'मजकूर आकार',
   'Line spacing': 'ओळ अंतर',
   'Line width': 'ओळ रुंदी',

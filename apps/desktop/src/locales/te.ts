@@ -616,6 +616,7 @@ export const te: Dictionary = {
   '{done} of {total}': '{total}లో {done}',
   'Sync failed': 'సింక్ విఫలమైంది',
   '{name} could not be written.': '{name} రాయలేకపోయింది.',
+  '{name} could not be read.': '{name} చదవలేకపోయింది.',
   'Text size': 'టెక్స్ట్ పరిమాణం',
   'Line spacing': 'పంక్తి అంతరం',
   'Line width': 'పంక్తి వెడల్పు',

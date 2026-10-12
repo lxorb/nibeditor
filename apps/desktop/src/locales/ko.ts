@@ -613,6 +613,7 @@ export const ko: Dictionary = {
   '{done} of {total}': '{total} 중 {done}',
   'Sync failed': '동기화 실패',
   '{name} could not be written.': '{name}을(를) 쓸 수 없었습니다.',
+  '{name} could not be read.': '{name}을(를) 읽을 수 없었습니다.',
   'Text size': '글자 크기',
   'Line spacing': '줄 간격',
   'Line width': '줄 너비',

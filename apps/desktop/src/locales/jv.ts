@@ -614,6 +614,7 @@ export const jv: Dictionary = {
   '{done} of {total}': '{done} saka {total}',
   'Sync failed': 'Panyelarasan gagal',
   '{name} could not be written.': '{name} ora bisa ditulis.',
+  '{name} could not be read.': '{name} ora bisa diwaca.',
   'Text size': 'Ukuran teks',
   'Line spacing': 'Jarak larik',
   'Line width': 'Amba larik',

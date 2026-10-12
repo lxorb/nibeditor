@@ -617,6 +617,7 @@ export const fa: Dictionary = {
   '{done} of {total}': '{done} از {total}',
   'Sync failed': 'همگام‌سازی نشد',
   '{name} could not be written.': '{name} نوشته نشد.',
+  '{name} could not be read.': '{name} خوانده نشد.',
   'Text size': 'اندازه نوشته',
   'Line spacing': 'فاصله خط',
   'Line width': 'پهنای خط',

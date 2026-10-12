@@ -663,6 +663,7 @@ export const ar: Dictionary = {
   '{done} of {total}': '{done} من {total}',
   'Sync failed': 'فشلت المزامنة',
   '{name} could not be written.': 'تعذّرت كتابة {name}.',
+  '{name} could not be read.': 'تعذّرت قراءة {name}.',
   'Text size': 'حجم النص',
   'Line spacing': 'تباعد الأسطر',
   'Line width': 'عرض السطر',

@@ -620,6 +620,7 @@ export const kn: Dictionary = {
   '{done} of {total}': '{total}ರಲ್ಲಿ {done}',
   'Sync failed': 'ಸಿಂಕ್ ವಿಫಲವಾಯಿತು',
   '{name} could not be written.': '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  '{name} could not be read.': '{name} ಓದಲಾಗಲಿಲ್ಲ.',
   'Text size': 'ಪಠ್ಯ ಗಾತ್ರ',
   'Line spacing': 'ಸಾಲಿನ ಅಂತರ',
   'Line width': 'ಸಾಲಿನ ಅಗಲ',

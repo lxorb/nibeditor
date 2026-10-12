@@ -614,6 +614,7 @@ export const ms: Dictionary = {
   '{done} of {total}': '{done} daripada {total}',
   'Sync failed': 'Penyegerakan gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',
+  '{name} could not be read.': '{name} tidak dapat dibaca.',
   'Text size': 'Saiz teks',
   'Line spacing': 'Jarak baris',
   'Line width': 'Lebar baris',

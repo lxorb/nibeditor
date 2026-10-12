@@ -617,6 +617,7 @@ export const gu: Dictionary = {
   '{done} of {total}': '{total}માંથી {done}',
   'Sync failed': 'સમન્વય નિષ્ફળ',
   '{name} could not be written.': '{name} લખાઈ નહીં.',
+  '{name} could not be read.': '{name} વાંચી શકાઈ નહીં.',
   'Text size': 'લખાણનું માપ',
   'Line spacing': 'લીટી અંતર',
   'Line width': 'લીટીની પહોળાઈ',

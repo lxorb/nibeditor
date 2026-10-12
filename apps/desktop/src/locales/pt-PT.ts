@@ -630,6 +630,7 @@ export const ptPT: Dictionary = {
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'A sincronização falhou',
   '{name} could not be written.': 'Não foi possível escrever {name}.',
+  '{name} could not be read.': 'Não foi possível ler {name}.',
   'Text size': 'Tamanho do texto',
   'Line spacing': 'Entrelinha',
   'Line width': 'Largura da linha',

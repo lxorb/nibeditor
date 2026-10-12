@@ -620,6 +620,7 @@ export const fil: Dictionary = {
   '{done} of {total}': '{done} ng {total}',
   'Sync failed': 'Nabigo ang sync',
   '{name} could not be written.': 'Hindi naisulat ang {name}.',
+  '{name} could not be read.': 'Hindi nabasa ang {name}.',
   'Text size': 'Laki ng teksto',
   'Line spacing': 'Espasyo ng linya',
   'Line width': 'Lapad ng linya',

@@ -617,6 +617,7 @@ export const hi: Dictionary = {
   '{done} of {total}': '{total} में {done}',
   'Sync failed': 'सिंक विफल',
   '{name} could not be written.': '{name} लिखा नहीं जा सका।',
+  '{name} could not be read.': '{name} पढ़ा नहीं जा सका।',
   'Text size': 'टेक्स्ट आकार',
   'Line spacing': 'पंक्ति दूरी',
   'Line width': 'पंक्ति चौड़ाई',

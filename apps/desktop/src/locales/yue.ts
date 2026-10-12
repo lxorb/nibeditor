@@ -612,6 +612,7 @@ export const yue: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '冇辦法寫入 {name}。',
+  '{name} could not be read.': '冇辦法讀取 {name}。',
   'Text size': '字體大小',
   'Line spacing': '行距',
   'Line width': '行寬',

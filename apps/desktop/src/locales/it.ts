@@ -631,6 +631,7 @@ export const it: Dictionary = {
   '{done} of {total}': '{done} di {total}',
   'Sync failed': 'Sincronizzazione fallita',
   '{name} could not be written.': 'Impossibile scrivere {name}.',
+  '{name} could not be read.': 'Impossibile leggere {name}.',
   'Text size': 'Dimensione del testo',
   'Line spacing': 'Interlinea',
   'Line width': 'Larghezza della riga',

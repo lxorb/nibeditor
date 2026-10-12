@@ -616,6 +616,7 @@ export const ta: Dictionary = {
   '{done} of {total}': '{total} இல் {done}',
   'Sync failed': 'ஒத்திசைவு தோல்வி',
   '{name} could not be written.': '{name} ஐ எழுத முடியவில்லை.',
+  '{name} could not be read.': '{name} ஐப் படிக்க முடியவில்லை.',
   'Text size': 'உரை அளவு',
   'Line spacing': 'வரி இடைவெளி',
   'Line width': 'வரி அகலம்',

@@ -620,6 +620,7 @@ export const sw: Dictionary = {
   '{done} of {total}': '{done} ya {total}',
   'Sync failed': 'Usawazishaji umeshindikana',
   '{name} could not be written.': '{name} haikuandikwa.',
+  '{name} could not be read.': '{name} haikusomeka.',
   'Text size': 'Ukubwa wa maandishi',
   'Line spacing': 'Nafasi kati ya mistari',
   'Line width': 'Upana wa mstari',

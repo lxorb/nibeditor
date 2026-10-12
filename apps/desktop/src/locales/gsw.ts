@@ -617,6 +617,7 @@ export const gsw: Dictionary = {
   '{done} of {total}': '{done} vo {total}',
   'Sync failed': 'Synchronisierig het nod klappt',
   '{name} could not be written.': '{name} het sich nöd schriibe laa.',
+  '{name} could not be read.': '{name} het sich nöd läse laa.',
   'Text size': 'Textgrössi',
   'Line spacing': 'Ziilenabstand',
   'Line width': 'Ziilenbreiti',

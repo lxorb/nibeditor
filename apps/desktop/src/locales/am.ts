@@ -614,6 +614,7 @@ export const am: Dictionary = {
   '{done} of {total}': 'ከ{total} {done}',
   'Sync failed': 'ማመሳሰል አልተሳካም',
   '{name} could not be written.': '{name} መጻፍ አልተቻለም።',
+  '{name} could not be read.': '{name} ማንበብ አልተቻለም።',
   'Text size': 'የጽሑፍ መጠን',
   'Line spacing': 'የመስመር ክፍተት',
   'Line width': 'የመስመር ስፋት',

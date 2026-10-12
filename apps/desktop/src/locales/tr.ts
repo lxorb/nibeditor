@@ -617,6 +617,7 @@ export const tr: Dictionary = {
   '{done} of {total}': '{total} içinde {done}',
   'Sync failed': 'Eşitleme başarısız',
   '{name} could not be written.': '{name} yazılamadı.',
+  '{name} could not be read.': '{name} okunamadı.',
   'Text size': 'Metin boyutu',
   'Line spacing': 'Satır aralığı',
   'Line width': 'Satır genişliği',

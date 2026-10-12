@@ -619,6 +619,7 @@ export const ha: Dictionary = {
   '{done} of {total}': '{done} daga {total}',
   'Sync failed': 'Daidaitawa ta gaza',
   '{name} could not be written.': 'Ba a iya rubuta {name} ba.',
+  '{name} could not be read.': 'Ba a iya karanta {name} ba.',
   'Text size': 'Girman rubutu',
   'Line spacing': 'Tazarar layi',
   'Line width': 'Faɗin layi',

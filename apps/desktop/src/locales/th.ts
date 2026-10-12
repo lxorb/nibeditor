@@ -613,6 +613,7 @@ export const th: Dictionary = {
   '{done} of {total}': '{done} จาก {total}',
   'Sync failed': 'ซิงก์ไม่สำเร็จ',
   '{name} could not be written.': 'เขียน {name} ไม่ได้',
+  '{name} could not be read.': 'อ่าน {name} ไม่ได้',
   'Text size': 'ขนาดตัวอักษร',
   'Line spacing': 'ระยะบรรทัด',
   'Line width': 'ความกว้างบรรทัด',
