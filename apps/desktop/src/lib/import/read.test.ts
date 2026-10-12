@@ -22,6 +22,17 @@ describe('which app an export came out of', () => {
     ).resolves.toBe('notion')
   })
 
+  test('a folder of notes with a folder called Keep is a folder of notes', async () => {
+    const sources = [
+      file('Home.md', '# Home\n\nSee [[Shopping]].\n'),
+      file('Keep/Shopping.md', '- milk\n'),
+    ]
+    await expect(detect(sources)).resolves.toBe('markdown')
+
+    const plan = await readAs('markdown', sources)
+    expect(plan.files.map((one) => one.path).sort()).toEqual(['Home.md', 'Keep/Shopping.md'])
+  })
+
   test('a Keep export says so by its folder, or by what a note holds', async () => {
     await expect(detect([file('Takeout/Keep/A.json', '{}')])).resolves.toBe('keep')
     await expect(detect([file('A.json', '{"textContent":"words"}')])).resolves.toBe('keep')

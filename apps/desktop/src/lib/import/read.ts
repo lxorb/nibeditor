@@ -62,8 +62,10 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   // every entry, which nothing else does.
   if (await looksLikeJournal(sources)) return 'journal'
 
-  // Takeout names the folder, and a Keep note says what it is even loose.
-  if (has(/(^|\/)Keep\//i)) return 'keep'
+  // Takeout names the folder, and a Keep note says what it is even loose. The folder
+  // with a note of Keep's in it: a folder of somebody's own notes called Keep is still
+  // theirs, and read as Keep it would bring none of them.
+  if (has(/(^|\/)Keep\/[^/]+\.json$/i)) return 'keep'
 
   const json = await jsonKind(sources)
   if (json) return json
