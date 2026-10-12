@@ -74,6 +74,29 @@ describe('which app an export came out of', () => {
     await expect(detect([file('Graph/pages/A.md', '- y')])).resolves.toBe('logseq')
   })
 
+  test('a folder of notes with a Journals folder of its own is a folder of notes', async () => {
+    const sources = [
+      file('Home.md', '# Home\n\nSee [[Plan]].\n'),
+      file('Projects/Plan.md', '# Plan\n\n- TODO call the bank\n'),
+      file('Journals/2024/01/2024-01-15.md', '# Monday\n'),
+      file('Journals/2024/02/2024-02-01.md', '# Thursday\n'),
+    ]
+    const format = await detect(sources)
+    expect(format).toBe('markdown')
+
+    const plan = await readAs(format ?? 'markdown', sources)
+    expect(plan.files.map((one) => one.path).sort()).toEqual([
+      'Home.md',
+      'Journals/2024/01/2024-01-15.md',
+      'Journals/2024/02/2024-02-01.md',
+      'Projects/Plan.md',
+    ])
+    // Logseq's own folder still says it is a graph, journals and all.
+    await expect(
+      detect([file('journals/2026_01_02.md', '- x'), file('logseq/config.edn', '{}')]),
+    ).resolves.toBe('logseq')
+  })
+
   test('a folder of notes with a pages folder deep inside is a folder of notes', async () => {
     const sources = [
       file('Home.md', 'Today:\n\n- TODO call the bank\n- DONE send invoice\n'),

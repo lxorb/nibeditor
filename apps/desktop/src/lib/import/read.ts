@@ -73,8 +73,11 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   // At the top, or one folder down for a zip whose one entry is the graph. Not
   // deeper: a `pages/` folder four folders into somebody's notes is a website's
   // pages, and reading the whole folder as Logseq would turn every `- TODO` in it
-  // into a checkbox.
-  if (has(/^(journals|pages|logseq)\//i) || has(/^[^/]+\/(journals|pages)\//i)) return 'logseq'
+  // into a checkbox. Logseq's own `logseq/` or its `pages/`, named in lower case as
+  // Logseq names them, and not a `journals/` folder alone: somebody's Obsidian notes
+  // keep their days in `Journals/2024/01/` as often, and read as Logseq those would
+  // be flattened and given the wrong dates.
+  if (has(/^([^/]+\/)?logseq\//i) || has(/^([^/]+\/)?pages\//)) return 'logseq'
   if (looksLikeNotion(paths)) return 'notion'
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
