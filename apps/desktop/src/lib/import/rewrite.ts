@@ -260,7 +260,7 @@ function splitFragment(target: string): { path: string; fragment: string | null 
  *  blocks and inline code spans, in a callout or a quote as well. A link written
  *  there is an example of one, which is words to copy exactly as they are, and
  *  neither Obsidian nor nib reads it as a link. */
-function codeRanges(text: string): [number, number][] {
+export function codeRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
   const lines = text.split('\n')
   const properties = propertiesEnd(lines)
@@ -412,7 +412,7 @@ function paired(text: string, from: number, to: number, ranges: [number, number]
   }
 }
 
-function inCode(ranges: readonly [number, number][], offset: number): boolean {
+export function inCode(ranges: readonly [number, number][], offset: number): boolean {
   return ranges.some(([from, to]) => offset >= from && offset < to)
 }
 

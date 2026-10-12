@@ -39,6 +39,7 @@ import { writeBytes, writeFile } from '../workspace/write-file'
 
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { codeRanges, inCode } from './rewrite'
 
 /** Where an import lands: a space, and a folder inside it. */
 export interface ImportTarget {
@@ -192,9 +193,9 @@ function followed(text: string, was: string, moved: ReadonlyMap<string, string>)
     const before = nameOf(from)
     const after = nameOf(to)
     if (before !== after) {
-      said = said.replaceAll(`[[${before}]]`, `[[${after}]]`)
-      said = said.replaceAll(`[[${before}|`, `[[${after}|`)
-      said = said.replaceAll(`[[${before}#`, `[[${after}#`)
+      said = outsideCode(said, `[[${before}]]`, `[[${after}]]`)
+      said = outsideCode(said, `[[${before}|`, `[[${after}|`)
+      said = outsideCode(said, `[[${before}#`, `[[${after}#`)
     }
     if (isNote(from)) continue
 
@@ -203,10 +204,28 @@ function followed(text: string, was: string, moved: ReadonlyMap<string, string>)
     const now = relativePath(here, to).replace(/ /g, '%20')
     if (path === now) continue
 
-    said = said.replaceAll(`](${path})`, `](${now})`)
+    said = outsideCode(said, `](${path})`, `](${now})`)
   }
 
   return said
+}
+
+/** Every `find` in the text made `put`, except in code. A link written in a code
+ *  span or a fence is an example of one, words to copy exactly, which the import
+ *  left as it was when it read the note and leaves as it was here too. */
+function outsideCode(text: string, find: string, put: string): string {
+  if (!text.includes(find)) return text
+
+  const code = codeRanges(text)
+  let out = ''
+  let from = 0
+  for (let at = text.indexOf(find); at >= 0; at = text.indexOf(find, at + find.length)) {
+    if (inCode(code, at)) continue
+    out += text.slice(from, at) + put
+    from = at + find.length
+  }
+
+  return out + text.slice(from)
 }
 
 function isNote(path: string): boolean {

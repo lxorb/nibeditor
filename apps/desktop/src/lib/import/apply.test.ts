@@ -142,6 +142,19 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Deep/Trip.md')).toBe('![](../assets/shot%202.png)')
   })
 
+  test('a link written as an example in code stays as it was written', () => {
+    const guide = 'Type `[[Plan]]` to link, or [[Plan]].\n\n```\n[[Plan]] and ![](shot.png)\n```\n'
+    const stamped = restamped(
+      planOf([note('Guide.md', guide), note('Plan.md', '# Plan'), file('shot.png')]),
+      new Set(['plan.md', 'shot.png']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Guide.md')).toBe(
+      'Type `[[Plan]]` to link, or [[Plan 2]].\n\n```\n[[Plan]] and ![](shot.png)\n```\n',
+    )
+  })
+
   test('two of the import1s own notes cannot land on one name', () => {
     const taken = new Set(['a.md', 'a 2.md'])
     const stamped = restamped(planOf([note('A.md', 'one'), note('A.md', 'two')]), taken, '')
