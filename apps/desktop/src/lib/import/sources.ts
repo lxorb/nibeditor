@@ -140,10 +140,18 @@ function lazily(path: string, read: () => Promise<Uint8Array>): Source {
   }
 }
 
+/** Files that are zips inside and documents to whoever opens them: Office's,
+ *  OpenDocument's, Apple's iWork and an EPUB. A vault keeps them as attachments and
+ *  pandoc reads them whole, so their parts are never what was meant. */
+const ZIPPED_DOCUMENT =
+  /\.(docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg|epub|pages|numbers|key|vsdx)$/i
+
 /** The two bytes every zip starts with, so a `.enex` somebody renamed is still
- *  read as what it is and a zip with no extension is still opened. */
+ *  read as what it is and a zip with no extension is still opened. A document
+ *  that is a zip underneath is not one, because its name says what it is. */
 function isZip(path: string, bytes: Uint8Array): boolean {
   const named = path.toLowerCase().endsWith('.zip')
+  if (!named && ZIPPED_DOCUMENT.test(path)) return false
   const stamped = bytes[0] === 0x50 && bytes[1] === 0x4b
   return stamped || (named && bytes.length === 0)
 }

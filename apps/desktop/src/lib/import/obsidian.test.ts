@@ -1,9 +1,10 @@
+import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 
 import { carriedBy, NOTION } from './carry'
 import { fromAppJson, leftInVault, obsidianCarries } from './obsidian'
 import { detect, readAs } from './read'
-import { sourceOf, type Source } from './sources'
+import { insideFolder, sourceOf, sourcesFrom, type Picked, type Source } from './sources'
 
 function file(path: string, body = 'x'): Source {
   return sourceOf(path, new TextEncoder().encode(body))
@@ -199,5 +200,43 @@ describe('the links in a vault', () => {
         file('Notes/Report.md', '# Report'),
       ),
     ).resolves.toBe('Read [[Report]] and [[Report.pdf]]\n')
+  })
+})
+
+/** A file the browser hands over from a picked folder. */
+function picked(path: string, bytes: Uint8Array): Picked {
+  return {
+    name: path.split('/').pop() ?? path,
+    webkitRelativePath: path,
+    arrayBuffer: async () => bytes.slice().buffer,
+  }
+}
+
+/** Every path a plan writes, in order. */
+async function pathsFrom(sources: readonly Source[]): Promise<string[]> {
+  const plan = await readAs('obsidian', sources)
+  return plan.files.map((one) => one.path).sort()
+}
+
+describe('the files in a vault', () => {
+  test('keep a Word document whole when the vault is picked as a folder', async () => {
+    const zip = new JSZip()
+    zip.file('[Content_Types].xml', '<Types/>')
+    zip.file('word/document.xml', '<w:document/>')
+    const docx = await zip.generateAsync({ type: 'uint8array' })
+    const words = (body: string) => new TextEncoder().encode(body)
+
+    const sources = await sourcesFrom(
+      insideFolder([
+        picked('Vault/.obsidian/app.json', words('{}')),
+        picked('Vault/Notes.md', words('![[Report.docx]]')),
+        picked('Vault/Attachments/Report.docx', docx),
+      ]),
+    )
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Attachments/Report.docx',
+      'Notes.md',
+    ])
   })
 })
