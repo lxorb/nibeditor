@@ -128,10 +128,14 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
     entries.push({ path: tidyPath(entryPath), read: () => entry.async('uint8array') })
   })
 
+  // A zipped vault holds its zips as attachments, as a vault picked as a folder does,
+  // rather than exports to open.
+  const vault = entries.some((entry) => VAULT.test(entry.path))
+
   for (const entry of entries) {
     // A zip inside a zip is read now, because knowing whether one holds notes
     // means reading it, and the sheet counts what it is about to write.
-    if (entry.path.toLowerCase().endsWith('.zip')) {
+    if (!vault && entry.path.toLowerCase().endsWith('.zip')) {
       inside.push(...(await expand(entry.path, await entry.read(), depth + 1)))
       continue
     }
