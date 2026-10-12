@@ -10,6 +10,8 @@
  *  an export in a webview, and it is the reason the sheet says how much it is
  *  about to write before it starts. */
 
+import { plural, t } from '../i18n.svelte'
+
 /** Which app the files came out of. `markdown` is the plain case: a folder of
  *  notes, which is what half of these apps export when asked nicely.
  *
@@ -61,6 +63,16 @@ export interface Lost {
    *  hits the one case, in every language that has a singular. */
   one?: string
   values?: Record<string, string | number>
+}
+
+/** What one line of what was lost reads as. A line with a singular form of its own
+ *  is counting something, and the count decides which form its language takes;
+ *  everything else is one sentence. */
+export function worthKnowing(line: Lost): string {
+  const count = line.values?.count
+  if (line.one === undefined || typeof count !== 'number') return t(line.text, line.values)
+
+  return plural(count, { one: line.one, other: line.text }, line.values)
 }
 
 export interface ImportPlan {

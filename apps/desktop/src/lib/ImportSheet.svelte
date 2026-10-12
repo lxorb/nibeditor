@@ -17,7 +17,7 @@
   import { key, plural, t } from './i18n.svelte'
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
-  import type { FormatId, Lost } from './import/plan'
+  import { type FormatId, worthKnowing } from './import/plan'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
@@ -67,16 +67,6 @@
       .filter(Boolean)
       .join(' · '),
   )
-
-  /** What one line of "worth knowing" reads as. A line with a singular form of its
-   *  own is counting something, and the count decides which form its language
-   *  takes; everything else is one sentence. */
-  function worthKnowing(line: Lost): string {
-    const count = line.values?.count
-    if (line.one === undefined || typeof count !== 'number') return t(line.text, line.values)
-
-    return plural(count, { one: line.one, other: line.text }, line.values)
-  }
 
   /** Where it lands, said the way the file list says it. */
   const target = $derived(

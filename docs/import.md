@@ -188,7 +188,8 @@ file or folder, `.git` among them, and `node_modules` stay behind too, the same
 whether the vault came from the list, a folder or a zip. The one hidden file that is
 the reader's own is iCloud's placeholder for a note it took off the Mac to save
 space (`.Plan.md.icloud`): it stays behind as well, since the note is not there to
-bring, and the sheet says how many files are in iCloud rather than on this Mac. See
+bring, and the sheet, or the line across the top for a vault made into a space,
+says how many files are in iCloud rather than on this Mac. See
 `import/obsidian.ts`.
 
 **Craft**, **Ulysses**, **iA Writer** and anything else that writes

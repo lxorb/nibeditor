@@ -16,7 +16,7 @@
 import { busy } from './busy.svelte'
 import { firstVisit } from './first-visit.svelte'
 import { message, t } from './i18n.svelte'
-import type { FormatId } from './import/plan'
+import { type FormatId, worthKnowing } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
 import type { Vault } from './import/vaults'
@@ -136,8 +136,13 @@ export async function importAsSpace(
   // A vault of nothing but Obsidian's housekeeping is known as a vault and then
   // leaves every file behind, and settings alone are not a space anybody can open a
   // note in.
+  // A vault whose notes are all in iCloud says so, rather than only that there is
+  // nothing to read.
   const shown = plan.files.some((one) => !one.path.split('/').some((part) => part.startsWith('.')))
-  if (!shown) throw new Error(t('Nothing in there can be read as notes.'))
+  if (!shown) {
+    const said = [t('Nothing in there can be read as notes.'), ...plan.lost.map(worthKnowing)]
+    throw new Error(said.join(' '))
+  }
 
   const space = await workspace.addSpace(typeof name === 'string' ? name : await name(format))
   // A folder the disk would not make, read-only or full, is an import that was not
@@ -153,6 +158,10 @@ export async function importAsSpace(
   }
 
   await workspace.loadTree()
+  // What did not come along is said once the rest has, the way the import sheet
+  // says it before: notes still in iCloud, pages kept as they were. Left unsaid, a
+  // link to one of them points at nothing and nobody knows why.
+  if (plan.lost.length) busy.failed(plan.lost.map(worthKnowing).join(' '))
   return space
 }
 

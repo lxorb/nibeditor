@@ -118,6 +118,7 @@ vi.mock('./carry-over', async () => {
 })
 
 const { importAsSpace, arrive } = await import('./migrating.svelte')
+const { busy } = await import('./busy.svelte')
 
 function file(path: string, body: string | Uint8Array = 'x'): Source {
   return sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)
@@ -132,6 +133,7 @@ beforeEach(() => {
   ws.activeSpaceId = 'old'
   ws.added = 0
   ws.refusing = false
+  busy.clear()
 })
 
 describe('a vault brought in as a space', () => {
@@ -169,6 +171,31 @@ describe('a vault brought in as a space', () => {
       ]),
     ).rejects.toThrow('Nothing in there can be read as notes.')
     expect(ws.added).toBe(0)
+  })
+
+  test('says how many of its files are in iCloud rather than on this Mac', async () => {
+    await importAsSpace('Brain', [
+      file('.obsidian/app.json', '{}'),
+      file('.Plan.md.icloud', 'bplist00'),
+      file('.Budget.md.icloud', 'bplist00'),
+      file('Attachments/.diagram.png.icloud', 'bplist00'),
+      file('Home.md', '# Home\n\nSee [[Plan]] and [[Budget]].\n'),
+    ])
+
+    expect(wrote).toContain(`${ROOT}/Home.md`)
+    expect(busy.trouble).toBe('3 files are in iCloud rather than on this Mac')
+  })
+
+  test('with every note in iCloud says so, rather than only that nothing could be read', async () => {
+    await expect(
+      importAsSpace('Brain', [
+        file('.obsidian/app.json', '{}'),
+        file('.Plan.md.icloud', 'bplist00'),
+        file('.Budget.md.icloud', 'bplist00'),
+      ]),
+    ).rejects.toThrow(
+      'Nothing in there can be read as notes. 2 files are in iCloud rather than on this Mac',
+    )
   })
 
   test('says it was not written when its space cannot be made', async () => {
