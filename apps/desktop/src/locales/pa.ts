@@ -1230,6 +1230,8 @@ export const pa: Dictionary = {
   '{count} tables inside notes do not come over': 'ਨੋਟਾਂ ਅੰਦਰ {count} ਸਾਰਨੀਆਂ ਨਹੀਂ ਆਉਂਦੀਆਂ',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ਨਾਲ ਲੱਗੀਆਂ ਚੀਜ਼ਾਂ ਇਸ Mac ਉੱਤੇ ਨਹੀਂ, iCloud ਵਿੱਚ ਹਨ',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ਫ਼ਾਈਲਾਂ ਇਸ Mac ਉੱਤੇ ਨਹੀਂ, iCloud ਵਿੱਚ ਹਨ',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ਉਹ ਨੋਟਾਂ Full Disk Access ਪਿੱਛੇ ਰੱਖਦਾ ਹੈ।',
   'There are no notes in Apple Notes on this Mac.': 'ਇਸ Mac ਉੱਤੇ Apple Notes ਵਿੱਚ ਕੋਈ ਨੋਟ ਨਹੀਂ।',

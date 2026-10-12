@@ -1232,6 +1232,8 @@ export const kn: Dictionary = {
   '{count} tables inside notes do not come over': 'ಟಿಪ್ಪಣಿಗಳ ಒಳಗಿನ {count} ಕೋಷ್ಟಕಗಳು ಬರುವುದಿಲ್ಲ',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ಲಗತ್ತುಗಳು ಈ Mac ನಲ್ಲಿ ಅಲ್ಲ, iCloud ನಲ್ಲಿವೆ',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ಫೈಲ್‌ಗಳು ಈ Mac ನಲ್ಲಿ ಅಲ್ಲ, iCloud ನಲ್ಲಿವೆ',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ಆ ಟಿಪ್ಪಣಿಗಳನ್ನು Full Disk Access ಹಿಂದೆ ಇಡುತ್ತದೆ.',
   'There are no notes in Apple Notes on this Mac.': 'ಈ Mac ನಲ್ಲಿ Apple Notes ನಲ್ಲಿ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ.',

@@ -1205,6 +1205,8 @@ export const th: Dictionary = {
   '{count} tables inside notes do not come over': 'ตาราง {count} ตารางในโน้ตไม่ถูกนำมา',
   '{count} attachments are in iCloud rather than on this Mac':
     'ไฟล์แนบ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',
+  '{count} files are in iCloud rather than on this Mac':
+    'ไฟล์ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS เก็บโน้ตเหล่านั้นไว้หลังการเข้าถึงดิสก์ทั้งหมด',
   'There are no notes in Apple Notes on this Mac.': 'บน Mac เครื่องนี้ไม่มีโน้ตใน Apple Notes',

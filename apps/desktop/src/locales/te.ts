@@ -1228,6 +1228,8 @@ export const te: Dictionary = {
   '{count} tables inside notes do not come over': 'నోట్ల లోపలి {count} పట్టికలు రావు',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} జోడింపులు ఈ Mac లో కాక iCloud లో ఉన్నాయి',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ఫైళ్లు ఈ Mac లో కాక iCloud లో ఉన్నాయి',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ఆ నోట్లను Full Disk Access వెనుక ఉంచుతుంది.',
   'There are no notes in Apple Notes on this Mac.': 'ఈ Mac లో Apple Notes లో నోట్లు లేవు.',

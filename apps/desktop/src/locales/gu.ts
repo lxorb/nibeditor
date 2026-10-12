@@ -1220,6 +1220,8 @@ export const gu: Dictionary = {
   '{count} tables inside notes do not come over': 'નોંધ અંદરનાં {count} કોષ્ટક આવતાં નથી',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} જોડાણ આ Mac પર નહીં, iCloud માં છે',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ફાઇલો આ Mac પર નહીં, iCloud માં છે',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS એ નોંધોને Full Disk Access પાછળ રાખે છે.',
   'There are no notes in Apple Notes on this Mac.': 'આ Mac પર Apple Notes માં કોઈ નોંધ નથી.',

@@ -1228,6 +1228,8 @@ export const gsw: Dictionary = {
   '{count} tables inside notes do not come over': '{count} Tabelle i Notize chömed nöd mit',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} Aahäng sind i iCloud und nöd uf dem Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} Dateie sind i iCloud und nöd uf dem Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS haltet die Notize hinder Festplattevollzuegriff.',
   'There are no notes in Apple Notes on this Mac.': 'Uf dem Mac git s kei Notize in Apple Notize.',

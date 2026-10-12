@@ -1246,6 +1246,8 @@ export const es: Dictionary = {
   '{count} tables inside notes do not come over': '{count} tablas dentro de notas no pasan',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} adjuntos están en iCloud y no en este Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} archivos están en iCloud y no en este Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS guarda esas notas tras Acceso total al disco.',
   'There are no notes in Apple Notes on this Mac.': 'No hay notas en Apple Notas en este Mac.',

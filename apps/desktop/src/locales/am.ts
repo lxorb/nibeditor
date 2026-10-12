@@ -1209,6 +1209,8 @@ export const am: Dictionary = {
   '{count} tables inside notes do not come over': 'በማስታወሻዎች ውስጥ ያሉ {count} ሰንጠረዞች አይሻገሩም',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} አባሪዎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ፋይሎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS እነዚያን ማስታወሻዎች ከFull Disk Access ጀርባ ያስቀምጣል።',
   'There are no notes in Apple Notes on this Mac.': 'በዚህ Mac ላይ በApple Notes ውስጥ ማስታወሻ የለም።',

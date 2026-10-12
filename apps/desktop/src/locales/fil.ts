@@ -1239,6 +1239,8 @@ export const fil: Dictionary = {
     '{count} talahanayan sa loob ng tala ang hindi pumapasok',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} kalakip ang nasa iCloud at hindi sa Mac na ito',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} file ang nasa iCloud at hindi sa Mac na ito',
   'macOS keeps those notes behind Full Disk Access.':
     'Itinatago ng macOS ang mga talang iyon sa likod ng Full Disk Access.',
   'There are no notes in Apple Notes on this Mac.': 'Walang tala sa Apple Notes sa Mac na ito.',

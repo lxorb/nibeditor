@@ -1201,6 +1201,7 @@ export const yue: Dictionary = {
   '{count} tables inside notes do not come over': '筆記內嘅 {count} 個表格唔會轉入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 個附件喺 iCloud，唔係喺呢部 Mac',
+  '{count} files are in iCloud rather than on this Mac': '{count} 個檔案喺 iCloud，唔係喺呢部 Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS 將呢啲筆記放喺「完整磁碟存取權」之後。',
   'There are no notes in Apple Notes on this Mac.': '呢部 Mac 嘅「備忘錄」入面冇筆記。',

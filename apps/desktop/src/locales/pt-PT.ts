@@ -1251,6 +1251,8 @@ export const ptPT: Dictionary = {
   '{count} tables inside notes do not come over': '{count} tabelas dentro de notas não passam',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} anexos estão no iCloud e não neste Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ficheiros estão no iCloud e não neste Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'O macOS guarda essas notas atrás do Acesso total ao disco.',
   'There are no notes in Apple Notes on this Mac.': 'Não há notas no Apple Notas neste Mac.',

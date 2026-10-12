@@ -1212,6 +1212,8 @@ export const ko: Dictionary = {
   '{count} tables inside notes do not come over': '노트 안의 표 {count}개는 넘어오지 않습니다',
   '{count} attachments are in iCloud rather than on this Mac':
     '첨부 {count}개가 이 Mac이 아니라 iCloud에 있습니다',
+  '{count} files are in iCloud rather than on this Mac':
+    '파일 {count}개가 이 Mac이 아니라 iCloud에 있습니다',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS는 그 노트를 전체 디스크 접근 권한 뒤에 둡니다.',
   'There are no notes in Apple Notes on this Mac.': '이 Mac의 Apple 메모에 노트가 없습니다.',

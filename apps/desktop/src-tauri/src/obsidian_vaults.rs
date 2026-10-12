@@ -191,7 +191,8 @@ fn file_in(root: &Path, path: &str) -> Result<PathBuf, String> {
 /// another program's business and are left, except Obsidian's own, which keeps the
 /// settings the vault was written under; inside that, the panes of the last
 /// machine, the plugins' code, themes and caches stay behind. So do `.git`,
-/// `node_modules` and Obsidian's own trash.
+/// `node_modules` and Obsidian's own trash. iCloud's placeholders are listed, so the
+/// import can say how many notes are still in iCloud; see `left`.
 fn files_of(root: &Path) -> Vec<VaultFile> {
     let mut found = Vec::new();
     walk(root, root, 0, &mut found);
@@ -274,7 +275,17 @@ fn left(relative: &str, is_dir: bool) -> bool {
         return false;
     }
 
-    rubbish || (is_dir && name == "node_modules")
+    // iCloud's placeholder for a note it took off this Mac, `.Plan.md.icloud`, is
+    // hidden but is not rubbish: it stands for one of the reader's own files, so it
+    // is listed and the import says how many are still in iCloud; see obsidian.ts.
+    // Spelled out here rather than asked of notes/icloud.rs, which is a Mac's alone,
+    // since a vault copied off a Mac holds them too.
+    let evicted = !is_dir
+        && name
+            .strip_prefix('.')
+            .and_then(|rest| rest.strip_suffix(".icloud"))
+            .is_some_and(|real| !real.is_empty());
+    (rubbish && !evicted) || (is_dir && name == "node_modules")
 }
 
 #[cfg(test)]
@@ -456,5 +467,18 @@ mod tests {
                 "Read me.md",
             ]
         );
+    }
+
+    #[test]
+    fn a_note_icloud_took_off_this_mac_is_listed_by_its_placeholder() {
+        let here = tempfile::tempdir().expect("a folder");
+        let vault = here.path();
+        fs::create_dir_all(vault.join(".obsidian")).expect("the settings");
+        fs::write(vault.join(".Plan.md.icloud"), "bplist00").expect("a placeholder");
+        fs::write(vault.join(".obsidian/.app.json.icloud"), "bplist00").expect("another");
+        fs::write(vault.join("Home.md"), "# Home").expect("a note");
+
+        let paths: Vec<String> = files_of(vault).into_iter().map(|one| one.path).collect();
+        assert_eq!(paths, vec![".Plan.md.icloud", "Home.md"]);
     }
 }

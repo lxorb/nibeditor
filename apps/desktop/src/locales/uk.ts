@@ -1274,6 +1274,8 @@ export const uk: Dictionary = {
   '{count} tables inside notes do not come over': 'Таблиць у нотатках, що не переносяться: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Вкладень в iCloud, а не на цьому Mac: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Файлів в iCloud, а не на цьому Mac: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS тримає ці нотатки за повним доступом до диска.',
   'There are no notes in Apple Notes on this Mac.': 'На цьому Mac в Apple Нотатках немає нотаток.',

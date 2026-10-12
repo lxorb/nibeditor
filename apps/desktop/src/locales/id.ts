@@ -1221,6 +1221,8 @@ export const id: Dictionary = {
   '{count} tables inside notes do not come over': '{count} tabel di dalam catatan tidak ikut',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran ada di iCloud, bukan di Mac ini',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} file ada di iCloud, bukan di Mac ini',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS menyimpan catatan itu di balik Akses Disk Penuh.',
   'There are no notes in Apple Notes on this Mac.':

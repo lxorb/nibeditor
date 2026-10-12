@@ -1215,6 +1215,8 @@ export const my: Dictionary = {
   '{count} tables inside notes do not come over': 'မှတ်စုအတွင်း ဇယား {count} ခု ပါမလာပါ',
   '{count} attachments are in iCloud rather than on this Mac':
     'တွဲဖိုင် {count} ခု ဤ Mac တွင်မဟုတ်ဘဲ iCloud တွင် ရှိသည်',
+  '{count} files are in iCloud rather than on this Mac':
+    'ဖိုင် {count} ခု ဤ Mac တွင်မဟုတ်ဘဲ iCloud တွင် ရှိသည်',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS သည် ထိုမှတ်စုများကို Full Disk Access နောက်တွင် ထားသည်။',
   'There are no notes in Apple Notes on this Mac.': 'ဤ Mac ၏ Apple Notes တွင် မှတ်စုမရှိပါ။',

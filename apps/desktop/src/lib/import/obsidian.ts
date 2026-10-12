@@ -13,9 +13,11 @@
 
 import type { PropertiesMode } from '@nib/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
+import { key } from '../i18n.svelte'
 import type { LinkFormat } from '../link-format'
 import type { Carried } from './carry'
 import { isJunk } from './folder'
+import type { Lost } from './plan'
 import type { Source } from './sources'
 
 /** Where the settings folder sits: at the top, or one folder down for a zip whose
@@ -75,6 +77,31 @@ export function leftInVault(path: string): boolean {
   const parts = path.split('/')
   const name = parts.pop() ?? ''
   return name.startsWith('.') || parts.some((one) => one.startsWith('.') || one === 'node_modules')
+}
+
+/** What iCloud leaves in place of a file it took off the Mac to save space, on
+ *  macOS 13 and earlier: `.Plan.md.icloud` stands for `Plan.md`. */
+const IN_ICLOUD = /^\.[^/]+\.icloud$/
+
+/** What the vault holds and cannot bring, one line each: the files iCloud keeps
+ *  rather than this Mac. Their placeholders are hidden files, which stay behind
+ *  like any other, but each stands for one of the reader's own notes or pictures,
+ *  so how many there are is said out loud rather than dropped in silence. Only
+ *  those in the vault's own folders: one in `.trash/` was thrown away already. */
+export function lostInVault(sources: readonly Source[]): Lost[] {
+  const away = sources.filter((one) => {
+    const parts = one.path.split('/')
+    const name = parts.pop() ?? ''
+    return IN_ICLOUD.test(name) && !parts.some((part) => part.startsWith('.'))
+  }).length
+  if (!away) return []
+
+  return [
+    {
+      text: key('{count} files are in iCloud rather than on this Mac'),
+      values: { count: away },
+    },
+  ]
 }
 
 /** The habits the vault's `app.json` records. Read from what was picked rather

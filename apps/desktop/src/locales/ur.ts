@@ -1224,6 +1224,8 @@ export const ur: Dictionary = {
   '{count} tables inside notes do not come over': 'نوٹس کے اندر {count} جدول نہیں آتے',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} منسلکات اس Mac کی بجائے iCloud میں ہیں',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} فائلیں اس Mac کی بجائے iCloud میں ہیں',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ان نوٹس کو Full Disk Access کے پیچھے رکھتا ہے۔',
   'There are no notes in Apple Notes on this Mac.': 'اس Mac پر Apple Notes میں کوئی نوٹ نہیں۔',

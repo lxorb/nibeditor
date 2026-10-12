@@ -1275,6 +1275,8 @@ export const pl: Dictionary = {
     'Tabel wewnątrz notatek, które się nie przenoszą: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Załączników w iCloud, a nie na tym Macu: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Plików w iCloud, a nie na tym Macu: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS trzyma te notatki za Pełnym dostępem do dysku.',
   'There are no notes in Apple Notes on this Mac.': 'Na tym Macu nie ma notatek w Apple Notatkach.',

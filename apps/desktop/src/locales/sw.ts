@@ -1235,6 +1235,8 @@ export const sw: Dictionary = {
   '{count} tables inside notes do not come over': 'Majedwali {count} ndani ya madokezo hayavuki',
   '{count} attachments are in iCloud rather than on this Mac':
     'Viambatisho {count} viko kwenye iCloud badala ya kwenye Mac hii',
+  '{count} files are in iCloud rather than on this Mac':
+    'Faili {count} ziko kwenye iCloud badala ya kwenye Mac hii',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS huweka madokezo hayo nyuma ya Full Disk Access.',
   'There are no notes in Apple Notes on this Mac.':

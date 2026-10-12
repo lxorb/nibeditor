@@ -1222,6 +1222,8 @@ export const mr: Dictionary = {
   '{count} tables inside notes do not come over': 'नोंदींतील {count} तक्ते येत नाहीत',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} जोडपत्रे या Mac वर नसून iCloud मध्ये आहेत',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} फायली या Mac वर नसून iCloud मध्ये आहेत',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS त्या नोंदी Full Disk Access च्या मागे ठेवते.',
   'There are no notes in Apple Notes on this Mac.': 'या Mac वर Apple Notes मध्ये नोंदी नाहीत.',

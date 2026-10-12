@@ -1277,6 +1277,8 @@ export const ru: Dictionary = {
     'Таблиц внутри заметок, которые не переносятся: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Вложений в iCloud, а не на этом Mac: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Файлов в iCloud, а не на этом Mac: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS держит эти заметки за полным доступом к диску.',
   'There are no notes in Apple Notes on this Mac.': 'На этом Mac в Apple Заметках нет заметок.',

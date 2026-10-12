@@ -1234,6 +1234,8 @@ export const ml: Dictionary = {
   '{count} tables inside notes do not come over': 'കുറിപ്പുകൾക്കുള്ളിലെ {count} പട്ടികകൾ വരില്ല',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} അനുബന്ധങ്ങൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ഫയലുകൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ആ കുറിപ്പുകൾ Full Disk Access-നു പിന്നിൽ വയ്ക്കുന്നു.',
   'There are no notes in Apple Notes on this Mac.': 'ഈ Mac-ൽ Apple Notes-ൽ കുറിപ്പുകളില്ല.',

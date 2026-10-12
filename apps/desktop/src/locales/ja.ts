@@ -1217,6 +1217,8 @@ export const ja: Dictionary = {
   '{count} tables inside notes do not come over': 'メモの中の {count} 件の表は入りません',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 件の添付は iCloud にあり、この Mac にはありません',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} 件のファイルは iCloud にあり、この Mac にはありません',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS はそのメモをフルディスクアクセスの内側に置いています。',
   'There are no notes in Apple Notes on this Mac.': 'この Mac の Apple メモにメモはありません。',

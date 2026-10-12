@@ -1213,6 +1213,8 @@ export const vi: Dictionary = {
   '{count} tables inside notes do not come over': '{count} bảng trong ghi chú không chuyển sang',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} tệp kèm nằm trên iCloud chứ không phải trên Mac này',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} tệp nằm trên iCloud chứ không phải trên Mac này',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS giữ các ghi chú đó sau Quyền truy cập toàn bộ ổ đĩa.',
   'There are no notes in Apple Notes on this Mac.':

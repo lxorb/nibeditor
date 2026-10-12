@@ -98,6 +98,21 @@ describe('an Obsidian vault', () => {
       'Old vault/Note.md',
     ])
   })
+
+  test('says how many of its files are in iCloud rather than on this Mac', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', '# Home'),
+      file('.Plan.md.icloud', 'bplist00'),
+      file('Pictures/.photo.png.icloud', 'bplist00'),
+      file('.trash/.Old.md.icloud', 'bplist00'),
+    ])
+
+    expect(plan.files.map((one) => one.path).sort()).toEqual(['.obsidian/app.json', 'Home.md'])
+    expect(plan.lost).toEqual([
+      { text: '{count} files are in iCloud rather than on this Mac', values: { count: 2 } },
+    ])
+  })
 })
 
 describe('what a vault carries into the settings', () => {

@@ -269,8 +269,11 @@ export async function readAs(
     }
     case 'obsidian': {
       const { readPlain } = await import('./plain')
-      const { atVaultTop, leftInVault } = await import('./obsidian')
-      return readPlain(atVaultTop(sources), { format, skip: leftInVault, asTheyAre: true })
+      const { atVaultTop, leftInVault, lostInVault } = await import('./obsidian')
+      const vault = atVaultTop(sources)
+      const plan = await readPlain(vault, { format, skip: leftInVault, asTheyAre: true })
+      plan.lost.push(...lostInVault(vault))
+      return plan
     }
     case 'craft':
     case 'onenote':

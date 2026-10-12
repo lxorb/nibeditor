@@ -1236,6 +1236,8 @@ export const ta: Dictionary = {
     'குறிப்புகளுக்குள் உள்ள {count} அட்டவணைகள் வரவில்லை',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} இணைப்புகள் இந்த Mac இல் இல்லாமல் iCloud இல் உள்ளன',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} கோப்புகள் இந்த Mac இல் இல்லாமல் iCloud இல் உள்ளன',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS அந்தக் குறிப்புகளை Full Disk Access க்குப் பின் வைக்கிறது.',
   'There are no notes in Apple Notes on this Mac.':

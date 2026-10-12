@@ -1223,6 +1223,8 @@ export const fa: Dictionary = {
   '{count} tables inside notes do not come over': '{count} جدول درون یادداشت‌ها نمی‌آید',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} پیوست در iCloud است و نه روی این Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} فایل در iCloud است و نه روی این Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS آن یادداشت‌ها را پشت Full Disk Access نگه می‌دارد.',
   'There are no notes in Apple Notes on this Mac.': 'روی این Mac در Apple Notes یادداشتی نیست.',

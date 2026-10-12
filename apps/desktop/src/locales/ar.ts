@@ -1290,6 +1290,8 @@ export const ar: Dictionary = {
   '{count} tables inside notes do not come over': '{count} جدول داخل الملاحظات لا ينتقل',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} مرفق في iCloud وليس على هذا الـ Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ملف في iCloud وليس على هذا الـ Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'يحفظ macOS تلك الملاحظات خلف الوصول الكامل للقرص.',
   'There are no notes in Apple Notes on this Mac.':

@@ -1228,6 +1228,8 @@ export const tr: Dictionary = {
   '{count} tables inside notes do not come over': 'Notların içindeki {count} tablo geçmez',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ek, bu Mac’te değil iCloud’dadır',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} dosya, bu Mac’te değil iCloud’dadır',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS bu notları Tüm Disk Erişimi’nin ardında tutar.',
   'There are no notes in Apple Notes on this Mac.': 'Bu Mac’te Apple Notlar’da not yok.',

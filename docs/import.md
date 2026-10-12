@@ -184,7 +184,11 @@ space and the paths a `.canvas` names still lead somewhere. It comes along, so O
 what is about one machine rather than the vault: `workspace.json`, the installed
 plugins and themes, the cache, and Obsidian's own `.trash/`. Every other hidden
 file or folder, `.git` among them, and `node_modules` stay behind too, the same
-whether the vault came from the list, a folder or a zip. See `import/obsidian.ts`.
+whether the vault came from the list, a folder or a zip. The one hidden file that is
+the reader's own is iCloud's placeholder for a note it took off the Mac to save
+space (`.Plan.md.icloud`): it stays behind as well, since the note is not there to
+bring, and the sheet says how many files are in iCloud rather than on this Mac. See
+`import/obsidian.ts`.
 
 **Craft**, **Ulysses**, **iA Writer** and anything else that writes
 markdown are read as what they are: files in folders, some notes and the rest the

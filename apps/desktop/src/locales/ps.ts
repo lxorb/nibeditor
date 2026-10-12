@@ -1224,6 +1224,8 @@ export const ps: Dictionary = {
   '{count} tables inside notes do not come over': 'په يادښتونو کې {count} جدولونه نه راځي',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ملګړي په iCloud کې دي نه پر دې Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} فایلونه په iCloud کې دي نه پر دې Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS هغه يادښتونه د Full Disk Access تر شا ساتي.',
   'There are no notes in Apple Notes on this Mac.': 'پر دې Mac په Apple Notes کې يادښت نشته.',

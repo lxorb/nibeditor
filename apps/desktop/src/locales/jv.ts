@@ -1216,6 +1216,8 @@ export const jv: Dictionary = {
   '{count} tables inside notes do not come over': '{count} tabel ing cathetan ora mlebu',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran ana ing iCloud, dudu ing Mac iki',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} berkas ana ing iCloud, dudu ing Mac iki',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS nyimpen cathetan kuwi ing mburi Full Disk Access.',
   'There are no notes in Apple Notes on this Mac.': 'Ing Mac iki Apple Notes ora duwe cathetan.',

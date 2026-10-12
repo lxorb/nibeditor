@@ -1201,6 +1201,8 @@ export const zhHans: Dictionary = {
   '{count} tables inside notes do not come over': '笔记内的 {count} 个表格不会转入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 个附件在 iCloud 上，而不在这台 Mac 上',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} 个文件在 iCloud 上，而不在这台 Mac 上',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS 将这些笔记放在「完全磁盘访问权限」之后。',
   'There are no notes in Apple Notes on this Mac.': '这台 Mac 上的「备忘录」中没有笔记。',

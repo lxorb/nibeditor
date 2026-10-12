@@ -1237,6 +1237,8 @@ export const ha: Dictionary = {
     'Teburori {count} cikin bayanan kula ba sa shigowa',
   '{count} attachments are in iCloud rather than on this Mac':
     'Abubuwan haɗe {count} suna cikin iCloud maimakon a wannan Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    'Fayiloli {count} suna cikin iCloud maimakon a wannan Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS na riƙe waɗannan bayanan kula bayan Full Disk Access.',
   'There are no notes in Apple Notes on this Mac.': 'Babu bayanan kula a Apple Notes a wannan Mac.',

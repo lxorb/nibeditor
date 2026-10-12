@@ -1219,6 +1219,8 @@ export const ms: Dictionary = {
   '{count} tables inside notes do not come over': '{count} jadual dalam nota tidak sampai',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} lampiran berada dalam iCloud, bukan pada Mac ini',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} fail berada dalam iCloud, bukan pada Mac ini',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS menyimpan nota itu di sebalik Akses Cakera Penuh.',
   'There are no notes in Apple Notes on this Mac.': 'Tiada nota dalam Apple Notes pada Mac ini.',
