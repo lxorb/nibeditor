@@ -703,6 +703,53 @@ describe('the links in a vault', () => {
       ),
     ).resolves.toBe('---\ntitle: Rock `n roll\n---\nSee ![](../assets/pic.png) and `npm i`.\n')
   })
+
+  test('to a root note by its relative or rooted path still go there past a namesake beside them', async () => {
+    // Obsidian's "Relative path to file" and "Absolute path in vault" formats write
+    // these; nib reads a bare `[[Plan]]` from `Projects/` as the one beside it.
+    const vault = [file('Plan.md', '# Root plan\n'), file('Projects/Plan.md', '# Project plan\n')]
+    await expect(
+      noteFrom('Projects/A.md', ...vault, file('Projects/A.md', 'See [[../Plan]].\n')),
+    ).resolves.toBe('See [Plan](../Plan.md).\n')
+    await expect(
+      noteFrom('Projects/A.md', ...vault, file('Projects/A.md', 'See [[/Plan|the plan]].\n')),
+    ).resolves.toBe('See [the plan](../Plan.md).\n')
+  })
+
+  test('to a file whose name a Mac wrote decomposed keep their own spelling and case', async () => {
+    const decomposed = 'Caf\u00e9'.normalize('NFD')
+    const body =
+      'Met at [[Caf\u00e9]], [[caf\u00e9]] and [[Caf\u00e9|the caf\u00e9]], ![[Caf\u00e9.png]].\n'
+    await expect(
+      noteFrom(
+        'Diary.md',
+        file(`${decomposed}.md`, '# Caf\u00e9\n'),
+        file(`${decomposed}.png`, 'P'),
+        file('Diary.md', body),
+      ),
+    ).resolves.toBe(body)
+  })
+
+  test('on the line after a table are not escaped as if in a cell', async () => {
+    // A list item, a heading, or the end of a callout ends a table, and nib reads
+    // `[[Plan\\|x]]` outside one as a link to a note called `Plan\\`.
+    const plan = file('Plan.md', '# Plan\n')
+    const listed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n- see [[Plan|the plan]]\n'
+    await expect(noteFrom('Log.md', plan, file('Log.md', listed))).resolves.toBe(listed)
+
+    const headed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n## Next [[Plan|again]]\n'
+    await expect(noteFrom('Log.md', plan, file('Log.md', headed))).resolves.toBe(headed)
+
+    const callout =
+      '> [!info] Stats\n> | a | b |\n> |---|---|\n> | 1 | 2 |\nAfter the callout, [[Plan|the plan]].\n'
+    await expect(noteFrom('Log.md', plan, file('Log.md', callout))).resolves.toBe(callout)
+
+    // A row that is only words still belongs to the table, and its link is escaped.
+    const ran = '| a | b |\n| --- | --- |\nsee [[Plan|the plan]]\n'
+    await expect(noteFrom('Log.md', plan, file('Log.md', ran))).resolves.toBe(
+      '| a | b |\n| --- | --- |\nsee [[Plan\\|the plan]]\n',
+    )
+  })
 })
 
 /** A file the browser hands over from a picked folder. */

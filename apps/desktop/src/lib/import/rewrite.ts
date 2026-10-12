@@ -211,8 +211,9 @@ export function rewriteLinks(
 
       // A link that found its file only by ignoring case keeps the case it was
       // written in: those are words in a sentence, and nib reads a name without
-      // regard to case just as Obsidian does.
-      const name = found.name.toLowerCase() === path.toLowerCase() ? path : found.name
+      // regard to case just as Obsidian does. Its accents too, whole or apart, since
+      // a Mac names a file with them apart and the link was typed with them whole.
+      const name = foldName(found.name) === foldName(path) ? path : found.name
       const words = shown?.slice(1) ?? null
       const embed = whole.startsWith('!')
       // A picture's size has no place in a markdown image, where it would only be
@@ -222,11 +223,15 @@ export function rewriteLinks(
       // one there stays one: a markdown link would be only words, and the relation
       // it made would be gone.
       const property = offset < properties
+      // A note nib would read the bare name as another one from here keeps the path
+      // the link went by, as a markdown link from this note: `[[../Plan]]` in
+      // `Projects/` meant the root `Plan.md`, and `[[Plan]]` there is the one beside it.
+      const elsewhere = !property && isMarkdownPath(found.path) && !reaches(found, at.now)
       const written = linkTo(
         name,
         words,
         { path: found.path, from: at.now, embed, fragment },
-        sized || property ? 'wikilink' : undefined,
+        sized || property ? 'wikilink' : elsewhere ? 'relative' : undefined,
       )
       return inCode(stillTables, offset) ? inCell(written) : written
     },
@@ -442,18 +447,29 @@ export function isCanvas(path: string): boolean {
   return /\.canvas$/i.test(path)
 }
 
+/** A line that starts a block of its own, which ends a table above it rather than
+ *  being another row: a list item, a heading, a fence or a rule. */
+const NEW_BLOCK =
+  /^(?:[-+*][ \t]|\d{1,9}[.)][ \t]|#{1,6}(?:[ \t]|$)|`{3}|~{3}|([-*_])(?:[ \t]*\1){2,}[ \t]*$)/
+
 /** Where the note's tables are, as stretches of its text: the header row, the row of
- *  dashes under it and every row after, up to the first blank line. A callout's or a
+ *  dashes under it and every row after, up to the first blank line, the first line
+ *  that starts a block of its own, or the end of the callout it is in. A callout's or a
  *  quote's `>` in front of each line is a table in there all the same, and so is the
  *  indent of a list item, a tab or four spaces, which is where Obsidian writes a table
  *  kept under one. Lines indented that far as code are code first, and a link there
  *  is left alone before its table is asked about. */
 function tableRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
-  const lines = text.split('\n').map((line) => line.replace(QUOTED, '').replace(/^[ \t]+/, ''))
+  const raw = text.split('\n')
+  const lines = raw.map((line) => line.replace(QUOTED, '').replace(/^[ \t]+/, ''))
+  // How many `>` a line sits behind. A table in a callout ends with the callout: the
+  // line after it with fewer is not one of its rows, as a table is no paragraph to run
+  // on into.
+  const depth = (one: number) => ((QUOTED.exec(raw[one] ?? '') ?? [''])[0].match(/>/g) ?? []).length
   const starts: number[] = []
   let at = 0
-  for (const line of text.split('\n')) {
+  for (const line of raw) {
     starts.push(at)
     at += line.length + 1
   }
@@ -464,7 +480,11 @@ function tableRanges(text: string): [number, number][] {
     if (!DIVIDER.test(divider) || !divider.includes('|') || !head.includes('|')) continue
 
     let last = one
-    while ((lines[last + 1] ?? '').trim()) last += 1
+    const row = (line: number) =>
+      (lines[line] ?? '').trim() !== '' &&
+      !NEW_BLOCK.test(lines[line] ?? '') &&
+      depth(line) === depth(one)
+    while (row(last + 1)) last += 1
     ranges.push([starts[one - 1] ?? 0, (starts[last + 1] ?? text.length + 1) - 1])
     one = last
   }
