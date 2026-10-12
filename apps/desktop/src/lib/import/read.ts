@@ -5,7 +5,8 @@
  *  one of these formats says what it is if you look. So the sheet looks, names
  *  what it found, and shows what it is about to make.
  *
- *  The order below is the order of certainty: a `.enex` can only be Evernote, a
+ *  The order below is the order of certainty: a `.obsidian/` folder can only be
+ *  a vault, whatever else is in it, a `.enex` can only be Evernote, a
  *  32-character id on every file name can only be Notion, and a folder of
  *  markdown is what is left when nothing more specific fits. */
 
@@ -37,14 +38,16 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   const paths = sources.map((one) => one.path)
   const has = (pattern: RegExp) => paths.some((one) => pattern.test(one))
 
+  // Obsidian keeps its settings in `.obsidian/` at the top of a vault, and nothing
+  // else writes that folder. Asked first, because a vault is somebody's whole set of
+  // files: a `.enex` kept in one is an old export lying in the vault, not the thing
+  // being imported, and a vault with a `pages/` folder in it is still a vault and
+  // not a Logseq graph. One folder deep as well, for a zip whose only entry is the
+  // vault itself.
+  if (has(VAULT)) return 'obsidian'
+
   if (has(/\.enex$/i)) return 'evernote'
   if (has(/\.note$/i)) return 'tomboy'
-
-  // Obsidian keeps its settings in `.obsidian/` at the top of a vault, and nothing
-  // else writes that folder. Asked before the folder shapes below, because a vault
-  // with a `pages/` folder in it is still a vault and not a Logseq graph. One folder
-  // deep as well, for a zip whose only entry is the vault itself.
-  if (has(VAULT)) return 'obsidian'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this

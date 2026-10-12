@@ -27,6 +27,15 @@ describe('an Obsidian vault', () => {
     await expect(
       detect([file('.obsidian/app.json', '{}'), file('pages/A.md', '# A')]),
     ).resolves.toBe('obsidian')
+    // An old Evernote or Tomboy export kept in a vault is one of its files.
+    await expect(
+      detect([
+        file('.obsidian/app.json', '{}'),
+        file('Home.md', '# Home'),
+        file('Archive/Evernote backup.enex', '<en-export></en-export>'),
+        file('Archive/Old.note', '<note/>'),
+      ]),
+    ).resolves.toBe('obsidian')
     // A zip whose one entry is the vault.
     await expect(
       detect([file('Vault/.obsidian/app.json', '{}'), file('Vault/A.md', '# A')]),

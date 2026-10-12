@@ -176,8 +176,8 @@ and `.base` files all read as they are, so the notes go through the plain reader
 below untouched. The files are the reader's own rather than an export's, so none
 loses the 32-character tail a Notion name would, and a saved `.html` page arrives as
 the page, not as a note. What is Obsidian's alone is `.obsidian/` at the top, which is also
-how a vault is known (before the folder shapes, so a vault with a `pages/` folder
-is not taken for Logseq). A zip whose one entry is the vault has it one folder
+how a vault is known (before anything else, so a vault with a `pages/` folder is
+not taken for Logseq, nor one with an old `.enex` kept in it for Evernote). A zip whose one entry is the vault has it one folder
 down, and that folder is taken off every path, so the vault lands at the top of the
 space and the paths a `.canvas` names still lead somewhere. It comes along, so Obsidian still opens the space, minus
 what is about one machine rather than the vault: `workspace.json`, the installed
