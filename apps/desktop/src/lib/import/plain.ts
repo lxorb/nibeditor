@@ -33,8 +33,8 @@ export interface PlainOptions {
   /** Files an app keeps for itself rather than an export it wrote: an Obsidian
    *  vault. Their names are the reader's own, so no exporter's id is taken off
    *  them and none is shortened or respaced, since the vault's canvases name them
-   *  too, and an HTML file is a page somebody saved, copied as it is rather than
-   *  read as a note. */
+   *  too, a note's words are kept to the byte, and an HTML file is a page
+   *  somebody saved, copied as it is rather than read as a note. */
   asTheyAre?: boolean
 }
 
@@ -70,7 +70,11 @@ export async function readPlain(
 
       return {
         to: names.free(path.replace(/\.txt$/i, '.md')),
-        read: (text, at) => ({ text: options.words?.(text, at) ?? text, title: null }),
+        read: (text, at) => ({
+          text: options.words?.(text, at) ?? text,
+          title: null,
+          kept: options.asTheyAre === true,
+        }),
       }
     },
   })

@@ -414,6 +414,15 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('keep a note’s line endings and the blank lines above a rule', async () => {
+    const windows = '# T\r\n\r\nline\r\n'
+    const rule = '\n---\nnot: properties\n---\n'
+
+    await expect(noteFrom('A.md', file('A.md', windows))).resolves.toBe(windows)
+    await expect(noteFrom('A.md', file('A.md', '# T\r\n\r\nline'))).resolves.toBe(windows)
+    await expect(noteFrom('A.md', file('A.md', rule))).resolves.toBe(rule)
+  })
+
   test('keep a note that opens with an indented code block as code', async () => {
     const code = '    let x = 1\n    let y = 2\n\nAfter.\n'
     await expect(noteFrom('Code.md', file('Code.md', code))).resolves.toBe(code)

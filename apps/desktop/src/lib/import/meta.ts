@@ -74,6 +74,15 @@ export function noteText(title: string | null, body: string, meta: Meta = {}): s
   return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
 }
 
+/** A note's words as the app that kept them wrote them, to the byte. The blank
+ *  lines above them stay, because a `---` that is not on the first line is a rule
+ *  and not properties, and so does every line ending, a Windows one included. Only
+ *  a last line ending is added where there was none, of the note's own kind. */
+export function keptText(body: string): string {
+  if (!body || body.endsWith('\n')) return body
+  return `${body}${body.includes('\r\n') ? '\r\n' : '\n'}`
+}
+
 /** A property name YAML will read as one word, for a column called
  *  `Last edited time`. */
 export function propertyName(key: string): string {

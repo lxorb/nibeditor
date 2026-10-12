@@ -10,7 +10,7 @@
  *  a Roam JSON - build their plans themselves, because there is nothing to map. */
 
 import type { Meta } from './meta'
-import { noteText } from './meta'
+import { keptText, noteText } from './meta'
 import type { FormatId, ImportPlan, Lost, Planned } from './plan'
 import { ExportFiles, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
@@ -22,6 +22,9 @@ interface Written {
    *  they are, which is right for a format that already writes its own heading. */
   title?: string | null
   meta?: Meta
+  /** The words are a file an app kept for itself rather than an export it wrote,
+   *  so nothing goes above them and nothing around them is tidied. */
+  kept?: boolean
 }
 
 interface Placement {
@@ -68,7 +71,7 @@ export async function folderPlan(
     written.push({
       kind: 'note',
       path: one.to,
-      text: noteText(said.title ?? null, body, said.meta ?? {}),
+      text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}),
     })
   }
 
