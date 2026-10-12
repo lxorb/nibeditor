@@ -51,9 +51,16 @@ export function leftInVault(path: string): boolean {
   // Only the vault's own settings, at the top once `atVaultTop` has had the paths:
   // an older vault kept one folder down has its `.obsidian/` left behind like any
   // other hidden folder, the way obsidian_vaults.rs leaves it.
+  // `workspaces.json` is not among them: it holds the layouts somebody saved by name,
+  // which travel with the vault. A hidden file in there is the desktop's rubbish, as
+  // it is anywhere else in the vault.
   if (path.startsWith('.obsidian/')) {
     const rest = path.slice('.obsidian/'.length)
-    return /^workspace[^/]*\.json$/i.test(rest) || /^(plugins|themes|cache)\//i.test(rest)
+    return (
+      /^workspace(?:-[^/]*)?\.json$/i.test(rest) ||
+      /^(plugins|themes|cache)\//i.test(rest) ||
+      rest.split('/').some((one) => one.startsWith('.'))
+    )
   }
 
   const parts = path.split('/')

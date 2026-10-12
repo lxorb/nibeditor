@@ -82,21 +82,27 @@ fn listed() -> Vec<PathBuf> {
 /// than the first found, because a Linux reader who moved from the downloaded app to the
 /// Flatpak still has the old list, naming vaults long gone, beside the one Obsidian
 /// writes now.
+///
+/// Newest first across all of them, as within one: the leftover list is the older
+/// one, and its vaults would otherwise sit above the ones opened yesterday. A vault
+/// in two lists is as new as the newer of them says.
 fn listed_in(configs: &[PathBuf]) -> Vec<PathBuf> {
-    let mut found: Vec<PathBuf> = Vec::new();
+    let mut found: Vec<(i64, PathBuf)> = Vec::new();
 
     for config in configs {
         let Ok(text) = fs::read_to_string(config) else {
             continue;
         };
-        for vault in vaults_in(&text) {
-            if !found.contains(&vault) {
-                found.push(vault);
+        for (when, vault) in dated_in(&text) {
+            match found.iter_mut().find(|(_, one)| *one == vault) {
+                Some(held) => held.0 = held.0.max(when),
+                None => found.push((when, vault)),
             }
         }
     }
 
-    found
+    found.sort_by_key(|(when, _)| std::cmp::Reverse(*when));
+    found.into_iter().map(|(_, path)| path).collect()
 }
 
 /// Where Obsidian writes `obsidian.json`: its config folder, which on Linux may also
@@ -119,7 +125,13 @@ fn config_files() -> Vec<PathBuf> {
 
 /// The vaults out of the file's text: `{"vaults": {"<id>": {"path", "ts"}}}`, the
 /// newest `ts` first, which is the order Obsidian's chooser lists them in.
+#[cfg(test)]
 fn vaults_in(text: &str) -> Vec<PathBuf> {
+    dated_in(text).into_iter().map(|(_, path)| path).collect()
+}
+
+/// The same, each with its `ts`, so lists can be put in one order.
+fn dated_in(text: &str) -> Vec<(i64, PathBuf)> {
     let Ok(said) = serde_json::from_str::<serde_json::Value>(text) else {
         return Vec::new();
     };
@@ -140,7 +152,7 @@ fn vaults_in(text: &str) -> Vec<PathBuf> {
         .collect();
 
     found.sort_by_key(|(when, _)| std::cmp::Reverse(*when));
-    found.into_iter().map(|(_, path)| path).collect()
+    found
 }
 
 /// The vault asked for, when it is one of those listed, spelled the way the list
@@ -238,24 +250,28 @@ fn relative(root: &Path, path: &Path) -> Option<String> {
 /// Whether a path of the vault stays behind.
 fn left(relative: &str, is_dir: bool) -> bool {
     let name = relative.rsplit('/').next().unwrap_or(relative);
+    // The desktop's rubbish, inside Obsidian's folder as much as anywhere else.
+    let rubbish = name.starts_with('.') || name == "Thumbs.db" || name == "desktop.ini";
 
     if let Some(rest) = relative.strip_prefix(".obsidian/") {
         let top = rest.split('/').next().unwrap_or(rest);
-        return matches!(top, "plugins" | "themes" | "cache")
-            || (!rest.contains('/')
-                && name.starts_with("workspace")
-                && Path::new(name)
-                    .extension()
-                    .is_some_and(|extension| extension.eq_ignore_ascii_case("json")));
+        // `workspace.json` and `workspace-mobile.json` are the last machine's panes;
+        // `workspaces.json` is the layouts saved by name, which are the vault's own.
+        let panes = name.strip_suffix(".json").is_some_and(|stem| {
+            stem.eq_ignore_ascii_case("workspace")
+                || stem
+                    .get(..10)
+                    .is_some_and(|start| start.eq_ignore_ascii_case("workspace-"))
+        });
+        return rubbish
+            || matches!(top, "plugins" | "themes" | "cache")
+            || (!rest.contains('/') && panes);
     }
     if relative == ".obsidian" {
         return false;
     }
 
-    name.starts_with('.')
-        || (is_dir && name == "node_modules")
-        || name == "Thumbs.db"
-        || name == "desktop.ini"
+    rubbish || (is_dir && name == "node_modules")
 }
 
 #[cfg(test)]
@@ -305,9 +321,35 @@ mod tests {
         assert_eq!(
             listed_in(&[native, here.path().join("missing.json"), flatpak]),
             vec![
+                PathBuf::from("/home/me/Notes"),
                 PathBuf::from("/home/me/Work"),
                 PathBuf::from("/gone/Old"),
+            ]
+        );
+    }
+
+    #[test]
+    fn vaults_from_every_list_come_newest_first() {
+        let here = tempfile::tempdir().expect("a folder");
+        let native = here.path().join("native.json");
+        let flatpak = here.path().join("flatpak.json");
+        fs::write(
+            &native,
+            r#"{"vaults":{"a":{"path":"/home/me/Old","ts":1700000000000},"b":{"path":"/home/me/Work","ts":1600000000000}}}"#,
+        )
+        .expect("the native list");
+        fs::write(
+            &flatpak,
+            r#"{"vaults":{"c":{"path":"/home/me/Notes","ts":1790000000000},"d":{"path":"/home/me/Work","ts":1800000000000}}}"#,
+        )
+        .expect("the Flatpak's list");
+
+        assert_eq!(
+            listed_in(&[native, flatpak]),
+            vec![
+                PathBuf::from("/home/me/Work"),
                 PathBuf::from("/home/me/Notes"),
+                PathBuf::from("/home/me/Old"),
             ]
         );
     }
@@ -380,6 +422,10 @@ mod tests {
             ".obsidian/templates.json",
             ".obsidian/workspace.json",
             ".obsidian/workspace-mobile.json",
+            ".obsidian/workspaces.json",
+            ".obsidian/.DS_Store",
+            ".obsidian/._app.json",
+            ".obsidian/snippets/.DS_Store",
             ".obsidian/snippets/wide.css",
             ".obsidian/plugins/dataview/main.js",
             ".obsidian/themes/Minimal/theme.css",
@@ -400,6 +446,7 @@ mod tests {
                 ".obsidian/app.json",
                 ".obsidian/snippets/wide.css",
                 ".obsidian/templates.json",
+                ".obsidian/workspaces.json",
                 "Projects/Sub/Plan.md",
                 "Read me.md",
             ]

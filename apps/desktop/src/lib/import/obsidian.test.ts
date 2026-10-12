@@ -57,7 +57,12 @@ describe('an Obsidian vault', () => {
     expect(leftInVault('Projects/node_modules/x/index.js')).toBe(true)
     expect(leftInVault('.gitignore')).toBe(true)
 
+    expect(leftInVault('.obsidian/.DS_Store')).toBe(true)
+    expect(leftInVault('.obsidian/snippets/._wide.css')).toBe(true)
+
     expect(leftInVault('.obsidian/app.json')).toBe(false)
+    // The layouts saved by name with the Workspaces plugin are the vault's own.
+    expect(leftInVault('.obsidian/workspaces.json')).toBe(false)
     expect(leftInVault('.obsidian/templates.json')).toBe(false)
     expect(leftInVault('Notes/workspace.json')).toBe(false)
     expect(leftInVault('Notes/A.md')).toBe(false)
