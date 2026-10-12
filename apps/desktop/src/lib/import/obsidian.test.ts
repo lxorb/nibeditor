@@ -411,6 +411,22 @@ describe('the links in a vault', () => {
     }
   })
 
+  test('keep the folder that says which note is meant when the Links setting writes markdown', async () => {
+    setLinkWriting('shortest')
+    try {
+      await expect(
+        noteFrom(
+          'Home.md',
+          file('Home.md', 'See [[Projects/Plan]].\n'),
+          file('Plan.md', '# Root\n'),
+          file('Projects/Plan.md', '# Project\n'),
+        ),
+      ).resolves.toBe('See [Projects/Plan](Projects/Plan.md).\n')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
   test('to a note with a bracket in its name stay markdown links', async () => {
     await expect(
       noteFrom(

@@ -103,7 +103,9 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
 
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  if (format === 'shortest') return withExtension(nameOf(path))
+  // A name that holds a folder is one the file shares with another, so the shortest
+  // target that still says which is the path from the top, as Obsidian writes it.
+  if (format === 'shortest') return target.name.includes('/') ? path : withExtension(nameOf(path))
   // A note that does not know where it is being written cannot say "from here",
   // so the path from the top of the space is the closest true answer.
   return target.from ? relativePath(folderOf(target.from), path) : path

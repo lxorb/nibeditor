@@ -35,6 +35,12 @@ describe('the three markdown spellings', () => {
     expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
   })
 
+  test('write the folder in the shortest name when the name needs it to say which', () => {
+    expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](ideas/Plan.md)',
+    )
+  })
+
   test('always show something, since a markdown link with no words shows none', () => {
     expect(formatLink({ ...PLAN, shown: 'the plan' }, 'absolute')).toBe('[the plan](ideas/Plan.md)')
     expect(formatLink(PLAN, 'absolute')).toContain('[Plan]')
