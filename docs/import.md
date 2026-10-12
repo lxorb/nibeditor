@@ -181,7 +181,9 @@ is not taken for Logseq). A zip whose one entry is the vault has it one folder
 down, and that folder is taken off every path, so the vault lands at the top of the
 space and the paths a `.canvas` names still lead somewhere. It comes along, so Obsidian still opens the space, minus
 what is about one machine rather than the vault: `workspace.json`, the installed
-plugins and themes, the cache, and Obsidian's own `.trash/`. See `import/obsidian.ts`.
+plugins and themes, the cache, and Obsidian's own `.trash/`. Every other hidden
+file or folder, `.git` among them, and `node_modules` stay behind too, the same
+whether the vault came from the list, a folder or a zip. See `import/obsidian.ts`.
 
 **Craft**, **Ulysses**, **iA Writer** and anything else that writes
 markdown are read as what they are: files in folders, some notes and the rest the

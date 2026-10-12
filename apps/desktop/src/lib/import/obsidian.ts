@@ -43,7 +43,10 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
 /** Left behind: the open panes and recent files of the machine it came off
  *  (`workspace.json`, `workspace-mobile.json`), installed plugins and themes, which
  *  are code and styles for another app, a cache, and `.trash/`, which Obsidian
- *  keeps for "Move to Obsidian trash" and which nobody kept on purpose. */
+ *  keeps for "Move to Obsidian trash" and which nobody kept on purpose. Every
+ *  other hidden file or folder is another program's business, `.git` among them,
+ *  and so is `node_modules`: the same as the vault list leaves behind in
+ *  obsidian_vaults.rs, so a vault picked as a folder or a zip arrives the same. */
 export function leftInVault(path: string): boolean {
   const inside = SETTINGS.exec(path)
   if (inside) {
@@ -51,7 +54,9 @@ export function leftInVault(path: string): boolean {
     return /^workspace[^/]*\.json$/i.test(rest) || /^(plugins|themes|cache)\//i.test(rest)
   }
 
-  return /^(?:[^/]+\/)?\.trash\//.test(path)
+  const parts = path.split('/')
+  const name = parts.pop() ?? ''
+  return name.startsWith('.') || parts.some((one) => one.startsWith('.') || one === 'node_modules')
 }
 
 /** The habits the vault's `app.json` records. Read from what was picked rather

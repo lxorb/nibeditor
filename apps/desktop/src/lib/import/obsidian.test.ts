@@ -40,6 +40,12 @@ describe('an Obsidian vault', () => {
     expect(leftInVault('.obsidian/themes/Minimal/theme.css')).toBe(true)
     expect(leftInVault('.trash/Old.md')).toBe(true)
     expect(leftInVault('Vault/.trash/Old.md')).toBe(true)
+    // Another program's, as the vault list leaves them; see obsidian_vaults.rs.
+    expect(leftInVault('.git/HEAD')).toBe(true)
+    expect(leftInVault('.git/objects/ab/cdef0123')).toBe(true)
+    expect(leftInVault('.stversions/A.md')).toBe(true)
+    expect(leftInVault('Projects/node_modules/x/index.js')).toBe(true)
+    expect(leftInVault('.gitignore')).toBe(true)
 
     expect(leftInVault('.obsidian/app.json')).toBe(false)
     expect(leftInVault('.obsidian/templates.json')).toBe(false)
@@ -52,6 +58,8 @@ describe('an Obsidian vault', () => {
       file('.obsidian/app.json', '{}'),
       file('.obsidian/workspace.json', '{}'),
       file('.trash/Gone.md', '# Gone'),
+      file('.git/HEAD', 'ref: refs/heads/main'),
+      file('.git/objects/ab/cdef', 'blob'),
       file('Projects/Plan.md', '# Plan\n\nSee [[Ideas]]'),
       file('Ideas.md', '# Ideas'),
     ])
