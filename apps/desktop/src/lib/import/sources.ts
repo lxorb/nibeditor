@@ -139,19 +139,53 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
 const CP437 =
   'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■\u00a0'
 
+/** The code page Windows' "Compressed (zipped) folder" writes names in on a system
+ *  set to each language: its OEM code page, which is 437 only on an American one.
+ *  Only those a browser can read; every other language is read as 437, which keeps
+ *  the accented letters of the Western European ones. */
+const OEM: Record<string, string> = {
+  ja: 'shift_jis',
+  zh: 'gbk',
+  'zh-tw': 'big5',
+  'zh-hk': 'big5',
+  'zh-mo': 'big5',
+  'zh-hant': 'big5',
+  ko: 'euc-kr',
+  ru: 'ibm866',
+  uk: 'ibm866',
+  be: 'ibm866',
+  bg: 'ibm866',
+  kk: 'ibm866',
+  th: 'windows-874',
+}
+
+/** The code page of this system's own Windows, by the language it is set to. A zip
+ *  that does not say how its names are written was most likely made on the machine
+ *  importing it, or one set up like it, and nothing in the zip says otherwise. */
+function oemCodePage(): string | null {
+  const tag = (typeof navigator === 'undefined' ? '' : navigator.language).toLowerCase()
+  const parts = tag.split('-')
+  return OEM[parts.slice(0, 2).join('-')] ?? OEM[parts[0] ?? ''] ?? null
+}
+
 /** A name in a zip that does not say it is UTF-8. macOS writes UTF-8 without saying
- *  so, and its names read as UTF-8; a name that does not is code page 437, the way
- *  Windows wrote it, so `Café.md` arrives as itself rather than with a broken letter
+ *  so, and its names read as UTF-8; a name that does not is in the code page of the
+ *  Windows that wrote it, `メモ.md` in Shift-JIS on a Japanese one and `Café.md` in
+ *  437 on an American one, so each arrives as itself rather than as broken letters
  *  that no link to it matches. */
 function zipName(bytes: Uint8Array | readonly unknown[]): string {
   const said = Uint8Array.from(bytes as ArrayLike<number>)
-  try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(said)
-  } catch {
-    return Array.from(said, (one) =>
-      one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''),
-    ).join('')
+  for (const page of ['utf-8', oemCodePage()]) {
+    if (page === null) continue
+    try {
+      return new TextDecoder(page, { fatal: true }).decode(said)
+    } catch {
+      // Not that code page; the next one is tried.
+    }
   }
+  return Array.from(said, (one) =>
+    one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''),
+  ).join('')
 }
 
 /** A file whose bytes are only decompressed when a reader asks for them, kept

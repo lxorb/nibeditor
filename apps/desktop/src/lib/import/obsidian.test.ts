@@ -1,5 +1,5 @@
 import JSZip from 'jszip'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 import { setLinkWriting } from '../link-format'
 import { carriedBy, NOTION } from './carry'
@@ -945,6 +945,31 @@ describe('the files in a vault', () => {
       'Crème.md',
       'Home.md',
     ])
+  })
+
+  test('keep their Japanese names from a zip a Japanese Windows made', async () => {
+    const ascii = (said: string) => [...new TextEncoder().encode(said)]
+    // `メモ` in code page 932 (Shift-JIS), the code page a Japanese Windows writes in.
+    const memo = [0x83, 0x81, 0x83, 0x82]
+    const zip = windowsZip([
+      [new Uint8Array(ascii('Brain/.obsidian/app.json')), '{}'],
+      [new Uint8Array(ascii('Brain/Home.md')), 'See [[メモ]]\n'],
+      [new Uint8Array([...ascii('Brain/'), ...memo, ...ascii('.md')]), '# メモ\n'],
+    ])
+
+    vi.stubGlobal('navigator', { language: 'ja-JP' })
+    try {
+      const sources = await sourcesFrom([
+        { name: 'Brain.zip', arrayBuffer: async () => zip.slice().buffer },
+      ])
+      await expect(pathsFrom(sources)).resolves.toEqual([
+        '.obsidian/app.json',
+        'Home.md',
+        'メモ.md',
+      ])
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   test('land at the top of the space with their settings when a hidden file sits beside the vault', async () => {
