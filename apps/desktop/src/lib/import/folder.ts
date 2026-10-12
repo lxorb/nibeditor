@@ -12,7 +12,7 @@
 import type { Meta } from './meta'
 import { keptText, noteText } from './meta'
 import type { FormatId, ImportPlan, Lost, Planned } from './plan'
-import { ExportFiles, rewriteLinks } from './rewrite'
+import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
 /** What a note's file says, once the format has had a look at it. */
@@ -47,6 +47,9 @@ export async function folderPlan(
 ): Promise<ImportPlan> {
   const placed: { source: Source; to: string; read: Placement['read'] }[] = []
   const files = new ExportFiles()
+  // What the import renamed on the way in, by the path the export gave it, which is
+  // how a canvas in the export names it.
+  const renamed = new Map<string, string>()
 
   // Everything is placed before anything is read, because a link in the first
   // note can point at the last file in the export.
@@ -56,13 +59,16 @@ export async function folderPlan(
 
     placed.push({ source, to: placement.to, read: placement.read })
     files.add(source.path, { path: placement.to, name: nameFor(placement.to) })
+    if (placement.to !== source.path) renamed.set(source.path, placement.to)
   }
 
   const written: Planned[] = []
 
   for (const one of placed) {
     if (!one.read) {
-      written.push({ kind: 'file', path: one.to, bytes: await one.source.bytes() })
+      const bytes = await one.source.bytes()
+      const kept = renamed.size && isCanvas(one.to) ? canvasFollowed(bytes, renamed) : bytes
+      written.push({ kind: 'file', path: one.to, bytes: kept })
       continue
     }
 

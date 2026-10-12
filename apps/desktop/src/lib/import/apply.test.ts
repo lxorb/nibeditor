@@ -155,6 +155,23 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a canvas card follows the note it shows', () => {
+    const board = '{"nodes":[{"id":"a","type":"file","file":"Plan.md"}],"edges":[]}'
+    const stamped = restamped(
+      planOf([
+        note('Plan.md', '# Plan'),
+        { kind: 'file', path: 'Board.canvas', bytes: new TextEncoder().encode(board) },
+      ]),
+      new Set(['plan.md']),
+      '',
+    )
+    const canvas = stamped.files.find((one) => one.path === 'Board.canvas')
+
+    expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(
+      board.replace('Plan.md', 'Plan 2.md'),
+    )
+  })
+
   test('two of the import1s own notes cannot land on one name', () => {
     const taken = new Set(['a.md', 'a 2.md'])
     const stamped = restamped(planOf([note('A.md', 'one'), note('A.md', 'two')]), taken, '')

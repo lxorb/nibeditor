@@ -213,6 +213,46 @@ export function rewriteLinks(
   )
 }
 
+/** A canvas whose file cards point at where the files they show went: `moved` maps
+ *  a path as the canvas names it to the one the file has now. JSON Canvas names a
+ *  file by its path from the top of the vault, so a card would otherwise go on
+ *  showing a name the import changed, or a note of that name that was already in
+ *  the space. Only those paths are written again, each in its place, so the rest
+ *  of the file stays byte for byte; a canvas that is not UTF-8 is not one, and is
+ *  left as it came. */
+export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, string>): Uint8Array {
+  let text: string
+  try {
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+  } catch {
+    return bytes
+  }
+
+  const followed = text.replace(
+    /("file"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
+    (whole, key: string, said: string) => {
+      const now = moved.get(jsonString(said) ?? '')
+      return now === undefined ? whole : `${key}${JSON.stringify(now)}`
+    },
+  )
+  return followed === text ? bytes : new TextEncoder().encode(followed)
+}
+
+/** What a JSON string says, or null for one that is not valid JSON. */
+function jsonString(said: string): string | null {
+  try {
+    const value: unknown = JSON.parse(said)
+    return typeof value === 'string' ? value : null
+  } catch {
+    return null
+  }
+}
+
+/** Whether this file is a canvas, whose cards name the files they show. */
+export function isCanvas(path: string): boolean {
+  return /\.canvas$/i.test(path)
+}
+
 /** Where the note's tables are, as stretches of its text: the header row, the row of
  *  dashes under it and every row after, up to the first blank line. A callout's or a
  *  quote's `>` in front of each line is a table in there all the same. */

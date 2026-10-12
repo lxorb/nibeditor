@@ -39,7 +39,7 @@ import { writeBytes, writeFile } from '../workspace/write-file'
 
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
-import { codeRanges, inCode } from './rewrite'
+import { canvasFollowed, codeRanges, inCode, isCanvas } from './rewrite'
 
 /** Where an import lands: a space, and a folder inside it. */
 export interface ImportTarget {
@@ -172,7 +172,11 @@ export function restamped(
   }
 
   const files = placed.map(({ file, was, now }) => {
-    if (file.kind === 'file') return { ...file, path: now }
+    if (file.kind === 'file') {
+      // A canvas's cards follow the same way, since they name the import's files too.
+      const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes
+      return { ...file, path: now, bytes }
+    }
     const text = moved.size ? followed(file.text, was, moved) : file.text
     return { ...file, path: now, text }
   })

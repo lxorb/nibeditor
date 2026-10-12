@@ -719,6 +719,21 @@ describe('the files in a vault', () => {
     expect(home?.kind === 'note' && home.text).toBe('See [[Con-. Law]].\n')
   })
 
+  test('renamed for Windows are still what a canvas card shows', async () => {
+    const board =
+      '{\n  "nodes": [{ "id": "a", "type": "file", "file": "Questions/Why?.md" }],\n  "edges": []\n}'
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Questions/Why?.md', '# Why'),
+      file('Questions/Board.canvas', board),
+    ])
+    const canvas = plan.files.find((one) => one.path === 'Questions/Board.canvas')
+    expect(plan.files.map((one) => one.path)).toContain('Questions/Why.md')
+    expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(
+      board.replace('Why?.md', 'Why.md'),
+    )
+  })
+
   test('keep their links when a rename for Windows gives one a namesake', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),

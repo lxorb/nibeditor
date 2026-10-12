@@ -87,8 +87,9 @@ version history has them, the file list has the rows before the sheet closes, an
 none of it knows whether it is running on a desktop, in a browser or on a phone.
 
 **Nothing is written over.** A name that is taken steps aside the way a new note's
-does - `Plan 2.md` - and the links inside the import follow it, so an import that
-landed beside notes of the same name still points at its own notes.
+does - `Plan 2.md` - and the links inside the import follow it, a canvas's cards
+among them, so an import that landed beside notes of the same name still points at
+its own notes. A link written as an example in code is words, and stays as it was.
 
 **The whole import is one thing to undo.** However many thousand files it wrote,
 what somebody did was import once. Undoing takes the files away outright rather
