@@ -31,7 +31,7 @@ import { freePath } from '@nib/markdown/paths'
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
-import { joinPath } from '../tauri'
+import { invoke, joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
@@ -66,8 +66,7 @@ export async function applyImport(
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
-  const stamped = restamped(plan, takenIn(target), target.folder)
-  const files = judged(stamped.files)
+  const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
   let done = 0
 
@@ -90,7 +89,7 @@ export async function applyImport(
     if (paths.length) await landed(paths)
   }
 
-  return { paths, stepped: stamped.stepped }
+  return { paths, stepped }
 }
 
 /** What an import that wrote something owes the rest of the app. */
@@ -123,6 +122,39 @@ function judged(files: readonly Planned[]): Planned[] {
 }
 
 const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
+
+/** The plan restamped, its paths judged, and nothing landing on a file that is
+ *  already there. The file list knows only the open space, and only what a tab can
+ *  hold, so a picture, a file in `.obsidian/` or any file of another space is not
+ *  in it: the disk is asked about every path the import would write as well, and a
+ *  path it holds is taken like any other, until no path the import would write is
+ *  one. A disk that cannot be asked, a page in a browser, has the list's word. */
+async function restampedOnDisk(
+  plan: ImportPlan,
+  target: ImportTarget,
+): Promise<{ files: Planned[]; stepped: number }> {
+  const taken = takenIn(target)
+  const there = new Map<string, boolean>()
+
+  for (;;) {
+    const stamped = restamped(plan, taken, target.folder)
+    const files = judged(stamped.files)
+
+    const asking = [...new Set(files.map((file) => file.path))].filter((path) => !there.has(path))
+    const answers = await Promise.all(asking.map((path) => onDisk(joinPath(target.root, path))))
+    asking.forEach((path, at) => there.set(path, answers[at] === true))
+
+    const held = files.filter((file) => there.get(file.path))
+    if (!held.length) return { files, stepped: stamped.stepped }
+    for (const file of held) taken.add(nameKey(file.path))
+  }
+}
+
+/** Whether a file is at this path: `file_stamp` answers nothing where there is none. */
+async function onDisk(path: string): Promise<boolean> {
+  const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+  return stamp !== null && stamp !== undefined
+}
 
 /** Every path the space already holds, as the one name it is (see `nameKey`), so a
  *  name that is taken can be recognised however it is spelled. */

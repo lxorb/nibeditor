@@ -12,9 +12,20 @@ let refusing: string | null = null
 /** What the import handed the undo stack. */
 const recorded: unknown[] = []
 
+/** What each note was written as. */
+const said = new Map<string, string>()
+
+/** What is on the disk already, which the file list may not show: a picture, a file
+ *  in a hidden folder, a file of a space that is not the one open. */
+const onDisk = new Set<string>()
+
 vi.mock('../tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
+    if (command === 'file_stamp') {
+      return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
+    }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
+    if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
     return Promise.resolve()
   },
@@ -50,6 +61,8 @@ beforeEach(() => {
   heard.length = 0
   recorded.length = 0
   refusing = null
+  onDisk.clear()
+  said.clear()
 })
 
 function planOf(files: Planned[]): ImportPlan {
@@ -281,6 +294,52 @@ describe('a vault landed beside notes of the same name', () => {
 
     expect(files.map((one) => one.path)).toContain('Inbox/Screenshot (1) 2.png')
     expect(textAt(files, 'Inbox/Trip.md')).toBe('![](Screenshot%20%281%29%202.png)\n')
+  })
+})
+
+describe('an import into a space that already holds an earlier copy', () => {
+  test('does not write over a picture the file list does not show', async () => {
+    // A picture is not in the file list, which lists only what a tab can hold.
+    onDisk.add('/Space/Brain/photo.png')
+    onDisk.add('/Space/Brain/.obsidian/app.json')
+    const landed = await applyImport(
+      planOf([
+        note('Home.md', 'Look: ![[photo.png]]\n'),
+        file('photo.png'),
+        file('.obsidian/app.json'),
+      ]),
+      { root: '/Space', folder: 'Brain' },
+    )
+
+    expect(landed.paths).toEqual([
+      '/Space/Brain/Home.md',
+      '/Space/Brain/photo 2.png',
+      '/Space/Brain/.obsidian/app 2.json',
+    ])
+    expect(landed.stepped).toBe(2)
+  })
+
+  test('has the note follow the picture that stepped aside', async () => {
+    onDisk.add('/Space/Brain/photo.png')
+    await applyImport(planOf([note('Home.md', 'Look: ![[photo.png]]\n'), file('photo.png')]), {
+      root: '/Space',
+      folder: 'Brain',
+    })
+
+    expect(said.get('/Space/Brain/Home.md')).toBe('Look: ![[photo 2.png]]\n')
+    expect(wrote.map((one) => one.path)).not.toContain('/Space/Brain/photo.png')
+  })
+
+  test('does not write over notes of a space that is not the one open', async () => {
+    // The file list is the open space's; this one is only on the disk.
+    onDisk.add('/Other/Brain/Home.md')
+    onDisk.add('/Other/Brain/Home 2.md')
+    const landed = await applyImport(planOf([note('Home.md', '# Home, the new copy\n')]), {
+      root: '/Other',
+      folder: 'Brain',
+    })
+
+    expect(landed.paths).toEqual(['/Other/Brain/Home 3.md'])
   })
 })
 

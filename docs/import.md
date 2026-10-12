@@ -90,6 +90,9 @@ none of it knows whether it is running on a desktop, in a browser or on a phone.
 does - `Plan 2.md` - and the links inside the import follow it, a canvas's cards
 among them, so an import that landed beside notes of the same name still points at
 its own notes. A link written as an example in code is words, and stays as it was.
+What is taken is asked of the disk too, for every path the import would write, so a
+picture, a file in `.obsidian/` or a note of a space that is not the one open is
+never written over either, though the file list shows none of them.
 
 **The whole import is one thing to undo.** However many thousand files it wrote,
 what somebody did was import once. Undoing takes the files away outright rather
