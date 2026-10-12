@@ -14,12 +14,15 @@
  *  is beats two. */
 
 import { convertTags } from './convert'
+import { isHidden } from './folder'
 import { readPlain } from './plain'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
+/** Hidden files stay behind, as from any folder of notes: Bear writes none, and a
+ *  folder taken for its export may be somebody's notes kept in git. */
 export function readBear(sources: readonly Source[]): Promise<ImportPlan> {
-  return readPlain(sources, { format: 'bear', words: bearTags })
+  return readPlain(sources, { format: 'bear', words: bearTags, skip: isHidden })
 }
 
 /** Bear's closed tags as nib's, leaving every fenced block exactly as written. */

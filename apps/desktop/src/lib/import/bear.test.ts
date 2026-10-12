@@ -49,4 +49,15 @@ describe('a Bear export', () => {
     expect(note?.kind === 'note' && note.text).toContain('#travel-notes')
     expect(note?.kind === 'note' && note.text).toContain('[[Kit]]')
   })
+
+  test('leaves hidden files behind, as a folder of notes does', async () => {
+    const plan = await readBear([
+      file('Trip.md', '# Trip\n\n#travel notes#\n'),
+      file('.git/config', '[core]\n'),
+      file('.gitignore', '.obsidian/\n'),
+      file('.trash/Old draft.md', '# Thrown away\n'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toEqual(['Trip.md'])
+  })
 })

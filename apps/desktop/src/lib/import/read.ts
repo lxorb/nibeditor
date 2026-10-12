@@ -19,6 +19,9 @@ import type { Rows } from './table'
  *  few enough that a zip of six thousand notes is not unpacked to answer it. */
 const PEEK = 20
 
+/** One of Bear's closed tags, as `CLOSED_TAG` in convert.ts reads them. */
+const CLOSED_TAG = /(^|[\s(])#[^\s#`[\]\n](?:[^#`[\]\n]{0,58}[^\s#`[\]\n])?#(?![\w#])/m
+
 /** Obsidian's own folder at the top of a vault, or one folder down. */
 const VAULT = /^([^/]+\/)?\.obsidian\//
 
@@ -161,12 +164,14 @@ async function jsonKind(sources: readonly Source[]): Promise<FormatId | null> {
 
 /** Bear's closed tags, which nothing else writes: `#two words#`. One is enough to
  *  say where a folder of markdown came from, and the only difference it makes is
- *  that those tags are tidied. */
+ *  that those tags are tidied. Held to what convert.ts reads as one, with no space
+ *  just inside either hash, so two ordinary tags on a line, `#project #work`, are
+ *  not taken for one. */
 async function looksLikeBear(sources: readonly Source[]): Promise<boolean> {
   const notes = sources.filter((one) => /\.(md|markdown)$/i.test(one.path)).slice(0, PEEK)
 
   for (const note of notes) {
-    if (/(^|[\s(])#[^#\s][^#\n]{0,60}#/m.test(await note.text())) return true
+    if (CLOSED_TAG.test(await note.text())) return true
   }
 
   return false

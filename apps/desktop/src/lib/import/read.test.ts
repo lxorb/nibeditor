@@ -126,6 +126,20 @@ describe('which app an export came out of', () => {
     await expect(detect([file('A.md', '# A\n\nplain words')])).resolves.toBe('markdown')
   })
 
+  test('a folder of notes with two ordinary tags on a line is a folder of notes', async () => {
+    const sources = [
+      file('Home.md', '# Home\n\nTags: #project #work\n'),
+      file('Plan.md', '# Plan\n'),
+      file('.git/config', '[core]\n'),
+      file('.trash/Old draft.md', '# Thrown away\n'),
+    ]
+    const format = await detect(sources)
+    expect(format).toBe('markdown')
+
+    const plan = await readAs(format ?? 'markdown', sources)
+    expect(plan.files.map((one) => one.path).sort()).toEqual(['Home.md', 'Plan.md'])
+  })
+
   test('a OneNote page says so in its own markup', async () => {
     const page = '<html><head><meta name="Generator" content="Microsoft OneNote 15"></head></html>'
 
