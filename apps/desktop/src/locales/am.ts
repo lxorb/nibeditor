@@ -992,6 +992,9 @@ export const am: Dictionary = {
   'AI account: {name}': 'የAI መለያ: {name}',
   Accounts: 'መለያዎች',
   Access: 'መዳረሻ',
+  Helpers: 'ረዳቶች',
+  'Start helpers on your AI accounts': 'በAI መለያዎችዎ ላይ ረዳቶችን ያስጀምሩ',
+  Delegated: 'ተሰጥቷል',
   'Code theme: {name}': 'የኮድ ገጽታ: {name}',
   'Delete a layout': 'አቀማመጥ አጥፋ',
   // Keyboards and modal editing

@@ -997,6 +997,9 @@ export const vi: Dictionary = {
   'AI account: {name}': 'Tài khoản AI: {name}',
   Accounts: 'Tài khoản',
   Access: 'Quyền truy cập',
+  Helpers: 'Trợ thủ',
+  'Start helpers on your AI accounts': 'Chạy trợ thủ trên tài khoản AI của bạn',
+  Delegated: 'Đã giao',
   'Code theme: {name}': 'Chủ đề mã: {name}',
   'Delete a layout': 'Xoá một bố cục',
   // Keyboards and modal editing

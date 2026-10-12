@@ -990,6 +990,9 @@ export const th: Dictionary = {
   'AI account: {name}': 'บัญชี AI: {name}',
   Accounts: 'บัญชี',
   Access: 'การเข้าถึง',
+  Helpers: 'ผู้ช่วย',
+  'Start helpers on your AI accounts': 'เริ่มผู้ช่วยในบัญชี AI ของคุณ',
+  Delegated: 'มอบหมายแล้ว',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
   // Keyboards and modal editing

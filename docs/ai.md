@@ -322,6 +322,40 @@ Keys are read back, because the request is made by the page. They are never
 cached in a variable, never written to a note, never synced, never logged, and
 never put in an error message.
 
+## Helpers
+
+Emil, 2026-10-12: "claude can create subagents of openai models. e.g. claude opus 5.5
+creating an astra subagent in the same way as it would create a subagent of claude."
+
+`run_agent` is one of nib's tools, shaped like Claude Code's own `Agent` tool and Codex's
+`spawn_agent`: a few words of `description`, the whole task as `prompt`, a `model` (`opus`,
+`sonnet`, `gpt-6-astra`, `astra`, or nothing for the asking agent's own), an `effort`, and
+a `subagent_type` naming an agent profile (a note whose front matter says `agent:`, 4.7 in
+docs/ai-sidebar.md). The helper is a thread of its own on the provider that model is on,
+answered by that provider's account in use: titled `↳ description` in the thread list, its
+answer this call's result. So Opus in the AI panel starts an Astra helper the way it would
+start a subagent, Astra starts a Claude one the same way, and an API key's loop, Claude
+Code and Codex all call the same tool (`lib/ai/helpers`). The sidebar's Claude Code has no
+subagent tool of its own (`--tools ""`), so this is its subagent tool.
+
+- **Which model**: each provider in use is asked what it lists, the asking agent's own
+  first; an exact id or name wins, then one that holds the word; a word nobody has is
+  refused with the models there are (`helpers/route.ts`).
+- **How it is waited for**: a call waits twenty seconds in the window, under the half
+  minute the endpoint gives it; `nib mcp` then holds the call open and asks `agent_result`
+  until the helper has ended, up to nine of the ten minutes each program gives a tool, and
+  the model is told to call `agent_result` past that. The API loop waits outright.
+- **Which thread**: a panel session's `nib mcp` is told its thread beside its token
+  (`NIB_MCP_THREAD`, per Claude Code session and per Codex thread), so a helper is its
+  thread's: in its mode, and stopped with it.
+- **Limits**: two deep under the thread the reader started (Claude Code's own is three),
+  four at once under one, fifteen minutes each, the API loop's step limit; a helper works in
+  its parent's mode and never more, with its own provider's built-in grant. Stop on a thread
+  stops every helper under it; a helper that ends takes its own with it.
+- **Who may**: the grant scope `agents`, "Start helpers on your AI accounts": on for the
+  sidebar's own agents and the reader's own clients, off for somebody else's tool. A grant
+  made before helpers is given it as a new one of its kind would be.
+
 ## The block
 
 The prompt is the body of a ```` ```ai ```` fence. The answer is ordinary

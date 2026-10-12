@@ -1010,6 +1010,9 @@ export const kn: Dictionary = {
   'AI account: {name}': 'AI ಖಾತೆ: {name}',
   Accounts: 'ಖಾತೆಗಳು',
   Access: 'ಪ್ರವೇಶ',
+  Helpers: 'ಸಹಾಯಕರು',
+  'Start helpers on your AI accounts': 'ನಿಮ್ಮ AI ಖಾತೆಗಳಲ್ಲಿ ಸಹಾಯಕರನ್ನು ಪ್ರಾರಂಭಿಸಿ',
+  Delegated: 'ವಹಿಸಲಾಗಿದೆ',
   'Code theme: {name}': 'ಕೋಡ್ ಥೀಮ್: {name}',
   'Delete a layout': 'ಲೇಔಟ್ ಅಳಿಸಿ',
   // Keyboards and modal editing

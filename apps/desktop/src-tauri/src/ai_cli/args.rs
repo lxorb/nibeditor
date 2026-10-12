@@ -163,6 +163,16 @@ pub const SERVER: &str = "nib";
 /// and Codex is told to pass this one on (`env_vars`). Never on a command line.
 pub const TOKEN_VAR: &str = "NIB_MCP_TOKEN";
 
+/// The variable `nib mcp` reads which nib thread a session is for, so a helper it starts
+/// is that thread's (src/mcp/link.rs). Not a secret: an id of the window's own.
+pub const THREAD_VAR: &str = "NIB_MCP_THREAD";
+
+/// A Codex thread's `nib mcp` told which nib thread it is for: the server's own
+/// environment in the thread's config, sent on stdin like the rest of it.
+pub fn with_thread(params: &mut Value, thread: &str) {
+    params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
+}
+
 /// How long either program waits for one nib tool: ten minutes, since in Approve a call
 /// waits for the reader to approve it (src/mcp/link.rs).
 const TOOL_SECONDS: u64 = 600;
@@ -630,6 +640,14 @@ mod tests {
         assert!(agent.get("model").is_none());
         let words = codex_thread(None, None, &nib, &folder);
         assert_eq!(words["config"], json!({}));
+
+        // The nib thread a session is for reaches its `nib mcp` alone, for its helpers.
+        let mut helped = codex_thread(Some(Mode::Agent), None, &nib, &folder);
+        with_thread(&mut helped, "nib-thread-1");
+        assert_eq!(
+            helped["config"]["mcp_servers.nib.env"],
+            json!({ THREAD_VAR: "nib-thread-1" })
+        );
     }
 
     #[test]

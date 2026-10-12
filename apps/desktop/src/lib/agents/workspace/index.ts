@@ -42,6 +42,7 @@ import { getContext, workspaceTabs } from './tabs'
 import { runTerminal } from './terminal'
 import { readTerminal, typeTerminal } from './terminal-tab'
 import { recentlyDeleted } from './deleted'
+import { agentResult, runAgent } from './helpers'
 import { createFolder, listNotes, moveFile, trashFile } from './tree'
 import { listVersions, restoreVersion } from './versions'
 
@@ -104,6 +105,8 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   draft_message: draftMessage,
   post_message: postMessage,
   react,
+  run_agent: runAgent,
+  agent_result: agentResult,
 }
 
 /** Every verb here, by name: the dispatcher's agent rows, which a test holds to this. */

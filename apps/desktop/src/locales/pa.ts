@@ -1009,6 +1009,9 @@ export const pa: Dictionary = {
   'AI account: {name}': 'AI ਖਾਤਾ: {name}',
   Accounts: 'ਖਾਤੇ',
   Access: 'ਪਹੁੰਚ',
+  Helpers: 'ਸਹਾਇਕ',
+  'Start helpers on your AI accounts': 'ਆਪਣੇ AI ਖਾਤਿਆਂ ਤੇ ਸਹਾਇਕ ਸ਼ੁਰੂ ਕਰੋ',
+  Delegated: 'ਸੌਂਪਿਆ',
   'Code theme: {name}': 'ਕੋਡ ਥੀਮ: {name}',
   'Delete a layout': 'ਖਾਕਾ ਮਿਟਾਓ',
   // Keyboards and modal editing

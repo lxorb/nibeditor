@@ -1011,6 +1011,9 @@ export const sw: Dictionary = {
   'AI account: {name}': 'Akaunti ya AI: {name}',
   Accounts: 'Akaunti',
   Access: 'Ufikiaji',
+  Helpers: 'Wasaidizi',
+  'Start helpers on your AI accounts': 'Anzisha wasaidizi kwenye akaunti zako za AI',
+  Delegated: 'Imekabidhiwa',
   'Code theme: {name}': 'Mandhari ya kodi: {name}',
   'Delete a layout': 'Futa mpangilio',
   // Keyboards and modal editing

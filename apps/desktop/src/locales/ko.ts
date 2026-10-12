@@ -996,6 +996,9 @@ export const ko: Dictionary = {
   'AI account: {name}': 'AI 계정: {name}',
   Accounts: '계정',
   Access: '접근',
+  Helpers: '도우미',
+  'Start helpers on your AI accounts': 'AI 계정에서 도우미 시작',
+  Delegated: '맡김',
   'Code theme: {name}': '코드 테마: {name}',
   'Delete a layout': '레이아웃 삭제',
   // Keyboards and modal editing

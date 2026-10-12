@@ -1004,6 +1004,9 @@ export const ur: Dictionary = {
   'AI account: {name}': 'اے آئی اکاؤنٹ: {name}',
   Accounts: 'اکاؤنٹس',
   Access: 'رسائی',
+  Helpers: 'معاونین',
+  'Start helpers on your AI accounts': 'اپنے اے آئی اکاؤنٹس پر معاون شروع کریں',
+  Delegated: 'سپرد کیا',
   'Code theme: {name}': 'کوڈ تھیم: {name}',
   'Delete a layout': 'لے آؤٹ حذف کریں',
   // Keyboards and modal editing

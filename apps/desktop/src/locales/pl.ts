@@ -1039,6 +1039,9 @@ export const pl: Dictionary = {
   'AI account: {name}': 'Konto AI: {name}',
   Accounts: 'Konta',
   Access: 'Dostęp',
+  Helpers: 'Pomocnicy',
+  'Start helpers on your AI accounts': 'Uruchamiać pomocników na twoich kontach AI',
+  Delegated: 'Zlecono',
   'Code theme: {name}': 'Motyw kodu: {name}',
   'Delete a layout': 'Usuń układ',
   // Keyboards and modal editing

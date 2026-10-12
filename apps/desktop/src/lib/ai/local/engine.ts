@@ -183,6 +183,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           mode: thread.mode,
           model: thread.model || null,
           effort: levelOf(kind, thread.effort),
+          thread: thread.id,
         },
         (said) => {
           if (box.live?.hear) box.live.hear(said)

@@ -163,6 +163,11 @@ class Chat implements Panel {
     return this.open
   }
 
+  /** A thread this run has held, by id: what a helper is started under. */
+  threadOf(id: string): Thread | null {
+    return this.live.get(id) ?? (this.open?.id === id ? this.open : null)
+  }
+
   /** The provider a new thread asks: Settings > AI > Used for > Ask's. */
   private providerForNew(): Provider | null {
     return ai.providerFor('ask')
@@ -604,10 +609,14 @@ class Chat implements Panel {
     void engineOf(provider.kind).then((engine) => engine.steer(thread, text))
   }
 
-  /** Stops the open thread's turn; what arrived stays. */
+  /** Stops the open thread's turn, and every helper it started; what arrived stays. */
   stop(): void {
     const id = this.open?.id
-    if (id) this.stoppers.get(id)?.abort()
+    if (!id) return
+    this.stoppers.get(id)?.abort()
+    void import('../helpers/helpers.svelte').then(({ helpers }) => {
+      helpers.stopUnder(id)
+    })
   }
 
   get busy(): boolean {

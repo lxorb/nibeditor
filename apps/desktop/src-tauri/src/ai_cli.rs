@@ -481,6 +481,9 @@ pub struct Opening {
     /// The account the thread's provider answers with: its home, where it has one.
     #[serde(default)]
     account: Option<String>,
+    /// The nib thread it is for, which the helpers it starts belong to.
+    #[serde(default)]
+    thread: Option<String>,
 }
 
 /// Opens a session named `id`: a Claude Code of its own, or a thread on the window's
@@ -496,6 +499,9 @@ pub fn ai_cli_open(
     let owner = owner(&webview)?;
     usable(&id)?;
     offered(opening.tool)?;
+    if let Some(thread) = &opening.thread {
+        usable(thread)?;
+    }
     let tool = opening.tool;
     let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
     let app = webview.app_handle().clone();
@@ -547,8 +553,11 @@ pub fn ai_cli_open(
                 home: home.clone(),
             };
             let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
-            let fork_of = opening.fork_of.as_deref();
-            host.open(&id, output, opening.mode, model, opening.effort, fork_of)?;
+            let from = codex_app::From {
+                fork_of: opening.fork_of.as_deref(),
+                thread: opening.thread.as_deref(),
+            };
+            host.open(&id, output, opening.mode, model, opening.effort, from)?;
             On::Codex(host)
         }
     };
@@ -595,6 +604,9 @@ fn claude_command(
     command.envs(args::CLAUDE_SESSION_ENV);
     if let Some(token) = token {
         command.env(args::TOKEN_VAR, token);
+        if let Some(thread) = &opening.thread {
+            command.env(args::THREAD_VAR, thread);
+        }
     }
     Ok(command)
 }
@@ -1185,11 +1197,21 @@ mod tests {
             Some(Mode::Plan),
             Some("gpt-fake"),
             Some(Effort::Xhigh),
-            None,
+            codex_app::From {
+                fork_of: None,
+                thread: Some("nib-thread-1"),
+            },
         )
         .expect("opened");
-        host.open("two", two, Some(Mode::Agent), None, None, None)
-            .expect("opened");
+        host.open(
+            "two",
+            two,
+            Some(Mode::Agent),
+            None,
+            None,
+            codex_app::From::default(),
+        )
+        .expect("opened");
 
         // Said before the thread is there: held, then sent.
         host.say("one", turn("what is a heron")).expect("said");
@@ -1256,7 +1278,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("slow", false, dir.path());
         let (output, heard) = route();
-        host.open("t", output, None, None, None, None)
+        host.open("t", output, None, None, None, codex_app::From::default())
             .expect("opened");
         host.say("t", turn("a long answer")).expect("said");
         until(&heard, TELLING, |one| {
@@ -1285,7 +1307,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("approval", false, dir.path());
         let (output, heard) = route();
-        host.open("t", output, None, None, None, None)
+        host.open("t", output, None, None, None, codex_app::From::default())
             .expect("opened");
         host.say("t", turn("run something")).expect("said");
         // The stand-in ends the turn only once answered, and says what the answer was.
@@ -1304,8 +1326,15 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("answer", false, dir.path());
         let (output, heard) = route();
-        host.open("t", output, Some(Mode::Agent), None, None, None)
-            .expect("opened");
+        host.open(
+            "t",
+            output,
+            Some(Mode::Agent),
+            None,
+            None,
+            codex_app::From::default(),
+        )
+        .expect("opened");
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.err.contains("token")));
         host.stop();

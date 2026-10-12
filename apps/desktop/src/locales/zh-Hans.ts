@@ -986,6 +986,9 @@ export const zhHans: Dictionary = {
   'AI account: {name}': 'AI 账户：{name}',
   Accounts: '账户',
   Access: '访问',
+  Helpers: '助手',
+  'Start helpers on your AI accounts': '在你的 AI 账户上启动助手',
+  Delegated: '已委派',
   'Code theme: {name}': '代码主题：{name}',
   'Delete a layout': '删除布局',
   // Keyboards and modal editing

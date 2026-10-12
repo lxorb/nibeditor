@@ -1013,6 +1013,9 @@ export const ml: Dictionary = {
   'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
   Accounts: 'അക്കൗണ്ടുകൾ',
   Access: 'ആക്സസ്',
+  Helpers: 'സഹായികൾ',
+  'Start helpers on your AI accounts': 'നിങ്ങളുടെ AI അക്കൗണ്ടുകളിൽ സഹായികളെ ആരംഭിക്കുക',
+  Delegated: 'ഏൽപ്പിച്ചു',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
   // Keyboards and modal editing

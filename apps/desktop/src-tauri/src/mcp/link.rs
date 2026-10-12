@@ -50,6 +50,12 @@ const APPROVAL_WAIT: Duration = Duration::from_secs(7 * 60);
 /// How often a waiting call looks for the reader's answer.
 const APPROVAL_LOOK: Duration = Duration::from_millis(400);
 
+/// How long a helper's call is held open while the helper works: inside the ten minutes
+/// each program gives a tool (`src/ai_cli/args.rs`), each look itself waiting in the
+/// window up to twenty seconds (src/lib/ai/helpers/run.ts). Past it, the model is told
+/// the helper is still running and asks again with `agent_result`.
+const HELPER_WAIT: Duration = Duration::from_secs(9 * 60);
+
 /// How long a window that is still loading has to say which verbs it answers before
 /// the link settles without them; the watch asks again every two seconds after.
 const WINDOW_WAIT: Duration = Duration::from_secs(5);
@@ -411,6 +417,9 @@ impl Link {
     /// approves inline, and the call goes ahead then.
     pub fn call(&self, verb: &str, args: &Value) -> Outcome {
         let outcome = self.call_once(verb, args);
+        if verb == "run_agent" || verb == "agent_result" {
+            return self.helped(outcome);
+        }
         let Outcome::Asked { approval, .. } = &outcome else {
             return outcome;
         };
@@ -422,6 +431,19 @@ impl Link {
             Some(false) => Outcome::failed("denied", "the reader said no"),
             None => outcome,
         }
+    }
+
+    /// A helper's answer, waited for while it says it is still working: the call is held
+    /// open the way the agent's own subagent tool holds it, up to `HELPER_WAIT`.
+    fn helped(&self, mut outcome: Outcome) -> Outcome {
+        let started = Instant::now();
+        while let Some(agent) = super::results::still_working(&outcome) {
+            if started.elapsed() >= HELPER_WAIT {
+                break;
+            }
+            outcome = self.call_once("agent_result", &json!({ "agent": agent }));
+        }
+        outcome
     }
 
     /// Waits for the reader's answer to a question: allowed, refused, or `None` when it
@@ -454,7 +476,12 @@ impl Link {
         let (Some(endpoint), Some(kept)) = (endpoint, kept) else {
             return Outcome::failed("not_paired", self.sentence());
         };
-        let asked = json!({ "verb": verb, "args": args, "rest": [] });
+        let mut asked = json!({ "verb": verb, "args": args, "rest": [] });
+        // The sidebar's own session says which thread it is, so a helper it starts is
+        // that thread's (src/ai_cli.rs sets it beside the token).
+        if let (Some(thread), Some(_)) = (thread_handed(), handed()) {
+            asked["thread"] = json!(thread);
+        }
         let said = match app::post(&endpoint, Some(&kept.token), &asked, PATIENCE) {
             Ok(said) => said,
             Err(first) => {
@@ -523,6 +550,21 @@ fn handed() -> Option<String> {
         .ok()
         .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
+
+/// The thread the app said this session is for, beside its token: an id of the window's
+/// own, letters, digits and `-`.
+fn thread_handed() -> Option<String> {
+    std::env::var(THREAD_VAR).ok().filter(|thread| {
+        !thread.is_empty()
+            && thread.len() <= 80
+            && thread
+                .bytes()
+                .all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
+    })
+}
+
+/// Where it is said; see `src/ai_cli/args.rs`.
+const THREAD_VAR: &str = "NIB_MCP_THREAD";
 
 /// A token proved: the grant it belongs to, or why not.
 fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {

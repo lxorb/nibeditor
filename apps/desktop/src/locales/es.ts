@@ -1018,6 +1018,9 @@ export const es: Dictionary = {
   'AI account: {name}': 'Cuenta de IA: {name}',
   Accounts: 'Cuentas',
   Access: 'Acceso',
+  Helpers: 'Ayudantes',
+  'Start helpers on your AI accounts': 'Iniciar ayudantes en tus cuentas de IA',
+  Delegated: 'Delegado',
   'Code theme: {name}': 'Tema del código: {name}',
   'Delete a layout': 'Eliminar una disposición',
   // Keyboards and modal editing

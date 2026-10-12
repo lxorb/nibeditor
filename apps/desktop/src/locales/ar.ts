@@ -1048,6 +1048,9 @@ export const ar: Dictionary = {
   'AI account: {name}': 'حساب الذكاء الاصطناعي: {name}',
   Accounts: 'الحسابات',
   Access: 'الوصول',
+  Helpers: 'المساعدون',
+  'Start helpers on your AI accounts': 'تشغيل مساعدين على حسابات الذكاء الاصطناعي',
+  Delegated: 'تم التفويض',
   'Code theme: {name}': 'سمة الكود: {name}',
   'Delete a layout': 'حذف تخطيط',
   // Keyboards and modal editing

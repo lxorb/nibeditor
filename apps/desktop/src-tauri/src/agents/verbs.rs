@@ -1369,6 +1369,8 @@ pub mod window {
         ("draft_message", Some(Scope::ChatsWrite)),
         ("post_message", Some(Scope::ChatsWrite)),
         ("react", Some(Scope::ChatsWrite)),
+        ("run_agent", Some(Scope::Agents)),
+        ("agent_result", Some(Scope::Agents)),
     ];
 
     /// The reader's web tabs, of every space's set, with what only the window knows

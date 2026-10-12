@@ -1006,6 +1006,9 @@ export const te: Dictionary = {
   'AI account: {name}': 'AI ఖాతా: {name}',
   Accounts: 'ఖాతాలు',
   Access: 'యాక్సెస్',
+  Helpers: 'సహాయకులు',
+  'Start helpers on your AI accounts': 'మీ AI ఖాతాలలో సహాయకులను ప్రారంభించండి',
+  Delegated: 'అప్పగించారు',
   'Code theme: {name}': 'కోడ్ థీమ్: {name}',
   'Delete a layout': 'లేఅవుట్ తొలగించు',
   // Keyboards and modal editing

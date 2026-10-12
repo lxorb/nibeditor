@@ -19,7 +19,14 @@ import { record, text, type ToolDef } from './wire'
  *  in the tests. */
 export interface Tools {
   list(provider: Provider, mode: Mode): Promise<Listed>
-  call(provider: Provider, mode: Mode, name: string, args: unknown): Promise<ToolOutput>
+  /** `thread` is the thread the loop runs for, which a helper it starts belongs to. */
+  call(
+    provider: Provider,
+    mode: Mode,
+    name: string,
+    args: unknown,
+    thread?: string,
+  ): Promise<ToolOutput>
   /** Where the reader is now: the space, the tab in front, every open tab. */
   context(provider: Provider): Promise<string>
 }
@@ -96,7 +103,14 @@ export const crateTools: Tools = {
       : ''
   },
 
-  async call(provider, mode, name, args) {
+  async call(provider, mode, name, args, thread) {
+    // A helper is the window's own to start (lib/ai/helpers), and this loop is already in
+    // the window: answered here, waited for until the helper has ended.
+    if (name === 'run_agent' || name === 'agent_result') {
+      const { answerText, helperHere } = await import('../helpers/run')
+      const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
+      return { text: answerText(answered), images: [], error: 'refused' in answered }
+    }
     try {
       const answered = await invoke<unknown>('ai_agent_call', {
         agent: agentOf(provider),

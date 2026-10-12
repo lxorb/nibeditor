@@ -1039,6 +1039,9 @@ export const uk: Dictionary = {
   'AI account: {name}': 'Обліковий запис ШІ: {name}',
   Accounts: 'Облікові записи',
   Access: 'Доступ',
+  Helpers: 'Помічники',
+  'Start helpers on your AI accounts': 'Запускати помічників на ваших облікових записах ШІ',
+  Delegated: 'Доручено',
   'Code theme: {name}': 'Тема коду: {name}',
   'Delete a layout': 'Видалити макет',
   // Keyboards and modal editing

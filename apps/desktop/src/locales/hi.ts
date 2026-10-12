@@ -1006,6 +1006,9 @@ export const hi: Dictionary = {
   'AI account: {name}': 'एआई खाता: {name}',
   Accounts: 'खाते',
   Access: 'पहुँच',
+  Helpers: 'सहायक',
+  'Start helpers on your AI accounts': 'अपने एआई खातों पर सहायक शुरू करें',
+  Delegated: 'सौंपा',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'लेआउट हटाएँ',
   // Keyboards and modal editing

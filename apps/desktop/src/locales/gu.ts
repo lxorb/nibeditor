@@ -1003,6 +1003,9 @@ export const gu: Dictionary = {
   'AI account: {name}': 'AI એકાઉન્ટ: {name}',
   Accounts: 'એકાઉન્ટ',
   Access: 'ઍક્સેસ',
+  Helpers: 'સહાયકો',
+  'Start helpers on your AI accounts': 'તમારા AI એકાઉન્ટ પર સહાયકો શરૂ કરો',
+  Delegated: 'સોંપ્યું',
   'Code theme: {name}': 'કોડ થીમ: {name}',
   'Delete a layout': 'માંડણી કાઢો',
   // Keyboards and modal editing

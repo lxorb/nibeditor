@@ -461,7 +461,9 @@ mod tests {
     /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens. Raised
     /// to 33 000 on 2026-10-07 for chats (docs/chats.md 4.14, "the agent reads and posts",
     /// Emil's ask): six tools, 2 101 characters, about 530 tokens, and listed only to a
-    /// grant holding chats.read or chats.write.
+    /// grant holding chats.read or chats.write. Raised to 34 500 on 2026-10-12 for helpers
+    /// (Emil: "claude can create subagents of openai models"): two tools, about 1 000
+    /// characters, listed only to a grant holding agents.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -470,7 +472,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 33_000,
+            total < 34_500,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

@@ -223,6 +223,8 @@ const VERBS: Record<string, Verb> = {
   draft_message: needs('chats.write'),
   post_message: needs('chats.write'),
   react: needs('chats.write'),
+  run_agent: needs('agents'),
+  agent_result: needs('agents'),
 
   // What the crate asks the window on an agent's behalf, each optional: the crate has
   // an answer of its own when the window gives none (docs/agent-native.md 13.1). The

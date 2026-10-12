@@ -31,6 +31,8 @@ export interface Opening {
   effort: Level | null
   /** Codex: a copy of another open session's thread. */
   forkOf?: string
+  /** The thread it is for, which the helpers it starts belong to. */
+  thread?: string
 }
 
 /** A picture with a message. */
@@ -127,6 +129,7 @@ export async function openSession(
       ...(opening.forkOf ? { forkOf: opening.forkOf } : {}),
       // The account is the one the grant is the provider's for: its home, where it has one.
       account: opening.agent.id,
+      ...(opening.thread ? { thread: opening.thread } : {}),
     },
     output: channel,
   })

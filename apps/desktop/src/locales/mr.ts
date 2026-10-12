@@ -1002,6 +1002,9 @@ export const mr: Dictionary = {
   'AI account: {name}': 'एआय खाते: {name}',
   Accounts: 'खाती',
   Access: 'प्रवेश',
+  Helpers: 'सहाय्यक',
+  'Start helpers on your AI accounts': 'तुमच्या एआय खात्यांवर सहाय्यक सुरू करा',
+  Delegated: 'सोपवले',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'मांडणी हटवा',
   // Keyboards and modal editing

@@ -1002,6 +1002,9 @@ export const ms: Dictionary = {
   'AI account: {name}': 'Akaun AI: {name}',
   Accounts: 'Akaun',
   Access: 'Akses',
+  Helpers: 'Pembantu',
+  'Start helpers on your AI accounts': 'Mulakan pembantu pada akaun AI anda',
+  Delegated: 'Diwakilkan',
   'Code theme: {name}': 'Tema kod: {name}',
   'Delete a layout': 'Hapuskan susun atur',
   // Keyboards and modal editing

@@ -986,6 +986,9 @@ export const zhHantHK: Dictionary = {
   'AI account: {name}': 'AI 帳戶：{name}',
   Accounts: '帳戶',
   Access: '存取',
+  Helpers: '助手',
+  'Start helpers on your AI accounts': '在你的 AI 帳戶上啟動助手',
+  Delegated: '已委派',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
   // Keyboards and modal editing

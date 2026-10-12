@@ -26,7 +26,7 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
-use super::args::{codex_thread, Effort, Mode, Tool};
+use super::args::{codex_thread, with_thread, Effort, Mode, Tool};
 use super::run::{self, Ended, Heard, Running};
 use super::say::{GoalSay, Image, Message, Say};
 
@@ -75,6 +75,14 @@ struct State {
     routes: HashMap<String, Route>,
     /// The nib thread of each Codex thread.
     threads: HashMap<String, String>,
+}
+
+/// Where a nib thread comes from: a copy of another's Codex thread, and the nib thread
+/// whose `nib mcp` it is, for the helpers it starts.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct From<'a> {
+    pub fork_of: Option<&'a str>,
+    pub thread: Option<&'a str>,
 }
 
 /// One running app-server.
@@ -165,8 +173,8 @@ impl Host {
         self.running.stop();
     }
 
-    /// A nib thread, on a Codex thread of its own or, with `fork_of`, on a copy of the
-    /// Codex thread another nib thread is on.
+    /// A nib thread, on a Codex thread of its own or, with `from.fork_of`, on a copy of
+    /// the Codex thread another nib thread is on.
     pub fn open(
         &self,
         id: &str,
@@ -174,7 +182,7 @@ impl Host {
         mode: Option<Mode>,
         model: Option<&str>,
         effort: Option<Effort>,
-        fork_of: Option<&str>,
+        from: From<'_>,
     ) -> Result<(), String> {
         let effort = effort.map(|one| one.word(Tool::Codex)).transpose()?;
         let mut state = locked(&self.state);
@@ -182,7 +190,10 @@ impl Host {
             return Err(format!("{id} is already open"));
         }
         let mut params = codex_thread(mode, model, &self.nib, &self.folder);
-        let method = if let Some(from) = fork_of {
+        if let (Some(thread), Some(_)) = (from.thread, mode) {
+            with_thread(&mut params, thread);
+        }
+        let method = if let Some(from) = from.fork_of {
             let thread = state
                 .routes
                 .get(from)

@@ -1002,6 +1002,9 @@ export const bn: Dictionary = {
   'AI account: {name}': 'এআই অ্যাকাউন্ট: {name}',
   Accounts: 'অ্যাকাউন্ট',
   Access: 'অ্যাক্সেস',
+  Helpers: 'সহায়ক',
+  'Start helpers on your AI accounts': 'আপনার এআই অ্যাকাউন্টে সহায়ক চালু করুন',
+  Delegated: 'অর্পণ করা হয়েছে',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   // Keyboards and modal editing

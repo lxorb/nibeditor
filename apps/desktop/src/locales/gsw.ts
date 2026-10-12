@@ -1006,6 +1006,9 @@ export const gsw: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zuegriff',
+  Helpers: 'Helfer',
+  'Start helpers on your AI accounts': 'Helfer uf dine KI-Konte starte',
+  Delegated: 'Übergeh',
   'Code theme: {name}': 'Code-Design: {name}',
   'Delete a layout': 'Es Layout lösche',
   // Keyboards and modal editing

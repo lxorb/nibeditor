@@ -1005,6 +1005,9 @@ export const tr: Dictionary = {
   'AI account: {name}': 'Yapay zekâ hesabı: {name}',
   Accounts: 'Hesaplar',
   Access: 'Erişim',
+  Helpers: 'Yardımcılar',
+  'Start helpers on your AI accounts': 'Yapay zekâ hesaplarında yardımcı başlat',
+  Delegated: 'Devredildi',
   'Code theme: {name}': 'Kod teması: {name}',
   'Delete a layout': 'Bir düzeni sil',
   // Keyboards and modal editing

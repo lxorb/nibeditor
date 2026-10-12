@@ -310,6 +310,7 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
         tool if CHATS.contains(&tool) && result.is_string() => {
             vec![text(result.as_str().unwrap_or_default())]
         }
+        "run_agent" | "agent_result" => vec![text(&helper(result))],
         _ => {
             let said = shared::text(tool, args, result).unwrap_or_else(|| result.to_string());
             if from_outside {
@@ -319,6 +320,59 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
             }
         }
     }
+}
+
+/// Where a helper stands, as the model that started it reads it: its answer once it has
+/// one, and how to wait for it while it works (src/lib/ai/helpers/run.ts says the same for
+/// the sidebar's own loop).
+pub fn helper(result: &Value) -> String {
+    let words = |key: &str| result.get(key).and_then(Value::as_str).unwrap_or_default();
+    let model = [words("model"), words("provider")]
+        .into_iter()
+        .find(|one| !one.is_empty())
+        .unwrap_or("another model");
+    let who = format!("helper {} ({model})", words("agent"));
+    match words("state") {
+        "running" => format!(
+            "{who} is still working. Call agent_result with agent \"{}\" to wait for its answer.",
+            words("agent")
+        ),
+        "done" if !words("answer").is_empty() => words("answer").to_owned(),
+        "done" => format!("{who} finished without a word."),
+        "stopped" if !words("answer").is_empty() => format!(
+            "{who} was stopped. What it said so far:
+
+{}",
+            words("answer")
+        ),
+        "stopped" => format!("{who} was stopped."),
+        _ => {
+            let why = words("error");
+            format!(
+                "{who} failed: {}",
+                if why.is_empty() {
+                    "it did not answer"
+                } else {
+                    why
+                }
+            )
+        }
+    }
+}
+
+/// Whether a helper's answer says it is still working, which `nib mcp` waits on.
+pub fn still_working(outcome: &Outcome) -> Option<String> {
+    let Outcome::Done { result, .. } = outcome else {
+        return None;
+    };
+    (result.get("state").and_then(Value::as_str) == Some("running"))
+        .then(|| {
+            result
+                .get("agent")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+        })
+        .flatten()
 }
 
 /// What a call that asked says.
@@ -388,6 +442,37 @@ fn held(dialog: &Dialog) -> String {
 mod tests {
     use super::*;
     use crate::agents::verbs::{Answer, Code, DialogKind, Snapped};
+
+    #[test]
+    fn a_helper_is_its_answer_once_it_has_one_and_says_how_to_wait_until_then() {
+        let done = Outcome::Done {
+            result: json!({"agent": "h1", "state": "done", "model": "gpt-6-astra", "answer": "Two herons."}),
+            untrusted: None,
+            dialog: None,
+        };
+        assert_eq!(
+            rendered("run_agent", &json!({}), &done)["content"][0]["text"],
+            "Two herons."
+        );
+        assert_eq!(still_working(&done), None);
+
+        let running = Outcome::Done {
+            result: json!({"agent": "h1", "state": "running", "model": "gpt-6-astra"}),
+            untrusted: None,
+            dialog: None,
+        };
+        assert_eq!(still_working(&running).as_deref(), Some("h1"));
+        let said = rendered("agent_result", &json!({}), &running);
+        let words = said["content"][0]["text"].as_str().expect("words");
+        assert!(
+            words.contains("agent_result") && words.contains("\"h1\""),
+            "{words}"
+        );
+
+        let failed =
+            json!({"agent": "h1", "state": "failed", "provider": "codex", "error": "signed out"});
+        assert_eq!(helper(&failed), "helper h1 (codex) failed: signed out");
+    }
 
     fn contract(answer: &Answer) -> Outcome {
         Outcome::from_endpoint(200, &serde_json::to_value(answer).expect("json"))

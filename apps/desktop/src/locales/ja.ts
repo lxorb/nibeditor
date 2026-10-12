@@ -1001,6 +1001,9 @@ export const ja: Dictionary = {
   'AI account: {name}': 'AI アカウント: {name}',
   Accounts: 'アカウント',
   Access: 'アクセス',
+  Helpers: 'ヘルパー',
+  'Start helpers on your AI accounts': 'AI アカウントでヘルパーを起動',
+  Delegated: '依頼',
   'Code theme: {name}': 'コードテーマ: {name}',
   'Delete a layout': 'レイアウトを削除',
   // Keyboards and modal editing

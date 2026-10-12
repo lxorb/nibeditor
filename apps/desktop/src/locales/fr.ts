@@ -1020,6 +1020,9 @@ export const fr: Dictionary = {
   'AI account: {name}': 'Compte IA : {name}',
   Accounts: 'Comptes',
   Access: 'Accès',
+  Helpers: 'Assistants',
+  'Start helpers on your AI accounts': 'Lancer des assistants sur vos comptes IA',
+  Delegated: 'Délégué',
   'Code theme: {name}': 'Thème du code : {name}',
   'Delete a layout': 'Supprimer une disposition',
   // Keyboards and modal editing

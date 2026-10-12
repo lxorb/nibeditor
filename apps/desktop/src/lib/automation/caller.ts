@@ -30,8 +30,9 @@ interface Agent {
   sites: Readonly<Record<string, string>>
 }
 
-/** The reader, or an agent. */
-export type Caller = { agent: null } | { agent: Agent }
+/** The reader, or an agent: an agent of the AI panel's says which thread it runs for, so
+ *  a helper it starts is that thread's (src-tauri/src/mcp/link.rs). */
+export type Caller = { agent: null } | { agent: Agent; thread?: string }
 
 /** The reader's own command line and the crate asking on an agent's behalf. */
 export const READER: Caller = { agent: null }
@@ -45,8 +46,9 @@ function texts(value: unknown): string[] {
 }
 
 /** The caller a request names: the reader when it names nobody, an agent otherwise. */
-export function callerOf(told: unknown): Caller {
+export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
+  const threadOf = typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
 
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
@@ -67,6 +69,7 @@ export function callerOf(told: unknown): Caller {
           )
         : {},
     },
+    ...threadOf,
   }
 }
 

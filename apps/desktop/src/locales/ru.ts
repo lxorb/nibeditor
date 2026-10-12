@@ -1040,6 +1040,9 @@ export const ru: Dictionary = {
   'AI account: {name}': 'Аккаунт ИИ: {name}',
   Accounts: 'Аккаунты',
   Access: 'Доступ',
+  Helpers: 'Помощники',
+  'Start helpers on your AI accounts': 'Запускать помощников на ваших аккаунтах ИИ',
+  Delegated: 'Поручено',
   'Code theme: {name}': 'Тема кода: {name}',
   'Delete a layout': 'Удалить макет',
   // Keyboards and modal editing

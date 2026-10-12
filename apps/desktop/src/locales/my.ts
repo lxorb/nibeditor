@@ -998,6 +998,9 @@ export const my: Dictionary = {
   'AI account: {name}': 'AI အကောင့်: {name}',
   Accounts: 'အကောင့်များ',
   Access: 'ဝင်ရောက်ခွင့်',
+  Helpers: 'အကူများ',
+  'Start helpers on your AI accounts': 'သင့် AI အကောင့်များတွင် အကူများ စတင်ပါ',
+  Delegated: 'လွှဲအပ်ခဲ့သည်',
   'Code theme: {name}': 'ကုဒ်အပြင်အဆင်: {name}',
   'Delete a layout': 'အပြင်အဆင်ဖျက်ပါ',
   // Keyboards and modal editing

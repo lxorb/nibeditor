@@ -1005,6 +1005,9 @@ export const fa: Dictionary = {
   'AI account: {name}': 'حساب هوش مصنوعی: {name}',
   Accounts: 'حساب‌ها',
   Access: 'دسترسی',
+  Helpers: 'دستیارها',
+  'Start helpers on your AI accounts': 'اجرای دستیار روی حساب‌های هوش مصنوعی شما',
+  Delegated: 'واگذار شد',
   'Code theme: {name}': 'پوسته کد: {name}',
   'Delete a layout': 'حذف چیدمان',
   // Keyboards and modal editing

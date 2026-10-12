@@ -43,6 +43,7 @@ describe('the defaults', () => {
       'browser',
       'browser.reader',
       'browser.network',
+      'agents',
     ])
     expect(grant.spaces).toBe('all')
     expect(grant.mode).toBe('unsupervised')
@@ -69,7 +70,7 @@ describe('the defaults', () => {
     expect(crate).toMatch(
       /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\|\s*Scope::Terminal/,
     )
-    expect(crate).toMatch(/Scope::Context \| Scope::BrowserReader/)
+    expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
     expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60/)
   })
 })

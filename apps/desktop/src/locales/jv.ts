@@ -998,6 +998,9 @@ export const jv: Dictionary = {
   'AI account: {name}': 'Akun AI: {name}',
   Accounts: 'Akun',
   Access: 'Akses',
+  Helpers: 'Pambantu',
+  'Start helpers on your AI accounts': 'Miwiti pambantu ing akun AI sampeyan',
+  Delegated: 'Dipasrahake',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Busak tata letak',
   // Keyboards and modal editing

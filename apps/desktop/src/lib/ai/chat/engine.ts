@@ -406,7 +406,7 @@ export function createApiEngine(setup: Setup): Engine {
     }
     return await Promise.all(
       calls.map(async (call) => {
-        const ask = () => tools.call(provider, thread.mode, call.name, call.args)
+        const ask = () => tools.call(provider, thread.mode, call.name, call.args, thread.id)
         let output = await ask()
         // Allowed, the same call goes through on the allowance; asked again (a second
         // question the first one stood in front of), it waits again, a few times at most.

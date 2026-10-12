@@ -323,6 +323,7 @@ describe('a Claude Code thread', () => {
       model: 'opus',
       effort: 'high',
       account: 'cc',
+      thread: 'thread-1',
     })
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn', 'model', 'effort', 'turn'])
     expect(opened[0]?.said[1]).toEqual({ kind: 'model', model: 'sonnet' })

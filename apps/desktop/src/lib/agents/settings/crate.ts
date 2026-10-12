@@ -89,6 +89,7 @@ const SCOPES: readonly Scope[] = [
   'browser.storage',
   'settings',
   'terminal',
+  'agents',
 ]
 
 const CATEGORIES: readonly Category[] = [

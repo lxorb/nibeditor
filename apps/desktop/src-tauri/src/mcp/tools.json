@@ -1146,5 +1146,37 @@
       "required": ["tab"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": true }
+  },
+  {
+    "name": "run_agent",
+    "description": "Start a helper on any model the reader's AI accounts offer, Claude's or OpenAI's, as you would a subagent of your own. It has none of your conversation: give it the whole task. It works with these nib tools in your mode, and its final answer is the result; while it still works, call agent_result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string", "description": "A few words the reader sees." },
+        "prompt": { "type": "string", "description": "The whole task." },
+        "model": {
+          "type": "string",
+          "description": "opus, sonnet, haiku, gpt-6-astra, astra or any listed id; empty for yours."
+        },
+        "effort": {
+          "type": "string",
+          "enum": ["auto", "off", "minimal", "low", "medium", "high", "xhigh", "max"]
+        },
+        "subagent_type": { "type": "string", "description": "An agent profile's name." }
+      },
+      "required": ["prompt"]
+    },
+    "annotations": { "readOnlyHint": false, "openWorldHint": true }
+  },
+  {
+    "name": "agent_result",
+    "description": "A run_agent helper's answer; while it still works, call again.",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "agent": { "type": "string" } },
+      "required": ["agent"]
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false }
   }
 ]

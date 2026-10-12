@@ -1002,6 +1002,9 @@ export const ps: Dictionary = {
   'AI account: {name}': 'د AI حساب: {name}',
   Accounts: 'حسابونه',
   Access: 'لاسرسی',
+  Helpers: 'مرستندويان',
+  'Start helpers on your AI accounts': 'ستاسو د AI په حسابونو مرستندويان پیل کړئ',
+  Delegated: 'وسپارل شو',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
   'Delete a layout': 'اوډون ړنګول',
   // Keyboards and modal editing

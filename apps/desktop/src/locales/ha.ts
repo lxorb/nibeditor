@@ -1012,6 +1012,9 @@ export const ha: Dictionary = {
   'AI account: {name}': 'Asusun AI: {name}',
   Accounts: 'Asusun',
   Access: 'Damar shiga',
+  Helpers: 'Mataimaka',
+  'Start helpers on your AI accounts': 'Fara mataimaka a asusun AI naka',
+  Delegated: 'An danka',
   'Code theme: {name}': 'Kamannin lamba: {name}',
   'Delete a layout': 'Share tsari',
   // Keyboards and modal editing

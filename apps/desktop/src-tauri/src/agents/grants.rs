@@ -74,11 +74,15 @@ pub enum Scope {
     /// The terminal.
     #[serde(rename = "terminal")]
     Terminal,
+    /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
+    /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
+    #[serde(rename = "agents")]
+    Agents,
 }
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 15] = [
+    pub const ALL: [Scope; 16] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -94,6 +98,7 @@ impl Scope {
         Scope::BrowserStorage,
         Scope::Settings,
         Scope::Terminal,
+        Scope::Agents,
     ];
 }
 
@@ -254,7 +259,11 @@ impl Grant {
         grant.scopes.retain(|one| {
             !matches!(
                 one,
-                Scope::Context | Scope::BrowserReader | Scope::ChatsRead | Scope::ChatsWrite
+                Scope::Context
+                    | Scope::BrowserReader
+                    | Scope::ChatsRead
+                    | Scope::ChatsWrite
+                    | Scope::Agents
             )
         });
         grant.mode = Mode::Confirm;
@@ -299,6 +308,17 @@ struct File {
     /// absent in a file written before chats were.
     #[serde(default)]
     chats: bool,
+    /// Whether its grants have been given helpers, which came after them.
+    #[serde(default)]
+    helpers: bool,
+}
+
+/// A grant kept from before helpers, given them as a new grant of its kind would be: the
+/// reader's own clients (they see the screen) start helpers, somebody else's tool does not.
+fn with_helpers(grant: &mut Grant) {
+    if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
+        grant.scopes.push(Scope::Agents);
+    }
 }
 
 /// A grant kept from before chats, given them the way it holds notes: a grant of the
@@ -481,6 +501,11 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
                     with_chats(&mut one.grant);
                 }
             }
+            if !file.helpers {
+                for one in &mut agents {
+                    with_helpers(&mut one.grant);
+                }
+            }
             agents
         })
         .unwrap_or_default()
@@ -494,6 +519,7 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     let text = serde_json::to_string_pretty(&File {
         agents: kept.to_vec(),
         chats: true,
+        helpers: true,
     })
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
@@ -645,6 +671,7 @@ mod tests {
                 token: hashed("t"),
             }],
             chats: true,
+            helpers: true,
         })
         .expect("json");
         let back: File = serde_json::from_str(&text).expect("read");
@@ -721,6 +748,7 @@ mod tests {
         assert!(!own.holds(Scope::Settings));
         assert!(!own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
+        assert!(own.holds(Scope::Agents));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
         assert_eq!(
@@ -736,6 +764,7 @@ mod tests {
         assert!(!other.holds(Scope::Context));
         assert!(!other.holds(Scope::BrowserReader));
         assert!(!other.holds(Scope::ChatsRead) && !other.holds(Scope::ChatsWrite));
+        assert!(!other.holds(Scope::Agents));
         assert_eq!(other.mode, Mode::Confirm);
     }
 

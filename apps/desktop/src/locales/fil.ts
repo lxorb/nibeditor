@@ -1014,6 +1014,9 @@ export const fil: Dictionary = {
   'AI account: {name}': 'AI account: {name}',
   Accounts: 'Mga account',
   Access: 'Access',
+  Helpers: 'Mga katulong',
+  'Start helpers on your AI accounts': 'Magpatakbo ng katulong sa iyong mga AI account',
+  Delegated: 'Ipinasa',
   'Code theme: {name}': 'Tema ng code: {name}',
   'Delete a layout': 'Tanggalin ang layout',
   // Keyboards and modal editing

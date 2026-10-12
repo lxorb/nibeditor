@@ -181,10 +181,11 @@ pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
         .map(|grant| supervised(grant, mode))
 }
 
-/// Whether a mode lists a tool: Plan what only reads and `create_note`, the others all.
+/// Whether a mode lists a tool: Plan what only reads, `create_note` and helpers (which
+/// work in Plan too), the others all.
 pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
-        Mode::Plan => reads_only || name == "create_note",
+        Mode::Plan => reads_only || name == "create_note" || name == "run_agent",
         Mode::Approve | Mode::Agent => true,
     }
 }

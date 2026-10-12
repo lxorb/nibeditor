@@ -65,6 +65,8 @@ const VERBS: Record<string, string> = {
   run_command: key('Ran'),
   run_terminal: key('Ran'),
   write_setting: key('Changed'),
+  run_agent: key('Delegated'),
+  agent_result: key('Waited'),
 }
 
 /** A tool's own name, whichever road called it: Claude Code says `mcp__nib__read_note`. */
@@ -103,7 +105,7 @@ export function objectOf(args: unknown): string {
   }
   if (typeof said.url === 'string' && said.url) return host(said.url)
   if (typeof said.query === 'string' && said.query) return `“${said.query.slice(0, 60)}”`
-  for (const field of ['title', 'name', 'text', 'command']) {
+  for (const field of ['title', 'name', 'description', 'text', 'command']) {
     const value = said[field]
     if (typeof value === 'string' && value) return value.slice(0, 60)
   }
