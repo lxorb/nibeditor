@@ -246,6 +246,138 @@ export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, str
   return followed === text ? bytes : new TextEncoder().encode(followed)
 }
 
+/** A note's links, pointing at where the import's own files went once some of them
+ *  stepped aside: `moved` maps a path inside the import to the one the file has now,
+ *  `paths` is every file the import holds, and `was` is the note's own path.
+ *
+ *  Each link is read the way nib reads it, so only a link that meant a file that
+ *  moved is written again: `[[Plan]]` beside a root `Plan.md` that stayed is left on
+ *  it when `Projects/Plan.md` is the one that stepped aside. A wikilink keeps its
+ *  folders, its case, its heading and the `\|` a table writes, and only its name
+ *  changes; a markdown link is followed by its path from this note, its heading,
+ *  page and title kept. A link written as an example in code is left as it was. */
+export function linksFollowed(
+  text: string,
+  was: string,
+  moved: ReadonlyMap<string, string>,
+  paths: readonly string[],
+): string {
+  const here = folderOf(was)
+  const movedFolded = new Map([...moved].map(([from, to]) => [foldName(from), to] as const))
+  const called = calledBy(paths)
+  const code = withMath(text, codeRanges(text))
+
+  /** What one markdown link becomes. */
+  function markdownLink(
+    whole: string,
+    bang: string,
+    label: string,
+    inside: string,
+    offset: number,
+  ): string {
+    if (inCode(code, offset)) return whole
+
+    const words = label.replace(LINK, (one, inner: string, said: string, held: string) =>
+      markdownLink(one, inner, said, held, offset),
+    )
+    const kept = words === label ? whole : `${bang}[${words}](${inside})`
+
+    const { target, title } = splitTarget(inside)
+    if (!target || isAddress(target)) return kept
+    const { path: written, fragment } = splitFragment(target)
+    // A path that starts with `/` starts at the top of the vault, as `find` reads it.
+    const path = decoded(written)
+    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
+    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
+    if (now === undefined) return kept
+
+    const anchor = fragment === null ? '' : `#${fragment}`
+    return `${bang}[${words}](${encodeTarget(relativePath(here, now))}${anchor}${title})`
+  }
+
+  const linked = text.replace(LINK, markdownLink)
+  const stillCode = withMath(linked, codeRanges(linked))
+
+  return linked.replace(
+    WIKILINK,
+    (whole, target: string, shown: string | undefined, offset: number) => {
+      if (inCode(stillCode, offset)) return whole
+
+      // In a table the `|` before the shown words is written `\|`, and the backslash
+      // is the cell's business rather than part of the name.
+      const cell = shown !== undefined && target.endsWith('\\')
+      const named = cell ? target.slice(0, -1) : target
+      const { path, fragment } = splitFragment(named)
+      const said = path.trim()
+      const meant = nearest(said, was, called)
+      const now = meant === undefined ? undefined : moved.get(meant)
+      if (meant === undefined || now === undefined) return whole
+
+      const renamed = respelled(said, meant, now)
+      if (renamed === null) return whole
+      const bang = whole.startsWith('!') ? '!' : ''
+      const anchor = fragment === null ? '' : `#${fragment}`
+      return `${bang}[[${path.replace(said, renamed)}${anchor}${cell ? '\\' : ''}${shown ?? ''}]]`
+    },
+  )
+}
+
+/** The files a wikilink could name, by the last part of the name it would use: a
+ *  note's without its extension and with it, any other file's whole. */
+function calledBy(paths: readonly string[]): Map<string, string[]> {
+  const called = new Map<string, string[]>()
+  for (const path of paths) {
+    const name = path.split('/').pop() ?? path
+    const names = isMarkdownPath(path) ? [name, withoutExtension(name)] : [name]
+    for (const one of names) {
+      const key = foldName(one)
+      called.set(key, [...(called.get(key) ?? []), path])
+    }
+  }
+  return called
+}
+
+/** The file a wikilink naming `said`, written in the note at `from`, is read as:
+ *  the one whose path ends with the name, beside the link first, then the
+ *  shallowest, then the first by path. See `reaches` above, whose reading this is. */
+function nearest(
+  said: string,
+  from: string,
+  called: ReadonlyMap<string, string[]>,
+): string | undefined {
+  const wanted = foldName(said.replace(/^\/+/, ''))
+  const fits = (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
+    const whole = foldName(path)
+    const bare = isMarkdownPath(path) ? foldName(withoutExtension(path)) : whole
+    return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
+  })
+
+  const here = folderOf(from)
+  const depth = (path: string) => path.split('/').length
+  const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
+  return [...fits].sort(
+    (one, other) =>
+      beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+  )[0]
+}
+
+/** A wikilink's name for a file that moved from `from` to `to`, in the link's own
+ *  spelling: its folders kept, the extension only where it wrote one, and the case
+ *  it was typed in kept for the part of the name that did not change. Null where
+ *  the name the link wrote is not the file's at all. */
+function respelled(said: string, from: string, to: string): string | null {
+  const parts = said.split('/')
+  const last = parts.pop() ?? said
+  const whole = from.split('/').pop() ?? from
+  const name = [whole, withoutExtension(whole)].find((one) => foldName(one) === foldName(last))
+  if (name === undefined) return null
+
+  const fresh = to.split('/').pop() ?? to
+  const after = name === whole ? fresh : withoutExtension(fresh)
+  const spelled = after.startsWith(name) ? last + after.slice(name.length) : after
+  return [...parts, spelled].join('/')
+}
+
 /** What a JSON string says, or null for one that is not valid JSON. */
 function jsonString(said: string): string | null {
   try {

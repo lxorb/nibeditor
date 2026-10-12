@@ -193,6 +193,97 @@ describe('a name that is already taken', () => {
   })
 })
 
+/** A vault read and then landed in the folder `Inbox` of a space that already holds
+ *  `taken`. */
+async function vaultLanded(taken: string[], ...files: [string, string?][]): Promise<Planned[]> {
+  const { readAs } = await import('./read')
+  const { sourceOf } = await import('./sources')
+  const sources = [['.obsidian/app.json', '{}'] as const, ...files].map(([path, body]) =>
+    sourceOf(path, new TextEncoder().encode(body ?? 'x')),
+  )
+  return restamped(await readAs('obsidian', sources), new Set(taken), 'Inbox').files
+}
+
+describe('a vault landed beside notes of the same name', () => {
+  test('keeps a link to the root Plan on it when only Projects/Plan steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/projects/plan.md'],
+      ['Plan.md', '# The root plan'],
+      ['Projects/Plan.md', '# The project plan'],
+      ['Home.md', 'Start with [[Plan]].'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Projects/Plan 2.md')
+    expect(textAt(files, 'Inbox/Home.md')).toBe('Start with [[Plan]].\n')
+  })
+
+  test('has a link that names the folder follow its note when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/projects/plan.md'],
+      ['Plan.md', '# The root plan'],
+      ['Projects/Plan.md', '# The project plan'],
+      ['Home.md', 'See [[Projects/Plan]].'],
+    )
+
+    expect(textAt(files, 'Inbox/Home.md')).toBe('See [[Projects/Plan 2]].\n')
+  })
+
+  test('has a link written in another case follow its note, in the case it was written', async () => {
+    const files = await vaultLanded(
+      ['inbox/kit.md'],
+      ['Kit.md', '# Kit'],
+      ['Trip.md', 'Pack the [[kit]].'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Kit 2.md')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('Pack the [[kit 2]].\n')
+  })
+
+  test('has a link with words in a table follow its note when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/kit.md'],
+      ['Kit.md', '# Kit'],
+      ['Trip.md', '| What | Where |\n| --- | --- |\n| [[Kit\\|the kit]] | hall |\n'],
+    )
+
+    expect(textAt(files, 'Inbox/Trip.md')).toBe(
+      '| What | Where |\n| --- | --- |\n| [[Kit 2\\|the kit]] | hall |\n',
+    )
+  })
+
+  test('has a markdown link to a picture follow it with its title kept', async () => {
+    const files = await vaultLanded(
+      ['inbox/shot.png'],
+      ['shot.png'],
+      ['Trip.md', '![](shot.png "The view")'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/shot 2.png')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('![](shot%202.png "The view")\n')
+  })
+
+  test('has a markdown link to a page of a PDF follow it with the page kept', async () => {
+    const files = await vaultLanded(
+      ['inbox/paper.pdf'],
+      ['Paper.pdf'],
+      ['Trip.md', 'Read [page 3](Paper.pdf#page=3).'],
+    )
+
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('Read [page 3](Paper%202.pdf#page=3).\n')
+  })
+
+  test('has a picture whose name holds brackets follow it when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/screenshot (1).png'],
+      ['Screenshot (1).png'],
+      ['Trip.md', '![](Screenshot%20(1).png)'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Screenshot (1) 2.png')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('![](Screenshot%20%281%29%202.png)\n')
+  })
+})
+
 /** The write site judges what it is about to write, whatever the reader handed
  *  it. Every format reader puts each part of a name through `safeName`, so a path
  *  that climbs out of the space means a reader forwarded a zip entry's own name -

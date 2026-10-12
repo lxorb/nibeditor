@@ -31,7 +31,6 @@ import { freePath } from '@nib/markdown/paths'
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
-import { folderOf, relativePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
@@ -39,7 +38,7 @@ import { writeBytes, writeFile } from '../workspace/write-file'
 
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
-import { canvasFollowed, codeRanges, inCode, isCanvas } from './rewrite'
+import { canvasFollowed, isCanvas, linksFollowed } from './rewrite'
 
 /** Where an import lands: a space, and a folder inside it. */
 export interface ImportTarget {
@@ -171,73 +170,16 @@ export function restamped(
     placed.push({ file, was: file.path, now: free })
   }
 
+  const paths = plan.files.map((file) => file.path)
   const files = placed.map(({ file, was, now }) => {
     if (file.kind === 'file') {
       // A canvas's cards follow the same way, since they name the import's files too.
       const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes
       return { ...file, path: now, bytes }
     }
-    const text = moved.size ? followed(file.text, was, moved) : file.text
+    const text = moved.size ? linksFollowed(file.text, was, moved, paths) : file.text
     return { ...file, path: now, text }
   })
 
   return { files, stepped: moved.size }
-}
-
-/** A note's links, pointing at where the import's own files ended up.
- *
- *  Only what moved is touched, and it is touched in the spellings the import
- *  wrote: anything by its name in a wikilink - a note without its extension, a
- *  picture with it, the way Obsidian embeds one - and a file that is not a note by
- *  the path from this note's own folder as well. */
-function followed(text: string, was: string, moved: ReadonlyMap<string, string>): string {
-  let said = text
-
-  for (const [from, to] of moved) {
-    const before = nameOf(from)
-    const after = nameOf(to)
-    if (before !== after) {
-      said = outsideCode(said, `[[${before}]]`, `[[${after}]]`)
-      said = outsideCode(said, `[[${before}|`, `[[${after}|`)
-      said = outsideCode(said, `[[${before}#`, `[[${after}#`)
-    }
-    if (isNote(from)) continue
-
-    const here = folderOf(was)
-    const path = relativePath(here, from).replace(/ /g, '%20')
-    const now = relativePath(here, to).replace(/ /g, '%20')
-    if (path === now) continue
-
-    said = outsideCode(said, `](${path})`, `](${now})`)
-  }
-
-  return said
-}
-
-/** Every `find` in the text made `put`, except in code. A link written in a code
- *  span or a fence is an example of one, words to copy exactly, which the import
- *  left as it was when it read the note and leaves as it was here too. */
-function outsideCode(text: string, find: string, put: string): string {
-  if (!text.includes(find)) return text
-
-  const code = codeRanges(text)
-  let out = ''
-  let from = 0
-  for (let at = text.indexOf(find); at >= 0; at = text.indexOf(find, at + find.length)) {
-    if (inCode(code, at)) continue
-    out += text.slice(from, at) + put
-    from = at + find.length
-  }
-
-  return out + text.slice(from)
-}
-
-function isNote(path: string): boolean {
-  return /\.(md|markdown)$/i.test(path)
-}
-
-/** The name a wikilink calls a file by: a note's without its extension, any
- *  other file's whole. */
-function nameOf(path: string): string {
-  return (path.split('/').pop() ?? path).replace(/\.(md|markdown)$/i, '')
 }
