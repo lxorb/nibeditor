@@ -345,6 +345,7 @@ macro_rules! desktop_commands {
             ai_agent::ai_agent_call,
             ai_agent::ai_agent_context,
             ai_cli::ai_cli_status,
+            ai_cli::ai_cli_forget,
             ai_cli::ai_cli_ask,
             ai_cli::ai_cli_stop,
             ai_cli::ai_cli_open,

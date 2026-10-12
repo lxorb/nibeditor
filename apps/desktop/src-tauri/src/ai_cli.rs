@@ -44,11 +44,13 @@
 //! | `codex_app` | the window's Codex app-server: the JSON-RPC client, its threads |
 //! | `program` | where each program is, and the `PATH` it runs with |
 //! | `family` | a program and everything it starts, ended together |
+//! | `home` | where a program keeps one account's sign-in |
 //! | `run` | one run: stdin in, lines out, its end |
 
 mod args;
 mod codex_app;
 mod family;
+mod home;
 mod program;
 mod run;
 mod say;
@@ -70,6 +72,7 @@ use crate::ai_agent::Builtin;
 pub use args::Tool;
 use args::{Effort, Mode, Shape};
 use codex_app::Host;
+use home::Home;
 use program::Program;
 use run::{Heard, Running, Said};
 use say::{Message, Say};
@@ -130,6 +133,8 @@ enum On {
 struct HostKey {
     owner: String,
     agent: Option<(String, Mode)>,
+    /// The account's home, so two accounts' threads are never on one app-server.
+    home: Option<Home>,
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -218,14 +223,32 @@ fn offered(tool: Tool) -> Result<(), String> {
     Ok(())
 }
 
-/// A program's command, started in `folder` with its own `PATH`.
-fn command(program: &Program, args: &[impl AsRef<std::ffi::OsStr>], folder: &Path) -> Command {
+/// A program's command, started in `folder` with its own `PATH`, and in an account's
+/// home where it is not the reader's own (home.rs).
+fn command(
+    program: &Program,
+    args: &[impl AsRef<std::ffi::OsStr>],
+    folder: &Path,
+    home: Option<&Home>,
+) -> Command {
     let mut command = Command::new(&program.exe);
     command
         .args(args)
         .current_dir(folder)
         .env("PATH", &program.path);
+    if let Some(home) = home {
+        home.apply(&mut command);
+    }
     command
+}
+
+/// The home an account named by the window runs in: the account must be one of the
+/// reader's, and only a second sign-in to a program has one.
+fn home_for(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
+    if let Some(id) = account {
+        usable(id)?;
+    }
+    home::of(app, tool, account)
 }
 
 /// Where a program runs: a folder of the app's own, empty, so nothing it might look
@@ -249,7 +272,7 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
         return caps;
     }
 
-    let help = run::run_to_end(command(program, &args::HELP, folder), TELLING)
+    let help = run::run_to_end(command(program, &args::HELP, folder, None), TELLING)
         .map(|said| format!("{}\n{}", said.out, said.ended.err))
         .unwrap_or_default();
     let caps = args::Caps::from_help(&help);
@@ -263,6 +286,8 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
 pub struct Status {
     /// The program, for the line a terminal types to sign in with it.
     program: String,
+    /// The account's home where it is one of nib's, for the same line.
+    home: Option<String>,
     #[serde(flatten)]
     said: Said,
 }
@@ -270,19 +295,50 @@ pub struct Status {
 /// Whether a tool is installed and signed in, asked of the tool itself. `None` where it
 /// is not installed. The app reads the answer; see `lib/ai/local/status.svelte.ts`.
 #[tauri::command(async)]
-pub fn ai_cli_status(webview: Webview, tool: Tool) -> Result<Option<Status>, String> {
+pub fn ai_cli_status(
+    webview: Webview,
+    tool: Tool,
+    account: Option<String>,
+) -> Result<Option<Status>, String> {
     owner(&webview)?;
     offered(tool)?;
     let Some(program) = program::find(tool) else {
         return Ok(None);
     };
+    let home = home_for(webview.app_handle(), tool, account.as_deref())?;
     let folder = workroom(webview.app_handle())?;
-    let said = run::run_to_end(command(&program, args::status(tool), &folder), TELLING)
-        .map_err(|error| error.to_string())?;
+    let said = run::run_to_end(
+        command(&program, args::status(tool), &folder, home.as_ref()),
+        TELLING,
+    )
+    .map_err(|error| error.to_string())?;
     Ok(Some(Status {
         program: program.exe.to_string_lossy().into_owned(),
+        home: home.map(|one| one.dir().to_string_lossy().into_owned()),
         said,
     }))
+}
+
+/// Signs a second sign-in's program out of its home, the program's own way, and lets the
+/// home go: what Remove does to an account that is not the reader's own. The reader's own
+/// home is never touched here; its sign-out is the program's own line in a terminal.
+#[tauri::command(async)]
+pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
+    owner(&webview)?;
+    offered(tool)?;
+    let Some(home) = home_for(webview.app_handle(), tool, Some(&account))? else {
+        return Ok(());
+    };
+    if let Some(program) = program::find(tool) {
+        let folder = workroom(webview.app_handle())?;
+        // Whatever it says: a program that cannot sign out leaves a login the folder takes
+        // with it, and the reader asked for the account to go.
+        let _ = run::run_to_end(
+            command(&program, args::logout(tool), &folder, Some(&home)),
+            TELLING,
+        );
+    }
+    home::removed(&home)
 }
 
 /// A message on a channel, as JSON.
@@ -302,6 +358,7 @@ pub fn ai_cli_ask(
     id: String,
     tool: Tool,
     model: Option<String>,
+    account: Option<String>,
     prompt: String,
     output: Channel<Value>,
 ) -> Result<(), String> {
@@ -313,6 +370,7 @@ pub fn ai_cli_ask(
     }
     let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
     let app = webview.app_handle().clone();
+    let home = home_for(&app, tool, account.as_deref())?;
     let folder = workroom(&app)?;
     let model = model.filter(|one| !one.trim().is_empty());
     let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
@@ -327,7 +385,7 @@ pub fn ai_cli_ask(
 
     let name = id.clone();
     let started = run::start(
-        command(&program, &args, &folder),
+        command(&program, &args, &folder, home.as_ref()),
         prompt.into_bytes(),
         ASKING,
         move |heard| {
@@ -420,6 +478,9 @@ pub struct Opening {
     /// A Codex thread to start as a copy of another open session's.
     #[serde(default)]
     fork_of: Option<String>,
+    /// The account the thread's provider answers with: its home, where it has one.
+    #[serde(default)]
+    account: Option<String>,
 }
 
 /// Opens a session named `id`: a Claude Code of its own, or a thread on the window's
@@ -448,6 +509,7 @@ pub fn ai_cli_open(
         .mode
         .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
         .transpose()?;
+    let home = home_for(&app, tool, opening.account.as_deref())?;
 
     // Read off its help, perhaps for the first time this run, before any lock is held.
     let claude = match tool {
@@ -457,6 +519,7 @@ pub fn ai_cli_open(
             &opening,
             model,
             token.as_deref(),
+            home.as_ref(),
         )?),
         Tool::Codex => None,
     };
@@ -481,6 +544,7 @@ pub fn ai_cli_open(
             let key = HostKey {
                 owner: owner.clone(),
                 agent: opening.mode.map(|mode| (opening.agent.id.clone(), mode)),
+                home: home.clone(),
             };
             let host = host_for(&asks, key, &program, &folder, token.as_deref())?;
             let fork_of = opening.fork_of.as_deref();
@@ -508,6 +572,7 @@ fn claude_command(
     opening: &Opening,
     model: Option<&str>,
     token: Option<&str>,
+    home: Option<&Home>,
 ) -> Result<Command, String> {
     let caps = caps_of(program, folder);
     let config = folder.join("nib-mcp.json");
@@ -525,6 +590,7 @@ fn claude_command(
         program,
         &args::claude_session(shape, &caps, &config)?,
         folder,
+        home,
     );
     command.envs(args::CLAUDE_SESSION_ENV);
     if let Some(token) = token {
@@ -545,7 +611,7 @@ fn host_for(
     if let Some(host) = hosts.get(&key).filter(|host| host.alive()) {
         return Ok(Arc::clone(host));
     }
-    let mut command = command(program, &args::codex_server(), folder);
+    let mut command = command(program, &args::codex_server(), folder, key.home.as_ref());
     if let Some(token) = token {
         command.env(args::TOKEN_VAR, token);
     }
@@ -599,16 +665,26 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
 /// The models a program offers, as it lists them: Claude Code's `list_models`, Codex's
 /// `model/list`. The window reads them into its model list (`lib/ai/local/models.ts`).
 #[tauri::command(async)]
-pub fn ai_cli_models(webview: Webview, tool: Tool) -> Result<Value, String> {
+pub fn ai_cli_models(
+    webview: Webview,
+    tool: Tool,
+    account: Option<String>,
+) -> Result<Value, String> {
     let owner = owner(&webview)?;
     offered(tool)?;
     let program = program::find(tool).ok_or_else(|| "missing".to_owned())?;
+    let home = home_for(webview.app_handle(), tool, account.as_deref())?;
     let folder = workroom(webview.app_handle())?;
     match tool {
         Tool::ClaudeCode => {
             let caps = caps_of(&program, &folder);
             let claude = Claude::start(
-                command(&program, &args::claude_listing(&caps), &folder),
+                command(
+                    &program,
+                    &args::claude_listing(&caps),
+                    &folder,
+                    home.as_ref(),
+                ),
                 TELLING,
                 |_| {},
             )
@@ -620,7 +696,11 @@ pub fn ai_cli_models(webview: Webview, tool: Tool) -> Result<Value, String> {
         }
         Tool::Codex => {
             let asks = webview.state::<Asks>();
-            let key = HostKey { owner, agent: None };
+            let key = HostKey {
+                owner,
+                agent: None,
+                home,
+            };
             host_for(&asks, key, &program, &folder, None)?.models(TELLING)
         }
     }
@@ -677,6 +757,43 @@ mod tests {
             }
         }
         panic!("no end was heard");
+    }
+
+    #[test]
+    fn a_second_account_signs_in_and_out_in_a_home_of_its_own() {
+        if !node() {
+            eprintln!("no node here; skipped");
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        crate::ai_accounts::write(
+            dir.path(),
+            r#"{"accounts":[{"id":"claude-code-2","kind":"claude-code","name":"","model":"","own":true}]}"#,
+            "",
+        )
+        .expect("accounts");
+        let home = home::under(dir.path(), Tool::ClaudeCode, Some("claude-code-2"))
+            .expect("read")
+            .expect("a home");
+
+        let mut asked = fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode));
+        // The reader's shell holds a key, which would outrank the account's sign-in.
+        asked.env("ANTHROPIC_API_KEY", "from-the-shell");
+        home.apply(&mut asked);
+        let said = run_to_end(asked, TELLING).expect("status");
+        assert!(
+            said.out.contains("reader+claude-code-2@example.com"),
+            "{}",
+            said.out
+        );
+        assert!(said.out.contains("\"claude.ai\""), "{}", said.out);
+
+        let mut out = fake(Tool::ClaudeCode, "answer", args::logout(Tool::ClaudeCode));
+        home.apply(&mut out);
+        run_to_end(out, TELLING).expect("logout");
+        assert!(home.dir().join("signed-out").exists());
+        home::removed(&home).expect("removed");
+        assert!(!home.dir().exists());
     }
 
     fn full_caps() -> args::Caps {
@@ -1256,13 +1373,16 @@ mod tests {
 
         let program = shim("claude.cmd", "claude");
         let args = args::ask(Some("opus"), &args::Caps::default()).expect("args");
-        let (lines, ended) =
-            heard_all(command(&program, &args, dir.path()), "through cmd", TELLING);
+        let (lines, ended) = heard_all(
+            command(&program, &args, dir.path(), None),
+            "through cmd",
+            TELLING,
+        );
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         assert!(lines[0].contains("opus[1m]"));
 
         let program = shim("codex.cmd", "codex");
-        let mut command = command(&program, &args::codex_server(), dir.path());
+        let mut command = command(&program, &args::codex_server(), dir.path(), None);
         command.env("FAKE_AI_CLI_MODE", "answer");
         let host = Host::start(
             command,
@@ -1288,7 +1408,7 @@ mod tests {
         };
         let dir = tempfile::tempdir().expect("a folder");
         let status = run_to_end(
-            command(&program, args::status(Tool::ClaudeCode), dir.path()),
+            command(&program, args::status(Tool::ClaudeCode), dir.path(), None),
             TELLING,
         )
         .expect("status");
@@ -1298,7 +1418,8 @@ mod tests {
         }
         let caps = caps_of(&program, dir.path());
         let args = args::ask(None, &caps).expect("args");
-        let (lines, ended) = heard_all(command(&program, &args, dir.path()), "say ok", ASKING);
+        let (lines, ended) =
+            heard_all(command(&program, &args, dir.path(), None), "say ok", ASKING);
         eprintln!("{} lines, ended {ended:?}", lines.len());
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         let result = lines
@@ -1321,7 +1442,7 @@ mod tests {
         };
         let config = dir.path().join("nib-mcp.json");
         let args = args::claude_session(shape, &caps, &config).expect("args");
-        let mut session = command(&program, &args, dir.path());
+        let mut session = command(&program, &args, dir.path(), None);
         session.envs(args::CLAUDE_SESSION_ENV);
         let (sent, heard) = mpsc::channel();
         let claude = Claude::start(session, IDLE, move |message| {

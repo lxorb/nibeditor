@@ -125,6 +125,8 @@ export async function openSession(
       model: opening.model,
       effort: opening.effort,
       ...(opening.forkOf ? { forkOf: opening.forkOf } : {}),
+      // The account is the one the grant is the provider's for: its home, where it has one.
+      account: opening.agent.id,
     },
     output: channel,
   })
@@ -145,6 +147,6 @@ export async function openSession(
 }
 
 /** The models a program offers, as it lists them; see models.ts. */
-export async function listedModels(tool: LocalKind): Promise<unknown> {
-  return await invoke<unknown>('ai_cli_models', { tool })
+export async function listedModels(tool: LocalKind, account: string): Promise<unknown> {
+  return await invoke<unknown>('ai_cli_models', { tool, account })
 }

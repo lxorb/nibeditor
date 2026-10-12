@@ -190,7 +190,7 @@ describe('Claude Code on this machine', () => {
     await expect(complete({ provider: CLAUDE_CODE, model: '', messages: ASKED })).rejects.toThrow(
       'Your Claude plan is at its limit for now.',
     )
-    expect(plans.local['claude-code'].limit?.state).toBe('reached')
+    expect(plans.of('claude-code').limit?.state).toBe('reached')
   })
 
   test('a program that is not installed says so', async () => {

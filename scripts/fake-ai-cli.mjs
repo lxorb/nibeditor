@@ -24,6 +24,7 @@
 
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { createInterface } from 'node:readline'
 
 const [tool, ...args] = process.argv.slice(2)
@@ -96,14 +97,21 @@ async function claude() {
     console.log(CLAUDE_HELP)
     return
   }
+  // A second account's home says so in its email, and a key left in the environment
+  // says so in its method, which is how a test sees the home and the key reach it.
+  const home = process.env.CLAUDE_CONFIG_DIR
+  if (args[0] === 'auth' && args[1] === 'logout') {
+    if (home) writeFileSync(join(home, 'signed-out'), '')
+    return
+  }
   if (args[0] === 'auth' && args[1] === 'status') {
     const signedIn = mode !== 'signed-out'
     const status = signedIn
       ? {
           loggedIn: true,
-          authMethod: 'claude.ai',
+          authMethod: process.env.ANTHROPIC_API_KEY ? 'api_key' : 'claude.ai',
           subscriptionType: 'max',
-          email: 'reader@example.com',
+          email: home ? `reader+${basename(home)}@example.com` : 'reader@example.com',
         }
       : { loggedIn: false, authMethod: 'none' }
     console.log(JSON.stringify(status, null, 2))
@@ -422,6 +430,10 @@ function claudeSession() {
 async function codex() {
   if (has('--version')) {
     console.log('codex-cli 9.9.9')
+    return
+  }
+  if (args[0] === 'logout') {
+    if (process.env.CODEX_HOME) writeFileSync(join(process.env.CODEX_HOME, 'signed-out'), '')
     return
   }
   if (args[0] === 'login' && args[1] === 'status') {

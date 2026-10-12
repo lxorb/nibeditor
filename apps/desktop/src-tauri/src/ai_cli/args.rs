@@ -422,6 +422,14 @@ pub fn status(tool: Tool) -> &'static [&'static str] {
     }
 }
 
+/// What signs a program out of the home it is started in: its own sign-out.
+pub fn logout(tool: Tool) -> &'static [&'static str] {
+    match tool {
+        Tool::ClaudeCode => &["auth", "logout"],
+        Tool::Codex => &["logout"],
+    }
+}
+
 /// What lists Claude Code's flags.
 pub const HELP: [&str; 1] = ["--help"];
 

@@ -24,6 +24,14 @@ const FOR = 5 * 60_000
 interface Plan extends Standing {
   /** Where the plan stood when its program last said, in this run. */
   limit: Limit | null
+  /** The account's home where it is a second sign-in, for the line that signs it in. */
+  home: string | null
+}
+
+/** One account of a program on this machine: which program, and which account. */
+export interface LocalAccount {
+  id: string
+  kind: LocalKind
 }
 
 const unasked = (): Plan => ({
@@ -32,10 +40,12 @@ const unasked = (): Plan => ({
   plan: null,
   account: null,
   limit: null,
+  home: null,
 })
 
 class Plans {
-  local = $state<Record<LocalKind, Plan>>({ 'claude-code': unasked(), codex: unasked() })
+  /** Where each account stands, by its id. */
+  local = $state<Record<string, Plan>>({})
   /** Who is signed in to ChatGPT here, `null` for nobody, `undefined` until asked. */
   chatgpt = $state<{ email: string | null } | null | undefined>(undefined)
   /** Where the ChatGPT plan stood when a request last heard, in this run. */
@@ -43,13 +53,29 @@ class Plans {
 
   private watching = new Set<string>()
 
-  /** Asks a program whether it is installed and signed in. */
-  async check(kind: LocalKind): Promise<Plan> {
+  /** Where an account stands, as last heard: not asked yet until it is. */
+  of(id: string): Plan {
+    return this.local[id] ?? unasked()
+  }
+
+  /** Asks a program whether it is installed and signed in, in the account's own home. */
+  async check(account: LocalAccount): Promise<Plan> {
     // A crate that could not ask is a program that cannot be run from here, which the
     // row says the way it says one that is not installed.
-    const said = await invoke<unknown>('ai_cli_status', { tool: kind }).catch(() => null)
-    const now: Plan = { ...standingOf(kind, saidIn(said)), limit: this.local[kind].limit }
-    this.local[kind] = now
+    const said = await invoke<unknown>('ai_cli_status', {
+      tool: account.kind,
+      account: account.id,
+    }).catch(() => null)
+    const home =
+      typeof said === 'object' && said !== null && typeof (said as { home?: unknown }).home === 'string'
+        ? (said as { home: string }).home
+        : null
+    const now: Plan = {
+      ...standingOf(account.kind, saidIn(said)),
+      limit: this.of(account.id).limit,
+      home,
+    }
+    this.local = { ...this.local, [account.id]: now }
     return now
   }
 
@@ -67,29 +93,29 @@ class Plans {
         : null
   }
 
-  /** Asks again every few seconds until the program says it is signed in. */
-  watch(kind: LocalKind): void {
-    if (this.watching.has(kind)) return
-    this.watching.add(kind)
+  /** Asks again every few seconds until the program says the account is signed in. */
+  watch(account: LocalAccount): void {
+    if (this.watching.has(account.id)) return
+    this.watching.add(account.id)
     const started = Date.now()
 
     const again = async () => {
       await waited(EVERY)
-      const now = await this.check(kind)
-      if (now.state === 'in' || Date.now() - started > FOR) this.watching.delete(kind)
+      const now = await this.check(account)
+      if (now.state === 'in' || Date.now() - started > FOR) this.watching.delete(account.id)
       else void again()
     }
     void again()
   }
 
   /** What a question heard about the plan's limit. */
-  heard(kind: LocalKind, limit: Limit): void {
-    this.local[kind].limit = limit
+  heard(id: string, limit: Limit): void {
+    this.local = { ...this.local, [id]: { ...this.of(id), limit } }
   }
 
   /** A question found the program signed out. */
-  signedOut(kind: LocalKind): void {
-    this.local[kind].state = 'out'
+  signedOut(id: string): void {
+    this.local = { ...this.local, [id]: { ...this.of(id), state: 'out' } }
   }
 }
 

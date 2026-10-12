@@ -146,4 +146,14 @@ describe('the line a terminal signs in with', () => {
       String.raw`'/Users/o'\''neil/.local/bin/codex' login`,
     )
   })
+
+  test('a second account signs in in its own home, set for the program alone', () => {
+    const home = 'C:/Users/A B/AppData/Local/nib/ai/homes/claude-code-2'
+    expect(loginLine('claude-code', 'C:/npm/claude.cmd', true, false, home)).toBe(
+      `set "CLAUDE_CONFIG_DIR=${home}" && "C:/npm/claude.cmd" auth login`,
+    )
+    expect(loginLine('codex', '/usr/bin/codex', false, true, "/home/o'n/ai/homes/codex-2")).toBe(
+      String.raw`CODEX_HOME='/home/o'\''n/ai/homes/codex-2' '/usr/bin/codex' logout`,
+    )
+  })
 })

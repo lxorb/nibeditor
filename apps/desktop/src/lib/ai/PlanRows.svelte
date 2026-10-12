@@ -56,15 +56,15 @@
   /** Claude Code's or Codex's own login, in a terminal tab; the pane closes so the tab
    *  can be seen, and the program is asked until it says it is signed in. */
   async function signInTo(kind: LocalKind) {
-    const program = plans.local[kind].program
-    if (!program) return
+    const plan = plans.of(provider.id)
+    if (!plan.program) return
     const [{ signIn }, { settings }] = await Promise.all([
       import('./local/signin'),
       import('../settings.svelte'),
     ])
     settings.open = false
-    await signIn(kind, program)
-    plans.watch(kind)
+    await signIn(kind, plan.program, plan.home)
+    plans.watch({ id: provider.id, kind })
   }
 
   /** Sign in with ChatGPT: the browser, and back. */
@@ -111,7 +111,7 @@
 <!-- Where a program on this machine stands: not installed, signed out, or whose plan it
      is signed in with. -->
 {#snippet program(kind: LocalKind)}
-  {@const plan = plans.local[kind]}
+  {@const plan = plans.of(provider.id)}
   <div class="nib-setting setting">
     <span class="name">{t('Account')}</span>
     <div class="row">
@@ -122,7 +122,7 @@
         <button class="nib-chip" onclick={() => void openExternal(INSTALL[kind])}>
           {t('Install')}
         </button>
-        <button class="nib-chip is-quiet" onclick={() => void plans.check(kind)}>
+        <button class="nib-chip is-quiet" onclick={() => void plans.check({ id: provider.id, kind })}>
           {t('Check again')}
         </button>
       {:else if plan.state === 'in'}

@@ -29,25 +29,59 @@ const LOGOUT: Record<LocalKind, string> = {
 /** How long the shell has to start before the line is given up on. */
 const STARTING = 20_000
 
-/** The line that runs a program's login, spelled for the shell it is typed into: the
- *  path in double quotes for Command Prompt, in single quotes for a POSIX shell (and
- *  fish, which reads them the same way). */
-export function loginLine(kind: LocalKind, program: string, windows: boolean, out = false): string {
-  const quoted = windows ? `"${program}"` : `'${program.replace(/'/g, `'\\''`)}'`
-  return `${quoted} ${(out ? LOGOUT : LOGIN)[kind]}`
+/** The variable each program reads a second account's home from; see home.rs in
+ *  src-tauri/src/ai_cli. */
+const HOME_VARIABLE: Record<LocalKind, string> = {
+  'claude-code': 'CLAUDE_CONFIG_DIR',
+  codex: 'CODEX_HOME',
 }
 
-/** Opens a terminal running the program's login, and says whether the line was typed. */
-export async function signIn(kind: LocalKind, program: string): Promise<boolean> {
-  return await typeInTerminal(kind, program, false)
+/** A word in single quotes for a POSIX shell, and fish, which reads them the same way. */
+const posix = (word: string) => `'${word.replace(/'/g, `'\\''`)}'`
+
+/** The line that runs a program's login, spelled for the shell it is typed into: the
+ *  path in double quotes for Command Prompt, in single quotes for a POSIX shell. A second
+ *  account's login is the same line in that account's home. */
+export function loginLine(
+  kind: LocalKind,
+  program: string,
+  windows: boolean,
+  out = false,
+  home: string | null = null,
+): string {
+  const quoted = windows ? `"${program}"` : posix(program)
+  const line = `${quoted} ${(out ? LOGOUT : LOGIN)[kind]}`
+  if (!home) return line
+  return windows
+    ? `set "${HOME_VARIABLE[kind]}=${home}" && ${line}`
+    : `${HOME_VARIABLE[kind]}=${posix(home)} ${line}`
+}
+
+/** Opens a terminal running the program's login, in the account's home where it has one
+ *  of nib's, and says whether the line was typed. */
+export async function signIn(
+  kind: LocalKind,
+  program: string,
+  home: string | null = null,
+): Promise<boolean> {
+  return await typeInTerminal(kind, program, false, home)
 }
 
 /** The same with the program's logout (`/logout`). */
-export async function signOut(kind: LocalKind, program: string): Promise<boolean> {
-  return await typeInTerminal(kind, program, true)
+export async function signOut(
+  kind: LocalKind,
+  program: string,
+  home: string | null = null,
+): Promise<boolean> {
+  return await typeInTerminal(kind, program, true, home)
 }
 
-async function typeInTerminal(kind: LocalKind, program: string, out: boolean): Promise<boolean> {
+async function typeInTerminal(
+  kind: LocalKind,
+  program: string,
+  out: boolean,
+  home: string | null,
+): Promise<boolean> {
   const [{ openTerminal }, { shells }, { ptyOf }, { workspace }] = await Promise.all([
     import('../../terminal/open'),
     import('../../terminal/shells.svelte'),
@@ -64,7 +98,7 @@ async function typeInTerminal(kind: LocalKind, program: string, out: boolean): P
   const tab = workspace.activeTabId
   if (!tab) return false
 
-  const line = `${loginLine(kind, program, windows, out)}\r`
+  const line = `${loginLine(kind, program, windows, out, home)}\r`
   const started = Date.now()
   while (Date.now() - started < STARTING) {
     const pty = ptyOf(tab)

@@ -49,7 +49,7 @@ class Listening {
     if (said.model) this.model = said.model
     if (said.limit) {
       this.heard.limit = said.limit
-      plans.heard(this.kind, said.limit)
+      plans.heard(this.ask.provider.id, said.limit)
     }
     if (said.trouble) this.heard.trouble = said.trouble
     if (said.signedOut) this.heard.signedOut = true
@@ -65,7 +65,7 @@ class Listening {
   /** The answer, or the sentence the run ended on. */
   finish(end: Ending): string {
     if (end.stopped || this.ask.signal?.aborted) throw stopped()
-    if (this.heard.signedOut) plans.signedOut(this.kind)
+    if (this.heard.signedOut) plans.signedOut(this.ask.provider.id)
     const name = KIND_NAMES[this.kind]
     const trouble = troubleOf(name, PLANS[this.kind], this.heard, end, !!this.answer)
     if (trouble) throw new Error(trouble)
@@ -108,6 +108,7 @@ async function askClaude(ask: Ask): Promise<string> {
         id,
         tool: 'claude-code',
         model: ask.model.trim() || null,
+        account: ask.provider.id,
         prompt: promptFor(ask.messages),
         output: channel,
       })

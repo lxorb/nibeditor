@@ -38,7 +38,7 @@ export async function status(thread: Thread | null, provider: Provider | null): 
   let plan: string | null = null
   let account: string | null = null
   if (isLocal(provider.kind)) {
-    const now = await (await plansOf()).check(provider.kind)
+    const now = await (await plansOf()).check({ id: provider.id, kind: provider.kind })
     plan = now.plan
     account = now.account ?? (now.state === 'out' ? t('Signed out') : null)
   } else if (provider.kind === 'chatgpt') {
@@ -63,7 +63,7 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
   const spent = thread?.spent
   const window = thread?.usage.window ?? null
   let limit = null
-  if (provider && isLocal(provider.kind)) limit = (await plansOf()).local[provider.kind].limit
+  if (provider && isLocal(provider.kind)) limit = (await plansOf()).of(provider.id).limit
   else if (provider?.kind === 'chatgpt') limit = (await plansOf()).chatgptLimit
   const until = limit?.until ? new Date(limit.until).toLocaleString() : limit?.untilWords
   const standing =
@@ -88,7 +88,7 @@ export async function doctor(provider: Provider | null): Promise<string> {
   if (!provider) return t('Add an AI provider in Settings first.')
   const out: [string, string | null][] = [[t('Provider'), KIND_NAMES[provider.kind]]]
   if (isLocal(provider.kind)) {
-    const now = await (await plansOf()).check(provider.kind)
+    const now = await (await plansOf()).check({ id: provider.id, kind: provider.kind })
     out.push([t('Program'), now.program ?? t('Not installed')])
     out.push([t('Signed in'), now.state === 'in' ? '✓' : now.state === 'out' ? '✕' : '?'])
   } else if (provider.baseUrl) {
@@ -117,13 +117,14 @@ export async function sign(provider: Provider | null, out: boolean): Promise<voi
     await plans.checkChatgpt()
     return
   }
-  const kind = provider.kind
-  const program = plans.local[kind].program ?? (await plans.check(kind)).program
-  if (!program) {
+  const account = { id: provider.id, kind: provider.kind }
+  const known = plans.of(account.id)
+  const plan = known.program ? known : await plans.check(account)
+  if (!plan.program) {
     settings.show('ai')
     return
   }
   const { signIn, signOut } = await import('../local/signin')
-  await (out ? signOut : signIn)(kind, program)
-  plans.watch(kind)
+  await (out ? signOut : signIn)(account.kind, plan.program, plan.home)
+  plans.watch(account)
 }

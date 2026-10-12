@@ -59,11 +59,11 @@ const FIRST: Record<Exclude<ProviderKind, 'compatible'>, string> = {
   codex: 'codex',
 }
 
-/** The kinds that may be added more than once: keys and servers. A program's sign-in is
- *  one per installation until the crate keeps a home per account, and a ChatGPT sign-in
- *  until it keeps a token per account. */
+/** The kinds that may be added more than once: keys, servers and programs, whose second
+ *  sign-in keeps its login in a home of nib's. A ChatGPT sign-in is one per installation
+ *  until the crate keeps a token per account. */
 export function repeatable(kind: ProviderKind): boolean {
-  return kind === 'anthropic' || kind === 'openai' || kind === 'compatible'
+  return kind !== 'chatgpt'
 }
 
 /** Who serves an account's models. */

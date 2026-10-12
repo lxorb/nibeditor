@@ -18,13 +18,11 @@
 //! and makes its change again. Each write is said to every window, so a switch in one is
 //! a switch in all of them.
 
-use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{made, write_privately};
@@ -68,15 +66,15 @@ fn file(root: &Path) -> PathBuf {
     root.join("accounts.json")
 }
 
-/// The stamp of a text: the first sixteen hex digits of its SHA-256, and the empty
-/// string for no text at all.
+/// The stamp of a text: its 64-bit FNV-1a hash in sixteen hex digits, and the empty
+/// string for no text at all. A stamp tells two versions of one small file apart, not a
+/// secret, so a hash every build and every platform computes alike is all it needs.
 fn stamp_of(text: Option<&str>) -> String {
     text.map(|text| {
-        let digest = Sha256::digest(text.as_bytes());
-        digest.iter().take(8).fold(String::new(), |mut hex, byte| {
-            let _ = write!(hex, "{byte:02x}");
-            hex
-        })
+        let hash = text.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
+            (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
+        });
+        format!("{hash:016x}")
     })
     .unwrap_or_default()
 }
@@ -123,6 +121,53 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     made(root)?;
     write_privately(&file(root), text.as_bytes())?;
     Ok(stamp_of(Some(text)))
+}
+
+/// Whether `id` is kept as an account that is a second sign-in to `kind`'s program, and
+/// so has a home of nib's: the window says so (`own`), and only for a program's kind.
+/// Read here rather than taken from the window, so a page can name an account and never
+/// a folder.
+#[cfg(desktop)]
+pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
+    if kind != "claude-code" && kind != "codex" {
+        return Ok(false);
+    }
+    let Some(text) = read_text(root)? else {
+        return Ok(false);
+    };
+    let kept: serde_json::Value =
+        serde_json::from_str(&text).map_err(|_| "the accounts cannot be read".to_owned())?;
+    let account = kept
+        .get("accounts")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|all| {
+            all.iter()
+                .find(|one| one.get("id").and_then(serde_json::Value::as_str) == Some(id))
+        });
+    match account {
+        None => Err(format!("{id} is not an account")),
+        Some(one) => Ok(
+            one.get("kind").and_then(serde_json::Value::as_str) == Some(kind)
+                && one.get("own").and_then(serde_json::Value::as_bool) == Some(true),
+        ),
+    }
+}
+
+/// The folder a second sign-in's program keeps its login in: `homes/<id>` under the
+/// accounts. An id is the window's own, letters, digits, `-` and `_`, so it can only
+/// ever name a folder there.
+#[cfg(desktop)]
+pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
+    let fits = !id.is_empty()
+        && id.len() <= 64
+        && id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+    if fits {
+        Ok(root.join("homes").join(id))
+    } else {
+        Err(format!("{id} is not an account"))
+    }
 }
 
 /// The accounts as they are kept.
@@ -194,6 +239,41 @@ mod tests {
             Some(r#"{"a":2}"#)
         );
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[cfg(desktop)]
+    #[test]
+    fn only_a_second_sign_in_to_that_program_has_a_home_of_its_own() {
+        let root = folder("homes");
+        let text = r#"{"accounts":[
+            {"id":"claude-code","kind":"claude-code","name":"","model":""},
+            {"id":"claude-code-2","kind":"claude-code","name":"","model":"","own":true},
+            {"id":"anthropic","kind":"anthropic","name":"","model":"","own":true}
+        ]}"#;
+        write(&root, text, "").expect("written");
+        assert_eq!(has_own_home(&root, "claude-code", "claude-code"), Ok(false));
+        assert_eq!(
+            has_own_home(&root, "claude-code-2", "claude-code"),
+            Ok(true)
+        );
+        // A home is a program's: neither another program's nor a key's.
+        assert_eq!(has_own_home(&root, "claude-code-2", "codex"), Ok(false));
+        assert_eq!(has_own_home(&root, "anthropic", "anthropic"), Ok(false));
+        assert!(has_own_home(&root, "nobody", "claude-code").is_err());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[cfg(desktop)]
+    #[test]
+    fn a_home_is_always_a_folder_under_the_homes() {
+        let root = PathBuf::from("ai");
+        assert_eq!(
+            home_dir(&root, "codex-2"),
+            Ok(root.join("homes").join("codex-2"))
+        );
+        for bad in ["", "..", "../x", "a/b", "a\\b", "C:", &"x".repeat(65)] {
+            assert!(home_dir(&root, bad).is_err(), "{bad:?}");
+        }
     }
 
     #[test]

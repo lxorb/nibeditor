@@ -135,6 +135,8 @@ class Ai {
   private stamp = ''
   /** Whether this window has heard from the file yet; a change made before then waits. */
   private synced: Promise<void> | null = null
+  /** The last change being written. */
+  private writing: Promise<void> = Promise.resolve()
 
   /** What an id answers with now: its provider's active account, or null for an id of
    *  nothing there. The one place a thread, a feature or a helper learns who answers. */
@@ -227,9 +229,20 @@ class Ai {
   /** Makes a change once the file has been heard from, so a change made in the first
    *  moment is never written over a file this window has not read yet. */
   private changed(make: (state: Accounts) => Accounts) {
-    // Shown at once; written once the window has read the file.
+    // Shown at once; written once the window has read the file, after the change before.
     this.state = make(this.state)
-    void (this.synced ?? Promise.resolve()).then(() => this.change(make))
+    const before = this.writing
+    this.writing = (async () => {
+      await this.synced
+      await before
+      await this.change(make)
+    })()
+  }
+
+  /** The last change made, written: what a question to the crate about an account just
+   *  added waits for, since the crate reads the accounts from the file. */
+  async written(): Promise<void> {
+    await this.writing
   }
 
   /** Has a feature ask the provider of `id`, or the default again for the empty string. */

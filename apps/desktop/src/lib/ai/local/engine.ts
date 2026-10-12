@@ -84,6 +84,8 @@ interface Live {
   model: string
   effort: Effort
   fast: boolean
+  /** The account it was opened in. */
+  account: string
   /** Who hears its lines: the send in flight, or nobody between sends. */
   hear: ((said: Heard) => void) | null
   /** What it said before anybody heard: the first send hears it, a later one not. */
@@ -163,7 +165,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   /** The thread's session, opened now if it has none that fits its mode. */
   async function liveFor(thread: Thread, provider: Provider): Promise<[Live, boolean]> {
     const held = sessions.get(thread.id)
-    if (held && !held.session.ended && held.mode === thread.mode) return [held, false]
+    // A session is the account's it was opened in: after a switch of account, the next
+    // send opens one in the new account, seeded from the thread as after an idle end.
+    const fits = held?.mode === thread.mode && held.account === provider.id
+    if (held && !held.session.ended && fits) return [held, false]
     if (held) await held.session.close()
 
     let session: Session
@@ -197,6 +202,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       model: thread.model,
       effort: thread.effort,
       fast: !!thread.fast,
+      account: provider.id,
       hear: null,
       early,
     }
@@ -366,13 +372,13 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         }
         if (said.limit) {
           heard.limit = said.limit
-          plans.heard(kind, said.limit)
+          plans.heard(provider.id, said.limit)
           on({ type: 'limit', limit: said.limit })
         }
         if (said.trouble) heard.trouble = said.trouble
         if (said.signedOut) {
           heard.signedOut = true
-          plans.signedOut(kind)
+          plans.signedOut(provider.id)
         }
         if (said.thinking) {
           const last = turn.parts.at(-1)
@@ -577,7 +583,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   return {
     async models(provider) {
       if (provider.kind !== kind) return []
-      listed = modelsIn(kind, await listedModels(kind))
+      listed = modelsIn(kind, await listedModels(kind, provider.id))
       return listed.map((one) => ({ ...one, window: one.window ?? windows.get(one.id) ?? null }))
     },
     async send(thread, message, on, signal) {

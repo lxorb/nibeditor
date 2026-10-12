@@ -22,7 +22,8 @@ export function vendorName(vendor: Vendor, accounts: readonly Account[]): string
   if (vendor === CLAUDE) return KIND_NAMES.anthropic
   if (vendor === OPENAI) return KIND_NAMES.openai
   const named = accounts.find((one) => one.id === vendor)?.name
-  return named ? named : t(KIND_NAMES.compatible)
+  if (named) return named
+  return t(KIND_NAMES.compatible)
 }
 
 /** An account's name: what the reader called it, else its road. */

@@ -266,6 +266,29 @@ describe('a call that asks the reader, in a program’s session', () => {
   })
 })
 
+describe('a switch of account', () => {
+  test('the next send opens a session in the account now in use, the turns carried', async () => {
+    const work: Provider & { kind: 'claude-code' } = { ...CLAUDE, id: 'cc-2', name: 'Work' }
+    let answering: Provider = CLAUDE
+    const built = createLocalEngine('claude-code', {
+      // Every account of the provider answers with the one in use, as `ai.provider` does.
+      provider: () => answering,
+      answers: QUIET,
+      instructions: () => Promise.resolve(''),
+    })
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'one', built)
+    answering = work
+    await send(work, on, 'two', built)
+
+    expect(opened.map((one) => one.opening.account)).toEqual(['cc', 'cc-2'])
+    expect(opened.map((one) => (one.opening.agent as { id: string }).id)).toEqual(['cc', 'cc-2'])
+    // The new session hears the thread so far, as after an idle end.
+    const seed = opened[1]?.said[0] as { text?: string } | undefined
+    expect(seed?.text).toContain('one')
+  })
+})
+
 describe('a Claude Code thread', () => {
   test('streams thinking, a row per tool call and the words, with the program’s counts', async () => {
     const on = thread(CLAUDE)
@@ -299,6 +322,7 @@ describe('a Claude Code thread', () => {
       mode: 'approve',
       model: 'opus',
       effort: 'high',
+      account: 'cc',
     })
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn', 'model', 'effort', 'turn'])
     expect(opened[0]?.said[1]).toEqual({ kind: 'model', model: 'sonnet' })

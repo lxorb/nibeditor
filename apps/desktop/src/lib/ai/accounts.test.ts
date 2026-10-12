@@ -66,13 +66,22 @@ describe('adding accounts', () => {
     expect(activeOf(state, CLAUDE)?.id).toBe('claude-code')
   })
 
-  test('a sign-in to a program or to ChatGPT is one per installation', () => {
-    for (const kind of ['chatgpt', 'claude-code', 'codex'] as const) {
-      const once = added(NONE, kind)
-      const twice = added(once.state, kind)
-      expect(twice.state.accounts).toHaveLength(1)
-      expect(twice.account.id).toBe(kind)
-    }
+  test('a second Claude Code or Codex is a home of its own, the first is the reader’s', () => {
+    const state = made('claude-code', 'claude-code', 'codex', 'codex')
+    expect(state.accounts.map((one) => one.id)).toEqual([
+      'claude-code',
+      'claude-code-2',
+      'codex',
+      'codex-2',
+    ])
+    expect(state.accounts.map((one) => one.own ?? false)).toEqual([false, true, false, true])
+  })
+
+  test('a ChatGPT sign-in is one per installation', () => {
+    const once = added(NONE, 'chatgpt')
+    const twice = added(once.state, 'chatgpt')
+    expect(twice.state.accounts).toHaveLength(1)
+    expect(twice.account.id).toBe('chatgpt')
   })
 })
 
