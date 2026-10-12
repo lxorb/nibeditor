@@ -425,8 +425,9 @@ function encodeTarget(path: string): string {
  *
  *  Three tries, in the order the exports need them: the path as written from the
  *  note's own folder, the same path from the top of the export, and finally the
- *  bare file name anywhere in the export. The last is what Obsidian, Bear and
- *  Logseq all rely on, since none of them writes a path at all. */
+ *  bare file name anywhere in the export, or for a link that names folders too, the
+ *  file whose path ends with them. The last is what Obsidian, Bear and Logseq all
+ *  rely on, since none of them writes the whole path. */
 export class ExportFiles {
   /** Every file in the export, by its export path. */
   private readonly byPath = new Spellings()
@@ -441,6 +442,9 @@ export class ExportFiles {
    *  not the spreadsheet, and a canvas or a paper of the same stem never answers. */
   private readonly byStem = new Spellings()
 
+  /** Every file in the export with its export path, in the order they came. */
+  private readonly paths: [string, Found][] = []
+
   /** How many of the files arriving a wikilink would call by each name. */
   private readonly named = new Map<string, number>()
 
@@ -454,6 +458,7 @@ export class ExportFiles {
 
   add(was: string, found: Found) {
     this.byPath.add(was, found)
+    this.paths.push([was, found])
 
     const name = was.split('/').pop() ?? was
     this.byName.add(name, found)
@@ -519,6 +524,17 @@ export class ExportFiles {
       if (found) return this.told(found)
     }
 
+    // A link that names folders as well is held to them, the way Obsidian reads
+    // one: the file whose path ends with what the link wrote. A link to
+    // `Clients/Acme/Contacts` in a vault with only `Clients/Beta/Contacts.md` is a
+    // note nobody has written yet, not Beta's. A path written on another machine,
+    // `file:///Users/me/Export/pic.png`, ends with the file's own instead.
+    const said = cleaned.split('/').filter((part) => part && part !== '.' && part !== '..')
+    if (said.length > 1) {
+      const fits = this.paths.find(([was]) => endsTogether(was, said.join('/')))
+      return fits ? this.told(fits[1]) : null
+    }
+
     const name = cleaned.split('/').pop() ?? cleaned
     const found = this.byName.get(name) ?? this.byStem.get(name)
     if (!found) return null
@@ -556,6 +572,15 @@ class Spellings {
   get(key: string): Found | undefined {
     return this.exact.get(key) ?? this.folded.get(key.toLowerCase())
   }
+}
+
+/** Whether one of two paths is the end of the other, whole folders and names at a
+ *  time and without regard to case, a note's `.md` left off or not. */
+function endsTogether(was: string, said: string): boolean {
+  const one = was.toLowerCase()
+  const other = said.toLowerCase()
+  const ends = (path: string, end: string) => path === end || path.endsWith(`/${end}`)
+  return [one, one.replace(/\.md$/, '')].some((path) => ends(path, other) || ends(other, path))
 }
 
 /** A path without the extension on its last part. */

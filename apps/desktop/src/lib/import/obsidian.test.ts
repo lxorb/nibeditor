@@ -373,6 +373,19 @@ describe('the links in a vault', () => {
     ).resolves.toBe('![[Diagram]]\n')
   })
 
+  test('that name a folder holding no such note are a note not written yet', async () => {
+    const beta = file('Clients/Beta/Contacts.md', '# Beta\n')
+    const wiki = 'Call [[Clients/Acme/Contacts]].\n'
+    const markdown = 'Call [them](Clients/Acme/Contacts.md).\n'
+
+    await expect(noteFrom('A.md', file('A.md', wiki), beta)).resolves.toBe(wiki)
+    await expect(noteFrom('A.md', file('A.md', markdown), beta)).resolves.toBe(markdown)
+    // The end of a path is enough, the way Obsidian reads it.
+    await expect(noteFrom('A.md', file('A.md', 'Call [[Beta/Contacts]].\n'), beta)).resolves.toBe(
+      'Call [[Contacts]].\n',
+    )
+  })
+
   test('keep the case they were written in', async () => {
     await expect(
       noteFrom(
