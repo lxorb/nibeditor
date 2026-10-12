@@ -427,6 +427,10 @@ export class ExportFiles {
   /** How many of the files arriving a wikilink would call by each name. */
   private readonly named = new Map<string, number>()
 
+  /** How many of the files in the export a link could call by each name, the way it
+   *  was before the import renamed anything. */
+  private readonly called = new Map<string, number>()
+
   /** The notes arriving, by the last part of their path without its extension, the
    *  way nib looks a wikilink's name up. */
   private readonly arriving = new Map<string, string[]>()
@@ -439,6 +443,12 @@ export class ExportFiles {
 
     const stem = name.replace(/\.[^.]+$/, '')
     if (stem !== name && isMarkdownPath(found.path)) this.byStem.add(stem, found)
+
+    const names = stem !== name && isMarkdownPath(found.path) ? [name, stem] : [name]
+    for (const one of names) {
+      const key = one.toLowerCase()
+      this.called.set(key, (this.called.get(key) ?? 0) + 1)
+    }
 
     const said = found.name.toLowerCase()
     this.named.set(said, (this.named.get(said) ?? 0) + 1)
@@ -493,13 +503,19 @@ export class ExportFiles {
     }
 
     const name = cleaned.split('/').pop() ?? cleaned
-    return this.byName.get(name) ?? this.byStem.get(name) ?? null
+    const found = this.byName.get(name) ?? this.byStem.get(name)
+    if (!found) return null
+    // A name only one file in the export had could only mean that file. Once a
+    // renamed file arrives with it as well - `Why?` is `Why` on the way in - the
+    // folder is written in too, so the link still says which.
+    return (this.called.get(name.toLowerCase()) ?? 0) < 2 ? this.told(found) : found
   }
 
   /** A file the link named by its path, with enough of that path kept to say which
    *  file is meant when another arriving shares its name. The bare name would go to
-   *  whichever of them the space finds first. A link that named only the name is
-   *  left to answer the way it did, so it is not handed here. */
+   *  whichever of them the space finds first. A link that named only a name two
+   *  files in the export had is left to answer the way it did, so it is not handed
+   *  here. */
   private told(found: Found): Found {
     if ((this.named.get(found.name.toLowerCase()) ?? 0) < 2) return found
     return { ...found, name: found.path.replace(/\.md$/i, '') }

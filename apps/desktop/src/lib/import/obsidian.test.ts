@@ -579,6 +579,19 @@ describe('the files in a vault', () => {
     expect(home?.kind === 'note' && home.text).toBe('See [[Con-. Law]].\n')
   })
 
+  test('keep their links when a rename for Windows gives one a namesake', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', 'Read [[Why?]] first, then [[Why]].\n'),
+      file('Notes/Why?.md', 'the new one'),
+      file('Archive/Why.md', 'the old one'),
+    ])
+    const home = plan.files.find((one) => one.path === 'Home.md')
+    expect(home?.kind === 'note' && home.text).toBe(
+      'Read [[Notes/Why]] first, then [[Archive/Why]].\n',
+    )
+  })
+
   test('arrive both when one is named with a space in front to sort first', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
