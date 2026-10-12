@@ -269,9 +269,10 @@ function definitionsFollowed(text: string, follow: (path: string) => string | nu
   )
 }
 
-/** A canvas whose file cards point at where the files they show went: `moved` maps
- *  a path as the canvas names it to the one the file has now. JSON Canvas names a
- *  file by its path from the top of the vault, so a card would otherwise go on
+/** A canvas whose file cards, and groups with a picture behind them, point at where
+ *  the files they show went: `moved` maps a path as the canvas names it to the one
+ *  the file has now. JSON Canvas names a file by its path from the top of the vault,
+ *  a card's in `file` and a group's in `background`, so either would otherwise go on
  *  showing a name the import changed, or a note of that name that was already in
  *  the space. Only those paths are written again, each in its place, so the rest
  *  of the file stays byte for byte; a canvas that is not UTF-8 is not one, and is
@@ -285,7 +286,7 @@ export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, str
   }
 
   const followed = text.replace(
-    /("file"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
+    /("(?:file|background)"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
     (whole, key: string, said: string) => {
       const now = moved.get(jsonString(said) ?? '')
       return now === undefined ? whole : `${key}${JSON.stringify(now)}`

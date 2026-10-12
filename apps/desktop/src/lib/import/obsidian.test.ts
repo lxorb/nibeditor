@@ -997,6 +997,21 @@ describe('the files in a vault', () => {
     )
   })
 
+  test('renamed for Windows are still the picture behind a canvas group', async () => {
+    const board =
+      '{\n  "nodes": [{ "id": "g", "type": "group", "label": "Mood", "background": "Attachments/Why?.png" }],\n  "edges": []\n}'
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Attachments/Why?.png', 'png'),
+      file('Board.canvas', board),
+    ])
+    const canvas = plan.files.find((one) => one.path === 'Board.canvas')
+    expect(plan.files.map((one) => one.path)).toContain('Attachments/Why.png')
+    expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(
+      board.replace('Why?.png', 'Why.png'),
+    )
+  })
+
   test('keep their links when a rename for Windows gives one a namesake', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
