@@ -1,4 +1,4 @@
-# Nib for the Snap Store.
+# Orden for the Snap Store.
 #
 # Like the AUR and Flathub packaging, this unpacks the official .deb instead of
 # rebuilding the app. Nothing is staged from the Ubuntu archive: the gnome
@@ -9,15 +9,16 @@
 # blank.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable nibeditor_0.13.1_amd64.snap`; see
-# packaging/README.md.
-name: nibeditor
-title: nibeditor
+# account and `snapcraft upload --release=stable orden_0.13.1_amd64.snap`; see
+# packaging/linux.md.
+name: orden
+title: Orden
 base: core24
 version: '0.13.1'
 summary: Markdown editor with live preview
 description: |
-  nibeditor is a small markdown editor that formats what you write as you write it.
+  Orden, formerly nibeditor, is a small markdown editor that formats what you
+  write as you write it.
 
   There is no split screen and no preview pane: headings, emphasis, lists,
   tables, code and math take their final shape in the same window you type in,
@@ -30,13 +31,13 @@ description: |
   * Publish a file as a page on the web, with a custom domain if you have one
   * Export to PDF and HTML
 
-  nibeditor is free software under the GNU Affero General Public License. The same
-  editor also runs in a browser at nibeditor.com.
+  Orden is free software under the GNU Affero General Public License. The same
+  editor also runs in a browser at orden.so.
 license: AGPL-3.0-only
-website: https://nibeditor.com
-source-code: https://github.com/lxorb/nibeditor
-issues: https://github.com/lxorb/nibeditor/issues
-contact: https://github.com/lxorb/nibeditor/issues
+website: https://orden.so
+source-code: https://github.com/lxorb/orden
+issues: https://github.com/lxorb/orden/issues
+contact: https://github.com/lxorb/orden/issues
 
 grade: stable
 # Nothing here needs to reach outside the sandbox: the spaces in ~/Documents come
@@ -49,7 +50,7 @@ platforms:
   arm64:
 
 apps:
-  nibeditor:
+  orden:
     command: usr/bin/nib
     desktop: usr/share/applications/nib.desktop
     extensions: [gnome]
@@ -72,12 +73,12 @@ apps:
       WEBKIT_DISABLE_DMABUF_RENDERER: '1'
 
 parts:
-  nibeditor:
+  orden:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.13.1/Nib-0.13.1-linux-x64.deb
-      - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.13.1/Nib-0.13.1-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-arm64.deb
     # The bytes those two names stood for on the day the release was made. Every
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
@@ -94,14 +95,16 @@ parts:
       # Tauri writes a .desktop entry with no categories, no web handlers and no
       # comment, and files a 256x256 icon under a scale-2 directory. Both are
       # replaced here, the same way the AUR and Flathub packaging does.
-      # Tauri names its entry after the product: Nib up to 0.11, nibeditor since.
+      # Tauri names its entry after the product: Nib up to 0.11, nibeditor up to
+      # 0.13, Orden since.
       rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop" \
-        "${CRAFT_PART_INSTALL}/usr/share/applications/nibeditor.desktop"
+        "${CRAFT_PART_INSTALL}/usr/share/applications/nibeditor.desktop" \
+        "${CRAFT_PART_INSTALL}/usr/share/applications/Orden.desktop"
       install -d "${CRAFT_PART_INSTALL}/usr/share/applications"
       cat > "${CRAFT_PART_INSTALL}/usr/share/applications/nib.desktop" <<'DESKTOP'
       [Desktop Entry]
       Type=Application
-      Name=nibeditor
+      Name=Orden
       GenericName=Markdown Editor
       Comment=Write markdown and see it as you type
       Exec=nib %U
@@ -109,7 +112,7 @@ parts:
       Terminal=false
       Categories=Office;TextEditor;Utility;
       MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
-      Keywords=markdown;md;editor;notes;writing;wysiwyg;
+      Keywords=markdown;md;editor;notes;writing;wysiwyg;nib;nibeditor;
       StartupWMClass=nib
       StartupNotify=true
       DESKTOP

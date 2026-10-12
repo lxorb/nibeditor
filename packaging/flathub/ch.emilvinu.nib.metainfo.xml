@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>ch.emilvinu.nib</id>
 
-  <name>nibeditor</name>
+  <name>Orden</name>
   <summary>Markdown editor with live preview</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
@@ -14,8 +14,8 @@
 
   <description>
     <p>
-      nibeditor is a small markdown editor that formats what you write as you
-      write it. There is no split screen and no preview pane: headings, emphasis,
+      Orden, formerly nibeditor, is a small markdown editor that formats what
+      you write as you write it. There is no split screen and no preview pane: headings, emphasis,
       lists, tables, code and math take their final shape in the same window you
       type in, and the markdown underneath stays plain text you can open anywhere.
     </p>
@@ -29,15 +29,15 @@
       <li>Export to PDF and HTML</li>
     </ul>
     <p>
-      nibeditor is free software under the GNU Affero General Public License. The
-      same editor also runs in a browser at nibeditor.com.
+      Orden is free software under the GNU Affero General Public License. The
+      same editor also runs in a browser at orden.so.
     </p>
   </description>
 
   <launchable type="desktop-id">ch.emilvinu.nib.desktop</launchable>
 
   <!-- What a catalogue paints behind the icon. Both are the app's own purple,
-       one well above it and one well below, so the nib stays legible on either. -->
+       one well above it and one well below, so the mark stays legible on either. -->
   <branding>
     <color type="primary" scheme_preference="light">#ded9fc</color>
     <color type="primary" scheme_preference="dark">#2e2560</color>
@@ -45,14 +45,14 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/lxorb/nibeditor/c07562c111935094bb5391ebc5433b6bbaf66bfa/docs/media/screenshot.png</image>
+      <image>https://raw.githubusercontent.com/lxorb/orden/c07562c111935094bb5391ebc5433b6bbaf66bfa/docs/media/screenshot.png</image>
       <caption>A document being edited, formatted as it is typed</caption>
     </screenshot>
   </screenshots>
 
-  <url type="homepage">https://nibeditor.com</url>
-  <url type="bugtracker">https://github.com/lxorb/nibeditor/issues</url>
-  <url type="vcs-browser">https://github.com/lxorb/nibeditor</url>
+  <url type="homepage">https://orden.so</url>
+  <url type="bugtracker">https://github.com/lxorb/orden/issues</url>
+  <url type="vcs-browser">https://github.com/lxorb/orden</url>
 
   <categories>
     <category>Office</category>
@@ -65,6 +65,7 @@
     <keyword>notes</keyword>
     <keyword>writing</keyword>
     <keyword>wysiwyg</keyword>
+    <keyword>nibeditor</keyword>
   </keywords>
 
   <provides>
@@ -84,31 +85,31 @@
 
   <releases>
     <release version="0.8.0" date="2026-09-13">
-      <url type="details">https://github.com/lxorb/nibeditor/releases/tag/v0.8.0</url>
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.8.0</url>
       <description>
         <p>Web pages as notes, sites that publish with search and forms, meetings that transcribe themselves, and the app in thirty-nine languages.</p>
       </description>
     </release>
     <release version="0.7.0" date="2026-09-12">
-      <url type="details">https://github.com/lxorb/nibeditor/releases/tag/v0.7.0</url>
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.7.0</url>
       <description>
         <p>Search with operators, query fences that answer where they stand, a graph of the whole space, and notes that hold notes.</p>
       </description>
     </release>
     <release version="0.6.0" date="2026-09-09">
-      <url type="details">https://github.com/lxorb/nibeditor/releases/tag/v0.6.0</url>
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.6.0</url>
       <description>
         <p>A drawing canvas with pens, shapes and connectors, layouts for phone and tablet, and an icon for every note.</p>
       </description>
     </release>
     <release version="0.5.0" date="2026-09-08">
-      <url type="details">https://github.com/lxorb/nibeditor/releases/tag/v0.5.0</url>
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.5.0</url>
       <description>
         <p>Notes presented as slide decks, a browser extension for clipping pages, and a theme store.</p>
       </description>
     </release>
     <release version="0.4.0" date="2026-09-04">
-      <url type="details">https://github.com/lxorb/nibeditor/releases/tag/v0.4.0</url>
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.4.0</url>
       <description>
         <p>Sync across devices, publishing, and an MCP server for language model access.</p>
       </description>

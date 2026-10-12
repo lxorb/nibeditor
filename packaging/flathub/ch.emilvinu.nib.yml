@@ -1,4 +1,4 @@
-# nibeditor for Flathub, built from source in the sandbox.
+# Orden for Flathub, built from source in the sandbox.
 #
 # Flathub's requirements gained a "Building from source" section on 2026-02-25:
 # a source-available submission has to be built entirely from source, so this
@@ -88,12 +88,12 @@ modules:
         install -Dm644 "$icons/icon.png"       /app/share/icons/hicolor/512x512/apps/ch.emilvinu.nib.png
     sources:
       - type: git
-        url: https://github.com/lxorb/nibeditor.git
+        url: https://github.com/lxorb/orden.git
         tag: v0.8.0
         commit: da7799a074c474731cdec17421a54ee38f992e26
         x-checker-data:
           type: json
-          url: https://api.github.com/repos/lxorb/nibeditor/releases/latest
+          url: https://api.github.com/repos/lxorb/orden/releases/latest
           tag-query: .tag_name
           version-query: $tag | sub("^v"; "")
           is-main-source: true

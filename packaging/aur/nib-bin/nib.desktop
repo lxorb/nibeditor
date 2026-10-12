@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=nibeditor
+Name=Orden
 GenericName=Markdown Editor
 Comment=Write markdown and see it as you type
 Exec=nib %U
@@ -8,6 +8,6 @@ Icon=nib
 Terminal=false
 Categories=Office;TextEditor;Utility;
 MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
-Keywords=markdown;md;editor;notes;writing;wysiwyg;
+Keywords=markdown;md;editor;notes;writing;wysiwyg;nib;nibeditor;
 StartupWMClass=nib
 StartupNotify=true

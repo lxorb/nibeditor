@@ -1,14 +1,14 @@
 {
-  # Nib for Nix. The AppImage is wrapped rather than rebuilt: Tauri's AppImage
+  # Orden for Nix. The AppImage is wrapped rather than rebuilt: Tauri's AppImage
   # already carries WebKitGTK and its web process, so nothing has to be patched
   # in from nixpkgs beyond the FHS environment appimageTools sets up.
   #
   # This is not the nixpkgs package - it is a flake anyone can install from
   # directly, without waiting on a nixpkgs review:
   #
-  #   nix profile install github:lxorb/nibeditor?dir=packaging/nix
-  #   nix run github:lxorb/nibeditor?dir=packaging/nix
-  description = "nibeditor, a markdown editor with realtime inline preview";
+  #   nix profile install github:lxorb/orden?dir=packaging/nix
+  #   nix run github:lxorb/orden?dir=packaging/nix
+  description = "Orden, a markdown editor with realtime inline preview";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -39,12 +39,12 @@
           inherit (appimages.${system}) suffix hash;
 
           src = pkgs.fetchurl {
-            url = "https://github.com/lxorb/nibeditor/releases/download/v${version}/Nib-${version}-linux-${suffix}.AppImage";
+            url = "https://github.com/lxorb/orden/releases/download/v${version}/Nib-${version}-linux-${suffix}.AppImage";
             inherit hash;
           };
 
           # Unpacked once so the .desktop entry and the icons can be installed
-          # into the profile, which is what makes Nib show up in a launcher.
+          # into the profile, which is what makes Orden show up in a launcher.
           contents = pkgs.appimageTools.extract {
             pname = "nib";
             inherit version src;
@@ -55,7 +55,7 @@
             inherit version src;
 
             # pandoc is deliberately not pulled in: it is only needed for
-            # importing and exporting DOCX and friends, Nib hides that when it
+            # importing and exporting DOCX and friends, Orden hides that when it
             # is missing, and it would roughly double the closure. Anyone who
             # wants it can add pandoc to their own profile.
             extraInstallCommands = ''
@@ -72,9 +72,9 @@
 
             meta = {
               description = "Markdown editor with realtime inline preview";
-              homepage = "https://nibeditor.com";
-              downloadPage = "https://github.com/lxorb/nibeditor/releases";
-              changelog = "https://github.com/lxorb/nibeditor/releases/tag/v${version}";
+              homepage = "https://orden.so";
+              downloadPage = "https://github.com/lxorb/orden/releases";
+              changelog = "https://github.com/lxorb/orden/releases/tag/v${version}";
               license = nixpkgs.lib.licenses.agpl3Only;
               mainProgram = "nib";
               platforms = systems;

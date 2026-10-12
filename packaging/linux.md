@@ -2,13 +2,13 @@
 
 Four package managers. Three of them repackage what
 `.github/workflows/release.yml` already publishes rather than rebuilding
-nibeditor, so a release is a release everywhere and nothing can drift between
+Orden, so a release is a release everywhere and nothing can drift between
 them. Flathub is the exception and has to be: it only takes a source-available
 app that is compiled from source inside its own sandbox.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
-| `aur/nib-bin/` | AUR (`yay -S nib-bin`) | the `.deb` | x86_64, aarch64 |
+| `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `flathub/` | Flathub (`flatpak`) | source, in the sandbox | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the AppImage | x86_64, aarch64 |
@@ -30,20 +30,20 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 ## What Tauri's .deb gives us, and what it gets wrong
 
 ```
-Package: nibeditor (Conflicts and Replaces: nib, its name up to 0.11)
+Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
 Depends: libwebkit2gtk-4.1-0, libgtk-3-0
 usr/bin/nib
-usr/share/applications/nibeditor.desktop (Nib.desktop up to 0.11)
+usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
 ```
 
 The binary and the icons are fine. The rest is not, and every package here
 repairs the same three things:
 
-- **`Categories=` is empty**, so Nib lands in no menu category at all. Tauri
+- **`Categories=` is empty**, so Orden lands in no menu category at all. Tauri
   derives it from `bundle.category` in `tauri.conf.json`, which is unset.
-- **No `MimeType=` and no `%U` on `Exec=`**, so nothing offers Nib as a web
-  browser. Nib claims `x-scheme-handler/http` and `https`, which is what lets it be
+- **No `MimeType=` and no `%U` on `Exec=`**, so nothing offers Orden as a web
+  browser. Orden claims `x-scheme-handler/http` and `https`, which is what lets it be
   the default browser (see `default_browser.rs`), and of files only
   `application/pdf`, for a file manager's "Open with" (see `handed_pdfs.rs`): it
   opens no note from outside its spaces, so a `.md` in a file manager is never
@@ -61,15 +61,18 @@ Each package therefore installs its own `.desktop` entry and moves the icon.
 The three copies differ only where they have to: the Flatpak one is named after
 the app ID and points `Icon=` at it, the snap one points `Icon=` at `${SNAP}`.
 
-## AUR - `nib-bin`
+## AUR - `orden-bin`
 
 `aur/nib-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
-generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. It unpacks
-the `.deb` with `bsdtar`, so installing Nib pulls in no Rust or Node toolchain.
+generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. The package
+is `orden-bin`; the folder, the binary, the icon and the desktop entry keep the
+name `nib`. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
+Rust or Node toolchain.
 
-`nib-bin` is unclaimed, and neither the official repositories nor the AUR has a
-`nib`, so `provides=nib` and `conflicts=nib` are free. (`nib-git` in the AUR is
-an unrelated, orphaned Python static site generator.)
+Neither `orden-bin` nor `orden` is in the AUR (checked 2026-10-12), and neither
+the official repositories nor the AUR has a `nib`, so `provides=nib` and
+`conflicts=nib` are free. (`nib-git` in the AUR is an unrelated, orphaned Python
+static site generator.) The package was never published as `nib-bin`.
 
 ### Steps to publish it - needs your account
 
@@ -91,15 +94,15 @@ the key have to be yours.
 4. Hand the private key and your account details to the repository:
 
    ```
-   gh secret set AUR_USERNAME --repo lxorb/nibeditor --body "<your AUR username>"
-   gh secret set AUR_EMAIL    --repo lxorb/nibeditor --body "<the email on the account>"
-   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/nibeditor < ~/.ssh/aur_nib
+   gh secret set AUR_USERNAME --repo lxorb/orden --body "<your AUR username>"
+   gh secret set AUR_EMAIL    --repo lxorb/orden --body "<the email on the account>"
+   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/orden < ~/.ssh/aur_nib
    ```
 
 5. Publish the current release:
 
    ```
-   gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.13.1
+   gh workflow run publish-linux.yml --repo lxorb/orden -f tag=v0.13.1
    ```
 
    The AUR creates the package base on first push, so there is nothing to
@@ -108,9 +111,9 @@ the key have to be yours.
 If you would rather do the first push yourself:
 
 ```
-git clone ssh://aur@aur.archlinux.org/nib-bin.git
-cp packaging/aur/nib-bin/{PKGBUILD,.SRCINFO,nib.desktop} nib-bin/
-cd nib-bin && git add -A && git commit -m "nib 0.13.1" && git push
+git clone ssh://aur@aur.archlinux.org/orden-bin.git
+cp packaging/aur/nib-bin/{PKGBUILD,.SRCINFO,nib.desktop} orden-bin/
+cd orden-bin && git add -A && git commit -m "orden 0.13.1" && git push
 ```
 
 ## Flathub
@@ -124,7 +127,7 @@ whole thing build with no network.
 
 > All source available submissions must be built entirely from source code.
 
-nibeditor is AGPL, so it is a source-available submission, and a manifest that
+Orden is AGPL, so it is a source-available submission, and a manifest that
 unpacked the release `.deb` would be closed on sight. The Tauri apps on Flathub
 that do exactly that were accepted before the date and are grandfathered, not
 precedent. The exception clause covers well-known vendors with no offline build
@@ -215,7 +218,7 @@ be a file in this repository and not the GitHub `user-attachments` link it used
 to be - that one answers a GET with a redirect to a signed S3 URL that expires
 in five minutes and refuses HEAD outright.
 
-The name in the metainfo and the desktop entry is `nibeditor`; the app ID stays
+The name in the metainfo and the desktop entry is `Orden`; the app ID stays
 `ch.emilvinu.nib`, which is the Tauri bundle identifier. Flathub requires the
 matching domain to be yours and to answer over HTTPS. <https://emilvinu.ch>
 does, so the ID stands as it is.
@@ -244,7 +247,7 @@ yours to open, and the disclosure belongs in the pull request body.
      ask you to disclose;
    - the manifest asks for `--filesystem=xdg-documents` rather than
      `--filesystem=home`, because the linter treats `home` as an error, and
-     because it is all Nib needs: the spaces are in `~/Documents/Nib`, Nib opens
+     because it is all Orden needs: the spaces are in `~/Documents/Nib`, Orden opens
      nothing from outside them, and an export saved elsewhere goes through the
      document portal of the save dialog.
 5. Once it is merged and published, verification is a token you serve yourself:
@@ -299,23 +302,23 @@ desktop users look for software, and a snap is the only way to be in it.
 
 1. Make an Ubuntu One account at <https://snapcraft.io/account> if you have
    none, then `snapcraft login`.
-2. Claim the name - it is unregistered today:
+2. Claim the name - nothing is published under it today:
 
    ```
-   snapcraft register nib
+   snapcraft register orden
    ```
 
 3. Export credentials scoped to that one snap and hand them over:
 
    ```
-   snapcraft export-login --snaps nib \
+   snapcraft export-login --snaps orden \
      --acls package_access,package_push,package_update,package_release \
      snapcraft-creds.txt
-   gh secret set SNAPCRAFT_STORE_CREDENTIALS --repo lxorb/nibeditor < snapcraft-creds.txt
+   gh secret set SNAPCRAFT_STORE_CREDENTIALS --repo lxorb/orden < snapcraft-creds.txt
    rm snapcraft-creds.txt
    ```
 
-4. `gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.13.1` uploads
+4. `gh workflow run publish-linux.yml --repo lxorb/orden -f tag=v0.13.1` uploads
    both architectures to the stable channel.
 
 The first upload of a graphical snap goes through a manual review if it asks for
@@ -334,8 +337,8 @@ be more discoverable than this flake - a small audience for a large standing
 commitment. The flake costs nothing and works today:
 
 ```
-nix run github:lxorb/nibeditor?dir=packaging/nix
-nix profile install github:lxorb/nibeditor?dir=packaging/nix
+nix run github:lxorb/orden?dir=packaging/nix
+nix profile install github:lxorb/orden?dir=packaging/nix
 ```
 
 There is no `flake.lock` on purpose: pinning nixpkgs here would mean an extra
@@ -351,7 +354,7 @@ makes the validation workflow meaningful. To move them forward by hand:
 
 ```
 version=0.13.1
-base=https://github.com/lxorb/nibeditor/releases/download/v$version
+base=https://github.com/lxorb/orden/releases/download/v$version
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.deb" | sha256sum; done
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.AppImage" | sha256sum; done
 ```

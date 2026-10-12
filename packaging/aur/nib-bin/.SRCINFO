@@ -1,8 +1,8 @@
-pkgbase = nib-bin
+pkgbase = orden-bin
 	pkgdesc = Lightweight markdown editor with realtime inline preview
 	pkgver = 0.13.1
 	pkgrel = 1
-	url = https://nibeditor.com
+	url = https://orden.so
 	arch = x86_64
 	arch = aarch64
 	license = AGPL-3.0-only
@@ -11,17 +11,20 @@ pkgbase = nib-bin
 	depends = hicolor-icon-theme
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
+	provides = orden=0.13.1
 	provides = nib=0.13.1
 	conflicts = nib
+	conflicts = nib-bin
+	conflicts = nibeditor
 	noextract = nib.deb
 	options = !strip
 	options = !debug
 	options = !emptydirs
 	source = nib.desktop
 	sha256sums = e579b24c99fe2a3a4e63a703d7b25fa5fa9432e8195d4d6683a580b63c48dc07
-	source_x86_64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.13.1/Nib-0.13.1-linux-x64.deb
+	source_x86_64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-x64.deb
 	sha256sums_x86_64 = d3ffa0ab64a64d5910f9f3dc45c56d000c6967307c8c17429b9b3799d4dd8907
-	source_aarch64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.13.1/Nib-0.13.1-linux-arm64.deb
+	source_aarch64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.13.1/Nib-0.13.1-linux-arm64.deb
 	sha256sums_aarch64 = fcb20ecb72ecd2fffe269d8ac0c8cf369420b82629ad0d863ab5cb8b37424d8c
 
-pkgname = nib-bin
+pkgname = orden-bin

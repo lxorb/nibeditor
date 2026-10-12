@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   aur:
-    name: AUR (nib-bin)
+    name: AUR (orden-bin)
     runs-on: ubuntu-latest
     # It reads the repository and fetches this release's own .debs over plain
     # https. The push to aur.archlinux.org travels on an ssh key.
@@ -100,13 +100,13 @@ jobs:
         if: env.HAS_KEY == 'true'
         uses: KSXGitHub/github-actions-deploy-aur@084b0d9b15415bf9cdb65d44dad1efe37a354050 # v4.2.0
         with:
-          pkgname: nib-bin
+          pkgname: orden-bin
           pkgbuild: packaging/aur/nib-bin/PKGBUILD
           assets: packaging/aur/nib-bin/nib.desktop
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: nib ${{ env.TAG }}
+          commit_message: orden ${{ env.TAG }}
 
       - name: No AUR key yet
         if: env.HAS_KEY != 'true'

@@ -41,7 +41,7 @@ jobs:
           mkdir -p dl
           for arch in x64 arm64; do
             curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
-              "https://github.com/lxorb/nibeditor/releases/download/v$VERSION/Nib-$VERSION-linux-$arch.deb"
+              "https://github.com/lxorb/orden/releases/download/v$VERSION/Nib-$VERSION-linux-$arch.deb"
           done
           sha256sum dl/*.deb
 
@@ -80,7 +80,8 @@ jobs:
       - name: Tauri's own .desktop entry
         run: |
           dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
-          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop since.
+          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop up to
+          # 0.13, Orden.desktop since.
           entry=$(ls x/usr/share/applications/*.desktop | head -1)
           cat "$entry"
           # Not a gate: this is the file the packaging replaces, and it is
@@ -92,7 +93,7 @@ jobs:
       - name: What the AppImage bundles, in case Flathub cannot use the .deb
         run: |
           curl -fsSL -o Nib.AppImage \
-            "https://github.com/lxorb/nibeditor/releases/download/v$VERSION/Nib-$VERSION-linux-x64.AppImage"
+            "https://github.com/lxorb/orden/releases/download/v$VERSION/Nib-$VERSION-linux-x64.AppImage"
           chmod +x Nib.AppImage
           ./Nib.AppImage --appimage-extract >/dev/null
           echo "::group::AppDir"
@@ -156,7 +157,9 @@ jobs:
           install -d /check
           bsdtar -xf ./*.pkg.tar.zst -C /check
           test -f /check/usr/share/applications/nib.desktop
-          test ! -e /check/usr/share/applications/Nib.desktop
+          for tauri in Nib nibeditor Orden; do
+            test ! -e "/check/usr/share/applications/$tauri.desktop"
+          done
           test -f /check/usr/share/icons/hicolor/256x256/apps/nib.png
           test ! -e /check/usr/share/icons/hicolor/256x256@2
           test -x /check/usr/bin/nib
@@ -257,7 +260,7 @@ jobs:
           fi
           echo 'every library resolves'
 
-      # Nib has no --version to ask, so this is a launch: what matters is that
+      # Orden has no --version to ask, so this is a launch: what matters is that
       # the app the sandbox built comes up and stays up.
       - name: It starts and stays up
         run: |
@@ -334,7 +337,9 @@ jobs:
           unsquashfs -d /tmp/snapx "${{ steps.build.outputs.snap }}" >/dev/null
           cat /tmp/snapx/meta/snap.yaml
           test -f /tmp/snapx/usr/share/applications/nib.desktop
-          test ! -e /tmp/snapx/usr/share/applications/Nib.desktop
+          for tauri in Nib nibeditor Orden; do
+            test ! -e "/tmp/snapx/usr/share/applications/$tauri.desktop"
+          done
           ls /tmp/snapx/meta/gui/ || true
           find /tmp/snapx -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head
 
@@ -352,7 +357,7 @@ jobs:
         run: |
           nix build --print-build-logs "path:$PWD/packaging/nix#nib"
           ls -la result/bin result/share/applications result/share/icons/hicolor/*/apps
-      # Nib has no --version to ask, so this is a launch: what matters is
+      # Orden has no --version to ask, so this is a launch: what matters is
       # that the FHS environment resolves every library the AppImage needs.
       - name: Nothing is missing from the wrapper
         run: |

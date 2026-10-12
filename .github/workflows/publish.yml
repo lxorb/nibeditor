@@ -1,6 +1,6 @@
 name: publish
 
-# Where Nib goes once it is released: the package managers that carry it. One
+# Where Orden goes once it is released: the package managers that carry it. One
 # job per manager, none depending on another, so a rate-limited push or a
 # rejected pull request never holds up the rest.
 #
@@ -76,9 +76,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   # winget-pkgs is a pull request, not a push, so this opens one and a Microsoft
-  # bot merges it. The action needs lxorb.Nib to exist there already - it
-  # refuses to create a package from nothing - so the first version was
-  # submitted by hand from packaging/winget.
+  # bot merges it. The action needs the package to exist there already - it
+  # refuses to create a package from nothing - so its first version is submitted
+  # by hand. lxorb.Nib never got past its pull request and nobody installed it,
+  # so the package starts out under the product's name instead: lxorb.Orden.
   winget:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.winget == 'true'
@@ -91,7 +92,7 @@ jobs:
     steps:
       - uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e # v2
         with:
-          identifier: lxorb.Nib
+          identifier: lxorb.Orden
           version: ${{ needs.gate.outputs.version }}
           release-tag: ${{ needs.gate.outputs.tag }}
           # The NSIS setup is the installer winget offers. The MSI is a
@@ -122,10 +123,24 @@ jobs:
           repository: lxorb/scoop-bucket
           token: ${{ secrets.PACKAGING_TOKEN }}
 
+      # The manifest as this release has it, rather than as the bucket last had it,
+      # the same way the cask below is taken: a line other than the version, the
+      # urls and the digests can change with a release, the way the product's name
+      # did. The package keeps its id, nib, because Scoop has no rename.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: ${{ env.TAG }}
+          path: source
+          sparse-checkout: packaging/scoop
+          persist-credentials: false
+
       - name: Bump nib
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cp source/packaging/scoop/nib.json bucket/nib.json
+          rm -r source
+
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
             --pattern "Nib-$VERSION-windows-x64-setup.exe" \
             --pattern "Nib-$VERSION-windows-arm64-setup.exe"
@@ -158,7 +173,7 @@ jobs:
           git push
 
   # lxorb/homebrew-tap, likewise ours. Homebrew/homebrew-cask is not: it has a
-  # notability bar Nib has not cleared, so there is nothing to send there yet.
+  # notability bar Orden has not cleared, so there is nothing to send there yet.
   homebrew:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
@@ -178,7 +193,7 @@ jobs:
 
       # The cask as this release has it, rather than as the tap last had it: a line
       # other than the version and the digest can change with a release, the way the
-      # app's folder was renamed to nibeditor.app.
+      # app's folder was renamed to nibeditor.app and then to Orden.app.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ env.TAG }}
@@ -186,12 +201,20 @@ jobs:
           sparse-checkout: packaging/homebrew
           persist-credentials: false
 
-      - name: Bump nib
+      - name: Bump orden
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp source/packaging/homebrew/nib.rb Casks/nib.rb
+          cp source/packaging/homebrew/orden.rb Casks/orden.rb
           rm -r source
+
+          # The cask was called nib until the product was. `cask_renames.json` is how
+          # a tap renames one: `brew upgrade` moves everybody who has nib over to
+          # orden, and `brew install lxorb/tap/nib` still finds it. The old file has
+          # to go for that, and both steps change nothing once they have happened.
+          git rm -q --ignore-unmatch Casks/nib.rb
+          renames=$(cat cask_renames.json 2>/dev/null || echo '{}')
+          jq --indent 2 '. + {"nib": "orden"}' <<<"$renames" > cask_renames.json
 
           dmg="Nib-$VERSION-macos-universal.dmg"
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "$dmg"
@@ -200,16 +223,16 @@ jobs:
 
           # The cask builds its own URL out of the version, so only these two
           # lines change on the way.
-          sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/nib.rb
-          sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/nib.rb
-          grep -E '^  (version|sha256) ' Casks/nib.rb
+          sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/orden.rb
+          sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/orden.rb
+          grep -E '^  (version|sha256) ' Casks/orden.rb
 
       - name: Commit
         run: |
           git config user.name lxorb
           git config user.email 101118850+lxorb@users.noreply.github.com
-          git add Casks/nib.rb
-          git diff --quiet --cached || git commit -m "feat: nib $VERSION"
+          git add Casks/orden.rb cask_renames.json
+          git diff --quiet --cached || git commit -m "feat: orden $VERSION"
           git push
 
   # Chocolatey is a push of a built package, and the only one of the four that
@@ -253,10 +276,10 @@ jobs:
           rm -r dl
 
           sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" nib.nuspec
-          sed -i -E "s|(nibeditor@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
+          sed -i -E "s|(orden@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
           sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" nib.nuspec
           grep -E "releases/download|'[0-9A-Fa-f]{64}'" tools/chocolateyinstall.ps1
-          grep -E '<version>|nibeditor@v|releases/tag' nib.nuspec
+          grep -E '<version>|orden@v|releases/tag' nib.nuspec
 
       - name: Pack and push
         shell: pwsh

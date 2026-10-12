@@ -1,27 +1,29 @@
 # Maintainer: Emil Vinu <101118850+lxorb@users.noreply.github.com>
 
-# Nib ships an official .deb for both architectures, so this package unpacks
+# Orden ships an official .deb for both architectures, so this package unpacks
 # that rather than rebuilding the app: no Rust or Node toolchain is pulled in
 # to install an editor. What comes out of the .deb is repaired on the way in -
 # Tauri's own .desktop entry carries no categories, no web handlers and no
 # comment, and its 256x256 icon is filed under a scale-2 directory.
 
-pkgname=nib-bin
+pkgname=orden-bin
+# The program, its icon and its desktop entry keep the name every install of it
+# has had: the binary is `nib`, whatever the product is called.
 _pkgname=nib
 pkgver=0.13.1
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
-url="https://nibeditor.com"
+url="https://orden.so"
 license=('AGPL-3.0-only')
 depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
 optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
-provides=("${_pkgname}=${pkgver}")
-conflicts=("${_pkgname}")
+provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
+conflicts=("${_pkgname}" 'nib-bin' 'nibeditor')
 options=('!strip' '!debug' '!emptydirs')
 
-_url="https://github.com/lxorb/nibeditor/releases/download/v${pkgver}"
+_url="https://github.com/lxorb/orden/releases/download/v${pkgver}"
 source=('nib.desktop')
 # One name for both, since only the running architecture is fetched.
 source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
@@ -37,9 +39,11 @@ package() {
 
   install -Dm644 "${srcdir}/nib.desktop" \
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
-  # Tauri names its entry after the product: Nib up to 0.11, nibeditor since.
+  # Tauri names its entry after the product: Nib up to 0.11, nibeditor up to
+  # 0.13, Orden since.
   rm -f "${pkgdir}/usr/share/applications/Nib.desktop" \
-    "${pkgdir}/usr/share/applications/nibeditor.desktop"
+    "${pkgdir}/usr/share/applications/nibeditor.desktop" \
+    "${pkgdir}/usr/share/applications/Orden.desktop"
 
   # The file in 256x256@2 is a plain 256x256 image, so it belongs in the
   # unscaled directory; left where it is, every theme lookup scales it wrong.
