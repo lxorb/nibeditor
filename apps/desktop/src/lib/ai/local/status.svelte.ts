@@ -67,7 +67,9 @@ class Plans {
       account: account.id,
     }).catch(() => null)
     const home =
-      typeof said === 'object' && said !== null && typeof (said as { home?: unknown }).home === 'string'
+      typeof said === 'object' &&
+      said !== null &&
+      typeof (said as { home?: unknown }).home === 'string'
         ? (said as { home: string }).home
         : null
     const now: Plan = {

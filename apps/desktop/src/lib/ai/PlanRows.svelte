@@ -122,7 +122,10 @@
         <button class="nib-chip" onclick={() => void openExternal(INSTALL[kind])}>
           {t('Install')}
         </button>
-        <button class="nib-chip is-quiet" onclick={() => void plans.check({ id: provider.id, kind })}>
+        <button
+          class="nib-chip is-quiet"
+          onclick={() => void plans.check({ id: provider.id, kind })}
+        >
           {t('Check again')}
         </button>
       {:else if plan.state === 'in'}

@@ -172,11 +172,9 @@
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
     if (isLocal(kind) && provider.own) {
-      void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch(
-        (error: unknown) => {
-          trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
-        },
-      )
+      void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) => {
+        trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
+      })
     }
     ai.remove(provider.id)
   }
@@ -219,9 +217,7 @@
       <div class="card" class:account={mine.length > 1} transition:slide={{ duration: dur(160) }}>
         <div class="nib-setting setting">
           <span class="name">
-            {mine.length > 1
-              ? labelOf(provider)
-              : provider.name || t(KIND_NAMES[provider.kind])}
+            {mine.length > 1 ? labelOf(provider) : provider.name || t(KIND_NAMES[provider.kind])}
           </span>
           <div class="row">
             {#if mine.length === 1}
