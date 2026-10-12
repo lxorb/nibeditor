@@ -998,6 +998,7 @@ export const ja: Dictionary = {
   'Layout: {name}': 'レイアウト: {name}',
   'Space: {name}': 'スペース: {name}',
   'Theme: {name}': 'テーマ: {name}',
+  'AI account: {name}': 'AI アカウント: {name}',
   'Code theme: {name}': 'コードテーマ: {name}',
   'Delete a layout': 'レイアウトを削除',
   // Keyboards and modal editing

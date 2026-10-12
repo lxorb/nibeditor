@@ -1016,6 +1016,7 @@ export const ptPT: Dictionary = {
   'Layout: {name}': 'Disposição: {name}',
   'Space: {name}': 'Espaço: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Conta de IA: {name}',
   'Code theme: {name}': 'Tema do código: {name}',
   'Delete a layout': 'Eliminar uma disposição',
   // Keyboards and modal editing

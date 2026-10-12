@@ -1015,6 +1015,7 @@ export const es: Dictionary = {
   'Layout: {name}': 'Disposición: {name}',
   'Space: {name}': 'Espacio: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Cuenta de IA: {name}',
   'Code theme: {name}': 'Tema del código: {name}',
   'Delete a layout': 'Eliminar una disposición',
   // Keyboards and modal editing

@@ -43,7 +43,7 @@ async function instructionsOf(thread: Thread): Promise<string> {
 }
 
 const setup: Setup = {
-  provider: (id) => ai.providers.find((one) => one.id === id) ?? null,
+  provider: (id) => ai.provider(id),
   instructions: instructionsOf,
 }
 

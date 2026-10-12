@@ -70,6 +70,7 @@ import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
+import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
@@ -1497,6 +1498,14 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Theme: {name}', { name: t(item.name) }),
       checked: item.id === theme.id,
       run: () => theme.select(item.id),
+    })),
+    // The AI accounts of a provider that has more than one, the one in use ticked as a
+    // theme is: a switch of account without a trip to Settings. See ai/switching.ts.
+    ...switchableAccounts().map((one) => ({
+      id: `ai-account:${one.id}`,
+      label: t('AI account: {name}', { name: one.label }),
+      checked: one.active,
+      run: () => switchAccount(one.id),
     })),
     // Whether the app is dark, light, or whatever the system is asking for. A
     // row each rather than one that flips, so the keyboard reaches the same

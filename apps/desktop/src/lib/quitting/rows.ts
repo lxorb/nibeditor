@@ -86,7 +86,7 @@ async function threadRows(window: string): Promise<Row[]> {
 
   const { ai } = await import('../ai/store.svelte')
   return threads.map((thread) => {
-    const kind = ai.providers.find((one) => one.id === thread.provider)?.kind
+    const kind = ai.provider(thread.provider)?.kind
     const program = kind === 'claude-code' ? 'claude' : kind === 'codex' ? 'codex' : null
     return {
       window,

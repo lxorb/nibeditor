@@ -1045,6 +1045,7 @@ export const ar: Dictionary = {
   'Layout: {name}': 'التخطيط: {name}',
   'Space: {name}': 'المساحة: {name}',
   'Theme: {name}': 'السمة: {name}',
+  'AI account: {name}': 'حساب الذكاء الاصطناعي: {name}',
   'Code theme: {name}': 'سمة الكود: {name}',
   'Delete a layout': 'حذف تخطيط',
   // Keyboards and modal editing

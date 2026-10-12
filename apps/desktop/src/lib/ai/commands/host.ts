@@ -33,8 +33,7 @@ export interface Host {
   ask(thread: Thread, messages: readonly Message[], signal?: AbortSignal): Promise<string>
 }
 
-const providerOf = (id: string): Provider | null =>
-  ai.providers.find((one) => one.id === id) ?? null
+const providerOf = (id: string): Provider | null => ai.provider(id)
 
 /** The engine's setup where the panel's is not to hand: the providers in Settings, and
  *  the commands' own lines on top of nothing else. */

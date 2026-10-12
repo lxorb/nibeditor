@@ -470,7 +470,7 @@ async function rewound(thread: Thread): Promise<void> {
   const setup = Object.values(import.meta.glob<SetupModule>('../sidebar/setup.ts'))[0]
   if (!setup) return
   const { ai } = await import('../store.svelte')
-  const provider = ai.providers.find((one) => one.id === thread.provider)
+  const provider = ai.provider(thread.provider)
   if (!provider) return
   const engine = await (await setup()).engineOf(provider.kind).catch(() => null)
   engine?.rewound?.(thread)

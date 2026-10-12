@@ -171,7 +171,7 @@ class Chat implements Panel {
   /** The provider of the open thread, or the one a new thread would ask. */
   get provider(): Provider | null {
     const id = this.head?.provider
-    return ai.providers.find((one) => one.id === id) ?? this.providerForNew()
+    return (id ? ai.provider(id) : null) ?? this.providerForNew()
   }
 
   /** The open thread's model as its provider lists it. */
@@ -260,7 +260,7 @@ class Chat implements Panel {
     this.everything = true
     this.redraw()
     if (thread.turns.length) rememberOpen(thread.space, thread.id)
-    const provider = ai.providers.find((one) => one.id === thread.provider)
+    const provider = ai.provider(thread.provider)
     if (provider) void this.loadModels(provider)
   }
 
@@ -477,7 +477,7 @@ class Chat implements Panel {
 
   private async run(thread: Thread, send: Queued): Promise<void> {
     const { text, chips, around, once } = send
-    const provider = ai.providers.find((one) => one.id === thread.provider)
+    const provider = ai.provider(thread.provider)
     if (!provider) {
       const words = t('Add an AI provider in Settings first.')
       if (thread === this.open) {
@@ -598,7 +598,7 @@ class Chat implements Panel {
   }
 
   private steerWords(thread: Thread, text: string): void {
-    const provider = ai.providers.find((one) => one.id === thread.provider)
+    const provider = ai.provider(thread.provider)
     if (!provider) return
     this.steering = { ...this.steering, [thread.id]: [...(this.steering[thread.id] ?? []), text] }
     void engineOf(provider.kind).then((engine) => engine.steer(thread, text))
@@ -677,7 +677,7 @@ class Chat implements Panel {
     thread.turns.splice(at)
     this.everything = true
     this.redraw()
-    const provider = ai.providers.find((one) => one.id === thread.provider)
+    const provider = ai.provider(thread.provider)
     if (!provider) return
     const stopper = this.begin(thread, asked.draft.text)
     void this.sendDraft(thread, provider, asked.draft, stopper)
@@ -731,7 +731,7 @@ class Chat implements Panel {
     else if (info) thread.usage = { ...thread.usage, window: info.window ?? thread.usage.window }
     if (!info?.fast) delete thread.fast
     this.changedHead(thread)
-    const listed = ai.providers.find((one) => one.id === provider)
+    const listed = ai.provider(provider)
     if (listed) void this.loadModels(listed)
   }
 

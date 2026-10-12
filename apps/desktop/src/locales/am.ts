@@ -989,6 +989,7 @@ export const am: Dictionary = {
   'Layout: {name}': 'አቀማመጥ: {name}',
   'Space: {name}': 'ቦታ: {name}',
   'Theme: {name}': 'ገጽታ: {name}',
+  'AI account: {name}': 'የAI መለያ: {name}',
   'Code theme: {name}': 'የኮድ ገጽታ: {name}',
   'Delete a layout': 'አቀማመጥ አጥፋ',
   // Keyboards and modal editing

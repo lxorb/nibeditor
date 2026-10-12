@@ -116,7 +116,7 @@ function claude(): void {
 }
 
 beforeEach(() => {
-  for (const one of [...ai.providers]) ai.remove(one.id)
+  for (const one of [...ai.accounts]) ai.remove(one.id)
   sent.length = 0
   askedAccount.length = 0
   answers = []
@@ -169,7 +169,7 @@ describe('what the note says wrote it', () => {
     hosted()
     expect(transcribedBy()).toBe('gpt-4o-mini-transcribe')
 
-    for (const one of [...ai.providers]) ai.remove(one.id)
+    for (const one of [...ai.accounts]) ai.remove(one.id)
     local()
     expect(transcribedBy()).toBe('whisper-1')
   })

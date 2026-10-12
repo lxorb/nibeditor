@@ -1002,6 +1002,7 @@ export const fa: Dictionary = {
   'Layout: {name}': 'چیدمان: {name}',
   'Space: {name}': 'فضا: {name}',
   'Theme: {name}': 'پوسته: {name}',
+  'AI account: {name}': 'حساب هوش مصنوعی: {name}',
   'Code theme: {name}': 'پوسته کد: {name}',
   'Delete a layout': 'حذف چیدمان',
   // Keyboards and modal editing

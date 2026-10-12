@@ -1,6 +1,11 @@
 <script lang="ts">
-  /** Settings > AI: the providers, where the keys are, the plans, and which provider
-   *  each feature asks.
+  /** Settings > AI: the providers and their accounts, where the keys are, the plans, and
+   *  which provider each feature asks.
+   *
+   *  A provider with several accounts (two Claude Code sign-ins, a work key and one's
+   *  own) is a row of its own over them, and one of them is in use: the rest wait to be
+   *  switched to, here or from the palette. A provider of one account is that account's
+   *  row, as it always was. See ai/accounts.ts.
    *
    *  Its own component rather than rows in the panel's table, because a provider is
    *  not a setting: it is two or three fields, a list fetched from a server, and one
@@ -22,6 +27,8 @@
    *  which is not the same thing and is not pretended to be. See ai/keys.ts. */
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
+  import { accountName, vendorName } from './ai/account-words'
+  import { repeatable } from './ai/accounts'
   import { FEATURES, ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
@@ -58,8 +65,8 @@
    *  nobody translated. */
   const EXAMPLE_URL = 'http://localhost:11434'
 
-  /** The word a provider wears: its own name, or its kind's. */
-  const named = (provider: Provider) => provider.name || t(KIND_NAMES[provider.kind])
+  /** The word a provider wears: Claude, OpenAI, or a compatible server's name. */
+  const named = (vendor: string) => vendorName(vendor, ai.accounts)
 
   /** Whether a provider's key is on this device, or, for ChatGPT, whether somebody is
    *  signed in: the two are the same question to a request. */
@@ -68,19 +75,18 @@
       ? !__EVEN_PLUGIN__ && !!plans.chatgpt
       : (keyed[provider.id] ?? false)
 
-  /** Which kinds can still be added. One of each but the compatible kind, because
-   *  there is one of each API, key, program and plan; as many compatible ones as
-   *  somebody has servers. */
+  /** Which kinds can still be added: as many keys and servers as the reader has, and a
+   *  kind that is one per installation once. */
   const addable = $derived(
     offeredKinds(isDesktop, __CLAUDE_CODE__).filter(
-      (kind) => kind === 'compatible' || !ai.providers.some((one) => one.kind === kind),
+      (kind) => repeatable(kind) || !ai.accounts.some((one) => one.kind === kind),
     ),
   )
 
   onMount(() => {
     // Asked as the pane opens and not from an effect: each question writes where the
     // plan stands, and an effect that read that back would ask again for ever.
-    for (const provider of ai.providers) void ask(provider.kind)
+    for (const kind of new Set(ai.accounts.map((one) => one.kind))) void ask(kind)
   })
 
   /** Where a plan stands, asked of whoever knows: the program, or the crate. */
@@ -94,8 +100,8 @@
   $effect(() => {
     // Every keyed provider in the list, asked whether this device holds its key. Reruns
     // when the list changes, which is what makes a new row say "not set" at once.
-    for (const provider of ai.providers) {
-      if (!isLocal(provider.kind) && provider.kind !== 'chatgpt') void look(provider.id)
+    for (const account of ai.accounts) {
+      if (!isLocal(account.kind) && account.kind !== 'chatgpt') void look(account.id)
     }
   })
 
@@ -162,129 +168,169 @@
   }
 </script>
 
+<!-- Whether a block and a rewrite ask this provider without being told. -->
+{#snippet defaulting(vendor: string)}
+  {#if ai.defaultVendor === vendor}
+    <span class="hint">{t('Default')}</span>
+  {:else}
+    <button class="nib-chip" onclick={() => ai.setDefault(vendor)}>{t('Make default')}</button>
+  {/if}
+{/snippet}
+
 <h3>{t('Providers')}</h3>
 
-{#if ai.providers.length}
-  {#each ai.providers as provider (provider.id)}
-    <div class="card" transition:slide={{ duration: dur(160) }}>
-      <!-- What it is, and whether it is the one a block uses without being told. -->
-      <div class="nib-setting setting">
-        <span class="name">{named(provider)}</span>
-        <div class="row">
-          {#if ai.defaultId === provider.id}
-            <span class="hint">{t('Default')}</span>
-          {:else}
-            <button class="nib-chip" onclick={() => ai.setDefault(provider.id)}>
-              {t('Make default')}
-            </button>
-          {/if}
-          <button class="nib-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button>
+{#if ai.accounts.length}
+  {#each ai.vendors as vendor (vendor)}
+    {@const mine = ai.accountsOf(vendor)}
+    <!-- A provider of several accounts: its name and whether a block asks it without
+         being told, over its accounts, one of which answers. A provider of one is the
+         account's own row, as it always was. -->
+    {#if mine.length > 1}
+      <div class="card" transition:slide={{ duration: dur(160) }}>
+        <div class="nib-setting setting">
+          <span class="name strong">{named(vendor)}</span>
+          <div class="row">{@render defaulting(vendor)}</div>
         </div>
       </div>
+    {/if}
+    {#each mine as provider (provider.id)}
+      <div class="card" class:account={mine.length > 1} transition:slide={{ duration: dur(160) }}>
+        <div class="nib-setting setting">
+          <span class="name">
+            {mine.length > 1
+              ? accountName(provider)
+              : provider.name || t(KIND_NAMES[provider.kind])}
+          </span>
+          <div class="row">
+            {#if mine.length === 1}
+              {@render defaulting(vendor)}
+            {:else if ai.isActive(provider.id)}
+              <span class="hint">{t('In use')}</span>
+            {:else}
+              <button class="nib-chip" onclick={() => ai.activate(provider.id)}>{t('Use')}</button>
+            {/if}
+            <button class="nib-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button
+            >
+          </div>
+        </div>
 
-      {#if provider.kind === 'compatible'}
-        <label class="nib-setting setting">
-          <span class="name">{t('Name')}</span>
-          <input
-            class="nib-field inline"
-            value={provider.name}
-            placeholder={t('OpenAI-compatible')}
-            spellcheck="false"
-            onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
-          />
-        </label>
+        {#if provider.kind !== 'compatible' && mine.length > 1}
+          <label class="nib-setting setting">
+            <span class="name">{t('Name')}</span>
+            <input
+              class="nib-field inline"
+              value={provider.name}
+              placeholder={accountName({ ...provider, name: '' })}
+              spellcheck="false"
+              onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
+            />
+          </label>
+        {/if}
 
-        <label class="nib-setting setting">
-          <span class="name">{t('Base URL')}</span>
-          <input
-            class="nib-field inline"
-            value={provider.baseUrl ?? ''}
-            placeholder={EXAMPLE_URL}
-            spellcheck="false"
-            autocapitalize="off"
-            autocorrect="off"
-            autocomplete="off"
-            onchange={(event) => {
-              ai.update(provider.id, { baseUrl: event.currentTarget.value })
-              void refresh({ ...provider, baseUrl: event.currentTarget.value })
-            }}
-          />
-        </label>
-      {/if}
+        {#if provider.kind === 'compatible'}
+          <label class="nib-setting setting">
+            <span class="name">{t('Name')}</span>
+            <input
+              class="nib-field inline"
+              value={provider.name}
+              placeholder={t('OpenAI-compatible')}
+              spellcheck="false"
+              onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
+            />
+          </label>
 
-      <!-- A plan's rows, which only a desktop offers; the plugin leaves them out whole.
-           The two kinds by name rather than `isLocal`: a call in a condition makes it a
-           derived the build cannot see through, and PlanRows would ship after all. -->
-      {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex')}
-        <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
-      {:else}
-        {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
-          <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
+          <label class="nib-setting setting">
+            <span class="name">{t('Base URL')}</span>
+            <input
+              class="nib-field inline"
+              value={provider.baseUrl ?? ''}
+              placeholder={EXAMPLE_URL}
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+              autocomplete="off"
+              onchange={(event) => {
+                ai.update(provider.id, { baseUrl: event.currentTarget.value })
+                void refresh({ ...provider, baseUrl: event.currentTarget.value })
+              }}
+            />
+          </label>
+        {/if}
+
+        <!-- A plan's rows, which only a desktop offers; the plugin leaves them out whole.
+             The two kinds by name rather than `isLocal`: a call in a condition makes it a
+             derived the build cannot see through, and PlanRows would ship after all. -->
+        {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex')}
+          <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
         {:else}
-          <!-- The key. Shown as set and never shown again: a field that hands a key back
-               is a field that can copy one out of somebody else's window. -->
+          {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
+            <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
+          {:else}
+            <!-- The key. Shown as set and never shown again: a field that hands a key back
+                 is a field that can copy one out of somebody else's window. -->
+            <div class="nib-setting setting">
+              <span class="name">{t('API key')}</span>
+              {#if keyed[provider.id]}
+                <div class="row">
+                  <span class="hint">{t('Set on this device')}</span>
+                  <button class="nib-chip is-quiet" onclick={() => void drop(provider)}
+                    >{t('Remove')}</button
+                  >
+                </div>
+              {:else}
+                <input
+                  class="nib-field inline"
+                  type="password"
+                  value=""
+                  placeholder={provider.kind === 'compatible' ? t('Optional') : 'sk-'}
+                  spellcheck="false"
+                  autocomplete="off"
+                  onchange={(event) => {
+                    const typed = event.currentTarget.value
+                    event.currentTarget.value = ''
+                    void take(provider, typed)
+                  }}
+                />
+              {/if}
+            </div>
+          {/if}
+
           <div class="nib-setting setting">
-            <span class="name">{t('API key')}</span>
-            {#if keyed[provider.id]}
-              <div class="row">
-                <span class="hint">{t('Set on this device')}</span>
-                <button class="nib-chip is-quiet" onclick={() => void drop(provider)}
-                  >{t('Remove')}</button
-                >
+            <span class="name">{t('Model')}</span>
+            {#if models[provider.id]?.length}
+              <div class="pick">
+                <Select
+                  value={provider.model}
+                  options={(models[provider.id] ?? []).map((one) => ({ value: one, label: one }))}
+                  onchange={(value: string) => ai.update(provider.id, { model: value })}
+                  label={t('Model')}
+                  plain={viewport.touch}
+                />
               </div>
             {:else}
-              <input
-                class="nib-field inline"
-                type="password"
-                value=""
-                placeholder={provider.kind === 'compatible' ? t('Optional') : 'sk-'}
-                spellcheck="false"
-                autocomplete="off"
-                onchange={(event) => {
-                  const typed = event.currentTarget.value
-                  event.currentTarget.value = ''
-                  void take(provider, typed)
-                }}
-              />
+              <div class="row">
+                {#if provider.model}<span class="hint">{provider.model}</span>{/if}
+                <button
+                  class="nib-chip"
+                  disabled={asking === provider.id || !reachable(provider, ready(provider))}
+                  onclick={() => void refresh(provider)}
+                >
+                  {asking === provider.id ? t('Asking…') : t('List models')}
+                </button>
+              </div>
             {/if}
           </div>
         {/if}
 
-        <div class="nib-setting setting">
-          <span class="name">{t('Model')}</span>
-          {#if models[provider.id]?.length}
-            <div class="pick">
-              <Select
-                value={provider.model}
-                options={(models[provider.id] ?? []).map((one) => ({ value: one, label: one }))}
-                onchange={(value: string) => ai.update(provider.id, { model: value })}
-                label={t('Model')}
-                plain={viewport.touch}
-              />
-            </div>
-          {:else}
-            <div class="row">
-              {#if provider.model}<span class="hint">{provider.model}</span>{/if}
-              <button
-                class="nib-chip"
-                disabled={asking === provider.id || !reachable(provider, ready(provider))}
-                onclick={() => void refresh(provider)}
-              >
-                {asking === provider.id ? t('Asking…') : t('List models')}
-              </button>
-            </div>
-          {/if}
-        </div>
+        {#if trouble[provider.id]}
+          <p class="hint bad">{trouble[provider.id]}</p>
+        {/if}
+      </div>
+      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
+        <!-- OpenAI's own words for it, beside the model it is spent on. -->
+        <p class="hint caption">{t('Using ChatGPT plan')}</p>
       {/if}
-
-      {#if trouble[provider.id]}
-        <p class="hint bad">{trouble[provider.id]}</p>
-      {/if}
-    </div>
-    {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
-      <!-- OpenAI's own words for it, beside the model it is spent on. -->
-      <p class="hint caption">{t('Using ChatGPT plan')}</p>
-    {/if}
+    {/each}
   {/each}
 {:else}
   <p class="hint">{t('No providers yet.')}</p>
@@ -301,7 +347,7 @@
 </div>
 
 <!-- Which provider each feature asks, once there is more than one to choose from. -->
-{#if ai.providers.length > 1}
+{#if ai.vendors.length > 1}
   <h3 transition:slide={{ duration: dur(160) }}>{t('Used for')}</h3>
   <div class="card" transition:slide={{ duration: dur(160) }}>
     {#each FEATURES as feature (feature.id)}
@@ -312,7 +358,7 @@
             value={ai.uses[feature.id] ?? ''}
             options={[
               { value: '', label: t('Default') },
-              ...ai.providers.map((one) => ({ value: one.id, label: named(one) })),
+              ...ai.vendors.map((one) => ({ value: one, label: named(one) })),
             ]}
             onchange={(value: string) => ai.use(feature.id, value)}
             label={t(feature.label)}
@@ -422,6 +468,15 @@
 
   .hint.caption {
     padding: 0 2px;
+  }
+
+  /* A provider's own row over its accounts, and the accounts set in a step under it. */
+  .strong {
+    font-weight: 600;
+  }
+
+  .account {
+    padding-inline-start: var(--space-3);
   }
 
   /* A phone draws the box, the touch rows and the hairlines. The sheet is the

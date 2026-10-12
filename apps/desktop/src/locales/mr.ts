@@ -999,6 +999,7 @@ export const mr: Dictionary = {
   'Layout: {name}': 'मांडणी: {name}',
   'Space: {name}': 'स्पेस: {name}',
   'Theme: {name}': 'थीम: {name}',
+  'AI account: {name}': 'एआय खाते: {name}',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'मांडणी हटवा',
   // Keyboards and modal editing

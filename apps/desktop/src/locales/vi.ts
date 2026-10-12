@@ -994,6 +994,7 @@ export const vi: Dictionary = {
   'Layout: {name}': 'Bố cục: {name}',
   'Space: {name}': 'Không gian: {name}',
   'Theme: {name}': 'Chủ đề: {name}',
+  'AI account: {name}': 'Tài khoản AI: {name}',
   'Code theme: {name}': 'Chủ đề mã: {name}',
   'Delete a layout': 'Xoá một bố cục',
   // Keyboards and modal editing

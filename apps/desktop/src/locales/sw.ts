@@ -1008,6 +1008,7 @@ export const sw: Dictionary = {
   'Layout: {name}': 'Mpangilio: {name}',
   'Space: {name}': 'Nafasi: {name}',
   'Theme: {name}': 'Mandhari: {name}',
+  'AI account: {name}': 'Akaunti ya AI: {name}',
   'Code theme: {name}': 'Mandhari ya kodi: {name}',
   'Delete a layout': 'Futa mpangilio',
   // Keyboards and modal editing

@@ -995,6 +995,7 @@ export const jv: Dictionary = {
   'Layout: {name}': 'Tata letak: {name}',
   'Space: {name}': 'Papan: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Akun AI: {name}',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Busak tata letak',
   // Keyboards and modal editing

@@ -1003,6 +1003,7 @@ export const gsw: Dictionary = {
   'Layout: {name}': 'Layout: {name}',
   'Space: {name}': 'Ablag: {name}',
   'Theme: {name}': 'Design: {name}',
+  'AI account: {name}': 'KI-Konto: {name}',
   'Code theme: {name}': 'Code-Design: {name}',
   'Delete a layout': 'Es Layout lösche',
   // Keyboards and modal editing

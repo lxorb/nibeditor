@@ -1002,6 +1002,7 @@ export const tr: Dictionary = {
   'Layout: {name}': 'Düzen: {name}',
   'Space: {name}': 'Alan: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Yapay zekâ hesabı: {name}',
   'Code theme: {name}': 'Kod teması: {name}',
   'Delete a layout': 'Bir düzeni sil',
   // Keyboards and modal editing

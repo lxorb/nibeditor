@@ -33,7 +33,7 @@ function transcriptOf(turns: readonly Turn[]): string {
 
 /** The turns as a summary, in the thread's provider's words. */
 export async function summarized(thread: Thread, turns: readonly Turn[]): Promise<string> {
-  const provider = ai.providers.find((one) => one.id === thread.provider)
+  const provider = ai.provider(thread.provider)
   if (!provider) throw new Error(t('That provider is not set up yet.'))
   const messages: Message[] = [
     { role: 'system', content: KEEP },

@@ -999,6 +999,7 @@ export const ms: Dictionary = {
   'Layout: {name}': 'Susun atur: {name}',
   'Space: {name}': 'Ruang: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Akaun AI: {name}',
   'Code theme: {name}': 'Tema kod: {name}',
   'Delete a layout': 'Hapuskan susun atur',
   // Keyboards and modal editing

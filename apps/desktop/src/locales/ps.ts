@@ -999,6 +999,7 @@ export const ps: Dictionary = {
   'Layout: {name}': 'اوډون: {name}',
   'Space: {name}': 'ځای: {name}',
   'Theme: {name}': 'بڼه: {name}',
+  'AI account: {name}': 'د AI حساب: {name}',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
   'Delete a layout': 'اوډون ړنګول',
   // Keyboards and modal editing

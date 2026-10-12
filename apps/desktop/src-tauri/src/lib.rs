@@ -44,6 +44,8 @@ mod ai_agent;
 // ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
 mod ai_cli;
+// The reader's AI accounts, one file for every window and engine; see ai_accounts.rs.
+mod ai_accounts;
 // The AI sidebar's threads, kept on this device; see ai_threads.rs.
 mod ai_threads;
 // A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
@@ -294,6 +296,8 @@ macro_rules! commands {
             space_watch::space_unwatch,
             space_watch::space_scan,
             space_watch::file_identity,
+            ai_accounts::ai_accounts_read,
+            ai_accounts::ai_accounts_write,
             ai_threads::ai_threads_list,
             ai_threads::ai_thread_read,
             ai_threads::ai_thread_write,

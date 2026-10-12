@@ -1010,6 +1010,7 @@ export const ml: Dictionary = {
   'Layout: {name}': 'ലേഔട്ട്: {name}',
   'Space: {name}': 'സ്പേസ്: {name}',
   'Theme: {name}': 'തീം: {name}',
+  'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
   // Keyboards and modal editing

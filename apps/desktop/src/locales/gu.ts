@@ -1000,6 +1000,7 @@ export const gu: Dictionary = {
   'Layout: {name}': 'માંડણી: {name}',
   'Space: {name}': 'જગ્યા: {name}',
   'Theme: {name}': 'થીમ: {name}',
+  'AI account: {name}': 'AI એકાઉન્ટ: {name}',
   'Code theme: {name}': 'કોડ થીમ: {name}',
   'Delete a layout': 'માંડણી કાઢો',
   // Keyboards and modal editing

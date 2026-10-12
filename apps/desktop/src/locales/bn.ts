@@ -999,6 +999,7 @@ export const bn: Dictionary = {
   'Layout: {name}': 'লেআউট: {name}',
   'Space: {name}': 'স্পেস: {name}',
   'Theme: {name}': 'থিম: {name}',
+  'AI account: {name}': 'এআই অ্যাকাউন্ট: {name}',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   // Keyboards and modal editing

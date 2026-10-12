@@ -168,10 +168,44 @@ Settings > AI. Six kinds, the three plans on a desktop only:
 | OpenAI | An OpenAI API key | `api.openai.com/v1/models` |
 | OpenAI-compatible | A base URL, and a key if the server wants one | `<base>/v1/models` |
 
-One of each but the last, because there is one of each API, key, program and plan.
 As many compatible ones as you have servers: Ollama on this machine,
 LM Studio beside it, OpenRouter behind both, a gateway at work. Each gets a name
 so the list reads as what they are.
+
+### Accounts
+
+Emil, 2026-10-12: "you should for example be able to have multiple claude accounts. of
+course if you have multiple accounts for the same provider then only one will be active.
+still, openai and claude could be active at the same time."
+
+A **provider** is who serves the model: Claude (through Claude Code or an Anthropic key),
+OpenAI (through Codex, ChatGPT or an OpenAI key), and each compatible server on its own.
+Each row above is an **account** of one, and a provider may have several: a work key
+beside one's own, two Claude Code sign-ins. Exactly one account of each provider is in
+use, and every provider is in use at once. Everything that asks a model asks a provider -
+a thread, a feature in Used for, the default - and is answered by the account in use now
+(`ai.provider(id)` in `store.svelte.ts`, `resolve` in `accounts.ts`), so a switch reaches
+every thread on that provider at its next question. A question already being answered
+finishes on the account it started on, as Roo Code keeps a task's profile for its life.
+A provider of several accounts is a row of its own over them in Settings > AI, **Use** on
+each one not in use; the palette lists `AI account: Claude · Work` for each, the one in
+use ticked.
+
+The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
+not the page's storage, which is one browsing profile's: the system's engine and nib's own
+Chromium are two profiles, and before this file an engine switch started with no providers
+while every key was still in the keychain. Every window, both engines and every space read
+the same file; a write names the stamp of the text it changed, is refused over a newer one
+and made again over it, and is heard by every window. A build under another identifier (a
+probe) has a file of its own, which is what keeps a test away from the reader's accounts.
+The window still keeps a copy (`nib:ai-accounts`) to start from before the crate answers;
+a browser has only that.
+
+Nobody signs in or types a key again for any of this. The first window that finds no file
+writes it out of the rows it kept before (`nib:ai`, which is left alone for an older
+build), each row keeping its id, so its key is found under that id, its grant (`nib-<id>`)
+is the same grant and every thread still names it. A second profile that kept rows of its
+own adds the ones the file lacks, once.
 
 Claude Code and Codex are found where their installers put them - the `PATH`,
 `~/.local/bin`, npm's global folder, Homebrew, Bun, Volta, mise, and on a Mac and Linux
@@ -520,7 +554,9 @@ only the provider knows.
 | `apps/desktop/src/lib/ai/keys.ts` | Where a key lives, per platform |
 | `apps/desktop/src/lib/ai/chatgpt.ts` | A ChatGPT plan's token of the hour, and its refusals in nib's words |
 | `apps/desktop/src/lib/ai/local/` | Claude Code and Codex: a question put, their lines read, their state, their sign-in |
-| `apps/desktop/src/lib/ai/store.svelte.ts` | The providers, the default, and which one each feature asks |
+| `apps/desktop/src/lib/ai/accounts.ts` | What an account is: providers, the one in use, ids, the move from the window's own rows |
+| `apps/desktop/src/lib/ai/accounts-file.ts` | Where the accounts are kept: the crate's file, or a browser's storage |
+| `apps/desktop/src/lib/ai/store.svelte.ts` | The accounts as the app reads them: the one each provider answers with, the default, and which one each feature asks |
 | `apps/desktop/src/lib/ai/ask.ts` | What the block asks, and who answers |
 | `apps/desktop/src/lib/ai/rewrite.ts` | The four verbs, and what each sends |
 | `apps/desktop/src/lib/ai/rewriting.svelte.ts` | One rewrite, start to accepted |
@@ -531,6 +567,7 @@ only the provider knows.
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |
 | `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain, and the iPhone's |
+| `apps/desktop/src-tauri/src/ai_accounts.rs` | The accounts' one file, stamped, for every window |
 | `apps/desktop/src-tauri/src/ai_cli.rs` | Claude Code and Codex run: found, argued, started, streamed, ended |
 | `apps/desktop/src-tauri/src/chatgpt.rs` | Sign in with ChatGPT: the loopback, the tokens, the refresh, the sign-out |
 
