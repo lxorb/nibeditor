@@ -64,7 +64,10 @@ function endpointFile() {
  *  `dispatch` in the automation folder.
  *
  *  `--name value` is a named argument; `--name` on its own is a yes, the same way a
- *  query string writes one. */
+ *  query string writes one. A value may start with dashes - a note's front matter
+ *  opens with `---` - so only a word that reads as a flag ends one. */
+const FLAG = /^--[a-z]/i
+
 function parseArgv(argv) {
   const mine = { json: false, out: null, yes: false }
   const args = {}
@@ -90,7 +93,7 @@ function parseArgv(argv) {
     if (word.startsWith('--')) {
       const [name, ...value] = word.slice(2).split('=')
       if (value.length) args[name] = value.join('=')
-      else if (argv[at + 1] !== undefined && !argv[at + 1].startsWith('--')) args[name] = argv[++at]
+      else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
       else args[name] = ''
       continue
     }
