@@ -29,6 +29,13 @@ describe('the folder an import makes for itself', () => {
     expect(folderNameFor([picked('backup.zip')], 'bear')).toBe('Bear')
   })
 
+  test('keeps a name that only starts with an exporter’s word', () => {
+    expect(folderNameFor([picked('Keepsakes.zip')], 'obsidian')).toBe('Keepsakes')
+    expect(folderNameFor([picked('Graphic Design.zip')], 'obsidian')).toBe('Graphic Design')
+    expect(folderNameFor([picked('Archived Recipes.zip')], 'obsidian')).toBe('Archived Recipes')
+    expect(folderNameFor([picked('Exports Of Thought.zip')], 'obsidian')).toBe('Exports Of Thought')
+  })
+
   test('is the app it came out of when several files were picked', () => {
     expect(folderNameFor([picked('Work.enex'), picked('Home.enex')], 'evernote')).toBe('Evernote')
   })

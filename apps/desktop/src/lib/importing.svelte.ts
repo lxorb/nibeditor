@@ -36,9 +36,11 @@ export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
 
 /** Names an exporter gives a file that say nothing about what is in it, so the
  *  import's folder is named after the app instead. `AppleJournalEntries` is the
- *  name Journal's own export has, for everybody, every time. */
+ *  name Journal's own export has, for everybody, every time. Only a whole word:
+ *  `Keepsakes` and `Graphic Design` are names somebody chose, and the start of
+ *  them is not an exporter's. */
 const MACHINE_MADE =
-  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)[\s_-]*/i
+  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
 
 class Importing {
   open = $state(false)
