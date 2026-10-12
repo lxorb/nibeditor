@@ -118,6 +118,14 @@ export function titleFrom(text: string): string | null {
   return null
 }
 
+/** A path as the one name it is wherever it lands: composed alike and in one case.
+ *  Two names that differ only in case are one file on Windows and on a Mac, and two
+ *  that differ only in how an accent is composed are one file on a Mac, which is
+ *  how a vault off a Mac and one typed on Linux can hold both spellings of `Café`. */
+export function nameKey(path: string): string {
+  return path.normalize('NFC').toLowerCase()
+}
+
 /** Keeps an import's own names apart.
  *
  *  Two Evernote notes are allowed to be called the same thing and two Keep notes
@@ -131,18 +139,18 @@ export class Names {
    *  folder of the same name is how nib nests, so those are meant to collide and
    *  the caller says which by asking once for each. */
   free(path: string): string {
-    const free = freePath(path, (candidate) => this.taken.has(candidate.toLowerCase()))
-    this.taken.add(free.toLowerCase())
+    const free = freePath(path, (candidate) => this.taken.has(nameKey(candidate)))
+    this.taken.add(nameKey(free))
     return free
   }
 
   /** Says a path is taken without asking for one, for the folder a note is
    *  about to nest under. */
   hold(path: string) {
-    this.taken.add(path.toLowerCase())
+    this.taken.add(nameKey(path))
   }
 
   has(path: string): boolean {
-    return this.taken.has(path.toLowerCase())
+    return this.taken.has(nameKey(path))
   }
 }

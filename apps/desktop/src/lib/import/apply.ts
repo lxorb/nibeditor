@@ -37,6 +37,7 @@ import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
+import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
 
 /** Where an import lands: a space, and a folder inside it. */
@@ -123,8 +124,8 @@ function judged(files: readonly Planned[]): Planned[] {
 
 const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
 
-/** Every path the space already holds, lowercased, so a name that is taken can be
- *  recognised however it is spelled. */
+/** Every path the space already holds, as the one name it is (see `nameKey`), so a
+ *  name that is taken can be recognised however it is spelled. */
 function takenIn(target: ImportTarget): Set<string> {
   const taken = new Set<string>()
   const root = target.root
@@ -132,11 +133,12 @@ function takenIn(target: ImportTarget): Set<string> {
   for (const entry of workspace.files) {
     if (!entry.path.startsWith(root)) continue
     taken.add(
-      entry.path
-        .slice(root.length)
-        .replace(/^[\\/]+/, '')
-        .replace(/\\/g, '/')
-        .toLowerCase(),
+      nameKey(
+        entry.path
+          .slice(root.length)
+          .replace(/^[\\/]+/, '')
+          .replace(/\\/g, '/'),
+      ),
     )
   }
 
@@ -152,16 +154,17 @@ export function restamped(
   folder: string,
 ): { files: Planned[]; stepped: number } {
   const under = folder.replace(/^\/+|\/+$/g, '')
-  // Lowercased on the way in, because two names that differ only in case are one
-  // name on Windows and on a Mac.
-  const held = new Set([...taken].map((one) => one.toLowerCase()))
+  // Keyed on the way in, because two names that differ only in case are one name on
+  // Windows and on a Mac, and two that differ only in how an accent is composed are
+  // one name on a Mac.
+  const held = new Set([...taken].map(nameKey))
   const moved = new Map<string, string>()
   const placed: { file: Planned; was: string; now: string }[] = []
 
   for (const file of plan.files) {
     const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, (candidate) => held.has(candidate.toLowerCase()))
-    held.add(free.toLowerCase())
+    const free = freePath(wanted, (candidate) => held.has(nameKey(candidate)))
+    held.add(nameKey(free))
 
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
     placed.push({ file, was: file.path, now: free })

@@ -533,6 +533,16 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('arrive both when their names differ only in how an accent is composed', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Caf\u00e9.md', 'typed on Linux'),
+      file('Cafe\u0301.md', 'synced from a Mac'),
+    ])
+    const notes = plan.files.flatMap((one) => (one.kind === 'note' ? [one.path] : []))
+    expect(notes).toEqual(['Caf\u00e9.md', 'Cafe\u0301 2.md'])
+  })
+
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [

@@ -154,6 +154,13 @@ describe('a name that is already taken', () => {
 
     expect(stamped.files[0]?.path).toBe('Plan 2.md')
   })
+
+  test('counts as taken however its accents are composed', () => {
+    const decomposed = 'Cafe\u0301.md'
+    const stamped = restamped(planOf([note(decomposed, 'x')]), new Set(['caf\u00e9.md']), '')
+
+    expect(stamped.files[0]?.path).toBe('Cafe\u0301 2.md')
+  })
 })
 
 /** The write site judges what it is about to write, whatever the reader handed
