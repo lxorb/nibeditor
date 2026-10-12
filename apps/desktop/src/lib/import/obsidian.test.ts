@@ -629,6 +629,46 @@ async function pathsFrom(sources: readonly Source[]): Promise<string[]> {
   return plan.files.map((one) => one.path).sort()
 }
 
+/** A zip as Windows' "Compressed (zipped) folder" writes one: stored, its names in
+ *  the machine's code page as they are given and not marked UTF-8. */
+function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
+  const u16 = (n: number) => [n & 0xff, (n >> 8) & 0xff]
+  const u32 = (n: number) => [...u16(n & 0xffff), ...u16(n >>> 16)]
+  const table = Array.from({ length: 256 }, (_, n) => {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    return c >>> 0
+  })
+  const crc = (bytes: Uint8Array) => {
+    let c = 0xffffffff
+    for (const b of bytes) c = (table[(c ^ b) & 0xff] ?? 0) ^ (c >>> 8)
+    return (c ^ 0xffffffff) >>> 0
+  }
+
+  const local: number[] = []
+  const central: number[] = []
+  for (const [name, body] of entries) {
+    const data = new TextEncoder().encode(body)
+    const sizes = [...u32(crc(data)), ...u32(data.length), ...u32(data.length)]
+    const offset = local.length
+    local.push(...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u32(0), ...sizes)
+    local.push(...u16(name.length), ...u16(0), ...name, ...data)
+    central.push(...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u32(0))
+    central.push(...sizes, ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0))
+    central.push(...u32(0), ...u32(offset), ...name)
+  }
+  const count = u16(entries.length)
+  const end = [...u32(0x06054b50), ...u32(0), ...count, ...count]
+  return new Uint8Array([
+    ...local,
+    ...central,
+    ...end,
+    ...u32(central.length),
+    ...u32(local.length),
+    ...u16(0),
+  ])
+}
+
 describe('the files in a vault', () => {
   test('keep a Word document whole when the vault is picked as a folder', async () => {
     const zip = new JSZip()
@@ -848,6 +888,33 @@ describe('the files in a vault', () => {
       'Home.md',
       'Map.canvas',
       'Projects/Plan.md',
+    ])
+  })
+
+  test('keep their accented names from a zip Windows made', async () => {
+    const ascii = (said: string) => [...new TextEncoder().encode(said)]
+    // `é` is 0x82 in code page 437, and the bytes are not UTF-8.
+    const cafe = (before: string, after: string) =>
+      new Uint8Array([...ascii(`${before}Caf`), 0x82, ...ascii(after)])
+    const zip = windowsZip([
+      [new Uint8Array(ascii('Brain/.obsidian/app.json')), '{}'],
+      [new Uint8Array(ascii('Brain/Home.md')), 'See [[Café]] and ![[Café.png]]\n'],
+      [cafe('Brain/', '.md'), '# Café\n'],
+      [cafe('Brain/Attachments/', '.png'), 'png'],
+      // A name macOS wrote, UTF-8 that does not say so, reads as UTF-8.
+      [new Uint8Array(ascii('Brain/Crème.md')), '# Crème\n'],
+    ])
+
+    const sources = await sourcesFrom([
+      { name: 'Brain.zip', arrayBuffer: async () => zip.slice().buffer },
+    ])
+    await expect(detect(sources)).resolves.toBe('obsidian')
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Attachments/Café.png',
+      'Café.md',
+      'Crème.md',
+      'Home.md',
     ])
   })
 

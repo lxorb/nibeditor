@@ -107,7 +107,7 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
 
   const { default: JSZip } = await import('jszip')
-  const zip = await JSZip.loadAsync(bytes).catch(() => null)
+  const zip = await JSZip.loadAsync(bytes, { decodeFileName: zipName }).catch(() => null)
   // A zip that does not open - empty, cut short, or a file that only starts the way
   // one does - is a file like any other: one broken attachment in a vault is not a
   // reason to bring none of the rest.
@@ -132,6 +132,26 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   }
 
   return inside
+}
+
+/** The upper half of IBM code page 437, which the zip format names for a file name
+ *  not marked UTF-8, and which Windows' own "Compressed (zipped) folder" writes in. */
+const CP437 =
+  'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■\u00a0'
+
+/** A name in a zip that does not say it is UTF-8. macOS writes UTF-8 without saying
+ *  so, and its names read as UTF-8; a name that does not is code page 437, the way
+ *  Windows wrote it, so `Café.md` arrives as itself rather than with a broken letter
+ *  that no link to it matches. */
+function zipName(bytes: Uint8Array | readonly unknown[]): string {
+  const said = Uint8Array.from(bytes as ArrayLike<number>)
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(said)
+  } catch {
+    return Array.from(said, (one) =>
+      one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''),
+    ).join('')
+  }
 }
 
 /** A file whose bytes are only decompressed when a reader asks for them, kept
