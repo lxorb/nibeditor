@@ -216,6 +216,33 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('keep pointing at a file whose name holds a percent sign or a hash', async () => {
+    await expect(
+      noteFrom(
+        'Notes/A.md',
+        file('Notes/A.md', '![chart](../assets/Growth%2010%25.png)\n'),
+        file('assets/Growth 10%.png', 'PNG'),
+      ),
+    ).resolves.toBe('![chart](../assets/Growth%2010%25.png)\n')
+    await expect(
+      noteFrom(
+        'A.md',
+        file('A.md', 'See [basics](C%23%20basics.md).\n'),
+        file('C.md', '# C\n'),
+        file('C# basics.md', '# C# basics\n'),
+      ),
+    ).resolves.toBe('See [[C# basics|basics]].\n')
+    // A wikilink is read as written, never as percent encoding.
+    await expect(
+      noteFrom(
+        'A.md',
+        file('A.md', 'See [[50%25 off]].\n'),
+        file('50% off.md', 'x'),
+        file('50%25 off.md', 'y'),
+      ),
+    ).resolves.toBe('See [[50%25 off]].\n')
+  })
+
   test('with no extension mean the note, whatever file of that stem sorts first', async () => {
     await expect(
       noteFrom(

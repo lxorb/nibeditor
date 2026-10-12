@@ -107,8 +107,10 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
 
       // In a table Obsidian writes the `|` before the shown words as `\|`, and the
       // backslash is the cell's business rather than part of the name.
+      // A wikilink is a name rather than an address, so nothing in it is percent
+      // encoding: Obsidian reads `[[50%25 off]]` as the note called just that.
       const named = shown === undefined ? target : target.replace(/\\$/, '')
-      const { path, fragment } = splitFragment(decoded(named.trim()))
+      const { path, fragment } = splitFragment(named.trim())
       const found = find(path, at.was)
       if (!found) return whole
 
@@ -264,10 +266,12 @@ function decoded(target: string): string {
   }
 }
 
-/** A space encoded again on the way out, and nothing else: a reader who opens
- *  the note sees the file name they would see in the file list. */
+/** A space encoded again on the way out, and the two characters a link cannot hold
+ *  as themselves: a `%`, which would start an escape, and a `#`, which would start a
+ *  heading. Nothing else, so a reader who opens the note sees the file name they
+ *  would see in the file list. */
 function encodeTarget(path: string): string {
-  return path.replace(/ /g, '%20')
+  return path.replace(/%/g, '%25').replace(/#/g, '%23').replace(/ /g, '%20')
 }
 
 /** Finding a link's target among the files an export held.
@@ -311,7 +315,9 @@ export class ExportFiles {
 
   /** The resolver `rewriteLinks` asks. */
   readonly find: Resolver = (target, from) => {
-    const cleaned = target.replace(/^\.\//, '').replace(/#.*$/, '').replace(/\/+$/, '')
+    // The heading is already off: a `#` still here was `%23` in the link, and part
+    // of the file's name.
+    const cleaned = target.replace(/^\.\//, '').replace(/\/+$/, '')
     if (!cleaned) return null
 
     const here = folderOf(from)
