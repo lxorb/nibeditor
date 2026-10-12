@@ -171,7 +171,8 @@
   function forget(provider: Account) {
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
-    if (isLocal(kind) && provider.own) {
+    // The glasses' plugin has no programs, and leaves out what asks them.
+    if (!__EVEN_PLUGIN__ && isLocal(kind) && provider.own) {
       void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) => {
         trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
       })
@@ -183,7 +184,7 @@
    *  its program says, else its road. */
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
-    const email = isLocal(provider.kind) ? plans.of(provider.id).account : null
+    const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? plans.of(provider.id).account : null
     return email ?? accountName(provider)
   }
 </script>
