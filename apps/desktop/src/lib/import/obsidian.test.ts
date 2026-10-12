@@ -513,6 +513,21 @@ describe('the files in a vault', () => {
     expect(home?.kind === 'note' && home.text).toBe('See [[Con-. Law]].\n')
   })
 
+  test('arrive both when one is named with a space in front to sort first', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', 'See [[Inbox]].\n'),
+      file(' Inbox.md', 'pinned inbox'),
+      file('Inbox.md', 'the other inbox'),
+    ])
+    const notes = plan.files.flatMap((one) => (one.kind === 'note' ? [[one.path, one.text]] : []))
+    expect(notes).toEqual([
+      ['Home.md', 'See [[Inbox 2]].\n'],
+      ['Inbox.md', 'pinned inbox\n'],
+      ['Inbox 2.md', 'the other inbox\n'],
+    ])
+  })
+
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [

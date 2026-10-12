@@ -50,8 +50,12 @@ export async function readPlain(
     place: (source) => {
       if (isJunk(source.path) || options.skip?.(source.path)) return { to: null }
 
+      // A space in front of the whole path, which a vault uses to sort a note
+      // first, is one the space trims off when the file is written (see
+      // automation/inside.ts), so it comes off here, where a name it then shares
+      // with another file still steps aside and the links follow it.
       const path = options.asTheyAre
-        ? placedPath(source.path, undefined, keptName)
+        ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
         : placedPath(source.path, withoutNotionId)
       if (path === null) return { to: null }
 
