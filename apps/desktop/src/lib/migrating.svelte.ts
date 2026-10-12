@@ -93,7 +93,7 @@ class Migrating {
           const { name, sources } = await read()
           const space = await importAsSpace(name, sources)
           this.vaults = null
-          if (space) await arrive(space)
+          await arrive(space)
         } catch (error) {
           busy.failed(message(error, t('That import could not be written.')))
         }
@@ -116,7 +116,7 @@ async function namedFor(picked: readonly Picked[], format: FormatId): Promise<st
 export async function importAsSpace(
   name: string | ((format: FormatId) => Promise<string>),
   sources: readonly Source[],
-): Promise<Space | null> {
+): Promise<Space> {
   const [{ detect, readAs }, { applyImport }, { carriedBy }] = await Promise.all([
     import('./import/read'),
     import('./import/apply'),
@@ -134,7 +134,10 @@ export async function importAsSpace(
   if (!shown) throw new Error(t('Nothing in there can be read as notes.'))
 
   const space = await workspace.addSpace(typeof name === 'string' ? name : await name(format))
-  if (!space) return null
+  // A folder the disk would not make, read-only or full, is an import that was not
+  // written, and somebody who picked their vault is told so rather than left
+  // looking at the list closing on nothing.
+  if (!space) throw new Error(t('That import could not be written.'))
 
   await applyImport(plan, { root: space.root, folder: '' })
 

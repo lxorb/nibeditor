@@ -51,6 +51,8 @@ const ws = {
   tree: null as Entry | null,
   activeSpaceId: 'old',
   added: 0,
+  /** Whether the disk refuses to make the space, as a read-only one does. */
+  refusing: false,
   get files() {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
@@ -67,6 +69,7 @@ const ws = {
   },
   undone: { record: () => undefined },
   addSpace: async (name: string) => {
+    if (ws.refusing) return undefined
     ws.added += 1
     return { id: 'new', name, root: ROOT }
   },
@@ -113,6 +116,7 @@ beforeEach(() => {
   ws.tree = null
   ws.activeSpaceId = 'old'
   ws.added = 0
+  ws.refusing = false
 })
 
 describe('a vault brought in as a space', () => {
@@ -123,8 +127,7 @@ describe('a vault brought in as a space', () => {
       file('Boards/Map.canvas', '{"nodes":[],"edges":[]}'),
       file('Welcome.md', '# Welcome\n\nStart here.'),
     ])
-    expect(space).not.toBeNull()
-    await arrive(space!)
+    await arrive(space)
 
     expect(opened).toEqual([`${ROOT}/Welcome.md`])
   })
@@ -138,5 +141,13 @@ describe('a vault brought in as a space', () => {
       ]),
     ).rejects.toThrow('Nothing in there can be read as notes.')
     expect(ws.added).toBe(0)
+  })
+
+  test('says it was not written when its space cannot be made', async () => {
+    ws.refusing = true
+    await expect(
+      importAsSpace('Brain', [file('.obsidian/app.json', '{}'), file('Home.md', '# Home')]),
+    ).rejects.toThrow('That import could not be written.')
+    expect(wrote.size).toBe(0)
   })
 })
