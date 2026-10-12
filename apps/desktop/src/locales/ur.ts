@@ -1002,6 +1002,8 @@ export const ur: Dictionary = {
   'Space: {name}': 'اسپیس: {name}',
   'Theme: {name}': 'تھیم: {name}',
   'AI account: {name}': 'اے آئی اکاؤنٹ: {name}',
+  Accounts: 'اکاؤنٹس',
+  Access: 'رسائی',
   'Code theme: {name}': 'کوڈ تھیم: {name}',
   'Delete a layout': 'لے آؤٹ حذف کریں',
   // Keyboards and modal editing

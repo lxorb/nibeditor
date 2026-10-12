@@ -1012,6 +1012,8 @@ export const fil: Dictionary = {
   'Space: {name}': 'Espasyo: {name}',
   'Theme: {name}': 'Tema: {name}',
   'AI account: {name}': 'AI account: {name}',
+  Accounts: 'Mga account',
+  Access: 'Access',
   'Code theme: {name}': 'Tema ng code: {name}',
   'Delete a layout': 'Tanggalin ang layout',
   // Keyboards and modal editing

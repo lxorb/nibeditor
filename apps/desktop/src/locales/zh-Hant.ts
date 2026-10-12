@@ -985,6 +985,8 @@ export const zhHant: Dictionary = {
   'Space: {name}': '空間：{name}',
   'Theme: {name}': '主題：{name}',
   'AI account: {name}': 'AI 帳戶：{name}',
+  Accounts: '帳戶',
+  Access: '存取',
   'Code theme: {name}': '程式碼主題：{name}',
   'Delete a layout': '刪除版面配置',
   // Keyboards and modal editing

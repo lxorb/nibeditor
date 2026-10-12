@@ -1012,6 +1012,8 @@ export const ptBR: Dictionary = {
   'Space: {name}': 'Espaço: {name}',
   'Theme: {name}': 'Tema: {name}',
   'AI account: {name}': 'Conta de IA: {name}',
+  Accounts: 'Contas',
+  Access: 'Acesso',
   'Code theme: {name}': 'Tema do código: {name}',
   'Delete a layout': 'Excluir um layout',
   // Keyboards and modal editing

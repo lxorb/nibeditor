@@ -1018,6 +1018,8 @@ export const fr: Dictionary = {
   'Space: {name}': 'Espace : {name}',
   'Theme: {name}': 'Thème : {name}',
   'AI account: {name}': 'Compte IA : {name}',
+  Accounts: 'Comptes',
+  Access: 'Accès',
   'Code theme: {name}': 'Thème du code : {name}',
   'Delete a layout': 'Supprimer une disposition',
   // Keyboards and modal editing

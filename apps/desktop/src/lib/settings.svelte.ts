@@ -148,10 +148,17 @@ class Settings {
     }
   }
 
+  /** Where in a pane it was asked to open: Access, for what used to be panes of their
+   *  own. Read and cleared by the part it names. */
+  at = $state<'access' | null>(null)
+
   /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both. */
+   *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
+   *  Settings > AI's Access now, and a link to either still lands there. */
   show(section?: Section) {
-    this.section = section ?? 'general'
+    const moved = section === 'agents' || section === 'llm'
+    this.at = moved ? 'access' : null
+    this.section = moved ? 'ai' : (section ?? 'general')
     this.listing = section === undefined
     this.open = true
     this.error = null

@@ -1004,6 +1004,8 @@ export const hi: Dictionary = {
   'Space: {name}': 'स्पेस: {name}',
   'Theme: {name}': 'थीम: {name}',
   'AI account: {name}': 'एआई खाता: {name}',
+  Accounts: 'खाते',
+  Access: 'पहुँच',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'लेआउट हटाएँ',
   // Keyboards and modal editing

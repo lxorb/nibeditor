@@ -56,10 +56,11 @@ export function places(): Place[] {
     all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
   }
 
-  // The agents on this machine: a desktop's alone. See agents/settings/reach.svelte.ts.
+  // The agents on this machine, in AI's Access: a desktop's alone. See
+  // agents/settings/reach.svelte.ts and access/Access.svelte.
   if (!__EVEN_PLUGIN__ && reach.offered) {
     all.push({
-      section: 'agents',
+      section: 'ai',
       label: t('Agents'),
       text: ['MCP', 'nib mcp', 'Claude Code', 'Codex', 'token', t('Create a token')],
     })
@@ -83,9 +84,10 @@ export function places(): Place[] {
     })
   }
 
+  // The apps connected through the account, in AI's Access too.
   if (account.user) {
     all.push({
-      section: 'llm',
+      section: 'ai',
       label: t('LLM access'),
       text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
     })

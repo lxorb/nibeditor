@@ -28,7 +28,7 @@
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { accountName, vendorName } from './ai/account-words'
-  import { repeatable } from './ai/accounts'
+  import { type Account, repeatable } from './ai/accounts'
   import { FEATURES, ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
@@ -46,7 +46,7 @@
   import { message, t } from './i18n.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
-  import { isDesktop } from './tauri'
+  import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
 
   /** Which providers have a key on this device, by id. Asked once per provider and
@@ -86,14 +86,16 @@
   onMount(() => {
     // Asked as the pane opens and not from an effect: each question writes where the
     // plan stands, and an effect that read that back would ask again for ever.
-    for (const kind of new Set(ai.accounts.map((one) => one.kind))) void ask(kind)
+    for (const account of ai.accounts) void ask(account)
   })
 
-  /** Where a plan stands, asked of whoever knows: the program, or the crate. */
-  async function ask(kind: ProviderKind) {
+  /** Where an account's plan stands, asked of whoever knows: the program, in the
+   *  account's own home, or the crate. */
+  async function ask(account: Provider) {
     // The plugin offers neither (see `offeredKinds`), and leaves out what asks them.
     if (__EVEN_PLUGIN__) return
-    if (isLocal(kind)) await plans.check(kind)
+    const { kind } = account
+    if (isLocal(kind)) await plans.check({ id: account.id, kind })
     if (kind === 'chatgpt') await plans.checkChatgpt()
   }
 
@@ -158,13 +160,33 @@
   }
 
   function add(kind: ProviderKind) {
-    ai.add(kind)
-    void ask(kind)
+    const made = ai.add(kind)
+    // Asked once it is written: the crate finds a second sign-in's home in the file.
+    void ai.written().then(() => ask(made))
   }
 
-  function forget(provider: Provider) {
-    if (!isLocal(provider.kind) && provider.kind !== 'chatgpt') void drop(provider)
+  /** An account taken away, with what it keeps on this device: a key, or a second
+   *  sign-in's home, which its program signs out of first. The reader's own sign-in to a
+   *  program is theirs and stays. */
+  function forget(provider: Account) {
+    const { kind } = provider
+    if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
+    if (isLocal(kind) && provider.own) {
+      void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch(
+        (error: unknown) => {
+          trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
+        },
+      )
+    }
     ai.remove(provider.id)
+  }
+
+  /** What an account is called: the name the reader gave it, else whose sign-in it is as
+   *  its program says, else its road. */
+  function labelOf(provider: Account): string {
+    if (provider.name) return provider.name
+    const email = isLocal(provider.kind) ? plans.of(provider.id).account : null
+    return email ?? accountName(provider)
   }
 </script>
 
@@ -177,7 +199,7 @@
   {/if}
 {/snippet}
 
-<h3>{t('Providers')}</h3>
+<h3>{t('Accounts')}</h3>
 
 {#if ai.accounts.length}
   {#each ai.vendors as vendor (vendor)}
@@ -198,7 +220,7 @@
         <div class="nib-setting setting">
           <span class="name">
             {mine.length > 1
-              ? accountName(provider)
+              ? labelOf(provider)
               : provider.name || t(KIND_NAMES[provider.kind])}
           </span>
           <div class="row">
@@ -399,7 +421,7 @@
 <style>
   /* The settings pane's own shapes. A section in its own component does not inherit
      the panel's styles - those are scoped to it - so the ones this pane uses are
-     here with the panel's values, the way McpSetup and SyncPane carry theirs. See
+     here with the panel's values, the way AccountSteps and SyncPane carry theirs. See
      SettingsPanel.svelte. */
   h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));

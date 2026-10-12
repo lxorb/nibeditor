@@ -1037,6 +1037,8 @@ export const uk: Dictionary = {
   'Space: {name}': 'Простір: {name}',
   'Theme: {name}': 'Тема: {name}',
   'AI account: {name}': 'Обліковий запис ШІ: {name}',
+  Accounts: 'Облікові записи',
+  Access: 'Доступ',
   'Code theme: {name}': 'Тема коду: {name}',
   'Delete a layout': 'Видалити макет',
   // Keyboards and modal editing

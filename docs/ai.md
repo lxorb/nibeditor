@@ -172,6 +172,19 @@ As many compatible ones as you have servers: Ollama on this machine,
 LM Studio beside it, OpenRouter behind both, a gateway at work. Each gets a name
 so the list reads as what they are.
 
+### One page
+
+Settings > AI is one page in two groups. **Accounts**: the providers and their accounts
+below, and Used for. **Access**: everything that can reach the notes, in one list - the
+agents on this computer, through `nib mcp` (docs/agent-native.md 9.1, 10), and the apps
+connected through the account's connector - each row saying what it reaches and when it
+was last used; an agent's row opens its grant. Under the list, one **Connect** chooser
+over both roads (Claude Code, Codex, Claude, ChatGPT, Other), each way only where it
+applies (`lib/access/choices.ts`). Until 2026-10-12 these were three panes, AI, Agents and
+LLM access, split by plumbing rather than by what a reader wants; a link to either of the
+last two (`settings.show('agents')`, the palette, `/mcp`) still lands on Access, and the
+settings search still finds them by their old words.
+
 ### Accounts
 
 Emil, 2026-10-12: "you should for example be able to have multiple claude accounts. of
@@ -206,6 +219,30 @@ writes it out of the rows it kept before (`nib:ai`, which is left alone for an o
 build), each row keeping its id, so its key is found under that id, its grant (`nib-<id>`)
 is the same grant and every thread still names it. A second profile that kept rows of its
 own adds the ones the file lacks, once.
+
+**A second sign-in to a program** is an account whose program keeps its login in a home
+of nib's, `<local data>/ai/homes/<id>`; the first Claude Code and the first Codex are the
+reader's own `~/.claude` and `~/.codex`, as they always were. Both programs document the
+one variable for this - Anthropic: "To stay signed in to multiple accounts at once ...
+give each account its own configuration directory" with `CLAUDE_CONFIG_DIR`
+([authentication](https://code.claude.com/docs/en/authentication)), and Codex's
+`CODEX_HOME` - so nib sets it on the unmodified program it starts and on the program's
+own login, which **Sign in** types into a terminal tab as `set "CLAUDE_CONFIG_DIR=..." &&
+claude auth login`. The program signs the reader in through its maker's flow, keeps the
+login there and refreshes it itself; nib names the folder and never opens what is in it,
+which keeps everything under "Your own plan" true. The window names an account, never the
+folder: the crate finds the account in the file and derives its home
+(`src-tauri/src/ai_cli/home.rs`). A Codex home of nib's starts with
+`cli_auth_credentials_store = "keyring"`, so its login is in the system's own store,
+keyed by the home; Claude Code keeps its own `.credentials.json` in the folder on
+Windows and Linux (mode 0600), and a Keychain entry keyed by the folder on a Mac. For
+such a home the variables that would outrank its login (`ANTHROPIC_API_KEY`,
+`ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CODEX_API_KEY`) are
+taken out of the program's environment, or the reader's shell would pick the account.
+Switching is instant - the next start names another folder - and a thread's session is
+the account's it was opened in: after a switch the next message opens one in the new
+account, seeded from nib's transcript. **Remove** on a second sign-in runs the program's
+own sign-out in its home (`claude auth logout`, `codex logout`) and deletes the folder.
 
 Claude Code and Codex are found where their installers put them - the `PATH`,
 `~/.local/bin`, npm's global folder, Homebrew, Bun, Volta, mise, and on a Mac and Linux

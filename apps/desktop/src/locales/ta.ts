@@ -1011,6 +1011,8 @@ export const ta: Dictionary = {
   'Space: {name}': 'இடம்: {name}',
   'Theme: {name}': 'தீம்: {name}',
   'AI account: {name}': 'AI கணக்கு: {name}',
+  Accounts: 'கணக்குகள்',
+  Access: 'அணுகல்',
   'Code theme: {name}': 'குறியீட்டுத் தீம்: {name}',
   'Delete a layout': 'தளவமைப்பை நீக்கு',
   // Keyboards and modal editing

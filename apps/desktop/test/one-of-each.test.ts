@@ -456,12 +456,13 @@ describe('the switch', () => {
       'lib/GraphControls.svelte',
       // Whether Todoist's done tasks come too.
       'lib/ImportSheet.svelte',
-      'lib/McpSetup.svelte',
       // A setting's row in the palette, which flips where it stands.
       'lib/Palette.svelte',
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
-      // What an agent may do, a switch a scope, in Settings > Agents.
+      // Whether a pasted token may write, in Settings > AI > Access.
+      'lib/access/AccountSteps.svelte',
+      // What an agent may do, a switch a scope, in Settings > AI > Access.
       'lib/agents/settings/AgentDetail.svelte',
       // Fast, in the AI panel's model popover.
       'lib/ai/sidebar/ModelPicker.svelte',

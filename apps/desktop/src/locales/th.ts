@@ -988,6 +988,8 @@ export const th: Dictionary = {
   'Space: {name}': 'พื้นที่: {name}',
   'Theme: {name}': 'ธีม: {name}',
   'AI account: {name}': 'บัญชี AI: {name}',
+  Accounts: 'บัญชี',
+  Access: 'การเข้าถึง',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
   // Keyboards and modal editing

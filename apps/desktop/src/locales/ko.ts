@@ -994,6 +994,8 @@ export const ko: Dictionary = {
   'Space: {name}': '공간: {name}',
   'Theme: {name}': '테마: {name}',
   'AI account: {name}': 'AI 계정: {name}',
+  Accounts: '계정',
+  Access: '접근',
   'Code theme: {name}': '코드 테마: {name}',
   'Delete a layout': '레이아웃 삭제',
   // Keyboards and modal editing

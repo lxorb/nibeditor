@@ -1037,6 +1037,8 @@ export const pl: Dictionary = {
   'Space: {name}': 'Przestrzeń: {name}',
   'Theme: {name}': 'Motyw: {name}',
   'AI account: {name}': 'Konto AI: {name}',
+  Accounts: 'Konta',
+  Access: 'Dostęp',
   'Code theme: {name}': 'Motyw kodu: {name}',
   'Delete a layout': 'Usuń układ',
   // Keyboards and modal editing

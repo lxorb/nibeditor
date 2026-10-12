@@ -1007,6 +1007,8 @@ export const pa: Dictionary = {
   'Space: {name}': 'ਥਾਂ: {name}',
   'Theme: {name}': 'ਥੀਮ: {name}',
   'AI account: {name}': 'AI ਖਾਤਾ: {name}',
+  Accounts: 'ਖਾਤੇ',
+  Access: 'ਪਹੁੰਚ',
   'Code theme: {name}': 'ਕੋਡ ਥੀਮ: {name}',
   'Delete a layout': 'ਖਾਕਾ ਮਿਟਾਓ',
   // Keyboards and modal editing

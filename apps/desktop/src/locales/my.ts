@@ -996,6 +996,8 @@ export const my: Dictionary = {
   'Space: {name}': 'နေရာ: {name}',
   'Theme: {name}': 'အပြင်အဆင်: {name}',
   'AI account: {name}': 'AI အကောင့်: {name}',
+  Accounts: 'အကောင့်များ',
+  Access: 'ဝင်ရောက်ခွင့်',
   'Code theme: {name}': 'ကုဒ်အပြင်အဆင်: {name}',
   'Delete a layout': 'အပြင်အဆင်ဖျက်ပါ',
   // Keyboards and modal editing

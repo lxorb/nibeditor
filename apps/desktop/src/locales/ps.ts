@@ -1000,6 +1000,8 @@ export const ps: Dictionary = {
   'Space: {name}': 'ځای: {name}',
   'Theme: {name}': 'بڼه: {name}',
   'AI account: {name}': 'د AI حساب: {name}',
+  Accounts: 'حسابونه',
+  Access: 'لاسرسی',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
   'Delete a layout': 'اوډون ړنګول',
   // Keyboards and modal editing

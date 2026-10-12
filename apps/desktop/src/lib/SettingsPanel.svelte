@@ -18,7 +18,6 @@
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
-  import McpSetup from './McpSetup.svelte'
   import { SEARCH_MARK } from './panel-marks'
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
@@ -85,6 +84,8 @@
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
   let query = $state('')
+  /** Whether Settings > AI shows one agent's grant in place of its accounts. */
+  let accessDetail = $state(false)
 
   /** The generated panes, rebuilt as things change so every control shows the
    *  value it actually has. */
@@ -1041,17 +1042,18 @@
     <!-- Its own component, for the same reason as the connector's: what syncing
          is doing is a small report with two decisions in it. -->
     <SyncPane />
-  {:else if settings.section === 'ai'}
-    <!-- Its own component: a provider is two or three fields and a list fetched
-         from a server, not a row of settings. -->
-    <AiPane />
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'agents'}
-    <!-- Fetched as it is opened: nothing of the agents is in the app until somebody
-         looks at them, or one connects, and nothing at all in the glasses' plugin,
-         which has no agents. See agents/settings/AgentsPane.svelte. -->
-    {#await import('./agents/settings/AgentsPane.svelte') then agents}
-      <agents.default />
-    {/await}
+  {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
+    <!-- One page: the accounts, in a component of their own since a provider is two or
+         three fields and a list fetched from a server; then Access, everything that can
+         reach the notes, fetched as the page opens - nothing of the agents is in the app
+         until somebody looks at them, and none of it in the glasses' plugin. While an
+         agent's grant is open, it is the page. See access/Access.svelte. -->
+    {#if !accessDetail}<AiPane />{/if}
+    {#if !__EVEN_PLUGIN__}
+      {#await import('./access/Access.svelte') then access}
+        <access.default ondetail={(open: boolean) => (accessDetail = open)} />
+      {/await}
+    {/if}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
     <!-- Fetched as it is opened; see online/OnlinePane.svelte. -->
     {#await import('./online/OnlinePane.svelte') then pane}
@@ -1062,9 +1064,6 @@
     {#await import('./remote/RemotePane.svelte') then pane}
       <pane.default />
     {/await}
-  {:else if settings.section === 'llm'}
-    <!-- Its own component: the pane is a small guide, not a list of settings. -->
-    <McpSetup />
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
   {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}

@@ -984,6 +984,8 @@ export const zhHans: Dictionary = {
   'Space: {name}': '空间：{name}',
   'Theme: {name}': '主题：{name}',
   'AI account: {name}': 'AI 账户：{name}',
+  Accounts: '账户',
+  Access: '访问',
   'Code theme: {name}': '代码主题：{name}',
   'Delete a layout': '删除布局',
   // Keyboards and modal editing

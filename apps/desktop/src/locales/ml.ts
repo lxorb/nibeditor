@@ -1011,6 +1011,8 @@ export const ml: Dictionary = {
   'Space: {name}': 'സ്പേസ്: {name}',
   'Theme: {name}': 'തീം: {name}',
   'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
+  Accounts: 'അക്കൗണ്ടുകൾ',
+  Access: 'ആക്സസ്',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
   // Keyboards and modal editing

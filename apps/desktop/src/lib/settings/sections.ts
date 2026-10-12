@@ -6,7 +6,6 @@
  *  out. */
 
 import { account } from '../account.svelte'
-import { reach } from '../agents/settings/reach.svelte'
 import { modes } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
@@ -65,11 +64,8 @@ export const ICONS: Record<string, string> = {
 
 /** The panes, in their groups.
  *
- *  The LLM connector is a thing an account owns, and it is off until deliberately
- *  turned on. Until there is an account it has nothing to show but an instruction
- *  to sign in, so it stays out of the list rather than sitting there offering
- *  nothing. Glasses is the same argument from the other side: somebody who has
- *  never had a pair in front of the plugin has no glasses to set anything about.
+ *  Glasses is only there for somebody who has had a pair in front of the plugin:
+ *  anybody else has no glasses to set anything about.
  *
  *  Publishing a space is not here at all: it is a sheet opened from the space's
  *  own menu, beside sharing it; see PublishSheet.svelte. */
@@ -87,17 +83,12 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
-      // The providers a note's `ai` block and the rewrites reach, and where their
-      // keys went. Always here: unlike the connector below, nothing about it needs
-      // an account, and the pane's own first row is how one is added.
+      // Everything about a model, on one page: the accounts a note's `ai` block, the
+      // rewrites and the AI panel ask, and Access, everything that can reach the notes -
+      // the agents on this machine and the apps connected through the account. Always
+      // here: nothing about it needs an account, and its first row is how one is added.
+      // See AiPane.svelte and access/Access.svelte.
       { id: 'ai', label: t('AI') },
-      // The agents on this machine, and what each may do: a desktop's alone, because
-      // an agent reaches nib through the installed app's own program. Beside AI,
-      // since both are about a model; the account's connector is its other half,
-      // under the account. See agents/settings/reach.svelte.ts.
-      ...(!__EVEN_PLUGIN__ && reach.offered
-        ? [{ id: 'agents' as Section, label: t('Agents') }]
-        : []),
       // The machines a remote terminal reaches: a desktop's alone, as a terminal is.
       ...(!__EVEN_PLUGIN__ && isDesktop ? [{ id: 'remote' as Section, label: t('Remote') }] : []),
       // The account's machine in the cloud and its month: on every device, with an
@@ -118,7 +109,6 @@ export function sectionGroups(): Item[][] {
       // Only with an account: a pane about what syncs where has nothing to say
       // until there is somewhere for notes to sync to.
       ...(account.user ? [{ id: 'sync' as Section, label: t('Sync') }] : []),
-      ...(account.user ? [{ id: 'llm' as Section, label: t('LLM access') }] : []),
     ],
     [
       { id: 'trash', label: t('Recently deleted') },

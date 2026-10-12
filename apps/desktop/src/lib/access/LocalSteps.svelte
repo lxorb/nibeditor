@@ -1,39 +1,36 @@
 <script lang="ts">
-  /** How one more agent is connected (docs/agent-native.md 9.1, 10).
+  /** How an agent on this computer is connected (docs/agent-native.md 9.1, 10), for one
+   *  way in of Settings > AI > Access.
    *
-   *  On this machine a client is given one line: nib's own program as its MCP server,
-   *  `nib mcp`, which asks the reader once, the first time it connects, and is remembered
-   *  after. The line is the client's own way of adding a server - Claude Code's, Codex's,
-   *  or the JSON entry the rest take from a file - with the path of the program that is
-   *  installed here, so it is pasted and not edited.
+   *  A client is given one line: nib's own program as its MCP server, `nib mcp`, which
+   *  asks the reader once, the first time it connects, and is remembered after. The line
+   *  is the client's own way of adding a server - Claude Code's, Codex's, or the JSON
+   *  entry the rest take from a file - with the path of the program that is installed
+   *  here, so it is pasted and not edited.
    *
-   *  A client somewhere else, or a script, is given a token instead, made here by hand
-   *  with somebody else's defaults and shown the once, as GitHub shows one: nib keeps only
-   *  its hash. The same fold as the account connector's Show config, because it is the
-   *  same second road for the same reader. */
+   *  A client somewhere else, or a script, is given a token instead, under Other: made
+   *  here by hand with somebody else's defaults and shown the once, as GitHub shows one;
+   *  nib keeps only its hash. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import Copyable from '../../Copyable.svelte'
-  import CopyButton from '../../CopyButton.svelte'
-  import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
-  import { segmented } from '../../slide'
-  import { type McpClient, mcpLine } from '../mcp'
-  import type { AgentsPane } from './pane.svelte'
+  import Copyable from '../Copyable.svelte'
+  import CopyButton from '../CopyButton.svelte'
+  import { t } from '../i18n.svelte'
+  import { dur } from '../motion'
+  import { type McpClient, mcpLine } from '../agents/mcp'
+  import type { AgentsPane } from '../agents/settings/pane.svelte'
 
-  const { pane }: { pane: AgentsPane } = $props()
+  const { pane, client }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'other' } = $props()
 
-  const CLIENTS = $derived<{ id: McpClient; label: string }[]>([
-    { id: 'claude', label: 'Claude Code' },
-    { id: 'codex', label: 'Codex' },
-    { id: 'json', label: t('Other') },
-  ])
+  /** Each way's line, in the words `mcpLine` writes it in: Other is the entry a client
+   *  takes from a file. */
+  const lineOf = (way: typeof client): McpClient =>
+    way === 'claude-code' ? 'claude' : way === 'codex' ? 'codex' : 'json'
 
-  let client = $state<McpClient>('claude')
   let making = $state(false)
   let name = $state('')
 
-  const line = $derived(pane.program === null ? null : mcpLine(pane.program, client))
+  const line = $derived(pane.program === null ? null : mcpLine(pane.program, lineOf(client)))
 
   /** Opens the fold, or closes it and the token with it: shown once means gone once it
    *  is put away, and the fold then makes the next one. */
@@ -45,23 +42,8 @@
   }
 </script>
 
-<h3>{pane.grants.length ? t('Connect another') : t('Connect')}</h3>
-
-<div class="nib-segmented" role="tablist" use:segmented>
-  {#each CLIENTS as one (one.id)}
-    <button
-      role="tab"
-      class:on={client === one.id}
-      aria-selected={client === one.id}
-      onclick={() => (client = one.id)}
-    >
-      {one.label}
-    </button>
-  {/each}
-</div>
-
 {#if line !== null}
-  {#if client === 'json'}
+  {#if client === 'other'}
     <pre>{line}</pre>
     <CopyButton value={line} wide />
   {:else}
@@ -70,39 +52,42 @@
   <p class="hint">{t('nibeditor asks you once, the first time it connects.')}</p>
 {/if}
 
-<button class="disclose" aria-expanded={making} onclick={fold}>
-  <svg class="chevron nib-mirror" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
-    ><path d="M6 3l5 5-5 5" /></svg
-  >
-  {t('A client on another machine?')}
-</button>
+{#if client === 'other'}
+  <button class="disclose" aria-expanded={making} onclick={fold}>
+    <svg class="chevron nib-mirror" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
+      ><path d="M6 3l5 5-5 5" /></svg
+    >
+    {t('A client on another machine?')}
+  </button>
 
-{#if making}
-  <div class="made" transition:slide={{ duration: dur(180), easing: cubicOut }}>
-    {#if pane.minted}
-      <Copyable value={pane.minted.token} />
-      <p class="hint">{t('Shown only once.')}</p>
-    {:else}
-      <form
-        class="make"
-        onsubmit={(event) => {
-          event.preventDefault()
-          void pane.mint(name)
-        }}
-      >
-        <input
-          class="named"
-          bind:value={name}
-          placeholder={t('Name')}
-          aria-label={t('Name')}
-          spellcheck="false"
-          autocomplete="off"
-        />
-        <button class="nib-chip" type="submit" disabled={!name.trim()}>{t('Create a token')}</button
+  {#if making}
+    <div class="made" transition:slide={{ duration: dur(180), easing: cubicOut }}>
+      {#if pane.minted}
+        <Copyable value={pane.minted.token} />
+        <p class="hint">{t('Shown only once.')}</p>
+      {:else}
+        <form
+          class="make"
+          onsubmit={(event) => {
+            event.preventDefault()
+            void pane.mint(name)
+          }}
         >
-      </form>
-    {/if}
-  </div>
+          <input
+            class="named"
+            bind:value={name}
+            placeholder={t('Name')}
+            aria-label={t('Name')}
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button class="nib-chip" type="submit" disabled={!name.trim()}
+            >{t('Create a token')}</button
+          >
+        </form>
+      {/if}
+    </div>
+  {/if}
 {/if}
 
 <style>
@@ -121,7 +106,7 @@
   }
 
   /* The fold, as the account connector's: a chevron that turns, and the words beside
-     it. See McpSetup.svelte. */
+     it. See AccountSteps.svelte. */
   .disclose {
     display: inline-flex;
     align-items: center;

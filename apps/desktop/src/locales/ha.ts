@@ -1010,6 +1010,8 @@ export const ha: Dictionary = {
   'Space: {name}': 'Wuri: {name}',
   'Theme: {name}': 'Kamanni: {name}',
   'AI account: {name}': 'Asusun AI: {name}',
+  Accounts: 'Asusun',
+  Access: 'Damar shiga',
   'Code theme: {name}': 'Kamannin lamba: {name}',
   'Delete a layout': 'Share tsari',
   // Keyboards and modal editing

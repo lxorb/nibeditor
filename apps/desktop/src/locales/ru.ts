@@ -1038,6 +1038,8 @@ export const ru: Dictionary = {
   'Space: {name}': 'Пространство: {name}',
   'Theme: {name}': 'Тема: {name}',
   'AI account: {name}': 'Аккаунт ИИ: {name}',
+  Accounts: 'Аккаунты',
+  Access: 'Доступ',
   'Code theme: {name}': 'Тема кода: {name}',
   'Delete a layout': 'Удалить макет',
   // Keyboards and modal editing

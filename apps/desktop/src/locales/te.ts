@@ -1004,6 +1004,8 @@ export const te: Dictionary = {
   'Space: {name}': 'స్పేస్: {name}',
   'Theme: {name}': 'థీమ్: {name}',
   'AI account: {name}': 'AI ఖాతా: {name}',
+  Accounts: 'ఖాతాలు',
+  Access: 'యాక్సెస్',
   'Code theme: {name}': 'కోడ్ థీమ్: {name}',
   'Delete a layout': 'లేఅవుట్ తొలగించు',
   // Keyboards and modal editing

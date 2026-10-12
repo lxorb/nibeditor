@@ -1001,6 +1001,8 @@ export const gu: Dictionary = {
   'Space: {name}': 'જગ્યા: {name}',
   'Theme: {name}': 'થીમ: {name}',
   'AI account: {name}': 'AI એકાઉન્ટ: {name}',
+  Accounts: 'એકાઉન્ટ',
+  Access: 'ઍક્સેસ',
   'Code theme: {name}': 'કોડ થીમ: {name}',
   'Delete a layout': 'માંડણી કાઢો',
   // Keyboards and modal editing

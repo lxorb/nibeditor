@@ -1000,6 +1000,8 @@ export const bn: Dictionary = {
   'Space: {name}': 'স্পেস: {name}',
   'Theme: {name}': 'থিম: {name}',
   'AI account: {name}': 'এআই অ্যাকাউন্ট: {name}',
+  Accounts: 'অ্যাকাউন্ট',
+  Access: 'অ্যাক্সেস',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   // Keyboards and modal editing

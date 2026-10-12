@@ -1008,6 +1008,8 @@ export const kn: Dictionary = {
   'Space: {name}': 'ಸ್ಪೇಸ್: {name}',
   'Theme: {name}': 'ಥೀಮ್: {name}',
   'AI account: {name}': 'AI ಖಾತೆ: {name}',
+  Accounts: 'ಖಾತೆಗಳು',
+  Access: 'ಪ್ರವೇಶ',
   'Code theme: {name}': 'ಕೋಡ್ ಥೀಮ್: {name}',
   'Delete a layout': 'ಲೇಔಟ್ ಅಳಿಸಿ',
   // Keyboards and modal editing
