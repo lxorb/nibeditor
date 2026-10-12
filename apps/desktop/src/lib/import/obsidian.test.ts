@@ -223,6 +223,18 @@ describe('the links in a vault', () => {
     ).resolves.toBe('See [[Plan]].\n')
   })
 
+  test('keep going to a note at the top that shares its name with one beside them', async () => {
+    const text = await noteFrom(
+      'Projects/Alpha.md',
+      file('Index.md', '# Home\n'),
+      file('Projects/Index.md', '# Projects\n'),
+      file('Projects/Alpha.md', 'Back to [Home](../Index.md), or [[Index|here]].\n'),
+    )
+    // nib reads `[[Index]]` from Projects as the Index beside it, so the markdown link
+    // stays, while the wikilink meant the one beside it all along.
+    expect(text).toBe('Back to [Home](../Index.md), or [[Projects/Index|here]].\n')
+  })
+
   test('are left exactly as written inside code', async () => {
     const kit = file('Kit.md', '# Kit\n')
     const fenced = 'Example:\n\n```markdown\n[the kit](Kit.md) and [[kit#Tent]]\n```\n'

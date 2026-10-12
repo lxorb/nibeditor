@@ -67,7 +67,12 @@ export async function folderPlan(
     }
 
     const said = await one.read(await one.source.text(), one.source)
-    const body = rewriteLinks(said.text, { was: one.source.path, now: one.to }, files.find)
+    const body = rewriteLinks(
+      said.text,
+      { was: one.source.path, now: one.to },
+      files.find,
+      files.reaches,
+    )
     written.push({
       kind: 'note',
       path: one.to,

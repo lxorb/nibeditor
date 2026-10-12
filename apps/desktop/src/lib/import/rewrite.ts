@@ -20,6 +20,8 @@
  *  address into the app it came from is a fact about where the note used to live,
  *  and rewriting it to nothing would lose that. */
 
+import { foldName } from '@nib/markdown/links'
+
 import { linkTo } from '../composer'
 import { folderOf, isMarkdownPath, relativePath } from '../space-paths'
 
@@ -34,6 +36,10 @@ export interface Found {
 /** Answers where a link's target ended up, or null for one that was not in the
  *  export. `from` is the file the link is written in, as the export named it. */
 export type Resolver = (target: string, from: string) => Found | null
+
+/** Answers whether a wikilink naming `found`, written in the note at `from` (where
+ *  that note is going), is read by nib as that very file. */
+export type Reaching = (found: Found, from: string) => boolean
 
 /** A markdown link or embed. The target is read as everything between the
  *  brackets, because an exported path is as likely to hold a space as not, and
@@ -74,43 +80,71 @@ export interface Rewriting {
   now: string
 }
 
-export function rewriteLinks(text: string, at: Rewriting, find: Resolver): string {
+export function rewriteLinks(
+  text: string,
+  at: Rewriting,
+  find: Resolver,
+  reaches: Reaching = () => true,
+): string {
   const folder = folderOf(at.now)
   const code = codeRanges(text)
   const tables = tableRanges(text)
 
+  /** What one markdown link becomes. */
+  function markdownLink(
+    whole: string,
+    bang: string,
+    label: string,
+    inside: string,
+    offset: number,
+  ): string {
+    if (inCode(code, offset)) return whole
+
+    const { target, title } = splitTarget(inside)
+    if (!target || isAddress(target)) return whole
+
+    // The heading, block or page after the `#` is kept apart from the path, so
+    // the link still goes to the same place in the file once it is found.
+    const { path: written, fragment } = splitFragment(target)
+    const found = find(decoded(written), at.was)
+    if (!found) return whole
+
+    // A note is pointed at by name, so the link survives it being renamed - or in
+    // the spelling the Links setting asks for, since `linkTo` is the one place in
+    // the app that writes a link to a note and this is the app writing one.
+    // A name a wikilink cannot hold keeps the markdown link it came in, which is
+    // the one way Obsidian could link to it either.
+    // So does a name nib would read as another note from where this one is going:
+    // a note at the top of the vault is named by its name alone, and a note of the
+    // same name beside the link is nearer.
+    if (isMarkdownPath(found.path) && !UNLINKABLE.test(found.name) && reaches(found, at.now)) {
+      const link = linkTo(found.name, label, {
+        path: found.path,
+        from: at.now,
+        embed: bang === '!',
+        fragment: fragment === null ? null : decoded(fragment),
+      })
+      return inCode(tables, offset) ? inCell(link) : link
+    }
+
+    const path = relativePath(folder, found.path)
+    const anchor = fragment === null ? '' : `#${fragment}`
+    return `${bang}[${label}](${encodeTarget(path)}${anchor}${title})`
+  }
+
+  // Where the links this pass writes sit in what it hands on, so the pass after it
+  // does not read a wikilink it wrote as one the note came with. That one would be
+  // found again from the note's own folder, which a link that said `../` was not.
+  const rewritten: [number, number][] = []
+  let moved = 0
+
   const linked = text.replace(
     LINK,
     (whole, bang: string, label: string, inside: string, offset: number) => {
-      if (inCode(code, offset)) return whole
-
-      const { target, title } = splitTarget(inside)
-      if (!target || isAddress(target)) return whole
-
-      // The heading, block or page after the `#` is kept apart from the path, so
-      // the link still goes to the same place in the file once it is found.
-      const { path: written, fragment } = splitFragment(target)
-      const found = find(decoded(written), at.was)
-      if (!found) return whole
-
-      // A note is pointed at by name, so the link survives it being renamed - or in
-      // the spelling the Links setting asks for, since `linkTo` is the one place in
-      // the app that writes a link to a note and this is the app writing one.
-      // A name a wikilink cannot hold keeps the markdown link it came in, which is
-      // the one way Obsidian could link to it either.
-      if (isMarkdownPath(found.path) && !UNLINKABLE.test(found.name)) {
-        const written = linkTo(found.name, label, {
-          path: found.path,
-          from: at.now,
-          embed: bang === '!',
-          fragment: fragment === null ? null : decoded(fragment),
-        })
-        return inCode(tables, offset) ? inCell(written) : written
-      }
-
-      const path = relativePath(folder, found.path)
-      const anchor = fragment === null ? '' : `#${fragment}`
-      return `${bang}[${label}](${encodeTarget(path)}${anchor}${title})`
+      const link = markdownLink(whole, bang, label, inside, offset)
+      if (link !== whole) rewritten.push([offset + moved, offset + moved + link.length])
+      moved += link.length - whole.length
+      return link
     },
   )
 
@@ -124,7 +158,7 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
   return linked.replace(
     WIKILINK,
     (whole, target: string, shown: string | undefined, offset: number) => {
-      if (inCode(stillCode, offset)) return whole
+      if (inCode(stillCode, offset) || inCode(rewritten, offset)) return whole
 
       // In a table Obsidian writes the `|` before the shown words as `\|`, and the
       // backslash is the cell's business rather than part of the name.
@@ -375,6 +409,10 @@ export class ExportFiles {
   /** How many of the files arriving a wikilink would call by each name. */
   private readonly named = new Map<string, number>()
 
+  /** The notes arriving, by the last part of their path without its extension, the
+   *  way nib looks a wikilink's name up. */
+  private readonly arriving = new Map<string, string[]>()
+
   add(was: string, found: Found) {
     this.byPath.add(was, found)
 
@@ -386,6 +424,32 @@ export class ExportFiles {
 
     const said = found.name.toLowerCase()
     this.named.set(said, (this.named.get(said) ?? 0) + 1)
+
+    if (isMarkdownPath(found.path)) {
+      const last = foldName(withoutExtension(found.path)).split('/').pop() ?? ''
+      this.arriving.set(last, [...(this.arriving.get(last) ?? []), found.path])
+    }
+  }
+
+  /** Whether nib reads a wikilink naming `found`, written in the note at `from`, as
+   *  that very note. It takes a name as the end of a path and picks the nearest note
+   *  that fits: the one beside the link, then the shallowest, then the first by path.
+   *  See `resolveNote` in @nib/editor, whose reading this is. */
+  readonly reaches: Reaching = (found, from) => {
+    const wanted = foldName(found.name)
+    const fits = (this.arriving.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
+      const said = foldName(withoutExtension(path))
+      return said === wanted || said.endsWith(`/${wanted}`)
+    })
+
+    const here = folderOf(from)
+    const depth = (path: string) => path.split('/').length
+    const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
+    const nearest = [...fits].sort(
+      (one, other) =>
+        beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+    )[0]
+    return nearest === undefined || nearest === found.path
   }
 
   /** The resolver `rewriteLinks` asks. */
@@ -435,6 +499,11 @@ class Spellings {
   get(key: string): Found | undefined {
     return this.exact.get(key) ?? this.folded.get(key.toLowerCase())
   }
+}
+
+/** A path without the extension on its last part. */
+function withoutExtension(path: string): string {
+  return path.replace(/\.[^./]+$/, '')
 }
 
 /** Two paths joined, with `..` resolved, all inside the export. */
