@@ -339,7 +339,9 @@ function saidBy(error: unknown): string {
 export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
-  const stripped = named.replace(MACHINE_MADE, '').trim()
+  // Obsidian makes no exports, so a vault's name is always one its owner gave it:
+  // `Graph Theory` keeps its first word.
+  const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
 
   // `Export-9f1c2d3e.zip` leaves `9f1c2d3e`, which is the export's id rather than
   // a name anybody would give a folder, and `backup.zip` leaves nothing at all. A

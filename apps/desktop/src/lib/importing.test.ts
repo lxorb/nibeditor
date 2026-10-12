@@ -42,6 +42,11 @@ describe('the folder an import makes for itself', () => {
     expect(folderNameFor([picked('Exports Of Thought.zip')], 'obsidian')).toBe('Exports Of Thought')
   })
 
+  test('keeps a vault’s whole name, an exporter’s word first and all', () => {
+    expect(folderNameFor([picked('Graph Theory.zip')], 'obsidian')).toBe('Graph Theory')
+    expect(folderNameFor([picked('Archive.zip')], 'obsidian')).toBe('Archive')
+  })
+
   test('is the app it came out of when several files were picked', () => {
     expect(folderNameFor([picked('Work.enex'), picked('Home.enex')], 'evernote')).toBe('Evernote')
   })
