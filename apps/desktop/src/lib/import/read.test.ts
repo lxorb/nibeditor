@@ -22,6 +22,27 @@ describe('which app an export came out of', () => {
     ).resolves.toBe('notion')
   })
 
+  test('a folder of notes with one Notion page kept in it is a folder of notes', async () => {
+    const standup = '# Standup\nDate: 2024-03-02\nAttendees: Ann, Bob\n\nShipped the beta.\n'
+    const sources = [
+      file('Standup.md', standup),
+      file('Home.md', '# Home\n\nSee [[Standup]].\n'),
+      file('Inbox/Old page 0123456789abcdef0123456789abcdef.md', '# Old page\n'),
+    ]
+    await expect(detect(sources)).resolves.toBe('markdown')
+
+    const plan = await readAs('markdown', sources)
+    const read = plan.files.find((one) => one.path === 'Standup.md')
+    expect(read?.kind === 'note' && read.text).toBe(standup)
+    // An HTML export's own index carries no id, and the pages still say Notion.
+    await expect(
+      detect([
+        file('index.html', '<html></html>'),
+        file('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.html'),
+      ]),
+    ).resolves.toBe('notion')
+  })
+
   test('a folder of notes with a folder called Keep is a folder of notes', async () => {
     const sources = [
       file('Home.md', '# Home\n\nSee [[Shopping]].\n'),

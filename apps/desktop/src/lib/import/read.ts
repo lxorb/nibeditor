@@ -75,7 +75,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   // pages, and reading the whole folder as Logseq would turn every `- TODO` in it
   // into a checkbox.
   if (has(/^(journals|pages|logseq)\//i) || has(/^[^/]+\/(journals|pages)\//i)) return 'logseq'
-  if (paths.some((one) => hasNotionId(one.split('/').pop() ?? one))) return 'notion'
+  if (looksLikeNotion(paths)) return 'notion'
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
   const html = paths.filter((one) => /\.html?$/i.test(one))
@@ -95,6 +95,19 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   if (has(PANDOC)) return 'pandoc'
 
   return null
+}
+
+/** Notion's id on the end of every page's name. Every one, because a single page
+ *  somebody exported once and kept among their own notes is one of those notes, and
+ *  read as Notion the lines under each title would all become properties. A page is
+ *  a note or a web page, bar the `index.html` an HTML export opens on; an export of
+ *  nothing but databases has its id on each table instead. */
+function looksLikeNotion(paths: readonly string[]): boolean {
+  const named = (path: string) => hasNotionId(path.split('/').pop() ?? path)
+  const pages = paths.filter(
+    (one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one),
+  )
+  return pages.length ? pages.every(named) : paths.some(named)
 }
 
 /** What wrote a TextBundle, which the bundle itself says. */
