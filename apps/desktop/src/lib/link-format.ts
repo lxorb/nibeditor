@@ -66,8 +66,9 @@ export interface LinkTarget {
    *  without its `#`, the way a wikilink holds it. */
   fragment?: string | null
   /** The words the link shows. Nothing, or the name again, leaves a wikilink
-   *  bare; a markdown link always shows something, since `[](x)` shows nothing at
-   *  all. */
+   *  bare, unless it goes to a heading or a block: a bare `[[Plan#Budget]]` shows
+   *  the heading too, so the name it showed is kept. A markdown link always shows
+   *  something, since `[](x)` shows nothing at all. */
   shown?: string | null
   /** `![[…]]` and `![](…)`: the note itself rather than a link to it. */
   embed?: boolean
@@ -77,7 +78,7 @@ export interface LinkTarget {
 export function formatLink(target: LinkTarget, format: LinkFormat): string {
   const bang = target.embed ? '!' : ''
   const fragment = target.fragment ?? ''
-  const shown = target.shown && target.shown !== target.name ? target.shown : ''
+  const shown = target.shown && (target.shown !== target.name || fragment) ? target.shown : ''
 
   if (format === 'wikilink') {
     const inner = fragment ? `${target.name}#${fragment}` : target.name

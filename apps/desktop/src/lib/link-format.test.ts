@@ -17,6 +17,12 @@ describe('a link to a note', () => {
     expect(formatLink({ ...PLAN, shown: 'Plan' }, 'wikilink')).toBe('[[Plan]]')
   })
 
+  test('keeps the name it shows when it goes to a heading, which bare would show too', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Budget', shown: 'Plan' }, 'wikilink')).toBe(
+      '[[Plan#Budget|Plan]]',
+    )
+  })
+
   test('carries the heading or the block after the target', () => {
     expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'wikilink')).toBe('[[Plan#Next steps]]')
     expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'wikilink')).toBe('[[Plan#^a1b2c3]]')

@@ -198,6 +198,7 @@ describe('the links in a vault', () => {
     const said = [
       '[[Note#Setup]]',
       '[[Note#Setup|how to set up]]',
+      '[[Note#Setup|Note]]',
       '[[Note#^abc123]]',
       '![[Note#Setup]]',
       '![[paper.pdf#page=3]]',
