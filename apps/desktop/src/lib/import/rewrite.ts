@@ -161,6 +161,7 @@ export function rewriteLinks(
   // because the pass above moved everything after the first link it rewrote.
   const stillCode = codeRanges(linked)
   const stillTables = tableRanges(linked)
+  const properties = propertiesTo(linked)
   return linked.replace(
     WIKILINK,
     (whole, target: string, shown: string | undefined, offset: number) => {
@@ -184,11 +185,15 @@ export function rewriteLinks(
       // A picture's size has no place in a markdown image, where it would only be
       // its alt text, so a sized embed stays a wikilink whatever the Links setting.
       const sized = embed && !isMarkdownPath(found.path) && SIZE.test(words?.trim() ?? '')
+      // A property holds a link only as a wikilink, in Obsidian and in nib alike, so
+      // one there stays one: a markdown link would be only words, and the relation
+      // it made would be gone.
+      const property = offset < properties
       const written = linkTo(
         name,
         words,
         { path: found.path, from: at.now, embed, fragment },
-        sized ? 'wikilink' : undefined,
+        sized || property ? 'wikilink' : undefined,
       )
       return inCode(stillTables, offset) ? inCell(written) : written
     },
@@ -325,6 +330,13 @@ function propertiesEnd(lines: readonly string[]): number {
   if (lines[0]?.trimEnd() !== '---') return 0
   const closing = lines.findIndex((line, at) => at > 0 && /^(?:---|\.\.\.)\s*$/.test(line))
   return closing < 0 ? 0 : closing + 1
+}
+
+/** Where the properties at the top of the note end, as an offset into its text, or
+ *  nothing for a note that has none. */
+function propertiesTo(text: string): number {
+  const lines = text.split('\n')
+  return lines.slice(0, propertiesEnd(lines)).join('\n').length
 }
 
 /** The inline code spans between `from` and `to`: a run of backticks, up to the

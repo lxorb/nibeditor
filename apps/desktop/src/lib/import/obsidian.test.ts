@@ -396,6 +396,21 @@ describe('the links in a vault', () => {
     }
   })
 
+  test('in the properties stay wikilinks when the Links setting writes markdown', async () => {
+    setLinkWriting('shortest')
+    try {
+      await expect(
+        noteFrom(
+          'Meeting.md',
+          file('Meeting.md', '---\nproject: "[[Alpha]]"\n---\nAbout [[Alpha]].\n'),
+          file('Alpha.md', '# Alpha\n'),
+        ),
+      ).resolves.toBe('---\nproject: "[[Alpha]]"\n---\nAbout [Alpha](Alpha.md).\n')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
   test('to a note with a bracket in its name stay markdown links', async () => {
     await expect(
       noteFrom(
