@@ -376,6 +376,16 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('are left exactly as written in math', async () => {
+    const block = '$$\nA[i](j) = 1\n$$\n'
+    const span = 'Let $f[x](y)$ be, for $5 or [y](y.md).\n'
+
+    await expect(noteFrom('A.md', file('A.md', block), file('j.md', '# j'))).resolves.toBe(block)
+    await expect(noteFrom('A.md', file('A.md', span), file('y.md', '# y'))).resolves.toBe(
+      'Let $f[x](y)$ be, for $5 or [[y]].\n',
+    )
+  })
+
   test('keep pointing at a file whose name holds a percent sign or a hash', async () => {
     await expect(
       noteFrom(

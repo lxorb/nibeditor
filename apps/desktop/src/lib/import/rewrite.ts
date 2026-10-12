@@ -100,7 +100,7 @@ export function rewriteLinks(
   reaches: Reaching = () => true,
 ): string {
   const folder = folderOf(at.now)
-  const code = codeRanges(text)
+  const code = withMath(text, codeRanges(text))
   const tables = tableRanges(text)
 
   /** What one markdown link becomes. */
@@ -172,7 +172,7 @@ export function rewriteLinks(
   // as well, so an import writes one spelling throughout rather than keeping the
   // exporting app's wherever it happened to match nib's. The code is found again,
   // because the pass above moved everything after the first link it rewrote.
-  const stillCode = codeRanges(linked)
+  const stillCode = withMath(linked, codeRanges(linked))
   const stillTables = tableRanges(linked)
   const properties = propertiesTo(linked)
   return linked.replace(
@@ -402,6 +402,36 @@ export function codeRanges(text: string): [number, number][] {
   }
   spans(text, prose, text.length, ranges)
   return ranges
+}
+
+/** Math, `$$` blocks and `$` spans: what Obsidian reads after a `$` that is not
+ *  followed by a space, up to one that is not after a space or before a digit, so
+ *  a price is only a price. Neither is Markdown any more than code is, so a link
+ *  never starts in it: `$f[x](y)$` is LaTeX, whatever notes the vault holds. */
+const MATH =
+  /(?<!\\)\$\$(?:[^$\\]|\\[\s\S]|\$(?!\$))*\$\$|(?<![\\$])\$(?![\s$])(?:[^$\n\\]|\\.|\n(?![ \t>]*\n))*?(?<![\s\\])\$(?!\d)/g
+
+/** The code ranges, and the math outside them. A `$` in a code span is only a dollar,
+ *  so the code is blanked out before the math is looked for, its lines kept so a
+ *  span still ends at its paragraph. */
+function withMath(text: string, code: [number, number][]): [number, number][] {
+  if (!text.includes('$')) return code
+
+  const parts: string[] = []
+  let at = 0
+  for (const [from, to] of [...code].sort((one, other) => one[0] - other[0])) {
+    if (to <= at) continue
+    const start = Math.max(from, at)
+    parts.push(text.slice(at, start), text.slice(start, to).replace(/[^\n]/g, ' '))
+    at = to
+  }
+  const plain = parts.join('') + text.slice(at)
+
+  const math = [...plain.matchAll(MATH)].map((one): [number, number] => [
+    one.index,
+    one.index + one[0].length,
+  ])
+  return [...code, ...math]
 }
 
 /** How many lines the properties at the top of the note take, the two `---` lines
