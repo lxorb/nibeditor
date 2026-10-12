@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { hasNotionId, Names, safeName, titleFrom, withoutNotionId } from './names'
+import { hasNotionId, keptName, Names, safeName, titleFrom, withoutNotionId } from './names'
 
 describe('a title as a file name', () => {
   test('loses what no file may be called, keeping the words', () => {
@@ -23,6 +23,13 @@ describe('a title as a file name', () => {
     expect(safeName('con')).toBe('con-')
     expect(safeName('LPT1')).toBe('LPT1-')
     expect(safeName('console')).toBe('console')
+  })
+
+  test('steps around them in front of the first dot too, which is where Windows looks', () => {
+    expect(safeName('Con. Law')).toBe('Con-. Law')
+    expect(keptName('Aux. verbs')).toBe('Aux-. verbs')
+    expect(keptName('aux.config')).toBe('aux-.config')
+    expect(keptName('Cons. Law')).toBe('Cons. Law')
   })
 
   test('is short enough to leave room for the folders above it', () => {

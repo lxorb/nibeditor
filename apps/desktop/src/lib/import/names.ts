@@ -44,7 +44,7 @@ export function safeName(title: string): string {
 
   const short = one.length > LONGEST ? one.slice(0, LONGEST).trimEnd() : one
   if (!short) return 'Untitled'
-  return DEVICES.test(short) ? `${short}-` : short
+  return undeviced(short)
 }
 
 /** A name a file already had on somebody's disk, changed only as far as a file
@@ -54,7 +54,16 @@ export function safeName(title: string): string {
 export function keptName(name: string): string {
   const one = withoutForbidden(name).replace(/[. ]+$/, '')
   if (!one.trim()) return 'Untitled'
-  return DEVICES.test(one) ? `${one}-` : one
+  return undeviced(one)
+}
+
+/** A name that starts with a device's, which Windows judges by what comes before
+ *  the first dot - `Con. Law` is the device `Con` as much as `CON` is - with a
+ *  hyphen after that part, so the space takes the file wherever it is opened. */
+function undeviced(name: string): string {
+  const at = name.indexOf('.')
+  const first = at < 0 ? name : name.slice(0, at)
+  return DEVICES.test(first) ? `${first}-${name.slice(first.length)}` : name
 }
 
 /** The name without the id its exporter stuck on the end. */

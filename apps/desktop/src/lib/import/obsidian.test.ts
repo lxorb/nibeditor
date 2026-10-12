@@ -498,6 +498,21 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('arrive when a name starts like a device’s, with the links following it', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', 'See [[Con. Law]].\n'),
+      file('Con. Law.md', 'Marbury v. Madison.'),
+    ])
+    expect(plan.files.map((one) => one.path)).toEqual([
+      '.obsidian/app.json',
+      'Home.md',
+      'Con-. Law.md',
+    ])
+    const home = plan.files.find((one) => one.path === 'Home.md')
+    expect(home?.kind === 'note' && home.text).toBe('See [[Con-. Law]].\n')
+  })
+
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [
