@@ -173,7 +173,9 @@ in a folder of its own.
 **Obsidian.** A vault is markdown in folders, which is nib's own spelling already:
 wikilinks, embeds, callouts, block ids, `%%comments%%`, `==highlights==`, `.canvas`
 and `.base` files all read as they are, so the notes go through the plain reader
-below untouched. What is Obsidian's alone is `.obsidian/` at the top, which is also
+below untouched. The files are the reader's own rather than an export's, so none
+loses the 32-character tail a Notion name would, and a saved `.html` page arrives as
+the page, not as a note. What is Obsidian's alone is `.obsidian/` at the top, which is also
 how a vault is known (before the folder shapes, so a vault with a `pages/` folder
 is not taken for Logseq). It comes along, so Obsidian still opens the space, minus
 what is about one machine rather than the vault: `workspace.json`, the installed

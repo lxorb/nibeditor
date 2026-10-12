@@ -30,6 +30,11 @@ export interface PlainOptions {
   /** A last look at a note's words: Bear rewrites its tags here, Logseq its
    *  properties. */
   words?: (text: string, source: Source) => string
+  /** Files an app keeps for itself rather than an export it wrote: an Obsidian
+   *  vault. Their names are the reader's own, so no exporter's id is taken off
+   *  them, and an HTML file is a page somebody saved, copied as it is rather than
+   *  read as a note. */
+  asTheyAre?: boolean
 }
 
 export async function readPlain(
@@ -44,10 +49,10 @@ export async function readPlain(
     place: (source) => {
       if (isJunk(source.path) || options.skip?.(source.path)) return { to: null }
 
-      const path = placedPath(source.path)
+      const path = placedPath(source.path, options.asTheyAre ? undefined : withoutNotionId)
       if (path === null) return { to: null }
 
-      if (HTML.test(path)) {
+      if (HTML.test(path) && !options.asTheyAre) {
         html += 1
         return {
           to: names.free(path.replace(HTML, '.md')),
@@ -83,12 +88,14 @@ export async function readPlain(
  *
  *  The folders are kept as they are, since somebody arranged them, and a name
  *  that no file may have is argued with one part at a time so a folder full of
- *  notes stays one folder. */
-function placedPath(path: string): string | null {
+ *  notes stays one folder. `each` is done to every part first: for an export, the
+ *  id Notion leaves on the end of names is taken off wherever it appears, since a
+ *  folder of markdown might have come from there through some other tool. */
+function placedPath(path: string, each?: (part: string) => string): string | null {
   if (BUNDLE_TEXT.test(path)) {
     // `Trips/Iceland.textbundle/text.md` is the note `Trips/Iceland.md`.
     const bundle = path.replace(/\/text\.(md|markdown|txt)$/i, '')
-    return `${tidyParts(bundle.replace(/\.textbundle$/i, ''))}.md`
+    return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each)}.md`
   }
 
   const inside = /\.textbundle\/(.*)$/i.exec(path)
@@ -96,15 +103,8 @@ function placedPath(path: string): string | null {
     const rest = inside[1] ?? ''
     // A bundle's own metadata says what wrote it, which the note does not need.
     if (/^info\.json$/i.test(rest)) return null
-    return tidyParts(rest)
+    return safeParts(rest, each)
   }
 
-  return tidyParts(path)
-}
-
-/** Every part of a path made into something a file may be called, with the id
- *  Notion leaves on the end of names taken off wherever it appears: a folder of
- *  markdown might have come from there through some other tool. */
-function tidyParts(path: string): string {
-  return safeParts(path, withoutNotionId)
+  return safeParts(path, each)
 }

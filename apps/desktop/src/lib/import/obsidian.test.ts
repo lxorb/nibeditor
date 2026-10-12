@@ -239,4 +239,30 @@ describe('the files in a vault', () => {
       'Notes.md',
     ])
   })
+
+  test('keep their names, a hash at the end of one included', async () => {
+    const hashed = 'Attachments/photo-0123456789abcdef0123456789abcdef.jpg'
+    await expect(
+      pathsFrom([file('.obsidian/app.json', '{}'), file(hashed, 'JPG')]),
+    ).resolves.toEqual(['.obsidian/app.json', hashed])
+  })
+
+  test('keep a saved web page as the page, not a note made of it', async () => {
+    const page = '<html><body><p style="color:red">Hi</p></body></html>'
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Clips/Article.html', page),
+      file('Clips/Article.md', '# Notes on [[Article.html]]'),
+    ])
+
+    const kept = plan.files.find((one) => one.path === 'Clips/Article.html')
+    expect(kept?.kind).toBe('file')
+    expect(kept?.kind === 'file' && new TextDecoder().decode(kept.bytes)).toBe(page)
+    expect(plan.files.map((one) => one.path).sort()).toEqual([
+      '.obsidian/app.json',
+      'Clips/Article.html',
+      'Clips/Article.md',
+    ])
+    expect(plan.lost).toEqual([])
+  })
 })
