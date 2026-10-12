@@ -782,6 +782,29 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('keep a zip whole beside the note that links it when the vault is picked as a folder', async () => {
+    const zip = new JSZip()
+    zip.file('README.md', '# the code readme')
+    zip.file('src/main.py', 'print(1)')
+    const bytes = await zip.generateAsync({ type: 'uint8array' })
+    const words = (body: string) => new TextEncoder().encode(body)
+
+    const sources = await sourcesFrom(
+      insideFolder([
+        picked('Brain/.obsidian/app.json', words('{}')),
+        picked('Brain/Projects/Tool.md', words('Code: [[source.zip]]\n')),
+        picked('Brain/Projects/source.zip', bytes),
+        picked('Brain/README.md', words('# my readme')),
+      ]),
+    )
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Projects/Tool.md',
+      'Projects/source.zip',
+      'README.md',
+    ])
+  })
+
   test('keep a mind map and a Sketch file whole when the vault is picked as a folder', async () => {
     const zipped = async (entries: Record<string, string>) => {
       const zip = new JSZip()

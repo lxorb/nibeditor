@@ -24,6 +24,9 @@ export interface Source {
   bytes(): Promise<Uint8Array>
 }
 
+/** A vault's settings folder, at the top of what was picked or one folder in. */
+const VAULT = /^([^/]+\/)?\.obsidian\//
+
 /** How deep a zip inside a zip is followed. Notion splits a large export into
  *  `Part-1.zip` and the rest, and nothing anybody exports nests deeper than
  *  that; a cap is also what stops a zip that holds itself. */
@@ -76,6 +79,10 @@ export function insideFolder(picked: readonly Picked[]): Picked[] {
 /** Every file behind what the reader picked, zips opened. */
 export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> {
   const found: Source[] = []
+  // A folder that is an Obsidian vault holds its zips as attachments, which a note
+  // links and the vault list brings whole, rather than exports to open. See VAULT in
+  // read.ts, which knows a vault the same way.
+  const vault = picked.some((one) => VAULT.test(tidyPath((one.webkitRelativePath ?? '').trim())))
 
   for (const one of picked) {
     // The relative path when the browser gave one, and the bare name when it
@@ -87,7 +94,8 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
     // a zip inside a zip is: the folder is what was picked, and a mind map or a
     // Sketch file kept in a vault is a zip underneath that nobody meant unpacked.
     // A file picked on its own may be an export whatever it is called.
-    if (inside.length && !path.toLowerCase().endsWith('.zip')) found.push(sourceOf(path, bytes))
+    if (inside.length && (vault || !path.toLowerCase().endsWith('.zip')))
+      found.push(sourceOf(path, bytes))
     else found.push(...(await expand(path, bytes, 0)))
   }
 
