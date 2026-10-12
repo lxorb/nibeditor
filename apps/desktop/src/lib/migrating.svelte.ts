@@ -17,6 +17,7 @@ import { busy } from './busy.svelte'
 import { firstVisit } from './first-visit.svelte'
 import { message, t } from './i18n.svelte'
 import type { FormatId } from './import/plan'
+import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
 import type { Vault } from './import/vaults'
 import { isDesktop } from './tauri'
@@ -126,7 +127,12 @@ export async function importAsSpace(
   const format = await detect(sources)
   if (!format) throw new Error(t('Nothing in there can be read as notes.'))
 
-  const plan = await readAs(format, sources)
+  // The habits are read first, because one of them is how a link is spelled, and the
+  // notes are read in that spelling: the space is about to be set to it, and a vault
+  // of wikilinks read in whatever the Links setting said before would arrive as a
+  // space of markdown links set to write wikilinks.
+  const carried = await carriedBy(format, sources)
+  const plan = await spelledAs(carried?.linkFormat, () => readAs(format, sources))
   // A vault of nothing but Obsidian's housekeeping is known as a vault and then
   // leaves every file behind, and settings alone are not a space anybody can open a
   // note in.
@@ -141,7 +147,6 @@ export async function importAsSpace(
 
   await applyImport(plan, { root: space.root, folder: '' })
 
-  const carried = await carriedBy(format, sources)
   if (carried) {
     const { carryOver } = await import('./carry-over')
     await carryOver(carried)
@@ -149,6 +154,21 @@ export async function importAsSpace(
 
   await workspace.loadTree()
   return space
+}
+
+/** What `read` makes with every link written in `format`, the setting put back as
+ *  it was afterwards: carry-over.ts is what sets it for good, once the space is
+ *  there to be set. No format leaves the setting as it is. */
+async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<T>): Promise<T> {
+  if (!format) return read()
+
+  const was = linkWriting()
+  setLinkWriting(format)
+  try {
+    return await read()
+  } finally {
+    setLinkWriting(was)
+  }
 }
 
 /** In the new space, on its first note, with the file list beside it where there

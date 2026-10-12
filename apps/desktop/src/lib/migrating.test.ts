@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { sourceOf, type Source } from './import/sources'
+import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 
 interface Entry {
   path: string
@@ -10,6 +11,8 @@ interface Entry {
 }
 
 const wrote = new Set<string>()
+/** What each note was written as. */
+const said = new Map<string, string>()
 const opened: string[] = []
 const ROOT = '/spaces/Brain'
 
@@ -86,6 +89,7 @@ const ws = {
 vi.mock('./tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'write_note' || command === 'write_bytes') wrote.add(String(args.path))
+    if (command === 'write_note') said.set(String(args.path), String(args.content))
     return Promise.resolve()
   },
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
@@ -102,7 +106,16 @@ vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('./first-visit.svelte', () => ({
   firstVisit: { asking: false, answered: () => undefined },
 }))
-vi.mock('./carry-over', () => ({ carryOver: async () => undefined }))
+// What carry-over.ts does to the spelling every link is written in, through
+// modes.setLinkFormat.
+vi.mock('./carry-over', async () => {
+  const { setLinkWriting } = await import('./link-format')
+  return {
+    carryOver: async (carried: { linkFormat?: LinkFormat }) => {
+      if (carried.linkFormat) setLinkWriting(carried.linkFormat)
+    },
+  }
+})
 
 const { importAsSpace, arrive } = await import('./migrating.svelte')
 
@@ -112,6 +125,8 @@ function file(path: string, body: string | Uint8Array = 'x'): Source {
 
 beforeEach(() => {
   wrote.clear()
+  said.clear()
+  setLinkWriting('wikilink')
   opened.length = 0
   ws.tree = null
   ws.activeSpaceId = 'old'
@@ -130,6 +145,19 @@ describe('a vault brought in as a space', () => {
     await arrive(space)
 
     expect(opened).toEqual([`${ROOT}/Welcome.md`])
+  })
+
+  test('keeps its wikilinks when the Links setting was last on markdown links', async () => {
+    setLinkWriting('shortest')
+    await importAsSpace('Brain', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', 'See [[Plan]] and ![[diagram.png]].\n'),
+      file('Plan.md', '# Plan\n'),
+      file('diagram.png', 'png'),
+    ])
+
+    expect(linkWriting()).toBe('wikilink')
+    expect(said.get(`${ROOT}/Home.md`)).toBe('See [[Plan]] and ![[diagram.png]].\n')
   })
 
   test('holding nothing but Obsidian housekeeping makes no empty space', async () => {
