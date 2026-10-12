@@ -390,6 +390,30 @@ describe('the links in a vault', () => {
     ).resolves.toBe('See [[50%25 off]].\n')
   })
 
+  test('to a file whose name holds brackets in a pair are pointed at it', async () => {
+    await expect(
+      noteFrom(
+        'Notes/A.md',
+        file('Notes/A.md', '![](Screenshot%20(1).png)\n'),
+        file('Attachments/Screenshot (1).png', 'png'),
+      ),
+    ).resolves.toBe('![](../Attachments/Screenshot%20%281%29.png)\n')
+  })
+
+  test('whose words hold brackets in a pair are pointed at their files', async () => {
+    await expect(
+      noteFrom(
+        'Notes/A.md',
+        file('Notes/A.md', '![see [1]](pic.png)\n'),
+        file('Attachments/pic.png', 'png'),
+      ),
+    ).resolves.toBe('![see [1]](../Attachments/pic.png)\n')
+    // A wikilink with words after it in brackets is still a wikilink.
+    await expect(
+      noteFrom('A.md', file('A.md', 'See [[Plan]](draft).\n'), file('Plan.md', '# Plan')),
+    ).resolves.toBe('See [[Plan]](draft).\n')
+  })
+
   test('keep pointing at a file whose name holds a bracket alone', async () => {
     await expect(
       noteFrom(

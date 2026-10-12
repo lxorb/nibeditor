@@ -45,8 +45,14 @@ export type Reaching = (found: Found, from: string) => boolean
  *  brackets, because an exported path is as likely to hold a space as not, and
  *  a title after it is put back as it was. A bracket with a backslash in front of
  *  it is only a bracket, the way every markdown reader takes it, so `\[label\](x)`
- *  is words somebody wrote about a link rather than one. */
-const LINK = /(!?)(?<!\\)\[((?:[^\]\\\n]|\\.)*)\]\(([^()\n]*)\)/g
+ *  is words somebody wrote about a link rather than one.
+ *
+ *  The words and the target may each hold brackets of their own that are balanced,
+ *  as CommonMark allows: `[Paper [2019]](paper.pdf)`, and `Screenshot%20(1).png`,
+ *  which is how Obsidian writes a link to `Screenshot (1).png`. The words do not
+ *  start with a bracket, since `[[Plan]](x)` is a wikilink followed by words. */
+const LINK =
+  /(!?)(?<!\\)\[((?!\[)(?:[^[\]\\\n]|\\.|\[(?:[^[\]\\\n]|\\.)*\])*)\]\(((?:[^()\n]|\([^()\n]*\))*)\)/g
 
 /** A wikilink, which Bear, Logseq, Roam and Obsidian all write. */
 const WIKILINK = /!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
@@ -448,8 +454,8 @@ function decoded(target: string): string {
 /** A space encoded again on the way out, and the characters a link cannot hold as
  *  themselves: a `%`, which would start an escape, a `#`, which would start a
  *  heading, and a bracket, since a `)` the name holds alone would end the link
- *  there and the links read here hold none. Nothing else, so a reader who opens the
- *  note sees the file name they would see in the file list. */
+ *  there, and every reader takes the encoded one the same. Nothing else, so a
+ *  reader who opens the note sees the file name they would see in the file list. */
 function encodeTarget(path: string): string {
   return path
     .replace(/%/g, '%25')
