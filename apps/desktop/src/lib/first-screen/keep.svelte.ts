@@ -232,12 +232,15 @@ function keepScreen(view: EditorView): void {
 function follow(view: EditorView): () => void {
   let waiting: ReturnType<typeof setTimeout> | undefined
   let idle = 0
+  // WebKit has no idle callbacks, so there the pause is the whole wait.
+  const hasIdle = typeof requestIdleCallback === 'function'
 
   const later = () => {
     clearTimeout(waiting)
-    cancelIdleCallback(idle)
+    if (hasIdle) cancelIdleCallback(idle)
     waiting = setTimeout(() => {
-      idle = requestIdleCallback(() => keepScreen(view), { timeout: QUIET })
+      if (hasIdle) idle = requestIdleCallback(() => keepScreen(view), { timeout: QUIET })
+      else keepScreen(view)
     }, QUIET)
   }
 
@@ -259,7 +262,7 @@ function follow(view: EditorView): () => void {
   later()
   return () => {
     clearTimeout(waiting)
-    cancelIdleCallback(idle)
+    if (hasIdle) cancelIdleCallback(idle)
     changed.disconnect()
     resized.disconnect()
     view.scrollDOM.removeEventListener('scroll', later)
