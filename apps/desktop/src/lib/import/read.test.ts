@@ -38,6 +38,16 @@ describe('which app an export came out of', () => {
       detect([file('journals/2026_01_02.md', '- x'), file('pages/A.md', '- y')]),
     ).resolves.toBe('logseq')
     await expect(detect([file('pages/A.md', '- y')])).resolves.toBe('logseq')
+    // A zip whose one entry is the graph.
+    await expect(detect([file('Graph/pages/A.md', '- y')])).resolves.toBe('logseq')
+  })
+
+  test('a folder of notes with a pages folder deep inside is a folder of notes', async () => {
+    const sources = [
+      file('Home.md', 'Today:\n\n- TODO call the bank\n- DONE send invoice\n'),
+      file('Clients/Acme/Website/pages/About.md', '# About'),
+    ]
+    await expect(detect(sources)).resolves.toBe('markdown')
   })
 
   test('a TextBundle says what wrote it', async () => {

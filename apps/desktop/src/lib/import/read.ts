@@ -68,7 +68,11 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   const json = await jsonKind(sources)
   if (json) return json
 
-  if (has(/^(journals|pages|logseq)\//i) || has(/\/(journals|pages)\//i)) return 'logseq'
+  // At the top, or one folder down for a zip whose one entry is the graph. Not
+  // deeper: a `pages/` folder four folders into somebody's notes is a website's
+  // pages, and reading the whole folder as Logseq would turn every `- TODO` in it
+  // into a checkbox.
+  if (has(/^(journals|pages|logseq)\//i) || has(/^[^/]+\/(journals|pages)\//i)) return 'logseq'
   if (paths.some((one) => hasNotionId(one.split('/').pop() ?? one))) return 'notion'
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
