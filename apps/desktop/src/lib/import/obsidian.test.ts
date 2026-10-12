@@ -918,6 +918,24 @@ describe('the files in a vault', () => {
     )
   })
 
+  test('keep a name that needs no change when another is renamed onto it', async () => {
+    // `*` sorts before `.`, which is the order the vault list walks them in.
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Why*.png', 'star picture'),
+      file('Why.png', 'plain picture'),
+      file('Note.md', '![[Why.png]] and ![[Why*.png]]\n'),
+    ])
+    const bytesAt = (path: string) => {
+      const found = plan.files.find((one) => one.path === path)
+      return found?.kind === 'file' ? new TextDecoder().decode(found.bytes) : null
+    }
+    expect(bytesAt('Why.png')).toBe('plain picture')
+    expect(bytesAt('Why 2.png')).toBe('star picture')
+    const note = plan.files.find((one) => one.path === 'Note.md')
+    expect(note?.kind === 'note' && note.text).toBe('![[Why.png]] and ![[Why 2.png]]\n')
+  })
+
   test('arrive both when one is named with a space in front to sort first', async () => {
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
@@ -926,10 +944,11 @@ describe('the files in a vault', () => {
       file('Inbox.md', 'the other inbox'),
     ])
     const notes = plan.files.flatMap((one) => (one.kind === 'note' ? [[one.path, one.text]] : []))
+    // The one whose name needs no change keeps it, and the link still means it.
     expect(notes).toEqual([
-      ['Home.md', 'See [[Inbox 2]].\n'],
-      ['Inbox.md', 'pinned inbox\n'],
-      ['Inbox 2.md', 'the other inbox\n'],
+      ['Home.md', 'See [[Inbox]].\n'],
+      ['Inbox 2.md', 'pinned inbox\n'],
+      ['Inbox.md', 'the other inbox\n'],
     ])
   })
 

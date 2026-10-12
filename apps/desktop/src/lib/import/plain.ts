@@ -45,24 +45,41 @@ export async function readPlain(
   const names = new Names()
   let html = 0
 
+  /** Where a file goes, or null for one that is left behind. */
+  const target = (source: Source): string | null => {
+    if (isJunk(source.path) || options.skip?.(source.path)) return null
+
+    // A space in front of the whole path, which a vault uses to sort a note
+    // first, is one the space trims off when the file is written (see
+    // automation/inside.ts), so it comes off here, where a name it then shares
+    // with another file still steps aside and the links follow it.
+    const path = options.asTheyAre
+      ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
+      : placedPath(source.path, withoutNotionId)
+    if (path === null) return null
+
+    if (HTML.test(path) && !options.asTheyAre) return path.replace(HTML, '.md')
+    return isNoteFile(path) ? path.replace(/\.txt$/i, '.md') : path
+  }
+
+  // A file whose name needs no change keeps it, whichever comes first: `Why?.png`
+  // made into `Why.png` for Windows is the one that steps aside from the vault's
+  // own `Why.png`, since a canvas, a base or another app names that one by it.
+  for (const source of sources) {
+    if (target(source) === source.path) names.keep(source.path)
+  }
+
   const plan = await folderPlan(sources, {
     format: options.format ?? 'markdown',
     place: (source) => {
-      if (isJunk(source.path) || options.skip?.(source.path)) return { to: null }
-
-      // A space in front of the whole path, which a vault uses to sort a note
-      // first, is one the space trims off when the file is written (see
-      // automation/inside.ts), so it comes off here, where a name it then shares
-      // with another file still steps aside and the links follow it.
-      const path = options.asTheyAre
-        ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
-        : placedPath(source.path, withoutNotionId)
+      const path = target(source)
       if (path === null) return { to: null }
+      const to = names.free(path, path === source.path)
 
-      if (HTML.test(path) && !options.asTheyAre) {
+      if (HTML.test(source.path) && !options.asTheyAre) {
         html += 1
         return {
-          to: names.free(path.replace(HTML, '.md')),
+          to,
           read: (text) => ({
             text: htmlToMarkdown(text, { fileTargets: true, appTargets: true }),
             title: null,
@@ -70,10 +87,10 @@ export async function readPlain(
         }
       }
 
-      if (!isNoteFile(path)) return { to: names.free(path) }
+      if (!isNoteFile(path)) return { to }
 
       return {
-        to: names.free(path.replace(/\.txt$/i, '.md')),
+        to,
         read: (text, at) => ({
           text: options.words?.(text, at) ?? text,
           title: null,

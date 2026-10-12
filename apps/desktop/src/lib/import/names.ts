@@ -143,13 +143,27 @@ export function nameKey(path: string): string {
 export class Names {
   private readonly taken = new Set<string>()
 
+  /** Names files already have, which another file is not given while the file
+   *  that has it is still to come. */
+  private readonly kept = new Set<string>()
+
   /** A free path, remembered as taken. Folders count as taken too: a note and a
    *  folder of the same name is how nib nests, so those are meant to collide and
-   *  the caller says which by asking once for each. */
-  free(path: string): string {
-    const free = freePath(path, (candidate) => this.taken.has(nameKey(candidate)))
+   *  the caller says which by asking once for each. `own` says the path is the
+   *  file's own name, which a name `keep` held back is free for. */
+  free(path: string, own = false): string {
+    const free = freePath(path, (candidate) => {
+      const key = nameKey(candidate)
+      return this.taken.has(key) || (this.kept.has(key) && !(own && candidate === path))
+    })
     this.taken.add(nameKey(free))
     return free
+  }
+
+  /** Holds a name back for the file that already has it, so a file renamed onto it
+   *  steps aside rather than taking it first. */
+  keep(path: string) {
+    this.kept.add(nameKey(path))
   }
 
   /** Says a path is taken without asking for one, for the folder a note is

@@ -90,6 +90,8 @@ none of it knows whether it is running on a desktop, in a browser or on a phone.
 does - `Plan 2.md` - and the links inside the import follow it, a canvas's cards
 among them, so an import that landed beside notes of the same name still points at
 its own notes. A link written as an example in code is words, and stays as it was.
+Within the import, a file whose name needs no change keeps it: `Why?.png` made into
+`Why.png` for Windows is the one that steps aside from a vault's own `Why.png`.
 What is taken is asked of the disk too, for every path the import would write, so a
 picture, a file in `.obsidian/` or a note of a space that is not the one open is
 never written over either, though the file list shows none of them.
