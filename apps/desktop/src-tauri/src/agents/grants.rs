@@ -220,8 +220,9 @@ pub struct Grant {
 
 impl Grant {
     /// A grant for one of the reader's own clients, paired on this machine, with Emil's
-    /// defaults (9.1): everything but scripts, the reader's storage, settings and the
-    /// terminal; every space; unsupervised; every question on.
+    /// defaults (9.1): everything but scripts, the reader's storage and settings; every
+    /// space; unsupervised; every question on. The terminal and helpers are in since
+    /// 2026-10-12, so an agent outside nib does what the AI panel's own agent does.
     pub fn own(id: String, client: &str) -> Self {
         Grant {
             id,
@@ -232,10 +233,7 @@ impl Grant {
                 .filter(|one| {
                     !matches!(
                         one,
-                        Scope::BrowserScript
-                            | Scope::BrowserStorage
-                            | Scope::Settings
-                            | Scope::Terminal
+                        Scope::BrowserScript | Scope::BrowserStorage | Scope::Settings
                     )
                 })
                 .collect(),
@@ -264,6 +262,7 @@ impl Grant {
                     | Scope::ChatsRead
                     | Scope::ChatsWrite
                     | Scope::Agents
+                    | Scope::Terminal
             )
         });
         grant.mode = Mode::Confirm;
@@ -746,7 +745,9 @@ mod tests {
         assert!(!own.holds(Scope::BrowserScript));
         assert!(!own.holds(Scope::BrowserStorage));
         assert!(!own.holds(Scope::Settings));
-        assert!(!own.holds(Scope::Terminal));
+        // What the AI panel's own agent has, terminal and all (Emil, 2026-10-12: an agent
+        // outside nib does "exactly the same thing as an agent that I am running IN nib").
+        assert!(own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
         assert!(own.holds(Scope::Agents));
         assert_eq!(own.mode, Mode::Unsupervised);

@@ -87,7 +87,6 @@ fn grant_id(provider: &str) -> Result<String, String> {
 /// (`supervised`), not the grant's.
 fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     let mut grant = Grant::own(id, client);
-    grant.scopes.push(Scope::Terminal);
     if !builtin.reader_tabs {
         grant.scopes.retain(|one| *one != Scope::BrowserReader);
     }

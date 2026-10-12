@@ -998,6 +998,7 @@ export const my: Dictionary = {
   'AI account: {name}': 'AI အကောင့်: {name}',
   Accounts: 'အကောင့်များ',
   Access: 'ဝင်ရောက်ခွင့်',
+  'Agents on this computer connect on their own': 'ဤကွန်ပျူတာရှိ အေးဂျင့်များ သူ့အလိုလို ချိတ်ဆက်သည်',
   Helpers: 'အကူများ',
   'Start helpers on your AI accounts': 'သင့် AI အကောင့်များတွင် အကူများ စတင်ပါ',
   Delegated: 'လွှဲအပ်ခဲ့သည်',

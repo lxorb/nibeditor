@@ -1002,6 +1002,7 @@ export const ps: Dictionary = {
   'AI account: {name}': 'د AI حساب: {name}',
   Accounts: 'حسابونه',
   Access: 'لاسرسی',
+  'Agents on this computer connect on their own': 'په دې کمپیوټر استازي پخپله نښلي',
   Helpers: 'مرستندويان',
   'Start helpers on your AI accounts': 'ستاسو د AI په حسابونو مرستندويان پیل کړئ',
   Delegated: 'وسپارل شو',

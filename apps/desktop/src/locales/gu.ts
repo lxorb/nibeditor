@@ -1003,6 +1003,7 @@ export const gu: Dictionary = {
   'AI account: {name}': 'AI એકાઉન્ટ: {name}',
   Accounts: 'એકાઉન્ટ',
   Access: 'ઍક્સેસ',
+  'Agents on this computer connect on their own': 'આ કમ્પ્યુટરના એજન્ટ આપમેળે જોડાય છે',
   Helpers: 'સહાયકો',
   'Start helpers on your AI accounts': 'તમારા AI એકાઉન્ટ પર સહાયકો શરૂ કરો',
   Delegated: 'સોંપ્યું',

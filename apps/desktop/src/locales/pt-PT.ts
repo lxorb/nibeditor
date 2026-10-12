@@ -1019,6 +1019,7 @@ export const ptPT: Dictionary = {
   'AI account: {name}': 'Conta de IA: {name}',
   Accounts: 'Contas',
   Access: 'Acesso',
+  'Agents on this computer connect on their own': 'Os agentes deste computador ligam-se sozinhos',
   Helpers: 'Ajudantes',
   'Start helpers on your AI accounts': 'Iniciar ajudantes nas suas contas de IA',
   Delegated: 'Delegado',

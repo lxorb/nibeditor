@@ -1006,6 +1006,7 @@ export const gsw: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zuegriff',
+  'Agents on this computer connect on their own': 'Agänte uf däm Computer verbinde sich sälber',
   Helpers: 'Helfer',
   'Start helpers on your AI accounts': 'Helfer uf dine KI-Konte starte',
   Delegated: 'Übergeh',

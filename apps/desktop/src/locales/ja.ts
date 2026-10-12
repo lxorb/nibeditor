@@ -1001,6 +1001,7 @@ export const ja: Dictionary = {
   'AI account: {name}': 'AI アカウント: {name}',
   Accounts: 'アカウント',
   Access: 'アクセス',
+  'Agents on this computer connect on their own': 'このコンピューターのエージェントは自動で接続',
   Helpers: 'ヘルパー',
   'Start helpers on your AI accounts': 'AI アカウントでヘルパーを起動',
   Delegated: '依頼',

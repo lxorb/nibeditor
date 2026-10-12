@@ -81,9 +81,9 @@ describe('the pane over the crate', () => {
     const pane = await opened(fake)
 
     fake.failing = new Error('the agents cannot be read just now')
-    await pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
+    await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
     expect(pane.error).toBe('the agents cannot be read just now')
-    expect(pane.grants[0]?.scopes).not.toContain('terminal')
+    expect(pane.grants[0]?.scopes).not.toContain('settings')
   })
 
   it('removes an agent, and only that one', async () => {

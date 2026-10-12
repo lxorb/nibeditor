@@ -731,7 +731,7 @@ mod tests {
         assert!(Caller::Reader.told().is_none());
         let agent = Caller::Agent(Box::new(Grant::own("claude-code".into(), "Claude Code")));
         assert_eq!(agent.id(), "claude-code");
-        assert!(!agent.holds(Scope::Terminal));
+        assert!(!agent.holds(Scope::Settings));
         assert_eq!(agent.told().expect("told")["id"], "claude-code");
     }
 }

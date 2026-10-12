@@ -1013,6 +1013,7 @@ export const ta: Dictionary = {
   'AI account: {name}': 'AI கணக்கு: {name}',
   Accounts: 'கணக்குகள்',
   Access: 'அணுகல்',
+  'Agents on this computer connect on their own': 'இந்தக் கணினியின் முகவர்கள் தாமாக இணைகின்றன',
   Helpers: 'உதவியாளர்கள்',
   'Start helpers on your AI accounts': 'உங்கள் AI கணக்குகளில் உதவியாளர்களைத் தொடங்கு',
   Delegated: 'ஒப்படைத்தது',

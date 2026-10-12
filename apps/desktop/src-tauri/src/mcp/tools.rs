@@ -422,10 +422,10 @@ mod tests {
         assert!(!after.contains("edit_note"));
     }
 
-    /// Emil's own defaults (9.1) reach everything but scripts, the reader's storage,
-    /// settings and the terminal.
+    /// Emil's own defaults (9.1) reach everything but scripts, the reader's storage and
+    /// settings: the terminal is in since 2026-10-12, as the AI panel's own agent has it.
     #[test]
-    fn emils_defaults_list_all_but_four_kinds() {
+    fn emils_defaults_list_all_but_three_kinds() {
         let every: BTreeSet<String> = AGENT_VERBS
             .iter()
             .map(|(one, _)| (*one).to_owned())
@@ -437,12 +437,7 @@ mod tests {
             .collect();
         assert_eq!(
             hidden,
-            BTreeSet::from([
-                "browser_evaluate",
-                "run_terminal",
-                "type_terminal",
-                "write_setting"
-            ])
+            BTreeSet::from(["browser_evaluate", "write_setting"])
         );
     }
 

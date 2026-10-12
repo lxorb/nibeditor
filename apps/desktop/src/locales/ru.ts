@@ -1040,6 +1040,7 @@ export const ru: Dictionary = {
   'AI account: {name}': 'Аккаунт ИИ: {name}',
   Accounts: 'Аккаунты',
   Access: 'Доступ',
+  'Agents on this computer connect on their own': 'Агенты на этом компьютере подключаются сами',
   Helpers: 'Помощники',
   'Start helpers on your AI accounts': 'Запускать помощников на ваших аккаунтах ИИ',
   Delegated: 'Поручено',

@@ -29,7 +29,7 @@ const own = () => ownGrant('claude-code', 'Claude Code', 1)
 const only = (...scopes: Scope[]): Grant => ({ ...own(), scopes })
 
 describe('the defaults', () => {
-  it('are Emil’s for his own client: everything but scripts, storage, settings and the terminal', () => {
+  it('are Emil’s for his own client: everything but scripts, storage and settings', () => {
     const grant = own()
     expect(grant.scopes).toEqual([
       'context',
@@ -43,6 +43,7 @@ describe('the defaults', () => {
       'browser',
       'browser.reader',
       'browser.network',
+      'terminal',
       'agents',
     ])
     expect(grant.spaces).toBe('all')
@@ -66,9 +67,9 @@ describe('the defaults', () => {
       fileURLToPath(new URL('../../../../src-tauri/src/agents/grants.rs', import.meta.url)),
       'utf8',
     )
-    // The four scopes `Grant::own` leaves out, and the two `third_party` takes away.
+    // The three scopes `Grant::own` leaves out, and the ones `third_party` takes away.
     expect(crate).toMatch(
-      /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\|\s*Scope::Terminal/,
+      /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/,
     )
     expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
     expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60/)
@@ -134,8 +135,8 @@ describe('the rest of a grant', () => {
   it('offers a question only where it can come up', () => {
     expect(askApplies(only('notes.read'), 'paying')).toBe(false)
     expect(askApplies(only('browser.reader'), 'paying')).toBe(true)
-    expect(askApplies(own(), 'terminal')).toBe(false)
-    expect(askApplies(only('terminal'), 'terminal')).toBe(true)
+    expect(askApplies(own(), 'settings')).toBe(false)
+    expect(askApplies(only('settings'), 'settings')).toBe(true)
   })
 
   it('names itself, but never with nothing', () => {

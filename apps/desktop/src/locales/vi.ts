@@ -997,6 +997,7 @@ export const vi: Dictionary = {
   'AI account: {name}': 'Tài khoản AI: {name}',
   Accounts: 'Tài khoản',
   Access: 'Quyền truy cập',
+  'Agents on this computer connect on their own': 'Tác tử trên máy này tự kết nối',
   Helpers: 'Trợ thủ',
   'Start helpers on your AI accounts': 'Chạy trợ thủ trên tài khoản AI của bạn',
   Delegated: 'Đã giao',

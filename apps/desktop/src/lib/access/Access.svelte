@@ -28,6 +28,7 @@
   import { settings } from '../settings.svelte'
   import { arrive, segmented } from '../slide'
   import { keep, storedText } from '../stored'
+  import { invoke, isDesktop } from '../tauri'
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
@@ -107,6 +108,35 @@
 
   let root = $state<HTMLElement>()
 
+  /** Whether nib adds itself to the agent programs on this computer, so they reach it
+   *  with nothing to set up (src-tauri/src/ai_cli/enroll.rs); null where this app may
+   *  not, which is anything but the app somebody installed. */
+  let enrolled = $state<boolean | null>(null)
+
+  onMount(() => {
+    if (!isDesktop) return
+    void invoke<unknown>('ai_cli_enroll_read').then(
+      (said) => {
+        const { offered, on } = (said ?? {}) as { offered?: unknown; on?: unknown }
+        enrolled = offered === true ? on !== false : null
+      },
+      () => undefined,
+    )
+  })
+
+  function enroll() {
+    if (enrolled === null) return
+    enrolled = !enrolled
+    void invoke('ai_cli_enroll_write', { on: enrolled }).catch(() => undefined)
+  }
+
+  /** A switch row answers Enter and Space, as a button does. */
+  function pressed(event: KeyboardEvent) {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    enroll()
+  }
+
   // Opened at Access - an old link to Agents or LLM access, `/mcp` - the page lands here.
   onMount(() => {
     if (settings.at !== 'access') return
@@ -181,6 +211,22 @@
                 </div>
               {/if}
             {/if}
+          </div>
+        {/if}
+
+        {#if enrolled !== null}
+          <div class="card">
+            <div
+              class="nib-setting pressable"
+              role="switch"
+              tabindex="0"
+              aria-checked={enrolled}
+              onclick={enroll}
+              onkeydown={pressed}
+            >
+              <span class="name">{t('Agents on this computer connect on their own')}</span>
+              <span class="nib-switch" class:on={enrolled} aria-hidden="true"></span>
+            </div>
           </div>
         {/if}
 

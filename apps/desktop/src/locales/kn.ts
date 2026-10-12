@@ -1010,6 +1010,7 @@ export const kn: Dictionary = {
   'AI account: {name}': 'AI ಖಾತೆ: {name}',
   Accounts: 'ಖಾತೆಗಳು',
   Access: 'ಪ್ರವೇಶ',
+  'Agents on this computer connect on their own': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನ ಏಜೆಂಟ್‌ಗಳು ತಾವಾಗಿ ಸಂಪರ್ಕಿಸುತ್ತವೆ',
   Helpers: 'ಸಹಾಯಕರು',
   'Start helpers on your AI accounts': 'ನಿಮ್ಮ AI ಖಾತೆಗಳಲ್ಲಿ ಸಹಾಯಕರನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   Delegated: 'ವಹಿಸಲಾಗಿದೆ',

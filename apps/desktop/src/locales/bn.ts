@@ -1002,6 +1002,7 @@ export const bn: Dictionary = {
   'AI account: {name}': 'এআই অ্যাকাউন্ট: {name}',
   Accounts: 'অ্যাকাউন্ট',
   Access: 'অ্যাক্সেস',
+  'Agents on this computer connect on their own': 'এই কম্পিউটারের এজেন্টরা নিজেরাই যুক্ত হয়',
   Helpers: 'সহায়ক',
   'Start helpers on your AI accounts': 'আপনার এআই অ্যাকাউন্টে সহায়ক চালু করুন',
   Delegated: 'অর্পণ করা হয়েছে',

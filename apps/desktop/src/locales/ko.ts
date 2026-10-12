@@ -996,6 +996,7 @@ export const ko: Dictionary = {
   'AI account: {name}': 'AI 계정: {name}',
   Accounts: '계정',
   Access: '접근',
+  'Agents on this computer connect on their own': '이 컴퓨터의 에이전트가 스스로 연결',
   Helpers: '도우미',
   'Start helpers on your AI accounts': 'AI 계정에서 도우미 시작',
   Delegated: '맡김',

@@ -1009,6 +1009,7 @@ export const pa: Dictionary = {
   'AI account: {name}': 'AI ਖਾਤਾ: {name}',
   Accounts: 'ਖਾਤੇ',
   Access: 'ਪਹੁੰਚ',
+  'Agents on this computer connect on their own': 'ਇਸ ਕੰਪਿਊਟਰ ਦੇ ਏਜੰਟ ਆਪਣੇ ਆਪ ਜੁੜਦੇ ਹਨ',
   Helpers: 'ਸਹਾਇਕ',
   'Start helpers on your AI accounts': 'ਆਪਣੇ AI ਖਾਤਿਆਂ ਤੇ ਸਹਾਇਕ ਸ਼ੁਰੂ ਕਰੋ',
   Delegated: 'ਸੌਂਪਿਆ',

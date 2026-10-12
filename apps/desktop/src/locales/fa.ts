@@ -1005,6 +1005,7 @@ export const fa: Dictionary = {
   'AI account: {name}': 'حساب هوش مصنوعی: {name}',
   Accounts: 'حساب‌ها',
   Access: 'دسترسی',
+  'Agents on this computer connect on their own': 'عامل‌های این رایانه خودشان وصل می‌شوند',
   Helpers: 'دستیارها',
   'Start helpers on your AI accounts': 'اجرای دستیار روی حساب‌های هوش مصنوعی شما',
   Delegated: 'واگذار شد',

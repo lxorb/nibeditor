@@ -1048,6 +1048,7 @@ export const ar: Dictionary = {
   'AI account: {name}': 'حساب الذكاء الاصطناعي: {name}',
   Accounts: 'الحسابات',
   Access: 'الوصول',
+  'Agents on this computer connect on their own': 'الوكلاء على هذا الحاسوب يتصلون تلقائيًا',
   Helpers: 'المساعدون',
   'Start helpers on your AI accounts': 'تشغيل مساعدين على حسابات الذكاء الاصطناعي',
   Delegated: 'تم التفويض',

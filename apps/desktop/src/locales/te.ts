@@ -1006,6 +1006,7 @@ export const te: Dictionary = {
   'AI account: {name}': 'AI ఖాతా: {name}',
   Accounts: 'ఖాతాలు',
   Access: 'యాక్సెస్',
+  'Agents on this computer connect on their own': 'ఈ కంప్యూటర్‌లోని ఏజెంట్లు స్వయంగా కనెక్ట్ అవుతాయి',
   Helpers: 'సహాయకులు',
   'Start helpers on your AI accounts': 'మీ AI ఖాతాలలో సహాయకులను ప్రారంభించండి',
   Delegated: 'అప్పగించారు',

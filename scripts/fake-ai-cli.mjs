@@ -49,6 +49,41 @@ function refuse(why) {
   process.exitCode = 2
 }
 
+/** `mcp get`, `mcp add` and `mcp remove`, as both programs spell them, kept in a file of
+ *  the program's home (`CLAUDE_CONFIG_DIR` or `CODEX_HOME`, else `HOME`): what a test of
+ *  nib connecting itself to the agents on a machine reads back. Never a real config. */
+function mcp(home) {
+  const file = join(home, 'fake-mcp.json')
+  let servers = {}
+  try {
+    servers = JSON.parse(readFileSync(file, 'utf8'))
+  } catch {
+    // No servers yet.
+  }
+  const rest = args.slice(1).filter((one) => one !== '--scope' && one !== 'user')
+  const [verb, name] = rest
+  if (verb === 'get') {
+    if (!servers[name]) {
+      process.stderr.write(`No MCP server found with name: ${name}\n`)
+      process.exitCode = 1
+      return
+    }
+    console.log(`${name}:\n  Command: ${servers[name].join(' ')}`)
+    return
+  }
+  if (verb === 'add') {
+    if (servers[name]) {
+      process.stderr.write(`MCP server ${name} already exists\n`)
+      process.exitCode = 1
+      return
+    }
+    servers[name] = rest.slice(rest.indexOf('--') + 1)
+  } else if (verb === 'remove') {
+    delete servers[name]
+  } else return refuse(`mcp ${verb} is not faked`)
+  writeFileSync(file, JSON.stringify(servers))
+}
+
 /** Starts a child that ends only with its family, and never ends either on its own. */
 function hang() {
   const child = spawn(process.execPath, ['-e', 'setInterval(Date.now, 1000)'], {
@@ -100,6 +135,7 @@ async function claude() {
   // A second account's home says so in its email, and a key left in the environment
   // says so in its method, which is how a test sees the home and the key reach it.
   const home = process.env.CLAUDE_CONFIG_DIR
+  if (args[0] === 'mcp') return mcp(home ?? process.env.HOME ?? '.')
   if (args[0] === 'auth' && args[1] === 'logout') {
     if (home) writeFileSync(join(home, 'signed-out'), '')
     return
@@ -432,6 +468,7 @@ async function codex() {
     console.log('codex-cli 9.9.9')
     return
   }
+  if (args[0] === 'mcp') return mcp(process.env.CODEX_HOME ?? process.env.HOME ?? '.')
   if (args[0] === 'logout') {
     if (process.env.CODEX_HOME) writeFileSync(join(process.env.CODEX_HOME, 'signed-out'), '')
     return

@@ -986,6 +986,7 @@ export const zhHans: Dictionary = {
   'AI account: {name}': 'AI 账户：{name}',
   Accounts: '账户',
   Access: '访问',
+  'Agents on this computer connect on their own': '此电脑上的智能体自动连接',
   Helpers: '助手',
   'Start helpers on your AI accounts': '在你的 AI 账户上启动助手',
   Delegated: '已委派',

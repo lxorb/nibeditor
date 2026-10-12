@@ -234,7 +234,7 @@ export function ownGrant(id: string, client: string, created: number): Grant {
     name: client,
     client,
     scopes: ALL_SCOPES.filter(
-      (one) => !['browser.script', 'browser.storage', 'settings', 'terminal'].includes(one),
+      (one) => !['browser.script', 'browser.storage', 'settings'].includes(one),
     ),
     spaces: 'all',
     sites: {},
@@ -257,7 +257,10 @@ export function thirdPartyGrant(id: string, client: string, created: number): Gr
   return {
     ...own,
     scopes: own.scopes.filter(
-      (one) => !['context', 'browser.reader', 'chats.read', 'chats.write', 'agents'].includes(one),
+      (one) =>
+        !['context', 'browser.reader', 'chats.read', 'chats.write', 'agents', 'terminal'].includes(
+          one,
+        ),
     ),
     mode: 'confirm',
   }

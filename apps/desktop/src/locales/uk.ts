@@ -1039,6 +1039,7 @@ export const uk: Dictionary = {
   'AI account: {name}': 'Обліковий запис ШІ: {name}',
   Accounts: 'Облікові записи',
   Access: 'Доступ',
+  'Agents on this computer connect on their own': 'Агенти на цьому комп’ютері підключаються самі',
   Helpers: 'Помічники',
   'Start helpers on your AI accounts': 'Запускати помічників на ваших облікових записах ШІ',
   Delegated: 'Доручено',

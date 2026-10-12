@@ -1089,6 +1089,22 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
 | for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where nib is closed |
 | auth | a grant made by the bubble in 9.1 | OAuth or a pasted `nib_` token, as today |
 
+**Connected on their own** (Emil, 2026-10-12: "[Claude Code] running on my machine should
+be able to connect to nib without me having to set up anything ... and do exactly the same
+thing as an agent that I am running IN nib"). After every launch the installed app adds
+itself to each agent program it finds, through the program's own command - `claude mcp
+add --scope user nib -- <nib> mcp`, `codex mcp add nib -- <nib> mcp` - the line below, run
+for the reader; the program writes its own config and nib never opens it. A program that
+already has a server called `nib` is left alone, whatever it points at; the switch in
+Settings > AI > Access ("Agents on this computer connect on their own", on by default)
+takes the entry out again, only where it names this app's program. Only the app somebody
+installed does this - a release under the shipped identifier, never a probe or a
+development build - and a test does it in homes of its own (`NIB_ENROLL_HOME`), never the
+reader's. The first call is the pairing in 9.1, allowed once and remembered; and a client
+paired since 2026-10-12 gets what the AI panel's own agent has: the terminal and helpers
+(`agents`, docs/ai.md "Helpers") as well as the rest of 9.1's defaults. Grants made before
+keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
+
 **`nib mcp` is the app's own binary in a mode with no window**: `main.rs` reads its
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,

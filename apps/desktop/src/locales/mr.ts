@@ -1002,6 +1002,7 @@ export const mr: Dictionary = {
   'AI account: {name}': 'एआय खाते: {name}',
   Accounts: 'खाती',
   Access: 'प्रवेश',
+  'Agents on this computer connect on their own': 'या संगणकावरील एजंट आपोआप जोडले जातात',
   Helpers: 'सहाय्यक',
   'Start helpers on your AI accounts': 'तुमच्या एआय खात्यांवर सहाय्यक सुरू करा',
   Delegated: 'सोपवले',

@@ -992,6 +992,7 @@ export const am: Dictionary = {
   'AI account: {name}': 'የAI መለያ: {name}',
   Accounts: 'መለያዎች',
   Access: 'መዳረሻ',
+  'Agents on this computer connect on their own': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች በራሳቸው ይገናኛሉ',
   Helpers: 'ረዳቶች',
   'Start helpers on your AI accounts': 'በAI መለያዎችዎ ላይ ረዳቶችን ያስጀምሩ',
   Delegated: 'ተሰጥቷል',

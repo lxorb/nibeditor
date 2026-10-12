@@ -1005,6 +1005,7 @@ export const tr: Dictionary = {
   'AI account: {name}': 'Yapay zekâ hesabı: {name}',
   Accounts: 'Hesaplar',
   Access: 'Erişim',
+  'Agents on this computer connect on their own': 'Bu bilgisayardaki ajanlar kendiliğinden bağlanır',
   Helpers: 'Yardımcılar',
   'Start helpers on your AI accounts': 'Yapay zekâ hesaplarında yardımcı başlat',
   Delegated: 'Devredildi',

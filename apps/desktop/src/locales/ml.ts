@@ -1013,6 +1013,7 @@ export const ml: Dictionary = {
   'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
   Accounts: 'അക്കൗണ്ടുകൾ',
   Access: 'ആക്സസ്',
+  'Agents on this computer connect on their own': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ സ്വയം ബന്ധിപ്പിക്കും',
   Helpers: 'സഹായികൾ',
   'Start helpers on your AI accounts': 'നിങ്ങളുടെ AI അക്കൗണ്ടുകളിൽ സഹായികളെ ആരംഭിക്കുക',
   Delegated: 'ഏൽപ്പിച്ചു',

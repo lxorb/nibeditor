@@ -1002,6 +1002,7 @@ export const id: Dictionary = {
   'AI account: {name}': 'Akun AI: {name}',
   Accounts: 'Akun',
   Access: 'Akses',
+  'Agents on this computer connect on their own': 'Agen di komputer ini terhubung sendiri',
   Helpers: 'Pembantu',
   'Start helpers on your AI accounts': 'Jalankan pembantu di akun AI Anda',
   Delegated: 'Didelegasikan',

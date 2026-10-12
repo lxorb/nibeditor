@@ -1004,6 +1004,7 @@ export const ur: Dictionary = {
   'AI account: {name}': 'اے آئی اکاؤنٹ: {name}',
   Accounts: 'اکاؤنٹس',
   Access: 'رسائی',
+  'Agents on this computer connect on their own': 'اس کمپیوٹر کے ایجنٹ خود جڑتے ہیں',
   Helpers: 'معاونین',
   'Start helpers on your AI accounts': 'اپنے اے آئی اکاؤنٹس پر معاون شروع کریں',
   Delegated: 'سپرد کیا',

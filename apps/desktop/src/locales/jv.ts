@@ -998,6 +998,7 @@ export const jv: Dictionary = {
   'AI account: {name}': 'Akun AI: {name}',
   Accounts: 'Akun',
   Access: 'Akses',
+  'Agents on this computer connect on their own': 'Agen ing komputer iki nyambung dhewe',
   Helpers: 'Pambantu',
   'Start helpers on your AI accounts': 'Miwiti pambantu ing akun AI sampeyan',
   Delegated: 'Dipasrahake',

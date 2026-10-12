@@ -1012,6 +1012,7 @@ export const ha: Dictionary = {
   'AI account: {name}': 'Asusun AI: {name}',
   Accounts: 'Asusun',
   Access: 'Damar shiga',
+  'Agents on this computer connect on their own': 'Wakilai a wannan kwamfuta suna haɗuwa da kansu',
   Helpers: 'Mataimaka',
   'Start helpers on your AI accounts': 'Fara mataimaka a asusun AI naka',
   Delegated: 'An danka',

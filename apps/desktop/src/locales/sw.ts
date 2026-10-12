@@ -1011,6 +1011,7 @@ export const sw: Dictionary = {
   'AI account: {name}': 'Akaunti ya AI: {name}',
   Accounts: 'Akaunti',
   Access: 'Ufikiaji',
+  'Agents on this computer connect on their own': 'Mawakala kwenye kompyuta hii hujiunganisha wenyewe',
   Helpers: 'Wasaidizi',
   'Start helpers on your AI accounts': 'Anzisha wasaidizi kwenye akaunti zako za AI',
   Delegated: 'Imekabidhiwa',

@@ -1024,6 +1024,7 @@ export const it: Dictionary = {
   'AI account: {name}': 'Account IA: {name}',
   Accounts: 'Account',
   Access: 'Accesso',
+  'Agents on this computer connect on their own': 'Gli agenti di questo computer si collegano da soli',
   Helpers: 'Aiutanti',
   'Start helpers on your AI accounts': 'Avviare aiutanti sui tuoi account IA',
   Delegated: 'Delegato',

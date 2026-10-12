@@ -987,6 +987,7 @@ export const yue: Dictionary = {
   'AI account: {name}': 'AI 帳戶：{name}',
   Accounts: '帳戶',
   Access: '存取',
+  'Agents on this computer connect on their own': '呢部電腦嘅代理自動連線',
   Helpers: '助手',
   'Start helpers on your AI accounts': '喺你嘅 AI 帳戶度開助手',
   Delegated: '交咗出去',

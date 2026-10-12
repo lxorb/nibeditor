@@ -990,6 +990,7 @@ export const th: Dictionary = {
   'AI account: {name}': 'บัญชี AI: {name}',
   Accounts: 'บัญชี',
   Access: 'การเข้าถึง',
+  'Agents on this computer connect on their own': 'เอเจนต์ในคอมพิวเตอร์นี้เชื่อมต่อเอง',
   Helpers: 'ผู้ช่วย',
   'Start helpers on your AI accounts': 'เริ่มผู้ช่วยในบัญชี AI ของคุณ',
   Delegated: 'มอบหมายแล้ว',

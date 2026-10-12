@@ -44,11 +44,13 @@
 //! | `codex_app` | the window's Codex app-server: the JSON-RPC client, its threads |
 //! | `program` | where each program is, and the `PATH` it runs with |
 //! | `family` | a program and everything it starts, ended together |
+//! | `enroll` | nib added to the agent programs on this computer, as they add a server |
 //! | `home` | where a program keeps one account's sign-in |
 //! | `run` | one run: stdin in, lines out, its end |
 
 mod args;
 mod codex_app;
+mod enroll;
 mod family;
 mod home;
 mod program;
@@ -317,6 +319,25 @@ pub fn ai_cli_status(
         home: home.map(|one| one.dir().to_string_lossy().into_owned()),
         said,
     }))
+}
+
+/// After the window: nib added to the agent programs on this computer; see enroll.rs.
+pub fn keep_enrolled(app: &AppHandle) {
+    enroll::keep_enrolled(app);
+}
+
+/// Whether nib connects itself to the agents on this computer, for Access's switch.
+#[tauri::command]
+pub fn ai_cli_enroll_read(webview: Webview) -> Result<enroll::Standing, String> {
+    owner(&webview)?;
+    Ok(enroll::standing(webview.app_handle()))
+}
+
+/// The switch turned: nib connected to every agent program, or let go of.
+#[tauri::command(async)]
+pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
+    owner(&webview)?;
+    enroll::turned(webview.app_handle(), on)
 }
 
 /// Signs a second sign-in's program out of its home, the program's own way, and lets the
@@ -806,6 +827,84 @@ mod tests {
         assert!(home.dir().join("signed-out").exists());
         home::removed(&home).expect("removed");
         assert!(!home.dir().exists());
+    }
+
+    /// The stand-in started the way an installed program is: a shim by the program's
+    /// name, npm's `.cmd` on Windows and a script elsewhere.
+    fn fake_program(dir: &Path, tool: Tool) -> Program {
+        let name = tool.command();
+        #[cfg(windows)]
+        let (exe, text) = (
+            dir.join(format!("{name}.cmd")),
+            format!(
+                "@node \"{}\" {name} %*
+",
+                fake_script().display()
+            ),
+        );
+        #[cfg(not(windows))]
+        let (exe, text) = (
+            dir.join(name),
+            format!(
+                "#!/bin/sh
+exec node '{}' {name} \"$@\"
+",
+                fake_script().display()
+            ),
+        );
+        std::fs::write(&exe, text).expect("the shim");
+        #[cfg(not(windows))]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&exe, std::fs::Permissions::from_mode(0o755))
+                .expect("runnable");
+        }
+        Program {
+            exe,
+            path: std::env::var_os("PATH").unwrap_or_default(),
+        }
+    }
+
+    #[test]
+    fn nib_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
+        if !node() {
+            eprintln!("no node here; skipped");
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        let home = dir.path().join("home");
+        for one in [".claude", ".codex"] {
+            std::fs::create_dir_all(home.join(one)).expect("a home");
+        }
+        let nib = dir.path().join("nib.exe");
+        for (tool, kept) in [
+            (Tool::ClaudeCode, home.join(".claude").join("fake-mcp.json")),
+            (Tool::Codex, home.join(".codex").join("fake-mcp.json")),
+        ] {
+            let program = fake_program(dir.path(), tool);
+            let servers = || -> Value {
+                std::fs::read_to_string(&kept)
+                    .ok()
+                    .and_then(|text| serde_json::from_str(&text).ok())
+                    .unwrap_or_else(|| serde_json::json!({}))
+            };
+            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(
+                servers(),
+                serde_json::json!({ "nib": [nib.to_string_lossy(), "mcp"] }),
+                "{tool:?}"
+            );
+            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(servers(), serde_json::json!({}), "{tool:?}");
+
+            // A server the reader called nib, pointing somewhere else, is theirs.
+            let theirs = serde_json::json!({ "nib": ["C:/elsewhere/nib.exe", "mcp"] });
+            std::fs::write(&kept, theirs.to_string()).expect("theirs");
+            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(servers(), theirs, "{tool:?}");
+        }
     }
 
     fn full_caps() -> args::Caps {

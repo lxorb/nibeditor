@@ -346,6 +346,8 @@ macro_rules! desktop_commands {
             ai_agent::ai_agent_context,
             ai_cli::ai_cli_status,
             ai_cli::ai_cli_forget,
+            ai_cli::ai_cli_enroll_read,
+            ai_cli::ai_cli_enroll_write,
             ai_cli::ai_cli_ask,
             ai_cli::ai_cli_stop,
             ai_cli::ai_cli_open,
@@ -954,10 +956,10 @@ fn ready(
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
 
-    // Nib listed among the browsers, put back if a portable copy moved or an install
-    // never wrote it: after the window, on a thread of its own; see default_browser.rs.
+    // Nib listed among the browsers and among the agents' servers, each on a thread of
+    // its own after the window; see `kept_listed`.
     #[cfg(desktop)]
-    default_browser::keep_registered(handle);
+    kept_listed(handle);
 
     // And, on a build that is being measured rather than used, the gate: it opens a
     // web tab and the engine's own pages, says what each cost and quits. Off unless
@@ -969,6 +971,16 @@ fn ready(
     }
 
     Ok(())
+}
+
+/// What other programs list nib in, put back after every launch: Windows' browsers, put
+/// back if a portable copy moved or an install never wrote it (`default_browser.rs`), and
+/// the agent programs on this computer, so they reach nib with nothing to set up
+/// (`ai_cli/enroll.rs`). Each on a thread of its own, after the window.
+#[cfg(desktop)]
+fn kept_listed(handle: &tauri::AppHandle<Engine>) {
+    default_browser::keep_registered(handle);
+    ai_cli::keep_enrolled(handle);
 }
 
 /// The launch said in the log, and the window's thread watched from here on: which
