@@ -102,6 +102,13 @@ export function isNoteFile(path: string): boolean {
   return /\.(md|markdown|mdown|mkd|txt)$/i.test(path)
 }
 
+/** Whether a file is hidden, or inside a hidden folder: `.git` and its objects, a
+ *  `.gitignore`, the `.trash/` Obsidian keeps for notes thrown away. Another
+ *  program's business, which the space's file list and sync leave out as well. */
+export function isHidden(path: string): boolean {
+  return path.split('/').some((part) => part.startsWith('.'))
+}
+
 /** Files no export meant to hand over: a folder's own metadata, the rubbish two
  *  desktops leave in every folder they touch. `Icon\r` is where Finder keeps a
  *  folder's own icon, named with a character Windows cannot write. */

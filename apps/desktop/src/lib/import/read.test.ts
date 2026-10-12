@@ -136,6 +136,23 @@ describe('reading as a format', () => {
     expect(plan.files).toHaveLength(1)
   })
 
+  test('a folder of notes leaves its hidden files behind, git and a trash among them', async () => {
+    // A vault kept in git whose `.obsidian/` was never committed: a folder of notes.
+    const sources = [
+      file('Home.md', '# Home\n\nSee [[Plan]]'),
+      file('Plan.md', '# Plan'),
+      file('.trash/Deleted idea.md', '# thrown away'),
+      file('.git/HEAD', 'ref: refs/heads/main'),
+      file('.git/config', '[core]'),
+      file('.gitignore', '.obsidian/'),
+    ]
+    const format = await detect(sources)
+    expect(format).toBe('markdown')
+
+    const plan = await readAs(format ?? 'markdown', sources)
+    expect(plan.files.map((one) => one.path).sort()).toEqual(['Home.md', 'Plan.md'])
+  })
+
   test("pandoc's own formats answer an empty plan, since pandoc reads those", async () => {
     const plan = await readAs('pandoc', [file('A.docx', 'PK')])
 

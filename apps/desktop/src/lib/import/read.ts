@@ -295,7 +295,11 @@ export async function readAs(
     case 'apple-notes':
     case 'markdown': {
       const { readPlain } = await import('./plain')
-      return readPlain(sources, { format })
+      const { isHidden } = await import('./folder')
+      // Hidden files stay behind, as they do from a vault: a folder of notes kept in
+      // git, or a vault whose `.obsidian/` was never synced, holds `.git` and a
+      // `.trash/` of notes somebody threw away, and none of it is anybody's writing.
+      return readPlain(sources, { format, skip: isHidden })
     }
     case 'pandoc': {
       // Pandoc is a program on the machine rather than a reader in here, and the

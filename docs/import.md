@@ -196,6 +196,9 @@ says how many files are in iCloud rather than on this Mac. See
 markdown are read as what they are: files in folders, some notes and the rest the
 pictures those notes point at. A TextBundle is unwrapped on the way past, so
 `Iceland.textbundle/text.md` is the note `Iceland.md` with its assets beside it.
+Hidden files and folders stay behind, as they do from a vault: a folder of notes
+kept in git, or a vault whose `.obsidian/` never came along, holds `.git` and a
+`.trash/` of notes somebody threw away, and none of it is anybody's writing.
 
 **OneNote** only through an HTML export, and it says so: the words are kept and
 the look is not. Which is the honest summary of every HTML import.
