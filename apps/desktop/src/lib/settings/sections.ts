@@ -99,10 +99,13 @@ export function sectionGroups(): Item[][] {
         ? [{ id: 'agents' as Section, label: t('Agents') }]
         : []),
       // The machines a remote terminal reaches: a desktop's alone, as a terminal is.
-      ...(!__EVEN_PLUGIN__ && isDesktop ? [{ id: 'remote' as Section, label: t('Remote') }] : []),
+      // Both only for somebody who writes code; see `developer` in modes.svelte.ts.
+      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
+        ? [{ id: 'remote' as Section, label: t('Remote') }]
+        : []),
       // The account's machine in the cloud and its month: on every device, with an
       // account. See docs/online-terminal.md 4.10.
-      ...(!__EVEN_PLUGIN__ && account.user
+      ...(!__EVEN_PLUGIN__ && account.user && modes.coder
         ? [{ id: 'online' as Section, label: t('Online terminal') }]
         : []),
       // Only for somebody who has a pair: in the plugin always, and on any other

@@ -14,14 +14,15 @@ import { account } from './account.svelte'
 import { joining } from './joining.svelte'
 import { isPlugin } from './plugin'
 import { firstVisit } from './first-visit.svelte'
+import { setup } from './setup.svelte'
 import { choosing } from './space-choice'
 import { isNative } from './tauri'
 import { workspace } from './workspace.svelte'
 
 class SpaceChooser {
-  /** Whether it is on screen. Derived and never written, so it cannot disagree with
-   *  the spaces folder: see `choosing`. */
-  readonly showing = $derived(
+  /** Whether the required step is up. Derived and never written, so it cannot
+   *  disagree with the spaces folder: see `choosing`. */
+  readonly asking = $derived(
     choosing({
       native: isNative,
       firstVisit: firstVisit.asking,
@@ -34,6 +35,12 @@ class SpaceChooser {
       tabs: workspace.tabs.length,
     }),
   )
+
+  /** The optional questions after it, for somebody new; see setup.svelte.ts. */
+  readonly personalizing = $derived(!this.asking && setup.armed && !account.signedIn)
+
+  /** Whether it is on screen: either of the two. */
+  readonly showing = $derived(this.asking || this.personalizing)
 }
 
 export const spaceChooser = new SpaceChooser()

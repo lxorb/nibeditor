@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Kabeh wis siyap',
+  Personalize: 'Atur dhewe',
+  Clean: 'Resik',
+  'Live preview': 'Pratinjau langsung',
+  'Developer mode': 'Mode pangembang',
+  'Do you write code?': 'Apa sampeyan nulis kode?',
+  Yes: 'Iya',
+  No: 'Ora',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Aplikasi liyane',
   'Start fresh': 'Miwiti anyar',

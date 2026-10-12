@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'అంతా సిద్ధం',
+  Personalize: 'వ్యక్తిగతీకరించండి',
+  Clean: 'శుభ్రంగా',
+  'Live preview': 'లైవ్ ప్రివ్యూ',
+  'Developer mode': 'డెవలపర్ మోడ్',
+  'Do you write code?': 'మీరు కోడ్ రాస్తారా?',
+  Yes: 'అవును',
+  No: 'కాదు',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'వేరే యాప్',
   'Start fresh': 'కొత్తగా మొదలుపెట్టు',

@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Всё готово',
+  Personalize: 'Настроить под себя',
+  Clean: 'Чистый',
+  'Live preview': 'Живой просмотр',
+  'Developer mode': 'Режим разработчика',
+  'Do you write code?': 'Вы пишете код?',
+  Yes: 'Да',
+  No: 'Нет',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Другое приложение',
   'Start fresh': 'Начать с нуля',

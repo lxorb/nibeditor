@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '搞掂晒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
+  'Developer mode': '開發人員模式',
+  'Do you write code?': '你寫唔寫程式？',
+  Yes: '係',
+  No: '唔係',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '其他 app',
   'Start fresh': '重新開始',

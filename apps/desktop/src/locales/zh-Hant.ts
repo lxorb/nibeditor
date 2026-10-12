@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHant: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '一切就緒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
+  'Developer mode': '開發者模式',
+  'Do you write code?': '你會寫程式嗎？',
+  Yes: '是',
+  No: '否',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '其他 App',
   'Start fresh': '重新開始',

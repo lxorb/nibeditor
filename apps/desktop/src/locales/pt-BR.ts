@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Tudo pronto',
+  Personalize: 'Personalizar',
+  Clean: 'Limpo',
+  'Live preview': 'Prévia ao vivo',
+  'Developer mode': 'Modo desenvolvedor',
+  'Do you write code?': 'Você escreve código?',
+  Yes: 'Sim',
+  No: 'Não',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Outro app',
   'Start fresh': 'Começar do zero',

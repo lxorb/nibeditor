@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'ሁሉም ዝግጁ ነው',
+  Personalize: 'ግላዊ አድርግ',
+  Clean: 'ንጹህ',
+  'Live preview': 'ቀጥታ ቅድመ እይታ',
+  'Developer mode': 'የገንቢ ሁነታ',
+  'Do you write code?': 'ኮድ ይጽፋሉ?',
+  Yes: 'አዎ',
+  No: 'አይ',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'ሌላ መተግበሪያ',
   'Start fresh': 'አዲስ ጀምር',

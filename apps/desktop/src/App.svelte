@@ -2,6 +2,7 @@
   import { onDestroy, tick } from 'svelte'
   import { t } from './lib/i18n.svelte'
   import { firstVisit } from './lib/first-visit.svelte'
+  import { setup } from './lib/setup.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -1134,10 +1135,11 @@
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
   {/await}
 {/if}
-<!-- What a fresh install opens on, until there is a space. Fetched only then; the card
-     decides the rest itself, and the plugin never shows it, so its build does not
-     carry it. See SpaceChooser.svelte and space-choice.ts. -->
-{#if !__EVEN_PLUGIN__ && workspace.restored && (!workspace.spaces.length || firstVisit.asking)}
+<!-- What a fresh install opens on, until there is a space, and its optional questions
+     after (setup.svelte.ts). Fetched only then; the card decides the rest itself, and
+     the plugin never shows it, so its build does not carry it. See SpaceChooser.svelte
+     and space-choice.ts. -->
+{#if !__EVEN_PLUGIN__ && workspace.restored && (!workspace.spaces.length || firstVisit.asking || setup.armed)}
   {#await spaceChooserCard() then SpaceChooser}
     <SpaceChooser />
   {/await}

@@ -39,6 +39,7 @@ import { howFor } from './new-tab'
 import { rowName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
+import { modes } from './modes.svelte'
 import { isDesktop, joinPath, platform } from './tauri'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
@@ -376,7 +377,7 @@ function revealEntry(entry: Entry): MenuEntry[] {
  *  Open in Integrated Terminal and Explorer's Open in Terminal. A desktop's alone, like
  *  every terminal; see docs/terminal.md. */
 function terminalEntry(entry: Entry): MenuEntry[] {
-  if (__EVEN_PLUGIN__ || !isDesktop) return []
+  if (__EVEN_PLUGIN__ || !isDesktop || !modes.coder) return []
 
   const folder = entry.is_dir ? entry.path : folderOf(entry.path)
   return [

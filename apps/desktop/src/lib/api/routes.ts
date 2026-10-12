@@ -476,6 +476,8 @@ export interface AccountSettings {
   quietMarks?: boolean
   /** No hints anywhere in the app; see hints.svelte.ts. */
   silent?: boolean
+  /** Whether the tools for writing code are offered; see `developer` in modes.svelte.ts. */
+  developer?: boolean
 }
 
 /** What any read can say about the account's OpenAI key.

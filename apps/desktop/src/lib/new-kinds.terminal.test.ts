@@ -57,6 +57,21 @@ describe('a terminal, as a kind a new tab can be', () => {
     ])
   })
 
+  /** Every terminal is for somebody who writes code: Developer mode off leaves the whole
+   *  line out. See `developer` in modes.svelte.ts. */
+  test('is left out, with Remote and Online, for somebody who does not write code', async () => {
+    const { modes } = await import('./modes.svelte')
+    modes.developer = false
+    try {
+      expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
+        ['note', 'canvas', 'pages'],
+        ['web', 'private'],
+      ])
+    } finally {
+      modes.developer = null
+    }
+  })
+
   /** T is the new tab's own key, so the terminal's is R - Run, on Windows, for thirty
    *  years - and no two kinds share one. */
   test('on R, its own letter', () => {

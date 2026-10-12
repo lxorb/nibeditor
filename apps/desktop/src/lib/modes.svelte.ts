@@ -137,6 +137,7 @@ interface Saved {
   focus: boolean
   quietMarks: boolean
   silent: boolean
+  developer: boolean | null
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -265,6 +266,9 @@ class Modes {
    *  Off, because the people a hint is for would never look for the switch. The
    *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
   silent = $state(false)
+  /** Developer mode: the terminals offered. Null until answered, which counts as yes;
+   *  the account's. See SpaceChooser.svelte. */
+  developer = $state<boolean | null>(null)
   typewriter = $state(false)
   punctuation = $state(false)
   numbers = $state(false)
@@ -471,6 +475,7 @@ class Modes {
       this.typewriter = saved.typewriter === true
       this.quietMarks = saved.quietMarks === true
       this.silent = saved.silent === true
+      this.developer = typeof saved.developer === 'boolean' ? saved.developer : null
       this.hand = saved.hand === true
       // `=== true` rather than `!== false`: a reader who never chose keeps the
       // new default, and only one who turned it on keeps it on.
@@ -690,6 +695,20 @@ class Modes {
     this.silent = !this.silent
     this.persist()
     this.share({ silent: this.silent })
+  }
+
+  get coder(): boolean {
+    return this.developer !== false
+  }
+
+  /** The first answer also picks how markdown is written: Obsidian's live preview for
+   *  yes, Notion's hidden marks for no. */
+  setDeveloper(on: boolean) {
+    const first = this.developer === null
+    this.developer = on
+    if (first && this.quietMarks === on) this.toggleQuietMarks()
+    this.persist()
+    this.share({ developer: on })
   }
 
   toggleHand() {
@@ -1112,6 +1131,12 @@ class Modes {
       this.persist()
     }
 
+    const coding = remote.developer
+    if (typeof coding === 'boolean' && unheard && coding !== this.developer) {
+      this.developer = coding
+      this.persist()
+    }
+
     const breaking = remote.hardBreaks
     if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
       this.hardBreaks = breaking
@@ -1353,6 +1378,7 @@ class Modes {
       focus: this.focus,
       quietMarks: this.quietMarks,
       silent: this.silent,
+      developer: this.developer,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,

@@ -46,6 +46,8 @@ Element.prototype.animate = () => {
 }
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
+const { modes } = await import('../../src/lib/modes.svelte')
+const { setup } = await import('../../src/lib/setup.svelte')
 const { spaceChooser } = await import('../../src/lib/space-chooser.svelte')
 const { default: Choosing } = await import('./Choosing.svelte')
 
@@ -56,6 +58,8 @@ beforeEach(() => {
   workspace.activeSpaceId = null
   workspace.tabs = []
   workspace.restored = true
+  modes.developer = null
+  setup.finish()
 })
 
 afterEach(() => {
@@ -91,5 +95,71 @@ test('the card is drawn while it is up, and a space takes it away', async () => 
   await workspace.addSpace('One')
   flushSync()
 
+  // Somebody new is offered the optional questions first; Done goes past them.
+  press(target, 'Done')
+  await vi.waitFor(() => expect(target.querySelector('[role="dialog"]')).toBeNull())
+})
+
+/** What the card's buttons say, in order. */
+const words = (target: HTMLElement) =>
+  [...target.querySelectorAll('button')].map((one) => one.textContent.trim())
+
+function press(target: HTMLElement, word: string) {
+  const button = [...target.querySelectorAll('button')].find(
+    (one) => one.textContent.trim() === word,
+  )
+  if (!button) throw new Error(`no ${word} in ${words(target).join(', ')}`)
+  button.click()
+  flushSync()
+}
+
+/** The required step done, the optional questions after it: the card stays, says it is
+ *  all set, and lets the reader personalize as far as they like. See setup.svelte.ts. */
+test('stays after the space is made, to offer the optional questions', async () => {
+  const target = document.createElement('div')
+  document.body.append(target)
+  const card = mount(Choosing, { target })
+  stop = () => void unmount(card, { outro: false })
+  flushSync()
+  expect(setup.armed).toBe(true)
+
+  await workspace.addSpace('One')
+  flushSync()
+  expect(target.querySelector('[role="dialog"]')).not.toBeNull()
+  expect(words(target)).toEqual(expect.arrayContaining(['Personalize', 'Done']))
+
+  press(target, 'Personalize')
+  expect(setup.question).toBe('theme')
+
+  press(target, 'Next')
+  press(target, 'Yes')
+  expect(modes.developer).toBe(true)
+  press(target, 'Next')
+  expect(setup.question).toBe('markdown')
+  // A yes starts markdown the way Obsidian's live preview writes it.
+  expect(target.querySelector('[aria-checked="true"]')?.textContent.trim()).toBe('Live preview')
+
+  press(target, 'Clean')
+  expect(modes.quietMarks).toBe(true)
+  press(target, 'Next')
+
+  expect(setup.armed).toBe(false)
+  await vi.waitFor(() => expect(target.querySelector('[role="dialog"]')).toBeNull())
+})
+
+test('Done at any question leaves the rest at their defaults', async () => {
+  const target = document.createElement('div')
+  document.body.append(target)
+  const card = mount(Choosing, { target })
+  stop = () => void unmount(card, { outro: false })
+  flushSync()
+
+  await workspace.addSpace('One')
+  flushSync()
+  press(target, 'Personalize')
+  press(target, 'Done')
+
+  expect(modes.developer).toBeNull()
+  expect(modes.coder).toBe(true)
   await vi.waitFor(() => expect(target.querySelector('[role="dialog"]')).toBeNull())
 })

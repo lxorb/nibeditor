@@ -261,6 +261,8 @@ const KNOWN: Record<string, Check> = {
   quietMarks: switched('quietMarks'),
   // No hints anywhere in the app, for somebody who knows it.
   silent: switched('silent'),
+  // Whether the terminals and the other tools for writing code are offered.
+  developer: switched('developer'),
 }
 
 /** How much of any of this an account may hold.

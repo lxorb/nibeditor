@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'พร้อมแล้ว',
+  Personalize: 'ปรับแต่ง',
+  Clean: 'สะอาดตา',
+  'Live preview': 'แสดงตัวอย่างสด',
+  'Developer mode': 'โหมดนักพัฒนา',
+  'Do you write code?': 'คุณเขียนโค้ดไหม?',
+  Yes: 'ใช่',
+  No: 'ไม่',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'แอปอื่น',
   'Start fresh': 'เริ่มใหม่',

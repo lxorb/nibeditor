@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Her şey hazır',
+  Personalize: 'Kişiselleştir',
+  Clean: 'Sade',
+  'Live preview': 'Canlı önizleme',
+  'Developer mode': 'Geliştirici modu',
+  'Do you write code?': 'Kod yazıyor musunuz?',
+  Yes: 'Evet',
+  No: 'Hayır',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Başka bir uygulama',
   'Start fresh': 'Sıfırdan başla',

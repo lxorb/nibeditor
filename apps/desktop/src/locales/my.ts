@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
+  Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
+  Clean: 'ရှင်းလင်း',
+  'Live preview': 'တိုက်ရိုက်အစမ်းကြည့်',
+  'Developer mode': 'ဒီဗလပ်ပါမုဒ်',
+  'Do you write code?': 'ကုဒ်ရေးပါသလား?',
+  Yes: 'ဟုတ်ကဲ့',
+  No: 'မဟုတ်ပါ',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'အခြားအက်ပ်',
   'Start fresh': 'အသစ်စတင်ပါ',

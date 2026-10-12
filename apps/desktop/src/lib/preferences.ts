@@ -620,6 +620,26 @@ export function preferences(view?: EditorView): Pane[] {
               : []),
           ],
         },
+        // Discord's Developer Mode: the terminals and what goes with them, for somebody
+        // who writes code. The first screen asks (SpaceChooser.svelte); this is where the
+        // answer changes. Not in the glasses' plugin, which has no terminal to offer.
+        ...(__EVEN_PLUGIN__
+          ? []
+          : [
+              {
+                title: t('Code'),
+                fields: [
+                  {
+                    kind: 'switch' as const,
+                    label: t('Developer mode'),
+                    words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
+                    initial: true,
+                    get: () => modes.coder,
+                    set: (on: boolean) => modes.setDeveloper(on),
+                  },
+                ],
+              },
+            ]),
         // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
         ...(__EVEN_PLUGIN__
           ? []
@@ -681,7 +701,7 @@ export function preferences(view?: EditorView): Pane[] {
         // come back after a restart: this machine's, like the release channel below,
         // because a shell is a program on one computer and its screen is nobody else's.
         // Only a desktop has a terminal; see docs/terminal.md.
-        ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
+        ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalGroup()] : []),
 
         // Only the desktop app installs anything: a page is the new version the
         // moment it is reloaded, and a phone app is the store's business. So the

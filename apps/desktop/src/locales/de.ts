@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Alles bereit',
+  Personalize: 'Personalisieren',
+  Clean: 'Aufgeräumt',
+  'Live preview': 'Live-Vorschau',
+  'Developer mode': 'Entwicklermodus',
+  'Do you write code?': 'Schreibst du Code?',
+  Yes: 'Ja',
+  No: 'Nein',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Andere App',
   'Start fresh': 'Neu anfangen',

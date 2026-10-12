@@ -39,6 +39,7 @@ import { account } from './account.svelte'
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
 import { menu, type MenuEntry } from './menu.svelte'
+import { modes } from './modes.svelte'
 import { isDesktop } from './tauri'
 import { openTerminal, shellRows } from './terminal/open'
 import { shells } from './terminal/shells.svelte'
@@ -135,11 +136,12 @@ export function newKinds(): NewKindRow[] {
     // because T is the new tab's own key, and R is what Run has been on Windows for
     // thirty years. See docs/terminal.md.
     // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
-    ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow(), remoteRow()] : []),
+    // Every terminal is for somebody who writes code; see `developer` in modes.svelte.ts.
+    ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalRow(), remoteRow()] : []),
     // A shell on the reader's own machine in the cloud: on every device, since it is the
     // one terminal a phone and a browser can have. O for Online. See
     // docs/online-terminal.md 4.10.
-    ...(__EVEN_PLUGIN__ ? [] : [onlineRow()]),
+    ...(__EVEN_PLUGIN__ || !modes.coder ? [] : [onlineRow()]),
     // A website is a bookmark on a phone - it opens in the phone's own browser and
     // there is no tab to make - so the row is left out there rather than offered and
     // answering nothing. See openWeb in workspace.svelte.ts. The glasses' plugin has no

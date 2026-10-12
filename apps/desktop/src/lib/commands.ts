@@ -1122,8 +1122,9 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]),
     // A shell in a tab, in the one Settings chose; the plus and Ctrl+T offer the others.
-    // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md.
-    ...(!__EVEN_PLUGIN__ && isDesktop
+    // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md. Like
+    // every terminal, only for somebody who writes code; see `developer` in modes.
+    ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
       ? [
           {
             id: 'new-terminal',
@@ -1144,7 +1145,7 @@ export function appCommands(view?: EditorView): Command[] {
     // A shell on the reader's machine in the cloud, on every device; and its machine
     // started or stopped by hand. Never by a link or the command line, as a terminal
     // here is not. See docs/online-terminal.md 4.10.
-    ...(__EVEN_PLUGIN__
+    ...(__EVEN_PLUGIN__ || !modes.coder
       ? []
       : [
           {
