@@ -45,6 +45,11 @@ export async function readPlain(
   const names = new Names()
   let html = 0
 
+  // A vault's notes are its markdown and nothing else: Obsidian keeps a `.txt` as a
+  // file it does not open, and links name it with its extension, so it stays one.
+  const note = (path: string) =>
+    options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path)
+
   /** Where a file goes, or null for one that is left behind. */
   const target = (source: Source): string | null => {
     if (isJunk(source.path) || options.skip?.(source.path)) return null
@@ -59,7 +64,7 @@ export async function readPlain(
     if (path === null) return null
 
     if (HTML.test(path) && !options.asTheyAre) return path.replace(HTML, '.md')
-    return isNoteFile(path) ? path.replace(/\.txt$/i, '.md') : path
+    return note(path) ? path.replace(/\.txt$/i, '.md') : path
   }
 
   // A file whose name needs no change keeps it, whichever comes first: `Why?.png`
@@ -87,7 +92,7 @@ export async function readPlain(
         }
       }
 
-      if (!isNoteFile(path)) return { to }
+      if (!note(path)) return { to }
 
       return {
         to,

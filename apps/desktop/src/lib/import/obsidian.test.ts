@@ -808,6 +808,18 @@ function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
 }
 
 describe('the files in a vault', () => {
+  test('keep a text file as the file it is, which a link names by its extension', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Notes.md', 'See ![[filenames.txt]].'),
+      file('filenames.txt', 'one\ntwo'),
+    ])
+
+    const kept = plan.files.find((one) => one.path === 'filenames.txt')
+    expect(kept?.kind).toBe('file')
+    expect(plan.files.some((one) => one.path === 'filenames.md')).toBe(false)
+  })
+
   test('keep a Word document whole when the vault is picked as a folder', async () => {
     const zip = new JSZip()
     zip.file('[Content_Types].xml', '<Types/>')
