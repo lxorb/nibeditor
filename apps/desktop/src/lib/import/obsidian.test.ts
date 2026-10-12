@@ -852,6 +852,25 @@ describe('the files in a vault', () => {
     expect(notes).toEqual(['Caf\u00e9.md', 'Cafe\u0301 2.md'])
   })
 
+  test('whose names a Mac wrote with their accents apart are found by a link typed whole', async () => {
+    // As Finder or Preview saves a name, with each accent apart from its letter; a
+    // link typed or completed holds them together, and Obsidian reads both as one.
+    const embedded = await noteFrom(
+      'Notes/Job.md',
+      file(`Attachments/${'R\u00e9sum\u00e9'.normalize('NFD')}.pdf`, '%PDF-1.7'),
+      file('Notes/Job.md', '![](R%C3%A9sum%C3%A9.pdf)\n'),
+    )
+    expect(embedded.normalize('NFC')).toBe('![](../Attachments/R\u00e9sum\u00e9.pdf)\n')
+
+    // The same file renamed for Windows on the way in, its link following it.
+    const renamed = await noteFrom(
+      'Notes/Quiz.md',
+      file(`Pics/${'R\u00e9ponse'.normalize('NFD')}?.png`, 'png'),
+      file('Notes/Quiz.md', '![[R\u00e9ponse?.png]]\n'),
+    )
+    expect(renamed.normalize('NFC')).toBe('![[R\u00e9ponse.png]]\n')
+  })
+
   test('keep a saved web page as the page, not a note made of it', async () => {
     const page = '<html><body><p style="color:red">Hi</p></body></html>'
     const plan = await readAs('obsidian', [

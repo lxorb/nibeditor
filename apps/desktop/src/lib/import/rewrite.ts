@@ -815,27 +815,33 @@ export class ExportFiles {
 /** Files by a name, found by the exact spelling first and then without regard to
  *  case, the first file added answering either way. A vault off a Linux disk can
  *  hold `Plan.md` and `plan.md` side by side, and `[[Plan]]` there means the one
- *  spelled that way rather than whichever of the two came last. */
+ *  spelled that way rather than whichever of the two came last.
+ *
+ *  Accents are one spelling however they are composed: a Mac writes `Résumé.pdf`
+ *  with its accents apart, a link typed or completed holds them together, and
+ *  Obsidian and nib both read the two as one name. */
 class Spellings {
   private readonly exact = new Map<string, Found>()
   private readonly folded = new Map<string, Found>()
 
   add(key: string, found: Found) {
-    if (!this.exact.has(key)) this.exact.set(key, found)
-    const lower = key.toLowerCase()
+    const composed = key.normalize('NFC')
+    if (!this.exact.has(composed)) this.exact.set(composed, found)
+    const lower = foldName(key)
     if (!this.folded.has(lower)) this.folded.set(lower, found)
   }
 
   get(key: string): Found | undefined {
-    return this.exact.get(key) ?? this.folded.get(key.toLowerCase())
+    return this.exact.get(key.normalize('NFC')) ?? this.folded.get(foldName(key))
   }
 }
 
 /** Whether one of two paths is the end of the other, whole folders and names at a
- *  time and without regard to case, a note's `.md` left off or not. */
+ *  time and without regard to case or to how an accent is composed, a note's `.md`
+ *  left off or not. */
 function endsTogether(was: string, said: string): boolean {
-  const one = was.toLowerCase()
-  const other = said.toLowerCase()
+  const one = foldName(was)
+  const other = foldName(said)
   const ends = (path: string, end: string) => path === end || path.endsWith(`/${end}`)
   return [one, one.replace(/\.md$/, '')].some((path) => ends(path, other) || ends(other, path))
 }
