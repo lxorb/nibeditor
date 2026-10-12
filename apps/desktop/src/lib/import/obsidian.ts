@@ -31,10 +31,12 @@ const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
  *  look for it, and every path a `.canvas` or `.base` names from the top of the
  *  vault would point at nothing. A vault already at the top comes back as it was.
  *
- *  Only when the vault's folder is all there is, the desktop's rubbish aside. A
- *  folder holding two vaults, or a vault beside notes of its own, is somebody's
- *  folder of things, and each of them arrives where it sat: taking one vault's
- *  folder off would pour its notes over everything beside it. */
+ *  Only when the vault's folder is all there is, the desktop's rubbish aside, and the
+ *  hidden files beside it as well, which stay behind wherever they sit: a phone's
+ *  `.nomedia` is not somebody's notes. A folder holding two vaults, or a vault beside
+ *  notes of its own, is somebody's folder of things, and each of them arrives where
+ *  it sat: taking one vault's folder off would pour its notes over everything
+ *  beside it. */
 export function atVaultTop(sources: readonly Source[]): Source[] {
   if (sources.some((one) => one.path.startsWith('.obsidian/'))) return [...sources]
 
@@ -42,7 +44,8 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
     .map((one) => SETTINGS.exec(one.path)?.[0].slice(0, -'.obsidian/'.length))
     .find(Boolean)
   if (!wrapper) return [...sources]
-  if (sources.some((one) => !one.path.startsWith(wrapper) && !isJunk(one.path))) {
+  const beside = (path: string) => !path.startsWith(wrapper) && !isJunk(path) && !leftInVault(path)
+  if (sources.some((one) => beside(one.path))) {
     return [...sources]
   }
 

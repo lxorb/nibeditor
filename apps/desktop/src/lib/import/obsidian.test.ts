@@ -918,6 +918,18 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('land at the top of the space with their settings when a hidden file sits beside the vault', async () => {
+    const sources = [
+      file('Brain/.obsidian/app.json', '{"vimMode":true}'),
+      file('Brain/Home.md', 'hi'),
+      file('.nomedia', ''),
+    ]
+
+    await expect(detect(sources)).resolves.toBe('obsidian')
+    await expect(pathsFrom(sources)).resolves.toEqual(['.obsidian/app.json', 'Home.md'])
+    expect((await obsidianCarries(sources)).vim).toBe(true)
+  })
+
   test('stay in their folders when the folder picked holds more than one vault', async () => {
     const notes = async (sources: Source[]) =>
       (await pathsFrom(sources)).filter((one) => !one.includes('.obsidian'))
