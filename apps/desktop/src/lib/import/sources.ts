@@ -83,7 +83,12 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
     const inside = (one.webkitRelativePath ?? '').trim()
     const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
-    found.push(...(await expand(path, bytes, 0)))
+    // A file out of a picked folder is opened only when its name says zip, the way
+    // a zip inside a zip is: the folder is what was picked, and a mind map or a
+    // Sketch file kept in a vault is a zip underneath that nobody meant unpacked.
+    // A file picked on its own may be an export whatever it is called.
+    if (inside.length && !path.toLowerCase().endsWith('.zip')) found.push(sourceOf(path, bytes))
+    else found.push(...(await expand(path, bytes, 0)))
   }
 
   return found

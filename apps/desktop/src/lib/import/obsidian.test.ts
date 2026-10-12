@@ -416,6 +416,30 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('keep a mind map and a Sketch file whole when the vault is picked as a folder', async () => {
+    const zipped = async (entries: Record<string, string>) => {
+      const zip = new JSZip()
+      for (const [path, body] of Object.entries(entries)) zip.file(path, body)
+      return zip.generateAsync({ type: 'uint8array' })
+    }
+    const words = (body: string) => new TextEncoder().encode(body)
+
+    const sources = await sourcesFrom(
+      insideFolder([
+        picked('Vault/.obsidian/app.json', words('{}')),
+        picked('Vault/Home.md', words('![[Map.xmind]]\n')),
+        picked('Vault/Mind/Map.xmind', await zipped({ 'content.json': '[]' })),
+        picked('Vault/Design/Logo.sketch', await zipped({ 'document.json': '{}' })),
+      ]),
+    )
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Design/Logo.sketch',
+      'Home.md',
+      'Mind/Map.xmind',
+    ])
+  })
+
   test('arrive from a picked folder holding a note that opens with PK and a broken zip', async () => {
     const words = (body: string) => new TextEncoder().encode(body)
     const sources = await sourcesFrom([
