@@ -178,30 +178,29 @@ export function restamped(
 
 /** A note's links, pointing at where the import's own files ended up.
  *
- *  Only what moved is touched, and it is touched in the two spellings the import
- *  wrote: a note by its name in a wikilink, and a file by the path from this
- *  note's own folder. */
+ *  Only what moved is touched, and it is touched in the spellings the import
+ *  wrote: anything by its name in a wikilink - a note without its extension, a
+ *  picture with it, the way Obsidian embeds one - and a file that is not a note by
+ *  the path from this note's own folder as well. */
 function followed(text: string, was: string, moved: ReadonlyMap<string, string>): string {
   let said = text
 
   for (const [from, to] of moved) {
-    if (isNote(from)) {
-      const before = nameOf(from)
-      const after = nameOf(to)
-      if (before === after) continue
-
+    const before = nameOf(from)
+    const after = nameOf(to)
+    if (before !== after) {
       said = said.replaceAll(`[[${before}]]`, `[[${after}]]`)
       said = said.replaceAll(`[[${before}|`, `[[${after}|`)
       said = said.replaceAll(`[[${before}#`, `[[${after}#`)
-      continue
     }
+    if (isNote(from)) continue
 
     const here = folderOf(was)
-    const before = relativePath(here, from).replace(/ /g, '%20')
-    const after = relativePath(here, to).replace(/ /g, '%20')
-    if (before === after) continue
+    const path = relativePath(here, from).replace(/ /g, '%20')
+    const now = relativePath(here, to).replace(/ /g, '%20')
+    if (path === now) continue
 
-    said = said.replaceAll(`](${before})`, `](${after})`)
+    said = said.replaceAll(`](${path})`, `](${now})`)
   }
 
   return said
@@ -211,6 +210,8 @@ function isNote(path: string): boolean {
   return /\.(md|markdown)$/i.test(path)
 }
 
+/** The name a wikilink calls a file by: a note's without its extension, any
+ *  other file's whole. */
 function nameOf(path: string): string {
   return (path.split('/').pop() ?? path).replace(/\.(md|markdown)$/i, '')
 }

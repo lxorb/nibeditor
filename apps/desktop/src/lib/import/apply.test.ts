@@ -117,6 +117,20 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Trip.md')).toBe('![](assets/shot%202.png)')
   })
 
+  test('a picture a vault embeds by its name follows it, its size and all', () => {
+    const taken = new Set(['brain/photo.png', 'brain/home.md'])
+    const stamped = restamped(
+      planOf([note('Home.md', 'Look: ![[photo.png]] and ![[photo.png|300]]\n'), file('photo.png')]),
+      taken,
+      'Brain',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['Brain/Home 2.md', 'Brain/photo 2.png'])
+    expect(textAt(stamped.files, 'Brain/Home 2.md')).toBe(
+      'Look: ![[photo 2.png]] and ![[photo 2.png|300]]\n',
+    )
+  })
+
   test('a link from a note in a folder follows it too', () => {
     const taken = new Set(['assets/shot.png'])
     const stamped = restamped(
