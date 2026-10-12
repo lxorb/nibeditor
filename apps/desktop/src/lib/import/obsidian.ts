@@ -15,6 +15,7 @@ import type { PropertiesMode } from '@nib/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import type { LinkFormat } from '../link-format'
 import type { Carried } from './carry'
+import { isJunk } from './folder'
 import type { Source } from './sources'
 
 /** Where the settings folder sits: at the top, or one folder down for a zip whose
@@ -26,7 +27,12 @@ const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
  *  zip, so the folder again inside it would be a folder holding a folder of its own
  *  name, `.obsidian/` would not be at the top where Obsidian and views/templates.ts
  *  look for it, and every path a `.canvas` or `.base` names from the top of the
- *  vault would point at nothing. A vault already at the top comes back as it was. */
+ *  vault would point at nothing. A vault already at the top comes back as it was.
+ *
+ *  Only when the vault's folder is all there is, the desktop's rubbish aside. A
+ *  folder holding two vaults, or a vault beside notes of its own, is somebody's
+ *  folder of things, and each of them arrives where it sat: taking one vault's
+ *  folder off would pour its notes over everything beside it. */
 export function atVaultTop(sources: readonly Source[]): Source[] {
   if (sources.some((one) => one.path.startsWith('.obsidian/'))) return [...sources]
 
@@ -34,6 +40,9 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
     .map((one) => SETTINGS.exec(one.path)?.[0].slice(0, -'.obsidian/'.length))
     .find(Boolean)
   if (!wrapper) return [...sources]
+  if (sources.some((one) => !one.path.startsWith(wrapper) && !isJunk(one.path))) {
+    return [...sources]
+  }
 
   return sources.map((one) =>
     one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one,

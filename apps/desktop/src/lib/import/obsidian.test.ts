@@ -572,6 +572,28 @@ describe('the files in a vault', () => {
     ])
   })
 
+  test('stay in their folders when the folder picked holds more than one vault', async () => {
+    const notes = async (sources: Source[]) =>
+      (await pathsFrom(sources)).filter((one) => !one.includes('.obsidian'))
+
+    await expect(
+      notes([
+        file('Work/.obsidian/app.json', '{"useMarkdownLinks": true}'),
+        file('Work/Home.md', '# Work home'),
+        file('Personal/.obsidian/app.json', '{}'),
+        file('Personal/Home.md', '# Personal home'),
+      ]),
+    ).resolves.toEqual(['Personal/Home.md', 'Work/Home.md'])
+    // A vault one folder down beside notes of the folder's own is not poured over them.
+    await expect(
+      notes([
+        file('Home.md', '# Loose home'),
+        file('Vault/.obsidian/app.json', '{}'),
+        file('Vault/Home.md', '# Vault home'),
+      ]),
+    ).resolves.toEqual(['Home.md', 'Vault/Home.md'])
+  })
+
   test('keep a note’s line endings and the blank lines above a rule', async () => {
     const windows = '# T\r\n\r\nline\r\n'
     const rule = '\n---\nnot: properties\n---\n'
