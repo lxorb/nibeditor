@@ -69,6 +69,13 @@ const QUOTED = /^(?: {0,3}>[ \t]?)*/
 /** A line indented far enough to be code: four spaces, or a tab. */
 const INDENTED = /^(?: {4}| {0,3}\t)/
 
+/** A line that opens or closes a fenced code block: a run of backticks or tildes,
+ *  and whatever is said after it. */
+const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
+
+/** The same inside a list item, where it sits as far in as the item's words. */
+const LISTED_FENCE = /^[ \t]*(`{3,}|~{3,})(.*)$/
+
 /** A line that starts a list item: a bullet, or a number and its dot. */
 const LIST_ITEM = /^ {0,3}(?:[-+*]|\d{1,9}[.)])(?:[ \t]|$)/
 
@@ -251,7 +258,7 @@ function codeRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
   const lines = text.split('\n')
   const properties = propertiesEnd(lines)
-  let fence: { mark: string; from: number } | null = null
+  let fence: { mark: string; from: number; loose: boolean } | null = null
   let indented: { from: number; to: number } | null = null
   // An indented block needs a blank line above it, since an indented line straight
   // under a paragraph is more of the paragraph, and it cannot sit in a list item,
@@ -265,9 +272,18 @@ function codeRanges(text: string): [number, number][] {
     // A callout's or a quote's `>` comes off first: its code is code all the same.
     const line = whole.replace(QUOTED, '')
     const empty = !line.trim()
-    const marked = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
-    const mark = marked?.[1] ?? ''
-    const rest = marked?.[2] ?? ''
+    // A fence can open on a list item's own line, after its marker, and inside a
+    // list item it sits as far in as the item's words, which is past the three
+    // spaces a fence may have anywhere else: `1. Write:` then `    ~~~` is a code
+    // block in that item, in CommonMark and in Obsidian alike. The fence it opened
+    // closes the same way.
+    const item: RegExpExecArray | null = fence ? null : LIST_ITEM.exec(line)
+    const loose: boolean = fence ? fence.loose : listed || item !== null
+    const marked: RegExpExecArray | null = (loose ? LISTED_FENCE : FENCE).exec(
+      item ? line.slice(item[0].length) : line,
+    )
+    const mark: string = marked?.[1] ?? ''
+    const rest: string = marked?.[2] ?? ''
 
     if (index < properties) {
       // The properties at the top are YAML, where an indent is only an indent.
@@ -297,7 +313,8 @@ function codeRanges(text: string): [number, number][] {
         // Still in the block.
       } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
         spans(text, prose, at, ranges)
-        fence = { mark, from: at }
+        fence = { mark, from: at, loose }
+        if (!INDENTED.test(line)) listed = item !== null
       } else if (!empty && INDENTED.test(line) && blank && !listed) {
         spans(text, prose, at, ranges)
         indented = { from: at, to: at + whole.length }

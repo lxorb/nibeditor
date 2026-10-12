@@ -283,6 +283,21 @@ describe('the links in a vault', () => {
     ).resolves.toBe('- Item\n\n    more about [[kit]]\n')
   })
 
+  test('are left exactly as written in a fence inside a list item', async () => {
+    const plan = file('Plan.md', '# Plan\n')
+    const indented = '# A\n\n1. Write:\n    ~~~md\n    See [the plan](Plan.md)\n    ~~~\n'
+    const tabbed = '# A\n\n- Write:\n\t~~~\n\tSee [the plan](Plan.md)\n\t~~~\n'
+    const opened = '1. ```markdown\n   See [the plan](Plan.md)\n   ```\n'
+
+    await expect(noteFrom('A.md', file('A.md', indented), plan)).resolves.toBe(indented)
+    await expect(noteFrom('A.md', file('A.md', tabbed), plan)).resolves.toBe(tabbed)
+    await expect(noteFrom('A.md', file('A.md', opened), plan)).resolves.toBe(opened)
+    // Once the fence closes, the item's words are words again.
+    await expect(
+      noteFrom('A.md', file('A.md', `${opened}   and [the plan](Plan.md)\n`), plan),
+    ).resolves.toBe(`${opened}   and [[Plan|the plan]]\n`)
+  })
+
   test('in a table cell keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const table = (link: string) => `| Who | Link |\n| --- | --- |\n| me | ${link} |\n`
