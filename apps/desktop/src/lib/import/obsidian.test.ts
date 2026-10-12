@@ -200,6 +200,23 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('are left exactly as written in an indented block or a fence in a callout', async () => {
+    const kit = file('Kit.md', '# Kit\n')
+    const indented = 'Example:\n\n    See [the kit](Kit.md)\n\n    and [[kit]]\n\nDone.\n'
+    const callout = '> [!example]\n> ~~~\n> [[kit]]\n> ~~~\n'
+
+    await expect(noteFrom('A.md', file('A.md', indented), kit)).resolves.toBe(indented)
+    await expect(noteFrom('A.md', file('A.md', callout), kit)).resolves.toBe(callout)
+    // Under a paragraph or a list item an indented line is more of it, and its link
+    // is a link.
+    await expect(
+      noteFrom('A.md', file('A.md', 'Some words\n    and [[kit]]\n'), kit),
+    ).resolves.toBe('Some words\n    and [[Kit]]\n')
+    await expect(
+      noteFrom('A.md', file('A.md', '- Item\n\n    more about [[kit]]\n'), kit),
+    ).resolves.toBe('- Item\n\n    more about [[Kit]]\n')
+  })
+
   test('in a table cell keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
     const table = (link: string) => `| Who | Link |\n| --- | --- |\n| me | ${link} |\n`

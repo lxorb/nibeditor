@@ -47,6 +47,15 @@ const WIKILINK = /!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
  *  a table: `| --- | :-: |`, with or without the pipes at its ends. */
 const DIVIDER = /^ {0,3}\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/
 
+/** The `>` in front of every line of a callout or a quote, however deep. */
+const QUOTED = /^(?: {0,3}>[ \t]?)*/
+
+/** A line indented far enough to be code: four spaces, or a tab. */
+const INDENTED = /^(?: {4}| {0,3}\t)/
+
+/** A line that starts a list item: a bullet, or a number and its dot. */
+const LIST_ITEM = /^ {0,3}(?:[-+*]|\d{1,9}[.)])(?:[ \t]|$)/
+
 export interface Rewriting {
   /** Where the note sat in the export, which is what a relative link resolves
    *  against. */
@@ -130,7 +139,7 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
  *  quote's `>` in front of each line is a table in there all the same. */
 function tableRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
-  const lines = text.split('\n').map((line) => line.replace(/^(?: {0,3}>[ \t]?)*/, ''))
+  const lines = text.split('\n').map((line) => line.replace(QUOTED, ''))
   const starts: number[] = []
   let at = 0
   for (const line of text.split('\n')) {
@@ -168,21 +177,35 @@ function splitFragment(target: string): { path: string; fragment: string | null 
   return { path: target.slice(0, at), fragment: target.slice(at + 1) }
 }
 
-/** Where the note's code is, as stretches of its text: fenced blocks and inline code
- *  spans. A link written there is an example of one, which is words to copy exactly
- *  as they are, and neither Obsidian nor nib reads it as a link. */
+/** Where the note's code is, as stretches of its text: fenced blocks, indented
+ *  blocks and inline code spans, in a callout or a quote as well. A link written
+ *  there is an example of one, which is words to copy exactly as they are, and
+ *  neither Obsidian nor nib reads it as a link. */
 function codeRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
+  const lines = text.split('\n')
+  const properties = propertiesEnd(lines)
   let fence: { mark: string; from: number } | null = null
+  let indented: { from: number; to: number } | null = null
+  // An indented block needs a blank line above it, since an indented line straight
+  // under a paragraph is more of the paragraph, and it cannot sit in a list item,
+  // whose indented lines are more of the item.
+  let blank = true
+  let listed = false
   let prose = 0
   let at = 0
 
-  for (const line of text.split('\n')) {
+  for (const [index, whole] of lines.entries()) {
+    // A callout's or a quote's `>` comes off first: its code is code all the same.
+    const line = whole.replace(QUOTED, '')
+    const empty = !line.trim()
     const marked = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
     const mark = marked?.[1] ?? ''
     const rest = marked?.[2] ?? ''
 
-    if (fence) {
+    if (index < properties) {
+      // The properties at the top are YAML, where an indent is only an indent.
+    } else if (fence) {
       // A fence closes on a run of its own mark at least as long, with nothing after.
       if (
         mark &&
@@ -190,23 +213,57 @@ function codeRanges(text: string): [number, number][] {
         mark.length >= fence.mark.length &&
         !rest.trim()
       ) {
-        ranges.push([fence.from, at + line.length])
+        ranges.push([fence.from, at + whole.length])
         fence = null
-        prose = at + line.length
+        prose = at + whole.length
       }
-    } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
-      spans(text, prose, at, ranges)
-      fence = { mark, from: at }
+    } else {
+      // An indented block runs on through blank lines, and ends on the first line
+      // that is not indented, which is then read like any other.
+      if (indented && !empty && INDENTED.test(line)) indented.to = at + whole.length
+      else if (indented && !empty) {
+        ranges.push([indented.from, indented.to])
+        prose = indented.to
+        indented = null
+      }
+
+      if (indented) {
+        // Still in the block.
+      } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
+        spans(text, prose, at, ranges)
+        fence = { mark, from: at }
+      } else if (!empty && INDENTED.test(line) && blank && !listed) {
+        spans(text, prose, at, ranges)
+        indented = { from: at, to: at + whole.length }
+      } else if (!empty && !INDENTED.test(line)) {
+        listed = LIST_ITEM.test(line)
+      }
     }
 
-    at += line.length + 1
+    blank = empty
+    at += whole.length + 1
   }
 
   // A fence nobody closed runs to the end of the note, which is how markdown reads it.
-  if (fence) ranges.push([fence.from, text.length])
-  else spans(text, prose, text.length, ranges)
+  if (fence) {
+    ranges.push([fence.from, text.length])
+    return ranges
+  }
 
+  if (indented) {
+    ranges.push([indented.from, indented.to])
+    prose = indented.to
+  }
+  spans(text, prose, text.length, ranges)
   return ranges
+}
+
+/** How many lines the properties at the top of the note take, the two `---` lines
+ *  included, or nothing for a note that has none. */
+function propertiesEnd(lines: readonly string[]): number {
+  if (lines[0]?.trimEnd() !== '---') return 0
+  const closing = lines.findIndex((line, at) => at > 0 && /^(?:---|\.\.\.)\s*$/.test(line))
+  return closing < 0 ? 0 : closing + 1
 }
 
 /** The inline code spans between `from` and `to`: a run of backticks, up to the
