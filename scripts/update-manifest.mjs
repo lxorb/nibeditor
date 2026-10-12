@@ -15,6 +15,11 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
+/** The repository is lxorb/orden now, and GitHub forwards this, its old name, to
+ *  it. It stays: every build from before the rename takes a bundle only from a URL
+ *  under this prefix (`offered()` in src-tauri/src/updates.rs), and one manifest
+ *  serves them all. So nobody may create a repository called lxorb/nibeditor
+ *  again: it would end the forwarding for every one of those installs. */
 const REPO = 'lxorb/nibeditor'
 
 /** Which Tauri platform key a built file belongs to. Each match names the

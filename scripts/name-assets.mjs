@@ -1,9 +1,9 @@
 /** Renames built bundles to something a person can read before downloading.
  *
  *  Tauri names them after build triples and packaging conventions, so the same
- *  release carries `Nib_0.1.0_x64-setup.exe`, `Nib_0.1.0_amd64.AppImage` and
- *  `Nib-0.1.0-1.x86_64.rpm` - three spellings of the architecture and no word
- *  saying which operating system any of them is for.
+ *  release carries `Orden_0.14.0_x64-setup.exe`, `Orden_0.14.0_amd64.AppImage`
+ *  and `Orden-0.14.0-1.x86_64.rpm` - three spellings of the architecture and no
+ *  word saying which operating system any of them is for.
  *
  *    node scripts/name-assets.mjs artifacts 0.1.0
  *
@@ -48,7 +48,10 @@ for (const dir of readdirSync(root)) {
   const full = join(root, dir)
   if (!statSync(full).isDirectory()) continue
 
-  // `nib-windows-x64` is the artifact directory the matrix produced.
+  // `nib-windows-x64` is the artifact directory the matrix produced. The label
+  // says `Nib-` whatever the product is called: every build from before the
+  // rename takes an update only from a file whose name starts with it, and one
+  // manifest serves them all (`names()` in src-tauri/src/updates.rs).
   const label = `Nib-${version}-${dir.replace(/^nib-/, '')}`
 
   for (const path of filesIn(full)) {

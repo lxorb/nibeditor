@@ -7,7 +7,7 @@ name: publish-mobile
 # remakes that one on every push and would take an APK uploaded beside it with it.
 #
 # There is no store account behind either platform. The Android side is an APK to
-# sideload; the iOS side is a simulator build, because putting Nib on a real iPhone
+# sideload; the iOS side is a simulator build, because putting Orden on a real iPhone
 # needs an Apple developer account. See docs/mobile.md for what to add when there
 # is one.
 on:
@@ -128,7 +128,7 @@ jobs:
             alias=nib
             keytool -genkeypair -keystore "$store" -alias "$alias" -keyalg RSA -keysize 2048 \
               -validity 10000 -storepass "$password" -keypass "$password" \
-              -dname 'CN=Nib, O=Emil Vinu'
+              -dname 'CN=Orden, O=Emil Vinu'
           fi
 
           {

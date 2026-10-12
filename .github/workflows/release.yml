@@ -2,7 +2,7 @@ name: release
 
 # Two kinds of release come out of here. A tag `v*` is a release proper, with
 # its own page and its own number. Every push to main is a build as well: the
-# desktop app follows main the way nibeditor.com does, so what is on main is
+# desktop app follows main the way orden.so does, so what is on main is
 # what people run, not only what was last tagged. Those builds land on one
 # rolling pre-release tagged `edge`, replaced each time - not `main`, since a
 # tag sharing a name with the branch makes every `git checkout main` ambiguous.

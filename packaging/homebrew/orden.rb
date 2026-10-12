@@ -1,12 +1,13 @@
-cask "nib" do
+cask "orden" do
   version "0.13.0"
   sha256 "7d63446f485df235deabf396a23e7e5cdc82e48863b9310f189f347e96aeda2e"
 
-  url "https://github.com/lxorb/nibeditor/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
-      verified: "github.com/lxorb/nibeditor/"
+  url "https://github.com/lxorb/orden/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
+      verified: "github.com/lxorb/orden/"
+  name "Orden"
   name "nibeditor"
   desc "Markdown editor that styles formatting in place instead of showing syntax"
-  homepage "https://nibeditor.com/"
+  homepage "https://orden.so/"
 
   livecheck do
     url :url
@@ -16,7 +17,7 @@ cask "nib" do
   auto_updates true
   depends_on macos: ">= :ventura"
 
-  app "nibeditor.app"
+  app "Orden.app"
 
   uninstall quit: "ch.emilvinu.nib"
 
@@ -30,10 +31,10 @@ cask "nib" do
   ]
 
   caveats <<~EOS
-    nibeditor is not notarized by Apple, so Gatekeeper refuses the quarantined copy
+    Orden is not notarized by Apple, so Gatekeeper refuses the quarantined copy
     Homebrew installs by default. Install it without the quarantine flag:
 
-      brew install --cask --no-quarantine lxorb/tap/nib
+      brew install --cask --no-quarantine lxorb/tap/orden
 
   EOS
 end
