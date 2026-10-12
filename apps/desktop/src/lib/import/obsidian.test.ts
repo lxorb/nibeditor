@@ -77,6 +77,21 @@ describe('an Obsidian vault', () => {
     expect(paths).toEqual(['.obsidian/app.json', 'Ideas.md', 'Projects/Plan.md'])
     expect(plan.format).toBe('obsidian')
   })
+  test('leaves an older vault’s settings behind, as the vault list does', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', '# Home'),
+      file('Old vault/.obsidian/app.json', '{}'),
+      file('Old vault/.obsidian/graph.json', '{}'),
+      file('Old vault/Note.md', '# Old'),
+    ])
+
+    expect(plan.files.map((one) => one.path).sort()).toEqual([
+      '.obsidian/app.json',
+      'Home.md',
+      'Old vault/Note.md',
+    ])
+  })
 })
 
 describe('what a vault carries into the settings', () => {
@@ -130,6 +145,21 @@ describe('what a vault carries into the settings', () => {
 
     const broken = await obsidianCarries([file('.obsidian/app.json', '{not json')])
     expect(broken).toEqual(fromAppJson({}))
+  })
+
+  test('reads the vault’s own app.json, not an older vault’s that sorts first', async () => {
+    const carried = await carriedBy('obsidian', [
+      file('Old vault/.obsidian/app.json', '{"useMarkdownLinks":true,"vimMode":true}'),
+      file('Old vault/Note.md', '# Old'),
+      file('.obsidian/app.json', '{"vimMode":false}'),
+      file('Home.md', '# Home'),
+    ])
+
+    expect(carried).toMatchObject({ vim: false, linkFormat: 'wikilink' })
+    // A zip whose one entry is the vault still has its settings read.
+    await expect(
+      obsidianCarries([file('Brain/.obsidian/app.json', '{"vimMode":true}')]),
+    ).resolves.toMatchObject({ vim: true })
   })
 
   test('is Notion’s habits for a Notion export, and nothing for a plain folder', async () => {

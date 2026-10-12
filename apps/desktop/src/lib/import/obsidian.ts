@@ -48,9 +48,11 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
  *  and so is `node_modules`: the same as the vault list leaves behind in
  *  obsidian_vaults.rs, so a vault picked as a folder or a zip arrives the same. */
 export function leftInVault(path: string): boolean {
-  const inside = SETTINGS.exec(path)
-  if (inside) {
-    const rest = path.slice(inside[0].length)
+  // Only the vault's own settings, at the top once `atVaultTop` has had the paths:
+  // an older vault kept one folder down has its `.obsidian/` left behind like any
+  // other hidden folder, the way obsidian_vaults.rs leaves it.
+  if (path.startsWith('.obsidian/')) {
+    const rest = path.slice('.obsidian/'.length)
     return /^workspace[^/]*\.json$/i.test(rest) || /^(plugins|themes|cache)\//i.test(rest)
   }
 
@@ -61,9 +63,10 @@ export function leftInVault(path: string): boolean {
 
 /** The habits the vault's `app.json` records. Read from what was picked rather
  *  than from the disk, so a vault that arrived as a zip says as much as one that
- *  arrived as a folder. */
+ *  arrived as a folder. The one at the top of the vault, wherever it sorts: an older
+ *  vault kept inside this one has an `app.json` of its own. */
 export async function obsidianCarries(sources: readonly Source[]): Promise<Carried> {
-  const app = sources.find((one) => /^(?:[^/]+\/)?\.obsidian\/app\.json$/.test(one.path))
+  const app = atVaultTop(sources).find((one) => one.path === '.obsidian/app.json')
   let said: unknown = {}
 
   if (app) {
