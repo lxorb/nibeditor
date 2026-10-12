@@ -79,7 +79,7 @@ function mcp(home) {
     }
     servers[name] = rest.slice(rest.indexOf('--') + 1)
   } else if (verb === 'remove') {
-    delete servers[name]
+    servers = Object.fromEntries(Object.entries(servers).filter(([one]) => one !== name))
   } else return refuse(`mcp ${verb} is not faked`)
   writeFileSync(file, JSON.stringify(servers))
 }

@@ -1014,7 +1014,8 @@ export const fil: Dictionary = {
   'AI account: {name}': 'AI account: {name}',
   Accounts: 'Mga account',
   Access: 'Access',
-  'Agents on this computer connect on their own': 'Kusang kumokonekta ang mga agent sa computer na ito',
+  'Agents on this computer connect on their own':
+    'Kusang kumokonekta ang mga agent sa computer na ito',
   Helpers: 'Mga katulong',
   'Start helpers on your AI accounts': 'Magpatakbo ng katulong sa iyong mga AI account',
   Delegated: 'Ipinasa',

@@ -1015,7 +1015,8 @@ export const de: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zugriff',
-  'Agents on this computer connect on their own': 'Agenten auf diesem Computer verbinden sich selbst',
+  'Agents on this computer connect on their own':
+    'Agenten auf diesem Computer verbinden sich selbst',
   Helpers: 'Helfer',
   'Start helpers on your AI accounts': 'Helfer auf deinen KI-Konten starten',
   Delegated: 'Übergeben',

@@ -460,6 +460,8 @@ describe('the switch', () => {
       'lib/Palette.svelte',
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
+      // Whether the agents on this computer connect on their own, in Settings > AI > Access.
+      'lib/access/Access.svelte',
       // Whether a pasted token may write, in Settings > AI > Access.
       'lib/access/AccountSteps.svelte',
       // What an agent may do, a switch a scope, in Settings > AI > Access.
