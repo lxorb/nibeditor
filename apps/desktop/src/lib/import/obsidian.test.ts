@@ -363,6 +363,19 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('in a table under a list item keep the cell whole', async () => {
+    const plan = file('Plan.md', '# Plan\n')
+    // Obsidian writes a list item's contents a tab in; four spaces do the same.
+    const tabbed = '- Steps\n\t| step | note |\n\t| --- | --- |\n\t| one | [[Plan\\|the plan]] |\n'
+    const spaced = (link: string) =>
+      `1. Steps\n    | step | note |\n    | --- | --- |\n    | one | ${link} |\n`
+
+    await expect(noteFrom('A.md', file('A.md', tabbed), plan)).resolves.toBe(tabbed)
+    await expect(noteFrom('A.md', file('A.md', spaced('[the plan](Plan.md)')), plan)).resolves.toBe(
+      spaced('[[Plan\\|the plan]]'),
+    )
+  })
+
   test('keep pointing at a file whose name holds a percent sign or a hash', async () => {
     await expect(
       noteFrom(

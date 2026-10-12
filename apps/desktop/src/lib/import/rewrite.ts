@@ -255,10 +255,13 @@ export function isCanvas(path: string): boolean {
 
 /** Where the note's tables are, as stretches of its text: the header row, the row of
  *  dashes under it and every row after, up to the first blank line. A callout's or a
- *  quote's `>` in front of each line is a table in there all the same. */
+ *  quote's `>` in front of each line is a table in there all the same, and so is the
+ *  indent of a list item, a tab or four spaces, which is where Obsidian writes a table
+ *  kept under one. Lines indented that far as code are code first, and a link there
+ *  is left alone before its table is asked about. */
 function tableRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
-  const lines = text.split('\n').map((line) => line.replace(QUOTED, ''))
+  const lines = text.split('\n').map((line) => line.replace(QUOTED, '').replace(/^[ \t]+/, ''))
   const starts: number[] = []
   let at = 0
   for (const line of text.split('\n')) {
