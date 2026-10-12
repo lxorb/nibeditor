@@ -75,13 +75,28 @@ pub fn read_obsidian_file(vault: String, path: String) -> Result<String, String>
 
 /// The vaults `obsidian.json` names, wherever this platform's Obsidian keeps it.
 fn listed() -> Vec<PathBuf> {
-    for config in config_files() {
-        if let Ok(text) = fs::read_to_string(&config) {
-            return vaults_in(&text);
+    listed_in(&config_files())
+}
+
+/// The vaults of every one of these lists, each once. Every list is read rather
+/// than the first found, because a Linux reader who moved from the downloaded app to the
+/// Flatpak still has the old list, naming vaults long gone, beside the one Obsidian
+/// writes now.
+fn listed_in(configs: &[PathBuf]) -> Vec<PathBuf> {
+    let mut found: Vec<PathBuf> = Vec::new();
+
+    for config in configs {
+        let Ok(text) = fs::read_to_string(config) else {
+            continue;
+        };
+        for vault in vaults_in(&text) {
+            if !found.contains(&vault) {
+                found.push(vault);
+            }
         }
     }
 
-    Vec::new()
+    found
 }
 
 /// Where Obsidian writes `obsidian.json`: its config folder, which on Linux may also
@@ -208,14 +223,16 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
     }
 }
 
-/// The path from the vault's top, with forward slashes.
+/// The path from the vault's top, with forward slashes. None for a name that is not
+/// UTF-8, an old Latin-1 download on Linux, say: written out it would be a name with
+/// a replacement character in it, which `read_obsidian_file` could then not find.
 fn relative(root: &Path, path: &Path) -> Option<String> {
     let rest = path.strip_prefix(root).ok()?;
-    let parts: Vec<String> = rest
+    let parts: Option<Vec<&str>> = rest
         .components()
-        .map(|part| part.as_os_str().to_string_lossy().into_owned())
+        .map(|part| part.as_os_str().to_str())
         .collect();
-    Some(parts.join("/"))
+    Some(parts?.join("/"))
 }
 
 /// Whether a path of the vault stays behind.
@@ -267,6 +284,54 @@ mod tests {
     fn a_file_obsidian_could_not_read_lists_nothing() {
         assert!(vaults_in("not json").is_empty());
         assert!(vaults_in(r#"{"other":1}"#).is_empty());
+    }
+
+    #[test]
+    fn every_list_obsidian_keeps_is_read_each_vault_once() {
+        let here = tempfile::tempdir().expect("a folder");
+        let native = here.path().join("native.json");
+        let flatpak = here.path().join("flatpak.json");
+        fs::write(
+            &native,
+            r#"{"vaults":{"a":{"path":"/gone/Old","ts":1},"b":{"path":"/home/me/Work","ts":2}}}"#,
+        )
+        .expect("the native list");
+        fs::write(
+            &flatpak,
+            r#"{"vaults":{"c":{"path":"/home/me/Notes","ts":3},"d":{"path":"/home/me/Work","ts":2}}}"#,
+        )
+        .expect("the Flatpak's list");
+
+        assert_eq!(
+            listed_in(&[native, here.path().join("missing.json"), flatpak]),
+            vec![
+                PathBuf::from("/home/me/Work"),
+                PathBuf::from("/gone/Old"),
+                PathBuf::from("/home/me/Notes"),
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_name_that_is_not_utf8_is_not_listed_as_one_nobody_can_read() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let here = tempfile::tempdir().expect("a folder");
+        let vault = here.path();
+        fs::write(
+            vault.join(std::ffi::OsStr::from_bytes(b"Caf\xe9.md")),
+            "# Cafe",
+        )
+        .expect("a Latin-1 name");
+        fs::write(vault.join("Read me.md"), "x").expect("a note");
+
+        let files = files_of(vault);
+        let paths: Vec<&str> = files.iter().map(|one| one.path.as_str()).collect();
+        assert_eq!(paths, vec!["Read me.md"]);
+        for file in &files {
+            assert!(file_in(vault, &file.path).is_ok());
+        }
     }
 
     #[test]
