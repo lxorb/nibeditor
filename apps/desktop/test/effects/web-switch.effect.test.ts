@@ -861,3 +861,60 @@ test('a picture of the page goes when the page is shown at another size', async 
 
   void unmount(app)
 })
+
+/** The hole's box is the one source of where the page goes, and that includes a box with
+ *  no room in it: a window made too short for anything under the bar. The pane used to
+ *  say nothing then, and the page stayed drawn at the hole's last box over the bar and
+ *  whatever else had taken its place; and when the room came back at the same box, the
+ *  pane had already said that box and said nothing again (#246). */
+test('a hole with no room puts its page out of sight, and the room back brings it back', async () => {
+  const { tab, app } = await opened('https://example.com/no-room')
+  const hole = target.querySelector('.hole')
+  if (!hole) throw new Error('no hole')
+
+  asked.length = 0
+  hole.setAttribute('data-box', JSON.stringify({ x: 0, y: 40, width: 800, height: 0 }))
+  resized(hole)
+  await frames()
+
+  const hidden = asked.filter((one) => one.command === 'web_place')
+  expect(hidden.at(-1)?.args.visible).toBe(false)
+  // Still the tab in front: nothing counts down to freezing it.
+  expect(pages.of(tab.id).onScreen).toBe(true)
+
+  asked.length = 0
+  hole.setAttribute('data-box', JSON.stringify({ x: 0, y: 40, width: 800, height: 560 }))
+  resized(hole)
+  await frames()
+
+  const shown = asked.filter((one) => one.command === 'web_place')
+  expect(shown.at(-1)?.args.visible).toBe(true)
+  expect(shown.at(-1)?.args.pane).toEqual({ x: 0, y: 40, width: 800, height: 560 })
+
+  void unmount(app)
+})
+
+/** A window moved to a screen of another scale keeps its size in its own pixels, so the
+ *  hole's box and the window's size are what they were - and the page's window, in the
+ *  screen's pixels, is not. The scale is part of what the pane tells, so it is told again. */
+test('a screen of another scale places the page again', async () => {
+  const { app } = await opened('https://example.com/scale')
+  const scale = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')
+
+  asked.length = 0
+  window.dispatchEvent(new Event('resize'))
+  await frames()
+  expect(asked.filter((one) => one.command === 'web_place')).toHaveLength(0)
+
+  Object.defineProperty(window, 'devicePixelRatio', { value: 1.5, configurable: true })
+  try {
+    window.dispatchEvent(new Event('resize'))
+    await frames()
+    expect(asked.filter((one) => one.command === 'web_place')).toHaveLength(1)
+  } finally {
+    if (scale) Object.defineProperty(window, 'devicePixelRatio', scale)
+    else Reflect.deleteProperty(window, 'devicePixelRatio')
+  }
+
+  void unmount(app)
+})

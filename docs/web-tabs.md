@@ -322,11 +322,12 @@ and a second launch handed its file over to a window that was never brought
 forward. Nothing in the crate asks that way now; `get_window` is the call, because a
 window is what all of them wanted.
 
-**Following the pane.** A resize observer on the hole for a pane being dragged,
-the window's own resize, and a look after any press - and the crate is only told
-when the answer has changed, so a keystroke in a note beside the page costs one
-layout read and no IPC. The window's own resize is the crate's to follow; see
-"Glued to the pane" below.
+**Following the pane.** The hole's box is the one source of where the page goes, and
+every change of it is heard: a resize observer for its size, an intersection observer
+for where it is (`web-tab/shifts.ts`), the window's own resize, the screen's scale, and
+a look after any press - and the crate is only told when the answer has changed, so a
+keystroke in a note beside the page costs one layout read and no IPC. The window's own
+resize is the crate's to follow; see "Glued to the pane" below.
 
 **Hidden when the tab is not showing, and never closed for it.** This is the one
 thing in this file that shipped wrong twice. Emil, 2026-09-13: _"if I switch between
@@ -710,6 +711,66 @@ does.
 | the address field's suggestions                       | hidden 1,314 ms                  | never hidden, cut round     |
 | settings over the page                                | hidden, its still under it       | emptied, its still under it |
 | a toast                                               | never hidden                     | never hidden                |
+
+**One box, and every change of it.** Emil, 2026-10-12 (#246): _"often they just freeze
+in a wrong sizing and so on. hence there may be a more fundamental issue."_ There was
+one, and every symptom shared it. A page goes where the hole's box is, and the box is the
+one source of that: what the crate does on its own in a resize is a bridge to the
+window's next word, never an answer of its own. Chrome and Arc never meet the question -
+their page is a view in the same layout pass as everything round it - and Electron's
+views and Tauri's meet it exactly as nib does. So the window has to hear every change of
+the box, and the crate must invent nothing between two of them. Neither held:
+
+- **A move is a change.** The pane heard its hole through a resize observer, which hears
+  a size. The file list moved to the other side of the window moves the panes across
+  without changing their width, and the page stayed where the panes had been, over the
+  list, until something else happened to change size: 504 pixels off, for good. An
+  intersection observer whose root is the box itself hears the box move, which is
+  Floating UI's answer for keeping one thing glued to another (`web-tab/shifts.ts`); it
+  is armed again on every change of size, the hole's or the window's, because a box that
+  shrinks inside its root is still seen whole and a move inside a stale root is never
+  seen.
+- **No room is a change.** A hole squeezed to nothing - a window too short for anything
+  under the bar - said nothing, and the page stayed drawn at its last box over the bar.
+  It goes out of sight now, still the tab in front, and comes back with the room.
+- **A scale is a change.** A window moved to a screen of another scale keeps its size in
+  its own pixels, so neither the hole nor the window said anything; the pane tells the
+  scale with the box now, and hears it change. The crate followed the change with the
+  window's old size in pixels read at the new scale, a layout twice or half as big for a
+  message; it follows the size the window is about to be given.
+- **A minimised window is no change.** Windows says a minimised window's client area is
+  nothing, and tao passes that on as a resize to nought, which the crate mapped every page
+  in the window down to one pixel by: each site laid itself out for a window a pixel
+  wide, and again when the window came back. Chrome leaves a minimised window's pages
+  their size, and so does this.
+- **An edge is an edge.** The runtime rounded a page's corner and its size to the screen's
+  pixels apart, so at 125 or 150 per cent the far edge could be a pixel off the hole's,
+  which the compositor rounds edge by edge. The crate rounds each edge itself
+  (`edges` in web_follow.rs).
+- **A layer's corners are its own.** The picture in #246: a menu hanging over the edge of
+  a page was trimmed to the page and then rounded, so its corners were drawn on the
+  page's edge, and the page showed through two corners of the menu. A layer keeps its
+  whole shape now, and the page's own edge trims it (web_cut.rs).
+
+Measured with `scripts/web-bounds-probe.py`, which asks the windows after each step,
+once the page has stopped moving, whether every hole on screen has its page over it to
+the pixel and no page is on screen without a hole - and, for a layer over the page's edge,
+whether the page draws in the layer's corner. A probe at 200 per cent:
+
+| step | before | after |
+| --- | --- | --- |
+| opened, the window resized, a frame at a time too, the sidebar opened, shut and pressed over and over, the pane split, its divider dragged, the pane filling the window and giving it back, the pane showing nothing and the page again, the split closed, a note and another page and back | over its hole | over its hole |
+| the file list moved to the other side | 504 pixels off, for good | over its hole |
+| a window too short for anything under the bar | a page left on with no hole | out of sight, and back with the room |
+| a menu over the page's left edge | the page drawn in the menu's corners | cut in the menu's own shape |
+| a menu up through a resize, then closed | the page whole | the page whole |
+
+Twenty-six steps; 23 of them right before and all 26 after, on two runs of each build.
+Not driven, because a probe's window may never be on a screen: a minimised window (the
+shell draws a probe's as a title bar in the corner of the screen) and a screen of another
+scale, both held by the tests in web_follow.rs, `shifts.test.ts` and
+`web-switch.effect.test.ts`; and the edges, which meet at 200 per cent either way and are
+held to the pixel at 150 by web_follow.rs's tests.
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
@@ -1989,6 +2050,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                          |
 | `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                        |
 | `apps/desktop/src/lib/web-tab/place.ts`               | where each note was left, per device: the offset and the trail. Tested                                                                                                                                                                                 |
+| `apps/desktop/src/lib/web-tab/shifts.ts` | the hole heard moving without changing size, and the screen's scale changing. Tested |
 | `apps/desktop/src/lib/web-tab/keep.ts`                | the file keeping up with the page, debounced. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/permissions.svelte.ts`  | what each site was told, and the requests waiting for an answer. Tested                                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/WebAsk.svelte`          | the bubble a site is answered in                                                                                                                                                                                                                       |

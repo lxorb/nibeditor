@@ -28,12 +28,29 @@
 //! while it crossed - lands where that layout is at the current size, rather than putting
 //! the page back where the pane was before the resize. That was the freeze: the window's
 //! last word was a stale one, and it never had reason to say another.
+//!
+//! The mapping is a bridge and never the answer: what the window measured is the one
+//! source of where a page goes, and the window measures again after every change of its
+//! layout, its size and its scale (see `look` in web-tab/WebTab.svelte). So this side
+//! invents nothing the window would not say. Two things it used to (#246):
+//!
+//! * **A minimised window has no size**, and is not a window of no size. Windows says a
+//!   minimised window's client area is nothing, and tao passes that on as a resize to
+//!   nought by nought, which mapped every page in the window down to one pixel: every
+//!   site laid itself out again for a window one pixel wide, and again when the window
+//!   came back. Chrome leaves a minimised window's pages their size, and so does this:
+//!   an empty client area is no news about the layout.
+//! * **A page's edges are the hole's edges.** The window draws the hole with each edge
+//!   rounded to the screen's pixels, and the runtime rounded the page's corner and its
+//!   size apart, so at 125 or 150 per cent the page's far edge could be a pixel off the
+//!   hole's: a hairline of the pane beside it, or a page a pixel over the divider.
+//!   `edges` rounds each edge, as the window's compositor does.
 
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, PoisonError};
 
 use serde::Deserialize;
-use tauri::{LogicalPosition, LogicalSize, Manager as _, Rect, Window, WindowEvent};
+use tauri::{Manager as _, PhysicalPosition, PhysicalSize, Rect, Window, WindowEvent};
 
 /// A rectangle in the window's own coordinates, as the window measures one.
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
@@ -136,14 +153,26 @@ fn following<T>(look: impl FnOnce(&mut HashMap<String, (String, Followed)>) -> T
     look(&mut FOLLOWING.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
-/// The window's size now, in the units the window measures in.
+/// A client area of `width` by `height` screen pixels at `scale`, in the units the window
+/// measures in, or nothing for an empty one: a minimised window, which says nothing about
+/// where anything is.
+#[must_use]
+pub fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
+    if width == 0 || height == 0 || scale <= 0.0 {
+        return None;
+    }
+    Some(Extent {
+        width: f64::from(width) / scale,
+        height: f64::from(height) / scale,
+    })
+}
+
+/// The window's size now, in the units the window measures in; nothing while it is
+/// minimised.
 pub fn extent_of(window: &Window) -> Option<Extent> {
     let scale = window.scale_factor().ok()?;
-    let size = window.inner_size().ok()?.to_logical::<f64>(scale);
-    Some(Extent {
-        width: size.width,
-        height: size.height,
-    })
+    let size = window.inner_size().ok()?;
+    extent(size.width, size.height, scale)
 }
 
 /// Where a placement puts a page now, and the page followed from here on - or, without a
@@ -174,24 +203,62 @@ pub fn unfollow(label: &str) {
     following(|all| all.remove(label));
 }
 
-/// The bounds a page is set to, in the runtime's own terms.
-pub fn rect_of(bounds: Bounds) -> Rect {
+/// A page's window in the screen's own pixels at `scale`: left, top, width and height,
+/// with each edge rounded where the window's compositor rounds the hole's, so the two
+/// meet at every scale. Never less than a pixel either way.
+#[must_use]
+#[allow(
+    clippy::cast_possible_truncation,
+    reason = "a page is never anywhere near two billion pixels across"
+)]
+pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
+    let at = |length: f64| (length * scale).round() as i32;
+    let (left, top) = (at(bounds.x), at(bounds.y));
+    let (right, bottom) = (at(bounds.x + bounds.width), at(bounds.y + bounds.height));
+    (
+        left,
+        top,
+        right.saturating_sub(left).max(1).unsigned_abs(),
+        bottom.saturating_sub(top).max(1).unsigned_abs(),
+    )
+}
+
+/// A page's window as `edges` says it, in the runtime's own terms.
+#[must_use]
+pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
-        position: LogicalPosition::new(bounds.x, bounds.y).into(),
-        size: LogicalSize::new(bounds.width, bounds.height).into(),
+        position: PhysicalPosition::new(left, top).into(),
+        size: PhysicalSize::new(width, height).into(),
     }
 }
 
-/// A window was resized: every page on screen in it goes where its layout puts it at the
-/// new size, inside this same resize.
+/// A window was resized, or moved to a screen of another scale: every page on screen in
+/// it goes where its layout puts it at the new size, inside this same resize.
+///
+/// A change of scale says the size the window is about to be given, and that is the size
+/// followed. The window still has its old size in the screen's pixels when it is told,
+/// and the old size at the new scale is a layout twice or half as big, for the one
+/// message before the resize that follows.
 pub fn heard(window: &Window, event: &WindowEvent) {
-    if !matches!(
-        event,
-        WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }
-    ) {
-        return;
-    }
-    let Some(now) = extent_of(window) else {
+    let (now, scale) = match event {
+        WindowEvent::Resized(_) => {
+            let Ok(scale) = window.scale_factor() else {
+                return;
+            };
+            (extent_of(window), scale)
+        }
+        WindowEvent::ScaleFactorChanged {
+            scale_factor,
+            new_inner_size,
+            ..
+        } => (
+            extent(new_inner_size.width, new_inner_size.height, *scale_factor),
+            *scale_factor,
+        ),
+        _ => return,
+    };
+    // Minimised: every page keeps its place and its size until the window is back.
+    let Some(now) = now else {
         return;
     };
     let mine: Vec<(String, Followed)> = following(|all| {
@@ -202,18 +269,19 @@ pub fn heard(window: &Window, event: &WindowEvent) {
     });
     for (label, one) in mine {
         if let Some(view) = window.app_handle().get_webview(&label) {
-            let bounds = fitted(one.hole, &one.frame, now);
-            let _ = view.set_bounds(rect_of(bounds));
+            let placed = edges(fitted(one.hole, &one.frame, now), scale);
+            let (_, _, width, height) = placed;
+            let _ = view.set_bounds(rect_of(placed));
             // A page under one of the app's layers keeps the layer cut out of it at its
             // new size; see web_cut.rs.
-            crate::web_cut::refit(&view, bounds.width, bounds.height);
+            crate::web_cut::refit(&view, width, height, scale);
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{fitted, Bounds, Extent, Frame};
+    use super::{edges, extent, fitted, Bounds, Extent, Frame};
 
     /// Within a hundredth of a pixel, which is what floating point owes a division.
     fn near(found: Bounds, wanted: Bounds) {
@@ -360,5 +428,36 @@ mod tests {
             },
         );
         assert_eq!(now, hole);
+    }
+
+    /// Minimised, Windows says the window has no client area, and tao says that as a resize
+    /// to nought by nought; mapped, it was every page in the window one pixel wide.
+    #[test]
+    fn a_minimised_window_says_nothing_about_the_layout() {
+        assert_eq!(extent(0, 0, 1.5), None);
+        assert_eq!(extent(1200, 0, 1.0), None);
+        assert_eq!(
+            extent(1800, 1200, 1.5),
+            Some(Extent {
+                width: 1200.0,
+                height: 800.0,
+            })
+        );
+    }
+
+    /// At 150 per cent a hole from 100.3 to 300.6 is drawn from pixel 150 to pixel 451.
+    /// Its corner and its size rounded apart made a page 300 wide, a pixel short of the
+    /// hole's far edge; and the same below.
+    #[test]
+    fn a_page_s_edges_are_rounded_where_the_hole_s_are() {
+        assert_eq!(
+            edges(at(100.3, 40.2, 200.3, 560.2), 1.5),
+            (150, 60, 301, 841)
+        );
+        assert_eq!(
+            edges(at(240.0, 76.0, 960.0, 684.0), 1.0),
+            (240, 76, 960, 684)
+        );
+        assert_eq!(edges(at(-10.0, -10.0, 0.1, 0.1), 2.0), (-20, -20, 1, 1));
     }
 }

@@ -18,6 +18,12 @@
 //! page is live, scrolling and playing, never hidden and so never blank when the layer
 //! goes. Measured with scripts/web-smooth-probe.py.
 //!
+//! A layer reaching past the page's edge keeps its own shape and the page's edge trims
+//! it. It used to be trimmed to the page first and rounded after, so its corners were
+//! drawn on the page's edge rather than its own, and the page showed in the corners of
+//! every menu that hung over the edge of a pane (#246): a sliver of the site in each of
+//! two corners of the menu, where the menu's own corners are square.
+//!
 //! A layer that dims the whole window - a sheet over its scrim - still covers all of the
 //! page, and that is a cut too: an empty region. The page is out of sight without being
 //! hidden, so the engine keeps its frame and the page is back the moment the sheet goes,
@@ -70,30 +76,34 @@ fn pixels(length: f64, scale: f64) -> i32 {
     (length * scale).round() as i32
 }
 
-/// The shape a cut leaves of a page `width` by `height` in the window's own units, on a
-/// screen of `scale`. Layers that miss the page are left out, and those that reach past
-/// its edge are trimmed to it; a cut with nothing left in it is no cut.
+/// The shape a cut leaves of a page `wide` by `tall` pixels of the screen, at `scale`.
+/// Layers that miss the page are left out; one that reaches past its edge is kept whole,
+/// corners and all, and what of it is outside the page is outside the page's window
+/// anyway. A cut with nothing left in it is no cut.
 #[must_use]
-pub fn shape_of(cut: Option<&Cut>, width: f64, height: f64, scale: f64) -> Shape {
+pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64) -> Shape {
     let cut = cut?;
     if cut.all {
         return Some(Vec::new());
     }
 
-    let (wide, tall) = (pixels(width, scale), pixels(height, scale));
+    let wide = i32::try_from(wide).unwrap_or(i32::MAX);
+    let tall = i32::try_from(tall).unwrap_or(i32::MAX);
     let pieces: Vec<Piece> = cut
         .hollows
         .iter()
         .map(|one| {
             (
-                pixels(one.x, scale).max(0),
-                pixels(one.y, scale).max(0),
-                pixels(one.x + one.width, scale).min(wide),
-                pixels(one.y + one.height, scale).min(tall),
+                pixels(one.x, scale),
+                pixels(one.y, scale),
+                pixels(one.x + one.width, scale),
+                pixels(one.y + one.height, scale),
                 pixels(one.radius * 2.0, scale).max(0),
             )
         })
-        .filter(|(left, top, right, bottom, _)| left < right && top < bottom)
+        .filter(|&(left, top, right, bottom, _)| {
+            left < right && top < bottom && left < wide && right > 0 && top < tall && bottom > 0
+        })
         .collect();
 
     // Nothing over the page after all: the whole of it.
@@ -120,14 +130,13 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
-/// Gives a page the shape a cut leaves of it at `width` by `height`, unless it already
-/// has that shape.
-pub fn apply(view: &Webview, cut: Option<Cut>, width: f64, height: f64) {
+/// Gives a page the shape a cut leaves of it at `wide` by `tall` pixels of the screen,
+/// at `scale`, unless it already has that shape.
+pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64) {
     if !CUTS {
         return;
     }
-    let scale = view.window().scale_factor().unwrap_or(1.0);
-    let shape = shape_of(cut.as_ref(), width, height, scale);
+    let shape = shape_of(cut.as_ref(), wide, tall, scale);
     let label = view.label().to_string();
     let changed = given(|all| {
         // A page never given a shape has all of itself, which is `None`.
@@ -141,10 +150,10 @@ pub fn apply(view: &Webview, cut: Option<Cut>, width: f64, height: f64) {
 }
 
 /// A page under a cut has been given a new size: the cut again, at that size.
-pub fn refit(view: &Webview, width: f64, height: f64) {
+pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
     let cut = given(|all| all.get(view.label()).and_then(|(cut, _)| cut.clone()));
     if cut.is_some() {
-        apply(view, cut, width, height);
+        apply(view, cut, wide, tall, scale);
     }
 }
 
@@ -231,8 +240,8 @@ mod tests {
 
     #[test]
     fn nothing_over_the_page_is_the_whole_page() {
-        assert_eq!(shape_of(None, 800.0, 600.0, 1.0), None);
-        assert_eq!(shape_of(Some(&Cut::default()), 800.0, 600.0, 1.0), None);
+        assert_eq!(shape_of(None, 800, 600, 1.0), None);
+        assert_eq!(shape_of(Some(&Cut::default()), 800, 600, 1.0), None);
     }
 
     #[test]
@@ -241,7 +250,7 @@ mod tests {
             all: true,
             hollows: Vec::new(),
         };
-        assert_eq!(shape_of(Some(&all), 800.0, 600.0, 1.0), Some(Vec::new()));
+        assert_eq!(shape_of(Some(&all), 800, 600, 1.0), Some(Vec::new()));
     }
 
     #[test]
@@ -254,20 +263,38 @@ mod tests {
             }],
         };
         assert_eq!(
-            shape_of(Some(&cut), 800.0, 600.0, 1.5),
+            shape_of(Some(&cut), 1200, 900, 1.5),
             Some(vec![(0, 0, 1200, 900, 0), (15, 30, 315, 180, 24)])
         );
     }
 
     #[test]
-    fn a_layer_reaching_past_the_page_is_trimmed_to_it() {
+    fn a_layer_reaching_past_the_page_keeps_its_own_shape() {
         let cut = Cut {
             all: false,
             hollows: vec![hollow(-40.0, -10.0, 100.0, 50.0)],
         };
         assert_eq!(
-            shape_of(Some(&cut), 800.0, 600.0, 1.0),
-            Some(vec![(0, 0, 800, 600, 0), (0, 0, 60, 40, 0)])
+            shape_of(Some(&cut), 800, 600, 1.0),
+            Some(vec![(0, 0, 800, 600, 0), (-40, -10, 60, 40, 0)])
+        );
+    }
+
+    /// The menu of #246: two thirds of it over the file list, a third over the page, with
+    /// round corners. Trimmed to the page and rounded after, its corners were drawn on the
+    /// page's edge, and the page showed through the menu there.
+    #[test]
+    fn a_menu_over_the_page_s_edge_has_its_corners_where_the_menu_has_them() {
+        let cut = Cut {
+            all: false,
+            hollows: vec![Hollow {
+                radius: 12.0,
+                ..hollow(-248.0, 85.0, 328.0, 240.0)
+            }],
+        };
+        assert_eq!(
+            shape_of(Some(&cut), 1000, 700, 1.0),
+            Some(vec![(0, 0, 1000, 700, 0), (-248, 85, 80, 325, 24)])
         );
     }
 
@@ -277,6 +304,11 @@ mod tests {
             all: false,
             hollows: vec![hollow(900.0, 10.0, 100.0, 50.0)],
         };
-        assert_eq!(shape_of(Some(&cut), 800.0, 600.0, 1.0), None);
+        assert_eq!(shape_of(Some(&cut), 800, 600, 1.0), None);
+        let left = Cut {
+            all: false,
+            hollows: vec![hollow(-140.0, 10.0, 100.0, 50.0)],
+        };
+        assert_eq!(shape_of(Some(&left), 800, 600, 1.0), None);
     }
 }

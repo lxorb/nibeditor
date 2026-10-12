@@ -11,7 +11,8 @@
    *  `workspace.openWeb` for why.
    *
    *  The hole has to follow the pane exactly, so it is measured rather than
-   *  guessed: a resize observer for the pane being dragged, the window's own resize,
+   *  guessed, and its box is the one source of where the page goes: a resize observer
+   *  for its size, `watchShifts` for where it is, the window's own resize and scale,
    *  and a check after anything the app puts over it. A native webview draws above
    *  every pixel of HTML in the window, so what of the app's is over the page is cut
    *  out of it - otherwise a menu would come up behind it. See covers.ts. */
@@ -56,6 +57,7 @@
   import { shownAddress } from './omnibox'
   import { type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
   import { seek, shut, sought } from './seek'
+  import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
   import { isMuted, keepZoom, zoomOf } from './sites'
@@ -201,6 +203,9 @@
    *  anything. */
   let told = ''
 
+  /** What was told while the hole had no room for the page: the page out of sight. */
+  const NO_ROOM = 'no room'
+
   /** Where the hole was, the last time anybody looked.
    *
    *  Kept here rather than measured when it is wanted, because the one moment it is
@@ -244,12 +249,18 @@
 
   // The hole, watched for as long as it is in the pane: from the mount, and from the
   // moment a tab on nib's own page is sent to a site, which is when the page is asked for.
+  // Its size by the resize observer, and where it is by `watchShifts`: the panes moved
+  // across the window without changing size are a page left behind otherwise (#246).
   $effect(() => {
     const room = hole
     if (!room || !watching) return
     watching.observe(room)
+    const unshift = watchShifts(room, follow)
     untrack(() => follow())
-    return () => watching.unobserve(room)
+    return () => {
+      watching.unobserve(room)
+      unshift()
+    }
   })
 
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
@@ -279,7 +290,17 @@
     if (!isDesktop || !ready || own) return
 
     const box = rect()
-    if (!box) return
+    if (!box) {
+      // No room for the page at all: a window made too short for anything under the bar.
+      // The page goes out of sight where it was, still the tab in front, rather than
+      // staying drawn at the hole's last box over whatever is there now; it comes back
+      // with the room, because what was told is forgotten.
+      if (last && told !== NO_ROOM) {
+        told = NO_ROOM
+        void pages.place(tab.id, last, false)
+      }
+      return
+    }
 
     last = box
     const cut = coverOf(box)
@@ -300,7 +321,9 @@
     if (!visible && hole && moving(hole)) follow()
 
     const frame = frameOf()
-    const said = JSON.stringify([box, cut, frame?.window])
+    // The scale is part of it: the same box on a screen of another scale is another page
+    // window, and nothing else in the layout says the scale changed.
+    const said = JSON.stringify([box, cut, frame?.window, devicePixelRatio])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
@@ -364,6 +387,8 @@
     else void startup.turn('rooms').then(asking)
 
     window.addEventListener('resize', follow)
+    // A screen of another scale: the same box is another page window; see shifts.ts.
+    const unscale = watchScale(follow)
     // Anything the app opens over the page is opened by a press: after one, look
     // again at what is on top. Twice, because a sheet arrives over a transition.
     const pressed = () => {
@@ -396,6 +421,7 @@
       // than a pause later. See keep.ts.
       if (tab.path !== null) keepNow(tab.path)
       window.removeEventListener('resize', follow)
+      unscale()
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
 

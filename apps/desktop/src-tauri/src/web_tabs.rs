@@ -39,7 +39,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{
-    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Url, Webview, WebviewBuilder,
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Url, Webview, WebviewBuilder,
     WebviewUrl,
 };
 
@@ -1052,11 +1052,15 @@ fn page_built(
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = (app, store);
 
+    // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let (left, top, width, height) =
+        crate::web_follow::edges(crate::web_follow::Bounds::from(pane), scale);
     window
         .add_child(
             builder,
-            LogicalPosition::new(pane.x, pane.y),
-            LogicalSize::new(pane.width, pane.height),
+            PhysicalPosition::new(left, top),
+            PhysicalSize::new(width, height),
         )
         .map(|_| ())
         .map_err(|error| format!("that page could not be opened: {error}"))
@@ -1781,18 +1785,24 @@ pub fn web_place(
     // Where the layout the window measured puts the page at the window's size now, which
     // is where it was measured unless the window has been resized since; see
     // web_follow.rs.
+    let window = view.window();
     let bounds = crate::web_follow::placed(
-        &view.window(),
+        &window,
         view.label(),
         crate::web_follow::Bounds::from(&pane),
         frame,
         visible,
     );
+    let scale = window
+        .scale_factor()
+        .map_err(|error| format!("that page could not be placed: {error}"))?;
+    let placed = crate::web_follow::edges(bounds, scale);
+    let (_, _, width, height) = placed;
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
-        view.set_bounds(crate::web_follow::rect_of(bounds))
+        view.set_bounds(crate::web_follow::rect_of(placed))
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
@@ -1801,7 +1811,7 @@ pub fn web_place(
     // a layer never draws a frame over it.
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
-        crate::web_cut::apply(&view, cut.clone(), bounds.width, bounds.height);
+        crate::web_cut::apply(&view, cut.clone(), width, height, scale);
     }
 
     {
