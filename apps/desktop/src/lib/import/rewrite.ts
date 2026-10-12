@@ -117,7 +117,13 @@ export function rewriteLinks(
     // So does a name nib would read as another note from where this one is going:
     // a note at the top of the vault is named by its name alone, and a note of the
     // same name beside the link is nearer.
-    if (isMarkdownPath(found.path) && !UNLINKABLE.test(found.name) && reaches(found, at.now)) {
+    // And so do words a wikilink cannot show: a `]` in them would end it.
+    if (
+      isMarkdownPath(found.path) &&
+      !UNLINKABLE.test(found.name) &&
+      !/[[\]]/.test(label) &&
+      reaches(found, at.now)
+    ) {
       const link = linkTo(found.name, label, {
         path: found.path,
         from: at.now,
@@ -456,12 +462,18 @@ export class ExportFiles {
   readonly find: Resolver = (target, from) => {
     // The heading is already off: a `#` still here was `%23` in the link, and part
     // of the file's name.
-    const cleaned = target.replace(/^\.\//, '').replace(/\/+$/, '')
+    // A path that starts with `/` starts at the top of the vault, which is how
+    // Obsidian reads it, so it is not looked for in the note's own folder.
+    const rooted = target.startsWith('/')
+    const cleaned = target.replace(/^\.\//, '').replace(/^\/+|\/+$/g, '')
     if (!cleaned) return null
 
     const here = folderOf(from)
     // A wikilink to a note in a folder writes the path without the extension.
-    const tries = [joined(here, cleaned), cleaned].flatMap((one) => [one, `${one}.md`])
+    const tries = (rooted ? [cleaned] : [joined(here, cleaned), cleaned]).flatMap((one) => [
+      one,
+      `${one}.md`,
+    ])
 
     for (const one of tries) {
       const found = this.byPath.get(one)

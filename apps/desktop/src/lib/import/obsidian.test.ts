@@ -235,6 +235,24 @@ describe('the links in a vault', () => {
     expect(text).toBe('Back to [Home](../Index.md), or [[Projects/Index|here]].\n')
   })
 
+  test('that start with a slash start at the top of the vault', async () => {
+    const text = await noteFrom(
+      'Notes/Home.md',
+      file('Notes/Home.md', 'See [x](/Plan.md) and ![[/img.png]].\n'),
+      file('Plan.md', '# P\n'),
+      file('Notes/Plan.md', '# P2\n'),
+      file('img.png', 'p'),
+    )
+    expect(text).toBe('See [x](../Plan.md) and ![[img.png]].\n')
+  })
+
+  test('whose words hold escaped brackets stay markdown links', async () => {
+    const body = 'See [\\[1\\] Intro](Intro.md).\n'
+    await expect(
+      noteFrom('Home.md', file('Home.md', body), file('Intro.md', '# Intro\n')),
+    ).resolves.toBe(body)
+  })
+
   test('are left exactly as written inside code', async () => {
     const kit = file('Kit.md', '# Kit\n')
     const fenced = 'Example:\n\n```markdown\n[the kit](Kit.md) and [[kit#Tent]]\n```\n'
