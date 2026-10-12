@@ -442,8 +442,46 @@ function splitFragment(target: string): { path: string; fragment: string | null 
 /** Where the note's code is, as stretches of its text: fenced blocks, indented
  *  blocks and inline code spans, in a callout or a quote as well. A link written
  *  there is an example of one, which is words to copy exactly as they are, and
- *  neither Obsidian nor nib reads it as a link. */
+ *  neither Obsidian nor nib reads it as a link.
+ *
+ *  So is raw HTML whose words are not Markdown: a `<pre>` block, whose sample is
+ *  shown exactly as written, and a comment, which is hidden and which nothing in
+ *  nib ever rewrites. */
 export function codeRanges(text: string): [number, number][] {
+  const code = codeOnly(text)
+  return [...code, ...htmlRanges(text, code)]
+}
+
+/** A line that opens an HTML block CommonMark shows as it is: `<pre>`, and the
+ *  three others of its kind, whose words run to their closing tag. */
+const HTML_BLOCK = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/gim
+
+/** The `<pre>` blocks and the comments outside the code already found. A block, or
+ *  a comment that starts a line, never closed runs to the end of the note, as
+ *  CommonMark reads one; a `<!--` in a sentence that never closes is only words. */
+function htmlRanges(text: string, code: readonly [number, number][]): [number, number][] {
+  const ranges: [number, number][] = []
+  const outside = (at: number) =>
+    !inCode(code, at) && !ranges.some(([from, to]) => at >= from && at < to)
+
+  for (const opened of text.matchAll(HTML_BLOCK)) {
+    if (!outside(opened.index)) continue
+    const close = new RegExp(`</${opened[1] ?? 'pre'}>`, 'i').exec(text.slice(opened.index))
+    ranges.push([opened.index, close ? opened.index + close.index + close[0].length : text.length])
+  }
+
+  for (let at = text.indexOf('<!--'); at >= 0; at = text.indexOf('<!--', at + 4)) {
+    if (!outside(at)) continue
+    const close = text.indexOf('-->', at + 4)
+    if (close >= 0) ranges.push([at, close + 3])
+    else if (/(?:^|\n) {0,3}$/.test(text.slice(0, at))) ranges.push([at, text.length])
+  }
+
+  return ranges
+}
+
+/** The fenced and indented blocks and the inline code spans. */
+function codeOnly(text: string): [number, number][] {
   const ranges: [number, number][] = []
   const lines = text.split('\n')
   const properties = propertiesEnd(lines)

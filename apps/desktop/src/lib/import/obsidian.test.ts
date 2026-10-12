@@ -387,6 +387,15 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('are left exactly as written in a <pre> block or an HTML comment', async () => {
+    const body = '<pre>\n[the plan](Plan.md)\n</pre>\n\n<!-- old: [the plan](Plan.md) -->\n'
+    const after = `${body}\nNow [the plan](Plan.md), and a <!-- in a sentence [plan](Plan.md).\n`
+
+    await expect(noteFrom('A.md', file('A.md', after), file('Plan.md', '# Plan'))).resolves.toBe(
+      `${body}\nNow [[Plan|the plan]], and a <!-- in a sentence [[Plan|plan]].\n`,
+    )
+  })
+
   test('around a picture point the picture at its file', async () => {
     const pic = file('attachments/pic.png', 'png')
 
