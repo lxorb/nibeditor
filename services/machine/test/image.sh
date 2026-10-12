@@ -33,6 +33,12 @@ docker run -d --name nib-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
 NIBD_URL=ws://127.0.0.1:7680 NIBD_TRACED_URL=ws://127.0.0.1:7681 NIBD_SECRET=$secret \
   pnpm exec vitest run --config vitest.image.config.ts
 
+# A program in a session goes on while nibd ends under it and the entrypoint starts it
+# again: told to restart down the link, then killed outright (test/survive.drive.ts).
+NIBD_SURVIVE_URL=ws://127.0.0.1:7680 NIBD_SECRET=$secret \
+  NIBD_SURVIVE_RESTARTS='["docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs"]' \
+  pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
+
 # nibd ended under a machine that goes on (a crash, the OOM killer, its own watchdog) is
 # started again in the same machine by the entrypoint, and answers within seconds.
 before=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs)

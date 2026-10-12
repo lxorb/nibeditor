@@ -1,16 +1,22 @@
-/** Every session's screen, written as the machine goes to sleep and read at the next
- *  boot (docs/online-terminal.md 4.4, 4.6).
+/** Every session's screen, written as the machine goes to sleep, every few minutes while
+ *  it is awake and as `nibd` stops, and read as `nibd` starts (docs/online-terminal.md
+ *  4.4, 4.6, 4.16).
  *
- *  A sleep keeps the disk and loses every process, so what a person sees after a wake
- *  is the screen they left, above a fresh prompt, in the folder they were in - the
- *  local terminal's restore. One file a session under `/var/lib/nibd/sessions`, written
- *  whole and renamed into place, so a machine stopped mid-write keeps the last good one. */
+ *  Read two ways. Where the session's holder is still there (`nibd` alone restarted),
+ *  the program is too, and the screen is drawn back whole, the second screen and every
+ *  mode included, with what the holder kept after it on top. Where it is not (a sleep, a
+ *  reboot), what a person sees is the first screen they left, above a fresh prompt, in
+ *  the folder they were in: the local terminal's restore. One file a session under
+ *  `/var/lib/nibd/sessions`, written whole and renamed into place, so a machine stopped
+ *  mid-write keeps the last good one. */
 
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export interface Saved {
-  v: 1
+  /** 2: `screen` is the whole terminal. 1, from a `nibd` before holders: the first
+   *  screen alone, without its modes. */
+  v: 1 | 2
   session: string
   /** When it was saved. */
   at: number
@@ -18,7 +24,7 @@ export interface Saved {
   seq: number
   cols: number
   rows: number
-  /** The serialised screen, normal buffer only. */
+  /** The serialised screen, as `v` says. */
   screen: string
   /** The program that was in front, by name. */
   program: string | null
@@ -78,12 +84,13 @@ function readJson(file: string): unknown {
 function savedOf(value: unknown): Saved | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Partial<Saved>
-  if (one.v !== 1 || typeof one.session !== 'string' || !isSessionId(one.session)) return null
+  if (one.v !== 1 && one.v !== 2) return null
+  if (typeof one.session !== 'string' || !isSessionId(one.session)) return null
   if (typeof one.at !== 'number' || typeof one.seq !== 'number') return null
   if (typeof one.cols !== 'number' || typeof one.rows !== 'number') return null
   if (typeof one.screen !== 'string') return null
   return {
-    v: 1,
+    v: one.v,
     session: one.session,
     at: one.at,
     seq: one.seq,

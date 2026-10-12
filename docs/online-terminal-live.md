@@ -90,8 +90,9 @@ tunnel's route again, so Access can also be added later.
    `systemctl is-active nibd cloudflared` both active; `sudo cat /var/log/cloud-init-output.log | grep -c NIBD_SECRET` is 0.
 3. Close every tab, wait an hour, open one: the same shell, `sleep 9999` still running (no
    sleep on a server).
-4. `sudo systemctl kill -s KILL nibd`: within seconds `relink`; the shells end with it and the
-   screens come back (systemd restarts nibd).
+4. `sudo systemctl kill -s KILL nibd` with `sleep 9999` running in a terminal: within seconds
+   `relink`, and the same `sleep` still running on the same screen (systemd restarts nibd; the
+   sleep's holder is not in its unit, `docs/online-terminal.md` 4.16).
 5. Settings > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
 6. Admin Reboot, `POST /v2/online/admin/machines/<id>/reboot`: `reboot`, then `wake restart`
    a minute or two later; the files are all there.

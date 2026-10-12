@@ -54,7 +54,7 @@
       "ignoreDependencies": ["cloudflare"]
     },
     "services/machine": {
-      "entry": ["src/main.ts", "vitest.image.config.ts", "test/**/*.drive.ts"]
+      "entry": ["src/main.ts", "src/hold.ts", "vitest.image.config.ts", "test/**/*.drive.ts"]
     },
     "packages/themes": {}
   }

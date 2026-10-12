@@ -358,6 +358,7 @@ drawn byte for byte), with `node-pty`:
 
 - a session is a pty running the user's login shell as `nib` in the home, plus a **headless
   xterm** fed every byte it prints, with 5,000 lines of scrollback (the local terminal's);
+  the pty is a holder's of its own, which outlives `nibd` (4.16);
 - output is sent on at most once a frame and at once after a quiet one, as the local engine's
   sender does (`docs/terminal.md`, _The engine_), and at once for the first two reads after a
   key even inside a busy frame, so an echo never waits behind a spinner's frame; as binary
@@ -731,7 +732,7 @@ the disk. An awake machine either works or says it does not, and comes back by i
   running (a sleep a deploy cut short) links to it as it is.
 - **`nibd` watches itself.** A worker thread ends `nibd` when its event loop has not turned
   for a minute (`watchdog.ts`); the entrypoint starts it again in the same machine, so the
-  disk and the home stay, and the screens come back from a save at most five minutes old.
+  disk and the home stay, and every program goes on in its holder (4.16).
   Five ends in ten minutes end the machine instead, which `Machine` answers with a restart.
   The sessions' cgroup gets the machine's memory less 512 MiB, so a build that eats it all
   is ended by the kernel inside the sessions, not by a machine thrashing around `nibd`.
@@ -828,8 +829,9 @@ killed, and the warning that a firewall change can lock its owner out).
 - **The health path** (4.14) on a server: a link that goes quiet or closes is made again; a
   `nibd` whose link goes quiet again within five minutes is told `restart` down the fresh link
   - one that merely closed is not counted, since a close says more of the way there (the
-  edge, the tunnel) than of `nibd`, and a restart ends every shell (issue 208) (it saves every
-  screen and ends, and systemd starts it again, `nib-update` first); one that will not link is
+  edge, the tunnel) than of `nibd` (issue 208) (it saves every screen and ends, and systemd
+  starts it again, `nib-update` first, every program going on in its holder, 4.16); one that
+  will not link is
   waited for while systemd restarts it, and after three minutes the server is **power-cycled**
   through the API; ten minutes after that it is `asleep` with `restart`, which its terminals
   offer to try again. The owner's **Stop is Restart** on a server. The admin has **Reboot** and
@@ -856,9 +858,65 @@ killed, and the warning that a firewall change can lock its owner out).
   into a server made after it; on a server made before, its owner adds it in a terminal. Never
   root, never a password.
 - **Left out**: moving a Cloudflare home onto the server by itself (it stays in R2, to be
-  fetched by hand); keeping the shells through a restart of `nibd` itself (they end with the
-  pty `nibd` holds - a `dtach` under each session would keep them, later); several servers per
-  person; any other size.
+  fetched by hand); several servers per person; any other size.
+
+### 4.16 A program outlives `nibd`
+
+Issue 222, Emil, 2026-10-07: after coming back to a terminal, "the program that was running
+before is just not running anymore, as if cancelled", on several terminals and several times.
+
+Every program ended with `nibd`, which held every pty itself: a SIGTERM ended each session's
+processes, a `nibd` killed outright hung up on them, and the next one drew the screens back
+above fresh shells. And on a server `nibd` restarts far more often than the machine does:
+
+- the health path's restart of a link that went quiet twice in five minutes (4.15), which
+  until issue 208 (2026-10-08) was any relink, and every deploy of the Worker relinks: the
+  day the issue was written had dozens;
+- the owner's Restart, which is Stop on a server;
+- systemd restarting `nibd.service`: on Ubuntu 24.04 needrestart restarts every service
+  whose libraries a security update replaced, unattended, after the nightly upgrade
+  ([needrestart][needrestart]), and node is linked against glibc;
+- `nibd`'s own watchdog, a crash, the kernel.
+
+**Studied**: tmux and screen (a server owns the ptys and a client leaving ends nothing; one
+server for every session, so its crash ends them all), dtach and abduco (one small process a
+session that holds the pty and a socket and nothing else; what is printed while nobody is
+attached is lost, and a redraw is asked for on attach), mosh (a server per session that the
+network going away never ends), VS Code Remote (a pty host apart from the server, so a reload
+keeps the terminals; and then ends them after a reconnection grace of hours, the part not to
+copy, [VS Code][vscode-grace]), Codespaces (the idle stop ends every process, 2.1), and
+systemd's `KillMode`, which ends whatever is left in a unit's cgroup as the unit stops - why
+tmux started from a service dies with it unless it is moved to a scope of its own.
+
+- **A holder per shell** (`services/machine/src/hold.ts`), dtach's shape: `nibd` starts one
+  detached, in a session of its own, and it moves itself into the session's cgroup (the one
+  `pids.max`, `memory.max` and End's `cgroup.kill` already used) before the shell exists, so
+  neither a signal to `nibd` nor systemd stopping `nibd`'s unit reaches it or anything the
+  shell started. It listens on `/var/lib/nibd/holds/<session>.sock`, which only root reaches,
+  and reads the pty whether anybody is attached or not, so a program never waits on a `nibd`
+  that is restarting.
+- **What dtach leaves out, kept**: the last 4 MB of output, numbered by the session's own
+  offsets. The next `nibd` draws the screen from its last save - every five minutes and as it
+  stops, now the whole terminal with the second screen and every mode - and the holder sends
+  what it printed after it, so the screen goes on as though nothing happened and a device
+  that drew up to an offset is sent exactly what it missed. Where the holder no longer has
+  everything since the save, the program is asked to draw itself again: its window changes
+  size and back, as tmux makes it do on an attach.
+- **Nothing says anything happened**: no date line and no Resume; the terminal says
+  _Starting machine…_ for the seconds the link takes.
+- **End** ends the holder with everything in its cgroup, a session nobody opened since the
+  restart included, and an End said while `nibd` cannot be reached is said on the next link.
+  A shell that ends while `nibd` is away is said ended when it is back: its holder waits.
+- **What still ends a program**: a reboot (the admin's, Hetzner's, or the power-cycle after
+  three minutes in which nobody reached `nibd`, 4.15), the sessions' memory running out, End,
+  emptying the trash, and on Cloudflare a sleep (4.4, for the cost). After any of those the
+  screen comes back above a fresh shell with the date line and Resume, as before.
+- **What it costs**: a node process a shell (the machine workflow prints how much), eight at
+  most. A holder runs the code it was started with until its shell ends, so `nibd` and its
+  holders speak words that only grow (`hold-wire.ts`), and node-pty is swapped in by a rename
+  rather than written over under the holders that have it loaded.
+- **The first restart after this is deployed** still ends the shells there are: a `nibd`
+  without holders started them.
 
 ## 5. What nib does not do
 
@@ -1034,3 +1092,5 @@ section _An online terminal_), `docs/keyboard.md`, `docs/design.md` and `docs/mo
 [warp-share]: https://docs.warp.dev/knowledge-and-collaboration/session-sharing
 [cc-legal]: https://code.claude.com/docs/en/legal-and-compliance
 [codex-auth]: https://learn.chatgpt.com/docs/auth
+[needrestart]: https://discourse.ubuntu.com/t/needrestart-changes-in-ubuntu-24-04-service-restarts/44671
+[vscode-grace]: https://github.com/microsoft/vscode/issues/123518

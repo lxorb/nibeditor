@@ -166,6 +166,8 @@ const RECENT = 'recent'
 const METERED = 'metered'
 const GRACE = 'grace'
 const RESTORED = 'restored'
+/** Sessions ended while there was no link to say it on, said on the next one. */
+const ENDING = 'ending'
 
 /** What a wake reads of the machine's row: its snapshot and backup. */
 interface Booted {
@@ -335,7 +337,7 @@ export class Machine implements DurableObject {
         this.revoke(headers.get('x-nib-who') ?? '', headers.get('x-nib-role'), headers)
         return new Response(null, { status: 204 })
       case 'end':
-        this.end(headers.get('x-nib-session') ?? '')
+        await this.end(headers.get('x-nib-session') ?? '')
         return new Response(null, { status: 204 })
       case 'erase':
         return await this.erase(headers.get('x-nib-id'))
@@ -730,6 +732,12 @@ export class Machine implements DurableObject {
       this.pulse(link, beat)
     }, PING_EVERY)
 
+    // An End said while the link was down: `nibd` ends the session now, so its program
+    // does not run on in its holder with nobody left to reach it.
+    for (const session of (await this.ctx.storage.get<string[]>(ENDING)) ?? []) {
+      this.tell(session, { t: 'close', session })
+    }
+    await this.ctx.storage.delete(ENDING)
     this.reopen()
   }
 
@@ -917,8 +925,8 @@ export class Machine implements DurableObject {
       await audit(this.env, me.id, 'relink')
       this.everybody({ t: 'machine', state: 'awake' })
       // Only a link that went quiet says anything about `nibd`: one that closed was the
-      // way to it (the edge, the tunnel), and restarting `nibd` for that would end every
-      // shell on the machine for nothing (issue 208).
+      // way to it (the edge, the tunnel), and restarting `nibd` for that would redraw every
+      // terminal on the machine for nothing (issue 208).
       if (silent) await this.quietAgain(me)
       return
     } catch (error) {
@@ -930,8 +938,9 @@ export class Machine implements DurableObject {
   /** A `nibd` whose link went quiet again within minutes of the last one that did answers
    *  its link but not much else - a loop starved, a session wedged in it - so it is
    *  restarted: told down the fresh link, it saves every screen and its supervisor
-   *  starts it again in a moment, and the link is made again after it (4.14). Only on a
-   *  machine that is always on; a container is restarted whole instead. */
+   *  starts it again in a moment, and the link is made again after it (4.14). Every
+   *  program goes on in its holder meanwhile (4.16). Only on a machine that is always on;
+   *  a container is restarted whole instead. */
   private async quietAgain(me: Me): Promise<void> {
     const now = Date.now()
     const again = now - this.relinked < SILENT_AGAIN
@@ -943,7 +952,8 @@ export class Machine implements DurableObject {
   }
 
   /** The owner's Restart on a machine that is always on, which stops nothing else: `nibd`
-   *  saves every screen and starts again, ending the shells, and the link is made again. */
+   *  saves every screen and starts again, every program going on in its holder (4.16),
+   *  and the link is made again. */
   private async restartNibd(who: string | null): Promise<void> {
     const me = await this.me()
     if (!me || !this.link) return
@@ -1539,9 +1549,14 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** A session ended by its owner: the shell closed and every socket on it with it. */
-  private end(session: string): void {
-    this.tell(session, { t: 'close', session })
+  /** A session ended by its owner: the shell closed and every socket on it with it. With
+   *  no link just now, said on the next one. */
+  private async end(session: string): Promise<void> {
+    if (this.link) this.tell(session, { t: 'close', session })
+    else {
+      const ending = (await this.ctx.storage.get<string[]>(ENDING)) ?? []
+      await this.ctx.storage.put(ENDING, [...new Set([...ending, session])])
+    }
     this.opened.delete(session)
     for (const socket of this.ctx.getWebSockets(session)) {
       this.say(socket, { t: 'ended', code: null })

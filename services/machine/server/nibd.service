@@ -2,7 +2,10 @@
 # again whenever it ends - a crash, the kernel's OOM killer, its own watchdog
 # (src/watchdog.ts), or the Restart the owner or the health path asks for - and brought
 # up to date with the Worker's own build first (nib-update). Never given up on: the
-# Machine object decides when a server needs more than this (a reboot).
+# Machine object decides when a server needs more than this (a reboot). None of that
+# ends a program in a terminal: every shell is in a holder (src/hold.ts) that leaves
+# this unit's cgroup for its session's before the shell starts, so stopping the unit,
+# which ends whatever is left in its cgroup, never reaches it.
 [Unit]
 Description=nibd, the online terminal's sessions
 After=network-online.target

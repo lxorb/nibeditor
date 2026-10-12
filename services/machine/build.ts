@@ -1,7 +1,7 @@
-/** `nibd` as one file for the image: everything but node-pty, which is native and is
- *  built inside the image for the image's own system (see Dockerfile). CommonJS, since
- *  xterm.js and ws are, and a CommonJS module inside an ES bundle cannot `require` the
- *  node built-ins they ask for.
+/** `nibd` and its sessions' holder, one file each for the image: everything but
+ *  node-pty, which is native and is built inside the image for the image's own system
+ *  (see Dockerfile). CommonJS, since xterm.js and ws are, and a CommonJS module inside an
+ *  ES bundle cannot `require` the node built-ins they ask for.
  *
  *  And the machine's bundle, dist/machine.bin: nibd and every file install.sh puts in
  *  place, as one gzipped tar that the Worker carries inside itself and hands a Hetzner
@@ -13,22 +13,30 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 import { build } from 'esbuild'
 
-await build({
-  entryPoints: ['src/main.ts'],
-  outfile: 'dist/nibd.cjs',
-  bundle: true,
-  platform: 'node',
-  target: 'node22',
-  format: 'cjs',
-  external: ['node-pty', 'bufferutil', 'utf-8-validate'],
-  legalComments: 'none',
-  logLevel: 'warning',
-})
+/** `nibd`, and the holder each session's shell runs under (src/hold.ts), which outlives
+ *  it and so is a program of its own. */
+for (const [entry, outfile] of [
+  ['src/main.ts', 'dist/nibd.cjs'],
+  ['src/hold.ts', 'dist/hold.cjs'],
+] as const) {
+  await build({
+    entryPoints: [entry],
+    outfile,
+    bundle: true,
+    platform: 'node',
+    target: 'node22',
+    format: 'cjs',
+    external: ['node-pty', 'bufferutil', 'utf-8-validate'],
+    legalComments: 'none',
+    logLevel: 'warning',
+  })
+}
 
 /** What goes in the bundle: its path inside it, where it is read from, and whether it runs. */
 const BUNDLE: readonly [string, string, boolean][] = [
   ['install.sh', 'install.sh', true],
   ['nibd.cjs', 'dist/nibd.cjs', false],
+  ['hold.cjs', 'dist/hold.cjs', false],
   ['package.json', 'package.json', false],
   ['agents.sh', 'agents.sh', true],
   ['profile.sh', 'profile.sh', false],

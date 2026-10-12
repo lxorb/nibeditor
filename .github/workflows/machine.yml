@@ -146,6 +146,19 @@ jobs:
           health
           echo "nibd started again by systemd"
 
+      # What issue 222 was: every restart of nibd ended every program in every terminal.
+      # Now a loop counts on through the restart told down the link, systemd restarting
+      # the unit (a deploy, or needrestart after a security update) and systemd killing
+      # it, its holder out of the unit's cgroup (docs/online-terminal.md 4.16).
+      - name: A program goes on through every restart of nibd
+        working-directory: services/machine
+        env:
+          NIBD_SURVIVE_URL: ws://127.0.0.1:7680
+          NIBD_SECRET: ci-secret
+          NIBD_SURVIVE_CGROUP: '1'
+          NIBD_SURVIVE_RESTARTS: '["sudo systemctl restart nibd", "sudo systemctl kill -s KILL nibd"]'
+        run: pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
+
       - name: Claude Code and Codex, checked against their makers'
         run: |
           set -euo pipefail

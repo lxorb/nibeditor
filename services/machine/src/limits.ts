@@ -130,16 +130,10 @@ export class Cgroups {
     }
   }
 
-  /** The session's own cgroup, with its shell in it. Done the moment the shell is
-   *  spawned: nothing typed can have forked yet. */
-  add(session: string, pid: number): void {
-    const dir = join(this.base, session)
-    try {
-      mkdirSync(dir, { recursive: true })
-      writeFileSync(join(dir, 'cgroup.procs'), String(pid))
-    } catch {
-      // The shell is gone already; `end` has nothing to do.
-    }
+  /** The session's own cgroup, which its holder puts itself in before the shell exists
+   *  (`enterCgroup`), so everything the shell starts is in it from the first fork. */
+  dirOf(session: string): string {
+    return join(this.base, session)
   }
 
   /** Every process of the session, ended by the kernel; false where it could not. */
@@ -159,6 +153,20 @@ export class Cgroups {
       }
     }, 500).unref()
     return true
+  }
+}
+
+/** A process moved into a session's cgroup. That is also what takes a holder out of
+ *  `nibd`'s own unit, whose processes systemd ends whenever `nibd` stops. False where the
+ *  host gives no cgroup to write. */
+export function enterCgroup(dir: string, pid: number): boolean {
+  try {
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'cgroup.procs'), String(pid))
+    return true
+  } catch {
+    // Read-only, or not Linux: the rlimit fences alone, and End kills by process.
+    return false
   }
 }
 

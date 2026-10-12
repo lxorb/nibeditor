@@ -1,17 +1,26 @@
-/** One shell session: a pty, the headless screen it draws on, and the output it printed,
- *  numbered by offset (docs/online-terminal.md 4.6).
+/** One shell session: its holder (hold.ts), which owns the pty and outlives `nibd`; the
+ *  headless screen it draws on; and the output it printed, numbered by offset
+ *  (docs/online-terminal.md 4.6, 4.16).
  *
  *  Output is read as bytes, never decoded, so an offset counts what the shell wrote and
  *  a character split across two reads is the screen's to join. Each coalesced frame
  *  goes to the ring and to the screen at the same moment, so the ring's end and what
  *  the screen has been handed are always the same offset - which is what lets a screen
- *  be sent with the `seq` everything after it continues from. */
+ *  be sent with the `seq` everything after it continues from. The holder numbers what it
+ *  read the same way, so a `nibd` started after another goes on at the same offsets.
+ *
+ *  A session starts by looking for its holder. Found, `nibd` restarted under a program
+ *  that went on: the screen comes back from the last save with what the holder kept
+ *  after it, and nothing a person sees says anything happened. Not found, a new session
+ *  or one whose machine slept or rebooted: a holder is started for a fresh shell, above
+ *  the saved screen if there is one. Whatever is asked of the session meanwhile waits. */
 
 import { existsSync } from 'node:fs'
-import { spawn, type IPty } from 'node-pty'
 import type { NibdFrame, Restored } from '@nib/online/wire'
 import { Coalescer } from './coalesce'
-import { Cgroups, killSession, shellCommand, type User } from './limits'
+import { Held, socketOf } from './held'
+import type { Hello } from './hold-wire'
+import { type Cgroups, shellCommand, type User } from './limits'
 import { folderOf, programOf } from './proc'
 import { Ring } from './ring'
 import type { Saved } from './saves'
@@ -26,6 +35,9 @@ export interface Machine {
   env: Record<string, string>
   pidsMax: number
   cgroups: Cgroups | null
+  /** The holder program, `hold.cjs`, and the folder its sockets are in, root's alone. */
+  holder: string
+  holds: string
   send(frame: NibdFrame): void
 }
 
@@ -36,11 +48,19 @@ export class Session {
   readonly id: string
   private readonly machine: Machine
   private readonly screen: Screen
-  private readonly ring: Ring
+  private ring = new Ring()
   private readonly coalescer: Coalescer
-  private pty: IPty | null = null
-  /** Set when this session was drawn back from a save after a boot. */
-  readonly restored: Restored | undefined
+  /** The holder of the shell running now; null once that shell ended. */
+  private held: Held | null
+  /** The shell's process, once its holder said. */
+  private shell: number | undefined
+  /** Set when this session was drawn back from a save above a fresh shell. */
+  private restoredFrom: Restored | undefined
+  /** Settled once the holder was found again or a new one started. */
+  private readonly ready: Promise<void>
+  private settled = false
+  /** A size asked for before then, made once it is. */
+  private wanted: { cols: number; rows: number } | null = null
   /** Bytes printed since `taken` last asked: the activity of 4.4. */
   private printed = 0
   private program: string | null = null
@@ -48,76 +68,202 @@ export class Session {
   private asking: ReturnType<typeof setTimeout> | null = null
   private askedAt = 0
   /** Output held back while a screen is written out; see `want`. */
-  private held: NibdFrame[] | null = null
-  /** Ended for good: nothing more is drawn or said. */
+  private holding: NibdFrame[] | null = null
+  /** Ended for good, or let go of: nothing more is drawn or said. */
   private over = false
   private answering: Promise<void> = Promise.resolve()
-  /** Where a screen may be taken; see scan.ts. Its offsets count from `base`. */
-  private readonly scanner = new Scanner()
-  private readonly base: number
+  /** Where a screen may be taken; see scan.ts. Its offsets count from `scanned`. */
+  private scanner = new Scanner()
+  private scanned = 0
+  /** The offset after the last byte the holder sent: where the next one goes on. */
+  private heard = 0
 
   constructor(id: string, cols: number, rows: number, machine: Machine, saved?: Saved) {
     this.id = id
     this.machine = machine
     this.screen = new Screen(saved?.cols ?? cols, saved?.rows ?? rows)
-    // A restored session's offsets start past the saved ones, so a device that drew
-    // the old stream is sent the screen rather than bytes from a stream that is gone.
-    this.base = saved ? saved.seq + 1 : 0
-    this.ring = new Ring(this.base)
     this.coalescer = new Coalescer((bytes) => {
       this.sent(bytes)
     })
     this.screen.term.onTitleChange(() => {
       this.ask()
     })
-
-    let folder = machine.home
-    if (saved) {
-      this.restored = { at: saved.at, program: saved.program }
-      this.screen.write(saved.screen)
-      this.screen.write(restoredLine(saved.at))
-      if (saved.cols !== cols || saved.rows !== rows) this.screen.resize(cols, rows)
-      if (saved.folder && existsSync(saved.folder)) folder = saved.folder
-    }
-    this.spawn(folder)
+    const held = this.hold()
+    this.held = held
+    this.ready = this.begin(held, cols, rows, saved)
+      .catch(() => {
+        this.died(held)
+      })
+      .finally(() => {
+        this.settled = true
+        const wanted = this.wanted
+        this.wanted = null
+        if (wanted) this.resize(wanted.cols, wanted.rows)
+      })
   }
 
   get alive(): boolean {
-    return this.pty !== null
+    return this.held !== null
+  }
+
+  /** What a restored screen is from, while this session was drawn back above a fresh
+   *  shell. */
+  get restored(): Restored | undefined {
+    return this.restoredFrom
+  }
+
+  /** The shell's process, once its holder said. */
+  get pid(): number | undefined {
+    return this.shell
   }
 
   /** A new shell in a session whose shell ended, on the same screen and stream. */
   restart(): void {
-    if (!this.pty) this.spawn(this.machine.home)
+    if (this.held || this.over) return
+    const held = this.hold()
+    this.held = held
+    this.spawn(held, this.machine.home).catch(() => {
+      this.died(held)
+    })
   }
 
-  private spawn(folder: string): void {
+  private hold(): Held {
+    const held: Held = new Held(socketOf(this.machine.holds, this.id), {
+      out: (seq, data) => {
+        if (this.held === held) this.read(seq, data)
+      },
+      exit: (code) => {
+        this.ended(held, code)
+      },
+    })
+    return held
+  }
+
+  private async begin(held: Held, cols: number, rows: number, saved?: Saved): Promise<void> {
+    const hello = await held.find()
+    if (this.over) return
+    if (hello) {
+      await this.rejoin(held, hello, saved)
+      return
+    }
+    const folder = saved ? await this.drawBack(saved, cols, rows) : this.machine.home
+    if (folder !== null) await this.spawn(held, folder)
+  }
+
+  /** The holder found again: `nibd` restarted under a program that went on. Where the
+   *  holder kept everything since the last save, the screen is that save's and goes on
+   *  from it as though nothing happened. Otherwise it is what the holder kept, over the
+   *  save where there is one, and the program is asked to draw itself again: its window
+   *  changes size and back, which every full-screen program answers by drawing all of it,
+   *  as tmux makes it do on an attach. */
+  private async rejoin(held: Held, hello: Hello, saved?: Saved): Promise<void> {
+    this.shell = hello.shell
+    const kept = saved?.v === 2 && saved.seq >= hello.from && saved.seq <= hello.end ? saved : null
+    if (saved && saved.seq < hello.base) {
+      // A save of the shell before this one, which this holder was started above: drawn
+      // as that restore drew it.
+      const first = await firstScreen(saved)
+      if (this.over) return
+      this.screen.write(first)
+      this.screen.write(restoredLine(saved.at))
+    } else if (saved?.v === 2) {
+      this.screen.write(saved.screen)
+    }
+    if (this.screen.cols !== hello.cols || this.screen.rows !== hello.rows) {
+      this.screen.resize(hello.cols, hello.rows)
+    }
+    const since = kept ? kept.seq : hello.from
+    this.from(since)
+    held.attach(since)
+    if (!kept && hello.from > hello.base && hello.rows > 1) {
+      held.resize(hello.cols, hello.rows - 1)
+      held.resize(hello.cols, hello.rows)
+    }
+    this.ask()
+  }
+
+  /** A saved session whose program is gone, drawn back above the fresh shell about to
+   *  start: the local terminal's restore. Answers the folder the shell starts in, or
+   *  null where the session ended meanwhile. */
+  private async drawBack(saved: Saved, cols: number, rows: number): Promise<string | null> {
+    const first = await firstScreen(saved)
+    if (this.over) return null
+    this.restoredFrom = { at: saved.at, program: saved.program }
+    // Offsets past the saved ones, so a device that drew the old stream is sent the
+    // screen rather than bytes from a stream that is gone.
+    this.from(saved.seq + 1)
+    this.screen.write(first)
+    this.screen.write(restoredLine(saved.at))
+    if (saved.cols !== cols || saved.rows !== rows) this.screen.resize(cols, rows)
+    return saved.folder && existsSync(saved.folder) ? saved.folder : this.machine.home
+  }
+
+  /** A holder for a new shell in `folder`, its offsets going on from the stream's end. */
+  private async spawn(held: Held, folder: string): Promise<void> {
     const { file, args } = shellCommand(this.machine.shell, this.machine.user, this.machine.pidsMax)
-    const pty = spawn(file, args, {
-      name: 'xterm-256color',
-      cols: this.screen.cols,
-      rows: this.screen.rows,
-      cwd: folder,
+    const base = this.ring.end
+    const hello = await held.start(
+      this.machine.holder,
+      {
+        socket: held.path,
+        cgroup: this.machine.cgroups?.dirOf(this.id) ?? null,
+        file,
+        args,
+        cwd: folder,
+        cols: this.screen.cols,
+        rows: this.screen.rows,
+        base,
+      },
       // Which session a program asked a browser in, for `nib-open` to say; see opener.ts.
-      env: { ...this.machine.env, NIB_SESSION: this.id },
-      encoding: null,
-    })
-    this.pty = pty
-    this.machine.cgroups?.add(this.id, pty.pid)
-    pty.onData((data: string | Buffer) => {
-      const bytes = typeof data === 'string' ? Buffer.from(data) : data
-      const view = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-      this.printed += view.length
-      this.scanner.feed(view)
-      this.coalescer.push(view)
-      this.ask()
-    })
-    pty.onExit(({ exitCode, signal }) => {
-      if (this.pty !== pty) return
+      { ...this.machine.env, NIB_SESSION: this.id },
+    )
+    if (this.over) return
+    this.shell = hello.shell
+    this.heard = base
+    held.attach(base)
+  }
+
+  /** The stream goes on from `seq`: what the ring, the scanner and the holder's next
+   *  byte count from. */
+  private from(seq: number): void {
+    this.ring = new Ring(seq)
+    this.scanner = new Scanner()
+    this.scanned = seq
+    this.heard = seq
+  }
+
+  /** Output from the holder: only what follows what the screen has been handed. */
+  private read(seq: number, data: Uint8Array): void {
+    if (this.over || seq + data.length <= this.heard) return
+    if (seq > this.heard) {
+      // Bytes the holder no longer had: the stream goes on past them.
       this.coalescer.flush()
-      this.pty = null
-      this.emit({ t: 'ended', session: this.id, code: signal ? null : exitCode })
-    })
+      this.ring.skip(seq)
+      this.scanner = new Scanner()
+      this.scanned = seq
+      this.heard = seq
+    }
+    const fresh = data.subarray(this.heard - seq)
+    this.heard = seq + data.length
+    this.printed += fresh.length
+    this.scanner.feed(fresh)
+    this.coalescer.push(fresh)
+    this.ask()
+  }
+
+  private ended(held: Held, code: number | null): void {
+    if (this.over || this.held !== held) return
+    this.coalescer.flush()
+    this.held = null
+    this.shell = undefined
+    this.emit({ t: 'ended', session: this.id, code })
+  }
+
+  /** A holder that could not be started: the session ended, and Enter tries again. */
+  private died(held: Held): void {
+    if (this.over || this.held !== held) return
+    this.held = null
+    this.emit({ t: 'ended', session: this.id, code: null })
   }
 
   private sent(bytes: Uint8Array): void {
@@ -129,27 +275,30 @@ export class Session {
 
   /** A frame on the link, in order behind any output held for a screen. */
   private emit(frame: NibdFrame): void {
-    if (this.held) this.held.push(frame)
+    if (this.holding) this.holding.push(frame)
     else this.machine.send(frame)
   }
 
   input(data: Uint8Array): void {
     // Its echo goes the moment the pty prints it; see coalesce.ts.
     this.coalescer.typed()
-    this.pty?.write(Buffer.from(data.buffer, data.byteOffset, data.byteLength))
+    this.held?.write(data)
     if (data.includes(13)) this.ask()
   }
 
   pause(paused: boolean): void {
-    if (paused) this.pty?.pause()
-    else this.pty?.resume()
+    this.held?.pause(paused)
   }
 
   resize(cols: number, rows: number): void {
-    if (cols === this.screen.cols && rows === this.screen.rows) return
+    if (!this.settled) {
+      this.wanted = { cols, rows }
+      return
+    }
+    if (this.over || (cols === this.screen.cols && rows === this.screen.rows)) return
     this.coalescer.flush()
     this.screen.resize(cols, rows)
-    this.pty?.resize(cols, rows)
+    this.held?.resize(cols, rows)
   }
 
   /** Sends what a device that drew everything before `since` needs: the bytes after
@@ -168,17 +317,17 @@ export class Session {
   }
 
   private async answer(since: number): Promise<void> {
-    // Everything up to the last point between two whole sequences now, the rest at the
-    // next frame, so a screen taken here is never cut through an escape.
-    this.coalescer.flush(Math.max(0, this.base + this.scanner.safe - this.ring.end))
+    await this.ready
+    if (this.over) return
+    this.toSafePoint()
     const data = this.ring.since(since)
     if (data) {
       this.machine.send({ t: 'out', session: this.id, seq: since, data })
       return
     }
     const seq = this.ring.end
-    const held: NibdFrame[] = []
-    this.held = held
+    const holding: NibdFrame[] = []
+    this.holding = holding
     const screen = await this.screen.serialized()
     this.machine.send({
       t: 'screen',
@@ -187,10 +336,16 @@ export class Session {
       cols: this.screen.cols,
       rows: this.screen.rows,
       data: screen,
-      ...(this.restored ? { restored: this.restored } : {}),
+      ...(this.restoredFrom ? { restored: this.restoredFrom } : {}),
     })
-    this.held = null
-    for (const frame of held) this.machine.send(frame)
+    this.holding = null
+    for (const frame of holding) this.machine.send(frame)
+  }
+
+  /** Everything up to the last point between two whole sequences handed on now, the
+   *  rest at the next frame, so a screen taken here is never cut through an escape. */
+  private toSafePoint(): void {
+    this.coalescer.flush(Math.max(0, this.scanned + this.scanner.safe - this.ring.end))
   }
 
   /** The bytes printed since the last time this was asked. */
@@ -200,47 +355,62 @@ export class Session {
     return printed
   }
 
+  /** The whole screen and the offset it shows everything before. The next `nibd` goes
+   *  on from exactly there where the holder still kept what followed; where the program
+   *  is gone, its first screen is drawn back above a fresh shell. */
   async save(at: number): Promise<Saved> {
-    this.coalescer.flush()
+    await this.ready
+    if (this.over) throw new Error('this session is no longer here')
+    this.toSafePoint()
     const seq = this.ring.end
-    const shell = this.pty?.pid
+    const screen = this.screen.serialized()
+    const shell = this.shell
     return {
-      v: 1,
+      v: 2,
       session: this.id,
       at,
       seq,
       cols: this.screen.cols,
       rows: this.screen.rows,
-      screen: await this.screen.saved(),
+      screen: await screen,
       program: shell === undefined ? this.program : programOf(shell),
       folder: shell === undefined ? null : folderOf(shell),
     }
   }
 
-  /** The session ended for good: every process it started, its screen, its timers. */
+  /** The session ended for good: every process it started, its holder, its screen. */
   end(): void {
-    const pty = this.pty
-    this.pty = null
+    const held = this.held
+    this.held = null
+    this.letGo()
+    this.machine.cgroups?.kill(this.id)
+    held?.kill()
+  }
+
+  /** Let go of, its program running on in its holder for the `nibd` after this one. */
+  detach(): void {
+    const held = this.held
+    this.held = null
+    this.letGo()
+    held?.detach()
+  }
+
+  private letGo(): void {
+    if (this.over) return
     this.over = true
     if (this.asking) clearTimeout(this.asking)
-    if (pty && !this.machine.cgroups?.kill(this.id)) killSession(pty.pid)
-    try {
-      pty?.kill('SIGKILL')
-    } catch {
-      // Gone with the rest of the session.
-    }
     this.screen.dispose()
   }
 
   /** The program in front and its title, asked at most once a second and said only
    *  when it changed. */
   private ask(): void {
-    if (this.asking) return
+    if (this.asking || this.over) return
     const wait = Math.max(0, this.askedAt + PROGRAM_EVERY - Date.now())
     this.asking = setTimeout(() => {
       this.asking = null
       this.askedAt = Date.now()
-      const shell = this.pty?.pid
+      const shell = this.shell
       this.program = shell === undefined ? null : programOf(shell)
       const title = this.screen.title
       const said = JSON.stringify([this.program, title])
@@ -251,6 +421,13 @@ export class Session {
       this.emit({ t: 'program', session: this.id, name: this.program, title, mark: null })
     }, wait)
   }
+}
+
+/** A save's first screen alone, as a restore draws it. */
+function firstScreen(saved: Saved): Promise<string> {
+  return saved.v === 2
+    ? Screen.firstOf(saved.screen, saved.cols, saved.rows)
+    : Promise.resolve(saved.screen)
 }
 
 /** The dim line under a screen drawn back after a boot, saying when it is from: the

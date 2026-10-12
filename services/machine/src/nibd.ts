@@ -6,12 +6,19 @@
  *  the home but what a shell does and the pictures pasted into a session, which it writes
  *  to `~/.cache/nib/images` as the user, never as root (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
  *  is read by any code of nib's (4.7). Its whole vocabulary is the link's, from
- *  `@nib/online/wire`. */
+ *  `@nib/online/wire`.
+ *
+ *  It owns no pty itself: every shell is in a holder of its own (hold.ts), which outlives
+ *  `nibd`, so a restart of `nibd` - a deploy it picks up, the owner's Restart, its own
+ *  watchdog, a crash, systemd after a security update - ends no program (4.16). */
 
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import type { Activity } from '@nib/online/types'
 import { isLoopbackUrl } from '@nib/online/urls'
 import type { MachineFrame, NibdFrame } from '@nib/online/wire'
 import { diskOf, Meter, homeSize } from './activity'
+import { Held, socketOf } from './held'
 import { Images } from './images'
 import type { Cgroups, User } from './limits'
 import { Saves, isSessionId, type Saved } from './saves'
@@ -38,6 +45,8 @@ export interface Options {
   /** Ends `nibd` for its supervisor to start again (systemd on a server, the entrypoint in
    *  a container), once every screen is saved: `restart` from the link. */
   restart?: () => void
+  /** The holder every shell runs under, `hold.cjs` beside `nibd.cjs` (hold.ts). */
+  holder: string
 }
 
 /** How long a callback's request may take: a program's sign-in listener answers at
@@ -67,13 +76,18 @@ export class Nibd {
   private lastTyped: string | null = null
   private readonly timers: ReturnType<typeof setInterval>[] = []
   private readonly images: Images
+  /** The folder every holder's socket is in, root's alone. */
+  private readonly holds: string
 
   constructor(options: Options) {
     this.options = options
     this.images = new Images(options.home, options.user)
     this.saves = new Saves(options.state)
-    // Every session that was saved as the machine went to sleep comes back now, above a
-    // fresh shell, so the first `open` after a wake finds it as it was left.
+    this.holds = join(options.state, 'holds')
+    mkdirSync(this.holds, { recursive: true, mode: 0o700 })
+    // Every saved session comes back now: still running in its holder where only `nibd`
+    // restarted, or above a fresh shell after a sleep or a reboot, so the first `open`
+    // after either finds it as it was left.
     for (const saved of this.saves.all()) {
       this.sessions.set(saved.session, this.session(saved.session, saved.cols, saved.rows, saved))
     }
@@ -112,6 +126,7 @@ export class Nibd {
       rows,
       {
         ...this.options,
+        holds: this.holds,
         send: (frame) => {
           this.send(frame)
         },
@@ -156,7 +171,8 @@ export class Nibd {
         await session?.want(frame.since)
         return
       case 'close':
-        session?.end()
+        if (session) session.end()
+        else this.endHeld(frame.session)
         this.sessions.delete(frame.session)
         this.saves.forget(frame.session)
         return
@@ -227,10 +243,26 @@ export class Nibd {
     for (const session of this.sessions.values()) session.pause(paused)
   }
 
-  /** Everything stopped: the timers, and every session's processes. */
-  stop(): void {
+  /** A session no `open` asked for since this `nibd` started, ended all the same: its
+   *  holder found and ended, with everything its shell started. */
+  private endHeld(id: string): void {
+    this.options.cgroups?.kill(id)
+    const held = new Held(socketOf(this.holds, id), {
+      out: () => undefined,
+      exit: () => undefined,
+    })
+    held.kill()
+    void held.find()
+  }
+
+  /** Everything stopped: the timers, and every session let go of, its program running
+   *  on in its holder for the `nibd` after this one; or, `ending`, ended. */
+  stop(ending = false): void {
     for (const timer of this.timers) clearInterval(timer)
-    for (const session of this.sessions.values()) session.end()
+    for (const session of this.sessions.values()) {
+      if (ending) session.end()
+      else session.detach()
+    }
     this.sessions.clear()
   }
 }

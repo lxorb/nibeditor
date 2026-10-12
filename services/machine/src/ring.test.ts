@@ -55,3 +55,15 @@ test('a restored session numbers on from where it starts', () => {
   expect(ring.since(0)).toBeNull()
   expect(ring.append(bytes('x'))).toBe(500)
 })
+
+test('a gap in the stream lets go of everything before it, and goes on after it', () => {
+  const ring = new Ring()
+  ring.append(bytes('abc'))
+  ring.skip(10)
+  expect(ring.end).toBe(10)
+  expect(ring.since(2)).toBeNull()
+  expect(ring.append(bytes('de'))).toBe(10)
+  expect(textOf(ring.since(10))).toBe('de')
+  ring.skip(5)
+  expect(ring.end).toBe(12)
+})

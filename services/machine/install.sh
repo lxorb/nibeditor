@@ -9,8 +9,8 @@
 #   install.sh --files    nib's own files alone: what nib-update puts in place before
 #                         every start of nibd, from the bundle the Worker hands out
 #
-# Run as root from the folder it is in, which holds the rest: nibd.cjs (or dist/nibd.cjs
-# in the repository), package.json, agents.sh, profile.sh, nib-open, nib-update and
+# Run as root from the folder it is in, which holds the rest: nibd.cjs and hold.cjs (or
+# dist/ in the repository), package.json, agents.sh, profile.sh, nib-open, nib-update and
 # server/*.service. Everything fetched is checked: apt by its signed repositories, node
 # against the release's SHASUMS256.txt, uv against its release's .sha256. Claude Code and
 # Codex are not here: they go into the home at boot (agents.sh), where their own
@@ -109,13 +109,25 @@ files() {
   install -d /opt/nibd
   local pty
   pty=$(node -p "require('$here/package.json').dependencies['node-pty']")
+  # Built beside the one in place and swapped in by a rename: the sessions' holders keep
+  # running across an update with the old native module mapped, and a file written over
+  # under a running process is a crash, where one renamed away is not (hold.ts).
   if [ "$(cat /opt/nibd/pty 2>/dev/null)" != "$pty" ]; then
-    (cd /opt/nibd && npm install --omit=dev --no-audit --no-fund --no-save "node-pty@$pty")
+    rm -rf /opt/nibd/pty.new /opt/nibd/node_modules.old
+    install -d /opt/nibd/pty.new
+    (cd /opt/nibd/pty.new && npm install --omit=dev --no-audit --no-fund --no-save "node-pty@$pty")
+    if [ -d /opt/nibd/node_modules ]; then mv /opt/nibd/node_modules /opt/nibd/node_modules.old; fi
+    mv /opt/nibd/pty.new/node_modules /opt/nibd/node_modules
+    rm -rf /opt/nibd/pty.new /opt/nibd/node_modules.old
     echo "$pty" >/opt/nibd/pty
   fi
   (cd /opt/nibd && node -e "require('node-pty')")
-  install -m 644 "$nibd" /opt/nibd/nibd.cjs.new
-  mv /opt/nibd/nibd.cjs.new /opt/nibd/nibd.cjs
+  local program
+  for program in nibd hold; do
+    local built="${nibd%/nibd.cjs}/$program.cjs"
+    install -m 644 "$built" "/opt/nibd/$program.cjs.new"
+    mv "/opt/nibd/$program.cjs.new" "/opt/nibd/$program.cjs"
+  done
 
   # Global npm installs go into the home, so Codex's own update command needs no root.
   install -m 644 "$here/profile.sh" /etc/profile.d/nib.sh

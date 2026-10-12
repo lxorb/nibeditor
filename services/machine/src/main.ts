@@ -1,5 +1,7 @@
 /** `nibd` started: its settings from the environment the entrypoint gave it, the server,
- *  its own watchdog (watchdog.ts), and the save on SIGTERM.
+ *  its own watchdog (watchdog.ts), and the save on SIGTERM. Neither a SIGTERM nor a
+ *  restart ends a session: `nibd` lets go of each, and its holder keeps the program
+ *  running for the `nibd` after this one (hold.ts).
  *
  *  The secret is read once and taken out of the environment before any shell starts,
  *  so no session inherits it. Every session gets a small environment of its own
@@ -7,6 +9,7 @@
 
 import { existsSync } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
+import { dirname, join } from 'node:path'
 import { Cgroups, PIDS_MAX, userOf } from './limits'
 import { Nibd } from './nibd'
 import { listenOpener, OPEN_SOCKET, serveOpener } from './opener'
@@ -77,6 +80,8 @@ function main(): void {
     activityEvery: numberOf(env.NIBD_ACTIVITY_MS, 30_000),
     homeEvery: numberOf(env.NIBD_HOME_MS, 60 * 60_000),
     saveEvery: numberOf(env.NIBD_SAVE_MS, 5 * 60_000),
+    // Beside this file: in the image, on a server and in the repository's dist alike.
+    holder: join(dirname(process.argv[1] ?? '.'), 'hold.cjs'),
     // Not 0, which both supervisors read as "asked to stop": started again at once.
     restart: () => {
       nibd.stop()
@@ -98,6 +103,7 @@ function main(): void {
     stopping = true
     // The host gives a stopping machine a grace period; the screens are worth more of
     // it than anything else, so they go first, and the exit does not wait on sockets.
+    // Where the machine goes on (systemd restarting `nibd` alone), so do the holders.
     setTimeout(() => process.exit(0), 8000).unref()
     void nibd.saveAll().finally(() => {
       nibd.stop()

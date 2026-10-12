@@ -48,6 +48,15 @@ export class Ring {
     return seq
   }
 
+  /** The stream goes on at `to`, the bytes before it never had: everything kept is let
+   *  go, since nothing after a gap can be answered from before it. */
+  skip(to: number): void {
+    if (to <= this.end) return
+    this.chunks = []
+    this.held = 0
+    this.end = to
+  }
+
   /** Everything after `since`, as one run of bytes; or null when part of it is gone, or
    *  `since` is not an offset this session has reached. */
   since(since: number): Uint8Array | null {

@@ -1533,6 +1533,34 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
+  test('an End said while nibd cannot be reached is said once it is, so no program runs on', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    if (running.host.link_) running.host.link_.silent = true
+    running.host.failLinks = 1000
+    await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
+    expect(await running.machine.state()).toBe('starting')
+
+    await running.machine.fetch(
+      new Request('https://machine.invalid/end', {
+        headers: { 'x-nib-machine': 'end', 'x-nib-session': 'session-1' },
+      }),
+    )
+    running.host.failLinks = 0
+    vi.setSystemTime(Date.now() + 10_000)
+    await fire(running)
+    expect(await running.machine.state()).toBe('awake')
+    expect(running.host.link_?.sent).toContainEqual({ t: 'close', session: 'session-1' })
+
+    // Said once: the link after that one has nothing more to end.
+    const said = running.host.link_
+    said?.close()
+    await vi.waitFor(() => {
+      expect(running.host.link_).not.toBe(said)
+    })
+    expect(running.host.link_?.sent).not.toContainEqual({ t: 'close', session: 'session-1' })
+  })
+
   test('the admin’s Reboot power-cycles it and waits for it', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')

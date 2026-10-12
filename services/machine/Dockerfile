@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8
 
 COPY install.sh package.json agents.sh profile.sh nib-open /tmp/machine/
-COPY dist/nibd.cjs /tmp/machine/dist/nibd.cjs
+COPY dist/nibd.cjs dist/hold.cjs /tmp/machine/dist/
 RUN bash /tmp/machine/install.sh && rm -rf /tmp/machine
 
 # The Sandbox SDK's shim, which the home's backups to R2 and their restores run through

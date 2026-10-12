@@ -77,6 +77,16 @@ export class Screen {
   dispose(): void {
     this.term.dispose()
   }
+
+  /** The first screen of a whole one (`serialized`), as `saved` takes it: what is drawn
+   *  back above a fresh shell when the program that drew the rest is gone. */
+  static async firstOf(whole: string, cols: number, rows: number): Promise<string> {
+    const scratch = new Screen(cols, rows)
+    scratch.write(whole)
+    const first = await scratch.saved()
+    scratch.dispose()
+    return first
+  }
 }
 
 /** Where the serialise addon goes from the first screen to the second. */
