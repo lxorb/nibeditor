@@ -175,8 +175,9 @@ describe('where nibd is root', () => {
     expect(await elsewhere.part(ID, 'png', bytes(1), true)).toBeNull()
   })
 
-  /** The script itself, run by this test's own user in place of `setpriv`'s. */
-  describe('the script the user runs', () => {
+  /** The script itself, run by this test's own user in place of `setpriv`'s. Linux only,
+   *  as the machine is: it asks for GNU find's `-regextype`. */
+  describe.runIf(process.platform === 'linux')('the script the user runs', () => {
     const asThisUser = (home: string): Run => {
       return (_file, args, _env, input) => {
         const after = args.indexOf('--') + 1
