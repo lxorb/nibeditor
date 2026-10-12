@@ -343,8 +343,9 @@ export function folderNameFor(picked: readonly Picked[], format: FormatId): stri
 
   // `Export-9f1c2d3e.zip` leaves `9f1c2d3e`, which is the export's id rather than
   // a name anybody would give a folder, and `backup.zip` leaves nothing at all. A
-  // name has a word in it.
-  const wordy = /[A-Za-z]{3,}/.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
+  // name has a word in it, in whatever script it is written: `Заметки`, `笔记` and
+  // `AI` are all names somebody gave their notes.
+  const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
 
   return wordy ? safeName(stripped) : nameOfFormat(format)
 }

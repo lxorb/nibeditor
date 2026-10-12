@@ -17,6 +17,12 @@ describe('the folder an import makes for itself', () => {
     expect(folderNameFor([picked('My notes.zip')], 'markdown')).toBe('My notes')
   })
 
+  test('is named after the file that was picked, in whatever script its name is', () => {
+    expect(folderNameFor([picked('Заметки.zip')], 'obsidian')).toBe('Заметки')
+    expect(folderNameFor([picked('笔记.zip')], 'obsidian')).toBe('笔记')
+    expect(folderNameFor([picked('AI.zip')], 'obsidian')).toBe('AI')
+  })
+
   test('is named after the folder that was dropped', () => {
     expect(
       folderNameFor([picked('2026_01_02.md', 'My graph/journals/2026_01_02.md')], 'logseq'),
