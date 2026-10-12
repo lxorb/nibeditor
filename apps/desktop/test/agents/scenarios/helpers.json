@@ -1,0 +1,41 @@
+{
+  "proves": "an agent starts a helper on the reader's AI account and gets its answer back, the same through nib mcp as through the endpoint, and a model nobody offers is refused with the ones there are",
+  "doc": "docs/ai.md Helpers; docs/agent-native.md 10",
+  "grant": {
+    "scopes": [
+      "context",
+      "notes.read",
+      "notes.write",
+      "tree",
+      "workspace",
+      "browser",
+      "browser.reader",
+      "browser.script",
+      "browser.network",
+      "browser.storage",
+      "agents"
+    ]
+  },
+  "steps": [
+    {
+      "reader_eval": "const kept = await window.__TAURI_INTERNALS__.invoke('ai_accounts_read'); const text = JSON.stringify({ version: 1, accounts: [{ id: 'claude-code', kind: 'claude-code', name: '', model: '' }], active: { claude: 'claude-code' }, defaultVendor: 'claude', uses: {} }); await window.__TAURI_INTERNALS__.invoke('ai_accounts_write', { text, stamp: kept.stamp }); return true"
+    },
+    { "pause": 1500 },
+    {
+      "call": "run_agent",
+      "args": { "description": "herons", "prompt": "Find the herons.", "model": "" },
+      "expect": {
+        "status": "ok",
+        "contains": { "result.answer": "You asked" }
+      }
+    },
+    {
+      "call": "run_agent",
+      "args": { "description": "herons", "prompt": "Find the herons.", "model": "gemini" },
+      "expect": {
+        "status": "error",
+        "contains": { "message": "no model called" }
+      }
+    }
+  ]
+}
