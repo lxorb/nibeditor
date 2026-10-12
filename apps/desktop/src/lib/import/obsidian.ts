@@ -21,6 +21,25 @@ import type { Source } from './sources'
  *  one entry is the vault. */
 const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
 
+/** The vault's files with the folder around it taken off, for a zip whose one
+ *  entry is the vault: `Brain/Home.md` is `Home.md`. The space is named after the
+ *  zip, so the folder again inside it would be a folder holding a folder of its own
+ *  name, `.obsidian/` would not be at the top where Obsidian and views/templates.ts
+ *  look for it, and every path a `.canvas` or `.base` names from the top of the
+ *  vault would point at nothing. A vault already at the top comes back as it was. */
+export function atVaultTop(sources: readonly Source[]): Source[] {
+  if (sources.some((one) => one.path.startsWith('.obsidian/'))) return [...sources]
+
+  const wrapper = sources
+    .map((one) => SETTINGS.exec(one.path)?.[0].slice(0, -'.obsidian/'.length))
+    .find(Boolean)
+  if (!wrapper) return [...sources]
+
+  return sources.map((one) =>
+    one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one,
+  )
+}
+
 /** Left behind: the open panes and recent files of the machine it came off
  *  (`workspace.json`, `workspace-mobile.json`), installed plugins and themes, which
  *  are code and styles for another app, a cache, and `.trash/`, which Obsidian

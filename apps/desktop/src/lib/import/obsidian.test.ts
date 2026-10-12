@@ -265,4 +265,24 @@ describe('the files in a vault', () => {
     ])
     expect(plan.lost).toEqual([])
   })
+
+  test('land at the top of the space from a zip whose one entry is the vault', async () => {
+    const zip = new JSZip()
+    zip.file('Brain/.obsidian/app.json', '{}')
+    zip.file('Brain/Home.md', '# Home\n\nSee [[Projects/Plan]]')
+    zip.file('Brain/Projects/Plan.md', '# Plan')
+    zip.file('Brain/Map.canvas', '{"nodes":[{"type":"file","file":"Projects/Plan.md"}]}')
+    const bytes = await zip.generateAsync({ type: 'uint8array' })
+
+    const sources = await sourcesFrom([
+      { name: 'Brain.zip', arrayBuffer: async () => bytes.slice().buffer },
+    ])
+    await expect(detect(sources)).resolves.toBe('obsidian')
+    await expect(pathsFrom(sources)).resolves.toEqual([
+      '.obsidian/app.json',
+      'Home.md',
+      'Map.canvas',
+      'Projects/Plan.md',
+    ])
+  })
 })
