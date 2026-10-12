@@ -55,11 +55,15 @@ export function safeName(title: string): string {
  *  `extension` is what follows the name in the file's own, when it has one: then a
  *  dot or a space the name ends with is not at the end of the file's, and Windows
  *  keeps it, so `Wait for it....md` and `Draft .md` stay as they are. A space put
- *  there in place of a character Windows forbids still comes off: `Why?.md` is
- *  `Why.md`, not `Why .md`. */
+ *  there in place of a character Windows forbids still comes off, at either end:
+ *  `Why?.md` is `Why.md`, not `Why .md`, and `"Ship it".md` is `Ship it.md`, which
+ *  is what a link to it says once nib trims it. A space the name opened with itself,
+ *  to sort it first, is kept. */
 export function keptName(name: string, extension = ''): string {
   const own = extension ? (/[. ]*$/.exec(name)?.[0] ?? '') : ''
-  const rest = withoutForbidden(name.slice(0, name.length - own.length))
+  const lead = /^ */.exec(name)?.[0] ?? ''
+  const freed = withoutForbidden(name.slice(lead.length, name.length - own.length))
+  const rest = `${lead}${freed.trimStart()}`
   const one = extension ? `${rest.trimEnd()}${own}` : rest.replace(/[. ]+$/, '')
   if (!one.trim()) return 'Untitled'
   return undeviced(one)

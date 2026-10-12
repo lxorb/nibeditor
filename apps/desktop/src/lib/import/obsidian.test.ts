@@ -1010,6 +1010,18 @@ describe('the files in a vault', () => {
     )
   })
 
+  test('whose name opens with a quote, kept in a folder, are still reached by their links', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Quotes/"Ship it".md', 'q'),
+      file('Quotes/Index.md', 'See [["Ship it"]]\n'),
+    ])
+    const paths = plan.files.map((one) => one.path)
+    expect(paths).toContain('Quotes/Ship it.md')
+    const index = plan.files.find((one) => one.path === 'Quotes/Index.md')
+    expect(index?.kind === 'note' && index.text).toBe('See [[Ship it]]\n')
+  })
+
   test('keep a name that needs no change when another is renamed onto it', async () => {
     // `*` sorts before `.`, which is the order the vault list walks them in.
     const plan = await readAs('obsidian', [

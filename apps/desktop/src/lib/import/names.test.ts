@@ -41,6 +41,14 @@ describe('a title as a file name', () => {
     expect(keptName('Drafts.')).toBe('Drafts')
   })
 
+  test('kept from disk loses a forbidden character at its start, keeping a space it opened with', () => {
+    expect(keptName('"Ship it"', '.md')).toBe('Ship it')
+    expect(keptName('<Draft>', '.md')).toBe('Draft')
+    expect(keptName('*Inbox', '.md')).toBe('Inbox')
+    expect(keptName(' Inbox', '.md')).toBe(' Inbox')
+    expect(keptName(' ?Inbox', '.md')).toBe(' Inbox')
+  })
+
   test('is short enough to leave room for the folders above it', () => {
     expect(safeName('a'.repeat(300))).toHaveLength(96)
   })
