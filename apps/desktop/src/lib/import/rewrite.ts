@@ -50,12 +50,23 @@ export type Reaching = (found: Found, from: string) => boolean
  *  The words and the target may each hold brackets of their own that are balanced,
  *  as CommonMark allows: `[Paper [2019]](paper.pdf)`, and `Screenshot%20(1).png`,
  *  which is how Obsidian writes a link to `Screenshot (1).png`. The words do not
- *  start with a bracket, since `[[Plan]](x)` is a wikilink followed by words. */
+ *  start with a bracket, since `[[Plan]](x)` is a wikilink followed by words.
+ *
+ *  The words may run over a line break, as they do in a note wrapped by hand, but
+ *  not over a blank line: that ends the paragraph, and a link with it. */
 const LINK =
-  /(!?)(?<!\\)\[((?!\[)(?:[^[\]\\\n]|\\.|\[(?:[^[\]\\\n]|\\.)*\])*)\]\(((?:[^()\n]|\([^()\n]*\))*)\)/g
+  /(!?)(?<!\\)\[((?!\[)(?:[^[\]\\\n]|\n(?![ \t>]*\n)|\\.|\[(?:[^[\]\\\n]|\n(?![ \t>]*\n)|\\.)*\])*)\]\(((?:[^()\n]|\([^()\n]*\))*)\)/g
 
-/** A wikilink, which Bear, Logseq, Roam and Obsidian all write. */
-const WIKILINK = /!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
+/** A wikilink, which Bear, Logseq, Roam and Obsidian all write. A backslash in
+ *  front makes `\[[Plan]]` words about a link rather than one, in Obsidian and in
+ *  nib alike, so it is left as it was written. */
+const WIKILINK = /(?<!\\)!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
+
+/** A link reference definition, `[w]: Why%3F.png` on a line of its own, which is
+ *  where `![why][w]` and `[the note][n]` take their target from. `[^1]:` is a
+ *  footnote's words rather than a target. */
+const DEFINITION =
+  /^( {0,3}\[(?!\^)(?:[^[\]\\\n]|\\.)+\]:[ \t]*)(<[^<>\n]*>|[^\s<]\S*)((?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?)$/gm
 
 /** What a wikilink cannot hold in its name: a `]` ends it and a `|` starts the
  *  words it shows, so a note named with either is reached by a markdown link. */
@@ -138,11 +149,12 @@ export function rewriteLinks(
     // So does a name nib would read as another note from where this one is going:
     // a note at the top of the vault is named by its name alone, and a note of the
     // same name beside the link is nearer.
-    // And so do words a wikilink cannot show: a `]` in them would end it.
+    // And so do words a wikilink cannot show: a `]` in them would end it, and a
+    // line break, which a wikilink cannot run over.
     if (
       isMarkdownPath(found.path) &&
       !UNLINKABLE.test(found.name) &&
-      !/[[\]]/.test(words) &&
+      !/[[\]\n]/.test(words) &&
       reaches(found, at.now)
     ) {
       const link = linkTo(found.name, words, {
@@ -183,7 +195,7 @@ export function rewriteLinks(
   const stillCode = withMath(linked, codeRanges(linked))
   const stillTables = tableRanges(linked)
   const properties = propertiesTo(linked)
-  return linked.replace(
+  const wikilinked = linked.replace(
     WIKILINK,
     (whole, target: string, shown: string | undefined, offset: number) => {
       if (inCode(stillCode, offset) || inCode(rewritten, offset)) return whole
@@ -217,6 +229,37 @@ export function rewriteLinks(
         sized || property ? 'wikilink' : undefined,
       )
       return inCode(stillTables, offset) ? inCell(written) : written
+    },
+  )
+
+  // A definition names its file by a path, as a markdown link does, and stays one:
+  // `[n]: [[Q]]` would be no definition at all.
+  return definitionsFollowed(wikilinked, (path) => {
+    const found = find(path, at.was)
+    return found ? relativePath(folder, found.path) : null
+  })
+}
+
+/** The link reference definitions in a note, each pointed by `follow` at where its
+ *  file went: it is handed the path the definition wrote, its encoding undone, and
+ *  answers with the path to write from the note, or null to leave the line as it
+ *  was. The label, the heading after a `#` and the title are kept. */
+function definitionsFollowed(text: string, follow: (path: string) => string | null): string {
+  const code = withMath(text, codeRanges(text))
+  const properties = propertiesTo(text)
+
+  return text.replace(
+    DEFINITION,
+    (whole, label: string, said: string, title: string, offset: number) => {
+      if (offset < properties || inCode(code, offset)) return whole
+      const target = said.replace(/^<|>$/g, '')
+      if (!target || isAddress(target)) return whole
+
+      const { path, fragment } = splitFragment(target)
+      const now = follow(decoded(path))
+      if (now === null) return whole
+      const anchor = fragment === null ? '' : `#${fragment}`
+      return `${label}${encodeTarget(now)}${anchor}${title}`
     },
   )
 }
@@ -298,7 +341,7 @@ export function linksFollowed(
   const linked = text.replace(LINK, markdownLink)
   const stillCode = withMath(linked, codeRanges(linked))
 
-  return linked.replace(
+  const wikilinked = linked.replace(
     WIKILINK,
     (whole, target: string, shown: string | undefined, offset: number) => {
       if (inCode(stillCode, offset)) return whole
@@ -320,6 +363,12 @@ export function linksFollowed(
       return `${bang}[[${path.replace(said, renamed)}${anchor}${cell ? '\\' : ''}${shown ?? ''}]]`
     },
   )
+
+  return definitionsFollowed(wikilinked, (path) => {
+    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
+    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
+    return now === undefined ? null : relativePath(here, now)
+  })
 }
 
 /** The files a wikilink could name, by the last part of the name it would use: a
@@ -527,7 +576,9 @@ function codeOnly(text: string): [number, number][] {
     const rest: string = marked?.[2] ?? ''
 
     if (index < properties) {
-      // The properties at the top are YAML, where an indent is only an indent.
+      // The properties at the top are YAML, where an indent is only an indent, and
+      // a backtick is only a backtick: it opens no span in the words under them.
+      prose = at + whole.length + 1
     } else if (fence) {
       // A fence closes on a run of its own mark at least as long, with nothing after.
       if (

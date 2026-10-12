@@ -622,6 +622,87 @@ describe('the links in a vault', () => {
       noteFrom('Home.md', file('Home.md', body), file('Notes.md', '# Notes\n')),
     ).resolves.toBe(body)
   })
+
+  test('whose words wrap onto a second line are pointed at their files', async () => {
+    const out = await noteFrom(
+      'Notes/Here.md',
+      file(
+        'Notes/Here.md',
+        'The chart below is the one\n![sales by quarter, as sent to the\nboard](chart.png)\n\nSee [the whole\nplan](Plan.md) for the rest.\n',
+      ),
+      file('assets/chart.png'),
+      file('Projects/Plan.md', '# Plan'),
+    )
+    // A wikilink cannot run over a line, so the note is reached by its path.
+    expect(out).toBe(
+      'The chart below is the one\n![sales by quarter, as sent to the\nboard](../assets/chart.png)\n\nSee [the whole\nplan](../Projects/Plan.md) for the rest.\n',
+    )
+  })
+
+  test('do not run over a blank line', async () => {
+    const body = 'An open [bracket\n\nand then](Plan.md) more.\n'
+    await expect(
+      noteFrom('Home.md', file('Home.md', body), file('Projects/Plan.md', '# Plan')),
+    ).resolves.toBe(body)
+  })
+
+  test('written as a reference follow a file the import renamed', async () => {
+    await expect(
+      noteFrom(
+        'Notes/Here.md',
+        file(
+          'Notes/Here.md',
+          'The answer: ![why][w], and [the note][n].\n\n[w]: Why%3F.png\n[n]: <Q%3F.md> "The question"\n[^1]: Why%3F.png\n',
+        ),
+        file('Notes/Why?.png'),
+        file('Notes/Q?.md', '# Q'),
+      ),
+    ).resolves.toBe(
+      'The answer: ![why][w], and [the note][n].\n\n[w]: Why.png\n[n]: Q.md "The question"\n[^1]: Why%3F.png\n',
+    )
+  })
+
+  test('written as a reference are pointed at a file found by its name', async () => {
+    await expect(
+      noteFrom(
+        'Notes/Here.md',
+        file('Notes/Here.md', '![chart][c]\n\n[c]: chart.png\n'),
+        file('assets/chart.png'),
+      ),
+    ).resolves.toBe('![chart][c]\n\n[c]: ../assets/chart.png\n')
+  })
+
+  test('escaped with a backslash are words, and only the real link beside them changes', async () => {
+    await expect(
+      noteFrom(
+        'Help.md',
+        file('Help.md', 'Type \\[[Why?]] to link to it, or [[Why?]].\n'),
+        file('Why?.md', '# Why'),
+      ),
+    ).resolves.toBe('Type \\[[Why?]] to link to it, or [[Why]].\n')
+  })
+
+  test('escaped with a backslash stay words when the Links setting writes markdown', async () => {
+    setLinkWriting('shortest')
+    try {
+      const body = 'Write \\[[Plan]] to link.\n'
+      await expect(
+        noteFrom('Help.md', file('Help.md', body), file('Projects/Plan.md', '# Plan')),
+      ).resolves.toBe(body)
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
+  test('under a property holding a lone backtick are still pointed at their files', async () => {
+    await expect(
+      noteFrom(
+        'Notes/Here.md',
+        file('Notes/Here.md', '---\ntitle: Rock `n roll\n---\nSee ![](pic.png) and `npm i`.\n'),
+        file('assets/pic.png'),
+      ),
+    ).resolves.toBe('---\ntitle: Rock `n roll\n---\nSee ![](../assets/pic.png) and `npm i`.\n')
+  })
 })
 
 /** A file the browser hands over from a picked folder. */

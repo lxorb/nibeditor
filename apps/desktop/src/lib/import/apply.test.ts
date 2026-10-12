@@ -130,6 +130,33 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Trip.md')).toBe('![](assets/shot%202.png)')
   })
 
+  test('a picture a reference names follows it', () => {
+    const taken = new Set(['assets/shot.png'])
+    const stamped = restamped(
+      planOf([note('Trip.md', '![shot][s]\n\n[s]: assets/shot.png\n'), file('assets/shot.png')]),
+      taken,
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Trip.md')).toBe('![shot][s]\n\n[s]: assets/shot%202.png\n')
+  })
+
+  test('a wikilink escaped with a backslash is words, and stays as it was', () => {
+    const taken = new Set(['plan.md'])
+    const stamped = restamped(
+      planOf([
+        note('Help.md', 'Write \\[[Plan]] to link the plan: [[Plan]].\n'),
+        note('Plan.md', '# Plan'),
+      ]),
+      taken,
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Help.md')).toBe(
+      'Write \\[[Plan]] to link the plan: [[Plan 2]].\n',
+    )
+  })
+
   test('a picture a vault embeds by its name follows it, its size and all', () => {
     const taken = new Set(['brain/photo.png', 'brain/home.md'])
     const stamped = restamped(
