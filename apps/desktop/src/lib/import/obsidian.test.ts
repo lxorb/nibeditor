@@ -589,6 +589,17 @@ describe('the files in a vault', () => {
     ).resolves.toEqual(['.obsidian/app.json', hashed])
   })
 
+  test('keep a dot or a space before the extension, beside a namesake without one', async () => {
+    await expect(
+      pathsFrom([
+        file('.obsidian/app.json', '{}'),
+        file('Wait for it....md', '# Suspense\n'),
+        file('Draft.md', 'one\n'),
+        file('Draft .md', 'two\n'),
+      ]),
+    ).resolves.toEqual(['.obsidian/app.json', 'Draft .md', 'Draft.md', 'Wait for it....md'])
+  })
+
   test('keep a long name and a double space, so a canvas naming them still finds them', async () => {
     const long =
       'How to Build a Second Brain - A Proven Method to Organize Your Digital Life and Unlock Your Creative Potential'

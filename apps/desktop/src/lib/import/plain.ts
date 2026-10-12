@@ -105,7 +105,7 @@ export async function readPlain(
 function placedPath(
   path: string,
   each?: (part: string) => string,
-  named: (part: string) => string = safeName,
+  named: (part: string, extension?: string) => string = safeName,
 ): string | null {
   if (BUNDLE_TEXT.test(path)) {
     // `Trips/Iceland.textbundle/text.md` is the note `Trips/Iceland.md`.

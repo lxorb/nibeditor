@@ -50,9 +50,17 @@ export function safeName(title: string): string {
 /** A name a file already had on somebody's disk, changed only as far as a file
  *  in a space has to be: what Windows forbids, a dot or a space at the end, and a
  *  device's name. Never shortened and never respaced, because an app that keeps
- *  its own files, an Obsidian vault, names them in its links and canvases too. */
-export function keptName(name: string): string {
-  const one = withoutForbidden(name).replace(/[. ]+$/, '')
+ *  its own files, an Obsidian vault, names them in its links and canvases too.
+ *
+ *  `extension` is what follows the name in the file's own, when it has one: then a
+ *  dot or a space the name ends with is not at the end of the file's, and Windows
+ *  keeps it, so `Wait for it....md` and `Draft .md` stay as they are. A space put
+ *  there in place of a character Windows forbids still comes off: `Why?.md` is
+ *  `Why.md`, not `Why .md`. */
+export function keptName(name: string, extension = ''): string {
+  const own = extension ? (/[. ]*$/.exec(name)?.[0] ?? '') : ''
+  const rest = withoutForbidden(name.slice(0, name.length - own.length))
+  const one = extension ? `${rest.trimEnd()}${own}` : rest.replace(/[. ]+$/, '')
   if (!one.trim()) return 'Untitled'
   return undeviced(one)
 }
@@ -91,7 +99,7 @@ export function hasNotionId(name: string): boolean {
 export function safeParts(
   path: string,
   each: (part: string) => string = (part) => part,
-  named: (part: string) => string = safeName,
+  named: (part: string, extension?: string) => string = safeName,
 ): string {
   const parts = path.split('/').filter(Boolean)
   const last = parts.pop() ?? ''
@@ -100,7 +108,7 @@ export function safeParts(
   const extension = at > 0 ? last.slice(at) : ''
 
   const folders = parts.map((one) => named(each(one)))
-  const name = `${named(each(stem))}${extension}`
+  const name = `${named(each(stem), extension)}${extension}`
 
   return [...folders, name].join('/')
 }

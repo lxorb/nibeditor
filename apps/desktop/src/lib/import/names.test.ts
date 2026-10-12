@@ -32,6 +32,15 @@ describe('a title as a file name', () => {
     expect(keptName('Cons. Law')).toBe('Cons. Law')
   })
 
+  test('kept from disk keeps a dot or a space before its extension, which Windows keeps', () => {
+    expect(keptName('Wait for it...', '.md')).toBe('Wait for it...')
+    expect(keptName('Draft ', '.md')).toBe('Draft ')
+    // A space that stands in for a forbidden character at the end still comes off.
+    expect(keptName('Why?', '.md')).toBe('Why')
+    // A folder's name has nothing after it, so Windows would drop them there.
+    expect(keptName('Drafts.')).toBe('Drafts')
+  })
+
   test('is short enough to leave room for the folders above it', () => {
     expect(safeName('a'.repeat(300))).toHaveLength(96)
   })
