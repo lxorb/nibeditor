@@ -37,11 +37,21 @@ export type Resolver = (target: string, from: string) => Found | null
 
 /** A markdown link or embed. The target is read as everything between the
  *  brackets, because an exported path is as likely to hold a space as not, and
- *  a title after it is put back as it was. */
-const LINK = /(!?)\[([^\]\n]*)\]\(([^()\n]*)\)/g
+ *  a title after it is put back as it was. A bracket with a backslash in front of
+ *  it is only a bracket, the way every markdown reader takes it, so `\[label\](x)`
+ *  is words somebody wrote about a link rather than one. */
+const LINK = /(!?)(?<!\\)\[((?:[^\]\\\n]|\\.)*)\]\(([^()\n]*)\)/g
 
 /** A wikilink, which Bear, Logseq, Roam and Obsidian all write. */
 const WIKILINK = /!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
+
+/** What a wikilink cannot hold in its name: a `]` ends it and a `|` starts the
+ *  words it shows, so a note named with either is reached by a markdown link. */
+const UNLINKABLE = /[[\]|]/
+
+/** The size Obsidian writes after a picture's `|`: a width, or a width and a
+ *  height. */
+const SIZE = /^\d+(?:x\d+)?$/
 
 /** The row of dashes under a table's header, which is what makes the lines around it
  *  a table: `| --- | :-: |`, with or without the pipes at its ends. */
@@ -86,7 +96,9 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
       // A note is pointed at by name, so the link survives it being renamed - or in
       // the spelling the Links setting asks for, since `linkTo` is the one place in
       // the app that writes a link to a note and this is the app writing one.
-      if (isMarkdownPath(found.path)) {
+      // A name a wikilink cannot hold keeps the markdown link it came in, which is
+      // the one way Obsidian could link to it either.
+      if (isMarkdownPath(found.path) && !UNLINKABLE.test(found.name)) {
         const written = linkTo(found.name, label, {
           path: found.path,
           from: at.now,
@@ -123,12 +135,21 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
       const found = find(path, at.was)
       if (!found) return whole
 
-      const written = linkTo(found.name, shown?.slice(1) ?? null, {
-        path: found.path,
-        from: at.now,
-        embed: whole.startsWith('!'),
-        fragment,
-      })
+      // A link that found its file only by ignoring case keeps the case it was
+      // written in: those are words in a sentence, and nib reads a name without
+      // regard to case just as Obsidian does.
+      const name = found.name.toLowerCase() === path.toLowerCase() ? path : found.name
+      const words = shown?.slice(1) ?? null
+      const embed = whole.startsWith('!')
+      // A picture's size has no place in a markdown image, where it would only be
+      // its alt text, so a sized embed stays a wikilink whatever the Links setting.
+      const sized = embed && !isMarkdownPath(found.path) && SIZE.test(words?.trim() ?? '')
+      const written = linkTo(
+        name,
+        words,
+        { path: found.path, from: at.now, embed, fragment },
+        sized ? 'wikilink' : undefined,
+      )
       return inCode(stillTables, offset) ? inCell(written) : written
     },
   )
@@ -338,33 +359,30 @@ function encodeTarget(path: string): string {
  *  bare file name anywhere in the export. The last is what Obsidian, Bear and
  *  Logseq all rely on, since none of them writes a path at all. */
 export class ExportFiles {
-  /** Every file in the export, by its lowercased export path. */
-  private readonly byPath = new Map<string, Found>()
+  /** Every file in the export, by its export path. */
+  private readonly byPath = new Spellings()
 
   /** The same, by bare name, for the shortest-path links. A name two files share
    *  answers with the first, which is what any reader of those spaces does. */
-  private readonly byName = new Map<string, Found>()
+  private readonly byName = new Spellings()
 
-  /** By name without the extension, which is how a wikilink names a note. */
-  private readonly byStem = new Map<string, Found>()
+  /** Notes by name without the extension, which is how a wikilink names a note.
+   *  Only notes: Obsidian reads a link with no extension as a link to a note, so
+   *  `[[Budget]]` beside nothing but `Budget.xlsx` is a note nobody has written yet,
+   *  not the spreadsheet, and a canvas or a paper of the same stem never answers. */
+  private readonly byStem = new Spellings()
 
   /** How many of the files arriving a wikilink would call by each name. */
   private readonly named = new Map<string, number>()
 
   add(was: string, found: Found) {
-    this.byPath.set(was.toLowerCase(), found)
+    this.byPath.add(was, found)
 
-    const name = was.split('/').pop()?.toLowerCase() ?? was
-    if (!this.byName.has(name)) this.byName.set(name, found)
+    const name = was.split('/').pop() ?? was
+    this.byName.add(name, found)
 
-    // A wikilink writes no extension, so a note answers to its stem as well, and
-    // ahead of a canvas or a paper of the same stem: Obsidian reads a link with no
-    // extension as a link to a note, whichever file sorted first.
     const stem = name.replace(/\.[^.]+$/, '')
-    const held = this.byStem.get(stem)
-    if (stem !== name && (!held || (!isMarkdownPath(held.path) && isMarkdownPath(found.path)))) {
-      this.byStem.set(stem, found)
-    }
+    if (stem !== name && isMarkdownPath(found.path)) this.byStem.add(stem, found)
 
     const said = found.name.toLowerCase()
     this.named.set(said, (this.named.get(said) ?? 0) + 1)
@@ -382,11 +400,11 @@ export class ExportFiles {
     const tries = [joined(here, cleaned), cleaned].flatMap((one) => [one, `${one}.md`])
 
     for (const one of tries) {
-      const found = this.byPath.get(one.toLowerCase())
+      const found = this.byPath.get(one)
       if (found) return this.told(found)
     }
 
-    const name = cleaned.split('/').pop()?.toLowerCase() ?? cleaned
+    const name = cleaned.split('/').pop() ?? cleaned
     return this.byName.get(name) ?? this.byStem.get(name) ?? null
   }
 
@@ -397,6 +415,25 @@ export class ExportFiles {
   private told(found: Found): Found {
     if ((this.named.get(found.name.toLowerCase()) ?? 0) < 2) return found
     return { ...found, name: found.path.replace(/\.md$/i, '') }
+  }
+}
+
+/** Files by a name, found by the exact spelling first and then without regard to
+ *  case, the first file added answering either way. A vault off a Linux disk can
+ *  hold `Plan.md` and `plan.md` side by side, and `[[Plan]]` there means the one
+ *  spelled that way rather than whichever of the two came last. */
+class Spellings {
+  private readonly exact = new Map<string, Found>()
+  private readonly folded = new Map<string, Found>()
+
+  add(key: string, found: Found) {
+    if (!this.exact.has(key)) this.exact.set(key, found)
+    const lower = key.toLowerCase()
+    if (!this.folded.has(lower)) this.folded.set(lower, found)
+  }
+
+  get(key: string): Found | undefined {
+    return this.exact.get(key) ?? this.folded.get(key.toLowerCase())
   }
 }
 

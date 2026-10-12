@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 
+import { setLinkWriting } from '../link-format'
 import { carriedBy, NOTION } from './carry'
 import { fromAppJson, leftInVault, obsidianCarries } from './obsidian'
 import { detect, readAs } from './read'
@@ -241,10 +242,10 @@ describe('the links in a vault', () => {
     // is a link.
     await expect(
       noteFrom('A.md', file('A.md', 'Some words\n    and [[kit]]\n'), kit),
-    ).resolves.toBe('Some words\n    and [[Kit]]\n')
+    ).resolves.toBe('Some words\n    and [[kit]]\n')
     await expect(
       noteFrom('A.md', file('A.md', '- Item\n\n    more about [[kit]]\n'), kit),
-    ).resolves.toBe('- Item\n\n    more about [[Kit]]\n')
+    ).resolves.toBe('- Item\n\n    more about [[kit]]\n')
   })
 
   test('in a table cell keep the cell whole', async () => {
@@ -255,7 +256,7 @@ describe('the links in a vault', () => {
       table('[[Plan\\|the plan]]'),
     )
     await expect(noteFrom('A.md', file('A.md', table('[[plan\\|the plan]]')), plan)).resolves.toBe(
-      table('[[Plan\\|the plan]]'),
+      table('[[plan\\|the plan]]'),
     )
     // Outside a table the `|` is the link's own.
     await expect(noteFrom('A.md', file('A.md', 'See [the plan](Plan.md).\n'), plan)).resolves.toBe(
@@ -307,6 +308,74 @@ describe('the links in a vault', () => {
         file('Notes/Report.md', '# Report'),
       ),
     ).resolves.toBe('Read [[Report]] and [[Report.pdf]]\n')
+  })
+
+  test('with no extension and no note of that name are a note not written yet', async () => {
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', 'Write up [[Budget]] later.\n'),
+        file('Files/Budget.xlsx'),
+      ),
+    ).resolves.toBe('Write up [[Budget]] later.\n')
+    await expect(
+      noteFrom('Home.md', file('Home.md', '![[Diagram]]\n'), file('Diagram.png', 'png')),
+    ).resolves.toBe('![[Diagram]]\n')
+  })
+
+  test('keep the case they were written in', async () => {
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', 'See the [[plan]] for details.\n'),
+        file('Plan.md', '# Plan\n'),
+      ),
+    ).resolves.toBe('See the [[plan]] for details.\n')
+  })
+
+  test('reach each of two notes whose names differ only in case', async () => {
+    const plan = await readAs('obsidian', [
+      file('.obsidian/app.json', '{}'),
+      file('Home.md', 'See [[todo]] and [[TODO]]\n'),
+      file('TODO.md', 'big'),
+      file('todo.md', 'small'),
+    ])
+    expect(plan.files.map((one) => one.path)).toEqual([
+      '.obsidian/app.json',
+      'Home.md',
+      'TODO.md',
+      'todo 2.md',
+    ])
+    const home = plan.files.find((one) => one.path === 'Home.md')
+    expect(home?.kind === 'note' && home.text).toBe('See [[todo 2]] and [[TODO]]\n')
+  })
+
+  test('keep a picture’s size when the Links setting writes markdown', async () => {
+    setLinkWriting('shortest')
+    try {
+      await expect(
+        noteFrom('Home.md', file('Home.md', '![[photo.png|300]]\n'), file('photo.png', 'png')),
+      ).resolves.toBe('![[photo.png|300]]\n')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
+  test('to a note with a bracket in its name stay markdown links', async () => {
+    await expect(
+      noteFrom(
+        'Home.md',
+        file('Home.md', 'See [the draft](%5BDraft%5D%20Plan.md).\n'),
+        file('[Draft] Plan.md', '# Draft\n'),
+      ),
+    ).resolves.toBe('See [the draft]([Draft]%20Plan.md).\n')
+  })
+
+  test('written with escaped brackets are words, not links', async () => {
+    const body = 'Write it as \\[label\\](Notes.md) to show the syntax.\n'
+    await expect(
+      noteFrom('Home.md', file('Home.md', body), file('Notes.md', '# Notes\n')),
+    ).resolves.toBe(body)
   })
 })
 
