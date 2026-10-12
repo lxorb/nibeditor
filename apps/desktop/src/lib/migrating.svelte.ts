@@ -127,6 +127,12 @@ export async function importAsSpace(
   if (!format) throw new Error(t('Nothing in there can be read as notes.'))
 
   const plan = await readAs(format, sources)
+  // A vault of nothing but Obsidian's housekeeping is known as a vault and then
+  // leaves every file behind, and settings alone are not a space anybody can open a
+  // note in.
+  const shown = plan.files.some((one) => !one.path.split('/').some((part) => part.startsWith('.')))
+  if (!shown) throw new Error(t('Nothing in there can be read as notes.'))
+
   const space = await workspace.addSpace(typeof name === 'string' ? name : await name(format))
   if (!space) return null
 
@@ -157,9 +163,11 @@ export async function arrive(space: Space) {
   if (!viewport.drawer) workspace.showPanel('tree')
 }
 
-/** The first note of the space as the file list shows it, to open on. */
+/** The first note of the space as the file list shows it, to open on. The list
+ *  puts folders first and holds PDFs and canvases too, so a vault's `Attachments/`
+ *  would otherwise be what it opens on; a space of papers alone opens on its first. */
 function firstNote(): string | null {
-  return workspace.files[0]?.path ?? null
+  return (workspace.notes[0] ?? workspace.files[0])?.path ?? null
 }
 
 export const migrating = new Migrating()
