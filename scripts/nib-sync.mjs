@@ -29,7 +29,7 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
 
-const API = process.env.NIB_API ?? 'https://nibeditor.com'
+const API = process.env.NIB_API ?? 'https://orden.so'
 const TOKEN = process.env.NIB_TOKEN ?? ''
 
 /** What a note's path may end in, which is what the service accepts. */

@@ -74,6 +74,16 @@ jobs:
       - name: Dead code and unused dependencies
         run: pnpm knip
 
+      # The rename's notice is the README's first line, word for word, for as long as
+      # people still arrive looking for nibeditor (docs/backlog.md, Q19).
+      - name: The README opens with the rename
+        run: |
+          expected='> Important: NibEditor is now Orden. We decided to change the name but everything else is still the same :)'
+          if [ "$(head -n 1 README.md)" != "$expected" ]; then
+            echo "README.md must open with: $expected" >&2
+            exit 1
+          fi
+
   # Sync v2's engine as every device of the simulator, ten thousand seeds of the unkind
   # network against the reference account (docs/sync-v2.md section 12): the same seeds
   # every run, so a change that breaks one is caught on its own push. Beside the tests
@@ -411,7 +421,7 @@ jobs:
             echo "R8 wrote no mapping folder"
           fi
 
-  # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
+  # Whatever is on main is what orden.so and nibeditor.com serve. Gated on the tests above,
   # so a red build never reaches anyone.
   deploy:
     # The types, the tests and the static checks. Clippy guards the desktop app,

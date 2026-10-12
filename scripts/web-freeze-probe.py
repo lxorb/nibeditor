@@ -459,7 +459,7 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
 
 def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__)
-    parsed.add_argument("--exe", required=True, help="the built Nib.exe")
+    parsed.add_argument("--exe", required=True, help="the built nib.exe")
     parsed.add_argument("--settle", type=float, default=6.0, help="seconds before the tab opens")
     parsed.add_argument("--watch", type=float, default=20.0, help="seconds after it opens")
     parsed.add_argument(

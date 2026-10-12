@@ -176,6 +176,7 @@ id (80b9de44) landed; two faults are left.
 | The name a reader sees is nibeditor: the welcome note (the old text still recognised as untouched), the sign-in and invite mails, the Mac menu bar, window titles, the OAuth resource name, the AUR and Nix `.desktop` files | `nibeditor-naming-and-launch.md`, 2026-09-08; hunt #123 | no "Nib" a reader sees; bundle id, winget ids and asset names untouched | S | med | Q18 |
 | The docs made true: `docs/typora-parity.md` still has the mermaid-on-pages and Lines rows open (both built) and says Reveal is not built (it is, as Show in folder); `docs/power-user.md`'s "In progress" row is done; the "What is left" lists refreshed once the wave lands | this audit | every open row open, every done row done | S | med | the wave |
 | README: a winget row once PR 429968 merges; the comparison's iOS cell once an installable iPhone app exists | batches #40, #49 | rows match what ships | S | low | external |
+| The web handoff's **Notes from nibeditor.com** row and `/handoff` come out twelve months after the rename; the nibeditor.com API, its zone and its registration stay for good | rebrand plan, 2026-10-12 | the row gone, every API route on nibeditor.com still answering | S | low | 2027-10 |
 
 ## 11. security-2 - the lows and the CSP
 
@@ -271,6 +272,7 @@ otherwise.
 | Q16 | Ink on an accent fill in dark mode | A per-scheme ink token |
 | Q17 | Delete the three finished migrations | Yes; every v0.5-era install has updated since |
 | Q18 | The display name is nibeditor everywhere a reader sees it, identifiers untouched | Yes, per 2026-09-08 |
+| Q19 | The name is Orden (2026-10-12): Orden and orden.so wherever a reader sees it, nibeditor.com answering the API for good, identifiers (`ch.emilvinu.nib`, `Documents/Nib`, the `nib` binary, the `Nib-` release assets) untouched | Yes, per 2026-10-12 |
 
 ## Dropped
 

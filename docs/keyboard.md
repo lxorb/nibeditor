@@ -1,6 +1,6 @@
 # The keyboard
 
-Nib is meant to be usable with no pointer at all. Not "usable" as in you can Tab
+Orden is meant to be usable with no pointer at all. Not "usable" as in you can Tab
 through it if you are patient: usable as in a hand that never leaves the home row
 can open a note, read down a folder, switch space, change a setting and get back
 to writing.
@@ -86,7 +86,7 @@ Code has `focusNextPart` on F6 and `focusPreviousPart` on Shift+F6, and Discord
 documents it as its section key. The APG has an open issue proposing Ctrl+F6 for
 the same job and it has sat there since 2020.
 
-## Nib's model
+## Orden's model
 
 Four sentences.
 
@@ -734,7 +734,7 @@ laptops, the Mac has its own default. Windows and Linux are unchanged.
 | Full screen | ⌃⌘F | F11 | F11 is Show Desktop; ⌃⌘F is every Mac app's Enter Full Screen |
 | Full window | ⌃⇧⌘F | Shift+F11 | the same Shift on full screen's key, and Sublime Text's own pair |
 | Present | ⌥⌘P | F5 | Keynote's Play Slideshow |
-| Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Nib's own on the Ctrl+Cmd row beside ⌃⌘F |
+| Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Orden's own on the Ctrl+Cmd row beside ⌃⌘F |
 | Round the strip | ⌃⇥, ⌃⇧⇥, ⇧⌘], ⇧⌘[ | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | ⌘⇥ is the app switcher; the brackets are Safari's, Chrome's and VS Code's |
 | The note at a place | ⌘1 to ⌘9 | Alt+1 to 9 and Alt+0, Ctrl+Alt+1 to 9 | Obsidian's and Safari's; ⌥ and a digit types a character |
 | Heading 1 to 6 | ⌥⌘1 to ⌥⌘6 | Ctrl+1 to 6 | trades places with the notes, as Notion has them on a Mac |
@@ -807,7 +807,7 @@ or Cmd, and Backspace takes it away.
 Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or
 Vim. Each holds only where it differs from Default, so a key Default gains later reaches
 all of them. The rule for a clash is the other app's: its key goes to what it does there,
-and the Nib action that held it is left with no key rather than moved somewhere nobody
+and the Orden action that held it is left with no key rather than moved somewhere nobody
 would look. Those rows read "Not set" in the list, and are still in the menus and the
 palette. `presets.test.ts` fails if a keyboard writes one chord twice, or leaves any two
 actions on one key.

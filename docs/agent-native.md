@@ -493,7 +493,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
-| `run_command` | `id` | one row of the palette's registry, as `nib commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
+| `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
@@ -1108,11 +1108,11 @@ keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
 **`nib mcp` is the app's own binary in a mode with no window**: `main.rs` reads its
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
-as `nib screenshot` finds them). It starts in a few milliseconds and opens no webview. If
+as `orden screenshot` finds them). It starts in a few milliseconds and opens no webview. If
 nib is not running it starts it minimised and waits for the endpoint. So the installed app
-is the whole of it: `claude mcp add nib -- "%LOCALAPPDATA%\nibeditor\nib.exe" mcp` (an
-install from before the product was renamed keeps `%LOCALAPPDATA%\Nib`, so a line
-pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
+is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp` (an
+install from before a rename keeps `%LOCALAPPDATA%\Nib` or `%LOCALAPPDATA%\nibeditor`,
+so a line pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
 (`docs/automation.md`); not a fixed HTTP port, which something else can be sitting on. A
 client that only speaks HTTP can be given the endpoint's own `/mcp` later; nothing here
 depends on it.

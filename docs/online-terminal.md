@@ -57,7 +57,7 @@ Each has a recommendation, and the design below assumes it.
 2. **An online terminal is a document in a space**, `Build.term`, made from a new tab's card (Ctrl+T or the plus)
    (**O**), renamed, moved, bookmarked and trashed like a note. It names one shell session on
    its owner's machine. Every nib that opens it - another computer of the same person, a phone,
-   the browser at nibeditor.com, a colleague in the space - shows the same session.
+   the browser at orden.so, a colleague in the space - shows the same session.
 3. **One shell, many screens.** In the machine, a small daemon, `nibd`, owns every session's
    pty and keeps its screen in a headless xterm.js, so a late joiner is sent the screen as it
    is (colours, modes, the program on the second screen) and then the stream; a reconnect is
@@ -517,7 +517,7 @@ session 25, input 100 frames a second a person; egress 20 GB a month on the free
 - **mail and scanning**: impossible with the internet off (above);
 - **HTTP floods and scraping**: the egress cap, and a flag past 1 GB an hour;
 - a **flag** stops the machine, mails Emil and the owner, and keeps it stopped until Emil lets
-  it go (`/admin/machines/:id`). Reports reach `abuse@nibeditor.com`.
+  it go (`/admin/machines/:id`). Reports reach `abuse@orden.so`.
 
 **Secrets.** Cloudflare's advice is to "assume that the code uses everything it can reach"
 ([security][cf-sb-sec]), so nib puts none of its own in a machine: no Worker secret, no
@@ -543,7 +543,7 @@ sees their machine's in Settings, Emil sees all.
 **Who gets one** (decision 4): the allow-list (`users.online`), signed in; later any account
 with a second factor on (a stolen session would be a machine holding somebody's agent login)
 and at least seven days old. **Terms**: nib has none published yet. Before anybody outside the
-allow-list: a page at nibeditor.com/terms with the online terminal's part - no mining, mail,
+allow-list: a page at orden.so/terms with the online terminal's part - no mining, mail,
 scanning, attacks or illegal content; no getting round the limits; nib may stop a machine and
 reads its metadata (the audit above), never its contents unless the law makes it; homes are
 deleted 90 days after the machine was last awake; no promise it is always there; a machine is
@@ -1032,7 +1032,7 @@ section _An online terminal_), `docs/keyboard.md`, `docs/design.md` and `docs/mo
 ### 6.3 Going live (Emil, after the waves)
 
 1. Emil answers the decisions above and sets the ceiling.
-2. The terms page is published; `abuse@nibeditor.com` exists.
+2. The terms page is published; `abuse@orden.so` exists.
 3. The container block, the binding and the tag move from `wrangler.machines.jsonc` into
    `wrangler.jsonc`; the image is built and pushed by `wrangler deploy` (Cloudflare's own
    registry, 50 GB per account, one image). This is the first moment anything costs money.

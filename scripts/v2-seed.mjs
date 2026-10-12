@@ -551,10 +551,10 @@ async function check(manifestPath, folders) {
 
 /** The names a disk cannot hold side by side, made through the account. */
 async function viaApi(spaceName, prod) {
-  const api = (process.env.NIB_API || 'https://nibeditor.com').replace(/\/$/, '')
+  const api = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
   const token = process.env.NIB_TOKEN ?? ''
   if (!token) throw new Error('NIB_TOKEN is not set')
-  if (/nibeditor\.com/.test(api) && !prod)
+  if (/orden\.so|nibeditor\.com/.test(api) && !prod)
     throw new Error(`${api} is production: pass --prod once the manager has said yes`)
 
   const ask = async (path, body) => {

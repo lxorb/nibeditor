@@ -39,7 +39,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, extname, join } from 'node:path'
 
-const API = (process.env.NIB_API || 'https://nibeditor.com').replace(/\/$/, '')
+const API = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
 const TOKEN = process.env.NIB_TOKEN ?? ''
 
 /** How many requests are in flight at once: enough to be quick, few enough that

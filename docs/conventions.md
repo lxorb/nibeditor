@@ -31,7 +31,7 @@ same commands on every push to `main`.
 | `packages/chats` | The chats' shared half, `@nib/chats` (`docs/chats.md`): the types the app, the Worker's `ChatLog` and the connector meet at (`types.ts`), the one reducer every end applies a chat's events with (`reduce.ts`), who may do what (`roles.ts`), the search language (`search.ts`), mentions, ids, a `.chat` pointer's text, message links, the limits, and every frame and HTTP shape with its check (`wire.ts`). Pure, no DOM, no dependencies. |
 | `packages/online` | The online terminal's shared half, `@nib/online` (`docs/online-terminal.md`): the types the app, the Worker's `Machine` and the machine's `nibd` meet at (`types.ts`), every frame of both sockets with its check (`wire.ts`), a `.term` file's text (`term.ts`), and the rules all three decide by: `awake` (whether a machine stays awake), `sizeOf` (whose size the pty takes), `mayType` (who types), and a month's usage and its price (`usage.ts`). Pure, no DOM; a shape any two of them share is spelled here and nowhere else. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |
-| `apps/cli` | `nib`, which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
+| `apps/cli` | `orden` (and `nib`, its old name), which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
 | `services/sync` | The Cloudflare Worker: sync, publishing, MCP, accounts, and the theme store's catalogue. Tests run routes against real SQL. A published page is the note; see `docs/publishing.md`. |
 
 One file, one responsibility. A file that has to explain two jobs in its
@@ -351,7 +351,7 @@ What that one import gives it, so that no drive writes any of it again:
   in, the mail it would have sent, and every process under it ended with it.
   `--local` switches the remote bindings off, so no Cloudflare token is wanted. The
   app such a drive loads is a build of its own, `dist-worker`, that asks its own
-  origin for the API - as the web app at nibeditor.com does - so one build serves
+  origin for the API - as the web app at orden.so does - so one build serves
   every Worker on any port, several drives run their Workers side by side, and
   `dist` is never rebuilt under a drive that is still fetching from it.
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
@@ -542,7 +542,7 @@ app's log folder - `%LOCALAPPDATA%\ch.emilvinu.nib\logs` on Windows,
 on Linux:
 
 ```powershell
-setx NIB_TRACE_STARTUP 1      # then start Nib the way you always do
+setx NIB_TRACE_STARTUP 1      # then start Orden the way you always do
 setx NIB_TRACE_STARTUP ""     # and off again
 ```
 
@@ -1015,7 +1015,7 @@ Keep one word per term. nib's own vocabulary, and what to follow:
 | chat | a channel people write in together, kept as a `.chat` file in a space; never "channel", "conversation" or "DM" on screen | Slack's *channel*. de `Chat`, fr `Discussion` |
 | reply | a message written under another, in the replies pane; never "thread", which is an AI conversation's word | Slack's *reply*. de `Antwort`, fr `Réponse` |
 
-`Nib`, `nibeditor`, format names (`Markdown`, `PDF`, `HTML`), other products
+`Orden` and its old names `nibeditor` and `Nib`, format names (`Markdown`, `PDF`, `HTML`), other products
 (`Obsidian`, `Notion`, `OpenAI`) and key names (`Ctrl`, `Enter`, `⌘`) are never
 translated.
 

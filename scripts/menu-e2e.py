@@ -45,13 +45,13 @@ PASTED_HTML = """<html><head><title>A tab nobody wants</title>
 <style>p { color: red }</style></head><body>
 <h2>Pasted heading</h2>
 <p><strong>bold</strong> and <em>italic</em>, <del>struck</del>, <mark>marked</mark>,
-and a <a href="https://nibeditor.com">link</a>.</p>
+and a <a href="https://orden.so">link</a>.</p>
 <ul><li>one</li><li>two<ul><li>under</li></ul></li></ul>
 <ol start="3"><li>three</li></ol>
 <table><thead><tr><th>Left</th><th>Right</th></tr></thead>
 <tbody><tr><td>a</td><td>1</td></tr></tbody></table>
 <pre><code class="language-ts">const x: number = 1</code></pre>
-<p><img src="https://nibeditor.com/one.png" alt="a picture"></p>
+<p><img src="https://orden.so/one.png" alt="a picture"></p>
 <script>window.mischief = 1</script>
 </body></html>"""
 
@@ -61,7 +61,7 @@ WANTED = [
     "**bold** and *italic*",
     "~~struck~~",
     "==marked==",
-    "[link](https://nibeditor.com)",
+    "[link](https://orden.so)",
     "- one",
     "- two",
     "  - under",
@@ -70,7 +70,7 @@ WANTED = [
     "| a | 1 |",
     "```ts",
     "const x: number = 1",
-    "![a picture](https://nibeditor.com/one.png)",
+    "![a picture](https://orden.so/one.png)",
 ]
 
 UNWANTED = [

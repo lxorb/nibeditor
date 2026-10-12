@@ -1,7 +1,7 @@
 # Automation
 
-Two ways to drive nibeditor from outside it: a `nib://` link, which is what a
-shortcut, a launcher or another program can hand the system, and `nib`, which is
+Two ways to drive Orden from outside it: a `nib://` link, which is what a
+shortcut, a launcher or another program can hand the system, and `orden`, which is
 the same app driven from a terminal.
 
 Both go through one dispatcher, and every verb in it goes through the call the app
@@ -38,7 +38,7 @@ out**. A link is written by anybody and followed by a click, so a microphone, a
 camera and who this machine is signed in as are not things a page on the web gets
 to reach by handing the system an address. The row itself says so - `byHand` in
 commands.ts - and the command line, which is behind this installation's own secret,
-runs all of them. `nib commands list` prints the lot.
+runs all of them. `orden commands list` prints the lot.
 
 One row neither may run: **New terminal**. A shell on this machine is not something
 another program opens in the app, because a terminal it could open is a terminal it
@@ -99,14 +99,17 @@ Nothing else, deliberately; see below.
   at `/?nib=<the link>`, the app follows it and takes it off the address so a
   reload does not follow it twice. Everything above works, spelled `web+nib://`.
 
-## `nib`, the command line
+## `orden`, the command line
 
-`nib` drives the app that is running. It is a Node script with no dependencies:
+`orden` drives the app that is running. It is a Node script with no dependencies:
 
 ```sh
 node apps/cli/nib.mjs files list
-pnpm --filter @nib/cli link --global && nib files list
+pnpm --filter @nib/cli link --global && orden files list
 ```
+
+`nib` is the same command under the name it had before, so a script that calls it
+keeps working.
 
 It ships in no installer, on purpose. The only way an installer can carry a command
 is as a sidecar, which is a second compiled binary in every bundle on every
@@ -114,7 +117,7 @@ platform for something almost nobody runs; a Node script adds nothing to any
 download. Node is already this repository's answer for driving nib without the app
 (`scripts/nib-sync.mjs`), so this sits beside it.
 
-There is no browser build of `nib` and there will not be: a tab has no socket to
+There is no browser build of `orden` and there will not be: a tab has no socket to
 listen on. Run against the web app it says so rather than failing to connect.
 
 ### Verbs
@@ -292,7 +295,7 @@ to `automation.json` in the app's own config folder:
 It holds the port, the secret, `eval`, and `pid` - which process is listening. The pid
 is written rather than read: the file is rewritten every launch, so the one in it is
 always the process that wrote it, and a pid from a launch that has ended names nothing or
-names somebody else's process. `nib screenshot` is the one caller that wants it.
+names somebody else's process. `orden screenshot` is the one caller that wants it.
 
 The secret is 32 bytes of system randomness as hex, kept across launches, and the
 file is `0600` where the platform has modes. Every request carries it as

@@ -4,9 +4,9 @@ What the Mac build does differently from Windows and Linux, and the checklist it
 
 ## What is Mac-only
 
-- **Frame.** The window keeps the system's traffic lights over Nib's own bar (`titleBarStyle: Overlay`, `tauri.macos.conf.json`, `appearance.rs` `own_frame`). `lights.rs` centres them in the bar and puts them back whenever AppKit lays the titlebar out again, which it does on every resize, new title and edited dot. The bar leaves `--traffic-lights` of room in whichever bar holds the top left corner: the tab bar, or the sidebar's head while it is docked open. Full screen gives the room back. No drawn window buttons and no hamburger on a Mac.
-- **Menu bar.** Built from the same rows as the in-window menu (`native-menu.ts`, `native-menu-bar.svelte.ts`), plus the File rows a Mac's File menu has and the in-window one leaves to their keys: New Note, New Tab, New Window, Close Note, Reopen Closed Tab and Close Window, with Settings… in the Nib menu. No Save and no Save As…: every note writes itself, and Cmd+S is a key with no row that writes what is waiting at once. No Open File… and no Open Recent: nib opens nothing from outside its spaces, and Cmd+O is the palette on the notes, which is where a note is found by name. With a web tab in front a key reaches the app only as a row of the bar, so those have to be rows here. Cut, Copy and Paste are the system's own rows, so they work in every webview. Undo, Redo and Select All hand their key to the page first, where the note, a canvas or a deck answers it, and to the system's own action when nothing there does, which is how a field and a web tab get it (`standIn`, `menu_bar.rs`).
-- **Lifecycle.** The bundle declares no document type, so Finder offers Nib for no file; `RunEvent::Opened` carries the web pages another program hands over once Nib is the browser, and a file among them opens nothing. Nothing goes to the Dock's recent documents either. Closing the last window keeps Nib in the Dock, and clicking the Dock icon opens a window again. Cmd+Q lets every window write what is waiting and then quits, asking nothing (`lifecycle.rs`, `start.ts`). The window frame is restored at launch.
+- **Frame.** The window keeps the system's traffic lights over Orden's own bar (`titleBarStyle: Overlay`, `tauri.macos.conf.json`, `appearance.rs` `own_frame`). `lights.rs` centres them in the bar and puts them back whenever AppKit lays the titlebar out again, which it does on every resize, new title and edited dot. The bar leaves `--traffic-lights` of room in whichever bar holds the top left corner: the tab bar, or the sidebar's head while it is docked open. Full screen gives the room back. No drawn window buttons and no hamburger on a Mac.
+- **Menu bar.** Built from the same rows as the in-window menu (`native-menu.ts`, `native-menu-bar.svelte.ts`), plus the File rows a Mac's File menu has and the in-window one leaves to their keys: New Note, New Tab, New Window, Close Note, Reopen Closed Tab and Close Window, with Settings… in the Orden menu. No Save and no Save As…: every note writes itself, and Cmd+S is a key with no row that writes what is waiting at once. No Open File… and no Open Recent: nib opens nothing from outside its spaces, and Cmd+O is the palette on the notes, which is where a note is found by name. With a web tab in front a key reaches the app only as a row of the bar, so those have to be rows here. Cut, Copy and Paste are the system's own rows, so they work in every webview. Undo, Redo and Select All hand their key to the page first, where the note, a canvas or a deck answers it, and to the system's own action when nothing there does, which is how a field and a web tab get it (`standIn`, `menu_bar.rs`).
+- **Lifecycle.** The bundle declares no document type, so Finder offers Orden for no file; `RunEvent::Opened` carries the web pages another program hands over once Orden is the browser, and a file among them opens nothing. Nothing goes to the Dock's recent documents either. Closing the last window keeps Orden in the Dock, and clicking the Dock icon opens a window again. Cmd+Q lets every window write what is waiting and then quits, asking nothing (`lifecycle.rs`, `start.ts`). The window frame is restored at launch.
 - **Window.** Its title is the note's name, the edited dot in the red button is never lit because nothing is ever unwritten for long, and it knows which file it stands for (`document_window.rs`).
 - **Keys.** Mac defaults and key symbols (`shortcuts/registry.ts`, `keys.ts`, `docs/keyboard.md`).
 - **Files.**
@@ -29,7 +29,7 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### Install
 
-1. Download the `.dmg` from the release, open it, and drag Nib to Applications. Gatekeeper warns, because the build is not notarized. Open Anyway in System Settings > Privacy & Security starts it. It must not say "damaged".
+1. Download the `.dmg` from the release, open it, and drag Orden to Applications. Gatekeeper warns, because the build is not notarized. Open Anyway in System Settings > Privacy & Security starts it. It must not say "damaged".
 2. The Dock and Finder icon is the same size as other apps' icons, with rounded corners.
 
 > macOS 26.6 (25G72), Apple M5. 1 passes: the dmg, quarantined as Safari quarantines a download, says Apple could not verify Nib, and Open Anyway starts it. That depends on the ad-hoc signature this branch adds. The 0.9.1 release carries only the linker's signature on its binaries (`codesign --verify` says "not signed at all"), which is what Apple silicon calls "damaged". 2 passes on macOS 26 only because the system masks a full-bleed icon itself; the icon is an opaque square, so macOS 13 to 15 show it square and larger than its neighbours until it is on Apple's grid.
@@ -46,7 +46,7 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### Menu bar
 
-1. The bar reads Nib / File / Edit / Paragraph / Format / View / Window / Help, and its key hints match Settings > Keyboard.
+1. The bar reads Orden / File / Edit / Paragraph / Format / View / Window / Help, and its key hints match Settings > Keyboard.
 2. In a note, Cmd+B, Cmd+W, Cmd+N and Cmd+Shift+T each run once.
 3. Cmd+B typed in the sidebar search does not bold the note.
 4. In a web tab:
@@ -69,10 +69,10 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### Lifecycle
 
-1. A `.md` in Finder does not offer Nib under Open With, a double click opens it in whatever else is set for markdown, and `open -a Nib some.md` or a file dropped on the Dock icon brings Nib forward and opens nothing. A Mac that had an older Nib forgets it as the new bundle replaces it (Launch Services reads the bundle again).
+1. A `.md` in Finder does not offer Orden under Open With, a double click opens it in whatever else is set for markdown, and `open -a Orden some.md` or a file dropped on the Dock icon brings Orden forward and opens nothing. A Mac that had an older version forgets it as the new bundle replaces it (Launch Services reads the bundle again).
 2. `open "nib://..."` from Terminal still works.
-3. Close every window: Nib stays in the Dock, and clicking the Dock icon brings a window back where it was.
-4. Type into a note and press Cmd+Q at once: Nib quits without a question, and the words are in the file. With two windows, and from the Dock menu's Quit, the same.
+3. Close every window: Orden stays in the Dock, and clicking the Dock icon brings a window back where it was.
+4. Type into a note and press Cmd+Q at once: Orden quits without a question, and the words are in the file. With two windows, and from the Dock menu's Quit, the same.
 5. Window title and edited dot:
    - Mission Control shows the note's name.
    - The red button never wears the edited dot, while typing or after.
@@ -93,17 +93,17 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
    - Opt+Cmd+1 to Opt+Cmd+6 set headings.
    - Ctrl+` makes inline code.
    - Opt+Cmd chords work on a German keyboard layout.
-5. Cmd+` still cycles Nib's windows.
+5. Cmd+` still cycles Orden's windows.
 
 > macOS 26.6 (25G72), Apple M5, ABC - QWERTZ layout. 1: Ctrl+Cmd+F toggles full screen. 2: in the file list a bare Backspace does nothing, Cmd+Backspace deletes the note, and Cmd+Return renames. 3: Cmd+1 to Cmd+9 switch tabs; Shift+Cmd+] and [ step through them on a US layout. On QWERTZ that key is AppKit's Cmd+* for Zoom in, since AppKit rewrites a row's key for the layout (see menu_bar.rs), so there Ctrl+Tab and Ctrl+Shift+Tab are the way to step. 4: Opt+Cmd+1 to 6 make headings 1 to 6, and Ctrl+` makes inline code, which QWERTZ presses as Ctrl+<, the key the menu shows. Opt+Cmd+5 and 6 folded and unfolded the note instead for a while this round, when the rewrite had been turned off: QWERTZ types `[` with Opt+5, and that is Fold's Opt+Cmd+[. And a Ctrl chord the Mac has no binding for, Ctrl+Q, Ctrl+R or Ctrl+^, typed an invisible control character into the note; it types nothing now (the editor's control.ts). 5 needs a real keyboard: Cmd+` is the system's, and a posted key does not reach it.
 
 ### Files
 
-1. With Homebrew's pandoc installed and Nib started from Finder, the Word export appears.
+1. With Homebrew's pandoc installed and Orden started from Finder, the Word export appears.
 2. Rename `idea.md` to `Idea.md`, a folder `work` to `Work`, and a space likewise: all go through.
 3. For a note created with `touch "$(printf 'U\xcc\x88bersicht.md')"`, `[[Übersicht]]` resolves and backlinks work.
 4. iCloud Desktop & Documents with a note set to "Remove Download": the note shows a cloud in the list, and opening it downloads it.
-5. Right-clicking in a text field shows the system menu (Look Up, Spelling). Right-clicking in a note still shows Nib's own menu.
+5. Right-clicking in a text field shows the system menu (Look Up, Spelling). Right-clicking in a note still shows Orden's own menu.
 6. Reveal in Finder selects the file.
 
 > macOS 26.6 (25G72), Apple M5. 1 was not run: Homebrew is not installed on this Mac. 2: renaming a note, a folder with notes in it and a space by their capitals alone goes through, which tests in notes.rs now check on the Mac's own case-insensitive disk. 3: a note whose name the disk keeps decomposed is reached by `[[Übersicht]]` and links back (link-index.test.ts). 4 was not run: this Mac is not signed in to iCloud. `notes/icloud.rs` now also knows the dataless file macOS 14 and later leave under the note's own name, where it knew only the `.icloud` placeholder of macOS 13. 5: the sidebar's search field gives the system's menu (Look Up, Translate, Spelling and Grammar, Substitutions), and a note gives Nib's own. 6: Reveal in Finder opens the space's folder with the note selected.
@@ -117,7 +117,7 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
    - no dialog and no flashing window.
 2. Cmd+P opens the print sheet.
 3. A web tab on a camera test site:
-   - Nib's question appears, and Don't Allow denies.
+   - Orden's question appears, and Don't Allow denies.
    - A camera and microphone request asks twice.
    - File upload and `target=_blank` still work.
 4. Sign in to a site, then quit with the window closed or with Cmd+Q, and relaunch: still signed in.
@@ -138,5 +138,5 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### Recording and dictation
 
-1. The recorder asks for the microphone with Nib's sentence, then records.
+1. The recorder asks for the microphone with Orden's sentence, then records.
 2. Dictation asks for speech recognition.

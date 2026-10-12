@@ -81,7 +81,7 @@ interface Rule {
  *  itself, so every Twitch frame carries the two hostnames the app is ever served
  *  from: `tauri.localhost` on Windows, plain `localhost` everywhere else and in
  *  dev. A published page never builds a frame at all - there the card is a link -
- *  which is why no `*.nibeditor.com` is in here and none can be: Twitch takes
+ *  which is why no `*.orden.so` is in here and none can be: Twitch takes
  *  exact hostnames and a published space is a subdomain nobody knows in advance. */
 const TWITCH = 'parent=localhost&parent=tauri.localhost&autoplay=false'
 

@@ -83,7 +83,7 @@ REAL = {
     "Slides": "https://docs.google.com/presentation/d/1EAYk18WDjIG-zp_0vLm3CsfQh_i8eXc67Jo2O9C6Vuc/edit",
     "Sign-in": "https://accounts.google.com/ServiceLogin?service=wise&continue=https://docs.google.com/spreadsheets/",
     "YouTube": "https://www.youtube.com/",
-    "GitHub": "https://github.com/lxorb/nibeditor",
+    "GitHub": "https://github.com/lxorb/orden",
     "Proton": "https://account.proton.me/mail",
     "Moodle": "https://moodle-app2.let.ethz.ch/",
 }

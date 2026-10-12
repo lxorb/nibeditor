@@ -108,7 +108,7 @@ def register_id() -> None:
     import winreg
 
     key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, rf"Software\Classes\AppUserModelId\{IDENTIFIER}")
-    winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "nibeditor probe")
+    winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "Orden probe")
     winreg.CloseKey(key)
 
 

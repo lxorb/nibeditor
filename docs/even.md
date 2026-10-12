@@ -1,9 +1,9 @@
-# Nib on the Even Realities G2
+# Orden on the Even Realities G2
 
 The plugin is the web app with one thing added: a bridge that keeps the glasses
 showing whatever note is active in it, and lets the glasses say back which note
 that should be. Same components, same stores, same browser storage, same sign-in,
-same sync. It is served at `https://nibeditor.com/even/`, and it does nothing at
+same sync. It is served at `https://orden.so/even/`, and it does nothing at
 all in a browser that has no glasses behind it.
 
 **Everything on the panel is text.** No image container is made at all: a page of
@@ -78,7 +78,8 @@ plugin asks for `network` and for **both** microphones, because it listens throu
 both; see section 5. A test in `even/manifest.test.ts` now holds the manifest to
 every rule on this page, because all of them are silent until a release.
 
-Our `network` whitelist is **one origin**, `https://nibeditor.com`: one entry per
+Our `network` whitelist is **one origin**, `https://orden.so` (a package from before
+the rename has `https://nibeditor.com`, which still answers): one entry per
 full origin, no wildcards, no bare hostnames. The phone app blocks any request to a
 host that is not on it before the request leaves the WebView, and CORS still
 applies on top of that.
@@ -672,7 +673,7 @@ The page on the glasses and the scroll on the phone are one place in the note.
 The two ends would chase each other round the note, so a page turn opens a 500 ms
 window in which a scroll on the phone is the plugin's own doing and is ignored.
 
-**Nib turns the pages, and that is the only way the glass is fed.** The app cuts the
+**Orden turns the pages, and that is the only way the glass is fed.** The app cuts the
 note into panels of eight lines, sends one, and a flick of a temple sends the next: a
 section starts at the top of a panel, its heading stays above every page of it, and
 the head says which page of how many.
@@ -1008,7 +1009,7 @@ is. That is the better half of the trade: a note written on a laptop a minute ag
 in the answer.
 
 **The ceilings** are in `limits.ts` with the mail ones: sixty questions and six
-hundred utterances an hour, per account. Not about Nib's reputation like the mail
+hundred utterances an hour, per account. Not about Orden's reputation like the mail
 ones - about a bug, or a phone in a pocket, not being able to run through a month of
 somebody's OpenAI credit in an afternoon.
 
@@ -1284,7 +1285,7 @@ so the finding was real and larger than reported. Where they came from:
 | Svelte's runtime | 17 | `https://svelte.dev/e/<code>`, one per runtime error |
 | `flowchart.js` | 3 | raphael's home page, an SVG feature string |
 | `pdf` | 4 | pdf.js's own examples and test URLs |
-| the app's own chunks | 3 | `github.com/lxorb/nibeditor`, and two connector addresses the MCP panel prints |
+| the app's own chunks | 3 | `github.com/lxorb/orden`, and two connector addresses the MCP panel prints |
 
 And the second finding, by the line that produced it:
 
@@ -1420,7 +1421,7 @@ nothing on the glasses is exactly what that looks like from the outside, and it
 is indistinguishable from a bridge that was never found. Staging both names as
 the plugin removes the question rather than answering it.
 
-`even.html` also paints one line of its own, `Nib for G2`, before any script
+`even.html` also paints one line of its own, `Orden for G2`, before any script
 runs, and the app removes it on mount. The editor's page has nothing like it, so
 seeing it at all says the plugin's page was loaded, and seeing it stay says the
 page loaded and its script did not.
@@ -1437,12 +1438,12 @@ what a beta tester installs.
 1. On the phone: **Even Realities app -> Hardware -> Enable Developer Mode**.
 2. On a computer:
    ```sh
-   npx @evenrealities/evenhub-cli qr --url https://nibeditor.com/even/
+   npx @evenrealities/evenhub-cli qr --url https://orden.so/even/
    ```
 3. In the phone app, open the **Even Hub** tab, tap **Scan QR**, and point the
    camera at the terminal. The glasses draw the plugin within a second or two.
 
-The origin is then `https://nibeditor.com`, which the sync API's CORS list
+The origin is then `https://orden.so`, which the sync API's CORS list
 already allows, so signing in and syncing work as they do in a browser. The
 catch: the moment the phone app goes to the background - lock screen, app
 switcher, Control Center - the WebView is suspended and the page usually comes
@@ -1534,7 +1535,7 @@ anything with colour in it. The sizes are not published anywhere, so
 node scripts/even-icon.mjs
 ```
 
-`docs/even/icon-24.png`, `icon-256.png` and their two backgrounds: the Nib mark
+`docs/even/icon-24.png`, `icon-256.png` and their two backgrounds: the app's mark
 in greyscale, eight bit grey plus alpha, no colour channel to be rejected for.
 Upload whichever size the field asks for.
 
@@ -1568,7 +1569,7 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
   never more than eight rows in the body;
 - the note on the phone has **nothing laid over it**: one frame around the words the
   glasses are showing, sized to them, and no element covering the page;
-- **Nib turns every page**: the number is in the head, a flick turns a whole page and
+- **Orden turns every page**: the number is in the head, a flick turns a whole page and
   the number counts it, and there is no scrolling row left in the settings on the
   glasses to reach;
 - a scroll off a temple turned the page, and **only the bands that changed were
@@ -1590,8 +1591,8 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
   page never shows;
 - the microphone opened, the corner lit, and six spoken commands were obeyed:
   next, back, spaces view, close, "open page three" and "go to line forty";
-- a spoken question put the question up, asked **Nib** for it - the question, the
-  model and the effort, **no key and no note** - reached `nibeditor.com` and nothing
+- a spoken question put the question up, asked **Orden** for it - the question, the
+  model and the effort, **no key and no note** - reached `orden.so` and nothing
   else, and opened the answer with its one sentence first; a scroll went down it a
   line at a time and a double tap closed it;
 - **a space that chose an icon drew it** - the shape, in the SVG namespace, which is
@@ -1714,7 +1715,7 @@ In rough order of how much rests on it:
    and frames arrive on `onEvenHubEvent`.
 9. **A double tap on the root page still raises the system's own question** once the
    plugin is consuming double taps everywhere else.
-10. **A question actually leaves the WebView**, now that `nibeditor.com` is the one
+10. **A question actually leaves the WebView**, now that `orden.so` is the one
     origin on the whitelist and the whole flow goes through it.
 11. **The page number lands in the top right of the head band**, beside the
     microphone's corner, with no gap that reads as two words and nothing clipped.
@@ -1742,7 +1743,7 @@ In rough order of how much rests on it:
    `Access-Control-Allow-Origin: *` "or specifically the WebView origin if you can
    identify it", which is the platform declining to say. The sync API allows a
    fixed list of origins (`services/sync/src/index.ts`), which covers the QR flow
-   because that loads `https://nibeditor.com` directly, and will not cover a
+   because that loads `https://orden.so` directly, and will not cover a
    packed build. Nothing has been changed there: widening the API's CORS is a
    decision about the API, not about this plugin. When it is time, the options
    are to allow a null or absent `Origin` on `/v1/*`, or to allow `*` there and

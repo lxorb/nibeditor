@@ -63,8 +63,8 @@ tunnel's route again, so Access can also be added later.
 
 ### 4. Check what the Worker sees
 
-`GET https://nibeditor.com/v2/online/admin` signed in as Emil: `hetzner.missing` is `[]`.
-`GET https://nibeditor.com/v2/online/machine/current` answers 64 hex characters.
+`GET https://orden.so/v2/online/admin` signed in as Emil: `hetzner.missing` is `[]`.
+`GET https://orden.so/v2/online/machine/current` answers 64 hex characters.
 
 ### 5. Move Emil's machine (this is when it starts to cost money)
 

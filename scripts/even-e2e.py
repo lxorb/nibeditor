@@ -55,6 +55,17 @@ MORE_PATH = f"{SPACE}/Everything else.md"
 # and this puts the same data in front of the firmware's own folding.
 SCRIPTS_PATH = f"{SPACE}/Scripts.md"
 
+# The hosts the manifest's network whitelist allows, read off the manifest: the plugin
+# may reach those and nothing else.
+WHITELIST = {
+    origin.removeprefix("https://")
+    for one in json.loads((ROOT / "apps" / "desktop" / "even.app.json").read_text(encoding="utf-8"))[
+        "permissions"
+    ]
+    if one["name"] == "network"
+    for origin in one["whitelist"]
+}
+
 # A second space, for the icons: one that chose an icon and one that did not.
 OTHER_SPACE = "/Uni"
 UNI_PATH = f"{OTHER_SPACE}/Lecture.md"
@@ -107,7 +118,7 @@ $$
 
 ![A sketch of the panel](sketch.png)
 
-A footnote[^one], a [link](https://nibeditor.com) and a wikilink to
+A footnote[^one], a [link](https://orden.so) and a wikilink to
 [[Monday standup]].
 
 [^one]: Which reads as a superscript.
@@ -357,10 +368,11 @@ window.__say = (text) => {
   })
 }
 
-/** Nib's own API, answering from a script. Nothing leaves the machine, and every
- *  host the plugin asked for is written down - which is now the whole of the check,
- *  because the account's OpenAI key is written and never read back and the plugin
- *  has none to send. The question goes to nibeditor.com, and to nothing else.
+/** Orden's own API, answering from a script, under either of the service's names.
+ *  Nothing leaves the machine, and every host the plugin asked for is written down -
+ *  which is now the whole of the check, because the account's OpenAI key is written
+ *  and never read back and the plugin has none to send. The question goes to the
+ *  origin the whitelist names, and to nothing else.
  *
  *  Signed in, because a question is asked of an account: `/v1/me` answers with one,
  *  which is what puts a token in `account.accountToken`. Everything the syncing then
@@ -390,7 +402,7 @@ const json = (body, status = 200) =>
 
 window.fetch = (input, init) => {
   const url = String(typeof input === 'string' ? input : (input?.url ?? input))
-  if (!url.startsWith('https://nibeditor.com')) return realFetch(input, init)
+  if (!/^https:\/\/(?:orden\.so|nibeditor\.com)(?:[/?#]|$)/.test(url)) return realFetch(input, init)
 
   const path = new URL(url).pathname
   window.__hosts.push(new URL(url).host)
@@ -1002,7 +1014,7 @@ def main() -> int:
             open_note(page, "Even Realities glasses")
             paged = page.evaluate("window.__bands()")
             report.ok(
-                "the page number is there, because Nib turns every page",
+                "the page number is there, because Orden turns every page",
                 re.search(r"\d+/\d+$", paged.get("nibHead", "").rstrip()) is not None,
                 paged.get("nibHead", "").rstrip(),
             )
@@ -1137,7 +1149,7 @@ def main() -> int:
             asked = page.evaluate("window.__asked")
             sent = asked[0] if asked else {}
             report.ok(
-                "asked Nib the question, with the model and nothing else",
+                "asked Orden the question, with the model and nothing else",
                 sorted(sent.keys()) == ["effort", "model", "question"],
                 json.dumps(sorted(sent.keys())),
             )
@@ -1148,8 +1160,8 @@ def main() -> int:
             )
             hosts = page.evaluate("window.__hosts")
             report.ok(
-                "reached nibeditor.com and nothing else, which is the whole whitelist",
-                bool(hosts) and set(hosts) == {"nibeditor.com"},
+                "reached the whitelist's origin and nothing else",
+                bool(hosts) and set(hosts) <= WHITELIST,
                 json.dumps(sorted(set(hosts))),
             )
             report.ok(
