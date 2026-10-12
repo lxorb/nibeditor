@@ -200,6 +200,22 @@ describe('the links in a vault', () => {
     )
   })
 
+  test('in a table cell keep the cell whole', async () => {
+    const plan = file('Plan.md', '# Plan\n')
+    const table = (link: string) => `| Who | Link |\n| --- | --- |\n| me | ${link} |\n`
+
+    await expect(noteFrom('A.md', file('A.md', table('[the plan](Plan.md)')), plan)).resolves.toBe(
+      table('[[Plan\\|the plan]]'),
+    )
+    await expect(noteFrom('A.md', file('A.md', table('[[plan\\|the plan]]')), plan)).resolves.toBe(
+      table('[[Plan\\|the plan]]'),
+    )
+    // Outside a table the `|` is the link's own.
+    await expect(noteFrom('A.md', file('A.md', 'See [the plan](Plan.md).\n'), plan)).resolves.toBe(
+      'See [[Plan|the plan]].\n',
+    )
+  })
+
   test('with no extension mean the note, whatever file of that stem sorts first', async () => {
     await expect(
       noteFrom(

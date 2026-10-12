@@ -43,6 +43,10 @@ const LINK = /(!?)\[([^\]\n]*)\]\(([^()\n]*)\)/g
 /** A wikilink, which Bear, Logseq, Roam and Obsidian all write. */
 const WIKILINK = /!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
 
+/** The row of dashes under a table's header, which is what makes the lines around it
+ *  a table: `| --- | :-: |`, with or without the pipes at its ends. */
+const DIVIDER = /^ {0,3}\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/
+
 export interface Rewriting {
   /** Where the note sat in the export, which is what a relative link resolves
    *  against. */
@@ -54,6 +58,7 @@ export interface Rewriting {
 export function rewriteLinks(text: string, at: Rewriting, find: Resolver): string {
   const folder = folderOf(at.now)
   const code = codeRanges(text)
+  const tables = tableRanges(text)
 
   const linked = text.replace(
     LINK,
@@ -73,12 +78,13 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
       // the spelling the Links setting asks for, since `linkTo` is the one place in
       // the app that writes a link to a note and this is the app writing one.
       if (isMarkdownPath(found.path)) {
-        return linkTo(found.name, label, {
+        const written = linkTo(found.name, label, {
           path: found.path,
           from: at.now,
           embed: bang === '!',
           fragment: fragment === null ? null : decoded(fragment),
         })
+        return inCode(tables, offset) ? inCell(written) : written
       }
 
       const path = relativePath(folder, found.path)
@@ -93,23 +99,62 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
   // exporting app's wherever it happened to match nib's. The code is found again,
   // because the pass above moved everything after the first link it rewrote.
   const stillCode = codeRanges(linked)
+  const stillTables = tableRanges(linked)
   return linked.replace(
     WIKILINK,
     (whole, target: string, shown: string | undefined, offset: number) => {
       if (inCode(stillCode, offset)) return whole
 
-      const { path, fragment } = splitFragment(decoded(target.trim()))
+      // In a table Obsidian writes the `|` before the shown words as `\|`, and the
+      // backslash is the cell's business rather than part of the name.
+      const named = shown === undefined ? target : target.replace(/\\$/, '')
+      const { path, fragment } = splitFragment(decoded(named.trim()))
       const found = find(path, at.was)
       if (!found) return whole
 
-      return linkTo(found.name, shown?.slice(1) ?? null, {
+      const written = linkTo(found.name, shown?.slice(1) ?? null, {
         path: found.path,
         from: at.now,
         embed: whole.startsWith('!'),
         fragment,
       })
+      return inCode(stillTables, offset) ? inCell(written) : written
     },
   )
+}
+
+/** Where the note's tables are, as stretches of its text: the header row, the row of
+ *  dashes under it and every row after, up to the first blank line. A callout's or a
+ *  quote's `>` in front of each line is a table in there all the same. */
+function tableRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = []
+  const lines = text.split('\n').map((line) => line.replace(/^(?: {0,3}>[ \t]?)*/, ''))
+  const starts: number[] = []
+  let at = 0
+  for (const line of text.split('\n')) {
+    starts.push(at)
+    at += line.length + 1
+  }
+
+  for (let one = 1; one < lines.length; one++) {
+    const head = lines[one - 1] ?? ''
+    const divider = lines[one] ?? ''
+    if (!DIVIDER.test(divider) || !divider.includes('|') || !head.includes('|')) continue
+
+    let last = one
+    while ((lines[last + 1] ?? '').trim()) last += 1
+    ranges.push([starts[one - 1] ?? 0, (starts[last + 1] ?? text.length + 1) - 1])
+    one = last
+  }
+
+  return ranges
+}
+
+/** A link written into a table cell. A bare `|` there ends the cell, which would cut
+ *  a wikilink's shown words off into a cell of their own, so it is written `\|`, the
+ *  way Obsidian writes it and nib reads it. */
+function inCell(link: string): string {
+  return link.replace(/(?<!\\)\|/g, '\\|')
 }
 
 /** A link's target and what follows its `#`: a heading, a `^blockid`, a PDF's
