@@ -238,8 +238,6 @@ macro_rules! commands {
     ($($desktop:tt)*) => {
         tauri::generate_handler![
             notes::read_note,
-            full_screen::window_fullscreen,
-            full_screen::window_is_fullscreen,
             notes::write_note,
             notes::write_bytes,
             notes::delete_note,
