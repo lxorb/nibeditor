@@ -50,6 +50,13 @@ body {
   overscroll-behavior: none;
 }
 
+/* A drag that is not about words selects none on its way: a divider, a sidebar's edge,
+   a row carried. Both spellings, because a Mac's WebKit reads only the prefixed one. */
+.nib-unselectable {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* A button is pressed, not read. WebKit selects the words on one held down, and
    on an iPhone a long press on a button's label came up selected, with Copy and
    Look Up over it. */

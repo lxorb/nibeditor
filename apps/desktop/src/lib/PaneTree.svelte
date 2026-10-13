@@ -9,7 +9,6 @@
 
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
-  import { unselectable } from './unselectable'
   import { type Frame, paneIn, type Split } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 
@@ -54,7 +53,7 @@
     handle.setPointerCapture(event.pointerId)
     workspace.panes.sliding = split.id
     document.body.style.cursor = along === 'row' ? 'col-resize' : 'row-resize'
-    unselectable(document.body, true)
+    document.body.classList.add('nib-unselectable')
 
     const move = (moved: PointerEvent) => {
       const room = along === 'row' ? box.width : box.height
@@ -71,7 +70,7 @@
       handle.removeEventListener('pointercancel', stop)
 
       document.body.style.cursor = ''
-      unselectable(document.body, false)
+      document.body.classList.remove('nib-unselectable')
       workspace.panes.settle()
     }
 
