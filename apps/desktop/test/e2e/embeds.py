@@ -25,6 +25,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
+import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -260,7 +261,9 @@ def drive(browser: Browser) -> None:
     else:
         if "youtube-nocookie.com/embed/dQw4w9WgXcQ" not in (frame["src"] or ""):
             wrong(f"the frame points at {frame['src']}")
-        if frame["sandbox"] != "allow-scripts allow-same-origin allow-presentation":
+        # WebKit has no Presentation API, and is not asked for its flag; see web-frame.ts.
+        asked = "allow-scripts allow-same-origin" + ("" if harness.WEBKIT else " allow-presentation")
+        if frame["sandbox"] != asked:
             wrong(f"the frame's sandbox is {frame['sandbox']!r}")
         if frame["referrer"] != "origin":
             wrong(f"the frame tells the provider more than the origin: {frame['referrer']!r}")

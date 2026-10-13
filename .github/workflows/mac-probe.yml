@@ -1,0 +1,17 @@
+name: mac-probe
+on:
+  pull_request:
+    paths:
+      - scripts/mac-probe/**
+      - .github/workflows/mac-probe.yml
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install webkit chromium
+          python3 scripts/mac-probe/dnd.py

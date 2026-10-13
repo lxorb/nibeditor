@@ -1,0 +1,8 @@
+<div id=a draggable=true style='width:80px;height:30px;background:#ccc'>drag</div>
+<div id=b style='width:80px;height:30px;margin-top:40px;background:#aaf'>drop</div>
+<script>
+window.log=[];
+a.addEventListener('dragstart', e => { e.dataTransfer.setData('text/nib-section','2'); e.dataTransfer.setData('text/plain','x'); log.push('start') });
+b.addEventListener('dragover', e => { log.push('over:'+[...e.dataTransfer.types].join('|')); if (e.dataTransfer.types.includes('text/nib-section')) e.preventDefault() });
+b.addEventListener('drop', e => { e.preventDefault(); log.push('drop:'+e.dataTransfer.getData('text/nib-section')) });
+</script>

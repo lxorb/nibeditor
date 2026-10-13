@@ -120,7 +120,6 @@ fn writable(path: &Path) -> bool {
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
 
 /// Moves this copy into Applications, starts it from there and quits the careful way.
-/// An older copy already there under the same name is the one this replaces.
 #[cfg(target_os = "macos")]
 #[tauri::command(async)]
 pub fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
@@ -133,22 +132,23 @@ pub fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
         .ok_or("there is no Applications folder to move to")?
         .join(name);
 
-    if to.exists() {
-        std::fs::remove_dir_all(&to).map_err(|error| format!("{}: {error}", to.display()))?;
+    // A copy already there is the one that updates itself, and may be newer than this:
+    // it is started instead, never written over.
+    if !to.exists() {
+        let copied = Command::new("/usr/bin/ditto")
+            .arg(&from)
+            .arg(&to)
+            .status()
+            .map_err(|error| error.to_string())?;
+        if !copied.success() {
+            return Err(format!("could not copy the app to {}", to.display()));
+        }
+        // What a download carries, and what translocated the copy in the first place.
+        let _ = Command::new("/usr/bin/xattr")
+            .args(["-dr", "com.apple.quarantine"])
+            .arg(&to)
+            .status();
     }
-    let copied = Command::new("/usr/bin/ditto")
-        .arg(&from)
-        .arg(&to)
-        .status()
-        .map_err(|error| error.to_string())?;
-    if !copied.success() {
-        return Err(format!("could not copy the app to {}", to.display()));
-    }
-    // What a download carries, and what translocated the copy in the first place.
-    let _ = Command::new("/usr/bin/xattr")
-        .args(["-dr", "com.apple.quarantine"])
-        .arg(&to)
-        .status();
 
     Command::new("/bin/sh")
         .args(["-c", RELAUNCH, "sh"])

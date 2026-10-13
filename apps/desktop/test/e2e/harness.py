@@ -153,6 +153,16 @@ MAC_PLATFORM = (
     " Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' })"
 )
 
+#: And a clipboard that answers: Playwright's WebKit grants no permission to read it,
+#: where a Mac asks the reader once. So in WebKit what the page wrote is what a read
+#: hands back when the engine refuses, as a reader who allowed it would see.
+WEBKIT_CLIPBOARD = (
+    "(() => { const c = navigator.clipboard; if (!c) return; let kept = '';"
+    " const write = c.writeText.bind(c), read = c.readText.bind(c);"
+    " c.writeText = (text) => { kept = String(text); return write(text).catch(() => undefined) };"
+    " c.readText = () => read().catch(() => kept) })()"
+)
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
@@ -225,6 +235,7 @@ def answering(browser: Any) -> Any:
         context.add_init_script(ANSWERED)
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
+            context.add_init_script(WEBKIT_CLIPBOARD)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -246,10 +257,31 @@ def answering(browser: Any) -> Any:
 
 # ------------------------------------------------------------- a Mac's keys
 
-#: Where the app's keys are written, each with the Mac's own where it has one.
-REGISTRY = APP / "src" / "lib" / "shortcuts" / "registry.ts"
+#: Where the app's keys are written, each with the Mac's own where it has one: the
+#: app's, and the editor's.
+REGISTRIES = (
+    APP / "src" / "lib" / "shortcuts" / "registry.ts",
+    ROOT / "packages" / "editor" / "src" / "keymap.ts",
+)
 
 _MODIFIERS = ("Control", "Meta", "Alt", "Shift")
+
+#: Playwright's names for the keys the registry writes as the character they carry.
+_CHARACTERS = {
+    "Backquote": "`",
+    "BracketLeft": "[",
+    "BracketRight": "]",
+    "Minus": "-",
+    "Equal": "=",
+    "Slash": "/",
+    "Backslash": "\\",
+    "Semicolon": ";",
+    "Quote": "'",
+    "Comma": ",",
+    "Period": ".",
+    **{f"Digit{digit}": str(digit) for digit in range(10)},
+    **{f"Key{chr(letter)}": chr(letter).lower() for letter in range(65, 91)},
+}
 
 #: Ctrl and a key that moves through text, as a Mac presses it: the modifier and the key.
 TEXT_KEYS = {
@@ -269,7 +301,7 @@ def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
     named = {"mod": mod, "ctrl": "Control", "control": "Control", "cmd": "Meta", "meta": "Meta"}
     named |= {"alt": "Alt", "option": "Alt", "shift": "Shift"}
     held = frozenset(named[one.lower()] for one in parts[:-1] if one.lower() in named)
-    key = parts[-1]
+    key = _CHARACTERS.get(parts[-1], parts[-1])
     return held, key.lower() if len(key) == 1 else key
 
 
@@ -283,7 +315,7 @@ def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
     Back is Alt+ArrowLeft off a Mac and Ctrl+[ on one. A Mac with none (`mac: null`)
     is left out, and the key everywhere else then reaches nothing there either."""
     found: dict[tuple[frozenset[str], str], str] = {}
-    source = REGISTRY.read_text(encoding="utf-8")
+    source = "".join(one.read_text(encoding="utf-8") for one in REGISTRIES)
     for entry in re.finditer(r"\{[^{}]*?\bkey: '([^']+)',[^{}]*?\bmac: '([^']+)'", source):
         held, key = _chord(entry.group(1), "Control")
         # A bare Delete or Backspace a drive presses is a character taken out of a
@@ -344,6 +376,9 @@ def _press_as_a_mac() -> None:
     def noted(method: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(method)
         def making(*args: Any, **kwargs: Any) -> Any:
+            # WebKit has no permission to write the clipboard: a page may, unasked.
+            if "permissions" in kwargs:
+                kwargs["permissions"] = [one for one in kwargs["permissions"] if one != "clipboard-write"]
             made = method(*args, **kwargs)
             agent = kwargs.get("user_agent")
             context = made.context if isinstance(made, Page) else made
