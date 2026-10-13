@@ -13,6 +13,8 @@
  *  `across` reads the pointer left and right rather than up and down. Under a finger a
  *  held one is its menu, as everywhere else, so a drag is a pointer's. */
 
+import { unselectable } from '../unselectable'
+
 /** How far a pointer travels before it is a drag. */
 const SLOP = 6
 
@@ -58,7 +60,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     carried().classList.add('is-carried')
     // A drag is not a selection: nothing it passes over is chosen on the way.
     window.getSelection()?.removeAllRanges()
-    document.documentElement.style.userSelect = 'none'
+    unselectable(document.documentElement, true)
   }
 
   const move = (event: PointerEvent) => {
@@ -98,7 +100,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     lifted = false
     from = null
     carried().classList.remove('is-carried')
-    document.documentElement.style.userSelect = ''
+    unselectable(document.documentElement, false)
     if (!was) return
     window.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)
