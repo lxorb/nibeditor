@@ -394,45 +394,6 @@ mod tests {
         assert!(source("tauri.conf.json").contains(r#""wix/pdf.wxs""#));
     }
 
-    /// A Mac's Open With and a Linux file manager's: listed as a viewer of PDFs that
-    /// is never chosen on its own, and on Linux in every package's own entry too.
-    #[test]
-    fn a_mac_and_linux_offer_nib_for_a_pdf_and_claim_nothing() {
-        let plist = source("Info.plist");
-        for line in [
-            "<string>com.adobe.pdf</string>",
-            "<key>LSHandlerRank</key>\n\t\t\t<string>Alternate</string>",
-            "<key>CFBundleTypeRole</key>\n\t\t\t<string>Viewer</string>",
-        ] {
-            assert!(plist.contains(line), "Info.plist does not say: {line}");
-        }
-
-        let linux: serde_json::Value =
-            serde_json::from_str(&source("tauri.linux.conf.json")).expect("the config");
-        let association = &linux["bundle"]["fileAssociations"][0];
-        assert_eq!(association["mimeType"], "application/pdf");
-        assert_eq!(association["rank"], "Alternate");
-        // Tauri's Windows installer would make an association the default, and the
-        // Mac's is in Info.plist; neither config may carry one.
-        for config in ["tauri.conf.json", "tauri.macos.conf.json"] {
-            assert!(!source(config).contains("fileAssociations"), "{config}");
-        }
-
-        for entry in [
-            "../../../packaging/aur/nib-bin/nib.desktop",
-            "../../../packaging/flathub/ch.emilvinu.nib.desktop",
-            "../../../packaging/nix/nib.desktop",
-            "../../../packaging/snap/snapcraft.yaml",
-        ] {
-            let entry = source(entry);
-            let types = entry
-                .lines()
-                .find(|line| line.trim_start().starts_with("MimeType="))
-                .expect("a MimeType line");
-            assert!(types.contains("application/pdf;"), "{types}");
-        }
-    }
-
     #[test]
     fn two_files_are_the_same_only_byte_for_byte() {
         let dir = tempfile::tempdir().expect("a temp folder");

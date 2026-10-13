@@ -120,23 +120,43 @@ describe('what a workflow is allowed to fetch', () => {
   })
 })
 
-/** nib opens nothing from outside its spaces, so no bundle and no package manager
- *  offers it a file: no double click, no "Open with", no share of a file to open
+/** nib opens no note from outside its spaces, so no bundle and no package manager
+ *  offers it a note: no double click, no "Open with", no share of a file to open
  *  where it lies. Held here rather than trusted to memory, because a file type is
  *  one line of config away on every platform and each one quietly makes nib a file
- *  opener again. The web's two schemes are the browser's, and stay. */
+ *  opener again. The web's two schemes are the browser's, and stay. And a PDF, which
+ *  every bundle offers nib for in "Open with" and none makes nib the default of; it
+ *  is brought into a space before it is read (src-tauri/src/handed_pdfs.rs). */
 describe('what nib claims to open', () => {
   const tauri = (...parts: string[]) => repo('apps', 'desktop', 'src-tauri', ...parts)
 
-  test('no file type in any bundle', () => {
+  test('no file type in any bundle but a PDF, and that one only offered', () => {
+    // Tauri's own Windows installer makes an association the default.
     for (const config of ['tauri.conf.json', 'tauri.macos.conf.json']) {
       expect(tauri(config), config).not.toContain('fileAssociations')
     }
+    expect(tauri('Info.ios.plist')).not.toContain('CFBundleDocumentTypes')
     for (const plist of ['Info.plist', 'Info.ios.plist']) {
-      expect(tauri(plist), plist).not.toContain('CFBundleDocumentTypes')
       expect(tauri(plist), plist).not.toContain('UTImportedTypeDeclarations')
     }
+    const types = /<key>CFBundleDocumentTypes<\/key>[\s\S]*?\n\t<\/array>/.exec(tauri('Info.plist'))
+    expect(types?.[0].match(/<string>[^<]*<\/string>/g)).toEqual([
+      '<string>PDF document</string>',
+      '<string>Viewer</string>',
+      '<string>Alternate</string>',
+      '<string>com.adobe.pdf</string>',
+    ])
+
+    const linux = JSON.parse(tauri('tauri.linux.conf.json')) as {
+      bundle: { fileAssociations: { ext: string[]; mimeType: string; rank: string }[] }
+    }
+    expect(linux.bundle.fileAssociations).toMatchObject([
+      { ext: ['pdf'], mimeType: 'application/pdf', rank: 'Alternate' },
+    ])
+
     expect(tauri('wix', 'browser.wxs')).not.toMatch(/<(ProgId|Extension)\b/)
+    expect(tauri('wix', 'pdf.wxs')).not.toMatch(/<(ProgId|Extension)\b/)
+    expect(tauri('wix', 'pdf.wxs')).not.toContain(String.raw`Key="Software\Classes\.pdf" `)
   })
 
   /** The installer writes the browser and no file type, and an install over an
@@ -168,9 +188,11 @@ describe('what nib claims to open', () => {
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
   }
 
-  test('a Linux desktop entry is a browser and no editor of files', () => {
+  test('a Linux desktop entry is a browser and a reader of PDFs, no editor of files', () => {
     for (const [name, entry] of Object.entries(desktops)) {
-      expect(entry, name).toContain('MimeType=x-scheme-handler/http;x-scheme-handler/https;')
+      expect(entry, name).toContain(
+        'MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n',
+      )
       expect(entry, name).toContain('Exec=nib %U')
       expect(entry, name).not.toContain('text/markdown')
       expect(entry, name).not.toContain('%F')
