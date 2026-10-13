@@ -454,6 +454,37 @@ Run and Debug view nib has not got. A page has it first, as it has Ctrl+D; a ter
 gives it to the app, since a shell cannot tell it from Ctrl+D. See `deselectAll` in
 `workspace.svelte.ts`.
 
+**Full screen**
+
+| | |
+| --- | --- |
+| F11 | the tab being worked in alone over the whole screen, and again gives the screen back. Ctrl+Cmd+F on a Mac, where the window takes a Space of its own |
+| Escape | gives the screen back, where nothing else wanted it |
+
+Emil, 2026-10-13 (#259): *"F11 toggles fullscreen for whatever is currently open (note, web
+tab, chat, etc.), like F11 in a browser. F11 again (or Esc) exits. Web tabs in fullscreen
+hide the URL bar (and the rest of the tab chrome)."* Chrome's F11 for whatever kind of tab
+is open: the window goes full screen and everything of the app goes with its frame - both
+sides, the strips, the other panes of a split, a web tab's address bar and the status bar
+- so a web tab is its page and nothing else. The pane is the one Full window fills, so the
+split and the strips come back exactly as they were, and a window that was filled is
+filled again after. The tab in front may change (Ctrl+Tab, a link) and the screen stays,
+as F11 does through a tab switch; a key that moves to another pane takes the screen with
+it; a pane left with nothing in it gives the screen back.
+
+F11 works from inside a web page too, where Chrome keeps it from the page - unless a video
+in the page holds the screen, when F11 gives that back first. Escape is the issue's other
+way out, and it is the last to hear the key, the way a browser gives a page its Escape
+first: an open menu, a field, a terminal, vim's normal mode, a picture stepped off and a
+page's own dialog each keep theirs, and only an Escape they let go by gives the screen
+back. Chrome's F11 has no Escape at all; here it is the one the issue asked for, held to
+the rule Escape keeps everywhere else (one level back, never two). Outside a web page a
+small button in the corner stays as well, fading once nothing has moved; over a web page
+nothing is drawn, since nothing of the app's can be drawn over a page, and F11 and Escape
+are the way out, as in Chrome. A run sent off the screen (`NIB_OFF_SCREEN`) never puts its
+window over one: the crate keeps what was asked and leaves the window where it is; see
+`src-tauri/src/full_screen.rs`.
+
 **Full window**
 
 | | |
@@ -549,9 +580,10 @@ inside the page is Chrome's way back to the address field.
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
 Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, nib's own Alt+0
-to 9, F6 to the address field and Shift+F11, the tab filling the window, are never offered
-to the page. Shift+F11 alone leaves the page the keyboard: filling the window is no reason to
-take the caret out of what fills it. Alt and a digit is no
+to 9, F6 to the address field, F11, full screen, and Shift+F11, the tab filling the window,
+are never offered to the page - F11 only while no video in it holds the screen, which F11
+gives back first. F11 and Shift+F11 leave the page the keyboard: filling the screen or the
+window is no reason to take the caret out of what fills it. Alt and a digit is no
 character on Windows, so what a page loses with it is only an `accesskey` on a digit, as
 it does in Chrome on Linux; AltGr and a digit, which is Ctrl and Alt, stays the page's.
 The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address

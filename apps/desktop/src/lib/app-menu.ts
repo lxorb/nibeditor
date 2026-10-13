@@ -459,7 +459,7 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Fullscreen'),
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
-          run: () => void fullscreen.toggle(workspace.activeTabId),
+          run: () => void fullscreen.toggle(workspace.panes),
         },
         // The tab alone in the window, which stays a window; see lib/tab-fill. A phone
         // and a tablet show one document already.

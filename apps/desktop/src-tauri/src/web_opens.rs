@@ -92,6 +92,14 @@
 //! `nib-actual-size`, and the crate draws the page at a hundred per cent without taking
 //! the keyboard out of it. All a page gets by asking is its own zoom reset.
 //!
+//! **And Escape, while the app holds the screen.** F11 puts the tab alone over the whole
+//! screen, a web page included, and Escape is one of its ways back (#259) - but a page's
+//! own dialog, its search box and its video player use Escape too, and Chrome gives a
+//! page its Escape first. So an Escape nothing in the page took asks under
+//! `nib-escape`, and is said to the window only where the app put it full screen
+//! (`full_screen.rs`): anywhere else it is nothing, and the keyboard stays in the page.
+//! All a page gets by asking is the screen given back, which its reader's own key did.
+//!
 //! `WebView2`'s, and nib's own Chromium's, which hands the host no window name: there the
 //! script asks through a function only nib's world has (`BINDING`). Elsewhere nothing is
 //! known, and every tab a page asks for opens in front, as before.
@@ -132,6 +140,10 @@ const ACTUAL: &str = "nib-actual-size";
 /// And the store's own install button, pressed on an extension's page; see `SCRIPT`.
 const INSTALL: &str = "nib-install-extension";
 
+/// And Escape that nothing in the page took, which gives the screen back where the app
+/// has put the window full screen and is nothing anywhere else; see `full_screen.rs`.
+const ESCAPE: &str = "nib-escape";
+
 /// And a modifier tapped twice on its own.
 const TWICE_SHIFT: &str = "nib-twice-shift";
 const TWICE_CTRL: &str = "nib-twice-ctrl";
@@ -162,13 +174,27 @@ pub enum Passed {
     /// The store's own "Add to Chrome" or "Get", pressed: nib installs the extension the
     /// page is about (extensions.rs).
     Install,
+    /// Escape the page let go by, while the app holds the screen.
+    Escape,
 }
 
 impl Passed {
-    /// Whether it is a modifier tapped twice, which no engine says a person asked for.
+    /// Whether it is a modifier tapped twice, or Escape, which no engine says a person
+    /// asked for: neither grants a page an activation in Chromium.
     #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
     pub const fn is_tap(self) -> bool {
-        matches!(self, Self::ShiftTwice | Self::CtrlTwice | Self::AltTwice)
+        matches!(
+            self,
+            Self::ShiftTwice | Self::CtrlTwice | Self::AltTwice | Self::Escape
+        )
+    }
+
+    /// Whether the window `window` has a use for it: Escape gives back a screen the app
+    /// put the window over, and is nothing anywhere else, so it is never said there and
+    /// the keyboard stays in the page.
+    #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+    pub fn wanted_by(self, window: &str) -> bool {
+        self != Self::Escape || crate::full_screen::is_on(window)
     }
 }
 
@@ -224,6 +250,9 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// as in Chrome, read off the press. Only a press a person made, on a web address, that
 /// the page itself has not already answered. Alt with the main button is the engine's
 /// own download, and the Windows key is not a browser's, so both are left to the engine.
+///
+/// Escape that nothing in the page took asks under `nib-escape`, and is left to the
+/// engine as well, which has a use of its own for it (a page still loading stops).
 ///
 /// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L, Alt+D, Ctrl+D, Ctrl+H,
 /// Ctrl+Shift+Delete, and Ctrl+0 on the row or the number pad, that nothing in the page
@@ -295,6 +324,7 @@ pub const SCRIPT: &str = r"(function () {
     var back = event.shiftKey
     var code = event.keyCode
     var name = null
+    if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'nib-escape')
     if (ctrl && alt) return
     else if (alt) name = code === 68 && !back ? 'nib-address' : null
     else if (ctrl && code === 70 && !back) name = 'nib-find'
@@ -427,6 +457,7 @@ pub fn sought(name: &str) -> Option<Passed> {
         TWICE_CTRL => Some(Passed::CtrlTwice),
         TWICE_ALT => Some(Passed::AltTwice),
         INSTALL => Some(Passed::Install),
+        ESCAPE => Some(Passed::Escape),
         _ => None,
     }
 }
@@ -639,7 +670,9 @@ mod heard {
                 // the reader is typing by asking on its own.
                 if let Some(key) = sought(&name) {
                     let (since, focused) = typing_here(host);
-                    if taken_as_a_person_s(key, user.as_bool(), since, focused) {
+                    if key.wanted_by(&window)
+                        && taken_as_a_person_s(key, user.as_bool(), since, focused)
+                    {
                         passed(&app, &window, &asking, key);
                     }
                     return Ok(());
@@ -743,7 +776,9 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
         return;
     };
     if let Some(key) = sought(&name) {
-        passed(app, window, tab, key);
+        if key.wanted_by(window) {
+            passed(app, window, tab, key);
+        }
         return;
     }
     if let Some(key) = chord(&name) {
@@ -1039,6 +1074,31 @@ mod tests {
                     + super::STORE_END.len()
             })
         );
+    }
+
+    /// Escape asks only once the page let it go by, takes nothing from the engine, needs
+    /// no activation (Chromium grants none for it), and is wanted only by a window the app
+    /// has put full screen.
+    #[test]
+    fn escape_the_page_let_go_by_gives_back_a_screen_the_app_holds_and_nothing_else() {
+        assert_eq!(sought("nib-escape"), Some(Passed::Escape));
+        assert_eq!(placed("nib-escape", true, NONE, false), None);
+        assert!(SCRIPT.contains(
+            "if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'nib-escape')"
+        ));
+        // After the page has had it: the same handler that answers Ctrl+F last.
+        let keys = SCRIPT.find("last('keydown'").expect("the keys");
+        assert!(SCRIPT.find("code === 27").is_some_and(|at| at > keys));
+
+        assert!(taken_as_a_person_s(Passed::Escape, false, 40, true));
+        assert!(!taken_as_a_person_s(Passed::Escape, false, 40, false));
+
+        assert!(!Passed::Escape.wanted_by("escape-test"));
+        crate::full_screen::noted_for_test("escape-test", true);
+        assert!(Passed::Escape.wanted_by("escape-test"));
+        crate::full_screen::noted_for_test("escape-test", false);
+        assert!(!Passed::Escape.wanted_by("escape-test"));
+        assert!(Passed::Find.wanted_by("escape-test"));
     }
 
     /// Ctrl+0 is answered in the crate and never reaches the window as an ask, since the

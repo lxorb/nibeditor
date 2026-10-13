@@ -1,29 +1,41 @@
 /** The document, and nothing else.
  *
  *  Full screen takes the app away and leaves what is being read or drawn: the
- *  the file list with its spaces, the title bar and the status bar all go,
- *  and the document fills the screen behind whatever the system keeps for its
- *  clock and its gesture bar. Where there is a window to ask, the window goes
- *  full screen too, so a desktop loses its frame and a browser tab loses the
- *  browser.
+ *  file list, the bars, the strips, the other panes and a web tab's address bar all
+ *  go, and the tab in front of the pane worked in fills the screen: Chrome's F11, for
+ *  any kind of tab (docs/keyboard.md, "Full screen"). The pane is the one Full window
+ *  fills (`panes.fills`), so the split comes back as it was. Where there is a window
+ *  to ask, it goes full screen too.
  *
- *  One command for both halves, which is `app.fullscreen` and F11 - see
- *  shortcuts/registry.ts - reached from the View menu, from the three dots on a
- *  phone and a tablet, and from the one small button that stays behind.
- *
- *  Nothing about it is remembered. It belongs to the document it was entered on
- *  and to this sitting: closing that document brings the app back, and so does
- *  starting it again. A reader who cannot find their way out of a screen with
- *  nothing on it is the one thing this must never do, which is why there are four
- *  ways back - the button, Escape, back on Android, and the menu row it was
- *  turned on from. */
+ *  One command, `app.fullscreen` (F11), from the key, the View menu and the three
+ *  dots on a phone. Nothing about it is remembered. A screen nobody can find their
+ *  way off is the one thing this must never be, so there are five ways back: the
+ *  button (never over a web page), Escape, back on Android, the menu row, and F11. */
 
 import { currentWindow } from './tauri'
 import { afterQuiet } from './timing'
 
+/** `workspace.panes`, as far as full screen reads and writes it. */
+export interface Panes {
+  fills: string | null
+  readonly focusedId: string
+  readonly focused: { readonly activeTabId: string | null }
+}
+
 /** How long the way out stays lit after the last thing moved. Long enough to
  *  find, short enough that a page being read is not sharing it with a button. */
 export const IDLE = 2600
+
+const FIELDS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
+
+/** Whether Escape gives the screen back: nothing `spent` it (vim, a picture stepped
+ *  off) and no field or shell holds the keyboard, which read it themselves. */
+export function escapeLeaves(
+  spent: boolean,
+  holder: { readonly tagName?: string } | null,
+): boolean {
+  return !spent && !FIELDS.has(holder?.tagName ?? '')
+}
 
 /** How often a moving pointer is allowed to re-arm that: a pointer crossing the
  *  screen says the same thing sixty times a second. */
@@ -32,8 +44,6 @@ const STIR = 400
 class FullScreen {
   /** Whether the app is out of the way. */
   on = $state(false)
-  /** The document it was entered on, by tab. */
-  of = $state<string | null>(null)
   /** Whether the way out has faded back: still there, still reachable by a key,
    *  no longer part of what is being read. */
   idle = $state(false)
@@ -41,17 +51,21 @@ class FullScreen {
   /** The way out fades once nothing has moved for a while; see `wake`. */
   private readonly fading = afterQuiet(() => (this.idle = true), IDLE)
   private stirred = 0
+  private panes: Panes | null = null
+  private filledBefore: string | null = null
 
-  async toggle(tabId: string | null) {
+  async toggle(panes: Panes) {
     if (this.on) await this.leave()
-    else await this.enter(tabId)
+    else await this.enter(panes)
   }
 
-  async enter(tabId: string | null) {
-    if (this.on) return
+  async enter(panes: Panes) {
+    if (this.on || panes.focused.activeTabId === null) return
 
     this.on = true
-    this.of = tabId
+    this.panes = panes
+    this.filledBefore = panes.fills
+    panes.fills = panes.focusedId
     this.wake()
     await this.window(true)
   }
@@ -60,9 +74,13 @@ class FullScreen {
     if (!this.on) return
 
     this.on = false
-    this.of = null
     this.idle = false
     this.fading.cancel()
+    // A fill from before comes back while its pane is still the one worked in.
+    const panes = this.panes
+    if (panes) panes.fills = this.filledBefore === panes.focusedId ? this.filledBefore : null
+    this.panes = null
+    this.filledBefore = null
     await this.window(false)
   }
 
@@ -76,13 +94,14 @@ class FullScreen {
     this.wake()
   }
 
-  /** Whether the document this belongs to is still open. Full screen goes with
-   *  it: a window with no document in it and no app around it is a window with
-   *  nothing at all. */
-  watch(openTabIds: readonly string[]) {
-    if (!this.on || this.of === null || openTabIds.includes(this.of)) return
+  /** The screen follows the pane worked in, and is given back once it shows nothing:
+   *  a window with no document and no app around it has nothing at all. */
+  follow() {
+    const panes = this.panes
+    if (!this.on || !panes) return
 
-    void this.leave()
+    if (panes.focused.activeTabId === null) void this.leave()
+    else if (panes.fills !== panes.focusedId) panes.fills = panes.focusedId
   }
 
   private wake() {
