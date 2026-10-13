@@ -216,7 +216,6 @@
 
   .setting .name {
     flex: 1;
-    min-width: 0;
   }
 
   .name strong {

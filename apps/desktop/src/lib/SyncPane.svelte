@@ -445,7 +445,6 @@
 
   .setting .name {
     flex: 1;
-    min-width: 0;
   }
 
   /* Wide enough for the longest choice the pane offers. */

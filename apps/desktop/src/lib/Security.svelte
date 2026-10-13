@@ -314,7 +314,6 @@
 
   .setting .name {
     flex: 1;
-    min-width: 0;
   }
 
   /* A value at the right of its row: what this row says rather than what it

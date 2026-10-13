@@ -116,30 +116,33 @@
         size={32}
       />
       <span class="name">{t('Picture')}</span>
-      <button class="nib-chip" onclick={() => void choose()}>{t('Change')}</button>
-      {#if camera}
-        <button
-          class="nib-glyph"
-          title={t('Take photo')}
-          aria-label={t('Take photo')}
-          onclick={takePhoto}
-        >
-          <svg viewBox="0 0 16 16"
-            ><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7H2z" /><circle cx="8" cy="9" r="2.3" /></svg
+      <span class="ends">
+        <button class="nib-chip" onclick={() => void choose()}>{t('Change')}</button>
+        {#if camera}
+          <button
+            class="nib-glyph"
+            title={t('Take photo')}
+            aria-label={t('Take photo')}
+            onclick={takePhoto}
           >
-        </button>
-      {/if}
-      {#if user.avatar}
-        <button class="nib-chip is-quiet" onclick={() => void kept(removeFace)}
-          >{t('Remove')}</button
-        >
-      {/if}
+            <svg viewBox="0 0 16 16"
+              ><path d="M2 5.5h2.5L6 3.5h4l1.5 2H14v7H2z" /><circle cx="8" cy="9" r="2.3" /></svg
+            >
+          </button>
+        {/if}
+        {#if user.avatar}
+          <button class="nib-chip is-quiet" onclick={() => void kept(removeFace)}
+            >{t('Remove')}</button
+          >
+        {/if}
+      </span>
     </div>
 
     <label class="nib-setting setting">
       <span class="name">{t('Pronouns')}</span>
       <input
         class="inline"
+        class:empty={!user.pronouns}
         value={user.pronouns ?? ''}
         maxlength="40"
         spellcheck="false"
@@ -152,6 +155,7 @@
       <span class="name">{t('Bio')}</span>
       <textarea
         class="inline"
+        class:empty={!user.bio}
         rows="3"
         maxlength="190"
         value={user.bio ?? ''}
@@ -161,34 +165,42 @@
 
     <div class="nib-setting setting">
       <span class="name">{t('Status')}</span>
-      <input
-        class="inline emoji"
-        value={status?.emoji ?? ''}
-        maxlength="16"
-        aria-label={t('Emoji')}
-        onchange={(event) => withStatus({ emoji: event.currentTarget.value.trim() })}
-      />
-      <input
-        class="inline"
-        value={status?.text ?? ''}
-        maxlength="100"
-        aria-label={t('Status')}
-        onchange={(event) => withStatus({ text: event.currentTarget.value })}
-      />
+      <!-- The two halves of one status, kept together: where the row has no room for
+           both beside the name, they go under it as a pair. -->
+      <span class="ends said">
+        <input
+          class="inline emoji"
+          class:empty={!status?.emoji}
+          value={status?.emoji ?? ''}
+          maxlength="16"
+          aria-label={t('Emoji')}
+          onchange={(event) => withStatus({ emoji: event.currentTarget.value.trim() })}
+        />
+        <input
+          class="inline"
+          class:empty={!status?.text}
+          value={status?.text ?? ''}
+          maxlength="100"
+          aria-label={t('Status')}
+          onchange={(event) => withStatus({ text: event.currentTarget.value })}
+        />
+      </span>
     </div>
 
     <div class="nib-setting setting">
       <span class="name">{t('Clear after')}</span>
-      <Select
-        value={clears}
-        options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
-        label={t('Clear after')}
-        plain
-        onchange={(value: string) => {
-          clears = value as Clears
-          if (status) withStatus({})
-        }}
-      />
+      <div class="pick">
+        <Select
+          value={clears}
+          options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
+          label={t('Clear after')}
+          plain={viewport.touch}
+          onchange={(value: string) => {
+            clears = value as Clears
+            if (status) withStatus({})
+          }}
+        />
+      </div>
     </div>
 
     <div
@@ -259,7 +271,6 @@
 
   .setting .name {
     flex: 1;
-    min-width: 0;
   }
 
   .tall {
@@ -296,6 +307,86 @@
   .inline.emoji {
     width: 3rem;
     text-align: center;
+  }
+
+  /* A value is read where it stands, like every value in the list; a field with
+     nothing in it would be nothing at all, so it shows the box it is until it holds
+     something. */
+  .inline.empty {
+    border-color: var(--line);
+  }
+
+  /* The dropdown's column, the one every pane's dropdowns line up in; see
+     SettingsPanel.svelte. */
+  .pick {
+    flex: none;
+    width: 14rem;
+  }
+
+  /* What a row holds at its end, kept together: where there is no room for all of it
+     beside the name, it goes under the name as one, at the end. */
+  .ends {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* A phone draws the box, the touch rows and the hairlines between them, the way
+     Security.svelte does for its own cards: the sheet is the panel's, so that half
+     of the selector is global and the rows are this pane's. */
+  :global(.sheet.phone) .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  :global(.sheet.phone) .setting {
+    position: relative;
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .setting + .setting::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    inset-inline-start: var(--touch-pad);
+    inset-inline-end: 0;
+    height: 1px;
+    background: var(--line);
+  }
+
+  :global(.sheet.phone) .pick {
+    width: auto;
+    max-width: 60%;
+  }
+
+  :global(.sheet.phone) .inline {
+    width: 55%;
+    min-height: var(--touch-target);
+    padding: 8px 10px;
+    font-size: var(--touch-text);
+  }
+
+  /* The pair takes the rest of the row, the words the most of it. */
+  :global(.sheet.phone) .said {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  :global(.sheet.phone) .said .inline {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  :global(.sheet.phone) .said .inline.emoji {
+    flex: none;
+    width: 4rem;
   }
 
   .pressable {

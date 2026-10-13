@@ -475,8 +475,9 @@ select option {
    the pointer. */
 .nib-setting {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1) var(--space-3);
   width: 100%;
   min-height: 38px;
   margin: 0;
@@ -508,6 +509,36 @@ select option {
 .nib-setting .name,
 .nib-setting .name .what {
   overflow-wrap: anywhere;
+}
+
+/* But never below a width a name can be read at, whatever sits beside it.
+
+   A name that gives way all the way gives way to nothing: a control as wide as the
+   row - an action that is a line across a card, a dropdown that is 100% of what it
+   is in - left the name 0px, and its words were drawn a letter to a line. Settings >
+   Online terminal did it with Restart, Glasses with the OpenAI key, and Account with
+   Clear after, each one found by Emil. Each pane's own rule said `min-width: 0` for
+   the name, which is what let it go to nothing, so the floor here is `!important`:
+   it is the one thing a row promises that no pane may take back.
+
+   The floor is where the row breaks instead. It wraps, and what does not fit beside
+   the name goes onto a line of its own under it, at the end where every control
+   sits - so a control too wide for the row costs a line, the way a long name does,
+   and never the name. Nine rems is the longest English name a row holds at the
+   small size; a word longer than that, which German has, may still break, and only
+   there. */
+.nib-setting > .name {
+  flex: 1 1 0;
+  min-inline-size: min(9rem, 100%) !important;
+}
+
+.nib-setting > .name + * {
+  margin-inline-start: auto;
+}
+
+/* And what sits at the end is never wider than the row it ends. */
+.nib-setting > .name ~ * {
+  max-inline-size: 100%;
 }
 
 /* ── Layers over the app ───────────────────── */
