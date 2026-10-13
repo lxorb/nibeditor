@@ -335,7 +335,7 @@ describe('the spelling dictionary', () => {
   /** The same order the app's language list keeps: the default, the Latin
    *  names A to Z, Japanese at the foot. */
   test('is offered in the order every language list keeps', () => {
-    const one = field('spelling', 'Language')
+    const one = field('editor', 'Dictionary')
     if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
 
     const shown = one.options.map((option) => ({ id: option.value, name: option.label }))
