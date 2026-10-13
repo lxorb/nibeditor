@@ -338,7 +338,10 @@ What that one import gives it, so that no drive writes any of it again:
   own; `DRIVE.side` starts a second server, such as a fake OpenAI-compatible
   provider.
 - **The browser CI has.** Playwright's own Chromium, headless; `NIB_BROWSER=chrome`
-  drives the machine's own Chrome instead.
+  drives the machine's own Chrome instead. `NIB_ENGINE=webkit` drives Playwright's
+  WebKit, which is what a Mac, an iPhone and Linux run the app in: every key a drive
+  presses is the Mac's (Cmd for Ctrl, and the registry's own Mac key where it has one),
+  and a drive that needs Chromium's DevTools is skipped there, saying so.
 - **The app's own word, not a clock.** `DRIVE.open` returns once the handle, the
   space and the launch order's last mark (`nib: launch order finished`, see
   `apps/desktop/src/lib/startup.svelte.ts`) are there, `DRIVE.open_note` once the

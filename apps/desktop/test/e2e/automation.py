@@ -133,6 +133,9 @@ def follow(page: Page, uri: str, label: str) -> dict:
     does, and answers what the app is showing once it has settled."""
     page.goto(f"{ORIGIN}/?nib={quote(uri, safe='')}", wait_until="domcontentloaded")
     ready(page, label)
+    # Read once the launch has got as far as the link, which comes off the address as
+    # it is read: later than the launch's last mark in a slower engine.
+    DRIVE.waited(page, "() => !location.search.includes('nib=')", f"[{label}] the link to be read")
     page.wait_for_timeout(900)
     return page.evaluate(STATE)
 

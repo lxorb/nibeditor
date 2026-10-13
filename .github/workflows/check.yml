@@ -209,6 +209,82 @@ jobs:
             apps/desktop/test/e2e/shots/layout-sweep
           if-no-files-found: ignore
 
+  # The drives a Mac breaks first, in WebKit, which is what a Mac, an iPhone and Linux
+  # run the app in. Everything above is Chromium's, and Chromium is WebView2: the editor
+  # once stopped drawing after the first keystroke on every Mac (`cancelIdleCallback`,
+  # which WebKit does not have), with every gate here green. `NIB_ENGINE=webkit` presses
+  # every key the way a Mac does - Cmd for Ctrl, Option for a word, the registry's own
+  # Mac key where it has one - so these also say that each of those keys works there.
+  # On Linux, where WebKit is cheap; the same drives on a Mac's own WebKit are below.
+  # See apps/desktop/test/e2e/harness.py and test/webkit.test.ts for the static half.
+  webkit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps webkit
+
+      - name: The core drives, as a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-shots
+          path: apps/desktop/test/e2e/shots
+          if-no-files-found: ignore
+
+  # The floor in a Mac's own WebKit, on a Mac: what WKWebView draws with, which the
+  # Linux port above is not - its fonts, its scrollbars, its keyboard events.
+  webkit-mac:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install webkit
+
+      - name: The floor, on a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-mac-shots
+          path: apps/desktop/test/e2e/shots
+          if-no-files-found: ignore
+
   # All three platforms, because the crate is not one body of code. The taskbar's
   # recent documents list, Explorer's New menu and the PDF printer are behind a
   # Windows cfg gate, the Apple Notes reader is behind a macOS one - SQLite,

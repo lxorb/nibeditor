@@ -252,7 +252,7 @@ def drive(browser: Browser, scheme: str) -> None:
     # The thinking row opens to what the provider said of it.
     page.locator(".ask .row .line").first.click()
     page.wait_for_timeout(250)
-    if "at the note" not in page.locator(".ask .row .detail").first.inner_text():
+    if "at the note" not in (page.locator(".ask .row .detail").first.text_content() or ""):
         wrong("the thinking row does not open to the summary")
 
     # Escape stops an answer; what arrived stays.
@@ -720,12 +720,14 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}04-worked-side")
     page.locator(".ask .answer.last .worked .line").click()
     waited(page, "document.querySelector('.ask .answer.last .work')", "the steps")
-    verbs = page.locator(".ask .answer.last .work .verb").all_inner_texts()
+    # Read as text rather than as what is drawn: WebKit draws nothing of a row while it
+    # is still sliding open, and innerText is only what is drawn.
+    verbs = page.locator(".ask .answer.last .work .verb").all_text_contents()
     if verbs != ["Thought", "Explored", "Ran", "Edited"]:
         wrong(f"the steps are not Codex's rows: {verbs}")
     page.locator(".ask .answer.last .work .line", has_text="Ran").click()
     waited(page, "document.querySelector('.ask .work .detail.said')", "the command's output")
-    said = page.locator(".ask .work .detail.said").inner_text()
+    said = page.locator(".ask .work .detail.said").text_content() or ""
     if "$ wc -w Herons.md" not in said or "19 Herons.md" not in said:
         wrong(f"a command does not open to its output: {said!r}")
     page.locator(".ask .card .bar .what").click()

@@ -92,3 +92,51 @@ jobs:
           path: apps/desktop/test/e2e/shots
           retention-days: 14
           if-no-files-found: ignore
+
+  # The same set again in WebKit, which is what a Mac, an iPhone and Linux run the app
+  # in, every key pressed the way a Mac presses it; see `NIB_ENGINE` in harness.py. A
+  # drive that needs Chromium's DevTools, a fake microphone or a finger made in the page
+  # is listed as skipped here, with the reason.
+  drives-webkit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps webkit
+
+      - name: Drives, as a Mac
+        env:
+          ONLY: ${{ inputs.only }}
+          NIB_ENGINE: webkit
+        run: |
+          python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 ${ONLY:+--only "$ONLY"}
+
+      - name: The table
+        if: always()
+        run: |
+          table=apps/desktop/test/e2e/shots/results.md
+          if [ -f "$table" ]; then { echo '## In WebKit'; cat "$table"; } >>"$GITHUB_STEP_SUMMARY"; fi
+
+      - name: The shots and the logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: drives-webkit
+          path: apps/desktop/test/e2e/shots
+          retention-days: 14
+          if-no-files-found: ignore
