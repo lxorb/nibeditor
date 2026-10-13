@@ -90,6 +90,21 @@ export function frameSandbox(written: string | undefined): string {
   return allowed(written, SANDBOX, ' ')
 }
 
+/** The tokens of a sandbox this engine knows. WebKit - a Mac's, an iPhone's - has no
+ *  Presentation API, and reports `allow-presentation` as an error on the console of
+ *  every YouTube card pressed there; what it does not know it would ignore anyway. An
+ *  engine that cannot say what it knows is given the whole list. */
+function known(frame: HTMLIFrameElement, sandbox: string): string {
+  try {
+    return sandbox
+      .split(' ')
+      .filter((one) => frame.sandbox.supports(one))
+      .join(' ')
+  } catch {
+    return sandbox
+  }
+}
+
 /** The permissions a card may actually be granted, whatever it asked for. */
 export function framePermissions(written: string | undefined): string {
   return allowed(written, ALLOW, '; ')
@@ -103,7 +118,7 @@ function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
 
   const frame = document.createElement('iframe')
   frame.className = 'embed-frame'
-  frame.setAttribute('sandbox', frameSandbox(card.dataset.sandbox))
+  frame.setAttribute('sandbox', known(frame, frameSandbox(card.dataset.sandbox)))
   const permissions = framePermissions(card.dataset.allow)
   if (permissions) frame.setAttribute('allow', permissions)
   frame.referrerPolicy = FRAME_REFERRER
