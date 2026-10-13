@@ -67,6 +67,9 @@ ROWS = """
 """
 
 
+TILES = "() => [...document.querySelectorAll('.tiles .tile')].map((one) => one.getAttribute('aria-label'))"
+
+
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
         viewport={"width": 1280, "height": 820} if not finger else {"width": 420, "height": 880},
@@ -129,12 +132,16 @@ def drive_groups(browser: Browser) -> None:
     say(f"[groups] the list: {json.dumps(rows, ensure_ascii=False)}")
     shot(page, "01-a-group")
 
+    # A note at the top of the list is a tile above the rows; one in a group is a row
+    # of the group. See bookmark-tiles.py.
     names = [row["label"] for row in rows]
-    if names != ["Other", "Work", "The plan"]:
+    if names != ["Work", "The plan"]:
         wrong(f"the list does not read as a group holding a note: {names}")
+    if page.evaluate(TILES) != ["Other"]:
+        wrong(f"the note at the top is not a tile: {page.evaluate(TILES)}")
 
-    group = rows[1]
-    inside = rows[2]
+    group = rows[0]
+    inside = rows[1]
     if not group["twist"] or group["open"] != "true":
         wrong("the group has no twist that says it is open")
     if inside["left"] <= group["left"]:
@@ -146,7 +153,7 @@ def drive_groups(browser: Browser) -> None:
     shut = page.evaluate(ROWS)
     say(f"[groups] shut: {json.dumps([row['label'] for row in shut])}")
     shot(page, "02-shut")
-    if [row["label"] for row in shut] != ["Other", "Work"]:
+    if [row["label"] for row in shut] != ["Work"]:
         wrong(f"shutting the group left its rows behind: {[row['label'] for row in shut]}")
 
     # And the group is remembered as shut on this machine, not on the account.
@@ -169,7 +176,7 @@ def drive_groups(browser: Browser) -> None:
         }"""
     )
     page.wait_for_timeout(400)
-    left = [row["label"] for row in page.evaluate(ROWS)]
+    left = [row["label"] for row in page.evaluate(ROWS)] + page.evaluate(TILES)
     say(f"[groups] after the group went: {json.dumps(left)}")
     shot(page, "03-group-gone")
     if sorted(left) != ["Other", "The plan"]:
@@ -193,10 +200,10 @@ def drive_block(browser: Browser) -> None:
     )
     say(f"[block] the menu: {json.dumps(labels[:8], ensure_ascii=False)}")
     shot(page, "10-the-menu")
-    if not any("Bookmark this block" in one for one in labels):
+    if not any("Add block to Essentials" in one for one in labels):
         wrong("the block's menu does not offer to bookmark it")
 
-    page.locator(".rows .nib-row", has_text="Bookmark this block").first.click()
+    page.locator(".rows .nib-row", has_text="Add block to Essentials").first.click()
     page.wait_for_timeout(600)
 
     kept = page.evaluate(

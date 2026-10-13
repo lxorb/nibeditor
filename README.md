@@ -70,7 +70,7 @@ See for yourself: [orden.so](https://orden.so)
 - **Wikilinks** to a note, a heading or a block, with **embeds** and hover previews
 - **Backlinks**, unlinked mentions and a **graph** of the space or one note
 - **Search** a whole space with operators, and replace across it
-- Nested **tags** and **bookmarks**
+- Nested **tags**, and **Essentials**: the notes and sites kept at the top of the sidebar as tiles, as Zen keeps them
 - **PDFs** with highlights, and every version of a note kept
 
 ### Canvas and pen

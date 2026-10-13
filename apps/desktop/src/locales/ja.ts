@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'Essentialsに追加',
+  'Remove from Essentials': 'Essentialsから削除',
+  'Add block to Essentials': 'ブロックをEssentialsに追加',
+  'Add blocks to Essentials': 'ブロックをまとめてEssentialsに追加',
+  'Add view to Essentials': 'この表示をEssentialsに追加',
+  'Open tabs and Essentials': 'タブとEssentialsを開く',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditorはOrdenになりました',
   'Notes from nibeditor.com': 'nibeditor.comのノート',
@@ -263,8 +271,6 @@ export const ja: Dictionary = {
   'Move this note': 'このノートを移動',
   'Move up': '上へ',
   'Move down': '下へ',
-  Bookmark: 'ブックマーク',
-  'Remove bookmark': 'ブックマークを削除',
   'Search here again': '再び検索する',
   'Undo the last file change': '直前のファイル操作を元に戻す',
   'Undo moving {name}': '{name} の移動を元に戻す',
@@ -314,7 +320,6 @@ export const ja: Dictionary = {
   'Remove group': 'グループを削除',
   'Out of the group': 'グループから出す',
   Make: '作成',
-  'Bookmark this block': 'このブロックをブックマーク',
   Panels: 'パネル',
   Outline: 'アウトライン',
   'Stay on this note': 'このノートに留まる',
@@ -1659,7 +1664,6 @@ export const ja: Dictionary = {
   Nothing: 'なし',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'この表示を保存',
   Keep: '残す',
 
   // Which side of the window a panel sits on.
@@ -1725,7 +1729,6 @@ export const ja: Dictionary = {
   Blocked: 'ブロック',
   'Reset permissions': '権限をリセット',
   'Turn into': '種類を変える',
-  'Bookmark these blocks': 'これらのブロックをブックマーク',
   Foldable: '折りたためる',
   'Starts folded': '折りたたんで開く',
   // Where a space keeps what websites store
@@ -1947,7 +1950,6 @@ export const ja: Dictionary = {
   'Change notes': 'ノートを変更する',
   'See what you are looking at': '見ているものを確認する',
   'Move and rename files': 'ファイルの移動と名前変更',
-  'Open tabs and bookmarks': 'タブとブックマークを開く',
   'Bring a tab to the front': 'タブを前面に出す',
   'Browse in tabs of its own': '専用のタブで閲覧する',
   'Read what pages load': 'ページが読み込む内容を読む',

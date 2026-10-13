@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Mga Mahalaga',
+  'Add to Essentials': 'Idagdag sa Mga Mahalaga',
+  'Remove from Essentials': 'Alisin sa Mga Mahalaga',
+  'Add block to Essentials': 'Idagdag ang block sa Mga Mahalaga',
+  'Add blocks to Essentials': 'Idagdag ang mga block sa Mga Mahalaga',
+  'Add view to Essentials': 'Idagdag ang view sa Mga Mahalaga',
+  'Open tabs and Essentials': 'Magbukas ng mga tab at Mga Mahalaga',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'Orden na ang nibeditor',
   'Notes from nibeditor.com': 'Mga tala mula sa nibeditor.com',
@@ -263,8 +271,6 @@ export const fil: Dictionary = {
   'Move this note': 'Ilipat ang talang ito',
   'Move up': 'Iakyat',
   'Move down': 'Ibaba',
-  Bookmark: 'Bookmark',
-  'Remove bookmark': 'Alisin ang bookmark',
   'Search here again': 'Maghanap muli dito',
   'Undo the last file change': 'Ibalik ang huling pagbabago sa file',
   'Undo moving {name}': 'Ibalik ang paglipat ng {name}',
@@ -314,7 +320,6 @@ export const fil: Dictionary = {
   'Remove group': 'Alisin ang grupo',
   'Out of the group': 'Ilabas sa grupo',
   Make: 'Gawin',
-  'Bookmark this block': 'I-bookmark ang block na ito',
   Panels: 'Mga panel',
   Outline: 'Balangkas',
   'Stay on this note': 'Manatili sa talang ito',
@@ -1696,7 +1701,6 @@ export const fil: Dictionary = {
   Nothing: 'Wala',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'I-bookmark ang view na ito',
   Keep: 'Itago',
 
   // Which side of the window a panel sits on.
@@ -1762,7 +1766,6 @@ export const fil: Dictionary = {
   Blocked: 'Naka-block',
   'Reset permissions': 'I-reset ang mga pahintulot',
   'Turn into': 'Gawing',
-  'Bookmark these blocks': 'I-bookmark ang mga block na ito',
   Foldable: 'Natitiklop',
   'Starts folded': 'Nakatiklop sa simula',
   // Where a space keeps what websites store
@@ -1992,7 +1995,6 @@ export const fil: Dictionary = {
   'Change notes': 'Magbago ng mga tala',
   'See what you are looking at': 'Makita ang tinitingnan mo',
   'Move and rename files': 'Maglipat at magpalit ng pangalan ng mga file',
-  'Open tabs and bookmarks': 'Magbukas ng mga tab at bookmark',
   'Bring a tab to the front': 'Iharap ang isang tab',
   'Browse in tabs of its own': 'Mag-browse sa sarili nitong mga tab',
   'Read what pages load': 'Basahin ang nilo-load ng mga page',

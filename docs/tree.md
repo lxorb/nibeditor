@@ -52,9 +52,12 @@ name is the note, the caret beside it is what it holds. A row that opened on a
 click in one place and folded on a click in another would be two kinds of row
 wearing one design.
 
-## What a bookmark may be
+## What an Essential may be
 
-The row above the list keeps notes, folders, headings, blocks, searches, groups -
+Called Essentials on screen since 2026-10-13, Zen's word, and bookmarks in the code
+and in everything stored, so a list kept before the rename is read as it was.
+
+The Essentials above the list keep notes, folders, headings, blocks, searches, groups -
 and one view of the space's graph. Each says where it points the way a link does,
 relative to the space, so the list travels to every machine signed in.
 
@@ -72,6 +75,60 @@ A build older than this one draws no row for a kind it has never heard of, and
 writes the list back without it: a graph view made here disappears from a device
 running an older nib rather than arriving broken. See
 `workspace/bookmarks.svelte.ts` and `workspace/graph-settings.svelte.ts`.
+
+### The files among them are tiles
+
+Emil, 2026-10-13: the bookmarks should look like Zen's Essentials, and be called that. Zen and Arc, whose
+Favorites it copies, keep a grid of soft cards at the top of the sidebar, each wearing
+nothing but the site's mark, the one that is open lifted out of the rest. So does nib,
+for what has a face of its own: every file kept at the top of the list - a note, a
+website, a canvas, a PDF - is a tile, and everything that is only words stays a row
+under the grid: a heading, a block, a search, a graph view, a folder, a group and what
+is in it.
+
+- **The face** is the mark the file wears everywhere else, a size up: a website's
+  favicon, the icon a note chose, a canvas's two cards. A note that chose nothing
+  wears its first letter rather than the plain page, because a grid of identical
+  pages is a grid nobody can read without hovering every tile; Chrome's new tab page
+  does the same. The name is the tooltip and what a screen reader says.
+- **The grid** gives a tile at least 48 pixels (64 under a thumb) and shares out the
+  rest, so the default panel holds four, a wide one more, and two tiles are two
+  halves. There is no limit of its own: Zen stops at twelve, which people ask it to
+  lift, so the grid simply wraps and the list's own sixty is the limit.
+- **In place, not in a tab.** Emil, 2026-10-13: *"essentials should not open as
+  tabs"*. A press shows the file where a tab shows and puts nothing in the strip; another
+  tab or tile then takes the pane and the essential stays loaded behind it, and the next
+  press on its tile comes back to it where it was left - following a link inside it
+  stays inside it. Ctrl or the middle button on a tile, or Open in new tab in its menu,
+  opens an ordinary tab. A file already open in a tab of the strip gets a view of its own,
+  sharing the one document, so the tab there stays where it is. In a split, an essential
+  shows in the pane being worked in, and comes back in whichever pane it is already
+  showing in: one essential, one view, as Zen's split view keeps an essential in its
+  half. Taken out of the Essentials while it is open, it goes back to being a tab of the
+  strip, which is what Zen does. A pane whose strip empties stays while it is showing an
+  essential, and one that closes hands its essentials to the pane taking its room. An
+  essential is not written into the session: a restart starts it fresh from its tile.
+  Per space, as the Essentials themselves are - Zen shares its Essentials across a
+  profile's spaces, but a space here is a folder of its own - and a space switched away
+  keeps its essentials loaded with the rest of its tabs. A phone and a tablet hold one
+  document at a time, so there a press shows it in place of what was there. See
+  `essentials.ts`.
+- **The open one** wears the accent's wash, a ring of the accent fading into its
+  quiet line, and a small shadow. Zen draws the ring out of the favicon's colours; the
+  accent is what the open row of every other list says "open" in.
+- **By hand**: a tile dragged among the others lands in front of the one it is let go
+  of over, or after it past its middle; a row of the file list or a tab carried out of
+  the strip is bookmarked where it is let go of over the grid, which keeps an empty
+  place for a tab while there is no tile yet. A tile dragged onto a group goes into it
+  and is a row there; a row out of a group dragged onto the grid comes out and is a
+  tile. The arrows walk the grid by its rows and columns and step off its foot onto
+  the rows under it.
+- **The list** is the other way of looking at all of it, for somebody who keeps a lot
+  of notes there and reads them by name: Appearance, File list, Essentials: Grid or
+  List in Settings, kept on this machine. A settings search for the old word,
+  bookmarks, finds it, in English and in the reader's own language. Ctrl+1 to 9 stay the tabs', as they are in every browser but Arc.
+
+See `essentials.ts`, `BookmarkTile.svelte` and `tab-strip/bookmark-drop.ts`.
 
 ## A folder somebody else made
 

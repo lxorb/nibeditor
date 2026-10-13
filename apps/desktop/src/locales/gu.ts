@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'આવશ્યક',
+  'Add to Essentials': 'આવશ્યકમાં ઉમેરો',
+  'Remove from Essentials': 'આવશ્યકમાંથી દૂર કરો',
+  'Add block to Essentials': 'બ્લોક આવશ્યકમાં ઉમેરો',
+  'Add blocks to Essentials': 'બ્લોક્સ આવશ્યકમાં ઉમેરો',
+  'Add view to Essentials': 'દૃશ્ય આવશ્યકમાં ઉમેરો',
+  'Open tabs and Essentials': 'ટૅબ અને આવશ્યક ખોલો',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor હવે Orden છે',
   'Notes from nibeditor.com': 'nibeditor.com પરથી નોંધો',
@@ -263,8 +271,6 @@ export const gu: Dictionary = {
   'Move this note': 'આ નોંધ ખસેડો',
   'Move up': 'ઉપર ખસેડો',
   'Move down': 'નીચે ખસેડો',
-  Bookmark: 'બુકમાર્ક',
-  'Remove bookmark': 'બુકમાર્ક કાઢો',
   'Search here again': 'ફરી અહીં શોધો',
   'Undo the last file change': 'ફાઇલનો છેલ્લો ફેરફાર પાછો લો',
   'Undo moving {name}': '{name} ખસેડવું પાછું લો',
@@ -314,7 +320,6 @@ export const gu: Dictionary = {
   'Remove group': 'સમૂહ કાઢો',
   'Out of the group': 'સમૂહમાંથી બહાર',
   Make: 'બનાવો',
-  'Bookmark this block': 'આ બ્લૉક બુકમાર્ક કરો',
   Panels: 'પૅનલ',
   Outline: 'રૂપરેખા',
   'Stay on this note': 'આ નોંધ પર રહો',
@@ -1655,7 +1660,6 @@ export const gu: Dictionary = {
   Nothing: 'કંઈ નહીં',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'આ દૃશ્ય બુકમાર્ક કરો',
   Keep: 'રાખો',
 
   // Which side of the window a panel sits on.
@@ -1720,7 +1724,6 @@ export const gu: Dictionary = {
   Blocked: 'બ્લૉક કરેલ',
   'Reset permissions': 'પરવાનગીઓ રીસેટ કરો',
   'Turn into': 'માં ફેરવો',
-  'Bookmark these blocks': 'આ બ્લૉકો બુકમાર્ક કરો',
   Foldable: 'વાળી શકાય',
   'Starts folded': 'વાળેલું શરૂ થાય',
   // Where a space keeps what websites store
@@ -1944,7 +1947,6 @@ export const gu: Dictionary = {
   'Change notes': 'નોંધો બદલવી',
   'See what you are looking at': 'તમે શું જુઓ છો તે જોવું',
   'Move and rename files': 'ફાઇલો ખસેડવી અને નામ બદલવાં',
-  'Open tabs and bookmarks': 'ટૅબ્સ અને બુકમાર્ક ખોલવા',
   'Bring a tab to the front': 'કોઈ ટૅબ આગળ લાવવી',
   'Browse in tabs of its own': 'પોતાની ટૅબ્સમાં બ્રાઉઝ કરવું',
   'Read what pages load': 'પેજ શું લોડ કરે છે તે વાંચવું',

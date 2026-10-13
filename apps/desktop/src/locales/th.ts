@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'เพิ่มไปยัง Essentials',
+  'Remove from Essentials': 'นำออกจาก Essentials',
+  'Add block to Essentials': 'เพิ่มบล็อกไปยัง Essentials',
+  'Add blocks to Essentials': 'เพิ่มบล็อกทั้งหมดไปยัง Essentials',
+  'Add view to Essentials': 'เพิ่มมุมมองไปยัง Essentials',
+  'Open tabs and Essentials': 'เปิดแท็บและ Essentials',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor เปลี่ยนชื่อเป็น Orden แล้ว',
   'Notes from nibeditor.com': 'โน้ตจาก nibeditor.com',
@@ -263,8 +271,6 @@ export const th: Dictionary = {
   'Move this note': 'ย้ายโน้ตนี้',
   'Move up': 'ย้ายขึ้น',
   'Move down': 'ย้ายลง',
-  Bookmark: 'บุ๊กมาร์ก',
-  'Remove bookmark': 'ลบบุ๊กมาร์ก',
   'Search here again': 'ค้นหาที่นี่อีกครั้ง',
   'Undo the last file change': 'เลิกทำการเปลี่ยนไฟล์ล่าสุด',
   'Undo moving {name}': 'เลิกย้าย {name}',
@@ -314,7 +320,6 @@ export const th: Dictionary = {
   'Remove group': 'ลบกลุ่ม',
   'Out of the group': 'เอาออกจากกลุ่ม',
   Make: 'สร้าง',
-  'Bookmark this block': 'บุ๊กมาร์กบล็อกนี้',
   Panels: 'แผง',
   Outline: 'เค้าโครง',
   'Stay on this note': 'อยู่ที่โน้ตนี้',
@@ -1634,7 +1639,6 @@ export const th: Dictionary = {
   Nothing: 'ไม่มี',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'บุ๊กมาร์กมุมมองนี้',
   Keep: 'เก็บ',
 
   // Which side of the window a panel sits on.
@@ -1699,7 +1703,6 @@ export const th: Dictionary = {
   Blocked: 'ถูกบล็อก',
   'Reset permissions': 'รีเซ็ตสิทธิ์',
   'Turn into': 'เปลี่ยนเป็น',
-  'Bookmark these blocks': 'บุ๊กมาร์กบล็อกเหล่านี้',
   Foldable: 'พับได้',
   'Starts folded': 'เริ่มแบบพับ',
   // Where a space keeps what websites store
@@ -1920,7 +1923,6 @@ export const th: Dictionary = {
   'Change notes': 'แก้ไขโน้ต',
   'See what you are looking at': 'เห็นสิ่งที่คุณกำลังดู',
   'Move and rename files': 'ย้ายและเปลี่ยนชื่อไฟล์',
-  'Open tabs and bookmarks': 'เปิดแท็บและบุ๊กมาร์ก',
   'Bring a tab to the front': 'นำแท็บขึ้นมาด้านหน้า',
   'Browse in tabs of its own': 'ท่องเว็บในแท็บของตัวเอง',
   'Read what pages load': 'อ่านสิ่งที่หน้าเว็บโหลด',

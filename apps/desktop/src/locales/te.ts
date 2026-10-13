@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'అత్యవసరాలు',
+  'Add to Essentials': 'అత్యవసరాలకు జోడించు',
+  'Remove from Essentials': 'అత్యవసరాల నుండి తీసివేయి',
+  'Add block to Essentials': 'బ్లాక్‌ను అత్యవసరాలకు జోడించు',
+  'Add blocks to Essentials': 'బ్లాక్‌లను అత్యవసరాలకు జోడించు',
+  'Add view to Essentials': 'వీక్షణను అత్యవసరాలకు జోడించు',
+  'Open tabs and Essentials': 'ట్యాబ్‌లు మరియు అత్యవసరాలు తెరవడం',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ఇప్పుడు Orden',
   'Notes from nibeditor.com': 'nibeditor.com నుండి నోట్స్',
@@ -263,8 +271,6 @@ export const te: Dictionary = {
   'Move this note': 'ఈ నోట్‌ను తరలించు',
   'Move up': 'పైకి తరలించు',
   'Move down': 'కిందికి తరలించు',
-  Bookmark: 'బుక్‌మార్క్',
-  'Remove bookmark': 'బుక్‌మార్క్ తీసివేయి',
   'Search here again': 'ఇక్కడ మళ్లీ వెతుకు',
   'Undo the last file change': 'చివరి ఫైల్ మార్పును చర్యరద్దు చేయి',
   'Undo moving {name}': '{name} తరలింపును చర్యరద్దు చేయి',
@@ -314,7 +320,6 @@ export const te: Dictionary = {
   'Remove group': 'గ్రూప్ తీసివేయి',
   'Out of the group': 'గ్రూప్ నుండి బయటకు',
   Make: 'తయారుచేయి',
-  'Bookmark this block': 'ఈ బ్లాక్‌ను బుక్‌మార్క్ చేయి',
   Panels: 'ప్యానెల్‌లు',
   Outline: 'ఔట్‌లైన్',
   'Stay on this note': 'ఈ నోట్‌పైనే ఉండు',
@@ -1669,7 +1674,6 @@ export const te: Dictionary = {
   Nothing: 'ఏమీ లేదు',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ఈ వీక్షణను బుక్‌మార్క్ చేయండి',
   Keep: 'ఉంచండి',
 
   // Which side of the window a panel sits on.
@@ -1735,7 +1739,6 @@ export const te: Dictionary = {
   Blocked: 'బ్లాక్ అయింది',
   'Reset permissions': 'అనుమతులను రీసెట్ చేయండి',
   'Turn into': 'గా మార్చు',
-  'Bookmark these blocks': 'ఈ బ్లాక్‌లను బుక్‌మార్క్ చేయి',
   Foldable: 'ముడుచుకోగలదు',
   'Starts folded': 'ముడుచుకుని మొదలు',
   // Where a space keeps what websites store
@@ -1962,7 +1965,6 @@ export const te: Dictionary = {
   'Change notes': 'నోట్‌లు మార్చడం',
   'See what you are looking at': 'మీరు చూస్తున్నది చూడటం',
   'Move and rename files': 'ఫైల్‌లను తరలించడం, పేరు మార్చడం',
-  'Open tabs and bookmarks': 'ట్యాబ్‌లు, బుక్‌మార్క్‌లు తెరవడం',
   'Bring a tab to the front': 'ఒక ట్యాబ్‌ను ముందుకు తేవడం',
   'Browse in tabs of its own': 'సొంత ట్యాబ్‌లలో బ్రౌజ్ చేయడం',
   'Read what pages load': 'పేజీలు లోడ్ చేసేది చదవడం',

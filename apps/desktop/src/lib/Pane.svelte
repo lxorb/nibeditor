@@ -88,11 +88,11 @@
    *  nothing here is worked out until a graph tab is open. */
   const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut))
   const archived = $derived(tab?.path ? workspace.archive.has(tab.path) : false)
-  /** Every note this pane holds. The editor keeps a state for each one it has
-   *  shown, and this is what tells it which of them are still open. The tabs
-   *  themselves, because a tab is what a state is kept under; see
-   *  editor-states.ts. */
-  const strip = $derived(workspace.tabsIn(pane.id))
+  /** Every note this pane holds, the essentials shown in it among them. The editor
+   *  keeps a state for each one it has shown, and this is what tells it which of them
+   *  are still open. The tabs themselves, because a tab is what a state is kept
+   *  under; see editor-states.ts. */
+  const held = $derived(workspace.heldIn(pane.id))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along - as it is for a pane filling the window. */
@@ -646,7 +646,7 @@
               bind:view={columnViews[one.id]}
               tab={one}
               focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
-              kept={strip}
+              kept={held}
               onimage={saveImage}
               resolveimage={resolveImage}
               openlink={followHref}
@@ -680,7 +680,7 @@
         bind:view
         {tab}
         focused={workspace.panes.focusedId === pane.id}
-        kept={strip}
+        kept={held}
         onimage={saveImage}
         resolveimage={resolveImage}
         openlink={followHref}

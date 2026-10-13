@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Esensial',
+  'Add to Essentials': 'Tambahkan ke Esensial',
+  'Remove from Essentials': 'Hapus dari Esensial',
+  'Add block to Essentials': 'Tambahkan blok ke Esensial',
+  'Add blocks to Essentials': 'Tambahkan blok-blok ke Esensial',
+  'Add view to Essentials': 'Tambahkan tampilan ke Esensial',
+  'Open tabs and Essentials': 'Membuka tab dan Esensial',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor kini bernama Orden',
   'Notes from nibeditor.com': 'Catatan dari nibeditor.com',
@@ -263,8 +271,6 @@ export const id: Dictionary = {
   'Move this note': 'Pindahkan catatan ini',
   'Move up': 'Pindah ke atas',
   'Move down': 'Pindah ke bawah',
-  Bookmark: 'Markah',
-  'Remove bookmark': 'Hapus markah',
   'Search here again': 'Cari di sini lagi',
   'Undo the last file change': 'Batalkan perubahan berkas terakhir',
   'Undo moving {name}': 'Batalkan pemindahan {name}',
@@ -314,7 +320,6 @@ export const id: Dictionary = {
   'Remove group': 'Hapus grup',
   'Out of the group': 'Keluar dari grup',
   Make: 'Buat',
-  'Bookmark this block': 'Markahi blok ini',
   Panels: 'Panel',
   Outline: 'Kerangka',
   'Stay on this note': 'Tetap di catatan ini',
@@ -1662,7 +1667,6 @@ export const id: Dictionary = {
   Nothing: 'Tidak ada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Tandai tampilan ini',
   Keep: 'Simpan',
 
   // Which side of the window a panel sits on.
@@ -1728,7 +1732,6 @@ export const id: Dictionary = {
   Blocked: 'Diblokir',
   'Reset permissions': 'Reset izin',
   'Turn into': 'Ubah menjadi',
-  'Bookmark these blocks': 'Markahi blok-blok ini',
   Foldable: 'Dapat dilipat',
   'Starts folded': 'Mulai terlipat',
   // Where a space keeps what websites store
@@ -1951,7 +1954,6 @@ export const id: Dictionary = {
   'Change notes': 'Mengubah catatan',
   'See what you are looking at': 'Melihat yang sedang kamu lihat',
   'Move and rename files': 'Memindahkan dan mengganti nama file',
-  'Open tabs and bookmarks': 'Membuka tab dan bookmark',
   'Bring a tab to the front': 'Membawa tab ke depan',
   'Browse in tabs of its own': 'Menjelajah di tab sendiri',
   'Read what pages load': 'Membaca yang dimuat halaman',

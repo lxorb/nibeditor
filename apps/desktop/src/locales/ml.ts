@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'അവശ്യങ്ങൾ',
+  'Add to Essentials': 'അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Remove from Essentials': 'അവശ്യങ്ങളിൽ നിന്ന് നീക്കുക',
+  'Add block to Essentials': 'ബ്ലോക്ക് അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Add blocks to Essentials': 'ബ്ലോക്കുകൾ അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Add view to Essentials': 'കാഴ്ച അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Open tabs and Essentials': 'ടാബുകളും അവശ്യങ്ങളും തുറക്കുക',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ഇപ്പോൾ Orden ആണ്',
   'Notes from nibeditor.com': 'nibeditor.com-ൽ നിന്നുള്ള കുറിപ്പുകൾ',
@@ -263,8 +271,6 @@ export const ml: Dictionary = {
   'Move this note': 'ഈ കുറിപ്പ് നീക്കുക',
   'Move up': 'മുകളിലേക്ക് നീക്കുക',
   'Move down': 'താഴേക്ക് നീക്കുക',
-  Bookmark: 'ബുക്ക്‌മാർക്ക്',
-  'Remove bookmark': 'ബുക്ക്‌മാർക്ക് നീക്കുക',
   'Search here again': 'ഇവിടെ വീണ്ടും തിരയുക',
   'Undo the last file change': 'അവസാന ഫയൽ മാറ്റം പഴയപടിയാക്കുക',
   'Undo moving {name}': '{name} നീക്കിയത് പഴയപടിയാക്കുക',
@@ -314,7 +320,6 @@ export const ml: Dictionary = {
   'Remove group': 'ഗ്രൂപ്പ് നീക്കുക',
   'Out of the group': 'ഗ്രൂപ്പിന് പുറത്ത്',
   Make: 'ഉണ്ടാക്കുക',
-  'Bookmark this block': 'ഈ ബ്ലോക്ക് ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Panels: 'പാനലുകൾ',
   Outline: 'ഔട്ട്‌ലൈൻ',
   'Stay on this note': 'ഈ കുറിപ്പിൽ തന്നെ നിൽക്കുക',
@@ -1681,7 +1686,6 @@ export const ml: Dictionary = {
   Nothing: 'ഒന്നുമില്ല',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ഈ കാഴ്ച ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Keep: 'സൂക്ഷിക്കുക',
 
   // Which side of the window a panel sits on.
@@ -1748,7 +1752,6 @@ export const ml: Dictionary = {
   Blocked: 'തടഞ്ഞു',
   'Reset permissions': 'അനുമതികൾ പുനഃസജ്ജീകരിക്കുക',
   'Turn into': 'ആയി മാറ്റുക',
-  'Bookmark these blocks': 'ഈ ബ്ലോക്കുകൾ ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Foldable: 'മടക്കാവുന്നത്',
   'Starts folded': 'മടക്കി തുടങ്ങുന്നു',
   // Where a space keeps what websites store
@@ -1974,7 +1977,6 @@ export const ml: Dictionary = {
   'Change notes': 'കുറിപ്പുകൾ മാറ്റൽ',
   'See what you are looking at': 'നിങ്ങൾ കാണുന്നത് കാണൽ',
   'Move and rename files': 'ഫയലുകൾ നീക്കലും പേരുമാറ്റലും',
-  'Open tabs and bookmarks': 'ടാബുകളും ബുക്ക്‌മാർക്കുകളും തുറക്കൽ',
   'Bring a tab to the front': 'ഒരു ടാബ് മുന്നിലേക്ക് കൊണ്ടുവരൽ',
   'Browse in tabs of its own': 'സ്വന്തം ടാബുകളിൽ ബ്രൗസ് ചെയ്യൽ',
   'Read what pages load': 'പേജുകൾ ലോഡ് ചെയ്യുന്നത് വായിക്കൽ',

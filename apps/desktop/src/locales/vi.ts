@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Mục chính',
+  'Add to Essentials': 'Thêm vào mục chính',
+  'Remove from Essentials': 'Gỡ khỏi mục chính',
+  'Add block to Essentials': 'Thêm khối vào mục chính',
+  'Add blocks to Essentials': 'Thêm các khối vào mục chính',
+  'Add view to Essentials': 'Thêm chế độ xem vào mục chính',
+  'Open tabs and Essentials': 'Mở thẻ và mục chính',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor giờ là Orden',
   'Notes from nibeditor.com': 'Ghi chú từ nibeditor.com',
@@ -263,8 +271,6 @@ export const vi: Dictionary = {
   'Move this note': 'Chuyển ghi chú này',
   'Move up': 'Chuyển lên',
   'Move down': 'Chuyển xuống',
-  Bookmark: 'Dấu trang',
-  'Remove bookmark': 'Bỏ dấu trang',
   'Search here again': 'Tìm ở đây lại',
   'Undo the last file change': 'Hoàn tác thay đổi tệp cuối',
   'Undo moving {name}': 'Hoàn tác chuyển {name}',
@@ -314,7 +320,6 @@ export const vi: Dictionary = {
   'Remove group': 'Xoá nhóm',
   'Out of the group': 'Ra khỏi nhóm',
   Make: 'Tạo',
-  'Bookmark this block': 'Đánh dấu khối này',
   Panels: 'Ngăn',
   Outline: 'Đề mục',
   'Stay on this note': 'Giữ ở ghi chú này',
@@ -1651,7 +1656,6 @@ export const vi: Dictionary = {
   Nothing: 'Không có gì',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Đánh dấu khung nhìn này',
   Keep: 'Giữ',
 
   // Which side of the window a panel sits on.
@@ -1717,7 +1721,6 @@ export const vi: Dictionary = {
   Blocked: 'Bị chặn',
   'Reset permissions': 'Đặt lại quyền',
   'Turn into': 'Biến thành',
-  'Bookmark these blocks': 'Đánh dấu các khối này',
   Foldable: 'Có thể gập',
   'Starts folded': 'Mở ra đã gập',
   // Where a space keeps what websites store
@@ -1938,7 +1941,6 @@ export const vi: Dictionary = {
   'Change notes': 'Sửa ghi chú',
   'See what you are looking at': 'Thấy thứ bạn đang xem',
   'Move and rename files': 'Di chuyển và đổi tên tệp',
-  'Open tabs and bookmarks': 'Mở tab và dấu trang',
   'Bring a tab to the front': 'Đưa một tab lên trước',
   'Browse in tabs of its own': 'Duyệt trong tab riêng',
   'Read what pages load': 'Đọc những gì trang tải',

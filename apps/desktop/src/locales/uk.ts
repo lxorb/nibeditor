@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Основне',
+  'Add to Essentials': 'Додати до основного',
+  'Remove from Essentials': 'Вилучити з основного',
+  'Add block to Essentials': 'Додати блок до основного',
+  'Add blocks to Essentials': 'Додати блоки до основного',
+  'Add view to Essentials': 'Додати вигляд до основного',
+  'Open tabs and Essentials': 'Відкривати вкладки й основне',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor тепер називається Orden',
   'Notes from nibeditor.com': 'Нотатки з nibeditor.com',
@@ -263,8 +271,6 @@ export const uk: Dictionary = {
   'Move this note': 'Перемістити нотатку',
   'Move up': 'Перемістити вище',
   'Move down': 'Перемістити нижче',
-  Bookmark: 'Закладка',
-  'Remove bookmark': 'Прибрати закладку',
   'Search here again': 'Знову шукати тут',
   'Undo the last file change': 'Скасувати останню зміну файлів',
   'Undo moving {name}': 'Скасувати переміщення {name}',
@@ -314,7 +320,6 @@ export const uk: Dictionary = {
   'Remove group': 'Прибрати групу',
   'Out of the group': 'З групи',
   Make: 'Створити',
-  'Bookmark this block': 'Додати блок до закладок',
   Panels: 'Панелі',
   Outline: 'Структура',
   'Stay on this note': 'Залишатися на цій нотатці',
@@ -1730,7 +1735,6 @@ export const uk: Dictionary = {
   Nothing: 'Нічого',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Додати цей вигляд до закладок',
   Keep: 'Залишити',
 
   // Which side of the window a panel sits on.
@@ -1795,7 +1799,6 @@ export const uk: Dictionary = {
   Blocked: 'Заблоковано',
   'Reset permissions': 'Скинути дозволи',
   'Turn into': 'Перетворити в',
-  'Bookmark these blocks': 'Додати блоки до закладок',
   Foldable: 'Згортуваний',
   'Starts folded': 'Відкривається згорнутим',
   // Where a space keeps what websites store
@@ -2025,7 +2028,6 @@ export const uk: Dictionary = {
   'Change notes': 'Змінювати нотатки',
   'See what you are looking at': 'Бачити, на що ви дивитеся',
   'Move and rename files': 'Переміщувати й перейменовувати файли',
-  'Open tabs and bookmarks': 'Відкривати вкладки й закладки',
   'Bring a tab to the front': 'Виводити вкладку на передній план',
   'Browse in tabs of its own': 'Переглядати у власних вкладках',
   'Read what pages load': 'Читати, що завантажують сторінки',

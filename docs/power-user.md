@@ -31,7 +31,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Palette | One search over notes and files, commands, open tabs, bookmarks, visited pages and single settings, no `>` needed; `>`, `#`, `:` narrow | JetBrains, VS Code, Raycast, Chrome | done (agent `one-palette`) | without `>` the palette listed notes only (`lib/palette/notes.ts`) | L | high |
+| Palette | One search over notes and files, commands, open tabs, Essentials, visited pages and single settings, no `>` needed; `>`, `#`, `:` narrow | JetBrains, VS Code, Raycast, Chrome | done (agent `one-palette`) | without `>` the palette listed notes only (`lib/palette/notes.ts`) | L | high |
 | Palette | Ranking across kinds: match, exact name, kind, frecency, context; an eval of 58 queries, 98% top-1 | Raycast, Alfred, Firefox | done (agent `one-palette`) | recent notes were the only signal (`fuzzy.ts` `recentFirst`) | M | high |
 | Palette | Shift twice opens it, over a web page too; rebindable to another modifier; Ctrl+O second (Ctrl+P is Print since 2026-10-01) | JetBrains | done (agent `one-palette`) | no double-tap keys existed (`lib/keys.ts`) | M | high |
 | Palette | Shift+Delete forgets a row; a switch setting flips in place; a setting opens its pane scrolled to it | Chrome, VS Code, JetBrains | done (agent `one-palette`) | none of the three existed | S | med |
@@ -140,7 +140,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Files | Dragging a row into a note's text inserts a link to it | Obsidian | done 3e836808 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
 | Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | done ef25c471 (Open to the side) | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
 | Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done ef25c471 | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
-| Files | With several rows selected: Move, Bookmark and Open all, besides Delete | Explorer, Obsidian | done ef25c471 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
+| Files | With several rows selected: Move, Add to Essentials and Open all, besides Delete | Explorer, Obsidian | done ef25c471 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
 | Files | Collapse all folders | VS Code, Obsidian | done 5930123a | no command and no button | S | med |
 | Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | done 5930123a, 2ab8bf2c | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
 

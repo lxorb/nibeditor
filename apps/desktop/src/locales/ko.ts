@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: '에센셜',
+  'Add to Essentials': '에센셜에 추가',
+  'Remove from Essentials': '에센셜에서 제거',
+  'Add block to Essentials': '블록을 에센셜에 추가',
+  'Add blocks to Essentials': '블록들을 에센셜에 추가',
+  'Add view to Essentials': '보기를 에센셜에 추가',
+  'Open tabs and Essentials': '탭과 에센셜 열기',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor가 Orden으로 바뀌었습니다',
   'Notes from nibeditor.com': 'nibeditor.com의 노트',
@@ -263,8 +271,6 @@ export const ko: Dictionary = {
   'Move this note': '이 노트 이동',
   'Move up': '위로 이동',
   'Move down': '아래로 이동',
-  Bookmark: '북마크',
-  'Remove bookmark': '북마크 제거',
   'Search here again': '여기서 다시 검색',
   'Undo the last file change': '마지막 파일 변경 취소',
   'Undo moving {name}': '{name} 이동 취소',
@@ -314,7 +320,6 @@ export const ko: Dictionary = {
   'Remove group': '그룹 제거',
   'Out of the group': '그룹에서 빼기',
   Make: '만들기',
-  'Bookmark this block': '이 블록 북마크',
   Panels: '패널',
   Outline: '개요',
   'Stay on this note': '이 노트에 머무르기',
@@ -1644,7 +1649,6 @@ export const ko: Dictionary = {
   Nothing: '없음',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '이 보기를 북마크',
   Keep: '남기기',
 
   // Which side of the window a panel sits on.
@@ -1709,7 +1713,6 @@ export const ko: Dictionary = {
   Blocked: '차단됨',
   'Reset permissions': '권한 재설정',
   'Turn into': '형식 바꾸기',
-  'Bookmark these blocks': '이 블록들 북마크',
   Foldable: '접을 수 있음',
   'Starts folded': '접힌 채로 시작',
   // Where a space keeps what websites store
@@ -1930,7 +1933,6 @@ export const ko: Dictionary = {
   'Change notes': '노트 변경',
   'See what you are looking at': '보고 있는 내용 보기',
   'Move and rename files': '파일 이동 및 이름 변경',
-  'Open tabs and bookmarks': '탭과 북마크 열기',
   'Bring a tab to the front': '탭을 앞으로 가져오기',
   'Browse in tabs of its own': '자체 탭에서 탐색',
   'Read what pages load': '페이지가 불러오는 내용 읽기',

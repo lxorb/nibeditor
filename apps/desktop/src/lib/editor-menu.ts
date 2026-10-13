@@ -304,12 +304,12 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
 
   return [
     held
-      ? { label: t('Remove bookmark'), run: () => workspace.bookmarks.toggle(held) }
+      ? { label: t('Remove from Essentials'), run: () => workspace.bookmarks.toggle(held) }
       : {
           // One bookmark per block, each under its own first words, so a run of them
           // arrives in the list as the blocks they are rather than as one row standing
           // for several.
-          label: spans.length > 1 ? t('Bookmark these blocks') : t('Bookmark this block'),
+          label: spans.length > 1 ? t('Add blocks to Essentials') : t('Add block to Essentials'),
           run: () => {
             // The words are read before any naming: giving a block a name writes into
             // the note and moves every offset after it.

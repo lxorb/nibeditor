@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': '加入 Essentials',
+  'Remove from Essentials': '從 Essentials 移除',
+  'Add block to Essentials': '將區塊加入 Essentials',
+  'Add blocks to Essentials': '將區塊全部加入 Essentials',
+  'Add view to Essentials': '將檢視加入 Essentials',
+  'Open tabs and Essentials': '開分頁同 Essentials',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor而家叫做Orden',
   'Notes from nibeditor.com': '嚟自nibeditor.com嘅筆記',
@@ -263,8 +271,6 @@ export const yue: Dictionary = {
   'Move this note': '移動呢篇筆記',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入書籤',
-  'Remove bookmark': '移除書籤',
   'Search here again': '重新納入搜尋',
   'Undo the last file change': '復原上一次檔案更改',
   'Undo moving {name}': '復原移動{name}',
@@ -314,7 +320,6 @@ export const yue: Dictionary = {
   'Remove group': '移除分組',
   'Out of the group': '移出分組',
   Make: '建立',
-  'Bookmark this block': '為呢個區塊加書籤',
   Panels: '面板',
   Outline: '大綱',
   'Stay on this note': '停留喺呢篇筆記',
@@ -1624,7 +1629,6 @@ export const yue: Dictionary = {
   Nothing: '無',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '將呢個檢視加入書籤',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1689,7 +1693,6 @@ export const yue: Dictionary = {
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
   'Turn into': '轉換為',
-  'Bookmark these blocks': '為呢啲區塊加書籤',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
   // Where a space keeps what websites store
@@ -1907,7 +1910,6 @@ export const yue: Dictionary = {
   'Change notes': '改筆記',
   'See what you are looking at': '睇到你睇緊乜',
   'Move and rename files': '搬同改名檔案',
-  'Open tabs and bookmarks': '開標籤頁同書籤',
   'Bring a tab to the front': '將標籤頁擺去最前',
   'Browse in tabs of its own': '喺自己嘅標籤頁瀏覽',
   'Read what pages load': '讀網頁載入嘅嘢',

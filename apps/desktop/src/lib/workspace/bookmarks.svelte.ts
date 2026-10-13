@@ -104,6 +104,12 @@ export function bookmarkList(value: unknown): Bookmark[] {
     .slice(0, MOST_BOOKMARKS)
 }
 
+/** A file at the top of the list, which is an essential's tile; one in a group is a
+ *  row of its group. See Bookmarks.svelte. */
+export function isTile(mark: Bookmark): boolean {
+  return mark.kind === 'note' && !mark.parent
+}
+
 /** Two bookmarks are the same one when they point at the same thing.
  *
  *  Which group it is in is not part of that: a note is bookmarked or it is not,
@@ -156,8 +162,12 @@ export class Bookmarks {
   offered: Promise<unknown> = Promise.resolve()
 
   /** Which space the rows on screen belong to. A function rather than a value
-   *  because the workspace decides that, and it changes as spaces are picked. */
-  constructor(private readonly root: () => string | null) {}
+   *  because the workspace decides that, and it changes as spaces are picked.
+   *  `changed` hears every change to a list; see `kept` in essentials.svelte.ts. */
+  constructor(
+    private readonly root: () => string | null,
+    private readonly changed: () => void = () => undefined,
+  ) {}
 
   /** The open space's bookmarks, in the order they were put in. */
   get list(): Bookmark[] {
@@ -215,8 +225,6 @@ export class Bookmarks {
     this.put(root, [...rest.slice(0, to), mark, ...rest.slice(to)])
   }
 
-  /** A note or folder in the open space, as a bookmark. Null for a row outside
-   *  it, which is nothing this space can keep. */
   /** A new group, at the end of the list, under a name of its own. */
   addGroup(name: string): Bookmark | null {
     const root = this.root()
@@ -435,5 +443,6 @@ export class Bookmarks {
     // pass, and a storage that is full would otherwise end the pass rather than
     // cost this machine one remembered list; see stored.ts.
     keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    this.changed()
   }
 }

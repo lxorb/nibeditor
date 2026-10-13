@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'ضروری‌ها',
+  'Add to Essentials': 'افزودن به ضروری‌ها',
+  'Remove from Essentials': 'حذف از ضروری‌ها',
+  'Add block to Essentials': 'افزودن بلوک به ضروری‌ها',
+  'Add blocks to Essentials': 'افزودن بلوک‌ها به ضروری‌ها',
+  'Add view to Essentials': 'افزودن نما به ضروری‌ها',
+  'Open tabs and Essentials': 'باز کردن زبانه‌ها و ضروری‌ها',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor اکنون Orden است',
   'Notes from nibeditor.com': 'یادداشت‌ها از nibeditor.com',
@@ -263,8 +271,6 @@ export const fa: Dictionary = {
   'Move this note': 'جابه‌جایی این یادداشت',
   'Move up': 'جابه‌جایی به بالا',
   'Move down': 'جابه‌جایی به پایین',
-  Bookmark: 'نشانک',
-  'Remove bookmark': 'برداشتن نشانک',
   'Search here again': 'جست‌وجوی دوباره اینجا',
   'Undo the last file change': 'واگرد آخرین تغییر پرونده',
   'Undo moving {name}': 'واگرد جابه‌جایی {name}',
@@ -314,7 +320,6 @@ export const fa: Dictionary = {
   'Remove group': 'برداشتن گروه',
   'Out of the group': 'بیرون از گروه',
   Make: 'ساختن',
-  'Bookmark this block': 'نشانک این بلوک',
   Panels: 'تخته‌ها',
   Outline: 'رئوس',
   'Stay on this note': 'ماندن روی این یادداشت',
@@ -1664,7 +1669,6 @@ export const fa: Dictionary = {
   Nothing: 'هیچ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'نشانک‌گذاری این نما',
   Keep: 'نگه داشتن',
 
   // Which side of the window a panel sits on.
@@ -1729,7 +1733,6 @@ export const fa: Dictionary = {
   Blocked: 'مسدود است',
   'Reset permissions': 'بازنشانی اجازه‌ها',
   'Turn into': 'تبدیل به',
-  'Bookmark these blocks': 'نشانک این بلوک‌ها',
   Foldable: 'تاشو',
   'Starts folded': 'تاشده آغاز می‌شود',
   // Where a space keeps what websites store
@@ -1954,7 +1957,6 @@ export const fa: Dictionary = {
   'Change notes': 'تغییر یادداشت‌ها',
   'See what you are looking at': 'دیدن آنچه نگاه می‌کنید',
   'Move and rename files': 'جابه‌جایی و تغییر نام فایل‌ها',
-  'Open tabs and bookmarks': 'باز کردن زبانه‌ها و نشانک‌ها',
   'Bring a tab to the front': 'آوردن یک زبانه به جلو',
   'Browse in tabs of its own': 'مرور در زبانه‌های خودش',
   'Read what pages load': 'خواندن آنچه صفحه‌ها بار می‌کنند',

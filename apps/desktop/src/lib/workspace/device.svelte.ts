@@ -16,7 +16,16 @@
  *  every time the folder is read again - on every save, rename and sync - and
  *  took the open folders with it each time. */
 
-import { isBoolean, isNumber, isString, keep, recordOf, stored, stringList } from '../stored'
+import {
+  isBoolean,
+  isNumber,
+  isString,
+  keep,
+  recordOf,
+  stored,
+  storedText,
+  stringList,
+} from '../stored'
 import { without, withOrWithout } from '../records'
 import { movedTo, samePath, withinSpace } from '../space-paths'
 import type { FileOp } from './file-ops'
@@ -40,6 +49,8 @@ export const TAGS_KEY = 'nib:expanded-tags'
  *  nothing outside this file names it, and the one place that lists these keys
  *  is the glasses plugin's own, which this is small enough to travel to. */
 const GROUPS_KEY = 'nib:expanded-groups'
+/** Whether the Essentials are tiles or the list they were. */
+const ESSENTIALS_KEY = 'nib:essentials-look'
 
 /** Enough that a note opened this morning is still there, short enough that
  *  the list is worth reading. */
@@ -86,6 +97,10 @@ export class DeviceView {
   expandedTags = $state<Record<string, boolean>>({})
   /** Which groups of bookmarks are open, by the group's own name. */
   expandedGroups = $state<Record<string, boolean>>({})
+  /** Whether the Essentials are Zen's grid of tiles, the default, or the list of names
+   *  they were, for somebody who keeps a lot of notes there and reads them by name.
+   *  Settings, Appearance; see essentials.ts. */
+  essentialTiles = $state(true)
 
   /** The icon a space wears, keyed by folder rather than by id so it survives
    *  the ids being handed out again on the next launch. */
@@ -122,6 +137,7 @@ export class DeviceView {
     this.listOrder = recordOf(stored(LIST_ORDER_KEY), isSortMode)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
+    this.essentialTiles = storedText(ESSENTIALS_KEY) !== 'list'
     this.icons = recordOf(stored(ICONS_KEY), isString)
     this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
   }
@@ -167,6 +183,11 @@ export class DeviceView {
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
     keep(GROUPS_KEY, JSON.stringify(this.expandedGroups))
+  }
+
+  showEssentialTiles(on: boolean) {
+    this.essentialTiles = on
+    keep(ESSENTIALS_KEY, on ? 'tiles' : 'list')
   }
 
   /** How far down the list this space was left, or zero for one never scrolled. */

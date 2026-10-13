@@ -14,6 +14,7 @@ import type { Landing } from '../workspace/panes.svelte'
 import { zoneAt } from '../workspace/zones'
 import type { Bounds } from './layout'
 import { keyOf, stripOf, type TabDrag } from './drag.svelte'
+import { droppedOnBookmarks, overBookmarks } from './bookmark-drop'
 import { droppedOnSpace, overSpaces } from './space-drop'
 
 /** Where a tab carried out of the strip of `paneId` would land: at a place in another
@@ -79,18 +80,19 @@ function unsaved(tabId: string) {
 /** The carried tab is at `point`, or over something else where that is null. */
 export function overList(tabId: string, point: { x: number; y: number } | null): void {
   overSpaces(tabId, point)
+  overBookmarks(tabId, point)
   const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
   if (folder !== null) dropTarget.over(folder)
   else if (dropTarget.folder !== null) dropTarget.clear()
 }
 
-/** Let go of: moved to the space whose row was lit, or saved into the row of the list that
- *  was, where there was one. */
+/** Let go of: moved to the space whose row was lit, bookmarked where the line among the
+ *  bookmarks was, or saved into the row of the list that was lit, where there was one. */
 export function droppedOnList(tabId: string): void {
   const folder = dropTarget.folder
   const tab = unsaved(tabId)
   dropTarget.clear()
-  if (droppedOnSpace(tabId)) return
+  if (droppedOnSpace(tabId) || droppedOnBookmarks(tabId)) return
   if (folder !== null && tab) void workspace.save(tab, folder)
 }
 

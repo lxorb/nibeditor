@@ -28,7 +28,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   'chats.write': () => t('Post in chats'),
   context: () => t('See what you are looking at'),
   tree: () => t('Move and rename files'),
-  workspace: () => t('Open tabs and bookmarks'),
+  workspace: () => t('Open tabs and Essentials'),
   'workspace.focus': () => t('Bring a tab to the front'),
   browser: () => t('Browse in tabs of its own'),
   'browser.network': () => t('Read what pages load'),

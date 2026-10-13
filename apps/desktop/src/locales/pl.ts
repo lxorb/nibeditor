@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pl: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Niezbędne',
+  'Add to Essentials': 'Dodaj do niezbędnych',
+  'Remove from Essentials': 'Usuń z niezbędnych',
+  'Add block to Essentials': 'Dodaj blok do niezbędnych',
+  'Add blocks to Essentials': 'Dodaj bloki do niezbędnych',
+  'Add view to Essentials': 'Dodaj widok do niezbędnych',
+  'Open tabs and Essentials': 'Otwieranie kart i niezbędnych',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor to teraz Orden',
   'Notes from nibeditor.com': 'Notatki z nibeditor.com',
@@ -263,8 +271,6 @@ export const pl: Dictionary = {
   'Move this note': 'Przenieś tę notatkę',
   'Move up': 'Przenieś w górę',
   'Move down': 'Przenieś w dół',
-  Bookmark: 'Zakładka',
-  'Remove bookmark': 'Usuń zakładkę',
   'Search here again': 'Szukaj tu znowu',
   'Undo the last file change': 'Cofnij ostatnią zmianę plików',
   'Undo moving {name}': 'Cofnij przeniesienie {name}',
@@ -314,7 +320,6 @@ export const pl: Dictionary = {
   'Remove group': 'Usuń grupę',
   'Out of the group': 'Poza grupę',
   Make: 'Utwórz',
-  'Bookmark this block': 'Dodaj zakładkę do bloku',
   Panels: 'Panele',
   Outline: 'Konspekt',
   'Stay on this note': 'Zostań na tej notatce',
@@ -1735,7 +1740,6 @@ export const pl: Dictionary = {
   Nothing: 'Nic',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Dodaj ten widok do zakładek',
   Keep: 'Zachowaj',
 
   // Which side of the window a panel sits on.
@@ -1801,7 +1805,6 @@ export const pl: Dictionary = {
   Blocked: 'Zablokowane',
   'Reset permissions': 'Zresetuj uprawnienia',
   'Turn into': 'Zamień na',
-  'Bookmark these blocks': 'Dodaj zakładki do bloków',
   Foldable: 'Zwijalny',
   'Starts folded': 'Zaczyna zwinięty',
   // Where a space keeps what websites store
@@ -2032,7 +2035,6 @@ export const pl: Dictionary = {
   'Change notes': 'Zmieniać notatki',
   'See what you are looking at': 'Widzieć, na co patrzysz',
   'Move and rename files': 'Przenosić pliki i zmieniać ich nazwy',
-  'Open tabs and bookmarks': 'Otwierać karty i zakładki',
   'Bring a tab to the front': 'Przenosić kartę na wierzch',
   'Browse in tabs of its own': 'Przeglądać we własnych kartach',
   'Read what pages load': 'Czytać, co ładują strony',

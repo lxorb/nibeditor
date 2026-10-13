@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'မရှိမဖြစ်များ',
+  'Add to Essentials': 'မရှိမဖြစ်များသို့ ထည့်ပါ',
+  'Remove from Essentials': 'မရှိမဖြစ်များမှ ဖယ်ပါ',
+  'Add block to Essentials': 'ဘလောက်ကို မရှိမဖြစ်များသို့ ထည့်ပါ',
+  'Add blocks to Essentials': 'ဘလောက်များကို မရှိမဖြစ်များသို့ ထည့်ပါ',
+  'Add view to Essentials': 'မြင်ကွင်းကို မရှိမဖြစ်များသို့ ထည့်ပါ',
+  'Open tabs and Essentials': 'တဘ်များနှင့် မရှိမဖြစ်များကို ဖွင့်ခြင်း',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor သည် ယခု Orden ဖြစ်ပါပြီ',
   'Notes from nibeditor.com': 'nibeditor.com မှ မှတ်စုများ',
@@ -263,8 +271,6 @@ export const my: Dictionary = {
   'Move this note': 'ဤမှတ်စုရွှေ့',
   'Move up': 'အပေါ်ရွှေ့',
   'Move down': 'အောက်ရွှေ့',
-  Bookmark: 'စာမှတ်',
-  'Remove bookmark': 'စာမှတ်ဖယ်',
   'Search here again': 'ဤနေရာပြန်ရှာ',
   'Undo the last file change': 'နောက်ဆုံးဖိုင်ပြောင်းလဲမှုပြန်ဖျက်',
   'Undo moving {name}': '{name} ရွှေ့မှုပြန်ဖျက်',
@@ -314,7 +320,6 @@ export const my: Dictionary = {
   'Remove group': 'အုပ်စုဖျက်',
   'Out of the group': 'အုပ်စုမှထုတ်',
   Make: 'ဖန်တီး',
-  'Bookmark this block': 'ဤဘလောက်ကိုစာမှတ်ထား',
   Panels: 'အကန့်များ',
   Outline: 'ခေါင်းစဉ်စာရင်း',
   'Stay on this note': 'ဤမှတ်စုတွင်ရှိနေ',
@@ -1654,7 +1659,6 @@ export const my: Dictionary = {
   Nothing: 'မရှိ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ဤမြင်ကွင်းကို မှတ်ထားပါ',
   Keep: 'ထားပါ',
 
   // Which side of the window a panel sits on.
@@ -1720,7 +1724,6 @@ export const my: Dictionary = {
   Blocked: 'ပိတ်ဆို့ထား',
   'Reset permissions': 'ခွင့်ပြုချက်များကို ပြင်ဆင်သတ်မှတ်ရန်',
   'Turn into': 'အဖြစ် ပြောင်းပါ',
-  'Bookmark these blocks': 'ဤဘလောက်များကိုစာမှတ်ထား',
   Foldable: 'ချိတ်ခေါက်နိုင်',
   'Starts folded': 'ခေါက်ပြီး စတင်',
   // Where a space keeps what websites store
@@ -1942,7 +1945,6 @@ export const my: Dictionary = {
   'Change notes': 'မှတ်စုများ ပြောင်းရန်',
   'See what you are looking at': 'သင်ကြည့်နေသည်ကို မြင်ရန်',
   'Move and rename files': 'ဖိုင်များ ရွှေ့ခြင်းနှင့် အမည်ပြောင်းခြင်း',
-  'Open tabs and bookmarks': 'တက်ဘ်နှင့် စာညှပ်များ ဖွင့်ရန်',
   'Bring a tab to the front': 'တက်ဘ်ကို ရှေ့သို့ယူရန်',
   'Browse in tabs of its own': 'ကိုယ်ပိုင်တက်ဘ်များတွင် ကြည့်ရှုရန်',
   'Read what pages load': 'စာမျက်နှာများ တင်သည်ကို ဖတ်ရန်',

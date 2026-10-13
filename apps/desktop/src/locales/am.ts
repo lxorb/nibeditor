@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'አስፈላጊዎች',
+  'Add to Essentials': 'ወደ አስፈላጊዎች አክል',
+  'Remove from Essentials': 'ከአስፈላጊዎች አስወግድ',
+  'Add block to Essentials': 'ብሎኩን ወደ አስፈላጊዎች አክል',
+  'Add blocks to Essentials': 'ብሎኮቹን ወደ አስፈላጊዎች አክል',
+  'Add view to Essentials': 'እይታውን ወደ አስፈላጊዎች አክል',
+  'Open tabs and Essentials': 'ትሮችን እና አስፈላጊዎችን መክፈት',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor አሁን Orden ነው',
   'Notes from nibeditor.com': 'ከnibeditor.com የመጡ ማስታወሻዎች',
@@ -261,8 +269,6 @@ export const am: Dictionary = {
   'Move this note': 'ይህን ማስታወሻ አንቀሳቅስ',
   'Move up': 'ወደ ላይ አንቀሳቅስ',
   'Move down': 'ወደ ታች አንቀሳቅስ',
-  Bookmark: 'ምልክት',
-  'Remove bookmark': 'ምልክት አስወግድ',
   'Search here again': 'እዚህ እንደገና ፈልግ',
   'Undo the last file change': 'የመጨረሻውን የፋይል ለውጥ መልስ',
   'Undo moving {name}': '{name} ማንቀሳቀስን መልስ',
@@ -312,7 +318,6 @@ export const am: Dictionary = {
   'Remove group': 'ቡድን አስወግድ',
   'Out of the group': 'ከቡድኑ አውጣ',
   Make: 'አድርግ',
-  'Bookmark this block': 'ይህን ብሎክ ምልክት አድርግ',
   Panels: 'ሰሌዳዎች',
   Outline: 'አስተዋይ',
   'Stay on this note': 'በዚህ ማስታወሻ ላይ ቆይ',
@@ -1641,7 +1646,6 @@ export const am: Dictionary = {
   Nothing: 'ምንም',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ይህን እይታ ዕልባት አድርግ',
   Keep: 'አቆይ',
 
   // Which side of the window a panel sits on.
@@ -1706,7 +1710,6 @@ export const am: Dictionary = {
   Blocked: 'ታግዷል',
   'Reset permissions': 'ፈቃዶችን ዳግም ያቀናብሩ',
   'Turn into': 'ቀይር',
-  'Bookmark these blocks': 'እነዚህን ብሎኮች ምልክት አድርግ',
   Foldable: 'ሊታጠፍ የሚችል',
   'Starts folded': 'ተጣጥፎ ይጀምራል',
   // Where a space keeps what websites store
@@ -1928,7 +1931,6 @@ export const am: Dictionary = {
   'Change notes': 'ማስታወሻዎችን መቀየር',
   'See what you are looking at': 'የሚያዩትን ማየት',
   'Move and rename files': 'ፋይሎችን ማንቀሳቀስ እና እንደገና መሰየም',
-  'Open tabs and bookmarks': 'ትሮችን እና ዕልባቶችን መክፈት',
   'Bring a tab to the front': 'ትርን ወደ ፊት ማምጣት',
   'Browse in tabs of its own': 'በራሱ ትሮች ማሰስ',
   'Read what pages load': 'ገጾች የሚጭኑትን ማንበብ',

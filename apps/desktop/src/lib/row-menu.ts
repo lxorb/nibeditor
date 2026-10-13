@@ -228,7 +228,7 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const all = marks.every((mark) => workspace.bookmarks.has(mark))
   return [
     {
-      label: all ? t('Remove bookmark') : t('Bookmark'),
+      label: all ? t('Remove from Essentials') : t('Add to Essentials'),
       run: () => workspace.bookmarks.toggleAll(marks),
     },
   ]

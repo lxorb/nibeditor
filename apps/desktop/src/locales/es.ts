@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const es: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Esenciales',
+  'Add to Essentials': 'Añadir a esenciales',
+  'Remove from Essentials': 'Quitar de esenciales',
+  'Add block to Essentials': 'Añadir bloque a esenciales',
+  'Add blocks to Essentials': 'Añadir bloques a esenciales',
+  'Add view to Essentials': 'Añadir vista a esenciales',
+  'Open tabs and Essentials': 'Abrir pestañas y esenciales',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ahora se llama Orden',
   'Notes from nibeditor.com': 'Notas de nibeditor.com',
@@ -263,8 +271,6 @@ export const es: Dictionary = {
   'Move this note': 'Mover esta nota',
   'Move up': 'Subir',
   'Move down': 'Bajar',
-  Bookmark: 'Marcador',
-  'Remove bookmark': 'Quitar el marcador',
   'Search here again': 'Buscar aquí otra vez',
   'Undo the last file change': 'Deshacer el último cambio de archivo',
   'Undo moving {name}': 'Deshacer mover {name}',
@@ -314,7 +320,6 @@ export const es: Dictionary = {
   'Remove group': 'Quitar el grupo',
   'Out of the group': 'Sacar del grupo',
   Make: 'Crear',
-  'Bookmark this block': 'Marcar este bloque',
   Panels: 'Paneles',
   Outline: 'Esquema',
   'Stay on this note': 'Quedarse en esta nota',
@@ -1707,7 +1712,6 @@ export const es: Dictionary = {
   Nothing: 'Nada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Marcar esta vista',
   Keep: 'Conservar',
 
   // Which side of the window a panel sits on.
@@ -1773,7 +1777,6 @@ export const es: Dictionary = {
   Blocked: 'Bloqueado',
   'Reset permissions': 'Restablecer permisos',
   'Turn into': 'Convertir en',
-  'Bookmark these blocks': 'Marcar estos bloques',
   Foldable: 'Plegable',
   'Starts folded': 'Empieza plegado',
   // Where a space keeps what websites store
@@ -2004,7 +2007,6 @@ export const es: Dictionary = {
   'Change notes': 'Cambiar notas',
   'See what you are looking at': 'Ver lo que estás mirando',
   'Move and rename files': 'Mover y renombrar archivos',
-  'Open tabs and bookmarks': 'Abrir pestañas y marcadores',
   'Bring a tab to the front': 'Traer una pestaña al frente',
   'Browse in tabs of its own': 'Navegar en pestañas propias',
   'Read what pages load': 'Leer lo que cargan las páginas',

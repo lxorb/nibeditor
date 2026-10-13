@@ -136,7 +136,7 @@ describe('a note', () => {
       'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
+      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
@@ -185,7 +185,7 @@ describe('a paper', () => {
       'Open to the side',
       'Rename',
       'Move',
-      'Bookmark',
+      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
@@ -208,7 +208,7 @@ describe('a file the account has a copy of', () => {
       'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
+      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -230,7 +230,7 @@ describe('a file the account has a copy of', () => {
       'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
+      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -247,7 +247,7 @@ describe('a file the account has a copy of', () => {
       'Open to the side',
       'Rename',
       'Move',
-      'Bookmark',
+      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -261,7 +261,13 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual(['Open all', 'Move', 'Bookmark', 'Archive', 'Delete 2 items'])
+    expect(labels(loose)).toEqual([
+      'Open all',
+      'Move',
+      'Add to Essentials',
+      'Archive',
+      'Delete 2 items',
+    ])
   })
 
   test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
@@ -272,12 +278,12 @@ describe('a row that is part of a selection of several', () => {
       rowMenu(loose)
         .find((one) => one?.label === label)
         ?.run()
-    press('Bookmark')
+    press('Add to Essentials')
 
     expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
-    expect(labels(loose)).toContain('Remove bookmark')
+    expect(labels(loose)).toContain('Remove from Essentials')
 
-    press('Remove bookmark')
+    press('Remove from Essentials')
     expect(workspace.bookmarks.list).toEqual([])
   })
 

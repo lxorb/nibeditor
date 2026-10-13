@@ -1160,6 +1160,26 @@ export function preferences(view?: EditorView): Pane[] {
             ]
           : []),
 
+        // The Essentials as Zen's grid of tiles, or as the list of names they were;
+        // found by the word they went by before, in English and in the reader's own.
+        {
+          title: t('File list'),
+          fields: [
+            {
+              kind: 'segmented',
+              label: t('Essentials'),
+              words: ['bookmarks', t('Bookmarks'), 'favorites', 'pinned', 'tiles', 'grid', 'list'],
+              options: [
+                { value: 'tiles', label: t('Grid') },
+                { value: 'list', label: t('List') },
+              ],
+              initial: 'tiles',
+              get: () => (workspace.device.essentialTiles ? 'tiles' : 'list'),
+              set: (value) => workspace.device.showEssentialTiles(value !== 'list'),
+            },
+          ],
+        },
+
         {
           title: t('Pointer'),
           fields: [

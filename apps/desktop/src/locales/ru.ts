@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Важное',
+  'Add to Essentials': 'Добавить в важное',
+  'Remove from Essentials': 'Удалить из важного',
+  'Add block to Essentials': 'Добавить блок в важное',
+  'Add blocks to Essentials': 'Добавить блоки в важное',
+  'Add view to Essentials': 'Добавить вид в важное',
+  'Open tabs and Essentials': 'Открывать вкладки и важное',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor теперь называется Orden',
   'Notes from nibeditor.com': 'Заметки с nibeditor.com',
@@ -263,8 +271,6 @@ export const ru: Dictionary = {
   'Move this note': 'Переместить заметку',
   'Move up': 'Переместить выше',
   'Move down': 'Переместить ниже',
-  Bookmark: 'Закладка',
-  'Remove bookmark': 'Убрать закладку',
   'Search here again': 'Снова искать здесь',
   'Undo the last file change': 'Отменить последнее изменение файлов',
   'Undo moving {name}': 'Отменить перемещение {name}',
@@ -314,7 +320,6 @@ export const ru: Dictionary = {
   'Remove group': 'Убрать группу',
   'Out of the group': 'Из группы',
   Make: 'Создать',
-  'Bookmark this block': 'Добавить блок в закладки',
   Panels: 'Панели',
   Outline: 'Структура',
   'Stay on this note': 'Оставаться на этой заметке',
@@ -1734,7 +1739,6 @@ export const ru: Dictionary = {
   Nothing: 'Ничего',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Добавить этот вид в закладки',
   Keep: 'Оставить',
 
   // Which side of the window a panel sits on.
@@ -1800,7 +1804,6 @@ export const ru: Dictionary = {
   Blocked: 'Заблокировано',
   'Reset permissions': 'Сбросить разрешения',
   'Turn into': 'Превратить в',
-  'Bookmark these blocks': 'Добавить блоки в закладки',
   Foldable: 'Сворачиваемый',
   'Starts folded': 'Открывается свёрнутым',
   // Where a space keeps what websites store
@@ -2031,7 +2034,6 @@ export const ru: Dictionary = {
   'Change notes': 'Менять заметки',
   'See what you are looking at': 'Видеть, на что вы смотрите',
   'Move and rename files': 'Перемещать и переименовывать файлы',
-  'Open tabs and bookmarks': 'Открывать вкладки и закладки',
   'Bring a tab to the front': 'Выводить вкладку на передний план',
   'Browse in tabs of its own': 'Ходить по сайтам в своих вкладках',
   'Read what pages load': 'Читать, что загружают страницы',

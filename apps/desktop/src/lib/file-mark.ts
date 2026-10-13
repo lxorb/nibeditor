@@ -172,3 +172,25 @@ export const MARKS: Record<FileMark, IconNode> = {
   // A speech bubble: a chat (docs/chats.md).
   chat: MessageSquare,
 }
+
+/** What an essential's tile wears: its file's mark, or for a note that chose no icon
+ *  its first letter, since a grid of identical pages cannot be read without hovering
+ *  every tile. See BookmarkTile.svelte. */
+export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {
+  return mark === 'note' && !chosen ? 'letter' : 'mark'
+}
+
+const GRAPHEMES = new Intl.Segmenter()
+
+/** The first letter or digit of a name, one grapheme, in capitals; the first
+ *  character of a name with none. */
+export function initialOf(name: string): string {
+  let first: string | null = null
+
+  for (const { segment } of GRAPHEMES.segment(name.trim())) {
+    first ??= segment
+    if (/[\p{L}\p{N}]/u.test(segment)) return segment.toLocaleUpperCase()
+  }
+
+  return first ?? ''
+}

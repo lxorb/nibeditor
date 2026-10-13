@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'اړین',
+  'Add to Essentials': 'اړینو ته ورگډ کړه',
+  'Remove from Essentials': 'له اړینو لرې کړه',
+  'Add block to Essentials': 'بلاک اړینو ته ورگډ کړه',
+  'Add blocks to Essentials': 'بلاکونه اړینو ته ورگډ کړه',
+  'Add view to Essentials': 'لید اړینو ته ورگډ کړه',
+  'Open tabs and Essentials': 'ټبونه او اړین پرانیستل',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor اوس Orden دی',
   'Notes from nibeditor.com': 'له nibeditor.com څخه یادښتونه',
@@ -263,8 +271,6 @@ export const ps: Dictionary = {
   'Move this note': 'دا يادښت خوځول',
   'Move up': 'پورته خوځول',
   'Move down': 'ښکته خوځول',
-  Bookmark: 'نښانه',
-  'Remove bookmark': 'نښانه ليرې کول',
   'Search here again': 'بيا دلته لټون',
   'Undo the last file change': 'د دوتنې وروستی بدلون بېرته کول',
   'Undo moving {name}': 'د {name} خوځښت بېرته کول',
@@ -314,7 +320,6 @@ export const ps: Dictionary = {
   'Remove group': 'ډله ليرې کول',
   'Out of the group': 'له ډلې بهر',
   Make: 'جوړول',
-  'Bookmark this block': 'دې بلاک ته نښانه',
   Panels: 'تختې',
   Outline: 'چوکاټ',
   'Stay on this note': 'پر دې يادښت پاتې کېدل',
@@ -1666,7 +1671,6 @@ export const ps: Dictionary = {
   Nothing: 'هیڅ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'دا لید نښه کول',
   Keep: 'ساتل',
 
   // Which side of the window a panel sits on.
@@ -1732,7 +1736,6 @@ export const ps: Dictionary = {
   Blocked: 'بند شوی',
   'Reset permissions': 'اجازې بیا تنظیمول',
   'Turn into': 'بدلول په',
-  'Bookmark these blocks': 'دې بلاکونو ته نښانه',
   Foldable: 'د غونډولو وړ',
   'Starts folded': 'غونډ پیل کیږي',
   // Where a space keeps what websites store
@@ -1956,7 +1959,6 @@ export const ps: Dictionary = {
   'Change notes': 'یادښتونه بدلول',
   'See what you are looking at': 'هغه لیدل چې تاسو یې ګورئ',
   'Move and rename files': 'فایلونه لېږدول او نوم بدلول',
-  'Open tabs and bookmarks': 'ټبونه او نښانې پرانیستل',
   'Bring a tab to the front': 'یو ټب مخې ته راوستل',
   'Browse in tabs of its own': 'په خپلو ټبونو کې لټون',
   'Read what pages load': 'هغه لوستل چې پاڼې یې بار کوي',

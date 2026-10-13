@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': '新增至 Essentials',
+  'Remove from Essentials': '從 Essentials 中移除',
+  'Add block to Essentials': '將區塊新增至 Essentials',
+  'Add blocks to Essentials': '將這些區塊新增至 Essentials',
+  'Add view to Essentials': '將檢視新增至 Essentials',
+  'Open tabs and Essentials': '開啟分頁及 Essentials',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor現已改名為Orden',
   'Notes from nibeditor.com': '來自nibeditor.com的筆記',
@@ -263,8 +271,6 @@ export const zhHantHK: Dictionary = {
   'Move this note': '移動此筆記',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入書籤',
-  'Remove bookmark': '移除書籤',
   'Search here again': '重新納入搜尋',
   'Undo the last file change': '復原上一次檔案更改',
   'Undo moving {name}': '復原移動{name}',
@@ -314,7 +320,6 @@ export const zhHantHK: Dictionary = {
   'Remove group': '移除分組',
   'Out of the group': '移出分組',
   Make: '建立',
-  'Bookmark this block': '為此區塊加書籤',
   Panels: '面板',
   Outline: '大綱',
   'Stay on this note': '停留在此筆記',
@@ -1625,7 +1630,6 @@ export const zhHantHK: Dictionary = {
   Nothing: '無',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '將此檢視加入書籤',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1690,7 +1694,6 @@ export const zhHantHK: Dictionary = {
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
   'Turn into': '轉換為',
-  'Bookmark these blocks': '為這些區塊加書籤',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
   // Where a space keeps what websites store
@@ -1908,7 +1911,6 @@ export const zhHantHK: Dictionary = {
   'Change notes': '修改筆記',
   'See what you are looking at': '查看你正在看的內容',
   'Move and rename files': '移動及重新命名檔案',
-  'Open tabs and bookmarks': '開啟標籤頁及書籤',
   'Bring a tab to the front': '將標籤頁移到最前',
   'Browse in tabs of its own': '在自己的標籤頁中瀏覽',
   'Read what pages load': '讀取頁面載入的內容',

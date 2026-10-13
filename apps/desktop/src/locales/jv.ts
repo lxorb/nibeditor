@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Penting',
+  'Add to Essentials': 'Tambahake menyang Penting',
+  'Remove from Essentials': 'Busak saka Penting',
+  'Add block to Essentials': 'Tambahake blok menyang Penting',
+  'Add blocks to Essentials': 'Tambahake blok-blok menyang Penting',
+  'Add view to Essentials': 'Tambahake tampilan menyang Penting',
+  'Open tabs and Essentials': 'Mbukak tab lan Penting',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor saiki jenenge Orden',
   'Notes from nibeditor.com': 'Cathetan saka nibeditor.com',
@@ -263,8 +271,6 @@ export const jv: Dictionary = {
   'Move this note': 'Pindhahake cathetan iki',
   'Move up': 'Munggah',
   'Move down': 'Mudhun',
-  Bookmark: 'Tandha buku',
-  'Remove bookmark': 'Busak tandha buku',
   'Search here again': 'Golek maneh ing kene',
   'Undo the last file change': 'Balekake owahan berkas pungkasan',
   'Undo moving {name}': 'Balekake pamindhahan {name}',
@@ -314,7 +320,6 @@ export const jv: Dictionary = {
   'Remove group': 'Busak grup',
   'Out of the group': 'Metu saka grup',
   Make: 'Gawe',
-  'Bookmark this block': 'Tandhani blok iki',
   Panels: 'Panel',
   Outline: 'Rangka',
   'Stay on this note': 'Tetep ing cathetan iki',
@@ -1655,7 +1660,6 @@ export const jv: Dictionary = {
   Nothing: 'Ora ana',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Tandhani tampilan iki',
   Keep: 'Simpen',
 
   // Which side of the window a panel sits on.
@@ -1721,7 +1725,6 @@ export const jv: Dictionary = {
   Blocked: 'Diblokir',
   'Reset permissions': 'Balèkaké idin',
   'Turn into': 'Owahi dadi',
-  'Bookmark these blocks': 'Tandhani blok-blok iki',
   Foldable: 'Bisa dilempit',
   'Starts folded': 'Wiwit kelempit',
   // Where a space keeps what websites store
@@ -1943,7 +1946,6 @@ export const jv: Dictionary = {
   'Change notes': 'Ngowahi cathetan',
   'See what you are looking at': 'Ndeleng apa sing lagi kokdeleng',
   'Move and rename files': 'Mindhah lan ngganti jeneng file',
-  'Open tabs and bookmarks': 'Mbukak tab lan tetenger',
   'Bring a tab to the front': 'Nggawa tab menyang ngarep',
   'Browse in tabs of its own': 'Njelajah ing tab dhewe',
   'Read what pages load': 'Maca apa sing dimuat kaca',

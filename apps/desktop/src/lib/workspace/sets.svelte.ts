@@ -216,7 +216,8 @@ class Sets {
   private tidy(frame: Frame): Frame {
     return tidied(
       frame,
-      (paneId) => workspace.tabsIn(paneId).map((tab) => tab.id),
+      // Every tab a pane holds: one holding only an essential is a pane still in use.
+      (paneId) => workspace.heldIn(paneId).map((tab) => tab.id),
       (strip) => workspace.panes.lastOf(strip),
     )
   }

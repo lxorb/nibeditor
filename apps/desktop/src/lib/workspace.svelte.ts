@@ -19,6 +19,7 @@ import {
   folderOf,
   insideSpace,
   isMarkdownPath,
+  movedTo,
   nameOf,
   noteName,
   pathKey,
@@ -205,6 +206,11 @@ const unread = (path: string) => import('./unread.svelte').then((one) => one.unr
 const closesPinned = () => import('./workspace/closing-pinned').then((one) => one.closesPinned())
 /** A space made, renamed or deleted; see workspace/space-changes.ts. */
 const changes = () => import('./workspace/space-changes')
+/** What an essential's tile does, fetched with the first one; see essentials.svelte.ts. */
+const essentials = () => import('./essentials.svelte')
+/** Whether a pane whose strip has emptied stays: while it shows an essential. */
+const paneStays = (strip: number, showing: Tab | null) =>
+  strip > 0 || (showing?.essential ?? null) !== null
 /** The spaces' own tab sets, fetched by the first space that keeps one. */
 const sets = () => import('./workspace/sets.svelte').then((one) => one.sets)
 
@@ -355,6 +361,8 @@ class Workspace {
   /** A new tab a kind was chosen on, waiting for that kind to take its place; see
    *  `chosenOn`. */
   private choosing: string | null = null
+  /** The file an essential's tile is opening, whose tab is one as it lands. */
+  essentialComing: string | null = null
   /** The row a name is being typed on, in place: a row that exists and is being
    *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
    *  name that will make it. `making` says which, and what to make.
@@ -379,7 +387,13 @@ class Workspace {
   readonly device = new DeviceView()
   /** The notes, folders, headings and searches kept above the file list. Per
    *  space, and on the account when there is one; see workspace/bookmarks. */
-  readonly bookmarks = new Bookmarks(() => this.activeSpace?.root ?? null)
+  readonly bookmarks = new Bookmarks(
+    () => this.activeSpace?.root ?? null,
+    () => {
+      if (this.tabs.some((one) => one.essential !== null))
+        void essentials().then((one) => one.kept())
+    },
+  )
   /** The icon each folder of the space wears. Per space and on the account for
    *  the same reasons the bookmarks are, and here rather than in the file itself
    *  because a folder has no file; see workspace/folder-icons. */
@@ -441,6 +455,14 @@ class Workspace {
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
+    // An essential follows its file before the Essentials hear, or they would release it.
+    this.fileOps.follow((op) => {
+      if (op.op !== 'moved' || op.kind === 'space') return
+      for (const tab of this.tabs) {
+        const to = tab.essential && movedTo(tab.essential, op.from, op.to, op.root ?? undefined)
+        if (to) tab.essential = to
+      }
+    })
     for (const store of [
       this.bookmarks,
       this.folderIcons,
@@ -488,8 +510,13 @@ class Workspace {
     this.panes.activate(paneId, tab?.id ?? null)
   }
 
-  /** One pane's strip, in the order the tabs were opened. */
+  /** One pane's strip, in the order the tabs were opened; never an essential. */
   tabsIn(paneId: string): Tab[] {
+    return this.tabs.filter((tab) => tab.paneId === paneId && !tab.essential)
+  }
+
+  /** Every tab a pane holds, its essentials too. */
+  heldIn(paneId: string): Tab[] {
     return this.tabs.filter((tab) => tab.paneId === paneId)
   }
 
@@ -1456,6 +1483,10 @@ class Workspace {
   /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
    *  was there goes as this one arrives; see `onlyOne`. */
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
+    if (this.essentialComing !== null && samePath(tab.path, this.essentialComing)) {
+      tab.essential = this.essentialComing
+      this.essentialComing = null
+    }
     const chosenOn = activate ? this.chosenFor(tab) : null
     if (chosenOn) {
       this.tabs = this.placed(tab, tab.paneId, this.tabsIn(tab.paneId).indexOf(chosenOn))
@@ -2185,6 +2216,26 @@ class Workspace {
 
     await this.openEntry(next, { activate: true })
     this.close(only.id)
+  }
+
+  /** A tab brought in front from outside its strip - an essential's tile - the drawer
+   *  going as it does for an open. */
+  front(id: string) {
+    this.activeTabId = id
+    this.showNote()
+    this.persist()
+  }
+
+  /** Another view of a document already open, in the pane being worked in: the
+   *  essential's own of a file the strip has, or the strip's of an essential's. */
+  secondView(note: NoteDoc, how: OpenHow, essential: string | null = null): Tab {
+    const tab = new Tab(note, this.panes.focusedId)
+    tab.essential = essential
+    if (note.path) this.placeAt(tab, note.path)
+    this.add(tab, how.activate !== false, this.openedFrom(how, tab.paneId))
+    if (how.activate !== false) this.showNote()
+    this.persist()
+    return tab
   }
 
   async openEntry(path: string, options: OpenHow = {}) {
@@ -2927,23 +2978,38 @@ class Workspace {
       return
     }
     const left = this.tabsIn(paneId)
+    const showing = this.panes.at(paneId)?.activeTabId === id ? null : this.showing(paneId)
 
     // The last tab of a pane takes the pane with it, and the pane beside it takes the
     // room. The last pane of all stays, and stays empty: what it shows is the kinds a
     // new tab could be, which is what Emil asked for - "it should be possible to have
-    // no note open (there should not always open a new one)". See NewHere.svelte.
-    if (!left.length) {
+    // no note open (there should not always open a new one)". See NewHere.svelte. One
+    // showing an essential stays.
+    if (!paneStays(left.length, showing)) {
       // The last pane of all names no tab, rather than the one that has just gone.
-      if (!this.panes.close(paneId)) this.panes.activate(paneId, null)
+      if (this.closePaneOf(paneId)) this.panes.activate(paneId, null)
       this.persist()
       return
     }
 
+    // The tab beside it; for an essential, the one shown before it.
     if (this.panes.at(paneId)?.activeTabId === id) {
-      this.panes.activate(paneId, (left[at] ?? left[left.length - 1])?.id ?? null)
+      const strip = left.map((one) => one.id)
+      const next = at < 0 ? this.panes.lastOf(strip) : (left[at] ?? left[left.length - 1])?.id
+      this.panes.activate(paneId, next ?? strip[strip.length - 1] ?? null)
     }
 
     this.persist()
+  }
+
+  /** Closes a pane, its essentials going to the pane that takes the room; true for the
+   *  last pane, which cannot. */
+  private closePaneOf(paneId: string): boolean {
+    const held = this.heldIn(paneId)
+    if (!this.panes.close(paneId)) return true
+
+    for (const one of held) one.paneId = this.panes.focusedId
+    return false
   }
 
   /** The tab that was closed last, back where it was: in the pane it was closed
@@ -4310,7 +4376,7 @@ class Workspace {
 
     if (from !== paneId) {
       const left = this.tabsIn(from)
-      if (!left.length) this.panes.close(from)
+      if (!paneStays(left.length, this.showing(from))) this.closePaneOf(from)
       else if (this.panes.at(from)?.activeTabId === id) {
         this.panes.activate(from, left[left.length - 1]?.id ?? null)
       }
@@ -4426,7 +4492,7 @@ class Workspace {
   async closePane(paneId: string = this.panes.focusedId) {
     if (this.panes.count < 2) return
 
-    const tabs = this.tabsIn(paneId)
+    const tabs = this.heldIn(paneId)
     if (!(await this.mayClose(tabs))) return
 
     for (const tab of tabs) this.close(tab.id)

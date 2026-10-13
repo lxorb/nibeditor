@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Temel öğeler',
+  'Add to Essentials': 'Temel öğelere ekle',
+  'Remove from Essentials': 'Temel öğelerden kaldır',
+  'Add block to Essentials': 'Bloğu temel öğelere ekle',
+  'Add blocks to Essentials': 'Blokları temel öğelere ekle',
+  'Add view to Essentials': 'Görünümü temel öğelere ekle',
+  'Open tabs and Essentials': 'Sekmeleri ve temel öğeleri açma',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor artık Orden',
   'Notes from nibeditor.com': 'nibeditor.com’daki notlar',
@@ -263,8 +271,6 @@ export const tr: Dictionary = {
   'Move this note': 'Bu notu taşı',
   'Move up': 'Yukarı taşı',
   'Move down': 'Aşağı taşı',
-  Bookmark: 'Yer imi',
-  'Remove bookmark': 'Yer imini kaldır',
   'Search here again': 'Burada yine ara',
   'Undo the last file change': 'Son dosya değişikliğini geri al',
   'Undo moving {name}': '{name} taşımasını geri al',
@@ -314,7 +320,6 @@ export const tr: Dictionary = {
   'Remove group': 'Grubu kaldır',
   'Out of the group': 'Gruptan çıkar',
   Make: 'Yap',
-  'Bookmark this block': 'Bu bloğa yer imi koy',
   Panels: 'Paneller',
   Outline: 'Anahat',
   'Stay on this note': 'Bu notta kal',
@@ -1670,7 +1675,6 @@ export const tr: Dictionary = {
   Nothing: 'Hiçbiri',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bu görünümü yer imlerine ekle',
   Keep: 'Sakla',
 
   // Which side of the window a panel sits on.
@@ -1735,7 +1739,6 @@ export const tr: Dictionary = {
   Blocked: 'Engelleniyor',
   'Reset permissions': 'İzinleri sıfırla',
   'Turn into': 'Şuna dönüştür',
-  'Bookmark these blocks': 'Bu bloklara yer imi koy',
   Foldable: 'Katlanabilir',
   'Starts folded': 'Katlı başlar',
   // Where a space keeps what websites store
@@ -1961,7 +1964,6 @@ export const tr: Dictionary = {
   'Change notes': 'Notları değiştirmek',
   'See what you are looking at': 'Neye baktığını görmek',
   'Move and rename files': 'Dosyaları taşımak ve yeniden adlandırmak',
-  'Open tabs and bookmarks': 'Sekme ve yer imi açmak',
   'Bring a tab to the front': 'Bir sekmeyi öne getirmek',
   'Browse in tabs of its own': 'Kendi sekmelerinde gezinmek',
   'Read what pages load': 'Sayfaların yüklediklerini okumak',

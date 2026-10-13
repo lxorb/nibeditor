@@ -124,7 +124,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
       : []),
     DIVIDER,
     { label: t('History'), hint: shortcuts.hint('web.history'), run: actions.history },
-    { label: t('Bookmarks'), run: actions.bookmarks },
+    { label: t('Essentials'), run: actions.bookmarks },
     {
       label: t('Delete browsing data…'),
       hint: shortcuts.hint('web.clear-data'),

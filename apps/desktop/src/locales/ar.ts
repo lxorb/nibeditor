@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'الأساسيات',
+  'Add to Essentials': 'أضف إلى الأساسيات',
+  'Remove from Essentials': 'إزالة من الأساسيات',
+  'Add block to Essentials': 'أضف الكتلة إلى الأساسيات',
+  'Add blocks to Essentials': 'أضف الكتل إلى الأساسيات',
+  'Add view to Essentials': 'أضف العرض إلى الأساسيات',
+  'Open tabs and Essentials': 'فتح علامات التبويب والأساسيات',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'أصبح nibeditor الآن Orden',
   'Notes from nibeditor.com': 'ملاحظات من nibeditor.com',
@@ -263,8 +271,6 @@ export const ar: Dictionary = {
   'Move this note': 'نقل هذه الملاحظة',
   'Move up': 'نقل لأعلى',
   'Move down': 'نقل لأسفل',
-  Bookmark: 'إشارة مرجعية',
-  'Remove bookmark': 'إزالة الإشارة',
   'Search here again': 'البحث هنا مرة أخرى',
   'Undo the last file change': 'التراجع عن آخر تغيير',
   'Undo moving {name}': 'التراجع عن نقل {name}',
@@ -314,7 +320,6 @@ export const ar: Dictionary = {
   'Remove group': 'إزالة المجموعة',
   'Out of the group': 'خارج المجموعة',
   Make: 'إنشاء',
-  'Bookmark this block': 'إشارة على هذه الكتلة',
   Panels: 'اللوحات',
   Outline: 'المخطط',
   'Stay on this note': 'البقاء على هذه الملاحظة',
@@ -1754,7 +1759,6 @@ export const ar: Dictionary = {
   Nothing: 'لا شيء',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'إضافة هذا العرض إلى الإشارات المرجعية',
   Keep: 'احتفاظ',
 
   // Which side of the window a panel sits on.
@@ -1820,7 +1824,6 @@ export const ar: Dictionary = {
   Blocked: 'محظور',
   'Reset permissions': 'إعادة ضبط الأذونات',
   'Turn into': 'تحويل إلى',
-  'Bookmark these blocks': 'إشارة على هذه الكتل',
   Foldable: 'قابل للطي',
   'Starts folded': 'يبدأ مطويًا',
   // Where a space keeps what websites store
@@ -2053,7 +2056,6 @@ export const ar: Dictionary = {
   'Change notes': 'تغيير الملاحظات',
   'See what you are looking at': 'رؤية ما تنظر إليه',
   'Move and rename files': 'نقل الملفات وإعادة تسميتها',
-  'Open tabs and bookmarks': 'فتح التبويبات والإشارات المرجعية',
   'Bring a tab to the front': 'إحضار تبويب إلى الأمام',
   'Browse in tabs of its own': 'التصفح في تبويبات خاصة به',
   'Read what pages load': 'قراءة ما تحمّله الصفحات',

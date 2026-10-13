@@ -106,7 +106,7 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
 
   return [
     {
-      label: workspace.bookmarks.has(mark) ? t('Remove bookmark') : t('Bookmark'),
+      label: workspace.bookmarks.has(mark) ? t('Remove from Essentials') : t('Add to Essentials'),
       run: () => workspace.bookmarks.toggle(mark),
     },
   ]

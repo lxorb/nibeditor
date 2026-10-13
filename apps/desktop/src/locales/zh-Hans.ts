@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: '常驻项',
+  'Add to Essentials': '添加到常驻项',
+  'Remove from Essentials': '从常驻项中移除',
+  'Add block to Essentials': '将块添加到常驻项',
+  'Add blocks to Essentials': '将这些块添加到常驻项',
+  'Add view to Essentials': '将视图添加到常驻项',
+  'Open tabs and Essentials': '打开标签页和常驻项',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor现已更名为Orden',
   'Notes from nibeditor.com': '来自nibeditor.com的笔记',
@@ -263,8 +271,6 @@ export const zhHans: Dictionary = {
   'Move this note': '移动此笔记',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入书签',
-  'Remove bookmark': '移除书签',
   'Search here again': '重新纳入搜索',
   'Undo the last file change': '撤销上一次文件更改',
   'Undo moving {name}': '撤销移动{name}',
@@ -314,7 +320,6 @@ export const zhHans: Dictionary = {
   'Remove group': '移除分组',
   'Out of the group': '移出分组',
   Make: '创建',
-  'Bookmark this block': '为此块加书签',
   Panels: '面板',
   Outline: '大纲',
   'Stay on this note': '停留在此笔记',
@@ -1626,7 +1631,6 @@ export const zhHans: Dictionary = {
   Nothing: '无',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '把此视图加入书签',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1691,7 +1695,6 @@ export const zhHans: Dictionary = {
   Blocked: '已阻止',
   'Reset permissions': '重置权限',
   'Turn into': '转换为',
-  'Bookmark these blocks': '为这些块加书签',
   Foldable: '可折叠',
   'Starts folded': '默认折叠',
   // Where a space keeps what websites store
@@ -1909,7 +1912,6 @@ export const zhHans: Dictionary = {
   'Change notes': '修改笔记',
   'See what you are looking at': '查看你正在看的内容',
   'Move and rename files': '移动和重命名文件',
-  'Open tabs and bookmarks': '打开标签页和书签',
   'Bring a tab to the front': '将标签页置于前台',
   'Browse in tabs of its own': '在自己的标签页中浏览',
   'Read what pages load': '读取页面加载的内容',

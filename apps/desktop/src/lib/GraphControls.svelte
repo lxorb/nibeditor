@@ -115,7 +115,7 @@
    *  rows import it: it is a sheet, and a card should not carry one. */
   async function keepView() {
     const { prompt } = await import('./prompt.svelte')
-    const name = await prompt.ask({ title: t('Bookmark this view'), confirmLabel: t('Keep') })
+    const name = await prompt.ask({ title: t('Add view to Essentials'), confirmLabel: t('Keep') })
     if (!name) return
 
     workspace.bookmarks.toggle(workspace.bookmarks.forGraph(name, settings))
@@ -415,7 +415,7 @@
            project, what nothing links to. It lands in the row above the file
            list with everything else that is kept; see Bookmarks.svelte. -->
       <button class="nib-row" onclick={() => void keepView()}>
-        <span class="nib-row-label">{t('Bookmark this view')}</span>
+        <span class="nib-row-label">{t('Add view to Essentials')}</span>
       </button>
 
       <button class="nib-row" onclick={() => workspace.graphSettings.reset()}>

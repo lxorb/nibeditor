@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'প্রয়োজনীয়',
+  'Add to Essentials': 'প্রয়োজনীয়-তে যোগ করুন',
+  'Remove from Essentials': 'প্রয়োজনীয় থেকে সরান',
+  'Add block to Essentials': 'ব্লকটি প্রয়োজনীয়-তে যোগ করুন',
+  'Add blocks to Essentials': 'ব্লকগুলো প্রয়োজনীয়-তে যোগ করুন',
+  'Add view to Essentials': 'ভিউটি প্রয়োজনীয়-তে যোগ করুন',
+  'Open tabs and Essentials': 'ট্যাব ও প্রয়োজনীয় খোলা',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor এখন Orden',
   'Notes from nibeditor.com': 'nibeditor.com থেকে নোট',
@@ -263,8 +271,6 @@ export const bn: Dictionary = {
   'Move this note': 'এই নোট সরান',
   'Move up': 'উপরে সরান',
   'Move down': 'নিচে সরান',
-  Bookmark: 'বুকমার্ক',
-  'Remove bookmark': 'বুকমার্ক সরান',
   'Search here again': 'এখানে আবার খোঁজ',
   'Undo the last file change': 'শেষ ফাইল বদল আনডু',
   'Undo moving {name}': '{name} সরানো আনডু',
@@ -314,7 +320,6 @@ export const bn: Dictionary = {
   'Remove group': 'গ্রুপ সরান',
   'Out of the group': 'গ্রুপের বাইরে',
   Make: 'বানান',
-  'Bookmark this block': 'এই ব্লক বুকমার্ক',
   Panels: 'প্যানেল',
   Outline: 'আউটলাইন',
   'Stay on this note': 'এই নোটে থাকুন',
@@ -1660,7 +1665,6 @@ export const bn: Dictionary = {
   Nothing: 'কিছুই নয়',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'এই ভিউ বুকমার্ক করুন',
   Keep: 'রাখুন',
 
   // Which side of the window a panel sits on.
@@ -1725,7 +1729,6 @@ export const bn: Dictionary = {
   Blocked: 'অবরুদ্ধ',
   'Reset permissions': 'অনুমতি রিসেট করুন',
   'Turn into': 'বদলান',
-  'Bookmark these blocks': 'এই ব্লকগুলো বুকমার্ক',
   Foldable: 'ভাঁজযোগ্য',
   'Starts folded': 'ভাঁজ করা শুরু',
   // Where a space keeps what websites store
@@ -1952,7 +1955,6 @@ export const bn: Dictionary = {
   'Change notes': 'নোট বদলানো',
   'See what you are looking at': 'আপনি কী দেখছেন তা দেখা',
   'Move and rename files': 'ফাইল সরানো ও নাম বদলানো',
-  'Open tabs and bookmarks': 'ট্যাব ও বুকমার্ক খোলা',
   'Bring a tab to the front': 'কোনো ট্যাব সামনে আনা',
   'Browse in tabs of its own': 'নিজের ট্যাবে ব্রাউজ করা',
   'Read what pages load': 'পেজ কী লোড করে তা পড়া',

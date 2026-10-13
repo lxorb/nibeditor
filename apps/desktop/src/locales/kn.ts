@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'ಅಗತ್ಯಗಳು',
+  'Add to Essentials': 'ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
+  'Remove from Essentials': 'ಅಗತ್ಯಗಳಿಂದ ತೆಗೆದುಹಾಕಿ',
+  'Add block to Essentials': 'ಬ್ಲಾಕ್ ಅನ್ನು ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
+  'Add blocks to Essentials': 'ಬ್ಲಾಕ್‌ಗಳನ್ನು ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
+  'Add view to Essentials': 'ನೋಟವನ್ನು ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
+  'Open tabs and Essentials': 'ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಅಗತ್ಯಗಳನ್ನು ತೆರೆಯುವುದು',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ಈಗ Orden',
   'Notes from nibeditor.com': 'nibeditor.com ನಿಂದ ಟಿಪ್ಪಣಿಗಳು',
@@ -263,8 +271,6 @@ export const kn: Dictionary = {
   'Move this note': 'ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಸರಿಸಿ',
   'Move up': 'ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move down': 'ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
-  Bookmark: 'ಬುಕ್‌ಮಾರ್ಕ್',
-  'Remove bookmark': 'ಬುಕ್‌ಮಾರ್ಕ್ ತೆಗೆಯಿರಿ',
   'Search here again': 'ಇಲ್ಲಿ ಮತ್ತೆ ಹುಡುಕಿ',
   'Undo the last file change': 'ಕೊನೆಯ ಫೈಲ್ ಬದಲಾವಣೆ ರದ್ದುಗೊಳಿಸಿ',
   'Undo moving {name}': '{name} ಸರಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
@@ -314,7 +320,6 @@ export const kn: Dictionary = {
   'Remove group': 'ಗುಂಪು ತೆಗೆಯಿರಿ',
   'Out of the group': 'ಗುಂಪಿನಿಂದ ಹೊರಗೆ',
   Make: 'ಮಾಡಿ',
-  'Bookmark this block': 'ಈ ಬ್ಲಾಕ್ ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
   Panels: 'ಪ್ಯಾನೆಲ್‌ಗಳು',
   Outline: 'ಔಟ್‌ಲೈನ್',
   'Stay on this note': 'ಈ ಟಿಪ್ಪಣಿಯಲ್ಲೇ ಇರಿ',
@@ -1675,7 +1680,6 @@ export const kn: Dictionary = {
   Nothing: 'ಏನೂ ಇಲ್ಲ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ಈ ನೋಟವನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
   Keep: 'ಇರಿಸಿ',
 
   // Which side of the window a panel sits on.
@@ -1741,7 +1745,6 @@ export const kn: Dictionary = {
   Blocked: 'ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
   'Reset permissions': 'ಅನುಮತಿಗಳನ್ನು ಮರುಹೊಂದಿಸಿ',
   'Turn into': 'ಆಗಿ ಮಾಡಿ',
-  'Bookmark these blocks': 'ಈ ಬ್ಲಾಕ್‌ಗಳನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
   Foldable: 'ಮಡಚಬಹುದು',
   'Starts folded': 'ಮಡಚಿ ಆರಂಭ',
   // Where a space keeps what websites store
@@ -1970,7 +1973,6 @@ export const kn: Dictionary = {
   'Change notes': 'ಟಿಪ್ಪಣಿಗಳನ್ನು ಬದಲಿಸುವುದು',
   'See what you are looking at': 'ನೀವು ನೋಡುತ್ತಿರುವುದನ್ನು ನೋಡುವುದು',
   'Move and rename files': 'ಫೈಲ್‌ಗಳನ್ನು ಸರಿಸುವುದು, ಹೆಸರು ಬದಲಿಸುವುದು',
-  'Open tabs and bookmarks': 'ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ತೆರೆಯುವುದು',
   'Bring a tab to the front': 'ಒಂದು ಟ್ಯಾಬ್ ಅನ್ನು ಮುಂದೆ ತರುವುದು',
   'Browse in tabs of its own': 'ಸ್ವಂತ ಟ್ಯಾಬ್‌ಗಳಲ್ಲಿ ಬ್ರೌಸ್ ಮಾಡುವುದು',
   'Read what pages load': 'ಪುಟಗಳು ಲೋಡ್ ಮಾಡುವುದನ್ನು ಓದುವುದು',

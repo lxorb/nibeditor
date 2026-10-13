@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'Zu Essentials hinzufügen',
+  'Remove from Essentials': 'Aus Essentials entfernen',
+  'Add block to Essentials': 'Block zu Essentials hinzufügen',
+  'Add blocks to Essentials': 'Blöcke zu Essentials hinzufügen',
+  'Add view to Essentials': 'Ansicht zu Essentials hinzufügen',
+  'Open tabs and Essentials': 'Tabs und Essentials öffnen',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor heißt jetzt Orden',
   'Notes from nibeditor.com': 'Notizen von nibeditor.com',
@@ -264,8 +272,6 @@ export const de: Dictionary = {
   'Move this note': 'Diese Notiz verschieben',
   'Move up': 'Nach oben',
   'Move down': 'Nach unten',
-  Bookmark: 'Lesezeichen',
-  'Remove bookmark': 'Lesezeichen entfernen',
   'Search here again': 'Wieder durchsuchen',
   'Undo the last file change': 'Letzte Dateiänderung rückgängig',
   'Undo moving {name}': '{name} zurück verschieben',
@@ -315,7 +321,6 @@ export const de: Dictionary = {
   'Remove group': 'Gruppe entfernen',
   'Out of the group': 'Aus der Gruppe nehmen',
   Make: 'Erstellen',
-  'Bookmark this block': 'Diesen Block merken',
   Panels: 'Bereiche',
   Outline: 'Gliederung',
   'Stay on this note': 'Bei dieser Notiz bleiben',
@@ -1704,7 +1709,6 @@ export const de: Dictionary = {
   Nothing: 'Nichts',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Diese Ansicht merken',
   Keep: 'Behalten',
 
   // Which side of the window a panel sits on.
@@ -1769,7 +1773,6 @@ export const de: Dictionary = {
   Blocked: 'Blockiert',
   'Reset permissions': 'Berechtigungen zurücksetzen',
   'Turn into': 'Umwandeln in',
-  'Bookmark these blocks': 'Diese Blöcke merken',
   Foldable: 'Faltbar',
   'Starts folded': 'Startet zugeklappt',
   // Where a space keeps what websites store
@@ -1994,7 +1997,6 @@ export const de: Dictionary = {
   'Change notes': 'Notizen ändern',
   'See what you are looking at': 'Sehen, was du gerade ansiehst',
   'Move and rename files': 'Dateien verschieben und umbenennen',
-  'Open tabs and bookmarks': 'Tabs und Lesezeichen öffnen',
   'Bring a tab to the front': 'Einen Tab nach vorne holen',
   'Browse in tabs of its own': 'In eigenen Tabs surfen',
   'Read what pages load': 'Lesen, was Seiten laden',

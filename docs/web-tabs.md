@@ -1250,7 +1250,7 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 **The dots hold Chrome's menu, in Chrome's order and Chrome's words**, because Emil
 asked for exactly that: _"Our browser related menu structure should be very similar
 to that of chrome. And in general we don't want to reinvent how a browser works."_
-New tab, New private tab, History, Bookmarks, Delete browsing data, Zoom out / the size /
+New tab, New private tab, History, Essentials, Delete browsing data, Zoom out / the size /
 Zoom in, Full screen, Print, Find, Save page, Share, Copy link, Open in the browser,
 Settings - each bent onto what nib has where the two differ: Chrome's Incognito window is
 a tab here, a bookmark is the space's own kept files, Save page is the clipper, and Share

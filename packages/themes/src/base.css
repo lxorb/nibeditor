@@ -824,6 +824,178 @@ select option {
   color: var(--text-strong);
 }
 
+/* ── A tile ────────────────────────────────── */
+
+/* The Essentials above the file list, Zen's: a grid of soft cards, each wearing only
+   its file's face, the open one lifted. At least `--tile-least` a tile and the rest
+   shared out, so a narrow panel holds four, a wide one more and two tiles are two
+   halves; a thumb's row tall under a finger. See Bookmarks.svelte. */
+.nib-tiles {
+  --tile-least: var(--space-7);
+  --tile-height: calc(var(--row-height) + var(--space-4));
+  --tile-gap: var(--space-1);
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-least), 1fr));
+  gap: var(--tile-gap);
+  margin: var(--space-1) var(--space-1) var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+[data-touch] .nib-tiles {
+  --tile-least: calc(var(--space-7) + var(--space-4));
+  --tile-height: var(--touch-row);
+  --tile-gap: var(--space-2);
+}
+
+.nib-tiles > li {
+  min-width: 0;
+}
+
+/* The place for a first tile while a tab that could be one is carried. */
+.nib-tiles .is-empty {
+  height: var(--tile-height);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.nib-tiles.is-taking .is-empty {
+  border-color: var(--accent);
+  background: var(--surface-selected);
+}
+
+.nib-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  height: var(--tile-height);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+/* Hover and press as a veil of the text's own colour, so the step is the same on a
+   dark panel, a light one and a pane of glass, lifted or not. */
+.nib-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--text-strong);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .nib-tile:hover {
+    color: var(--text-strong);
+  }
+
+  .nib-tile:hover::after {
+    opacity: 0.05;
+  }
+}
+
+/* The card gives under the press, as a key does. */
+.nib-tile:active {
+  transform: scale(0.96);
+  color: var(--text-strong);
+}
+
+.nib-tile:active::after {
+  opacity: 0.1;
+}
+
+/* The open one, lifted: the accent's wash over the card, a ring of the accent fading
+   into its quiet line - where Zen draws one out of the favicon's colours - and the
+   small shadow a raised card wears. */
+.nib-tile.is-on {
+  background:
+    linear-gradient(var(--surface-selected), var(--surface-selected)), var(--surface-hover);
+  box-shadow: var(--shadow-sm);
+  color: var(--accent);
+}
+
+/* The ring, masked out of a full card so the wash inside it stays; it fades in. */
+.nib-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 45%, var(--text-strong)) 45%,
+    var(--accent-line)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box xor,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.nib-tile.is-on::before {
+  opacity: 1;
+}
+
+/* Where a drop would land: a line in the gap, as a list draws one between rows. */
+.nib-tile.is-before::before,
+.nib-tile.is-after::before {
+  inset: var(--space-1) auto;
+  width: 2px;
+  padding: 0;
+  border-radius: 1px;
+  background: var(--accent);
+  mask: none;
+  -webkit-mask: none;
+  opacity: 1;
+}
+
+.nib-tile.is-before::before {
+  inset-inline-start: calc(-1 * var(--tile-gap) / 2 - 1px);
+}
+
+.nib-tile.is-after::before {
+  inset-inline-end: calc(-1 * var(--tile-gap) / 2 - 1px);
+}
+
+/* The face a size up from a row's mark, which reads `--icon-md`; and the letter a
+   note that chose no icon wears, at the same size. */
+.nib-tile-face {
+  --icon-md: var(--icon-lg);
+
+  display: grid;
+  place-items: center;
+}
+
+.nib-tile-letter {
+  font-size: var(--icon-lg);
+  font-weight: var(--weight-strong);
+  line-height: 1;
+}
+
 /* ── A glyph that is a button ──────────────── */
 
 /* One square with a mark in it and nothing else: the button that opens the file

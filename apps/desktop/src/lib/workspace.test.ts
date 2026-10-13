@@ -4437,3 +4437,131 @@ describe('a search of the space', () => {
     expect(unsavedHits(parseQuery('milk'), 'another', 10)).toEqual([])
   })
 })
+
+/** Zen's Essentials: a press on a tile shows the file where a tab shows, with no tab in
+ *  the strip, and the view stays loaded behind whatever comes in front of it. See
+ *  essentials.ts. */
+describe('an essential', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    for (const one of [...workspace.bookmarks.list]) workspace.bookmarks.remove(one)
+  })
+
+  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
+  const keep = (path: string) =>
+    workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
+
+  test('shows its file with no tab in the strip', async () => {
+    keep('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+
+    expect(workspace.active?.path).toBe('/space/a.md')
+    expect(workspace.active?.essential).toBe('/space/a.md')
+    expect(strip()).toEqual([])
+  })
+
+  test('stays loaded behind another tab, and comes back as it was left', async () => {
+    keep('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const first = workspace.active?.id
+    await workspace.open('/space/b.md')
+
+    expect(strip()).toEqual(['/space/b.md'])
+    expect(workspace.tabs).toHaveLength(2)
+
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    expect(workspace.active?.id).toBe(first)
+    expect(workspace.tabs).toHaveLength(2)
+  })
+
+  test('is a view of its own of a file the strip already has open', async () => {
+    keep('/space/a.md')
+    await workspace.open('/space/a.md')
+    const inStrip = workspace.active
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.active?.id).not.toBe(inStrip?.id)
+    expect(workspace.active?.note).toBe(inStrip?.note)
+  })
+
+  test('goes back to the strip once it is taken out of the Essentials', async () => {
+    keep('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    keep('/space/a.md')
+    // Heard through the essentials' own module, which the change fetches.
+    await workspace.bookmarks.offered
+    await new Promise((done) => setTimeout(done))
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.active?.essential).toBeNull()
+  })
+
+  test('stays on screen when the last tab of the strip closes behind it', async () => {
+    keep('/space/a.md')
+    await workspace.open('/space/b.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const shown = workspace.active?.id
+    const behind = workspace.tabs.find((one) => one.path === '/space/b.md')
+    if (!behind) throw new Error('b is not open')
+
+    workspace.close(behind.id)
+
+    expect(workspace.active?.id).toBe(shown)
+    expect(strip()).toEqual([])
+  })
+
+  test('closed, hands the pane back to the tab shown before it', async () => {
+    keep('/space/a.md')
+    await workspace.open('/space/b.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+
+    workspace.close(workspace.active?.id ?? '')
+
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('follows its file when the file is renamed', async () => {
+    keep('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const shown = workspace.active
+
+    await workspace.fileMoved('/space/a.md', '/space/z.md', 'file')
+
+    expect(shown?.essential).toBe('/space/z.md')
+    expect(strip()).toEqual([])
+  })
+})
+
+describe('an essential asked for in a tab', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
+
+  test('gets one of its own beside the essential, on the one document', async () => {
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    const essential = workspace.active
+
+    await (await import('./essentials.svelte')).openInStrip('/space/a.md', { beside: true })
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.active?.essential).toBeNull()
+    expect(workspace.active?.note).toBe(essential?.note)
+  })
+
+  test('is the tab of the strip that already shows it', async () => {
+    await workspace.open('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+
+    await (await import('./essentials.svelte')).openInStrip('/space/a.md', {})
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.tabs).toHaveLength(2)
+  })
+})

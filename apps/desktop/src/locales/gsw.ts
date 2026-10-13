@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'Zu de Essentials tue',
+  'Remove from Essentials': 'Us de Essentials neh',
+  'Add block to Essentials': 'Block zu de Essentials tue',
+  'Add blocks to Essentials': 'Blöck zu de Essentials tue',
+  'Add view to Essentials': 'Aasicht zu de Essentials tue',
+  'Open tabs and Essentials': 'Tabs und Essentials uftue',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor heisst jetzt Orden',
   'Notes from nibeditor.com': 'Notize vo nibeditor.com',
@@ -263,8 +271,6 @@ export const gsw: Dictionary = {
   'Move this note': 'Die Notiz verschiebe',
   'Move up': 'Ufe',
   'Move down': 'Abe',
-  Bookmark: 'Lesezeiche',
-  'Remove bookmark': 'Lesezeiche wegnäh',
   'Search here again': 'Wieder durchsueche',
   'Undo the last file change': 'Letschti Dateiänderig zrugg',
   'Undo moving {name}': '{name} zrugg verschiebe',
@@ -314,7 +320,6 @@ export const gsw: Dictionary = {
   'Remove group': 'Gruppe entferne',
   'Out of the group': 'Us de Gruppe nää',
   Make: 'Mache',
-  'Bookmark this block': 'Dää Block merke',
   Panels: 'Beriich',
   Outline: 'Gliederig',
   'Stay on this note': 'Bi dere Notiz bliibe',
@@ -1674,7 +1679,6 @@ export const gsw: Dictionary = {
   Nothing: 'Nüt',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Die Asicht merke',
   Keep: 'Behalte',
 
   // Which side of the window a panel sits on.
@@ -1740,7 +1744,6 @@ export const gsw: Dictionary = {
   Blocked: 'Blockiert',
   'Reset permissions': 'Brächtigunge zrugsetze',
   'Turn into': 'Umwandle i',
-  'Bookmark these blocks': 'Die Block merke',
   Foldable: 'Zämmefaltbar',
   'Starts folded': 'Faht zuegfaltet aa',
   // Where a space keeps what websites store
@@ -1964,7 +1967,6 @@ export const gsw: Dictionary = {
   'Change notes': 'Notize ändere',
   'See what you are looking at': 'Gseh, was du grad aaluegsch',
   'Move and rename files': 'Dateie verschiebe und umbenänne',
-  'Open tabs and bookmarks': 'Tabs und Läsezeiche öffne',
   'Bring a tab to the front': 'En Tab nach vorne hole',
   'Browse in tabs of its own': 'I eigete Tabs surfe',
   'Read what pages load': 'Läse, was Siite lade',

@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essenziali',
+  'Add to Essentials': 'Aggiungi agli Essenziali',
+  'Remove from Essentials': 'Rimuovi dagli Essenziali',
+  'Add block to Essentials': 'Aggiungi il blocco agli Essenziali',
+  'Add blocks to Essentials': 'Aggiungi i blocchi agli Essenziali',
+  'Add view to Essentials': 'Aggiungi la vista agli Essenziali',
+  'Open tabs and Essentials': 'Aprire schede ed Essenziali',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ora si chiama Orden',
   'Notes from nibeditor.com': 'Note da nibeditor.com',
@@ -263,8 +271,6 @@ export const it: Dictionary = {
   'Move this note': 'Sposta questa nota',
   'Move up': 'Sposta su',
   'Move down': 'Sposta giù',
-  Bookmark: 'Segnalibro',
-  'Remove bookmark': 'Rimuovi il segnalibro',
   'Search here again': 'Cerca di nuovo qui',
   'Undo the last file change': 'Annulla l’ultima modifica ai file',
   'Undo moving {name}': 'Annulla lo spostamento di {name}',
@@ -314,7 +320,6 @@ export const it: Dictionary = {
   'Remove group': 'Rimuovi il gruppo',
   'Out of the group': 'Fuori dal gruppo',
   Make: 'Crea',
-  'Bookmark this block': 'Segna questo blocco',
   Panels: 'Pannelli',
   Outline: 'Struttura',
   'Stay on this note': 'Resta su questa nota',
@@ -1715,7 +1720,6 @@ export const it: Dictionary = {
   Nothing: 'Niente',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Segna questa vista',
   Keep: 'Conserva',
 
   // Which side of the window a panel sits on.
@@ -1780,7 +1784,6 @@ export const it: Dictionary = {
   Blocked: 'Autorizzazione negata',
   'Reset permissions': 'Reimposta le autorizzazioni',
   'Turn into': 'Trasforma in',
-  'Bookmark these blocks': 'Segna questi blocchi',
   Foldable: 'Richiudibile',
   'Starts folded': 'Inizia richiuso',
   // Where a space keeps what websites store
@@ -2011,7 +2014,6 @@ export const it: Dictionary = {
   'Change notes': 'Modificare le note',
   'See what you are looking at': 'Vedere cosa stai guardando',
   'Move and rename files': 'Spostare e rinominare file',
-  'Open tabs and bookmarks': 'Aprire schede e segnalibri',
   'Bring a tab to the front': 'Portare una scheda in primo piano',
   'Browse in tabs of its own': 'Navigare in schede proprie',
   'Read what pages load': 'Leggere cosa caricano le pagine',

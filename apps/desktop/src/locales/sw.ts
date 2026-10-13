@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Muhimu',
+  'Add to Essentials': 'Ongeza kwenye Muhimu',
+  'Remove from Essentials': 'Ondoa kwenye Muhimu',
+  'Add block to Essentials': 'Ongeza kizuizi kwenye Muhimu',
+  'Add blocks to Essentials': 'Ongeza vizuizi kwenye Muhimu',
+  'Add view to Essentials': 'Ongeza mwonekano kwenye Muhimu',
+  'Open tabs and Essentials': 'Kufungua vichupo na Muhimu',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor sasa ni Orden',
   'Notes from nibeditor.com': 'Madokezo kutoka nibeditor.com',
@@ -263,8 +271,6 @@ export const sw: Dictionary = {
   'Move this note': 'Hamisha dokezo hili',
   'Move up': 'Panda juu',
   'Move down': 'Shuka chini',
-  Bookmark: 'Alamisho',
-  'Remove bookmark': 'Ondoa alamisho',
   'Search here again': 'Tafuta hapa tena',
   'Undo the last file change': 'Tendua badiliko la mwisho la faili',
   'Undo moving {name}': 'Tendua kuhamisha {name}',
@@ -314,7 +320,6 @@ export const sw: Dictionary = {
   'Remove group': 'Ondoa kundi',
   'Out of the group': 'Toa kwenye kundi',
   Make: 'Tengeneza',
-  'Bookmark this block': 'Alamisha kizuizi hiki',
   Panels: 'Paneli',
   Outline: 'Muhtasari',
   'Stay on this note': 'Baki kwenye dokezo hili',
@@ -1690,7 +1695,6 @@ export const sw: Dictionary = {
   Nothing: 'Hakuna',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Weka alama mwonekano huu',
   Keep: 'Weka',
 
   // Which side of the window a panel sits on.
@@ -1756,7 +1760,6 @@ export const sw: Dictionary = {
   Blocked: 'Imezuiwa',
   'Reset permissions': 'Badilisha ruhusa',
   'Turn into': 'Badilisha kuwa',
-  'Bookmark these blocks': 'Alamisha vizuizi hivi',
   Foldable: 'Inaweza kukunjwa',
   'Starts folded': 'Huanza imekunjwa',
   // Where a space keeps what websites store
@@ -1982,7 +1985,6 @@ export const sw: Dictionary = {
   'Change notes': 'Kubadilisha madokezo',
   'See what you are looking at': 'Kuona unachotazama',
   'Move and rename files': 'Kuhamisha na kubadilisha majina ya faili',
-  'Open tabs and bookmarks': 'Kufungua vichupo na alamisho',
   'Bring a tab to the front': 'Kuleta kichupo mbele',
   'Browse in tabs of its own': 'Kuvinjari katika vichupo vyake',
   'Read what pages load': 'Kusoma kile kurasa zinapakia',

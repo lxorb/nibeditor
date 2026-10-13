@@ -48,7 +48,7 @@ test('is Chromes own menu, in Chromes own order', () => {
     'New tab',
     'New private tab',
     'History',
-    'Bookmarks',
+    'Essentials',
     'Delete browsing data…',
     'Zoom out',
     '100%',

@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essenciais',
+  'Add to Essentials': 'Adicionar aos Essenciais',
+  'Remove from Essentials': 'Remover dos Essenciais',
+  'Add block to Essentials': 'Adicionar bloco aos Essenciais',
+  'Add blocks to Essentials': 'Adicionar blocos aos Essenciais',
+  'Add view to Essentials': 'Adicionar visualização aos Essenciais',
+  'Open tabs and Essentials': 'Abrir abas e Essenciais',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor agora se chama Orden',
   'Notes from nibeditor.com': 'Notas do nibeditor.com',
@@ -263,8 +271,6 @@ export const ptBR: Dictionary = {
   'Move this note': 'Mover esta nota',
   'Move up': 'Subir',
   'Move down': 'Descer',
-  Bookmark: 'Favorito',
-  'Remove bookmark': 'Remover o favorito',
   'Search here again': 'Buscar aqui de novo',
   'Undo the last file change': 'Desfazer a última mudança de arquivo',
   'Undo moving {name}': 'Desfazer mover {name}',
@@ -314,7 +320,6 @@ export const ptBR: Dictionary = {
   'Remove group': 'Remover o grupo',
   'Out of the group': 'Tirar do grupo',
   Make: 'Criar',
-  'Bookmark this block': 'Favoritar este bloco',
   Panels: 'Painéis',
   Outline: 'Estrutura',
   'Stay on this note': 'Ficar nesta nota',
@@ -1692,7 +1697,6 @@ export const ptBR: Dictionary = {
   Nothing: 'Nada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Marcar esta visão',
   Keep: 'Guardar',
 
   // Which side of the window a panel sits on.
@@ -1758,7 +1762,6 @@ export const ptBR: Dictionary = {
   Blocked: 'Bloqueado',
   'Reset permissions': 'Redefinir permissões',
   'Turn into': 'Transformar em',
-  'Bookmark these blocks': 'Favoritar estes blocos',
   Foldable: 'Recolhível',
   'Starts folded': 'Começa recolhido',
   // Where a space keeps what websites store
@@ -1988,7 +1991,6 @@ export const ptBR: Dictionary = {
   'Change notes': 'Alterar notas',
   'See what you are looking at': 'Ver o que você está olhando',
   'Move and rename files': 'Mover e renomear arquivos',
-  'Open tabs and bookmarks': 'Abrir abas e favoritos',
   'Bring a tab to the front': 'Trazer uma aba para a frente',
   'Browse in tabs of its own': 'Navegar em abas próprias',
   'Read what pages load': 'Ler o que as páginas carregam',

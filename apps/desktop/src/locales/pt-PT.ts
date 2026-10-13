@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essenciais',
+  'Add to Essentials': 'Adicionar aos Essenciais',
+  'Remove from Essentials': 'Remover dos Essenciais',
+  'Add block to Essentials': 'Adicionar bloco aos Essenciais',
+  'Add blocks to Essentials': 'Adicionar blocos aos Essenciais',
+  'Add view to Essentials': 'Adicionar vista aos Essenciais',
+  'Open tabs and Essentials': 'Abrir separadores e Essenciais',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'O nibeditor chama-se agora Orden',
   'Notes from nibeditor.com': 'Notas do nibeditor.com',
@@ -263,8 +271,6 @@ export const ptPT: Dictionary = {
   'Move this note': 'Mover esta nota',
   'Move up': 'Subir',
   'Move down': 'Descer',
-  Bookmark: 'Marcador',
-  'Remove bookmark': 'Remover o marcador',
   'Search here again': 'Procurar aqui de novo',
   'Undo the last file change': 'Anular a última alteração de ficheiro',
   'Undo moving {name}': 'Anular mover {name}',
@@ -314,7 +320,6 @@ export const ptPT: Dictionary = {
   'Remove group': 'Remover o grupo',
   'Out of the group': 'Tirar do grupo',
   Make: 'Criar',
-  'Bookmark this block': 'Marcar este bloco',
   Panels: 'Painéis',
   Outline: 'Estrutura',
   'Stay on this note': 'Ficar nesta nota',
@@ -1705,7 +1710,6 @@ export const ptPT: Dictionary = {
   Nothing: 'Nada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Marcar esta vista',
   Keep: 'Guardar',
 
   // Which side of the window a panel sits on.
@@ -1771,7 +1775,6 @@ export const ptPT: Dictionary = {
   Blocked: 'Bloqueado',
   'Reset permissions': 'Repor autorizações',
   'Turn into': 'Transformar em',
-  'Bookmark these blocks': 'Marcar estes blocos',
   Foldable: 'Recolhível',
   'Starts folded': 'Começa recolhido',
   // Where a space keeps what websites store
@@ -2001,7 +2004,6 @@ export const ptPT: Dictionary = {
   'Change notes': 'Alterar notas',
   'See what you are looking at': 'Ver o que está a ver',
   'Move and rename files': 'Mover e mudar o nome de ficheiros',
-  'Open tabs and bookmarks': 'Abrir separadores e marcadores',
   'Bring a tab to the front': 'Trazer um separador para a frente',
   'Browse in tabs of its own': 'Navegar em separadores próprios',
   'Read what pages load': 'Ler o que as páginas carregam',

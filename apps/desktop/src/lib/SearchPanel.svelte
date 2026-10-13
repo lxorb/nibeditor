@@ -344,8 +344,8 @@
         <button
           class="star"
           class:on={kept}
-          title={kept ? t('Remove bookmark') : t('Bookmark')}
-          aria-label={kept ? t('Remove bookmark') : t('Bookmark')}
+          title={kept ? t('Remove from Essentials') : t('Add to Essentials')}
+          aria-label={kept ? t('Remove from Essentials') : t('Add to Essentials')}
           aria-pressed={kept}
           onclick={() => workspace.bookmarks.toggle(searchMark)}
           transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}

@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Muhimmai',
+  'Add to Essentials': 'Ƙara zuwa Muhimmai',
+  'Remove from Essentials': 'Cire daga Muhimmai',
+  'Add block to Essentials': 'Ƙara toshe zuwa Muhimmai',
+  'Add blocks to Essentials': 'Ƙara tubalai zuwa Muhimmai',
+  'Add view to Essentials': 'Ƙara kallo zuwa Muhimmai',
+  'Open tabs and Essentials': 'Buɗe shafuka da Muhimmai',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor yanzu shi ne Orden',
   'Notes from nibeditor.com': 'Bayanai daga nibeditor.com',
@@ -263,8 +271,6 @@ export const ha: Dictionary = {
   'Move this note': 'Matsar da wannan bayanin kula',
   'Move up': 'Matsar sama',
   'Move down': 'Matsar ƙasa',
-  Bookmark: 'Alamar shafi',
-  'Remove bookmark': 'Cire alamar shafi',
   'Search here again': 'Sake nema nan',
   'Undo the last file change': 'Mayar da sauyin fayil na ƙarshe',
   'Undo moving {name}': 'Mayar da matsar {name}',
@@ -314,7 +320,6 @@ export const ha: Dictionary = {
   'Remove group': 'Cire rukuni',
   'Out of the group': 'Fitar daga rukuni',
   Make: 'Yi',
-  'Bookmark this block': 'Sa alamar shafi ga wannan sashe',
   Panels: 'Fanoni',
   Outline: 'Tsari',
   'Stay on this note': 'Zauna a wannan bayanin kula',
@@ -1691,7 +1696,6 @@ export const ha: Dictionary = {
   Nothing: 'Babu',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Yi alama ga wannan kallo',
   Keep: 'Ajiye',
 
   // Which side of the window a panel sits on.
@@ -1757,7 +1761,6 @@ export const ha: Dictionary = {
   Blocked: 'An hana',
   'Reset permissions': 'Mayar da izini',
   'Turn into': 'Juya zuwa',
-  'Bookmark these blocks': 'Sa alamar shafi ga waɗannan sassa',
   Foldable: 'Mai naɗewa',
   'Starts folded': 'Yana farawa a naɗe',
   // Where a space keeps what websites store
@@ -1982,7 +1985,6 @@ export const ha: Dictionary = {
   'Change notes': 'Canza bayanan kula',
   'See what you are looking at': 'Ganin abin da kake kallo',
   'Move and rename files': 'Matsar da fayiloli da sake musu suna',
-  'Open tabs and bookmarks': 'Buɗe shafuka da alamomi',
   'Bring a tab to the front': 'Kawo shafi gaba',
   'Browse in tabs of its own': 'Bincike a shafukansa',
   'Read what pages load': 'Karanta abin da shafuka ke lodawa',

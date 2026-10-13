@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ms: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Penting',
+  'Add to Essentials': 'Tambah ke Penting',
+  'Remove from Essentials': 'Buang daripada Penting',
+  'Add block to Essentials': 'Tambah blok ke Penting',
+  'Add blocks to Essentials': 'Tambah blok-blok ke Penting',
+  'Add view to Essentials': 'Tambah paparan ke Penting',
+  'Open tabs and Essentials': 'Membuka tab dan Penting',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor kini dikenali sebagai Orden',
   'Notes from nibeditor.com': 'Nota daripada nibeditor.com',
@@ -263,8 +271,6 @@ export const ms: Dictionary = {
   'Move this note': 'Alihkan nota ini',
   'Move up': 'Alih ke atas',
   'Move down': 'Alih ke bawah',
-  Bookmark: 'Penanda',
-  'Remove bookmark': 'Buang penanda',
   'Search here again': 'Cari di sini lagi',
   'Undo the last file change': 'Buat asal perubahan fail terakhir',
   'Undo moving {name}': 'Buat asal pengalihan {name}',
@@ -314,7 +320,6 @@ export const ms: Dictionary = {
   'Remove group': 'Buang kumpulan',
   'Out of the group': 'Keluar daripada kumpulan',
   Make: 'Jadikan',
-  'Bookmark this block': 'Tandakan blok ini',
   Panels: 'Panel',
   Outline: 'Rangka',
   'Stay on this note': 'Kekal pada nota ini',
@@ -1663,7 +1668,6 @@ export const ms: Dictionary = {
   Nothing: 'Tiada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Tanda buku paparan ini',
   Keep: 'Simpan',
 
   // Which side of the window a panel sits on.
@@ -1729,7 +1733,6 @@ export const ms: Dictionary = {
   Blocked: 'Disekat',
   'Reset permissions': 'Tetapkan semula kebenaran',
   'Turn into': 'Jadikan',
-  'Bookmark these blocks': 'Tandakan blok-blok ini',
   Foldable: 'Boleh dilipat',
   'Starts folded': 'Mula terlipat',
   // Where a space keeps what websites store
@@ -1952,7 +1955,6 @@ export const ms: Dictionary = {
   'Change notes': 'Mengubah nota',
   'See what you are looking at': 'Melihat apa yang anda lihat',
   'Move and rename files': 'Mengalih dan menamakan semula fail',
-  'Open tabs and bookmarks': 'Membuka tab dan penanda buku',
   'Bring a tab to the front': 'Membawa tab ke hadapan',
   'Browse in tabs of its own': 'Melayari dalam tab sendiri',
   'Read what pages load': 'Membaca apa yang dimuatkan halaman',

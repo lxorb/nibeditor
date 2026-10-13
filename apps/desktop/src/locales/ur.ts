@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ur: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'ضروری',
+  'Add to Essentials': 'ضروری میں شامل کریں',
+  'Remove from Essentials': 'ضروری سے ہٹائیں',
+  'Add block to Essentials': 'بلاک ضروری میں شامل کریں',
+  'Add blocks to Essentials': 'بلاکس ضروری میں شامل کریں',
+  'Add view to Essentials': 'منظر ضروری میں شامل کریں',
+  'Open tabs and Essentials': 'ٹیبز اور ضروری کھولنا',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor اب Orden ہے',
   'Notes from nibeditor.com': 'nibeditor.com سے نوٹس',
@@ -263,8 +271,6 @@ export const ur: Dictionary = {
   'Move this note': 'یہ نوٹ منتقل کریں',
   'Move up': 'اوپر لے جائیں',
   'Move down': 'نیچے لے جائیں',
-  Bookmark: 'بک مارک',
-  'Remove bookmark': 'بک مارک ہٹائیں',
   'Search here again': 'یہاں دوبارہ تلاش کریں',
   'Undo the last file change': 'آخری تبدیلی واپس لیں',
   'Undo moving {name}': '{name} کی منتقلی واپس لیں',
@@ -314,7 +320,6 @@ export const ur: Dictionary = {
   'Remove group': 'گروپ ہٹائیں',
   'Out of the group': 'گروپ سے باہر',
   Make: 'بنائیں',
-  'Bookmark this block': 'اس بلاک کو بک مارک کریں',
   Panels: 'پینل',
   Outline: 'خاکہ',
   'Stay on this note': 'اسی نوٹ پر رہیں',
@@ -1661,7 +1666,6 @@ export const ur: Dictionary = {
   Nothing: 'کچھ نہیں',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'اس منظر کو بک مارک کریں',
   Keep: 'رکھیں',
 
   // Which side of the window a panel sits on.
@@ -1726,7 +1730,6 @@ export const ur: Dictionary = {
   Blocked: 'مسدود کردہ',
   'Reset permissions': 'اجازتیں دوبارہ ترتیب دیں',
   'Turn into': 'میں بدلیں',
-  'Bookmark these blocks': 'ان بلاکس کو بک مارک کریں',
   Foldable: 'تہ کیا جا سکتا ہے',
   'Starts folded': 'تہ شدہ شروع',
   // Where a space keeps what websites store
@@ -1950,7 +1953,6 @@ export const ur: Dictionary = {
   'Change notes': 'نوٹس بدلنا',
   'See what you are looking at': 'دیکھنا کہ آپ کیا دیکھ رہے ہیں',
   'Move and rename files': 'فائلیں منتقل کرنا اور نام بدلنا',
-  'Open tabs and bookmarks': 'ٹیبز اور بُک مارکس کھولنا',
   'Bring a tab to the front': 'کسی ٹیب کو سامنے لانا',
   'Browse in tabs of its own': 'اپنے ٹیبز میں براؤز کرنا',
   'Read what pages load': 'پڑھنا کہ صفحات کیا لوڈ کرتے ہیں',

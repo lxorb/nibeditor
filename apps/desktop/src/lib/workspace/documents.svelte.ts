@@ -413,6 +413,11 @@ export class Tab {
    *  this strip in this pane. */
   pinned = $state(false)
 
+  /** The file in the Essentials this tab was made for by a press on its tile, or null
+   *  for a tab of the strip, which leaves an essential out. The file it was made for,
+   *  since a link followed inside an essential stays in it; see essentials.ts. */
+  essential = $state<string | null>(null)
+
   /** Whether this tab is showing the note as it reads rather than as it is
    *  written. Per tab, because a note can be read in one pane while it is being
    *  written in another, and because which face is up is about this sitting with

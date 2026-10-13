@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'ज़रूरी',
+  'Add to Essentials': 'ज़रूरी में जोड़ें',
+  'Remove from Essentials': 'ज़रूरी से हटाएँ',
+  'Add block to Essentials': 'ब्लॉक ज़रूरी में जोड़ें',
+  'Add blocks to Essentials': 'ब्लॉक्स ज़रूरी में जोड़ें',
+  'Add view to Essentials': 'दृश्य ज़रूरी में जोड़ें',
+  'Open tabs and Essentials': 'टैब और ज़रूरी खोलना',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor अब Orden है',
   'Notes from nibeditor.com': 'nibeditor.com से नोट्स',
@@ -263,8 +271,6 @@ export const hi: Dictionary = {
   'Move this note': 'यह नोट ले जाएँ',
   'Move up': 'ऊपर ले जाएँ',
   'Move down': 'नीचे ले जाएँ',
-  Bookmark: 'बुकमार्क',
-  'Remove bookmark': 'बुकमार्क निकालें',
   'Search here again': 'यहाँ फिर खोजें',
   'Undo the last file change': 'पिछला फ़ाइल बदलाव पूर्ववत करें',
   'Undo moving {name}': '{name} ले जाना पूर्ववत करें',
@@ -314,7 +320,6 @@ export const hi: Dictionary = {
   'Remove group': 'समूह निकालें',
   'Out of the group': 'समूह से बाहर',
   Make: 'बनाएँ',
-  'Bookmark this block': 'इस ब्लॉक को बुकमार्क करें',
   Panels: 'पैनल',
   Outline: 'रूपरेखा',
   'Stay on this note': 'इसी नोट पर रहें',
@@ -1661,7 +1666,6 @@ export const hi: Dictionary = {
   Nothing: 'कुछ नहीं',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'इस दृश्य को बुकमार्क करें',
   Keep: 'रखें',
 
   // Which side of the window a panel sits on.
@@ -1726,7 +1730,6 @@ export const hi: Dictionary = {
   Blocked: 'ब्लॉक किया गया है',
   'Reset permissions': 'अनुमतियां रीसेट करें',
   'Turn into': 'में बदलें',
-  'Bookmark these blocks': 'इन ब्लॉकों को बुकमार्क करें',
   Foldable: 'मोड़ा जा सकता है',
   'Starts folded': 'मुड़ा हुआ शुरू',
   // Where a space keeps what websites store
@@ -1950,7 +1953,6 @@ export const hi: Dictionary = {
   'Change notes': 'नोट बदलना',
   'See what you are looking at': 'देखना कि आप क्या देख रहे हैं',
   'Move and rename files': 'फ़ाइलें ले जाना और नाम बदलना',
-  'Open tabs and bookmarks': 'टैब और बुकमार्क खोलना',
   'Bring a tab to the front': 'किसी टैब को सामने लाना',
   'Browse in tabs of its own': 'अपने टैब में ब्राउज़ करना',
   'Read what pages load': 'पढ़ना कि पेज क्या लोड करते हैं',

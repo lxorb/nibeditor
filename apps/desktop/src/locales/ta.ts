@@ -1,6 +1,14 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'அத்தியாவசியங்கள்',
+  'Add to Essentials': 'அத்தியாவசியங்களில் சேர்',
+  'Remove from Essentials': 'அத்தியாவசியங்களிலிருந்து அகற்று',
+  'Add block to Essentials': 'தொகுதியை அத்தியாவசியங்களில் சேர்',
+  'Add blocks to Essentials': 'தொகுதிகளை அத்தியாவசியங்களில் சேர்',
+  'Add view to Essentials': 'காட்சியை அத்தியாவசியங்களில் சேர்',
+  'Open tabs and Essentials': 'தாவல்களையும் அத்தியாவசியங்களையும் திறத்தல்',
   // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor இப்போது Orden',
   'Notes from nibeditor.com': 'nibeditor.com இலிருந்து குறிப்புகள்',
@@ -263,8 +271,6 @@ export const ta: Dictionary = {
   'Move this note': 'இந்தக் குறிப்பை நகர்த்து',
   'Move up': 'மேலே நகர்த்து',
   'Move down': 'கீழே நகர்த்து',
-  Bookmark: 'புத்தகக்குறி',
-  'Remove bookmark': 'புத்தகக்குறியை அகற்று',
   'Search here again': 'இங்கே மீண்டும் தேடு',
   'Undo the last file change': 'கடைசி கோப்பு மாற்றத்தைச் செயல்தவிர்',
   'Undo moving {name}': '{name} நகர்த்தலைச் செயல்தவிர்',
@@ -314,7 +320,6 @@ export const ta: Dictionary = {
   'Remove group': 'குழுவை அகற்று',
   'Out of the group': 'குழுவிலிருந்து வெளியே',
   Make: 'உருவாக்கு',
-  'Bookmark this block': 'இந்தத் தொகுதியைப் புத்தகக்குறியிடு',
   Panels: 'பலகங்கள்',
   Outline: 'அவுட்லைன்',
   'Stay on this note': 'இந்தக் குறிப்பில் நிலைத்திரு',
@@ -1688,7 +1693,6 @@ export const ta: Dictionary = {
   Nothing: 'ஒன்றுமில்லை',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'இந்தக் காட்சியைப் புத்தகக்குறியிடு',
   Keep: 'வை',
 
   // Which side of the window a panel sits on.
@@ -1755,7 +1759,6 @@ export const ta: Dictionary = {
   Blocked: 'தடுக்கப்பட்டது',
   'Reset permissions': 'அனுமதிகளை மீட்டமை',
   'Turn into': 'ஆக மாற்று',
-  'Bookmark these blocks': 'இந்தத் தொகுதிகளைப் புத்தகக்குறியிடு',
   Foldable: 'மடக்கக்கூடியது',
   'Starts folded': 'மடித்த நிலையில் தொடங்கும்',
   // Where a space keeps what websites store
@@ -1981,7 +1984,6 @@ export const ta: Dictionary = {
   'Change notes': 'குறிப்புகளை மாற்றுதல்',
   'See what you are looking at': 'நீங்கள் பார்ப்பதைப் பார்த்தல்',
   'Move and rename files': 'கோப்புகளை நகர்த்துதல், பெயர் மாற்றுதல்',
-  'Open tabs and bookmarks': 'தாவல்கள், புக்மார்க்குகளைத் திறத்தல்',
   'Bring a tab to the front': 'ஒரு தாவலை முன்னுக்குக் கொண்டுவருதல்',
   'Browse in tabs of its own': 'சொந்தத் தாவல்களில் உலாவுதல்',
   'Read what pages load': 'பக்கங்கள் ஏற்றுவதைப் படித்தல்',
