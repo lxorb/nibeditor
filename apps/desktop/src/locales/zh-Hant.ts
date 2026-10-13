@@ -5,6 +5,10 @@ export const zhHant: Dictionary = {
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
   'Full permissions: nothing is asked first': '完整權限：事先不會詢問任何事',
+  // Import: Zen's tabs
+  'Import from Zen': '從 Zen 匯入',
+  'Containers stay in Zen': '容器會留在 Zen 中',
+  'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
   // Tasks: Upcoming's weeks
   'Previous week': '上一週',
   // Tasks: projects placed in the panel, and their folder

@@ -5,6 +5,10 @@ export const gu: Dictionary = {
   'Full permissions': 'પૂર્ણ પરવાનગીઓ',
   'Auto mode': 'સ્વચાલિત મોડ',
   'Full permissions: nothing is asked first': 'પૂર્ણ પરવાનગીઓ: પહેલાં કંઈ પૂછવામાં આવતું નથી',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen માંથી આયાત કરો',
+  'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
+  'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
   // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
   // Tasks: projects placed in the panel, and their folder

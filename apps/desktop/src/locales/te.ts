@@ -5,6 +5,10 @@ export const te: Dictionary = {
   'Full permissions': 'పూర్తి అనుమతులు',
   'Auto mode': 'ఆటో మోడ్',
   'Full permissions: nothing is asked first': 'పూర్తి అనుమతులు: ముందుగా ఏమీ అడగదు',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
+  'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
+  'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
   // Tasks: Upcoming's weeks
   'Previous week': 'మునుపటి వారం',
   // Tasks: projects placed in the panel, and their folder

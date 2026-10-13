@@ -5,6 +5,10 @@ export const yue: Dictionary = {
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
   'Full permissions: nothing is asked first': '完整權限：乜都唔會事先問',
+  // Import: Zen's tabs
+  'Import from Zen': '由 Zen 匯入',
+  'Containers stay in Zen': '容器留喺 Zen',
+  'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
   // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder

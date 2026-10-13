@@ -7,6 +7,10 @@
  *  in the same place: a new space, named after what came in, holding it, open, with
  *  the habits of the app it came from carried into the settings (import/carry.ts).
  *
+ *  And Zen, the browser, whose spaces become spaces and whose tabs web notes in
+ *  them: one space per Zen space rather than one for the import. See
+ *  import/zen-plan.ts.
+ *
  *  An import into a space that already exists is the import sheet's, and carries no
  *  settings: it is notes arriving, not somebody arriving. See importing.svelte.ts.
  *
@@ -20,6 +24,7 @@ import { type FormatId, worthKnowing } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
 import type { Vault } from './import/vaults'
+import type { ZenProfile } from './import/zen-profiles'
 import { isDesktop } from './tauri'
 import { viewport } from './viewport.svelte'
 import { type Space, workspace } from './workspace.svelte'
@@ -33,6 +38,9 @@ class Migrating {
    *  list is not up. */
   vaults = $state<Vault[] | null>(null)
 
+  /** Zen's profiles, while the reader is choosing one. Null when the list is not up. */
+  profiles = $state<ZenProfile[] | null>(null)
+
   /** Obsidian: the vaults this machine has, by name, the way Arc lists the browsers
    *  it found. Where Obsidian lists none, or off the desktop, straight to the
    *  folder dialog, which is Obsidian's own "Open folder as vault". */
@@ -44,9 +52,33 @@ class Migrating {
     else await this.folder()
   }
 
-  /** Back from the vault list to the rows. */
+  /** Back from the vault or profile list to the rows. */
   back() {
     this.vaults = null
+    this.profiles = null
+  }
+
+  /** Zen: its one profile straight away, or the list where it keeps several, the
+   *  way its own profile manager lists them. Said in a line where there is none. */
+  async zen() {
+    if (this.working) return
+    const { zenProfiles } = await import('./import/zen-landing')
+    const found = await zenProfiles()
+    const [only] = found
+    if (found.length > 1) this.profiles = found
+    else if (only) await this.zenProfile(only)
+    else busy.failed(t('Zen’s tabs could not be read.'))
+  }
+
+  /** One of Zen's profiles, every space of it. Lands in the first space without
+   *  opening a page: what is in it is websites, and none of them was asked for yet. */
+  async zenProfile(profile: ZenProfile) {
+    await this.running(async () => {
+      const { landZen } = await import('./import/zen-landing')
+      const space = await landZen(profile)
+      this.profiles = null
+      await arrive(space, false)
+    })
   }
 
   /** One of the vaults Obsidian listed, read where it is. */
@@ -85,16 +117,23 @@ class Migrating {
       sources: Source[]
     }>,
   ) {
+    await this.running(async () => {
+      const { name, sources } = await read()
+      const space = await importAsSpace(name, sources)
+      this.vaults = null
+      await arrive(space)
+    })
+  }
+
+  /** One import at a time, under the busy line, its failure said in it. */
+  private async running(task: () => Promise<void>) {
     if (this.working) return
     this.working = true
 
     try {
       await busy.run(t('Importing'), async () => {
         try {
-          const { name, sources } = await read()
-          const space = await importAsSpace(name, sources)
-          this.vaults = null
-          await arrive(space)
+          await task()
         } catch (error) {
           busy.failed(message(error, t('That import could not be written.')))
         }
@@ -182,15 +221,16 @@ async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<
 
 /** In the new space, on its first note, with the file list beside it where there
  *  is room - which is where Obsidian lands after opening a folder as a vault. On a
- *  phone the list is a drawer over the note, and opening it would hide the note. */
-export async function arrive(space: Space) {
+ *  phone the list is a drawer over the note, and opening it would hide the note.
+ *  `open` false lands on the list alone. */
+export async function arrive(space: Space, open = true) {
   // The browser's first visit has had its question answered; see first-visit.svelte.ts.
   if (firstVisit.asking) firstVisit.answered()
   // From Settings' Import pane, the new space is what there is to look at.
   const { settings } = await import('./settings.svelte')
   settings.open = false
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
-  const note = firstNote()
+  const note = open ? firstNote() : null
   if (note) await workspace.openEntry(note, { activate: true })
   if (!viewport.drawer) workspace.showPanel('tree')
 }

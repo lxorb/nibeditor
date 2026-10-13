@@ -5,6 +5,10 @@ export const ml: Dictionary = {
   'Full permissions': 'പൂർണ്ണ അനുമതികൾ',
   'Auto mode': 'ഓട്ടോ മോഡ്',
   'Full permissions: nothing is asked first': 'പൂർണ്ണ അനുമതികൾ: ഒന്നും മുൻകൂട്ടി ചോദിക്കില്ല',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
+  'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
+  'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder

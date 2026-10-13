@@ -5,6 +5,10 @@ export const fil: Dictionary = {
   'Full permissions': 'Buong pahintulot',
   'Auto mode': 'Auto mode',
   'Full permissions: nothing is asked first': 'Buong pahintulot: walang itatanong muna',
+  // Import: Zen's tabs
+  'Import from Zen': 'Mag-import mula sa Zen',
+  'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
+  'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder

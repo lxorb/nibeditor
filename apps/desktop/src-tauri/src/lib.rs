@@ -227,6 +227,10 @@ mod web_tint;
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
+// The profiles Zen lists and the file of each that holds its tabs, for the import's
+// Zen row; see zen_profiles.rs.
+#[cfg(desktop)]
+mod zen_profiles;
 
 use paths::Picked;
 use tauri::Manager;
@@ -378,6 +382,8 @@ macro_rules! desktop_commands {
             obsidian_vaults::read_obsidian_file,
             full_screen::window_fullscreen,
             full_screen::window_is_fullscreen,
+            zen_profiles::zen_profiles,
+            zen_profiles::read_zen_file,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
             handed_pdfs::bring_in_pdf,

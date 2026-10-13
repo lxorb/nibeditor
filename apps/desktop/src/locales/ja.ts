@@ -5,6 +5,10 @@ export const ja: Dictionary = {
   'Full permissions': 'フルアクセス',
   'Auto mode': '自動モード',
   'Full permissions: nothing is asked first': 'フルアクセス: 事前に何も確認しません',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen から読み込む',
+  'Containers stay in Zen': 'コンテナは Zen に残ります',
+  'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
   // Tasks: Upcoming's weeks
   'Previous week': '前の週',
   // Tasks: projects placed in the panel, and their folder

@@ -40,6 +40,11 @@ import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
 import { canvasFollowed, isCanvas, linksFollowed } from './rewrite'
 
+/** What the writing needs of a plan: its files. What was lost has been said by then,
+ *  and the format is the reader's business; an import that is not read out of an
+ *  export, Zen's tabs, has neither. */
+type Written = Pick<ImportPlan, 'files'>
+
 /** Where an import lands: a space, and a folder inside it. */
 export interface ImportTarget {
   /** The space's root, as the platform spells paths. */
@@ -62,7 +67,7 @@ export interface Writing {
 }
 
 export async function applyImport(
-  plan: ImportPlan,
+  plan: Written,
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
@@ -130,7 +135,7 @@ const ESCAPING = key('That import would have landed outside the space, so nothin
  *  path it holds is taken like any other, until no path the import would write is
  *  one. A disk that cannot be asked, a page in a browser, has the list's word. */
 async function restampedOnDisk(
-  plan: ImportPlan,
+  plan: Written,
   target: ImportTarget,
 ): Promise<{ files: Planned[]; stepped: number }> {
   const taken = takenIn(target)
@@ -181,7 +186,7 @@ function takenIn(target: ImportTarget): Set<string> {
  *  that is taken, and every link inside the import pointing at where its target
  *  actually went. */
 export function restamped(
-  plan: ImportPlan,
+  plan: Written,
   taken: ReadonlySet<string>,
   folder: string,
 ): { files: Planned[]; stepped: number } {

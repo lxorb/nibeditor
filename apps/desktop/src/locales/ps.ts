@@ -5,6 +5,10 @@ export const ps: Dictionary = {
   'Full permissions': 'بشپړې اجازې',
   'Auto mode': 'خپلکاره حالت',
   'Full permissions: nothing is asked first': 'بشپړې اجازې: مخکې هیڅ نه پوښتل کېږي',
+  // Import: Zen's tabs
+  'Import from Zen': 'له Zen څخه واردول',
+  'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
+  'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
   // Tasks: Upcoming's weeks
   'Previous week': 'تېره اونۍ',
   // Tasks: projects placed in the panel, and their folder

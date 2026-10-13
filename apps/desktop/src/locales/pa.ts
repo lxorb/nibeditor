@@ -5,6 +5,10 @@ export const pa: Dictionary = {
   'Full permissions': 'ਪੂਰੀਆਂ ਇਜਾਜ਼ਤਾਂ',
   'Auto mode': 'ਆਟੋ ਮੋਡ',
   'Full permissions: nothing is asked first': 'ਪੂਰੀਆਂ ਇਜਾਜ਼ਤਾਂ: ਪਹਿਲਾਂ ਕੁਝ ਨਹੀਂ ਪੁੱਛਿਆ ਜਾਂਦਾ',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
+  'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
+  'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
   // Tasks: Upcoming's weeks
   'Previous week': 'ਪਿਛਲਾ ਹਫ਼ਤਾ',
   // Tasks: projects placed in the panel, and their folder

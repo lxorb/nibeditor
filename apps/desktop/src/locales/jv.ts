@@ -5,6 +5,10 @@ export const jv: Dictionary = {
   'Full permissions': 'Idin lengkap',
   'Auto mode': 'Mode otomatis',
   'Full permissions: nothing is asked first': 'Idin lengkap: ora ana sing ditakoni dhisik',
+  // Import: Zen's tabs
+  'Import from Zen': 'Impor saka Zen',
+  'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
+  'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sadurunge',
   // Tasks: projects placed in the panel, and their folder

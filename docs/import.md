@@ -68,6 +68,26 @@ their own, named after what came in, and lands in it.
   Notion, markdown hidden while writing, properties as a panel and Notion's keys.
   Each through the setter Settings uses, so it is saved and shared like a choice.
   An import into an existing space carries none. See `import/carry.ts`.
+- **Zen's spaces as spaces** (Emil, 2026-10-13). On a desktop the Zen row reads the
+  browser's own sidebar out of the profile: `profiles.ini` in Zen's folder lists the
+  profiles (the one Zen opens first in front, a list where there are several), and
+  `zen-sessions.jsonlz4` holds every space, pinned tab, Essential and folder, with
+  Zen's backups and Firefox's `recovery.jsonlz4` behind it for a profile from before
+  that file. Read and never written, while Zen runs; the crate hands over those few
+  files of a listed profile and nothing else (`zen_profiles.rs`), the app unpacks
+  Mozilla's LZ4 (`import/mozlz4.ts`) and reads the lists (`import/zen.ts`). Each Zen
+  space becomes the nib space of its name, with its icon (an emoji as it is, Zen's
+  drawings as Lucide's) and its colour as the nearest accent; each tab a web note in
+  the place the sidebar has it and that order kept as the list's arranged order; a
+  folder a folder, an empty one an empty note; a pinned tab's address it goes back
+  to the note's home; the Essentials web notes at the top of the first space (or of
+  their container's) and bookmarks of it. Pages that are not on the web stay behind,
+  and so do containers, which nib's one browsing profile has nothing to become; the
+  line says so. Importing again brings only what is new: a space of the same name is
+  the same space, and a web note already there pointing at the same page is not
+  written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
+  `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
+  its own through `NIB_ZEN_DIR`.
 - **More apps** are a row and a case in `carriedBy`; the readers are already there.
 
 ## Where it lands

@@ -5,6 +5,10 @@ export const ta: Dictionary = {
   'Full permissions': 'முழு அனுமதிகள்',
   'Auto mode': 'தானியங்கு பயன்முறை',
   'Full permissions: nothing is asked first': 'முழு அனுமதிகள்: முன்னதாக எதுவும் கேட்கப்படாது',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
+  'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
+  'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
   // Tasks: Upcoming's weeks
   'Previous week': 'முந்தைய வாரம்',
   // Tasks: projects placed in the panel, and their folder

@@ -5,6 +5,10 @@ export const id: Dictionary = {
   'Full permissions': 'Izin penuh',
   'Auto mode': 'Mode otomatis',
   'Full permissions: nothing is asked first': 'Izin penuh: tidak ada yang ditanyakan dulu',
+  // Import: Zen's tabs
+  'Import from Zen': 'Impor dari Zen',
+  'Containers stay in Zen': 'Kontainer tetap di Zen',
+  'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder

@@ -5,6 +5,10 @@ export const ha: Dictionary = {
   'Full permissions': 'Cikakken izini',
   'Auto mode': 'Yanayin kai-tsaye',
   'Full permissions: nothing is asked first': 'Cikakken izini: ba a tambayar komai da farko',
+  // Import: Zen's tabs
+  'Import from Zen': 'Shigo daga Zen',
+  'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
+  'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Makon da ya gabata',
   // Tasks: projects placed in the panel, and their folder

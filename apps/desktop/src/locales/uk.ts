@@ -5,6 +5,10 @@ export const uk: Dictionary = {
   'Full permissions': 'Повний доступ',
   'Auto mode': 'Автоматичний режим',
   'Full permissions: nothing is asked first': 'Повний доступ: нічого не питається заздалегідь',
+  // Import: Zen's tabs
+  'Import from Zen': 'Імпорт з Zen',
+  'Containers stay in Zen': 'Контейнери залишаються в Zen',
+  'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Попередній тиждень',
   // Tasks: projects placed in the panel, and their folder

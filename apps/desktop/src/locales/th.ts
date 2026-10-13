@@ -5,6 +5,10 @@ export const th: Dictionary = {
   'Full permissions': 'สิทธิ์เต็ม',
   'Auto mode': 'โหมดอัตโนมัติ',
   'Full permissions: nothing is asked first': 'สิทธิ์เต็ม: ไม่ถามอะไรก่อน',
+  // Import: Zen's tabs
+  'Import from Zen': 'นำเข้าจาก Zen',
+  'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
+  'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
   // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
   // Tasks: projects placed in the panel, and their folder

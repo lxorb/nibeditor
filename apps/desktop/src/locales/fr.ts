@@ -5,6 +5,10 @@ export const fr: Dictionary = {
   'Full permissions': 'Autorisations complètes',
   'Auto mode': 'Mode automatique',
   'Full permissions: nothing is asked first': 'Autorisations complètes : rien n’est demandé avant',
+  // Import: Zen's tabs
+  'Import from Zen': 'Importer depuis Zen',
+  'Containers stay in Zen': 'Les conteneurs restent dans Zen',
+  'Zen’s tabs could not be read.': 'Les onglets de Zen n’ont pas pu être lus.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semaine précédente',
   // Tasks: projects placed in the panel, and their folder

@@ -317,7 +317,8 @@ function importCommand(): Command | null {
 /** Obsidian and Notion by name, the two apps most people arrive from: each brings
  *  its notes in as a space of their own, with the app's habits in the settings,
  *  the way the first screen does. Settings' Import pane holds the same rows; see
- *  migrating.svelte.ts. Obsidian opens that pane, where the vaults it lists are. */
+ *  migrating.svelte.ts. Obsidian opens that pane, where the vaults it lists are, and
+ *  so does Zen, the browser, whose spaces arrive as spaces. */
 function migrateCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
@@ -337,6 +338,20 @@ function migrateCommands(): Command[] {
         void import('./migrating.svelte').then(({ migrating }) => migrating.files())
       },
     },
+    // Zen's tabs are on this machine's disk, which only the desktop reads. In the
+    // Import pane, where a list of its profiles has room.
+    ...(isDesktop
+      ? [
+          {
+            id: 'import-zen',
+            label: t('Import from Zen'),
+            run: () => {
+              settings.show('import')
+              void import('./migrating.svelte').then(({ migrating }) => migrating.zen())
+            },
+          },
+        ]
+      : []),
   ]
 }
 

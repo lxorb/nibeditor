@@ -5,6 +5,10 @@ export const sw: Dictionary = {
   'Full permissions': 'Ruhusa kamili',
   'Auto mode': 'Hali ya kiotomatiki',
   'Full permissions: nothing is asked first': 'Ruhusa kamili: hakuna kinachoulizwa kwanza',
+  // Import: Zen's tabs
+  'Import from Zen': 'Ingiza kutoka Zen',
+  'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
+  'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder

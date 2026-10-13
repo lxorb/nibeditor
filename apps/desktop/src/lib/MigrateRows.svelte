@@ -9,19 +9,24 @@
    *  Names and no logos, the way the chooser's other rows are a title and a button.
    *
    *  Obsidian on a desktop opens on the vaults Obsidian lists, the way Arc opens on
-   *  the browsers it found; see migrating.svelte.ts. */
+   *  the browsers it found; see migrating.svelte.ts. Zen, the browser, the same way
+   *  with its profiles, where it keeps more than one. */
   import { t } from './i18n.svelte'
   import { migrating } from './migrating.svelte'
-  import { isMobile } from './tauri'
+  import { isDesktop, isMobile } from './tauri'
 
   /** A phone hands over files one at a time and never a folder; see
    *  import/picking.ts. So there, a vault or a graph arrives as a zip, through
    *  the row that takes files. */
   const folders = !isMobile
 
+  /** Zen's profiles are on this machine's disk, which only the desktop reads. */
+  const zen = isDesktop
+
   /** An app's name is its name in every language, as in the import sheet. */
   const OBSIDIAN = 'Obsidian'
   const NOTION = 'Notion'
+  const ZEN = 'Zen'
 </script>
 
 {#if migrating.vaults}
@@ -60,6 +65,32 @@
       </button>
     </span>
   </div>
+{:else if migrating.profiles}
+  {#each migrating.profiles as profile (profile.path)}
+    <div class="nib-setting">
+      <span class="name" title={profile.path}>{profile.name}</span>
+      <button
+        class="nib-button is-quiet is-soft"
+        type="button"
+        disabled={migrating.working}
+        onclick={() => void migrating.zenProfile(profile)}
+      >
+        {t('Import')}
+      </button>
+    </div>
+  {/each}
+
+  <div class="nib-setting">
+    <span class="name"></span>
+    <button
+      class="nib-button is-quiet is-soft"
+      type="button"
+      disabled={migrating.working}
+      onclick={() => migrating.back()}
+    >
+      {t('Back')}
+    </button>
+  </div>
 {:else}
   {#if folders}
     <div class="nib-setting">
@@ -86,6 +117,20 @@
       {t('Import')}
     </button>
   </div>
+
+  {#if zen}
+    <div class="nib-setting">
+      <span class="name">{ZEN}</span>
+      <button
+        class="nib-button is-quiet is-soft"
+        type="button"
+        disabled={migrating.working}
+        onclick={() => void migrating.zen()}
+      >
+        {t('Import')}
+      </button>
+    </div>
+  {/if}
 
   <div class="nib-setting">
     <span class="name">{t('Another app')}</span>

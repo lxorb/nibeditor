@@ -5,6 +5,10 @@ export const fa: Dictionary = {
   'Full permissions': 'دسترسی کامل',
   'Auto mode': 'حالت خودکار',
   'Full permissions: nothing is asked first': 'دسترسی کامل: پیش از هیچ کاری پرسیده نمی‌شود',
+  // Import: Zen's tabs
+  'Import from Zen': 'درون‌آوری از Zen',
+  'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
+  'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
   // Tasks: Upcoming's weeks
   'Previous week': 'هفتهٔ پیشین',
   // Tasks: projects placed in the panel, and their folder

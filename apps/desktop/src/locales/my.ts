@@ -5,6 +5,10 @@ export const my: Dictionary = {
   'Full permissions': 'ခွင့်ပြုချက် အပြည့်',
   'Auto mode': 'အလိုအလျောက် မုဒ်',
   'Full permissions: nothing is asked first': 'ခွင့်ပြုချက် အပြည့်- ကြိုတင် ဘာမျှ မမေးပါ',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen မှ သွင်းပါ',
+  'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
+  'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
   // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
   // Tasks: projects placed in the panel, and their folder

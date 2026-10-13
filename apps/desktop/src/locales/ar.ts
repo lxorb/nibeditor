@@ -5,6 +5,10 @@ export const ar: Dictionary = {
   'Full permissions': 'أذونات كاملة',
   'Auto mode': 'الوضع التلقائي',
   'Full permissions: nothing is asked first': 'أذونات كاملة: لا يُسأل عن شيء مسبقًا',
+  // Import: Zen's tabs
+  'Import from Zen': 'استيراد من Zen',
+  'Containers stay in Zen': 'تبقى الحاويات في Zen',
+  'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
   // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
   // Tasks: projects placed in the panel, and their folder

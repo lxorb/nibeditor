@@ -5,6 +5,10 @@ export const tr: Dictionary = {
   'Full permissions': 'Tam izinler',
   'Auto mode': 'Otomatik mod',
   'Full permissions: nothing is asked first': 'Tam izinler: önceden hiçbir şey sorulmaz',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen’den içe aktar',
+  'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
+  'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
   // Tasks: projects placed in the panel, and their folder

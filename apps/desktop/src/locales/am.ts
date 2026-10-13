@@ -5,6 +5,10 @@ export const am: Dictionary = {
   'Full permissions': 'ሙሉ ፈቃዶች',
   'Auto mode': 'ራስ-ሰር ሁነታ',
   'Full permissions: nothing is asked first': 'ሙሉ ፈቃዶች፦ ምንም አስቀድሞ አይጠየቅም',
+  // Import: Zen's tabs
+  'Import from Zen': 'ከZen አምጣ',
+  'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
+  'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
   // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
   // Tasks: projects placed in the panel, and their folder

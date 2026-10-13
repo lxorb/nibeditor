@@ -5,6 +5,10 @@ export const vi: Dictionary = {
   'Full permissions': 'Toàn quyền',
   'Auto mode': 'Chế độ tự động',
   'Full permissions: nothing is asked first': 'Toàn quyền: không hỏi trước điều gì',
+  // Import: Zen's tabs
+  'Import from Zen': 'Nhập từ Zen',
+  'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
+  'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder

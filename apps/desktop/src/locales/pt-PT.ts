@@ -5,6 +5,10 @@ export const ptPT: Dictionary = {
   'Full permissions': 'Permissões totais',
   'Auto mode': 'Modo automático',
   'Full permissions: nothing is asked first': 'Permissões totais: nada é perguntado antes',
+  // Import: Zen's tabs
+  'Import from Zen': 'Importar do Zen',
+  'Containers stay in Zen': 'Os contentores ficam no Zen',
+  'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder

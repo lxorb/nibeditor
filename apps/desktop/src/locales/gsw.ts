@@ -5,6 +5,10 @@ export const gsw: Dictionary = {
   'Full permissions': 'Volli Berächtigunge',
   'Auto mode': 'Automatische Modus',
   'Full permissions: nothing is asked first': 'Volli Berächtigunge: Es wird nüt vorher gfrogt',
+  // Import: Zen's tabs
+  'Import from Zen': 'Us Zen importiere',
+  'Containers stay in Zen': 'D Container blibe im Zen',
+  'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder

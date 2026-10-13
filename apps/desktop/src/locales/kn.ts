@@ -5,6 +5,10 @@ export const kn: Dictionary = {
   'Full permissions': 'ಪೂರ್ಣ ಅನುಮತಿಗಳು',
   'Auto mode': 'ಸ್ವಯಂ ಮೋಡ್',
   'Full permissions: nothing is asked first': 'ಪೂರ್ಣ ಅನುಮತಿಗಳು: ಮೊದಲು ಏನೂ ಕೇಳಲಾಗುವುದಿಲ್ಲ',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
   // Tasks: projects placed in the panel, and their folder

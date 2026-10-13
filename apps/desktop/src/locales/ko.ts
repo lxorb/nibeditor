@@ -5,6 +5,10 @@ export const ko: Dictionary = {
   'Full permissions': '전체 권한',
   'Auto mode': '자동 모드',
   'Full permissions: nothing is asked first': '전체 권한: 미리 묻지 않습니다',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen에서 가져오기',
+  'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
+  'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
   // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
   // Tasks: projects placed in the panel, and their folder
