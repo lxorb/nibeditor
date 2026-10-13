@@ -611,8 +611,14 @@ function holds(tail: string): boolean {
  *  mode per tab (issue #232): which tab each pane's editor shows, the face a restored tab
  *  is dressed in before its first frame, and where a new tab starts. No module more; the
  *  1,707 bytes are in modes.svelte.ts, Editor.svelte and the tab and its session.
- *  Measured 3,227,121 and 379. */
-const BUDGET = 3_227_500
+ *  Measured 3,227,121 and 379.
+ *
+ *  Raised 2026-10-13, to 3,231,000, from a main at 3,229,321 - already 1,821 over, after
+ *  the rename to Orden - for what a Mac was missing: Cmd+Opt+K where Option+K is a
+ *  character, a sandbox WebKit can read, a pointer that comes back on a move WebKit
+ *  calls no movement, and an update that says why it failed rather than offering itself
+ *  again. The move to Applications is behind the update notice. Measured 3,230,588. */
+const BUDGET = 3_231_000
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

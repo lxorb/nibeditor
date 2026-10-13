@@ -13,7 +13,6 @@
 import type { PanelSide } from './workspace.svelte'
 import { readingFactor } from './direction'
 import { forget, isNumber, keep, stored } from './stored'
-import { unselectable } from './unselectable'
 import { viewport } from './viewport.svelte'
 
 const STORAGE_KEY = 'nib:sidebar-width'
@@ -146,7 +145,7 @@ export class SidebarWidth {
     // The document keeps its own cursor and selection out of the way for the
     // length of the drag.
     document.body.style.cursor = 'col-resize'
-    unselectable(document.body, true)
+    document.body.classList.add('nib-unselectable')
 
     const move = (moved: PointerEvent) => {
       const moving = (moved.clientX - startX) * this.towards
@@ -163,7 +162,7 @@ export class SidebarWidth {
 
       this.dragging = false
       document.body.style.cursor = ''
-      unselectable(document.body, false)
+      document.body.classList.remove('nib-unselectable')
       if (this.pixels !== null) write(this.side, this.pixels)
     }
 
