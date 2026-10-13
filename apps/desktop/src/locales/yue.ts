@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私人分頁',
+  'Note types': '筆記類型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder

@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Settings: note types
+  'Page note': 'Ghi chú nhiều trang',
+  'Web note': 'Ghi chú web',
+  'Private tab': 'Thẻ riêng tư',
+  'Note types': 'Loại ghi chú',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder

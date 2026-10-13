@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Settings: note types
+  'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'Web note': 'ਵੈੱਬ ਨੋਟ',
+  'Private tab': 'ਨਿੱਜੀ ਟੈਬ',
+  'Note types': 'ਨੋਟ ਦੀਆਂ ਕਿਸਮਾਂ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ਪਿਛਲਾ ਹਫ਼ਤਾ',
   // Tasks: projects placed in the panel, and their folder

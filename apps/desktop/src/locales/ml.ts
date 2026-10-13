@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Settings: note types
+  'Page note': 'താൾ കുറിപ്പ്',
+  'Web note': 'വെബ് കുറിപ്പ്',
+  'Private tab': 'സ്വകാര്യ ടാബ്',
+  'Note types': 'കുറിപ്പ് തരങ്ങൾ',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder

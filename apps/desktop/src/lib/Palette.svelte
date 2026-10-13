@@ -14,6 +14,7 @@
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
+  import { hiddenKinds } from './hidden-kinds.svelte'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
   import { appCommands } from './commands'
@@ -192,7 +193,10 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  const makes = $derived(mode === 'everything' && root ? makeable(term, taken) : null)
+  // Not where Settings turned notes off; see hidden-kinds.svelte.ts.
+  const makes = $derived(
+    mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
+  )
 
   /** An address typed, where it is one. */
   const address = $derived.by(() => {

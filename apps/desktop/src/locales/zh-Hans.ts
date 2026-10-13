@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Settings: note types
+  'Page note': '分页笔记',
+  'Web note': '网页笔记',
+  'Private tab': '无痕标签页',
+  'Note types': '笔记类型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一周',
   // Tasks: projects placed in the panel, and their folder

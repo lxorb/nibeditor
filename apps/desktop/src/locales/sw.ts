@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Settings: note types
+  'Page note': 'Dokezo la kurasa',
+  'Web note': 'Dokezo la wavuti',
+  'Private tab': 'Kichupo cha faragha',
+  'Note types': 'Aina za madokezo',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder

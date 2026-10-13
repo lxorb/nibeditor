@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
+  // Settings: note types
+  'Page note': 'Nota a pagine',
+  'Web note': 'Nota web',
+  'Private tab': 'Scheda privata',
+  'Note types': 'Tipi di nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Settimana precedente',
   // Tasks: projects placed in the panel, and their folder

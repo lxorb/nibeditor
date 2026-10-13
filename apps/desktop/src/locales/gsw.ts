@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Settings: note types
+  'Page note': 'Siitenotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Private Tab',
+  'Note types': 'Notiztype',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder

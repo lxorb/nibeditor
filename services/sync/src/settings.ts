@@ -218,6 +218,7 @@ const KNOWN: Record<string, Check> = {
   shortcuts: shortcutMap,
   toolbar: buttonList,
   pull: pulledCommand,
+  hiddenKinds: kindList,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   // How long the account keeps what a note said before: a month, or a year.
@@ -342,6 +343,30 @@ function buttonList(value: unknown): string | null {
     }
     if (seen.has(id)) return `${id} is on the toolbar twice`
     seen.add(id)
+  }
+
+  return null
+}
+
+/** How many kinds a reader may turn off, and how a kind is named: a short word of the
+ *  app's own (`canvas`, `online`). Well past the nine there are. */
+const MOST_KINDS = 32
+const KIND = /^[a-z][a-z-]{0,23}$/
+
+/** The kinds of tab a reader turned off in Settings, so nothing offers to make one; or
+ *  null, for every kind offered. Read for its shape rather than against a list, for the
+ *  reason a command id is: the kinds are the app's, and a newer one's word has to
+ *  travel through this column to the newer build on another device. */
+function kindList(value: unknown): string | null {
+  if (value === null) return null
+  if (!Array.isArray(value)) return 'hiddenKinds must be a list of kinds or null'
+  if (value.length > MOST_KINDS) return `hiddenKinds holds at most ${MOST_KINDS} kinds`
+
+  const seen = new Set<string>()
+  for (const kind of value as unknown[]) {
+    if (typeof kind !== 'string' || !KIND.test(kind)) return `${String(kind)} is not a kind`
+    if (seen.has(kind)) return `${kind} is in hiddenKinds twice`
+    seen.add(kind)
   }
 
   return null

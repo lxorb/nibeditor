@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Settings: note types
+  'Page note': 'Bayanin kula na shafuka',
+  'Web note': 'Bayanin yanar gizo',
+  'Private tab': 'Shafi na sirri',
+  'Note types': "Nau'ikan bayanin kula",
   // Tasks: Upcoming's weeks
   'Previous week': 'Makon da ya gabata',
   // Tasks: projects placed in the panel, and their folder

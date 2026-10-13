@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Settings: note types
+  'Page note': 'પાનાંવાળી નોંધ',
+  'Web note': 'વેબ નોંધ',
+  'Private tab': 'ખાનગી ટૅબ',
+  'Note types': 'નોંધના પ્રકાર',
   // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
   // Tasks: projects placed in the panel, and their folder

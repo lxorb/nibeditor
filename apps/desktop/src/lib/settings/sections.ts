@@ -25,6 +25,8 @@ export const ICONS: Record<string, string> = {
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
+  // Four tiles, one of them a plus: the kinds a new tab offers, and the one being made.
+  kinds: 'M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM11.25 9v4.5M9 11.25h4.5',
   // A keyboard: the row of keys is the shortcut, not the writing.
   shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
   // A phone, upright, with the bar this pane is about across the bottom of it.
@@ -74,6 +76,8 @@ export function sectionGroups(): Item[][] {
     [
       { id: 'general', label: t('General') },
       { id: 'editor', label: t('Editor') },
+      // Which kinds of tab anything offers to make; see kinds-here.ts.
+      { id: 'kinds', label: t('Note types') },
       { id: 'shortcuts', label: t('Shortcuts') },
       // The bar over the keyboard on a phone, and the pull on its lists. Here on
       // every device rather than only where there is a thumb: it goes on the
