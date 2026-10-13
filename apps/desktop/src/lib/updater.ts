@@ -1,7 +1,7 @@
 import { log } from './log'
 import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
-import { invoke, isDesktop, platform } from './tauri'
+import { invoke, isDesktop } from './tauri'
 import { waited } from './timing'
 
 /** The two streams of releases a machine can follow: the tagged releases, or the
@@ -150,28 +150,6 @@ export async function restartToUpdate() {
     // Nothing sensible to do: the update is installed either way, and the next
     // launch picks it up.
   }
-}
-
-/** Whether this copy cannot be updated where it runs: a Mac's, started from its disk
- *  image or from a download macOS translocated, where the installer can write nothing
- *  and the same version would be offered on every launch. Asked once. See
- *  src-tauri/src/app_place.rs. */
-let stuckAsked: Promise<boolean> | null = null
-
-export function stuck(): Promise<boolean> {
-  stuckAsked ??=
-    isDesktop && platform() === 'macos'
-      ? invoke<boolean>('app_stuck').catch(() => false)
-      : Promise.resolve(false)
-  return stuckAsked
-}
-
-/** Moves such a copy into Applications and starts it from there; the look it makes
- *  there finds the update again, and installs it. What was downloaded here could only
- *  fail, so it goes. */
-export async function moveToApplications() {
-  await discard()
-  await invoke('move_to_applications')
 }
 
 /** Runs the staged installer. Called as the app closes, so nothing is
