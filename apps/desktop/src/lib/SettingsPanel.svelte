@@ -10,7 +10,7 @@
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import { about } from './settings/about'
-  import { copyText } from './clipboard'
+  import CopyButton from './CopyButton.svelte'
   import { updates } from './updates.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import EngineRow from './settings/EngineRow.svelte'
@@ -101,16 +101,6 @@
   const build = $derived(
     about({ version: __APP_VERSION__, stamp: __EVEN_BUILD__, engine: engineName, os: platform() }),
   )
-  /** Whether Copy has just been pressed, which it says for a moment. */
-  let copiedAbout = $state(false)
-
-  async function copyAbout() {
-    await copyText(build.copied)
-    copiedAbout = true
-    await waited(LIT)
-    copiedAbout = false
-  }
-
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
 
@@ -1147,9 +1137,7 @@
     </span>
     <div class="row">
       <span class="text chosen">{build.version}</span>
-      <button class="nib-chip" onclick={() => void copyAbout()}
-        >{copiedAbout ? t('Copied') : t('Copy')}</button
-      >
+      <CopyButton value={build.copied} />
     </div>
   </div>
 {/snippet}
