@@ -166,6 +166,14 @@ jobs:
       - name: The launch hands the thread back
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
 
+      # And whether anything on screen is laid out so it cannot be read: every pane of
+      # the settings and the big surfaces, at three desktop widths and a phone, light and
+      # dark, signed out and with an account, on the same build. A name drawn a letter
+      # to a line beside a control too wide for its row passed every gate above three
+      # times and was found by Emil each time. See apps/desktop/test/e2e/layout-sweep.py.
+      - name: Nothing is laid out so it cannot be read
+        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
+
       # And the half of that rule a test over source text cannot prove: that a real
       # release does not carry the handle. `window.nibApp` is the whole workspace,
       # and the page it sits on renders other people's HTML, so "the bundler removed
@@ -186,7 +194,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: smoke-shots
-          path: apps/desktop/test/e2e/shots/smoke
+          path: |
+            apps/desktop/test/e2e/shots/smoke
+            apps/desktop/test/e2e/shots/layout-sweep
           if-no-files-found: ignore
 
   # All three platforms, because the crate is not one body of code. The taskbar's
