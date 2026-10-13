@@ -791,13 +791,25 @@ ended up hidden for a layer that covered a corner of it:
   heard; a hint, a card a row puts up under the pointer, a second toast in a row that did
   not change size came by neither, and was drawn behind the page. One watch on the
   window hears every layer come and go (`watchArrivals` in covers.ts).
+- **And the other way round: a hole for nothing.** A hint in the sidebar's foot stays in
+  the document while the sidebar is shut, hidden with its column and still laid out over
+  the corner of the page beside it, and every page was cut round it: an empty box where
+  nothing was drawn. A layer that is not drawn is no layer.
 
 An engine that cannot cut answers a layer by hiding the page behind its still, and a
 notice is up until somebody answers it, the update notice for a day. There the page ends
 above the notices instead, the way Chrome gives its download bar and infobars a band of
 their own rather than drawing them over the page (`clearOf` in covers.ts); a menu or a
 card still steps the page behind its still, and a sheet dims it. Measured with
-`scripts/web-layers-probe.py`, one step for each kind of layer.
+`scripts/web-layers-probe.py`, one step for each kind of layer, at 200 per cent:
+
+| step | before | after |
+| --- | --- | --- |
+| the update notice, the undo toast, a tab's card, the suggestions, the bar's menu, a layer nothing announces | never hidden | never hidden, cut round each |
+| each of those gone again | cut round the shut sidebar's hint | whole |
+| settings | the page's still under the sheet | the page's still under the sheet |
+| a page built under the update notice | hidden until it went | cut round it |
+| a page built under a tab's card | hidden until it went | shown |
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
