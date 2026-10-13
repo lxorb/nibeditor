@@ -40,10 +40,13 @@ say_eval() { node "$cli" eval "$1" --yes 2>&1; }
 launch() {
   open "$app"
   for _ in $(seq 60); do
-    [ -f "$endpoint" ] && running "$app" && node "$cli" status >/dev/null 2>&1 && return 0
+    [ -f "$endpoint" ] && running "$app" && node "$cli" verbs >/dev/null 2>&1 && return 0
     sleep 1
   done
   echo "the app never answered at $endpoint"
+  pgrep -fl "/Contents/MacOS/" || echo "nothing of it is running"
+  ls -la "$support" 2>&1 | head
+  node "$cli" verbs 2>&1 | head -5
   return 1
 }
 

@@ -1,3 +1,4 @@
+import { log } from './log'
 import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
 import { invoke, isDesktop } from './tauri'
@@ -156,9 +157,11 @@ export async function installStaged() {
 
   try {
     await staged.install()
-  } catch {
-    // A failed install leaves the working version alone, which is the right
-    // outcome - it will be offered again next time.
+  } catch (error) {
+    // A failed install leaves the working version alone, and it is offered again next
+    // time; said in the log, because a Mac's copy that cannot be written to fails here
+    // on every restart and nothing else would say why.
+    log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
     staged = null
   }

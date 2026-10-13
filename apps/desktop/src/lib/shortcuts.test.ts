@@ -133,6 +133,29 @@ describe('every shortcut there is', () => {
     expect(idle.map((one) => one.id)).toEqual([])
   })
 
+  /** A Mac's chords are Cmd's. `Mod` is Cmd there, so a key written with `Ctrl` reaches a
+   *  Mac as Control - the key a person from Windows reaches for and a Mac person never
+   *  does - unless the entry says on purpose what a Mac presses instead (Ctrl+Tab and
+   *  Ctrl+[ are the Mac's own, as in Safari). And Option with a letter alone is a
+   *  character on a Mac's keyboard, `å` or `∂`, so it is never a key there either. */
+  test('on a Mac, holds Cmd rather than Control unless the entry says what a Mac presses', () => {
+    // Ctrl+Alt+Space on every system, on purpose: see the entry in registry.ts.
+    const everywhere = new Set(['app.quick-add'])
+    const control = registry.SHORTCUTS.filter((one) => {
+      const key = defaultKeyFor(one, 'mac')
+      return key !== null && /(^|-)Ctrl-/.test(key) && one.mac === undefined
+    })
+    expect(control.map((one) => one.id).filter((id) => !everywhere.has(id))).toEqual([])
+
+    // Read off the whole window or the note. The AI field's Option+P and Option+T are
+    // Claude Code's own on a Mac too, and only that field hears them.
+    const typed = registry.SHORTCUTS.filter((one) => {
+      const key = defaultKeyFor(one, 'mac')
+      return one.scope !== 'panel' && key !== null && /^(Alt-)+(Shift-)?[a-z0-9]$/.test(key)
+    })
+    expect(typed.map((one) => `${one.id} ${String(defaultKeyFor(one, 'mac'))}`)).toEqual([])
+  })
+
   /** Not a desktop here, and a window of its own is a desktop's alone: the phone's
    *  bar offered New window, and it was a button that did nothing. */
   test('offers nothing only a desktop has where there is no desktop', async () => {
