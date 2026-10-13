@@ -938,8 +938,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   // The selection into the AI panel's field as `@Note:12-14`, Claude Code's Alt+K: the
   // words as they are now, which go with the next message whatever is selected then.
-  // Cmd+Opt+K on a Mac, where Option and a letter is a character - a German keyboard's
-  // degree sign is Option+K - and a key read off the whole window would eat it.
+  // Cmd+Opt+K on a Mac, where Option+K types a character (a German keyboard's °).
   {
     id: 'app.ask-selection',
     label: () => t('Selection to the AI panel'),

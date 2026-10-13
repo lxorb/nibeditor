@@ -90,10 +90,8 @@ export function frameSandbox(written: string | undefined): string {
   return allowed(written, SANDBOX, ' ')
 }
 
-/** The tokens of a sandbox this engine knows. WebKit - a Mac's, an iPhone's - has no
- *  Presentation API, and reports `allow-presentation` as an error on the console of
- *  every YouTube card pressed there; what it does not know it would ignore anyway. An
- *  engine that cannot say what it knows is given the whole list. */
+/** The sandbox tokens this engine knows: WebKit has no `allow-presentation`, and says
+ *  so on the console for every card pressed. All of them where it cannot say. */
 function known(frame: HTMLIFrameElement, sandbox: string): string {
   try {
     return sandbox
