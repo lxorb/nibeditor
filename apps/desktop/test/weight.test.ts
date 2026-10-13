@@ -611,8 +611,16 @@ function holds(tail: string): boolean {
  *  mode per tab (issue #232): which tab each pane's editor shows, the face a restored tab
  *  is dressed in before its first frame, and where a new tab starts. No module more; the
  *  1,707 bytes are in modes.svelte.ts, Editor.svelte and the tab and its session.
- *  Measured 3,227,121 and 379. */
-const BUDGET = 3_227_500
+ *  Measured 3,227,121 and 379.
+ *
+ *  Raised again 2026-10-13, to 3,230,000, from a main at 3,227,563 (63 bytes over, the
+ *  page cut round every card of the notices row, web-tab/covers.ts) for the one question
+ *  that has to be asked before anything of a launch is written: whether an earlier
+ *  version left settings here, which is who is told the name is now Orden
+ *  (renamed.svelte.ts, its code and nothing else). The card that says it is behind a
+ *  door and fetched for that one launch (RenameNotice.svelte), and the browser build's
+ *  handoff is behind the space chooser's. Measured 3,229,321. */
+const BUDGET = 3_230_000
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
