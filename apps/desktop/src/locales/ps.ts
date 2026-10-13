@@ -708,6 +708,7 @@ export const ps: Dictionary = {
   'out of space': 'زېرمه ډکه',
   'nibeditor {version} is ready to install.': 'nibeditor {version} د لګولو لپاره تيار دی.',
   'Restart now': 'اوس بيا پيلول',
+  'Move to Applications': 'اپلیکیشنونو ته یې ولېږدوئ',
   Later: 'وروسته',
   More: 'نور',
   'Open notes': 'يادښتونه پرانيستل',

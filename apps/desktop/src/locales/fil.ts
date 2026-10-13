@@ -711,6 +711,7 @@ export const fil: Dictionary = {
   'out of space': 'walang espasyo',
   'nibeditor {version} is ready to install.': 'Puwede nang i-install ang nibeditor {version}.',
   'Restart now': 'I-restart ngayon',
+  'Move to Applications': 'Ilipat sa Applications',
   Later: 'Mamaya',
   More: 'Iba pa',
   'Open notes': 'Buksan ang mga tala',

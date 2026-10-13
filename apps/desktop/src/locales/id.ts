@@ -705,6 +705,7 @@ export const id: Dictionary = {
   'out of space': 'penyimpanan penuh',
   'nibeditor {version} is ready to install.': 'nibeditor {version} siap dipasang.',
   'Restart now': 'Mulai ulang sekarang',
+  'Move to Applications': 'Pindahkan ke Aplikasi',
   Later: 'Nanti',
   More: 'Lagi',
   'Open notes': 'Buka catatan',

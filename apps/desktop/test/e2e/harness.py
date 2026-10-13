@@ -50,7 +50,9 @@ What that one import does, in the order a run meets it:
     by their paths asks for a Vite dev server instead: `Drive(__file__, dev=True)`.
   - **The browser CI has.** Playwright's own Chromium, headless, so a drive says the
     same thing here as on the nightly run; `NIB_BROWSER=chrome` for the machine's
-    own Chrome.
+    own Chrome. `NIB_ENGINE=webkit` drives Playwright's WebKit instead, which is what
+    a Mac runs the app in: the drive's keys are pressed the way a Mac presses them
+    (`mac_key`), on the loopback address rather than a name below `.localhost`.
   - **The app's own signals.** `open` waits for the handle, the space and the last
     mark of the launch order (`nib: launch order finished`, lib/startup.svelte.ts),
     which is the app saying it is up, instead of a number of milliseconds.
@@ -142,6 +144,15 @@ BUILT_IN = (
     " catch {}"
 )
 
+#: What a Mac's WebKit says its platform is. Playwright's WebKit says it is a Mac in its
+#: agent wherever it runs, and on Windows says `Win32` here, so CodeMirror - which asks
+#: this - and the app - which asks the agent - would disagree about which key is `Mod`,
+#: which no Mac ever does. Only where the agent is a Mac's: a phone's stays a phone's.
+MAC_PLATFORM = (
+    "if (/Macintosh/.test(navigator.userAgent) && navigator.platform !== 'MacIntel')"
+    " Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' })"
+)
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
@@ -212,6 +223,8 @@ def answering(browser: Any) -> Any:
 
     def answered(context: Any, first_look: bool) -> None:
         context.add_init_script(ANSWERED)
+        if WEBKIT:
+            context.add_init_script(MAC_PLATFORM)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -274,6 +287,9 @@ def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
 def mac_key(pressed: str) -> str:
     """What a Mac presses for what a drive wrote for Windows: the registry's own Mac
     key where it has one, and otherwise Cmd for Ctrl."""
+    # Ctrl held down on its own, for a press or a hover that wants it.
+    if pressed in ("Control", "ControlOrMeta"):
+        return "Meta"
     chord = _chord(pressed, "Control")
     if chord in mac_bindings():
         return mac_bindings()[chord]
@@ -292,16 +308,60 @@ def _mac_modifiers(modifiers: Sequence[str] | None) -> list[str] | None:
 def _press_as_a_mac() -> None:
     """Every key a drive presses, pressed the way a Mac would: a drive is written once,
     with Windows' keys, and in WebKit - which says it is a Mac, so the app reads Cmd as
-    its `Mod` - each chord is the Mac's. A held Ctrl on a click is Cmd as well."""
-    from playwright.sync_api import ElementHandle, Frame, Keyboard, Locator, Page
+    its `Mod` - each chord is the Mac's. A held Ctrl on a click is Cmd as well. Not in a
+    context the drive gave an agent of its own, a phone's say, where the app reads the
+    keys of whatever that agent names."""
+    import weakref
+
+    from playwright.sync_api import (
+        Browser,
+        BrowserContext,
+        ElementHandle,
+        Frame,
+        Keyboard,
+        Locator,
+        Page,
+    )
+
+    #: The keyboards and contexts whose page says it is a Mac, by the object.
+    other: weakref.WeakSet[Any] = weakref.WeakSet()
+
+    def noted(method: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def making(*args: Any, **kwargs: Any) -> Any:
+            made = method(*args, **kwargs)
+            agent = kwargs.get("user_agent")
+            context = made.context if isinstance(made, Page) else made
+            if (agent and "Mac" not in agent) or context in other:
+                other.add(context)
+                for page in context.pages:
+                    other.add(page.keyboard)
+            if isinstance(made, Page) and made.context in other:
+                other.add(made.keyboard)
+            return made
+
+        return making
+
+    Browser.new_context = noted(Browser.new_context)  # type: ignore[method-assign]
+    Browser.new_page = noted(Browser.new_page)  # type: ignore[method-assign]
+    BrowserContext.new_page = noted(BrowserContext.new_page)  # type: ignore[method-assign]
+
+    def a_mac(owner: Any) -> bool:
+        if isinstance(owner, Keyboard):
+            return owner not in other
+        page = owner if isinstance(owner, Page) else getattr(owner, "page", None)
+        if page is None and isinstance(owner, Frame):
+            page = owner.page
+        return page is None or page.context not in other
 
     def keyed(method: Callable[..., Any], at: int) -> Callable[..., Any]:
         @functools.wraps(method)
         def pressing(*args: Any, **kwargs: Any) -> Any:
-            if "key" in kwargs:
-                kwargs["key"] = mac_key(kwargs["key"])
-            elif len(args) > at:
-                args = (*args[:at], mac_key(args[at]), *args[at + 1 :])
+            if a_mac(args[0]):
+                if "key" in kwargs:
+                    kwargs["key"] = mac_key(kwargs["key"])
+                elif len(args) > at:
+                    args = (*args[:at], mac_key(args[at]), *args[at + 1 :])
             return method(*args, **kwargs)
 
         return pressing
@@ -309,7 +369,7 @@ def _press_as_a_mac() -> None:
     def modified(method: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(method)
         def clicking(*args: Any, **kwargs: Any) -> Any:
-            if "modifiers" in kwargs:
+            if "modifiers" in kwargs and a_mac(args[0]):
                 kwargs["modifiers"] = _mac_modifiers(kwargs["modifiers"])
             return method(*args, **kwargs)
 
@@ -864,6 +924,8 @@ class Drive:
             options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
             context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(ANSWERED)
+        if WEBKIT:
+            context.add_init_script(MAC_PLATFORM)
         context.add_init_script(BUILT_IN)
         return context
 
@@ -1471,8 +1533,10 @@ def needs_of(source: str) -> tuple[str, ...]:
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
     if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
         said = (*said, "native")
-    # A DevTools session is Chromium's alone, so a drive that opens one needs it too.
-    if "chromium" not in said and re.search(r"\bnew_cdp_session\b|\bconnect_over_cdp\b", source):
+    # A DevTools session is Chromium's alone, so a drive that opens one needs it too; and
+    # so is a microphone that plays a file.
+    chromium_only = r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream"
+    if "chromium" not in said and re.search(chromium_only, source):
         said = (*said, "chromium")
     return said
 

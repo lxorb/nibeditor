@@ -708,6 +708,7 @@ export const tr: Dictionary = {
   'out of space': 'yer kalmadı',
   'nibeditor {version} is ready to install.': 'nibeditor {version} kurulmaya hazır.',
   'Restart now': 'Şimdi yeniden başlat',
+  'Move to Applications': 'Uygulamalar’a taşı',
   Later: 'Sonra',
   More: 'Daha',
   'Open notes': 'Notları aç',

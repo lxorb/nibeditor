@@ -33,7 +33,7 @@ function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) return name === 'node_modules' ? [] : walk(path)
-    return /\.(ts|svelte|css|js)$/.test(name) && !/\.test\.ts$/.test(name) ? [path] : []
+    return /\.(ts|svelte|css|js)$/.test(name) && !name.endsWith('.test.ts') ? [path] : []
   })
 }
 

@@ -705,6 +705,7 @@ export const my: Dictionary = {
   'out of space': 'သိုလှောင်မှုပြည့်',
   'nibeditor {version} is ready to install.': 'nibeditor {version} တပ်ဆင်ရန်အသင့်ရှိ။',
   'Restart now': 'ယခုပြန်စ',
+  'Move to Applications': 'Applications သို့ ရွှေ့ရန်',
   Later: 'နောက်မှ',
   More: 'ပို',
   'Open notes': 'ဖွင့်ထားသောမှတ်စုများ',

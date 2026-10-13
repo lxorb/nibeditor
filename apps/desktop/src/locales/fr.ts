@@ -718,6 +718,7 @@ export const fr: Dictionary = {
   'out of space': 'plus d’espace disponible',
   'nibeditor {version} is ready to install.': 'nibeditor {version} est prêt à être installé.',
   'Restart now': 'Redémarrer maintenant',
+  'Move to Applications': 'Déplacer dans Applications',
   Later: 'Plus tard',
   More: 'Plus',
   'Open notes': 'Notes ouvertes',
