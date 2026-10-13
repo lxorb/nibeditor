@@ -447,6 +447,7 @@
      desktop's is. */
   :global([data-touch]) .scrim.is-clear {
     background: color-mix(in srgb, var(--bg) var(--scrim-ink), transparent);
+    -webkit-backdrop-filter: blur(var(--scrim-blur));
     backdrop-filter: blur(var(--scrim-blur));
   }
 

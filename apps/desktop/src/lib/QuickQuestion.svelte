@@ -29,6 +29,7 @@
   import { scrollbar } from './scrollbar'
   import { settings } from './settings.svelte'
   import { trap } from './trap'
+  import { grow } from './grow'
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
@@ -115,6 +116,7 @@
         <textarea
           bind:this={field}
           bind:value={quick.question}
+          use:grow={quick.question}
           data-lands
           rows="1"
           placeholder={t('Ask')}

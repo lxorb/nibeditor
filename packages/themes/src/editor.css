@@ -865,6 +865,7 @@
   font-size: var(--text-xs);
   text-decoration: none;
   vertical-align: 1px;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -2295,6 +2296,7 @@
   place-items: center;
   padding: 4vh 4vw;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   cursor: zoom-out;
   animation: fade-in var(--dur-base) var(--ease-out);
