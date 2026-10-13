@@ -624,7 +624,6 @@ export const mr: Dictionary = {
   Use: 'वापरा',
   Remove: 'काढा',
   'Your words': 'तुमचे शब्द',
-  Words: 'शब्द',
   'Add a word': 'शब्द जोडा',
   'Add {word} to the dictionary': '{word} शब्दकोशात जोडा',
   'Remove {word} from the dictionary': '{word} शब्दकोशातून काढा',
@@ -692,7 +691,6 @@ export const mr: Dictionary = {
   Attachments: 'अटॅचमेंट',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'पानांच्या नोंदी',
-  'New pages': 'नवी पाने',
   'Assets folder of the space': 'स्पेसचे ॲसेट फोल्डर',
   'Next to the note': 'नोंदीच्या शेजारी',
   'A folder named after the note': 'नोंदीच्या नावाचे फोल्डर',
@@ -1394,7 +1392,6 @@ export const mr: Dictionary = {
   'Keys stay in the secure store on this device.': 'कळा या उपकरणाच्या सुरक्षित साठ्यात राहतात.',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
   'AI can be wrong. Check the facts.': 'AI चुकू शकते. तथ्ये तपासा.',
-  'Used by the glasses': 'चष्मा वापरतो',
   'Could not read the models.': 'मॉडेल वाचता आले नाहीत.',
   'That provider is not set up yet.': 'तो पुरवठादार अद्याप मांडलेला नाही.',
   'Could not reach {url}': '{url} पर्यंत पोहोचता आले नाही',
@@ -2306,4 +2303,11 @@ export const mr: Dictionary = {
   Peach: 'पीच',
   Sage: 'सेज',
   Mist: 'धुके',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

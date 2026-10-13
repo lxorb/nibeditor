@@ -1,6 +1,7 @@
 import { setSnippets } from '@nib/editor'
 import { connectors } from './connectors.svelte'
-import { message } from './i18n.svelte'
+import { message, t } from './i18n.svelte'
+import { landing } from './settings/landing.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
 import { isRecord, isString, keep, stored, storedText } from './stored'
@@ -13,25 +14,41 @@ const NOTE_ID_KEY = 'nib:note-id'
 /** How an exported page is coloured: light, dark, or as the app looks now. */
 type ExportAppearance = 'light' | 'dark' | 'app'
 
+/** The pages of Settings, by the ids a link opens them at. */
 export type Section =
   | 'general'
+  | 'appearance'
   | 'editor'
+  | 'markdown'
   | 'shortcuts'
   | 'mobile'
-  | 'spelling'
-  | 'markdown'
-  | 'appearance'
-  | 'glasses'
+  | 'browser'
+  | 'tasks'
+  | 'terminal'
   | 'ai'
-  | 'agents'
-  | 'remote'
-  | 'online'
+  | 'glasses'
   | 'account'
   | 'sync'
-  | 'llm'
   | 'trash'
-  | 'import'
   | 'export'
+
+/** Pages that were pages of their own once and are part of another now, by their old
+ *  ids, so a link to one - a command, an agent's `open`, a palette row - still lands
+ *  where its rows went: Spelling in Editor, Remote and Online terminal in Terminal,
+ *  Import beside Export, Agents and LLM access in AI. */
+const MOVED = {
+  spelling: 'editor',
+  remote: 'terminal',
+  online: 'terminal',
+  import: 'export',
+  agents: 'ai',
+  llm: 'ai',
+} as const satisfies Record<string, Section>
+
+/** A page by its id now or by the one it had. */
+export type Asked = Section | keyof typeof MOVED
+
+const isMoved = (section: Asked): section is keyof typeof MOVED => section in MOVED
 
 class Settings {
   open = $state(false)
@@ -153,12 +170,14 @@ class Settings {
   at = $state<'access' | null>(null)
 
   /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
-   *  Settings > AI's Access now, and a link to either still lands there. */
-  show(section?: Section) {
-    const moved = section === 'agents' || section === 'llm'
-    this.at = moved ? 'access' : null
-    this.section = moved ? 'ai' : (section ?? 'general')
+   *  Asked for by name, a pane opens straight away on both, and a page asked for by
+   *  the id it had opens the page its rows are on now; see `MOVED`. */
+  show(section?: Asked) {
+    const moved = section !== undefined && isMoved(section)
+    this.at = section === 'agents' || section === 'llm' ? 'access' : null
+    this.section = moved ? MOVED[section] : (section ?? 'general')
+    // Spelling is a group partway down Editor, so a link to it lands on its first row.
+    if (section === 'spelling') landing.label = t('Check spelling')
     this.listing = section === undefined
     this.open = true
     this.error = null

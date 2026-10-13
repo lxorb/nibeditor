@@ -624,7 +624,6 @@ export const my: Dictionary = {
   Use: 'သုံး',
   Remove: 'ဖယ်',
   'Your words': 'သင့်စကားလုံးများ',
-  Words: 'စကားလုံးများ',
   'Add a word': 'စကားလုံးထည့်',
   'Add {word} to the dictionary': '{word} ကိုအဘိဓာန်သို့ထည့်',
   'Remove {word} from the dictionary': '{word} ကိုအဘိဓာန်မှဖယ်',
@@ -689,7 +688,6 @@ export const my: Dictionary = {
   Attachments: 'တွဲဖိုင်များ',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'စာမျက်နှာမှတ်စုများ',
-  'New pages': 'စာမျက်နှာအသစ်များ',
   'Assets folder of the space': 'အလုပ်ခွင်၏ပစ္စည်းဖိုင်တွဲ',
   'Next to the note': 'မှတ်စုအနီး',
   'A folder named after the note': 'မှတ်စုအမည်ဖြင့်ဖိုင်တွဲ',
@@ -1382,7 +1380,6 @@ export const my: Dictionary = {
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
   'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',
-  'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
   'That provider is not set up yet.': 'ထိုပေးသူ မစီစဉ်ရသေးပါ။',
   'Could not reach {url}': '{url} ကို မရောက်ပါ',
@@ -2288,4 +2285,11 @@ export const my: Dictionary = {
   Peach: 'မက်မွန်',
   Sage: 'ဆေ့ချ်',
   Mist: 'မြူ',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

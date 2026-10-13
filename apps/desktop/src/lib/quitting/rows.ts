@@ -17,9 +17,9 @@ import { ptyOf, runningTabs } from '../terminal/running'
 import type { Warning } from '../terminal/shells.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 
-/** Why the question is asked: the app quitting, a window closing, or an update's
- *  restart. */
-export type Why = 'quit' | 'window' | 'restart'
+/** Why the question is asked: the app quitting, a window closing, an update's restart,
+ *  or a window reloaded, which ends that window's own as a close does. */
+export type Why = 'quit' | 'window' | 'restart' | 'reload'
 
 /** One thing that would stop. Plain data, since another window's rows arrive over a
  *  broadcast channel; see windows.ts. */

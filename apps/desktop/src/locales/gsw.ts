@@ -624,7 +624,6 @@ export const gsw: Dictionary = {
   Use: 'Bruuche',
   Remove: 'Ewägnäh',
   'Your words': 'Dini Wörter',
-  Words: 'Wörter',
   'Add a word': 'Wort hinzuefüege',
   'Add {word} to the dictionary': '{word} is Wörterbuech uufnäh',
   'Remove {word} from the dictionary': '{word} usem Wörterbuech ewägnäh',
@@ -692,7 +691,6 @@ export const gsw: Dictionary = {
   Attachments: 'Aahäng',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Siitenotize',
-  'New pages': 'Nöii Siite',
   'Assets folder of the space': 'Medieordner vo de Ablag',
   'Next to the note': 'Nebet de Notiz',
   'A folder named after the note': 'Ordner mit em Name vo de Notiz',
@@ -1403,7 +1401,6 @@ export const gsw: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
   'AI can be wrong. Check the facts.': 'KI cha sich irre. Fakte prüefe.',
-  'Used by the glasses': 'Vo de Brille gnutzt',
   'Could not read the models.': 'D Modäll händ sich nöd läse laa.',
   'That provider is not set up yet.': 'Dä Aabieter isch na nöd iigrichtet.',
   'Could not reach {url}': '{url} nöd erreichbar',
@@ -2316,4 +2313,11 @@ export const gsw: Dictionary = {
   Peach: 'Pfirsich',
   Sage: 'Salbei',
   Mist: 'Näbel',
+  // Settings: its pages, and Reload window
+  About: 'Über',
+  'Import and export': 'Import und Export',
+  'New notes': 'Neui Notize',
+  'Reload window': 'Fänschter neu lade',
+  'Reload window?': 'Fänschter neu lade?',
+  'Reload anyway': 'Trotzdem neu lade',
 }

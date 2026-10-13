@@ -627,7 +627,6 @@ export const sw: Dictionary = {
   Use: 'Tumia',
   Remove: 'Ondoa',
   'Your words': 'Maneno yako',
-  Words: 'Maneno',
   'Add a word': 'Ongeza neno',
   'Add {word} to the dictionary': 'Ongeza {word} kwenye kamusi',
   'Remove {word} from the dictionary': 'Ondoa {word} kwenye kamusi',
@@ -695,7 +694,6 @@ export const sw: Dictionary = {
   Attachments: 'Viambatisho',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Madokezo ya kurasa',
-  'New pages': 'Kurasa mpya',
   'Assets folder of the space': 'Folda ya mali ya nafasi',
   'Next to the note': 'Karibu na dokezo',
   'A folder named after the note': 'Folda yenye jina la dokezo',
@@ -1413,7 +1411,6 @@ export const sw: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
   'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
-  'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
   'That provider is not set up yet.': 'Mtoa huduma huyo hajasanidiwa bado.',
   'Could not reach {url}': '{url} haikufikiwa',
@@ -2333,4 +2330,11 @@ export const sw: Dictionary = {
   Peach: 'Pichi',
   Sage: 'Sage',
   Mist: 'Ukungu',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

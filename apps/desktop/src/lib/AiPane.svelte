@@ -42,7 +42,6 @@
     type ProviderKind,
     reachable,
   } from './ai/providers'
-  import { glassesKey } from './even/key.svelte'
   import { message, t } from './i18n.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
@@ -400,20 +399,6 @@
   {/if}
 </p>
 <p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
-
-<!-- The account's own key, which is a different key for a different thing. Read
-     only here: it is set in Glasses, and it is never shown again anywhere. See
-     even/key.svelte.ts. -->
-{#if glassesKey.set}
-  <h3>{t('OpenAI key')}</h3>
-  <div class="card">
-    <div class="nib-setting setting">
-      <span class="name">{t('Used by the glasses')}</span>
-      <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-    </div>
-  </div>
-  <p class="hint caption">{t('Kept encrypted on your account, and never shown again.')}</p>
-{/if}
 
 <style>
   /* The settings pane's own shapes. A section in its own component does not inherit

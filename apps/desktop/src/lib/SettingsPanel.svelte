@@ -9,10 +9,13 @@
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
+  import { about } from './settings/about'
+  import { copyText } from './clipboard'
+  import { updates } from './updates.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import EngineRow from './settings/EngineRow.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
-  import { systemName } from './settings/engine'
+  import { type EngineState, systemName } from './settings/engine'
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
@@ -28,7 +31,7 @@
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
   // A view's keys are in the list from the first view on; here they are in it anyway.
   import './views/task-keys'
-  import { runnable } from './shortcuts/registry'
+  import { runnable, type Shortcut } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { NOTHING, pull } from './pull.svelte'
   import { PRESETS, presetById } from './shortcuts/presets'
@@ -41,11 +44,18 @@
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
-  import { isDesktop, openExternal, platform } from './tauri'
+  import { invoke, isDesktop, isNative, openExternal, platform } from './tauri'
   import { theme } from './theme.svelte'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
-  import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
+  import {
+    type Field,
+    type PictureSide,
+    preferences,
+    resetPane,
+    resettable,
+    type Written,
+  } from './preferences'
   import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
@@ -74,6 +84,33 @@
   /** Why the engine row's last try did not work, in its own words; see EngineRow. */
   let engineProblem = $state('')
 
+  /** The engine the pages run on now, by its name, for About; asked of the crate as
+   *  General opens, where there is a choice of two. */
+  let engineName = $state('')
+  $effect(() => {
+    if (!settings.open || settings.section !== 'general' || !systemName(platform())) return
+    void invoke<EngineState>('engine_state')
+      .then(
+        (state) =>
+          (engineName = state.running === 'chromium' ? 'Chromium' : systemName(platform())),
+      )
+      .catch(() => undefined)
+  })
+
+  /** This build, as About says it; see settings/about.ts. */
+  const build = $derived(
+    about({ version: __APP_VERSION__, stamp: __EVEN_BUILD__, engine: engineName, os: platform() }),
+  )
+  /** Whether Copy has just been pressed, which it says for a moment. */
+  let copiedAbout = $state(false)
+
+  async function copyAbout() {
+    await copyText(build.copied)
+    copiedAbout = true
+    await waited(LIT)
+    copiedAbout = false
+  }
+
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
 
@@ -88,6 +125,8 @@
   let query = $state('')
   /** Whether Settings > AI shows one agent's grant in place of its accounts. */
   let accessDetail = $state(false)
+  /** Whether Settings > Terminal shows one remote host in place of the rest. */
+  let hostOpen = $state(false)
 
   /** The generated panes, rebuilt as things change so every control shows the
    *  value it actually has. */
@@ -134,6 +173,11 @@
   // it would otherwise be waiting there the next time the settings opened.
   $effect(() => {
     if (!settings.open) store.close()
+  })
+
+  // A host left open goes with the page it was opened on.
+  $effect(() => {
+    if (!settings.open || settings.section !== 'terminal') hostOpen = false
   })
 
   // And a half-done deletion goes with the pane it was started in: coming back to
@@ -308,6 +352,11 @@
   let dragging = $state<number | null>(null)
   let dropAt = $state<number | null>(null)
 
+  /** A command the bar and the pull may offer: one that runs here, once. A second key
+   *  for a command is the same command, so the palette was in the list three times and
+   *  Commands twice. */
+  const offerable = (one: Shortcut) => runnable(one.id) && !one.alias
+
   /** Everything the bar could hold that it does not already, grouped the way the
    *  shortcuts list groups the same commands - because it is the same list.
    *  Panel and fixed entries are left out: a panel key means nothing outside the
@@ -322,7 +371,7 @@
       rows: SHORTCUTS.filter(
         (one) =>
           one.category === category.id &&
-          runnable(one.id) &&
+          offerable(one) &&
           !held.has(one.id) &&
           (!needle ||
             one.label().toLowerCase().includes(needle) ||
@@ -339,7 +388,7 @@
   const pullChoices = $derived([
     { value: NOTHING, label: t('Nothing') },
     ...CATEGORIES.flatMap((category) =>
-      SHORTCUTS.filter((one) => one.category === category.id && runnable(one.id)).map((one) => ({
+      SHORTCUTS.filter((one) => one.category === category.id && offerable(one)).map((one) => ({
         value: one.id,
         label: `${category.label()}: ${one.label()}`,
       })),
@@ -741,127 +790,151 @@
   {/if}
 {/snippet}
 
-<!-- Orden as the browser links from other programs open in: a desktop's alone, since a
-     phone's links are its own browser's and a page in a browser is inside one already.
-     The control is its own component because it asks the system and listens for the
-     window coming back; see settings/DefaultBrowser.svelte. -->
-{#snippet browserRow()}
-  <h3>{t('Browser')}</h3>
-  <div class="card">
-    <div class="nib-setting setting">
-      <span class="name">{t('Default browser')}</span>
-      <DefaultBrowser />
-    </div>
-    <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
-         there is a choice, which is Windows for now; see `systemName`. -->
-    {#if systemName(platform())}
-      <div class="nib-setting setting">
-        <span class="name">
-          {t('Engine')}
-          {#if engineProblem}<small class="warn" transition:slide={{ duration: dur(160) }}
-              >{t(engineProblem)}</small
-            >{/if}
-        </span>
-        <EngineRow onproblem={(said: string) => (engineProblem = said)} />
-      </div>
+<!-- The rows of a group written out by hand, inside its card where the group says;
+     see `Written` in preferences.ts. Each is here rather than a kind of generated field
+     because it asks the system something or holds a list, and there is one of it. -->
+{#snippet written(which: Written)}
+  {#if which === 'about'}
+    {@render aboutRows()}
+  {:else if which === 'updates'}
+    <!-- Asked for by name: the notice comes at once for whatever is waiting. -->
+    <button class="nib-action" onclick={() => void updates.check()}>{t('Check for updates')}</button
+    >
+  {:else if which === 'browser'}
+    {@render browserRows()}
+  {:else if which === 'extensions'}
+    <!-- The extensions web tabs run; see settings/ExtensionRows.svelte. -->
+    <ExtensionRows />
+  {:else if which === 'words'}
+    {@render dictionary()}
+  {:else if which === 'new-menu'}
+    <!-- Explorer's own registry, so a browser cannot offer it however Windows the
+         machine running the browser happens to be. -->
+    {#if isWindows}
+      {@render row({
+        kind: 'switch',
+        label: t('Show in Explorer’s New menu'),
+        get: () => settings.newMenu,
+        set: (on) => void settings.setNewMenu(on),
+      })}
     {/if}
-    <!-- Where a few words typed in the address field go: Chrome's list for the reader's
-         region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
-    <div class="nib-setting setting">
-      <span class="name">{t('Search engine')}</span>
-      <div class="pick">
-        <Select
-          value={customising ? CUSTOM : searchEngine.id}
-          options={[
-            ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
-            { value: CUSTOM, label: t('Custom') },
-          ]}
-          onchange={(value: string) => {
-            customising = value === CUSTOM && !searchEngine.custom
-            searchEngine.choose(value)
-          }}
-          label={t('Search engine')}
-          plain={viewport.touch}
-        />
-      </div>
-    </div>
-    {#if customising || searchEngine.id === CUSTOM}
-      <label class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
-        <span class="name">{t('Address')}</span>
-        <input
-          class="inline"
-          type="url"
-          value={searchEngine.custom}
-          placeholder="https://example.com/search?q=%s"
-          spellcheck="false"
-          autocapitalize="off"
-          autocomplete="off"
-          aria-invalid={customBad}
-          onchange={(event) => {
-            customBad = !searchEngine.setCustom(event.currentTarget.value)
-            if (!customBad) customising = false
-          }}
-        />
-      </label>
-    {/if}
-  </div>
-  <!-- The extensions web tabs run, where the engine runs any: Windows, on both of its
-       engines. See settings/ExtensionRows.svelte. -->
-  {#if platform() === 'windows'}
-    <h3>{t('Extensions')}</h3>
-    <div class="card">
-      <ExtensionRows />
-    </div>
+  {:else if which === 'import'}
+    <!-- The first screen's rows, any time later. Fetched as it is opened. -->
+    {#await import('./MigrateRows.svelte') then rows}
+      <rows.default />
+    {/await}
+  {:else if which === 'export'}
+    {@render exportRows()}
   {/if}
 {/snippet}
 
-<!-- The words the reader has said are words. Written out here rather than as
-     another kind of generated field, because there is one list like this in the
-     whole app and a new kind would be a new shape every other reader of a field
-     has to learn. Adding is mostly done where the words are met, in the menu
-     over one in the text; this is where they are read and taken back. -->
-{#snippet dictionary()}
-  <h3>{t('Your words')}</h3>
-  <div class="card">
-    <div class="nib-setting setting words">
-      <span class="name"><span class="what">{t('Words')}</span></span>
-      {#if modes.spellWords.length}
-        <div class="chips">
-          {#each modes.spellWords as word (word)}
-            <button
-              class="chip"
-              title={t('Remove')}
-              onclick={() => modes.toggleSpellWord(word, view)}
-            >
-              {word}<Cross small />
-            </button>
-          {/each}
-        </div>
-      {/if}
+<!-- Orden as the browser links from other programs open in, which asks the system and
+     listens for the window coming back (settings/DefaultBrowser.svelte); which engine
+     the pages run on; and where a few words typed in the address field go. -->
+{#snippet browserRows()}
+  <div class="nib-setting setting">
+    <span class="name">{t('Default browser')}</span>
+    <DefaultBrowser />
+  </div>
+  <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
+       there is a choice, which is Windows for now; see `systemName`. -->
+  {#if systemName(platform())}
+    <div class="nib-setting setting">
+      <span class="name">
+        {t('Engine')}
+        {#if engineProblem}<small class="warn" transition:slide={{ duration: dur(160) }}
+            >{t(engineProblem)}</small
+          >{/if}
+      </span>
+      <EngineRow onproblem={(said: string) => (engineProblem = said)} />
+    </div>
+  {/if}
+  <!-- Where a few words typed in the address field go: Chrome's list for the reader's
+       region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
+  <div class="nib-setting setting">
+    <span class="name">{t('Search engine')}</span>
+    <div class="pick">
+      <Select
+        value={customising ? CUSTOM : searchEngine.id}
+        options={[
+          ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
+          { value: CUSTOM, label: t('Custom') },
+        ]}
+        onchange={(value: string) => {
+          customising = value === CUSTOM && !searchEngine.custom
+          searchEngine.choose(value)
+        }}
+        label={t('Search engine')}
+        plain={viewport.touch}
+      />
+    </div>
+  </div>
+  {#if customising || searchEngine.id === CUSTOM}
+    <label class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
+      <span class="name">{t('Address')}</span>
       <input
         class="inline"
-        type="text"
-        placeholder={t('Add a word')}
+        type="url"
+        value={searchEngine.custom}
+        placeholder="https://example.com/search?q=%s"
         spellcheck="false"
         autocapitalize="off"
         autocomplete="off"
+        aria-invalid={customBad}
         onchange={(event) => {
-          modes.toggleSpellWord(event.currentTarget.value, view)
-          event.currentTarget.value = ''
+          customBad = !searchEngine.setCustom(event.currentTarget.value)
+          if (!customBad) customising = false
         }}
       />
-    </div>
+    </label>
+  {/if}
+{/snippet}
+
+<!-- The words the reader has said are words, at the foot of Spelling. Adding is mostly
+     done where the words are met, in the menu over one in the text; this is where they
+     are read and taken back. -->
+{#snippet dictionary()}
+  <div class="nib-setting setting words">
+    <span class="name"><span class="what">{t('Your words')}</span></span>
+    {#if modes.spellWords.length}
+      <div class="chips">
+        {#each modes.spellWords as word (word)}
+          <button
+            class="chip"
+            title={t('Remove')}
+            onclick={() => modes.toggleSpellWord(word, view)}
+          >
+            {word}<Cross small />
+          </button>
+        {/each}
+      </div>
+    {/if}
+    <input
+      class="inline"
+      type="text"
+      placeholder={t('Add a word')}
+      spellcheck="false"
+      autocapitalize="off"
+      autocomplete="off"
+      onchange={(event) => {
+        modes.toggleSpellWord(event.currentTarget.value, view)
+        event.currentTarget.value = ''
+      }}
+    />
   </div>
 {/snippet}
 
 {#snippet pane()}
   {#if current}
-    {#each current.groups as group (group.title)}
-      <h3>{group.title}</h3>
+    <!-- A remote host open in Terminal is the page while it is open. -->
+    {#each settings.section === 'terminal' && hostOpen ? [] : current.groups as group (group.title)}
+      {#if group.title}<h3>{group.title}</h3>{/if}
       <div class="card">
+        {#if group.before}{@render written(group.before)}{/if}
         {#each group.fields as field (field.label)}
           {@render row(field)}
         {/each}
+        {#if group.after}{@render written(group.after)}{/if}
       </div>
 
       <!-- What no control on the card can say about itself. A link where the
@@ -883,25 +956,16 @@
       {/if}
     {/each}
 
-    <!-- A desktop's alone; the glasses' plugin leaves the row and its engine out. -->
-    {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
-      {@render browserRow()}
-    {/if}
-
-    {#if settings.section === 'export'}
-      {@render exportExtras()}
-    {/if}
-
     {#if settings.section === 'appearance'}
       {@render appearanceExtras()}
     {/if}
 
-    {#if settings.section === 'spelling'}
-      {@render dictionary()}
-    {/if}
-
     {#if settings.section === 'glasses'}
       {@render glassesExtras()}
+    {/if}
+
+    {#if !__EVEN_PLUGIN__ && settings.section === 'terminal'}
+      {@render terminalExtras()}
     {/if}
 
     <!-- Everything above, back to how it came. -->
@@ -1045,7 +1109,7 @@
     <!-- Its own component, for the same reason as the connector's: what syncing
          is doing is a small report with two decisions in it. -->
     <SyncPane />
-  {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
+  {:else if settings.section === 'ai'}
     <!-- One page: the accounts, in a component of their own since a provider is two or
          three fields and a list fetched from a server; then Access, everything that can
          reach the notes, fetched as the page opens - nothing of the agents is in the app
@@ -1057,41 +1121,68 @@
         <access.default ondetail={(open: boolean) => (accessDetail = open)} />
       {/await}
     {/if}
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
-    <!-- Fetched as it is opened; see online/OnlinePane.svelte. -->
-    {#await import('./online/OnlinePane.svelte') then pane}
-      <pane.default />
-    {/await}
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
-    <!-- Fetched as it is opened, as Agents is; see remote/RemotePane.svelte. -->
-    {#await import('./remote/RemotePane.svelte') then pane}
-      <pane.default />
-    {/await}
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
-    <!-- The first screen's rows, any time later: Notion's Settings > Import. Fetched
-         as it is opened, as Agents is. -->
-    {#await import('./MigrateRows.svelte') then rows}
-      <div class="card">
-        <rows.default />
-      </div>
-    {/await}
   {/if}
 {/snippet}
 
-<!-- The settings on this pane only matter once something is exported, so the ways
-     of doing it belong here rather than in the palette. Commands rather than
-     settings, which is why they are not fields. -->
-{#snippet exportExtras()}
-  <h3>{t('This note')}</h3>
-  <div class="card">
-    {#each exportActions() as action (action.id)}
-      <button class="nib-action" disabled={action.disabled} onclick={action.run}>
-        {action.label}
-      </button>
-    {/each}
+<!-- Which build this is: the number, selectable, with what kind of build it is and what
+     it runs on under it, and Copy for all of that on one line. What a release or a build
+     of main is only means something where something was installed. -->
+{#snippet aboutRows()}
+  <div class="nib-setting setting">
+    <span class="name">
+      {t('Version')}
+      {#if isNative || engineName}<small
+          >{[
+            isNative
+              ? build.kind === 'stable'
+                ? t('Stable')
+                : `${t('Unstable')} #${build.kind.edge}`
+              : '',
+            engineName,
+          ]
+            .filter(Boolean)
+            .join(' · ')}</small
+        >{/if}
+    </span>
+    <div class="row">
+      <span class="text chosen">{build.version}</span>
+      <button class="nib-chip" onclick={() => void copyAbout()}
+        >{copiedAbout ? t('Copied') : t('Copy')}</button
+      >
+    </div>
   </div>
+{/snippet}
+
+<!-- The ways of exporting the note in front, under the page they lay it out on: the
+     settings above only matter once something is exported, so the ways of doing it are
+     here as well as in the palette. -->
+{#snippet exportRows()}
+  {#each exportActions() as action (action.id)}
+    <button class="nib-action" disabled={action.disabled} onclick={action.run}>
+      {action.label}
+    </button>
+  {/each}
+{/snippet}
+
+<!-- The rest of Terminal: the machines a remote terminal reaches, a desktop's alone as a
+     terminal is (remote/RemotePane.svelte), and the account's machine in the cloud
+     (online/OnlinePane.svelte). Each is fetched as the page opens, and a host opened is
+     the page while it is open, as an agent's grant is on AI's. -->
+{#snippet terminalExtras()}
+  {#if isDesktop}
+    {#if !hostOpen}<h3>{t('Remote')}</h3>{/if}
+    {#await import('./remote/RemotePane.svelte') then pane}
+      <pane.default ondetail={(open: boolean) => (hostOpen = open)} />
+    {/await}
+  {/if}
+  {#if account.user && !hostOpen}
+    <h3>{t('Online terminal')}</h3>
+    {#await import('./online/OnlinePane.svelte') then pane}
+      <pane.default />
+    {/await}
+  {/if}
 {/snippet}
 
 <!-- Every shortcut there is, grouped the way the menus group the same
@@ -1437,15 +1528,6 @@
       <button class="nib-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
-
-      {#if isWindows}
-        {@render row({
-          kind: 'switch',
-          label: t('Show in Explorer’s New menu'),
-          get: () => settings.newMenu,
-          set: (on) => void settings.setNewMenu(on),
-        })}
-      {/if}
     </div>
   {/if}
 {/snippet}
@@ -1631,6 +1713,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Words somebody may want to take with them - a version for a bug report - select
+     like a page's, where the rest of the sheet is controls. */
+  .setting .text.chosen {
+    user-select: text;
+    cursor: text;
+    font-variant-numeric: tabular-nums;
   }
 
   .setting .value {

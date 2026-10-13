@@ -626,7 +626,6 @@ export const ha: Dictionary = {
   Use: 'Yi amfani',
   Remove: 'Cire',
   'Your words': 'Kalmominka',
-  Words: 'Kalmomi',
   'Add a word': 'Ƙara kalma',
   'Add {word} to the dictionary': 'Ƙara {word} cikin ƙamus',
   'Remove {word} from the dictionary': 'Cire {word} daga ƙamus',
@@ -694,7 +693,6 @@ export const ha: Dictionary = {
   Attachments: 'Abubuwan haɗe',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Bayanin kula na shafuka',
-  'New pages': 'Sabbin shafuka',
   'Assets folder of the space': 'Babban fayil na kayan wurin',
   'Next to the note': 'Kusa da bayanin kula',
   'A folder named after the note': 'Babban fayil mai sunan bayanin kula',
@@ -1416,7 +1414,6 @@ export const ha: Dictionary = {
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
   'AI can be wrong. Check the facts.': 'AI na iya yin kuskure. Ka tabbatar da gaskiyar bayanai.',
-  'Used by the glasses': 'Tabarau na amfani da shi',
   'Could not read the models.': 'Ba a iya karanta samfuran ba.',
   'That provider is not set up yet.': 'Ba a saita wannan mai bayarwa tukuna.',
   'Could not reach {url}': 'Ba a iya kai wa {url} ba',
@@ -2333,4 +2330,11 @@ export const ha: Dictionary = {
   Peach: 'Peach',
   Sage: 'Sage',
   Mist: 'Hazo',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

@@ -624,7 +624,6 @@ export const fa: Dictionary = {
   Use: 'به کار بردن',
   Remove: 'برداشتن',
   'Your words': 'واژه‌های شما',
-  Words: 'واژه‌ها',
   'Add a word': 'افزودن واژه',
   'Add {word} to the dictionary': 'افزودن {word} به واژه‌نامه',
   'Remove {word} from the dictionary': 'برداشتن {word} از واژه‌نامه',
@@ -692,7 +691,6 @@ export const fa: Dictionary = {
   Attachments: 'پیوست‌ها',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'یادداشت‌های صفحه‌ای',
-  'New pages': 'صفحه‌های تازه',
   'Assets folder of the space': 'پوشه دارایی‌های فضا',
   'Next to the note': 'کنار یادداشت',
   'A folder named after the note': 'پوشه‌ای به نام یادداشت',
@@ -1397,7 +1395,6 @@ export const fa: Dictionary = {
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
   'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
-  'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
   'That provider is not set up yet.': 'آن فراهم‌کننده هنوز برپا نشده.',
   'Could not reach {url}': '{url} در دسترس نبود',
@@ -2305,4 +2302,11 @@ export const fa: Dictionary = {
   Peach: 'هلو',
   Sage: 'مریم‌گلی',
   Mist: 'مه',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

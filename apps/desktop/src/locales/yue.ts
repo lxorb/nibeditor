@@ -621,7 +621,6 @@ export const yue: Dictionary = {
   Use: '用',
   Remove: '移除',
   'Your words': '你嘅詞彙',
-  Words: '詞彙',
   'Add a word': '新增詞彙',
   'Add {word} to the dictionary': '將{word}加入詞典',
   'Remove {word} from the dictionary': '從詞典移除{word}',
@@ -685,7 +684,6 @@ export const yue: Dictionary = {
   Attachments: '附件',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分頁筆記',
-  'New pages': '新增頁面',
   'Assets folder of the space': '空間嘅附件檔案夾',
   'Next to the note': '同筆記同一層',
   'A folder named after the note': '以筆記命名嘅檔案夾',
@@ -1362,7 +1360,6 @@ export const yue: Dictionary = {
   'Keys stay in the secure store on this device.': '密鑰留喺呢部裝置嘅安全儲存區中。',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
-  'Used by the glasses': '供眼鏡用',
   'Could not read the models.': '冇辦法讀取模型列表。',
   'That provider is not set up yet.': '嗰個服務商仲未設定好。',
   'Could not reach {url}': '冇辦法連上{url}',
@@ -2250,4 +2247,11 @@ export const yue: Dictionary = {
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

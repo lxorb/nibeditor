@@ -621,7 +621,6 @@ export const zhHantHK: Dictionary = {
   Use: '使用',
   Remove: '移除',
   'Your words': '你的詞彙',
-  Words: '詞彙',
   'Add a word': '新增詞彙',
   'Add {word} to the dictionary': '將{word}加入詞典',
   'Remove {word} from the dictionary': '從詞典移除{word}',
@@ -685,7 +684,6 @@ export const zhHantHK: Dictionary = {
   Attachments: '附件',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分頁筆記',
-  'New pages': '新增頁面',
   'Assets folder of the space': '空間的附件檔案夾',
   'Next to the note': '與筆記同層',
   'A folder named after the note': '以筆記命名的檔案夾',
@@ -1362,7 +1360,6 @@ export const zhHantHK: Dictionary = {
   'Keys stay in the secure store on this device.': '密鑰留在此裝置的安全儲存區中。',
   'This browser holds the keys in its own storage.': '此瀏覽器把密鑰放在自己的儲存空間裏。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
-  'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型列表。',
   'That provider is not set up yet.': '該服務商還沒設定好。',
   'Could not reach {url}': '無法連上{url}',
@@ -2251,4 +2248,11 @@ export const zhHantHK: Dictionary = {
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
+  // Settings: its pages, and Reload window
+  About: '關於',
+  'Import and export': '匯入和匯出',
+  'New notes': '新筆記',
+  'Reload window': '重新載入視窗',
+  'Reload window?': '重新載入視窗?',
+  'Reload anyway': '仍然重新載入',
 }

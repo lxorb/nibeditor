@@ -566,6 +566,13 @@ export function appMenu(context: Context): MenuGroup[] {
           ...keyed('app.zoom-reset'),
           run: () => modes.resetZoom(),
         },
+        DIVIDER,
+        // Where Chrome and every Electron app keep their Reload; see reload-window.ts.
+        {
+          label: t('Reload window'),
+          ...keyed('app.reload'),
+          run: () => void import('./reload-window').then((one) => one.reloadWindow()),
+        },
       ],
     },
 

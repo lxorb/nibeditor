@@ -624,7 +624,6 @@ export const id: Dictionary = {
   Use: 'Pakai',
   Remove: 'Hapus',
   'Your words': 'Kata Anda',
-  Words: 'Kata',
   'Add a word': 'Tambah kata',
   'Add {word} to the dictionary': 'Tambahkan {word} ke kamus',
   'Remove {word} from the dictionary': 'Hapus {word} dari kamus',
@@ -689,7 +688,6 @@ export const id: Dictionary = {
   Attachments: 'Lampiran',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Catatan halaman',
-  'New pages': 'Halaman baru',
   'Assets folder of the space': 'Folder aset ruang',
   'Next to the note': 'Di sebelah catatan',
   'A folder named after the note': 'Folder bernama sama dengan catatan',
@@ -1389,7 +1387,6 @@ export const id: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Peramban ini menyimpan kunci di penyimpanannya sendiri.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Periksa faktanya.',
-  'Used by the glasses': 'Dipakai kacamata',
   'Could not read the models.': 'Tidak dapat membaca daftar model.',
   'That provider is not set up yet.': 'Penyedia itu belum disiapkan.',
   'Could not reach {url}': 'Tidak dapat menghubungi {url}',
@@ -2296,4 +2293,11 @@ export const id: Dictionary = {
   Peach: 'Persik',
   Sage: 'Sage',
   Mist: 'Kabut',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

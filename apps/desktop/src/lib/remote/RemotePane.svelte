@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Settings, Remote: every host a remote terminal reaches, in the order the picker
+  /** Settings > Terminal, Remote: every host a remote terminal reaches, in the order the picker
    *  offers the rest of them, and a row opens one (HostDetail.svelte).
    *
    *  A host of the ssh config is a mirror - its name and where it is are the config's,
@@ -18,12 +18,17 @@
   import { destinationOf, moved } from './hosts'
   import { remote } from './hosts.svelte'
 
+  /** Told whether a host is open, which is then the whole page; see Settings > Terminal. */
+  const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
+
   $effect(() => {
     void remote.refresh()
   })
 
   let chosen = $state<string | null>(null)
   const host = $derived(chosen === null ? null : (remote.byId(chosen) ?? null))
+
+  $effect(() => ondetail?.(host !== null))
 
   let problem = $state('')
 

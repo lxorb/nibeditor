@@ -659,7 +659,6 @@ export const ar: Dictionary = {
   Use: 'استخدام',
   Remove: 'إزالة',
   'Your words': 'كلماتك',
-  Words: 'كلمات',
   'Add a word': 'إضافة كلمة',
   'Add {word} to the dictionary': 'إضافة {word} إلى القاموس',
   'Remove {word} from the dictionary': 'إزالة {word} من القاموس',
@@ -737,7 +736,6 @@ export const ar: Dictionary = {
   Attachments: 'المرفقات',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ملاحظات الصفحات',
-  'New pages': 'الصفحات الجديدة',
   'Assets folder of the space': 'مجلد ملفات المساحة',
   'Next to the note': 'بجانب الملاحظة',
   'A folder named after the note': 'مجلد باسم الملاحظة',
@@ -1489,7 +1487,6 @@ export const ar: Dictionary = {
   'Keys stay in the secure store on this device.': 'تبقى المفاتيح في المخزن الآمن على هذا الجهاز.',
   'This browser holds the keys in its own storage.': 'يحفظ هذا المتصفح المفاتيح في مخزنه الخاص.',
   'AI can be wrong. Check the facts.': 'قد يخطئ الذكاء الاصطناعي. تحقّق من الحقائق.',
-  'Used by the glasses': 'تستخدمه النظارات',
   'Could not read the models.': 'تعذّرت قراءة الطُرز.',
   'That provider is not set up yet.': 'هذا المزوّد غير مُهيّأ بعد.',
   'Could not reach {url}': 'تعذّر الوصول إلى {url}',
@@ -2410,4 +2407,11 @@ export const ar: Dictionary = {
   Peach: 'خوخي',
   Sage: 'مريمية',
   Mist: 'ضباب',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

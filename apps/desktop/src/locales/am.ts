@@ -620,7 +620,6 @@ export const am: Dictionary = {
   Use: 'ተጠቀም',
   Remove: 'አስወግድ',
   'Your words': 'የእርስዎ ቃላት',
-  Words: 'ቃላት',
   'Add a word': 'ቃል ጨምር',
   'Add {word} to the dictionary': '{word} ወደ መዝገበ ቃላት ጨምር',
   'Remove {word} from the dictionary': '{word} ከመዝገበ ቃላት አስወግድ',
@@ -687,7 +686,6 @@ export const am: Dictionary = {
   Attachments: 'አባሪዎች',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'የገጾች ማስታወሻዎች',
-  'New pages': 'አዲስ ገጾች',
   'Assets folder of the space': 'የቦታው የንብረት ፎልደር',
   'Next to the note': 'ከማስታወሻው ጎን',
   'A folder named after the note': 'በማስታወሻው ስም የተሰየመ ፎልደር',
@@ -1377,7 +1375,6 @@ export const am: Dictionary = {
   'Keys stay in the secure store on this device.': 'ቁልፎች በዚህ መሣሪያ አስተማማኝ ማከማቻ ውስጥ ይቀራሉ።',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
   'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
-  'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',
   'That provider is not set up yet.': 'ያ አቅራቢ እስካሁን አልተዘጋጀም።',
   'Could not reach {url}': '{url} ላይ መድረስ አልተቻለም',
@@ -2277,4 +2274,11 @@ export const am: Dictionary = {
   Peach: 'ኮክ',
   Sage: 'ሴጅ',
   Mist: 'ጭጋግ',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

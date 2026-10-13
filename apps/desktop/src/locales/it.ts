@@ -636,7 +636,6 @@ export const it: Dictionary = {
   Use: 'Usa',
   Remove: 'Rimuovi',
   'Your words': 'Parole personali',
-  Words: 'Parole',
   'Add a word': 'Aggiungi una parola',
   'Add {word} to the dictionary': 'Aggiungi {word} al dizionario',
   'Remove {word} from the dictionary': 'Rimuovi {word} dal dizionario',
@@ -706,7 +705,6 @@ export const it: Dictionary = {
   Attachments: 'Allegati',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Note a pagine',
-  'New pages': 'Pagine nuove',
   'Assets folder of the space': 'Cartella risorse dello spazio',
   'Next to the note': 'Accanto alla nota',
   'A folder named after the note': 'Una cartella col nome della nota',
@@ -1438,7 +1436,6 @@ export const it: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Questo browser conserva le chiavi nella propria memoria.',
   'AI can be wrong. Check the facts.': 'L’IA può sbagliare. Verificare i fatti.',
-  'Used by the glasses': 'Usato dagli occhiali',
   'Could not read the models.': 'Non è stato possibile leggere i modelli.',
   'That provider is not set up yet.': 'Quel fornitore non è ancora configurato.',
   'Could not reach {url}': 'Non è stato possibile raggiungere {url}',
@@ -2365,4 +2362,11 @@ export const it: Dictionary = {
   Peach: 'Pesca',
   Sage: 'Salvia',
   Mist: 'Nebbia',
+  // Settings: its pages, and Reload window
+  About: 'Informazioni',
+  'Import and export': 'Importa ed esporta',
+  'New notes': 'Nuove note',
+  'Reload window': 'Ricarica finestra',
+  'Reload window?': 'Ricaricare la finestra?',
+  'Reload anyway': 'Ricarica comunque',
 }

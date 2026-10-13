@@ -1593,6 +1593,13 @@ export function appCommands(view?: EditorView): Command[] {
       // command that appears to do nothing at all.
       run: () => void updates.check(),
     },
+    // The window loaded again, nothing typed lost; see reload-window.ts.
+    {
+      id: 'reload',
+      label: t('Reload window'),
+      hint: shortcuts.hint('app.reload'),
+      run: () => void import('./reload-window').then((one) => one.reloadWindow()),
+    },
     {
       id: 'sidebar',
       label: workspace.panel ? t('Hide left sidebar') : t('Show left sidebar'),

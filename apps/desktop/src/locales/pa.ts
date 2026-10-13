@@ -627,7 +627,6 @@ export const pa: Dictionary = {
   Use: 'ਵਰਤੋ',
   Remove: 'ਹਟਾਓ',
   'Your words': 'ਤੁਹਾਡੇ ਸ਼ਬਦ',
-  Words: 'ਸ਼ਬਦ',
   'Add a word': 'ਸ਼ਬਦ ਜੋੜੋ',
   'Add {word} to the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਵਿੱਚ ਜੋੜੋ',
   'Remove {word} from the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਤੋਂ ਹਟਾਓ',
@@ -695,7 +694,6 @@ export const pa: Dictionary = {
   Attachments: 'ਨਾਲ ਲੱਗੀਆਂ ਚੀਜ਼ਾਂ',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ਸਫ਼ਿਆਂ ਵਾਲੀਆਂ ਨੋਟਾਂ',
-  'New pages': 'ਨਵੇਂ ਸਫ਼ੇ',
   'Assets folder of the space': 'ਥਾਂ ਦਾ ਸਮੱਗਰੀ ਫੋਲਡਰ',
   'Next to the note': 'ਨੋਟ ਦੇ ਨਾਲ',
   'A folder named after the note': 'ਨੋਟ ਦੇ ਨਾਂ ਵਾਲਾ ਫੋਲਡਰ',
@@ -1401,7 +1399,6 @@ export const pa: Dictionary = {
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
   'AI can be wrong. Check the facts.': 'AI ਗਲਤ ਹੋ ਸਕਦਾ ਹੈ। ਤੱਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
-  'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',
   'That provider is not set up yet.': 'ਉਹ ਪ੍ਰਦਾਤਾ ਹਾਲੇ ਨਹੀਂ ਲੱਗਾ।',
   'Could not reach {url}': '{url} ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ',
@@ -2309,4 +2306,11 @@ export const pa: Dictionary = {
   Peach: 'ਆੜੂ',
   Sage: 'ਸੇਜ',
   Mist: 'ਧੁੰਦ',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

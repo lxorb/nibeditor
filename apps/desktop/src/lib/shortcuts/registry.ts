@@ -1214,6 +1214,21 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-0',
     run: () => modes.resetZoom(),
   },
+  {
+    // The window loaded again, with every word written first; see reload-window.ts.
+    // No key on Windows or Linux, where Ctrl+R is two other people's: a shell's search
+    // back through its history, and Vim's redo, which an app key read off the window
+    // would take from both. Cmd+R on a Mac, where Cmd never reaches a shell and Vim's
+    // redo is Ctrl. Over a page the bar reads its own reload first, so Cmd+R there is
+    // still the page's, as in Safari; see `web.reload`.
+    id: 'app.reload',
+    label: () => t('Reload window'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    mac: 'Mod-r',
+    run: () => void import('../reload-window').then((one) => one.reloadWindow()),
+  },
 ]
 
 /** The ninth digit, which is the last tab rather than the ninth. */

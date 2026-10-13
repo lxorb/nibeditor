@@ -636,7 +636,6 @@ export const ptPT: Dictionary = {
   Use: 'Usar',
   Remove: 'Remover',
   'Your words': 'Palavras próprias',
-  Words: 'Palavras',
   'Add a word': 'Adicionar uma palavra',
   'Add {word} to the dictionary': 'Adicionar {word} ao dicionário',
   'Remove {word} from the dictionary': 'Remover {word} do dicionário',
@@ -705,7 +704,6 @@ export const ptPT: Dictionary = {
   Attachments: 'Anexos',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Notas de páginas',
-  'New pages': 'Páginas novas',
   'Assets folder of the space': 'Pasta de recursos do espaço',
   'Next to the note': 'Ao lado da nota',
   'A folder named after the note': 'Uma pasta com o nome da nota',
@@ -1433,7 +1431,6 @@ export const ptPT: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no seu próprio armazenamento.',
   'AI can be wrong. Check the facts.': 'A IA pode errar. Confirme os factos.',
-  'Used by the glasses': 'Usado pelos óculos',
   'Could not read the models.': 'Não foi possível ler os modelos.',
   'That provider is not set up yet.': 'Esse fornecedor ainda não está configurado.',
   'Could not reach {url}': 'Não foi possível alcançar {url}',
@@ -2354,4 +2351,11 @@ export const ptPT: Dictionary = {
   Peach: 'Pêssego',
   Sage: 'Salva',
   Mist: 'Névoa',
+  // Settings: its pages, and Reload window
+  About: 'Acerca',
+  'Import and export': 'Importar e exportar',
+  'New notes': 'Novas notas',
+  'Reload window': 'Recarregar janela',
+  'Reload window?': 'Recarregar janela?',
+  'Reload anyway': 'Recarregar mesmo assim',
 }

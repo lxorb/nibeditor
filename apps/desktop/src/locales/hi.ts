@@ -624,7 +624,6 @@ export const hi: Dictionary = {
   Use: 'उपयोग करें',
   Remove: 'निकालें',
   'Your words': 'आपके शब्द',
-  Words: 'शब्द',
   'Add a word': 'शब्द जोड़ें',
   'Add {word} to the dictionary': '{word} को शब्दकोश में जोड़ें',
   'Remove {word} from the dictionary': '{word} को शब्दकोश से निकालें',
@@ -692,7 +691,6 @@ export const hi: Dictionary = {
   Attachments: 'अटैचमेंट',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'पृष्ठ नोट',
-  'New pages': 'नए पृष्ठ',
   'Assets folder of the space': 'स्पेस का एसेट फ़ोल्डर',
   'Next to the note': 'नोट के पास',
   'A folder named after the note': 'नोट के नाम का फ़ोल्डर',
@@ -1394,7 +1392,6 @@ export const hi: Dictionary = {
   'This browser holds the keys in its own storage.':
     'यह ब्राउज़र कुंजियाँ अपने ही भंडार में रखता है।',
   'AI can be wrong. Check the facts.': 'AI गलत हो सकता है। तथ्यों की जाँच करें।',
-  'Used by the glasses': 'चश्मा इसका उपयोग करता है',
   'Could not read the models.': 'मॉडल पढ़े नहीं जा सके।',
   'That provider is not set up yet.': 'वह प्रदाता अभी सेट नहीं हुआ।',
   'Could not reach {url}': '{url} तक नहीं पहुँच सके',
@@ -2301,4 +2298,11 @@ export const hi: Dictionary = {
   Peach: 'आड़ू',
   Sage: 'सेज',
   Mist: 'धुंध',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

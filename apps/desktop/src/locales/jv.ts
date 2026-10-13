@@ -624,7 +624,6 @@ export const jv: Dictionary = {
   Use: 'Pakai',
   Remove: 'Busak',
   'Your words': 'Tembung sampeyan',
-  Words: 'Tembung',
   'Add a word': 'Tambah tembung',
   'Add {word} to the dictionary': 'Tambahake {word} menyang bausastra',
   'Remove {word} from the dictionary': 'Busak {word} saka bausastra',
@@ -689,7 +688,6 @@ export const jv: Dictionary = {
   Attachments: 'Lampiran',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Cathetan kaca',
-  'New pages': 'Kaca anyar',
   'Assets folder of the space': 'Folder aset papan',
   'Next to the note': 'Ing sandhinge cathetan',
   'A folder named after the note': 'Folder kanthi jeneng cathetan',
@@ -1383,7 +1381,6 @@ export const jv: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Priksa fakta-faktane.',
-  'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',
   'That provider is not set up yet.': 'Panyedhiya kuwi durung disetel.',
   'Could not reach {url}': 'Ora bisa nggayuh {url}',
@@ -2288,4 +2285,11 @@ export const jv: Dictionary = {
   Peach: 'Persik',
   Sage: 'Sage',
   Mist: 'Pedhut',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }
