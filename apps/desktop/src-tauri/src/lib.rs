@@ -94,6 +94,7 @@ mod extensions;
 mod foreground;
 mod front_matter;
 // The window's full screen, which a run sent off the screen never takes; see full_screen.rs.
+#[cfg(desktop)]
 mod full_screen;
 mod fuzzy;
 #[cfg(desktop)]
@@ -377,6 +378,8 @@ macro_rules! desktop_commands {
             obsidian_vaults::obsidian_vaults,
             obsidian_vaults::obsidian_vault_files,
             obsidian_vaults::read_obsidian_file,
+            full_screen::window_fullscreen,
+            full_screen::window_is_fullscreen,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
             handed_pdfs::bring_in_pdf,
