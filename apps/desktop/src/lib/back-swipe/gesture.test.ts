@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  BACKING,
   coasting,
   distance,
   FLING,
@@ -13,9 +14,9 @@ import {
   type Turn,
 } from './gesture'
 
-/** A window of 1000 by 700: the fingers travel 240 pixels past the start on a touchpad,
- *  190 on a screen. */
-const ROOM = { width: 1000, height: 700 }
+/** A window of 800 by 600: the fingers travel 180 pixels past the start on a touchpad,
+ *  150 on a screen. */
+const ROOM = { width: 800, height: 600 }
 const PAD = distance('touchpad', ROOM.width, ROOM.height)
 
 const EDGE: Record<Side, boolean> = { left: false, right: false }
@@ -39,6 +40,8 @@ function stream(
 }
 
 const swipe = (source: Source = 'touchpad') => new Swipe(source, () => ROOM)
+/** A precision touchpad's, which says when the fingers lift. */
+const told = () => new Swipe('touchpad', () => ROOM, true)
 const times = (count: number, step: readonly [number, number]) =>
   Array.from({ length: count }, () => step)
 
@@ -195,13 +198,13 @@ describe('the touchpad coasting', () => {
 })
 
 test('the distance is Chrome s share of the longer side, less the start, never tiny', () => {
-  expect(distance('touchpad', 1000, 700)).toBe(1000 * 0.3 - START.touchpad)
-  expect(distance('touch', 1000, 700)).toBe(1000 * 0.25 - START.touch)
+  expect(distance('touchpad', 800, 600)).toBe(800 * 0.3 - START.touchpad)
+  expect(distance('touch', 800, 600)).toBe(800 * 0.25 - START.touch)
   expect(distance('touchpad', 200, 150)).toBe(80)
-  expect(PAD).toBe(240)
+  expect(PAD).toBe(180)
 })
 
-test('a wide window never asks for more of the pad than a third of it', () => {
+test('a wide window never asks for more of the pad than the most', () => {
   // Chrome's share of a 1920 window would be 516 pixels past the start.
   expect(distance('touchpad', 1920, 1080)).toBe(MOST)
   expect(distance('touch', 2560, 1440)).toBe(MOST)
@@ -226,4 +229,76 @@ test('the content is asked only until the stream has said whose it is', () => {
   const down = swipe()
   stream(down, times(8, [0, 10]))
   expect(down.asking).toBe(false)
+})
+
+describe('a touchpad that says when the fingers lift', () => {
+  test('held still past the distance is armed, for as long as the hand likes, and goes on the lift', () => {
+    const one = told()
+    const { shown, at } = stream(one, times(40, [-10, 0]))
+    expect(shown.phase).toBe('tracking')
+    expect(shown.progress).toBeGreaterThanOrEqual(1)
+    // Nothing for a long while is still nothing: only the lift decides.
+    expect(one.shown.phase).toBe('tracking')
+    expect(one.lift(at + 5000).phase).toBe('went')
+  })
+
+  test('slowing down to a stop is never read as a coast', () => {
+    const one = told()
+    const slowing: (readonly [number, number])[] = [
+      ...times(14, [-16, 0] as const),
+      ...Array.from({ length: 8 }, (_, at): [number, number] => [-16 * 0.85 ** (at + 1), 0]),
+    ]
+    // Untold, the same steps are a coast, decided as it starts.
+    expect(stream(swipe(), slowing).shown.phase).toBe('went')
+    const { shown, at } = stream(one, slowing)
+    expect(shown.phase).toBe('tracking')
+    expect(one.lift(at + 200).phase).toBe('went')
+  })
+
+  test('past the distance and brought back short of it before the lift stays', () => {
+    const one = told()
+    stream(one, times(30, [-10, 0]))
+    expect(one.shown.progress).toBeGreaterThanOrEqual(1)
+    const { at } = stream(one, times(15, [10, 0]), {}, 2000)
+    expect(one.shown.progress).toBeLessThan(1)
+    expect(one.lift(at + 200).phase).toBe('stayed')
+  })
+
+  test('flicked back the way it came at the lift stays, however far it had come', () => {
+    const one = told()
+    stream(one, times(40, [-10, 0]))
+    // Back at 1.25 pixels a millisecond, still past the distance.
+    const { at, shown } = stream(one, times(6, [10, 0]), {}, 2000)
+    expect(shown.progress).toBeGreaterThanOrEqual(1)
+    expect(10 / 8).toBeGreaterThan(BACKING)
+    expect(one.lift(at + 8).phase).toBe('stayed')
+  })
+
+  test('a fling towards the arrow goes at the lift, short of the distance', () => {
+    const one = told()
+    const { at, shown } = stream(one, times(10, [-12, 0]))
+    expect(shown.progress).toBeLessThan(1)
+    expect(shown.phase).toBe('tracking')
+    expect(one.lift(at + 8).phase).toBe('went')
+  })
+
+  test('the same sweep held still before the lift is no fling', () => {
+    const one = told()
+    const { at } = stream(one, times(10, [-12, 0]))
+    expect(one.lift(at + 200).phase).toBe('stayed')
+  })
+
+  test('the arrow is where the fingers are, pixel for pixel past the start', () => {
+    const one = told()
+    expect(stream(one, times(10, [-10, 0])).shown.travel).toBe(100 - START.touchpad)
+    expect(stream(one, times(5, [4, 0]), {}, 2000).shown.travel).toBe(100 - START.touchpad - 20)
+  })
+
+  test('a scroll down that turns sideways in the same gesture stays a scroll', () => {
+    const one = told()
+    stream(one, times(10, [0, 12]))
+    const { shown, at } = stream(one, times(60, [-15, 0]), {}, 2000)
+    expect(shown.phase).toBe('content')
+    expect(one.lift(at + 8).phase).toBe('idle')
+  })
 })

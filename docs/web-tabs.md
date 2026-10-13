@@ -919,25 +919,32 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
   straight down included, so a scroll down a page that drifts sideways as it goes is a
   scroll down to its end and never brings the arrow out half way (#209; until then a step
   with nothing sideways in it was not counted until one with something was, and a long
-  scroll down could add up enough drift to go back). A page says nothing at all for a
-  scroll down: it adds the stream up itself and says it only once it is sideways on
-  purpose, with what went before. Shift, Ctrl and a tilted wheel's whole notches are
+  scroll down could add up enough drift to go back). On a precision touchpad the stream is
+  the whole time the fingers are down, so a scroll down that pauses and then goes sideways
+  is still the scroll it began as. A page says a scroll down once, as what it added up to,
+  and nothing more; it adds a stream up itself and says the rest only once it is sideways
+  on purpose, with what went before. Shift, Ctrl and a tilted wheel's whole notches are
   never a swipe; Chrome never swipes on a mouse.
-- **Shown before it happens.** A circle with an arrow follows the fingers in from the side,
-  gliding the app's shortest move between two steps so a page's steps, which cross the
-  engine a frame apart and not always evenly, read as one movement. A ring round its edge
-  fills with the accent as the fingers go, so how far is left is in sight; once letting go
-  would go, the circle fills with it and the arrow gives one small push. It goes with one
-  burst when it does or slides back out when it does not. It goes at three tenths of the
-  window's longer side less the start (a quarter on a screen), but never more than 320
-  pixels - Chrome measures the screen, and a touchpad is the same size under a window of
-  any width, so on a wide window Chrome's share was most of the pad - or at any distance
-  for a fling faster than 1100 pixels a second. A side with nothing to go to shows no arrow
-  at all. With reduced motion every one of those moves is a change of state.
-- **One swipe, one step.** The touchpad's coast goes on after a swipe has gone, and the
-  step itself can leave a gap in it - a page replaced, a note drawn - long enough to read as
-  the fingers lifting. A stream that begins within 300 ms of a swipe that went is that
-  coast, and nobody's; a hand that lifts and sweeps again takes longer than that.
+- **Shown before it happens, and decided as the fingers lift.** A circle with an arrow
+  comes in from behind the side with the fingers, pixel for pixel, and is drawn where they
+  are with no glide behind them. A ring round its edge fills with the accent as the fingers
+  go, so how far is left is in sight; once letting go would go, the circle fills with it
+  and the arrow gives one small push, and past that it moves on against a growing pull.
+  Nothing happens while the fingers are down, however long they are held. They lift, and
+  it goes if they had come three tenths of the window's longer side less the start (a
+  quarter on a screen), but never more than 200 pixels - Chrome measures the screen, and a
+  touchpad is the same size under a window of any width - or were moving towards it faster
+  than 1100 pixels a second, measured over the hand's last 80 ms. Brought back short of
+  that, or flicked back the way they came faster than 500 pixels a second, it slides back
+  out and nothing happens. It goes with one burst. A side with nothing to go to shows no
+  arrow at all. With reduced motion every one of those moves is a change of state.
+- **One gesture, one step.** On a precision touchpad, everything after the fingers lift
+  until they land again - the pad's coast, a wheel that is not the pad - is nobody's, and a
+  third finger is Windows' own gesture, which ends the swipe as nothing. Where no pad says
+  when the fingers lift, the coast goes on after a swipe has gone and the step itself can
+  leave a gap in it - a page replaced, a note drawn - long enough to read as the fingers
+  lifting, so a stream that begins within 300 ms of a swipe that went is that coast, and
+  nobody's.
 - **Off in Settings > General > Tabs**, _Swipe between pages_ (Safari's words for its own
   switch): Chrome has no such switch, and how to turn its swipe off is one of the things
   people most often ask about it. Not on a phone, whose sides are the system's back.
@@ -974,17 +981,42 @@ never moves, hides or goes blank, and is whole again once the arrow has gone. On
 Chromium, which cuts nothing, a page steps behind its picture for the arrow as it does for
 a menu.
 
-**When the fingers lift.** A page is never told: a touchpad's scroll is wheel events and
-nothing else. So a stream ends when they stop for 120 ms, and at once when they turn into
-the touchpad's own coasting after a flick - a run of steadily shrinking steps, which is
-where Chrome would have seen the fling - so a flick goes back without waiting for the coast
-to run out.
+**When the fingers lift.** Emil, 2026-10-12 (#209): _"the touchpad swipe still feels very
+unintuitive. e.g. it is possible to swipe and trigger a "back" whilst not even released the
+touchpad. needs rework"_. A page, and the app's own page, hear two fingers on a touchpad as
+wheel events and nothing else, so the swipe had guessed the lift: the wheel quiet for
+120 ms, or slowing the way a coast slows. A hand held still past the distance, or slowing
+down on the pad, was a hand let go of, and went back under the fingers. Chrome never
+guesses - Windows hands it the pad's gesture, which ends as the fingers leave - but the
+window is handed no gesture, because the pad's scroll reaches it through the engine.
 
-Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers), `edge.test.ts`,
-`test/effects/swipe.effect.test.ts` (the wiring, the arrow, a page's swipe, the setting),
-`test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page
-script in a page), and `scripts/swipe-probe.py`, which posts sideways wheel messages to the
-probe's own window, off every screen, over a note and over a page in a web tab.
+So the window reads the pad itself (`src-tauri/src/touchpad.rs`). A precision touchpad is
+a HID digitizer, and Windows hands any program that asks for them its raw reports: each
+frame says how many contacts it holds and whether each one is touching. A thread of the
+crate's own, with a window that is only a mailbox, puts the reports back into frames and
+says one number as it changes - the fingers on the pad - as `nib://touchpad`, and only
+while nib is in front, but for a lift. Nothing else about the hand leaves the crate. From
+the first time it says so, a touchpad's stream is the time two fingers are down, and only
+their lift decides it (`told` in `gesture.ts`). The same for both of Windows' engines, since
+the reports are the app's and not the engine's.
+
+Where nothing says when the fingers lift - a touchpad that is not a precision one, a Mac -
+a stream still ends when the wheel stops for 120 ms, and at once when it turns into the
+touchpad's own coasting after a flick, a run of steadily shrinking steps.
+
+Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers, and a hand that says when it
+lifts), `edge.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
+page's swipe, the setting, and every gesture in `test/effects/swipe-replays.json`),
+`touchpad.rs`'s own tests (frames put back together, and what is said while nib is behind),
+`test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page script
+in a page), and `scripts/swipe-probe.py`, which posts sideways wheel messages to the probe's
+own window, off every screen, over a note and over a page in a web tab, and plays the
+replays there with the fingers said as the crate says them. The replays are shaped on what a
+pad reports - a step every 8 ms while the hand moves, nothing while it is held, a coast
+after a lift - and are not a recording of a hand: no report of a real pad reaches a probe.
+On the build before this, a sweep past the distance went back with the fingers still on the
+pad, over a note and over a page, and over a page a third finger went back too; on this one
+every replay steps only as it should, both places.
 
 ### The browser build: a card, and a frame when asked
 
@@ -2048,6 +2080,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
 | `apps/desktop/src-tauri/src/web_swipe.rs`, `web_swipe.js` | a swipe over a page, said by the page through a binding in nib's world and read into numbers for the window. Unit tested; the script in `test/e2e/swipe.py` |
+| `apps/desktop/src-tauri/src/touchpad.rs` | how many fingers are on a precision touchpad, from its raw reports, said to the window so a swipe is decided as they lift. Unit tested; replayed in `scripts/swipe-probe.py` |
 | `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom, kept as the app's own, and Ctrl+0; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |

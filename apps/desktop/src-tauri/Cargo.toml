@@ -424,6 +424,10 @@ windows = { version = "0.58", features = [
   # The shape of a web tab's page, with the app's layers over it cut out of it rather
   # than the page hidden for them; see web_cut.rs.
   "Win32_Graphics_Gdi",
+  # How many fingers are on a precision touchpad, from its own reports, so a swipe is
+  # decided as they lift and not before; see touchpad.rs.
+  "Win32_UI_Input",
+  "Win32_Devices_HumanInterfaceDevice",
   # Reminders put on Windows' own schedule of toasts, which rings them with nib not
   # running: the notifier, the toast's XML and the moment it rings. See
   # reminders/toasts.rs.

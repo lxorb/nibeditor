@@ -10,8 +10,9 @@ What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_sw
   - the page script in a site's page says each sideways scroll the page left over, and
     says that the page took it where a scroller in the page could still move, where the
     page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
-    where the page's own handler took the wheel; and says nothing for a scroll down - one
-    that drifts sideways as it goes included - or a tilted wheel's notch.
+    where the page's own handler took the wheel; and says a scroll down once, as the scroll
+    down it added up to - one that drifts sideways as it goes included - and a tilted
+    wheel's notch not at all.
 
 The sweeps are Chromium's own smooth scroll gestures from the protocol
 (`Input.synthesizeScrollGesture`), whose wheel events are trusted and precise - a pixel
@@ -227,13 +228,20 @@ def page_script(browser: Browser) -> None:
     else:
         say("ok   a handler that took the wheel keeps it")
 
-    if heard("#words", 0, 100):
-        wrong("a scroll down was said")
+    def once_down(said: list[dict[str, object]]) -> bool:
+        if len(said) != 1:
+            return False
+        across, down = abs(float(str(said[0]["dx"]))), abs(float(str(said[0]["dy"])))
+        return down > 60 and down > across * 2.5
+
+    straight = heard("#words", 0, 100)
+    if not once_down(straight):
+        wrong(f"a scroll down was not said once, as a scroll down: {json.dumps(straight)}")
     drifting = heard("#words", 60, 400)
-    if drifting:
-        wrong(f"a scroll down that drifted sideways was said: {json.dumps(drifting)}")
+    if not once_down(drifting):
+        wrong(f"a scroll down that drifted sideways was not said once, down: {json.dumps(drifting)}")
     else:
-        say("ok   a scroll down that drifts sideways says nothing")
+        say("ok   a scroll down, drifting sideways or not, is said once as a scroll down")
     if heard("#words", 100, notch=True):
         wrong("a tilted wheel's notch was said")
     page.evaluate("document.documentElement.style.overscrollBehaviorX = 'none'")

@@ -16,10 +16,18 @@
  *  tab walks the trail its arrows walk - a tab revived after a relaunch included - and a
  *  note tab walks the notes it has shown. Fetched as the launch ends; see `warmDoors`.
  *
- *  **One swipe, one step.** The touchpad's coast goes on after a swipe has gone, and the
- *  step itself can leave a gap in it - a page is replaced, a note is drawn - long enough to
- *  read as the fingers lifting. What arrives within `SETTLE` of that is the same coast, and
- *  nobody's. */
+ *  **The fingers on the pad.** A precision touchpad says, through the crate, how many
+ *  fingers are on it (`nib://touchpad`; src-tauri/src/touchpad.rs). Once it has said so
+ *  once, a touchpad's stream is the time two fingers are down: it starts when they land,
+ *  is decided only when they lift, and everything after the lift until they land again -
+ *  the pad's coast, a wheel that is not the pad - is nobody's. So one gesture is one step
+ *  at most, however the coast runs, and a hand held still past the distance is only
+ *  armed. Three fingers are Windows' own gestures, and end the stream as nothing.
+ *
+ *  **One swipe, one step,** where the pad says nothing. The touchpad's coast goes on after
+ *  a swipe has gone, and the step itself can leave a gap in it - a page is replaced, a
+ *  note is drawn - long enough to read as the fingers lifting. What arrives within
+ *  `SETTLE` of that is the same coast, and nobody's. */
 
 import { mount, unmount } from 'svelte'
 import { overlays } from '../overlays'
@@ -64,6 +72,8 @@ interface Live {
   swipe: Swipe
   tab: Tab
   source: Source
+  /** Whether the hand says when it lifts: a finger, or a touchpad that has said so. */
+  told: boolean
   /** Whether the arrow has been out, so a decision is played rather than skipped. */
   shown: boolean
   /** Whether a step has been taken for it, so a coast cannot take a second. */
@@ -83,6 +93,10 @@ let quiet: ReturnType<typeof setTimeout> | undefined
 let clearing: ReturnType<typeof setTimeout> | undefined
 /** Until when, on this window's clock, a touchpad's new stream is the last swipe's coast. */
 let settling = 0
+
+/** What the touchpad has said of the fingers on it: whether it says anything at all, and
+ *  whether two or more are down now. */
+const pad = { known: false, down: false }
 
 /** Which way a side goes: Back at the left, unless the interface reads right to left,
  *  where the history runs the other way across the screen too. */
@@ -130,6 +144,7 @@ function draw(one: Live) {
   swiping.side = side
   swiping.stage = phase === 'went' ? 'went' : phase === 'stayed' ? 'stayed' : 'tracking'
   swiping.progress = progress
+  swiping.travel = one.swipe.shown.travel
   swiping.turn++
 }
 
@@ -140,6 +155,7 @@ function played() {
     swiping.tab = null
     swiping.room = null
     swiping.progress = 0
+    swiping.travel = 0
     swiping.turn++
   }, dur(PLAYS))
 }
@@ -163,17 +179,22 @@ function decided(one: Live, phase: 'went' | 'stayed', side: Side) {
  *  kind of hand, ends the stream before it. */
 export function heard(step: Heard): void {
   if (!swipeChoice.on) return
+  // The fingers are off the pad: the coast of a gesture already decided, or a wheel
+  // that is not the pad's. Nobody's.
+  if (step.source === 'touchpad' && pad.known && !pad.down) return
   if (live && (live.tab.id !== step.tab.id || live.source !== step.source)) lift()
 
   const now = performance.now()
+  const told = step.source === 'touch' || pad.known
   live ??= {
-    swipe: new Swipe(step.source, () => ({ width: innerWidth, height: innerHeight })),
+    swipe: new Swipe(step.source, () => ({ width: innerWidth, height: innerHeight }), told),
     tab: step.tab,
     source: step.source,
+    told,
     shown: false,
     stepped: false,
     went: false,
-    swallowed: step.source === 'touchpad' && now < settling,
+    swallowed: !told && now < settling,
     at: step.at,
     heardAt: now,
   }
@@ -183,7 +204,7 @@ export function heard(step: Heard): void {
   // A touchpad never says it was let go of; a finger does. See gesture.ts. Gone quiet,
   // it was let go of that long after its last step, on that step's own clock.
   clearTimeout(quiet)
-  if (step.source === 'touchpad') quiet = setTimeout(() => lift(step.at + QUIET), QUIET)
+  if (!one.told) quiet = setTimeout(() => lift(step.at + QUIET), QUIET)
   if (one.swallowed) return
 
   const turn: Turn = {
@@ -220,7 +241,34 @@ export function lift(at?: number): void {
     if (one.shown) draw(one)
     decided(one, shown.phase, shown.side)
   }
-  if (one.went && one.source === 'touchpad') settling = performance.now() + SETTLE
+  if (one.went && !one.told) settling = performance.now() + SETTLE
+}
+
+/** The stream ends as nothing: the arrow, if it was out, goes back, and nothing is
+ *  stepped. */
+function dropped() {
+  clearTimeout(quiet)
+  const one = live
+  live = null
+  if (one && !one.stepped && one.shown) decided(one, 'stayed', one.swipe.shown.side)
+}
+
+/** How many fingers are on the touchpad now, as the crate says it. Two landing start a
+ *  gesture and two lifting end it, decided there; a third is Windows' own. See the top. */
+export function touchpad(fingers: number): void {
+  pad.known = true
+  if (fingers >= 3) {
+    if (live?.source === 'touchpad') dropped()
+    pad.down = false
+    return
+  }
+  const down = fingers >= 2
+  if (down === pad.down) return
+  pad.down = down
+  if (live?.source !== 'touchpad') return
+  // Landing again with a stream still open is one whose lift was never heard.
+  if (down) dropped()
+  else lift()
 }
 
 /** The tab a window event is over, when it is one a swipe may start on: inside a pane's
@@ -340,6 +388,13 @@ export function readSaid(value: unknown): Said | null {
   return { tab, kind, dx, dy, at, left: left === true, right: right === true }
 }
 
+/** How many fingers the crate says are on the touchpad; see src-tauri/src/touchpad.rs. */
+export function readFingers(value: unknown): number | null {
+  if (typeof value !== 'object' || value === null) return null
+  const { fingers } = value as Record<string, unknown>
+  return typeof fingers === 'number' && Number.isInteger(fingers) && fingers >= 0 ? fingers : null
+}
+
 /** A page's swipe, in the window's pixels: a page zoomed in reports its own, smaller
  *  ones. */
 export function pageSaid(said: Said): void {
@@ -384,8 +439,16 @@ export function listen(): () => void {
         const said = readSaid(event.payload)
         if (said) pageSaid(said)
       })
-      if (stopped) off()
-      else unlisten = off
+      const offPad = await hear('nib://touchpad', (event) => {
+        const fingers = readFingers(event.payload)
+        if (fingers !== null) touchpad(fingers)
+      })
+      const both = () => {
+        off()
+        offPad()
+      }
+      if (stopped) both()
+      else unlisten = both
     })
   }
 
@@ -401,6 +464,8 @@ export function listen(): () => void {
     }
     lift()
     settling = 0
+    pad.known = false
+    pad.down = false
     void unmount(arrow)
     target.remove()
   }

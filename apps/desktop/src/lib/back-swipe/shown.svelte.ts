@@ -27,6 +27,8 @@ export const swiping = $state<{
   stage: Stage
   /** One where letting go goes; past one it runs a little further and stops. */
   progress: number
+  /** How far past the start the fingers have come, in pixels, which the arrow follows. */
+  travel: number
   /** Counts every change, for a web tab to place its page again on each. */
   turn: number
-}>({ tab: null, room: null, side: 'left', stage: 'tracking', progress: 0, turn: 0 })
+}>({ tab: null, room: null, side: 'left', stage: 'tracking', progress: 0, travel: 0, turn: 0 })

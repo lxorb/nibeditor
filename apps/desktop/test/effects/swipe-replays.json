@@ -1,0 +1,128 @@
+{
+  "about": "Two-finger gestures on a precision touchpad, replayed step by step: by test/effects/swipe.effect.test.ts through the window's own listeners, and by scripts/swipe-probe.py in the native app, with wheel messages posted to the app's page and the touchpad's fingers said as the crate says them (nib://touchpad). Each is shaped on what a pad reports: a step every 8 ms while the hand moves, nothing while it is held, and after a lift the pad's coast, each step 85 per cent of the last. Ops: fingers N - that many fingers are on the pad now; sweep COUNT WAY - steps sideways, WAY -1 towards the left (the fingers moving right, which is Back) and 1 the other way, 10 pixels each in the test; down COUNT - steps straight down; flick COUNT WAY - steps twice as long, a fast hand; hold MS - nothing for that long, the hand still on the pad; coast COUNT WAY - the pad coasting after a lift; expect [...] - every step taken so far. A replay with native false is the test's alone: a posted wheel's speed is the engine's to say.",
+  "replays": [
+    {
+      "name": "a sweep lifted past the distance goes back once, and its coast is nobody's",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 40, -1],
+        ["expect", []],
+        ["fingers", 0],
+        ["expect", ["back"]],
+        ["coast", 20, -1],
+        ["expect", ["back"]]
+      ]
+    },
+    {
+      "name": "still touching past the distance goes nowhere until the fingers lift",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 40, -1],
+        ["hold", 1500],
+        ["expect", []],
+        ["hold", 1500],
+        ["expect", []],
+        ["fingers", 0],
+        ["expect", ["back"]]
+      ]
+    },
+    {
+      "name": "brought back short of the distance before the lift goes nowhere",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 40, -1],
+        ["sweep", 34, 1],
+        ["hold", 200],
+        ["fingers", 0],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "flicked back the way it came at the lift goes nowhere",
+      "native": false,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 50, -1],
+        ["flick", 8, 1],
+        ["fingers", 0],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "a fast flick short of the distance goes back",
+      "native": false,
+      "do": [
+        ["fingers", 2],
+        ["flick", 8, -1],
+        ["expect", []],
+        ["fingers", 0],
+        ["expect", ["back"]]
+      ]
+    },
+    {
+      "name": "a short sweep goes nowhere",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 10, -1],
+        ["hold", 200],
+        ["fingers", 0],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "a scroll down that turns sideways in the same gesture stays a scroll",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["down", 12],
+        ["sweep", 40, -1],
+        ["fingers", 0],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "a third finger is Windows' own gesture and ends the swipe as nothing",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 30, -1],
+        ["fingers", 3],
+        ["sweep", 20, -1],
+        ["fingers", 0],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "the coast after a short sweep starts no swipe of its own",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 10, -1],
+        ["hold", 200],
+        ["fingers", 0],
+        ["coast", 30, -1],
+        ["expect", []]
+      ]
+    },
+    {
+      "name": "two gestures are two steps, back and then forward",
+      "native": true,
+      "do": [
+        ["fingers", 2],
+        ["sweep", 40, -1],
+        ["fingers", 0],
+        ["coast", 10, -1],
+        ["expect", ["back"]],
+        ["hold", 300],
+        ["fingers", 2],
+        ["sweep", 40, 1],
+        ["fingers", 0],
+        ["expect", ["back", "forward"]]
+      ]
+    }
+  ]
+}

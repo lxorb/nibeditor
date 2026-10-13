@@ -1,14 +1,13 @@
 <script lang="ts">
   /** The arrow a swipe brings in from the side of a pane: Chrome's, in nib's own
-   *  colours. A circle with an arrow in it slides in with the fingers, 146 pixels by the
-   *  time letting go would go and a little further past that, eased so it stops. A ring
-   *  round its edge fills with the accent as the fingers go, so how far is left is in
-   *  sight; full, the circle fills with it, the arrow in it gives one small push, and
-   *  letting go goes. It bursts once and goes when the swipe goes, and slides back out
-   *  when it stays. Between two steps it glides the shortest of the app's moves, so a
-   *  page's steps, which come across the engine a frame apart and not always evenly,
-   *  read as one movement. See swipes.ts, and gesture_nav_simple.cc in Chromium for the
-   *  numbers.
+   *  colours. A circle with an arrow in it slides in with the fingers, pixel for pixel,
+   *  from behind the side to where letting go would go, and past that a little further
+   *  against a growing pull, so it stops. A ring round its edge fills with the accent as
+   *  the fingers go, so how far is left is in sight; full, the circle fills with it, the
+   *  arrow in it gives one small push, and letting go goes. Nothing happens while the
+   *  fingers are down. It bursts once and goes when the swipe goes, and slides back out
+   *  when it stays. While the fingers are on it never glides: where it is drawn is where
+   *  they are. See swipes.ts, and gesture_nav_simple.cc in Chromium for the look.
    *
    *  Over a web tab the page is a webview drawn above every pixel of the window, so the
    *  circle is cut out of the page in its own shape (`nib-swipe` is one of the shapes
@@ -16,9 +15,7 @@
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import { swiping } from './shown.svelte'
 
-  /** How far the circle has come in at the moment letting go would go, and how much
-   *  further it may go past that. */
-  const TRAVEL = 146
+  /** How much further than where letting go goes the circle may be pulled. */
   const EXTRA = 72
   /** The circle's diameter. */
   const SIZE = 40
@@ -26,12 +23,15 @@
   /** Chrome's fast-out-slow-in, for the stretch past the threshold. */
   const eased = (t: number) => 1 - (1 - t) ** 3
 
-  /** How far in from the side the circle's leading edge is. */
+  /** How far in from the side the circle's leading edge is: the fingers' own travel up
+   *  to where letting go goes, and past it a pull that gives a little less each pixel. */
   const reach = $derived.by(() => {
     const progress = Math.max(0, swiping.progress)
-    if (swiping.stage === 'stayed') return 0
-    if (progress <= 1) return progress * TRAVEL
-    return TRAVEL + EXTRA * eased(Math.min(1, progress - 1))
+    if (swiping.stage === 'stayed' || progress === 0) return 0
+    const travel = Math.max(0, swiping.travel)
+    if (progress <= 1) return travel
+    const far = travel / progress
+    return far + EXTRA * eased(Math.min(1, (travel - far) / (EXTRA * 3)))
   })
 
   const shift = $derived(
@@ -59,6 +59,7 @@
       class:armed={swiping.progress >= 1 || swiping.stage === 'went'}
       class:went={swiping.stage === 'went'}
       class:stayed={swiping.stage === 'stayed'}
+      class:tracking={swiping.stage === 'tracking'}
       class:right={swiping.side === 'right'}
       style:transform="translate({shift}px, -50%)"
       style:opacity={shade}
@@ -117,6 +118,14 @@
     stroke-linecap: round;
     stroke-linejoin: round;
     transition: scale var(--dur-fast) var(--ease-spring);
+  }
+
+  /* With the fingers: drawn where they are, never on its way there. */
+  .nib-swipe.tracking {
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
   }
 
   .nib-swipe.right .arrow {

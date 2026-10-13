@@ -13,7 +13,15 @@ page's half. What a drive in a browser cannot reach, and this does:
   in nib's world there says it through its binding, the crate says it to the window, and
   the tab goes back along its trail;
 * **the arrow over the page** - while it is out, the page's window is given a region
-  with the arrow's circle cut out of it, and once it has gone the whole page again.
+  with the arrow's circle cut out of it, and once it has gone the whole page again;
+* **a precision touchpad's gestures, replayed** - every replay in
+  apps/desktop/test/effects/swipe-replays.json that a posted wheel can play, over the note
+  and over the page: the wheel messages posted as above, and the fingers landing and
+  lifting said as the crate says them (`nib://touchpad`, emitted from the app's page,
+  since no report of a real pad reaches a probe). Among them a hand held still past the
+  distance for three seconds, which must go nowhere until the fingers lift (#209), and one
+  brought back before it lifts. The sweeps above run first, before the pad has said
+  anything, so they hold the window's way of ending a stream where no pad says so.
 
 No real input is used and nothing is ever on a screen: the probe is started by
 `run_probe` and moved to a corner of this probe's own, still on no screen, so the point
@@ -58,6 +66,11 @@ CORNER = (-27000, -13000)
 SIZE = (2000, 1400)
 
 WM_MOUSEHWHEEL = 0x020E
+WM_MOUSEWHEEL = 0x020A
+
+#: A replay's step, a tenth of a notch: about the ten pixels of the replays' own steps, so
+#: a short sweep there is a short sweep here. Still never a whole notch in one frame.
+TURN = 12
 
 #: A fraction of a notch a message: a wheel that turns finer than a notch, which is how a
 #: touchpad's scroll reaches a window that is not reading it through Direct Manipulation.
@@ -95,17 +108,46 @@ page_probe = borrowed("web-page-probe")
 scroll_probe = borrowed("web-scroll-probe")
 scroll_probe.CORNER = CORNER
 
-#: Two pages of a site, each linking to the other.
+#: Two pages of a site, each linking to the other. Any other address is a page too, named
+#: after itself, for the replays to walk a fresh trail each.
 PAGES = {
     "/one": b"<!doctype html><title>One</title><body style='font:20px system-ui'><h1>One</h1>",
     "/two": b"<!doctype html><title>Two</title><body style='font:20px system-ui'><h1>Two</h1>",
 }
 
+REPLAYS = json.loads(
+    (HERE.parent / "apps" / "desktop" / "test" / "effects" / "swipe-replays.json").read_text(encoding="utf-8")
+)["replays"]
+
+#: Every press of Back and Forward, kept by the page from here on, whoever pressed it.
+PRESSES = """
+if (!window.__pressing) {
+  for (const [way, name] of [['goBack', 'back'], ['goForward', 'forward']]) {
+    const real = ws[way].bind(ws)
+    ws[way] = (...args) => {
+      window.__pressed.push(name)
+      return real(...args)
+    }
+  }
+  window.__pressing = true
+}
+window.__pressed = []
+window.__across ??= 0
+if (!window.__measuring) {
+  addEventListener('wheel', (event) => { window.__across += Math.abs(event.deltaX) }, { capture: true, passive: true })
+  window.__measuring = true
+}
+return true
+"""
+
 
 def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - the base class names it
-            body = PAGES.get(self.path.split("?")[0])
+            path = self.path.split("?")[0]
+            body = PAGES.get(path) or (
+                f"<!doctype html><title>{path}</title><body style='font:20px system-ui'><h1>{path}</h1>".encode()
+            )
             self.send_response(200 if body else 404)
             self.send_header("content-type", "text/html; charset=utf-8")
             self.end_headers()
@@ -134,6 +176,62 @@ def sweep(target: int, x: int, y: int, steps: int, turn: int) -> None:
             wintypes.HWND(target), WM_MOUSEHWHEEL, word << 16, ((y & 0xFFFF) << 16) | (x & 0xFFFF)
         )
         time.sleep(0.012)
+
+
+def wheel(target: int, x: int, y: int, message: int, turn: int) -> None:
+    assert user32 is not None
+    user32.PostMessageW(
+        wintypes.HWND(target), message, (turn & 0xFFFF) << 16, ((y & 0xFFFF) << 16) | (x & 0xFFFF)
+    )
+
+
+def replay(app, target: int, x: int, y: int, ops: list[list[object]]) -> list[tuple[list[str], list[str]]]:
+    """Plays one replay over `target`, and answers each `expect` with what was pressed by
+    then. A step is posted every twelve milliseconds, and the fingers are said through the
+    app's page as the crate says them."""
+    seen: list[tuple[list[str], list[str]]] = []
+    for op in ops:
+        kind = op[0]
+        if kind == "fingers":
+            ask(app, f"await window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {{ event: 'nib://touchpad', payload: {{ fingers: {int(op[1])} }} }}); return true")
+            time.sleep(0.05)
+        elif kind == "sweep":
+            for _ in range(int(op[1])):
+                wheel(target, x, y, WM_MOUSEHWHEEL, int(op[2]) * TURN)
+                time.sleep(0.012)
+        elif kind == "down":
+            for _ in range(int(op[1])):
+                wheel(target, x, y, WM_MOUSEWHEEL, -TURN)
+                time.sleep(0.012)
+        elif kind == "coast":
+            for step in range(int(op[1])):
+                turn = max(1, round(TURN * 0.85 ** (step + 1)))
+                wheel(target, x, y, WM_MOUSEHWHEEL, int(op[2]) * turn)
+                time.sleep(0.012)
+        elif kind == "hold":
+            time.sleep(float(str(op[1])) / 1000)
+        elif kind == "expect":
+            time.sleep(0.4)
+            got = ask(app, "return window.__pressed")
+            seen.append(([str(one) for one in op[1]], [str(one) for one in got] if isinstance(got, list) else [repr(got)]))
+    return seen
+
+
+def replays(app, target: int, x: int, y: int, fresh, where: str, said: dict[str, object], failed: list[str]) -> None:
+    """Every replay a posted wheel can play, each from a fresh trail that `fresh` makes."""
+    for number, one in enumerate(REPLAYS):
+        if not one.get("native"):
+            continue
+        fresh(number)
+        ask(app, PRESSES)
+        seen = replay(app, target, x, y, one["do"])
+        said[f"{where}: {one['name']}"] = seen
+        print(f"{where}: {one['name']}: {seen}", file=sys.stderr, flush=True)
+        for wanted, got in seen:
+            if wanted != got:
+                failed.append(f"{where}: {one['name']}: wanted {wanted}, got {got}")
+        # The arrow played out, and the fingers off the pad.
+        time.sleep(0.6)
 
 
 def region_holes(hwnd: int) -> int | None:
@@ -358,6 +456,69 @@ def main() -> int:
             failed.append(f"the arrow was not cut out of the page: {holes}")
         if holes[2] is not None:
             failed.append(f"the page was not whole again after the arrow: {holes}")
+
+        # The replays, from here on with the pad saying when the fingers lift. Over the
+        # note first, each from a trail of Alpha and then Beta.
+        def fresh_note(_number: int) -> None:
+            ask(
+                app,
+                """
+                const path = (starts) => ws.notes.find((one) => one.name.startsWith(starts)).path
+                await ws.open(path('Alpha'), { preview: true })
+                await ws.open(path('Beta'), { preview: true })
+                await wait(() => ws.active?.note?.name?.startsWith('Beta') && ws.active?.canGoBack)
+                await new Promise((go) => setTimeout(go, 300))
+                return true
+                """,
+            )
+
+        fresh_note(0)
+        _, page = app_input(window)
+        box = scroll_probe.rect(page)
+        replays(app, page, (box[0] + box[2]) // 2, (box[1] + box[3]) // 2, fresh_note, "note", said, failed)
+        said["note: pixels a replay's step scrolled, on average"] = ask(app, "return window.__across")
+
+        # And over the page, the same web tab brought to the front again, each replay from a
+        # fresh address of the site's.
+        visited = ["/one", "/two"]
+
+        def fresh_page(number: int) -> None:
+            address = f"/replay{number}"
+            for _ in range(40):
+                url = next((one for one in (page_probe.page_socket(args.identifier, path) for path in visited) if one), None)
+                if url:
+                    break
+                time.sleep(0.25)
+            else:
+                raise SystemExit("the site's page never answered for a replay")
+            tools = page_probe.Devtools(url)
+            try:
+                tools.value(f"location.href = '{address}'")
+            finally:
+                tools.close()
+            visited.insert(0, address)
+            ask(
+                app,
+                f"""
+                const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
+                ws.activate(tab.id)
+                await wait(() => String(nib.pages?.of?.(tab.id)?.url ?? tab.address ?? '').endsWith('{address}'), 8000)
+                await wait(() => nib.pages?.of?.(tab.id)?.back, 4000)
+                await new Promise((go) => setTimeout(go, 500))
+                return true
+                """,
+            )
+
+        fresh_page(0)
+        until = time.perf_counter() + 20
+        while len(webviews(window)) < 2 and time.perf_counter() < until:
+            time.sleep(0.25)
+        if len(webviews(window)) < 2:
+            said["web tab for the replays"] = ask(app, "return { active: ws.active?.kind, tabs: ws.tabs.map((one) => [one.kind, one.paneId, one.address]) }")
+            print(json.dumps(said, indent=2, default=str))
+        _, site_page = scroll_probe.page_windows(window)
+        box = scroll_probe.rect(site_page)
+        replays(app, site_page, (box[0] + box[2]) // 2, (box[1] + box[3]) // 2, fresh_page, "page", said, failed)
     finally:
         if not close_app(running):
             running.terminate()

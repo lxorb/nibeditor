@@ -168,6 +168,8 @@ mod tasks;
 #[cfg(desktop)]
 mod terminal;
 mod themes;
+#[cfg(desktop)]
+mod touchpad;
 mod trace;
 mod trash;
 mod tree;
@@ -780,6 +782,22 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 /// Everything that has to happen once, after the app is built and before the
 /// window is seen: what the webview may load, what the app was launched with, and
 /// then showing the window that was built hidden.
+/// What the window hears from outside its own page, all of it in place before the window
+/// is shown, because a page that asked before anything was listening waits for ever.
+#[cfg(desktop)]
+fn hearing(handle: &tauri::AppHandle) {
+    // What the window's own page may be given: the microphone the moment somebody
+    // presses Record, and nothing else; see `hearing` in web_tabs.rs.
+    web_tabs::hearing(handle);
+    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
+    // page and the app alike; see web_keys.rs.
+    #[cfg(all(windows, feature = "cef"))]
+    web_keys::chromium::start(handle);
+    // The fingers on a precision touchpad, which a swipe waits for; see touchpad.rs.
+    #[cfg(windows)]
+    touchpad::start(handle);
+}
+
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
@@ -852,15 +870,10 @@ fn ready(
     #[cfg(not(desktop))]
     trace::mark("launch arguments");
 
-    // What the window's own page may be given: the microphone the moment somebody
-    // presses Record, and nothing else. Before the window is shown, because a page that
-    // asked before anything was listening waits for ever; see `hearing` in web_tabs.rs.
+    // What the window hears from outside its own page, before the window is shown; see
+    // `hearing`.
     #[cfg(desktop)]
-    web_tabs::hearing(handle);
-    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
-    // page and the app alike; see web_keys.rs.
-    #[cfg(all(windows, feature = "cef"))]
-    web_keys::chromium::start(handle);
+    hearing(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to

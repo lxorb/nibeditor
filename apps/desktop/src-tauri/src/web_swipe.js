@@ -3,8 +3,10 @@
   // web_swipe.rs. Every stream of scroll that goes sideways before it goes down - from its
   // first step, so the app reads which way it went the way it reads a note's - and a
   // finger from the side of the screen, is said to the app, which decides
-  // (apps/desktop/src/lib/back-swipe). A scroll down a page says nothing. Nothing the page
-  // does is changed: every listener is passive and only reads.
+  // (apps/desktop/src/lib/back-swipe). A scroll down a page says so once, as what it added
+  // up to, and nothing more: the app holds the rest of the fingers' gesture to it, so a
+  // scroll down that pauses and then goes sideways is still the scroll it began as.
+  // Nothing the page does is changed: every listener is passive and only reads.
 
   // How near the side of the screen a finger has to land to be a swipe and not a pan.
   const SIDE = 24
@@ -130,6 +132,7 @@
       if (!stream.said && down > START && down > Math.abs(stream.across) * RATIO) {
         stream.downFirst = true
         heard = null
+        say({ k: 'w', dx: stream.across, dy: stream.down, t: at, l: false, r: false })
         return
       }
       // Only a sideways step asks which way the page would take it.
