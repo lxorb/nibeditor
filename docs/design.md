@@ -338,6 +338,20 @@ working out is behind a door glass alone opens (`glass/follow.svelte.ts`); the f
 of a launch wears the colour it was left on (`glass/chrome.svelte.ts`). Grounds are kept per
 page and origin like favicons, so a tab opened again is its colour before it loads.
 
+**A dark page wears a dark frame** (lxorb, issue #238: *"on some dark themed websites, glass
+theme will be pretty light"*). Three ways it used not to. A page whose `theme-color` is a grey
+of the other lightness from what it paints along its top - YouTube names a near-white bar in
+the dark, react.dev a near-black one in the light - has left that colour behind, and the top
+it paints wins; a colour with a hue in it is a brand's and still does (`stale` in
+`glass/colours.ts`). A still too busy for one colour is what it all averages to rather than
+nothing, so a dark hero image is dark. And every page is read once more a moment after it
+lands: an app that draws itself afterwards - Spotify's player, Proton's pages, which name
+their violet from script (the owner's own example) - has nothing of its own along its top
+yet, and was left in its favicon's tone or the bare canvas's white for good. While a tab loads an address
+nobody has read, the frame keeps the colour it had and changes once, when the new page has
+said its own, rather than passing through the site's mark (`groundNow` in
+`glass/follow.svelte.ts`).
+
 **Glass's dials** (Emil, 2026-10-03: *"the blur can't be entirely turned off; the blur
 option is too limited"*). Windows Terminal is the model for what is offered and Arc's theme
 for how little is said: Material (Mica Alt, Mica, Acrylic, No blur - the desk itself,

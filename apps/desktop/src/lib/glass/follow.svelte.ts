@@ -36,6 +36,13 @@ import { barFor, frameFor, type Material, type Sides, type Source } from './tint
  *  shows its mark, all in the same breath. */
 const SETTLES = 250
 
+/** How long after its first read a page is asked once more: an app that draws itself
+ *  after it has loaded - Spotify's player, Proton's pages, which name their colour from
+ *  script - has nothing of its own along its top yet, and was left in its mark's colour or
+ *  the bare canvas's white, a light or grey frame over a dark page (issue #238). Three
+ *  style lookups in the page; a page that said the same twice changes nothing. */
+const LATER = 1500
+
 /** A mark is counted at this size: a favicon's own, and plenty for a cover's colour. */
 const MARK = { width: 24, height: 24 }
 
@@ -110,6 +117,12 @@ function addressOf(tab: string, written: string | undefined): string | null {
   return pages.addressOf(tab) ?? written ?? null
 }
 
+/** What a tab's page stands on now: what it said here, or what this device saw here
+ *  before, or while it loads somewhere new, what it said last (`grounds.last`). */
+function groundNow(tab: string, address: string | null): Rgb | null {
+  return grounds.of(tab, address) ?? (pages.loadingOf(tab) ? grounds.last(tab) : null)
+}
+
 /** Each tab's read, waiting for its page to settle. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
 const waiting = new Map<string, ReturnType<typeof setTimeout>>()
@@ -168,7 +181,7 @@ function sourceOf(): Source {
     // now, once for each address. A browser's frame says so itself as it loads.
     if (isDesktop && !page.loading && !grounds.heard(tab.id, address)) askOnce(tab.id, address)
 
-    const ground = grounds.of(tab.id, address)
+    const ground = groundNow(tab.id, address)
     if (ground) return { colour: ground, page: true }
 
     const mark = markColour(siteMark(page.icon, address))
@@ -197,7 +210,7 @@ function barsOf(sides: Sides): Record<string, Ground> {
   if (glassValues().tab === false) return bars
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
-    const ground = grounds.of(tab.id, addressOf(tab.id, tab.address))
+    const ground = groundNow(tab.id, addressOf(tab.id, tab.address))
     if (ground) bars[tab.id] = barFor(ground, chrome.app, sides)
   }
   return bars
@@ -247,6 +260,22 @@ export function follow(): void {
   })
 }
 
+/** A page's ground, read and said; and `again`, read once more a moment later unless
+ *  the page has landed somewhere else meanwhile, which is read on its own. */
+function read(tab: string, again: boolean): void {
+  if (!chrome.on) return
+  const written = workspace.tabs.find((one) => one.id === tab)?.address
+  void groundOf(tab).then((ground) => {
+    if (ground === undefined) return
+    grounds.said(tab, addressOf(tab, written), ground)
+    if (again) {
+      setTimeout(() => {
+        if (!waiting.has(tab)) read(tab, false)
+      }, LATER)
+    }
+  })
+}
+
 /** A page has landed or moved: its ground is read once it has settled. */
 export function landed(tab: string): void {
   clearTimeout(waiting.get(tab))
@@ -254,11 +283,7 @@ export function landed(tab: string): void {
     tab,
     setTimeout(() => {
       waiting.delete(tab)
-      if (!chrome.on) return
-      const written = workspace.tabs.find((one) => one.id === tab)?.address
-      void groundOf(tab).then((ground) => {
-        if (ground !== undefined) grounds.said(tab, addressOf(tab, written), ground)
-      })
+      read(tab, true)
     }, SETTLES),
   )
 }

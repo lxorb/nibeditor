@@ -173,6 +173,28 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   expect(active()?.style.getPropertyValue('--web-ground')).toBe('')
 })
 
+// lxorb, issue #238: no detour through the site's mark while a page loads somewhere new.
+test('a tab on its way to an address never read keeps its colour, then changes once', async () => {
+  const { pages } = await import('../../src/lib/web-tab/pages.svelte')
+  const tab = workspace.openPage(BLACK) ?? ''
+  grounds.said(tab, BLACK, '#0f0f0f')
+  workspace.activate(tab)
+  await settle()
+  expect(tint()).toBe('#0f0f0f')
+
+  const page = pages.of(tab)
+  tints = []
+  page.url = 'https://never-seen.example/'
+  page.loading = true
+  await settle()
+  expect(tints).toEqual([])
+
+  page.loading = false
+  grounds.said(tab, 'https://never-seen.example/', '#ffffff')
+  await settle()
+  expect(tints).toEqual(['#ffffff'])
+})
+
 test('a note’s tab inside a strip turned dark by a page keeps the paper’s words', async () => {
   const black = workspace.openPage(BLACK) ?? ''
   grounds.said(black, BLACK, '#0f0f0f')

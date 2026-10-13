@@ -550,6 +550,11 @@ class Pages {
     return this.held.get(tabId)?.icon ?? null
   }
 
+  /** Whether a tab's page is on its way somewhere. Never makes a page. */
+  loadingOf(tabId: string): boolean {
+    return this.held.get(tabId)?.loading ?? false
+  }
+
   /** What the tab is pointing at, for the session and for the bar. */
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null

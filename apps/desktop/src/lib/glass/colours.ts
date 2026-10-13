@@ -9,7 +9,7 @@
  *  Pure: colours and pixels come in, so the page reader, the drive and the tests ask the
  *  same question. See colours.test.ts. */
 
-import { type Rgb, rgbOf } from '../legibility'
+import { luminance, type Rgb, rgbOf } from '../legibility'
 
 /** What a page says about itself, as web_tint.rs reads it (and reading.ts in a browser). */
 export interface PageSaid {
@@ -58,13 +58,37 @@ export function agreed(readings: readonly (Rgb | null)[]): Rgb | null {
   return null
 }
 
+/** How colourful a pixel is: the spread of its channels, 0 for a grey. */
+function chroma(r: number, g: number, b: number): number {
+  return Math.max(r, g, b) - Math.min(r, g, b)
+}
+
+/** Under this spread a colour reads as a grey. */
+const GREY = 32
+
+/** Where black ink and white ink read equally well: lighter than this is a light ground. */
+const MIDDLE = 0.179
+
+function light(colour: Rgb): boolean {
+  return luminance(colour) > MIDDLE
+}
+
+/** A theme colour that is a grey of the other lightness from what the page paints along
+ *  its top: a mode the page did not keep up with, not a colour it chose. YouTube in the
+ *  dark names a white bar over a black page, react.dev in the light a black one over
+ *  white (lxorb, issue #238). A colour with a hue in it is a brand's, and stands. */
+function stale(named: Rgb, top: Rgb): boolean {
+  return chroma(...named) < GREY && light(named) !== light(top)
+}
+
 /** What a page's own words say it stands on, or null where only its picture can say.
- *  The theme colour first; the top edge where every point is a colour and most agree. */
+ *  The theme colour first, unless it is stale; the top edge where every point is a
+ *  colour and most agree. */
 export function groundSaid(said: PageSaid): Rgb | null {
   const named = solid(said.theme)
-  if (named) return named
-  if (said.pictured) return null
-  return agreed(said.top.map(solid))
+  const top = said.pictured ? null : agreed(said.top.map(solid))
+  if (!named) return top
+  return top && stale(named, top) ? top : named
 }
 
 /** Pixels as a canvas hands them over: four bytes a pixel, red first. */
@@ -127,18 +151,13 @@ function heaviest(
   }
 }
 
-/** How colourful a pixel is: the spread of its channels, 0 for a grey. */
-function chroma(r: number, g: number, b: number): number {
-  return Math.max(r, g, b) - Math.min(r, g, b)
-}
-
 /** The colour a mark is - a favicon, a cover - as a person would name it: the most
  *  common colourful one, weighed by how colourful, so a red logo on white is red and
  *  not white. A mark with no colour in it at all is its most common grey. */
 export function dominant(pixels: Pixels): Rgb | null {
   const coloured = heaviest(pixels, (r, g, b) => {
     const spread = chroma(r, g, b)
-    return spread < 32 ? 0 : spread
+    return spread < GREY ? 0 : spread
   })
   return coloured?.colour ?? heaviest(pixels, () => 1)?.colour ?? null
 }
@@ -147,8 +166,30 @@ export function dominant(pixels: Pixels): Rgb | null {
 const MOSTLY = 0.6
 
 /** The colour a strip of a page's picture is, read off its top rows: one colour across
- *  most of it, or null for a picture busy enough that no colour is its ground. */
+ *  most of it, or for a picture too busy to have one, what it all comes to, which is at
+ *  least as dark or as light as the picture is. A dark hero image under a dark site's
+ *  header used to leave the frame to the site's mark, toned into the reader's own
+ *  scheme: a light frame over a dark page (issue #238). Null with nothing to count. */
 export function stripGround(pixels: Pixels): Rgb | null {
   const most = heaviest(pixels, () => 1)
-  return most && most.share >= MOSTLY ? most.colour : null
+  if (!most) return null
+  return most.share >= MOSTLY ? most.colour : average(pixels)
+}
+
+/** Every pixel that is not see-through, averaged. */
+function average(pixels: Pixels): Rgb | null {
+  const sum = [0, 0, 0]
+  let counted = 0
+  for (let at = 0; at + 3 < pixels.length; at += 4) {
+    if ((pixels[at + 3] ?? 0) < 128) continue
+    for (const channel of [0, 1, 2])
+      sum[channel] = (sum[channel] ?? 0) + (pixels[at + channel] ?? 0)
+    counted++
+  }
+  if (counted === 0) return null
+  return [0, 1, 2].map((channel) => Math.round((sum[channel] ?? 0) / counted)) as [
+    number,
+    number,
+    number,
+  ]
 }

@@ -56,6 +56,14 @@ class Grounds {
     return null
   }
 
+  /** What a tab's page said last, wherever that was: what the frame keeps while the tab
+   *  loads an address nobody has read, so it changes once, to the new page's colour,
+   *  rather than through the site's mark first. */
+  last(tab: string): Rgb | null {
+    const said = this.live[tab]?.colour
+    return said ? rgbOf(said) : null
+  }
+
   /** Whether a tab's page has said anything where it is now, colour or none. */
   heard(tab: string, address: string | null): boolean {
     return this.live[tab]?.at === address

@@ -6,9 +6,11 @@ build, through the app's own automation endpoint, and reads the result off the w
 own picture: the colour the bar and the frame took, and the contrast of the quietest
 word on the title bar, the list and the bar against the pixels under it.
 
-The pages: four of the probe's own, served from the loopback (white, black, red with a
-`theme-color`, yellow with none), and two of the web's (Google and YouTube), which a
-machine with no network simply reports as unread.
+The pages: six of the probe's own, served from the loopback (white, black, red with a
+`theme-color`, yellow with none, and issue #238's two: black named white, as YouTube is
+in the dark, and white named black, as react.dev is in the light), and some of the web's,
+dark and light, which a machine with no network simply reports as unread. A dark page's
+frame has to be dark and a light one's light; see `DARKNESS`.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"ch.emilvinu.nib.probe.glass-redo","version":"99.0.0",
@@ -61,7 +63,33 @@ PAGES = {
     "black": site("#0f0f0f", "#0f0f0f", None, "Black", "#ffffff"),
     "red": site("#ffffff", "#d32f2f", "#d32f2f", "Red", "#ffffff"),
     "yellow": site("#ffffff", "#ffeb3b", None, "Yellow", "#111111"),
+    "darkstale": site("#0f0f0f", "#0f0f0f", "rgba(255, 255, 255, 0.98)", "darkstale", "#ffffff"),
+    "lightstale": site("#ffffff", "#ffffff", "#23272f", "lightstale", "#111111"),
 }
+
+#: The web's, by a word their address says, and how dark each is in either scheme: a
+#: site that follows the scheme is named under both, one that keeps its own under one.
+WEB = {
+    "google": "https://www.google.com/",
+    "youtube": "https://www.youtube.com/",
+    "github": "https://github.com/",
+    "spotify": "https://open.spotify.com/",
+    "twitch": "https://www.twitch.tv/",
+    "wikipedia": "https://en.wikipedia.org/",
+    "ycombinator": "https://news.ycombinator.com/",
+    # The owner's example in issue #238: a deep violet named over a gradient, both schemes.
+    "proton": "https://account.proton.me/login",
+}
+
+#: Which pages must wear a dark frame, per scheme; the rest of `LIGHT_PAGES` a light one.
+DARKNESS = {
+    "dark": {"black", "darkstale", "youtube", "github", "spotify", "twitch", "proton"},
+    "light": {"black", "darkstale", "github", "spotify", "proton"},
+}
+LIGHT_PAGES = {"white", "lightstale", "wikipedia", "ycombinator"}
+
+#: Where black ink and white ink read equally well.
+MIDDLE = 0.179
 
 
 class Pages(http.server.BaseHTTPRequestHandler):
@@ -155,6 +183,11 @@ def read(held: dict, app_pid: int, scheme: str, name: str, host: str) -> None:
         glass.say(f"     {label} the page said no colour (at {said.get('at')!r}, frame {said.get('tint')})")
         return
     glass.say(f"     {label} bar {said['bar']}, frame {said['tint']}, frame words {said['frame'] or scheme}")
+    words = said["frame"] or scheme
+    if name in DARKNESS[scheme] and words != "dark":
+        glass.wrong(f"{label} a dark page in a frame with {words} words")
+    elif name in LIGHT_PAGES and words != "light":
+        glass.wrong(f"{label} a light page in a frame with {words} words")
     scale = said.get("scale", 1)
     for desk in BANDS[scheme]:
         glass.ran(held, glass.DESK.format(desk=desk, material="mica"))
@@ -196,7 +229,7 @@ def main() -> int:
             space.mkdir()
             (space / "Read me.md").write_text("# Read me\n\nWords.\n", encoding="utf-8")
             sites = {name: f"{origin}/{name}.html" for name in PAGES}
-            sites |= {"google": "https://www.google.com/", "youtube": "https://www.youtube.com/"}
+            sites |= WEB
             for name, address in sites.items():
                 (space / f"{name}.url").write_text(f"[InternetShortcut]\r\nURL={address}\r\n", encoding="utf-8")
 

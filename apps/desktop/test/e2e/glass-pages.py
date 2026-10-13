@@ -6,13 +6,23 @@ in front - its theme colour, else what it paints along its top - and the open ta
 the bar run down into the page as one surface, with the words on them in whichever
 scheme reads on that colour. See lib/glass in the app and glass.css.
 
-Four pages, the four the brief names, served from this drive's own origin so the
-browser build can read them (a page of another origin wears its favicon's colour):
+Six pages, the four the brief names and two from issue #238, served from this drive's
+own origin so the browser build can read them (a page of another origin wears its
+favicon's colour):
 
   - white, like Google, with nothing to say about its colour;
   - black, like YouTube;
   - red, with a `theme-color` and a red header;
-  - yellow, with a yellow header and no `theme-color`.
+  - yellow, with a yellow header and no `theme-color`;
+  - black with a near-white `theme-color`, which is YouTube in the dark;
+  - white with a near-black one, which is react.dev in the light;
+  - Proton's "Thank you for installing Proton Pass", which names its deep violet and paints
+    its gradient only once its script has run, after the page has loaded - the owner's
+    own example of a frame left grey over a coloured page.
+
+The last two used to give the frame the colour the page named rather than the one it
+paints, so a dark site wore a light frame. Over the four greys the frame has to be as
+dark or as light as the page is.
 
 For each, under the light scheme and the dark, a picture, and the contrast of the
 quietest word on each part of the frame measured against what the picture shows there:
@@ -57,15 +67,52 @@ def site(ground: str, header: str, theme: str | None, title: str) -> str:
 </body></html>"""
 
 
+#: Proton's page as it arrives: nothing named and nothing painted, then, once its script
+#: has run, its violet named and its gradient down the page.
+PROTON = """<!doctype html><html><head><meta charset="utf-8"><title>Thank you for installing Proton Pass</title>
+<style>html, body { margin: 0; min-height: 100vh; color: #ffffff; font: 15px/1.5 system-ui, sans-serif; }
+main { padding: 48px; }</style></head><body><main><h1>Welcome to your new password manager!</h1></main>
+<script>setTimeout(() => {
+  const meta = document.createElement('meta')
+  meta.name = 'theme-color'
+  meta.content = '#1b1340'
+  document.head.append(meta)
+  document.body.style.background = 'linear-gradient(#1b1340, #1d1c35 40%, #68556f)'
+}, 600)</script></body></html>"""
+
 PAGES = {
     "white": site("#ffffff", "#ffffff", None, "White"),
     "black": site("#0f0f0f", "#0f0f0f", None, "Black"),
     "red": site("#ffffff", "#d32f2f", "#d32f2f", "Red"),
     "yellow": site("#ffffff", "#ffeb3b", None, "Yellow"),
+    "darkstale": site("#0f0f0f", "#0f0f0f", "rgba(255, 255, 255, 0.98)", "Dark, named white"),
+    "lightstale": site("#ffffff", "#ffffff", "#23272f", "Light, named black"),
+    "proton": PROTON,
 }
 
 #: What each page's top is, which the bar should be wherever the page's own colour reads.
-TOPS = {"white": (255, 255, 255), "black": (15, 15, 15), "red": (211, 47, 47), "yellow": (255, 235, 59)}
+TOPS = {
+    "white": (255, 255, 255),
+    "black": (15, 15, 15),
+    "red": (211, 47, 47),
+    "yellow": (255, 235, 59),
+    "darkstale": (15, 15, 15),
+    "lightstale": (255, 255, 255),
+    "proton": (27, 19, 64),
+}
+
+#: Pages whose frame has to be dark, and pages whose frame has to be light.
+DARK = {"black", "darkstale", "proton"}
+
+#: Pages that name their colour only once their script has run, and the colour.
+LATE = {"proton": "#1b1340"}
+
+#: Pages whose frame has to wear their hue, not a grey: blue over red by at least this.
+HUED = {"proton": 12}
+LIGHT = {"white", "lightstale"}
+
+#: Where black ink and white ink read equally well.
+MIDDLE = 0.179
 
 
 @DRIVE.answers
@@ -151,6 +198,14 @@ def open_site(page: Page, name: str) -> None:
     page.click(".web .card .nib-button")
     wait_for(page, f"document.querySelector('iframe[data-web-tab]')?.src?.endsWith('/glass/{name}.html')", "the frame")
     wait_for(page, "document.querySelector('.webbar.grounded')", f"the {name} page's colour on its bar")
+    # A page that paints itself after it has loaded is read again a moment later; the
+    # frame is white with the page until then, and its colour after.
+    if name in LATE:
+        wait_for(
+            page,
+            f"document.querySelector('.webbar')?.style.getPropertyValue('--web-ground') === '{LATE[name]}'",
+            f"the {name} page's colour once it has painted",
+        )
     page.wait_for_timeout(300)
     DRIVE.settled(page)
 
@@ -181,6 +236,23 @@ def drive(browser: Browser) -> None:
             measure(page, picture, f"{label} the title bar", "header[data-chrome='top'] .drag")
             measure(page, picture, f"{label} the list down the side", ".panels[data-chrome='start']", "foot")
             measure(page, picture, f"{label} the bar over the page", ".webbar", "start")
+
+            # The frame as dark or as light as the page.
+            frame = page.evaluate(POINT, ["header[data-chrome='top'] .drag", "middle"])
+            if frame and name in DARK | LIGHT:
+                seen = picture.getpixel((frame[0], frame[1]))
+                dark = luminance(seen) <= MIDDLE
+                if dark == (name in DARK):
+                    say(f"ok   {label} the frame is {'dark' if dark else 'light'}: {seen[:3]}")
+                else:
+                    wrong(f"{label} the frame {seen[:3]} is not as {'dark' if name in DARK else 'light'} as the page")
+
+            if frame and name in HUED:
+                seen = picture.getpixel((frame[0], frame[1]))
+                if seen[2] - seen[0] >= HUED[name]:
+                    say(f"ok   {label} the frame wears the page's hue: {seen[:3]}")
+                else:
+                    wrong(f"{label} the frame {seen[:3]} is a grey over a coloured page")
 
             # The bar and the top of the page: one surface where the page's colour reads.
             bar = page.evaluate(POINT, [".webbar", "start"])
