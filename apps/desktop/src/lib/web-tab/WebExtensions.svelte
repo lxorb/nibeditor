@@ -6,7 +6,7 @@
    *  where it has no popup. At the end of the row its pin, which puts its button in the
    *  bar or takes it out. Under the rows, a field that takes a Chrome Web Store or Edge
    *  Add-ons link and installs what it names. Turning one off, its permissions and taking
-   *  it away are Settings' (Settings > General > Browser > Extensions), one row below the
+   *  it away are Settings' (Settings > Browser > Extensions), one row below the
    *  list here. */
 
   import { fly } from 'svelte/transition'
@@ -125,7 +125,7 @@
     class="nib-row manage"
     onclick={() => {
       onclose()
-      settings.show('general')
+      settings.show('browser')
     }}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">

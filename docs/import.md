@@ -51,7 +51,7 @@ their own, named after what came in, and lands in it.
   note's space, where "Start fresh" stays on that note and a browser that has
   answered is not asked again (`first-visit.svelte.ts`; every drive's browser has
   answered, see `ANSWERED` in `test/e2e/harness.py`).
-  Later, the same rows are Settings > Import (Notion's place for them) and the
+  Later, the same rows are Settings > Import and export (Notion's place for them) and the
   palette's Import from Obsidian and Import from Notion. See `MigrateRows.svelte`
   and `migrating.svelte.ts`.
 - **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults
