@@ -108,7 +108,7 @@ parts:
       Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nib.png
       Terminal=false
       Categories=Office;TextEditor;Utility;
-      MimeType=x-scheme-handler/http;x-scheme-handler/https;
+      MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
       Keywords=markdown;md;editor;notes;writing;wysiwyg;
       StartupWMClass=nib
       StartupNotify=true

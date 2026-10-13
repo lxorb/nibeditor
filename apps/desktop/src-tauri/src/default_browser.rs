@@ -656,8 +656,8 @@ mod tests {
         }
 
         // And the bundle builds it into the MSI.
-        assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs"]"#));
-        assert!(config.contains(r#""componentRefs": ["NibBrowser", "NibOldShortcuts"]"#));
+        assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"]"#));
+        assert!(config.contains(r#""componentRefs": ["NibBrowser", "NibOldShortcuts", "NibPdf"]"#));
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
     }
 

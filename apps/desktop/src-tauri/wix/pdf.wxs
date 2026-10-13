@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- nibeditor among the programs "Open with" offers for a PDF, for an install from the
+     MSI: the lines installer.nsh writes in NIB_PDF_OPEN_WITH (src/handed_pdfs.rs holds
+     the two together), in the installing person's own hive, and taken away again when
+     the MSI is uninstalled. The extension's own default is never written: the reader
+     somebody chose for PDFs stays theirs.
+
+     WiX reads this file as it is, so the product's name is written out: it is
+     `productName` in tauri.conf.json. The program is the file Tauri's own template
+     calls `Path`. -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="NibPdf" Guid="{772A39CF-B9CC-4704-B1D5-13E034CF0CA2}">
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibPDF" Type="string" Value="nibeditor PDF" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibPDF\Application" Name="ApplicationName" Type="string" Value="nibeditor" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibPDF\Application" Name="ApplicationIcon" Type="string" Value="[!Path],0" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibPDF\DefaultIcon" Type="string" Value="[!Path],0" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibPDF\shell\open\command" Type="string" Value="&quot;[!Path]&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\.pdf\OpenWithProgids" Name="NibPDF" Type="string" Value="" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>

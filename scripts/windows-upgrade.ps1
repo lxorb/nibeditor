@@ -203,6 +203,12 @@ if ($chosen) {
   }
 }
 
+# --- PDFs: in "Open with", and never the default
+$pdf = Value "$hkcu\Classes\NibPDF\shell\open\command"
+Check 'the PDF ProgID starts the program with the file' ((Starts $pdf) -eq $exe -and $pdf -like '* "%1"')
+Check 'and is offered in Open with' ($null -ne (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
+Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne 'NibPDF')
+
 # --- and away again
 if ($Scenario -eq 'msi') {
   $code = $entries[0].PSChildName
@@ -216,6 +222,7 @@ Check 'the program is gone' (-not (Test-Path $exe))
 Check 'no Apps & Features entry is left' (-not (Has "$uninstall\Nib") -and -not (Has "$uninstall\nibeditor"))
 Check 'no browser client is left' (-not (Has "$clients\Nib") -and -not (Has "$clients\nibeditor"))
 Check 'nothing in RegisteredApplications' ($null -eq (Value $registered 'Nib') -and $null -eq (Value $registered 'nibeditor'))
+Check 'nothing in Open with for PDFs' (-not (Has "$hkcu\Classes\NibPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
 $left = @("$programs\Nib.lnk", "$programs\nibeditor.lnk", "$desktop\Nib.lnk", "$desktop\nibeditor.lnk",
   "$commonPrograms\nibeditor\nibeditor.lnk", "$commonDesktop\Nib.lnk", "$commonDesktop\nibeditor.lnk") | Where-Object { Test-Path $_ }
 Check "no shortcut is left $left" (-not $left)

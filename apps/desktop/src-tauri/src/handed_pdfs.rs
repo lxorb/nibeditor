@@ -344,6 +344,95 @@ mod tests {
         );
     }
 
+    fn source(relative: &str) -> String {
+        fs::read_to_string(crate::app_dir().join(relative)).expect("a file beside the crate")
+    }
+
+    /// What Windows reads for "Open with": the `ProgID` and its line under the
+    /// extension, written alike by both installers and taken away by the uninstaller.
+    /// Never the extension's own default, which is the reader somebody chose.
+    #[test]
+    fn windows_offers_nib_for_a_pdf_and_claims_nothing() {
+        let script = source("installer.nsh");
+        let (install, uninstall) = script
+            .split_once("!macro NIB_PDF_FORGET")
+            .expect("a macro that forgets");
+        for line in [
+            r#"WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'"#,
+            r#"WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" """#,
+        ] {
+            assert!(install.contains(line), "installer.nsh does not say: {line}");
+        }
+        for line in [
+            r#"DeleteRegKey SHCTX "Software\Classes\NibPDF""#,
+            r#"DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF""#,
+        ] {
+            assert!(
+                uninstall.contains(line),
+                "installer.nsh does not say: {line}"
+            );
+        }
+        let hooks = script
+            .split_once("!macro NSIS_HOOK_POSTINSTALL")
+            .expect("an install hook")
+            .1;
+        let (installing, uninstalling) = hooks
+            .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
+            .expect("an uninstall hook");
+        assert!(installing.contains("!insertmacro NIB_PDF_OPEN_WITH"));
+        assert!(uninstalling.contains("!insertmacro NIB_PDF_FORGET"));
+        assert!(!script.contains(r#"WriteRegStr SHCTX "Software\Classes\.pdf" """#));
+
+        let fragment = source("wix/pdf.wxs");
+        for line in [
+            r#"Key="Software\Classes\NibPDF\shell\open\command" Type="string" Value="&quot;[!Path]&quot; &quot;%1&quot;""#,
+            r#"Key="Software\Classes\.pdf\OpenWithProgids" Name="NibPDF" Type="string" Value="""#,
+        ] {
+            assert!(fragment.contains(line), "pdf.wxs does not say: {line}");
+        }
+        assert!(!fragment.contains(r#"Key="Software\Classes\.pdf" Type"#));
+        assert!(source("tauri.conf.json").contains(r#""wix/pdf.wxs""#));
+    }
+
+    /// A Mac's Open With and a Linux file manager's: listed as a viewer of PDFs that
+    /// is never chosen on its own, and on Linux in every package's own entry too.
+    #[test]
+    fn a_mac_and_linux_offer_nib_for_a_pdf_and_claim_nothing() {
+        let plist = source("Info.plist");
+        for line in [
+            "<string>com.adobe.pdf</string>",
+            "<key>LSHandlerRank</key>\n\t\t\t<string>Alternate</string>",
+            "<key>CFBundleTypeRole</key>\n\t\t\t<string>Viewer</string>",
+        ] {
+            assert!(plist.contains(line), "Info.plist does not say: {line}");
+        }
+
+        let linux: serde_json::Value =
+            serde_json::from_str(&source("tauri.linux.conf.json")).expect("the config");
+        let association = &linux["bundle"]["fileAssociations"][0];
+        assert_eq!(association["mimeType"], "application/pdf");
+        assert_eq!(association["rank"], "Alternate");
+        // Tauri's Windows installer would make an association the default, and the
+        // Mac's is in Info.plist; neither config may carry one.
+        for config in ["tauri.conf.json", "tauri.macos.conf.json"] {
+            assert!(!source(config).contains("fileAssociations"), "{config}");
+        }
+
+        for entry in [
+            "../../../packaging/aur/nib-bin/nib.desktop",
+            "../../../packaging/flathub/ch.emilvinu.nib.desktop",
+            "../../../packaging/nix/nib.desktop",
+            "../../../packaging/snap/snapcraft.yaml",
+        ] {
+            let entry = source(entry);
+            let types = entry
+                .lines()
+                .find(|line| line.trim_start().starts_with("MimeType="))
+                .expect("a MimeType line");
+            assert!(types.contains("application/pdf;"), "{types}");
+        }
+    }
+
     #[test]
     fn two_files_are_the_same_only_byte_for_byte() {
         let dir = tempfile::tempdir().expect("a temp folder");

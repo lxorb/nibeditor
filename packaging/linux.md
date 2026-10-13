@@ -44,8 +44,9 @@ repairs the same three things:
   derives it from `bundle.category` in `tauri.conf.json`, which is unset.
 - **No `MimeType=` and no `%U` on `Exec=`**, so nothing offers Nib as a web
   browser. Nib claims `x-scheme-handler/http` and `https`, which is what lets it be
-  the default browser (see `default_browser.rs`), and no file type at all: it
-  opens nothing from outside its spaces, so a `.md` in a file manager is never
+  the default browser (see `default_browser.rs`), and of files only
+  `application/pdf`, for a file manager's "Open with" (see `handed_pdfs.rs`): it
+  opens no note from outside its spaces, so a `.md` in a file manager is never
   offered to it.
 - **The 256x256 icon is filed under `256x256@2`**, a scale-2 directory, where a
   256x256 image means "128 logical pixels at 2x" and every theme lookup scales

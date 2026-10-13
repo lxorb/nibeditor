@@ -7,9 +7,9 @@
 ; without this installer, and the ones the MSI writes; src/default_browser.rs holds
 ; this file and wix/browser.wxs to them.
 ;
-; No file type. Nib opens nothing from outside its spaces, so it claims no
-; extension and is in no "Open with" list, and an install over an older Nib takes
-; away what the older one claimed; see NIB_FORGET_FILES.
+; No file type is claimed. Nib opens no note from outside its spaces, so it is in
+; "Open with" for PDFs alone (NIB_PDF_OPEN_WITH), and an install over an older Nib
+; takes away the markdown types the older one claimed; see NIB_FORGET_FILES.
 ;
 ; Windows 8 and later will not let an installer claim a scheme on its own. The
 ; assignment is sealed with a per-user hash the shell verifies, so the most an
@@ -218,7 +218,34 @@ FunctionEnd
   ClearErrors
 !macroend
 
+; nib among the programs "Open with" offers for a PDF, and nothing more: a ProgID
+; saying how to start it, and its name under the extension's OpenWithProgids, which
+; is how VS Code and Chrome stand in that list. The extension's own default is left
+; alone, so whichever reader somebody chose stays theirs; "Always" in the list is
+; theirs to press. The PDF arrives on the command line; see src/handed_pdfs.rs,
+; which holds this file to these lines.
+!macro NIB_PDF_OPEN_WITH
+  WriteRegStr SHCTX "Software\Classes\NibPDF" "" "${PRODUCTNAME} PDF"
+  WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationName" "${PRODUCTNAME}"
+  WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationIcon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
+  WriteRegStr SHCTX "Software\Classes\NibPDF\DefaultIcon" "" "$INSTDIR\${MAINBINARYNAME}.exe,0"
+  WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
+  WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" ""
+!macroend
+
+; And out of it again, unless a copy of nib elsewhere has registered itself since.
+!macro NIB_PDF_FORGET
+  ReadRegStr $R7 SHCTX "Software\Classes\NibPDF\shell\open\command" ""
+  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"' 0 nib_pdf_kept
+    DeleteRegKey SHCTX "Software\Classes\NibPDF"
+    DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF"
+  nib_pdf_kept:
+  ClearErrors
+!macroend
+
 !macro NSIS_HOOK_POSTINSTALL
+  !insertmacro NIB_PDF_OPEN_WITH
+
   ; How to open a web page with Nib. The flag says the launch is a link's, so
   ; nothing else on its command line is ever read as a note.
   WriteRegStr SHCTX "Software\Classes\NibURL" "" "${PRODUCTNAME} URL"
@@ -256,6 +283,8 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
+  !insertmacro NIB_PDF_FORGET
+
   ; Nothing of a file type is written any more, but an install that was updated
   ; from an older Nib and never ran the install above goes clean all the same.
   !insertmacro NIB_FORGET_FILES
