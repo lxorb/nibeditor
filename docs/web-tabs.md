@@ -1569,6 +1569,23 @@ agent turns `Runtime` on only for the console it asked for. What a page does see
 `WebView2`'s own and in every app built on it: `EmbeddedBrowserWebView` on `window` and
 `Microsoft Edge WebView2` among the client hints' brands.
 
+**A worker a challenge starts runs.** Emil, 2026-10-13: _"login button just wasn't
+clickable on cloudflare."_ Cloudflare's sign in button stays disabled until its Turnstile
+widget has an answer, and the widget's frame - from `challenges.cloudflare.com`, so a
+process of its own - works the answer out in a worker it starts. nib follows such a frame
+to give it nib's world before its first document: it is held at its start, and let go once
+the world is in, and its own session is asked to follow its frames the same way
+(`web_worlds.rs`). Asked that, a frame's session holds every worker the frame starts as
+well - without attaching it, because the filter named frames alone - so nothing could ever
+let it go. A page's own session does not. The challenge never answered, the button stayed
+pale, and a minute later the widget gave up with _"There was a problem with verification"_.
+A frame's session follows its workers too now, and each is let go the moment it is
+attached. Measured on the probe, a worker in a frame from another site and in a frame
+inside that: before, neither ran, and Cloudflare had no answer in 30 s on three loads out
+of three; after, both ran and the answer came in 9 to 13 s, as it does with nib following
+no frames at all. `scripts/web-bot-probe.py` has its frame start a worker and fails if it
+never runs.
+
 **What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
 being a browser tab you can close and open again without signing in each time, and it is

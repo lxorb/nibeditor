@@ -13,6 +13,12 @@ and in a frame from another site (where a challenge runs), and fails on any of i
     nib's globals          anything of nib's or the runtime's on the page's `window`
     window.name            nib's channel names (`nib-...`) left behind on a window
 
+A worker that frame starts has to run, too. Emil, 2026-10-13: *"login button just wasn't
+clickable on cloudflare."* Turnstile's frame starts its challenge in a worker, and a frame's
+session, asked by nib to hold what it follows at its start, held that worker too and never
+attached it, so nothing let it go (src-tauri/src/web_worlds.rs): no answer, a sign in
+button that stayed disabled, and a minute later *"There was a problem with verification"*.
+
 And a cookie its site sets twice, as Cloudflare's challenge frame does: partitioned, and
 unpartitioned beside it for a browser that allows third-party cookies. Both are still
 there after the pages that make logins last have loaded (src-tauri/src/web_cookies.rs):
@@ -91,7 +97,19 @@ document.body.appendChild(frame)
 </script></body>"""
 )
 
-FRAME = "<!doctype html><script>" + SIGNS + "parent.postMessage(signs('frame'), '*')</script>"
+# The frame starts a worker before it answers, as Turnstile's challenge frame does, and
+# says whether the worker ever ran: one held at its start never posts.
+FRAME = (
+    "<!doctype html><script>"
+    + SIGNS
+    + """
+var said = signs('frame')
+var worker = new Worker(URL.createObjectURL(new Blob(['postMessage("ran")'])))
+var answer = function (ran) { said.worker = ran; parent.postMessage(said, '*'); answer = function () {} }
+worker.onmessage = function () { answer('ran') }
+setTimeout(function () { answer('held') }, 3000)
+</script>"""
+)
 
 # The site's one cookie, set twice: in the frame's partition, and outside it.
 TWICE = [
@@ -200,6 +218,8 @@ def main() -> int:
             for wrong in clean(one):
                 checks[f"{one.get('where')}: {wrong}"] = False
         checks["the page and its frame were read"] = len(first) == 2
+        framed = next((one for one in first if one.get("where") == "frame"), {})
+        checks["a worker a frame from another site starts runs"] = framed.get("worker") == "ran"
 
         # Two more loads, each of which makes the store's logins last; the cookie set
         # twice must still be there twice after them.
