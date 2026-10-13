@@ -11,6 +11,12 @@ on:
     tags: ['v*']
     branches: [main]
   workflow_dispatch:
+    inputs:
+      runners:
+        description: 'Where the Windows jobs run: azure when the repository has it on, or github'
+        type: choice
+        options: [auto, github]
+        default: auto
 
 # A newer push to main supersedes the build of an older one: only the newest
 # is worth finishing. A tag is a release of its own and is never cancelled.
@@ -45,8 +51,92 @@ jobs:
         shell: bash
         run: bash scripts/build-version.sh edge
 
+  # Azure machines for the slowest Windows jobs, when the repository variable
+  # NIB_CI_AZURE is `on`; see .github/azure/machines.sh. Done as soon as Azure has
+  # accepted them, so nothing else waits for a machine to boot, and a row no region
+  # took simply runs on GitHub's own runner. A push, a tag or a maintainer's dispatch
+  # only: nothing from a pull request ever reaches these machines.
+  machines:
+    if: vars.NIB_CI_AZURE == 'on' && inputs.runners != 'github'
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ROWS: >-
+        windows-x64=windows/x64 windows-arm64=windows/arm64
+        chromium-windows-x86_64=windows/x64 chromium-windows-aarch64=windows/arm64
+    outputs:
+      runners: ${{ steps.start.outputs.runners }}
+      rows: ${{ steps.start.outputs.rows }}
+    steps:
+      - &azure-checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: .github/azure
+      - &azure-login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      # Just-in-time runners are registered with the CI app's token; the runner on a
+      # machine only ever holds its own one-job registration.
+      - &azure-app
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.NIB_CI_APP_ID }}
+          private-key: ${{ secrets.NIB_CI_APP_KEY }}
+      # Keyed by attempt as well: a re-run of one failed job reuses these outputs, and
+      # an earlier attempt's machine is gone by then, so that job goes to GitHub.
+      - id: start
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          # shellcheck disable=SC2086
+          runners=$(bash .github/azure/machines.sh start $ROWS)
+          echo "runners=$(jq -c --arg a "$GITHUB_RUN_ATTEMPT" 'with_entries(.key = "\($a)/\(.key)")' <<<"$runners")" >>"$GITHUB_OUTPUT"
+          # The rows that got a machine, for machines-online to wait on.
+          echo "rows=$(for spec in $ROWS; do jq -e --arg k "${spec%%=*}" 'has($k)' <<<"$runners" >/dev/null && printf '%s ' "$spec"; done)" >>"$GITHUB_OUTPUT"
+
+  # Until every machine's runner is online. One that never comes gets one more machine
+  # elsewhere; when that fails as well, the run starts again on GitHub's runners, since
+  # its job would otherwise wait for a runner that will never come.
+  machines-online:
+    needs: machines
+    if: needs.machines.outputs.rows != ''
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+      actions: write
+    steps:
+      - *azure-checkout
+      - *azure-login
+      - *azure-app
+      - name: Wait for the runners
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          # shellcheck disable=SC2086
+          bash .github/azure/machines.sh watch ${{ needs.machines.outputs.rows }}
+      - name: Start again on GitHub's runners
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release.yml --ref "$GITHUB_REF_NAME" -f runners=github
+          gh run cancel "$GITHUB_RUN_ID"
+
   build:
-    needs: version
+    needs: [version, machines]
+    # Whether or not there are machines.
+    if: ${{ !cancelled() && needs.version.result == 'success' }}
     # It reads the repository and uploads an artifact, which travels on the
     # runtime's own token rather than on this one.
     permissions:
@@ -74,7 +164,7 @@ jobs:
             label: macos-universal
             rust: aarch64-apple-darwin,x86_64-apple-darwin
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ fromJSON(needs.machines.outputs.runners || '{}')[format('{0}/{1}', github.run_attempt, matrix.label)] || matrix.platform }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -181,7 +271,8 @@ jobs:
   # Windows and a Mac. Not Linux, where the engine's toolkit and the app's cannot share
   # a process (docs/browser.md section 10), so the setting has no row there.
   chromium:
-    needs: version
+    needs: [version, machines]
+    if: ${{ !cancelled() && needs.version.result == 'success' }}
     permissions:
       contents: read
     strategy:
@@ -200,7 +291,7 @@ jobs:
           - runner: macos-latest
             target: x86_64-apple-darwin
             platform: macos-x86_64
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ fromJSON(needs.machines.outputs.runners || '{}')[format('{0}/chromium-{1}', github.run_attempt, matrix.platform)] || matrix.runner }}
     timeout-minutes: 120
     defaults:
       run:
@@ -370,3 +461,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run publish.yml -f tag="$TAG"
+
+  # The first of the three things that delete the Azure machines (the sweeper and the
+  # machines themselves are the others): whatever the jobs did, failed or cancelled.
+  machines-down:
+    needs: [machines, build, chromium]
+    if: always() && needs.machines.result != 'skipped'
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - *azure-checkout
+      - *azure-login
+      - *azure-app
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: bash .github/azure/machines.sh down

@@ -1,0 +1,54 @@
+# The second of the three things that delete Azure build machines (.github/azure/machines.sh):
+# every half hour, anything in the resource group past its time, or carrying none, is
+# deleted, whatever became of the run that made it. The first is a run's own teardown
+# job; the third is the machine deleting itself.
+#
+# Inert until the Azure side exists: the repository variable AZURE_CLIENT_ID is what the
+# owner's one-time setup writes.
+name: azure-sweeper
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: azure-sweeper
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    if: vars.AZURE_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    # The environment is the only identity Azure lets in from a schedule.
+    environment: azure-ci
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: .github/azure
+
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # For the runners a deleted machine left registered.
+      - id: app
+        if: vars.NIB_CI_APP_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.NIB_CI_APP_ID }}
+          private-key: ${{ secrets.NIB_CI_APP_KEY }}
+
+      - name: Sweep
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: bash .github/azure/machines.sh sweep

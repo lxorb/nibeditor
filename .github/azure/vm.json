@@ -1,0 +1,202 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string"
+    },
+    "os": {
+      "type": "string",
+      "allowedValues": [
+        "windows",
+        "linux"
+      ]
+    },
+    "image": {
+      "type": "object"
+    },
+    "diskGb": {
+      "type": "int",
+      "defaultValue": 256
+    },
+    "tags": {
+      "type": "object"
+    },
+    "reaper": {
+      "type": "string"
+    },
+    "password": {
+      "type": "securestring"
+    },
+    "boot": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "windows": "[equals(parameters('os'), 'windows')]",
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Copy-Item C:\\AzureData\\CustomData.bin C:\\AzureData\\boot.ps1; & C:\\AzureData\\boot.ps1\""
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.90.0.0/24"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "s",
+            "properties": {
+              "addressPrefix": "10.90.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('name'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('name'))]"
+      ],
+      "properties": {
+        "enableAcceleratedNetworking": true,
+        "ipConfigurations": [
+          {
+            "name": "ip",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('name'), 's')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('name'))]",
+                "properties": {
+                  "deleteOption": "Delete"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-07-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('name'))]"
+      ],
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[parameters('reaper')]": {}
+        }
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('size')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('image')]",
+          "diskControllerType": "NVMe",
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadOnly",
+            "diskSizeGB": "[parameters('diskGb')]",
+            "deleteOption": "Delete",
+            "diffDiskSettings": {
+              "option": "Local",
+              "placement": "NvmeDisk"
+            }
+          }
+        },
+        "osProfile": {
+          "computerName": "nibci",
+          "adminUsername": "nib",
+          "adminPassword": "[parameters('password')]",
+          "customData": "[parameters('boot')]",
+          "windowsConfiguration": "[if(variables('windows'), createObject('provisionVMAgent', true(), 'enableAutomaticUpdates', false(), 'patchSettings', createObject('patchMode', 'Manual')), json('null'))]",
+          "linuxConfiguration": "[if(variables('windows'), json('null'), createObject('disablePasswordAuthentication', false(), 'provisionVMAgent', true()))]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('name'))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[variables('windows')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2024-07-01",
+      "name": "[concat(parameters('name'), '/boot')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {},
+        "protectedSettings": {
+          "commandToExecute": "[variables('start')]"
+        }
+      }
+    }
+  ]
+}
