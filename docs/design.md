@@ -285,16 +285,21 @@ the app's look, and the system's own Transparency effects or Reduce transparency
 it off everywhere. So the glass theme is the translucent one; a reader who had the row on
 under the built-in theme is given glass once.
 
-And glass is what nib opens in: a first launch is glass, in yellow, following the system
-(Emil, 2026-10-12). The theme is not written down until somebody chooses one, so an
-install that never has stays on that look and can still be offered the contrast theme;
-the accent is, because it follows the reader to whatever theme they choose next. An
-install an older build left on the built-in - which it wrote down for everybody, chosen or
-not - is moved to glass once, keeping its accent and scheme (yellow only where it never
-chose an accent), and `nib:theme-moved` says so, so picking the built-in again sticks
-(Emil, 2026-10-13). The built-in is called Classic now that it is not the default; its
-id stays `default`, which stored choices, theme files and the registry name. See
-`FIRST_LOOK` in theme.svelte.ts.
+And glass is what nib opens in: a first launch is glass, in green, following the system
+(Emil, 2026-10-12; green since 2026-10-13, yellow the day before). The theme is not
+written down until somebody chooses one, so an install that never has stays on that look
+and can still be offered the contrast theme; the accent is, because it follows the
+reader to whatever theme they choose next. An install an older build left on the
+built-in - which it wrote down for everybody, chosen or not - is moved to glass once,
+keeping its accent and scheme (the first look's accent only where it never chose one),
+and `nib:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
+The built-in is called Classic now that it is not the default; its id stays `default`,
+which stored choices, theme files and the registry name. And the accent the first look
+gives is kept as given (`nib:accent-given`) until one is picked, so a later first look's
+accent replaces it once and never replaces a pick; an install from the yellow day,
+before that key, counts its yellow as given only while its theme was never written down
+and no older build kept an accent under the old key. See `FIRST_LOOK` in
+theme.svelte.ts.
 
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the

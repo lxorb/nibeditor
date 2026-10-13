@@ -149,7 +149,11 @@ const GLASS: ThemeInfo = {
 }
 
 /** What opens until a look is chosen (Emil); the accent is kept, as it follows. */
-const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'yellow' }
+const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'green' }
+/** The accent the first look gave, empty once one is picked; see `giveAccent`. */
+const GIVEN_KEY = 'nib:accent-given'
+/** What it gave before that key: yellow, on 2026-10-13. */
+const GIVEN_BEFORE = 'yellow'
 /** Older builds wrote the built-in for all: moved to the first look once. */
 const MOVED_KEY = 'nib:theme-moved'
 
@@ -273,9 +277,10 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
+    const unwritten = storedText(STORAGE_KEY) === null
     const first = this.restoreChoice()
     this.offerTheContrastTheme()
-    this.restoreSettings(first)
+    this.restoreSettings(first, unwritten)
     this.early = earlySheet()
     // What the crate put back behind the window before the page started, said on the
     // first frame; and a launch that stood on it, or cannot tell, asks for it off
@@ -311,7 +316,7 @@ class Themes {
 
   /** Every answer, the accent's old key read into the app's drawer and left for an
    *  older build. Nothing is trusted: `valueOf` reads each against its setting. */
-  private restoreSettings(first: boolean) {
+  private restoreSettings(first: boolean, unwritten: boolean) {
     const drawers: ChosenSettings = Object.fromEntries(
       Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
         owner,
@@ -324,13 +329,27 @@ class Themes {
       drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
-    if (FIRST_LOOK && first && drawers[SHARED]?.accent === undefined) {
+    this.giveAccent(drawers, first, unwritten)
+    this.chosen = drawers
+    this.trying = {}
+  }
+
+  /** The first look's accent, to an install with none or with one an earlier first look
+   *  gave and nobody picked since. Before the key, a yellow counts as given only while
+   *  the theme was never written down and the old key holds nothing. */
+  private giveAccent(drawers: ChosenSettings, first: boolean, unwritten: boolean) {
+    if (!FIRST_LOOK) return
+
+    const held = drawers[SHARED]?.accent
+    const given =
+      storedText(GIVEN_KEY) ?? (unwritten && storedText(ACCENT_KEY) === null ? GIVEN_BEFORE : '')
+    const stillGiven = held === undefined ? first : held === given
+
+    if (stillGiven && held !== FIRST_LOOK.accent) {
       drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
       keep(SETTINGS_KEY, JSON.stringify(drawers))
     }
-
-    this.chosen = drawers
-    this.trying = {}
+    keep(GIVEN_KEY, stillGiven ? FIRST_LOOK.accent : '')
   }
 
   /** Whether the theme was chosen: older builds wrote the built-in down for everybody. */
@@ -601,6 +620,7 @@ class Themes {
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
     keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
   }

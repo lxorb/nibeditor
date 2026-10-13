@@ -697,22 +697,23 @@ const settled = async (done?: () => boolean) => {
   }
 }
 
-/** Emil, 2026-10-12: glass, in yellow, following the system is what nib opens in until
- *  somebody chooses otherwise, and nobody who has chosen anything is moved off it. */
+/** Emil, 2026-10-12: glass, following the system, is what nib opens in until somebody
+ *  chooses otherwise, and nobody who has chosen anything is moved off it. In green since
+ *  2026-10-13, and in yellow the day before. */
 describe('a first launch', () => {
   beforeEach(() => {
     kept.removeItem('nib:theme')
   })
 
-  test('is glass, in yellow, following the system', async () => {
+  test('is glass, in green, following the system', async () => {
     theme.init()
     await settled(() => injected() === glassCss)
 
     expect(theme.id).toBe('glass')
     expect(theme.scheme).toBe('system')
-    expect(theme.accent).toBe('yellow')
+    expect(theme.accent).toBe('green')
     expect(injected()).toBe(glassCss)
-    expect(painted['--accent']).toBe('#e5b23c')
+    expect(painted['--accent']).toBe('#3fcf8e')
     // On the material, where there is one.
     expect(host.asked.at(-1)?.on).toBe(true)
   })
@@ -721,7 +722,8 @@ describe('a first launch', () => {
     theme.init()
 
     expect(kept.getItem('nib:theme')).toBe(null)
-    expect(kept.getItem('nib:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'yellow' } }))
+    expect(kept.getItem('nib:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'green' } }))
+    expect(kept.getItem('nib:accent-given')).toBe('green')
   })
 
   test('and the next launch is the same look', () => {
@@ -729,16 +731,16 @@ describe('a first launch', () => {
     theme.init()
 
     expect(theme.id).toBe('glass')
-    expect(theme.accent).toBe('yellow')
+    expect(theme.accent).toBe('green')
   })
 
-  test('keeps the yellow on any theme chosen after it, since the accent is the reader’s', () => {
+  test('keeps the green on any theme chosen after it, since the accent is the reader’s', () => {
     theme.init()
     theme.select('default')
     theme.init()
 
     expect(theme.id).toBe('default')
-    expect(theme.accent).toBe('yellow')
+    expect(theme.accent).toBe('green')
   })
 
   test('and an accent chosen on it outlives the next launch', () => {
@@ -748,6 +750,7 @@ describe('a first launch', () => {
 
     expect(theme.id).toBe('glass')
     expect(theme.accent).toBe('teal')
+    expect(kept.getItem('nib:accent-given')).toBe('')
   })
 
   test('nor over an accent an older device kept under a key of its own', () => {
@@ -777,11 +780,11 @@ describe('an install on the built-in', () => {
     kept.removeItem('nib:theme-moved')
   })
 
-  test('moves to glass once, in yellow where no accent was ever chosen', () => {
+  test('moves to glass once, in green where no accent was ever chosen', () => {
     theme.init()
 
     expect(theme.id).toBe('glass')
-    expect(theme.accent).toBe('yellow')
+    expect(theme.accent).toBe('green')
     expect(kept.getItem('nib:theme')).toBe(null)
     expect(kept.getItem('nib:theme-moved')).toBe('yes')
   })
@@ -828,6 +831,67 @@ describe('an install on the built-in', () => {
 
     expect(theme.id).toBe('contrast')
     expect(theme.accent).toBe('violet')
+  })
+})
+
+/** Emil, 2026-10-13: the first look's accent is green, and an install yellow only
+ *  because the first look gave it that turns green once; a yellow somebody picked stays. */
+describe('an accent the first look gave', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme')
+  })
+
+  const given = (accent: string) =>
+    kept.setItem('nib:theme-settings', JSON.stringify({ '*': { accent } }))
+
+  test('the day’s yellow, on an install still on the first look, turns green once', () => {
+    given('yellow')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('green')
+    expect(kept.getItem('nib:accent-given')).toBe('green')
+
+    theme.setAccent('yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('but not once a theme was chosen, which is somebody in Appearance', () => {
+    kept.setItem('nib:theme', 'glass')
+    given('yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+    expect(kept.getItem('nib:accent-given')).toBe('')
+  })
+
+  test('nor where an older device kept its yellow under the old key', () => {
+    kept.setItem('nib:accent', 'yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('nor any other accent an install from before the marker holds', () => {
+    given('teal')
+    theme.init()
+
+    expect(theme.accent).toBe('teal')
+  })
+
+  test('follows whatever the first look gives now, on any theme, until one is picked', () => {
+    kept.setItem('nib:theme', 'wallpaper')
+    kept.setItem('nib:accent-given', 'teal')
+    given('teal')
+    theme.init()
+
+    expect(theme.accent).toBe('green')
+
+    theme.select('default')
+    theme.setAccent('green')
+    expect(kept.getItem('nib:accent-given')).toBe('')
   })
 })
 

@@ -24,7 +24,7 @@ scripts/glass-probe.py, which photographs the probe build.
 And the rest of what the theme promises: the paper under the note is opaque, the tab
 that is open runs down into it, the reader's accent is still the reader's, and
 Appearance has no Translucency row left, since glass is what it meant. And it is what a
-new reader opens in, in yellow and following the system (`FIRST_LOOK` in
+new reader opens in, in green and following the system (`FIRST_LOOK` in
 theme.svelte.ts), which every other drive is kept off by harness.py's `BUILT_IN`.
 
 Run it from the repository root:
@@ -374,7 +374,7 @@ def main() -> int:
 
 
 def first_look(browser: Browser, scheme: str) -> None:
-    """A browser that has never opened nib: glass, the yellow accent, the system's
+    """A browser that has never opened nib: glass, the green accent, the system's
     scheme, with glass's sheet worn and the theme not yet written down as a choice."""
     context = browser.new_context(
         viewport={"width": 1240, "height": 760},
@@ -397,7 +397,7 @@ def first_look(browser: Browser, scheme: str) -> None:
         " kept: localStorage.getItem('nib:theme') })"
     )
     shows(f"[{scheme}] a first launch is glass", look["id"], "glass")
-    shows(f"[{scheme}] in yellow", look["accent"], "yellow")
+    shows(f"[{scheme}] in green", look["accent"], "green")
     shows(f"[{scheme}] following the system", look["scheme"], "system")
     shows(f"[{scheme}] which here is {scheme}", look["current"], scheme)
     shows(f"[{scheme}] and nothing is written down as chosen", look["kept"], None)
@@ -423,6 +423,25 @@ def first_look(browser: Browser, scheme: str) -> None:
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
+    done_with(page)
+
+    # An install the day's first look gave yellow, the theme never written down: green
+    # once, and a yellow picked after that stays.
+    context = browser.new_context(color_scheme=scheme, first_look=True)
+    context.add_init_script(
+        "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
+        " localStorage.setItem('nib:theme-moved', 'yes');"
+        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'yellow' } })) } }"
+        " catch {}"
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] the first look's yellow turns green", page.evaluate(read), ["glass", "green"])
+    page.evaluate("() => window.nibApp.theme.setAccent('yellow')")
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] and a yellow picked after stays", page.evaluate(read), ["glass", "yellow"])
     done_with(page)
 
 

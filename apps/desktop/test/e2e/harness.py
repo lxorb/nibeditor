@@ -132,7 +132,7 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 ANSWERED = "try { localStorage.setItem('nib:first-visit', 'answered') } catch {}"
 
 #: And the look it chose: the built-in theme (Classic), unless it has chosen another since,
-#: having been moved off it to glass once already. A first launch is glass in yellow
+#: having been moved off it to glass once already. A first launch is glass in green
 #: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
 #: photographs and measures the built-in palette. A context made with `first_look=True`
 #: is a new reader's.
