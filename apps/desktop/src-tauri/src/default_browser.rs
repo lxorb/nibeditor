@@ -508,7 +508,7 @@ mod platform {
                 std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share"))
             });
         let system = std::env::var("XDG_DATA_DIRS").unwrap_or_default();
-        kept(entry, own, &system, |path| path.is_file())
+        kept(entry, own, &system, std::path::Path::is_file)
     }
 
     /// Writes nib's handler for both schemes and makes it their default: the deep link
