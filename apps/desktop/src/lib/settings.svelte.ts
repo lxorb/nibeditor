@@ -13,7 +13,6 @@ const NOTE_ID_KEY = 'nib:note-id'
 /** How an exported page is coloured: light, dark, or as the app looks now. */
 type ExportAppearance = 'light' | 'dark' | 'app'
 
-/** The pages of Settings, by the ids a link opens them at. */
 export type Section =
   | 'general'
   | 'appearance'
@@ -31,8 +30,7 @@ export type Section =
   | 'trash'
   | 'export'
 
-/** Pages that became part of another, by their old ids, so a link to one lands where
- *  its rows went. */
+/** Old pages, by the id a link may still say, and the page their rows are on now. */
 const MOVED = {
   spelling: 'editor',
   remote: 'terminal',
@@ -162,8 +160,7 @@ class Settings {
     }
   }
 
-  /** Where in a page it was asked to open: Access, or Spelling partway down Editor.
-   *  Read and cleared by the part it names. */
+  /** Where in a page it was asked to open. Read and cleared by the part it names. */
   at = $state<'access' | 'spelling' | null>(null)
 
   /** Opens on General, or on the list of panes where the screen is a phone's.

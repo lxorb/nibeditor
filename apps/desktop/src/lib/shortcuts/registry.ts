@@ -1215,8 +1215,7 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => modes.resetZoom(),
   },
   {
-    // No key on Windows or Linux: Ctrl+R is a shell's history search and Vim's redo.
-    // Over a page Cmd+R stays the page's (`web.reload`). See reload-window.ts.
+    // Ctrl+R is a shell's and Vim's, so a Mac's alone; see reload-window.ts.
     id: 'app.reload',
     label: () => t('Reload window'),
     category: 'view',
