@@ -289,7 +289,13 @@ it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exit
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
 instead, in `.github/workflows/drives.yml`, and whenever that workflow is
-dispatched; `smoke.py` alone also runs on every change, in `check.yml`.
+dispatched; `smoke.py` and `layout-sweep.py` also run on every change, in
+`check.yml`. The sweep holds every settings pane and the big surfaces, at three
+desktop widths and a phone, light and dark, signed out and in, to the facts a layout
+keeps: no word broken across lines, nothing past the window or spilling out of its
+box, nothing drawn over its neighbour, no control at no size, a row's name readable.
+Run it after any change to what is drawn (`--only desktop-out --widths 720` for one
+corner of it), and a surface it does not reach yet is one to add to it.
 
 Everything round a drive's steps is `apps/desktop/test/e2e/harness.py`'s, so a new
 drive is its steps and nothing else:
