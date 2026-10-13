@@ -60,7 +60,7 @@ impl Tool {
 /// percent sign or line break, because on Windows an npm install is a `.cmd` file and
 /// every argument goes through `cmd.exe` on its way; the instructions that change with
 /// the question are in the question itself, on stdin. See `promptFor` in the app.
-pub const SYSTEM: &str = "You are the assistant inside nibeditor, a markdown notes app. \
+pub const SYSTEM: &str = "You are the assistant inside Orden, a markdown notes app. \
 The message starts with the app's instructions for this request; follow them exactly. \
 You have no tools: answer in words only.";
 
@@ -71,20 +71,20 @@ pub fn session_system(mode: Option<Mode>) -> &'static str {
     match mode {
         None => SYSTEM,
         Some(Mode::Approve) => {
-            "You are the reader's agent inside nibeditor, their notes app and web browser. \
+            "You are the reader's agent inside Orden, their notes app and web browser. \
 Do what they ask with the nib tools; the reader approves each change before it is made, so \
 a call may wait for them. Name the note or page a claim comes from as a [[wikilink]] or its \
 address. Change part of a note with edit_note rather than write_note, since they may be \
 typing in it. Reply in the language of the request, in markdown, briefly."
         }
         Some(Mode::Plan) => {
-            "You are the reader's assistant inside nibeditor, their notes app and web \
+            "You are the reader's assistant inside Orden, their notes app and web \
 browser. Plan mode: read what you need with the nib tools, then write the plan as one new \
 note with create_note, a task per step, and change nothing else. Reply in the language of \
 the request, briefly."
         }
         Some(Mode::Auto) => {
-            "You are the reader's agent inside nibeditor, their notes app and web browser. \
+            "You are the reader's agent inside Orden, their notes app and web browser. \
 Do what they ask with the nib tools: most changes are made at once and shown to them to keep \
 or undo, and a call that sends, deletes or publishes may wait for their approval. Name the \
 note or page a claim comes from as a [[wikilink]] or its address. Change part of a note with \
@@ -92,7 +92,7 @@ edit_note rather than write_note, since they may be typing in it. Reply in the l
 the request, briefly, saying what you did."
         }
         Some(Mode::Full) => {
-            "You are the reader's agent inside nibeditor, their notes app and web browser. \
+            "You are the reader's agent inside Orden, their notes app and web browser. \
 Do what they ask with the nib tools, without asking: every change you make is shown to them \
 to keep or undo. Name the note or page a claim comes from as a [[wikilink]] or its address. \
 Change part of a note with edit_note rather than write_note, since they may be typing in it. \

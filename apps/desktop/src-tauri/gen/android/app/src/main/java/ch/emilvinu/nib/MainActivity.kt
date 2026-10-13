@@ -82,7 +82,7 @@ class MainActivity : TauriActivity() {
    *
    *  `addJavascriptInterface` has no notion of an origin and no notion of a frame:
    *  Android injects the object into *every* frame of the webview, iframes included,
-   *  and the call carries nothing about who made it. Nib's pages do hold frames of
+   *  and the call carries nothing about who made it. Orden's pages do hold frames of
    *  somebody else's - a note may embed a page, and a block of a note's own HTML
    *  runs in a frame of its own - and those are sandboxed precisely so that the app
    *  is out of their reach. The bridge was the way round the sandbox: a framed page
@@ -99,7 +99,7 @@ class MainActivity : TauriActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     // Android 15 draws every app under the system bars whether it asks or not,
-    // so Nib asks, and paints those areas itself: transparent bars over the
+    // so Orden asks, and paints those areas itself: transparent bars over the
     // page's own background, with the page's chrome padded by the insets. A
     // scrim behind the clock would be a band of somebody else's colour across
     // the top of a themed app.
@@ -207,7 +207,7 @@ class MainActivity : TauriActivity() {
     // devices. Both watch for a stylus over an editable area and then swallow
     // the touch stream to convert it to text - which over a note being written
     // in, or over a canvas card, means the pen never reaches the page at all.
-    // Nib draws with the pen itself, so the recogniser is turned off here and
+    // Orden draws with the pen itself, so the recogniser is turned off here and
     // every stylus event arrives as a pointer event; see canvas/ink.ts.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       webView.isAutoHandwritingEnabled = false

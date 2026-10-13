@@ -82,7 +82,7 @@ pub fn is_pdf(path: &Path) -> bool {
 }
 
 /// Whether a path names a canvas: the plane of cards Obsidian keeps in a
-/// `.canvas` file, which Nib reads and writes as JSON Canvas 1.0.
+/// `.canvas` file, which Orden reads and writes as JSON Canvas 1.0.
 ///
 /// It is text, so `read_note` and `write_note` already carry it and nothing here
 /// has to know what is inside; the crate only has to agree that it is a file the

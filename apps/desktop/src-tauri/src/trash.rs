@@ -60,7 +60,7 @@ pub struct TrashEntry {
 #[tauri::command(async)]
 pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
-        return Err(format!("{kind} is not something nibeditor can delete"));
+        return Err(format!("{kind} is not something Orden can delete"));
     }
 
     // Refuses anything outside the notes folder, and the trash itself: what is
@@ -117,7 +117,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<TrashEntry, String> {
     let (_, from, name) = placed(&app, &path)?;
     if !is_name(&name) {
-        return Err(format!("{name} is not a name nibeditor can keep"));
+        return Err(format!("{name} is not a name Orden can keep"));
     }
 
     let _guard = locked();
@@ -361,7 +361,7 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// a name rather than a path.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     if !is_name(&entry.name) {
-        return Err("that is not a name nibeditor stored".into());
+        return Err("that is not a name Orden stored".into());
     }
 
     let wanted = folded(&base.join(entry.from.replace('/', MAIN_SEPARATOR_STR)));

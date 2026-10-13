@@ -727,7 +727,7 @@ wrap_life_span_handler! {
             let url = text(target_url);
             let owner = &self.page.owner;
             if let Err(why) = tabs::may_open(owner, &url) {
-                self.page.say(format!("nib refused a window to {url}: {why}"));
+                self.page.say(format!("Orden refused a window to {url}: {why}"));
                 return 1;
             }
             let (Some(window_info), Some(client), Some(settings)) = (window_info, client, settings) else {
@@ -864,7 +864,7 @@ wrap_permission_handler! {
                 callback.cont(0);
             }
             self.page.say(format!(
-                "nib refused {} the camera and the microphone",
+                "Orden refused {} the camera and the microphone",
                 text(requesting_origin)
             ));
             1
@@ -882,7 +882,7 @@ wrap_permission_handler! {
                 callback.cont(PermissionRequestResult::DENY);
             }
             self.page
-                .say(format!("nib refused {} a permission", text(requesting_origin)));
+                .say(format!("Orden refused {} a permission", text(requesting_origin)));
             1
         }
     }
@@ -990,7 +990,7 @@ wrap_dialog_handler! {
                 callback.cancel();
             }
             self.page
-                .say("nib refused the page a file chooser: browser_upload answers one".into());
+                .say("Orden refused the page a file chooser: browser_upload answers one".into());
             1
         }
     }
@@ -1042,7 +1042,7 @@ wrap_request_handler! {
                 }
                 Err(why) => {
                     self.page
-                        .say(format!("nib stopped the page going to {url}: {why}"));
+                        .say(format!("Orden stopped the page going to {url}: {why}"));
                     1
                 }
             }
@@ -1057,7 +1057,7 @@ wrap_request_handler! {
             _user_gesture: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int {
             self.page.say(format!(
-                "nib kept {} from opening in a tab of the reader's",
+                "Orden kept {} from opening in a tab of the reader's",
                 text(target_url)
             ));
             1
@@ -1075,7 +1075,7 @@ wrap_request_handler! {
             _callback: Option<&mut AuthCallback>,
         ) -> ::std::os::raw::c_int {
             self.page.say(
-                "nib refused the site's sign-in box: ask the reader with browser_takeover".into(),
+                "Orden refused the site's sign-in box: ask the reader with browser_takeover".into(),
             );
             0
         }
@@ -1093,7 +1093,7 @@ wrap_request_handler! {
                 callback.select(None);
             }
             self.page
-                .say("nib refused the site's request for a client certificate".into());
+                .say("Orden refused the site's request for a client certificate".into());
             1
         }
     }
@@ -1179,7 +1179,7 @@ wrap_load_handler! {
             // no credentials itself, and the agent hears why here.
             if frame.is_some_and(|frame| frame.is_main() != 0) && text(error_text).contains("AUTH") {
                 self.page.say(format!(
-                    "nib refused the site's sign-in box at {}: ask the reader with browser_takeover",
+                    "Orden refused the site's sign-in box at {}: ask the reader with browser_takeover",
                     text(failed_url)
                 ));
             }

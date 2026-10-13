@@ -3,7 +3,7 @@
 //! Every titlebar `AppKit` draws centres its three buttons in its own height, with
 //! the same margin on the left as above them: nine points in the plain 32 point
 //! titlebar, twelve and thirteen in a compact toolbar's forty, nineteen in a
-//! unified toolbar's fifty-two. Nib's bar is `--titlebar-height`, 38 points, which
+//! unified toolbar's fifty-two. Orden's bar is `--titlebar-height`, 38 points, which
 //! is none of those, so the lights are placed by hand the way `AppKit` would have
 //! placed them in a bar that tall: centred in it, and as far in from the left as
 //! they are down from the top, with `AppKit`'s own distance between them.
@@ -24,7 +24,7 @@
 //!   one, and before the commit that draws the window, since the main queue is
 //!   drained ahead of it.
 //!
-//! Nib retitles the window and marks it edited on every note it shows, so the second
+//! Orden retitles the window and marks it edited on every note it shows, so the second
 //! is most of what the window does rather than an edge case.
 //!
 //! This is not tao's `traffic_light_inset`, which Tauri's `trafficLightPosition`

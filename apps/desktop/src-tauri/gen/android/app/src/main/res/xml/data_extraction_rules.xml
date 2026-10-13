@@ -9,7 +9,7 @@
   keeps happening on some manufacturers' devices whatever allowBackup says.
 
   Every domain is named rather than only `root`, because the notes are not in the
-  one that sounds like it: Nib keeps them under the app's own documents folder in
+  one that sounds like it: Orden keeps them under the app's own documents folder in
   external storage, which is `external`. The rest are named so that a preference,
   a database or a cached export cannot leave either.
 -->

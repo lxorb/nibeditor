@@ -1,5 +1,5 @@
 <resources>
-    <!-- The window Nib is drawn in. Its background is the page's own colour, so
+    <!-- The window Orden is drawn in. Its background is the page's own colour, so
          a launch shows what the app is about to paint rather than a white flash
          before the first frame; see packages/themes/src/tokens.css. Edge to
          edge, with the system bars over the page, is set in MainActivity. -->

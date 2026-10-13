@@ -412,7 +412,7 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             say(
                 &label,
                 "warning",
-                format!("nib refused a window to {url}: {why}"),
+                format!("Orden refused a window to {url}: {why}"),
             );
             return Ok(());
         }
@@ -483,7 +483,7 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
             say(
                 &label,
                 "warning",
-                format!("nib refused the page {}", permission_named(kind.0)),
+                format!("Orden refused the page {}", permission_named(kind.0)),
             );
         }
         Ok(())
@@ -698,7 +698,7 @@ fn sign_ins(core: &ICoreWebView2, owner: &Owner) {
                 say(
                     &label,
                     "warning",
-                    "nib refused the site's sign-in box: ask the reader with browser_takeover"
+                    "Orden refused the site's sign-in box: ask the reader with browser_takeover"
                         .into(),
                 );
             }
@@ -717,7 +717,7 @@ fn sign_ins(core: &ICoreWebView2, owner: &Owner) {
                 say(
                     &label,
                     "warning",
-                    "nib refused the site's request for a client certificate".into(),
+                    "Orden refused the site's request for a client certificate".into(),
                 );
             }
             Ok(())

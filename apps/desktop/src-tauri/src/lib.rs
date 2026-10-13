@@ -1,4 +1,4 @@
-//! Nib, on a desktop and on a phone: the plugins it runs with, the commands the
+//! Orden, on a desktop and on a phone: the plugins it runs with, the commands the
 //! window may call, and the window itself.
 //!
 //! Every command lives in the module that owns the thing it touches - `notes`,
@@ -71,7 +71,7 @@ mod link_preview;
 )]
 mod apple_text;
 mod assets;
-// The Mac app's folder carried over from the product's old name; see bundle_name.rs.
+// The Mac app's folder carried over from the product's old names; see bundle_name.rs.
 #[cfg(desktop)]
 mod bundle_name;
 mod carry;
@@ -985,7 +985,7 @@ fn ready(
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
 
-    // Nib listed among the browsers and among the agents' servers, each on a thread of
+    // Orden listed among the browsers and among the agents' servers, each on a thread of
     // its own after the window; see `kept_listed`.
     #[cfg(desktop)]
     kept_listed(handle);

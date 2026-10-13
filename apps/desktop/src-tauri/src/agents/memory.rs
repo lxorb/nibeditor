@@ -14,7 +14,7 @@ pub fn too_much() -> Option<String> {
     let used = engine_bytes();
     (used > CEILING).then(|| {
         format!(
-            "the browser is using {} MB of memory, past nib's ceiling of {} MB for agents: close or finish some tabs first",
+            "the browser is using {} MB of memory, past Orden's ceiling of {} MB for agents: close or finish some tabs first",
             used / (1024 * 1024),
             CEILING / (1024 * 1024)
         )
