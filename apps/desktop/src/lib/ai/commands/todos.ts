@@ -6,7 +6,7 @@
  *  Assist), which is shown above the rows so the reader learns it. The rows are a
  *  notice the thread draws with live boxes (TaskRows.svelte), never sent to the model.
  *
- *  `/today` hands the model the plan as a turn in Agent mode: it reads the lists with
+ *  `/today` hands the model the plan as a turn in Auto mode: it reads the lists with
  *  `list_tasks` and writes times and dates with `update_task`, every one an edit the
  *  review keeps or undoes, so nothing it plans is final until the reader says so. */
 
@@ -24,7 +24,7 @@ const PLAN = [
 ].join(' ')
 
 export function planDay(host: Host, thread: Thread | null, args: string): void {
-  sendHere(host, thread, args.trim() ? `${PLAN}\n\n${args.trim()}` : PLAN, { mode: 'agent' })
+  sendHere(host, thread, args.trim() ? `${PLAN}\n\n${args.trim()}` : PLAN, { mode: 'auto' })
 }
 
 /** How a model is asked to turn words into a filter. In English, for the model. */

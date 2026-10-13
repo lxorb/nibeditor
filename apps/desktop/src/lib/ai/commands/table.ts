@@ -60,7 +60,8 @@ export const ROWS: readonly Row[] = [
   // 3.3 Modes and long work
   row('modes', 'approve', ['ask'], key('Approve mode'), '[task]'),
   row('modes', 'plan', [], key('Plan mode'), '[task]'),
-  row('modes', 'agent', [], key('Agent mode'), '[task]'),
+  row('modes', 'auto', ['agent'], key('Auto mode'), '[task]'),
+  row('modes', 'full', ['yolo', 'bypass'], key('Full permissions'), '[task]'),
   row('modes', 'agents', ['subagents'], key('Agent profile'), '[name]'),
   row('modes', 'permissions', ['approvals', 'allowed-tools'], key('What the agent may do')),
   row('modes', 'goal', [], key('Work toward a goal'), '[condition|pause|resume|clear]'),

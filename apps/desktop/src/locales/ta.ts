@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'முழு அனுமதிகள்',
+  'Auto mode': 'தானியங்கு பயன்முறை',
+  'Full permissions: nothing is asked first': 'முழு அனுமதிகள்: முன்னதாக எதுவும் கேட்கப்படாது',
   // Tasks: Upcoming's weeks
   'Previous week': 'முந்தைய வாரம்',
   // Tasks: projects placed in the panel, and their folder
@@ -1442,7 +1446,6 @@ export const ta: Dictionary = {
   'A cited report': 'மேற்கோளிட்ட அறிக்கை',
   'A helper in the background': 'பின்னணியில் உதவியாளர்',
   'A side question': 'பக்கக் கேள்வி',
-  'Agent mode': 'ஏஜென்ட் பயன்முறை',
   'Agent profile': 'ஏஜென்ட் சுயவிவரம்',
   'Archive the thread': 'த்ரெட்டை காப்பகப்படுத்து',
   'Approve mode': 'ஒப்புதல் பயன்முறை',

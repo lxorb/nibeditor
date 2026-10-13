@@ -1,5 +1,5 @@
 /** What a thread did to files rather than to words (docs/ai-sidebar.md 4.5): a note
- *  moved or renamed, a note sent to Recently deleted. Agent mode does these without
+ *  moved or renamed, a note sent to Recently deleted. Auto and Full permissions do these without
  *  asking, so each is on the changes list beside the edits, with Undo and Keep, and a
  *  rewind takes them back too. Read off the thread's own tool rows, which say what each
  *  call did in the verb's own answer. Pure. */

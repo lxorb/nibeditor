@@ -11,6 +11,7 @@
 import { isBoolean, keep, stored } from '../../stored'
 import type { Thread } from '../chat/types'
 import { foundNamed } from './found'
+import { actsAlone } from '../modes'
 
 /** The fields the commands keep on a thread, beside lane 1's. Written down with it:
  *  the thread store keeps every field it does not check (chat/threads.ts). */
@@ -69,7 +70,7 @@ export async function instructionsFor(thread: Thread): Promise<string> {
   const lines = [
     profile?.body ?? '',
     await styleLine(held.style),
-    remembers() && thread.mode === 'agent' ? REMEMBERING : '',
+    remembers() && actsAlone(thread.mode) ? REMEMBERING : '',
   ]
   return lines.filter(Boolean).join('\n\n')
 }

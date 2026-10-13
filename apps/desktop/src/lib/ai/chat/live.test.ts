@@ -78,7 +78,7 @@ describe.skipIf(!KEY)('OpenAI, live', () => {
     'a call, its answer, a second message over the replayed turn, and an effort stepped',
     { timeout: 120_000 },
     async () => {
-      const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'agent')
+      const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'full')
       expect(
         await send(
           thread,
@@ -105,7 +105,7 @@ describe.skipIf(!KEY)('OpenAI, live', () => {
     'chat completions with tools, as a compatible server speaks them',
     { timeout: 120_000 },
     async () => {
-      const thread = newThread('space', 'compatible-live', 'gpt-4.1-mini', 'auto', 'agent')
+      const thread = newThread('space', 'compatible-live', 'gpt-4.1-mini', 'auto', 'full')
       expect(await send(thread, 'Read Birds.md and say what it says, briefly.')).toEqual({
         type: 'done',
         stop: 'end',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Ruhusa kamili',
+  'Auto mode': 'Hali ya kiotomatiki',
+  'Full permissions: nothing is asked first': 'Ruhusa kamili: hakuna kinachoulizwa kwanza',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder
@@ -1440,7 +1444,6 @@ export const sw: Dictionary = {
   'A cited report': 'Ripoti yenye vyanzo',
   'A helper in the background': 'Msaidizi nyuma ya pazia',
   'A side question': 'Swali la pembeni',
-  'Agent mode': 'Hali ya wakala',
   'Agent profile': 'Wasifu wa wakala',
   'Archive the thread': 'Hifadhi uzi',
   'Approve mode': 'Hali ya kuidhinisha',

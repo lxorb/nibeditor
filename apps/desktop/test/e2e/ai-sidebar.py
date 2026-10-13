@@ -18,7 +18,7 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
 - the ring's tray lists the bands;
-- and the whole of it in one thread: Approve answers, Agent mode edits a note as the
+- and the whole of it in one thread: Approve answers, Auto mode edits a note as the
   provider's agent while its answer runs, the changes bar keeps one edit and undoes the
   other, the clock on a message rewinds notes and conversation to before it, and Up
   on the empty field sends an edited message again, which leaves arrows between the
@@ -343,10 +343,32 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
-    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
-        wrong("Shift+Tab did not step Approve to Agent")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Auto":
+        wrong("Shift+Tab did not step Approve to Auto")
     page.keyboard.press("Shift+Tab")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Plan":
+        wrong("Shift+Tab did not step Auto to Plan")
     page.keyboard.press("Shift+Tab")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Approve":
+        wrong("Shift+Tab went into Full permissions instead of back to Approve")
+
+    # The mode's own menu: the three permission modes and Plan, Full permissions set apart,
+    # and choosing it says so in the danger tone.
+    page.locator(".ask .controls .mode").click()
+    waited(page, "document.querySelector('.menu [role=menuitem]')", "the mode menu")
+    rows = page.locator(".menu [role=menuitem]").all_inner_texts()
+    say(f"[modes] {rows}")
+    if [one.replace("✓", "").strip() for one in rows] != ["Approve", "Auto", "Full permissions", "Plan"]:
+        wrong(f"the mode menu is not Approve, Auto, Full permissions and Plan: {rows}")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}04b-modes")
+    page.locator(".menu [role=menuitem]", has_text="Full permissions").click()
+    waited(page, "document.querySelector('.ask .controls .mode.full')", "Full permissions in its tone")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}04c-full")
+    page.locator(".ask .controls .mode").click()
+    page.locator(".menu [role=menuitem]", has_text="Approve").click()
+    waited(page, "!document.querySelector('.ask .controls .mode.full')", "Approve again")
 
     # The ring's tray.
     page.locator(".ask .knob").click()
@@ -458,11 +480,11 @@ def flow(browser: Browser) -> None:
     waited(page, "document.querySelector('.ask .answer a[href=\"#cite-1\"]')", "a cited answer")
     idle(page)
 
-    # Agent mode, and two edits made as the provider's agent while the answer runs.
+    # Auto mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
-    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
-        wrong("Shift+Tab did not reach Agent")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Auto":
+        wrong("Shift+Tab did not reach Auto")
     Model.words = [f"done{one} " for one in range(25)]
     Model.pause = 0.08
     type_and_send(page, "Shout the heron's verbs")
@@ -649,18 +671,18 @@ def shape(browser: Browser, scheme: str) -> None:
     for row in ("Add photos and files", "Web search", "Mention", "Commands"):
         if row not in rows:
             wrong(f"the + menu has no {row!r}: {rows}")
-    if any(mode in rows for mode in ("Approve", "Agent", "Plan")):
+    if any(mode in rows for mode in ("Approve", "Auto", "Full permissions", "Plan")):
         wrong(f"the + menu still holds the modes: {rows}")
     page.keyboard.press("Escape")
     page.locator(".ask .controls .mode").click()
-    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length === 3", "the modes")
+    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length === 4", "the modes")
     shot(page, f"{tag}03-modes")
     menu_row(page, "Plan").click()
     page.wait_for_timeout(200)
     if page.locator(".ask .controls .mode").text_content().strip() != "Plan":
         wrong("a mode picked from its menu is not the one it says")
     page.locator(".ask .controls .mode").click()
-    menu_row(page, "Agent").click()
+    menu_row(page, "Auto").click()
 
     # Ask again, with another model from its menu.
     Model.thoughts = []

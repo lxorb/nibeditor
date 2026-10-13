@@ -156,7 +156,7 @@ describe('the menu', () => {
         kind: 'command',
         name: 'greet',
         body: 'Say hello to $who.',
-        mode: 'agent',
+        mode: 'full',
         effort: 'low',
       },
       { ...base, kind: 'command', name: 'plain', body: 'Plain.', arguments: [] },
@@ -171,7 +171,7 @@ describe('the menu', () => {
     await run(rows, 'greet', 'Ada', panel)
     await run(rows, 'plain', '', panel)
     expect(calls).toEqual([
-      'turn(open,"Say hello to Ada.",{"effort":"low","mode":"agent"})',
+      'turn(open,"Say hello to Ada.",{"effort":"low","mode":"full"})',
       'send("Plain.")',
     ])
   })

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const mr: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'पूर्ण परवानग्या',
+  'Auto mode': 'स्वयंचलित मोड',
+  'Full permissions: nothing is asked first': 'पूर्ण परवानग्या: आधी काहीही विचारले जात नाही',
   // Tasks: Upcoming's weeks
   'Previous week': 'मागील आठवडा',
   // Tasks: projects placed in the panel, and their folder
@@ -1421,7 +1425,6 @@ export const mr: Dictionary = {
   'A cited report': 'उद्धृत अहवाल',
   'A helper in the background': 'पार्श्वभूमीत मदतनीस',
   'A side question': 'उपप्रश्न',
-  'Agent mode': 'एजंट मोड',
   'Agent profile': 'एजंट प्रोफाइल',
   'Archive the thread': 'थ्रेड संग्रहित करा',
   'Approve mode': 'मंजुरी मोड',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Повний доступ',
+  'Auto mode': 'Автоматичний режим',
+  'Full permissions: nothing is asked first': 'Повний доступ: нічого не питається заздалегідь',
   // Tasks: Upcoming's weeks
   'Previous week': 'Попередній тиждень',
   // Tasks: projects placed in the panel, and their folder
@@ -1488,7 +1492,6 @@ export const uk: Dictionary = {
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',
-  'Agent mode': 'Режим агента',
   'Agent profile': 'Профіль агента',
   'Archive the thread': 'Архівувати гілку',
   'Approve mode': 'Режим схвалення',

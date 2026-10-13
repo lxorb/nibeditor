@@ -336,12 +336,12 @@ describe('a Claude Code thread', () => {
     const built = engine(CLAUDE, 'File papers under Reading.')
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'one', built)
-    on.mode = 'agent'
+    on.mode = 'full'
     await send(CLAUDE, on, 'two', built)
 
     expect(opened).toHaveLength(2)
     expect(opened[0]?.closed).toBe(true)
-    expect(opened[1]?.opening.mode).toBe('agent')
+    expect(opened[1]?.opening.mode).toBe('full')
     expect(opened[1]?.said[0]?.text).toBe(
       [
         '<instructions>\nFile papers under Reading.\n</instructions>',

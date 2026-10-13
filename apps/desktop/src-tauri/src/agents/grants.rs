@@ -152,7 +152,7 @@ pub enum Mode {
     Unsupervised,
     /// Every write asks, batched.
     Confirm,
-    /// Nothing asks but paying: the AI sidebar's Agent mode (docs/ai-sidebar.md 4.4),
+    /// Nothing asks but paying: the AI sidebar's Full permissions (docs/ai-sidebar.md 4.4),
     /// whose safety is that every change can be undone. Only ever a call's, laid over the
     /// built-in grant by `ai_agent.rs`; never kept (`Grants::replace`).
     Autonomous,

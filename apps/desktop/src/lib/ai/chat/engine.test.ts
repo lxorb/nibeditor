@@ -138,11 +138,11 @@ beforeEach(() => {
 describe('a call made and answered', () => {
   test('is one model turn of thinking, words, the call with its answer, and the answer’s words', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'What is in Birds.md?')
 
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
-    expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' }, mode: 'agent' }])
+    expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' }, mode: 'full' }])
     const [you, model] = thread.turns
     expect(you?.role).toBe('you')
     expect(model?.parts.map((one) => one.kind)).toEqual(['thinking', 'text', 'tool', 'text'])
@@ -162,7 +162,7 @@ describe('a call made and answered', () => {
 
   test('the second request carries the first’s blocks as they came, and the call’s answer', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     await send(thread, 'What is in Birds.md?')
 
     const second = sent[1]?.body as {
@@ -187,7 +187,7 @@ describe('a call made and answered', () => {
 
   test('the next message sends the whole turn back as the provider’s own record', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     await send(thread, 'What is in Birds.md?')
     expect(thread.turns[1]?.replay?.messages).toHaveLength(3)
     await send(thread, 'Thanks.')
@@ -382,7 +382,7 @@ describe('an effort the model refuses', () => {
 describe('words steered into a running turn', () => {
   test('land after the call in flight as a message of their own', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     onCall = () => engine.steer(thread, 'and tag them #birds')
     await send(thread, 'What is in Birds.md?')
 
@@ -406,7 +406,7 @@ describe('a send that ends early', () => {
     answers = [stream('anthropic-1')]
     const controller = new AbortController()
     onCall = () => controller.abort()
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'What is in Birds.md?', controller)
 
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
@@ -434,7 +434,7 @@ describe('a send that ends early', () => {
 
   test('a model that never stops calling tools is stopped at the limit, and says so', async () => {
     always = stream('anthropic-1')
-    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'loop')
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'steps' })
     expect(calls).toHaveLength(MOST_ROUNDS)

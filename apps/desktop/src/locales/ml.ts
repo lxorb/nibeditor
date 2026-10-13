@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'പൂർണ്ണ അനുമതികൾ',
+  'Auto mode': 'ഓട്ടോ മോഡ്',
+  'Full permissions: nothing is asked first': 'പൂർണ്ണ അനുമതികൾ: ഒന്നും മുൻകൂട്ടി ചോദിക്കില്ല',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder
@@ -1435,7 +1439,6 @@ export const ml: Dictionary = {
   'A cited report': 'ഉദ്ധൃതമായ റിപ്പോർട്ട്',
   'A helper in the background': 'പശ്ചാത്തലത്തിലെ ഒരു സഹായകൻ',
   'A side question': 'ഒരു അനുബന്ധ ചോദ്യം',
-  'Agent mode': 'ഏജന്റ് മോഡ്',
   'Agent profile': 'ഏജന്റ് പ്രൊഫൈൽ',
   'Archive the thread': 'ത്രെഡ് ആർക്കൈവ് ചെയ്യുക',
   'Approve mode': 'അംഗീകാര മോഡ്',

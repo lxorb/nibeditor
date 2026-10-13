@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Permissões totais',
+  'Auto mode': 'Modo automático',
+  'Full permissions: nothing is asked first': 'Permissões totais: nada é perguntado antes',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -1448,7 +1452,6 @@ export const ptBR: Dictionary = {
   'A cited report': 'Um relatório com citações',
   'A helper in the background': 'Um ajudante em segundo plano',
   'A side question': 'Uma pergunta lateral',
-  'Agent mode': 'Modo agente',
   'Agent profile': 'Perfil do agente',
   'Archive the thread': 'Arquivar a conversa',
   'Approve mode': 'Modo aprovar',

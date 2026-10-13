@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Toàn quyền',
+  'Auto mode': 'Chế độ tự động',
+  'Full permissions: nothing is asked first': 'Toàn quyền: không hỏi trước điều gì',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder
@@ -1407,7 +1411,6 @@ export const vi: Dictionary = {
   'A cited report': 'Báo cáo có trích dẫn',
   'A helper in the background': 'Trợ lý nền',
   'A side question': 'Câu hỏi phụ',
-  'Agent mode': 'Chế độ tác nhân',
   'Agent profile': 'Hồ sơ tác nhân',
   'Archive the thread': 'Lưu trữ luồng',
   'Approve mode': 'Chế độ duyệt',

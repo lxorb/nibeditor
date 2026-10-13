@@ -66,11 +66,11 @@ const KINDS: readonly ProviderKind[] = [
 
 describe('the command table', () => {
   test('holds the counts the document states', () => {
-    expect(DOC).toContain('**62 commands** and **43 synonyms**')
-    expect(DOC_ROWS).toHaveLength(62)
-    expect(DOC_ROWS.flatMap((one) => one.synonyms)).toHaveLength(43)
-    expect(ROWS).toHaveLength(62)
-    expect(ROWS.flatMap((one) => one.synonyms)).toHaveLength(43)
+    expect(DOC).toContain('**63 commands** and **46 synonyms**')
+    expect(DOC_ROWS).toHaveLength(63)
+    expect(DOC_ROWS.flatMap((one) => one.synonyms)).toHaveLength(46)
+    expect(ROWS).toHaveLength(63)
+    expect(ROWS.flatMap((one) => one.synonyms)).toHaveLength(46)
   })
 
   test('registers every row of section 3, in its order, with its synonyms and arguments', () => {

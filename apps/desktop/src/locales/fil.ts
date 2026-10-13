@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Buong pahintulot',
+  'Auto mode': 'Auto mode',
+  'Full permissions: nothing is asked first': 'Buong pahintulot: walang itatanong muna',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder
@@ -1445,7 +1449,6 @@ export const fil: Dictionary = {
   'A cited report': 'Ulat na may sanggunian',
   'A helper in the background': 'Katulong sa likod ng trabaho',
   'A side question': 'Isang karagdagang tanong',
-  'Agent mode': 'Mode ng ahente',
   'Agent profile': 'Profile ng ahente',
   'Archive the thread': 'I-archive ang usapan',
   'Approve mode': 'Mode ng pag-apruba',

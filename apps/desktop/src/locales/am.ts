@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'ሙሉ ፈቃዶች',
+  'Auto mode': 'ራስ-ሰር ሁነታ',
+  'Full permissions: nothing is asked first': 'ሙሉ ፈቃዶች፦ ምንም አስቀድሞ አይጠየቅም',
   // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
   // Tasks: projects placed in the panel, and their folder
@@ -1401,7 +1405,6 @@ export const am: Dictionary = {
   'A cited report': 'ምንጭ የተጠቀሰበት ዘገባ',
   'A helper in the background': 'ከበስተጀርባ ያለ ረዳት',
   'A side question': 'የጎን ጥያቄ',
-  'Agent mode': 'የወኪል ሁነታ',
   'Agent profile': 'የወኪል መገለጫ',
   'Archive the thread': 'ውይይቱን አስቀምጥ',
   'Approve mode': 'የማጽደቅ ሁነታ',

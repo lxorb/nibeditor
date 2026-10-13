@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'ခွင့်ပြုချက် အပြည့်',
+  'Auto mode': 'အလိုအလျောက် မုဒ်',
+  'Full permissions: nothing is asked first': 'ခွင့်ပြုချက် အပြည့်- ကြိုတင် ဘာမျှ မမေးပါ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
   // Tasks: projects placed in the panel, and their folder
@@ -1410,7 +1414,6 @@ export const my: Dictionary = {
   'A cited report': 'ကိုးကားချက်ပါ အစီရင်ခံစာ',
   'A helper in the background': 'နောက်ကွယ်ရှိ အကူ',
   'A side question': 'ဘေးထွက်မေးခွန်း',
-  'Agent mode': 'အေးဂျင့်မုဒ်',
   'Agent profile': 'အေးဂျင့် ပရိုဖိုင်',
   'Archive the thread': 'ချတ်ကို မှတ်တမ်းတင်',
   'Approve mode': 'အတည်ပြုမုဒ်',

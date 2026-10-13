@@ -83,7 +83,15 @@ browser. Plan mode: read what you need with the nib tools, then write the plan a
 note with create_note, a task per step, and change nothing else. Reply in the language of \
 the request, briefly."
         }
-        Some(Mode::Agent) => {
+        Some(Mode::Auto) => {
+            "You are the reader's agent inside nibeditor, their notes app and web browser. \
+Do what they ask with the nib tools: most changes are made at once and shown to them to keep \
+or undo, and a call that sends, deletes or publishes may wait for their approval. Name the \
+note or page a claim comes from as a [[wikilink]] or its address. Change part of a note with \
+edit_note rather than write_note, since they may be typing in it. Reply in the language of \
+the request, briefly, saying what you did."
+        }
+        Some(Mode::Full) => {
             "You are the reader's agent inside nibeditor, their notes app and web browser. \
 Do what they ask with the nib tools, without asking: every change you make is shown to them \
 to keep or undo. Name the note or page a claim comes from as a [[wikilink]] or its address. \
@@ -483,7 +491,8 @@ mod tests {
             None,
             Some(Mode::Approve),
             Some(Mode::Plan),
-            Some(Mode::Agent),
+            Some(Mode::Auto),
+            Some(Mode::Full),
         ] {
             let shape = Shape {
                 mode,
@@ -539,10 +548,10 @@ mod tests {
         assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
         assert_eq!(value_of(&plan, "--input-format"), Some("stream-json"));
 
-        // Approve and Agent list every nib verb, allowed in advance, so Claude Code itself
-        // never prompts: what asks first in Approve is nib, at its own verbs, for the
+        // The three permission modes list every nib verb, allowed in advance, so Claude Code itself
+        // never prompts: what asks first, in Approve and Auto, is nib, at its own verbs, for the
         // token lent to that mode. Its own tools stay out, so no bypass is needed.
-        for mode in [Mode::Approve, Mode::Agent] {
+        for mode in [Mode::Approve, Mode::Auto, Mode::Full] {
             let all = claude_session(shape(mode), &caps, &config()).expect("all");
             assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__nib"));
             assert!(!all.contains(&"--disallowedTools".to_owned()));
@@ -630,19 +639,24 @@ mod tests {
             .keys()
             .all(|key| key.starts_with("mcp_servers.nib.")));
 
-        let agent = codex_thread(Some(Mode::Agent), None, &nib, &folder);
+        let agent = codex_thread(Some(Mode::Full), None, &nib, &folder);
         assert!(agent["config"]["mcp_servers.nib.enabled_tools"].is_null());
         let approve = codex_thread(Some(Mode::Approve), None, &nib, &folder);
         assert!(approve["config"]["mcp_servers.nib.enabled_tools"].is_null());
         // Codex asks nobody in any mode: nib asks, at its verbs, in Approve.
         assert_eq!(approve["approvalPolicy"], "never");
         assert_eq!(agent["approvalPolicy"], "never");
+        // Auto too: the three permission modes are nib's, never Codex's own sandbox.
+        let auto = codex_thread(Some(Mode::Auto), None, &nib, &folder);
+        assert_eq!(auto["approvalPolicy"], "never");
+        assert_eq!(auto["sandbox"], "read-only");
+        assert!(auto["config"]["mcp_servers.nib.enabled_tools"].is_null());
         assert!(agent.get("model").is_none());
         let words = codex_thread(None, None, &nib, &folder);
         assert_eq!(words["config"], json!({}));
 
         // The nib thread a session is for reaches its `nib mcp` alone, for its helpers.
-        let mut helped = codex_thread(Some(Mode::Agent), None, &nib, &folder);
+        let mut helped = codex_thread(Some(Mode::Full), None, &nib, &folder);
         with_thread(&mut helped, "nib-thread-1");
         assert_eq!(
             helped["config"]["mcp_servers.nib.env"],

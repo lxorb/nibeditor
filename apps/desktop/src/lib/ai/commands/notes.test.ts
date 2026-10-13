@@ -27,7 +27,7 @@ describe('a note as a command', () => {
       description: 'The week in one note',
       model: 'claude-opus-5-5',
       effort: 'xhigh',
-      mode: 'agent',
+      mode: 'full',
       arguments: ['project', 'week'],
       tools: [],
     })

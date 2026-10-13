@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': '전체 권한',
+  'Auto mode': '자동 모드',
+  'Full permissions: nothing is asked first': '전체 권한: 미리 묻지 않습니다',
   // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
   // Tasks: projects placed in the panel, and their folder
@@ -1404,7 +1408,6 @@ export const ko: Dictionary = {
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',
-  'Agent mode': '에이전트 모드',
   'Agent profile': '에이전트 프로필',
   'Archive the thread': '스레드 보관',
   'Approve mode': '승인 모드',

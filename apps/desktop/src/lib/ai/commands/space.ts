@@ -49,7 +49,7 @@ const INIT = [
 ].join(' ')
 
 export function init(host: Host, thread: Thread | null): void {
-  sendHere(host, thread, INIT, { mode: 'agent' })
+  sendHere(host, thread, INIT, { mode: 'auto' })
 }
 
 /** `/mention <thing>`, `/add-space <space>`: what `@` would attach, with the menu of

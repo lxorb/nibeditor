@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': '完全权限',
+  'Auto mode': '自动模式',
+  'Full permissions: nothing is asked first': '完全权限：事先不会询问任何事',
   // Tasks: Upcoming's weeks
   'Previous week': '上一周',
   // Tasks: projects placed in the panel, and their folder
@@ -1389,7 +1393,6 @@ export const zhHans: Dictionary = {
   'A cited report': '带引用的报告',
   'A helper in the background': '后台助手',
   'A side question': '附带问题',
-  'Agent mode': '代理模式',
   'Agent profile': '代理配置',
   'Archive the thread': '归档线程',
   'Approve mode': '批准模式',

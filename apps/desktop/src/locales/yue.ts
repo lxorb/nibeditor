@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': '完整權限',
+  'Auto mode': '自動模式',
+  'Full permissions: nothing is asked first': '完整權限：乜都唔會事先問',
   // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder
@@ -1387,7 +1391,6 @@ export const yue: Dictionary = {
   'A cited report': '有引文嘅報告',
   'A helper in the background': '背景助手',
   'A side question': '旁枝問題',
-  'Agent mode': '代理模式',
   'Agent profile': '代理設定檔',
   'Archive the thread': '封存討論串',
   'Approve mode': '批准模式',

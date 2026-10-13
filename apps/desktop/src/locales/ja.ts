@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'フルアクセス',
+  'Auto mode': '自動モード',
+  'Full permissions: nothing is asked first': 'フルアクセス: 事前に何も確認しません',
   // Tasks: Upcoming's weeks
   'Previous week': '前の週',
   // Tasks: projects placed in the panel, and their folder
@@ -1410,7 +1414,6 @@ export const ja: Dictionary = {
   'A cited report': '出典付きレポート',
   'A helper in the background': '裏で動くヘルパー',
   'A side question': '補助質問',
-  'Agent mode': 'エージェントモード',
   'Agent profile': 'エージェントプロフィール',
   'Archive the thread': 'スレッドをアーカイブ',
   'Approve mode': '承認モード',

@@ -8,14 +8,14 @@
  *  grant supervises it - asking first where the grant asks, never where it does not. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import type { Mode } from '../../ai/modes'
+import { type Mode, modeOfGrant } from '../../ai/modes'
 import { type Call, done } from './call'
 import { answerOf, Refused } from './problem'
 
 /** Who asked, as the helpers read it. */
 function askerOf(call: Call) {
   const agent = call.caller.agent
-  const mode: Mode = agent?.mode === 'confirm' ? 'approve' : 'agent'
+  const mode: Mode = agent ? modeOfGrant(agent.mode) : 'auto'
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
   return { thread, mode }
 }

@@ -1305,7 +1305,7 @@ exec node '{}' {name} \"$@\"
         host.open(
             "two",
             two,
-            Some(Mode::Agent),
+            Some(Mode::Full),
             None,
             None,
             codex_app::From::default(),
@@ -1428,7 +1428,7 @@ exec node '{}' {name} \"$@\"
         host.open(
             "t",
             output,
-            Some(Mode::Agent),
+            Some(Mode::Full),
             None,
             None,
             codex_app::From::default(),
@@ -1449,7 +1449,7 @@ exec node '{}' {name} \"$@\"
         );
         let config = PathBuf::from("ai").join("nib-mcp.json");
         let one = Shape {
-            mode: Some(Mode::Agent),
+            mode: Some(Mode::Full),
             model: Some("opus"),
             effort: Some(Effort::Low),
         };

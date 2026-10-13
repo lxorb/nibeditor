@@ -176,7 +176,7 @@ describe('an edited message', () => {
       title: '',
       model: 'm',
       effort: 'auto',
-      mode: 'agent',
+      mode: 'full',
       usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
       created: 0,
       updated: 0,

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'دسترسی کامل',
+  'Auto mode': 'حالت خودکار',
+  'Full permissions: nothing is asked first': 'دسترسی کامل: پیش از هیچ کاری پرسیده نمی‌شود',
   // Tasks: Upcoming's weeks
   'Previous week': 'هفتهٔ پیشین',
   // Tasks: projects placed in the panel, and their folder
@@ -1422,7 +1426,6 @@ export const fa: Dictionary = {
   'A cited report': 'گزارش با ارجاع',
   'A helper in the background': 'کمک‌یار در پس‌زمینه',
   'A side question': 'پرسش جانبی',
-  'Agent mode': 'حالت عامل',
   'Agent profile': 'پروفایل عامل',
   'Archive the thread': 'بایگانی رشته',
   'Approve mode': 'حالت تأیید',

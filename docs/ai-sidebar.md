@@ -318,8 +318,9 @@ names the provider's own road.
 | nib | synonyms | from | what it does in nib | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
 | `/approve [task]` | `/ask` | CC default mode, Cx Auto, Copilot approvals | Approve mode, the first one: every tool the grant reaches, and each change waits in its row for **Approve**, **Deny** or **Always** (this tool, this thread); reads never ask; answers cite their passages (the Ask panel's reading) | full grant, nib asks at its verbs | full grant, nib asks at its verbs | full grant, nib asks at its verbs |
-| `/plan [task]` | - | CC, Cx, Cursor, Copilot | Plan mode: read-only tools; the plan is written as a draft note with a task per step, which you edit; **Build** runs it in Agent mode | read-only tools listed | Cx plan mode, read-only tools | read-only tools |
-| `/agent [task]` | - | Cursor Agent auto-run, CC bypassPermissions, Cx Full Access | Agent mode: every tool the grant reaches, nothing asked but paying; every change on the changes card to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
+| `/plan [task]` | - | CC, Cx, Cursor, Copilot | Plan mode: read-only tools; the plan is written as a draft note with a task per step, which you edit; **Build** runs it in Auto mode | read-only tools listed | Cx plan mode, read-only tools | read-only tools |
+| `/auto [task]` | `/agent` | CC auto mode, Cx Auto, Cursor Agent auto-run | Auto mode: every tool the grant reaches; a change is made at once, on the changes card to keep or undo, and what Settings › AI › Access says asks (sending, deleting, publishing, the terminal, ...) still waits for **Approve** | full grant, nib asks where Access says | full grant, nib asks where Access says | full grant, nib asks where Access says |
+| `/full [task]` | `/yolo`, `/bypass` | CC bypassPermissions, Cx Full Access | Full permissions: every tool the grant reaches, nothing asked but paying; every change on the changes card to keep or undo | full grant, never asks | full grant, never asks | full grant, never asks |
 | `/agents [name]` | `/subagents` | CC `/agents`, Cx `/agent` (`/subagents`) | the thread's agent profile: a note with `agent:` front matter gives instructions, a model, an effort and tools; none is the default | profile's instructions as the fixed style slot + model + effort | the same, by `thread/start` | system message + model + effort |
 | `/permissions` | `/approvals`, `/allowed-tools` | CC (`/allowed-tools`), Cx `/permissions` | the sidebar agent's grant (4.4): scopes and sites; how much it asks is the mode | nib's grant | nib's grant | nib's grant |
 | `/goal [condition\|pause\|resume\|clear]` | `clear`: `stop`, `off`, `reset`, `none`, `cancel` | CC, Cx, Cursor | keeps working until the condition holds, an evaluator says it cannot, or the budget is spent (4.8) | CC's own `/goal` in the session | `thread/goal/set\|get\|clear` | nib's evaluator loop |
@@ -362,7 +363,7 @@ reviewable diff, not a reply.
 | nib | synonyms | from | what it does in nib | CC | Cx | API |
 | --- | --- | --- | --- | --- | --- | --- |
 | `/tasks [filter\|words]` | - | Todoist's Filter Assist | the reader's to-dos as rows with live boxes: Today with nothing after it, a list for Todoist's filter language, and for words the model writes the filter, shown above the rows (`docs/tasks.md` 5.15) | nib | nib | nib |
-| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Agent mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
+| `/today [wishes]` | `/plan-day` | Todoist's Assist, To Do's My Day | plan my day: in Auto mode the model reads overdue, today, the next seven days and the inbox, and writes times and dates with `update_task`, each an edit the review keeps or undoes | nib | nib | nib |
 | `/catchup [chat]` | - | Slack's recaps | what the reader missed: the unread part of every chat (or the one named) attached, each other person's words inside an untrusted mark, and the model writes what each holds for them, headed by a link to where it starts (`docs/chats.md` 4.14) | nib | nib | nib |
 | `/reply [wishes]` | - | Slack's AI replies | a draft for the chat in front: its unread part (or its newest messages) attached, and the model's answer put in that chat's composer for the reader to send; `@nib` in a chat asks the same from the composer | nib | nib | nib |
 | `/status` | - | CC, Cx | provider, model, effort, account and plan, grant, program version | `claude auth status --json` | `codex login status` | Settings > AI's row |
@@ -376,7 +377,7 @@ reviewable diff, not a reply.
 | `/vim` | - | Cx (CC took its out) | vim keys in the field, using nib's vim mode | nib | nib | nib |
 | `/voice [on\|off]` | - | CC | dictation into the field through the transcription road (`docs/ai.md`, "Sound, as words") | nib | nib | nib |
 
-That is **62 commands** and **43 synonyms**. A custom command (4.7) is one more row, and a
+That is **63 commands** and **46 synonyms**. A custom command (4.7) is one more row, and a
 custom command with a vendor's name wins over nothing but itself: built-ins keep their
 names.
 
@@ -444,7 +445,7 @@ in October 2026 (openai.chatgpt 26.5930, its docs and its issues: [codex-ide], [
 | the task history: search, newest first, how long ago | the list in the conversation's place (a tab's rail down its left): search, newest first with the age at the end, "..." for Rename, Archive, Delete, Archived last |
 | the composer at the foot from the start, a rounded card the conversation fades under | the same |
 | its row: "+", permissions, the context donut, model and effort, send / stop / queue | "+" (files, web search, dictation, `@`, `/`), the mode (its mark and name; the mark alone on a narrow side), the context ring, the model and effort, one round button: the arrow, the stop while an answer arrives with an empty field, dictation's stop while it listens |
-| Ask for approval / Approve for me / Full access | Approve / Agent / Plan (4.4), from the mode's own menu or Shift+Tab |
+| Ask for approval / Approve for me / Full access | Approve / Auto / Full permissions, and Plan (4.4), from the mode's own menu; Shift+Tab steps through Approve, Auto and Plan, never into Full permissions |
 | the IDE context toggle | the note in front and its selection as chips over the field (4.2) |
 | queued messages with Steer | the same (4.12) |
 | the prompt in a bubble at the end, Copy and Edit on hover | the same, with Rewind; the arrows between branches under it once edited |
@@ -608,7 +609,7 @@ draws for `@note` and it holds here.
 ### 4.4 Tools: nib's verbs, under a grant
 
 The sidebar's agent is an agent like any other (`docs/agent-native.md` 9.1): a **built-in
-grant per provider**, named after it ("nib · Claude Code"), listed in Settings > Agents with
+grant per provider**, named after it ("nib · Claude Code"), listed in Settings › AI › Access with
 the same scopes, sites, asks and limits, and the same stop. Its default is Emil's default for
 agents (all but `browser.script`, `browser.storage`, `settings`, `terminal`), with
 `browser.reader` on, because the reader is right there, and `terminal` on with no program on
@@ -617,23 +618,40 @@ its list: "why did the build fail" is a question about the reader's terminal, so
 says (`ai_agent.rs` `made`; `docs/agent-native.md` 8.9).
 
 The modes are views of that grant, never more than it, and each says how much is asked
-first. The supervision is laid over the grant for each call (`ai_agent.rs` `supervised`)
-and never kept, so the grant in Settings > Agents has no "Asks first" of its own:
+first: three permission modes, the issue's Approve, Auto and Full permissions (#248), and
+Plan. The supervision is laid over the grant for each call (`ai_agent.rs` `supervised`)
+and never kept, so the grant in Settings › AI › Access asks what its own switches say only
+in Auto and Plan:
 
 | mode | tools listed | asks first |
 | --- | --- | --- |
 | Approve | everything the grant reaches | every change: the grant in `confirm` mode with every category on, so a write, a press in a page, a delete, a send, publishing, a setting and every terminal command waits for the reader; never a read |
-| Agent | everything the grant reaches | nothing but paying (`autonomous`): every change lands on the changes card (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
+| Auto | everything the grant reaches | as the grant says (`unsupervised`): a write lands at once on the changes card (4.5) with Keep and Undo; each category Settings › AI › Access leaves on (sending, deleting, publishing, a setting, the terminal, paying, ...) waits for the reader. Claude Code's auto mode is the same idea, a judge in place of switches |
+| Full permissions | everything the grant reaches | nothing but paying (`autonomous`): every change lands on the changes card (4.5) with Keep and Undo, a delete goes to Recently deleted, checkpoints rewind, the stop key stops it |
 | Plan | the read-only ones (`readOnlyHint` in `apps/desktop/src-tauri/src/mcp/tools.json`), plus `create_note` for the plan itself | as the grant says |
 
-What stays in Agent mode, and why: **paying** (a card field, a Buy button, a payment
+What stays in Full permissions, and why: **paying** (a card field, a Buy button, a payment
 processor) still asks, because no undo takes a payment back and every role model stops
 there (ChatGPT's agent, Copilot); a **password or sign-in field** is refused outright in
 every mode, since it is the reader's, through a takeover (`docs/agent-native.md` 9.4); and
 **Show** and **Take over** are the agent asking the reader for something, not permission
 prompts. Claude Code's `bypassPermissions` and Codex's Full Access are where the same idea
-comes from; the CLIs themselves already never prompt here (below), so Agent is nib's own
-verbs asking nothing.
+comes from; the CLIs themselves already never prompt here (below), so Full permissions is
+nib's own verbs asking nothing.
+
+**The same three for every engine.** nib's own loop (a key, the ChatGPT plan, a compatible
+server) sends the mode with every call; Claude Code and Codex are handed a token lent for
+the mode (below), and a mode changed mid-thread starts the session again on the new one's
+token, the conversation resumed. Their own permission settings stay where nib puts them in
+every mode - Claude Code `dontAsk` with nib's verbs alone allowed, Codex `approvalPolicy:
+never` in a read-only sandbox - because they have no tools of their own to supervise:
+mapping Full permissions onto `bypassPermissions` or Codex's `danger-full-access` would
+only lift a sandbox nothing uses. A helper (`run_agent`, `/batch`, `/deep-research`) works
+in its parent's mode, never more; one an outside agent starts works as its grant
+supervises it (`modeOfGrant`). A thread starts in Approve; Shift+Tab steps through
+Approve, Auto and Plan, and Full permissions is chosen from the menu, where it says in one
+line that nothing will be asked, and the chip under the field wears the danger tone while
+it is on.
 
 Two roads to the same tools:
 
@@ -651,7 +669,7 @@ Two roads to the same tools:
   tool off, read-only sandbox. This is the road `docs/ai.md` already promises: "One that
   ever does gets nib's own MCP server (`nib mcp`) with the grant Settings > Agents gives
   it, never a folder." The crate still writes every argument (`apps/desktop/src-tauri/src/ai_cli/args.rs`).
-  Neither program prompts in any mode: in Approve and Agent every nib verb is allowed in
+  Neither program prompts in any mode: in the three permission modes every nib verb is allowed in
   advance (`--permission-mode dontAsk`, Codex's `approvalPolicy: never`), which within a
   toolset of nib's verbs alone is what `bypassPermissions` and Full Access would be,
   without lifting a sandbox nothing uses or tripping a managed setting that forbids them.

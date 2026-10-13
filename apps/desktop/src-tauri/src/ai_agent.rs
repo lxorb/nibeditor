@@ -10,12 +10,18 @@
 //! word from outside (`mcp::host`). There is no second policy in the window.
 //!
 //! **The modes are views of the grant, never more than it** (4.4). What each lists:
-//! Plan the tools that only read and `create_note` for the plan, Approve and Agent
-//! everything the grant reaches. A call to a tool its mode does not list is refused here
-//! as well, whatever the model says. And how each is supervised, laid over the grant for
-//! the call and never kept (`supervised`): Approve asks before every change and never
-//! before a read; Agent asks for nothing but paying, because every change it makes can
-//! be kept or undone; Plan as the grant says.
+//! Plan the tools that only read and `create_note` for the plan, the others everything
+//! the grant reaches. A call to a tool its mode does not list is refused here as well,
+//! whatever the model says. And how each is supervised, laid over the grant for the call
+//! and never kept (`supervised`): Approve asks before every change and never before a
+//! read; Auto as the grant is, asking about what Settings > AI > Access says asks
+//! (sending, deleting, publishing, ...); Full permissions asks for nothing but paying,
+//! because every change it makes can be kept or undone; Plan as the grant is.
+//!
+//! The same three hold for every engine the sidebar runs: its own loop for a key or a
+//! plan, and Claude Code and Codex, which are started with none of their own tools and
+//! their own prompts off, so every change they can make is one of nib's, asked about
+//! here. A helper (`run_agent`) works in its parent's mode.
 //!
 //! The sidebar's Claude Code and Codex call the same tools through `nib mcp`, with a token
 //! the app lends each provider and mode for one run (`lend`): the endpoint finds the
@@ -37,16 +43,20 @@ use crate::agents::grants::{fresh_token, hashed, same, Grant, Mode as GrantMode,
 use crate::agents::{state, Caller};
 use crate::mcp::host;
 
-/// The sidebar's modes, as the window names them.
+/// The sidebar's modes, as the window names them: the three permission modes, and Plan.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Mode {
     /// Everything the grant reaches, every change approved first.
     Approve,
+    /// Everything the grant reaches, asked about where the grant asks.
+    Auto,
+    /// Everything the grant reaches, nothing asked but paying. Agent, as it was called
+    /// before, is read as this.
+    #[serde(alias = "agent")]
+    Full,
     /// Reads, and writes the plan as a note.
     Plan,
-    /// Everything the grant reaches, nothing asked.
-    Agent,
 }
 
 /// Which provider's agent is asking, and whether a new grant reaches the reader's tabs.
@@ -94,7 +104,8 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
 }
 
 /// The grant as a call in `mode` meets the policy: Approve asks before every change, and
-/// about every category, whatever was switched off; Agent asks for nothing but paying;
+/// about every category, whatever was switched off; Auto as the grant is, so what the
+/// reader set in Settings > AI > Access is what asks; Full asks for nothing but paying;
 /// Plan, which changes nothing but its own note, as the grant is.
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
@@ -102,8 +113,8 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
             grant.mode = GrantMode::Confirm;
             grant.asks.clear();
         }
-        Mode::Agent => grant.mode = GrantMode::Autonomous,
-        Mode::Plan => {}
+        Mode::Full => grant.mode = GrantMode::Autonomous,
+        Mode::Auto | Mode::Plan => {}
     }
     grant
 }
@@ -185,7 +196,7 @@ pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
 pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
         Mode::Plan => reads_only || name == "create_note" || name == "run_agent",
-        Mode::Approve | Mode::Agent => true,
+        Mode::Approve | Mode::Auto | Mode::Full => true,
     }
 }
 
@@ -355,10 +366,11 @@ mod tests {
     }
 
     #[test]
-    fn approve_and_agent_list_everything_the_grant_reaches_and_no_more() {
+    fn the_permission_modes_list_everything_the_grant_reaches_and_no_more() {
         let grant = grant();
-        let agent = names(Mode::Agent, &grant);
+        let agent = names(Mode::Full, &grant);
         assert_eq!(names(Mode::Approve, &grant), agent);
+        assert_eq!(names(Mode::Auto, &grant), agent);
         assert!(agent.contains("edit_note") && agent.contains("browser_click"));
         // Emil's defaults leave scripts and settings out; the terminal is in.
         assert!(!agent.contains("browser_evaluate") && agent.contains("type_terminal"));
@@ -377,11 +389,11 @@ mod tests {
     }
 
     #[test]
-    fn agent_never_asks_but_before_paying() {
+    fn full_permissions_never_ask_but_before_paying() {
         let mut stored = grant();
         // Whatever the grant said, asking first included.
         stored.mode = GrantMode::Confirm;
-        let agent = supervised(stored, Mode::Agent);
+        let agent = supervised(stored, Mode::Full);
         assert_eq!(agent.mode, GrantMode::Autonomous);
         for category in ASKED {
             assert_eq!(
@@ -402,6 +414,42 @@ mod tests {
         for category in ASKED {
             assert!(approve.asks(category), "{category:?}");
         }
+    }
+
+    #[test]
+    fn auto_asks_where_the_readers_access_says_and_nowhere_else() {
+        let mut stored = grant();
+        // Settings > AI > Access: deleting switched off, the rest left as they come.
+        stored.asks.insert(Category::Deleting, false);
+        let auto = supervised(stored.clone(), Mode::Auto);
+        assert_eq!(auto, stored);
+        assert_eq!(auto.mode, GrantMode::Unsupervised);
+        for category in ASKED {
+            assert_eq!(
+                auto.asks(category),
+                category != Category::Deleting,
+                "{category:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_three_permission_modes_ask_less_and_less() {
+        let stored = grant();
+        let count = |mode| {
+            let laid = supervised(stored.clone(), mode);
+            ASKED.iter().filter(|one| laid.asks(**one)).count()
+        };
+        let mut off = stored.clone();
+        off.asks.insert(Category::Sending, false);
+        assert!(supervised(off, Mode::Approve).asks(Category::Sending));
+        assert!(count(Mode::Approve) >= count(Mode::Auto));
+        assert!(count(Mode::Auto) > count(Mode::Full));
+        assert_eq!(count(Mode::Full), 1);
+        assert_eq!(
+            supervised(stored.clone(), Mode::Approve).mode,
+            GrantMode::Confirm
+        );
     }
 
     #[test]
@@ -442,8 +490,18 @@ mod tests {
 
     #[test]
     fn modes_read_as_the_window_names_them() {
-        let read: Vec<Mode> = serde_json::from_str(r#"["approve","plan","agent"]"#).expect("modes");
-        assert_eq!(read, [Mode::Approve, Mode::Plan, Mode::Agent]);
+        let read: Vec<Mode> =
+            serde_json::from_str(r#"["approve","auto","full","plan","agent"]"#).expect("modes");
+        assert_eq!(
+            read,
+            [
+                Mode::Approve,
+                Mode::Auto,
+                Mode::Full,
+                Mode::Plan,
+                Mode::Full
+            ]
+        );
         assert!(serde_json::from_str::<Mode>(r#""ask""#).is_err());
     }
 }

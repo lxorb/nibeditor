@@ -11,7 +11,7 @@ import type { Provider } from '../providers'
 import type { Command, Effort, Mode, Stop, Thread, Turn, Usage } from '../chat/types'
 
 /** What one send may be told to do differently from the thread, for that send alone: a
- *  custom command's `model:`, `effort:` and `mode:`, or Agent mode for `/init`. */
+ *  custom command's `model:`, `effort:` and `mode:`, or Auto mode for `/init`. */
 export interface Once {
   mode?: Mode
   model?: string

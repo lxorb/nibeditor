@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'Izin penuh',
+  'Auto mode': 'Mode otomatis',
+  'Full permissions: nothing is asked first': 'Izin penuh: tidak ada yang ditanyakan dulu',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder
@@ -1414,7 +1418,6 @@ export const id: Dictionary = {
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar',
   'A side question': 'Pertanyaan sampingan',
-  'Agent mode': 'Mode agen',
   'Agent profile': 'Profil agen',
   'Archive the thread': 'Arsipkan thread',
   'Approve mode': 'Mode setujui',

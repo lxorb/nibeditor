@@ -147,8 +147,12 @@ const RUNS: Record<string, Run> = {
     panel.setMode('plan')
     if (args) panel.send(args)
   },
-  agent: ({ args, panel }) => {
-    panel.setMode('agent')
+  auto: ({ args, panel }) => {
+    panel.setMode('auto')
+    if (args) panel.send(args)
+  },
+  full: ({ args, panel }) => {
+    panel.setMode('full')
     if (args) panel.send(args)
   },
   agents: ({ args, thread }, host) => agents(host, thread, args),

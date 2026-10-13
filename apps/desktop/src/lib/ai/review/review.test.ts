@@ -106,7 +106,7 @@ function aThread(): Thread & { provider: string } {
     provider,
     model: 'm',
     effort: 'auto',
-    mode: 'agent',
+    mode: 'full',
     turns: [],
     usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
     created: 0,

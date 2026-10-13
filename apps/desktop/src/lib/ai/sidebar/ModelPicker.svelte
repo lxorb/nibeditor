@@ -5,6 +5,10 @@
    *  Fast where the provider has a faster tier. The chip says the model and the level,
    *  `Opus 5.5 · High`, so neither is ever a guess.
    *
+   *  The popover is the app's menu in shape (#248): over the field's end where its chip is
+   *  rather than across the field, as wide as its words, every model a `.nib-row` with the one in use
+   *  ticked at its end, as the mode's menu beside it ticks its mode.
+   *
    *  A choice applies to the open thread from its next message, and the level picked is
    *  remembered for that model (prefs.ts). */
   import { untrack } from 'svelte'
@@ -156,7 +160,7 @@
       <div class="models" role="listbox">
         {#each shown as one, index (one.id)}
           <button
-            class="model"
+            class="nib-row model"
             class:lit={index === lit}
             role="option"
             aria-selected={one.id === head.model}
@@ -166,9 +170,9 @@
               close()
             }}
           >
-            <span class="dot" class:on={one.id === head.model}></span>
-            <span class="name">{one.name}</span>
+            <span class="nib-row-label">{one.name}</span>
             {#if one.window}<span class="window">{tokens(one.window, i18n.language)}</span>{/if}
+            <span class="tick" aria-hidden="true">{one.id === head.model ? '✓' : ''}</span>
           </button>
         {/each}
       </div>
@@ -206,6 +210,8 @@
 </div>
 
 <style>
+  /* The popover stands over the field's end, where the chip is, and never past the
+     field's edges: the field is the box it is placed in. */
   .picker {
     position: static;
     min-width: 0;
@@ -260,15 +266,21 @@
     color: var(--text-strong);
   }
 
+  /* `.nib-layer` draws it, as it draws the menu: the corner, the hairline, the surface
+     and the shadow. As wide as its longest row, within what the panel has. */
   .pop {
     position: absolute;
-    inset-inline: var(--space-1);
-    bottom: calc(100% + 4px);
+    inset-inline-end: var(--space-1);
+    bottom: calc(100% + 6px);
     z-index: var(--z-popover);
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-2);
+    gap: var(--space-1);
+    width: max-content;
+    /* Wide enough for a model's levels in one row where the panel has the room. */
+    min-width: min(17rem, calc(100cqw - 2 * var(--space-1)));
+    max-width: min(22rem, calc(100cqw - 2 * var(--space-1)));
+    padding: var(--space-1);
     outline: none;
   }
 
@@ -276,6 +288,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+    padding: var(--space-1) var(--space-1) 0;
   }
 
   .catch {
@@ -290,58 +303,40 @@
     overflow-y: auto;
   }
 
+  /* The rows are `.nib-row`, the menu's own; what a model's row adds is its window and
+     the tick, in the places the menu's rows keep a shortcut and a tick. */
   .model {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-height: var(--row-height-sm);
-    padding: 0 var(--space-2);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
     color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
+    white-space: nowrap;
   }
 
   .model.lit {
     background: var(--surface-hover);
-    color: var(--text-strong);
-  }
-
-  .dot {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .dot.on {
-    background: var(--accent);
-  }
-
-  .name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: var(--item-hover-text-color);
   }
 
   .window {
     flex: none;
+    margin-inline-start: var(--space-3);
     color: var(--muted);
+    font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
+  }
+
+  .tick {
+    flex: none;
+    width: 1em;
+    margin-inline-start: var(--space-3);
+    color: var(--accent);
+    font-size: var(--text-sm);
+    text-align: end;
   }
 
   .line {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-2) 0;
+    padding: var(--space-2) var(--space-2) var(--space-1);
     border: 0;
     border-top: 1px solid var(--line);
     background: none;

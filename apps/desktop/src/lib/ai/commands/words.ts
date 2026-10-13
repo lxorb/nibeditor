@@ -95,9 +95,9 @@ export function explain(host: Host, thread: Thread | null): void {
 }
 
 export function summarize(host: Host, thread: Thread | null, named: string): void {
-  sendHere(host, thread, summarizePrompt(named), { mode: 'agent' })
+  sendHere(host, thread, summarizePrompt(named), { mode: 'auto' })
 }
 
 export function review(host: Host, thread: Thread | null, target: string): void {
-  sendHere(host, thread, reviewPrompt(target), { mode: 'agent' })
+  sendHere(host, thread, reviewPrompt(target), { mode: 'auto' })
 }

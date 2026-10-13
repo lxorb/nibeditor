@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'ಪೂರ್ಣ ಅನುಮತಿಗಳು',
+  'Auto mode': 'ಸ್ವಯಂ ಮೋಡ್',
+  'Full permissions: nothing is asked first': 'ಪೂರ್ಣ ಅನುಮತಿಗಳು: ಮೊದಲು ಏನೂ ಕೇಳಲಾಗುವುದಿಲ್ಲ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
   // Tasks: projects placed in the panel, and their folder
@@ -1432,7 +1436,6 @@ export const kn: Dictionary = {
   'A cited report': 'ಉಲ್ಲೇಖಿತ ವರದಿ',
   'A helper in the background': 'ಹಿನ್ನೆಲೆಯ ಸಹಾಯಕ',
   'A side question': 'ಪಕ್ಕದ ಪ್ರಶ್ನೆ',
-  'Agent mode': 'ಏಜೆಂಟ್ ಮೋಡ್',
   'Agent profile': 'ಏಜೆಂಟ್ ಪ್ರೊಫೈಲ್',
   'Archive the thread': 'ಥ್ರೆಡ್ ಅನ್ನು ಆರ್ಕೈವ್ ಮಾಡಿ',
   'Approve mode': 'ಅನುಮೋದನೆ ಮೋಡ್',

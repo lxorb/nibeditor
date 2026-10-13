@@ -55,7 +55,7 @@ const choices = await import('./choices')
 import type { Thread } from './types'
 
 function had(): Thread {
-  const thread = newThread('space-1', 'anthropic', 'claude-opus-5-5', 'high', 'agent')
+  const thread = newThread('space-1', 'anthropic', 'claude-opus-5-5', 'high', 'full')
   thread.title = 'Herons'
   thread.turns = [
     {

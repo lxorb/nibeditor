@@ -40,7 +40,7 @@
   import Rewinding from '../review/Rewinding.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
-  import { MODES, FIRST_MODE, modeWord } from '../modes'
+  import { MODES, FIRST_MODE, type Mode, modeWord } from '../modes'
 
   let field = $state<HTMLTextAreaElement>()
   let caret = $state(0)
@@ -390,19 +390,23 @@
 
   // ── Mode ──────────────────────────────────────────────
 
-  /** The modes as rows, the one in force ticked, Codex's approval menu. The key that
-   *  steps them is the button's tooltip rather than a hint on every row, where it would
-   *  say the same thing thrice. */
+  /** The modes as rows, the one in force ticked, Codex's approval menu: the three
+   *  permission modes, least to most, then Plan under a rule. Full permissions is a danger
+   *  row, the one warning it gets, since it is chosen on purpose. The key that steps them
+   *  is the button's tooltip rather than a hint on every row. */
   function modeMenu(event: MouseEvent) {
-    menu.show(
-      event,
-      MODES.map((mode) => ({
-        label: t(modeWord(mode)),
-        checked: head?.mode === mode,
-        run: () => chat.setMode(mode),
-      })),
-    )
+    const row = (mode: Mode) => ({
+      label: t(modeWord(mode)),
+      checked: head?.mode === mode,
+      ...(mode === 'full' ? { danger: true } : {}),
+      run: () => chat.setMode(mode),
+    })
+    menu.show(event, [...MODES.filter((one) => one !== 'plan').map(row), DIVIDER, row('plan')], {
+      title: t('Permissions'),
+    })
   }
+
+  const mode = $derived(head?.mode ?? FIRST_MODE)
 
   // ── "+" ───────────────────────────────────────────────
 
@@ -649,13 +653,16 @@
         <!-- How much the agent may do without asking, Codex's permissions beside "+". -->
         <button
           class="mode"
-          title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
+          class:full={mode === 'full'}
+          title={mode === 'full'
+            ? t('Full permissions: nothing is asked first')
+            : shortcuts.tooltip(t('Next mode'), 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
           disabled={!head}
         >
-          <ModeMark mode={head?.mode ?? FIRST_MODE} />
-          <span>{t(modeWord(head?.mode ?? FIRST_MODE))}</span>
+          <ModeMark {mode} />
+          <span>{t(modeWord(mode))}</span>
           <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
         </button>
         <span class="gap"></span>
@@ -986,6 +993,12 @@
       background: var(--surface-hover);
       color: var(--text-strong);
     }
+  }
+
+  /* Asking for nothing is said in the danger tone for as long as it is on. */
+  .mode.full,
+  .mode.full:hover:not(:disabled) {
+    color: var(--danger);
   }
 
   /* A narrow side keeps the model's name whole and says the mode by its mark alone,

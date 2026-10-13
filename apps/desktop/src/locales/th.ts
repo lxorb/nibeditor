@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // AI: the three permission modes
+  'Full permissions': 'สิทธิ์เต็ม',
+  'Auto mode': 'โหมดอัตโนมัติ',
+  'Full permissions: nothing is asked first': 'สิทธิ์เต็ม: ไม่ถามอะไรก่อน',
   // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
   // Tasks: projects placed in the panel, and their folder
@@ -1394,7 +1398,6 @@ export const th: Dictionary = {
   'A cited report': 'รายงานพร้อมอ้างอิง',
   'A helper in the background': 'ผู้ช่วยเบื้องหลัง',
   'A side question': 'คำถามข้างเคียง',
-  'Agent mode': 'โหมดเอเจนต์',
   'Agent profile': 'โปรไฟล์เอเจนต์',
   'Archive the thread': 'เก็บเธรดถาวร',
   'Approve mode': 'โหมดอนุมัติ',

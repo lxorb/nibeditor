@@ -147,7 +147,7 @@ function linkOf(path: string, root: string): string {
 }
 
 /** `/batch <instruction>`: the instruction over every note it names, each a subtask in
- *  Agent mode, three at a time; one line when all are done. */
+ *  its parent's mode, three at a time; one line when all are done. */
 export async function batch(host: Host, parent: Thread, instruction: string): Promise<void> {
   const root =
     workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
@@ -173,7 +173,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
         parent,
         `${instruction.slice(0, 60)} · ${linkOf(path, root)}`,
         false,
-        'agent',
+        parent.mode,
       )
       host.adopt(helper)
       const ended = await host
@@ -204,11 +204,11 @@ export function researchPrompt(question: string): string {
   ].join(' ')
 }
 
-/** `/deep-research <question>`: a helper in Agent mode that reads the web and writes a
- *  cited note; its answer comes back here. Reaching the web is the grant's browser
+/** `/deep-research <question>`: a helper in its parent's mode that reads the web and writes
+ *  a cited note; its answer comes back here. Reaching the web is the grant's browser
  *  scope: without it the helper's first browser call is refused and says so. */
 export async function research(host: Host, parent: Thread, question: string): Promise<void> {
-  const helper = helperOf(parent, question.slice(0, 80), false, 'agent')
+  const helper = helperOf(parent, question.slice(0, 80), false, parent.mode)
   host.touched(parent)
   const ended = await run(host, parent, helper, 'research', researchPrompt(question), question)
   if (ended?.stop === 'stopped') return

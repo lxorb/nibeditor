@@ -66,11 +66,11 @@ describe('/tasks', () => {
 })
 
 describe('/today', () => {
-  test('asks the model to plan in Agent mode, with what the reader added', () => {
+  test('asks the model to plan in Auto mode, with what the reader added', () => {
     const { fake, sent } = host()
     planDay(fake, thread, 'gym at six')
     expect(sent[0]?.text).toMatch(/^Plan my day\./)
     expect(sent[0]?.text).toMatch(/gym at six$/)
-    expect(sent[0]?.once).toEqual({ mode: 'agent' })
+    expect(sent[0]?.once).toEqual({ mode: 'auto' })
   })
 })

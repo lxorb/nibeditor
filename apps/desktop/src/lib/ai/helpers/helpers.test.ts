@@ -54,7 +54,7 @@ const parent = (id: string, provider = CLAUDE.id): Thread => ({
   provider,
   model: 'opus',
   effort: 'auto',
-  mode: 'agent',
+  mode: 'full',
   turns: [],
   usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
   created: 0,
@@ -85,7 +85,7 @@ describe('a helper', () => {
     expect(runs[0]?.thread).toMatchObject({
       provider: 'codex',
       model: 'gpt-6-astra',
-      mode: 'agent',
+      mode: 'full',
       title: '↳ herons',
     })
     expect(runs[0]?.text).toBe('Find the herons.')
