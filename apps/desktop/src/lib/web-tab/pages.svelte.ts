@@ -31,6 +31,7 @@ import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
+import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
@@ -87,14 +88,6 @@ export const OUT_OF_THE_WAY = 20_000
  *  photographed again. */
 const SHOT_KEEPS = 400
 
-/** What the crate says when a page's browser did not answer and the page was left where
- *  it was rather than the app waiting on it; see src-tauri/src/web_answers.rs. */
-const NOT_ANSWERING = 'that page is not answering'
-
-/** How long before a page whose browser did not answer is placed again. A second: a
- *  browser busy with one heavy page is usually back by then, and each try costs the
- *  crate a moment of asking at most. */
-const ASK_AGAIN = 1000
 
 /** How long the page is given to say where it is before it is parked anyway. Half a
  *  second: the answer is a line of script in the page's own document, and a page that

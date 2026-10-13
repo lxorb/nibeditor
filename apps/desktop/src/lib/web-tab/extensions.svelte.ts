@@ -7,6 +7,7 @@
 
 import { stored, keep } from '../stored'
 import { invoke, isDesktop } from '../tauri'
+import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
 /** One extension, as the crate describes it. */
 export interface Extension {
@@ -77,6 +78,14 @@ export interface Popped {
   store: string | null | undefined
 }
 
+/** Where the window wants a popup's page, in its own coordinates. */
+export interface PopupRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 class Extensions {
   list = $state<Extension[]>([])
   /** Whether the crate has answered once. */
@@ -89,6 +98,9 @@ class Extensions {
   popped = $state<Popped | null>(null)
 
   private listening = false
+  /** The extensions whose problem is a popup that could not be opened this run, rather
+   *  than the crate's, so a popup that opens takes only that one away. */
+  private readonly problems = new Set<string>()
 
   /** Reads the list, and from then on hears about every change to it. */
   async start(): Promise<void> {
@@ -103,6 +115,7 @@ class Extensions {
   async load(): Promise<void> {
     const said = await invoke<unknown[]>('extensions_list').catch(() => [])
     this.list = said.map(readExtension).filter((one): one is Extension => one !== null)
+    this.problems.clear()
     this.read = true
   }
 
@@ -167,6 +180,40 @@ class Extensions {
 
   close(): void {
     this.popped = null
+  }
+
+  /** Builds the open popup's page where `at` says, while it is still the one open: asked
+   *  again every second while the tab's browser is too busy to answer, as a browser's
+   *  popup waits on a busy browser, and a popup that cannot be opened at all closes and
+   *  says why on its extension's button. Nothing a popup does takes the app with it. */
+  async build(popped: Popped, at: () => PopupRect | null): Promise<void> {
+    for (;;) {
+      const rect = at()
+      if (this.popped !== popped || !rect) return
+      try {
+        await invoke('extension_popup_open', {
+          id: popped.id,
+          tab: popped.tab,
+          store: popped.store ?? null,
+          rect,
+        })
+        // Closed while it was being built: its bubble has gone, and so does the page.
+        if (this.popped !== popped) await invoke('extension_popup_close').catch(() => undefined)
+        else if (this.problems.delete(popped.id)) this.change(popped.id, { problem: null })
+        return
+      } catch (error) {
+        if (this.popped !== popped) return
+        if (error === NOT_ANSWERING) {
+          await new Promise((done) => setTimeout(done, ASK_AGAIN))
+          continue
+        }
+        const why = typeof error === 'string' && error ? error : 'that popup could not be opened'
+        this.problems.add(popped.id)
+        this.change(popped.id, { problem: why })
+        this.close()
+        return
+      }
+    }
   }
 
   private change(id: string, fields: Partial<Extension>) {

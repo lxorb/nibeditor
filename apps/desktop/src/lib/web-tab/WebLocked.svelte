@@ -16,6 +16,7 @@
   import { fade } from 'svelte/transition'
   import { t } from '../i18n.svelte'
   import { LAYER } from '../motion'
+  import { favicon } from './address'
   import type { Lock } from './pages.svelte'
 
   const { lock, icon, address }: { lock: Lock | null; icon: string | null; address: string } =
@@ -33,14 +34,7 @@
    *  rather than a broken picture. */
   let marked = $state(true)
 
-  const mark = $derived.by(() => {
-    if (icon) return icon
-    try {
-      return new URL('/favicon.ico', address).href
-    } catch {
-      return null
-    }
-  })
+  const mark = $derived(icon || favicon(address))
 
   $effect(() => {
     if (mark) marked = true

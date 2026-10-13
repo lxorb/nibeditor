@@ -38,7 +38,8 @@
   <button
     class="nib-glyph extension"
     class:is-on={open === one.id}
-    title={one.name}
+    class:is-wrong={one.problem !== null}
+    title={one.problem ? `${one.name}: ${one.problem}` : one.name}
     aria-label={one.name}
     aria-haspopup="dialog"
     onclick={(event) => onpress(one.id, event.currentTarget)}

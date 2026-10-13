@@ -36,7 +36,7 @@
   import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
-  import { plainOrigin, webAddress } from './address'
+  import { favicon, plainOrigin, webAddress } from './address'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
@@ -968,10 +968,11 @@
       style:--agent={worn?.colour}
     >
       {#if address}
-        {#if marked}
+        {@const mark = siteMark(page.icon, address) ?? favicon(address)}
+        {#if marked && mark}
           <img
             class="mark"
-            src={siteMark(page.icon, address) ?? new URL('/favicon.ico', address).href}
+            src={mark}
             alt=""
             draggable="false"
             onerror={() => (marked = false)}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, isWebAddress, plainOrigin, webAddress } from './address'
+import { dotCom, favicon, isWebAddress, plainOrigin, webAddress } from './address'
 
 /** Ctrl+Enter in the address field, which every browser has had for thirty years. */
 describe('the dot-com press', () => {
@@ -114,4 +114,11 @@ describe('the origin, plainly', () => {
   test('answers with what it was given when that is not an address', () => {
     expect(plainOrigin('not an address')).toBe('not an address')
   })
+})
+
+test("a site's own picture is looked for at its root, and an address with no root has none", () => {
+  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe('https://pass.proton.me/favicon.ico')
+  // What a tab can hold before its page is an address, which once threw in the pane.
+  expect(favicon('pass.proton.me/onboarding')).toBeNull()
+  expect(favicon('about:blank')).toBeNull()
 })

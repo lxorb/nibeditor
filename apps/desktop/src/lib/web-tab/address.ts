@@ -141,3 +141,14 @@ export function plainOrigin(url: string): string {
   const host = parsed.host.replace(/^www\./i, '')
   return parsed.protocol === 'http:' ? `http://${host}` : host
 }
+
+/** The picture a site keeps at its root, which every browser looks for when a page names
+ *  none; null for an address with no root to look in - a page a tab is opening that is
+ *  not yet an address a browser would read, which once took the whole pane down. */
+export function favicon(address: string): string | null {
+  try {
+    return new URL('/favicon.ico', address).href
+  } catch {
+    return null
+  }
+}

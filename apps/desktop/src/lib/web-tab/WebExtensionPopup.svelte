@@ -11,7 +11,9 @@
    *  The bubble starts at the smallest size and grows to the size the page lays itself out
    *  at, which the crate measures; Escape, a press outside, the page closing itself and
    *  the tab going all close it. Every press inside it is the popup page's own, so the
-   *  bubble itself lets the pointer through. */
+   *  bubble itself lets the pointer through. A tab's browser too busy to answer is asked
+   *  again until it does, and a popup that cannot be opened says why on its button; see
+   *  `build` in extensions.svelte.ts. */
 
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
@@ -62,15 +64,10 @@
       })
       .catch(() => undefined)
 
-    const box = inside?.getBoundingClientRect()
-    if (box) {
-      void invoke('extension_popup_open', {
-        id: popped.id,
-        tab: popped.tab,
-        store: popped.store ?? null,
-        rect: { x: box.x, y: box.y, width: box.width, height: box.height },
-      }).catch(() => extensions.close())
-    }
+    void extensions.build(popped, () => {
+      const box = gone ? null : inside?.getBoundingClientRect()
+      return box ? { x: box.x, y: box.y, width: box.width, height: box.height } : null
+    })
 
     // A press anywhere else closes it; a press inside the popup is the popup's own page,
     // which the window never hears.
