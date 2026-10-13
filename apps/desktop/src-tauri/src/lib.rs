@@ -93,6 +93,8 @@ mod extensions;
 #[cfg(desktop)]
 mod foreground;
 mod front_matter;
+// The window's full screen, which a run sent off the screen never takes; see full_screen.rs.
+mod full_screen;
 mod fuzzy;
 #[cfg(desktop)]
 mod ground;
@@ -235,6 +237,8 @@ macro_rules! commands {
     ($($desktop:tt)*) => {
         tauri::generate_handler![
             notes::read_note,
+            full_screen::window_fullscreen,
+            full_screen::window_is_fullscreen,
             notes::write_note,
             notes::write_bytes,
             notes::delete_note,

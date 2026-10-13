@@ -11,7 +11,8 @@
 //!   whole screen, and the engine can only give it the whole of the webview, which was
 //!   the pane. `WebView2` says when a page holds a full screen element, and the window
 //!   answers by going full screen with the page over all of it. Escape and F11 give the
-//!   screen back, as in Chrome; they are the engine's to hear, so they are heard here.
+//!   screen back, as in Chrome; they are the engine's to hear, so they are heard here,
+//!   and F11 is nib's own full screen only while no video holds the screen (`web_keys.rs`).
 //! - **Zoom.** Ctrl and the wheel, Ctrl and a sign, or a pinch zoom the page inside the
 //!   engine (switched on for a web tab's page in `web_tabs.rs`), and the menu's
 //!   percentage never knew. The engine says when it changes, so the window can show it
@@ -128,14 +129,14 @@ pub fn web_unfill(app: AppHandle, tab: String) -> Result<(), String> {
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{listen, mute};
+pub use heard::{holds_screen, listen, mute};
 
 #[cfg(all(windows, not(feature = "cef")))]
 mod heard {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Emitter, Webview};
     use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2, ICoreWebView2NavigationCompletedEventArgs,
+        ICoreWebView2, ICoreWebView2Controller, ICoreWebView2NavigationCompletedEventArgs,
         ICoreWebView2NavigationCompletedEventArgs2, ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND,
         COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN, COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
         COREWEBVIEW2_WEB_ERROR_STATUS, COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT,
@@ -351,6 +352,14 @@ mod heard {
                 muted: muted.as_bool(),
             })
         }
+    }
+
+    /// Whether something in the page a key arrived at holds the whole screen, so the
+    /// key is this file's to hear; see `web_keys.rs`.
+    #[allow(unsafe_code, reason = "the engine is asked through its COM interfaces")]
+    pub fn holds_screen(controller: &ICoreWebView2Controller) -> bool {
+        // Safe: the controller is the page's own, asked on its own thread.
+        unsafe { controller.CoreWebView2() }.is_ok_and(|core| filling(&core))
     }
 
     /// Whether something in the page holds the whole screen.

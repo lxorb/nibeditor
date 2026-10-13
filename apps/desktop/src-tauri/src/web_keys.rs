@@ -11,7 +11,9 @@
 //! reopening the last, a new window - and F6, which a hand in a browser presses to get
 //! out of the page to the address field. And nib's own Alt and a digit, the tabs by
 //! number, which Chrome keeps from a page on Linux, and Shift+F11, the tab filling nib's
-//! window, which no browser binds and so no site is used to having. Everything else is
+//! window, which no browser binds and so no site is used to having. And F11, full screen,
+//! which is Chrome's own as well - except while a video in the page holds the screen,
+//! when F11 gives it back, which `web_page.rs` hears first. Everything else is
 //! the page's, which is what lets a site's own Ctrl+K work, so nothing else is touched.
 //! Reloading needs nothing here: F5 and Ctrl+R pressed in a page are the engine's own, as
 //! they are in Chrome. See docs/web-tabs.md.
@@ -137,9 +139,11 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         return Some(pressed("F6", "F6"));
     }
 
-    // Shift+F11, the tab filling nib's window: bound by no browser and not a character, so
-    // a page loses nothing a site relies on. F11 alone stays the page's, for its video.
-    if vk == 0x7A && held.shift && !held.ctrl && !held.alt {
+    // F11, full screen, and Shift+F11, the tab filling nib's window: F11 is Chrome's own,
+    // the second is bound by no browser, and neither is a character, so a page loses
+    // nothing a site relies on. A page whose video holds the screen is the exception, and
+    // the caller asks about it; see `listen`.
+    if vk == 0x7A && !held.ctrl && !held.alt {
         return Some(pressed("F11", "F11"));
     }
 
@@ -251,7 +255,7 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
     // Safe: the controller is the one this window owns, every object below is used only
     // on this thread, and the handler outlives the call because WebView2 holds it.
     unsafe {
-        let handler = AcceleratorKeyPressedEventHandler::create(Box::new(move |_sender, args| {
+        let handler = AcceleratorKeyPressedEventHandler::create(Box::new(move |sender, args| {
             let Some(args) = args else {
                 return Ok(());
             };
@@ -271,6 +275,11 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
                 alt: held(VK_MENU),
             };
             let repeat = status.WasKeyDown.as_bool();
+            // F11 while a video in the page holds the screen gives the screen back,
+            // which the page's own handler does; see `web_page.rs`.
+            if vk == 0x7A && sender.is_some_and(|one| crate::web_page::holds_screen(&one)) {
+                return Ok(());
+            }
             let Some(pressed) = meaning(vk, now, down, repeat) else {
                 // Alt held on its own, which the page keeps and the window is told of.
                 if let Some(said) = told(vk, now, down, repeat) {
@@ -664,7 +673,7 @@ mod tests {
     }
 
     #[test]
-    fn shift_f11_fills_the_window_and_leaves_the_page_its_keyboard() {
+    fn f11_and_shift_f11_are_the_window_s_and_leave_the_page_its_keyboard() {
         let shift = Held {
             shift: true,
             ..Held::default()
@@ -676,9 +685,12 @@ mod tests {
         assert!(filled.as_ref().is_some_and(|one| one.held.shift));
         assert!(filled.is_some_and(|one| one.keeps_page()));
 
-        // F11 alone is the page's, for a video's own full screen, and so is it with Ctrl
-        // or Alt.
-        assert_eq!(meaning(0x7A, Held::default(), true, false), None);
+        // F11 alone is full screen, Chrome's own; said without Shift, it is read as that.
+        let full = meaning(0x7A, Held::default(), true, false);
+        assert!(full
+            .as_ref()
+            .is_some_and(|one| one.code == "F11" && !one.held.shift && one.keeps_page()));
+        // With Ctrl or Alt it is the page's.
         let with = |ctrl, alt| Held {
             ctrl,
             shift: true,

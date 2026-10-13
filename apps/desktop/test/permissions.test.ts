@@ -33,8 +33,6 @@ const NEEDS: Record<string, string> = {
   minimize: 'core:window:allow-minimize',
   toggleMaximize: 'core:window:allow-toggle-maximize',
   isMaximized: 'core:window:allow-is-maximized',
-  setFullscreen: 'core:window:allow-set-fullscreen',
-  isFullscreen: 'core:window:allow-is-fullscreen',
   setAlwaysOnTop: 'core:window:allow-set-always-on-top',
   outerPosition: 'core:window:allow-outer-position',
   outerSize: 'core:window:allow-outer-size',
@@ -45,6 +43,15 @@ const NEEDS: Record<string, string> = {
 }
 
 const EVENTS = new Set(['onCloseRequested', 'onResized'])
+
+/** The window's full screen, asked of the crate rather than granted: a run sent off the
+ *  screen must never be put over one, and only the crate knows it was. See
+ *  src-tauri/src/full_screen.rs and `throughTheCrate` in tauri.ts. */
+const CRATE: Record<string, string> = {
+  setFullscreen: 'window_fullscreen',
+  isFullscreen: 'window_is_fullscreen',
+}
+const FULL_SCREEN = ['core:window:allow-set-fullscreen', 'core:window:allow-is-fullscreen']
 
 /** The window commands presenting calls, which do not go through `WindowLike`:
  *  the presenter's window is opened with the Tauri API directly, because it is
@@ -98,7 +105,7 @@ describe('window permissions', () => {
 
   test('every window command the app can call is granted', () => {
     const missing = windowMethods()
-      .filter((name) => !EVENTS.has(name))
+      .filter((name) => !EVENTS.has(name) && !(name in CRATE))
       .filter((name) => !capabilities.permissions.includes(NEEDS[name] ?? `unmapped:${name}`))
 
     expect(missing, `ungranted or unmapped: ${missing.join(', ')}`).toEqual([])
@@ -132,6 +139,18 @@ describe('window permissions', () => {
 
     expect(calling).toEqual([])
     expect(capabilities.permissions.filter((one) => TAKING.includes(one))).toEqual([])
+  })
+
+  test('full screen is the crate’s, and the window plugin’s is not granted', () => {
+    const tauri = read('../src/lib/tauri.ts')
+    const lib = read('../src-tauri/src/lib.rs')
+    for (const command of Object.values(CRATE)) {
+      expect(tauri).toContain(`('${command}'`)
+      expect(lib).toContain(`full_screen::${command}`)
+    }
+    for (const build of [capabilities, mobile]) {
+      expect(build.permissions.filter((one) => FULL_SCREEN.includes(one))).toEqual([])
+    }
   })
 
   test('nothing is granted that the app never calls', () => {

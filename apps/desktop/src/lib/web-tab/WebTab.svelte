@@ -738,7 +738,10 @@
       // be the size it now is.
       menu.replace(webRows(page, factor, actions))
     },
-    fullScreen: () => void fullscreen.toggle(tab.id),
+    fullScreen: () => {
+      workspace.activate(tab.id)
+      void fullscreen.toggle(workspace.panes)
+    },
     print: () => void pages.print(tab.id),
     find: isDesktop ? () => (page.find.open = true) : undefined,
     save: clip,
@@ -756,7 +759,7 @@
        this box rather than against the pane, because "under the bar" is what they mean:
        a rectangle the height of the whole pane would put them under the *page*, which is
        off the bottom of the window. -->
-  <div class="head" class:roomy={fullscreen.on} bind:this={head}>
+  <div class="head" class:gone={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
       ground={chrome.barOf(tab.id)}
@@ -1031,12 +1034,10 @@
     flex: none;
   }
 
-  /* Full screen puts its way out in this corner, and a page draws above it: the bar
-     makes the room, down and across, so neither the page nor the dots sit under the
-     button. See `.leave` in App.svelte. */
-  .head.roomy {
-    min-height: calc(var(--leave-size) + var(--space-2) * 2);
-    padding-inline-end: calc(var(--leave-size) + var(--space-2) * 2);
+  /* Full screen is the page and nothing else, Chrome's F11: the bar goes with the rest
+     of the app, and the page takes its room. See fullscreen.svelte.ts. */
+  .head.gone {
+    display: none;
   }
 
   /* The page's own room. `--bg` rather than nothing, because for one frame between

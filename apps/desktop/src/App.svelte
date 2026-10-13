@@ -26,7 +26,7 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
-  import { fullscreen } from './lib/fullscreen.svelte'
+  import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -405,9 +405,8 @@
   // document has to be as easy to leave as everything else. Escape is in `onKeydown`.
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
 
-  // And it belongs to the document it was entered on: closing that brings the app
-  // back rather than leaving a window with nothing in it. See fullscreen.svelte.ts.
-  $effect(() => fullscreen.watch(workspace.tabs.map((tab) => tab.id)))
+  // And it keeps to the pane worked in; see fullscreen.svelte.ts.
+  $effect(() => fullscreen.follow())
 
   // Both drawers follow the finger, the way a phone app's do; see
   // drawer-follow.ts, which is one engine for the two edges. Only where the
@@ -752,10 +751,12 @@
 
     // Then full screen, which is a mode and not a layer: on the stack it hid a web
     // tab's page, the thing it is meant to fill the screen with. See overlays.ts.
+    // Decided once the press has been everywhere; see `escapeLeaves`.
     if (event.key === 'Escape' && fullscreen.on) {
-      event.preventDefault()
-      event.stopImmediatePropagation()
-      void fullscreen.leave()
+      const holder = document.activeElement
+      queueMicrotask(() => {
+        if (escapeLeaves(event.defaultPrevented, holder)) void fullscreen.leave()
+      })
       return
     }
 
@@ -799,7 +800,7 @@
       },
       // The document alone, with the app out of the way and the window's own
       // frame with it; see fullscreen.svelte.ts.
-      fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
+      fullscreen: () => void fullscreen.toggle(workspace.panes),
     }
   }
   // On a Mac the app's menu is the menu bar across the top of the screen, which is
@@ -1060,8 +1061,9 @@
         </button>
       {/if}
 
-      <!-- The way back out of full screen; see FullscreenLeave.svelte. -->
-      {#if fullscreen.on}
+      <!-- The way back out of full screen; see FullscreenLeave.svelte. Never over a
+           web page, which would draw over it. -->
+      {#if fullscreen.on && workspace.active?.kind !== 'web'}
         {#await fullscreenWayOut() then WayOut}
           <WayOut />
         {/await}
@@ -1236,8 +1238,7 @@
 
 <style>
   main {
-    /* The way out of full screen, which a web tab's bar makes room for; see `.head`
-       in lib/web-tab/WebTab.svelte. */
+    /* The way out of full screen; see FullscreenLeave.svelte. */
     --leave-size: 30px;
     display: flex;
     flex-direction: column;

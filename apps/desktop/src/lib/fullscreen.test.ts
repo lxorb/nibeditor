@@ -27,11 +27,29 @@ vi.mock('./tauri', () => ({
     }),
 }))
 
-const { fullscreen, IDLE } = await import('./fullscreen.svelte')
+const { escapeLeaves, fullscreen, IDLE } = await import('./fullscreen.svelte')
+
+/** Two panes side by side, the left one worked in, as the store would have them. */
+function twoPanes(
+  showing: { left: string | null; right: string | null } = { left: 'tab-1', right: 'tab-2' },
+) {
+  const shown = { ...showing }
+  return {
+    fills: null as string | null,
+    focusedId: 'left',
+    shown,
+    get focused() {
+      return { activeTabId: this.focusedId === 'left' ? shown.left : shown.right }
+    },
+  }
+}
+
+let panes = twoPanes()
 
 beforeEach(() => {
   asked.length = 0
   refuses = false
+  panes = twoPanes()
   vi.useFakeTimers()
 })
 
@@ -42,22 +60,19 @@ afterEach(async () => {
 
 describe('turning it on and off', () => {
   test('one command does both, and the window follows', async () => {
-    await fullscreen.toggle('tab-1')
+    await fullscreen.toggle(panes)
     expect(fullscreen.on).toBe(true)
-    expect(fullscreen.of).toBe('tab-1')
     expect(asked).toEqual([true])
 
-    await fullscreen.toggle('tab-1')
+    await fullscreen.toggle(panes)
     expect(fullscreen.on).toBe(false)
-    expect(fullscreen.of).toBe(null)
     expect(asked).toEqual([true, false])
   })
 
   test('asking twice for what is already so changes nothing', async () => {
-    await fullscreen.enter('tab-1')
-    await fullscreen.enter('tab-2')
+    await fullscreen.enter(panes)
+    await fullscreen.enter(panes)
 
-    expect(fullscreen.of).toBe('tab-1')
     expect(asked).toEqual([true])
 
     await fullscreen.leave()
@@ -69,7 +84,7 @@ describe('turning it on and off', () => {
    *  outside a gesture - is no reason to leave the app on screen. */
   test('a window that refuses is not an error', async () => {
     refuses = true
-    await fullscreen.enter('tab-1')
+    await fullscreen.enter(panes)
 
     expect(fullscreen.on).toBe(true)
     expect(asked).toEqual([])
@@ -78,7 +93,7 @@ describe('turning it on and off', () => {
 
 describe('the way out', () => {
   test('fades once nothing has moved, and lights again when something does', async () => {
-    await fullscreen.enter('tab-1')
+    await fullscreen.enter(panes)
     expect(fullscreen.idle).toBe(false)
 
     vi.advanceTimersByTime(IDLE + 10)
@@ -92,7 +107,7 @@ describe('the way out', () => {
   })
 
   test('is not re-armed sixty times a second by a moving hand', async () => {
-    await fullscreen.enter('tab-1')
+    await fullscreen.enter(panes)
 
     // A pointer crossing the screen, well inside the window a stir is answered
     // in: the fade still comes when the first of them said it would.
@@ -109,23 +124,105 @@ describe('the way out', () => {
   })
 })
 
-describe('the document it belongs to', () => {
-  test('closing it brings the app back', async () => {
-    await fullscreen.enter('tab-1')
+describe('the tab it shows', () => {
+  /** Chrome's F11 for whatever is open: one tab, the one in front of the pane being
+   *  worked in, and the other pane, the strips and the split exactly as they were after. */
+  test('is the pane being worked in alone, and every pane comes back', async () => {
+    await fullscreen.enter(panes)
+    expect(panes.fills).toBe('left')
 
-    fullscreen.watch(['tab-1', 'tab-2'])
+    await fullscreen.leave()
+    expect(panes.fills).toBe(null)
+  })
+
+  test('a window filled before is filled again after', async () => {
+    panes.fills = 'left'
+    await fullscreen.enter(panes)
+    expect(panes.fills).toBe('left')
+
+    await fullscreen.leave()
+    expect(panes.fills).toBe('left')
+  })
+
+  /** Unless the pane that filled is no longer the one worked in, which ends Full window
+   *  on its own; see `stillFills` in tab-fill/rules.ts. */
+  test('but not once the keyboard went to another pane', async () => {
+    panes.fills = 'left'
+    await fullscreen.enter(panes)
+    panes.focusedId = 'right'
+    fullscreen.follow()
+    expect(panes.fills).toBe('right')
+
+    await fullscreen.leave()
+    expect(panes.fills).toBe(null)
+  })
+
+  test('goes with the keyboard to another pane', async () => {
+    await fullscreen.enter(panes)
+    panes.focusedId = 'right'
+    fullscreen.follow()
+
     expect(fullscreen.on).toBe(true)
+    expect(panes.fills).toBe('right')
+  })
 
-    fullscreen.watch(['tab-2'])
+  test('stays through another tab of the same pane, as F11 does through a tab switch', async () => {
+    await fullscreen.enter(panes)
+    panes.shown.left = 'tab-3'
+    fullscreen.follow()
+
+    expect(fullscreen.on).toBe(true)
+    expect(panes.fills).toBe('left')
+  })
+
+  test('and the app comes back when the pane shows nothing', async () => {
+    await fullscreen.enter(panes)
+    panes.shown.left = null
+    fullscreen.follow()
     // The state goes at once, so nothing is drawn for a frame that says the app
     // is still away; the window is asked a tick later.
     expect(fullscreen.on).toBe(false)
+    expect(panes.fills).toBe(null)
 
     await Promise.resolve()
     await Promise.resolve()
     expect(asked).toEqual([true, false])
   })
 
+  test('a pane showing nothing is never put full screen', async () => {
+    panes = twoPanes({ left: null, right: 'tab-2' })
+    await fullscreen.enter(panes)
+
+    expect(fullscreen.on).toBe(false)
+    expect(panes.fills).toBe(null)
+    expect(asked).toEqual([])
+  })
+
+  test('says nothing to panes it was not entered on', () => {
+    fullscreen.follow()
+    expect(panes.fills).toBe(null)
+  })
+})
+
+/** Escape gives the screen back where nothing else wanted it. */
+describe('Escape', () => {
+  test('in a note, or on nothing, leaves', () => {
+    expect(escapeLeaves(false, { tagName: 'DIV' })).toBe(true)
+    expect(escapeLeaves(false, null)).toBe(true)
+  })
+
+  test('spent by the editor, vim or a picture stepped off, does not', () => {
+    expect(escapeLeaves(true, { tagName: 'DIV' })).toBe(false)
+  })
+
+  test('in a field or a shell, which read it themselves, does not', () => {
+    for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
+      expect(escapeLeaves(false, { tagName }), tagName).toBe(false)
+    }
+  })
+})
+
+describe('what is kept of it', () => {
   test('and nothing about it is written down', () => {
     const source = readFileSync(
       fileURLToPath(new URL('./fullscreen.svelte.ts', import.meta.url)),
@@ -197,7 +294,7 @@ describe('the shell', () => {
     expect(wayOut).toContain('onclick={() => void fullscreen.leave()}')
     expect(app).toContain("if (event.key === 'Escape' && fullscreen.on) {")
     expect(app).toContain('closeOnBack(fullscreen.on, () => void fullscreen.leave())')
-    expect(menu).toContain('run: () => void fullscreen.toggle(workspace.activeTabId)')
+    expect(menu).toContain('run: () => void fullscreen.toggle(workspace.panes)')
   })
 
   /** Escape leaves it from the window's own key handler rather than off the overlay
@@ -221,10 +318,18 @@ describe('the shell', () => {
     expect(registry).toContain("id: 'app.fullscreen'")
     expect(registry).toContain("key: 'F11'")
     expect(menu).toContain("...keyed('app.fullscreen')")
-    expect(app).toContain('fullscreen: () => void fullscreen.toggle(workspace.activeTabId)')
+    expect(app).toContain('fullscreen: () => void fullscreen.toggle(workspace.panes)')
   })
 
-  test('and it is left when the document it was entered on is closed', () => {
-    expect(app).toContain('fullscreen.watch(workspace.tabs.map((tab) => tab.id))')
+  test('and it keeps to the pane worked in, and is left when that shows nothing', () => {
+    expect(app).toContain('$effect(() => fullscreen.follow())')
+  })
+
+  /** A web tab is its page alone: the bar goes, and no button is drawn where a native
+   *  webview would draw over it. */
+  test('a web tab is its page and nothing else', () => {
+    const web = readFileSync(`${SOURCE}lib/web-tab/WebTab.svelte`, 'utf8')
+    expect(web).toContain('<div class="head" class:gone={fullscreen.on}')
+    expect(app).toContain("{#if fullscreen.on && workspace.active?.kind !== 'web'}")
   })
 })
