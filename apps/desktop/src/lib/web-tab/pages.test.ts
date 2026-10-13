@@ -40,6 +40,9 @@ vi.stubGlobal('localStorage', memoryStorage())
  *  mocked below - so an empty object is the whole of what this needs to be. */
 vi.stubGlobal('window', {})
 
+/** A frame, for a cut that waits for the frame that draws its layer; see `cover`. */
+vi.stubGlobal('requestAnimationFrame', (go: () => void) => setTimeout(go, 0))
+
 /** What `web_open` is waiting for. The test resolves it, so "while the page is
  *  being built" is a state this file can stand in and look around from. */
 let building: (() => void) | null = null
@@ -59,6 +62,10 @@ let refusing = false
 /** A photograph the engine has not answered yet, while a test holds one. */
 let photographing: Promise<void> | null = null
 
+/** Whether the crate says it cuts the app's layers out of a page, as the system's engine
+ *  on Windows does; see src-tauri/src/web_cut.rs. */
+let cuts = false
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: true,
@@ -71,11 +78,12 @@ vi.mock('../tauri', async (importOriginal) => ({
       if (!looked) throw new Error('that page said nothing')
       return looked
     }
+    if (command === 'web_place') return cuts
     if (command !== 'web_open') return undefined
 
     await new Promise<void>((go) => (building = go))
     if (refuse) throw new Error('no webview to be had here')
-    return undefined
+    return cuts
   },
 }))
 
@@ -160,6 +168,7 @@ beforeEach(async () => {
   building = null
   refuse = false
   looked = null
+  cuts = false
   localStorage.clear()
 })
 
@@ -402,6 +411,28 @@ describe('a page asked for while something is over the pane', () => {
     // And nothing is photographed: a page built this moment has nothing on it worth
     // standing in for it, and a photograph is the most expensive thing the crate does.
     expect(commands()).not.toContain('web_shot')
+  })
+
+  /** Emil, 2026-10-13: the page of a tab opened while the update notice was up, or
+   *  while the card of the tab just pressed was, stayed an empty pane until the layer
+   *  went. The page arrived hidden, and the pane, whose box had not changed, never said
+   *  anything again. */
+  test('and where the engine cuts, it arrives with the layer cut out of it', async () => {
+    cuts = true
+    const over = {
+      cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
+      frame: null,
+    }
+    const shown = pages.show('a', SITE, PANE, false, over)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ visible: true }))
+
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+      false,
+    )
   })
 
   test('and is shown the moment nothing is over it any more', async () => {

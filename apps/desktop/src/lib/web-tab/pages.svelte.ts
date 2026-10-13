@@ -175,7 +175,8 @@ function painted(): Promise<void> {
 }
 
 /** Whether the crate cuts the app's layers out of a page rather than hiding it, which
- *  it says with every placement: the system's engine on Windows does. Until it has said,
+ *  it says with every page it builds and every placement: the system's engine on Windows
+ *  does. Until it has said,
  *  a page under a layer is hidden behind its picture, which every build can do. */
 let cutting = false
 
@@ -693,13 +694,17 @@ class Pages {
     try {
       // The note's own store, or the shared one; see web-data.svelte.ts.
       const store = page.inPrivate ? null : await (await stores()).store(page.own)
-      await invoke('web_open', {
+      const cuts = await invoke<boolean | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
         profile: { store, private: page.inPrivate },
       })
+      // Said with the page as well as with every placement, because the first page of a
+      // window is built before anything has been placed, and a layer over it then would
+      // be answered as though the engine could not cut.
+      cutting = cuts === true
       page.live = true
       page.openable = true
       page.frozen = false
@@ -759,10 +764,16 @@ class Pages {
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
-    // Something of the app's is over the hole. Out of sight and still the tab in front,
-    // so nothing counts down for it - and nothing is photographed either: a page that
-    // has this moment been built has nothing on it worth standing in for it.
-    else if (wanted.covering) await this.place(tabId, wanted.pane, false, false, wanted.over)
+    // Something of the app's is over the hole. Where the engine cuts, the layer is cut
+    // out of the page as it would be out of a page that had been there all along. It
+    // used to be hidden outright here, and the pane had nothing to say again - its box
+    // was the box it had said - so a page that arrived under the update notice, or under
+    // the card of the tab just pressed, was an empty pane until the layer went (Emil,
+    // 2026-10-13: "completely black until you click it away"). Where it cannot, the page
+    // is out of sight, still the tab in front so nothing counts down for it, and nothing
+    // is photographed: a page built this moment has nothing on it worth standing in.
+    else if (wanted.covering)
+      await this.place(tabId, wanted.pane, false, cutting && wanted.over.cut !== null, wanted.over)
     // Out of sight, and counting down to being frozen: the countdown that should have
     // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)

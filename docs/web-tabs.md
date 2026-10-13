@@ -772,6 +772,33 @@ scale, both held by the tests in web_follow.rs, `shifts.test.ts` and
 `web-switch.effect.test.ts`; and the edges, which meet at 200 per cent either way and are
 held to the pixel at 150 by web_follow.rs's tests.
 
+**A page that arrives under a layer is cut round it too.** Emil, 2026-10-13: _"sometimes
+when there are toasts, e.g. for a new version, or other stuff you hover over, the web tab
+is just not visible - completely black - until you click it away."_ Three ways a page
+ended up hidden for a layer that covered a corner of it:
+
+- **Built under it.** A page on its way was told what was over its hole, and arrived
+  hidden rather than cut: the update notice is up as the window comes back, and the card
+  of the tab just pressed is up while its page is built. The pane had nothing to say
+  again, because its box was the box it had said, so the page stayed an empty pane
+  until the layer went. It arrives cut now (`build` in pages.svelte.ts), and the pane
+  looks again the moment it has (`page.live` in WebTab.svelte).
+- **Before the crate had said it cuts.** Whether this build cuts was said with each
+  placement, and the first page of a window is built before anything has been placed,
+  so a layer over it was answered as an engine that cannot cut answers one. `web_open`
+  says it as well.
+- **By nothing a page hears.** A layer opened by a press or on the overlay stack is
+  heard; a hint, a card a row puts up under the pointer, a second toast in a row that did
+  not change size came by neither, and was drawn behind the page. One watch on the
+  window hears every layer come and go (`watchArrivals` in covers.ts).
+
+An engine that cannot cut answers a layer by hiding the page behind its still, and a
+notice is up until somebody answers it, the update notice for a day. There the page ends
+above the notices instead, the way Chrome gives its download bar and infobars a band of
+their own rather than drawing them over the page (`clearOf` in covers.ts); a menu or a
+card still steps the page behind its still, and a sheet dims it. Measured with
+`scripts/web-layers-probe.py`, one step for each kind of layer.
+
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
 all along the step is `history.back()` in the page, which is what a browser's own

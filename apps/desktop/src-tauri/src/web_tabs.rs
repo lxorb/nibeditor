@@ -1170,6 +1170,10 @@ impl Profile {
 /// answer coming back over a channel once the controller exists. Calling `add_child`
 /// straight from this thread would post the same message without waiting, which
 /// loses the one thing the window needs to know - whether there is a page to place.
+///
+/// The answer says whether this build cuts the app's layers out of a page, as
+/// `web_place`'s does: the first page of a window is built before anything has been
+/// placed, and a layer it arrives under is cut round from its first frame (web_cut.rs).
 #[tauri::command]
 pub async fn web_open(
     webview: Webview,
@@ -1179,7 +1183,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
-) -> Result<(), String> {
+) -> Result<bool, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
@@ -1190,7 +1194,7 @@ pub async fn web_open(
         // the file is in; a tab opened again in the meantime has its page already. And an
         // agent's page the reader was shown is already this tab's page, loaded.
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
-            return Ok(());
+            return Ok(crate::web_cut::CUTS);
         }
         return Err("that tab already has a page".into());
     }
@@ -1338,7 +1342,7 @@ pub async fn web_open(
 
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
-    Ok(())
+    Ok(crate::web_cut::CUTS)
 }
 
 /// A tab's builder, with what the page does said to the window: each load started and

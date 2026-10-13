@@ -43,6 +43,8 @@ export interface Layer {
   radius: number
   /** A scrim, clear or not, which covers the whole window; otherwise a floating layer. */
   scrim: boolean
+  /** A card in the notices row, which stands at the foot of the panes; see `clearOf`. */
+  notice?: boolean
   /** The element itself, which the page watches for a change of size; see WebTab.svelte. */
   node?: Element
 }
@@ -50,11 +52,13 @@ export interface Layer {
 /** The row the app's notices float in: a toast, the update notice, the storage card,
  *  the recording pill. See `.notices` in App.svelte. */
 const NOTICES = '[data-notices]'
+/** And each card in it, whatever it wears. */
+const CARDS = `${NOTICES} > *`
 
 /** The shapes the theme package gives every layer that floats (see base.css), the
  *  arrow a swipe brings in over a page, which is round and moves with the fingers (see
  *  back-swipe/SwipeArrow.svelte), and each card in the notices row. */
-const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, ${NOTICES} > *`
+const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, ${CARDS}`
 const SCRIMS = '.nib-scrim'
 
 function meets(one: Rect, other: Rect): boolean {
@@ -90,6 +94,35 @@ export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
 /** A cut of all of the page. */
 export const ALL: Cut = { all: true, hollows: [] }
 
+/** How much of a page has to be left above the notices for the page to stand clear of
+ *  them rather than behind its still: half of it. */
+const LEFT = 0.5
+
+/** Where a page goes on an engine that cannot cut, and the layers still over it there.
+ *
+ *  Such an engine can only answer a layer by hiding the page behind its still, and a
+ *  notice is up for as long as nobody answers it - the update notice for a whole day -
+ *  with the page behind a picture of itself all that time, or behind nothing where
+ *  there was no picture yet. A notice stands at the foot of the panes, so the page is
+ *  ended above it instead, the way Chrome gives its download bar and its infobars room
+ *  of their own rather than drawing them over the page: the page stays live, and the
+ *  notice is in a band of the pane's own. Only where that leaves the page most of its
+ *  height; past that, the notices are layers like any other. Pure. */
+export function clearOf(hole: Rect, layers: readonly Layer[]): { box: Rect; layers: Layer[] } {
+  const notices = layers.filter(
+    (one) => one.notice && one.box.width > 0 && one.box.height > 0 && meets(one.box, hole),
+  )
+  if (notices.length === 0) return { box: hole, layers: [...layers] }
+
+  const top = Math.min(...notices.map((one) => one.box.y))
+  const height = Math.floor(top - hole.y)
+  if (height < hole.height * LEFT) return { box: hole, layers: [...layers] }
+  return {
+    box: { ...hole, height },
+    layers: layers.filter((one) => !notices.includes(one)),
+  }
+}
+
 function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
@@ -106,6 +139,7 @@ export function layersOver(hole: HTMLElement): Layer[] {
       box: boxOf(node),
       radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
       scrim,
+      notice: node.matches(CARDS),
       node,
     })
   }
@@ -142,4 +176,46 @@ export function strangerOver(hole: HTMLElement): boolean {
  *  it has none. */
 export function noticeRows(): Element[] {
   return [...document.querySelectorAll(NOTICES)]
+}
+
+/** Whether a change to the document brought a layer or took one away: a node that is
+ *  one or holds one, or any card put in or taken out of the notices row - which, once
+ *  out of the row, no longer matches the selector that found it. Pure but for the
+ *  nodes it is handed. */
+export function bringsLayer(
+  record: Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'>,
+): boolean {
+  if (record.target instanceof Element && record.target.matches(NOTICES)) return true
+  const any = `${FLOATING}, ${SCRIMS}`
+  for (const nodes of [record.addedNodes, record.removedNodes]) {
+    for (const node of nodes) {
+      if (!(node instanceof Element)) continue
+      if (node.matches(any) || node.querySelector(any) !== null) return true
+    }
+  }
+  return false
+}
+
+const told = new Set<() => void>()
+let arriving: MutationObserver | null = null
+
+/** Says to `tell` whenever a layer comes into the window or leaves it, whatever brought
+ *  it. Most layers arrive by a press or on the overlay stack, which every page already
+ *  hears; these do not - a hint, a card a row puts up under the pointer, the second
+ *  toast in a row that did not change size, a layer written tomorrow by somebody who
+ *  never heard of the stack - and a page that never heard of one left it drawn behind
+ *  the page. One observer for the window, however many pages listen; the answer is
+ *  only "look again", which is coalesced onto a frame by whoever is told. */
+export function watchArrivals(tell: () => void): () => void {
+  if (typeof MutationObserver !== 'function') return () => undefined
+  told.add(tell)
+  arriving ??= new MutationObserver((records) => {
+    if (!records.some(bringsLayer)) return
+    for (const one of told) one()
+  })
+  if (told.size === 1) arriving.observe(document.body, { childList: true, subtree: true })
+  return () => {
+    told.delete(tell)
+    if (told.size === 0) arriving?.disconnect()
+  }
 }

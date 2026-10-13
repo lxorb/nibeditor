@@ -44,11 +44,13 @@
   import { filling } from './filling.svelte'
   import {
     ALL,
+    clearOf,
     cutOf,
     layersOver,
     moving,
     noticeRows,
     strangerOver,
+    watchArrivals,
     type Cut,
     type Layer,
   } from './covers'
@@ -138,7 +140,8 @@
     }
   }
 
-  /** What of the page the app's own layers are over, or null for none of it.
+  /** Where the page goes in the hole at `box`, and what of it the app's own layers are
+   *  over there, or null for none of it.
    *
    *  A native webview draws above every pixel of HTML in the window: nothing of nib's
    *  can be drawn on top of a page. So a layer over the page is cut out of it in its own
@@ -155,17 +158,21 @@
    *  the carried tab hangs under the pointer over all of them: a page left in front
    *  hid both, so the tab vanished the moment it left the strip and nobody could see
    *  where it would land. The drag is asked rather than hit-tested because the page
-   *  has to go before the zones are there to be hit. */
-  function coverOf(box: Rect): Cut | null {
-    if (page.filling) return null
+   *  has to go before the zones are there to be hit.
+   *
+   *  An engine that cannot cut ends the page above the app's notices instead of hiding
+   *  it for them; see `clearOf`. */
+  function coverOf(box: Rect): { box: Rect; cut: Cut | null } {
+    if (page.filling) return { box, cut: null }
     // Another tab's page holds the screen, and this one would be drawn over it.
-    if (filling.by !== null || workspace.panes.dragging !== null) return ALL
-    if (!hole) return null
+    if (filling.by !== null || workspace.panes.dragging !== null) return { box, cut: ALL }
+    if (!hole) return { box, cut: null }
     // Something over the page nothing knows the shape of: a drawer, a deck.
-    if (strangerOver(hole)) return ALL
+    if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
     watchLayers(layers)
-    return cutOf(box, layers)
+    const clear = pages.cuts ? { box, layers } : clearOf(box, layers)
+    return { box: clear.box, cut: cutOf(clear.box, clear.layers) }
   }
 
   /** The layers on the window, watched for a change of size as the hole is. A layer can
@@ -305,8 +312,8 @@
       return
     }
 
-    last = box
-    const cut = coverOf(box)
+    const { box: at, cut } = coverOf(box)
+    last = at
     const visible = cut === null
 
     // A layer on its way out is on no list: it took itself off the overlay stack the
@@ -326,7 +333,7 @@
     const frame = frameOf()
     // The scale is part of it: the same box on a screen of another scale is another page
     // window, and nothing else in the layout says the scale changed.
-    const said = JSON.stringify([box, cut, frame?.window, devicePixelRatio])
+    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
@@ -337,7 +344,7 @@
     // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
     if (!page.live) page.own = apart
-    void pages.show(tab.id, address, box, visible, { cut, frame })
+    void pages.show(tab.id, address, at, visible, { cut, frame })
   }
 
   /** Where this tab points: the address the page is on, else the one the session
@@ -429,12 +436,16 @@
     // press - a command from the palette opens the next overlay, and Escape closes one
     // - so the page cannot wait for a press to find out; see `coverOf`.
     const unwatch = overlays.watch(follow)
+    // And a layer that arrives by neither, or leaves by neither: a hint, a second toast,
+    // a card a row puts up under the pointer. See `watchArrivals`.
+    const unarrive = watchArrivals(follow)
 
     return () => {
       cancelAnimationFrame(scheduled)
       clearTimeout(late)
       watching?.disconnect()
       unwatch()
+      unarrive()
       // The tab is being left or closed: where its reading got to is written now rather
       // than a pause later. See keep.ts.
       if (tab.path !== null) keepNow(tab.path)
@@ -482,6 +493,11 @@
 
   // An agent began acting here or let go: the page moves in by the frame or back out.
   $effect(() => follow(worn !== null))
+
+  // The page arrived. Whatever came or went over the hole while it was on its way, and
+  // whether the engine cuts, which the first page of a window is the first to hear, are
+  // looked at again; a look that comes to what was said already says nothing.
+  $effect(() => follow(page.live))
 
   // Another computer's web login came or went. Going, the page is asked for again at
   // once, which is what makes a page come back by itself when the site is free; see

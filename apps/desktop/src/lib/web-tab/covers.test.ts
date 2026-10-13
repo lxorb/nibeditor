@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { describe, expect, test } from 'vitest'
-import { cutOf, layersOver, noticeRows, type Layer } from './covers'
+import {
+  bringsLayer,
+  clearOf,
+  cutOf,
+  layersOver,
+  noticeRows,
+  watchArrivals,
+  type Layer,
+} from './covers'
 
 const PAGE = { x: 300, y: 100, width: 900, height: 600 }
 
@@ -74,11 +82,111 @@ describe("the notices row's cards", () => {
     const found = layersOver(hole)
     expect(found.map((one) => one.node)).toEqual([toast])
     expect(found[0]?.scrim).toBe(false)
+    expect(found[0]?.notice).toBe(true)
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
 
   test('the row is what a page watches to hear a card come or go', () => {
     const { notices } = row()
     expect(noticeRows()).toEqual([notices])
+  })
+})
+
+/** On an engine that cannot cut, a layer hides the page behind its still - and a notice is
+ *  up until somebody answers it, the update notice for a day. So the page ends above the
+ *  notices there, the way Chrome gives its download bar room of its own. */
+describe('a page on an engine that cannot cut, over the notices', () => {
+  function notice(x: number, y: number, width: number, height: number): Layer {
+    return { ...float(x, y, width, height), notice: true }
+  }
+
+  test('ends above the notices, and is cut by nothing', () => {
+    const clear = clearOf(PAGE, [notice(850, 640, 330, 52)])
+    expect(clear.box).toEqual({ x: 300, y: 100, width: 900, height: 540 })
+    expect(cutOf(clear.box, clear.layers)).toBeNull()
+  })
+
+  test('above the highest of them', () => {
+    const clear = clearOf(PAGE, [notice(850, 640, 330, 52), notice(600, 620.6, 200, 72)])
+    expect(clear.box.height).toBe(520)
+  })
+
+  test('and a menu over it at the same time is still a layer over the page', () => {
+    const menu = float(400, 150, 220, 300)
+    const clear = clearOf(PAGE, [notice(850, 640, 330, 52), menu])
+    expect(clear.layers).toEqual([menu])
+    expect(cutOf(clear.box, clear.layers)?.hollows).toHaveLength(1)
+  })
+
+  test('a notice beside the page leaves the page its whole height', () => {
+    expect(clearOf(PAGE, [notice(20, 640, 240, 52)]).box).toEqual(PAGE)
+  })
+
+  test('notices that would leave less than half of it are layers like any other', () => {
+    const tall = notice(850, 300, 330, 380)
+    const clear = clearOf(PAGE, [tall])
+    expect(clear.box).toEqual(PAGE)
+    expect(clear.layers).toEqual([tall])
+  })
+})
+
+/** A layer that arrives by no press and by no overlay stack - a hint, a second toast in a
+ *  row that did not change size, a card a row puts up under the pointer - was a layer the
+ *  page never heard of, drawn behind the page. */
+describe('a layer arriving by itself', () => {
+  function record(target: Node, added: Node[] = [], removed: Node[] = []) {
+    const list = (nodes: Node[]) => nodes as unknown as NodeList
+    return { target, addedNodes: list(added), removedNodes: list(removed) }
+  }
+
+  test('is heard as it comes, and as it goes', () => {
+    document.body.innerHTML = '<div class="nib-layer"></div><p>words</p>'
+    const layer = document.querySelector('.nib-layer')!
+    const words = document.querySelector('p')!
+    expect(bringsLayer(record(document.body, [layer]))).toBe(true)
+    expect(bringsLayer(record(document.body, [], [layer]))).toBe(true)
+    expect(bringsLayer(record(document.body, [words, document.createTextNode('x')]))).toBe(false)
+  })
+
+  test('inside whatever brought it', () => {
+    document.body.innerHTML = '<section><div><span class="nib-bubble"></span></div></section>'
+    expect(bringsLayer(record(document.body, [document.querySelector('section')!]))).toBe(true)
+  })
+
+  test('and any card in the notices row, which once taken out is in no row', () => {
+    document.body.innerHTML = '<div data-notices></div>'
+    const card = document.createElement('div')
+    expect(bringsLayer(record(document.querySelector('[data-notices]')!, [], [card]))).toBe(true)
+  })
+
+  test('every page is told, by one watch on the window', async () => {
+    document.body.innerHTML = '<main></main>'
+    let one = 0
+    let other = 0
+    const stopOne = watchArrivals(() => (one += 1))
+    const stopOther = watchArrivals(() => (other += 1))
+
+    document
+      .querySelector('main')!
+      .append(Object.assign(document.createElement('div'), { className: 'nib-screen' }))
+    await Promise.resolve()
+    expect([one, other]).toEqual([1, 1])
+
+    // Typing in a note beside the page is no layer, and says nothing.
+    document.querySelector('main')!.append(document.createElement('p'))
+    await Promise.resolve()
+    expect([one, other]).toEqual([1, 1])
+
+    stopOne()
+    document.querySelector('.nib-screen')!.remove()
+    await Promise.resolve()
+    expect([one, other]).toEqual([1, 2])
+
+    stopOther()
+    document
+      .querySelector('main')!
+      .append(Object.assign(document.createElement('div'), { className: 'nib-layer' }))
+    await Promise.resolve()
+    expect([one, other]).toEqual([1, 2])
   })
 })
