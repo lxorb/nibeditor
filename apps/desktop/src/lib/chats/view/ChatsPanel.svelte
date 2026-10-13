@@ -8,7 +8,7 @@
   import { onMount } from 'svelte'
   import { amount, t } from '../../i18n.svelte'
   import { workspace } from '../../workspace.svelte'
-  import { hiddenKinds } from '../../hidden-kinds.svelte'
+  import { hiddenKinds } from '../../settings.svelte'
   import type { ChatEntry, Hit } from '../api'
   import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'

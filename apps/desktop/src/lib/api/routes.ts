@@ -436,8 +436,7 @@ export interface AccountSettings {
    *  default that changes later reach everybody who never chose; see
    *  toolbar.svelte.ts. */
   toolbar?: string[] | null
-  /** The kinds of tab turned off in Settings, which nothing offers to make; null for
-   *  every kind offered. See hidden-kinds.svelte.ts. */
+  /** See kind-choice.ts. */
   hiddenKinds?: string[] | null
   /** Which command pulling a list or a note down past its top runs: an id from
    *  the same registry, `none` for no gesture at all, or null for the one the app

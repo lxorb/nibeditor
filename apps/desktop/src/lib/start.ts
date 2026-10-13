@@ -29,7 +29,7 @@ import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
-import { settings } from './settings.svelte'
+import { hiddenKinds, settings } from './settings.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
@@ -38,7 +38,6 @@ import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
-import { hiddenKinds } from './hidden-kinds.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
@@ -68,7 +67,6 @@ export function start(): () => void {
   toolbar.restore()
   // And which command a pull down past the top of a list runs.
   pull.restore()
-  // Which kinds of tab nothing offers to make; see hidden-kinds.svelte.ts.
   hiddenKinds.restore()
   settings.restore()
   // The moment a hint may appear: long enough that the window has settled and the

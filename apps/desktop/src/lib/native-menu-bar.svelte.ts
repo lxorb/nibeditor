@@ -32,7 +32,7 @@ import type {
 } from '@tauri-apps/api/menu'
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
-import { hiddenKinds } from './hidden-kinds.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { i18n, t } from './i18n.svelte'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
@@ -172,7 +172,6 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   const open = !!workspace.active
 
   return {
-    // Without the kinds Settings turned off; see hidden-kinds.svelte.ts.
     opening: [
       ...(hiddenKinds.offers('note') ? [entryRow('app.new', context)] : []),
       entryRow('app.new-kind', context, { label: t('New tab') }),

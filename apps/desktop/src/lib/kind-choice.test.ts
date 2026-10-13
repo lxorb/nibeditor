@@ -23,10 +23,10 @@ vi.mock('./api', async (actual) => ({
   },
 }))
 
-const { hiddenOf, kindsHere, mayHide, shownOf } = await import('./kinds-here')
-const { hiddenKinds } = await import('./hidden-kinds.svelte')
+const { hiddenKinds, kindsHere, shownOf } = await import('./settings.svelte')
+const { hiddenOf, locked, mayHide, receive, setKind } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
-const { newFileRows } = await import('./file-kinds')
+const { newFileRows } = await import('./row-menu')
 const { account } = await import('./account.svelte')
 const { viewport } = await import('./viewport.svelte')
 
@@ -109,7 +109,7 @@ describe('the kinds a device has', () => {
 
 describe('turning a kind off', () => {
   test('takes it out of the chooser and the file list, and nothing else', () => {
-    hiddenKinds.set('canvas', false)
+    setKind('canvas', false)
 
     expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'online', 'web'])
     expect(newFileRows().map((one) => one?.label)).toEqual([
@@ -122,25 +122,25 @@ describe('turning a kind off', () => {
   })
 
   test('is undone by turning it on, and the default is stored as nothing', () => {
-    hiddenKinds.set('canvas', false)
+    setKind('canvas', false)
     expect(JSON.parse(store.get('nib:hidden-kinds') ?? '[]')).toEqual(['canvas'])
 
-    hiddenKinds.set('canvas', true)
+    setKind('canvas', true)
     expect(hiddenKinds.offers('canvas')).toBe(true)
     expect(store.has('nib:hidden-kinds')).toBe(false)
   })
 
   test('is refused for the last kind offered', () => {
-    for (const kind of ['note', 'canvas', 'pages', 'online'] as const) hiddenKinds.set(kind, false)
+    for (const kind of ['note', 'canvas', 'pages', 'online'] as const) setKind(kind, false)
     expect(hiddenKinds.shown).toEqual(['web'])
 
-    hiddenKinds.set('web', false)
+    setKind('web', false)
     expect(hiddenKinds.shown).toEqual(['web'])
-    expect(hiddenKinds.mayHide('web')).toBe(false)
+    expect(locked('web')).toBe(true)
   })
 
   test('is read back by the next run', () => {
-    hiddenKinds.set('pages', false)
+    setKind('pages', false)
     hiddenKinds.hidden = []
 
     hiddenKinds.restore()
@@ -152,8 +152,8 @@ describe('the account', () => {
   test('is told, and told null for every kind back on', () => {
     token = 'token'
 
-    hiddenKinds.set('web', false)
-    hiddenKinds.set('web', true)
+    setKind('web', false)
+    setKind('web', true)
 
     expect(saved.map(([, patch]) => patch)).toEqual([
       { hiddenKinds: ['web'] },
@@ -162,20 +162,20 @@ describe('the account', () => {
   })
 
   test('is followed, the last machine to change it winning', () => {
-    hiddenKinds.receive({ hiddenKinds: ['canvas', 'something-new'] })
+    receive({ hiddenKinds: ['canvas', 'something-new'] })
     expect(hiddenKinds.offers('canvas')).toBe(false)
     expect(hiddenKinds.hidden).toEqual(['canvas', 'something-new'])
 
-    hiddenKinds.receive({ hiddenKinds: null })
+    receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('canvas')).toBe(true)
     expect(store.has('nib:hidden-kinds')).toBe(false)
   })
 
   test('that never heard of it takes this machine’s list', () => {
-    hiddenKinds.set('pages', false)
+    setKind('pages', false)
     token = 'token'
 
-    hiddenKinds.receive({})
+    receive({})
     expect(saved).toEqual([['token', { hiddenKinds: ['pages'] }]])
   })
 })

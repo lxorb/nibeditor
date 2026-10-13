@@ -14,7 +14,6 @@
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
-  import { hiddenKinds } from './hidden-kinds.svelte'
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
   import { appCommands } from './commands'
@@ -43,7 +42,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { settings } from './settings.svelte'
+  import { hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -193,7 +192,7 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  // Not where Settings turned notes off; see hidden-kinds.svelte.ts.
+  // Not where Settings turned notes off; see kind-choice.ts.
   const makes = $derived(
     mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
   )

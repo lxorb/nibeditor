@@ -27,7 +27,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
+  import { hiddenKinds, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -36,7 +36,6 @@
   import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
-  import { hiddenKinds } from '../hidden-kinds.svelte'
   import { favicon, plainOrigin } from './address'
   import { webAddress } from './typed'
   import { upgradeOf } from './upgrade'
@@ -740,9 +739,7 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    // Ctrl+T's, so it is what Settings › Note types says a new tab is.
     newTab: () => workspace.newTab(tab.paneId),
-    // Read as the menu opens, which is after Settings may have turned it off.
     get newPrivate() {
       return hiddenKinds.offers('private')
         ? () => void import('./private').then(({ openPrivate }) => openPrivate())

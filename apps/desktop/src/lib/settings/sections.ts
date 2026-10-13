@@ -76,7 +76,7 @@ export function sectionGroups(): Item[][] {
     [
       { id: 'general', label: t('General') },
       { id: 'editor', label: t('Editor') },
-      // Which kinds of tab anything offers to make; see kinds-here.ts.
+      // Which kinds of tab anything offers to make; see kind-choice.ts.
       { id: 'kinds', label: t('Note types') },
       { id: 'shortcuts', label: t('Shortcuts') },
       // The bar over the keyboard on a phone, and the pull on its lists. Here on

@@ -12,15 +12,13 @@
  *  hardware keyboard types into the note rather than pressing the plus again. */
 
 import { flushSync } from 'svelte'
-import { hiddenKinds } from './hidden-kinds.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { views } from './views.svelte'
 import { workspace } from './workspace.svelte'
 
 export function writeNew(event: Event) {
   if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
 
-  // Where Settings turned notes off, the kinds that are left to choose from instead,
-  // which on a phone is what a new tab is; see `newTab` in workspace.svelte.ts.
   if (!hiddenKinds.offers('note')) {
     workspace.newTab()
     return

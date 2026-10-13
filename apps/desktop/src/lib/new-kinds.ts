@@ -35,13 +35,13 @@
  *  breaks; see NewHere.svelte.
  *
  *  Which kinds a device has, and which of those a reader turned off in Settings › Note
- *  types, is kinds-here.ts: a light module the places that make one without this list -
- *  the file list, the palette, the keys - ask too. */
+ *  types, is `hiddenKinds` in settings.svelte.ts, which the places that make one without
+ *  this list - the file list, the palette, the keys - ask too. */
 
 import type { IconNode } from 'lucide'
 import type { FileMark } from './file-mark'
-import { hiddenKinds } from './hidden-kinds.svelte'
-import { kindLabel, type KindName, kindsHere } from './kinds-here'
+import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
+import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
 import { openTerminal, shellRows } from './terminal/open'
 import { shells } from './terminal/shells.svelte'
@@ -92,7 +92,7 @@ export function newKinds(): NewKindRow[] {
 }
 
 /** The kinds offered where they are made: every one this device has that nobody turned
- *  off in Settings. See hidden-kinds.svelte.ts. */
+ *  off in Settings. See kind-choice.ts. */
 export function offeredKinds(): NewKindRow[] {
   const shown = hiddenKinds.shown
   return newKinds().filter((one) => shown.includes(one.kind))
@@ -133,8 +133,10 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     label: () => kindLabel('chat'),
     mark: 'chat',
     letter: 'm',
-    make: (paneId) =>
-      inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat())),
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat()))
+    },
   }),
   // R, because T is the new tab's own key, and R is what Run has been on Windows for
   // thirty years. See docs/terminal.md.
@@ -188,8 +190,10 @@ function onlineRow(): NewKindRow {
     mark: 'terminal',
     icon: ONLINE,
     letter: 'o',
-    make: (paneId) =>
-      inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline())),
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./online/open').then(({ openOnline }) => openOnline()))
+    },
   }
 }
 
@@ -200,8 +204,10 @@ function remoteRow(): NewKindRow {
     label: () => kindLabel('remote'),
     mark: 'remote',
     letter: 's',
-    make: (paneId) =>
-      void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId)),
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.show(paneId))
+    },
   }
 }
 

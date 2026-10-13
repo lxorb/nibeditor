@@ -20,14 +20,13 @@ import {
 } from '@nib/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
 import { revealPanel, stepRegionFocus } from '../focus'
-import { hiddenKinds } from '../hidden-kinds.svelte'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
-import { settings } from '../settings.svelte'
+import { hiddenKinds, settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
@@ -302,7 +301,6 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-Alt-n',
-    // Nothing, where Settings turned notes off; see hidden-kinds.svelte.ts.
     run: () => {
       if (hiddenKinds.offers('note')) workspace.openBlank()
     },
@@ -344,7 +342,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-n',
     run: () => {
       if (hiddenKinds.offers('private'))
-        void import('../web-tab/private').then(({ openPrivate }) => openPrivate())
+        void import('../web-tab/private').then((one) => one.openPrivate())
     },
     desktop: true,
   },

@@ -1,6 +1,6 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
 import { account } from './account.svelte'
-import { hiddenKinds } from './hidden-kinds.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import {
   blockIds,
@@ -1512,9 +1512,8 @@ class Workspace {
    *  #213: *"it should show the same view as when pressed Ctrl + D with the only
    *  difference being that the navbar at the top where you can enter a url is still
    *  there"*. Where there is no web tab to make - a phone, the glasses' plugin - it is
-   *  Ctrl+D's view itself, and so it is where Settings › Note types turned the web note
-   *  off: the field is a web page's, and no web page is what was asked for. See
-   *  WebTab.svelte, NewHere.svelte and hidden-kinds.svelte.ts. */
+   *  Ctrl+D's view itself, as where Settings turned web notes off. See WebTab.svelte and
+   *  NewHere.svelte. */
   newTab(paneId: string = this.panes.focusedId) {
     this.focusPane(paneId)
     if (hiddenKinds.offers('web')) this.openWebsite()

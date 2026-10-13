@@ -31,7 +31,7 @@
   // The kind of file a row is, under a name of its own: `FileMark` here is the
   // component that draws one.
   import { fileMark, type FileMark as Mark } from './file-mark'
-  import { hiddenKinds } from './hidden-kinds.svelte'
+  import { hiddenKinds } from './settings.svelte'
   import FileMark from './FileMark.svelte'
   import {
     folderFor,
@@ -410,7 +410,6 @@
     [['edit.undo'], () => workspace.undoFileAction()],
     [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction()],
     [['tree.duplicate'], (rows) => workspace.duplicateMany(rows)],
-    // Nothing, where Settings turned notes off; see hidden-kinds.svelte.ts.
     [['app.new'], (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null)],
   ]
 

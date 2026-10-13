@@ -50,11 +50,10 @@
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
   import { DEEPEST, SHALLOWEST } from './workspace/graph-settings.svelte'
-  import { search, type SearchSort } from './search.svelte'
+  import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
-  import { newFileRows } from './file-kinds'
-  import { hiddenKinds } from './hidden-kinds.svelte'
+  import { hiddenKinds } from './settings.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
@@ -279,89 +278,33 @@
     )
   }
 
-  /** A press on a panel's own tab. The file list's tab leads with the order rows,
-   *  which is where the list's sorting has always been, so that one press fetches them
-   *  and every other tab answers at once. */
+  /** A press on a panel's own tab: its rows, which panel-menu.ts holds, and for the file
+   *  list the order rows and what the list makes ahead of them. Behind doors, as the order
+   *  is, so the press is spent before the await. */
   function showTabMenu(event: MouseEvent, id: Panel, label: string) {
     event.preventDefault()
+    const own = import('./panel-menu')
+    const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
-      menu.show(event, tabMenu(id), { title: label })
+      void own.then(({ panelMenu }) => shown(panelMenu(id, side)))
       return
     }
 
-    void import('./order-menu').then(({ orderMenu }) =>
-      menu.show(event, [...orderMenu(), DIVIDER, ...tabMenu(id)], { title: label }),
+    void Promise.all([import('./order-menu'), import('./row-menu'), own]).then(
+      ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
+        shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
   }
 
-  /** What the Files tab offers besides the order: which files are shown at all, and
-   *  what the list makes. */
-  function sortMenu(): MenuEntry[] {
-    return [
-      {
-        label: workspace.treeOptions.showHidden ? t('Hide hidden files') : t('Show hidden files'),
-        run: () => workspace.toggleHidden(),
-      },
-      DIVIDER,
-      ...newFileRows(),
-    ]
-  }
-
-  /** The order the results are read in. The same menu the file list's sort is,
-   *  in the same place - a press on the tab - because it is the same question
-   *  about the same space asked of a different list. */
-  function resultsMenu(): MenuEntry[] {
-    const arrow = (key: SearchSort) =>
-      search.ordering.sort === key ? (search.ordering.descending ? '↓' : '↑') : undefined
-
-    return [
-      {
-        label: t('Sort by relevance'),
-        hint: arrow('relevance'),
-        run: () => search.setSort('relevance'),
-      },
-      { label: t('Sort by name'), hint: arrow('name'), run: () => search.setSort('name') },
-      {
-        label: t('Sort by modified'),
-        hint: arrow('modified'),
-        run: () => search.setSort('modified'),
-      },
-      {
-        label: t('Sort by created'),
-        hint: arrow('created'),
-        run: () => search.setSort('created'),
-      },
-    ]
-  }
-
-  /** What a press on a panel's own tab offers, for the two panels that have
-   *  something to say about the order of what they show. */
-  function tabMenu(id: Panel): MenuEntry[] {
-    const own = id === 'tree' ? sortMenu() : id === 'search' ? resultsMenu() : []
-    const there: PanelSide = side === 'right' ? 'left' : 'right'
-
-    // On every tab, and last: which side a panel sits on is a thing to do to the
-    // tab rather than a thing the panel is about, so it goes under whatever the
-    // panel's own rows are. A phone has no two sides to speak of - the right one
-    // is a drawer of its own there - and the row is offered all the same: the
-    // choice travels with the window, and a phone in a dock is a wide screen.
-    return [
-      ...own,
-      ...(own.length ? [DIVIDER] : []),
-      {
-        label: there === 'right' ? t('Move to the right') : t('Move to the left'),
-        run: () => workspace.movePanel(id, there),
-      },
-    ]
-  }
-
-  /** What the space itself offers, wherever in the panel you ask for it.
-   *
-   *  The kinds of note to make. A folder is not one of them: a note that holds notes
-   *  is how a space is organised, and that is a note made inside another note's row.
-   *  See folder-notes.ts and docs/tree.md. */
-  function spaceMenu(): MenuEntry[] {
-    return newFileRows()
+  /** What the space itself offers, wherever in the panel you ask for it: the kinds of
+   *  note to make, behind the door the row menus are behind. A folder is not one of
+   *  them; see folder-notes.ts and docs/tree.md. The press is spent before the await. */
+  function showSpaceMenu(event: MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./row-menu').then(({ newFileRows }) =>
+      menu.show(event, newFileRows(), titleOfSpace()),
+    )
   }
 
   /** What a phone's menu sheet is headed with. Left out entirely when there is
@@ -853,7 +796,7 @@
             title={t('Sort')}
             aria-label={t('Sort')}
             aria-haspopup="menu"
-            onclick={(event) => menu.show(event, tabMenu('search'), { title: t('Search') })}
+            onclick={(event) => showTabMenu(event, 'search', t('Search'))}
           >
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
@@ -964,7 +907,7 @@
                 class="rest"
                 data-space-rest
                 class:dropping={rootDrop}
-                oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+                oncontextmenu={showSpaceMenu}
                 onclick={() => workspace.cancelNaming()}
                 ondragover={overRoot}
                 ondragleave={() => dropTarget.clear()}

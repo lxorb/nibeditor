@@ -11,7 +11,7 @@
 
 import { may } from '@nib/chats'
 import { account } from '../account.svelte'
-import { hiddenKinds } from '../hidden-kinds.svelte'
+import { hiddenKinds } from '../settings.svelte'
 import { t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'
 import { nameOf, within, withoutExtension } from '../space-paths'
