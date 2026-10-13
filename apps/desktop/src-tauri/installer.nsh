@@ -260,7 +260,7 @@ FunctionEnd
   WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" ""
 !macroend
 
-; And out of it again, unless a copy of nib elsewhere has registered itself since.
+; And out of it again, unless a copy of the app elsewhere has registered itself since.
 !macro NIB_PDF_FORGET
   ReadRegStr $R7 SHCTX "Software\Classes\NibPDF\shell\open\command" ""
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"' 0 nib_pdf_kept

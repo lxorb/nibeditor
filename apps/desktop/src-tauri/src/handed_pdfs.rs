@@ -392,6 +392,22 @@ mod tests {
         }
         assert!(!fragment.contains(r#"Key="Software\Classes\.pdf" Type"#));
         assert!(source("tauri.conf.json").contains(r#""wix/pdf.wxs""#));
+
+        // The name "Open with" shows is the product's, which WiX has spelt out and the
+        // NSIS installer takes from the template.
+        let config: serde_json::Value =
+            serde_json::from_str(&source("tauri.conf.json")).expect("the config");
+        let product = config["productName"].as_str().expect("a product name");
+        for line in [
+            format!(r#"Key="Software\Classes\NibPDF" Type="string" Value="{product} PDF""#),
+            format!(
+                r#"Key="Software\Classes\NibPDF\Application" Name="ApplicationName" Type="string" Value="{product}""#
+            ),
+        ] {
+            assert!(fragment.contains(&line), "pdf.wxs does not say: {line}");
+        }
+        assert!(install
+            .contains(r#"WriteRegStr SHCTX "Software\Classes\NibPDF" "" "${PRODUCTNAME} PDF""#));
     }
 
     #[test]
