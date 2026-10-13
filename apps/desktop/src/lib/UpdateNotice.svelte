@@ -2,7 +2,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { moveToApplications, restartToUpdate, stuck } from './updater'
+  import { restartToUpdate } from './updater'
   import { dur } from './motion'
   import { log } from './log'
 
@@ -12,12 +12,13 @@
   /** A Mac's copy that cannot be updated where it runs is moved to Applications first;
    *  see updater.ts. */
   let moving = $state(false)
-  void stuck().then((answer) => (moving = answer))
+  const place = import('./app-place')
+  void place.then(({ stuck }) => stuck()).then((answer) => (moving = answer))
 
   async function restart() {
     restarting = true
     try {
-      await (moving ? moveToApplications() : restartToUpdate())
+      await (moving ? (await place).moveToApplications() : restartToUpdate())
     } catch (error) {
       // The notice stays, to be pressed again; what went wrong is the log's.
       log('error', `update: ${String(error)}`)
