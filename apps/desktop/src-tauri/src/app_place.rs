@@ -109,8 +109,10 @@ fn writable(path: &Path) -> bool {
     unsafe { libc::access(name.as_ptr(), libc::W_OK) == 0 }
 }
 
-/// What starts the copy in Applications once this process has gone, as a new instance;
-/// see `RELAUNCH` in bundle_name.rs, which has the same reasons.
+/// What starts the copy in Applications, run by `/bin/sh` with this process's id and the
+/// copy: once this process has gone - a copy started while it runs would be handed to it
+/// and quit - and as a new instance, because Launch Services can still count the one
+/// that has just gone as running for a moment, and `open` would only bring that forward.
 #[cfg_attr(
     not(any(target_os = "macos", test)),
     allow(dead_code, reason = "only a Mac moves the app")

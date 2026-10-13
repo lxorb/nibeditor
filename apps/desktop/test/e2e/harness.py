@@ -251,6 +251,16 @@ REGISTRY = APP / "src" / "lib" / "shortcuts" / "registry.ts"
 
 _MODIFIERS = ("Control", "Meta", "Alt", "Shift")
 
+#: Ctrl and a key that moves through text, as a Mac presses it: the modifier and the key.
+TEXT_KEYS = {
+    "ArrowLeft": ("Alt", "ArrowLeft"),
+    "ArrowRight": ("Alt", "ArrowRight"),
+    "Backspace": ("Alt", "Backspace"),
+    "Delete": ("Alt", "Delete"),
+    "Home": ("Meta", "ArrowUp"),
+    "End": ("Meta", "ArrowDown"),
+}
+
 
 def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
     """A combination as its modifiers and its key, from either spelling: the
@@ -294,6 +304,11 @@ def mac_key(pressed: str) -> str:
     if chord in mac_bindings():
         return mac_bindings()[chord]
     held, key = chord
+    # Moving through text, which a Mac does with other keys: a word at a time is
+    # Option's, and the top and the bottom of a note are Cmd and an arrow.
+    if "Control" in held and key in TEXT_KEYS:
+        moved, to = TEXT_KEYS[key]
+        return _written((held - {"Control"}) | {moved}, to)
     if "Control" not in held:
         return pressed
     return _written((held - {"Control"}) | {"Meta"}, pressed.rsplit("+", 1)[-1])
