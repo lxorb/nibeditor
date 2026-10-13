@@ -13,6 +13,7 @@
   import { dateAt } from '../days'
   import { type Comment, commentsOf } from '../task-body'
   import Words from '../Words.svelte'
+  import { grow } from '../../grow'
 
   const { row, path }: { row: Row; path: string } = $props()
 
@@ -74,6 +75,7 @@
   <textarea
     bind:this={field}
     bind:value={words}
+    use:grow={words}
     class="nib-field composer"
     rows="1"
     aria-label={t('Comment')}

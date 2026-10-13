@@ -43,33 +43,37 @@ export function listen(): () => void {
     }
   }
 
-  void navigator.locks
-    .request(ANSWERING, { signal: stopping.signal }, () => {
-      channel = new BroadcastChannel(CHANNEL)
-      channel.onmessage = (event: MessageEvent) => {
-        const said = heard(event.data)
-        if (said) answer(said)
-      }
-      stopKey = $effect.root(() => {
-        $effect(() => {
-          const key = quickAdd.anywhere
-            ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform)
-            : null
-          untrack(() => {
-            void invoke<string | null>('quick_add_key', { key })
-              .then((now) => (quickAdd.held = now !== null))
-              .catch(() => (quickAdd.held = false))
-          })
+  const answering = () => {
+    channel = new BroadcastChannel(CHANNEL)
+    channel.onmessage = (event: MessageEvent) => {
+      const said = heard(event.data)
+      if (said) answer(said)
+    }
+    stopKey = $effect.root(() => {
+      $effect(() => {
+        const key = quickAdd.anywhere
+          ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform)
+          : null
+        untrack(() => {
+          void invoke<string | null>('quick_add_key', { key })
+            .then((now) => (quickAdd.held = now !== null))
+            .catch(() => (quickAdd.held = false))
         })
       })
-      // Held for as long as this window answers.
-      return new Promise<void>((resolve) =>
-        stopping.signal.addEventListener('abort', () => resolve()),
-      )
     })
-    .catch(() => {
+    // Held for as long as this window answers.
+    return new Promise<void>((resolve) =>
+      stopping.signal.addEventListener('abort', () => resolve()),
+    )
+  }
+
+  // A page that is not a secure context has no locks, and is the one window there is.
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
+  if (locks)
+    void locks.request(ANSWERING, { signal: stopping.signal }, answering).catch(() => {
       // Stopped before the lock came: another window answers, and still does.
     })
+  else void answering()
 
   return () => {
     stopping.abort()

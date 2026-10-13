@@ -167,6 +167,7 @@
     color: var(--muted);
     cursor: grab;
     touch-action: none;
+    -webkit-user-select: none;
     user-select: none;
   }
 

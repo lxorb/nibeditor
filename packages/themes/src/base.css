@@ -566,11 +566,13 @@ select option {
   inset: 0;
   z-index: calc(var(--scrim-z, var(--z-sheet)) - 1);
   background: color-mix(in srgb, var(--bg) var(--scrim-ink, 62%), transparent);
+  -webkit-backdrop-filter: blur(var(--scrim-blur, 3px));
   backdrop-filter: blur(var(--scrim-blur, 3px));
 }
 
 .nib-scrim.is-clear {
   background: none;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
