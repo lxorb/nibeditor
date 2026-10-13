@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor тепер називається Orden',
+  'Notes from nibeditor.com': 'Нотатки з nibeditor.com',
+  'Nothing there': 'Там нічого немає',
   // Tasks: several lines pasted into quick add
   'One task': 'Одне завдання',
   'One per line': 'По одному на рядок',
@@ -554,8 +558,8 @@ export const uk: Dictionary = {
   'Sign in to ask a question.': 'Щоб запитати, потрібно увійти.',
   'Asking OpenAI which models this key can use': 'Запит до OpenAI: які моделі доступні цьому ключу',
   'Could not reach OpenAI': 'Не вдалося зв’язатися з OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Цьому ключу недоступна жодна з моделей, які запитує nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Цьому ключу недоступна жодна з моделей, які запитує Orden.',
   'No reasoning': 'Без міркувань',
   Minimal: 'Мінімальне',
   Low: 'Низьке',
@@ -577,7 +581,7 @@ export const uk: Dictionary = {
   Mode: 'Режим',
   // The window's own edges; see appearance.rs
   Window: 'Вікно',
-  'nibeditor’s own': 'nibeditor',
+  'Orden’s own': 'Orden',
   'The system’s': 'Системна',
   'Window frame': 'Рамка вікна',
   System: 'Системна',
@@ -708,7 +712,7 @@ export const uk: Dictionary = {
   '{used} of {limit} used.': 'Зайнято {used} з {limit}.',
   'That image does not fit in your storage.': 'Це зображення не вміщується у сховище.',
   'out of space': 'немає місця',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} готовий до встановлення.',
+  'Orden {version} is ready to install.': 'Orden {version} готовий до встановлення.',
   'Restart now': 'Перезапустити',
   Later: 'Пізніше',
   More: 'Ще',
@@ -787,14 +791,14 @@ export const uk: Dictionary = {
   'Reads your notes.': 'Читає нотатки.',
   'Reads and writes your notes.': 'Читає та змінює нотатки.',
   Other: 'Інше',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ШІ-асистент може читати нотатки - і змінювати їх, якщо дозволити. Він входить за адресою пошти nibeditor, вставляти нічого не потрібно.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ШІ-асистент може читати нотатки - і змінювати їх, якщо дозволити. Він входить за адресою пошти Orden, вставляти нічого не потрібно.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'У Claude відкрийте Settings → Connectors і натисніть Add custom connector.',
   'Open Claude’s connectors': 'Відкрити коннектори Claude',
   'Fill in the two fields and click Add.': 'Заповніть два поля й натисніть Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Натисніть Connect і увійдіть за адресою пошти nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Натисніть Connect і увійдіть за адресою пошти Orden.',
   'Using Claude Code instead?': 'Використовуєте Claude Code?',
   Command: 'Команда',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -805,16 +809,16 @@ export const uk: Dictionary = {
   'Open ChatGPT’s plugins': 'Відкрити плагіни ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Немає розділу Plugins або кнопки з плюсом? Спершу увімкніть Developer mode у Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Коли ChatGPT запитає, увійдіть за адресою пошти nibeditor.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Щоб скористатися цим у чаті, введіть @ і виберіть nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Коли ChatGPT запитає, увійдіть за адресою пошти Orden.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Щоб скористатися цим у чаті, введіть @ і виберіть Orden.',
   'Server URL': 'Адреса сервера',
   Authentication: 'Аутентифікація',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Залиште розширені налаштування OAuth як є і позначте “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Будь-який клієнт MCP, що вміє Streamable HTTP з OAuth. Дайте йому адресу: він зареєструється сам і відкриє сторінку входу nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Будь-який клієнт MCP, що вміє Streamable HTTP з OAuth. Дайте йому адресу: він зареєструється сам і відкриє сторінку входу Orden.',
   'Show config': 'Показати конфіг',
   'For a client that takes a JSON block instead of a URL.':
     'Для клієнта, якому потрібен блок JSON замість адреси.',
@@ -882,7 +886,7 @@ export const uk: Dictionary = {
   'Display name': 'Відображуване ім’я',
   'Your name': 'Ваше ім’я',
   Email: 'Пошта',
-  'On nibeditor.com': 'На nibeditor.com',
+  'On orden.so': 'На orden.so',
   'Your own domain': 'Свій домен',
   'Switching gives up {name}.': 'Перемикання звільнить {name}.',
   Page: 'Сторінка',
@@ -1280,8 +1284,8 @@ export const uk: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'На цьому Mac в Apple Нотатках немає нотаток.',
   'Those notes could not be read.': 'Ці нотатки не вдалося прочитати.',
   'Read them from this Mac': 'Прочитати з цього Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Увімкніть nibeditor у повному доступі до диска й спробуйте знову.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Увімкніть Orden у повному доступі до диска й спробуйте знову.',
   'Open the setting': 'Відкрити налаштування',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Щоденник експортує себе сам: Щоденник, Налаштування, Експорт. В Apple Нотаток експорту немає, тож поза тим Mac, де вони лежать, тут кидають теку, записану експортером.',
@@ -1655,8 +1659,9 @@ export const uk: Dictionary = {
   'that is not a theme': 'це не тема',
   'no such theme': 'такої теми немає',
   'choose a model first': 'спершу виберіть модель',
+  'set an OpenAI key in Orden’s settings first': 'спершу задайте ключ OpenAI у налаштуваннях Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'спершу задайте ключ OpenAI у налаштуваннях nibeditor',
+    'спершу задайте ключ OpenAI у налаштуваннях Orden',
   'that is a lot of questions - try again later': 'надто багато питань - спробуйте пізніше',
   'that is too much audio': 'надто багато звуку',
   'that is more than a spoken command': 'це більше, ніж голосова команда',
@@ -1820,7 +1825,7 @@ export const uk: Dictionary = {
     many: 'Вставити {count} рядків?',
     other: 'Вставити {count} рядка?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Браузер за умовчанням',
   // The engine web tabs run on
   Engine: 'Рушій',
@@ -1936,7 +1941,7 @@ export const uk: Dictionary = {
   'Always on this site': 'Завжди на цьому сайті',
   'Agents stopped': 'Агентів зупинено',
   'Agent tabs closed': 'Вкладки агентів закрито',
-  'nibeditor is still running for your agents': 'nibeditor і далі працює для ваших агентів',
+  'Orden is still running for your agents': 'Orden і далі працює для ваших агентів',
   '{client} wants to connect': '{client} хоче під’єднатися',
   // Web logins that travel, and the devices of an account
   'no such device': 'Такого пристрою немає',
@@ -1951,8 +1956,8 @@ export const uk: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Агенти на цьому комп’ютері',
   'Your account’s connector': 'Конектор вашого акаунта',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor спитає вас один раз, під час першого підключення.',
+  'Orden asks you once, the first time it connects.':
+    'Orden спитає вас один раз, під час першого підключення.',
   'A client on another machine?': 'Клієнт на іншому комп’ютері?',
   'Shown only once.': 'Показується лише один раз.',
   'Remove {name}?': 'Видалити {name}?',
@@ -2077,7 +2082,7 @@ export const uk: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Відкласти',
   Reminders: 'Нагадування',
-  'Reminders ring while nibeditor is open': 'Нагадування лунають, поки nibeditor відкритий',
+  'Reminders ring while Orden is open': 'Нагадування лунають, поки Orden відкритий',
   Automatic: 'Автоматично',
   'Stay in the tray': 'Залишатися в треї',
   'Exact alarms': 'Точні будильники',

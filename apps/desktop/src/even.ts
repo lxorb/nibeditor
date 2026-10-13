@@ -1,4 +1,4 @@
-/** Nib as an Even Realities plugin.
+/** Orden as an Even Realities plugin.
  *
  *  The same app: the same components, the same stores, the same browser storage,
  *  the same sign-in and the same sync. One thing is added and nothing is taken

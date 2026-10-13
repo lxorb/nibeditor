@@ -23,11 +23,13 @@ function quoted(program: string): string {
   return /^[\w@%+=:,./-]+$/.test(program) ? program : `'${program.replaceAll("'", `'\\''`)}'`
 }
 
-/** The line, or the entry, that adds nib to a client. */
+/** The line, or the entry, that adds Orden to a client, under the server name
+ *  `orden`: the one the app's own enrolment writes (src-tauri/src/enroll.rs), which
+ *  also renames an entry a client kept as `nib` from before the rename. */
 export function mcpLine(program: string, client: McpClient = 'claude'): string {
   if (client === 'json') {
-    return JSON.stringify({ mcpServers: { nib: { command: program, args: ['mcp'] } } }, null, 2)
+    return JSON.stringify({ mcpServers: { orden: { command: program, args: ['mcp'] } } }, null, 2)
   }
   const add = client === 'claude' ? 'claude mcp add --scope user' : 'codex mcp add'
-  return `${add} nib -- ${quoted(program)} mcp`
+  return `${add} orden -- ${quoted(program)} mcp`
 }

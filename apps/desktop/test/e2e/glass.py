@@ -260,7 +260,7 @@ FIRST_FRAME = """
 })()
 """
 
-TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
+TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 finished: set[object] = set()
 

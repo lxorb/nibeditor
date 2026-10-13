@@ -130,7 +130,7 @@ export function tooLongToParse(length: number): boolean {
 }
 
 /** Which language a view's compartment holds when it holds one at all: strict mode
- *  is plain CommonMark, and everything else is markdown with Nib's own extensions.
+ *  is plain CommonMark, and everything else is markdown with Orden's own extensions.
  *
  *  Kept in the state rather than in a variable, because the guard below has to be
  *  able to put the right one back and there is a view per pane. */

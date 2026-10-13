@@ -14,7 +14,7 @@
   import { trap } from '../trap'
   import { quitAsk } from './state.svelte'
 
-  const NAME = 'nibeditor'
+  const NAME = 'Orden'
 
   const title = $derived(
     quitAsk.why === 'quit'

@@ -4,7 +4,7 @@
  *  A phone has no keyboard to hang a shortcut off and no room for a row of
  *  buttons at the top of the screen, and there is exactly one movement a thumb
  *  can make that means nothing else: pulling a surface that is already at its top
- *  further down. Obsidian spends it on the command palette. Nib spends it on
+ *  further down. Obsidian spends it on the command palette. Orden spends it on
  *  whichever command the reader says, and offers search to begin with - what a
  *  thumb reaches for on a phone is a note, and search is how a note is found.
  *

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor አሁን Orden ነው',
+  'Notes from nibeditor.com': 'ከnibeditor.com የመጡ ማስታወሻዎች',
+  'Nothing there': 'እዚያ ምንም የለም',
   // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',
@@ -527,8 +531,8 @@ export const am: Dictionary = {
   'Sign in to ask a question.': 'ጥያቄ ለመጠየቅ ግባ።',
   'Asking OpenAI which models this key can use': 'ይህ ቁልፍ የትኞቹን ሞዴሎች መጠቀም እንደሚችል OpenAIን በመጠየቅ ላይ',
   'Could not reach OpenAI': 'OpenAI ላይ መድረስ አልተቻለም',
-  'That key cannot use any of the models nibeditor asks for.':
-    'ያ ቁልፍ nibeditor የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
+  'That key cannot use any of the models Orden asks for.':
+    'ያ ቁልፍ Orden የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
   'No reasoning': 'አመክንዮ የለም',
   Minimal: 'አነስተኛ',
   Low: 'ዝቅተኛ',
@@ -550,7 +554,7 @@ export const am: Dictionary = {
   Mode: 'ዘዴ',
   // The window's own edges; see appearance.rs
   Window: 'መስኮት',
-  'nibeditor’s own': 'የnibeditor ራሱ',
+  'Orden’s own': 'የOrden ራሱ',
   'The system’s': 'የሥርዓቱ',
   'Window frame': 'የመስኮት ክፈፍ',
   System: 'ሥርዓት',
@@ -673,7 +677,7 @@ export const am: Dictionary = {
   '{used} of {limit} used.': 'ከ{limit} {used} ተጠቅሟል።',
   'That image does not fit in your storage.': 'ያ ምስል በማከማቻህ ውስጥ አይገባም።',
   'out of space': 'ማከማቻ ሞልቷል',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ለመጫን ተዘጋጅቷል።',
+  'Orden {version} is ready to install.': 'Orden {version} ለመጫን ተዘጋጅቷል።',
   'Restart now': 'አሁን እንደገና አስነሳ',
   Later: 'ቆይቶ',
   More: 'ተጨማሪ',
@@ -749,13 +753,13 @@ export const am: Dictionary = {
   'Reads your notes.': 'ማስታወሻዎችህን ያነባል።',
   'Reads and writes your notes.': 'ማስታወሻዎችህን ያነባል እና ይጽፋል።',
   Other: 'ሌላ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በnibeditor ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በOrden ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'በClaude ውስጥ Settings → Connectors ክፈት እና Add custom connector ጫን።',
   'Open Claude’s connectors': 'የClaude አገናኞች ክፈት',
   'Fill in the two fields and click Add.': 'ሁለቱን ሳጥኖች ሙላ እና Add ጫን።',
-  'Click Connect and sign in with your nibeditor email.': 'Connect ጫን እና በnibeditor ኢሜይልህ ግባ።',
+  'Click Connect and sign in with your Orden email.': 'Connect ጫን እና በOrden ኢሜይልህ ግባ።',
   'Using Claude Code instead?': 'Claude Code ትጠቀማለህ?',
   Command: 'ትዕዛዝ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -766,14 +770,14 @@ export const am: Dictionary = {
   'Open ChatGPT’s plugins': 'የChatGPT ተሰኪዎች ክፈት',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'የPlugins ክፍል ወይም የመደመር ቁልፍ የለም? መጀመሪያ በSettings → Security and login ውስጥ Developer mode አብራ።',
-  'Sign in with your nibeditor email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በnibeditor ኢሜይልህ ግባ።',
-  'To use it in a chat, type @ and pick nibeditor.': 'በውይይት ለመጠቀም @ ጻፍ እና nibeditor ምረጥ።',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በOrden ኢሜይልህ ግባ።',
+  'To use it in a chat, type @ and pick Orden.': 'በውይይት ለመጠቀም @ ጻፍ እና Orden ምረጥ።',
   'Server URL': 'የአገልጋይ አድራሻ',
   Authentication: 'ማረጋገጫ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'የላቁ የOAuth ማስተካከያዎች እንዳሉ ተው እና “I understand and want to continue” ላይ ምልክት አድርግ።',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የnibeditor መግቢያ ገጽ ይከፍታል።',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የOrden መግቢያ ገጽ ይከፍታል።',
   'Show config': 'ውቅር አሳይ',
   'For a client that takes a JSON block instead of a URL.': 'በአድራሻ ምትክ የJSON ብሎክ ለሚቀበል ደንበኛ።',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -839,7 +843,7 @@ export const am: Dictionary = {
   'Display name': 'የሚታይ ስም',
   'Your name': 'ስምህ',
   Email: 'ኢሜይል',
-  'On nibeditor.com': 'በnibeditor.com ላይ',
+  'On orden.so': 'በorden.so ላይ',
   'Your own domain': 'የራስህ ጎራ',
   'Switching gives up {name}.': 'መቀየር {name}ን ያስለቅቃል።',
   Page: 'ገጽ',
@@ -1215,8 +1219,8 @@ export const am: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'በዚህ Mac ላይ በApple Notes ውስጥ ማስታወሻ የለም።',
   'Those notes could not be read.': 'እነዚያ ማስታወሻዎች መነበብ አልቻሉም።',
   'Read them from this Mac': 'ከዚህ Mac አንብባቸው',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditorን በFull Disk Access ውስጥ አብራ፣ ከዚያ በድጋሚ ጠይቅ።',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Ordenን በFull Disk Access ውስጥ አብራ፣ ከዚያ በድጋሚ ጠይቅ።',
   'Open the setting': 'ማስተካከያውን ክፈት',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal ራሱን ይልካል፦ Journal፣ ማስተካከያ፣ መላክ። Apple Notes መላክ የለውም፣ ስለዚህ ካለበት Mac ርቆ የሚጣለው ላኪ የጻፈው ፎልደር ነው።',
@@ -1569,7 +1573,8 @@ export const am: Dictionary = {
   'that is not a theme': 'ያ ገጽታ አይደለም',
   'no such theme': 'እንዲህ ያለ ገጽታ የለም',
   'choose a model first': 'መጀመሪያ ሞዴል ምረጥ',
-  'set an OpenAI key in nibeditor’s settings first': 'መጀመሪያ በnibeditor ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
+  'set an OpenAI key in Orden’s settings first': 'መጀመሪያ በOrden ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
+  'set an OpenAI key in nibeditor’s settings first': 'መጀመሪያ በOrden ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
   'that is a lot of questions - try again later': 'ያ ብዙ ጥያቄ ነው - ቆይተህ ሞክር',
   'that is too much audio': 'ያ በጣም ብዙ ድምፅ ነው',
   'that is more than a spoken command': 'ያ ከአንድ የድምፅ ትዕዛዝ በለጠ',
@@ -1727,7 +1732,7 @@ export const am: Dictionary = {
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
   // The engine web tabs run on
   Engine: 'ሞተር',
@@ -1841,7 +1846,7 @@ export const am: Dictionary = {
   'Always on this site': 'በዚህ ጣቢያ ሁልጊዜ',
   'Agents stopped': 'ወኪሎች ቆመዋል',
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
-  'nibeditor is still running for your agents': 'nibeditor ለወኪሎችዎ አሁንም እየሰራ ነው',
+  'Orden is still running for your agents': 'Orden ለወኪሎችዎ አሁንም እየሰራ ነው',
   '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
   // Web logins that travel, and the devices of an account
   'no such device': 'እንዲህ ያለ መሣሪያ የለም',
@@ -1856,8 +1861,7 @@ export const am: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
+  'Orden asks you once, the first time it connects.': 'Orden ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
   'Shown only once.': 'አንድ ጊዜ ብቻ ይታያል።',
   'Remove {name}?': '{name} ይወገድ?',
@@ -1978,7 +1982,7 @@ export const am: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'አሸልብ',
   Reminders: 'አስታዋሾች',
-  'Reminders ring while nibeditor is open': 'አስታዋሾች nibeditor ክፍት ሲሆን ይደውላሉ',
+  'Reminders ring while Orden is open': 'አስታዋሾች Orden ክፍት ሲሆን ይደውላሉ',
   Automatic: 'ራስ-ሰር',
   'Stay in the tray': 'በትሪው ውስጥ ቆይ',
   'Exact alarms': 'ትክክለኛ ማንቂያዎች',

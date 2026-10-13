@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor ఇప్పుడు Orden',
+  'Notes from nibeditor.com': 'nibeditor.com నుండి నోట్స్',
+  'Nothing there': 'అక్కడ ఏమీ లేదు',
   // Tasks: several lines pasted into quick add
   'One task': 'ఒక పని',
   'One per line': 'ప్రతి పంక్తికి ఒకటి',
@@ -529,8 +533,8 @@ export const te: Dictionary = {
   'Sign in to ask a question.': 'ప్రశ్న అడగడానికి సైన్ ఇన్ చేయండి.',
   'Asking OpenAI which models this key can use': 'ఈ కీ ఏ మోడల్‌లను వాడగలదో OpenAIని అడుగుతోంది',
   'Could not reach OpenAI': 'OpenAIని చేరుకోలేకపోయింది',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
   'No reasoning': 'తార్కికత లేదు',
   Minimal: 'అతి తక్కువ',
   Low: 'తక్కువ',
@@ -552,7 +556,7 @@ export const te: Dictionary = {
   Mode: 'మోడ్',
   // The window's own edges; see appearance.rs
   Window: 'విండో',
-  'nibeditor’s own': 'nibeditor సొంతం',
+  'Orden’s own': 'Orden సొంతం',
   'The system’s': 'సిస్టమ్‌ది',
   'Window frame': 'విండో ఫ్రేమ్',
   System: 'సిస్టమ్',
@@ -676,7 +680,7 @@ export const te: Dictionary = {
   '{used} of {limit} used.': '{limit}లో {used} వాడబడింది.',
   'That image does not fit in your storage.': 'మీ స్టోరేజ్‌లో ఆ చిత్రం సరిపోదు.',
   'out of space': 'స్టోరేజ్ లేదు',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
+  'Orden {version} is ready to install.': 'Orden {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
   'Restart now': 'ఇప్పుడే రీస్టార్ట్',
   Later: 'తర్వాత',
   More: 'మరిన్ని',
@@ -753,14 +757,14 @@ export const te: Dictionary = {
   'Reads your notes.': 'మీ నోట్‌లను చదువుతుంది.',
   'Reads and writes your notes.': 'మీ నోట్‌లను చదువుతుంది, రాస్తుంది.',
   Other: 'ఇతరం',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeలో Settings → Connectors తెరిచి Add custom connector క్లిక్ చేయండి.',
   'Open Claude’s connectors': 'Claude కనెక్టర్‌లు తెరువు',
   'Fill in the two fields and click Add.': 'రెండు ఫీల్డ్‌లు నింపి Add క్లిక్ చేయండి.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect క్లిక్ చేసి మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect క్లిక్ చేసి మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
   'Using Claude Code instead?': 'Claude Code వాడుతున్నారా?',
   Command: 'కమాండ్',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -771,16 +775,15 @@ export const te: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT ప్లగిన్‌లు తెరువు',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins విభాగం లేదా ప్లస్ బటన్ లేదా? ముందు Settings → Security and loginలో Developer mode ఆన్ చేయండి.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT అడిగినప్పుడు మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'చాట్‌లో వాడేందుకు @ టైప్ చేసి nibeditor ఎంచుకోండి.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT అడిగినప్పుడు మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'To use it in a chat, type @ and pick Orden.': 'చాట్‌లో వాడేందుకు @ టైప్ చేసి Orden ఎంచుకోండి.',
   'Server URL': 'సర్వర్ URL',
   Authentication: 'ప్రామాణీకరణ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'అధునాతన OAuth సెట్టింగ్‌లను అలాగే ఉంచి “I understand and want to continue” టిక్ చేయండి.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని nibeditor సైన్ ఇన్ పేజీ తెరుస్తుంది.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని Orden సైన్ ఇన్ పేజీ తెరుస్తుంది.',
   'Show config': 'కాన్ఫిగ్ చూపు',
   'For a client that takes a JSON block instead of a URL.':
     'URLకి బదులు JSON బ్లాక్ తీసుకునే క్లయింట్ కోసం.',
@@ -849,7 +852,7 @@ export const te: Dictionary = {
   'Display name': 'ప్రదర్శన పేరు',
   'Your name': 'మీ పేరు',
   Email: 'ఇమెయిల్',
-  'On nibeditor.com': 'nibeditor.comలో',
+  'On orden.so': 'orden.soలో',
   'Your own domain': 'మీ సొంత డొమైన్',
   'Switching gives up {name}.': 'మారితే {name} వదులుకుంటారు.',
   Page: 'పేజీ',
@@ -1234,8 +1237,8 @@ export const te: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'ఈ Mac లో Apple Notes లో నోట్లు లేవు.',
   'Those notes could not be read.': 'ఆ నోట్లను చదవలేకపోయాం.',
   'Read them from this Mac': 'ఈ Mac నుండి చదువు',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access లో nibeditor ఆన్ చేసి, మళ్ళీ అడుగు.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access లో Orden ఆన్ చేసి, మళ్ళీ అడుగు.',
   'Open the setting': 'అమరిక తెరువు',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal తానే ఎగుమతి చేస్తుంది: Journal, అమరికలు, ఎగుమతి. Apple Notes కు ఎగుమతి లేదు, కాబట్టి అది ఉన్న Mac కు దూరంగా, ఇక్కడ వదలాల్సింది ఒక ఎగుమతిదారు రాసిన ఫోల్డర్.',
@@ -1596,8 +1599,9 @@ export const te: Dictionary = {
   'that is not a theme': 'అది థీమ్ కాదు',
   'no such theme': 'అలాంటి థీమ్ లేదు',
   'choose a model first': 'ముందు ఒక మోడల్ ఎంచుకోండి',
+  'set an OpenAI key in Orden’s settings first': 'ముందు Orden సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
   'set an OpenAI key in nibeditor’s settings first':
-    'ముందు nibeditor సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
+    'ముందు Orden సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
   'that is a lot of questions - try again later': 'అవి చాలా ప్రశ్నలు - తర్వాత ప్రయత్నించండి',
   'that is too much audio': 'అది చాలా ఎక్కువ ఆడియో',
   'that is more than a spoken command': 'అది మాట్లాడే కమాండ్ కంటే ఎక్కువ',
@@ -1759,7 +1763,7 @@ export const te: Dictionary = {
     one: '{count} పంక్తిని అతికించాలా?',
     other: '{count} పంక్తులను అతికించాలా?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
   // The engine web tabs run on
   Engine: 'ఇంజిన్',
@@ -1873,7 +1877,7 @@ export const te: Dictionary = {
   'Always on this site': 'ఈ సైట్‌లో ఎల్లప్పుడూ',
   'Agents stopped': 'ఏజెంట్లు ఆపబడ్డాయి',
   'Agent tabs closed': 'ఏజెంట్ ట్యాబ్‌లు మూసివేయబడ్డాయి',
-  'nibeditor is still running for your agents': 'మీ ఏజెంట్ల కోసం nibeditor ఇంకా నడుస్తోంది',
+  'Orden is still running for your agents': 'మీ ఏజెంట్ల కోసం Orden ఇంకా నడుస్తోంది',
   '{client} wants to connect': '{client} కనెక్ట్ కావాలనుకుంటోంది',
   // Web logins that travel, and the devices of an account
   'no such device': 'అలాంటి పరికరం లేదు',
@@ -1889,8 +1893,8 @@ export const te: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ఈ కంప్యూటర్‌లోని ఏజెంట్‌లు',
   'Your account’s connector': 'మీ ఖాతా కనెక్టర్',
-  'nibeditor asks you once, the first time it connects.':
-    'మొదటిసారి కనెక్ట్ అయినప్పుడు nibeditor మిమ్మల్ని ఒకసారి అడుగుతుంది.',
+  'Orden asks you once, the first time it connects.':
+    'మొదటిసారి కనెక్ట్ అయినప్పుడు Orden మిమ్మల్ని ఒకసారి అడుగుతుంది.',
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
   'Shown only once.': 'ఒక్కసారి మాత్రమే చూపబడుతుంది.',
   'Remove {name}?': '{name}ని తీసివేయాలా?',
@@ -2011,7 +2015,7 @@ export const te: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'స్నూజ్',
   Reminders: 'రిమైండర్‌లు',
-  'Reminders ring while nibeditor is open': 'nibeditor తెరిచి ఉన్నప్పుడు రిమైండర్‌లు మోగుతాయి',
+  'Reminders ring while Orden is open': 'Orden తెరిచి ఉన్నప్పుడు రిమైండర్‌లు మోగుతాయి',
   Automatic: 'స్వయంచాలకం',
   'Stay in the tray': 'ట్రేలో ఉండు',
   'Exact alarms': 'ఖచ్చితమైన అలారాలు',

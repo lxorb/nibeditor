@@ -2,7 +2,7 @@
  *
  *  The registry is a public repository of folders, one per theme, and a
  *  generated index at its root. The app never talks to it directly: it asks
- *  nibeditor.com, which proxies it with an edge cache. So the registry can move
+ *  the service (`BASE`), which proxies it with an edge cache. So the registry can move
  *  without a release, and a reader's address never reaches whoever hosts it.
  *
  *  The index carries each theme's own tokens as well as its name, which is what

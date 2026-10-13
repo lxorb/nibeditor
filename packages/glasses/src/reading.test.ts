@@ -133,9 +133,9 @@ describe('the markers a reader may turn on', () => {
   })
 
   test('write a link as markdown only when asked', () => {
-    expect(shown('see [the notes](https://nibeditor.com)', {})).toBe('see the notes')
-    expect(shown('see [the notes](https://nibeditor.com)', { link: true })).toBe(
-      'see [the notes](https://nibeditor.com)',
+    expect(shown('see [the notes](https://orden.so)', {})).toBe('see the notes')
+    expect(shown('see [the notes](https://orden.so)', { link: true })).toBe(
+      'see [the notes](https://orden.so)',
     )
   })
 })

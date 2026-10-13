@@ -1,7 +1,7 @@
 /** A canvas file, read and written.
  *
  *  Two halves. The first is JSON Canvas 1.0, which is somebody else's and is
- *  public: jsoncanvas.org/spec/1.0/. A canvas Nib writes opens in Obsidian and
+ *  public: jsoncanvas.org/spec/1.0/. A canvas Orden writes opens in Obsidian and
  *  comes back unchanged, which is the whole reason for using it, so every field
  *  in that half is a field the spec defines and nothing written there is an
  *  invention of ours.
@@ -13,7 +13,7 @@
  *  `nodes` asks every other reader of the format to guess. Under this key the
  *  file is the spec exactly, plus something no other app has to look at.
  *
- *  Here rather than in the app because three parts of Nib read it: the surface
+ *  Here rather than in the app because three parts of Orden read it: the surface
  *  somebody draws on, the sync client that has to put two copies of a file back
  *  together, and the worker that notices the two copies in the first place. One
  *  reading of the format, so the three cannot drift.
@@ -853,7 +853,7 @@ function writtenEdge(edge: CanvasEdge): Record<string, unknown> {
 }
 
 /** How the parts of a canvas that are not the spec's are written. Bumped only
- *  when an older Nib could no longer read a newer file, which so far it can. */
+ *  when an older Orden could no longer read a newer file, which so far it can. */
 const NIB_VERSION = 1
 
 /** Tabs to a depth: the indentation `JSON.stringify(value, null, '\t')` gives a
@@ -1033,7 +1033,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
  *  above; canvas.test.ts holds the two to each other.
  *
  *  Nothing of ours is written into a canvas that has none: a plane of plain
- *  cards is exactly the file the spec describes, with no key of Nib's in it. */
+ *  cards is exactly the file the spec describes, with no key of Orden's in it. */
 export function writeCanvas(canvas: Canvas): string {
   return canvasRuns(canvas)
     .map((run) => run.join(''))
@@ -1054,7 +1054,7 @@ export function blankCanvas(): string {
  *  question for a note; this is its twin for the format that has no front matter.
  *
  *  The file is read and written back, because `nib.icon` sits in JSON rather than
- *  on a line of its own. That costs nothing for a canvas Nib wrote - writing one
+ *  on a line of its own. That costs nothing for a canvas Orden wrote - writing one
  *  is exact, so the only characters that differ are the key - and for a canvas
  *  written by hand it comes out as the file reformatted, which is what any change
  *  to it would have been anyway.
@@ -1085,7 +1085,7 @@ function isCanvasJson(text: string): boolean {
 }
 
 /** How long an id is. Sixteen hex characters is what Obsidian writes, so a
- *  canvas Nib made looks native there rather than obviously foreign. */
+ *  canvas Orden made looks native there rather than obviously foreign. */
 const ID_LENGTH = 16
 
 /** A fresh id for anything on a canvas. Random rather than counted, because two

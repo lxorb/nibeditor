@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ur: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor اب Orden ہے',
+  'Notes from nibeditor.com': 'nibeditor.com سے نوٹس',
+  'Nothing there': 'وہاں کچھ نہیں',
   // Tasks: several lines pasted into quick add
   'One task': 'ایک کام',
   'One per line': 'ہر سطر کا ایک',
@@ -530,8 +534,8 @@ export const ur: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAI سے پوچھ رہے ہیں کہ یہ کلید کون سے ماڈل استعمال کر سکتی ہے',
   'Could not reach OpenAI': 'OpenAI تک نہیں پہنچ سکے',
-  'That key cannot use any of the models nibeditor asks for.':
-    'یہ کلید nibeditor کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
+  'That key cannot use any of the models Orden asks for.':
+    'یہ کلید Orden کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
   'No reasoning': 'استدلال نہیں',
   Minimal: 'معمولی',
   Low: 'کم',
@@ -553,7 +557,7 @@ export const ur: Dictionary = {
   Mode: 'موڈ',
   // The window's own edges; see appearance.rs
   Window: 'ونڈو',
-  'nibeditor’s own': 'nibeditor کا اپنا',
+  'Orden’s own': 'Orden کا اپنا',
   'The system’s': 'سسٹم کا',
   'Window frame': 'ونڈو کا فریم',
   System: 'سسٹم',
@@ -677,7 +681,7 @@ export const ur: Dictionary = {
   '{used} of {limit} used.': '{limit} میں سے {used} استعمال ہوا۔',
   'That image does not fit in your storage.': 'یہ تصویر آپ کے ذخیرے میں نہیں سماتی۔',
   'out of space': 'ذخیرہ ختم',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} انسٹال کے لیے تیار ہے۔',
+  'Orden {version} is ready to install.': 'Orden {version} انسٹال کے لیے تیار ہے۔',
   'Restart now': 'ابھی دوبارہ شروع کریں',
   Later: 'بعد میں',
   More: 'مزید',
@@ -753,14 +757,14 @@ export const ur: Dictionary = {
   'Reads your notes.': 'آپ کے نوٹس پڑھتا ہے۔',
   'Reads and writes your notes.': 'آپ کے نوٹس پڑھتا اور لکھتا ہے۔',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے nibeditor ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے Orden ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude میں ترتیبات → Connectors کھولیں اور Add custom connector پر کلک کریں۔',
   'Open Claude’s connectors': 'Claude کے کنیکٹر کھولیں',
   'Fill in the two fields and click Add.': 'دونوں خانے بھریں اور Add پر کلک کریں۔',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect پر کلک کریں اور nibeditor ای میل سے سائن ان کریں۔',
+  'Click Connect and sign in with your Orden email.':
+    'Connect پر کلک کریں اور Orden ای میل سے سائن ان کریں۔',
   'Using Claude Code instead?': 'اس کی جگہ Claude Code استعمال کر رہے ہیں؟',
   Command: 'کمانڈ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -771,16 +775,15 @@ export const ur: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT کے پلگ اِن کھولیں',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins کا حصہ یا جمع کا بٹن نہیں؟ پہلے ترتیبات → Security and login میں Developer mode آن کریں۔',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'جب ChatGPT پوچھے تو nibeditor ای میل سے سائن ان کریں۔',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'چیٹ میں استعمال کے لیے @ لکھیں اور nibeditor چنیں۔',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'جب ChatGPT پوچھے تو Orden ای میل سے سائن ان کریں۔',
+  'To use it in a chat, type @ and pick Orden.': 'چیٹ میں استعمال کے لیے @ لکھیں اور Orden چنیں۔',
   'Server URL': 'سرور URL',
   Authentication: 'تصدیقِ شناخت',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'اعلیٰ OAuth ترتیبات ویسی ہی رہنے دیں اور “I understand and want to continue” پر نشان لگائیں۔',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر nibeditor کا سائن ان صفحہ کھولتا ہے۔',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر Orden کا سائن ان صفحہ کھولتا ہے۔',
   'Show config': 'کنفیگ دکھائیں',
   'For a client that takes a JSON block instead of a URL.':
     'اس کلائنٹ کے لیے جو URL کی جگہ JSON بلاک لیتا ہے۔',
@@ -847,7 +850,7 @@ export const ur: Dictionary = {
   'Display name': 'ظاہری نام',
   'Your name': 'آپ کا نام',
   Email: 'ای میل',
-  'On nibeditor.com': 'nibeditor.com پر',
+  'On orden.so': 'orden.so پر',
   'Your own domain': 'اپنا ڈومین',
   'Switching gives up {name}.': 'بدلنے سے {name} چھوٹ جاتا ہے۔',
   Page: 'صفحہ',
@@ -1230,8 +1233,8 @@ export const ur: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'اس Mac پر Apple Notes میں کوئی نوٹ نہیں۔',
   'Those notes could not be read.': 'وہ نوٹس پڑھے نہیں جا سکے۔',
   'Read them from this Mac': 'اس Mac سے پڑھیں',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access میں nibeditor آن کریں، پھر دوبارہ کوشش کریں۔',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access میں Orden آن کریں، پھر دوبارہ کوشش کریں۔',
   'Open the setting': 'ترتیب کھولیں',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal خود برآمد کرتا ہے: Journal، ترتیبات، برآمد۔ Apple Notes میں برآمد نہیں، لہٰذا جس Mac پر وہ ہیں اس سے دور، یہاں چھوڑنے کی چیز وہ فولڈر ہے جو کسی برآمد کار نے لکھا۔',
@@ -1588,8 +1591,9 @@ export const ur: Dictionary = {
   'that is not a theme': 'یہ تھیم نہیں ہے',
   'no such theme': 'ایسی تھیم نہیں',
   'choose a model first': 'پہلے ماڈل منتخب کریں',
+  'set an OpenAI key in Orden’s settings first': 'پہلے Orden کی ترتیبات میں OpenAI کلید مقرر کریں',
   'set an OpenAI key in nibeditor’s settings first':
-    'پہلے nibeditor کی ترتیبات میں OpenAI کلید مقرر کریں',
+    'پہلے Orden کی ترتیبات میں OpenAI کلید مقرر کریں',
   'that is a lot of questions - try again later': 'بہت زیادہ سوال - بعد میں کوشش کریں',
   'that is too much audio': 'یہ بہت زیادہ آڈیو ہے',
   'that is more than a spoken command': 'یہ بولی گئی کمانڈ سے زیادہ ہے',
@@ -1747,7 +1751,7 @@ export const ur: Dictionary = {
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',
   // The engine web tabs run on
   Engine: 'انجن',
@@ -1861,7 +1865,7 @@ export const ur: Dictionary = {
   'Always on this site': 'اس سائٹ پر ہمیشہ',
   'Agents stopped': 'ایجنٹ روک دیے گئے',
   'Agent tabs closed': 'ایجنٹ ٹیب بند ہو گئے',
-  'nibeditor is still running for your agents': 'آپ کے ایجنٹوں کے لیے nibeditor اب بھی چل رہا ہے',
+  'Orden is still running for your agents': 'آپ کے ایجنٹوں کے لیے Orden اب بھی چل رہا ہے',
   '{client} wants to connect': '{client} جڑنا چاہتا ہے',
   // Web logins that travel, and the devices of an account
   'no such device': 'ایسا کوئی آلہ نہیں',
@@ -1877,8 +1881,8 @@ export const ur: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'اس کمپیوٹر پر ایجنٹس',
   'Your account’s connector': 'آپ کے اکاؤنٹ کا کنیکٹر',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor آپ سے ایک بار پوچھتا ہے، جب یہ پہلی بار جڑتا ہے۔',
+  'Orden asks you once, the first time it connects.':
+    'Orden آپ سے ایک بار پوچھتا ہے، جب یہ پہلی بار جڑتا ہے۔',
   'A client on another machine?': 'کسی دوسری مشین پر کلائنٹ؟',
   'Shown only once.': 'صرف ایک بار دکھایا جاتا ہے۔',
   'Remove {name}?': '{name} کو ہٹائیں؟',
@@ -1999,7 +2003,7 @@ export const ur: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'اسنوز',
   Reminders: 'یاددہانیاں',
-  'Reminders ring while nibeditor is open': 'nibeditor کھلا ہونے تک یاددہانیاں بجتی ہیں',
+  'Reminders ring while Orden is open': 'Orden کھلا ہونے تک یاددہانیاں بجتی ہیں',
   Automatic: 'خودکار',
   'Stay in the tray': 'ٹرے میں رہیں',
   'Exact alarms': 'درست الارم',

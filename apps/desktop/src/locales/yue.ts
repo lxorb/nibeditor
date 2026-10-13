@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor而家叫做Orden',
+  'Notes from nibeditor.com': '嚟自nibeditor.com嘅筆記',
+  'Nothing there': '嗰度乜都冇',
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
@@ -528,8 +532,7 @@ export const yue: Dictionary = {
   'Sign in to ask a question.': '請登入後提問。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查詢呢個密鑰可用嘅模型',
   'Could not reach OpenAI': '冇辦法連上OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    '呢個密鑰用唔到nibeditor所需嘅任何模型。',
+  'That key cannot use any of the models Orden asks for.': '呢個密鑰用唔到Orden所需嘅任何模型。',
   'No reasoning': '唔推理',
   Minimal: '最低',
   Low: '低',
@@ -551,7 +554,7 @@ export const yue: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '視窗',
-  'nibeditor’s own': 'nibeditor 自己嘅',
+  'Orden’s own': 'Orden 自己嘅',
   'The system’s': '系統嘅',
   'Window frame': '視窗邊框',
   System: '系統',
@@ -671,7 +674,7 @@ export const yue: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '儲存空間唔夠，放唔落呢張圖片。',
   'out of space': '儲存空間已滿',
-  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安裝。',
+  'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
   'Restart now': '即刻重新啟動',
   Later: '遲啲',
   More: '更多',
@@ -744,13 +747,13 @@ export const yue: Dictionary = {
   'Reads your notes.': '讀取你嘅筆記。',
   'Reads and writes your notes.': '讀取並寫入你嘅筆記。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅nibeditor電郵登入，唔需要貼上任何嘢。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅Orden電郵登入，唔需要貼上任何嘢。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '喺Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
   'Open Claude’s connectors': '開啟Claude嘅連接器',
   'Fill in the two fields and click Add.': '填好呢兩個欄位，然後點擊「新增」。',
-  'Click Connect and sign in with your nibeditor email.': '點擊「連接」，用你嘅nibeditor電郵登入。',
+  'Click Connect and sign in with your Orden email.': '點擊「連接」，用你嘅Orden電郵登入。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -761,15 +764,14 @@ export const yue: Dictionary = {
   'Open ChatGPT’s plugins': '開啟ChatGPT嘅插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '冇「插件」一節或加號按鈕？請先喺「設定→安全同登入」中開啟開發者模式。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT詢問時，用你嘅nibeditor電郵登入。',
-  'To use it in a chat, type @ and pick nibeditor.': '喺對話中輸入@並揀nibeditor就可以用。',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT詢問時，用你嘅Orden電郵登入。',
+  'To use it in a chat, type @ and pick Orden.': '喺對話中輸入@並揀Orden就可以用。',
   'Server URL': '伺服器網址',
   Authentication: '驗證方式',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟nibeditor嘅登入頁面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟Orden嘅登入頁面。',
   'Show config': '顯示設定檔',
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址嘅客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -835,7 +837,7 @@ export const yue: Dictionary = {
   'Display name': '顯示名稱',
   'Your name': '你嘅名字',
   Email: '電郵',
-  'On nibeditor.com': '喺nibeditor.com上',
+  'On orden.so': '喺orden.so上',
   'Your own domain': '你自己嘅域名',
   'Switching gives up {name}.': '切換就會放棄{name}。',
   Page: '頁面',
@@ -1206,8 +1208,8 @@ export const yue: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': '呢部 Mac 嘅「備忘錄」入面冇筆記。',
   'Those notes could not be read.': '讀唔到呢啲筆記。',
   'Read them from this Mac': '從呢部 Mac 讀取',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '喺「完整磁碟存取權」開啟 nibeditor，然後再試一次。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '喺「完整磁碟存取權」開啟 Orden，然後再試一次。',
   'Open the setting': '開啟設定',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     '「日誌」可以自己匯出：日誌、設定、匯出。「備忘錄」冇匯出，所以喺筆記所在嘅 Mac 以外，要拖入嘅係匯出工具寫出嘅資料夾。',
@@ -1553,7 +1555,8 @@ export const yue: Dictionary = {
   'that is not a theme': '呢個唔係主題',
   'no such theme': '冇嗰個主題',
   'choose a model first': '請先揀模型',
-  'set an OpenAI key in nibeditor’s settings first': '請先喺nibeditor嘅設定中填入OpenAI密鑰',
+  'set an OpenAI key in Orden’s settings first': '請先喺Orden嘅設定中填入OpenAI密鑰',
+  'set an OpenAI key in nibeditor’s settings first': '請先喺Orden嘅設定中填入OpenAI密鑰',
   'that is a lot of questions - try again later': '問得太頻密喇，請等一陣再試',
   'that is too much audio': '音頻太長',
   'that is more than a spoken command': '呢個超過一句語音命令嘅長度',
@@ -1711,7 +1714,7 @@ export const yue: Dictionary = {
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '預設瀏覽器',
   // The engine web tabs run on
   Engine: '引擎',
@@ -1822,7 +1825,7 @@ export const yue: Dictionary = {
   'Always on this site': '喺呢個網站一直咁做',
   'Agents stopped': '啲代理停咗',
   'Agent tabs closed': '代理嘅分頁閂咗',
-  'nibeditor is still running for your agents': 'nibeditor 仲喺度幫你啲代理做嘢',
+  'Orden is still running for your agents': 'Orden 仲喺度幫你啲代理做嘢',
   '{client} wants to connect': '{client} 想連接',
   // Web logins that travel, and the devices of an account
   'no such device': '冇呢部裝置',
@@ -1836,8 +1839,7 @@ export const yue: Dictionary = {
   // to connect one more.
   'Agents on this computer': '呢部電腦上面嘅代理',
   'Your account’s connector': '你帳戶嘅連接器',
-  'nibeditor asks you once, the first time it connects.':
-    '第一次連線嘅時候，nibeditor 會問你一次。',
+  'Orden asks you once, the first time it connects.': '第一次連線嘅時候，Orden 會問你一次。',
   'A client on another machine?': '另一部機器上面嘅用戶端？',
   'Shown only once.': '只會顯示一次。',
   'Remove {name}?': '移除 {name}？',
@@ -1952,7 +1954,7 @@ export const yue: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
   Reminders: '提醒',
-  'Reminders ring while nibeditor is open': 'nibeditor 開住嘅時候提醒先會響',
+  'Reminders ring while Orden is open': 'Orden 開住嘅時候提醒先會響',
   Automatic: '自動',
   'Stay in the tray': '留喺系統匣',
   'Exact alarms': '準確鬧鐘',

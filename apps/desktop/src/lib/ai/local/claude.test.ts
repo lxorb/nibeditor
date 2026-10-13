@@ -117,6 +117,15 @@ describe('a session turn', () => {
     ).toEqual({ id: 'u1', name: '', done: { text: 'Herons wade.', error: false } })
   })
 
+  test('knows the app’s own tools under its new server name as well', () => {
+    const read = claudeReader()
+    expect(
+      read(
+        '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"u2","name":"mcp__orden__read_note","input":{"path":"Herons.md"}}]}}',
+      ).tool,
+    ).toEqual({ id: 'u2', name: 'read_note', args: { path: 'Herons.md' } })
+  })
+
   test('counts the request, and learns the window from the result', () => {
     const read = claudeReader()
     expect(

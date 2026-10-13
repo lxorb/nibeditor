@@ -7,7 +7,7 @@ no width at all - `Machine`, its state and its server drawn one letter to a line
 past the bottom of the window, with `Restart` floating half way down beside them.
 
 The account is answered here: `GET /v2/online/machine` with each of the two machines, and
-everything else the app would ask of nibeditor.com refused. What it checks, at every
+everything else the app would ask of the service refused. What it checks, at every
 width and in every look, and fails on:
 
   - the machine's row is one row: its name as wide as its words, the row no taller than
@@ -289,7 +289,7 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         device_scale_factor=2,
     )
     # Playwright tries the newest route first, so the refusal goes in before the answer.
-    page.route("https://nibeditor.com/**", lambda route: route.abort())
+    page.route("https://orden.so/**", lambda route: route.abort())
     account = Account()
     page.route("**/v2/online/terms**", account.answer)
     for machine, about in MACHINES.items():

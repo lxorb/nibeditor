@@ -78,7 +78,7 @@ describe('the marks on a run', () => {
 
   test('carries a link with the address it points at', () => {
     const link = spans.find((span) => span.href !== undefined)
-    expect(link).toEqual({ text: 'link', href: 'https://nibeditor.com' })
+    expect(link).toEqual({ text: 'link', href: 'https://orden.so' })
   })
 
   test('carries inline maths as the TeX between the dollars', () => {
@@ -296,7 +296,7 @@ describe('an embed on a line of its own', () => {
 
 describe('the pictures a document names', () => {
   test('are found in the order they are written, each once', () => {
-    expect(picturesIn(doc)).toEqual(['assets/pic.png', 'https://nibeditor.com/remote.jpg'])
+    expect(picturesIn(doc)).toEqual(['assets/pic.png', 'https://orden.so/remote.jpg'])
   })
 
   test('carry their words as the span text', () => {

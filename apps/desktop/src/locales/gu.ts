@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor હવે Orden છે',
+  'Notes from nibeditor.com': 'nibeditor.com પરથી નોંધો',
+  'Nothing there': 'ત્યાં કંઈ નથી',
   // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',
@@ -530,8 +534,8 @@ export const gu: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAIને પૂછી રહ્યું છે કે આ કી કયાં મોડેલ વાપરી શકે',
   'Could not reach OpenAI': 'OpenAI સુધી પહોંચી શકાયું નહીં',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor માંગે છે તેમાંથી કોઈ મોડેલ એ કી વાપરી શકતી નથી.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden માંગે છે તેમાંથી કોઈ મોડેલ એ કી વાપરી શકતી નથી.',
   'No reasoning': 'તર્ક નહીં',
   Minimal: 'ન્યૂનતમ',
   Low: 'નીચું',
@@ -553,7 +557,7 @@ export const gu: Dictionary = {
   Mode: 'રીત',
   // The window's own edges; see appearance.rs
   Window: 'વિન્ડો',
-  'nibeditor’s own': 'nibeditor નું પોતાનું',
+  'Orden’s own': 'Orden નું પોતાનું',
   'The system’s': 'સિસ્ટમનું',
   'Window frame': 'વિન્ડોની ફ્રેમ',
   System: 'સિસ્ટમ',
@@ -677,7 +681,7 @@ export const gu: Dictionary = {
   '{used} of {limit} used.': '{limit}માંથી {used} વપરાયું.',
   'That image does not fit in your storage.': 'એ ચિત્ર તમારા સંગ્રહમાં સમાતું નથી.',
   'out of space': 'સંગ્રહ ભરાયો',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} સ્થાપવા તૈયાર છે.',
+  'Orden {version} is ready to install.': 'Orden {version} સ્થાપવા તૈયાર છે.',
   'Restart now': 'હમણાં ફરી શરૂ કરો',
   Later: 'પછી',
   More: 'વધુ',
@@ -753,14 +757,14 @@ export const gu: Dictionary = {
   'Reads your notes.': 'તમારી નોંધો વાંચે છે.',
   'Reads and writes your notes.': 'તમારી નોંધો વાંચે અને લખે છે.',
   Other: 'બીજું',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI સહાયક તમારી નોંધો વાંચી શકે છે - અને પરવાનગી આપો તો બદલી પણ શકે. તે તમારા nibeditor ઈમેલથી સાઇન ઇન કરે છે; ચીપકાવવાનું કંઈ નથી.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI સહાયક તમારી નોંધો વાંચી શકે છે - અને પરવાનગી આપો તો બદલી પણ શકે. તે તમારા Orden ઈમેલથી સાઇન ઇન કરે છે; ચીપકાવવાનું કંઈ નથી.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeમાં Settings → Connectors ખોલો અને Add custom connector ક્લિક કરો.',
   'Open Claude’s connectors': 'Claudeના connectors ખોલો',
   'Fill in the two fields and click Add.': 'બે ખાનાં ભરો અને Add ક્લિક કરો.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect ક્લિક કરો અને તમારા nibeditor ઈમેલથી સાઇન ઇન કરો.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect ક્લિક કરો અને તમારા Orden ઈમેલથી સાઇન ઇન કરો.',
   'Using Claude Code instead?': 'Claude Code વાપરો છો?',
   Command: 'આદેશ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -771,16 +775,15 @@ export const gu: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPTના plugins ખોલો',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins વિભાગ કે વત્તાનું બટન નથી? પહેલાં Settings → Security and loginમાં Developer mode ચાલુ કરો.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT પૂછે ત્યારે તમારા nibeditor ઈમેલથી સાઇન ઇન કરો.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'વાતચીતમાં વાપરવા @ લખો અને nibeditor પસંદ કરો.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT પૂછે ત્યારે તમારા Orden ઈમેલથી સાઇન ઇન કરો.',
+  'To use it in a chat, type @ and pick Orden.': 'વાતચીતમાં વાપરવા @ લખો અને Orden પસંદ કરો.',
   'Server URL': 'સર્વર URL',
   Authentication: 'પ્રમાણીકરણ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'આગળની OAuth ગોઠવણ એમ જ રહેવા દો અને “I understand and want to continue” પર નિશાની કરો.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth સાથે Streamable HTTP વાપરતું કોઈ પણ MCP ક્લાયન્ટ. તેને URL આપો: તે પોતે નોંધણી કરે છે અને nibeditorનું સાઇન ઇન પાનું ખોલે છે.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth સાથે Streamable HTTP વાપરતું કોઈ પણ MCP ક્લાયન્ટ. તેને URL આપો: તે પોતે નોંધણી કરે છે અને Ordenનું સાઇન ઇન પાનું ખોલે છે.',
   'Show config': 'રચના બતાવો',
   'For a client that takes a JSON block instead of a URL.':
     'URLને બદલે JSON બ્લૉક લેતા ક્લાયન્ટ માટે.',
@@ -847,7 +850,7 @@ export const gu: Dictionary = {
   'Display name': 'દેખાતું નામ',
   'Your name': 'તમારું નામ',
   Email: 'ઈમેલ',
-  'On nibeditor.com': 'nibeditor.com પર',
+  'On orden.so': 'orden.so પર',
   'Your own domain': 'તમારું પોતાનું ડોમેન',
   'Switching gives up {name}.': 'બદલવાથી {name} છૂટે છે.',
   Page: 'પાનું',
@@ -1226,8 +1229,8 @@ export const gu: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'આ Mac પર Apple Notes માં કોઈ નોંધ નથી.',
   'Those notes could not be read.': 'એ નોંધો વાંચી શકાઈ નહીં.',
   'Read them from this Mac': 'આ Mac પરથી વાંચો',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access માં nibeditor ચાલુ કરો, પછી ફરી પૂછો.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access માં Orden ચાલુ કરો, પછી ફરી પૂછો.',
   'Open the setting': 'ગોઠવણ ખોલો',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal પોતે નિકાસ કરે છે: Journal, ગોઠવણ, નિકાસ. Apple Notes માં નિકાસ નથી, તેથી જે Mac પર તે છે તેનાથી દૂર, અહીં મૂકવાની વસ્તુ કોઈ નિકાસકે લખેલું ફોલ્ડર છે.',
@@ -1583,7 +1586,8 @@ export const gu: Dictionary = {
   'that is not a theme': 'એ થીમ નથી',
   'no such theme': 'એવી થીમ નથી',
   'choose a model first': 'પહેલાં મોડેલ પસંદ કરો',
-  'set an OpenAI key in nibeditor’s settings first': 'પહેલાં nibeditorની ગોઠવણમાં OpenAI કી મૂકો',
+  'set an OpenAI key in Orden’s settings first': 'પહેલાં Ordenની ગોઠવણમાં OpenAI કી મૂકો',
+  'set an OpenAI key in nibeditor’s settings first': 'પહેલાં Ordenની ગોઠવણમાં OpenAI કી મૂકો',
   'that is a lot of questions - try again later': 'એ બહુ પ્રશ્ન છે - પછી પ્રયત્ન કરો',
   'that is too much audio': 'એ બહુ વધુ ધ્વનિ છે',
   'that is more than a spoken command': 'એ એક બોલાયેલા આદેશથી વધુ છે',
@@ -1741,7 +1745,7 @@ export const gu: Dictionary = {
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
   // The engine web tabs run on
   Engine: 'એન્જિન',
@@ -1855,7 +1859,7 @@ export const gu: Dictionary = {
   'Always on this site': 'આ સાઇટ પર હંમેશાં',
   'Agents stopped': 'એજન્ટ રોકાયા',
   'Agent tabs closed': 'એજન્ટની ટૅબ બંધ થઈ',
-  'nibeditor is still running for your agents': 'તમારા એજન્ટ માટે nibeditor હજી ચાલે છે',
+  'Orden is still running for your agents': 'તમારા એજન્ટ માટે Orden હજી ચાલે છે',
   '{client} wants to connect': '{client} જોડાવા માંગે છે',
   // Web logins that travel, and the devices of an account
   'no such device': 'એવું ઉપકરણ નથી',
@@ -1871,8 +1875,8 @@ export const gu: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'આ કમ્પ્યુટર પરના એજન્ટ',
   'Your account’s connector': 'તમારા ખાતાનું કનેક્ટર',
-  'nibeditor asks you once, the first time it connects.':
-    'પહેલી વાર જોડાય ત્યારે nibeditor તમને એક વાર પૂછે છે.',
+  'Orden asks you once, the first time it connects.':
+    'પહેલી વાર જોડાય ત્યારે Orden તમને એક વાર પૂછે છે.',
   'A client on another machine?': 'બીજા મશીન પરનો ક્લાયન્ટ?',
   'Shown only once.': 'ફક્ત એક જ વાર બતાવાય છે.',
   'Remove {name}?': '{name} દૂર કરીએ?',
@@ -1993,7 +1997,7 @@ export const gu: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'સ્નૂઝ',
   Reminders: 'રિમાઇન્ડર',
-  'Reminders ring while nibeditor is open': 'nibeditor ખુલ્લું હોય ત્યારે રિમાઇન્ડર વાગે છે',
+  'Reminders ring while Orden is open': 'Orden ખુલ્લું હોય ત્યારે રિમાઇન્ડર વાગે છે',
   Automatic: 'આપમેળે',
   'Stay in the tray': 'ટ્રેમાં રહો',
   'Exact alarms': 'ચોક્કસ અલાર્મ',

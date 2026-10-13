@@ -32,9 +32,7 @@
    *  a route of its own), and everyone else sees the shared name alone. */
   const offerDomain = $derived(!!blog?.domain)
   /** Wherever the blog answers, for the link under the button. */
-  const liveAt = $derived(
-    blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.nibeditor.com` : ''),
-  )
+  const liveAt = $derived(blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.orden.so` : ''))
   /** The records for a domain: fresh from publishing, or as the listing
    *  remembers them. */
   const records = $derived(publish.dns.length ? publish.dns : (blog?.dns ?? []))
@@ -320,7 +318,7 @@
           class:on={publish.address === 'subdomain'}
           onclick={() => (publish.address = 'subdomain')}
         >
-          {t('On nibeditor.com')}
+          {t('On orden.so')}
         </button>
         <button
           type="button"
@@ -345,7 +343,7 @@
             spellcheck="false"
             autocapitalize="off"
           />
-          <span class="suffix">.nibeditor.com</span>
+          <span class="suffix">.orden.so</span>
         </div>
         {#if publish.availability.checking}
           <span class="hint">{t('checking…')}</span>
@@ -369,7 +367,7 @@
         />
         {#if published && blog?.subdomain}
           <span class="hint">
-            {t('Switching gives up {name}.', { name: `${blog.subdomain}.nibeditor.com` })}
+            {t('Switching gives up {name}.', { name: `${blog.subdomain}.orden.so` })}
           </span>
         {/if}
         {#if records.length}

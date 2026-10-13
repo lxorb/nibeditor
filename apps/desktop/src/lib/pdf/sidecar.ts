@@ -24,7 +24,7 @@ export async function loadHighlights(path: string): Promise<Sheet> {
 }
 
 /** Writes the marks down. Answers whether they were: a sheet from a later version
- *  of Nib holds fields this one knows nothing about, and writing back what was
+ *  of Orden holds fields this one knows nothing about, and writing back what was
  *  understood would throw the rest away. */
 export async function saveHighlights(path: string, sheet: Sheet): Promise<boolean> {
   if (frozen(sheet)) return false

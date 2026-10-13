@@ -3,7 +3,7 @@
 Emil, 2026-10-01, on a window of about 2000 by 1125: "settings have a strange size for
 this screen size". The sheet was 56rem wide and 76vh tall, so a big window made it
 taller and not wider - a portrait slab with Appearance's eight rows at the top of it -
-and the Frame control broke "nibeditor's own" over two lines.
+and the Frame control broke "nibeditor's own" (now "Orden's own") over two lines.
 
 So this opens Settings at four windows (1280x720, 1920x1080, 2560x1440, 2000x1125) at
 three system scales each (100, 125 and 150 per cent, which is a window of the same
@@ -161,7 +161,7 @@ FRAME = """
 () => {
   const body = document.querySelector('[role="dialog"][aria-label="Settings"] .body')
   const rows = [...body.querySelectorAll('.nib-setting')]
-  if (rows.some((row) => row.textContent.includes('nibeditor’s own'))) return 'real'
+  if (rows.some((row) => row.textContent.includes('Orden’s own'))) return 'real'
   const mode = rows.find((row) => row.querySelector('.nib-segmented'))
   if (!mode) return null
   const row = mode.cloneNode(true)
@@ -173,7 +173,7 @@ FRAME = """
   row.querySelector('.name .what').firstChild.textContent = 'Frame'
   const halves = [...row.querySelectorAll('.nib-segmented button')]
   halves.slice(2).forEach((one) => one.remove())
-  halves[0].textContent = 'nibeditor’s own'
+  halves[0].textContent = 'Orden’s own'
   halves[1].textContent = 'The system’s'
   mode.after(row)
   return 'stood in'

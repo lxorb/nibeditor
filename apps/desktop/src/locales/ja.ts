@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditorはOrdenになりました',
+  'Notes from nibeditor.com': 'nibeditor.comのノート',
+  'Nothing there': '何もありません',
   // Tasks: several lines pasted into quick add
   'One task': '1つのタスク',
   'One per line': '1行に1つ',
@@ -530,8 +534,8 @@ export const ja: Dictionary = {
   'Asking OpenAI which models this key can use':
     'このキーで使えるモデルを OpenAI に問い合わせています',
   'Could not reach OpenAI': 'OpenAI に接続できません',
-  'That key cannot use any of the models nibeditor asks for.':
-    'このキーでは nibeditor が必要とするモデルを使えません。',
+  'That key cannot use any of the models Orden asks for.':
+    'このキーでは Orden が必要とするモデルを使えません。',
   'No reasoning': '推論なし',
   Minimal: '最小',
   Low: '低',
@@ -553,7 +557,7 @@ export const ja: Dictionary = {
   Mode: 'モード',
   // The window's own edges; see appearance.rs
   Window: 'ウィンドウ',
-  'nibeditor’s own': 'nibeditor のもの',
+  'Orden’s own': 'Orden のもの',
   'The system’s': 'システムのもの',
   'Window frame': 'ウィンドウの枠',
   System: 'システム',
@@ -674,7 +678,7 @@ export const ja: Dictionary = {
   '{used} of {limit} used.': '{limit} 中 {used} を使用中。',
   'That image does not fit in your storage.': 'この画像を保存する空き容量がありません。',
   'out of space': '空き容量がありません',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} をインストールできます。',
+  'Orden {version} is ready to install.': 'Orden {version} をインストールできます。',
   'Restart now': '今すぐ再起動',
   Later: '後で',
   More: 'その他',
@@ -747,14 +751,14 @@ export const ja: Dictionary = {
   'Reads your notes.': 'ノートを読めます。',
   'Reads and writes your notes.': 'ノートの読み書きができます。',
   Other: 'その他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI アシスタントがノートを読めるようになります。許可すれば書き換えも可能です。nibeditor のメールアドレスでサインインするので、貼り付けるものはありません。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI アシスタントがノートを読めるようになります。許可すれば書き換えも可能です。Orden のメールアドレスでサインインするので、貼り付けるものはありません。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude で 設定 → コネクタ を開き、「カスタムコネクタを追加」をクリックします。',
   'Open Claude’s connectors': 'Claude のコネクタを開く',
   'Fill in the two fields and click Add.': '二つの欄を埋めて「追加」をクリックします。',
-  'Click Connect and sign in with your nibeditor email.':
-    '「接続」をクリックし、nibeditor のメールアドレスでサインインします。',
+  'Click Connect and sign in with your Orden email.':
+    '「接続」をクリックし、Orden のメールアドレスでサインインします。',
   'Using Claude Code instead?': 'Claude Code を使う場合は？',
   Command: 'コマンド',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -765,16 +769,16 @@ export const ja: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT のプラグインを開く',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'プラグインの項目やプラスボタンが見当たらない場合は、まず設定 → セキュリティとログインで開発者モードをオンにします。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT に求められたら、nibeditor のメールアドレスでサインインします。',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'チャットで使うには @ を入力して nibeditor を選びます。',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT に求められたら、Orden のメールアドレスでサインインします。',
+  'To use it in a chat, type @ and pick Orden.':
+    'チャットで使うには @ を入力して Orden を選びます。',
   'Server URL': 'サーバー URL',
   Authentication: '認証',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'OAuth の詳細設定はそのままにして、「理解した上で続行する」にチェックを入れます。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、nibeditor のサインインページを開きます。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、Orden のサインインページを開きます。',
   'Show config': '設定を表示',
   'For a client that takes a JSON block instead of a URL.':
     'URL ではなく JSON ブロックを受け取るクライアント向けです。',
@@ -844,7 +848,7 @@ export const ja: Dictionary = {
   'Display name': '表示名',
   'Your name': 'あなたの名前',
   Email: 'メール',
-  'On nibeditor.com': 'nibeditor.com 上',
+  'On orden.so': 'orden.so 上',
   'Your own domain': '独自ドメイン',
   'Switching gives up {name}.': '切り替えると {name} を手放します。',
   Page: 'ページ',
@@ -1223,8 +1227,8 @@ export const ja: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'この Mac の Apple メモにメモはありません。',
   'Those notes could not be read.': 'そのメモは読めませんでした。',
   'Read them from this Mac': 'この Mac から読む',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'フルディスクアクセスで nibeditor を有効にして、もう一度お試しください。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'フルディスクアクセスで Orden を有効にして、もう一度お試しください。',
   'Open the setting': '設定を開く',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal には書き出しがあります: ジャーナル、設定、書き出し。Apple メモに書き出しはないので、そのメモがある Mac 以外では、書き出しツールが作ったフォルダを渡してください。',
@@ -1583,8 +1587,9 @@ export const ja: Dictionary = {
   'that is not a theme': 'それはテーマではありません',
   'no such theme': 'そのテーマはありません',
   'choose a model first': '先にモデルを選んでください',
+  'set an OpenAI key in Orden’s settings first': '先にOrdenの設定でOpenAIキーを設定してください',
   'set an OpenAI key in nibeditor’s settings first':
-    '先にnibeditorの設定でOpenAIキーを設定してください',
+    '先にOrdenの設定でOpenAIキーを設定してください',
   'that is a lot of questions - try again later':
     '質問が多すぎます。しばらくしてからお試しください',
   'that is too much audio': '音声が長すぎます',
@@ -1746,7 +1751,7 @@ export const ja: Dictionary = {
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '既定のブラウザ',
   // The engine web tabs run on
   Engine: 'エンジン',
@@ -1857,7 +1862,7 @@ export const ja: Dictionary = {
   'Always on this site': 'このサイトでは常に',
   'Agents stopped': 'エージェントを停止しました',
   'Agent tabs closed': 'エージェントのタブを閉じました',
-  'nibeditor is still running for your agents': 'nibeditor はエージェントのために動き続けています',
+  'Orden is still running for your agents': 'Orden はエージェントのために動き続けています',
   '{client} wants to connect': '{client} が接続しようとしています',
   // Web logins that travel, and the devices of an account
   'no such device': 'そのデバイスはありません',
@@ -1873,8 +1878,8 @@ export const ja: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'このコンピューターのエージェント',
   'Your account’s connector': 'アカウントのコネクタ',
-  'nibeditor asks you once, the first time it connects.':
-    '初めて接続したときに、nibeditor が一度だけ確認します。',
+  'Orden asks you once, the first time it connects.':
+    '初めて接続したときに、Orden が一度だけ確認します。',
   'A client on another machine?': '別のマシンのクライアントですか？',
   'Shown only once.': '一度だけ表示されます。',
   'Remove {name}?': '{name} を削除しますか？',
@@ -1989,7 +1994,7 @@ export const ja: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'スヌーズ',
   Reminders: 'リマインダー',
-  'Reminders ring while nibeditor is open': 'リマインダーは nibeditor が開いている間に鳴ります',
+  'Reminders ring while Orden is open': 'リマインダーは Orden が開いている間に鳴ります',
   Automatic: '自動',
   'Stay in the tray': 'トレイに常駐',
   'Exact alarms': '正確なアラーム',

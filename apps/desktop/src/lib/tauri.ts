@@ -1,4 +1,4 @@
-/** Nib runs three ways: as the desktop app, as the phone app, and as a page in a
+/** Orden runs three ways: as the desktop app, as the phone app, and as a page in a
  *  browser. Everything platform-specific funnels through here so the interface
  *  never branches. */
 

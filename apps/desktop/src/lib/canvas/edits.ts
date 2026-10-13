@@ -386,7 +386,7 @@ export function withEnds(
     edges: canvas.edges.map((edge) => {
       if (!chosen.has(edge.id)) return edge
 
-      // The spec's own defaults are left unwritten, so an edge Nib did not
+      // The spec's own defaults are left unwritten, so an edge Orden did not
       // change comes back byte for byte.
       const one = put(edge, 'fromEnd', from ? 'arrow' : null)
       return put(one, 'toEnd', to ? null : 'none')

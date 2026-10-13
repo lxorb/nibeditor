@@ -52,7 +52,7 @@ DEVICES = [
 
 OWNER = {"email": "emil@example.com", "name": "Emil"}
 
-LINK = {"url": "https://nibeditor.com/join/8f2c1d5ab9", "role": "read", "mode": "open"}
+LINK = {"url": "https://orden.so/join/8f2c1d5ab9", "role": "read", "mode": "open"}
 
 
 def member(email, role="write", pending=False, name=None, guest=None):

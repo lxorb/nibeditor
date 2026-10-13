@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor ഇപ്പോൾ Orden ആണ്',
+  'Notes from nibeditor.com': 'nibeditor.com-ൽ നിന്നുള്ള കുറിപ്പുകൾ',
+  'Nothing there': 'അവിടെ ഒന്നുമില്ല',
   // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
@@ -533,8 +537,8 @@ export const ml: Dictionary = {
   'Asking OpenAI which models this key can use':
     'ഈ കീ ഏത് മോഡലുകൾ ഉപയോഗിക്കാമെന്ന് OpenAIയോട് ചോദിക്കുന്നു',
   'Could not reach OpenAI': 'OpenAIയിൽ എത്താനായില്ല',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
   'No reasoning': 'യുക്തിചിന്ത ഇല്ല',
   Minimal: 'വളരെ കുറവ്',
   Low: 'കുറവ്',
@@ -556,7 +560,7 @@ export const ml: Dictionary = {
   Mode: 'മോഡ്',
   // The window's own edges; see appearance.rs
   Window: 'വിൻഡോ',
-  'nibeditor’s own': 'nibeditor-ന്റെ സ്വന്തം',
+  'Orden’s own': 'Orden-ന്റെ സ്വന്തം',
   'The system’s': 'സിസ്റ്റത്തിന്റെ',
   'Window frame': 'വിൻഡോയുടെ ചട്ടക്കൂട്',
   System: 'സിസ്റ്റം',
@@ -680,7 +684,7 @@ export const ml: Dictionary = {
   '{used} of {limit} used.': '{limit}ൽ {used} ഉപയോഗിച്ചു.',
   'That image does not fit in your storage.': 'നിങ്ങളുടെ സ്റ്റോറേജിൽ ആ ചിത്രം ഒതുങ്ങില്ല.',
   'out of space': 'സ്റ്റോറേജ് ഇല്ല',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
+  'Orden {version} is ready to install.': 'Orden {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
   'Restart now': 'ഇപ്പോൾ റീസ്റ്റാർട്ട്',
   Later: 'പിന്നീട്',
   More: 'കൂടുതൽ',
@@ -758,14 +762,14 @@ export const ml: Dictionary = {
   'Reads your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുന്നു.',
   'Reads and writes your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുകയും എഴുതുകയും ചെയ്യുന്നു.',
   Other: 'മറ്റുള്ളവ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeൽ Settings → Connectors തുറന്ന് Add custom connector ക്ലിക്ക് ചെയ്യുക.',
   'Open Claude’s connectors': 'Claude കണക്ടറുകൾ തുറക്കുക',
   'Fill in the two fields and click Add.': 'രണ്ട് ഫീൽഡുകൾ പൂരിപ്പിച്ച് Add ക്ലിക്ക് ചെയ്യുക.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
   'Using Claude Code instead?': 'Claude Code ഉപയോഗിക്കുന്നുണ്ടോ?',
   Command: 'കമാൻഡ്',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -776,16 +780,16 @@ export const ml: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT പ്ലഗിനുകൾ തുറക്കുക',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins വിഭാഗമോ പ്ലസ് ബട്ടണോ ഇല്ലേ? ആദ്യം Settings → Security and loginൽ Developer mode ഓൺ ചെയ്യുക.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് nibeditor തിരഞ്ഞെടുക്കുക.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'To use it in a chat, type @ and pick Orden.':
+    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് Orden തിരഞ്ഞെടുക്കുക.',
   'Server URL': 'സെർവർ URL',
   Authentication: 'പ്രാമാണീകരണം',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'വിപുല OAuth സെറ്റിംഗ്സ് അതേപടി വിട്ട് “I understand and want to continue” ടിക്ക് ചെയ്യുക.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് nibeditorന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് Ordenന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
   'Show config': 'കോൺഫിഗ് കാണിക്കുക',
   'For a client that takes a JSON block instead of a URL.':
     'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
@@ -854,7 +858,7 @@ export const ml: Dictionary = {
   'Display name': 'ഡിസ്പ്ലേ പേര്',
   'Your name': 'നിങ്ങളുടെ പേര്',
   Email: 'ഇമെയിൽ',
-  'On nibeditor.com': 'nibeditor.comൽ',
+  'On orden.so': 'orden.soൽ',
   'Your own domain': 'നിങ്ങളുടെ സ്വന്തം ഡൊമെയ്ൻ',
   'Switching gives up {name}.': 'മാറിയാൽ {name} വിട്ടുപോകും.',
   Page: 'പേജ്',
@@ -1240,8 +1244,8 @@ export const ml: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'ഈ Mac-ൽ Apple Notes-ൽ കുറിപ്പുകളില്ല.',
   'Those notes could not be read.': 'ആ കുറിപ്പുകൾ വായിക്കാനായില്ല.',
   'Read them from this Mac': 'ഈ Mac-ൽ നിന്ന് വായിക്കുക',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access-ൽ nibeditor ഓൺ ചെയ്ത്, വീണ്ടും ചോദിക്കുക.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access-ൽ Orden ഓൺ ചെയ്ത്, വീണ്ടും ചോദിക്കുക.',
   'Open the setting': 'ക്രമീകരണം തുറക്കുക',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal സ്വയം കയറ്റുമതി ചെയ്യും: Journal, ക്രമീകരണങ്ങൾ, കയറ്റുമതി. Apple Notes-ന് കയറ്റുമതി ഇല്ല, അതിനാൽ അത് ഉള്ള Mac-ൽ നിന്ന് മാറി, ഇവിടെ ഇടേണ്ടത് ഏതെങ്കിലും കയറ്റുമതി ഉപകരണം എഴുതിയ ഫോൾഡർ ആണ്.',
@@ -1606,8 +1610,10 @@ export const ml: Dictionary = {
   'that is not a theme': 'അത് ഒരു തീം അല്ല',
   'no such theme': 'അങ്ങനെയൊരു തീം ഇല്ല',
   'choose a model first': 'ആദ്യം ഒരു മോഡൽ തിരഞ്ഞെടുക്കുക',
+  'set an OpenAI key in Orden’s settings first':
+    'ആദ്യം Orden സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
   'set an OpenAI key in nibeditor’s settings first':
-    'ആദ്യം nibeditor സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
+    'ആദ്യം Orden സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
   'that is a lot of questions - try again later': 'അത് വളരെയധികം ചോദ്യങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
   'that is too much audio': 'അത് വളരെയധികം ഓഡിയോ',
   'that is more than a spoken command': 'അത് ഒരു സംസാര കമാൻഡിനെക്കാൾ കൂടുതൽ',
@@ -1767,7 +1773,7 @@ export const ml: Dictionary = {
   'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
   // The engine web tabs run on
   Engine: 'എഞ്ചിൻ',
@@ -1882,8 +1888,8 @@ export const ml: Dictionary = {
   'Always on this site': 'ഈ സൈറ്റിൽ എപ്പോഴും',
   'Agents stopped': 'ഏജന്റുകളെ നിർത്തി',
   'Agent tabs closed': 'ഏജന്റ് ടാബുകൾ അടച്ചു',
-  'nibeditor is still running for your agents':
-    'നിങ്ങളുടെ ഏജന്റുകൾക്കായി nibeditor ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
+  'Orden is still running for your agents':
+    'നിങ്ങളുടെ ഏജന്റുകൾക്കായി Orden ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
   '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
   // Web logins that travel, and the devices of an account
   'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
@@ -1899,8 +1905,8 @@ export const ml: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ',
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
-  'nibeditor asks you once, the first time it connects.':
-    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ nibeditor നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
+  'Orden asks you once, the first time it connects.':
+    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ Orden നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
   'Shown only once.': 'ഒരിക്കൽ മാത്രം കാണിക്കും.',
   'Remove {name}?': '{name} നീക്കം ചെയ്യണോ?',
@@ -2021,8 +2027,7 @@ export const ml: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'സ്നൂസ്',
   Reminders: 'ഓർമ്മപ്പെടുത്തലുകൾ',
-  'Reminders ring while nibeditor is open':
-    'nibeditor തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
+  'Reminders ring while Orden is open': 'Orden തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
   Automatic: 'സ്വയമേവ',
   'Stay in the tray': 'ട്രേയിൽ തുടരുക',
   'Exact alarms': 'കൃത്യമായ അലാറങ്ങൾ',

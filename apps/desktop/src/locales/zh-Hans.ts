@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor现已更名为Orden',
+  'Notes from nibeditor.com': '来自nibeditor.com的笔记',
+  'Nothing there': '那里什么都没有',
   // Tasks: several lines pasted into quick add
   'One task': '一个任务',
   'One per line': '每行一个',
@@ -528,8 +532,7 @@ export const zhHans: Dictionary = {
   'Sign in to ask a question.': '请登录后提问。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查询此密钥可用的模型',
   'Could not reach OpenAI': '无法连接OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    '此密钥无法使用nibeditor所需的任何模型。',
+  'That key cannot use any of the models Orden asks for.': '此密钥无法使用Orden所需的任何模型。',
   'No reasoning': '不推理',
   Minimal: '最低',
   Low: '低',
@@ -551,7 +554,7 @@ export const zhHans: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '窗口',
-  'nibeditor’s own': 'nibeditor 自己的',
+  'Orden’s own': 'Orden 自己的',
   'The system’s': '系统的',
   'Window frame': '窗口边框',
   System: '系统',
@@ -671,7 +674,7 @@ export const zhHans: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '存储空间不足，放不下这张图片。',
   'out of space': '存储空间已满',
-  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安装。',
+  'Orden {version} is ready to install.': 'Orden{version}已可安装。',
   'Restart now': '立即重启',
   Later: '稍后',
   More: '更多',
@@ -744,13 +747,13 @@ export const zhHans: Dictionary = {
   'Reads your notes.': '读取你的笔记。',
   'Reads and writes your notes.': '读取并写入你的笔记。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的nibeditor邮箱登录，无需粘贴任何内容。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的Orden邮箱登录，无需粘贴任何内容。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '在Claude中打开“设置→连接器”，点击“添加自定义连接器”。',
   'Open Claude’s connectors': '打开Claude的连接器',
   'Fill in the two fields and click Add.': '填写这两个字段，然后点击“添加”。',
-  'Click Connect and sign in with your nibeditor email.': '点击“连接”，用你的nibeditor邮箱登录。',
+  'Click Connect and sign in with your Orden email.': '点击“连接”，用你的Orden邮箱登录。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -761,15 +764,14 @@ export const zhHans: Dictionary = {
   'Open ChatGPT’s plugins': '打开ChatGPT的插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '没有“插件”一节或加号按钮？请先在“设置→安全与登录”中开启开发者模式。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT询问时，用你的nibeditor邮箱登录。',
-  'To use it in a chat, type @ and pick nibeditor.': '在对话中输入@并选择nibeditor即可使用。',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT询问时，用你的Orden邮箱登录。',
+  'To use it in a chat, type @ and pick Orden.': '在对话中输入@并选择Orden即可使用。',
   'Server URL': '服务器URL',
   Authentication: '身份验证',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '高级OAuth设置保持不变，并勾选“我了解并希望继续”。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开nibeditor的登录页面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开Orden的登录页面。',
   'Show config': '显示配置',
   'For a client that takes a JSON block instead of a URL.': '适用于接受JSON配置而非URL的客户端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -835,7 +837,7 @@ export const zhHans: Dictionary = {
   'Display name': '显示名称',
   'Your name': '你的名称',
   Email: '邮箱',
-  'On nibeditor.com': '在nibeditor.com上',
+  'On orden.so': '在orden.so上',
   'Your own domain': '你自己的域名',
   'Switching gives up {name}.': '切换会放弃{name}。',
   Page: '页面',
@@ -1207,8 +1209,8 @@ export const zhHans: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': '这台 Mac 上的「备忘录」中没有笔记。',
   'Those notes could not be read.': '无法读取这些笔记。',
   'Read them from this Mac': '从这台 Mac 读取',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '在「完全磁盘访问权限」中打开 nibeditor，然后再试一次。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '在「完全磁盘访问权限」中打开 Orden，然后再试一次。',
   'Open the setting': '打开设置',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     '「日记」可自行导出：日记、设置、导出。「备忘录」没有导出，因此在笔记所在的 Mac 之外，要拖入的是导出工具写出的文件夹。',
@@ -1555,7 +1557,8 @@ export const zhHans: Dictionary = {
   'that is not a theme': '这不是一个主题',
   'no such theme': '没有该主题',
   'choose a model first': '请先选择模型',
-  'set an OpenAI key in nibeditor’s settings first': '请先在nibeditor设置中填入OpenAI密钥',
+  'set an OpenAI key in Orden’s settings first': '请先在Orden设置中填入OpenAI密钥',
+  'set an OpenAI key in nibeditor’s settings first': '请先在Orden设置中填入OpenAI密钥',
   'that is a lot of questions - try again later': '提问过于频繁，请稍后重试',
   'that is too much audio': '音频过长',
   'that is more than a spoken command': '这超出了一条语音命令的长度',
@@ -1713,7 +1716,7 @@ export const zhHans: Dictionary = {
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
   'Paste {count} lines?': '粘贴 {count} 行？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '默认浏览器',
   // The engine web tabs run on
   Engine: '引擎',
@@ -1824,7 +1827,7 @@ export const zhHans: Dictionary = {
   'Always on this site': '在此网站始终',
   'Agents stopped': '已停止智能体',
   'Agent tabs closed': '已关闭智能体标签页',
-  'nibeditor is still running for your agents': 'nibeditor 仍在为你的智能体运行',
+  'Orden is still running for your agents': 'Orden 仍在为你的智能体运行',
   '{client} wants to connect': '{client} 想要连接',
   // Web logins that travel, and the devices of an account
   'no such device': '没有这个设备',
@@ -1838,7 +1841,7 @@ export const zhHans: Dictionary = {
   // to connect one more.
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
-  'nibeditor asks you once, the first time it connects.': '首次连接时，nibeditor 会问你一次。',
+  'Orden asks you once, the first time it connects.': '首次连接时，Orden 会问你一次。',
   'A client on another machine?': '另一台机器上的客户端？',
   'Shown only once.': '只显示一次。',
   'Remove {name}?': '移除 {name}？',
@@ -1953,7 +1956,7 @@ export const zhHans: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍后提醒',
   Reminders: '提醒',
-  'Reminders ring while nibeditor is open': '提醒仅在 nibeditor 打开时响起',
+  'Reminders ring while Orden is open': '提醒仅在 Orden 打开时响起',
   Automatic: '自动',
   'Stay in the tray': '保留在托盘中',
   'Exact alarms': '精确闹钟',

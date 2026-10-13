@@ -605,8 +605,15 @@ function holds(tail: string): boolean {
  *  link-rewrite.ts): a link to a heading keeps the words it shows, a shortest link to a
  *  name two files share keeps its folder, and a target with a bracket in its name is
  *  written out so the bracket does not end the link. The Obsidian import that found them
- *  is behind its door. Measured 3,225,105 and 378. */
-const BUDGET = 3_225_500
+ *  is behind its door. Measured 3,225,105 and 378.
+ *
+ *  Raised again 2026-10-13, to 3,227,500, from a main at 3,225,105 for the
+ *  one question that has to be asked before anything of a launch is written: whether
+ *  an earlier version left settings here, which is who is told the name is now Orden
+ *  (renamed.svelte.ts, its code and nothing else). The card that says it is behind a
+ *  door and fetched for that one launch (RenameNotice.svelte), and the browser build's
+ *  handoff is behind the space chooser's. Measured 3,226,863 and 379. */
+const BUDGET = 3_227_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -3,7 +3,7 @@
  *
  *  A store rather than a constant because the list comes from the API: model names
  *  change every few months, and a list written into the settings pane would be a
- *  list of models that used to exist. So the pane asks Nib, which asks OpenAI with
+ *  list of models that used to exist. So the pane asks Orden, which asks OpenAI with
  *  the account's own key and keeps the answer for a day; see the Worker's
  *  ask/models.ts.
  *
@@ -82,7 +82,7 @@ export class Offered {
     try {
       found = (await api.askModels(token)).models
     } catch (error) {
-      // A phone with no signal, an account signed out, Nib being unreachable: all
+      // A phone with no signal, an account signed out, Orden being unreachable: all
       // of them are "no models", and the reader needs the reason rather than an
       // empty select.
       this.said = error instanceof Error ? error.message : t('Could not reach OpenAI')
@@ -91,7 +91,7 @@ export class Offered {
 
     this.models = found
     if (!found.length) {
-      this.said = t('That key cannot use any of the models nibeditor asks for.')
+      this.said = t('That key cannot use any of the models Orden asks for.')
       return
     }
 

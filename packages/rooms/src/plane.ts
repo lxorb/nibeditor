@@ -28,7 +28,7 @@
  *  exactly as a file writes them, and a stroke of any length is one item in the
  *  document rather than one per sample.
  *
- *  Read and written in one place, because three parts of Nib do it: the surface
+ *  Read and written in one place, because three parts of Orden do it: the surface
  *  somebody draws on, the room in the Worker that settles the file, and the tests
  *  that hold both to the same rule. Nothing here draws, saves, or talks over a
  *  socket. */
@@ -264,7 +264,7 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
 }
 
 /** One record as the thing it describes, or null. The format's own readers, so a
- *  record written by a newer Nib with a field this one has never heard of is read
+ *  record written by a newer Orden with a field this one has never heard of is read
  *  exactly as such a field in a file would be: kept where it is understood, and
  *  dropped where it is not. */
 function read(record: Y.Map<unknown>, nodes: ReadonlySet<string>): Thing | null {

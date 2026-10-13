@@ -55,7 +55,7 @@ describe('wikilinks turned into real links', () => {
 
   test('everything that is not a wikilink is left alone', () => {
     const out2 = toMarkdown(CORPUS, { link: resolve })
-    expect(out2).toContain('[link](https://nibeditor.com)')
+    expect(out2).toContain('[link](https://orden.so)')
     expect(out2).toContain('![Pasted picture](assets/pic.png)')
     expect(out2).toContain('**bold**')
   })
@@ -79,7 +79,7 @@ describe('pictures pointed somewhere else', () => {
 
   test('a remote picture is left where it is when the caller says so', () => {
     expect(toMarkdown(CORPUS, { picture: beside })).toContain(
-      '![Remote picture](https://nibeditor.com/remote.jpg)',
+      '![Remote picture](https://orden.so/remote.jpg)',
     )
   })
 
