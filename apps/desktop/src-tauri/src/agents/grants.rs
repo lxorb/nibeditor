@@ -310,6 +310,29 @@ struct File {
     /// Whether its grants have been given helpers, which came after them.
     #[serde(default)]
     helpers: bool,
+    /// Whether the AI sidebar's own grants have been called by the product's name since
+    /// the rename: absent in a file written while it was still nib.
+    #[serde(default)]
+    orden: bool,
+}
+
+/// What the AI sidebar's own grants are called before the provider's name:
+/// `Orden · Claude`.
+pub(crate) const SIDEBAR: &str = "Orden · ";
+
+/// What they were called until the product was renamed Orden, which a file written
+/// before then still says.
+const SIDEBAR_BEFORE: &str = "nib · ";
+
+/// A grant kept from before the rename, called what a new one is: its client and the
+/// name it is listed under, each where it still begins with the old word. A name the
+/// reader gave it is the reader's, and stays.
+fn as_orden(grant: &mut Grant) {
+    for label in [&mut grant.client, &mut grant.name] {
+        if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
+            *label = format!("{SIDEBAR}{rest}");
+        }
+    }
 }
 
 /// A grant kept from before helpers, given them as a new grant of its kind would be: the
@@ -505,6 +528,11 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
                     with_helpers(&mut one.grant);
                 }
             }
+            if !file.orden {
+                for one in &mut agents {
+                    as_orden(&mut one.grant);
+                }
+            }
             agents
         })
         .unwrap_or_default()
@@ -519,6 +547,7 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
         agents: kept.to_vec(),
         chats: true,
         helpers: true,
+        orden: true,
     })
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
@@ -671,6 +700,7 @@ mod tests {
             }],
             chats: true,
             helpers: true,
+            orden: true,
         })
         .expect("json");
         let back: File = serde_json::from_str(&text).expect("read");
@@ -687,6 +717,60 @@ mod tests {
             .as_array()
             .expect("scopes")
             .contains(&"browser.reader".into()));
+    }
+
+    /// The sidebar's grants from before the rename are called Orden once; a name the
+    /// reader gave one, and every other grant, keep theirs. Once the file is written with
+    /// the mark, nothing is renamed again.
+    #[test]
+    fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
+        let kept = |id: &str, client: &str, name: &str| {
+            let mut grant = Grant::own(id.into(), client);
+            grant.name = name.into();
+            Kept {
+                grant,
+                token: hashed("t"),
+            }
+        };
+        let text = serde_json::json!({
+            "agents": [
+                kept("nib-anthropic", "nib · Claude", "nib · Claude"),
+                kept("nib-openai", "nib · OpenAI", "My own OpenAI"),
+                kept("claude-code", "Claude Code", "Claude Code"),
+                kept("x", "nibbler · X", "nib ·X"),
+            ],
+            "chats": true,
+            "helpers": true,
+        })
+        .to_string();
+        let dir = std::env::temp_dir().join(format!("nib-grants-orden-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let path = dir.join("agents.json");
+        std::fs::write(&path, text).expect("write");
+
+        let read = read(&path);
+        let labels: Vec<(&str, &str)> = read
+            .iter()
+            .map(|one| (one.grant.client.as_str(), one.grant.name.as_str()))
+            .collect();
+        assert_eq!(
+            labels,
+            [
+                ("Orden · Claude", "Orden · Claude"),
+                ("Orden · OpenAI", "My own OpenAI"),
+                ("Claude Code", "Claude Code"),
+                ("nibbler · X", "nib ·X"),
+            ]
+        );
+        // The ids stay: they are how the sidebar finds its grant again.
+        assert_eq!(read[0].grant.id, "nib-anthropic");
+
+        // Written with the mark, a grant somebody calls `nib · ...` from then on is theirs.
+        let mut named = read.clone();
+        named[2].grant.name = "nib · mine".into();
+        write(&path, &named).expect("write again");
+        assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

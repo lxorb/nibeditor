@@ -72,14 +72,14 @@ pub fn session_system(mode: Option<Mode>) -> &'static str {
         None => SYSTEM,
         Some(Mode::Approve) => {
             "You are the reader's agent inside Orden, their notes app and web browser. \
-Do what they ask with the nib tools; the reader approves each change before it is made, so \
+Do what they ask with the Orden tools; the reader approves each change before it is made, so \
 a call may wait for them. Name the note or page a claim comes from as a [[wikilink]] or its \
 address. Change part of a note with edit_note rather than write_note, since they may be \
 typing in it. Reply in the language of the request, in markdown, briefly."
         }
         Some(Mode::Plan) => {
             "You are the reader's assistant inside Orden, their notes app and web \
-browser. Plan mode: read what you need with the nib tools, then write the plan as one new \
+browser. Plan mode: read what you need with the Orden tools, then write the plan as one new \
 note with create_note, a task per step, and change nothing else. Reply in the language of \
 the request, briefly."
         }
@@ -93,7 +93,7 @@ the request, briefly, saying what you did."
         }
         Some(Mode::Full) => {
             "You are the reader's agent inside Orden, their notes app and web browser. \
-Do what they ask with the nib tools, without asking: every change you make is shown to them \
+Do what they ask with the Orden tools, without asking: every change you make is shown to them \
 to keep or undo. Name the note or page a claim comes from as a [[wikilink]] or its address. \
 Change part of a note with edit_note rather than write_note, since they may be typing in it. \
 Reply in the language of the request, briefly, saying what you did."
@@ -163,8 +163,9 @@ pub fn tools_of(mode: Mode) -> (Vec<String>, Vec<String>) {
 }
 
 /// The name a session's MCP server goes by in both programs, which Claude Code prefixes
-/// its tools with (`mcp__nib__read_note`).
-pub const SERVER: &str = "nib";
+/// its tools with (`mcp__orden__read_note`). It was `nib` until the product was renamed
+/// Orden; a session is started fresh every time, so nothing kept names the old one.
+pub const SERVER: &str = "orden";
 
 /// The variable `nib mcp` reads the sidebar's token from (src/mcp/link.rs). Set on the
 /// program's own environment: Claude Code hands its environment to the servers it starts,
@@ -536,13 +537,15 @@ mod tests {
             Some(config().to_string_lossy().as_ref())
         );
         let allowed = value_of(&plan, "--allowedTools").expect("allowed");
-        assert!(allowed.contains("mcp__nib__read_note"));
-        assert!(allowed.contains("mcp__nib__create_note"));
+        assert!(allowed.contains("mcp__orden__read_note"));
+        assert!(allowed.contains("mcp__orden__create_note"));
         assert!(!allowed.contains("edit_note") && !allowed.contains("write_note"));
-        assert!(allowed.split(',').all(|one| one.starts_with("mcp__nib__")));
+        assert!(allowed
+            .split(',')
+            .all(|one| one.starts_with("mcp__orden__")));
         let denied = value_of(&plan, "--disallowedTools").expect("denied");
-        assert!(denied.contains("mcp__nib__edit_note"));
-        assert!(denied.contains("mcp__nib__run_terminal"));
+        assert!(denied.contains("mcp__orden__edit_note"));
+        assert!(denied.contains("mcp__orden__run_terminal"));
         assert!(!plan.contains(&"--safe-mode".to_owned()));
         assert!(plan.contains(&"--restricted".to_owned()));
         assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
@@ -553,7 +556,7 @@ mod tests {
         // token lent to that mode. Its own tools stay out, so no bypass is needed.
         for mode in [Mode::Approve, Mode::Auto, Mode::Full] {
             let all = claude_session(shape(mode), &caps, &config()).expect("all");
-            assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__nib"));
+            assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__orden"));
             assert!(!all.contains(&"--disallowedTools".to_owned()));
             assert_eq!(value_of(&all, "--permission-mode"), Some("dontAsk"));
             assert_eq!(value_of(&all, "--tools"), Some(""));
@@ -626,9 +629,9 @@ mod tests {
         assert_eq!(plan["ephemeral"], true);
         assert_eq!(plan["model"], "gpt-5.1-codex");
         let config = &plan["config"];
-        assert_eq!(config["mcp_servers.nib.args"], json!(["mcp"]));
-        assert_eq!(config["mcp_servers.nib.env_vars"], json!([TOKEN_VAR]));
-        let enabled = config["mcp_servers.nib.enabled_tools"]
+        assert_eq!(config["mcp_servers.orden.args"], json!(["mcp"]));
+        assert_eq!(config["mcp_servers.orden.env_vars"], json!([TOKEN_VAR]));
+        let enabled = config["mcp_servers.orden.enabled_tools"]
             .as_array()
             .expect("enabled");
         assert!(enabled.contains(&json!("read_note")));
@@ -637,12 +640,12 @@ mod tests {
             .as_object()
             .expect("config")
             .keys()
-            .all(|key| key.starts_with("mcp_servers.nib.")));
+            .all(|key| key.starts_with("mcp_servers.orden.")));
 
         let agent = codex_thread(Some(Mode::Full), None, &nib, &folder);
-        assert!(agent["config"]["mcp_servers.nib.enabled_tools"].is_null());
+        assert!(agent["config"]["mcp_servers.orden.enabled_tools"].is_null());
         let approve = codex_thread(Some(Mode::Approve), None, &nib, &folder);
-        assert!(approve["config"]["mcp_servers.nib.enabled_tools"].is_null());
+        assert!(approve["config"]["mcp_servers.orden.enabled_tools"].is_null());
         // Codex asks nobody in any mode: nib asks, at its verbs, in Approve.
         assert_eq!(approve["approvalPolicy"], "never");
         assert_eq!(agent["approvalPolicy"], "never");
@@ -659,18 +662,18 @@ mod tests {
         let mut helped = codex_thread(Some(Mode::Full), None, &nib, &folder);
         with_thread(&mut helped, "nib-thread-1");
         assert_eq!(
-            helped["config"]["mcp_servers.nib.env"],
+            helped["config"]["mcp_servers.orden.env"],
             json!({ THREAD_VAR: "nib-thread-1" })
         );
     }
 
     #[test]
-    fn the_mcp_config_names_nib_alone_and_no_token() {
+    fn the_mcp_config_names_orden_alone_and_no_token() {
         let config = mcp_config(Path::new("nib.exe"));
         let servers = config["mcpServers"].as_object().expect("servers");
         assert_eq!(servers.len(), 1);
-        assert_eq!(servers["nib"]["args"], json!(["mcp"]));
-        assert!(servers["nib"].get("env").is_none());
+        assert_eq!(servers["orden"]["args"], json!(["mcp"]));
+        assert!(servers["orden"].get("env").is_none());
     }
 
     #[test]

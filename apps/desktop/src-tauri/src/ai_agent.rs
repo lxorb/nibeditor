@@ -2,7 +2,7 @@
 //! Claude or `OpenAI` key, a `ChatGPT` plan or a compatible server (docs/ai-sidebar.md 4.4).
 //!
 //! **An agent like any other.** Each provider gets a built-in grant, named after it
-//! ("nib · Claude"), made the first time its thread asks and kept in Settings > Agents
+//! ("Orden · Claude"), made the first time its thread asks and kept in Settings > Agents
 //! with the same scopes, sites, limits and stop as an outside agent's. A call goes
 //! through the endpoint's own dispatch with that grant as the caller
 //! (`endpoint::dispatch`), so it meets the same policy and is written to the same log;
@@ -39,7 +39,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tauri::AppHandle;
 
-use crate::agents::grants::{fresh_token, hashed, same, Grant, Mode as GrantMode, Scope};
+use crate::agents::grants::{fresh_token, hashed, same, Grant, Mode as GrantMode, Scope, SIDEBAR};
 use crate::agents::{state, Caller};
 use crate::mcp::host;
 
@@ -128,7 +128,7 @@ pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, Str
     if let Some(found) = grants.by_id(app, &id) {
         return Ok(found);
     }
-    let client = format!("nib · {}", builtin.name.trim());
+    let client = format!("{SIDEBAR}{}", builtin.name.trim());
     let (grant, _token) =
         grants.mint(app, &client, |_, client| made(id.clone(), client, builtin))?;
     Ok(grant)
@@ -328,7 +328,7 @@ mod tests {
     }
 
     fn grant() -> Grant {
-        made("nib-anthropic".into(), "nib · Claude", &builtin(true))
+        made("nib-anthropic".into(), "Orden · Claude", &builtin(true))
     }
 
     fn names(mode: Mode, grant: &Grant) -> BTreeSet<String> {
@@ -475,8 +475,8 @@ mod tests {
 
     #[test]
     fn the_readers_tabs_are_in_reach_or_not() {
-        assert!(made("nib-a".into(), "nib · A", &builtin(true)).holds(Scope::BrowserReader));
-        assert!(!made("nib-a".into(), "nib · A", &builtin(false)).holds(Scope::BrowserReader));
+        assert!(made("nib-a".into(), "Orden · A", &builtin(true)).holds(Scope::BrowserReader));
+        assert!(!made("nib-a".into(), "Orden · A", &builtin(false)).holds(Scope::BrowserReader));
     }
 
     #[test]
