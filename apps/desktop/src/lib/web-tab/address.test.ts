@@ -117,7 +117,9 @@ describe('the origin, plainly', () => {
 })
 
 test("a site's own picture is looked for at its root, and an address with no root has none", () => {
-  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe('https://pass.proton.me/favicon.ico')
+  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe(
+    'https://pass.proton.me/favicon.ico',
+  )
   // What a tab can hold before its page is an address, which once threw in the pane.
   expect(favicon('pass.proton.me/onboarding')).toBeNull()
   expect(favicon('about:blank')).toBeNull()

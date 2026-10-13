@@ -88,7 +88,6 @@ export const OUT_OF_THE_WAY = 20_000
  *  photographed again. */
 const SHOT_KEEPS = 400
 
-
 /** How long the page is given to say where it is before it is parked anyway. Half a
  *  second: the answer is a line of script in the page's own document, and a page that
  *  has not answered in that long is a page busy with something of its own. */

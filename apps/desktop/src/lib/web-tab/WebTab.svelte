@@ -970,13 +970,7 @@
       {#if address}
         {@const mark = siteMark(page.icon, address) ?? favicon(address)}
         {#if marked && mark}
-          <img
-            class="mark"
-            src={mark}
-            alt=""
-            draggable="false"
-            onerror={() => (marked = false)}
-          />
+          <img class="mark" src={mark} alt="" draggable="false" onerror={() => (marked = false)} />
         {/if}
         <p class="name">{page.title || plainOrigin(address)}</p>
         <p class="site">{plainOrigin(address)}</p>
