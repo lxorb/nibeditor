@@ -321,11 +321,13 @@
 
 <style>
   /* The field takes whatever the glyphs beside it leave, and never less than can be
-     read; the list hangs from it, so it is the box the list is placed against. */
+     read: in a narrow pane it is the bar that gives way, onto a second line, and not
+     the field, which went to nothing behind its own padding. The list hangs from it,
+     so it is the box the list is placed against. */
   .field {
     position: relative;
     flex: 1 1 8rem;
-    min-width: 0;
+    min-width: min(7rem, 100%);
     display: flex;
   }
 

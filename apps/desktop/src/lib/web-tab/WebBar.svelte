@@ -405,10 +405,13 @@
 
 <style>
   /* The find bar's own row, because it is the same kind of thing in the same place:
-     a row of controls between the strip and what is being read. */
+     a row of controls between the strip and what is being read. A pane too narrow
+     for the glyphs and a field that can be read puts the field on a line of its own;
+     see AddressField.svelte. */
   .webbar {
     flex: none;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-1);
     padding: var(--space-1) var(--space-2);
