@@ -468,7 +468,7 @@ def main() -> int:
             # where the app meets WebKit - it does.
             if engine != "chrome" and DRIVE.server is not None:
                 ORIGIN = DRIVE.server.origin("127.0.0.1")
-            browser = DRIVE.browser(play) if engine == "chrome" else play.webkit.launch()
+            browser = DRIVE.browser(play) if engine == "chrome" else harness.answering(play.webkit.launch())
             try:
                 drive(browser)
             finally:

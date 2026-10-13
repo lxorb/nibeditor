@@ -23,7 +23,9 @@ fn bundle_of(exe: &Path) -> Option<PathBuf> {
     let contents = macos.parent()?;
     let bundle = contents.parent()?;
     let named = |path: &Path, name: &str| path.file_name().is_some_and(|own| own == name);
-    let app = bundle.extension().is_some_and(|extension| extension == "app");
+    let app = bundle
+        .extension()
+        .is_some_and(|extension| extension == "app");
     (named(macos, "MacOS") && named(contents, "Contents") && app).then(|| bundle.to_path_buf())
 }
 
@@ -193,16 +195,18 @@ mod tests {
     fn a_copy_on_the_disk_image_or_translocated_is_stuck() {
         let image = Path::new("/Volumes/nibeditor/nibeditor.app");
         assert!(stuck_at(image, true));
-        let moved = Path::new(
-            "/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/nibeditor.app",
-        );
+        let moved =
+            Path::new("/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/nibeditor.app");
         assert!(stuck_at(moved, false));
     }
 
     #[test]
     fn a_copy_in_applications_is_not() {
         assert!(!stuck_at(Path::new("/Applications/nibeditor.app"), false));
-        assert!(!stuck_at(Path::new("/Users/a/Applications/nibeditor.app"), false));
+        assert!(!stuck_at(
+            Path::new("/Users/a/Applications/nibeditor.app"),
+            false
+        ));
     }
 
     #[test]

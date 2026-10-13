@@ -1534,8 +1534,11 @@ def needs_of(source: str) -> tuple[str, ...]:
     if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
         said = (*said, "native")
     # A DevTools session is Chromium's alone, so a drive that opens one needs it too; and
-    # so is a microphone that plays a file.
-    chromium_only = r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream"
+    # so are a microphone that plays a file and a finger made in the page, which a
+    # desktop's WebKit has no constructor for.
+    chromium_only = (
+        r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream|new Touch\("
+    )
     if "chromium" not in said and re.search(chromium_only, source):
         said = (*said, "chromium")
     return said
