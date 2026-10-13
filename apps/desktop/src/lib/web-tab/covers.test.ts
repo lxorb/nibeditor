@@ -86,6 +86,22 @@ describe("the notices row's cards", () => {
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
 
+  /** The sign-in hint in the sidebar's foot stays in the document while the sidebar is
+   *  shut, hidden with its column and still laid out over the foot of the page beside it:
+   *  a page cut round it showed an empty box where nothing was drawn. */
+  test('a layer hidden with what it stands in is no layer', () => {
+    document.body.innerHTML = `
+      <div class="hole"></div>
+      <div class="column" style="visibility: hidden"><div class="nib-bubble hint"></div></div>
+      <div class="nib-layer"></div>`
+    const hidden = document.querySelector('.hint')!
+    const drawn = document.querySelector('.nib-layer')!
+    const visible = (one: Element) => one !== hidden
+    for (const one of [hidden, drawn]) Object.assign(one, { checkVisibility: () => visible(one) })
+    const found = layersOver(document.querySelector<HTMLElement>('.hole')!)
+    expect(found.map((one) => one.node)).toEqual([drawn])
+  })
+
   test('the row is what a page watches to hear a card come or go', () => {
     const { notices } = row()
     expect(noticeRows()).toEqual([notices])

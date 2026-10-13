@@ -128,12 +128,22 @@ function boxOf(node: Element): Rect {
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
 
-/** Every layer of the app's on the window, but those inside `hole` itself - a card the
- *  pane draws in its own room is under the page by design. */
+/** Whether a layer is drawn at all. A hint in the sidebar foot stays in the document
+ *  while the sidebar is shut, hidden with the column it stands in and still laid out
+ *  over the foot of the page beside it - and a page cut round it showed an empty box
+ *  where nothing was. Not its opacity: a layer fading in starts at none, and is a layer
+ *  from its first frame. An engine with no way to ask draws it, as before. */
+function seen(node: Element): boolean {
+  if (typeof node.checkVisibility !== 'function') return true
+  return node.checkVisibility({ visibilityProperty: true })
+}
+
+/** Every layer of the app's on the window that is drawn, but those inside `hole` itself -
+ *  a card the pane draws in its own room is under the page by design. */
 export function layersOver(hole: HTMLElement): Layer[] {
   const found: Layer[] = []
   for (const node of document.querySelectorAll(`${FLOATING}, ${SCRIMS}`)) {
-    if (hole.contains(node)) continue
+    if (hole.contains(node) || !seen(node)) continue
     const scrim = node.matches(SCRIMS)
     found.push({
       box: boxOf(node),

@@ -109,8 +109,11 @@ def gone(rows: list[tuple[float, dict[int, tuple[bool, int]]]], page: int, since
     }
 
 
-def over(app: Any, hwnd: int, page: int, own: int, opening: str, closing: str, held: float = 1.6) -> dict[str, object]:
-    """A layer opened over a live page, held, and closed."""
+def over(
+    app: Any, hwnd: int, page: int, own: int, opening: str, closing: str, held: float = 1.6, after: float = 1.5
+) -> dict[str, object]:
+    """A layer opened over a live page, held, and closed: the page while it is up, and
+    the page once it has had the time to go."""
 
     with Pages(hwnd, own) as sampled:
         time.sleep(0.2)
@@ -119,8 +122,22 @@ def over(app: Any, hwnd: int, page: int, own: int, opening: str, closing: str, h
         time.sleep(held)
         ended = time.perf_counter()
         app.ask(closing)
-        time.sleep(0.8)
-    return {"said": said, **gone(sampled.rows, page, began, ended), "after": gone(sampled.rows, page, ended + 0.6, ended + 0.8)}
+        time.sleep(after)
+        done = time.perf_counter()
+    return {
+        "said": said,
+        **gone(sampled.rows, page, began, ended),
+        "after": gone(sampled.rows, page, done - 0.3, done),
+        "layers left": app.ask(LEFT),
+    }
+
+
+#: What of the app's floats on the window, by its class: what a page is still cut round.
+LEFT = """JSON.stringify([...document.querySelectorAll(
+  '.nib-layer, .nib-bubble, .nib-screen, .nib-scrim, [data-notices] > *')].map((one) => {
+    const box = one.getBoundingClientRect()
+    return [one.className, Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height), one.checkVisibility({ opacityProperty: true, visibilityProperty: true })]
+  }))"""
 
 
 def built_under(app: Any, hwnd: int, own: int, opening: str, closing: str, note: str) -> dict[str, object]:
@@ -179,18 +196,15 @@ TOAST = """(() => {
   return 'ok'
 })()"""
 
-#: A tab's card, held until it is let go by hand.
+#: A tab's card, held until it is put away.
 CARD = """(() => {
   const tab = [...document.querySelectorAll('[data-strip] .tab')].find((one) => one.textContent.includes('%s'))
   if (!tab) return 'no tab'
   tab.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
   return 'ok'
 })()"""
-CARD_GONE = """(() => {
-  for (const tab of document.querySelectorAll('[data-strip] .tab'))
-    tab.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }))
-  return 'ok'
-})()"""
+#: Put away the way a press puts it away: it is on the overlay stack while it is over a page.
+CARD_GONE = "nibApp.overlays.escape(), 'ok'"
 
 SUGGEST = """(() => {
   const field = document.querySelector('.webbar input')
@@ -299,7 +313,8 @@ def main() -> int:
         time.sleep(2)
 
         said["update notice"] = over(app, hwnd, page, own, UPDATE, UPDATE_GONE)
-        said["undo toast"] = over(app, hwnd, page, own, TOAST, "'ok'", held=2.0)
+        # The toast goes by itself, after a few seconds.
+        said["undo toast"] = over(app, hwnd, page, own, TOAST, "'ok'", held=2.0, after=6.0)
         said["a tab's hover card"] = over(app, hwnd, page, own, CARD % "Other", CARD_GONE)
         said["address suggestions"] = over(app, hwnd, page, own, SUGGEST, SUGGEST_GONE)
         said["the bar's menu"] = over(app, hwnd, page, own, MENU, MENU_GONE)
