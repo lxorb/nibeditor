@@ -653,7 +653,7 @@ mod tests {
         let auto = codex_thread(Some(Mode::Auto), None, &nib, &folder);
         assert_eq!(auto["approvalPolicy"], "never");
         assert_eq!(auto["sandbox"], "read-only");
-        assert!(auto["config"]["mcp_servers.nib.enabled_tools"].is_null());
+        assert!(auto["config"]["mcp_servers.orden.enabled_tools"].is_null());
         assert!(agent.get("model").is_none());
         let words = codex_thread(None, None, &nib, &folder);
         assert_eq!(words["config"], json!({}));
