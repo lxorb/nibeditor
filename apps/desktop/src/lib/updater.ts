@@ -139,8 +139,7 @@ export async function restartToUpdate() {
   if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
-  // Not started again on a failed install: that would be the same version, offering
-  // itself again.
+  // Not on a failed install, which would start the same version again.
   if (!(await installStaged())) return
 
   try {
@@ -161,9 +160,7 @@ export async function installStaged(): Promise<boolean> {
     await staged.install()
     return true
   } catch (error) {
-    // A failed install leaves the working version alone, and it is offered again next
-    // time; said in the log, because a Mac's copy that cannot be written to fails here
-    // on every restart and nothing else would say why.
+    // The working version stays, and is offered again; said, so a failure is seen.
     log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
     return false
   } finally {

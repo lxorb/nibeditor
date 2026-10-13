@@ -147,10 +147,8 @@ export class TypingPointer {
   /** Where the pointer was the first time it was heard while hidden. */
   private at: { x: number; y: number } | null = null
 
-  /** A move that moves: by what the engine says it moved, or by where it is now
-   *  against where it was. An engine re-reads a still pointer when the page moves
-   *  under it, which moves nothing, and WebKit has been seen to say a real move is
-   *  no movement at all, which would keep the pointer hidden until a click. */
+  /** A move that moves, by its movement or by where it is now: a still pointer is
+   *  re-read when the page moves under it, and WebKit can say a move moved nothing. */
   moved(event: PointerEvent): void {
     const went = this.at !== null && (event.clientX !== this.at.x || event.clientY !== this.at.y)
     if (event.movementX !== 0 || event.movementY !== 0 || went) {
