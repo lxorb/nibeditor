@@ -9,8 +9,7 @@
   const { version, ondismiss }: { version: string; ondismiss: () => void } = $props()
 
   let restarting = $state(false)
-  /** A Mac's copy that cannot be updated where it runs is moved to Applications first;
-   *  see updater.ts. */
+  /** Moved to Applications first where it cannot update; see app-place.ts. */
   let moving = $state(false)
   const place = import('./app-place')
   void place.then(({ stuck }) => stuck()).then((answer) => (moving = answer))
@@ -20,7 +19,6 @@
     try {
       await (moving ? (await place).moveToApplications() : restartToUpdate())
     } catch (error) {
-      // The notice stays, to be pressed again; what went wrong is the log's.
       log('error', `update: ${String(error)}`)
     }
     // Only reached if the restart failed; the app is normally gone by now.
