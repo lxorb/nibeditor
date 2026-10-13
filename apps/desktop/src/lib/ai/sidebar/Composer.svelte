@@ -40,6 +40,7 @@
   import Rewinding from '../review/Rewinding.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
+  import { grow } from '../../grow'
   import { MODES, FIRST_MODE, type Mode, modeWord } from '../modes'
 
   let field = $state<HTMLTextAreaElement>()
@@ -628,6 +629,7 @@
       <textarea
         bind:this={field}
         bind:value={chat.text}
+        use:grow={chat.text}
         data-entry
         rows="1"
         placeholder={t('Ask anything, @ to add, / for more')}

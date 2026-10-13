@@ -224,6 +224,7 @@ const style = EditorView.baseTheme({
     font: `500 10px/1.5 var(--font-ui)`,
     letterSpacing: '0.02em',
     whiteSpace: 'nowrap',
+    WebkitUserSelect: 'none',
     userSelect: 'none',
     pointerEvents: 'none',
     // Shown as the caret lands and gone on its own. `forwards` is what leaves it
