@@ -719,6 +719,7 @@ export const mr: Dictionary = {
   'out of space': 'जागा उरली नाही',
   'nibeditor {version} is ready to install.': 'nibeditor {version} इन्स्टॉलसाठी तयार आहे.',
   'Restart now': 'आता रीस्टार्ट करा',
+  'Move to Applications': 'ॲप्लिकेशन्समध्ये हलवा',
   Later: 'नंतर',
   More: 'अधिक',
   'Open notes': 'नोंदी उघडा',

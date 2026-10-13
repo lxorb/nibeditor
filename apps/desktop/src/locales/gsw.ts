@@ -719,6 +719,7 @@ export const gsw: Dictionary = {
   'out of space': 'kei Platz meh',
   'nibeditor {version} is ready to install.': 'nibeditor {version} isch parat zum Installiere.',
   'Restart now': 'Jetzt neu starte',
+  'Move to Applications': 'In „Programme“ verschiebe',
   Later: 'Spöter',
   More: 'Meh',
   'Open notes': 'Offni Notize',

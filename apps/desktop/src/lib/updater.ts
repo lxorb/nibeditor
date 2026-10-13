@@ -1,6 +1,7 @@
+import { log } from './log'
 import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, platform } from './tauri'
 import { waited } from './timing'
 
 /** The two streams of releases a machine can follow: the tagged releases, or the
@@ -138,7 +139,9 @@ export async function restartToUpdate() {
   if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
-  await installStaged()
+  // Not started again on a failed install: that would be the same version, offering
+  // itself again.
+  if (!(await installStaged())) return
 
   try {
     const { relaunch } = await import('@tauri-apps/plugin-process')
@@ -149,16 +152,42 @@ export async function restartToUpdate() {
   }
 }
 
+/** Whether this copy cannot be updated where it runs: a Mac's, started from its disk
+ *  image or from a download macOS translocated, where the installer can write nothing
+ *  and the same version would be offered on every launch. Asked once. See
+ *  src-tauri/src/app_place.rs. */
+let stuckAsked: Promise<boolean> | null = null
+
+export function stuck(): Promise<boolean> {
+  stuckAsked ??=
+    isDesktop && platform() === 'macos'
+      ? invoke<boolean>('app_stuck').catch(() => false)
+      : Promise.resolve(false)
+  return stuckAsked
+}
+
+/** Moves such a copy into Applications and starts it from there; the look it makes
+ *  there finds the update again, and installs it. What was downloaded here could only
+ *  fail, so it goes. */
+export async function moveToApplications() {
+  await discard()
+  await invoke('move_to_applications')
+}
+
 /** Runs the staged installer. Called as the app closes, so nothing is
- *  interrupted; the update is in place for the next launch. */
-export async function installStaged() {
-  if (!staged) return
+ *  interrupted; the update is in place for the next launch. Answers whether it was. */
+export async function installStaged(): Promise<boolean> {
+  if (!staged) return false
 
   try {
     await staged.install()
-  } catch {
-    // A failed install leaves the working version alone, which is the right
-    // outcome - it will be offered again next time.
+    return true
+  } catch (error) {
+    // A failed install leaves the working version alone, and it is offered again next
+    // time; said in the log, because a Mac's copy that cannot be written to fails here
+    // on every restart and nothing else would say why.
+    log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
+    return false
   } finally {
     staged = null
   }

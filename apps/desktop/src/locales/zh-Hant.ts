@@ -713,6 +713,7 @@ export const zhHant: Dictionary = {
   'out of space': '儲存空間已滿',
   'nibeditor {version} is ready to install.': 'nibeditor{version}已可安裝。',
   'Restart now': '立即重新啟動',
+  'Move to Applications': '移到「應用程式」',
   Later: '稍後',
   More: '更多',
   'Open notes': '開啟中的筆記',

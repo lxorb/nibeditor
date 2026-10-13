@@ -732,6 +732,7 @@ export const ptPT: Dictionary = {
   'out of space': 'sem espaço',
   'nibeditor {version} is ready to install.': 'O nibeditor {version} está pronto a instalar.',
   'Restart now': 'Reiniciar agora',
+  'Move to Applications': 'Mover para Aplicações',
   Later: 'Mais tarde',
   More: 'Mais',
   'Open notes': 'Notas abertas',
