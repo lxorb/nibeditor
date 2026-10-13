@@ -110,6 +110,13 @@ export const gsw: Dictionary = {
   Unsaved: 'Nöd gspeicheret',
   'Save to': 'Speichere under',
   'Reloaded with the web data of {space}': 'Mit de Webdate vo {space} neu glade',
+  Separate: 'Separat',
+  'Share this note’s web data again?': 'D Webdate vo dere Notiz wider teile?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Wo iri Siite uf däm Computer aagmäldet sind, wird glöscht.',
+  'Share again': 'Wider teile',
+  'This note keeps its own web data now': 'Die Notiz het jetzt eigeni Webdate',
+  'Back on the shared web data': 'Wider bi de gmeinsame Webdate',
   'Add a page': 'Siite hinzuefüege',
   'Add a page after this': 'Siite dernaa hinzuefüege',
   'Delete this page': 'Die Siite lösche',

@@ -110,6 +110,13 @@ export const vi: Dictionary = {
   Unsaved: 'Chưa lưu',
   'Save to': 'Lưu vào',
   'Reloaded with the web data of {space}': 'Đã tải lại bằng dữ liệu web của {space}',
+  Separate: 'Riêng',
+  'Share this note’s web data again?': 'Chia sẻ lại dữ liệu web của ghi chú này?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Những gì các trang của nó đã đăng nhập trên máy tính này sẽ bị xóa.',
+  'Share again': 'Chia sẻ lại',
+  'This note keeps its own web data now': 'Ghi chú này giờ có dữ liệu web riêng',
+  'Back on the shared web data': 'Đã quay lại dữ liệu web dùng chung',
   'Add a page': 'Thêm một trang',
   'Add a page after this': 'Thêm một trang sau trang này',
   'Delete this page': 'Xoá trang này',

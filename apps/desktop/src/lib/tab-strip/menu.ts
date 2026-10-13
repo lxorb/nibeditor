@@ -24,7 +24,7 @@ import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
 import { plural, t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
-import { bookmarkAll } from '../row-menu'
+import { bookmarkAll, webDataEntry } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
 import { shownName } from '../note-name'
 import { nameOf, withinSpace } from '../space-paths'
@@ -146,6 +146,7 @@ function pageEntries(tab: Tab): MenuEntry[] {
       disabled: url === null,
       run: () => void muting(tab.id),
     },
+    ...(tab.path === null ? [] : webDataEntry({ path: tab.path, is_dir: false })),
     DIVIDER,
   ]
 }

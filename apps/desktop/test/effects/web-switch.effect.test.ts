@@ -194,6 +194,7 @@ const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
 await Promise.all([
   import('../../src/lib/web-tab/visited'),
   import('../../src/lib/web-tab/web-data.svelte'),
+  import('../../src/lib/web-tab/merged'),
   import('../../src/lib/web-tab/keys'),
   import('../../src/lib/web-tab/downloads.svelte'),
 ])

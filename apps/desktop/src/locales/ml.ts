@@ -110,6 +110,13 @@ export const ml: Dictionary = {
   Unsaved: 'സേവ് ചെയ്തിട്ടില്ല',
   'Save to': 'ഇവിടെ സേവ് ചെയ്യുക',
   'Reloaded with the web data of {space}': '{space}-ന്റെ വെബ് ഡാറ്റ ഉപയോഗിച്ച് വീണ്ടും ലോഡ് ചെയ്തു',
+  Separate: 'വേറിട്ട്',
+  'Share this note’s web data again?': 'ഈ കുറിപ്പിന്റെ വെബ് ഡാറ്റ വീണ്ടും പങ്കിടണോ?',
+  'What its pages are signed in to on this computer is deleted.':
+    'ഈ കമ്പ്യൂട്ടറിൽ ഇതിന്റെ പേജുകൾ സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത് ഇല്ലാതാക്കും.',
+  'Share again': 'വീണ്ടും പങ്കിടുക',
+  'This note keeps its own web data now': 'ഈ കുറിപ്പ് ഇപ്പോൾ സ്വന്തം വെബ് ഡാറ്റ സൂക്ഷിക്കുന്നു',
+  'Back on the shared web data': 'പങ്കിട്ട വെബ് ഡാറ്റയിലേക്ക് തിരികെ',
   'Add a page': 'താൾ ചേർക്കുക',
   'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
   'Delete this page': 'ഈ താൾ മായ്ക്കുക',

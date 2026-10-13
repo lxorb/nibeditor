@@ -466,6 +466,7 @@ macro_rules! desktop_commands {
             downloads::web_download_cancel,
             // A web login carried between computers; see web_state.rs.
             web_state::web_state_capture,
+            web_state::web_merge,
             web_state::web_state_restore,
             web_state::web_state_session,
             web_state::web_state_inbox,

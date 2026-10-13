@@ -110,6 +110,13 @@ export const ur: Dictionary = {
   Unsaved: 'محفوظ نہیں',
   'Save to': 'یہاں محفوظ کریں',
   'Reloaded with the web data of {space}': '{space} کے ویب ڈیٹا کے ساتھ دوبارہ لوڈ ہوا',
+  Separate: 'الگ',
+  'Share this note’s web data again?': 'اس نوٹ کا ویب ڈیٹا دوبارہ شیئر کریں؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'اس کمپیوٹر پر اس کے صفحات جس میں سائن ان ہیں، وہ حذف ہو جائے گا۔',
+  'Share again': 'دوبارہ شیئر کریں',
+  'This note keeps its own web data now': 'یہ نوٹ اب اپنا ویب ڈیٹا رکھتا ہے',
+  'Back on the shared web data': 'مشترکہ ویب ڈیٹا پر واپس',
   'Add a page': 'صفحہ شامل کریں',
   'Add a page after this': 'اس کے بعد صفحہ شامل کریں',
   'Delete this page': 'یہ صفحہ حذف کریں',

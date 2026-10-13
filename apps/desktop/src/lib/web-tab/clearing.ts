@@ -2,9 +2,8 @@
  *
  *  Chrome's dialog (Ctrl+Shift+Delete), in its own words and with its own choices: a time
  *  range - the last fifteen minutes to all time - and three kinds, Browsing history,
- *  Cookies and other site data, Cached images and files. A space whose web data is kept
- *  apart (web-data.ts) adds one more, as a browser with profiles has: this space's data,
- *  or every space's.
+ *  Cookies and other site data, Cached images and files - over the store every page
+ *  shares and the own stores of the web notes kept apart that are open (#239).
  *
  *  The history is this device's and goes here: its rows over the range, the marks kept
  *  for them, and the place each note on one of those pages was left at (visited.ts,
@@ -15,7 +14,7 @@
 import { invoke } from '../tauri'
 import { placesForgotten } from './place'
 import { visited } from './visited'
-import { webData } from './web-data.svelte'
+import { ownStore, webData } from './web-data.svelte'
 
 /** Chrome's time ranges, newest first, as how far back each reaches; all time is null. */
 const RANGES = {
@@ -38,8 +37,6 @@ export interface Asked {
   history: boolean
   site: boolean
   cache: boolean
-  /** Every space's data rather than this space's. */
-  everywhere: boolean
 }
 
 /** When a range starts, in milliseconds since 1970, or nought for all time. */
@@ -58,45 +55,28 @@ function originOf(url: string): string | null {
   }
 }
 
-/** The stores and histories a clearing reaches: this space's, or every space's as well
- *  as the one they share. A space kept per site has a store for each site it has been
- *  to, which its history names. */
-export async function reach(
-  space: string | null,
-  spaces: readonly string[],
-  everywhere: boolean,
-): Promise<{ stores: (string | null)[]; books: string[] }> {
-  const asked = everywhere ? [null, ...spaces] : [space]
-  const stores = new Set<string | null>()
-  const books = new Set<string>()
-  for (const one of asked) {
-    const book = webData.history(one)
-    books.add(book)
-    stores.add(await webData.store(one, null))
-    if (webData.of(one) === 'site') {
-      for (const visit of visited.all(book)) stores.add(await webData.store(one, visit.url))
-    }
-  }
-  return { stores: [...stores], books: [...books] }
+/** The stores and the history a clearing reaches: the store every page shares, and the
+ *  own store of each web note in `apart` that keeps its web data apart, which is every
+ *  open one - Firefox clears each container too. A note kept apart that is not open keeps
+ *  its own until it is. */
+export function reach(apart: readonly (string | null)[]): {
+  stores: (string | null)[]
+  books: string[]
+} {
+  const own = apart.map((one) => ownStore(one)).filter((one) => one !== null)
+  return { stores: [null, ...new Set(own)], books: [webData.history()] }
 }
 
-/** Whether any of `spaces` keeps its web data apart, which is when the dialog asks
- *  whose data goes. */
-export function keptApart(spaces: readonly string[]): boolean {
-  return spaces.some((one) => webData.of(one) !== 'global')
-}
-
-/** Deletes what was asked, for the tab's `space` and the window's `spaces`. The engine
- *  first, while the history still says which sites the range visited - nib's own
- *  Chromium clears site by site - and the history after. */
+/** Deletes what was asked, from the shared store and the stores of the web notes kept
+ *  apart in `apart`. The engine first, while the history still says which sites the
+ *  range visited - nib's own Chromium clears site by site - and the history after. */
 export async function clearData(
   asked: Asked,
-  space: string | null,
-  spaces: readonly string[],
+  apart: readonly (string | null)[],
   now = Date.now(),
 ): Promise<void> {
   const since = sinceFor(asked.range, now)
-  const { stores, books } = await reach(space, spaces, asked.everywhere)
+  const { stores, books } = reach(apart)
 
   if (asked.site || asked.cache) {
     const sites = new Set<string>()

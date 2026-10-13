@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { withOwn } from './own-file'
 import { readShortcut, readWebloc, writeShortcut } from './shortcut'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
@@ -36,7 +37,29 @@ describe('the file a website is written as', () => {
       added: '2026-09-12T08:30:00.000Z',
       home: null,
       icon: null,
+      own: null,
     })
+  })
+
+  // #239: a web note that keeps its own web data says so in its file, so the choice moves,
+  // is renamed and syncs with the note.
+  test('says a note keeps its own web data, and reads it back', () => {
+    const written = writeShortcut('https://a.example', 'A', WHEN, null, null, '3f9a0c17e2b4d685')
+    expect(written).toContain('Nib-Data=3f9a0c17e2b4d685\r\n')
+    expect(readShortcut(written)?.own).toBe('3f9a0c17e2b4d685')
+    expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Nib-Data')
+  })
+
+  test('and reads anything else in that key as a note that shares the one store', () => {
+    for (const value of ['', 'yes', '3F9A0C17E2B4D68', '../web', '3f9a0c17e2b4d685x']) {
+      const text = `[InternetShortcut]\r\nURL=https://a.example\r\nNib-Data=${value}\r\n`
+      expect(readShortcut(text)?.own, value).toBeNull()
+    }
+    const loose = '[InternetShortcut]\nURL=https://a.example\nnib-data= 3F9A0C17E2B4D685 '
+    expect(readShortcut(loose)?.own).toBe('3f9a0c17e2b4d685')
+    expect(writeShortcut('https://a.example', 'A', WHEN, null, null, 'not an id')).not.toContain(
+      'Nib-Data',
+    )
   })
 
   // A web note is a browser tab: `URL` is the page the reading has got to, so that
@@ -138,5 +161,20 @@ describe('a shortcut a Mac wrote', () => {
     expect(readWebloc('bplist00')).toBe(null)
     expect(readWebloc('')).toBe(null)
     expect(readWebloc(null)).toBe(null)
+  })
+})
+
+describe('a web note turned apart or shared again', () => {
+  test('keeps everything the file said, its own web data aside', () => {
+    const was = writeShortcut('https://a.example/page', 'A', WHEN, 'https://a.example', 'data:x')
+    const apart = withOwn('/S/A.url', was, '3f9a0c17e2b4d685')
+    expect(readShortcut(apart)).toEqual({ ...readShortcut(was), own: '3f9a0c17e2b4d685' })
+    expect(withOwn('/S/A.url', apart, null)).toBe(was)
+  })
+
+  test('and writes nothing over a file it does not write', () => {
+    expect(withOwn('/S/A.webloc', '<plist/>', '3f9a0c17e2b4d685')).toBeNull()
+    expect(withOwn('/S/A.url', 'not a shortcut', '3f9a0c17e2b4d685')).toBeNull()
+    expect(withOwn('/S/A.url', null, null)).toBeNull()
   })
 })

@@ -110,6 +110,13 @@ export const mr: Dictionary = {
   Unsaved: 'जतन केलेले नाही',
   'Save to': 'येथे जतन करा',
   'Reloaded with the web data of {space}': '{space} च्या वेब डेटासह पुन्हा लोड केले',
+  Separate: 'वेगळा',
+  'Share this note’s web data again?': 'या नोटचा वेब डेटा पुन्हा शेअर करायचा?',
+  'What its pages are signed in to on this computer is deleted.':
+    'या संगणकावर तिची पाने जिथे साइन इन आहेत ते हटवले जाईल.',
+  'Share again': 'पुन्हा शेअर करा',
+  'This note keeps its own web data now': 'ही नोट आता स्वतःचा वेब डेटा ठेवते',
+  'Back on the shared web data': 'पुन्हा शेअर केलेल्या वेब डेटावर',
   'Add a page': 'पान जोडा',
   'Add a page after this': 'याच्या नंतर पान जोडा',
   'Delete this page': 'हे पान काढा',

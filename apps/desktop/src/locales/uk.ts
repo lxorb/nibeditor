@@ -110,6 +110,13 @@ export const uk: Dictionary = {
   Unsaved: 'Не збережено',
   'Save to': 'Зберегти в',
   'Reloaded with the web data of {space}': 'Перезавантажено з вебданими простору {space}',
+  Separate: 'Окремі',
+  'Share this note’s web data again?': 'Знову зробити вебдані цієї нотатки спільними?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Те, у що її сторінки ввійшли на цьому комп’ютері, буде видалено.',
+  'Share again': 'Знову зробити спільними',
+  'This note keeps its own web data now': 'Ця нотатка тепер має власні вебдані',
+  'Back on the shared web data': 'Знову на спільних вебданих',
   'Add a page': 'Додати сторінку',
   'Add a page after this': 'Додати сторінку після цієї',
   'Delete this page': 'Видалити цю сторінку',

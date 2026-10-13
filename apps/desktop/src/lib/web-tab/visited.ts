@@ -12,7 +12,7 @@
  *  is. The rows and what is done to them are visits.ts; what is offered from them is
  *  omnibox.ts. */
 
-import { keep, stored } from '../stored'
+import { forget as forgetStored, keep, stored } from '../stored'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
 import {
@@ -94,6 +94,13 @@ class Visited {
   /** Somebody typed their way to `url`. */
   typed(book: Book, url: string) {
     this.write(book, typedTo(this.rows(book), url, Date.now()))
+  }
+
+  /** `into` written as `rows`, and `from` forgotten: a history folded into another. */
+  fold(from: Book, into: Book, rows: readonly Visit[]) {
+    this.write(into, rows)
+    this.books.delete(from)
+    forgetStored(from)
   }
 
   /** The tab has closed. */

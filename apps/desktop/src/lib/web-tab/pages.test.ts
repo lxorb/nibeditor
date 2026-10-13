@@ -628,7 +628,7 @@ describe('where a page keeps what the site stores', () => {
     expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: true } })
   })
 
-  test('in the store every space shares, until its space keeps its own', async () => {
+  test('in the store every page shares, until its web note keeps its own', async () => {
     pages.of('a').space = 'w'
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
@@ -637,10 +637,20 @@ describe('where a page keeps what the site stores', () => {
     expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: false } })
   })
 
-  test('a choice made for the space builds its open pages again in the new store', async () => {
-    const { webData } = await import('./web-data.svelte')
-    pages.of('a').space = 'w'
-    pages.of('b').space = 'h'
+  test('a web note kept apart is built in its own store', async () => {
+    pages.of('a').own = '3f9a0c17e2b4d685'
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+
+    expect(last('web_open')).toMatchObject({
+      tab: 'a',
+      profile: { store: 'note_3f9a0c17e2b4d685', private: false },
+    })
+    pages.of('a').own = null
+  })
+
+  test('a note turned apart builds its open page again in its own store, and says so', async () => {
     for (const tab of ['a', 'b']) {
       const shown = pages.show(tab, SITE, PANE)
       ;(await asked())()
@@ -649,37 +659,36 @@ describe('where a page keeps what the site stores', () => {
     }
     calls.length = 0
 
-    webData.set('w', 'space')
-    const rebuilt = pages.restore('w')
+    const rebuilt = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
     ;(await asked())()
     await rebuilt
     await settle()
 
-    // The page in the space that chose is built again, where it was, in the space's own
-    // store; the other space's page is left alone.
+    // The note's page is built again, where it was, in its own store; the other is left.
     expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
       'a',
     ])
-    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: 'space_w' }, pane: PANE })
-    webData.set('w', 'global')
+    expect(last('web_open')).toMatchObject({
+      tab: 'a',
+      profile: { store: 'note_3f9a0c17e2b4d685' },
+      pane: PANE,
+    })
+    expect(pages.of('a').notice).toBe('kept apart')
+    pages.of('a').own = null
   })
 
-  test('a choice that leaves a page in the store it was built in loads nothing again', async () => {
-    const { webData } = await import('./web-data.svelte')
-    webData.set('w', 'space')
-    pages.of('a').space = 'w'
+  test('a rehouse that leaves a page in the store it was built in loads nothing again', async () => {
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
     await shown
     calls.length = 0
 
-    // What an agent writing the same choice again does; see agents/workspace/settings.ts.
-    await pages.restore('w')
+    await pages.rehouse('a', null, 'nothing moved')
     await settle()
 
     expect(commands()).not.toContain('web_close')
     expect(pages.of('a').live).toBe(true)
-    webData.set('w', 'global')
+    expect(pages.of('a').notice).toBeNull()
   })
 })
 

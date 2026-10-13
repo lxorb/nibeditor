@@ -110,6 +110,13 @@ export const gu: Dictionary = {
   Unsaved: 'સાચવેલ નથી',
   'Save to': 'અહીં સાચવો',
   'Reloaded with the web data of {space}': '{space}ના વેબ ડેટા સાથે ફરી લોડ થયું',
+  Separate: 'અલગ',
+  'Share this note’s web data again?': 'આ નોંધનો વેબ ડેટા ફરી શેર કરવો છે?',
+  'What its pages are signed in to on this computer is deleted.':
+    'આ કમ્પ્યુટર પર તેનાં પેજ જેમાં સાઇન ઇન છે તે કાઢી નખાશે.',
+  'Share again': 'ફરી શેર કરો',
+  'This note keeps its own web data now': 'આ નોંધ હવે પોતાનો વેબ ડેટા રાખે છે',
+  'Back on the shared web data': 'ફરી શેર કરેલા વેબ ડેટા પર',
   'Add a page': 'પાનું ઉમેરો',
   'Add a page after this': 'આ પછી પાનું ઉમેરો',
   'Delete this page': 'આ પાનું કાઢો',

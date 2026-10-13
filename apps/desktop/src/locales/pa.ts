@@ -110,6 +110,13 @@ export const pa: Dictionary = {
   Unsaved: 'ਸੇਵ ਨਹੀਂ ਹੋਇਆ',
   'Save to': 'ਇੱਥੇ ਸੇਵ ਕਰੋ',
   'Reloaded with the web data of {space}': '{space} ਦੇ ਵੈੱਬ ਡੇਟਾ ਨਾਲ ਮੁੜ ਲੋਡ ਹੋਇਆ',
+  Separate: 'ਵੱਖਰਾ',
+  'Share this note’s web data again?': 'ਕੀ ਇਸ ਨੋਟ ਦਾ ਵੈੱਬ ਡਾਟਾ ਫਿਰ ਸਾਂਝਾ ਕਰਨਾ ਹੈ?',
+  'What its pages are signed in to on this computer is deleted.':
+    "ਇਸ ਕੰਪਿਊਟਰ 'ਤੇ ਇਸਦੇ ਪੰਨੇ ਜਿਸ ਵਿੱਚ ਸਾਈਨ ਇਨ ਹਨ, ਉਹ ਮਿਟਾ ਦਿੱਤਾ ਜਾਵੇਗਾ।",
+  'Share again': 'ਫਿਰ ਸਾਂਝਾ ਕਰੋ',
+  'This note keeps its own web data now': 'ਇਹ ਨੋਟ ਹੁਣ ਆਪਣਾ ਵੈੱਬ ਡਾਟਾ ਰੱਖਦਾ ਹੈ',
+  'Back on the shared web data': "ਸਾਂਝੇ ਵੈੱਬ ਡਾਟੇ 'ਤੇ ਵਾਪਸ",
   'Add a page': 'ਸਫ਼ਾ ਜੋੜੋ',
   'Add a page after this': 'ਇਸ ਤੋਂ ਬਾਅਦ ਸਫ਼ਾ ਜੋੜੋ',
   'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',

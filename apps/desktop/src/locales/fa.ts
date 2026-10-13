@@ -110,6 +110,13 @@ export const fa: Dictionary = {
   Unsaved: 'ذخیره‌نشده',
   'Save to': 'ذخیره در',
   'Reloaded with the web data of {space}': 'با داده‌های وب {space} دوباره بارگذاری شد',
+  Separate: 'جداگانه',
+  'Share this note’s web data again?': 'داده‌های وب این یادداشت دوباره مشترک شود؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'آنچه صفحه‌هایش در این رایانه به آن وارد شده‌اند حذف می‌شود.',
+  'Share again': 'اشتراک دوباره',
+  'This note keeps its own web data now': 'این یادداشت اکنون داده‌های وب خودش را نگه می‌دارد',
+  'Back on the shared web data': 'بازگشت به داده‌های وب مشترک',
   'Add a page': 'افزودن صفحه',
   'Add a page after this': 'افزودن صفحه پس از این',
   'Delete this page': 'حذف این صفحه',

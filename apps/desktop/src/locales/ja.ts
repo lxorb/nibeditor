@@ -110,6 +110,13 @@ export const ja: Dictionary = {
   Unsaved: '未保存',
   'Save to': '保存先',
   'Reloaded with the web data of {space}': '{space} のウェブデータで再読み込みしました',
+  Separate: '個別',
+  'Share this note’s web data again?': 'このノートのウェブデータを再び共有しますか？',
+  'What its pages are signed in to on this computer is deleted.':
+    'このコンピュータでこのノートのページがサインインしている情報は削除されます。',
+  'Share again': '再び共有',
+  'This note keeps its own web data now': 'このノートは独自のウェブデータを持つようになりました',
+  'Back on the shared web data': '共有のウェブデータに戻りました',
   'Add a page': 'ページを追加',
   'Add a page after this': 'この後にページを追加',
   'Delete this page': 'このページを削除',

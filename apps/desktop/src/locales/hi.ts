@@ -110,6 +110,13 @@ export const hi: Dictionary = {
   Unsaved: 'सहेजा नहीं गया',
   'Save to': 'यहाँ सहेजें',
   'Reloaded with the web data of {space}': '{space} के वेब डेटा के साथ फिर से लोड हुआ',
+  Separate: 'अलग',
+  'Share this note’s web data again?': 'इस नोट का वेब डेटा फिर से साझा करें?',
+  'What its pages are signed in to on this computer is deleted.':
+    'इस कंप्यूटर पर इसके पेज जिनमें साइन इन हैं, वह हटा दिया जाएगा।',
+  'Share again': 'फिर से साझा करें',
+  'This note keeps its own web data now': 'यह नोट अब अपना वेब डेटा रखता है',
+  'Back on the shared web data': 'साझा वेब डेटा पर वापस',
   'Add a page': 'पृष्ठ जोड़ें',
   'Add a page after this': 'इसके बाद पृष्ठ जोड़ें',
   'Delete this page': 'यह पृष्ठ हटाएँ',

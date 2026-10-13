@@ -13,7 +13,6 @@
 import { canWriteAt } from '../sharing.svelte'
 import { moveHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
-import { pages } from '../web-tab/pages.svelte'
 import type { Tab } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
 import { ownerOf } from './sets'
@@ -33,13 +32,11 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   const files = new Map<string, boolean>()
   for (const tab of tabs) {
     const how = carried(movingOf(tab), ws.spaces)
-    const was = tab.kind === 'web' ? pages.of(tab.id).space : null
     if (how === 'file' && tab.path !== null && ownerOf(tab.path, null, ws.spaces) !== space) {
       if (!(await fileMoved(tab.path, target.root, files))) continue
     } else if (how === 'home') {
       homed(tab, space)
     }
-    if (how !== 'tab' && tab.kind === 'web') void rehomed(tab, space, target.name, was)
     // A file that moved takes every view of it along: a second pane on the note is the
     // note, which is the other space's now.
     const views = how === 'file' ? ws.tabs.filter((one) => one.note === tab.note) : [tab]
@@ -77,12 +74,4 @@ function homed(tab: Tab, space: string) {
     moveHistory({ space: tab.note.home, key }, { space, key })
   }
   tab.note.home = space
-}
-
-/** A page in the space's web data from now on, built again there where that is another
- *  store than the one it was built in; see rehome.ts. Chrome keeps a page alive between
- *  two windows of one profile, and so does this between two spaces of one store. */
-async function rehomed(tab: Tab, space: string, name: string, was: string | null) {
-  const { rehome } = await import('../web-tab/rehome')
-  await rehome(tab.id, space, name, was)
 }

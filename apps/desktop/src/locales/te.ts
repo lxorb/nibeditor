@@ -110,6 +110,13 @@ export const te: Dictionary = {
   Unsaved: 'సేవ్ కాలేదు',
   'Save to': 'ఇక్కడ సేవ్ చేయి',
   'Reloaded with the web data of {space}': '{space} వెబ్ డేటాతో మళ్లీ లోడ్ అయింది',
+  Separate: 'వేరుగా',
+  'Share this note’s web data again?': 'ఈ నోట్ వెబ్ డేటాను మళ్లీ షేర్ చేయాలా?',
+  'What its pages are signed in to on this computer is deleted.':
+    'ఈ కంప్యూటర్‌లో దీని పేజీలు సైన్ ఇన్ అయి ఉన్నవి తొలగించబడతాయి.',
+  'Share again': 'మళ్లీ షేర్ చేయండి',
+  'This note keeps its own web data now': 'ఈ నోట్ ఇప్పుడు సొంత వెబ్ డేటాను ఉంచుకుంటుంది',
+  'Back on the shared web data': 'షేర్ చేసిన వెబ్ డేటాకు తిరిగి',
   'Add a page': 'పేజీ చేర్చు',
   'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
   'Delete this page': 'ఈ పేజీ తొలగించు',

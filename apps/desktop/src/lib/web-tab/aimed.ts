@@ -26,7 +26,7 @@ export async function aimed(
   if (was?.url === url) return
 
   const title = was?.title ?? shownName(nameOf(tab.path))
-  const content = writeShortcut(url, title, new Date())
+  const content = writeShortcut(url, title, new Date(), null, null, was?.own)
   tab.note.replace(content, false)
 
   await writeFile(tab.path, content).catch(() => undefined)

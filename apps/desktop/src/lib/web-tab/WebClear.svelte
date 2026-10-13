@@ -3,8 +3,8 @@
    *
    *  Chrome's choices in Chrome's words - a time range, Browsing history, Cookies and
    *  other site data, Cached images and files - and Chrome's default: the last hour, all
-   *  three. A space that keeps its web data apart is asked one thing more, whose data,
-   *  the way a browser with profiles clears one profile. The browser build has no engine
+   *  three, over the web data every page shares and that of each web note kept apart
+   *  that is open, as Firefox clears every container. The browser build has no engine
    *  of its own behind its pages, so it offers the history and nothing it cannot clear.
    *  What goes and how is clearing.ts.
    *
@@ -16,17 +16,14 @@
   import { message, t } from '../i18n.svelte'
   import { isDesktop } from '../tauri'
   import { viewport } from '../viewport.svelte'
-  import { clearData, DEFAULT_RANGE, keptApart, type Range } from './clearing'
+  import { clearData, DEFAULT_RANGE, type Range } from './clearing'
 
   const {
-    space,
-    spaces,
+    apart,
     onclose,
   }: {
-    /** The space of the tab that asked. */
-    space: string | null
-    /** Every space this window knows. */
-    spaces: readonly string[]
+    /** The web notes kept apart that are open, by the ids their stores are named by. */
+    apart: readonly (string | null)[]
     onclose: () => void
   } = $props()
 
@@ -34,7 +31,6 @@
   let history = $state(true)
   let site = $state(isDesktop)
   let cache = $state(isDesktop)
-  let everywhere = $state(false)
   let busy = $state(false)
   let wrong = $state<string | null>(null)
 
@@ -47,7 +43,6 @@
     { value: 'all', label: () => t('All time') },
   ]
 
-  const apart = $derived(keptApart(spaces))
   const kinds = $derived([
     { label: t('Browsing history'), on: history, set: (on: boolean) => (history = on) },
     ...(isDesktop
@@ -73,7 +68,7 @@
     busy = true
     wrong = null
     try {
-      await clearData({ range, history, site, cache, everywhere }, space, spaces)
+      await clearData({ range, history, site, cache }, apart)
       onclose()
     } catch (error) {
       wrong = message(error, 'the data could not be deleted')
@@ -103,23 +98,6 @@
           />
         </div>
       </div>
-      {#if apart}
-        <div class="row">
-          <span class="name">{t('Spaces')}</span>
-          <div class="pick">
-            <Select
-              value={everywhere ? 'all' : 'here'}
-              options={[
-                { value: 'here', label: t('This space') },
-                { value: 'all', label: t('All spaces') },
-              ]}
-              onchange={(value: string) => (everywhere = value === 'all')}
-              label={t('Spaces')}
-              plain={viewport.touch}
-            />
-          </div>
-        </div>
-      {/if}
     </div>
 
     <div class="card">

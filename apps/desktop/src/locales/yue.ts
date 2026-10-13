@@ -110,6 +110,13 @@ export const yue: Dictionary = {
   Unsaved: '未儲存',
   'Save to': '儲存到',
   'Reloaded with the web data of {space}': '已用 {space} 嘅網頁資料重新載入',
+  Separate: '獨立',
+  'Share this note’s web data again?': '再次共用呢份筆記嘅網絡數據？',
+  'What its pages are signed in to on this computer is deleted.':
+    '呢部電腦上佢啲頁面登入咗嘅資料會被刪除。',
+  'Share again': '再次共用',
+  'This note keeps its own web data now': '呢份筆記而家有自己嘅網絡數據',
+  'Back on the shared web data': '返返去共用嘅網絡數據',
   'Add a page': '加一頁',
   'Add a page after this': '喺呢頁之後加一頁',
   'Delete this page': '刪除呢頁',

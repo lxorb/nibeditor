@@ -110,6 +110,13 @@ export const ta: Dictionary = {
   Unsaved: 'சேமிக்கப்படவில்லை',
   'Save to': 'இங்கே சேமி',
   'Reloaded with the web data of {space}': '{space} இன் வலைத் தரவுடன் மீண்டும் ஏற்றப்பட்டது',
+  Separate: 'தனி',
+  'Share this note’s web data again?': 'இந்தக் குறிப்பின் வலைத் தரவை மீண்டும் பகிரவா?',
+  'What its pages are signed in to on this computer is deleted.':
+    'இந்தக் கணினியில் அதன் பக்கங்கள் உள்நுழைந்துள்ளவை நீக்கப்படும்.',
+  'Share again': 'மீண்டும் பகிர்',
+  'This note keeps its own web data now': 'இந்தக் குறிப்பு இப்போது தனக்கென வலைத் தரவை வைத்துள்ளது',
+  'Back on the shared web data': 'பகிரப்பட்ட வலைத் தரவுக்குத் திரும்பியது',
   'Add a page': 'பக்கம் சேர்',
   'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',

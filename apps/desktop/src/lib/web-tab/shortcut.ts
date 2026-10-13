@@ -54,6 +54,10 @@ const TITLE_KEY = 'title'
 const ADDED_KEY = 'nib-added'
 const HOME_KEY = 'nib-home'
 const ICON_KEY = 'nib-icon'
+const DATA_KEY = 'nib-data'
+
+/** What a web note's own web data is named by: sixteen lower case hex digits. */
+const OWN = /^[0-9a-f]{16}$/
 
 /** What a shortcut file says. */
 export interface Shortcut {
@@ -92,6 +96,9 @@ export interface Shortcut {
    *  is next open. It is here so that the tab strip and the file list have the site's
    *  mark before the page has loaded and on a machine that has never opened it. */
   icon: string | null
+  /** The id of the note's own web data (#239; web-data.svelte.ts), or null for the
+   *  store every page shares. In the file, so it moves and syncs with the note. */
+  own: string | null
 }
 
 /** A shortcut file, from its parts.
@@ -105,6 +112,7 @@ export function writeShortcut(
   when: Date,
   home?: string | null,
   icon?: string | null,
+  own?: string | null,
 ): string {
   const rows = [
     `URL=${oneLine(url)}`,
@@ -114,6 +122,7 @@ export function writeShortcut(
 
   if (home && home !== url) rows.push(`Nib-Home=${oneLine(home)}`)
   if (icon) rows.push(`Nib-Icon=${oneLine(icon)}`)
+  if (own && OWN.test(own)) rows.push(`Nib-Data=${own}`)
 
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
@@ -170,7 +179,14 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
     added: nothing(said.get(ADDED_KEY)),
     home: nothing(said.get(HOME_KEY)),
     icon: nothing(said.get(ICON_KEY)),
+    own: ownOf(said.get(DATA_KEY)),
   }
+}
+
+/** The id in `Nib-Data`, or null for anything that is not one. */
+function ownOf(value: string | undefined): string | null {
+  const said = value?.trim().toLowerCase() ?? ''
+  return OWN.test(said) ? said : null
 }
 
 /** A value that says nothing, as null. */
@@ -189,7 +205,7 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
   if (!/\.webloc$/i.test(path.trim())) return readShortcut(text)
 
   const url = readWebloc(text)
-  return url === null ? null : { url, title: null, added: null, home: null, icon: null }
+  return url === null ? null : { url, title: null, added: null, home: null, icon: null, own: null }
 }
 
 /** The address in a macOS `.webloc`, or null.

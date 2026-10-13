@@ -32,6 +32,7 @@ describe('two copies of a web note', () => {
       added: '2026-09-01T00:00:00.000Z',
       home: 'https://docs.dev/',
       icon: 'data:older',
+      own: null,
     })
   })
 

@@ -66,6 +66,7 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
+  import { readWebFile } from './shortcut'
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
@@ -332,10 +333,10 @@
     if (said === told && page.live) return
 
     told = said
-    // Which space the tab is in, which decides the store its page is built in; said with
-    // the page rather than in an effect of its own, because a tab opened by hand asks for
-    // its page in the breath it mounts. See web-data.ts.
+    // Which space the tab is in, and before its first page whether its note keeps its own
+    // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
+    if (!page.live) page.own = apart
     void pages.show(tab.id, address, box, visible, { cut, frame })
   }
 
@@ -370,7 +371,22 @@
    *  wherever it was opened from, and for a tab with no file the space it was opened
    *  in, kept across a switch to another. See `spaceOf` in workspace.svelte.ts. */
   const space = $derived(workspace.spaceOf(tab.note))
-  const book = $derived(webData.history(space))
+  const book = webData.history()
+
+  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
+  const apart = $derived(tab.path !== null ? (readWebFile(tab.path, tab.doc)?.own ?? null) : null)
+
+  // Turned on or off, here or on another computer, a running page moves store.
+  $effect(() => {
+    const now = apart
+    untrack(() => {
+      if (page.own === now || !page.live) return
+      const said = now
+        ? t('This note keeps its own web data now')
+        : t('Back on the shared web data')
+      void pages.rehouse(tab.id, now, said)
+    })
+  })
 
   onMount(() => {
     // The page is the last thing the launch does. Everything below is watching for the
@@ -453,13 +469,13 @@
     }
   })
 
-  // The line that the page was built again in another space's web data, for four seconds
-  // of being seen: a tab moved out of sight is told when it is next looked at. See rehome.ts.
+  // The line that the page was built again in another store, for four seconds of being
+  // seen: a tab out of sight is told when it is next looked at. See `rehouse`.
   $effect(() => {
-    const said = page.rehomed
+    const said = page.notice
     if (said === null) return
     const gone = setTimeout(() => {
-      if (page.rehomed === said) page.rehomed = null
+      if (page.notice === said) page.notice = null
     }, 4000)
     return () => clearTimeout(gone)
   })
@@ -825,11 +841,10 @@
 
     <!-- A computer new to the account, waiting for one that has the web logins to let it
          have them: which one, and the six digits both screens show. -->
-    <!-- Saved into a space that keeps its web data apart: built again there, which may
-         have signed the site out, so this says so for a moment. See `rehome`. -->
-    {#if page.rehomed !== null}
+    <!-- Built again in another store, which may have signed the site out. -->
+    {#if page.notice !== null}
       <p class="waiting" transition:fade={{ duration: dur(140) }}>
-        {t('Reloaded with the web data of {space}', { space: page.rehomed })}
+        {page.notice}
       </p>
     {/if}
     {#if pages.waiting}
@@ -896,11 +911,7 @@
        own layer. See WebClear.svelte. -->
   {#if clearingAsked.tab === tab.id}
     {#await import('./WebClear.svelte') then clear}
-      <clear.default
-        {space}
-        spaces={workspace.spaces.map((one) => one.id)}
-        onclose={() => clearingAsked.close()}
-      />
+      <clear.default apart={pages.apart()} onclose={() => clearingAsked.close()} />
     {/await}
   {/if}
 

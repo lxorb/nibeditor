@@ -53,6 +53,8 @@ pub(crate) mod cookies;
 #[cfg(not(feature = "cef"))]
 mod isolated;
 #[cfg(not(feature = "cef"))]
+mod merge;
+#[cfg(not(feature = "cef"))]
 mod restore;
 #[cfg(not(feature = "cef"))]
 mod restore_view;
@@ -233,6 +235,54 @@ pub fn web_state_wants(
     let site = site_of(&site)?;
     let path = folders::manifest_at(webview.app_handle(), &manifest_path)?;
     restore::chunks_wanted(&Keychain::of(webview.app_handle()), label, site, &path)
+}
+
+/// Folds the store `from` - a space's own, or one of its sites' - into the store every
+/// page shares: its cookies one by one, and the storage of each of `origins` the shared
+/// store holds none of. Leaves `from` as it was. See `web_state/merge.rs`.
+#[cfg(not(feature = "cef"))]
+#[tauri::command]
+pub async fn web_merge(
+    webview: Webview,
+    from: String,
+    origins: Vec<String>,
+) -> Result<merge::Merged, String> {
+    ours(&webview)?;
+    let Some(from) = crate::web_stores::named(Some(&from))? else {
+        return Err("the shared store is merged into nothing".to_owned());
+    };
+    let origins: Vec<String> = origins
+        .into_iter()
+        .filter(|one| one.starts_with("https://") || one.starts_with("http://"))
+        .collect();
+    // Which store was used last, for two copies of a cookie neither of which ends. A store
+    // that is not a folder (a Mac's) has nothing to say, and the space's own is taken as
+    // the one used for its sites.
+    let used = crate::engine::root(webview.app_handle())
+        .ok()
+        .map(|global| {
+            let store = global
+                .parent()
+                .map(|config| config.join(crate::web_stores::STORES).join(from));
+            (
+                store.as_deref().and_then(merge::last_used),
+                merge::last_used(&global),
+            )
+        });
+    let from_used_last = match used {
+        Some((Some(store), Some(global))) => store >= global,
+        _ => true,
+    };
+    merge::merge(&webview, from, &origins, from_used_last).await
+}
+
+/// See the system engine's `web_merge`. nib's own Chromium keeps every store as a
+/// profile of its own, which the system engines' hidden pages cannot reach; a space's
+/// logins there stay in its profile.
+#[cfg(feature = "cef")]
+#[tauri::command(async)]
+pub fn web_merge() -> Result<(), String> {
+    Err(NOT_HERE.to_owned())
 }
 
 /// What a capture and a restore say on nib's own Chromium, which has no door to them

@@ -483,7 +483,6 @@ describe('another space, without switching', () => {
       ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
       ['create_folder', { space: 'Home', path: 'Drinks' }],
       ['trash_file', { space: 'Home', path: 'Recipes.md' }],
-      ['read_setting', { space: 'Home', key: 'web_data' }],
     ]
     for (const [verb, args] of calls) {
       expect(await call(verb, args), verb).toMatchObject({ ok: true, status: 'ok' })

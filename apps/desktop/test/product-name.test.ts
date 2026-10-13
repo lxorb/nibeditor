@@ -31,7 +31,7 @@ const OLD_NAME = /(?<![A-Za-z])Nib(?![A-Za-z])/g
 function identifier(text: string, at: number): boolean {
   const before = text[at - 1] ?? ''
   const after = text.slice(at + 3)
-  return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon)\b)/.test(after)
+  return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data)\b)/.test(after)
 }
 
 /** Strings that say Nib because they have to, by the file that holds them. */
@@ -194,6 +194,7 @@ describe('the name a reader sees', () => {
     expect(oldNames('C:\\Users\\a\\AppData\\Local\\Nib\\nib.exe')).toEqual([])
     expect(oldNames('/Applications/Nib.app')).toEqual([])
     expect(oldNames('Nib-Icon=https://a.example/favicon.ico')).toEqual([])
+    expect(oldNames('Nib-Data=3f9a0c17e2b4d685')).toEqual([])
 
     expect(oldNames('Welcome to Nib')).toEqual([11])
     expect(oldNames('Nib-E-Mail')).toEqual([0])

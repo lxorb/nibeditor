@@ -110,6 +110,13 @@ export const ha: Dictionary = {
   Unsaved: 'Ba a ajiye ba',
   'Save to': 'Ajiye a',
   'Reloaded with the web data of {space}': 'An sake lodawa da bayanan yanar gizo na {space}',
+  Separate: 'Daban',
+  'Share this note’s web data again?': 'A sake raba bayanan yanar gizo na wannan bayani?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Abin da shafukansa suka shiga a wannan kwamfuta za a goge shi.',
+  'Share again': 'Sake raba',
+  'This note keeps its own web data now': 'Wannan bayani yanzu yana da nasa bayanan yanar gizo',
+  'Back on the shared web data': 'An koma kan bayanan yanar gizo da aka raba',
   'Add a page': 'Ƙara shafi',
   'Add a page after this': 'Ƙara shafi bayan wannan',
   'Delete this page': 'Share wannan shafi',

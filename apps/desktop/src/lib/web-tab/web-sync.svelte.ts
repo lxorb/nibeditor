@@ -11,7 +11,6 @@
 import { mount, untrack, unmount } from 'svelte'
 import { account } from '../account.svelte'
 import { agentMarks } from '../agent-marks.svelte'
-import { request } from '../api'
 import { log } from '../log'
 import { handsBack } from '../parting'
 import { hub } from '../sync2/hub.svelte'
@@ -120,26 +119,6 @@ async function begin(): Promise<void> {
       )
       return () => void unmount(bubble, { outro: true })
     })
-
-    // Which store each space's pages go in is the account's now; a space whose store
-    // changed has its open pages built again in the new one.
-    $effect(() => {
-      const spaces = account.spaces
-      untrack(() => {
-        for (const space of webData.follow(spaces, writeStoreUp)) void pages.restore(space)
-      })
-    })
-  })
-}
-
-/** A space's store choice, written to the account. */
-async function writeStoreUp(space: string, choice: string): Promise<void> {
-  const token = account.accountToken
-  if (!token) return
-  await request(`/v2/spaces/${encodeURIComponent(space)}/web-store`, {
-    method: 'PUT',
-    token,
-    body: { store: choice },
   })
 }
 
@@ -192,7 +171,9 @@ function leaseWorld(approval: Approval): LeaseWorld {
     if (!host) return null
     const { getDomain } = await import('tldts')
     return {
-      store: await webData.store(page.space, page.url),
+      // The shared store: a lease carries the logins every page shares, and a web note
+      // that keeps its own is not one a lease reaches (#239).
+      store: await webData.store(null),
       site: siteOf(host, (one) => getDomain(one, { allowPrivateDomains: true })),
     }
   }

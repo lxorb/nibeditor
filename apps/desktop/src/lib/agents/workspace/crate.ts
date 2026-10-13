@@ -14,14 +14,15 @@ import type { StoreSaid } from '../verbs'
 import { placeFor } from './spaces'
 import { lendTab, readerTabs } from './tabs'
 
-/** Which store the reader's tabs of a space use for an address, as the space's own
- *  choice makes it (web-tab/web-data.svelte.ts); the open space when none is named. */
+/** Which store the reader's tabs of a space use for an address: the one every page
+ *  shares, since a space no longer keeps one of its own (#239, web-tab/web-data.svelte.ts).
+ *  A web note that keeps its own web data is the note's, and no address reaches it. The
+ *  space is still answered, the open one when none is named. */
 async function storeFor(args: Said): Promise<StoreSaid> {
-  const url = said(args, 'url') ?? ''
   const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
   const { webData } = await import('../../web-tab/web-data.svelte')
 
-  return { space: place.space.name, store: await webData.store(place.space.id, url) }
+  return { space: place.space.name, store: await webData.store(null) }
 }
 
 /** A page's HTML as the markdown a clip of it would say: a snapshot the clip's reader

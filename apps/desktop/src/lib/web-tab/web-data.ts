@@ -1,22 +1,14 @@
-/** Where a space keeps what websites store: cookies, logins, `localStorage`, caches.
+/** The names of the stores a space kept its web data in, when a space could (2026-09-27 to
+ *  2026-10-13), and what a site is.
  *
- *  Emil, 2026-09-27: *"there should be a setting for a space where you can set on which
- *  granularity to save the website data. either global (default) which just uses the
- *  global cookies and data store of nib or per space which saves it per space or per
- *  site which makes it separate for each site in this space."*
- *
- *  Three answers, and the first is what every space has always had:
- *
- *  - **global** - the one store every space shares. Signed in once, signed in everywhere.
- *  - **space** - a store of this space's own, so a work space and a home space can be
- *    signed in to the same site as two different people.
- *  - **site** - within this space, a store per site, so no site sees what another one
- *    left behind.
- *
- *  This file names the stores; the crate makes them (src-tauri/src/web_stores.rs). A
- *  name is the whole of a store's identity, so a name has to come out the same on every
- *  launch - which is why it is made of the space's id and never of its name or folder,
- *  both of which a rename changes. Pure, so the naming is tested without a window. */
+ *  A space chose global (the one store every space shares), space (a store of its own,
+ *  `space_<id>`) or site (a store per site within it, `site_<id>_<site>`). The choice is
+ *  gone (#239): every page shares one store and a web note may keep its own
+ *  (web-data.svelte.ts). The names stay, because the stores a space kept are found by
+ *  them to be merged into the shared one (merged.ts), and the crate still takes them
+ *  (src-tauri/src/web_stores.rs). A name was made of the space's id and never of its name
+ *  or folder, both of which a rename changes. Pure, so the naming is tested without a
+ *  window. */
 
 /** How far apart a space keeps what websites store. */
 export type WebData = 'global' | 'space' | 'site'
@@ -88,13 +80,4 @@ export function storeName(choice: WebData, space: string, site: string | null): 
   if (choice === 'space' || !site) return `space_${id}`
 
   return `site_${id}_${site.toLowerCase().replace(UNSAFE, '-')}`.slice(0, LONGEST)
-}
-
-/** Where the address field's history of a space is kept: the one list for a space
- *  that shares the global store, a list of its own for one that keeps its data apart.
- *  A space that signs in apart and then offered the other spaces' pages as you typed
- *  would be keeping its cookies apart and telling everything else. A space kept per site
- *  keeps one list for the space, because the list is the space's and not a site's. */
-export function historyKey(choice: WebData, space: string | null): string {
-  return choice === 'global' || !space ? 'nib:web-visits' : `nib:web-visits:${space}`
 }

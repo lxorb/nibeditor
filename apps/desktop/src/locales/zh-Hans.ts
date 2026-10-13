@@ -110,6 +110,13 @@ export const zhHans: Dictionary = {
   Unsaved: '未保存',
   'Save to': '保存到',
   'Reloaded with the web data of {space}': '已使用 {space} 的网页数据重新加载',
+  Separate: '独立',
+  'Share this note’s web data again?': '再次共享这条笔记的网页数据？',
+  'What its pages are signed in to on this computer is deleted.':
+    '此电脑上其页面已登录的内容将被删除。',
+  'Share again': '再次共享',
+  'This note keeps its own web data now': '这条笔记现在有自己的网页数据',
+  'Back on the shared web data': '已回到共享的网页数据',
   'Add a page': '添加一页',
   'Add a page after this': '在此页后添加一页',
   'Delete this page': '删除此页',

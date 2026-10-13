@@ -110,6 +110,13 @@ export const tr: Dictionary = {
   Unsaved: 'Kaydedilmedi',
   'Save to': 'Şuraya kaydet',
   'Reloaded with the web data of {space}': '{space} alanının web verileriyle yeniden yüklendi',
+  Separate: 'Ayrı',
+  'Share this note’s web data again?': 'Bu notun web verileri yeniden paylaşılsın mı?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Sayfalarının bu bilgisayarda oturum açtığı her şey silinir.',
+  'Share again': 'Yeniden paylaş',
+  'This note keeps its own web data now': 'Bu not artık kendi web verilerini tutuyor',
+  'Back on the shared web data': 'Yeniden paylaşılan web verilerinde',
   'Add a page': 'Sayfa ekle',
   'Add a page after this': 'Bundan sonra sayfa ekle',
   'Delete this page': 'Bu sayfayı sil',

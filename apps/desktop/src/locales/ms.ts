@@ -110,6 +110,13 @@ export const ms: Dictionary = {
   Unsaved: 'Belum disimpan',
   'Save to': 'Simpan ke',
   'Reloaded with the web data of {space}': 'Dimuat semula dengan data web {space}',
+  Separate: 'Berasingan',
+  'Share this note’s web data again?': 'Kongsi semula data web nota ini?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Perkara yang halamannya telah log masuk pada komputer ini akan dipadamkan.',
+  'Share again': 'Kongsi semula',
+  'This note keeps its own web data now': 'Nota ini kini menyimpan data webnya sendiri',
+  'Back on the shared web data': 'Kembali pada data web yang dikongsi',
   'Add a page': 'Tambah halaman',
   'Add a page after this': 'Tambah halaman selepas ini',
   'Delete this page': 'Hapuskan halaman ini',

@@ -110,6 +110,13 @@ export const id: Dictionary = {
   Unsaved: 'Belum disimpan',
   'Save to': 'Simpan ke',
   'Reloaded with the web data of {space}': 'Dimuat ulang dengan data web {space}',
+  Separate: 'Terpisah',
+  'Share this note’s web data again?': 'Bagikan lagi data web catatan ini?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Tempat halamannya masuk di komputer ini akan dihapus.',
+  'Share again': 'Bagikan lagi',
+  'This note keeps its own web data now': 'Catatan ini sekarang punya data web sendiri',
+  'Back on the shared web data': 'Kembali ke data web bersama',
   'Add a page': 'Tambah halaman',
   'Add a page after this': 'Tambah halaman setelah ini',
   'Delete this page': 'Hapus halaman ini',

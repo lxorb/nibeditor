@@ -98,7 +98,7 @@ them there rather than keeping a second record.
 ### A space's own tabs
 
 **A space shares the window's tabs or keeps its own: Tabs, Global or Space, in the space's
-menu under Web data**, the same row built the same way with the same two words. Emil,
+menu**, built the way a web note's Web data row is, with the same word for the shared one. Emil,
 2026-10-01: *"there should be an option whether the tabs are global or only for the space.
 Only for the space means the whole open configuration is saved for that space, and it
 changes automatically when you switch to another space."* Every space is Global until
@@ -162,12 +162,9 @@ terminal tabs that you can't just close and reopen without losing progress)."*
   no file is given the other space as its home: saved there, searched there, a terminal's
   last lines kept under it (docs/terminal.md). A file in no space and a note shared on its
   own move as the tab alone. A file of that name already there stays, and so does its tab.
-- **A page's web data is its new space's**, as a web note's is the space holding it.
-  Where the two spaces share a store the page goes on as it was - Chrome moving a tab
-  between two windows of a profile; where they do not, it is built again in the new one
-  on the address it was on, and the line under the bar says so for four seconds of being
-  seen, as a web tab saved into such a space does (`web-tab/rehome.ts`). Arc asks first;
-  nib says it after, as everywhere else.
+- **A page goes on as it was**: every space shares one store of web data (#239), so a
+  page moved between spaces is Chrome moving a tab between two windows of a profile. A
+  web note that keeps its own takes it along, since the choice is in its file.
 - **Never** into a space that may not be written in, nor a file out of one.
 
 See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for the move.

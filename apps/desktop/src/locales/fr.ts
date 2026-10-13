@@ -110,6 +110,13 @@ export const fr: Dictionary = {
   Unsaved: 'Non enregistré',
   'Save to': 'Enregistrer dans',
   'Reloaded with the web data of {space}': 'Rechargée avec les données web de {space}',
+  Separate: 'Séparées',
+  'Share this note’s web data again?': 'Partager à nouveau les données web de cette note ?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Ce à quoi ses pages sont connectées sur cet ordinateur sera supprimé.',
+  'Share again': 'Partager à nouveau',
+  'This note keeps its own web data now': 'Cette note a maintenant ses propres données web',
+  'Back on the shared web data': 'De retour sur les données web partagées',
   'Add a page': 'Ajouter une page',
   'Add a page after this': 'Ajouter une page après celle-ci',
   'Delete this page': 'Supprimer cette page',

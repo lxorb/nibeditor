@@ -821,9 +821,8 @@ today's cadence.
   note (`sync.svelte.ts` `refresh` goes). Ctrl+S is a flush, and v2 makes it a push as well.
 - Web tabs are ephemeral until kept. The lease is about the site session (section 6.1), so
   an ephemeral tab on a site is covered exactly like a web note, and keeping it as a `.url`
-  changes nothing about the lease - unless it is kept into a space whose store is another,
-  when the page is built again in that store and the lease follows it, asked the one way a
-  page's store is (`web-tab/rehome.ts`).
+  changes nothing about the lease. (Since #239 every page shares one store and no space
+  keeps its own; see docs/web-tabs.md, "Where a page keeps its web data".)
 
 ---
 

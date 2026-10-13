@@ -110,6 +110,13 @@ export const ar: Dictionary = {
   Unsaved: 'غير محفوظ',
   'Save to': 'حفظ في',
   'Reloaded with the web data of {space}': 'أُعيد التحميل ببيانات الويب الخاصة بـ {space}',
+  Separate: 'منفصلة',
+  'Share this note’s web data again?': 'مشاركة بيانات الويب لهذه الملاحظة مرة أخرى؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'سيُحذف ما سجّلت صفحاتها الدخول إليه على هذا الكمبيوتر.',
+  'Share again': 'المشاركة مرة أخرى',
+  'This note keeps its own web data now': 'تحتفظ هذه الملاحظة الآن ببيانات الويب الخاصة بها',
+  'Back on the shared web data': 'عادت إلى بيانات الويب المشتركة',
   'Add a page': 'إضافة صفحة',
   'Add a page after this': 'إضافة صفحة بعد هذه',
   'Delete this page': 'حذف هذه الصفحة',

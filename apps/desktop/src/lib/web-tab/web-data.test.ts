@@ -1,6 +1,6 @@
 import { getDomain } from 'tldts'
 import { describe, expect, test, vi } from 'vitest'
-import { historyKey, hostOf, isWebData, siteOf, storeName, WEB_DATA } from './web-data'
+import { hostOf, isWebData, siteOf, storeName, WEB_DATA } from './web-data'
 
 /** Storage for the test, since node has none; what the app writes is read back from
  *  here. */
@@ -93,89 +93,26 @@ describe('the name of a store', () => {
   })
 })
 
-describe('the history a space offers', () => {
-  test('global shares the one list; apart is a list of the space’s own', () => {
-    expect(historyKey('global', '0-a')).toBe('nib:web-visits')
-    expect(historyKey('space', '0-a')).toBe('nib:web-visits:0-a')
-    expect(historyKey('site', '0-a')).toBe('nib:web-visits:0-a')
-    expect(historyKey('space', null)).toBe('nib:web-visits')
-  })
-})
-
 test('the three, and nothing else', () => {
   expect(WEB_DATA).toEqual(['global', 'space', 'site'])
   expect(WEB_DATA.every(isWebData)).toBe(true)
   expect(isWebData('host')).toBe(false)
 })
 
-describe('the choice each space has made', () => {
-  test('global until asked, kept by id, and put back by choosing global again', async () => {
-    const { webData } = await import('./web-data.svelte')
-
-    expect(webData.of('0-k3j9x2')).toBe('global')
-    expect(await webData.store('0-k3j9x2', 'https://moodle-app2.let.ethz.ch')).toBeNull()
-
-    webData.set('0-k3j9x2', 'site')
-    expect(webData.of('0-k3j9x2')).toBe('site')
-    expect(webData.of('1-other')).toBe('global')
-    expect(await webData.store('0-k3j9x2', 'https://moodle-app2.let.ethz.ch/my')).toBe(
-      'site_0-k3j9x2_ethz.ch',
-    )
-    expect(webData.history('0-k3j9x2')).toBe('nib:web-visits:0-k3j9x2')
-    expect(JSON.parse(localStorage.getItem('nib:web-data') ?? '{}')).toEqual({ '0-k3j9x2': 'site' })
-
-    webData.set('0-k3j9x2', 'space')
-    expect(await webData.store('0-k3j9x2', 'https://ethz.ch')).toBe('space_0-k3j9x2')
-
-    webData.set('0-k3j9x2', 'global')
-    expect(webData.of('0-k3j9x2')).toBe('global')
-    expect(JSON.parse(localStorage.getItem('nib:web-data') ?? '{}')).toEqual({})
+describe('a web note’s own web data', () => {
+  test('a note kept apart is in a store of its own, and every other page in the shared one', async () => {
+    const { ownStore, webData } = await import('./web-data.svelte')
+    expect(ownStore(null)).toBeNull()
+    expect(ownStore('3f9a0c17e2b4d685')).toBe('note_3f9a0c17e2b4d685')
+    expect(await webData.store(null)).toBeNull()
+    expect(await webData.store('3f9a0c17e2b4d685')).toBe('note_3f9a0c17e2b4d685')
+    expect(webData.history()).toBe('nib:web-visits')
   })
-})
 
-/** While web logins travel, the choice is the space's on the account: every computer
- *  puts the space's pages in the same store. See docs/sync-v2.md section 6.1. */
-describe('the choice on the account', () => {
-  test('is the one that counts, is written there, and a device’s own goes up once', async () => {
-    const { webData } = await import('./web-data.svelte')
-    localStorage.clear()
-    webData.set('mine-1', 'site')
-    webData.set('local-1', 'space')
-
-    const written: [string, string][] = []
-    const writeUp = (space: string, choice: string) => {
-      written.push([space, choice])
-      return Promise.resolve()
-    }
-
-    const changed = webData.follow(
-      [
-        { id: 'mine-1', role: 'owner', webStore: 'global' },
-        { id: 'theirs-1', role: 'write', webStore: 'space' },
-      ],
-      writeUp,
-    )
-
-    // This device's choice for a space the account kept on Global goes up, once.
-    expect(written).toEqual([['mine-1', 'site']])
-    expect(webData.of('mine-1')).toBe('site')
-    // Somebody else's space is in the store its owner chose, on every computer.
-    expect(webData.of('theirs-1')).toBe('space')
-    expect(changed).toEqual(['theirs-1'])
-    // A space the account does not have goes by the device, as it always did.
-    expect(webData.of('local-1')).toBe('space')
-
-    // Chosen again on this computer: written to the account, not to the device.
-    webData.set('mine-1', 'global')
-    expect(written.at(-1)).toEqual(['mine-1', 'global'])
-    expect(webData.of('mine-1')).toBe('global')
-
-    // Listed again with the account's own word: nothing goes up a second time.
-    written.length = 0
-    webData.follow([{ id: 'mine-1', role: 'owner', webStore: 'global' }], writeUp)
-    expect(written).toEqual([])
-
-    webData.unfollow()
-    expect(webData.of('mine-1')).toBe('site')
+  test('a fresh id is sixteen hex digits, another each time, and a name the crate takes', async () => {
+    const { freshOwn } = await import('./web-data.svelte')
+    const one = freshOwn()
+    expect(one).toMatch(/^[0-9a-f]{16}$/)
+    expect(freshOwn()).not.toBe(one)
   })
 })

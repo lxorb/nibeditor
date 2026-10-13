@@ -110,6 +110,13 @@ export const ko: Dictionary = {
   Unsaved: '저장 안 됨',
   'Save to': '저장 위치',
   'Reloaded with the web data of {space}': '{space}의 웹 데이터로 다시 불러옴',
+  Separate: '별도',
+  'Share this note’s web data again?': '이 노트의 웹 데이터를 다시 공유할까요?',
+  'What its pages are signed in to on this computer is deleted.':
+    '이 컴퓨터에서 이 노트의 페이지가 로그인한 정보가 삭제됩니다.',
+  'Share again': '다시 공유',
+  'This note keeps its own web data now': '이 노트는 이제 자체 웹 데이터를 사용합니다',
+  'Back on the shared web data': '공유 웹 데이터로 돌아왔습니다',
   'Add a page': '페이지 추가',
   'Add a page after this': '이 뒤에 페이지 추가',
   'Delete this page': '이 페이지 삭제',

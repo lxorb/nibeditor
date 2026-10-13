@@ -110,6 +110,13 @@ export const ps: Dictionary = {
   Unsaved: 'نه دی خوندي شوی',
   'Save to': 'خوندي کړئ په',
   'Reloaded with the web data of {space}': 'د {space} د ویب معلوماتو سره بیا پورته شو',
+  Separate: 'جلا',
+  'Share this note’s web data again?': 'د دې یادښت ویب ډېټا بیا شریکه کړئ؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'په دې کمپیوټر کې د هغې پاڼې چې ورته ننوتې دي، ړنګېږي.',
+  'Share again': 'بیا شریکول',
+  'This note keeps its own web data now': 'دا یادښت اوس خپله ویب ډېټا ساتي',
+  'Back on the shared web data': 'بېرته شریکې ویب ډېټا ته',
   'Add a page': 'مخ ورزياتول',
   'Add a page after this': 'له دې وروسته مخ ورزياتول',
   'Delete this page': 'دا مخ ړنګول',

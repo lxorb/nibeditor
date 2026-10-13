@@ -15,9 +15,8 @@ import { LINK_FORMATS } from '../../link-format'
 import { LINE_HEIGHTS, modes, WIDTHS } from '../../modes.svelte'
 import { theme } from '../../theme.svelte'
 import { asked } from './asks'
-import { type Call, done, maybe, need } from './call'
+import { type Call, done, need } from './call'
 import { Refused } from './problem'
-import { placeFor } from './spaces'
 
 /** One setting: what it says now, and how it is changed. `write` is handed the value
  *  as the agent sent it, refuses what the setting cannot be, and answers the change
@@ -152,29 +151,6 @@ const SETTINGS: Record<string, Setting> = {
     write: (value) => {
       const format = oneOf(value, LINK_FORMATS, 'link_format')
       return () => modes.setLinkFormat(format)
-    },
-  },
-  web_data: {
-    about: 'where a space keeps what websites store: global, space or site',
-    read: async (call) => {
-      const { webData } = await import('../../web-tab/web-data.svelte')
-      return webData.of(placeFor(call, maybe(call, 'space')).space.id)
-    },
-    write: async (value, call) => {
-      const { WEB_DATA } = await import('../../web-tab/web-data')
-      const choice = oneOf(value, WEB_DATA, 'web_data')
-      const space = placeFor(call, maybe(call, 'space')).space
-      const [{ webData }, { pages }] = await Promise.all([
-        import('../../web-tab/web-data.svelte'),
-        import('../../web-tab/pages.svelte'),
-      ])
-
-      // The space's open pages built again in the store it now keeps, as choosing it
-      // from the space's menu does; see `chooseWebData` in space-choices.ts.
-      return async () => {
-        webData.set(space.id, choice)
-        await pages.restore(space.id)
-      }
     },
   },
 }

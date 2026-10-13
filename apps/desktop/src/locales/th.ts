@@ -110,6 +110,13 @@ export const th: Dictionary = {
   Unsaved: 'ยังไม่บันทึก',
   'Save to': 'บันทึกไปที่',
   'Reloaded with the web data of {space}': 'โหลดใหม่ด้วยข้อมูลเว็บของ {space}',
+  Separate: 'แยกกัน',
+  'Share this note’s web data again?': 'แชร์ข้อมูลเว็บของโน้ตนี้อีกครั้งไหม',
+  'What its pages are signed in to on this computer is deleted.':
+    'สิ่งที่หน้าเว็บของโน้ตนี้ลงชื่อเข้าใช้ไว้ในคอมพิวเตอร์เครื่องนี้จะถูกลบ',
+  'Share again': 'แชร์อีกครั้ง',
+  'This note keeps its own web data now': 'ตอนนี้โน้ตนี้มีข้อมูลเว็บของตัวเองแล้ว',
+  'Back on the shared web data': 'กลับมาใช้ข้อมูลเว็บที่แชร์แล้ว',
   'Add a page': 'เพิ่มหน้า',
   'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
   'Delete this page': 'ลบหน้านี้',

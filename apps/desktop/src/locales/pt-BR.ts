@@ -110,6 +110,13 @@ export const ptBR: Dictionary = {
   Unsaved: 'Não salvo',
   'Save to': 'Salvar em',
   'Reloaded with the web data of {space}': 'Recarregada com os dados da web de {space}',
+  Separate: 'Separados',
+  'Share this note’s web data again?': 'Compartilhar de novo os dados da web desta nota?',
+  'What its pages are signed in to on this computer is deleted.':
+    'O que as páginas dela têm login neste computador será apagado.',
+  'Share again': 'Compartilhar de novo',
+  'This note keeps its own web data now': 'Esta nota agora tem os próprios dados da web',
+  'Back on the shared web data': 'De volta aos dados da web compartilhados',
   'Add a page': 'Adicionar uma página',
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Excluir esta página',

@@ -110,6 +110,13 @@ export const kn: Dictionary = {
   Unsaved: 'ಉಳಿಸಲಾಗಿಲ್ಲ',
   'Save to': 'ಇಲ್ಲಿ ಉಳಿಸಿ',
   'Reloaded with the web data of {space}': '{space} ನ ವೆಬ್ ಡೇಟಾದೊಂದಿಗೆ ಮರುಲೋಡ್ ಆಯಿತು',
+  Separate: 'ಪ್ರತ್ಯೇಕ',
+  'Share this note’s web data again?': 'ಈ ಟಿಪ್ಪಣಿಯ ವೆಬ್ ಡೇಟಾವನ್ನು ಮತ್ತೆ ಹಂಚಿಕೊಳ್ಳಬೇಕೆ?',
+  'What its pages are signed in to on this computer is deleted.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಇದರ ಪುಟಗಳು ಸೈನ್ ಇನ್ ಆಗಿರುವುದನ್ನು ಅಳಿಸಲಾಗುತ್ತದೆ.',
+  'Share again': 'ಮತ್ತೆ ಹಂಚಿಕೊಳ್ಳಿ',
+  'This note keeps its own web data now': 'ಈ ಟಿಪ್ಪಣಿ ಈಗ ತನ್ನದೇ ವೆಬ್ ಡೇಟಾ ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ',
+  'Back on the shared web data': 'ಹಂಚಿದ ವೆಬ್ ಡೇಟಾಗೆ ಮರಳಿದೆ',
   'Add a page': 'ಪುಟ ಸೇರಿಸು',
   'Add a page after this': 'ಇದರ ನಂತರ ಪುಟ ಸೇರಿಸು',
   'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',

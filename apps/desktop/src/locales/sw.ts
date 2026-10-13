@@ -110,6 +110,13 @@ export const sw: Dictionary = {
   Unsaved: 'Haijahifadhiwa',
   'Save to': 'Hifadhi kwenye',
   'Reloaded with the web data of {space}': 'Imepakiwa upya kwa data ya wavuti ya {space}',
+  Separate: 'Tofauti',
+  'Share this note’s web data again?': 'Shiriki tena data ya wavuti ya dokezo hili?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Kile ambacho kurasa zake zimeingia kwenye kompyuta hii kitafutwa.',
+  'Share again': 'Shiriki tena',
+  'This note keeps its own web data now': 'Dokezo hili sasa lina data yake ya wavuti',
+  'Back on the shared web data': 'Imerudi kwenye data ya wavuti iliyoshirikiwa',
   'Add a page': 'Ongeza ukurasa',
   'Add a page after this': 'Ongeza ukurasa baada ya huu',
   'Delete this page': 'Futa ukurasa huu',

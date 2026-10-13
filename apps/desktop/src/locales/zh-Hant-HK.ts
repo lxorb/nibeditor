@@ -110,6 +110,13 @@ export const zhHantHK: Dictionary = {
   Unsaved: '未儲存',
   'Save to': '儲存到',
   'Reloaded with the web data of {space}': '已使用 {space} 的網頁資料重新載入',
+  Separate: '獨立',
+  'Share this note’s web data again?': '再次共用這則筆記的網絡數據？',
+  'What its pages are signed in to on this computer is deleted.':
+    '此電腦上其頁面已登入的內容將被刪除。',
+  'Share again': '再次共用',
+  'This note keeps its own web data now': '這則筆記現在有自己的網絡數據',
+  'Back on the shared web data': '已返回共用的網絡數據',
   'Add a page': '加一頁',
   'Add a page after this': '在此頁之後加一頁',
   'Delete this page': '刪除此頁',

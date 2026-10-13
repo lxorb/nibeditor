@@ -57,6 +57,17 @@ pub(crate) async fn read(view: &Webview, site: &str) -> Result<Vec<Cookie>, Stri
         .collect())
 }
 
+/// Every cookie in the store `view` is in.
+pub(crate) async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
+    engine::all(view).await
+}
+
+/// Writes `cookies` into the store `view` is in, each over any cookie that is the same
+/// one, and leaves every other cookie there as it was.
+pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
+    engine::set(view, cookies, now()).await
+}
+
 /// Replaces the site's cookies in the store `view` is in with `cookies`, and says how many
 /// were written.
 pub(crate) async fn write(view: &Webview, site: &str, cookies: &[Cookie]) -> Result<usize, String> {

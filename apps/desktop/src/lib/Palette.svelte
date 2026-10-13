@@ -150,7 +150,7 @@
       recent: workspace.recent,
       bookmarks: workspace.bookmarks.list,
       commands,
-      pages: browses ? visited.all(webData.history(workspace.activeSpaceId)) : [],
+      pages: browses ? visited.all(webData.history()) : [],
       settings: settingRows,
       hosts,
       worth: (key) => frecency.worth(key),
@@ -493,7 +493,7 @@
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
     if (!__EVEN_PLUGIN__ && row.kind === 'page') {
-      visited.remove(webData.history(workspace.activeSpaceId), row.url)
+      visited.remove(webData.history(), row.url)
     }
     forgotten++
   }

@@ -3,7 +3,6 @@ import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
 import { canPublish, canShare, isShared, roleOf, share } from './sharing.svelte'
-import { isDesktop } from './tauri'
 import { type Space, workspace } from './workspace.svelte'
 
 /** The rows that open into a choice, fetched with the press; see space-choices.ts. */
@@ -113,17 +112,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
     // Beside it, because it is the same question about the same folder: who
     // else may read this.
     ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
-    // Where the space keeps what websites store. Only where a website is a tab with a
-    // store of its own behind it; in a browser build the page is the browser's.
-    ...(isDesktop
-      ? [
-          {
-            label: t('Web data'),
-            keep: true,
-            run: () => void choices().then((one) => one.showWebData(space)),
-          },
-        ]
-      : []),
     // What you are called in it, where anybody else is there to call you anything;
     // see people/nickname.ts.
     ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))

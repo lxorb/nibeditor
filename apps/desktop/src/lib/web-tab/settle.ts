@@ -42,6 +42,8 @@ export function settleShortcuts(
     firstAdded(fresh, stale),
     fresh.home ?? fresh.url,
     fresh.icon ?? stale.icon,
+    // The newer side's word on the note's own web data.
+    fresh.own,
   )
 
   // Nothing the older side said is missing from the newer one: the newer file as it
@@ -77,7 +79,8 @@ function sameShortcut(one: Shortcut | null, other: Shortcut): boolean {
     one.title === other.title &&
     one.added === other.added &&
     (one.home ?? null) === (other.home ?? null) &&
-    one.icon === other.icon
+    one.icon === other.icon &&
+    one.own === other.own
   )
 }
 

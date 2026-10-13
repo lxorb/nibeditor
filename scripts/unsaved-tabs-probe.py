@@ -1,21 +1,21 @@
-"""Do tabs with no file come back after a restart, and is each web page built in the store
-of the space it belongs to? Windows only.
+"""Do tabs with no file come back after a restart, each in the space it belongs to?
+Windows only.
 
 Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an unsaved state
 (with no saving location) [...] unsaved web tabs should use the current store of the
 current space. And a note should always use the data saving option from the space that it
 is from."*
 
-Two spaces, each keeping its web data apart (Space in its menu, a store folder of its own
-under `web-stores`). In Work, a new note is typed into and a page is opened behind it as a
-browser tab with no file; then Home is put on screen and the app is closed the way a
-person closes it. Started again, it is asked:
+Two spaces. In Work, a new note is typed into and a page is opened behind it as a browser
+tab with no file; then Home is put on screen and the app is closed the way a person closes
+it. Started again, it is asked:
 
 * whether the new note came back with its words and no file, and the browser tab with
   its space still Work although Home is on screen;
-* whether that tab's page, shown again, is built in Work's store - its folder comes back
-  - and not in Home's;
-* whether a web note of Home's, opened while Work is on screen, is built in Home's store.
+* whether a web note of Home's, opened while Work is on screen, is Home's.
+
+Which store a page is built in is no longer a space's to say: every page shares one, and a
+web note may keep its own (#239, docs/web-tabs.md); scripts/web-data-probe.py holds that.
 
     python scripts/unsaved-tabs-probe.py --exe path/to/nib.exe \\
         --identifier ch.emilvinu.nib.probe.<name>
@@ -30,7 +30,6 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import re
 import pathlib
 import shutil
 import sys
@@ -70,16 +69,6 @@ BACK = """JSON.stringify((() => {
     onScreen: ws.activeSpaceId,
   }
 })())"""
-
-
-def store_of(space: str) -> str:
-    """The folder a space's own store is, named the way web-data.ts names it."""
-    return "space_" + re.sub(r"[^a-z0-9.-]", "-", space.lower())
-
-
-def stores(identifier: str) -> set[str]:
-    folder = switch.config_dir(identifier) / "web-stores"
-    return {one.name for one in folder.iterdir()} if folder.exists() else set()
 
 
 def asked(app, code: str, seconds: float = 60) -> object:
@@ -139,7 +128,7 @@ def main() -> int:
         switch.allow_eval(args.identifier)
         time.sleep(1)
 
-        # Both spaces keep their web data apart: a store folder of each one's own.
+        # The two spaces, by id.
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         found: dict[str, object] = {}
 
@@ -153,8 +142,6 @@ def main() -> int:
             raise SystemExit(f"the two spaces are not there: {ids}")
         work, home = str(ids["Work"]), str(ids["Home"])
         said["spaces"] = {"Work": work, "Home": home}
-        apart = json.dumps({work: "space", home: "space"})
-        asked(app, f"localStorage.setItem('nib:web-data', {json.dumps(apart)}) || 'kept'")
         close_app(running)
         time.sleep(1)
 
@@ -164,11 +151,8 @@ def main() -> int:
         app.open("Idea.md", "Work")
         time.sleep(1)
         asked(app, f"(nib.workspace.openBlank(), nib.workspace.active.note.live.replace({json.dumps(WORDS)}, true), 'typed')")
-        # Behind the note, so its page is first built after the restart: that is the
-        # build this asks about, and a page in a store of its own is a browser process
-        # of its own, which the close below has no need to wait out.
+        # Behind the note, so its page is first built after the restart.
         asked(app, f"nib.workspace.openPage({json.dumps(page)}, 'behind') && 'opened'")
-        said["no store before the restart"] = store_of(work) not in stores(args.identifier)
         asked(app, f"nib.workspace.showSpace({json.dumps(home)}).then(() => 'home')")
         time.sleep(2)
         first = app.port
@@ -186,14 +170,8 @@ def main() -> int:
         web = back.get("web") if isinstance(back, dict) else None
         if isinstance(web, dict):
             asked(app, f"nib.workspace.activate({json.dumps(web['id'])}) || 'shown'")
-        said["page rebuilt in Work's store"] = until(
-            30, lambda: store_of(work) in stores(args.identifier)
-        )
-        said["stores after the restart"] = sorted(stores(args.identifier))
 
-        # A web note of Home's, opened behind with Work on screen: Home's, whose store
-        # its page is built in; see `spaceOf`. Opened behind, so no page of a store of
-        # its own is built here, which the tab above has already proved.
+        # A web note of Home's, opened behind with Work on screen: Home's; see `spaceOf`.
         asked(app, f"nib.workspace.showSpace({json.dumps(work)}).then(() => 'work')")
         mail = f"nib.workspace.spaces.find((one) => one.id === {json.dumps(home)}).root + '/Mail.url'"
         asked(app, f"nib.workspace.openWeb({mail}, {{ activate: false }}).then(() => 'opened')")
@@ -202,8 +180,7 @@ def main() -> int:
             "(() => { const ws = nib.workspace; const tab = ws.tabs.find((one) => (one.path ?? '')"
             ".endsWith('Mail.url')); return tab ? ws.spaceOf(tab.note) : null })()",
         )
-        said["web note in its own space's store"] = owner == home
-        said["stores at the end"] = sorted(stores(args.identifier))
+        said["web note in its own space"] = owner == home
     finally:
         if running is not None and not close_app(running):
             running.terminate()
@@ -221,8 +198,7 @@ def main() -> int:
         and isinstance(after.get("web"), dict)
         and after["web"].get("space") == ids["Work"]
         and after.get("onScreen") == ids["Home"]
-        and said.get("page rebuilt in Work's store") is True
-        and said.get("web note in its own space's store") is True
+        and said.get("web note in its own space") is True
     )
     print("PASS" if good else "FAIL")
     return 0 if good else 1

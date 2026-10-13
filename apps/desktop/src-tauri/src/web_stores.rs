@@ -32,8 +32,10 @@ const LONGEST: usize = 160;
 /// The store a tab was asked to be in, checked: `None` for the one every space
 /// shares, which is what nothing and an empty name both mean.
 ///
-/// A name becomes a folder name, so it is held to the two shapes the window writes -
-/// `space_` or `site_` and then lower case letters, digits, `.`, `-` and `_`. That
+/// A name becomes a folder name, so it is held to the shapes the window writes -
+/// `note_`, for a web note that keeps its own (#239), or `space_` or `site_`, the stores a
+/// space kept before that, which are only ever read to be merged - and then lower case
+/// letters, digits, `.`, `-` and `_`. That
 /// leaves nothing that climbs out of the stores folder or means something to a file
 /// system, `nul` and `con` included, rather than trying to list what does.
 pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
@@ -42,7 +44,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     };
 
     let fine = name.len() <= LONGEST
-        && (name.starts_with("space_") || name.starts_with("site_"))
+        && (name.starts_with("note_") || name.starts_with("space_") || name.starts_with("site_"))
         && name.bytes().all(|byte| {
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-' | b'_')
         })
@@ -90,9 +92,14 @@ mod tests {
         assert_eq!(named(Some("")), Ok(None));
     }
 
-    /// The two shapes the window writes are taken as they are.
+    /// The shapes the window writes are taken as they are.
     #[test]
-    fn a_space_and_a_site_are_names() {
+    fn a_note_a_space_and_a_site_are_names() {
+        assert_eq!(
+            named(Some("note_3f9a0c17e2b4d685")),
+            Ok(Some("note_3f9a0c17e2b4d685"))
+        );
+        assert!(named(Some("note_")).is_err());
         assert_eq!(named(Some("space_0-k3j9x2")), Ok(Some("space_0-k3j9x2")));
         assert_eq!(
             named(Some("site_0-k3j9x2_ethz.ch")),

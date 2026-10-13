@@ -428,8 +428,8 @@ so reviving it is a load and not a loss; that path is also what a login handed t
 another computer and an engine that has gone come back through. Closing the tab takes
 the webview and the trail with it.
 
-A choice of where a space keeps its web data builds again only the pages whose store
-it changed; one already in the store chosen keeps running.
+A web note turned Separate or back to Global builds again only its own page; every other
+page keeps running.
 
 **A space's own tabs out of sight are Hidden tabs** (Settings, General, Tabs): Keep
 running, Pause, or Ask, which is where it starts. Keep running treats them as any page
@@ -1741,81 +1741,82 @@ there, so there is nothing yet to give an expiry through.
 3. The page is handed nothing of the app's at all: no global, no script in its own
    world, no channel. See "What a page is given: nothing" below.
 
-### Where a space keeps its web data
+### Where a page keeps its web data
 
-**A space can keep what websites store apart: Global, Space or Site, in the space's own
-menu under Web data.** Emil, 2026-09-27: *"there should be a setting for a space where
-you can set on which granularity to save the website data. either global (default)
-which just uses the global cookies and data store of nib or per space which saves it per
-space or per site which makes it separate for each site in this space."*
+**Every page shares one store, and a web note may keep its own: Web data, Global or
+Separate, in the note's tab menu and its row in the file list.** Emil, 2026-10-13 (#239):
+_"currently there's a web data option per space ... usually, this will only be relevant for
+a few websites. and these could be maintained as web notes. so i'd like for this option to
+be removed. instead, web data should be global, BUT there should be an option that you can
+set for a web note / tab when right clicking on it that gives it independent web data."_
 
-- **Global**, which every space is until asked: the one store all spaces share, in
-  `web`, exactly as before. Signed in once, signed in everywhere.
-- **Space**: a store of the space's own, so a work space and a home space can be signed
-  in to the same site as two different people.
-- **Site**: within the space, a store per site, so no site sees what another one left.
+Firefox's Multi-Account Containers are the model - a cookie jar of its own, the history
+shared - and so are their two faults, which this does not repeat: the choice is in the menu
+of the thing it is about, ticked where it stands, and undone where it was made. Arc and Edge
+keep a profile per space, which is what nib had and what #239 took away.
 
-**A site is the registrable domain** - one label under a public suffix, from the public
-suffix list with its private section: `moodle-app2.let.ethz.ch` and `aai-logon.ethz.ch`
-are both `ethz.ch`, `a.github.io` and `b.github.io` are two sites. It is where a
-browser already draws the line between strangers (site isolation, `SameSite`, storage
-partitioning), and it is what keeps a sign-in through a sister host working: Moodle and
-ETH's identity provider are one site and so one store. A page's store is the site the
-tab is on when its page is built; a login that passes through somebody else's domain
-happens inside that tab and so inside that store. An address or `localhost` is its own
-site. See `siteOf` in `apps/desktop/src/lib/web-tab/web-data.ts`.
+- **Global**, which every note is until asked: the one store, signed in once, signed in
+  everywhere.
+- **Separate**: a store of the note's own, empty - signed out, which is the point of one:
+  a second account on the same site. The open page is built again in it, where it was and
+  on the page it was on, with one line under the bar for a few seconds.
+- **Back to Global** asks first, because what the note's pages were signed in to is
+  deleted: the page is built again in the shared store, and the note's own is cleared with
+  the call Delete browsing data makes. A store nobody names is a login nobody can see.
+
+**The note's file is the choice.** `Nib-Data=<sixteen hex digits>` beside `Nib-Home` and
+`Nib-Icon` (`web-tab/shortcut.ts`), an id made when it is turned on, and the store is
+`note_<id>`. In the file, so it moves and is renamed with the note, syncs with it, and opens
+in a store of the same name on another computer (empty there until web data syncs). Every
+rewrite of the file carries the key. A duplicated note keeps the id and so shares the jar.
+An unsaved tab has no file to say it, and is always on the shared store.
 
 What a store is, per engine (`apps/desktop/src-tauri/src/web_stores.rs`):
 
-| | Global | Space, Site |
+| | Global | A note's own |
 | --- | --- | --- |
-| Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/<name>`, a user data folder of its own |
-| Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/<name>`, a web context of its own |
+| Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/note_<id>`, a user data folder of its own |
+| Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/note_<id>`, a web context of its own |
 | macOS 14+ (`WKWebView`) | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name |
-| nib's own Chromium (`cef`) | the primary profile, `<config>/chromium/Default` | `<config>/chromium/store-<name>`, a profile of its own in the one browser process |
+| nib's own Chromium (`cef`) | the primary profile, `<config>/chromium/Default` | `<config>/chromium/store-note_<id>`, a profile of its own in the one browser process |
 
 On Windows a store of its own is a user data folder rather than a `WebView2` profile,
 because the runtime has no way to name a profile for a webview it builds. It costs a
-browser process per store while one of its tabs is open, and nothing after: only the
-global store has the page that holds a session open, and a login in a store of its own
-survives its last tab closing because its session cookies are given an expiry as its
-pages load. Measured on the probe build: a session cookie, a lasting cookie and
-`localStorage` all survive closing the tab twice and a restart, in a space's store and
-in a site's; a store of its own starts signed out; and going back to Global finds the
-global login where it was.
+browser process while one of its tabs is open, and nothing after: a login in it survives
+its last tab closing because its session cookies are given an expiry as its pages load.
 
-**The name is the store.** `space_<id>` or `site_<id>_<site>`, from the space's id -
-which a rename keeps - and never from its name or its folder. So the same store comes
-back on every launch, and **changing the setting loses nothing**: the store left behind
-stays on disk with its logins in it, and choosing it again is choosing them. The choice
-is this device's (`nib:web-data`), because the stores are folders on this device - until
-web logins travel between the account's computers, when it is the space's on the account
-so every computer puts the space's pages in the same store (docs/sync-v2.md 6.1).
-Choosing builds the space's open pages again in the new store, each where it was and on
-the page it was on, so the choice is on screen at once.
+**History is one list** (`nib:web-visits`, `visited.ts`), a note kept apart included, as
+Firefox keeps one history across containers. **Delete browsing data** clears the shared
+store and the own store of every web note kept apart that is open.
 
-**Which space a page belongs to decides its store.** A web note's is the space holding its
-file, wherever it was opened from - global search, a link, an agent - never the space on
-screen. A web tab with no file belongs to the space it was opened in, and a page opened out
-of a tab to that tab's, so a link followed out of a work site stays signed in as work; the
-session writes that space down, and switching to another space with the tab open changes
-nothing about it. Emil, 2026-09-30: _"unsaved web tabs should use the current store of the
-current space. And a note should always use the data saving option from the space that it
-is from."_ See `spaceOf` in `workspace.svelte.ts`.
+**The stores the spaces kept are merged into the shared one, once.** Until #239 a space
+chose Global, Space (`space_<id>`) or Site (`site_<id>_<site>`), and a reader who chose is
+signed in there. The first launch of a build without the choice merges each of those stores
+before its first page is built (`web-tab/merged.ts`, `web_merge` in
+`src-tauri/src/web_state/merge.rs`):
 
-**Saved into a space whose web data is kept apart, the page is built again in that
-space's store**, where it was and on the page it was on, with one quiet line under the bar
-for a few seconds naming the space: a site that signs out without a word looks like a site
-that broke. Arc does the same when a tab moves into a space with another profile; Chrome
-cannot move a tab between profiles at all, and leaving the page in the old store until it
-is next opened would make the file say one thing and the page do another. The store is
-asked the one way every page and every web login asks it, so the lease follows the page.
-See `web-tab/rehome.ts`.
+- **cookies one by one** - a cookie is its name, domain, path and partition: one the shared
+  store lacks is copied as it is, HttpOnly, partition and expiry included; of two copies
+  the one set last wins, and since no engine says when a cookie was set the later expiry
+  stands for it (a site sets the same lifetime again from a later moment, and nib's four
+  hundred days for a session cookie run from the last time it kept one); two without an
+  expiry go to the store whose folder changed last;
+- **an origin's storage whole or not at all** - localStorage and every IndexedDB database
+  of each origin the space's history names, copied only where the shared store has none for
+  that origin: an app's storage is one state, and half of two is neither;
+- **the space's history** folded into the one history;
+- **nothing deleted**: the old stores stay on disk as they were.
 
-**A space kept apart keeps its history apart too.** The address field's history of
-pages (`visited.ts`) is `nib:web-visits` for every space on Global and
-`nib:web-visits:<id>` for a space on Space or Site, so a space that signs in apart does
-not offer its pages to the others as they type.
+It is marked done (`nib:web-data-merged`) only once every store has merged, so a launch cut
+short tries again. On nib's own Chromium, where each store is a profile the merge's hidden
+pages cannot reach, a space's logins stay in its profile. Proved by
+`scripts/web-data-probe.py`, which signs a local site in through the build from before, in
+the shared store and in a space kept apart, and then opens the same note in the build after:
+the space's session cookie, localStorage and IndexedDB record are in the shared store, the
+cookie with the later end won on both sides, an origin the shared store had storage for kept
+its own, and the old store is still on disk. It then turns the note Separate the way a change
+synced into an open note arrives - its page is built again in `note_<id>`, signed out - and
+back, where the shared login is waiting. Two runs, the same.
 
 ### What a page is given: nothing
 
@@ -2153,8 +2154,11 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/dropped-site.ts` | a link dragged out of a page onto the file list, kept as a web note. Tested |
 | `scripts/web-bot-probe.py` | the drive for a bot check: what a page and a frame from another site can see of nib, and a cookie set twice kept twice |
 | `scripts/browser-parity-probe.py` | the drive for History, Delete browsing data, a private tab, the search engine and a link dropped on the list |
-| `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
-| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device, or on the account while web logins travel. Tested |
+| `apps/desktop/src/lib/web-tab/web-data.ts` | what a site is, and the names of the stores a space kept before #239. Pure, tested |
+| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which store a page goes in: the shared one, or its web note's own. Tested |
+| `apps/desktop/src/lib/web-tab/own-data.ts` | Web data in a web note's menus: Global or Separate, written into the note's file |
+| `apps/desktop/src/lib/web-tab/merged.ts` | the stores the spaces kept, merged into the shared one once. Tested |
+| `apps/desktop/src-tauri/src/web_state/merge.rs` | a store's cookies one by one and its origins' storage into the shared store. Unit tested; `scripts/web-data-probe.py` |
 | `apps/desktop/src/lib/web-tab/lease.svelte.ts` | a web login as a lease: whether a page may run, handing over, losing it, what goes up and when. Tested; see docs/sync-v2.md 6 |
 | `apps/desktop/src/lib/web-tab/lease-transfer.ts` | a site's login uploaded under the fence and downloaded for a restore. Tested |
 | `apps/desktop/src/lib/web-tab/carried.ts` | what travels with a login besides the site's storage: zoom, grants, where each web note was left. Tested |

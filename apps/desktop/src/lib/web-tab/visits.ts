@@ -78,7 +78,7 @@ export function visitsFrom(value: unknown): Visit[] {
 }
 
 /** The list, with the least recently open over the bound gone. */
-function bounded(list: Visit[]): Visit[] {
+export function bounded(list: Visit[]): Visit[] {
   if (list.length <= MOST_VISITS) return list
 
   return [...list].sort((one, other) => other.last - one.last).slice(0, MOST_VISITS)

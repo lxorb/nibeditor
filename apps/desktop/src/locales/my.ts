@@ -110,6 +110,13 @@ export const my: Dictionary = {
   Unsaved: 'မသိမ်းရသေး',
   'Save to': 'သိမ်းမည့်နေရာ',
   'Reloaded with the web data of {space}': '{space} ၏ ဝဘ်ဒေတာဖြင့် ပြန်ဖွင့်ထားသည်',
+  Separate: 'သီးခြား',
+  'Share this note’s web data again?': 'ဤမှတ်စု၏ ဝဘ်ဒေတာကို ထပ်မံမျှဝေမလား။',
+  'What its pages are signed in to on this computer is deleted.':
+    'ဤကွန်ပျူတာပေါ်တွင် ၎င်း၏စာမျက်နှာများ လက်မှတ်ထိုးဝင်ထားသည်များကို ဖျက်ပါမည်။',
+  'Share again': 'ထပ်မံမျှဝေရန်',
+  'This note keeps its own web data now': 'ဤမှတ်စုသည် ယခု ကိုယ်ပိုင်ဝဘ်ဒေတာ ထားရှိသည်',
+  'Back on the shared web data': 'မျှဝေထားသော ဝဘ်ဒေတာသို့ ပြန်ရောက်ပါပြီ',
   'Add a page': 'စာမျက်နှာထည့်ပါ',
   'Add a page after this': 'ဤအပြီး စာမျက်နှာထည့်ပါ',
   'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',

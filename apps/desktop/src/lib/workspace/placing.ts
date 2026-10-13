@@ -44,9 +44,7 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
  *  same instant were once handed the same name. The name is asked for against what is
  *  open as well as what is listed and claimed before the write begins, which is
  *  `claim`; see open.ts.
- *
- *  Kept into a space whose web data is kept apart, the page is built again in that
- *  space's; see `rehome` in web-tab/rehome.ts. */
+ *  A web note kept over keeps its own web data, if it had any. */
 export async function keepWeb(
   ws: Places,
   claim: Claim,
@@ -54,7 +52,6 @@ export async function keepWeb(
   dir: string,
   file?: string,
 ): Promise<string | null> {
-  const was = ws.spaceOf(tab.note)
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
   const page = pages.of(tab.id)
@@ -63,7 +60,8 @@ export async function keepWeb(
   const target = over?.path ?? joinPath(dir, ws.freeName(dir, named))
 
   const kept = await claim(target, async () => {
-    const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
+    const own = over ? (readWebFile(target, over.text)?.own ?? null) : null
+    const fresh = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined, own)
     const text = over ? settleShortcuts(target, over.text, fresh, true) : fresh
 
     if (!over) ws.showEntry(ws.freshEntry(target, false))
@@ -77,12 +75,6 @@ export async function keepWeb(
     return tab.note
   })
   if (kept !== tab.note) return null
-
-  const now = ws.spaceOf(tab.note)
-  if (now !== was) {
-    const { rehome } = await import('../web-tab/rehome')
-    void rehome(tab.id, now, ws.spaces.find((one) => one.id === now)?.name ?? '')
-  }
   return target
 }
 

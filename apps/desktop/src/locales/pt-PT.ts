@@ -110,6 +110,13 @@ export const ptPT: Dictionary = {
   Unsaved: 'Não guardado',
   'Save to': 'Guardar em',
   'Reloaded with the web data of {space}': 'Recarregada com os dados web de {space}',
+  Separate: 'Separados',
+  'Share this note’s web data again?': 'Partilhar novamente os dados da web desta nota?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Aquilo em que as páginas dela têm sessão iniciada neste computador será eliminado.',
+  'Share again': 'Partilhar novamente',
+  'This note keeps its own web data now': 'Esta nota tem agora os seus próprios dados da web',
+  'Back on the shared web data': 'De volta aos dados da web partilhados',
   'Add a page': 'Adicionar uma página',
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Eliminar esta página',

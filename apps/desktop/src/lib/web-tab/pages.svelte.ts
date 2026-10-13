@@ -46,8 +46,8 @@ function history(): Promise<typeof import('./visited').visited> {
   return import('./visited').then((module) => module.visited)
 }
 
-/** Which store each space keeps its web data in, asked for the same way and for the
- *  same reason: the first page is the first thing that needs it. See web-data.ts. */
+/** Which store a page keeps its web data in, asked for the same way and for the same
+ *  reason: the first page is the first thing that needs it. See web-data.svelte.ts. */
 function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
@@ -426,17 +426,19 @@ export class Page {
    *  is the tab a browser closes again; see `downloaded`. Not drawn. */
   titled = false
 
-  /** Which space the tab belongs to, which decides the store its page is built in and
-   *  the history it adds to. Set by the pane, which knows the space the way it knows the
-   *  file; see web-data.ts. */
+  /** Which space the tab belongs to. Set by the pane, which knows the space the way it
+   *  knows the file. */
   space: string | null = null
+
+  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
+  own: string | null = null
 
   /** Where the pane last put the page, so a page built again in another store goes back
    *  where it was; see `restore`. */
   pane: Rect | null = null
 
-  /** The space whose web data the page was just built again in; see rehome.ts. */
-  rehomed = $state<string | null>(null)
+  /** Said under the bar for a moment; see `rehouse`. */
+  notice = $state<string | null>(null)
 
   /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
@@ -684,9 +686,8 @@ class Pages {
     const tried = page.url
 
     try {
-      // Which store the site's cookies and storage go in, which is its space's choice;
-      // see web-data.ts.
-      const store = page.inPrivate ? null : await (await stores()).store(page.space, page.url)
+      // The note's own store, or the shared one; see web-data.svelte.ts.
+      const store = page.inPrivate ? null : await (await stores()).store(page.own)
       await invoke('web_open', {
         tab: tabId,
         url: page.url,
@@ -1230,29 +1231,28 @@ class Pages {
   private async saw(tabId: string, url: string, title: string): Promise<void> {
     // A private tab writes no history; see private.ts.
     if (this.held.get(tabId)?.inPrivate) return
-    const space = this.held.get(tabId)?.space ?? null
     const [visited, webData] = await Promise.all([history(), stores()])
-    visited.saw(webData.history(space), tabId, url, title)
+    visited.saw(webData.history(), tabId, url, title)
   }
 
-  /** Every running page of a space built again, in whichever store the space now keeps
-   *  its web data in. A webview's store is fixed when it is built, so a choice made in
-   *  the space's menu is a choice for the pages built after it - and a tab left in the
-   *  store it was opened in would be a setting that did nothing on screen. Each is parked
-   *  first, so it comes back on the page and at the place it was at; the one on screen is
-   *  built again where it was, the others as they are next looked at. A page whose store
-   *  the choice did not change is left running: that is no reason to load it again. */
-  async restore(space: string): Promise<void> {
-    const data = await stores()
-    const running = [...this.held.entries()].filter(
-      ([, page]) => page.live && page.space === space && !page.inPrivate,
-    )
-    for (const [tabId, page] of running) {
-      if ((await data.store(space, page.url)) === page.store) continue
-      const shown = page.shown ? page.pane : null
-      await this.park(tabId)
-      if (shown && page.url) await this.show(tabId, page.url, shown)
-    }
+  /** The web notes kept apart among the tabs; see clearing.ts. */
+  apart(): string[] {
+    return [...this.held.values()].map((page) => page.own).filter((one) => one !== null)
+  }
+
+  /** The web note keeps its own web data now, or no longer does: a running page is
+   *  parked and built again in that store, where it was, and `said` shown for a moment,
+   *  since the site may have signed out. A webview's store is fixed when it is built. */
+  async rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!page) return
+    page.own = own
+    if (!page.live || page.inPrivate) return
+    if ((await (await stores()).store(own)) === page.store) return
+    const shown = page.shown ? page.pane : null
+    await this.park(tabId)
+    if (shown && page.url) await this.show(tabId, page.url, shown)
+    page.notice = said
   }
 
   /** The tab has closed. The webview goes with it, and so does the trail: a tab

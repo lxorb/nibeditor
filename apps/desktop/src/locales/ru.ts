@@ -110,6 +110,13 @@ export const ru: Dictionary = {
   Unsaved: 'Не сохранено',
   'Save to': 'Сохранить в',
   'Reloaded with the web data of {space}': 'Перезагружено с веб-данными пространства {space}',
+  Separate: 'Отдельные',
+  'Share this note’s web data again?': 'Снова сделать веб-данные этой заметки общими?',
+  'What its pages are signed in to on this computer is deleted.':
+    'То, во что её страницы вошли на этом компьютере, будет удалено.',
+  'Share again': 'Снова сделать общими',
+  'This note keeps its own web data now': 'У этой заметки теперь свои веб-данные',
+  'Back on the shared web data': 'Снова на общих веб-данных',
   'Add a page': 'Добавить страницу',
   'Add a page after this': 'Добавить страницу после этой',
   'Delete this page': 'Удалить эту страницу',

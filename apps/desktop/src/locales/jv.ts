@@ -110,6 +110,13 @@ export const jv: Dictionary = {
   Unsaved: 'Durung disimpen',
   'Save to': 'Simpen ing',
   'Reloaded with the web data of {space}': 'Dimuat maneh nganggo data web {space}',
+  Separate: 'Kapisah',
+  'Share this note’s web data again?': 'Bagekake maneh data web cathetan iki?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Apa sing kalebu mlebu dening kaca-kacane ing komputer iki bakal dibusak.',
+  'Share again': 'Bagekake maneh',
+  'This note keeps its own web data now': 'Cathetan iki saiki nduwe data web dhewe',
+  'Back on the shared web data': 'Bali menyang data web bebarengan',
   'Add a page': 'Tambah kaca',
   'Add a page after this': 'Tambah kaca sawise iki',
   'Delete this page': 'Busak kaca iki',

@@ -122,6 +122,7 @@ async function writeFile(kept: Kept, home: string | null, icon: string | null): 
     Number.isNaN(when.getTime()) ? new Date() : when,
     home,
     icon,
+    said?.own,
   )
   if (content === kept.text) return
 

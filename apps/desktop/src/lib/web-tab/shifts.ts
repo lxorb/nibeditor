@@ -1,26 +1,8 @@
 /** A web tab's hole moving without changing size, and the screen's scale changing, heard
- *  as they happen.
- *
- *  A page is a native webview placed over the hole its pane leaves, and the hole's box is
- *  the one source of where the page goes: every change of it has to be said to the crate,
- *  or the page stays where the hole was. A resize observer hears the hole change size, and
- *  that is most of what a layout does to it - but not all of it. Emil, 2026-10-12 (#246):
- *  *"often they just freeze in a wrong sizing"*. The file list moved to the other side of
- *  the window moves the panes across without changing their width, and the language
- *  turned to one that reads the other way does the same; a resize observer says nothing
- *  of either, and the page stayed where the panes had been, over the list.
- *
- *  Chrome never meets this - its page is a view in the same layout pass as everything
- *  round it - and neither does anything drawn in the window's own document. What the web
- *  has for "keep this glued to that element" is Floating UI's `autoUpdate`, whose answer
- *  to a box that moves is an intersection observer whose root is shrunk to exactly the
- *  box: it sees the whole of the element, and the frame the element moves by a pixel it
- *  sees less of it and says so. No polling, nothing on a frame where nothing moved. That
- *  is `watchShifts`, after Floating UI's `observeMove`.
- *
- *  And the screen's scale: a window moved to a screen of another scale keeps its size in
- *  the window's own pixels, so neither the hole nor the window says anything, while every
- *  pixel of the page's window is now another size. `watchScale` hears it. */
+ *  as they happen (#246): a resize observer hears neither, and the page stayed where the
+ *  hole had been. `watchShifts` is Floating UI's `observeMove` - an intersection observer
+ *  whose root is shrunk to the box - and `watchScale` hears a screen of another scale. Why,
+ *  and what was measured: docs/web-tabs.md, "One box, and every change of it". */
 
 /** A box, in the window's own pixels. */
 export interface Box {

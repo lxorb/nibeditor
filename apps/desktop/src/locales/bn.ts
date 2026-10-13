@@ -110,6 +110,13 @@ export const bn: Dictionary = {
   Unsaved: 'সংরক্ষিত নয়',
   'Save to': 'এখানে সংরক্ষণ করুন',
   'Reloaded with the web data of {space}': '{space}-এর ওয়েব ডেটা দিয়ে আবার লোড হয়েছে',
+  Separate: 'আলাদা',
+  'Share this note’s web data again?': 'এই নোটের ওয়েব ডেটা আবার শেয়ার করবেন?',
+  'What its pages are signed in to on this computer is deleted.':
+    'এই কম্পিউটারে এর পেজগুলো যেখানে সাইন ইন করা আছে তা মুছে যাবে।',
+  'Share again': 'আবার শেয়ার করুন',
+  'This note keeps its own web data now': 'এই নোট এখন নিজের ওয়েব ডেটা রাখে',
+  'Back on the shared web data': 'আবার শেয়ার করা ওয়েব ডেটায়',
   'Add a page': 'পাতা যোগ করুন',
   'Add a page after this': 'এর পরে পাতা যোগ করুন',
   'Delete this page': 'এই পাতা মুছুন',

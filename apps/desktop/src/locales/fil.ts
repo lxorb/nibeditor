@@ -110,6 +110,13 @@ export const fil: Dictionary = {
   Unsaved: 'Hindi naka-save',
   'Save to': 'I-save sa',
   'Reloaded with the web data of {space}': 'Ni-reload gamit ang web data ng {space}',
+  Separate: 'Hiwalay',
+  'Share this note’s web data again?': 'Ibahagi muli ang web data ng tala na ito?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Mabubura ang mga naka-sign in ang mga page nito sa computer na ito.',
+  'Share again': 'Ibahagi muli',
+  'This note keeps its own web data now': 'May sariling web data na ang tala na ito',
+  'Back on the shared web data': 'Bumalik sa shared na web data',
   'Add a page': 'Magdagdag ng pahina',
   'Add a page after this': 'Magdagdag ng pahina pagkatapos nito',
   'Delete this page': 'Tanggalin ang pahinang ito',
