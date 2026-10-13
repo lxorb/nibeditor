@@ -277,7 +277,7 @@ the rule against a second sync implementation.
   notifications at all (Android 13 on), and the next time, if exact alarms are still
   off, sent to the system's switch for them, once. Without it an alarm is
   `setAndAllowWhileIdle`, which the system rings within a few minutes; with it,
-  `setExactAndAllowWhileIdle`. Settings > General > Reminders has the switch as a row.
+  `setExactAndAllowWhileIdle`. Settings > Tasks > Reminders has the switch as a row.
 - **What rings** is a notification on the `reminders` channel (high importance), with
   the task's words, its note, **Done** and **Snooze**. Snooze is answered in Kotlin, by
   an alarm fifteen minutes on. Done and a press on the notification need the page,

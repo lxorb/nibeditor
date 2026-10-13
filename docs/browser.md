@@ -54,7 +54,7 @@ engine costs **170 ms** on Windows and **1006 ms** on a macOS runner.
 
 Emil, 2026-09-30: *"For the chromium engine: it should for now be possible to switch
 between chromium and the alternative."* So nib's own Chromium is not the app's engine
-yet; it is one of two, and **Settings > General > Browser > Engine** chooses:
+yet; it is one of two, and **Settings > Browser > Engine** chooses:
 `Chromium | Edge` on Windows. A Mac gets `Chromium | Safari` once its web tabs load (below);
 Linux gets no row.
 

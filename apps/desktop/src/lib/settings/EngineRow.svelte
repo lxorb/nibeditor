@@ -1,5 +1,5 @@
 <!-- The engine web tabs run on: the system's own, or nib's own Chromium. The control on
-     the Engine row of Settings > General > Browser.
+     the Engine row of Settings > Browser.
 
      Chrome's shape for a setting that needs a new start: the choice is made on the spot,
      and a Relaunch chip appears beside it until the app is started again, which is what

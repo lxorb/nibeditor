@@ -1381,7 +1381,7 @@ other engines it is a tab, as before.
 ## A link from another program
 
 nib can be the machine's browser, so a link clicked in a mail, a chat, a PDF or a
-terminal opens as a web tab. Settings > General > Browser has one row: a Make default
+terminal opens as a web tab. Settings > Browser has one row: a Make default
 button while nib is not the browser, the tick once it is, asked again whenever the
 window gets the keyboard back. No system lets a program make itself the default, so the
 press does what Chrome's does: Windows opens nib's own page under Settings > Default
