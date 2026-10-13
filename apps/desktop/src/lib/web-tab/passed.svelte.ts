@@ -7,8 +7,7 @@
  *  reads the ask into one of eight words for the tab it came from (see web_opens.rs).
  *  They are read here too, so nothing a page says reaches anything but its own tab's
  *  find and address field, and the one key that works everywhere: Shift twice, which
- *  opens the palette over the page, as it does over a note. And Escape, which gives back
- *  the screen F11 took, where it did. The page keeps its own
+ *  opens the palette over the page, as it does over a note. The page keeps its own
  *  Shift, and one it answered itself does not count; see double-tap.ts. */
 
 import type { Modifier } from '../double-tap'
@@ -25,25 +24,7 @@ const TAPS: Record<string, Modifier> = {
   'alt-alt': 'Alt',
 }
 
-/** What a page's key asked for. */
-export type Passed =
-  | 'find'
-  | 'next'
-  | 'previous'
-  | 'address'
-  | 'shift-shift'
-  | 'ctrl-ctrl'
-  | 'alt-alt'
-  | 'install'
-  | 'escape'
-
-/** A page's ask, as the crate says it. */
-export interface Ask {
-  tab: string
-  key: Passed
-}
-
-const PASSED: readonly Passed[] = [
+const PASSED = [
   'find',
   'next',
   'previous',
@@ -53,7 +34,16 @@ const PASSED: readonly Passed[] = [
   'alt-alt',
   'install',
   'escape',
-]
+] as const
+
+/** What a page's key asked for. */
+export type Passed = (typeof PASSED)[number]
+
+/** A page's ask, as the crate says it. */
+export interface Ask {
+  tab: string
+  key: Passed
+}
 
 export function readAsk(value: unknown): Ask | null {
   if (!isRecord(value) || typeof value.tab !== 'string') return null
@@ -71,8 +61,7 @@ export function answer(tab: string, page: Page, key: Passed): void {
   const tapped = TAPS[key]
   if (tapped) heard(tapped)
   else if (key === 'address') addressing.asked = { page }
-  // Escape the page let go by, which the crate says only while the app holds the screen;
-  // see `nib-escape` in web_opens.rs.
+  // Said only while the app holds the screen; see `nib-escape` in web_opens.rs.
   else if (key === 'escape') void fullscreen.leave()
   else if (key === 'find' || key === 'next' || key === 'previous') sought(tab, page, key)
   // The store's own install button, pressed on an extension's page: nib installs it,

@@ -1,16 +1,10 @@
 /** The document, and nothing else.
  *
  *  Full screen takes the app away and leaves what is being read or drawn: the
- *  file list, the bars, the strips, the other panes and a web tab's address bar all
- *  go, and the tab in front of the pane worked in fills the screen: Chrome's F11, for
- *  any kind of tab (docs/keyboard.md, "Full screen"). The pane is the one Full window
- *  fills (`panes.fills`), so the split comes back as it was. Where there is a window
- *  to ask, it goes full screen too.
- *
- *  One command, `app.fullscreen` (F11), from the key, the View menu and the three
- *  dots on a phone. Nothing about it is remembered. A screen nobody can find their
- *  way off is the one thing this must never be, so there are five ways back: the
- *  button (never over a web page), Escape, back on Android, the menu row, and F11. */
+ *  tab in front of the pane worked in, alone, as Full window fills it, and the window
+ *  full screen: Chrome's F11 for any tab (docs/keyboard.md, "Full screen"). Nothing
+ *  about it is remembered, and there are five ways back: the button (never over a web
+ *  page), Escape, back on Android, the menu row, and F11. */
 
 import { currentWindow } from './tauri'
 import { afterQuiet } from './timing'
@@ -28,8 +22,7 @@ export const IDLE = 2600
 
 const FIELDS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
 
-/** Whether Escape gives the screen back: nothing `spent` it (vim, a picture stepped
- *  off) and no field or shell holds the keyboard, which read it themselves. */
+/** Escape gives the screen back unless it was `spent` or a field or shell has it. */
 export function escapeLeaves(
   spent: boolean,
   holder: { readonly tagName?: string } | null,
@@ -76,7 +69,6 @@ class FullScreen {
     this.on = false
     this.idle = false
     this.fading.cancel()
-    // A fill from before comes back while its pane is still the one worked in.
     const panes = this.panes
     if (panes) panes.fills = this.filledBefore === panes.focusedId ? this.filledBefore : null
     this.panes = null
@@ -94,8 +86,7 @@ class FullScreen {
     this.wake()
   }
 
-  /** The screen follows the pane worked in, and is given back once it shows nothing:
-   *  a window with no document and no app around it has nothing at all. */
+  /** The screen follows the pane worked in, and is given back once it shows nothing. */
   follow() {
     const panes = this.panes
     if (!this.on || !panes) return

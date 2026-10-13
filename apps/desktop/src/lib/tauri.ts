@@ -171,21 +171,10 @@ export async function currentWindow(): Promise<WindowLike> {
   if (!isNative) return browserWindow
 
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  return throughTheCrate(getCurrentWindow())
-}
-
-/** Full screen is asked of the crate, which keeps a run sent off the screen off it;
- *  see src-tauri/src/full_screen.rs. */
-function throughTheCrate<W extends object>(window: W): W {
-  const answered: Record<string, unknown> = {
+  // Full screen is the crate's, which keeps a probe off the screen; see full_screen.rs.
+  return Object.assign(Object.create(getCurrentWindow()) as WindowLike, {
     setFullscreen: (on: boolean) => invoke<undefined>('window_fullscreen', { on }),
     isFullscreen: () => invoke<boolean>('window_is_fullscreen'),
-  }
-  return new Proxy(window, {
-    get: (target, key, receiver) =>
-      typeof key === 'string' && key in answered
-        ? answered[key]
-        : Reflect.get(target, key, receiver),
   })
 }
 
