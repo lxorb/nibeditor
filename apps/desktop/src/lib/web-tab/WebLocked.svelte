@@ -34,7 +34,7 @@
    *  rather than a broken picture. */
   let marked = $state(true)
 
-  const mark = $derived(icon || favicon(address))
+  const mark = $derived(icon ?? favicon(address))
 
   $effect(() => {
     if (mark) marked = true

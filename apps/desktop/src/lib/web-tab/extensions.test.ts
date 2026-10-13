@@ -17,6 +17,8 @@ vi.mock('../tauri', async (importOriginal) => ({
     if (command === 'extensions_list') return Promise.resolve([row({ id: 'a', enabled: true })])
     if (command === 'extension_popup_open') {
       const said = builds.shift() ?? null
+      // The crate refuses with its words, as a string, which is what the window reads.
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       return said === null ? Promise.resolve(undefined) : Promise.reject(said)
     }
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
