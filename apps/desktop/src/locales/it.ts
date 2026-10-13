@@ -729,6 +729,7 @@ export const it: Dictionary = {
   'out of space': 'archiviazione piena',
   'nibeditor {version} is ready to install.': 'nibeditor {version} è pronto da installare.',
   'Restart now': 'Riavvia ora',
+  'Move to Applications': 'Sposta in Applicazioni',
   Later: 'Più tardi',
   More: 'Altro',
   'Open notes': 'Note aperte',

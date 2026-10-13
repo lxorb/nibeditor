@@ -712,6 +712,7 @@ export const jv: Dictionary = {
   'out of space': 'panyimpenan entek',
   'nibeditor {version} is ready to install.': 'nibeditor {version} wis siyap dipasang.',
   'Restart now': 'Wiwiti maneh saiki',
+  'Move to Applications': 'Pindhah menyang Aplikasi',
   Later: 'Mengko',
   More: 'Liyane',
   'Open notes': 'Bukak cathetan',

@@ -1,0 +1,86 @@
+name: mac-update
+
+# A released nib on a Mac, updated by its own updater from the releases' own manifest,
+# the way somebody's copy is: put where people put it, left to find the next release,
+# "Restart now" pressed, and asked afterwards what it is. On runners that are nobody's
+# machine; see scripts/mac-update-check.sh.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/mac-update-check.sh
+      - .github/workflows/mac-update.yml
+      - apps/desktop/src/lib/updater.ts
+      - apps/desktop/src-tauri/src/updates.rs
+      - apps/desktop/src-tauri/src/bundle_name.rs
+      - apps/desktop/src-tauri/src/app_place.rs
+      - scripts/mac-move-check.sh
+
+concurrency:
+  group: mac-update-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Not started from its disk image: a release there cannot be written to, so it never
+  # updates and offers the same version on every launch (measured here 2026-10-13,
+  # 0.12.0 against 0.13.0). The move below is the answer to that one.
+  update:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - from: '0.12.0'
+            where: applications
+          - from: '0.12.0'
+            where: home
+          - from: '0.11.0'
+            where: applications
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: The release and the one it should become
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "v${{ matrix.from }}" --repo "$GITHUB_REPOSITORY" --dir old --pattern '*-macos-universal.dmg'
+          latest="$(curl -fsSL https://github.com/lxorb/nibeditor/releases/latest/download/latest.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
+          echo "LATEST=$latest" >> "$GITHUB_ENV"
+          ls old; echo "the releases offer $latest"
+      - name: Updated by itself
+        run: bash scripts/mac-update-check.sh "$(ls old/*.dmg | head -1)" ${{ matrix.where }} "$LATEST"
+
+  # And the way out this build gives such a copy: started from a disk image it says it
+  # is stuck, moves itself into Applications, and comes back from there. Its own
+  # identifier, and the updater pointed nowhere; see scripts/mac-move-check.sh.
+  move:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: mac-move
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: |
+          pnpm --filter @nib/desktop exec tauri build --bundles app --config '{"identifier":"ch.emilvinu.nib.probe.mac-move","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+      - name: Stuck on the disk image, moved to Applications
+        run: bash scripts/mac-move-check.sh "$(ls -d apps/desktop/src-tauri/target/release/bundle/macos/*.app | head -1)"

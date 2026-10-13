@@ -718,6 +718,7 @@ export const sw: Dictionary = {
   'out of space': 'hifadhi imeisha',
   'nibeditor {version} is ready to install.': 'nibeditor {version} iko tayari kusakinishwa.',
   'Restart now': 'Anzisha tena sasa',
+  'Move to Applications': 'Hamishia kwenye Programu',
   Later: 'Baadaye',
   More: 'Zaidi',
   'Open notes': 'Fungua madokezo',

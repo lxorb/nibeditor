@@ -710,6 +710,7 @@ export const am: Dictionary = {
   'out of space': 'ማከማቻ ሞልቷል',
   'nibeditor {version} is ready to install.': 'nibeditor {version} ለመጫን ተዘጋጅቷል።',
   'Restart now': 'አሁን እንደገና አስነሳ',
+  'Move to Applications': 'ወደ መተግበሪያዎች ውሰድ',
   Later: 'ቆይቶ',
   More: 'ተጨማሪ',
   'Open notes': 'ማስታወሻዎችን ክፈት',
