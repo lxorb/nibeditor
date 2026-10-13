@@ -45,8 +45,9 @@ use super::{Places, State};
 /// runtime its files are linked from, so the runtime is kept while the version is.
 pub const READY: &str = ".ready";
 
-/// Where this project's release files are served from; see updates.rs.
-const RELEASES: &str = "https://github.com/lxorb/nibeditor/releases/download/";
+/// Where this project's release files are served from, under the repository's own
+/// name; see updates.rs.
+const RELEASES: &str = "https://github.com/lxorb/orden/releases/download/";
 
 /// What a probe fetches from instead: its own server, with its own key in its build's
 /// config. The signature still has to verify, so this moves where the bytes come from

@@ -269,8 +269,8 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         unsafe {
             MessageBoxW(
                 None,
-                w!("nib is not responding.\n\nEnd it and open nib again?"),
-                w!("nib"),
+                w!("Orden is not responding.\n\nEnd it and open Orden again?"),
+                w!("Orden"),
                 MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND,
             )
         }

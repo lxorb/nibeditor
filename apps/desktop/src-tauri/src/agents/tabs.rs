@@ -442,7 +442,7 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
 #[cfg(all(windows, not(feature = "cef")))]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let window =
-        super::shell::host(app).ok_or("nib has no window for an agent's tab to live in")?;
+        super::shell::host(app).ok_or("Orden has no window for an agent's tab to live in")?;
     let label = tab.label();
     let blank: Url = "about:blank"
         .parse()
@@ -554,7 +554,7 @@ fn listen(
                     .unwrap_or_else(PoisonError::into_inner)
                     .say(
                         "warning",
-                        format!("nib stopped the page going to {url}: {why}"),
+                        format!("Orden stopped the page going to {url}: {why}"),
                     );
                 return Ok(());
             }

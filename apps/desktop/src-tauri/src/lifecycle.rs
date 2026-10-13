@@ -279,7 +279,7 @@ pub fn keep_running(app: AppHandle) {
         quitting.set(RUNNING);
     }
     // And whatever asked for the quit is told it is off: a logout or a restart
-    // stops, where the system's own wording says Nib stopped it.
+    // stops, where the system's own wording says Orden stopped it.
     #[cfg(target_os = "macos")]
     asked_to_quit::answer(&app, false);
 }
@@ -297,7 +297,7 @@ pub fn keep_running(app: AppHandle) {
 ///
 /// Wait, not no. The answer goes back to whatever asked, and a logout, a restart
 /// or a shutdown hears "no" as the app stopping it: it was, every time, with
-/// nothing unsaved anywhere, and the reader had to start it again once Nib had quit
+/// nothing unsaved anywhere, and the reader had to start it again once Orden had quit
 /// by itself a moment later. Only a Cancel over an unsaved note calls one off now,
 /// which is what every Mac document app does.
 #[cfg(target_os = "macos")]
@@ -406,7 +406,7 @@ mod asked_to_quit {
 fn leave(app: &AppHandle) {
     state(app).set(LEAVING);
     // A quit `AppKit` asked about is ended by `AppKit`, which is also what tells a
-    // logout that Nib is out of its way.
+    // logout that Orden is out of its way.
     #[cfg(target_os = "macos")]
     if asked_to_quit::answer(app, true) {
         return;

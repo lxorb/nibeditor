@@ -1,4 +1,4 @@
-; Registers nibeditor the way Windows expects of an application other programs hand
+; Registers Orden the way Windows expects of an application other programs hand
 ; things to: a ProgID saying how to launch it, a Capabilities block listing what it
 ; handles, and an entry in RegisteredApplications so that it appears under
 ; Settings > Default apps as a browser for http and https links.
@@ -7,7 +7,7 @@
 ; without this installer, and the ones the MSI writes; src/default_browser.rs holds
 ; this file and wix/browser.wxs to them.
 ;
-; No file type is claimed. Nib opens no note from outside its spaces, so it is in
+; No file type is claimed. Orden opens no note from outside its spaces, so it is in
 ; "Open with" for PDFs alone (NIB_PDF_OPEN_WITH), and an install over an older Nib
 ; takes away the markdown types the older one claimed; see NIB_FORGET_FILES.
 ;
@@ -21,11 +21,12 @@
 ; ${PRODUCTNAME}, ${MANUFACTURER} and the rest, so a function written in this file
 ; (as opposed to a macro, which is read where it is inserted) cannot use them.
 
-; Until 0.11 the product was called Nib, and Tauri's template names an install by the
-; product: its folder, its Apps & Features entry, the folder it remembers for the next
-; install, its shortcuts and its client key among the browsers. None of those carry
-; over to a new name on their own, so an update would have put a second copy beside
-; the first. What follows makes the first install the one that is updated:
+; Until 0.11 the product was called Nib, from 0.12 to 0.13 nibeditor, and Tauri's
+; template names an install by the product: its folder, its Apps & Features entry,
+; the folder it remembers for the next install, its shortcuts and its client key
+; among the browsers. None of those carry over to a new name on their own, so an
+; update would have put a second copy beside the first. What follows makes the first
+; install the one that is updated, under whichever of the two old names it is:
 ;
 ; - The folder stays where it is. A pinned taskbar icon and every agent nib was added
 ;   to as an MCP server name the program by its path, and both keep working only if
@@ -35,76 +36,90 @@
 ;   again, so whatever was pinned from them stays pinned.
 ; - The browser's client key and its line in RegisteredApplications move to the new
 ;   name. The ProgID, NibURL, stays: the choice Windows sealed under Default apps
-;   names the ProgID, and so nib stays the default browser.
-; - A per-machine MSI install under the old name is taken away the way the template
+;   names the ProgID, and so the app stays the default browser.
+; - A per-machine MSI install under an old name is taken away the way the template
 ;   takes away one under the current name when its NSIS installer replaces it.
-!define NIB_OLD_NAME "Nib"
+;
+; default_browser.rs holds the two old names to its own list.
+!define NIB_OLD_NAME_1 "Nib"
+!define NIB_OLD_NAME_2 "nibeditor"
 ; `productName` in tauri.conf.json, written out for the function below, which is read
 ; before the template defines it; default_browser.rs holds the two together.
-!define NIB_NAME "nibeditor"
-!define NIB_OLD_UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${NIB_OLD_NAME}"
+!define NIB_NAME "Orden"
+!define NIB_UNINSTKEYS "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
-; Where the install under the old name is, once NibFindOldInstall has looked.
+; Where the install under an old name is, once NibFindOldInstall has looked.
 Var NibOldDir
 Var NibOldAsked
 
 ; Before the first page, so the folder page shows the folder that will be used.
 !define MUI_CUSTOMFUNCTION_GUIINIT NibFindOldInstall
 
-; Finds the install under the old name and makes its folder this install's, unless a
+; The folder of the install under the old name OLD, into $NibOldDir unless one was
+; found already: its own Apps & Features entry says where it is, in quotes. One whose
+; uninstaller is gone is no install, and its entry is dropped after the install like
+; any other trace.
+!macro NIB_FIND_UNDER OLD ID
+  StrCmp $NibOldDir "" 0 nib_find_${ID}_done
+  ReadRegStr $NibOldDir SHCTX "${NIB_UNINSTKEYS}\${OLD}" "InstallLocation"
+  StrCpy $R9 $NibOldDir 1
+  StrCmp $R9 '"' 0 nib_find_${ID}_unquoted
+    StrCpy $NibOldDir $NibOldDir "" 1
+    StrCpy $NibOldDir $NibOldDir -1
+  nib_find_${ID}_unquoted:
+  StrCmp $NibOldDir "" nib_find_${ID}_done
+  IfFileExists "$NibOldDir\uninstall.exe" nib_find_${ID}_done
+    StrCpy $NibOldDir ""
+  nib_find_${ID}_done:
+!macroend
+
+; Finds the install under an old name and makes its folder this install's, unless a
 ; folder was asked for (`/D=`) or an install under the new name is remembered: only
-; the template's default for a fresh install is replaced. Its own Apps & Features
-; entry says where the old install is, in quotes; one whose uninstaller is gone is no
-; install, and its entry is dropped after the install like any other trace.
+; the template's default for a fresh install is replaced. The later name first: an
+; install of Nib that 0.12 updated is under nibeditor's entry, in Nib's folder.
 Function NibFindOldInstall
   StrCmp $NibOldAsked "1" nib_find_done
   StrCpy $NibOldAsked "1"
 
-  ReadRegStr $NibOldDir SHCTX "${NIB_OLD_UNINSTKEY}" "InstallLocation"
   ; Its caller's $R9 is given back: the install hook keeps a folder in it.
   Push $R9
-  StrCpy $R9 $NibOldDir 1
-  StrCmp $R9 '"' 0 nib_find_unquoted
-    StrCpy $NibOldDir $NibOldDir "" 1
-    StrCpy $NibOldDir $NibOldDir -1
-  nib_find_unquoted:
+  StrCpy $NibOldDir ""
+  !insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_2}" 2
+  !insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_1}" 1
   Pop $R9
   StrCmp $NibOldDir "" nib_find_done
-  IfFileExists "$NibOldDir\uninstall.exe" nib_find_found
-    StrCpy $NibOldDir ""
-    Goto nib_find_done
-  nib_find_found:
     StrCmp $INSTDIR "$LOCALAPPDATA\${NIB_NAME}" 0 nib_find_done
     StrCpy $INSTDIR $NibOldDir
   nib_find_done:
 FunctionEnd
 
-; A shortcut the old install made, under the new name: renamed when it starts this
-; copy (its pins, its place on the desktop and its AppUserModelID go with it), deleted
-; when the new one is there already or it starts the old copy somewhere else.
-!macro NIB_RENAME_SHORTCUT DIR ID
-  IfFileExists "${DIR}\${NIB_OLD_NAME}.lnk" 0 nib_lnk_${ID}_done
-  !insertmacro IsShortcutTarget "${DIR}\${NIB_OLD_NAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+; A shortcut the old install made under the old name OLD, under the new name: renamed
+; when it starts this copy (its pins, its place on the desktop and its AppUserModelID
+; go with it), deleted when the new one is there already or it starts the old copy
+; somewhere else.
+!macro NIB_RENAME_SHORTCUT DIR OLD ID
+  IfFileExists "${DIR}\${OLD}.lnk" 0 nib_lnk_${ID}_done
+  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
   Pop $0
   StrCmp $0 1 nib_lnk_${ID}_here
   StrCmp $NibOldDir "" nib_lnk_${ID}_done
-  !insertmacro IsShortcutTarget "${DIR}\${NIB_OLD_NAME}.lnk" "$NibOldDir\${MAINBINARYNAME}.exe"
+  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$NibOldDir\${MAINBINARYNAME}.exe"
   Pop $0
   StrCmp $0 1 nib_lnk_${ID}_gone nib_lnk_${ID}_done
   nib_lnk_${ID}_here:
     IfFileExists "${DIR}\${PRODUCTNAME}.lnk" nib_lnk_${ID}_gone
-    Rename "${DIR}\${NIB_OLD_NAME}.lnk" "${DIR}\${PRODUCTNAME}.lnk"
+    Rename "${DIR}\${OLD}.lnk" "${DIR}\${PRODUCTNAME}.lnk"
     !insertmacro SetLnkAppUserModelId "${DIR}\${PRODUCTNAME}.lnk"
     Goto nib_lnk_${ID}_done
   nib_lnk_${ID}_gone:
-    Delete "${DIR}\${NIB_OLD_NAME}.lnk"
+    Delete "${DIR}\${OLD}.lnk"
   nib_lnk_${ID}_done:
 !macroend
 
-; The browser's client under the old name, when it starts this copy, the old copy, or
-; a program that is gone. A portable copy somebody registered on purpose keeps it.
-!macro NIB_FORGET_OLD_BROWSER ID
-  ReadRegStr $R7 SHCTX "Software\Clients\StartMenuInternet\${NIB_OLD_NAME}\shell\open\command" ""
+; The browser's client under the old name OLD, when it starts this copy, the old copy,
+; or a program that is gone. A portable copy somebody registered on purpose keeps it.
+!macro NIB_FORGET_OLD_BROWSER OLD ID
+  ReadRegStr $R7 SHCTX "Software\Clients\StartMenuInternet\${OLD}\shell\open\command" ""
   StrCmp $R7 "" nib_browser_${ID}_done
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe"' nib_browser_${ID}_forget
   StrCmp $R7 '"$NibOldDir\${MAINBINARYNAME}.exe"' nib_browser_${ID}_forget
@@ -112,12 +127,22 @@ FunctionEnd
   StrCpy $R6 $R6 -1
   IfFileExists $R6 nib_browser_${ID}_done
   nib_browser_${ID}_forget:
-    DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${NIB_OLD_NAME}"
-    DeleteRegValue SHCTX "Software\RegisteredApplications" "${NIB_OLD_NAME}"
+    DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${OLD}"
+    DeleteRegValue SHCTX "Software\RegisteredApplications" "${OLD}"
   nib_browser_${ID}_done:
 !macroend
 
-; The template's own migration from its MSI, for the MSI's old name: Tauri's updater
+; Everything else the old name OLD left: one install, under one name, in Apps &
+; Features.
+!macro NIB_FORGET_OLD_NAME OLD ID
+  !insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}" start_${ID}
+  !insertmacro NIB_RENAME_SHORTCUT "$DESKTOP" "${OLD}" desktop_${ID}
+  DeleteRegKey SHCTX "${NIB_UNINSTKEYS}\${OLD}"
+  DeleteRegKey SHCTX "Software\${MANUFACTURER}\${OLD}"
+  !insertmacro NIB_FORGET_OLD_BROWSER "${OLD}" install_${ID}
+!macroend
+
+; The template's own migration from its MSI, for the MSI's old names: Tauri's updater
 ; hands every install the NSIS setup, and the template only looks for an MSI under
 ; the current name. Run the same way it runs, and only where it runs, which is when
 ; pages are shown (the updater's passive mode is one). The shortcuts the MSI took with
@@ -131,7 +156,9 @@ FunctionEnd
     IntOp $R8 $R8 + 1
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "DisplayName"
     ReadRegStr $R5 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "Publisher"
-    StrCmp "$R6$R5" "${NIB_OLD_NAME}${MANUFACTURER}" 0 nib_msi_loop
+    StrCmp "$R6$R5" "${NIB_OLD_NAME_1}${MANUFACTURER}" nib_msi_old
+    StrCmp "$R6$R5" "${NIB_OLD_NAME_2}${MANUFACTURER}" nib_msi_old nib_msi_loop
+    nib_msi_old:
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "UninstallString"
     ${StrCase} $R5 $R6 "L"
     ${StrLoc} $R5 $R5 "msiexec" ">"
@@ -218,7 +245,7 @@ FunctionEnd
   ClearErrors
 !macroend
 
-; nib among the programs "Open with" offers for a PDF, and nothing more: a ProgID
+; Orden among the programs "Open with" offers for a PDF, and nothing more: a ProgID
 ; saying how to start it, and its name under the extension's OpenWithProgids, which
 ; is how VS Code and Chrome stand in that list. The extension's own default is left
 ; alone, so whichever reader somebody chose stays theirs; "Always" in the list is
@@ -246,7 +273,7 @@ FunctionEnd
 !macro NSIS_HOOK_POSTINSTALL
   !insertmacro NIB_PDF_OPEN_WITH
 
-  ; How to open a web page with Nib. The flag says the launch is a link's, so
+  ; How to open a web page with Orden. The flag says the launch is a link's, so
   ; nothing else on its command line is ever read as a note.
   WriteRegStr SHCTX "Software\Classes\NibURL" "" "${PRODUCTNAME} URL"
   WriteRegStr SHCTX "Software\Classes\NibURL\Application" "ApplicationName" "${PRODUCTNAME}"
@@ -254,9 +281,9 @@ FunctionEnd
   WriteRegStr SHCTX "Software\Classes\NibURL\DefaultIcon" "" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr SHCTX "Software\Classes\NibURL\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" --url "%1"'
 
-  ; Nib among the browsers, and what it is capable of opening, which is what
+  ; Orden among the browsers, and what it is capable of opening, which is what
   ; Default apps reads. The web's two schemes and no file type: a saved page
-  ; is a local file, and Nib opens none.
+  ; is a local file, and Orden opens none.
   WriteRegStr SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}" "" "${PRODUCTNAME}"
   WriteRegStr SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}\DefaultIcon" "" "$INSTDIR\${MAINBINARYNAME}.exe,0"
   WriteRegStr SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe"'
@@ -270,12 +297,9 @@ FunctionEnd
 
   !insertmacro NIB_FORGET_FILES
 
-  ; What the old name left: one install, under one name, in Apps & Features.
-  !insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS" start
-  !insertmacro NIB_RENAME_SHORTCUT "$DESKTOP" desktop
-  DeleteRegKey SHCTX "${NIB_OLD_UNINSTKEY}"
-  DeleteRegKey SHCTX "Software\${MANUFACTURER}\${NIB_OLD_NAME}"
-  !insertmacro NIB_FORGET_OLD_BROWSER install
+  ; What the old names left.
+  !insertmacro NIB_FORGET_OLD_NAME "${NIB_OLD_NAME_1}" 1
+  !insertmacro NIB_FORGET_OLD_NAME "${NIB_OLD_NAME_2}" 2
   ClearErrors
 
   ; Explorer caches file-type icons and handlers until it is told otherwise.
@@ -289,7 +313,7 @@ FunctionEnd
   ; from an older Nib and never ran the install above goes clean all the same.
   !insertmacro NIB_FORGET_FILES
 
-  ; The browser, unless a copy of Nib elsewhere has registered itself since: a
+  ; The browser, unless a copy of the app elsewhere has registered itself since: a
   ; portable copy the person chose on purpose keeps its place.
   ReadRegStr $R7 SHCTX "Software\Classes\NibURL\shell\open\command" ""
   StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" --url "%1"' 0 nib_browser_kept
@@ -297,7 +321,8 @@ FunctionEnd
     DeleteRegKey SHCTX "Software\Classes\NibURL"
     DeleteRegValue SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}"
   nib_browser_kept:
-  !insertmacro NIB_FORGET_OLD_BROWSER uninstall
+  !insertmacro NIB_FORGET_OLD_BROWSER "${NIB_OLD_NAME_1}" uninstall_1
+  !insertmacro NIB_FORGET_OLD_BROWSER "${NIB_OLD_NAME_2}" uninstall_2
   ClearErrors
 
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'

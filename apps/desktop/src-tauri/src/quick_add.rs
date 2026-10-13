@@ -128,7 +128,7 @@ fn bring_up(app: &AppHandle) {
 /// The window, built hidden: small, on top, no frame, no taskbar button.
 fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
-        .title("nibeditor")
+        .title("Orden")
         .inner_size(WIDTH, HEIGHT)
         .resizable(false)
         .maximizable(false)

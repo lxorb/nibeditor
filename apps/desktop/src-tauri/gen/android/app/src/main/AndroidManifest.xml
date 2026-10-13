@@ -56,7 +56,7 @@
     <!--
       Notes stay on the phone. Somebody's notes are the most private thing this
       app holds, and Android's own backup would put them in Google's cloud and on
-      whatever phone the reader migrates to next, encrypted with a key Nib does
+      whatever phone the reader migrates to next, encrypted with a key Orden does
       not hold and readable by whoever ends up with the account. Nothing here is
       state a new install needs, either: a note is a file the reader keeps
       themselves.
@@ -88,7 +88,7 @@
             </intent-filter>
 
             <!--
-              Anything shared to Nib becomes a note. The filters sit on the
+              Anything shared to Orden becomes a note. The filters sit on the
               launcher activity rather than on an activity of their own, which is
               what puts the app's own icon and name in the share sheet's row and
               what makes the second share of the day arrive in the app that is

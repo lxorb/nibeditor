@@ -11,7 +11,7 @@
 //!
 //! One more thing `AppKit` does is left as it is: it rewrites a row's key for the
 //! keyboard layout in use, so on QWERTZ Fold's Opt+Cmd+[ reads Opt+Cmd+Ö. That
-//! looks like it is overriding Nib's own table, and turning it off was tried. But a
+//! looks like it is overriding Orden's own table, and turning it off was tried. But a
 //! key equivalent is matched by the character it types, and QWERTZ types `[` with
 //! Opt+5, so Opt+Cmd+5 folded the note rather than making Heading 5. The rewrite is
 //! what keeps rows like that apart on every layout.

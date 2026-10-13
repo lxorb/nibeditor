@@ -239,7 +239,7 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     `--mode drive` and nothing else: a release in every respect but the handles, which
     is the shape that ships and so the shape worth driving. The build a Worker serves
     asks its own origin for the API - an empty `VITE_NIB_API` - which is how the web
-    app at nibeditor.com talks to its Worker, and which makes one build good for a
+    app at orden.so talks to its Worker, and which makes one build good for a
     Worker on any port: every drive against one runs a Worker of its own, beside the
     others."""
     kind = "worker" if served_by_worker else "plain"
@@ -1287,8 +1287,8 @@ def refused(exe: Path, identifier: str | None) -> str:
     under the release identifier, whose launch the running nib would take. A build
     whose identifier nobody said is refused too, since it may be either."""
     local = os.environ.get("LOCALAPPDATA")
-    # The folder an install from before the rename keeps, and a fresh install's.
-    for installed in ("Nib", "nibeditor"):
+    # The folders an install from before a rename keeps, and a fresh install's.
+    for installed in ("Nib", "nibeditor", "Orden"):
         if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
             return f"{exe} is the installed nib"
     if not identifier:

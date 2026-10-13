@@ -22,7 +22,7 @@
 //! tab just switched to - the wheel is delivered to the window under the pointer, the
 //! legacy window, and the page scrolls double. That much is read off the two ends rather
 //! than watched, because no real wheel ever reaches a probe that is never on the screen;
-//! and the fix below holds whichever window Windows picks. Nib's own page meets the same
+//! and the fix below holds whichever window Windows picks. Orden's own page meets the same
 //! thing the other way round, over a note while the keyboard is in a site.
 //!
 //! **What this does.** It sends the wheel where Chrome's goes. A low-level mouse hook
@@ -44,7 +44,7 @@
 //! thread of its own that does nothing else, so a mouse message is answered in a few
 //! microseconds and no busy moment in the window can hold the pointer up.
 //!
-//! `WebView2`'s alone. Nib's own Chromium puts every page and the interface in one
+//! `WebView2`'s alone. Orden's own Chromium puts every page and the interface in one
 //! browser process with the focus, which is Chrome's arrangement, and a Mac or Linux
 //! engine has no legacy window.
 

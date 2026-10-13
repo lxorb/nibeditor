@@ -61,7 +61,7 @@ pub fn script() -> &'static str {
 pub const BINDING: &str = "nibSwiped";
 
 /// What the window name a swipe is said under on `WebView2` begins with; the rest is
-/// what the binding would have been handed. Nib's own Chromium hears a swipe through
+/// what the binding would have been handed. Orden's own Chromium hears a swipe through
 /// the binding instead, and has no such window.
 #[cfg(any(not(feature = "cef"), test))]
 const NAMED: &str = "nib-swipe:";

@@ -137,7 +137,7 @@ pub fn start(dir: &Path) -> Result<Endpoint, String> {
             }
         }
     }
-    Err("nib did not start in 30 seconds".to_owned())
+    Err("Orden did not start in 30 seconds".to_owned())
 }
 
 /// The app, started. On Windows through `cmd /c start /min`, run with no console of its
@@ -162,7 +162,7 @@ fn launch() -> Result<(), String> {
     }
     quiet(&mut command)
         .status()
-        .map_err(|error| format!("nib could not be started: {error}"))
+        .map_err(|error| format!("Orden could not be started: {error}"))
         .map(drop)
 }
 
@@ -208,7 +208,7 @@ fn launch() -> Result<(), String> {
         Some(bundle) => quiet(Command::new("open").args(["-g", "-j"]).arg(bundle))
             .status()
             .map(drop)
-            .map_err(|error| format!("nib could not be started: {error}")),
+            .map_err(|error| format!("Orden could not be started: {error}")),
         None => detached(&program),
     }
 }
@@ -230,7 +230,7 @@ fn detached(program: &Path) -> Result<(), String> {
 
     let mut child = quiet(Command::new(program).process_group(0))
         .spawn()
-        .map_err(|error| format!("nib could not be started: {error}"))?;
+        .map_err(|error| format!("Orden could not be started: {error}"))?;
     std::thread::spawn(move || child.wait());
     Ok(())
 }

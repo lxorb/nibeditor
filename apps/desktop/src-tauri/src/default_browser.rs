@@ -1,4 +1,4 @@
-//! Nib as the default browser: listed among the browsers, one press to become the
+//! Orden as the default browser: listed among the browsers, one press to become the
 //! default, and whether it is.
 //!
 //! Emil, 2026-09-30: *"I would like to use nib as my default browser, so it should
@@ -40,14 +40,15 @@ const SHIPPED: &str = "ch.emilvinu.nib";
 )]
 const PROG_ID: &str = "NibURL";
 
-/// The product's name until 0.11, which the browser's client key and its line in
-/// `RegisteredApplications` are under on a machine that had it. The `ProgID` was never
-/// renamed, because the choice Windows sealed names it; see installer.nsh.
+/// The product's names before this one - Nib until 0.11, nibeditor from 0.12 to 0.13 -
+/// which the browser's client key and its line in `RegisteredApplications` are under on
+/// a machine that had one. The `ProgID` was never renamed, because the choice Windows
+/// sealed names it; see installer.nsh.
 #[cfg_attr(
     not(any(windows, test)),
     allow(dead_code, reason = "only Windows keeps a registry of programs")
 )]
-const OLD_NAME: &str = "Nib";
+const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
 
 /// What Default apps says about nib, beside its name.
 #[cfg_attr(
@@ -77,10 +78,11 @@ pub fn make_default_browser(app: AppHandle) -> Result<(), String> {
 
 /// Puts nib back among the browsers when the registration is missing or names a copy
 /// that is gone: a portable copy moved, Scoop's new version in a new folder, an MSI
-/// installed by another person on this machine. And takes away the one under the old
-/// name, which a copy no installer ran over (Scoop's, a portable one) still has. On a
+/// installed by another person on this machine. And takes away the ones under the old
+/// names, which a copy no installer ran over (Scoop's, a portable one) still has. On a
 /// thread of its own, after the window is up, so it costs a launch nothing. Windows
-/// only: a Mac's is in the bundle, and Linux's is written by the press.
+/// only: a Mac's is in the bundle, and Linux's is written by the press (and asked for
+/// again when the entry it named went with an old package; see `is_default`).
 pub fn keep_registered(app: &AppHandle) {
     #[cfg(windows)]
     if ships(app) {
@@ -208,20 +210,50 @@ fn exe_of(command: &str) -> Option<String> {
     Some(rest[..end].to_owned()).filter(|exe| !exe.is_empty())
 }
 
-/// The names nib's desktop entry has, whichever package put it there: the handler the
-/// press writes (named by the deep link plugin after the binary), Tauri's own package,
-/// and the Flathub, Snap, AUR and Nix ones under packaging/.
+/// The names the app's desktop entry has, whichever package put it there: the handler
+/// the press writes (named by the deep link plugin after the binary), Tauri's own
+/// package under each name the product has had, and the Flathub, Snap, AUR and Nix ones
+/// under packaging/.
 #[cfg_attr(
     not(any(target_os = "linux", test)),
     allow(dead_code, reason = "only Linux names a program by its desktop entry")
 )]
-const ENTRIES: [&str; 5] = [
+const ENTRIES: [&str; 6] = [
     "nib-handler.desktop",
     "nib.desktop",
     "nibeditor.desktop",
+    "orden.desktop",
     "ch.emilvinu.nib.desktop",
     "nib_nib.desktop",
 ];
+
+/// Whether the entry `entry` is in the `applications` folder of the person's own data
+/// folder `own` or of one of the system's, `system` (`XDG_DATA_DIRS`, which stands for
+/// `/usr/local/share:/usr/share` when it is empty), as `there` finds files.
+#[cfg_attr(
+    not(any(target_os = "linux", test)),
+    allow(dead_code, reason = "only Linux names a program by its desktop entry")
+)]
+fn kept(
+    entry: &str,
+    own: Option<std::path::PathBuf>,
+    system: &str,
+    there: impl Fn(&std::path::Path) -> bool,
+) -> bool {
+    let system = if system.trim().is_empty() {
+        "/usr/local/share:/usr/share"
+    } else {
+        system
+    };
+    own.into_iter()
+        .chain(
+            system
+                .split(':')
+                .filter(|dir| !dir.is_empty())
+                .map(std::path::PathBuf::from),
+        )
+        .any(|dir| there(&dir.join("applications").join(entry.trim())))
+}
 
 /// Whether a desktop entry the system named is nib's.
 #[cfg_attr(
@@ -236,7 +268,7 @@ fn is_ours(entry: &str) -> bool {
 
 #[cfg(windows)]
 mod platform {
-    use super::{exe_of, registration, Value, OLD_NAME, PROG_ID};
+    use super::{exe_of, registration, Value, OLD_NAMES, PROG_ID};
     use std::path::Path;
     use tauri::AppHandle;
     use windows::core::{PCWSTR, PWSTR};
@@ -270,7 +302,7 @@ mod platform {
     }
 
     /// Writes the registration for this copy unless one is whole already, and forgets
-    /// the one under the old name.
+    /// the ones under the old names.
     pub fn repair(name: &str) {
         let Ok(exe) = std::env::current_exe() else {
             return;
@@ -279,18 +311,21 @@ mod platform {
         if !whole(CURRENT_USER, name) {
             let _ = write(CURRENT_USER, &registration(name, &exe));
         }
-        forget_old(CURRENT_USER, name, &exe);
+        for old in OLD_NAMES {
+            forget_old(CURRENT_USER, old, name, &exe);
+        }
     }
 
-    /// Takes the client under the old name away when it starts this copy or a program
-    /// that is gone, the way the installer does. One that starts another copy that is
-    /// still there was somebody's choice, and stays.
-    pub(super) fn forget_old(root: &Key, name: &str, exe: &str) {
-        if name == OLD_NAME {
+    /// Takes the client under the old name `old` away when it starts this copy or a
+    /// program that is gone, the way the installer does. One that starts another copy
+    /// that is still there was somebody's choice, and stays, and so does the one under
+    /// this copy's own name `name`.
+    pub(super) fn forget_old(root: &Key, old: &str, name: &str, exe: &str) {
+        if old.eq_ignore_ascii_case(name) {
             return;
         }
-        let client = format!(r"Software\Clients\StartMenuInternet\{OLD_NAME}");
-        let Some(old) = root
+        let client = format!(r"Software\Clients\StartMenuInternet\{old}");
+        let Some(program) = root
             .open(format!(r"{client}\shell\open\command"))
             .and_then(|key| key.get_string(""))
             .ok()
@@ -298,13 +333,13 @@ mod platform {
         else {
             return;
         };
-        if !old.eq_ignore_ascii_case(exe) && Path::new(&old).is_file() {
+        if !program.eq_ignore_ascii_case(exe) && Path::new(&program).is_file() {
             return;
         }
         let _ = root.remove_tree(&client);
         let _ = root
             .create(r"Software\RegisteredApplications")
-            .and_then(|key| key.remove_value(OLD_NAME));
+            .and_then(|key| key.remove_value(old));
     }
 
     /// Whether every value is there and the program it starts still exists. Another
@@ -443,16 +478,37 @@ mod platform {
 
 #[cfg(target_os = "linux")]
 mod platform {
-    use super::is_ours;
+    use super::{is_ours, kept};
+    use std::path::PathBuf;
     use std::process::Command;
     use tauri::AppHandle;
     use tauri_plugin_deep_link::DeepLinkExt as _;
 
-    /// Whether the desktop entry the system opens both schemes with is nib's.
+    /// Whether the desktop entry the system opens both schemes with is nib's, and is
+    /// still there: a package under an old name took its entry with it when the one
+    /// under the new name replaced it, and an entry that is gone opens nothing, so the
+    /// press is offered again.
     pub fn is_default(_app: &AppHandle) -> bool {
-        ["http", "https"]
-            .into_iter()
-            .all(|scheme| handler_of(scheme).is_some_and(|entry| is_ours(&entry)))
+        ["http", "https"].into_iter().all(|scheme| {
+            handler_of(scheme).is_some_and(|entry| is_ours(&entry) && installed(&entry))
+        })
+    }
+
+    /// Whether a desktop entry is in one of the folders the system looks in, the
+    /// person's own first. Inside a Flatpak or a Snap the system's folders are not the
+    /// sandbox's, so there an entry is taken to be there.
+    fn installed(entry: &str) -> bool {
+        if std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some() {
+            return true;
+        }
+        let own = std::env::var_os("XDG_DATA_HOME")
+            .filter(|dir| !dir.is_empty())
+            .map(PathBuf::from)
+            .or_else(|| {
+                std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share"))
+            });
+        let system = std::env::var("XDG_DATA_DIRS").unwrap_or_default();
+        kept(entry, own, &system, |path| path.is_file())
     }
 
     /// Writes nib's handler for both schemes and makes it their default: the deep link
@@ -493,9 +549,9 @@ mod platform {
 
 #[cfg(test)]
 mod tests {
-    use super::{exe_of, is_ours, registration, Value, OLD_NAME, PROG_ID};
+    use super::{exe_of, is_ours, kept, registration, Value, OLD_NAMES, PROG_ID};
 
-    const EXE: &str = r"C:\Users\me\AppData\Local\Nib\nib.exe";
+    const EXE: &str = r"C:\Users\me\AppData\Local\Orden\nib.exe";
 
     fn values_under<'a>(table: &'a [Value], key: &str) -> Vec<&'a Value> {
         table.iter().filter(|one| one.key.ends_with(key)).collect()
@@ -503,7 +559,7 @@ mod tests {
 
     #[test]
     fn nib_takes_the_two_web_schemes_and_nothing_else() {
-        let table = registration("Nib", EXE);
+        let table = registration("Orden", EXE);
 
         let schemes: Vec<&str> = values_under(&table, r"\URLAssociations")
             .iter()
@@ -523,7 +579,7 @@ mod tests {
 
     #[test]
     fn a_link_starts_this_copy_and_says_it_is_a_link() {
-        let table = registration("Nib", EXE);
+        let table = registration("Orden", EXE);
         let command = table
             .iter()
             .find(|one| one.key == format!(r"Software\Classes\{PROG_ID}\shell\open\command"))
@@ -535,16 +591,16 @@ mod tests {
 
     #[test]
     fn default_apps_is_pointed_at_the_capabilities() {
-        let table = registration("Nib", EXE);
+        let table = registration("Orden", EXE);
         let listed = table
             .iter()
             .find(|one| one.key == r"Software\RegisteredApplications")
             .expect("an entry in RegisteredApplications");
 
-        assert_eq!(listed.name, "Nib");
+        assert_eq!(listed.name, "Orden");
         assert_eq!(
             listed.data,
-            r"Software\Clients\StartMenuInternet\Nib\Capabilities"
+            r"Software\Clients\StartMenuInternet\Orden\Capabilities"
         );
         assert!(table.iter().any(|one| one.key == listed.data));
     }
@@ -565,10 +621,61 @@ mod tests {
         assert!(is_ours("nib-handler.desktop\n"));
         assert!(is_ours("Nib.desktop"));
         assert!(is_ours("nibeditor.desktop"));
+        assert!(is_ours("Orden.desktop"));
         assert!(is_ours("ch.emilvinu.nib.desktop"));
         assert!(!is_ours("firefox.desktop"));
         assert!(!is_ours("nibbles.desktop"));
         assert!(!is_ours(""));
+        assert!(!is_ours("ordenx.desktop"));
+    }
+
+    /// An entry counts as there when it is in the person's own applications or the
+    /// system's, and not when the package that named it took it away.
+    #[test]
+    fn a_desktop_entry_is_looked_for_where_the_system_looks() {
+        use std::path::{Path, PathBuf};
+        let on_disk = [
+            "/home/a/.local/share/applications/nib-handler.desktop",
+            "/usr/share/applications/Orden.desktop",
+        ];
+        let there = |path: &Path| on_disk.iter().any(|one| Path::new(one) == path);
+        let own = || Some(PathBuf::from("/home/a/.local/share"));
+
+        assert!(kept("nib-handler.desktop\n", own(), "/usr/share", there));
+        assert!(
+            kept("Orden.desktop", own(), "", there),
+            "the default folders"
+        );
+        assert!(kept("Orden.desktop", None, "/opt/x:/usr/share", there));
+        assert!(!kept(
+            "nibeditor.desktop",
+            own(),
+            "/usr/local/share:/usr/share",
+            there
+        ));
+        assert!(!kept("Orden.desktop", own(), "/opt/x", there));
+    }
+
+    /// The packages under the new name replace the ones under either old name, and the
+    /// desktop entry is still found by them.
+    #[test]
+    fn the_linux_packages_replace_both_old_names() {
+        let parsed: serde_json::Value =
+            serde_json::from_str(&source("tauri.conf.json")).expect("the config");
+        let linux = &parsed["bundle"]["linux"];
+        let both = serde_json::json!(["nib", "nibeditor"]);
+        assert_eq!(linux["deb"]["conflicts"], both);
+        assert_eq!(linux["deb"]["replaces"], both);
+        assert_eq!(linux["rpm"]["obsoletes"], both);
+
+        let template = linux["deb"]["desktopTemplate"]
+            .as_str()
+            .expect("a template");
+        assert_eq!(linux["rpm"]["desktopTemplate"].as_str(), Some(template));
+        let entry = source(template);
+        assert!(entry.lines().any(|line| line == "Keywords=nib;nibeditor;"));
+        assert!(entry.lines().any(|line| line == "Name={{name}}"));
+        assert!(entry.lines().any(|line| line == "MimeType={{mime_type}}"));
     }
 
     /// The app's table in an installer's words: its name and its program written the
@@ -661,19 +768,35 @@ mod tests {
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));
     }
 
-    /// An install over one made under the old name takes that name's client away and
-    /// keeps the `ProgID`, and the uninstaller takes away whatever of it is left.
+    /// An install over one made under either old name takes that name's client away
+    /// and keeps the `ProgID`, and the uninstaller takes away whatever of it is left.
     #[test]
-    fn the_installer_forgets_the_old_name_and_keeps_the_prog_id() {
+    fn the_installer_forgets_the_old_names_and_keeps_the_prog_id() {
         let script = source("installer.nsh");
-        assert!(script.contains(&format!(r#"!define NIB_OLD_NAME "{OLD_NAME}""#)));
+        for (at, old) in OLD_NAMES.iter().enumerate() {
+            let define = format!(r#"!define NIB_OLD_NAME_{} "{old}""#, at + 1);
+            assert!(
+                script.contains(&define),
+                "installer.nsh does not say: {define}"
+            );
+        }
+        assert!(
+            !script.contains("NIB_OLD_NAME_3"),
+            "a third old name the app does not know"
+        );
         let product = product_name(&source("tauri.conf.json"));
         assert!(script.contains(&format!(r#"!define NIB_NAME "{product}""#)));
         for line in [
-            r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${NIB_OLD_NAME}""#,
-            r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${NIB_OLD_NAME}""#,
-            r#"DeleteRegKey SHCTX "${NIB_OLD_UNINSTKEY}""#,
-            r#"DeleteRegKey SHCTX "Software\${MANUFACTURER}\${NIB_OLD_NAME}""#,
+            r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${OLD}""#,
+            r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${OLD}""#,
+            r#"DeleteRegKey SHCTX "${NIB_UNINSTKEYS}\${OLD}""#,
+            r#"DeleteRegKey SHCTX "Software\${MANUFACTURER}\${OLD}""#,
+            r#"!insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}""#,
+            r#"!insertmacro NIB_RENAME_SHORTCUT "$DESKTOP" "${OLD}""#,
+            r#"!insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_1}""#,
+            r#"!insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_2}""#,
+            r#"StrCmp "$R6$R5" "${NIB_OLD_NAME_1}${MANUFACTURER}""#,
+            r#"StrCmp "$R6$R5" "${NIB_OLD_NAME_2}${MANUFACTURER}""#,
         ] {
             assert!(script.contains(line), "installer.nsh does not say: {line}");
         }
@@ -685,31 +808,56 @@ mod tests {
             .split_once("!macro NSIS_HOOK_POSTINSTALL")
             .expect("an install hook")
             .1;
-        for part in [install, uninstall] {
-            assert!(part.contains("!insertmacro NIB_FORGET_OLD_BROWSER"));
+        for at in 1..=OLD_NAMES.len() {
+            let forgotten = format!(r#"!insertmacro NIB_FORGET_OLD_NAME "${{NIB_OLD_NAME_{at}}}""#);
+            assert!(
+                install.contains(&forgotten),
+                "the install does not say: {forgotten}"
+            );
+            let browser =
+                format!(r#"!insertmacro NIB_FORGET_OLD_BROWSER "${{NIB_OLD_NAME_{at}}}""#);
+            assert!(
+                uninstall.contains(&browser),
+                "the uninstall does not say: {browser}"
+            );
         }
-        assert!(install.contains(r#"!insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS""#));
-        assert!(install.contains(r#"!insertmacro NIB_RENAME_SHORTCUT "$DESKTOP""#));
     }
 
-    /// The MSI replaces the one made under the old name rather than standing beside it:
-    /// the upgrade code is the one Tauri gave the old name (uuid5 of `Nib.exe.app.x64`,
-    /// read off the 0.11.0 MSI), and the folder it was in is looked for under the old
-    /// name and the publisher the bundle is built with.
+    /// The MSI replaces the one made under either old name rather than standing beside
+    /// it: the upgrade code is the one Tauri gave the first name (uuid5 of
+    /// `Nib.exe.app.x64`, read off the 0.11.0 MSI) and every MSI since has kept, and the
+    /// folder it was in is looked for under both old names and the publisher the bundle
+    /// is built with, the later name last, since the last one found wins.
     #[test]
-    fn the_msi_replaces_the_one_under_the_old_name() {
+    fn the_msi_replaces_the_one_under_either_old_name() {
         let config = source("tauri.conf.json");
         let fragment = source("wix/browser.wxs");
         assert!(config.contains(r#""upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e""#));
 
         let parsed: serde_json::Value = serde_json::from_str(&config).expect("the config");
         let publisher = parsed["bundle"]["publisher"].as_str().expect("a publisher");
-        let key = format!(r#"Key="Software\{publisher}\{OLD_NAME}""#);
-        assert_eq!(
-            fragment.matches(&key).count(),
-            2,
-            "browser.wxs does not say: {key}"
-        );
+        let mut last = 0;
+        for old in OLD_NAMES {
+            let key = format!(r#"Key="Software\{publisher}\{old}""#);
+            assert_eq!(
+                fragment.matches(&key).count(),
+                2,
+                "browser.wxs does not say: {key}"
+            );
+            let at = fragment.find(&key).expect("searched");
+            assert!(at > last, "{old} is searched before an older name");
+            last = at;
+
+            for shortcut in [
+                format!(r#"Name="{old}.lnk""#),
+                format!(r#"Name="Uninstall {old}.lnk""#),
+            ] {
+                assert!(
+                    fragment.contains(&shortcut),
+                    "browser.wxs does not remove {shortcut}"
+                );
+            }
+        }
         assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
     }
 
@@ -746,27 +894,27 @@ mod tests {
         let exe = std::env::current_exe().expect("this test's own program");
         let exe = exe.to_string_lossy();
 
-        assert!(!whole(&root, "Nib"), "an empty key was whole");
+        assert!(!whole(&root, "Orden"), "an empty key was whole");
 
-        write(&root, &registration("Nib", &exe)).expect("written");
-        assert!(whole(&root, "Nib"));
+        write(&root, &registration("Orden", &exe)).expect("written");
+        assert!(whole(&root, "Orden"));
 
         // One value gone: the https row.
-        root.create(r"Software\Clients\StartMenuInternet\Nib\Capabilities\URLAssociations")
+        root.create(r"Software\Clients\StartMenuInternet\Orden\Capabilities\URLAssociations")
             .and_then(|key| key.remove_value("https"))
             .expect("a value removed");
-        assert!(!whole(&root, "Nib"));
+        assert!(!whole(&root, "Orden"));
 
         // Whole again, for a program that is not there.
-        write(&root, &registration("Nib", r"C:\nowhere\nib.exe")).expect("written");
-        assert!(!whole(&root, "Nib"));
+        write(&root, &registration("Orden", r"C:\nowhere\nib.exe")).expect("written");
+        assert!(!whole(&root, "Orden"));
     }
 
-    /// The old name's client goes when it starts this copy or a program that is gone,
+    /// An old name's client goes when it starts this copy or a program that is gone,
     /// and stays when it starts another copy that is there. In a key of the test's own.
     #[cfg(windows)]
     #[test]
-    fn the_old_name_is_forgotten_unless_it_is_another_copy() {
+    fn an_old_name_is_forgotten_unless_it_is_another_copy() {
         use super::platform::{forget_old, write};
         use windows_registry::{Key, CURRENT_USER};
 
@@ -796,34 +944,36 @@ mod tests {
             .expect("a test key");
         let here = std::env::current_exe().expect("this test's own program");
         let here = here.to_string_lossy();
-        let client = format!(r"Software\Clients\StartMenuInternet\{OLD_NAME}");
-        let there = |root: &Key| {
-            root.open(&client).is_ok()
-                && root
-                    .open(r"Software\RegisteredApplications")
-                    .and_then(|key| key.get_string(OLD_NAME))
-                    .is_ok()
-        };
+        for old in OLD_NAMES {
+            let client = format!(r"Software\Clients\StartMenuInternet\{old}");
+            let there = |root: &Key| {
+                root.open(&client).is_ok()
+                    && root
+                        .open(r"Software\RegisteredApplications")
+                        .and_then(|key| key.get_string(old))
+                        .is_ok()
+            };
 
-        // Another copy, still there.
-        std::fs::write(&scratch.1, b"").expect("another copy");
-        let other = scratch.1.to_string_lossy();
-        write(&root, &registration(OLD_NAME, &other)).expect("written");
-        forget_old(&root, "nibeditor", &here);
-        assert!(there(&root), "another copy's was taken");
+            // Another copy, still there.
+            std::fs::write(&scratch.1, b"").expect("another copy");
+            let other = scratch.1.to_string_lossy();
+            write(&root, &registration(old, &other)).expect("written");
+            forget_old(&root, old, "Orden", &here);
+            assert!(there(&root), "another copy's was taken");
 
-        // That copy gone.
-        std::fs::remove_file(&scratch.1).expect("the copy removed");
-        forget_old(&root, "nibeditor", &here);
-        assert!(root.open(&client).is_err());
-        assert!(!there(&root));
+            // That copy gone.
+            std::fs::remove_file(&scratch.1).expect("the copy removed");
+            forget_old(&root, old, "Orden", &here);
+            assert!(root.open(&client).is_err());
+            assert!(!there(&root));
 
-        // This copy's, which the old name itself never forgets.
-        write(&root, &registration(OLD_NAME, &here)).expect("written");
-        forget_old(&root, OLD_NAME, &here);
-        assert!(there(&root), "the old name forgot itself");
-        forget_old(&root, "nibeditor", &here);
-        assert!(!there(&root));
+            // This copy's, which a copy under that name itself never forgets.
+            write(&root, &registration(old, &here)).expect("written");
+            forget_old(&root, old, old, &here);
+            assert!(there(&root), "{old} forgot itself");
+            forget_old(&root, old, "Orden", &here);
+            assert!(!there(&root));
+        }
     }
 
     /// The shell answers which program opens a scheme: the one a scheme of the test's own

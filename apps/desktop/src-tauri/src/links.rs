@@ -1294,7 +1294,7 @@ mod tests {
     /// the second of them falls inside that character rather than after it.
     ///
     /// This is a note's own text, so it reaches here from a file: one written in
-    /// Nib, one that arrived by sync, one somebody sent. The release build aborts
+    /// Orden, one that arrived by sync, one somebody sent. The release build aborts
     /// on a panic, so the whole app went with the scan.
     #[test]
     fn a_percent_before_a_wide_character_is_text() {

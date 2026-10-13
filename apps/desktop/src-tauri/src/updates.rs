@@ -30,12 +30,21 @@ const UNSTABLE: &str = "unstable";
 /// is what the updater falls back to when no endpoint is given, so the stable
 /// stream is the app's configuration itself instead of a second copy of it that
 /// could drift from it.
-const EDGE: &str = "https://github.com/lxorb/nibeditor/releases/download/edge/latest.json";
+const EDGE: &str = "https://github.com/lxorb/orden/releases/download/edge/latest.json";
 
 /// Where this project's own release files are served from. Every bundle and every
-/// signature beside it is under this; see `scripts/update-manifest.mjs`, which is
-/// what writes the addresses a manifest holds.
-const RELEASES: &str = "https://github.com/lxorb/nibeditor/releases/download/";
+/// signature beside it is under one of these; see `scripts/update-manifest.mjs`, which
+/// is what writes the addresses a manifest holds.
+///
+/// Two, because the repository was `lxorb/nibeditor` until it was renamed to
+/// `lxorb/orden`. GitHub forwards the old address, and the manifest still writes it,
+/// because every build from before the rename accepts nothing else; this one accepts
+/// the new address too, so a release may switch to it once no install still runs one
+/// of those.
+const RELEASES: [&str; 2] = [
+    "https://github.com/lxorb/nibeditor/releases/download/",
+    "https://github.com/lxorb/orden/releases/download/",
+];
 
 /// Whether an update a manifest offered is one this channel may install.
 ///
@@ -62,11 +71,15 @@ const RELEASES: &str = "https://github.com/lxorb/nibeditor/releases/download/";
 /// manifest served at the releases' endpoint would otherwise hand a stable install
 /// an untested build of main. See `scripts/build-version.sh`.
 fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
-    let Some(file) = download
-        .strip_prefix(RELEASES)
+    let Some(file) = RELEASES
+        .iter()
+        .find_map(|releases| download.strip_prefix(releases))
         .and_then(|rest| rest.rsplit('/').next())
     else {
-        return Err(format!("that version is not served from {RELEASES}"));
+        return Err(format!(
+            "that version is not served from {}",
+            RELEASES.join(" or ")
+        ));
     };
 
     if version.is_empty() || !names(file, version) {
@@ -81,13 +94,13 @@ fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
 }
 
 /// The words a bundle's file name begins with: the product's name until 0.11, which
-/// every release is still published under because every build of main from before
-/// this one reads nothing else, and the name it was given then, which a release may
-/// switch to once no install still runs one of those.
-const PREFIXES: [&str; 2] = ["Nib-", "nibeditor-"];
+/// every release is still published under because every build from before 0.12 reads
+/// nothing else, then the two names it has had since, nibeditor and Orden, which a
+/// release may switch to once no install still runs a build that does not know them.
+const PREFIXES: [&str; 3] = ["Nib-", "nibeditor-", "Orden-"];
 
 /// Whether a bundle's file name is the one this project gives `version`:
-/// `Nib-<version>-<platform>` (or `nibeditor-`; see `PREFIXES`), the platform
+/// `Nib-<version>-<platform>` (or `nibeditor-`, `Orden-`; see `PREFIXES`), the platform
 /// beginning with a letter.
 ///
 /// The version as the whole of what stands between `Nib-` and the platform, rather
@@ -198,7 +211,10 @@ mod tests {
 
     /// The address of one bundle on a release page, as the manifest writes it.
     fn bundle(version: &str) -> String {
-        format!("{RELEASES}v{version}/Nib-{version}-windows-x64-setup.exe")
+        format!(
+            "{}v{version}/Nib-{version}-windows-x64-setup.exe",
+            RELEASES[0]
+        )
     }
 
     #[test]
@@ -230,6 +246,10 @@ mod tests {
             "http://github.com/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
             "https://github.com/someone/else/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
             "https://github.com.evil.example/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "http://github.com/lxorb/orden/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://github.com.evil.example/lxorb/orden/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://github.com/lxorb/ordenx/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://github.com/lxorb/orden.evil.example/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
         ] {
             assert!(
                 offered("stable", "99.0.0", address).is_err(),
@@ -274,9 +294,11 @@ mod tests {
             "linux-arm64.AppImage",
             "macos-universal.app.tar.gz",
         ] {
-            for prefix in PREFIXES {
-                let address = format!("{RELEASES}v0.9.0/{prefix}0.9.0-{platform}");
-                assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{address}");
+            for releases in RELEASES {
+                for prefix in PREFIXES {
+                    let address = format!("{releases}v0.9.0/{prefix}0.9.0-{platform}");
+                    assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{address}");
+                }
             }
         }
     }
@@ -290,8 +312,11 @@ mod tests {
             "Nibeditor0.9.0-windows-x64-setup.exe",
             "evil-nibeditor-0.9.0-windows-x64-setup.exe",
             "nibeditor-0.9.0windows-x64-setup.exe",
+            "orden-0.9.0-windows-x64-setup.exe",
+            "Orden0.9.0-windows-x64-setup.exe",
+            "evil-Orden-0.9.0-windows-x64-setup.exe",
         ] {
-            let address = format!("{RELEASES}v0.9.0/{file}");
+            let address = format!("{}v0.9.0/{file}", RELEASES[1]);
             assert!(offered("stable", "0.9.0", &address).is_err(), "{file}");
         }
     }
@@ -349,5 +374,19 @@ mod tests {
 
         assert_eq!(configured.len(), 1);
         assert_ne!(configured[0].as_str(), Some(EDGE));
+    }
+
+    /// Both manifests are asked for at the repository's own name. The old name answers
+    /// too, through GitHub's forward, which is how every build from before the rename
+    /// still finds them.
+    #[test]
+    fn both_manifests_are_asked_for_under_the_new_name() {
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).expect("the config parses");
+        assert_eq!(
+            config["plugins"]["updater"]["endpoints"][0].as_str(),
+            Some("https://github.com/lxorb/orden/releases/latest/download/latest.json")
+        );
+        assert!(EDGE.starts_with(RELEASES[1]));
     }
 }

@@ -116,7 +116,7 @@ mod mac {
     use crate::apple_text::{self, Body, Parts};
 
     /// What the window is answered when macOS refuses the folder, which is what
-    /// it does until nibeditor has Full Disk Access. The sheet reads these two
+    /// it does until Orden has Full Disk Access. The sheet reads these two
     /// rather than showing them, so they are words the window knows and not words
     /// a reader is shown.
     const NO_ACCESS: &str = "no access";

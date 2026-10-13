@@ -4,8 +4,8 @@
 //! **Why this is allowed and the other way is not.** `OpenAI` offers "`ChatGPT` plan usage"
 //! to open-source and locally hosted apps (<https://developers.openai.com/siwc/token-sharing-open-source>):
 //! the app registers itself through the reader's own sign-in and calls the Responses API
-//! at `api.openai.com` with the token it is given. nibeditor is open source and the
-//! desktop app runs here, so it qualifies; the web app at nibeditor.com is hosted and does
+//! at `api.openai.com` with the token it is given. Orden is open source and the
+//! desktop app runs here, so it qualifies; the web app at orden.so is hosted and does
 //! not, and never offers this. What is *not* done is what several tools did before this
 //! existed - borrowing the Codex CLI's own client id and calling `ChatGPT`'s private
 //! `backend-api` - which is somebody else's identity. See docs/ai.md.
@@ -199,18 +199,18 @@ fn answer_callback(
     let (status, words, result) = match oauth::callback(&line, state) {
         Callback::Code { code, client } => (
             "200 OK",
-            "nibeditor is signed in to ChatGPT. This tab can be closed.",
+            "Orden is signed in to ChatGPT. This tab can be closed.",
             Some(Ok((code, client))),
         ),
         Callback::Refused(why) => (
             "200 OK",
-            "nibeditor was not signed in to ChatGPT.",
+            "Orden was not signed in to ChatGPT.",
             Some(Err(why)),
         ),
         Callback::Other => ("404 Not Found", "", None),
     };
     let page = format!(
-        "<!doctype html><meta charset=utf-8><title>nibeditor</title>\
+        "<!doctype html><meta charset=utf-8><title>Orden</title>\
          <p style=\"font:16px system-ui;margin:3em;text-align:center\">{words}</p>"
     );
     let _ = write!(

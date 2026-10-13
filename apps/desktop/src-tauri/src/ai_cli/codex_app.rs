@@ -150,8 +150,8 @@ impl Host {
                 "initialize",
                 &json!({
                     "clientInfo": {
-                        "name": "nibeditor",
-                        "title": "nibeditor",
+                        "name": "orden",
+                        "title": "Orden",
                         "version": env!("CARGO_PKG_VERSION"),
                     },
                     // The goal methods are behind it.
