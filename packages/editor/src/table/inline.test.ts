@@ -79,7 +79,7 @@ describe('a table cell', () => {
 
 describe('links in a cell', () => {
   test('show their label and carry their address', () => {
-    expect(html('[Nib](https://nibeditor.com)')).toBe('<a href="https://nibeditor.com">Nib</a>')
+    expect(html('[Orden](https://orden.so)')).toBe('<a href="https://orden.so">Orden</a>')
   })
 
   test('refuse a scheme that could run something', () => {

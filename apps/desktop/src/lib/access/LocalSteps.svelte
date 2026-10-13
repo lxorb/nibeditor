@@ -2,7 +2,7 @@
   /** How an agent on this computer is connected (docs/agent-native.md 9.1, 10), for one
    *  way in of Settings > AI > Access.
    *
-   *  A client is given one line: nib's own program as its MCP server, `nib mcp`, which
+   *  A client is given one line: Orden's own program as its MCP server, `nib mcp`, which
    *  asks the reader once, the first time it connects, and is remembered after. The line
    *  is the client's own way of adding a server - Claude Code's, Codex's, or the JSON
    *  entry the rest take from a file - with the path of the program that is installed
@@ -10,7 +10,7 @@
    *
    *  A client somewhere else, or a script, is given a token instead, under Other: made
    *  here by hand with somebody else's defaults and shown the once, as GitHub shows one;
-   *  nib keeps only its hash. */
+   *  Orden keeps only its hash. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Copyable from '../Copyable.svelte'
@@ -49,7 +49,7 @@
   {:else}
     <Copyable label={t('Command')} value={line} />
   {/if}
-  <p class="hint">{t('nibeditor asks you once, the first time it connects.')}</p>
+  <p class="hint">{t('Orden asks you once, the first time it connects.')}</p>
 {/if}
 
 {#if client === 'other'}

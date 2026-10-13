@@ -8,7 +8,7 @@ function isRemote(src: string): boolean {
 }
 
 /** The path as the note means it. What a note writes in a link is a URL, so a
- *  folder with a space in its name arrives as `%20` - from Nib itself, from
+ *  folder with a space in its name arrives as `%20` - from Orden itself, from
  *  Typora, from Obsidian. The file on disk is named with the space. */
 function written(src: string): string {
   try {

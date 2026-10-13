@@ -43,7 +43,7 @@ import { workspace } from './workspace.svelte'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
-export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
+export const SOURCE_URL = 'https://github.com/lxorb/orden'
 
 /** Where a bug goes, and where a new version says what changed. Both are pages
  *  of the same repository, so neither is a second address to keep in step. */

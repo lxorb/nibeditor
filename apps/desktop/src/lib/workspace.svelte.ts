@@ -878,7 +878,7 @@ class Workspace {
                 home: draft.space ?? null,
               })
 
-        // Deleted or moved while Nib was away, and no words of its own to keep.
+        // Deleted or moved while Orden was away, and no words of its own to keep.
         made.push(note ? this.viewOf(note, paneId, draft) : null)
       }
 
@@ -2166,7 +2166,7 @@ class Workspace {
    *  A browser build opens the welcome note because on a first visit there is
    *  nothing else to read. Signing in changes that, and nothing was watching:
    *  the workspace restores seconds before the account does, so somebody who
-   *  signs in is left looking at "Welcome to Nib" with their own notes in the
+   *  signs in is left looking at "Welcome to Orden" with their own notes in the
    *  sidebar beside it.
    *
    *  Only when the welcome note is the only thing open and untouched. Somebody

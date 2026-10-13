@@ -54,7 +54,7 @@ export async function status(thread: Thread | null, provider: Provider | null): 
     [t('Model'), [thread?.model ?? provider.model, thread?.effort].filter(Boolean).join(' · ')],
     [t('Mode'), thread?.mode],
     [t('Account'), [plan, account].filter(Boolean).join(' · ')],
-    [t('Agents'), `nib · ${provider.name}`],
+    [t('Agents'), `Orden · ${provider.name}`],
     [t('Version'), __APP_VERSION__],
   ])
 }

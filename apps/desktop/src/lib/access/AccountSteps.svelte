@@ -22,7 +22,7 @@
 
   const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors'
   const CHATGPT_PLUGINS = 'https://chatgpt.com/plugins'
-  const CLAUDE_CODE = `claude mcp add --transport http nib ${MCP_URL}`
+  const CLAUDE_CODE = `claude mcp add --transport http orden ${MCP_URL}`
 
   let showCode = $state(false)
   let showConfig = $state(false)
@@ -33,7 +33,7 @@
     JSON.stringify(
       {
         mcpServers: {
-          nib: {
+          orden: {
             url: MCP_URL,
             ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
           },
@@ -65,11 +65,11 @@
         </li>
         <li>
           <p>{t('Fill in the two fields and click Add.')}</p>
-          <Copyable label={t('Name')} value="nibeditor" />
+          <Copyable label={t('Name')} value="Orden" />
           <Copyable label="URL" value={MCP_URL} />
         </li>
         <li>
-          <p>{t('Click Connect and sign in with your nibeditor email.')}</p>
+          <p>{t('Click Connect and sign in with your Orden email.')}</p>
         </li>
       </ol>
 
@@ -102,7 +102,7 @@
         </li>
         <li>
           <p>{t('Fill in the form and click Create.')}</p>
-          <Copyable label={t('Name')} value="nibeditor" />
+          <Copyable label={t('Name')} value="Orden" />
           <Copyable label={t('Server URL')} value={MCP_URL} />
           <Copyable label={t('Authentication')} value="OAuth" plain />
           <p class="hint">
@@ -112,15 +112,15 @@
           </p>
         </li>
         <li>
-          <p>{t('Sign in with your nibeditor email when ChatGPT asks.')}</p>
-          <p class="hint">{t('To use it in a chat, type @ and pick nibeditor.')}</p>
+          <p>{t('Sign in with your Orden email when ChatGPT asks.')}</p>
+          <p class="hint">{t('To use it in a chat, type @ and pick Orden.')}</p>
         </li>
       </ol>
     {:else}
       <div class="steps-wrap">
         <p class="note">
           {t(
-            'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.',
+            'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.',
           )}
         </p>
         <Copyable label={t('Server URL')} value={MCP_URL} />

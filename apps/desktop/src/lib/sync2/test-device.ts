@@ -43,7 +43,7 @@ export async function testDevice(making: Making): Promise<TestDevice> {
     if (typeof held === 'string') await disk.write(`${root}/${path}`, held)
     else await disk.writeBytes(`${root}/${path}`, held)
   }
-  const base = making.base ?? 'https://nibeditor.com'
+  const base = making.base ?? 'https://orden.so'
   const asked: string[] = []
   const fetch = (request: Request) => {
     asked.push(`${request.method} ${new URL(request.url).pathname}`)

@@ -19,6 +19,7 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
+  import { renamed } from './lib/renamed.svelte'
   import { account } from './lib/account.svelte'
   import { joining } from './lib/joining.svelte'
   import { arriving } from './lib/arriving.svelte'
@@ -57,6 +58,7 @@
     quickAddSheet,
     quickSheet,
     recordingPill,
+    renameNotice,
     rewriteSheet,
     scratchpadCard,
     settingsSheet,
@@ -92,6 +94,9 @@
   import PullMark from './lib/PullMark.svelte'
   import { type AppContext, runEntry } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
+
+  // The app's new name, on the one launch that says it.
+  if (renamed.showing) void renameNotice.ask()
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -857,7 +862,7 @@
      all on a desktop: the phone's title bar draws the name as an `h1` and a desktop
      draws it on a tab, so anything reading the page down found a window with no
      top to it. Said and not shown, because the name is already on screen twice. -->
-<h1 class="nib-said">{workspace.active?.shown ?? 'nibeditor'}</h1>
+<h1 class="nib-said">{workspace.active?.shown ?? 'Orden'}</h1>
 
 <!-- What just happened, for whoever is listening rather than looking. On the page
      before there is anything in it and outside everything that can be made inert,
@@ -921,7 +926,7 @@
          drag drives both; only which layer it moves differs. -->
     <!-- Off to the side, the note is out of reach as a shut drawer is. WebKit
          scrolls even this page to show what takes the focus: the note taking it
-         as Nib started slid it across, over the list the phone had open. -->
+         as Orden started slid it across, over the list the phone had open. -->
     <div
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel}
@@ -1089,6 +1094,11 @@
     {#if recordingPill.asked}
       {#await recordingPill.asked then RecordingPill}
         <RecordingPill />
+      {/await}
+    {/if}
+    {#if renamed.showing && renameNotice.asked}
+      {#await renameNotice.asked then RenameNotice}
+        <RenameNotice />
       {/await}
     {/if}
     {#if updates.ready}

@@ -5,8 +5,8 @@ const note = { shown: 'Idea', path: '/Users/me/Notes/Idea.md' }
 
 describe('the window of a note', () => {
   test('is the app when nothing is open', () => {
-    expect(windowDocument(null, true)).toEqual({ title: 'nibeditor', edited: false, path: null })
-    expect(windowDocument(null, false)).toEqual({ title: 'nibeditor', edited: false, path: null })
+    expect(windowDocument(null, true)).toEqual({ title: 'Orden', edited: false, path: null })
+    expect(windowDocument(null, false)).toEqual({ title: 'Orden', edited: false, path: null })
   })
 
   /** Every note with a file writes itself, so the dot in a Mac's close button would
@@ -32,7 +32,7 @@ describe('the window of a note', () => {
 
   test('elsewhere is the name and the app, and never a mark between them', () => {
     expect(windowDocument(note, false)).toEqual({
-      title: 'Idea - nibeditor',
+      title: 'Idea - Orden',
       edited: false,
       path: null,
     })

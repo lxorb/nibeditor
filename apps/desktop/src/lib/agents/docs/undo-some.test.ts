@@ -9,7 +9,7 @@ import { deskWith } from './test-desk'
 let made = 0
 function anAgent() {
   made++
-  return { id: `some-${String(made)}`, name: 'nib · Claude' }
+  return { id: `some-${String(made)}`, name: 'Orden · Claude' }
 }
 
 /** The ids of the agent's edits of a note, oldest first. */

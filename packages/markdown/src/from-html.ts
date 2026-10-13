@@ -1,4 +1,4 @@
-/** HTML into the markdown Nib writes.
+/** HTML into the markdown Orden writes.
  *
  *  The other direction, and the same opinions read backwards: the markers here
  *  are the ones the editor's own formatting commands produce, so a page pasted
@@ -517,7 +517,7 @@ function converter(options: FromHtmlOptions): TurndownService {
   const indexIn = indexer()
 
   // A list item, with one space after its marker rather than turndown's three.
-  // Nib writes `- item`, and a note full of `-   item` is a note that looks like
+  // Orden writes `- item`, and a note full of `-   item` is a note that looks like
   // it came from somewhere else. Nested lines line up under the text, which is
   // what makes the nesting readable in the source.
   service.addRule('listItem', {

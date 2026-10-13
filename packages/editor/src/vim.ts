@@ -3,7 +3,7 @@
  *  A compartment like every other mode, so it goes on and off while the editor
  *  is open; what is particular to this one is that Vim wants the whole
  *  keyboard, and the keyboard is already spoken for. Two rules settle that,
- *  and both of them are Nib's rules rather than Vim's:
+ *  and both of them are Orden's rules rather than Vim's:
  *
  *  Every chord held with Ctrl or Cmd belongs to the app. Ctrl+P still opens
  *  the palette in normal mode and Ctrl+B still bolds, which is what makes

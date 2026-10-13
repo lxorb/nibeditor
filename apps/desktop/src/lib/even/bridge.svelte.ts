@@ -708,7 +708,7 @@ class Bridge {
   }
 
   /** One utterance, as words. Only reached where the WebView has no recogniser of
-   *  its own, which is the phone doing this for nothing where it can. Through Nib,
+   *  its own, which is the phone doing this for nothing where it can. Through Orden,
    *  for the same reason a question goes through it: the key is there.
    *
    *  Whatever it refuses with is thrown rather than swallowed. "Nothing was heard"
@@ -845,9 +845,9 @@ class Bridge {
   /** A question, asked of the model and answered on the glasses.
    *
    *  The plugin sends the question, the model and the effort, and nothing else: no
-   *  key, and none of the notes. Nib runs the model call and the two note tools
+   *  key, and none of the notes. Orden runs the model call and the two note tools
    *  against the account's own notes, because the key is written and never read
-   *  back and Nib is the only thing that can open it. See services/sync/src/ask. */
+   *  back and Orden is the only thing that can open it. See services/sync/src/ask. */
   private async ask(question: string): Promise<void> {
     const shell = this.shell
     if (!shell) return

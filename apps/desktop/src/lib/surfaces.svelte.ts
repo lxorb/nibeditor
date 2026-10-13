@@ -274,6 +274,10 @@ export const scratchpadCard = held(() =>
  *  recorder asks for it as it starts. See StatusBar.svelte and recorder/recording.svelte.ts. */
 export const recordingPill = latched(() => import('./RecordingPill.svelte'))
 
+/** The line that says the app's name changed, fetched only for the one launch that
+ *  says it; see RenameNotice.svelte. */
+export const renameNotice = latched(() => import('./RenameNotice.svelte'))
+
 /** What the app menu's rows are built out of: every command in the app, named, asked
  *  whether it may run, with the export list and the shortcut hints beside them. Not a
  *  component but the same bargain - nothing of it is worth a byte before somebody

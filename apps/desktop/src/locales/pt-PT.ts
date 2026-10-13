@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'O nibeditor chama-se agora Orden',
+  'Notes from nibeditor.com': 'Notas do nibeditor.com',
+  'Nothing there': 'Não há nada',
   // AI: the three permission modes
   'Full permissions': 'Permissões totais',
   'Auto mode': 'Modo automático',
@@ -582,8 +586,8 @@ export const ptPT: Dictionary = {
   'Asking OpenAI which models this key can use':
     'A perguntar à OpenAI que modelos esta chave pode usar',
   'Could not reach OpenAI': 'Não foi possível contactar a OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Essa chave não pode usar nenhum dos modelos que o nibeditor pede.',
+  'That key cannot use any of the models Orden asks for.':
+    'Essa chave não pode usar nenhum dos modelos que o Orden pede.',
   'No reasoning': 'Sem raciocínio',
   Minimal: 'Mínimo',
   Low: 'Baixo',
@@ -605,7 +609,7 @@ export const ptPT: Dictionary = {
   Mode: 'Modo',
   // The window's own edges; see appearance.rs
   Window: 'Janela',
-  'nibeditor’s own': 'Do nibeditor',
+  'Orden’s own': 'Do Orden',
   'The system’s': 'Do sistema',
   'Window frame': 'Moldura da janela',
   System: 'Sistema',
@@ -730,7 +734,7 @@ export const ptPT: Dictionary = {
   '{used} of {limit} used.': '{used} de {limit} em uso.',
   'That image does not fit in your storage.': 'Essa imagem não cabe no armazenamento.',
   'out of space': 'sem espaço',
-  'nibeditor {version} is ready to install.': 'O nibeditor {version} está pronto a instalar.',
+  'Orden {version} is ready to install.': 'O Orden {version} está pronto a instalar.',
   'Restart now': 'Reiniciar agora',
   Later: 'Mais tarde',
   More: 'Mais',
@@ -808,14 +812,14 @@ export const ptPT: Dictionary = {
   'Reads your notes.': 'Lê as notas.',
   'Reads and writes your notes.': 'Lê e escreve as notas.',
   Other: 'Outro',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Um assistente de IA pode ler as notas - e alterá-las, se isso for permitido. Inicia sessão com o e-mail do nibeditor; não há nada para colar.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Um assistente de IA pode ler as notas - e alterá-las, se isso for permitido. Inicia sessão com o e-mail do Orden; não há nada para colar.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'No Claude, abrir Definições → Conectores e clicar em Adicionar conector personalizado.',
   'Open Claude’s connectors': 'Abrir os conectores do Claude',
   'Fill in the two fields and click Add.': 'Preencher os dois campos e clicar em Adicionar.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Clicar em Conectar e iniciar sessão com o e-mail do nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Clicar em Conectar e iniciar sessão com o e-mail do Orden.',
   'Using Claude Code instead?': 'Usar o Claude Code em vez disso?',
   Command: 'Comando',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -826,16 +830,16 @@ export const ptPT: Dictionary = {
   'Open ChatGPT’s plugins': 'Abrir os plugins do ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Sem a secção Plugins ou sem o botão de mais? Ligar primeiro o modo de programador em Definições → Segurança e início de sessão.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Iniciar sessão com o e-mail do nibeditor quando o ChatGPT pedir.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Para o usar numa conversa, escrever @ e escolher nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Iniciar sessão com o e-mail do Orden quando o ChatGPT pedir.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Para o usar numa conversa, escrever @ e escolher Orden.',
   'Server URL': 'URL do servidor',
   Authentication: 'Autenticação',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Deixar as definições avançadas de OAuth como estão e marcar “Compreendo e quero continuar”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Qualquer cliente MCP que fale Streamable HTTP com OAuth. Basta o URL: regista-se a si mesmo e abre a página de início de sessão do nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Qualquer cliente MCP que fale Streamable HTTP com OAuth. Basta o URL: regista-se a si mesmo e abre a página de início de sessão do Orden.',
   'Show config': 'Ver a configuração',
   'For a client that takes a JSON block instead of a URL.':
     'Para um cliente que aceita um bloco JSON em vez de um URL.',
@@ -902,7 +906,7 @@ export const ptPT: Dictionary = {
   'Display name': 'Nome a apresentar',
   'Your name': 'Nome',
   Email: 'E-mail',
-  'On nibeditor.com': 'Em nibeditor.com',
+  'On orden.so': 'Em orden.so',
   'Your own domain': 'Um domínio próprio',
   'Switching gives up {name}.': 'Mudar abdica de {name}.',
   Page: 'Página',
@@ -1298,8 +1302,8 @@ export const ptPT: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'Não há notas no Apple Notas neste Mac.',
   'Those notes could not be read.': 'Não foi possível ler essas notas.',
   'Read them from this Mac': 'Ler deste Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Ative o nibeditor em Acesso total ao disco e tente novamente.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Ative o Orden em Acesso total ao disco e tente novamente.',
   'Open the setting': 'Abrir a definição',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'O Apple Diário exporta-se a si mesmo: Diário, Definições, Exportar. O Apple Notas não tem exportação, pelo que longe do Mac onde está, o que se larga aqui é uma pasta escrita por um exportador.',
@@ -1670,8 +1674,10 @@ export const ptPT: Dictionary = {
   'that is not a theme': 'isso não é um tema',
   'no such theme': 'não há esse tema',
   'choose a model first': 'escolher primeiro um modelo',
+  'set an OpenAI key in Orden’s settings first':
+    'definir primeiro uma chave da OpenAI nas definições do Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'definir primeiro uma chave da OpenAI nas definições do nibeditor',
+    'definir primeiro uma chave da OpenAI nas definições do Orden',
   'that is a lot of questions - try again later': 'são muitas perguntas - tentar mais tarde',
   'that is too much audio': 'é demasiado áudio',
   'that is more than a spoken command': 'isso é mais do que um comando falado',
@@ -1834,7 +1840,7 @@ export const ptPT: Dictionary = {
     many: 'Colar {count} de linhas?',
     other: 'Colar {count} linhas?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Navegador predefinido',
   // The engine web tabs run on
   Engine: 'Motor',
@@ -1949,8 +1955,7 @@ export const ptPT: Dictionary = {
   'Always on this site': 'Sempre neste site',
   'Agents stopped': 'Agentes parados',
   'Agent tabs closed': 'Separadores dos agentes fechados',
-  'nibeditor is still running for your agents':
-    'O nibeditor continua a funcionar para os seus agentes',
+  'Orden is still running for your agents': 'O Orden continua a funcionar para os seus agentes',
   '{client} wants to connect': '{client} quer ligar-se',
   // Web logins that travel, and the devices of an account
   'no such device': 'esse dispositivo não existe',
@@ -1966,8 +1971,8 @@ export const ptPT: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agentes neste computador',
   'Your account’s connector': 'Conector da sua conta',
-  'nibeditor asks you once, the first time it connects.':
-    'O nibeditor pergunta uma vez, na primeira vez que ele se liga.',
+  'Orden asks you once, the first time it connects.':
+    'O Orden pergunta uma vez, na primeira vez que ele se liga.',
   'A client on another machine?': 'Um cliente noutra máquina?',
   'Shown only once.': 'Mostrado apenas uma vez.',
   'Remove {name}?': 'Remover {name}?',
@@ -2090,7 +2095,7 @@ export const ptPT: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Adiar',
   Reminders: 'Lembretes',
-  'Reminders ring while nibeditor is open': 'Os lembretes tocam enquanto o nibeditor está aberto',
+  'Reminders ring while Orden is open': 'Os lembretes tocam enquanto o Orden está aberto',
   Automatic: 'Automático',
   'Stay in the tray': 'Ficar na área de notificação',
   'Exact alarms': 'Alarmes exatos',

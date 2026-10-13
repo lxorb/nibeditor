@@ -341,7 +341,7 @@ const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
 /** A path as something to compare: `/` separators, no extension of our own, and
  *  folded case and composed letters (`foldName`). Obsidian matches a link to a
- *  note by name whatever the case, and so do the two filesystems Nib runs on. */
+ *  note by name whatever the case, and so do the two filesystems Orden runs on. */
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
@@ -468,7 +468,7 @@ export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): N
  *  following it makes the note.
  *
  *  A PDF and a canvas resolve through the files rather than the notes, because
- *  those are what Nib can open beside a note. Any other file is left unresolved:
+ *  those are what Orden can open beside a note. Any other file is left unresolved:
  *  a link that cannot be followed should not look as though it can. */
 export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): boolean {
   if (!link.target) return true

@@ -7,7 +7,7 @@ import { notePreviews } from './hover'
  *
  *  `[[Note]]`, `[[Note|shown text]]`, `[[Note#Heading]]`, `[[Note#^blockid]]`,
  *  `![[Note]]` to show the note itself, and `![[picture.png]]` to show a
- *  picture. A note moves between Nib and Obsidian unchanged, which is the whole
+ *  picture. A note moves between Orden and Obsidian unchanged, which is the whole
  *  reason for the spelling.
  *
  *  Which part is where:

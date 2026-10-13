@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor اکنون Orden است',
+  'Notes from nibeditor.com': 'یادداشت‌ها از nibeditor.com',
+  'Nothing there': 'آنجا چیزی نیست',
   // AI: the three permission modes
   'Full permissions': 'دسترسی کامل',
   'Auto mode': 'حالت خودکار',
@@ -570,8 +574,8 @@ export const fa: Dictionary = {
   'Asking OpenAI which models this key can use':
     'پرسیدن از OpenAI که این کلید چه مدل‌هایی را می‌تواند به کار برد',
   'Could not reach OpenAI': 'OpenAI در دسترس نبود',
-  'That key cannot use any of the models nibeditor asks for.':
-    'آن کلید هیچ‌یک از مدل‌هایی که nibeditor می‌خواهد را نمی‌تواند به کار برد.',
+  'That key cannot use any of the models Orden asks for.':
+    'آن کلید هیچ‌یک از مدل‌هایی که Orden می‌خواهد را نمی‌تواند به کار برد.',
   'No reasoning': 'بی‌استدلال',
   Minimal: 'کمینه',
   Low: 'کم',
@@ -593,7 +597,7 @@ export const fa: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'پنجره',
-  'nibeditor’s own': 'خودِ nibeditor',
+  'Orden’s own': 'خودِ Orden',
   'The system’s': 'سیستم',
   'Window frame': 'قاب پنجره',
   System: 'سامانه',
@@ -717,7 +721,7 @@ export const fa: Dictionary = {
   '{used} of {limit} used.': '{used} از {limit} به کار رفته.',
   'That image does not fit in your storage.': 'آن تصویر در انبار شما جا نمی‌شود.',
   'out of space': 'انبار پر است',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} آماده نصب است.',
+  'Orden {version} is ready to install.': 'Orden {version} آماده نصب است.',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
   Later: 'بعداً',
   More: 'بیشتر',
@@ -794,14 +798,14 @@ export const fa: Dictionary = {
   'Reads your notes.': 'یادداشت‌های شما را می‌خواند.',
   'Reads and writes your notes.': 'یادداشت‌های شما را می‌خواند و می‌نویسد.',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه nibeditor شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه Orden شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'در Claude، Settings → Connectors را بگشایید و Add custom connector را بزنید.',
   'Open Claude’s connectors': 'گشودن رابط‌های Claude',
   'Fill in the two fields and click Add.': 'دو خانه را پر کنید و Add را بزنید.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect را بزنید و با رایانامه nibeditor خود وارد شوید.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect را بزنید و با رایانامه Orden خود وارد شوید.',
   'Using Claude Code instead?': 'از Claude Code استفاده می‌کنید؟',
   Command: 'فرمان',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -812,16 +816,16 @@ export const fa: Dictionary = {
   'Open ChatGPT’s plugins': 'گشودن افزونه‌های ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'بخش Plugins یا دکمه افزودن نیست؟ نخست Developer mode را در Settings → Security and login روشن کنید.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'هنگامی که ChatGPT پرسید، با رایانامه nibeditor خود وارد شوید.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و nibeditor را برگزینید.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'هنگامی که ChatGPT پرسید، با رایانامه Orden خود وارد شوید.',
+  'To use it in a chat, type @ and pick Orden.':
+    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و Orden را برگزینید.',
   'Server URL': 'نشانی کارساز',
   Authentication: 'اصالت‌سنجی',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'تنظیم‌های پیشرفته OAuth را همان‌گونه بگذارید و “I understand and want to continue” را بزنید.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود nibeditor را می‌گشاید.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود Orden را می‌گشاید.',
   'Show config': 'نمایش پیکربندی',
   'For a client that takes a JSON block instead of a URL.':
     'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
@@ -888,7 +892,7 @@ export const fa: Dictionary = {
   'Display name': 'نام نمایشی',
   'Your name': 'نام شما',
   Email: 'رایانامه',
-  'On nibeditor.com': 'روی nibeditor.com',
+  'On orden.so': 'روی orden.so',
   'Your own domain': 'دامنه خودتان',
   'Switching gives up {name}.': 'تغییر دادن {name} را رها می‌کند.',
   Page: 'صفحه',
@@ -1270,8 +1274,8 @@ export const fa: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'روی این Mac در Apple Notes یادداشتی نیست.',
   'Those notes could not be read.': 'آن یادداشت‌ها خوانده نشد.',
   'Read them from this Mac': 'از این Mac بخوان',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor را در Full Disk Access روشن کنید و دوباره بیازمایید.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden را در Full Disk Access روشن کنید و دوباره بیازمایید.',
   'Open the setting': 'گشودن تنظیم',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal خودش برون‌بری می‌کند: Journal، تنظیمات، برون‌بری. Apple Notes برون‌بری ندارد، پس دور از Macی که رویش است، آنچه اینجا انداخته می‌شود پوشه‌ای است که یک برون‌بر نوشته.',
@@ -1631,7 +1635,8 @@ export const fa: Dictionary = {
   'that is not a theme': 'آن پوسته نیست',
   'no such theme': 'چنین پوسته‌ای نیست',
   'choose a model first': 'نخست مدلی برگزینید',
-  'set an OpenAI key in nibeditor’s settings first': 'نخست در تنظیم nibeditor کلید OpenAI بگذارید',
+  'set an OpenAI key in Orden’s settings first': 'نخست در تنظیم Orden کلید OpenAI بگذارید',
+  'set an OpenAI key in nibeditor’s settings first': 'نخست در تنظیم Orden کلید OpenAI بگذارید',
   'that is a lot of questions - try again later': 'آن پرسش بسیار است - بعداً بیازمایید',
   'that is too much audio': 'آن صدای بسیار است',
   'that is more than a spoken command': 'آن بیش از یک فرمان گفتاری است',
@@ -1789,7 +1794,7 @@ export const fa: Dictionary = {
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',
   // The engine web tabs run on
   Engine: 'موتور',
@@ -1903,7 +1908,7 @@ export const fa: Dictionary = {
   'Always on this site': 'همیشه در این سایت',
   'Agents stopped': 'عامل‌ها ایستانده شدند',
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
-  'nibeditor is still running for your agents': 'nibeditor هنوز برای عامل‌های شما کار می‌کند',
+  'Orden is still running for your agents': 'Orden هنوز برای عامل‌های شما کار می‌کند',
   '{client} wants to connect': '{client} می‌خواهد وصل شود',
   // Web logins that travel, and the devices of an account
   'no such device': 'چنین دستگاهی نیست',
@@ -1919,8 +1924,8 @@ export const fa: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'عامل‌های این رایانه',
   'Your account’s connector': 'رابط حساب شما',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
+  'Orden asks you once, the first time it connects.':
+    'Orden یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
   'Shown only once.': 'فقط یک بار نشان داده می‌شود.',
   'Remove {name}?': '{name} حذف شود؟',
@@ -2041,7 +2046,7 @@ export const fa: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'تعویق',
   Reminders: 'یادآورها',
-  'Reminders ring while nibeditor is open': 'یادآورها تا وقتی nibeditor باز است به صدا درمی‌آیند',
+  'Reminders ring while Orden is open': 'یادآورها تا وقتی Orden باز است به صدا درمی‌آیند',
   Automatic: 'خودکار',
   'Stay in the tray': 'ماندن در سینی سیستم',
   'Exact alarms': 'هشدارهای دقیق',

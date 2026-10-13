@@ -184,11 +184,11 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
   })
 
-  /** Every device seeded before the app was called nibeditor holds these words,
-   *  and they are still the app's, not the reader's. */
-  test('nor the one written under the old name', () => {
+  /** Every device seeded before the app was called Orden holds one of these, under
+   *  either earlier name, and they are still the app's, not the reader's. */
+  test.each(['Nib', 'nibeditor'])('nor the one written while it was called %s', (name) => {
     const earlier = [
-      '# Welcome to Nib',
+      `# Welcome to ${name}`,
       '',
       'Your notes live on this device until you sign in',
       'and turn on syncing, and then they follow you everywhere.',
@@ -217,7 +217,7 @@ describe('the welcome note, untouched', () => {
   })
 
   test('says the name the app goes by', () => {
-    expect(WELCOME.split('\n')[0]).toBe('# Welcome to nibeditor')
+    expect(WELCOME.split('\n')[0]).toBe('# Welcome to Orden')
   })
 })
 

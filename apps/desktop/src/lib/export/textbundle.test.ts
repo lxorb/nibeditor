@@ -13,7 +13,7 @@ const PICTURES: Picture[] = [
     bytes: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]),
   },
   {
-    src: 'https://nibeditor.com/remote.jpg',
+    src: 'https://orden.so/remote.jpg',
     name: 'remote.jpg',
     mime: 'image/jpeg',
     bytes: new Uint8Array([0xff, 0xd8, 9, 9]),

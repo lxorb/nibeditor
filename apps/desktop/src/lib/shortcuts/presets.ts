@@ -1,14 +1,14 @@
 /** Whole keyboards, so hands that learned another app carry over.
  *
- *  A preset holds only the keys that differ from Nib's own, the same shape a
+ *  A preset holds only the keys that differ from Orden's own, the same shape a
  *  reader's own map has: what a preset does not name is at whatever the app
  *  says today, so a default that improves later reaches everybody rather than
  *  being frozen into five copies of it.
  *
  *  One rule decides the awkward cases, and it is the rule the other app
  *  already follows: the key goes to the action that app uses it for. Where that
- *  takes a key Nib had spent on something the other app has no counterpart for,
- *  the Nib action is left with no key rather than moved to a chord nobody would
+ *  takes a key Orden had spent on something the other app has no counterpart for,
+ *  the Orden action is left with no key rather than moved to a chord nobody would
  *  guess. It keeps its place in the menus, the palette and the shortcut list,
  *  and its row reads "Not set", which is something a reader can see and change.
  *
@@ -23,7 +23,7 @@ import type { PresetId } from './preset-ids'
 export interface Preset {
   id: Exclude<PresetId, 'custom'>
   label: () => string
-  /** Differences from Nib's defaults, by shortcut id. Null takes a key away. */
+  /** Differences from Orden's defaults, by shortcut id. Null takes a key away. */
   keys: KeyOverrides
   /** Whether the preset is modal editing as well as a map. */
   vim: boolean
@@ -31,12 +31,12 @@ export interface Preset {
 
 /** Obsidian's own keys.
  *
- *  Most of Nib's already are Obsidian's - Ctrl+E for reading, Ctrl+W,
+ *  Most of Orden's already are Obsidian's - Ctrl+E for reading, Ctrl+W,
  *  Ctrl+Shift+T for the last closed tab, Ctrl+Tab, Ctrl+K, Ctrl+comma,
  *  Ctrl+Shift+F and Ctrl+Shift+V - so what is written here is only where the two
  *  differ.
  *
- *  Nib's palette is both of Obsidian's, and here it answers on both of their keys:
+ *  Orden's palette is both of Obsidian's, and here it answers on both of their keys:
  *  Ctrl+O opens it, which is the quick switcher, and Ctrl+P narrows it to the
  *  commands, which is the command palette. Double Shift stays its first key and
  *  Ctrl+Shift+P the commands as well, where every editor has them. Ctrl+O is the
@@ -61,11 +61,11 @@ const OBSIDIAN: KeyOverrides = {
   'app.back': 'Mod-Alt-ArrowLeft',
   'app.forward': 'Mod-Alt-ArrowRight',
   // Obsidian's Ctrl+D deletes the paragraph, which in a markdown file is the line.
-  // Deselect tab, which holds it in Nib, has no counterpart there.
+  // Deselect tab, which holds it in Orden, has no counterpart there.
   'edit.delete-line': 'Mod-d',
   'app.deselect-tab': null,
   // Ctrl+] indents and Ctrl+[ outdents, the way round Obsidian and VS Code have it.
-  // Nib's own order is Typora's; see `edit.indent` in @nib/editor's keymap.
+  // Orden's own order is Typora's; see `edit.indent` in @nib/editor's keymap.
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
 }
@@ -89,15 +89,15 @@ OBSIDIAN['canvas.frame'] = null
  *  Notion writes its number shortcuts as Ctrl+Shift on Windows and Linux and
  *  Cmd+Option on a Mac; one map covers both, since `Mod` is already whichever
  *  of the two this machine uses. Ctrl+Shift+7 and 9 are a toggle list and a
- *  sub-page, neither of which Nib has, and are left alone.
+ *  sub-page, neither of which Orden has, and are left alone.
  *
- *  Three of Notion's keys land on something of Nib's own: Ctrl+E is inline code
+ *  Three of Notion's keys land on something of Orden's own: Ctrl+E is inline code
  *  there and the reading view here, Ctrl+backslash is the sidebar there and clear
  *  formatting here, and Ctrl+P is the search there and Print here. Notion's action
- *  takes the key and Nib's is left without one. Ctrl+Shift+S, strikethrough there,
+ *  takes the key and Orden's is left without one. Ctrl+Shift+S, strikethrough there,
  *  is free here.
  *
- *  Nib's own digits are all on Ctrl+Alt, and its panels are on letters, so
+ *  Orden's own digits are all on Ctrl+Alt, and its panels are on letters, so
  *  Notion's block types have the whole Ctrl+Shift row to themselves. */
 const NOTION: KeyOverrides = {
   // Notion's search, which is this palette on the notes, and so not Print.
@@ -110,17 +110,17 @@ const NOTION: KeyOverrides = {
   'format.strikethrough': 'Mod-Shift-s',
   // Notion's own is Ctrl+Shift+0, and that is the one key of theirs this cannot take:
   // on AZERTY the nought is the shifted character, so Ctrl+Shift+0 is Ctrl+0 there as
-  // well, and Ctrl+0 is the text size. So Paragraph keeps Nib's own letter.
+  // well, and Ctrl+0 is the text size. So Paragraph keeps Orden's own letter.
   'paragraph.heading-1': 'Mod-Shift-1',
   'paragraph.heading-2': 'Mod-Shift-2',
   'paragraph.heading-3': 'Mod-Shift-3',
-  // Notion's fourth digit is a to-do, which Nib does have.
+  // Notion's fourth digit is a to-do, which Orden does have.
   'paragraph.task-list': 'Mod-Shift-4',
   'paragraph.bullet-list': 'Mod-Shift-5',
   'paragraph.ordered-list': 'Mod-Shift-6',
   'paragraph.code-block': 'Mod-Shift-8',
   // The block the caret is in, as the grip's own Duplicate and Move rows. Deselect tab,
-  // which holds Ctrl+D in Nib, has no counterpart in Notion. On a Mac the move is
+  // which holds Ctrl+D in Orden, has no counterpart in Notion. On a Mac the move is
   // Cmd+Shift and an arrow, which takes selecting to either end of the note away, the
   // way Notion does itself.
   'edit.duplicate-block': 'Mod-d',
@@ -131,7 +131,7 @@ const NOTION: KeyOverrides = {
 
 /** VS Code's own keys.
  *
- *  Nib already has most of them: Ctrl+Shift+P, Ctrl+L for the line, Alt and Shift+Alt
+ *  Orden already has most of them: Ctrl+Shift+P, Ctrl+L for the line, Alt and Shift+Alt
  *  with Up and Down for moving and copying lines, Ctrl+Shift+Enter for a line above,
  *  Shift+Alt+Right and Left for the selection outwards and back, Ctrl+Shift+E for the
  *  files, Ctrl+Shift+F, Ctrl+H and F3. What is here is where they part.
@@ -154,7 +154,7 @@ const VSCODE: KeyOverrides = {
   'edit.goto-line': 'Ctrl-g',
   'edit.find-next': null,
   // Ctrl+D selects the word and then the next one like it, which is what every hand
-  // from VS Code presses it for; Deselect tab, which holds it in Nib, has none here.
+  // from VS Code presses it for; Deselect tab, which holds it in Orden, has none here.
   'edit.select-word': 'Mod-d',
   'app.deselect-tab': null,
   // Ctrl+Shift+K deletes the line. It was Code block, which VS Code has no key for.
@@ -166,7 +166,7 @@ const VSCODE: KeyOverrides = {
   // Ctrl+\ splits the pane to the right, and VS Code has nothing that clears formatting.
   'pane.split-right': 'Mod-\\',
   'format.clear': null,
-  // Ctrl+] indents and Ctrl+[ outdents. Nib's own order is Typora's, the other way
+  // Ctrl+] indents and Ctrl+[ outdents. Orden's own order is Typora's, the other way
   // round; see `edit.indent` in @nib/editor's keymap.
   'edit.indent': 'Mod-]',
   'edit.outdent': 'Mod-[',
@@ -175,7 +175,7 @@ const VSCODE: KeyOverrides = {
 /** Every keyboard there is to choose from, in the order the select shows them,
  *  which is PRESET_IDS' order.
  *
- *  Vim is Nib's own map with modal editing on top of it: what a Vim reader
+ *  Vim is Orden's own map with modal editing on top of it: what a Vim reader
  *  wants back is the modes, not somebody else's Ctrl chords, and every one of
  *  those chords goes on working in every mode. See packages/editor/src/vim.ts. */
 export const PRESETS: Preset[] = [

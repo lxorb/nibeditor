@@ -2,7 +2,7 @@
  *
  *  Three choices, and one rule behind all of them: what goes into the note is a
  *  relative path that resolves from the note's own folder. That is what keeps a
- *  space portable - the same folder opens in Nib, in Obsidian or in a text
+ *  space portable - the same folder opens in Orden, in Obsidian or in a text
  *  editor - and it is why this returns a folder relative to the note rather
  *  than a place on disk. The command that writes the file joins it on and
  *  checks the result is still inside the space. */

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor اوس Orden دی',
+  'Notes from nibeditor.com': 'له nibeditor.com څخه یادښتونه',
+  'Nothing there': 'هلته هیڅ نشته',
   // AI: the three permission modes
   'Full permissions': 'بشپړې اجازې',
   'Auto mode': 'خپلکاره حالت',
@@ -570,8 +574,8 @@ export const ps: Dictionary = {
   'Asking OpenAI which models this key can use':
     'له OpenAI پوښتنه چې دا کيلي کوم ماډلونه کارولی شي',
   'Could not reach OpenAI': 'OpenAI ته ونه رسېدل',
-  'That key cannot use any of the models nibeditor asks for.':
-    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې nibeditor غواړي.',
+  'That key cannot use any of the models Orden asks for.':
+    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې Orden غواړي.',
   'No reasoning': 'استدلال نشته',
   Minimal: 'ډېر لږ',
   Low: 'ټيټ',
@@ -593,7 +597,7 @@ export const ps: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'کړکۍ',
-  'nibeditor’s own': 'د nibeditor خپل',
+  'Orden’s own': 'د Orden خپل',
   'The system’s': 'د سيستم',
   'Window frame': 'د کړکۍ چوکاټ',
   System: 'غونډال',
@@ -717,7 +721,7 @@ export const ps: Dictionary = {
   '{used} of {limit} used.': 'له {limit} څخه {used} کارول شوی.',
   'That image does not fit in your storage.': 'هغه انځور ستاسو په زېرمه کې نه ځايېږي.',
   'out of space': 'زېرمه ډکه',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} د لګولو لپاره تيار دی.',
+  'Orden {version} is ready to install.': 'Orden {version} د لګولو لپاره تيار دی.',
   'Restart now': 'اوس بيا پيلول',
   Later: 'وروسته',
   More: 'نور',
@@ -793,14 +797,14 @@ export const ps: Dictionary = {
   'Reads your notes.': 'ستاسو يادښتونه لولي.',
   'Reads and writes your notes.': 'ستاسو يادښتونه لولي او ليکي.',
   Other: 'بل',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د nibeditor برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د Orden برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'په Claude کې Settings → Connectors پرانيځئ او Add custom connector کليک کړئ.',
   'Open Claude’s connectors': 'د Claude نښلونکي پرانيستل',
   'Fill in the two fields and click Add.': 'دواړه ځايونه ډک کړئ او Add کليک کړئ.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect کليک کړئ او د nibeditor برېښناليک سره ننوځئ.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect کليک کړئ او د Orden برېښناليک سره ننوځئ.',
   'Using Claude Code instead?': 'Claude Code کاروئ؟',
   Command: 'کړنه',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -811,16 +815,16 @@ export const ps: Dictionary = {
   'Open ChatGPT’s plugins': 'د ChatGPT پلګينونه پرانيستل',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'د Plugins برخه يا د زياتون تڼۍ نشته؟ لومړی Developer mode په Settings → Security and login کې ولاړ کړئ.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'کله چې ChatGPT پوښتنه وکړي، د nibeditor برېښناليک سره ننوځئ.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'په خبرو کې د کارولو لپاره @ وليکئ او nibeditor وټاکئ.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'کله چې ChatGPT پوښتنه وکړي، د Orden برېښناليک سره ننوځئ.',
+  'To use it in a chat, type @ and pick Orden.':
+    'په خبرو کې د کارولو لپاره @ وليکئ او Orden وټاکئ.',
   'Server URL': 'د سرور پته',
   Authentication: 'اعتبار پېژندنه',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'پرمختللې د OAuth امستنې همداسې پرېږدئ او “I understand and want to continue” ونښئ.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د nibeditor د ننوتلو مخ پرانيځي.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د Orden د ننوتلو مخ پرانيځي.',
   'Show config': 'سازونه ښودل',
   'For a client that takes a JSON block instead of a URL.':
     'د هغه پيرودونکي لپاره چې د پتې پر ځای د JSON بلاک اخلي.',
@@ -887,7 +891,7 @@ export const ps: Dictionary = {
   'Display name': 'ښودلو نوم',
   'Your name': 'ستاسو نوم',
   Email: 'برېښناليک',
-  'On nibeditor.com': 'پر nibeditor.com',
+  'On orden.so': 'پر orden.so',
   'Your own domain': 'خپل ډومېن',
   'Switching gives up {name}.': 'بدلول {name} پرېږدي.',
   Page: 'مخ',
@@ -1271,8 +1275,8 @@ export const ps: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'پر دې Mac په Apple Notes کې يادښت نشته.',
   'Those notes could not be read.': 'هغه يادښتونه ونه لوستل شول.',
   'Read them from this Mac': 'له دې Mac ولولئ',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor په Full Disk Access کې ولاړ کړئ، بيا هڅه وکړئ.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden په Full Disk Access کې ولاړ کړئ، بيا هڅه وکړئ.',
   'Open the setting': 'امستنه پرانيستل',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal پخپله صادروي: Journal، امستنې، صادرول. Apple Notes صادرول نه لري، نو له هغه Mac لرې چې پرې دي، دلته هغه دوتنپوښ غورځول کېږي چې يو صادرونکي ليکلی.',
@@ -1632,8 +1636,9 @@ export const ps: Dictionary = {
   'that is not a theme': 'هغه بڼه نه ده',
   'no such theme': 'داسې بڼه نشته',
   'choose a model first': 'لومړی ماډل وټاکئ',
+  'set an OpenAI key in Orden’s settings first': 'لومړی د Orden په امستنو کې د OpenAI کيلي کېږدئ',
   'set an OpenAI key in nibeditor’s settings first':
-    'لومړی د nibeditor په امستنو کې د OpenAI کيلي کېږدئ',
+    'لومړی د Orden په امستنو کې د OpenAI کيلي کېږدئ',
   'that is a lot of questions - try again later': 'هغه ډېرې پوښتنې دي - وروسته بيا هڅه وکړئ',
   'that is too much audio': 'هغه ډېر غږ دی',
   'that is more than a spoken command': 'هغه له يوې غږيزې کړنې ډېر دی',
@@ -1791,7 +1796,7 @@ export const ps: Dictionary = {
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'اصلي کوټګر',
   // The engine web tabs run on
   Engine: 'انجن',
@@ -1905,7 +1910,7 @@ export const ps: Dictionary = {
   'Always on this site': 'په دې سایټ تل',
   'Agents stopped': 'اېجنټان ودرول شول',
   'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
-  'nibeditor is still running for your agents': 'nibeditor لا هم ستاسو د اېجنټانو لپاره چلېږي',
+  'Orden is still running for your agents': 'Orden لا هم ستاسو د اېجنټانو لپاره چلېږي',
   '{client} wants to connect': '{client} غواړي وصل شي',
   // Web logins that travel, and the devices of an account
   'no such device': 'داسې وسیله نشته',
@@ -1921,8 +1926,8 @@ export const ps: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'په دې کمپیوټر کې اجنټان',
   'Your account’s connector': 'ستاسو د حساب نښلونکی',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
+  'Orden asks you once, the first time it connects.':
+    'Orden له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
   'Shown only once.': 'یوازې یو ځل ښودل کېږي.',
   'Remove {name}?': '{name} لرې شي؟',
@@ -2043,7 +2048,7 @@ export const ps: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'ځنډول',
   Reminders: 'یادونې',
-  'Reminders ring while nibeditor is open': 'یادونې تر هغه وخته غږېږي چې nibeditor پرانیستی وي',
+  'Reminders ring while Orden is open': 'یادونې تر هغه وخته غږېږي چې Orden پرانیستی وي',
   Automatic: 'اتومات',
   'Stay in the tray': 'په سیستم ټرې کې پاتې شه',
   'Exact alarms': 'دقیق الارمونه',

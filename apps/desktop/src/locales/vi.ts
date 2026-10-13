@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor giờ là Orden',
+  'Notes from nibeditor.com': 'Ghi chú từ nibeditor.com',
+  'Nothing there': 'Không có gì ở đó',
   // AI: the three permission modes
   'Full permissions': 'Toàn quyền',
   'Auto mode': 'Chế độ tự động',
@@ -569,8 +573,8 @@ export const vi: Dictionary = {
   'Sign in to ask a question.': 'Đăng nhập để đặt câu hỏi.',
   'Asking OpenAI which models this key can use': 'Đang hỏi OpenAI khoá này dùng được mô hình nào',
   'Could not reach OpenAI': 'Không kết nối được OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Khoá này không dùng được mô hình nào nibeditor cần.',
+  'That key cannot use any of the models Orden asks for.':
+    'Khoá này không dùng được mô hình nào Orden cần.',
   'No reasoning': 'Không suy luận',
   Minimal: 'Tối thiểu',
   Low: 'Thấp',
@@ -592,7 +596,7 @@ export const vi: Dictionary = {
   Mode: 'Chế độ',
   // The window's own edges; see appearance.rs
   Window: 'Cửa sổ',
-  'nibeditor’s own': 'Của nibeditor',
+  'Orden’s own': 'Của Orden',
   'The system’s': 'Của hệ thống',
   'Window frame': 'Khung cửa sổ',
   System: 'Hệ thống',
@@ -713,7 +717,7 @@ export const vi: Dictionary = {
   '{used} of {limit} used.': 'Đã dùng {used} trên {limit}.',
   'That image does not fit in your storage.': 'Ảnh đó không vừa dung lượng của bạn.',
   'out of space': 'hết dung lượng',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} đã sẵn sàng để cài.',
+  'Orden {version} is ready to install.': 'Orden {version} đã sẵn sàng để cài.',
   'Restart now': 'Khởi động lại ngay',
   Later: 'Để sau',
   More: 'Thêm',
@@ -787,14 +791,14 @@ export const vi: Dictionary = {
   'Reads your notes.': 'Đọc ghi chú của bạn.',
   'Reads and writes your notes.': 'Đọc và ghi ghi chú của bạn.',
   Other: 'Khác',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email nibeditor của bạn; không cần dán gì.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email Orden của bạn; không cần dán gì.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Trong Claude, mở Settings → Connectors rồi bấm Add custom connector.',
   'Open Claude’s connectors': 'Mở Connectors của Claude',
   'Fill in the two fields and click Add.': 'Điền hai ô rồi bấm Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Bấm Connect rồi đăng nhập bằng email nibeditor của bạn.',
+  'Click Connect and sign in with your Orden email.':
+    'Bấm Connect rồi đăng nhập bằng email Orden của bạn.',
   'Using Claude Code instead?': 'Dùng Claude Code thay vì thế?',
   Command: 'Lệnh',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -805,16 +809,15 @@ export const vi: Dictionary = {
   'Open ChatGPT’s plugins': 'Mở Plugins của ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Không thấy mục Plugins hay nút dấu cộng? Bật Developer mode trước, ở Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Đăng nhập bằng email nibeditor khi ChatGPT hỏi.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Để dùng trong một đoạn chat, gõ @ rồi chọn nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.': 'Đăng nhập bằng email Orden khi ChatGPT hỏi.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Để dùng trong một đoạn chat, gõ @ rồi chọn Orden.',
   'Server URL': 'URL máy chủ',
   Authentication: 'Xác thực',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Để nguyên các cài đặt OAuth nâng cao và tích “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của Orden.',
   'Show config': 'Hiện cấu hình',
   'For a client that takes a JSON block instead of a URL.':
     'Cho ứng dụng nhận một khối JSON thay vì URL.',
@@ -882,7 +885,7 @@ export const vi: Dictionary = {
   'Display name': 'Tên hiển thị',
   'Your name': 'Tên của bạn',
   Email: 'Email',
-  'On nibeditor.com': 'Trên nibeditor.com',
+  'On orden.so': 'Trên orden.so',
   'Your own domain': 'Tên miền riêng',
   'Switching gives up {name}.': 'Chuyển đổi là từ bỏ {name}.',
   Page: 'Trang',
@@ -1261,8 +1264,8 @@ export const vi: Dictionary = {
     'Trên Mac này Apple Notes không có ghi chú nào.',
   'Those notes could not be read.': 'Không đọc được các ghi chú đó.',
   'Read them from this Mac': 'Đọc từ Mac này',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Bật nibeditor trong Quyền truy cập toàn bộ ổ đĩa rồi thử lại.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Bật Orden trong Quyền truy cập toàn bộ ổ đĩa rồi thử lại.',
   'Open the setting': 'Mở cài đặt',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal tự xuất: Journal, Cài đặt, Xuất. Apple Notes không có chức năng xuất, nên ở ngoài chiếc Mac chứa nó, thứ cần kéo vào đây là thư mục do một trình xuất ghi ra.',
@@ -1618,8 +1621,9 @@ export const vi: Dictionary = {
   'that is not a theme': 'cái đó không phải chủ đề',
   'no such theme': 'không có chủ đề đó',
   'choose a model first': 'chọn mô hình trước',
+  'set an OpenAI key in Orden’s settings first': 'đặt khoá OpenAI trong cài đặt của Orden trước',
   'set an OpenAI key in nibeditor’s settings first':
-    'đặt khoá OpenAI trong cài đặt của nibeditor trước',
+    'đặt khoá OpenAI trong cài đặt của Orden trước',
   'that is a lot of questions - try again later': 'nhiều câu hỏi quá - thử lại sau',
   'that is too much audio': 'âm thanh quá dài',
   'that is more than a spoken command': 'cái đó dài hơn một lệnh nói',
@@ -1777,7 +1781,7 @@ export const vi: Dictionary = {
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
   'Paste {count} lines?': 'Dán {count} dòng?',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
   // The engine web tabs run on
   Engine: 'Công cụ',
@@ -1888,7 +1892,7 @@ export const vi: Dictionary = {
   'Always on this site': 'Luôn trên trang này',
   'Agents stopped': 'Đã dừng tác tử',
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
-  'nibeditor is still running for your agents': 'nibeditor vẫn chạy cho các tác tử của bạn',
+  'Orden is still running for your agents': 'Orden vẫn chạy cho các tác tử của bạn',
   '{client} wants to connect': '{client} muốn kết nối',
   // Web logins that travel, and the devices of an account
   'no such device': 'không có thiết bị đó',
@@ -1904,8 +1908,8 @@ export const vi: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Tác tử trên máy tính này',
   'Your account’s connector': 'Trình kết nối của tài khoản',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor hỏi bạn một lần, khi nó kết nối lần đầu.',
+  'Orden asks you once, the first time it connects.':
+    'Orden hỏi bạn một lần, khi nó kết nối lần đầu.',
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
   'Shown only once.': 'Chỉ hiện một lần.',
   'Remove {name}?': 'Gỡ {name}?',
@@ -2021,7 +2025,7 @@ export const vi: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Báo lại',
   Reminders: 'Lời nhắc',
-  'Reminders ring while nibeditor is open': 'Lời nhắc chỉ đổ chuông khi nibeditor đang mở',
+  'Reminders ring while Orden is open': 'Lời nhắc chỉ đổ chuông khi Orden đang mở',
   Automatic: 'Tự động',
   'Stay in the tray': 'Ở lại khay hệ thống',
   'Exact alarms': 'Báo thức chính xác',

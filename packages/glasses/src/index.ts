@@ -1,4 +1,4 @@
-/** Nib on the Even Realities G2, in text.
+/** Orden on the Even Realities G2, in text.
  *
  *  A note as pages of words for a 576 by 288 panel that has exactly one font in
  *  exactly one size, and a mapping from every construct in a note to something

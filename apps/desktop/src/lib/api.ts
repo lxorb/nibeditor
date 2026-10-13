@@ -37,7 +37,8 @@ export type {
   DomainStatus,
 } from './api/routes'
 
-export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
+/** nibeditor.com answers the same, for older builds; see services/sync/src/hosts.ts. */
+export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://orden.so'
 
 export class ApiError extends Error {
   constructor(

@@ -14,7 +14,7 @@ export type FileChange =
 
 type Tool = Extract<Part, { kind: 'tool' }>
 
-/** A tool's name as nib's verbs say it: Claude Code calls it `mcp__nib__move_file`. */
+/** A tool's name as the app's verbs say it: Claude Code calls it `mcp__orden__move_file`. */
 export function verbOf(name: string): string {
   const at = name.lastIndexOf('__')
   return at < 0 ? name : name.slice(at + 2)

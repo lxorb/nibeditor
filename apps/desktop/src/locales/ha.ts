@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor yanzu shi ne Orden',
+  'Notes from nibeditor.com': 'Bayanai daga nibeditor.com',
+  'Nothing there': 'Babu komai a can',
   // AI: the three permission modes
   'Full permissions': 'Cikakken izini',
   'Auto mode': 'Yanayin kai-tsaye',
@@ -572,8 +576,8 @@ export const ha: Dictionary = {
   'Sign in to ask a question.': 'Shiga don yin tambaya.',
   'Asking OpenAI which models this key can use': 'Ana tambayar OpenAI samfuran wannan maɓalli',
   'Could not reach OpenAI': 'Ba a iya kai wa OpenAI ba',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Wannan maɓalli ba zai iya amfani da ko ɗaya daga samfuran da nibeditor ke nema ba.',
+  'That key cannot use any of the models Orden asks for.':
+    'Wannan maɓalli ba zai iya amfani da ko ɗaya daga samfuran da Orden ke nema ba.',
   'No reasoning': 'Babu tunani',
   Minimal: 'Mafi ƙaranci',
   Low: 'Ƙasa',
@@ -595,7 +599,7 @@ export const ha: Dictionary = {
   Mode: 'Yanayi',
   // The window's own edges; see appearance.rs
   Window: 'Taga',
-  'nibeditor’s own': 'Na nibeditor',
+  'Orden’s own': 'Na Orden',
   'The system’s': 'Na tsarin',
   'Window frame': 'Firam ɗin taga',
   System: 'Tsarin',
@@ -719,7 +723,7 @@ export const ha: Dictionary = {
   '{used} of {limit} used.': 'An yi amfani da {used} daga {limit}.',
   'That image does not fit in your storage.': "Wannan hoton bai dace a ma'ajinka ba.",
   'out of space': "ma'aji ya ƙare",
-  'nibeditor {version} is ready to install.': 'nibeditor {version} na shirye don girkawa.',
+  'Orden {version} is ready to install.': 'Orden {version} na shirye don girkawa.',
   'Restart now': 'Sake kunnawa yanzu',
   Later: 'Daga baya',
   More: 'Ƙari',
@@ -797,14 +801,14 @@ export const ha: Dictionary = {
   'Reads your notes.': 'Yana karanta bayanan kulanka.',
   'Reads and writes your notes.': 'Yana karanta da rubuta bayanan kulanka.',
   Other: 'Wani',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Mataimakin AI zai iya karanta bayanan kulanka - kuma ya sauya su, idan ka bari. Yana shiga da imel na nibeditor naka; babu abin da za a manna.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Mataimakin AI zai iya karanta bayanan kulanka - kuma ya sauya su, idan ka bari. Yana shiga da imel na Orden naka; babu abin da za a manna.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'A Claude, buɗe Settings → Connectors sannan danna Add custom connector.',
   'Open Claude’s connectors': 'Buɗe masu haɗin Claude',
   'Fill in the two fields and click Add.': 'Cika filayen biyu sannan danna Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Danna Connect sannan ka shiga da imel na nibeditor naka.',
+  'Click Connect and sign in with your Orden email.':
+    'Danna Connect sannan ka shiga da imel na Orden naka.',
   'Using Claude Code instead?': 'Kana amfani da Claude Code?',
   Command: 'Umarni',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -815,16 +819,16 @@ export const ha: Dictionary = {
   'Open ChatGPT’s plugins': 'Buɗe ƙarin ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Babu sashen Plugins ko maɓallin ƙari? Kunna Developer mode da farko, a Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Shiga da imel na nibeditor naka lokacin da ChatGPT ya tambaya.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Don amfani da shi a taɗi, rubuta @ sannan zaɓi nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Shiga da imel na Orden naka lokacin da ChatGPT ya tambaya.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Don amfani da shi a taɗi, rubuta @ sannan zaɓi Orden.',
   'Server URL': 'URL na uwar garke',
   Authentication: 'Tabbatar da ainihi',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Bar saitunan OAuth na gaba kamar yadda suke sannan sa alama a “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Kowane abokin ciniki na MCP da ke amfani da Streamable HTTP da OAuth. Ba shi URL: zai yi rijista da kansa kuma ya buɗe shafin shiga na nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Kowane abokin ciniki na MCP da ke amfani da Streamable HTTP da OAuth. Ba shi URL: zai yi rijista da kansa kuma ya buɗe shafin shiga na Orden.',
   'Show config': 'Nuna saiti',
   'For a client that takes a JSON block instead of a URL.':
     'Ga abokin ciniki da ke karɓar sashen JSON maimakon URL.',
@@ -894,7 +898,7 @@ export const ha: Dictionary = {
   'Display name': 'Sunan bayyanawa',
   'Your name': 'Sunanka',
   Email: 'Imel',
-  'On nibeditor.com': 'A nibeditor.com',
+  'On orden.so': 'A orden.so',
   'Your own domain': 'Yankin yanar naka',
   'Switching gives up {name}.': 'Sauyawa yana rabuwa da {name}.',
   Page: 'Shafi',
@@ -1284,8 +1288,8 @@ export const ha: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'Babu bayanan kula a Apple Notes a wannan Mac.',
   'Those notes could not be read.': 'Ba a iya karanta waɗannan bayanan kula ba.',
   'Read them from this Mac': 'Karanta su daga wannan Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Kunna nibeditor a Full Disk Access, sannan sake gwadawa.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Kunna Orden a Full Disk Access, sannan sake gwadawa.',
   'Open the setting': 'Buɗe saitin',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal na fitar da kansa: Journal, Settings, Export. Apple Notes ba shi da fitarwa, don haka nesa da Mac da ke da su, abin da za a saukar shi ne babban fayil da mai fitarwa ya rubuta.',
@@ -1655,8 +1659,9 @@ export const ha: Dictionary = {
   'that is not a theme': 'wannan ba kamanni ba',
   'no such theme': 'babu irin wannan kamanni',
   'choose a model first': 'zaɓi samfuri da farko',
+  'set an OpenAI key in Orden’s settings first': 'saita maɓallin OpenAI a saitunan Orden da farko',
   'set an OpenAI key in nibeditor’s settings first':
-    'saita maɓallin OpenAI a saitunan nibeditor da farko',
+    'saita maɓallin OpenAI a saitunan Orden da farko',
   'that is a lot of questions - try again later':
     'waɗannan tambayoyi sun yi yawa - sake gwadawa daga baya',
   'that is too much audio': 'wannan sauti ya yi yawa',
@@ -1817,7 +1822,7 @@ export const ha: Dictionary = {
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Birawuza na asali',
   // The engine web tabs run on
   Engine: 'Injin',
@@ -1931,7 +1936,7 @@ export const ha: Dictionary = {
   'Always on this site': 'Koyaushe a wannan shafin',
   'Agents stopped': 'An dakatar da wakilai',
   'Agent tabs closed': 'An rufe shafukan wakilai',
-  'nibeditor is still running for your agents': 'nibeditor yana ci gaba da aiki don wakilanka',
+  'Orden is still running for your agents': 'Orden yana ci gaba da aiki don wakilanka',
   '{client} wants to connect': '{client} yana son haɗawa',
   // Web logins that travel, and the devices of an account
   'no such device': "babu irin wannan na'ura",
@@ -1947,8 +1952,8 @@ export const ha: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Wakilai a wannan kwamfuta',
   'Your account’s connector': 'Mahaɗin asusunka',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
+  'Orden asks you once, the first time it connects.':
+    'Orden zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
   'A client on another machine?': "Abokin ciniki a wata na'ura?",
   'Shown only once.': 'Ana nuna shi sau ɗaya kawai.',
   'Remove {name}?': 'Cire {name}?',
@@ -2069,7 +2074,7 @@ export const ha: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Jinkirta',
   Reminders: 'Tunatarwa',
-  'Reminders ring while nibeditor is open': 'Tunatarwa na kara yayin da nibeditor ke bude',
+  'Reminders ring while Orden is open': 'Tunatarwa na kara yayin da Orden ke bude',
   Automatic: 'Kai tsaye',
   'Stay in the tray': 'Zauna a tire',
   'Exact alarms': 'Ƙararrawa daidai',

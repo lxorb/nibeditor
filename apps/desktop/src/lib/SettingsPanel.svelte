@@ -740,7 +740,7 @@
   {/if}
 {/snippet}
 
-<!-- Nib as the browser links from other programs open in: a desktop's alone, since a
+<!-- Orden as the browser links from other programs open in: a desktop's alone, since a
      phone's links are its own browser's and a page in a browser is inside one already.
      The control is its own component because it asks the system and listens for the
      window coming back; see settings/DefaultBrowser.svelte. -->

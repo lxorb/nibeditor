@@ -50,7 +50,7 @@ import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
-/** Everything a state needs to be a Nib editor's state. Not the element it
+/** Everything a state needs to be a Orden editor's state. Not the element it
  *  draws into: a pane builds one of these for every note it has open and swaps
  *  them into its one view, so the state and the view are separate things. See
  *  held.ts. */

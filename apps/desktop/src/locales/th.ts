@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor เปลี่ยนชื่อเป็น Orden แล้ว',
+  'Notes from nibeditor.com': 'โน้ตจาก nibeditor.com',
+  'Nothing there': 'ไม่มีอะไรที่นั่น',
   // AI: the three permission modes
   'Full permissions': 'สิทธิ์เต็ม',
   'Auto mode': 'โหมดอัตโนมัติ',
@@ -569,8 +573,8 @@ export const th: Dictionary = {
   'Sign in to ask a question.': 'เข้าสู่ระบบเพื่อถามคำถาม',
   'Asking OpenAI which models this key can use': 'กำลังถาม OpenAI ว่าคีย์นี้ใช้โมเดลอะไรได้',
   'Could not reach OpenAI': 'ติดต่อ OpenAI ไม่ได้',
-  'That key cannot use any of the models nibeditor asks for.':
-    'คีย์นี้ใช้โมเดลที่ nibeditor ต้องการไม่ได้เลย',
+  'That key cannot use any of the models Orden asks for.':
+    'คีย์นี้ใช้โมเดลที่ Orden ต้องการไม่ได้เลย',
   'No reasoning': 'ไม่ให้เหตุผล',
   Minimal: 'น้อยสุด',
   Low: 'ต่ำ',
@@ -592,7 +596,7 @@ export const th: Dictionary = {
   Mode: 'โหมด',
   // The window's own edges; see appearance.rs
   Window: 'หน้าต่าง',
-  'nibeditor’s own': 'ของ nibeditor',
+  'Orden’s own': 'ของ Orden',
   'The system’s': 'ของระบบ',
   'Window frame': 'กรอบหน้าต่าง',
   System: 'ระบบ',
@@ -712,7 +716,7 @@ export const th: Dictionary = {
   '{used} of {limit} used.': 'ใช้ {used} จาก {limit}',
   'That image does not fit in your storage.': 'ที่เก็บข้อมูลของคุณไม่พอสำหรับรูปนั้น',
   'out of space': 'ที่เก็บข้อมูลเต็ม',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} พร้อมติดตั้ง',
+  'Orden {version} is ready to install.': 'Orden {version} พร้อมติดตั้ง',
   'Restart now': 'เริ่มใหม่เดี๋ยวนี้',
   Later: 'ภายหลัง',
   More: 'เพิ่มเติม',
@@ -785,14 +789,14 @@ export const th: Dictionary = {
   'Reads your notes.': 'อ่านโน้ตของคุณ',
   'Reads and writes your notes.': 'อ่านและเขียนโน้ตของคุณ',
   Other: 'อื่นๆ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ ไม่ต้องวางอะไร',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล Orden ของคุณ ไม่ต้องวางอะไร',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'ใน Claude เปิด Settings → Connectors แล้วคลิก Add custom connector',
   'Open Claude’s connectors': 'เปิด Connectors ของ Claude',
   'Fill in the two fields and click Add.': 'กรอกสองช่องแล้วคลิก Add',
-  'Click Connect and sign in with your nibeditor email.':
-    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ',
+  'Click Connect and sign in with your Orden email.':
+    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล Orden ของคุณ',
   'Using Claude Code instead?': 'ใช้ Claude Code อยู่?',
   Command: 'คำสั่ง',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -803,15 +807,15 @@ export const th: Dictionary = {
   'Open ChatGPT’s plugins': 'เปิด Plugins ของ ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'ไม่เห็นส่วน Plugins หรือปุ่มบวก? เปิด Developer mode ก่อนที่ Settings → Security and login',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'เข้าสู่ระบบด้วยอีเมล nibeditor เมื่อ ChatGPT ถาม',
-  'To use it in a chat, type @ and pick nibeditor.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก nibeditor',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'เข้าสู่ระบบด้วยอีเมล Orden เมื่อ ChatGPT ถาม',
+  'To use it in a chat, type @ and pick Orden.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก Orden',
   'Server URL': 'URL เซิร์ฟเวอร์',
   Authentication: 'การยืนยันตัวตน',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'ปล่อยการตั้งค่า OAuth ขั้นสูงไว้ตามเดิม แล้วติ๊ก “I understand and want to continue”',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ nibeditor',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ Orden',
   'Show config': 'แสดงคอนฟิก',
   'For a client that takes a JSON block instead of a URL.':
     'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
@@ -878,7 +882,7 @@ export const th: Dictionary = {
   'Display name': 'ชื่อที่แสดง',
   'Your name': 'ชื่อของคุณ',
   Email: 'อีเมล',
-  'On nibeditor.com': 'บน nibeditor.com',
+  'On orden.so': 'บน orden.so',
   'Your own domain': 'โดเมนของคุณ',
   'Switching gives up {name}.': 'การเปลี่ยนจะปล่อย {name}',
   Page: 'หน้า',
@@ -1252,8 +1256,8 @@ export const th: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'บน Mac เครื่องนี้ไม่มีโน้ตใน Apple Notes',
   'Those notes could not be read.': 'อ่านโน้ตเหล่านั้นไม่ได้',
   'Read them from this Mac': 'อ่านจาก Mac เครื่องนี้',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'เปิด nibeditor ในการเข้าถึงดิสก์ทั้งหมดแล้วลองอีกครั้ง',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'เปิด Orden ในการเข้าถึงดิสก์ทั้งหมดแล้วลองอีกครั้ง',
   'Open the setting': 'เปิดการตั้งค่า',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal ส่งออกเอง: Journal, การตั้งค่า, ส่งออก. Apple Notes ไม่มีการส่งออก จึงเมื่ออยู่ห่างจาก Mac ที่เก็บไว้ สิ่งที่ต้องวางคือโฟลเดอร์ที่ตัวส่งออกเขียนไว้',
@@ -1601,8 +1605,8 @@ export const th: Dictionary = {
   'that is not a theme': 'นั่นไม่ใช่ธีม',
   'no such theme': 'ไม่มีธีมนั้น',
   'choose a model first': 'เลือกโมเดลก่อน',
-  'set an OpenAI key in nibeditor’s settings first':
-    'ตั้งคีย์ OpenAI ในการตั้งค่าของ nibeditor ก่อน',
+  'set an OpenAI key in Orden’s settings first': 'ตั้งคีย์ OpenAI ในการตั้งค่าของ Orden ก่อน',
+  'set an OpenAI key in nibeditor’s settings first': 'ตั้งคีย์ OpenAI ในการตั้งค่าของ Orden ก่อน',
   'that is a lot of questions - try again later': 'คำถามมากเกินไป - ลองใหม่ภายหลัง',
   'that is too much audio': 'เสียงยาวเกินไป',
   'that is more than a spoken command': 'นั่นเกินกว่าคำสั่งเสียงหนึ่งคำสั่ง',
@@ -1759,7 +1763,7 @@ export const th: Dictionary = {
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
   // The engine web tabs run on
   Engine: 'เอนจิน',
@@ -1870,7 +1874,7 @@ export const th: Dictionary = {
   'Always on this site': 'เสมอในเว็บไซต์นี้',
   'Agents stopped': 'หยุดเอเจนต์แล้ว',
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
-  'nibeditor is still running for your agents': 'nibeditor ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
+  'Orden is still running for your agents': 'Orden ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
   '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
   // Web logins that travel, and the devices of an account
   'no such device': 'ไม่มีอุปกรณ์นี้',
@@ -1886,8 +1890,8 @@ export const th: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
+  'Orden asks you once, the first time it connects.':
+    'Orden จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
   'Shown only once.': 'แสดงเพียงครั้งเดียว',
   'Remove {name}?': 'นำ {name} ออกไหม',
@@ -2002,7 +2006,7 @@ export const th: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'เลื่อนปลุก',
   Reminders: 'การเตือน',
-  'Reminders ring while nibeditor is open': 'การเตือนจะดังขณะที่ nibeditor เปิดอยู่',
+  'Reminders ring while Orden is open': 'การเตือนจะดังขณะที่ Orden เปิดอยู่',
   Automatic: 'อัตโนมัติ',
   'Stay in the tray': 'อยู่ในถาดระบบ',
   'Exact alarms': 'การปลุกที่แม่นยำ',

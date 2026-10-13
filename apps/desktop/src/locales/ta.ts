@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor இப்போது Orden',
+  'Notes from nibeditor.com': 'nibeditor.com இலிருந்து குறிப்புகள்',
+  'Nothing there': 'அங்கே எதுவும் இல்லை',
   // AI: the three permission modes
   'Full permissions': 'முழு அனுமதிகள்',
   'Auto mode': 'தானியங்கு பயன்முறை',
@@ -569,8 +573,8 @@ export const ta: Dictionary = {
   'Sign in to ask a question.': 'கேள்வி கேட்க உள்நுழையவும்.',
   'Asking OpenAI which models this key can use': 'இந்தச் சாவியின் மாடல்களை OpenAI இல் கேட்கிறது',
   'Could not reach OpenAI': 'OpenAI ஐ அணுக முடியவில்லை',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
   'No reasoning': 'பகுத்தறிதல் இல்லை',
   Minimal: 'மிகக் குறைவு',
   Low: 'குறைவு',
@@ -592,7 +596,7 @@ export const ta: Dictionary = {
   Mode: 'நிலை',
   // The window's own edges; see appearance.rs
   Window: 'சாளரம்',
-  'nibeditor’s own': 'nibeditor-இன் சொந்தம்',
+  'Orden’s own': 'Orden-இன் சொந்தம்',
   'The system’s': 'கணினியின்',
   'Window frame': 'சாளரச் சட்டம்',
   System: 'கணினி',
@@ -716,7 +720,7 @@ export const ta: Dictionary = {
   '{used} of {limit} used.': '{limit} இல் {used} பயன்படுத்தப்பட்டது.',
   'That image does not fit in your storage.': 'உங்கள் சேமிப்பிடத்தில் அந்தப் படம் அடங்காது.',
   'out of space': 'சேமிப்பிடம் இல்லை',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} நிறுவத் தயார்.',
+  'Orden {version} is ready to install.': 'Orden {version} நிறுவத் தயார்.',
   'Restart now': 'இப்போதே மீள்தொடங்கு',
   Later: 'பிறகு',
   More: 'மேலும்',
@@ -795,14 +799,14 @@ export const ta: Dictionary = {
   'Reads your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும்.',
   'Reads and writes your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும், எழுதும்.',
   Other: 'மற்றவை',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் Orden மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude இல் Settings → Connectors திறந்து Add custom connector என்பதைக் கிளிக் செய்யவும்.',
   'Open Claude’s connectors': 'Claude இன் இணைப்பிகளைத் திற',
   'Fill in the two fields and click Add.': 'இரு புலங்களையும் நிரப்பி Add கிளிக் செய்யவும்.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect கிளிக் செய்து உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையவும்.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect கிளிக் செய்து உங்கள் Orden மின்னஞ்சலால் உள்நுழையவும்.',
   'Using Claude Code instead?': 'Claude Code பயன்படுத்துகிறீர்களா?',
   Command: 'கட்டளை',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -813,16 +817,16 @@ export const ta: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT இன் செருகுநிரல்களைத் திற',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins பிரிவு அல்லது கூட்டல் பொத்தான் இல்லையா? முதலில் Settings → Security and login இல் Developer mode ஆன் செய்யவும்.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT கேட்கும்போது உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையவும்.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து nibeditor ஐத் தேர்ந்தெடுக்கவும்.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT கேட்கும்போது உங்கள் Orden மின்னஞ்சலால் உள்நுழையவும்.',
+  'To use it in a chat, type @ and pick Orden.':
+    'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து Orden ஐத் தேர்ந்தெடுக்கவும்.',
   'Server URL': 'சேவையக URL',
   Authentication: 'அங்கீகாரம்',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'மேம்பட்ட OAuth அமைப்புகளை அப்படியே விட்டு “I understand and want to continue” என்பதைத் தேர்ந்தெடுக்கவும்.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து nibeditor இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து Orden இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
   'Show config': 'கட்டமைப்பைக் காட்டு',
   'For a client that takes a JSON block instead of a URL.':
     'URL க்குப் பதிலாக JSON தொகுதியை ஏற்கும் கிளையண்டுக்கு.',
@@ -895,7 +899,7 @@ export const ta: Dictionary = {
   'Display name': 'காட்டும் பெயர்',
   'Your name': 'உங்கள் பெயர்',
   Email: 'மின்னஞ்சல்',
-  'On nibeditor.com': 'nibeditor.com இல்',
+  'On orden.so': 'orden.so இல்',
   'Your own domain': 'உங்கள் சொந்த டொமைன்',
   'Switching gives up {name}.': 'மாற்றினால் {name} விடப்படும்.',
   Page: 'பக்கம்',
@@ -1284,8 +1288,8 @@ export const ta: Dictionary = {
     'இந்த Mac இல் Apple Notes இல் குறிப்புகள் இல்லை.',
   'Those notes could not be read.': 'அந்தக் குறிப்புகளைப் படிக்க முடியவில்லை.',
   'Read them from this Mac': 'இந்த Mac இல் இருந்து படி',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access இல் nibeditor ஐ இயக்கி, மீண்டும் கேள்.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access இல் Orden ஐ இயக்கி, மீண்டும் கேள்.',
   'Open the setting': 'அமைப்பைத் திற',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal தானே ஏற்றுமதி செய்யும்: Journal, அமைப்புகள், ஏற்றுமதி. Apple Notes இல் ஏற்றுமதி இல்லை, எனவே அது உள்ள Mac இல் இல்லாதபோது, இங்கே இடுவது ஒரு ஏற்றுமதிக் கருவி எழுதிய கோப்புறை.',
@@ -1653,8 +1657,10 @@ export const ta: Dictionary = {
   'that is not a theme': 'அது தீம் இல்லை',
   'no such theme': 'அப்படி ஒரு தீம் இல்லை',
   'choose a model first': 'முதலில் ஒரு மாடலைத் தேர்ந்தெடுக்கவும்',
+  'set an OpenAI key in Orden’s settings first':
+    'முதலில் Orden அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
   'set an OpenAI key in nibeditor’s settings first':
-    'முதலில் nibeditor அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
+    'முதலில் Orden அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
   'that is a lot of questions - try again later': 'அது நிறைய கேள்விகள் - பிறகு முயற்சிக்கவும்',
   'that is too much audio': 'அது மிக அதிக ஒலி',
   'that is more than a spoken command': 'அது பேசும் கட்டளையைவிட அதிகம்',
@@ -1814,7 +1820,7 @@ export const ta: Dictionary = {
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
   // The engine web tabs run on
   Engine: 'இன்ஜின்',
@@ -1929,8 +1935,7 @@ export const ta: Dictionary = {
   'Always on this site': 'இந்தத் தளத்தில் எப்போதும்',
   'Agents stopped': 'முகவர்கள் நிறுத்தப்பட்டன',
   'Agent tabs closed': 'முகவர் தாவல்கள் மூடப்பட்டன',
-  'nibeditor is still running for your agents':
-    'உங்கள் முகவர்களுக்காக nibeditor இன்னும் இயங்குகிறது',
+  'Orden is still running for your agents': 'உங்கள் முகவர்களுக்காக Orden இன்னும் இயங்குகிறது',
   '{client} wants to connect': '{client} இணைய விரும்புகிறது',
   // Web logins that travel, and the devices of an account
   'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
@@ -1946,8 +1951,8 @@ export const ta: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
-  'nibeditor asks you once, the first time it connects.':
-    'முதல் முறை இணையும்போது nibeditor உங்களிடம் ஒருமுறை கேட்கும்.',
+  'Orden asks you once, the first time it connects.':
+    'முதல் முறை இணையும்போது Orden உங்களிடம் ஒருமுறை கேட்கும்.',
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
   'Shown only once.': 'ஒருமுறை மட்டுமே காட்டப்படும்.',
   'Remove {name}?': '{name} ஐ அகற்றவா?',
@@ -2069,8 +2074,7 @@ export const ta: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'உறக்கநிலை',
   Reminders: 'நினைவூட்டல்கள்',
-  'Reminders ring while nibeditor is open':
-    'nibeditor திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
+  'Reminders ring while Orden is open': 'Orden திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
   Automatic: 'தானியங்கு',
   'Stay in the tray': 'ட்ரேயில் இருக்கவும்',
   'Exact alarms': 'துல்லியமான அலாரங்கள்',

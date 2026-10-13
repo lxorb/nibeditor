@@ -109,7 +109,7 @@ describe('the frame script', () => {
    *  or a frame that shares it - it does nothing at all, so it is never the way a
    *  string becomes code where the code could reach the app. */
   test('runs nothing anywhere but an opaque origin', async () => {
-    const window = framed(`<div id="dial"></div>${said('one')}`, 'https://nibeditor.com/')
+    const window = framed(`<div id="dial"></div>${said('one')}`, 'https://orden.so/')
     await settled()
 
     expect(window.document.getElementById('dial')).toBeNull()

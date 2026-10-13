@@ -30,8 +30,7 @@ export interface Language {
 
 /** Where a correction goes. Shown under the list, because a reader who can see
  *  that a word is wrong is the only person who can put it right. */
-export const CATALOGUES_URL =
-  'https://github.com/lxorb/nibeditor/tree/main/apps/desktop/src/locales'
+export const CATALOGUES_URL = 'https://github.com/lxorb/orden/tree/main/apps/desktop/src/locales'
 
 /** Every language with fifty million speakers, and the four that came first.
  *  Read through in order: the hand-written ones, then the rest by their id, so

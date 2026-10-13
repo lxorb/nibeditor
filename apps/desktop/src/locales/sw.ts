@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor sasa ni Orden',
+  'Notes from nibeditor.com': 'Madokezo kutoka nibeditor.com',
+  'Nothing there': 'Hakuna kitu hapo',
   // AI: the three permission modes
   'Full permissions': 'Ruhusa kamili',
   'Auto mode': 'Hali ya kiotomatiki',
@@ -573,8 +577,8 @@ export const sw: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Inauliza OpenAI modeli zipi kitufe hiki kinaweza kutumia',
   'Could not reach OpenAI': 'OpenAI haikufikiwa',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo nibeditor inaomba.',
+  'That key cannot use any of the models Orden asks for.':
+    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo Orden inaomba.',
   'No reasoning': 'Hakuna ufikirio',
   Minimal: 'Kidogo sana',
   Low: 'Chini',
@@ -596,7 +600,7 @@ export const sw: Dictionary = {
   Mode: 'Hali',
   // The window's own edges; see appearance.rs
   Window: 'Dirisha',
-  'nibeditor’s own': 'Ya nibeditor',
+  'Orden’s own': 'Ya Orden',
   'The system’s': 'Ya mfumo',
   'Window frame': 'Fremu ya dirisha',
   System: 'Mfumo',
@@ -720,7 +724,7 @@ export const sw: Dictionary = {
   '{used} of {limit} used.': '{used} kati ya {limit} zimetumika.',
   'That image does not fit in your storage.': 'Picha hiyo haitoshi kwenye hifadhi yako.',
   'out of space': 'hifadhi imeisha',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} iko tayari kusakinishwa.',
+  'Orden {version} is ready to install.': 'Orden {version} iko tayari kusakinishwa.',
   'Restart now': 'Anzisha tena sasa',
   Later: 'Baadaye',
   More: 'Zaidi',
@@ -797,14 +801,14 @@ export const sw: Dictionary = {
   'Reads your notes.': 'Husoma madokezo yako.',
   'Reads and writes your notes.': 'Husoma na kuandika madokezo yako.',
   Other: 'Nyingine',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya nibeditor; hakuna kitu cha kubandika.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya Orden; hakuna kitu cha kubandika.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Katika Claude, fungua Settings → Connectors na bofya Add custom connector.',
   'Open Claude’s connectors': 'Fungua viunganishi vya Claude',
   'Fill in the two fields and click Add.': 'Jaza sehemu mbili na bofya Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Bofya Connect na uingie kwa barua pepe yako ya nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Bofya Connect na uingie kwa barua pepe yako ya Orden.',
   'Using Claude Code instead?': 'Unatumia Claude Code?',
   Command: 'Amri',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -815,16 +819,15 @@ export const sw: Dictionary = {
   'Open ChatGPT’s plugins': 'Fungua programu-jalizi za ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Hakuna sehemu ya Plugins au kitufe cha kuongeza? Washa Developer mode kwanza, chini ya Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Ingia kwa barua pepe yako ya nibeditor ChatGPT ikiuliza.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Kuitumia kwenye gumzo, andika @ na chagua nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Ingia kwa barua pepe yako ya Orden ChatGPT ikiuliza.',
+  'To use it in a chat, type @ and pick Orden.': 'Kuitumia kwenye gumzo, andika @ na chagua Orden.',
   'Server URL': 'URL ya seva',
   Authentication: 'Uthibitishaji',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Acha mipangilio ya juu ya OAuth kama ilivyo na tia alama “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa Orden.',
   'Show config': 'Onyesha usanidi',
   'For a client that takes a JSON block instead of a URL.':
     'Kwa mteja anayechukua kizuizi cha JSON badala ya URL.',
@@ -894,7 +897,7 @@ export const sw: Dictionary = {
   'Display name': 'Jina la kuonyesha',
   'Your name': 'Jina lako',
   Email: 'Barua pepe',
-  'On nibeditor.com': 'Kwenye nibeditor.com',
+  'On orden.so': 'Kwenye orden.so',
   'Your own domain': 'Kikoa chako',
   'Switching gives up {name}.': 'Kubadili kunaacha {name}.',
   Page: 'Ukurasa',
@@ -1283,8 +1286,8 @@ export const sw: Dictionary = {
     'Hakuna madokezo katika Apple Notes kwenye Mac hii.',
   'Those notes could not be read.': 'Madokezo hayo hayakuweza kusomwa.',
   'Read them from this Mac': 'Yasome kutoka Mac hii',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Washa nibeditor katika Full Disk Access, kisha jaribu tena.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Washa Orden katika Full Disk Access, kisha jaribu tena.',
   'Open the setting': 'Fungua mpangilio',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal hujitoa yenyewe: Journal, Mipangilio, Toa. Apple Notes haina utoaji, kwa hivyo mbali na Mac iliyo nayo, kinachoachwa hapa ni folda iliyoandikwa na kitoaji.',
@@ -1656,8 +1659,10 @@ export const sw: Dictionary = {
   'that is not a theme': 'hiyo si mandhari',
   'no such theme': 'hakuna mandhari hiyo',
   'choose a model first': 'chagua modeli kwanza',
+  'set an OpenAI key in Orden’s settings first':
+    'weka kitufe cha OpenAI kwenye mipangilio ya Orden kwanza',
   'set an OpenAI key in nibeditor’s settings first':
-    'weka kitufe cha OpenAI kwenye mipangilio ya nibeditor kwanza',
+    'weka kitufe cha OpenAI kwenye mipangilio ya Orden kwanza',
   'that is a lot of questions - try again later': 'hayo ni maswali mengi - jaribu tena baadaye',
   'that is too much audio': 'hiyo ni sauti nyingi mno',
   'that is more than a spoken command': 'hiyo ni zaidi ya amri inayosemwa',
@@ -1816,7 +1821,7 @@ export const sw: Dictionary = {
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
   // The engine web tabs run on
   Engine: 'Injini',
@@ -1931,8 +1936,7 @@ export const sw: Dictionary = {
   'Always on this site': 'Daima kwenye tovuti hii',
   'Agents stopped': 'Mawakala wamesimamishwa',
   'Agent tabs closed': 'Vichupo vya mawakala vimefungwa',
-  'nibeditor is still running for your agents':
-    'nibeditor bado inaendelea kwa ajili ya mawakala wako',
+  'Orden is still running for your agents': 'Orden bado inaendelea kwa ajili ya mawakala wako',
   '{client} wants to connect': '{client} anataka kuunganishwa',
   // Web logins that travel, and the devices of an account
   'no such device': 'hakuna kifaa kama hicho',
@@ -1948,8 +1952,8 @@ export const sw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Mawakala kwenye kompyuta hii',
   'Your account’s connector': 'Kiunganishi cha akaunti yako',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor hukuuliza mara moja, mara ya kwanza inapounganishwa.',
+  'Orden asks you once, the first time it connects.':
+    'Orden hukuuliza mara moja, mara ya kwanza inapounganishwa.',
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
   'Shown only once.': 'Huonyeshwa mara moja tu.',
   'Remove {name}?': 'Ondoa {name}?',
@@ -2070,7 +2074,7 @@ export const sw: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Ahirisha',
   Reminders: 'Vikumbusho',
-  'Reminders ring while nibeditor is open': 'Vikumbusho hulia nibeditor ikiwa wazi',
+  'Reminders ring while Orden is open': 'Vikumbusho hulia Orden ikiwa wazi',
   Automatic: 'Kiotomatiki',
   'Stay in the tray': 'Baki kwenye trei',
   'Exact alarms': 'Kengele sahihi',

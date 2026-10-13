@@ -1,20 +1,20 @@
 {
   "package_id": "com.nibeditor.nib",
   "edition": "202601",
-  "name": "nibeditor",
-  "version": "0.13.1",
+  "name": "Orden",
+  "version": "0.13.2",
   "min_app_version": "2.2.10",
   "min_sdk_version": "0.0.15",
   "entrypoint": "even.html",
   "permissions": [
     {
       "name": "network",
-      "desc": "Sign in, keep your notes in step, and ask questions through your nibeditor account.",
-      "whitelist": ["https://nibeditor.com"]
+      "desc": "Sign in, keep your notes in step, and ask questions through your Orden account.",
+      "whitelist": ["https://orden.so"]
     },
     {
       "name": "g2-microphone",
-      "desc": "Say next, close or a question, and nibeditor answers on the glasses."
+      "desc": "Say next, close or a question, and Orden answers on the glasses."
     },
     {
       "name": "phone-microphone",

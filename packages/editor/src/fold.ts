@@ -373,7 +373,7 @@ function foldsFor(state: EditorState, lines: readonly FoldLines[]): FoldRange[] 
  *
  *  The only fold that is written in the file rather than remembered per device,
  *  because Obsidian's callout syntax carries it and a note is the same note in
- *  both. Nib never writes the sign and never rewrites it - opening one of these
+ *  both. Orden never writes the sign and never rewrites it - opening one of these
  *  is a view of the note changing, not the note - so a `-` means "opens shut"
  *  every time rather than "is shut for ever". */
 function markerFolds(state: EditorState): FoldRange[] {

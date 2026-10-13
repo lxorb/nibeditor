@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor가 Orden으로 바뀌었습니다',
+  'Notes from nibeditor.com': 'nibeditor.com의 노트',
+  'Nothing there': '아무것도 없습니다',
   // AI: the three permission modes
   'Full permissions': '전체 권한',
   'Auto mode': '자동 모드',
@@ -569,8 +573,8 @@ export const ko: Dictionary = {
   'Sign in to ask a question.': '질문하려면 로그인하세요.',
   'Asking OpenAI which models this key can use': '이 키로 쓸 수 있는 모델을 OpenAI에 확인 중',
   'Could not reach OpenAI': 'OpenAI에 연결할 수 없습니다',
-  'That key cannot use any of the models nibeditor asks for.':
-    '그 키로는 nibeditor가 요청하는 모델을 하나도 쓸 수 없습니다.',
+  'That key cannot use any of the models Orden asks for.':
+    '그 키로는 Orden이 요청하는 모델을 하나도 쓸 수 없습니다.',
   'No reasoning': '추론 없음',
   Minimal: '최소',
   Low: '낮음',
@@ -592,7 +596,7 @@ export const ko: Dictionary = {
   Mode: '모드',
   // The window's own edges; see appearance.rs
   Window: '창',
-  'nibeditor’s own': 'nibeditor의 것',
+  'Orden’s own': 'Orden의 것',
   'The system’s': '시스템의 것',
   'Window frame': '창 테두리',
   System: '시스템',
@@ -713,7 +717,7 @@ export const ko: Dictionary = {
   '{used} of {limit} used.': '{limit} 중 {used} 사용.',
   'That image does not fit in your storage.': '그 이미지는 저장 공간에 들어가지 않습니다.',
   'out of space': '저장 공간 부족',
-  'nibeditor {version} is ready to install.': 'nibeditor {version}을 설치할 수 있습니다.',
+  'Orden {version} is ready to install.': 'Orden {version}을 설치할 수 있습니다.',
   'Restart now': '지금 다시 시작',
   Later: '나중에',
   More: '더 보기',
@@ -786,14 +790,14 @@ export const ko: Dictionary = {
   'Reads your notes.': '노트를 읽습니다.',
   'Reads and writes your notes.': '노트를 읽고 씁니다.',
   Other: '기타',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. nibeditor 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. Orden 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude에서 Settings → Connectors를 열고 Add custom connector를 누르세요.',
   'Open Claude’s connectors': 'Claude의 커넥터 열기',
   'Fill in the two fields and click Add.': '두 칸을 채우고 Add를 누르세요.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect를 누르고 nibeditor 이메일로 로그인하세요.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect를 누르고 Orden 이메일로 로그인하세요.',
   'Using Claude Code instead?': 'Claude Code를 쓰시나요？',
   Command: '명령',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -804,16 +808,15 @@ export const ko: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT의 플러그인 열기',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins 항목이나 더하기 버튼이 없나요. Settings → Security and login에서 Developer mode를 먼저 켜세요.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT가 물으면 nibeditor 이메일로 로그인하세요.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    '대화에서 쓰려면 @를 입력하고 nibeditor를 고르세요.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT가 물으면 Orden 이메일로 로그인하세요.',
+  'To use it in a chat, type @ and pick Orden.': '대화에서 쓰려면 @를 입력하고 Orden을 고르세요.',
   'Server URL': '서버 URL',
   Authentication: '인증',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '고급 OAuth 설정은 그대로 두고 “I understand and want to continue”에 표시하세요.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 nibeditor 로그인 페이지를 엽니다.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 Orden 로그인 페이지를 엽니다.',
   'Show config': '설정 보기',
   'For a client that takes a JSON block instead of a URL.':
     'URL 대신 JSON 블록을 받는 클라이언트용.',
@@ -881,7 +884,7 @@ export const ko: Dictionary = {
   'Display name': '표시 이름',
   'Your name': '이름',
   Email: '이메일',
-  'On nibeditor.com': 'nibeditor.com에서',
+  'On orden.so': 'orden.so에서',
   'Your own domain': '내 도메인',
   'Switching gives up {name}.': '바꾸면 {name}을 포기합니다.',
   Page: '페이지',
@@ -1259,8 +1262,8 @@ export const ko: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': '이 Mac의 Apple 메모에 노트가 없습니다.',
   'Those notes could not be read.': '그 노트를 읽을 수 없었습니다.',
   'Read them from this Mac': '이 Mac에서 읽기',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '전체 디스크 접근 권한에서 nibeditor를 켠 뒤 다시 시도하세요.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '전체 디스크 접근 권한에서 Orden을 켠 뒤 다시 시도하세요.',
   'Open the setting': '설정 열기',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple 저널은 스스로 내보냅니다. 저널, 설정, 내보내기. Apple 메모에는 내보내기가 없으므로, 메모가 있는 Mac이 아닌 곳에서는 내보내기 도구가 쓴 폴더를 여기에 놓습니다.',
@@ -1612,8 +1615,8 @@ export const ko: Dictionary = {
   'that is not a theme': '테마가 아닙니다',
   'no such theme': '그런 테마가 없습니다',
   'choose a model first': '먼저 모델을 고르세요',
-  'set an OpenAI key in nibeditor’s settings first':
-    '먼저 nibeditor 설정에서 OpenAI 키를 지정하세요',
+  'set an OpenAI key in Orden’s settings first': '먼저 Orden 설정에서 OpenAI 키를 지정하세요',
+  'set an OpenAI key in nibeditor’s settings first': '먼저 Orden 설정에서 OpenAI 키를 지정하세요',
   'that is a lot of questions - try again later': '질문이 너무 많습니다 - 나중에 다시 하세요',
   'that is too much audio': '음성이 너무 깁니다',
   'that is more than a spoken command': '음성 명령으로는 너무 깁니다',
@@ -1770,7 +1773,7 @@ export const ko: Dictionary = {
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '기본 브라우저',
   // The engine web tabs run on
   Engine: '엔진',
@@ -1882,7 +1885,7 @@ export const ko: Dictionary = {
   'Always on this site': '이 사이트에서 항상',
   'Agents stopped': '에이전트가 중지됨',
   'Agent tabs closed': '에이전트 탭이 닫힘',
-  'nibeditor is still running for your agents': '에이전트를 위해 nibeditor가 계속 실행 중입니다',
+  'Orden is still running for your agents': '에이전트를 위해 Orden이 계속 실행 중입니다',
   '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
   // Web logins that travel, and the devices of an account
   'no such device': '그런 기기가 없습니다',
@@ -1898,8 +1901,7 @@ export const ko: Dictionary = {
   // to connect one more.
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
-  'nibeditor asks you once, the first time it connects.':
-    '처음 연결할 때 nibeditor가 한 번 묻습니다.',
+  'Orden asks you once, the first time it connects.': '처음 연결할 때 Orden이 한 번 묻습니다.',
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
   'Shown only once.': '한 번만 표시됩니다.',
   'Remove {name}?': '{name}을(를) 제거할까요?',
@@ -2014,7 +2016,7 @@ export const ko: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '다시 알림',
   Reminders: '리마인더',
-  'Reminders ring while nibeditor is open': 'nibeditor가 열려 있는 동안 리마인더가 울립니다',
+  'Reminders ring while Orden is open': 'Orden이 열려 있는 동안 리마인더가 울립니다',
   Automatic: '자동',
   'Stay in the tray': '트레이에 상주',
   'Exact alarms': '정확한 알람',

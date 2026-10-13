@@ -822,7 +822,7 @@ const APP_ENTRIES: Shortcut[] = [
   // names for the key. See runHandlers in @codemirror/view.
   //
   // Obsidian ships `file-explorer:open` and `outline:open` with no key at all and
-  // Notion has nothing of the kind, so three of these are Nib's own; Ctrl+Shift+E
+  // Notion has nothing of the kind, so three of these are Orden's own; Ctrl+Shift+E
   // for the files is what VS Code puts its explorer on, and Ctrl+Shift+F for
   // search is already Obsidian's.
   {

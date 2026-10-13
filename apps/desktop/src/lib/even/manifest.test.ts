@@ -52,7 +52,7 @@ describe('the manifest a build is packed from', () => {
     // that request; see services/sync/src/ask. A permission's description has to
     // stay true, and "sign in and keep your notes in step" is now the whole of what
     // the network is for.
-    expect(network?.whitelist).toEqual(['https://nibeditor.com'])
+    expect(network?.whitelist).toEqual(['https://orden.so'])
     for (const origin of network?.whitelist ?? []) {
       expect(origin, origin).toMatch(/^https:\/\/[a-z0-9.-]+$/)
     }

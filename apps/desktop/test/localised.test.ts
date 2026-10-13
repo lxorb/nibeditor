@@ -44,13 +44,15 @@ const EXEMPT = [
   // An example of an address somebody pastes, which is a URL rather than prose.
   /^https:\/\//,
   /^example\.com$/,
-  /^\.?nibeditor\.com$/,
+  /^\.?(orden\.so|nibeditor\.com)$/,
   /^(B|I|S|M|H|<>|#|"|×)$/, // the format bar's single-glyph labels
   /^(A3|A4|A5|Letter|Legal|PDF|HTML|MCP|LLM|CSS|DNS|JSON)$/,
   // Product and file-format names, which read the same in every language.
   /^(Word|OpenOffice|RTF|ePub|LaTeX|MediaWiki|reStructuredText|Textile|OPML)$/,
   /^(Markdown|TextBundle|JPG|PNG|SVG)$/,
   /^(Claude|Claude Code|ChatGPT|Codex|OAuth)$/,
+  // The app's own name, which is its name in every language.
+  /^Orden$/,
 ]
 
 const exempt = (text: string) => EXEMPT.some((pattern) => pattern.test(text.trim()))
