@@ -2,16 +2,26 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { restartToUpdate } from './updater'
+  import { moveToApplications, restartToUpdate, stuck } from './updater'
   import { dur } from './motion'
+  import { log } from './log'
 
   const { version, ondismiss }: { version: string; ondismiss: () => void } = $props()
 
   let restarting = $state(false)
+  /** A Mac's copy that cannot be updated where it runs is moved to Applications first;
+   *  see updater.ts. */
+  let moving = $state(false)
+  void stuck().then((answer) => (moving = answer))
 
   async function restart() {
     restarting = true
-    await restartToUpdate()
+    try {
+      await (moving ? moveToApplications() : restartToUpdate())
+    } catch (error) {
+      // The notice stays, to be pressed again; what went wrong is the log's.
+      log('error', `update: ${String(error)}`)
+    }
     // Only reached if the restart failed; the app is normally gone by now.
     restarting = false
   }
@@ -24,7 +34,9 @@
 
   <div class="actions">
     <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
-    <button class="nib-button" disabled={restarting} onclick={restart}>{t('Restart now')}</button>
+    <button class="nib-button" disabled={restarting} onclick={restart}
+      >{moving ? t('Move to Applications') : t('Restart now')}</button
+    >
   </div>
 </div>
 

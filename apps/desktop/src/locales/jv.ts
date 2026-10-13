@@ -724,6 +724,7 @@ export const jv: Dictionary = {
   'out of space': 'panyimpenan entek',
   'Orden {version} is ready to install.': 'Orden {version} wis siyap dipasang.',
   'Restart now': 'Wiwiti maneh saiki',
+  'Move to Applications': 'Pindhah menyang Aplikasi',
   Later: 'Mengko',
   More: 'Liyane',
   'Open notes': 'Bukak cathetan',
