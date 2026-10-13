@@ -443,6 +443,9 @@ def main() -> int:
     global engine, ORIGIN
 
     asked = sys.argv[sys.argv.index("--engine") + 1] if "--engine" in sys.argv else None
+    # A run of every drive in WebKit asks this one about WebKit alone.
+    if asked is None and harness.WEBKIT:
+        asked = "webkit"
     engines = [one for one in ENGINES if asked in (None, one)]
     if not engines:
         raise SystemExit(f"no engine called {asked}; the drive knows {', '.join(ENGINES)}")
@@ -465,7 +468,7 @@ def main() -> int:
             # where the app meets WebKit - it does.
             if engine != "chrome" and DRIVE.server is not None:
                 ORIGIN = DRIVE.server.origin("127.0.0.1")
-            browser = DRIVE.browser(play) if engine == "chrome" else play.webkit.launch()
+            browser = DRIVE.browser(play) if engine == "chrome" else harness.answering(play.webkit.launch())
             try:
                 drive(browser)
             finally:
