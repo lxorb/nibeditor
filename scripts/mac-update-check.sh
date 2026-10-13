@@ -35,6 +35,14 @@ echo "running $app"
 
 running() { pgrep -f "$1/Contents/MacOS/" >/dev/null; }
 
+# A copy from before a rename carries itself over to the new name on its first launch.
+carried() {
+  for name in Orden.app nibeditor.app; do
+    [ ! -d "$app" ] && [ -d "$folder/$name" ] && app="$folder/$name"
+  done
+  return 0
+}
+
 say_eval() { node "$cli" eval "$1" --yes 2>&1; }
 
 launch() {
@@ -70,7 +78,7 @@ EOF
 # Quitting puts a downloaded update in place on the way out, so the launch's own look
 # may already have updated the copy here; it comes back as the new version then.
 quit_app
-[ -d "$folder/nibeditor.app" ] && [ ! -d "$app" ] && app="$folder/nibeditor.app"
+carried
 launch || exit 1
 version="$(say_eval "await window.__TAURI_INTERNALS__.invoke('plugin:app|version')")"
 echo "running after a quit: $version"
@@ -113,8 +121,7 @@ done
 echo "came back by itself: $back"
 pgrep -fl "/Contents/MacOS/" || true
 
-# A copy from before the rename carries itself over to nibeditor.app on its first launch.
-[ -d "$folder/nibeditor.app" ] && [ ! -d "$app" ] && app="$folder/nibeditor.app"
+carried
 installed="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist" 2>/dev/null || echo none)"
 ls "$folder"
 echo "on disk now: $installed"
