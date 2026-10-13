@@ -152,6 +152,9 @@ PATIENCE = 30
 ENGINE = os.environ.get("NIB_ENGINE", "chromium")
 WEBKIT = ENGINE == "webkit"
 
+#: The modifier a drive's `Mod` is: WebKit says it is a Mac, and the app believes it.
+MOD = "Meta" if WEBKIT else "Control"
+
 #: How long a Worker is given to answer, and a build to finish.
 WORKER_PATIENCE = 90
 BUILD_PATIENCE = 600
@@ -226,6 +229,105 @@ def answering(browser: Any) -> Any:
     browser.new_context = new_context
     browser.new_page = new_page
     return browser
+
+
+# ------------------------------------------------------------- a Mac's keys
+
+#: Where the app's keys are written, each with the Mac's own where it has one.
+REGISTRY = APP / "src" / "lib" / "shortcuts" / "registry.ts"
+
+_MODIFIERS = ("Control", "Meta", "Alt", "Shift")
+
+
+def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
+    """A combination as its modifiers and its key, from either spelling: the
+    registry's `Mod-Shift-k` or Playwright's `Control+Shift+K`. `Mod` is `mod`."""
+    parts = re.split(r"[-+](?!$)", written)
+    named = {"mod": mod, "ctrl": "Control", "control": "Control", "cmd": "Meta", "meta": "Meta"}
+    named |= {"alt": "Alt", "option": "Alt", "shift": "Shift"}
+    held = frozenset(named[one.lower()] for one in parts[:-1] if one.lower() in named)
+    key = parts[-1]
+    return held, key.lower() if len(key) == 1 else key
+
+
+def _written(held: frozenset[str], key: str) -> str:
+    return "+".join([*(one for one in _MODIFIERS if one in held), key])
+
+
+@functools.cache
+def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
+    """Every key the registry gives a Mac of its own, by the key everywhere else:
+    Back is Alt+ArrowLeft off a Mac and Ctrl+[ on one. A Mac with none (`mac: null`)
+    is left out, and the key everywhere else then reaches nothing there either."""
+    found: dict[tuple[frozenset[str], str], str] = {}
+    source = REGISTRY.read_text(encoding="utf-8")
+    for entry in re.finditer(r"\{[^{}]*?\bkey: '([^']+)',[^{}]*?\bmac: '([^']+)'", source):
+        held, key = _chord(entry.group(1), "Control")
+        # A bare Delete or Backspace a drive presses is a character taken out of a
+        # field, not the file list's Move to trash, which is Cmd's on a Mac.
+        if not held and key in ("Delete", "Backspace"):
+            continue
+        found[held, key] = _written(*_chord(entry.group(2), "Meta"))
+    return found
+
+
+def mac_key(pressed: str) -> str:
+    """What a Mac presses for what a drive wrote for Windows: the registry's own Mac
+    key where it has one, and otherwise Cmd for Ctrl."""
+    chord = _chord(pressed, "Control")
+    if chord in mac_bindings():
+        return mac_bindings()[chord]
+    held, key = chord
+    if "Control" not in held:
+        return pressed
+    return _written((held - {"Control"}) | {"Meta"}, pressed.rsplit("+", 1)[-1])
+
+
+def _mac_modifiers(modifiers: Sequence[str] | None) -> list[str] | None:
+    if modifiers is None:
+        return None
+    return ["Meta" if one in ("Control", "ControlOrMeta") else one for one in modifiers]
+
+
+def _press_as_a_mac() -> None:
+    """Every key a drive presses, pressed the way a Mac would: a drive is written once,
+    with Windows' keys, and in WebKit - which says it is a Mac, so the app reads Cmd as
+    its `Mod` - each chord is the Mac's. A held Ctrl on a click is Cmd as well."""
+    from playwright.sync_api import ElementHandle, Frame, Keyboard, Locator, Page
+
+    def keyed(method: Callable[..., Any], at: int) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def pressing(*args: Any, **kwargs: Any) -> Any:
+            if "key" in kwargs:
+                kwargs["key"] = mac_key(kwargs["key"])
+            elif len(args) > at:
+                args = (*args[:at], mac_key(args[at]), *args[at + 1 :])
+            return method(*args, **kwargs)
+
+        return pressing
+
+    def modified(method: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(method)
+        def clicking(*args: Any, **kwargs: Any) -> Any:
+            if "modifiers" in kwargs:
+                kwargs["modifiers"] = _mac_modifiers(kwargs["modifiers"])
+            return method(*args, **kwargs)
+
+        return clicking
+
+    for name in ("press", "down", "up"):
+        setattr(Keyboard, name, keyed(getattr(Keyboard, name), 1))
+    for kind in (Page, Frame):
+        kind.press = keyed(kind.press, 2)  # type: ignore[method-assign]
+    for kind in (Locator, ElementHandle):
+        kind.press = keyed(kind.press, 1)  # type: ignore[method-assign]
+    for kind in (Page, Frame, Locator, ElementHandle):
+        for name in ("click", "dblclick", "hover", "tap"):
+            setattr(kind, name, modified(getattr(kind, name)))
+
+
+if WEBKIT:
+    _press_as_a_mac()
 
 
 # ---------------------------------------------------------------------- the build
@@ -1369,6 +1471,9 @@ def needs_of(source: str) -> tuple[str, ...]:
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
     if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
         said = (*said, "native")
+    # A DevTools session is Chromium's alone, so a drive that opens one needs it too.
+    if "chromium" not in said and re.search(r"\bnew_cdp_session\b|\bconnect_over_cdp\b", source):
+        said = (*said, "chromium")
     return said
 
 

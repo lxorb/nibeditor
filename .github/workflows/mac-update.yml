@@ -1,0 +1,50 @@
+name: mac-update
+
+# A released nib on a Mac, updated by its own updater from the releases' own manifest,
+# the way somebody's copy is: put where people put it, left to find the next release,
+# "Restart now" pressed, and asked afterwards what it is. On runners that are nobody's
+# machine; see scripts/mac-update-check.sh.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/mac-update-check.sh
+      - .github/workflows/mac-update.yml
+      - apps/desktop/src/lib/updater.ts
+      - apps/desktop/src-tauri/src/updates.rs
+      - apps/desktop/src-tauri/src/bundle_name.rs
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - from: '0.12.0'
+            where: applications
+          - from: '0.12.0'
+            where: home
+          - from: '0.12.0'
+            where: image
+          - from: '0.11.0'
+            where: applications
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+      - name: The release and the one it should become
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "v${{ matrix.from }}" --repo "$GITHUB_REPOSITORY" --dir old --pattern '*-macos-universal.dmg'
+          latest="$(curl -fsSL https://github.com/lxorb/nibeditor/releases/latest/download/latest.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
+          echo "LATEST=$latest" >> "$GITHUB_ENV"
+          ls old; echo "the releases offer $latest"
+      - name: Updated by itself
+        run: bash scripts/mac-update-check.sh "$(ls old/*.dmg | head -1)" ${{ matrix.where }} "$LATEST"
