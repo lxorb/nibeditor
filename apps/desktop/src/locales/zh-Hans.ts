@@ -722,6 +722,7 @@ export const zhHans: Dictionary = {
   'out of space': '存储空间已满',
   'Orden {version} is ready to install.': 'Orden{version}已可安装。',
   'Restart now': '立即重启',
+  'Move to Applications': '移到“应用程序”',
   Later: '稍后',
   More: '更多',
   'Open notes': '打开的笔记',

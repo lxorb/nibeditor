@@ -724,6 +724,7 @@ export const th: Dictionary = {
   'out of space': 'ที่เก็บข้อมูลเต็ม',
   'Orden {version} is ready to install.': 'Orden {version} พร้อมติดตั้ง',
   'Restart now': 'เริ่มใหม่เดี๋ยวนี้',
+  'Move to Applications': 'ย้ายไปที่แอปพลิเคชัน',
   Later: 'ภายหลัง',
   More: 'เพิ่มเติม',
   'Open notes': 'โน้ตที่เปิดอยู่',

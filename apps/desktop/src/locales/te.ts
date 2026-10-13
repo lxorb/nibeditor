@@ -728,6 +728,7 @@ export const te: Dictionary = {
   'out of space': 'స్టోరేజ్ లేదు',
   'Orden {version} is ready to install.': 'Orden {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
   'Restart now': 'ఇప్పుడే రీస్టార్ట్',
+  'Move to Applications': 'అప్లికేషన్‌లకు తరలించు',
   Later: 'తర్వాత',
   More: 'మరిన్ని',
   'Open notes': 'నోట్‌లు తెరువు',

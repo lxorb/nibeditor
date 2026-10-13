@@ -732,6 +732,7 @@ export const fil: Dictionary = {
   'out of space': 'walang espasyo',
   'Orden {version} is ready to install.': 'Puwede nang i-install ang Orden {version}.',
   'Restart now': 'I-restart ngayon',
+  'Move to Applications': 'Ilipat sa Applications',
   Later: 'Mamaya',
   More: 'Iba pa',
   'Open notes': 'Buksan ang mga tala',

@@ -729,6 +729,7 @@ export const gsw: Dictionary = {
   'out of space': 'kei Platz meh',
   'Orden {version} is ready to install.': 'Orden {version} isch parat zum Installiere.',
   'Restart now': 'Jetzt neu starte',
+  'Move to Applications': 'In „Programme“ verschiebe',
   Later: 'Spöter',
   More: 'Meh',
   'Open notes': 'Offni Notize',

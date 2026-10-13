@@ -726,6 +726,7 @@ export const ja: Dictionary = {
   'out of space': '空き容量がありません',
   'Orden {version} is ready to install.': 'Orden {version} をインストールできます。',
   'Restart now': '今すぐ再起動',
+  'Move to Applications': 'アプリケーションに移動',
   Later: '後で',
   More: 'その他',
   'Open notes': '開いているノート',

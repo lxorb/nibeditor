@@ -729,6 +729,7 @@ export const bn: Dictionary = {
   'out of space': 'জায়গা নেই',
   'Orden {version} is ready to install.': 'Orden {version} ইনস্টলের জন্য তৈরি।',
   'Restart now': 'এখনই রিস্টার্ট',
+  'Move to Applications': 'অ্যাপ্লিকেশনে সরান',
   Later: 'পরে',
   More: 'আরও',
   'Open notes': 'খোলা নোট',

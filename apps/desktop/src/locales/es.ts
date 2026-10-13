@@ -739,6 +739,7 @@ export const es: Dictionary = {
   'out of space': 'sin espacio',
   'Orden {version} is ready to install.': 'Orden {version} está listo para instalarse.',
   'Restart now': 'Reiniciar ahora',
+  'Move to Applications': 'Mover a Aplicaciones',
   Later: 'Más tarde',
   More: 'Más',
   'Open notes': 'Notas abiertas',

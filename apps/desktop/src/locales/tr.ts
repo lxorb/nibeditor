@@ -729,6 +729,7 @@ export const tr: Dictionary = {
   'out of space': 'yer kalmadı',
   'Orden {version} is ready to install.': 'Orden {version} kurulmaya hazır.',
   'Restart now': 'Şimdi yeniden başlat',
+  'Move to Applications': 'Uygulamalar’a taşı',
   Later: 'Sonra',
   More: 'Daha',
   'Open notes': 'Notları aç',

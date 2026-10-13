@@ -743,6 +743,7 @@ export const it: Dictionary = {
   'out of space': 'archiviazione piena',
   'Orden {version} is ready to install.': 'Orden {version} è pronto da installare.',
   'Restart now': 'Riavvia ora',
+  'Move to Applications': 'Sposta in Applicazioni',
   Later: 'Più tardi',
   More: 'Altro',
   'Open notes': 'Note aperte',

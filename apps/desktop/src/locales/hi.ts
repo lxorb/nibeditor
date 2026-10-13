@@ -729,6 +729,7 @@ export const hi: Dictionary = {
   'out of space': 'जगह नहीं बची',
   'Orden {version} is ready to install.': 'Orden {version} इंस्टॉल के लिए तैयार है।',
   'Restart now': 'अभी रीस्टार्ट करें',
+  'Move to Applications': 'ऐप्लिकेशन में ले जाएँ',
   Later: 'बाद में',
   More: 'और',
   'Open notes': 'नोट खोलें',

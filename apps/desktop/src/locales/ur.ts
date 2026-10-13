@@ -729,6 +729,7 @@ export const ur: Dictionary = {
   'out of space': 'ذخیرہ ختم',
   'Orden {version} is ready to install.': 'Orden {version} انسٹال کے لیے تیار ہے۔',
   'Restart now': 'ابھی دوبارہ شروع کریں',
+  'Move to Applications': 'ایپلیکیشنز میں منتقل کریں',
   Later: 'بعد میں',
   More: 'مزید',
   'Open notes': 'کھلے نوٹس',

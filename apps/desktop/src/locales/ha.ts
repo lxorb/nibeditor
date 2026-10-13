@@ -731,6 +731,7 @@ export const ha: Dictionary = {
   'out of space': "ma'aji ya ƙare",
   'Orden {version} is ready to install.': 'Orden {version} na shirye don girkawa.',
   'Restart now': 'Sake kunnawa yanzu',
+  'Move to Applications': 'Matsar zuwa Applications',
   Later: 'Daga baya',
   More: 'Ƙari',
   'Open notes': 'Buɗe bayanan kula',

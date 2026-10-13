@@ -722,6 +722,7 @@ export const yue: Dictionary = {
   'out of space': '儲存空間已滿',
   'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
   'Restart now': '即刻重新啟動',
+  'Move to Applications': '搬去「應用程式」',
   Later: '遲啲',
   More: '更多',
   'Open notes': '開啟中嘅筆記',

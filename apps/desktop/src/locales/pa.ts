@@ -732,6 +732,7 @@ export const pa: Dictionary = {
   'out of space': 'ਸੰਭਾਲ ਭਰ ਗਈ',
   'Orden {version} is ready to install.': 'Orden {version} ਲਾਉਣ ਲਈ ਤਿਆਰ ਹੈ।',
   'Restart now': 'ਹੁਣੇ ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
+  'Move to Applications': 'ਐਪਲੀਕੇਸ਼ਨਾਂ ਵਿੱਚ ਲਿਜਾਓ',
   Later: 'ਬਾਅਦ ਵਿੱਚ',
   More: 'ਹੋਰ',
   'Open notes': 'ਨੋਟਾਂ ਖੋਲ੍ਹੋ',

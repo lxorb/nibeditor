@@ -732,6 +732,7 @@ export const ml: Dictionary = {
   'out of space': 'സ്റ്റോറേജ് ഇല്ല',
   'Orden {version} is ready to install.': 'Orden {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
   'Restart now': 'ഇപ്പോൾ റീസ്റ്റാർട്ട്',
+  'Move to Applications': 'ആപ്ലിക്കേഷനുകളിലേക്ക് നീക്കുക',
   Later: 'പിന്നീട്',
   More: 'കൂടുതൽ',
   'Open notes': 'കുറിപ്പുകൾ തുറക്കുക',

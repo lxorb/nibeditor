@@ -725,6 +725,7 @@ export const ko: Dictionary = {
   'out of space': '저장 공간 부족',
   'Orden {version} is ready to install.': 'Orden {version}을 설치할 수 있습니다.',
   'Restart now': '지금 다시 시작',
+  'Move to Applications': '응용 프로그램으로 이동',
   Later: '나중에',
   More: '더 보기',
   'Open notes': '노트 열기',

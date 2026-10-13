@@ -51,6 +51,9 @@ mod ai_threads;
 // A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
 #[cfg(desktop)]
 mod appearance;
+// Where a Mac's copy runs from, and the move to Applications; see app_place.rs.
+#[cfg(desktop)]
+mod app_place;
 #[cfg(desktop)]
 mod apple_notes;
 #[cfg(desktop)]
@@ -434,6 +437,8 @@ macro_rules! desktop_commands {
             terminal::remote::remote_config_open,
             terminal::picture::remote_image,
             updates::check_update,
+            app_place::app_stuck,
+            app_place::move_to_applications,
             web_tabs::web_open,
             // Chrome and Edge extensions in web tabs; see extensions.rs.
             extensions::extensions_list,

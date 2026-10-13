@@ -732,6 +732,7 @@ export const kn: Dictionary = {
   'out of space': 'ಸಂಗ್ರಹಣೆ ಇಲ್ಲ',
   'Orden {version} is ready to install.': 'Orden {version} ಸ್ಥಾಪನೆಗೆ ಸಿದ್ಧ.',
   'Restart now': 'ಈಗಲೇ ಮರುಪ್ರಾರಂಭಿಸಿ',
+  'Move to Applications': 'ಅಪ್ಲಿಕೇಶನ್‌ಗಳಿಗೆ ಸರಿಸಿ',
   Later: 'ನಂತರ',
   More: 'ಇನ್ನಷ್ಟು',
   'Open notes': 'ಟಿಪ್ಪಣಿಗಳನ್ನು ತೆರೆಯಿರಿ',

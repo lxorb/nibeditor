@@ -726,6 +726,7 @@ export const id: Dictionary = {
   'out of space': 'penyimpanan penuh',
   'Orden {version} is ready to install.': 'Orden {version} siap dipasang.',
   'Restart now': 'Mulai ulang sekarang',
+  'Move to Applications': 'Pindahkan ke Aplikasi',
   Later: 'Nanti',
   More: 'Lagi',
   'Open notes': 'Buka catatan',
