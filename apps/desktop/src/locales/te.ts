@@ -621,7 +621,6 @@ export const te: Dictionary = {
   Use: 'వాడు',
   Remove: 'తీసివేయి',
   'Your words': 'మీ పదాలు',
-  Words: 'పదాలు',
   'Add a word': 'పదం జోడించు',
   'Add {word} to the dictionary': '{word}ను నిఘంటువులో జోడించు',
   'Remove {word} from the dictionary': '{word}ను నిఘంటువు నుండి తీసివేయి',
@@ -689,7 +688,6 @@ export const te: Dictionary = {
   Attachments: 'అటాచ్‌మెంట్‌లు',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'పేజీ నోట్‌లు',
-  'New pages': 'కొత్త పేజీలు',
   'Assets folder of the space': 'స్పేస్ అటాచ్‌మెంట్ ఫోల్డర్',
   'Next to the note': 'నోట్ పక్కన',
   'A folder named after the note': 'నోట్ పేరుతో ఒక ఫోల్డర్',
@@ -1398,7 +1396,6 @@ export const te: Dictionary = {
   'Keys stay in the secure store on this device.': 'కీలు ఈ పరికరంలోని సురక్షిత స్టోర్‌లో ఉంటాయి.',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
   'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
-  'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',
   'That provider is not set up yet.': 'ఆ ప్రొవైడర్ ఇంకా ఏర్పాటు కాలేదు.',
   'Could not reach {url}': '{url}ను చేరుకోలేకపోయింది',
@@ -2307,4 +2304,11 @@ export const te: Dictionary = {
   'Search this chat': 'ఈ చాట్‌లో వెతుకు',
   'Add as task': 'పనిగా జోడించు',
   'Save as note': 'గమనికగా సేవ్ చేయి',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

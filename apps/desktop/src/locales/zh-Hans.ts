@@ -619,7 +619,6 @@ export const zhHans: Dictionary = {
   Use: '使用',
   Remove: '移除',
   'Your words': '你的词汇',
-  Words: '词汇',
   'Add a word': '添加词汇',
   'Add {word} to the dictionary': '将{word}加入词典',
   'Remove {word} from the dictionary': '从词典移除{word}',
@@ -683,7 +682,6 @@ export const zhHans: Dictionary = {
   Attachments: '附件',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分页笔记',
-  'New pages': '新建页面',
   'Assets folder of the space': '空间的附件文件夹',
   'Next to the note': '与笔记同级',
   'A folder named after the note': '以笔记命名的文件夹',
@@ -1361,7 +1359,6 @@ export const zhHans: Dictionary = {
   'Keys stay in the secure store on this device.': '密钥保存在此设备的安全存储中。',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
   'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
-  'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',
   'That provider is not set up yet.': '该服务商尚未配置。',
   'Could not reach {url}': '无法连接{url}',
@@ -2246,4 +2243,11 @@ export const zhHans: Dictionary = {
   'Search this chat': '在此聊天中搜索',
   'Add as task': '添加为任务',
   'Save as note': '保存为笔记',
+  // Settings: its pages, and Reload window
+  About: '关于',
+  'Import and export': '导入和导出',
+  'New notes': '新笔记',
+  'Reload window': '重新加载窗口',
+  'Reload window?': '重新加载窗口?',
+  'Reload anyway': '仍然重新加载',
 }

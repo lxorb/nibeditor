@@ -621,7 +621,6 @@ export const vi: Dictionary = {
   Use: 'Dùng',
   Remove: 'Bỏ',
   'Your words': 'Từ của bạn',
-  Words: 'Từ',
   'Add a word': 'Thêm từ',
   'Add {word} to the dictionary': 'Thêm {word} vào từ điển',
   'Remove {word} from the dictionary': 'Bỏ {word} khỏi từ điển',
@@ -686,7 +685,6 @@ export const vi: Dictionary = {
   Attachments: 'Tệp kèm',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Ghi chú nhiều trang',
-  'New pages': 'Trang mới',
   'Assets folder of the space': 'Thư mục tài nguyên của không gian',
   'Next to the note': 'Cạnh ghi chú',
   'A folder named after the note': 'Thư mục trùng tên ghi chú',
@@ -1379,7 +1377,6 @@ export const vi: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
   'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
-  'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
   'That provider is not set up yet.': 'Nhà cung cấp đó chưa được thiết lập.',
   'Could not reach {url}': 'Không kết nối được tới {url}',
@@ -2278,4 +2275,11 @@ export const vi: Dictionary = {
   'Search this chat': 'Tìm trong cuộc trò chuyện này',
   'Add as task': 'Thêm thành việc cần làm',
   'Save as note': 'Lưu thành ghi chú',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

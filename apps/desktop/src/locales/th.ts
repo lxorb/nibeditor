@@ -621,7 +621,6 @@ export const th: Dictionary = {
   Use: 'ใช้',
   Remove: 'ลบออก',
   'Your words': 'คำของคุณ',
-  Words: 'คำ',
   'Add a word': 'เพิ่มคำ',
   'Add {word} to the dictionary': 'เพิ่ม {word} ลงพจนานุกรม',
   'Remove {word} from the dictionary': 'ลบ {word} จากพจนานุกรม',
@@ -685,7 +684,6 @@ export const th: Dictionary = {
   Attachments: 'ไฟล์แนบ',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'โน้ตแบบหน้า',
-  'New pages': 'หน้าใหม่',
   'Assets folder of the space': 'โฟลเดอร์แอสเซตของพื้นที่',
   'Next to the note': 'ข้างโน้ต',
   'A folder named after the note': 'โฟลเดอร์ชื่อเดียวกับโน้ต',
@@ -1368,7 +1366,6 @@ export const th: Dictionary = {
   'Keys stay in the secure store on this device.': 'คีย์อยู่ในที่เก็บนิรภัยของอุปกรณ์นี้',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
   'AI can be wrong. Check the facts.': 'AI อาจผิดพลาดได้ โปรดตรวจสอบข้อเท็จจริง',
-  'Used by the glasses': 'แว่นใช้อยู่',
   'Could not read the models.': 'อ่านรายการโมเดลไม่ได้',
   'That provider is not set up yet.': 'ยังไม่ได้ตั้งค่าผู้ให้บริการนั้น',
   'Could not reach {url}': 'ติดต่อ {url} ไม่ได้',
@@ -2259,4 +2256,11 @@ export const th: Dictionary = {
   'Search this chat': 'ค้นหาในแชทนี้',
   'Add as task': 'เพิ่มเป็นงาน',
   'Save as note': 'บันทึกเป็นโน้ต',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

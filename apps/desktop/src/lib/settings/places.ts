@@ -45,6 +45,12 @@ export function places(): Place[] {
     // this is where searching for it lands.
     { section: 'shortcuts', label: t('Vim keys'), text: ['vim'] },
     { section: 'markdown', label: t('Reset to defaults'), text: [] },
+    // The version, at the foot of General, by every word somebody asks for it by.
+    {
+      section: 'general',
+      label: t('Version'),
+      text: ['about', 'build', 'version', 'release', __APP_VERSION__],
+    },
   ]
 
   if (isDesktop) {
@@ -53,7 +59,21 @@ export function places(): Place[] {
       label: t('Reload themes and custom CSS'),
       text: [t('Custom')],
     })
-    all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
+    all.push({ section: 'general', label: t('Check for updates'), text: ['update', t('Updates')] })
+  }
+
+  // Nib's own browser rows; see `browserRows` in SettingsPanel.svelte.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    all.push({
+      section: 'browser',
+      label: t('Default browser'),
+      text: [t('Make default'), 'web', 'links'],
+    })
+    all.push({
+      section: 'browser',
+      label: t('Search engine'),
+      text: ['google', 'web', t('Custom')],
+    })
   }
 
   // The agents on this machine, in AI's Access: a desktop's alone. See
@@ -66,21 +86,38 @@ export function places(): Place[] {
     })
   }
 
-  // The machines a remote terminal reaches; see remote/RemotePane.svelte.
+  // The machines a remote terminal reaches, in Terminal; see remote/RemotePane.svelte.
   if (!__EVEN_PLUGIN__ && isDesktop) {
     all.push({
-      section: 'remote',
+      section: 'terminal',
       label: t('Add host'),
       text: ['SSH', 'ssh config', t('Remote'), t('Open config')],
     })
   }
 
-  // The account's machine; see online/OnlinePane.svelte.
+  // The account's machine, in Terminal too; see online/OnlinePane.svelte.
   if (!__EVEN_PLUGIN__ && account.user) {
     all.push({
-      section: 'online',
+      section: 'terminal',
       label: t('Online terminal'),
       text: [t('Machine'), t('Start'), t('Stop'), t('Hours'), 'CPU'],
+    })
+  }
+
+  // Notes from another app, beside Export; see MigrateRows.svelte.
+  if (!__EVEN_PLUGIN__) {
+    all.push({
+      section: 'export',
+      label: t('Import'),
+      text: [
+        'Notion',
+        'Obsidian',
+        'Evernote',
+        'Bear',
+        'Logseq',
+        'Apple Notes',
+        t('Import a folder'),
+      ],
     })
   }
 

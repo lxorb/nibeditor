@@ -622,7 +622,6 @@ export const tr: Dictionary = {
   Use: 'Kullan',
   Remove: 'Kaldır',
   'Your words': 'Sözcükleriniz',
-  Words: 'Sözcükler',
   'Add a word': 'Sözcük ekle',
   'Add {word} to the dictionary': '{word} sözlüğe eklensin',
   'Remove {word} from the dictionary': '{word} sözlükten kaldırılsın',
@@ -690,7 +689,6 @@ export const tr: Dictionary = {
   Attachments: 'Ekler',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Sayfalı notlar',
-  'New pages': 'Yeni sayfalar',
   'Assets folder of the space': 'Alanın varlıklar klasörü',
   'Next to the note': 'Notun yanında',
   'A folder named after the note': 'Notun adını taşıyan bir klasör',
@@ -1396,7 +1394,6 @@ export const tr: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
   'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',
-  'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
   'That provider is not set up yet.': 'Bu sağlayıcı henüz kurulmadı.',
   'Could not reach {url}': '{url} adresine ulaşılamadı',
@@ -2306,4 +2303,11 @@ export const tr: Dictionary = {
   'Search this chat': 'Bu sohbette ara',
   'Add as task': 'Görev olarak ekle',
   'Save as note': 'Not olarak kaydet',
+  // Settings: its pages, and Reload window
+  About: 'Hakkında',
+  'Import and export': 'İçe ve dışa aktar',
+  'New notes': 'Yeni notlar',
+  'Reload window': 'Pencereyi yeniden yükle',
+  'Reload window?': 'Pencere yeniden yüklensin mi?',
+  'Reload anyway': 'Yine de yeniden yükle',
 }

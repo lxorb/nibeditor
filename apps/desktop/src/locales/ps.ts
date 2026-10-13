@@ -622,7 +622,6 @@ export const ps: Dictionary = {
   Use: 'کارول',
   Remove: 'ليرې کول',
   'Your words': 'ستاسو کلمې',
-  Words: 'کلمې',
   'Add a word': 'کلمه ورزياتول',
   'Add {word} to the dictionary': '{word} قاموس ته ورزياتول',
   'Remove {word} from the dictionary': '{word} له قاموس ليرې کول',
@@ -690,7 +689,6 @@ export const ps: Dictionary = {
   Attachments: 'ملګړي',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'د مخونو يادښتونه',
-  'New pages': 'نوي مخونه',
   'Assets folder of the space': 'د ځای د سرچينو دوتنپوښ',
   'Next to the note': 'د يادښت تر څنګ',
   'A folder named after the note': 'د يادښت په نوم دوتنپوښ',
@@ -1396,7 +1394,6 @@ export const ps: Dictionary = {
     'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
   'AI can be wrong. Check the facts.': 'مصنوعي ځيرکتيا تېروتنه کولی شي. حقايق وڅېړئ.',
-  'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
   'That provider is not set up yet.': 'هغه برابرونکی تر اوسه جوړ نه دی.',
   'Could not reach {url}': '{url} ته ونه رسېدل',
@@ -2301,4 +2298,11 @@ export const ps: Dictionary = {
   'Search this chat': 'په دې چټ کې لټون',
   'Add as task': 'د دندې په توګه زیاتول',
   'Save as note': 'د یادښت په توګه ساتل',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

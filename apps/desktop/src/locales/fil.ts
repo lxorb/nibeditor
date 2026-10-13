@@ -625,7 +625,6 @@ export const fil: Dictionary = {
   Use: 'Gamitin',
   Remove: 'Alisin',
   'Your words': 'Mga salita mo',
-  Words: 'Mga salita',
   'Add a word': 'Magdagdag ng salita',
   'Add {word} to the dictionary': 'Idagdag ang {word} sa diksyunaryo',
   'Remove {word} from the dictionary': 'Alisin ang {word} sa diksyunaryo',
@@ -693,7 +692,6 @@ export const fil: Dictionary = {
   Attachments: 'Mga kalakip',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Mga talang may pahina',
-  'New pages': 'Mga bagong pahina',
   'Assets folder of the space': 'Folder ng asset ng espasyo',
   'Next to the note': 'Katabi ng tala',
   'A folder named after the note': 'Folder na kapangalan ng tala',
@@ -1416,7 +1414,6 @@ export const fil: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
   'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',
-  'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',
   'That provider is not set up yet.': 'Hindi pa naka-set up ang provider na iyon.',
   'Could not reach {url}': 'Hindi maabot ang {url}',
@@ -2337,4 +2334,11 @@ export const fil: Dictionary = {
   'Search this chat': 'Maghanap sa chat na ito',
   'Add as task': 'Idagdag bilang gawain',
   'Save as note': 'I-save bilang tala',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

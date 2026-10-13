@@ -622,7 +622,6 @@ export const ja: Dictionary = {
   Use: '使う',
   Remove: '取り外す',
   'Your words': 'あなたの単語',
-  Words: '単語',
   'Add a word': '単語を追加',
   'Add {word} to the dictionary': '{word} を辞書に追加',
   'Remove {word} from the dictionary': '{word} を辞書から削除',
@@ -687,7 +686,6 @@ export const ja: Dictionary = {
   Attachments: '添付ファイル',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ページノート',
-  'New pages': '新しいページ',
   'Assets folder of the space': 'スペースの assets フォルダ',
   'Next to the note': 'ノートの隣',
   'A folder named after the note': 'ノート名のフォルダ',
@@ -1382,7 +1380,6 @@ export const ja: Dictionary = {
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
   'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
-  'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',
   'That provider is not set up yet.': 'このプロバイダはまだ設定されていません。',
   'Could not reach {url}': '{url} に接続できません',
@@ -2286,4 +2283,11 @@ export const ja: Dictionary = {
   'Search this chat': 'このチャットを検索',
   'Add as task': 'タスクとして追加',
   'Save as note': 'ノートとして保存',
+  // Settings: its pages, and Reload window
+  About: '情報',
+  'Import and export': 'インポートとエクスポート',
+  'New notes': '新しいノート',
+  'Reload window': 'ウィンドウを再読み込み',
+  'Reload window?': 'ウィンドウを再読み込みしますか？',
+  'Reload anyway': 'それでも再読み込み',
 }

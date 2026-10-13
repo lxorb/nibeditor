@@ -630,7 +630,6 @@ export const fr: Dictionary = {
   Use: 'Utiliser',
   Remove: 'Retirer',
   'Your words': 'Vos mots',
-  Words: 'Mots',
   'Add a word': 'Ajouter un mot',
   'Add {word} to the dictionary': 'Ajouter {word} au dictionnaire',
   'Remove {word} from the dictionary': 'Retirer {word} du dictionnaire',
@@ -700,7 +699,6 @@ export const fr: Dictionary = {
   Attachments: 'Pièces jointes',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Notes en pages',
-  'New pages': 'Nouvelles pages',
   'Assets folder of the space': 'Dossier des médias de l’espace',
   'Next to the note': 'À côté de la note',
   'A folder named after the note': 'Un dossier au nom de la note',
@@ -1439,7 +1437,6 @@ export const fr: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Ce navigateur garde les clés dans son propre stockage.',
   'AI can be wrong. Check the facts.': 'L’IA peut se tromper. Vérifiez les faits.',
-  'Used by the glasses': 'Utilisée par les lunettes',
   'Could not read the models.': 'Impossible de lire les modèles.',
   'That provider is not set up yet.': 'Ce fournisseur n’est pas encore configuré.',
   'Could not reach {url}': '{url} est inaccessible',
@@ -2362,4 +2359,11 @@ export const fr: Dictionary = {
   'Search this chat': 'Rechercher dans cette discussion',
   'Add as task': 'Ajouter comme tâche',
   'Save as note': 'Enregistrer comme note',
+  // Settings: its pages, and Reload window
+  About: 'À propos',
+  'Import and export': 'Importer et exporter',
+  'New notes': 'Nouvelles notes',
+  'Reload window': 'Recharger la fenêtre',
+  'Reload window?': 'Recharger la fenêtre ?',
+  'Reload anyway': 'Recharger quand même',
 }

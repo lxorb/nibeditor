@@ -647,7 +647,6 @@ export const ru: Dictionary = {
   Use: 'Применить',
   Remove: 'Убрать',
   'Your words': 'Свои слова',
-  Words: 'Слова',
   'Add a word': 'Добавить слово',
   'Add {word} to the dictionary': 'Добавить {word} в словарь',
   'Remove {word} from the dictionary': 'Убрать {word} из словаря',
@@ -722,7 +721,6 @@ export const ru: Dictionary = {
   Attachments: 'Вложения',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Заметки со страницами',
-  'New pages': 'Новые страницы',
   'Assets folder of the space': 'Папка ресурсов пространства',
   'Next to the note': 'Рядом с заметкой',
   'A folder named after the note': 'Папка с именем заметки',
@@ -1465,7 +1463,6 @@ export const ru: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
   'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
-  'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',
   'That provider is not set up yet.': 'Этот поставщик ещё не настроен.',
   'Could not reach {url}': 'Не удалось связаться с {url}',
@@ -2380,4 +2377,11 @@ export const ru: Dictionary = {
   'Search this chat': 'Искать в этом чате',
   'Add as task': 'Добавить как задачу',
   'Save as note': 'Сохранить как заметку',
+  // Settings: its pages, and Reload window
+  About: 'О программе',
+  'Import and export': 'Импорт и экспорт',
+  'New notes': 'Новые заметки',
+  'Reload window': 'Перезагрузить окно',
+  'Reload window?': 'Перезагрузить окно?',
+  'Reload anyway': 'Всё равно перезагрузить',
 }

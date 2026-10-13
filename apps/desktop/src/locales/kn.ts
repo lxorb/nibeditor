@@ -625,7 +625,6 @@ export const kn: Dictionary = {
   Use: 'ಬಳಸಿ',
   Remove: 'ತೆಗೆಯಿರಿ',
   'Your words': 'ನಿಮ್ಮ ಪದಗಳು',
-  Words: 'ಪದಗಳು',
   'Add a word': 'ಪದ ಸೇರಿಸಿ',
   'Add {word} to the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿಗೆ ಸೇರಿಸಿ',
   'Remove {word} from the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿನಿಂದ ತೆಗೆಯಿರಿ',
@@ -693,7 +692,6 @@ export const kn: Dictionary = {
   Attachments: 'ಲಗತ್ತುಗಳು',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ಪುಟ ಟಿಪ್ಪಣಿಗಳು',
-  'New pages': 'ಹೊಸ ಪುಟಗಳು',
   'Assets folder of the space': 'ಸ್ಪೇಸ್‌ನ ಲಗತ್ತು ಫೋಲ್ಡರ್',
   'Next to the note': 'ಟಿಪ್ಪಣಿಯ ಪಕ್ಕದಲ್ಲಿ',
   'A folder named after the note': 'ಟಿಪ್ಪಣಿಯ ಹೆಸರಿನ ಫೋಲ್ಡರ್',
@@ -1403,7 +1401,6 @@ export const kn: Dictionary = {
   'This browser holds the keys in its own storage.':
     'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
   'AI can be wrong. Check the facts.': 'AI ತಪ್ಪಾಗಬಹುದು. ಸತ್ಯಾಂಶಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
-  'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   'That provider is not set up yet.': 'ಆ ಪೂರೈಕೆದಾರ ಇನ್ನೂ ಹೊಂದಿಸಿಲ್ಲ.',
   'Could not reach {url}': '{url} ತಲುಪಲಾಗಲಿಲ್ಲ',
@@ -2316,4 +2313,11 @@ export const kn: Dictionary = {
   'Search this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಹುಡುಕಿ',
   'Add as task': 'ಕೆಲಸವಾಗಿ ಸೇರಿಸಿ',
   'Save as note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಿ',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

@@ -19,7 +19,7 @@
 import { documentOf } from '@nib/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo } from '../../space-paths'
-import { type Section, settings } from '../../settings.svelte'
+import { type Asked, settings } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
@@ -217,18 +217,22 @@ function openPage(call: Call, url: string): AgentAnswer {
   return answered(workspace.tabs.find((one) => one.id === id))
 }
 
-/** The sections of Settings an agent may open it at, as the sheet names them. */
-const SECTIONS: readonly Section[] = [
+/** The sections of Settings an agent may open it at, as the sheet names them, and the
+ *  names some had before they became part of another page, which land there. */
+const SECTIONS: readonly Asked[] = [
   'general',
-  'editor',
-  'shortcuts',
-  'spelling',
-  'markdown',
   'appearance',
+  'editor',
+  'markdown',
+  'shortcuts',
+  'browser',
+  'tasks',
+  'terminal',
   'ai',
-  'agents',
   'sync',
   'export',
+  'spelling',
+  'agents',
 ]
 
 /** Settings, in front, at a section: a sheet over the window rather than a tab, so it

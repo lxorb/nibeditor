@@ -622,7 +622,6 @@ export const gu: Dictionary = {
   Use: 'વાપરો',
   Remove: 'કાઢો',
   'Your words': 'તમારા શબ્દો',
-  Words: 'શબ્દો',
   'Add a word': 'શબ્દ ઉમેરો',
   'Add {word} to the dictionary': '{word} શબ્દકોશમાં ઉમેરો',
   'Remove {word} from the dictionary': '{word} શબ્દકોશમાંથી કાઢો',
@@ -690,7 +689,6 @@ export const gu: Dictionary = {
   Attachments: 'જોડાણ',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'પાનાંવાળી નોંધો',
-  'New pages': 'નવાં પાનાં',
   'Assets folder of the space': 'જગ્યાનું સામગ્રી ફોલ્ડર',
   'Next to the note': 'નોંધની બાજુમાં',
   'A folder named after the note': 'નોંધના નામનું ફોલ્ડર',
@@ -1387,7 +1385,6 @@ export const gu: Dictionary = {
   'Keys stay in the secure store on this device.': 'કીઓ આ ઉપકરણના સલામત સંગ્રહમાં રહે છે.',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
   'AI can be wrong. Check the facts.': 'AI ભૂલ કરી શકે છે. હકીકતો ચકાસો.',
-  'Used by the glasses': 'ચશ્માં વાપરે છે',
   'Could not read the models.': 'મોડેલ વાંચી શકાયા નહીં.',
   'That provider is not set up yet.': 'એ પ્રદાતા હજી ગોઠવાયો નથી.',
   'Could not reach {url}': '{url} સુધી પહોંચી શકાયું નહીં',
@@ -2289,4 +2286,11 @@ export const gu: Dictionary = {
   'Search this chat': 'આ ચેટમાં શોધો',
   'Add as task': 'કાર્ય તરીકે ઉમેરો',
   'Save as note': 'નોંધ તરીકે સાચવો',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

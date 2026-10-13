@@ -646,7 +646,6 @@ export const uk: Dictionary = {
   Use: 'Застосувати',
   Remove: 'Прибрати',
   'Your words': 'Свої слова',
-  Words: 'Слова',
   'Add a word': 'Додати слово',
   'Add {word} to the dictionary': 'Додати {word} до словника',
   'Remove {word} from the dictionary': 'Прибрати {word} зі словника',
@@ -721,7 +720,6 @@ export const uk: Dictionary = {
   Attachments: 'Вкладення',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Нотатки зі сторінками',
-  'New pages': 'Нові сторінки',
   'Assets folder of the space': 'Папка ресурсів простору',
   'Next to the note': 'Поруч із нотаткою',
   'A folder named after the note': 'Папка з назвою нотатки',
@@ -1461,7 +1459,6 @@ export const uk: Dictionary = {
     'Ключі залишаються в захищеному сховищі цього пристрою.',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
   'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
-  'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',
   'That provider is not set up yet.': 'Цей постачальник ще не налаштований.',
   'Could not reach {url}': 'Не вдалося зв’язатися з {url}',
@@ -2374,4 +2371,11 @@ export const uk: Dictionary = {
   'Search this chat': 'Шукати в цьому чаті',
   'Add as task': 'Додати як завдання',
   'Save as note': 'Зберегти як нотатку',
+  // Settings: its pages, and Reload window
+  About: 'Про програму',
+  'Import and export': 'Імпорт і експорт',
+  'New notes': 'Нові нотатки',
+  'Reload window': 'Перезавантажити вікно',
+  'Reload window?': 'Перезавантажити вікно?',
+  'Reload anyway': 'Усе одно перезавантажити',
 }

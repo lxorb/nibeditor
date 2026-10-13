@@ -21,14 +21,18 @@
       ? t('Quit {name}?', { name: NAME })
       : quitAsk.why === 'restart'
         ? t('Restart {name}?', { name: NAME })
-        : t('Close window?'),
+        : quitAsk.why === 'reload'
+          ? t('Reload window?')
+          : t('Close window?'),
   )
   const going = $derived(
     quitAsk.why === 'quit'
       ? key('Quit anyway')
       : quitAsk.why === 'restart'
         ? key('Restart anyway')
-        : key('Close anyway'),
+        : quitAsk.why === 'reload'
+          ? key('Reload anyway')
+          : key('Close anyway'),
   )
 
   const stay = () => quitAsk.answer('stay')

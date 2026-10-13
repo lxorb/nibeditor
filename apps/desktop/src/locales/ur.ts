@@ -622,7 +622,6 @@ export const ur: Dictionary = {
   Use: 'استعمال کریں',
   Remove: 'ہٹائیں',
   'Your words': 'آپ کے الفاظ',
-  Words: 'الفاظ',
   'Add a word': 'لفظ شامل کریں',
   'Add {word} to the dictionary': '{word} کو لغت میں شامل کریں',
   'Remove {word} from the dictionary': '{word} کو لغت سے ہٹائیں',
@@ -690,7 +689,6 @@ export const ur: Dictionary = {
   Attachments: 'منسلکات',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'صفحات والے نوٹ',
-  'New pages': 'نئے صفحات',
   'Assets folder of the space': 'اسپیس کا اثاثہ فولڈر',
   'Next to the note': 'نوٹ کے ساتھ',
   'A folder named after the note': 'نوٹ کے نام کا فولڈر',
@@ -1393,7 +1391,6 @@ export const ur: Dictionary = {
   'Keys stay in the secure store on this device.': 'کلیدیں اس ڈیوائس کے محفوظ ذخیرے میں رہتی ہیں۔',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
   'AI can be wrong. Check the facts.': 'AI غلط ہو سکتا ہے۔ حقائق کی تصدیق کریں۔',
-  'Used by the glasses': 'چشمہ استعمال کرتا ہے',
   'Could not read the models.': 'ماڈل پڑھے نہیں جا سکے۔',
   'That provider is not set up yet.': 'وہ فراہم کنندہ ابھی مرتب نہیں ہوا۔',
   'Could not reach {url}': '{url} تک نہیں پہنچ سکے',
@@ -2295,4 +2292,11 @@ export const ur: Dictionary = {
   'Search this chat': 'اس چیٹ میں تلاش کریں',
   'Add as task': 'کام کے طور پر شامل کریں',
   'Save as note': 'نوٹ کے طور پر محفوظ کریں',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

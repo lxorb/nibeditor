@@ -621,7 +621,6 @@ export const ta: Dictionary = {
   Use: 'பயன்படுத்து',
   Remove: 'அகற்று',
   'Your words': 'உங்கள் சொற்கள்',
-  Words: 'சொற்கள்',
   'Add a word': 'சொல்லைச் சேர்',
   'Add {word} to the dictionary': '{word} ஐ அகராதியில் சேர்',
   'Remove {word} from the dictionary': '{word} ஐ அகராதியிலிருந்து அகற்று',
@@ -689,7 +688,6 @@ export const ta: Dictionary = {
   Attachments: 'இணைப்புக் கோப்புகள்',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'பக்கக் குறிப்புகள்',
-  'New pages': 'புதிய பக்கங்கள்',
   'Assets folder of the space': 'இடத்தின் இணைப்புக் கோப்புறை',
   'Next to the note': 'குறிப்புக்கு அருகில்',
   'A folder named after the note': 'குறிப்பின் பெயரில் ஒரு கோப்புறை',
@@ -1413,7 +1411,6 @@ export const ta: Dictionary = {
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
   'AI can be wrong. Check the facts.': 'AI தவறாகலாம். உண்மைகளைச் சரிபார்க்கவும்.',
-  'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',
   'That provider is not set up yet.': 'அந்த வழங்குநர் இன்னும் அமைக்கப்படவில்லை.',
   'Could not reach {url}': '{url} ஐ அணுக முடியவில்லை',
@@ -2327,4 +2324,11 @@ export const ta: Dictionary = {
   'Search this chat': 'இந்த அரட்டையில் தேடு',
   'Add as task': 'பணியாகச் சேர்',
   'Save as note': 'குறிப்பாகச் சேமி',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

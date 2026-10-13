@@ -622,7 +622,6 @@ export const ms: Dictionary = {
   Use: 'Guna',
   Remove: 'Buang',
   'Your words': 'Perkataan anda',
-  Words: 'Perkataan',
   'Add a word': 'Tambah perkataan',
   'Add {word} to the dictionary': 'Tambah {word} ke kamus',
   'Remove {word} from the dictionary': 'Buang {word} daripada kamus',
@@ -687,7 +686,6 @@ export const ms: Dictionary = {
   Attachments: 'Lampiran',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Nota halaman',
-  'New pages': 'Halaman baharu',
   'Assets folder of the space': 'Folder aset ruang',
   'Next to the note': 'Di sebelah nota',
   'A folder named after the note': 'Folder yang dinamakan seperti nota',
@@ -1386,7 +1384,6 @@ export const ms: Dictionary = {
   'This browser holds the keys in its own storage.':
     'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
   'AI can be wrong. Check the facts.': 'AI boleh tersilap. Semak faktanya.',
-  'Used by the glasses': 'Digunakan cermin mata',
   'Could not read the models.': 'Tidak dapat membaca senarai model.',
   'That provider is not set up yet.': 'Pembekal itu belum disiapkan.',
   'Could not reach {url}': 'Tidak dapat menghubungi {url}',
@@ -2291,4 +2288,11 @@ export const ms: Dictionary = {
   'Search this chat': 'Cari dalam sembang ini',
   'Add as task': 'Tambah sebagai tugasan',
   'Save as note': 'Simpan sebagai nota',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

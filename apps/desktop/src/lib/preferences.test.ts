@@ -273,11 +273,12 @@ describe('the release channel', () => {
     expect(hint).toContain('main')
   })
 
-  test('is a group of its own under General, where the app itself is set up', () => {
+  test('is in About, at the foot of General, beside the version', () => {
     const general = desktop.find((one) => one.id === 'general')
     const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
 
-    expect(group?.title).toBe('Updates')
+    expect(group?.title).toBe('About')
+    expect(general?.groups.at(-1)).toBe(group)
   })
 })
 

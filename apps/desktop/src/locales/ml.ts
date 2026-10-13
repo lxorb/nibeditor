@@ -625,7 +625,6 @@ export const ml: Dictionary = {
   Use: 'ഉപയോഗിക്കുക',
   Remove: 'നീക്കം ചെയ്യുക',
   'Your words': 'നിങ്ങളുടെ വാക്കുകൾ',
-  Words: 'വാക്കുകൾ',
   'Add a word': 'ഒരു വാക്ക് ചേർക്കുക',
   'Add {word} to the dictionary': '{word} നിഘണ്ടുവിൽ ചേർക്കുക',
   'Remove {word} from the dictionary': '{word} നിഘണ്ടുവിൽ നിന്ന് നീക്കുക',
@@ -693,7 +692,6 @@ export const ml: Dictionary = {
   Attachments: 'അറ്റാച്ച്‌മെന്റുകൾ',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'താൾ കുറിപ്പുകൾ',
-  'New pages': 'പുതിയ താളുകൾ',
   'Assets folder of the space': 'സ്പേസിന്റെ അറ്റാച്ച്‌മെന്റ് ഫോൾഡർ',
   'Next to the note': 'കുറിപ്പിന് അടുത്ത്',
   'A folder named after the note': 'കുറിപ്പിന്റെ പേരിലുള്ള ഫോൾഡർ',
@@ -1407,7 +1405,6 @@ export const ml: Dictionary = {
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
   'AI can be wrong. Check the facts.': 'AI-ക്ക് തെറ്റുപറ്റാം. വസ്തുതകൾ പരിശോധിക്കുക.',
-  'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
   'That provider is not set up yet.': 'ആ പ്രൊവൈഡർ ഇനിയും സജ്ജമല്ല.',
   'Could not reach {url}': '{url}ൽ എത്താനായില്ല',
@@ -2319,4 +2316,11 @@ export const ml: Dictionary = {
   'Search this chat': 'ഈ ചാറ്റിൽ തിരയുക',
   'Add as task': 'ജോലിയായി ചേർക്കുക',
   'Save as note': 'കുറിപ്പായി സംരക്ഷിക്കുക',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

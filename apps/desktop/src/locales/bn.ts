@@ -622,7 +622,6 @@ export const bn: Dictionary = {
   Use: 'ব্যবহার',
   Remove: 'সরান',
   'Your words': 'আপনার শব্দ',
-  Words: 'শব্দ',
   'Add a word': 'শব্দ যোগ',
   'Add {word} to the dictionary': 'অভিধানে {word} যোগ',
   'Remove {word} from the dictionary': 'অভিধান থেকে {word} সরান',
@@ -690,7 +689,6 @@ export const bn: Dictionary = {
   Attachments: 'অ্যাটাচমেন্ট',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'পাতার নোট',
-  'New pages': 'নতুন পাতা',
   'Assets folder of the space': 'স্পেসের অ্যাসেট ফোল্ডার',
   'Next to the note': 'নোটের পাশে',
   'A folder named after the note': 'নোটের নামে একটি ফোল্ডার',
@@ -1392,7 +1390,6 @@ export const bn: Dictionary = {
   'Keys stay in the secure store on this device.': 'কী এই ডিভাইসের নিরাপদ ভাণ্ডারে থাকে।',
   'This browser holds the keys in its own storage.': 'এই ব্রাউজার কী নিজের ভাণ্ডারে রাখে।',
   'AI can be wrong. Check the facts.': 'AI ভুল করতে পারে। তথ্যগুলো যাচাই করুন।',
-  'Used by the glasses': 'চশমা ব্যবহার করে',
   'Could not read the models.': 'মডেল পড়া গেল না।',
   'That provider is not set up yet.': 'ওই প্রদানকারী এখনও সাজানো হয়নি।',
   'Could not reach {url}': '{url}-এ পৌঁছানো গেল না',
@@ -2297,4 +2294,11 @@ export const bn: Dictionary = {
   'Search this chat': 'এই চ্যাটে খুঁজুন',
   'Add as task': 'কাজ হিসেবে যোগ করুন',
   'Save as note': 'নোট হিসেবে সংরক্ষণ করুন',
+  // Settings: its pages, and Reload window
+  About: 'About',
+  'Import and export': 'Import and export',
+  'New notes': 'New notes',
+  'Reload window': 'Reload window',
+  'Reload window?': 'Reload window?',
+  'Reload anyway': 'Reload anyway',
 }

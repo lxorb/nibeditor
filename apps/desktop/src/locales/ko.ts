@@ -621,7 +621,6 @@ export const ko: Dictionary = {
   Use: '사용',
   Remove: '제거',
   'Your words': '내 단어',
-  Words: '단어',
   'Add a word': '단어 추가',
   'Add {word} to the dictionary': '{word}을 사전에 추가',
   'Remove {word} from the dictionary': '{word}을 사전에서 제거',
@@ -686,7 +685,6 @@ export const ko: Dictionary = {
   Attachments: '첨부',
   // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '페이지 노트',
-  'New pages': '새 페이지',
   'Assets folder of the space': '공간의 자료 폴더',
   'Next to the note': '노트 옆',
   'A folder named after the note': '노트 이름의 폴더',
@@ -1375,7 +1373,6 @@ export const ko: Dictionary = {
   'Keys stay in the secure store on this device.': '키는 이 기기의 보안 저장소에 남습니다.',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
   'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
-  'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',
   'That provider is not set up yet.': '그 공급자는 아직 설정되지 않았습니다.',
   'Could not reach {url}': '{url}에 연결할 수 없었습니다',
@@ -2269,4 +2266,11 @@ export const ko: Dictionary = {
   'Search this chat': '이 채팅에서 검색',
   'Add as task': '할 일로 추가',
   'Save as note': '노트로 저장',
+  // Settings: its pages, and Reload window
+  About: '정보',
+  'Import and export': '가져오기 및 내보내기',
+  'New notes': '새 노트',
+  'Reload window': '창 새로 고침',
+  'Reload window?': '창을 새로 고칠까요?',
+  'Reload anyway': '그래도 새로 고침',
 }
