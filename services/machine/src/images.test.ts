@@ -52,7 +52,8 @@ describe('where nibd is the user already', () => {
 
     expect(path).toBe(join(folderIn(home), `${ID}.png`))
     expect([...readFileSync(path)]).toEqual([137, 80, 78, 71])
-    expect(statSync(path).mode & 0o777).toBe(0o600)
+    // Windows keeps no POSIX modes; the machine itself is Linux.
+    if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o600)
   })
 
   test('a jpeg is named the way a jpeg is', async () => {
