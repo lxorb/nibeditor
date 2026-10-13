@@ -145,6 +145,13 @@ BUILT_IN = (
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
+#: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
+#: is, or with `NIB_ENGINE=webkit` its WebKit, which is what a Mac, an iPhone and
+#: Linux run the app in. Every drive runs on either; one whose question only Chromium
+#: can answer - a DevTools session, a GPU flag - says `NEEDS = ("chromium",)`.
+ENGINE = os.environ.get("NIB_ENGINE", "chromium")
+WEBKIT = ENGINE == "webkit"
+
 #: How long a Worker is given to answer, and a build to finish.
 WORKER_PATIENCE = 90
 BUILD_PATIENCE = 600
@@ -162,6 +169,7 @@ TEARDOWN = 90
 #: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
+    "chromium": "Chromium's own DevTools or flags, which WebKit does not have",
 }
 
 #: The identifier every release is built under, which is the nib the reader is using
@@ -651,7 +659,10 @@ class Drive:
         elif dev:
             self.origin = f"http://{self.name}.localhost:{self.dev_port}"
         elif self.server:
-            self.origin = self.server.origin(f"{self.name}.localhost")
+            # WebKit is driven on the loopback address: under a name below `.localhost`
+            # it is not a secure context, where the app in a Mac's WKWebView is, and it
+            # never runs a sandboxed frame there. The port is the drive's own either way.
+            self.origin = self.server.origin("127.0.0.1" if WEBKIT else f"{self.name}.localhost")
         else:
             self.origin = ""
 
@@ -727,7 +738,12 @@ class Drive:
 
     def browser(self, play: Any, **options: Any) -> Any:
         """Playwright's own Chromium, new headless, which is what the nightly run has;
-        the machine's Chrome with `NIB_BROWSER=chrome`."""
+        the machine's Chrome with `NIB_BROWSER=chrome`; Playwright's WebKit with
+        `NIB_ENGINE=webkit`, where a Chromium switch is no option at all."""
+        if WEBKIT:
+            options.pop("channel", None)
+            options.pop("args", None)
+            return answering(play.webkit.launch(**options))
         channel = os.environ.get("NIB_BROWSER", "chromium")
         options.setdefault("channel", channel)
         return answering(play.chromium.launch(**options))
@@ -738,8 +754,13 @@ class Drive:
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
         """A browser with its profile on disk, for a drive whose question is what
         survives the browser being closed and opened again."""
-        options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
-        context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
+        if WEBKIT:
+            options.pop("channel", None)
+            options.pop("args", None)
+            context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
+        else:
+            options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
+            context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(ANSWERED)
         context.add_init_script(BUILT_IN)
         return context
@@ -1361,6 +1382,8 @@ def missing(needs: Sequence[str]) -> str:
             exe = Path(os.environ["NIB_PROBE_EXE"])
             if why := refused(exe, identifier_of(exe)):
                 return f"refused: {why}"
+        if one == "chromium" and WEBKIT:
+            return f"needs {NEEDS['chromium']}"
         if one not in NEEDS:
             return f"needs {one}, which the harness does not know"
     return ""
