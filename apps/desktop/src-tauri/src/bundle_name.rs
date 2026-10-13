@@ -55,6 +55,18 @@ fn renamed(exe: &Path) -> Option<(PathBuf, PathBuf)> {
     .then(|| (bundle.to_path_buf(), bundle.with_file_name(NEW)))
 }
 
+/// What starts the app again from its new folder, run by `/bin/sh` with this process's
+/// id and the new folder: once this process has gone - a second copy started while it
+/// runs would be handed to it and quit - and as a new instance, because Launch Services
+/// can still count the copy that has just gone as running for a moment, and `open`
+/// would then only bring that one forward. On the upgrade check's runners a plain
+/// `open` came back about one launch in three.
+#[cfg_attr(
+    not(any(target_os = "macos", test)),
+    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
+)]
+const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
+
 /// Whether Homebrew installed the app: a cask of its name is in one of `rooms`.
 #[cfg_attr(
     not(any(target_os = "macos", test)),
@@ -69,6 +81,7 @@ fn brewed(rooms: &[&str]) -> bool {
 /// window and claimed nothing the copy that starts would be handed.
 #[cfg(target_os = "macos")]
 pub fn carry_over() {
+    use std::os::unix::process::CommandExt as _;
     use std::process::{Command, Stdio};
 
     // A build under an identifier of its own is a probe or somebody's experiment.
@@ -82,19 +95,16 @@ pub fn carry_over() {
         return;
     }
 
-    // Started once this process has gone: a second copy started while it runs would be
-    // handed to it and quit.
+    // In a process group of its own, so that nothing which ends this process's group
+    // when it goes takes the one that starts it again with it.
     let started = Command::new("/bin/sh")
-        .args([
-            "-c",
-            r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; exec /usr/bin/open "$2""#,
-            "sh",
-        ])
+        .args(["-c", RELAUNCH, "sh"])
         .arg(std::process::id().to_string())
         .arg(&to)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
+        .process_group(0)
         .spawn();
     if started.is_ok() {
         std::process::exit(0);
@@ -103,7 +113,7 @@ pub fn carry_over() {
 
 #[cfg(test)]
 mod tests {
-    use super::{brewed, renamed, CASKROOMS, NEW, OLD};
+    use super::{brewed, renamed, CASKROOMS, NEW, OLD, RELAUNCH};
     use std::path::{Path, PathBuf};
 
     #[test]
@@ -152,6 +162,14 @@ mod tests {
         assert!(brewed(&["/nowhere/Caskroom/nib", &here]));
         assert!(!brewed(&["/nowhere/Caskroom/nib", "/nowhere/either"]));
         let _ = std::fs::remove_dir(&dir);
+    }
+
+    /// The copy that starts again waits for this one to go, then starts a new instance.
+    #[test]
+    fn the_app_starts_again_as_a_new_instance_once_this_one_has_gone() {
+        let (wait, start) = RELAUNCH.split_once("done;").expect("a wait, then a start");
+        assert!(wait.contains(r#"kill -0 "$1""#));
+        assert!(start.trim_end().ends_with(r#"exec /usr/bin/open -n "$2""#));
     }
 
     /// The cask under either token is Homebrew's, in either home.
