@@ -40,7 +40,7 @@ say_eval() { node "$cli" eval "$1" --yes 2>&1; }
 launch() {
   open "$app"
   for _ in $(seq 60); do
-    [ -f "$endpoint" ] && running "$app" && node "$cli" verbs >/dev/null 2>&1 && return 0
+    [ -f "$endpoint" ] && node "$cli" verbs >/dev/null 2>&1 && return 0
     sleep 1
   done
   echo "the app never answered at $endpoint"
