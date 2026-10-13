@@ -715,6 +715,7 @@ export const fa: Dictionary = {
   'out of space': 'انبار پر است',
   'nibeditor {version} is ready to install.': 'nibeditor {version} آماده نصب است.',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
+  'Move to Applications': 'انتقال به برنامه‌ها',
   Later: 'بعداً',
   More: 'بیشتر',
   'Open notes': 'گشودن یادداشت‌ها',
