@@ -24,7 +24,7 @@
 //! a variable or a protocol message; see args.rs and say.rs.
 //!
 //! **The sidebar's token.** `nib mcp` proves itself with a token the app lends the
-//! provider's built-in grant ("nib · Claude Code" in Settings > Agents) for the thread's
+//! provider's built-in grant ("Orden · Claude Code" in Settings > Agents) for the thread's
 //! mode (`ai_agent::lend`), so the endpoint supervises the session as that mode says. One
 //! per provider and mode, made the first time a run of the app needs it, kept in memory
 //! only, and handed to the program in its environment, which passes it to `nib mcp`
@@ -888,22 +888,86 @@ exec node '{}' {name} \"$@\"
                     .and_then(|text| serde_json::from_str(&text).ok())
                     .unwrap_or_else(|| serde_json::json!({}))
             };
+            let ours = || serde_json::json!([nib.to_string_lossy(), "mcp"]);
+            let elsewhere = || serde_json::json!(["C:/elsewhere/nib.exe", "mcp"]);
+            let start = |with: Value| std::fs::write(&kept, with.to_string()).expect("kept");
+
+            std::fs::remove_file(&kept).ok();
             enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
             enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(
                 servers(),
-                serde_json::json!({ "nib": [nib.to_string_lossy(), "mcp"] }),
+                serde_json::json!({ "orden": ours() }),
                 "{tool:?}"
             );
             enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(servers(), serde_json::json!({}), "{tool:?}");
 
-            // A server the reader called nib, pointing somewhere else, is theirs.
-            let theirs = serde_json::json!({ "nib": ["C:/elsewhere/nib.exe", "mcp"] });
-            std::fs::write(&kept, theirs.to_string()).expect("theirs");
+            // A server the reader called orden, pointing somewhere else, is theirs.
+            let theirs = serde_json::json!({ "orden": elsewhere() });
+            start(theirs.clone());
             enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
             enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(servers(), theirs, "{tool:?}");
+
+            // This app under the old name is renamed, by enrolling and on its own alike.
+            for enrolling in [true, false] {
+                start(serde_json::json!({ "nib": ours() }));
+                for _ in 0..2 {
+                    if enrolling {
+                        enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+                    } else {
+                        enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+                    }
+                }
+                assert_eq!(
+                    servers(),
+                    serde_json::json!({ "orden": ours() }),
+                    "{tool:?}"
+                );
+            }
+
+            // Under both names, it keeps the new one alone.
+            start(serde_json::json!({ "nib": ours(), "orden": ours() }));
+            enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(
+                servers(),
+                serde_json::json!({ "orden": ours() }),
+                "{tool:?}"
+            );
+
+            // The old name pointing somewhere else is the reader's: kept, and the app added
+            // beside it under the new name only when enrolling.
+            start(serde_json::json!({ "nib": elsewhere() }));
+            enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(
+                servers(),
+                serde_json::json!({ "nib": elsewhere() }),
+                "{tool:?}"
+            );
+            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(
+                servers(),
+                serde_json::json!({ "nib": elsewhere(), "orden": ours() }),
+                "{tool:?}"
+            );
+
+            // The new name the reader's and the old one this app's: the old one stays, the
+            // app's only way in, and nothing is added beside it.
+            let kept_both = serde_json::json!({ "nib": ours(), "orden": elsewhere() });
+            start(kept_both.clone());
+            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(servers(), kept_both, "{tool:?}");
+
+            // Turned off, the app goes under either name, the reader's stay.
+            start(serde_json::json!({ "nib": ours(), "orden": elsewhere() }));
+            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            assert_eq!(
+                servers(),
+                serde_json::json!({ "orden": elsewhere() }),
+                "{tool:?}"
+            );
+            std::fs::remove_file(&kept).ok();
         }
     }
 
@@ -1162,15 +1226,15 @@ exec node '{}' {name} \"$@\"
         // The stand-in says what it was started with: nib alone, its token, the mode's
         // tools, the model and the effort.
         for told in [
-            "\"mcp_servers\":[{\"name\":\"nib\",\"status\":\"connected\"}]",
+            "\"mcp_servers\":[{\"name\":\"orden\",\"status\":\"connected\"}]",
             "\"token\":true",
-            "mcp__nib__read_note",
+            "mcp__orden__read_note",
             "\"model\":\"opus\"",
             "\"effort\":\"high\"",
         ] {
             assert!(line_has(init, told), "{told} not in {init:?}");
         }
-        assert!(!line_has(init, "mcp__nib__edit_note"));
+        assert!(!line_has(init, "mcp__orden__edit_note"));
         assert!(first
             .iter()
             .any(|one| line_has(one, "You asked: what is a heron")));
