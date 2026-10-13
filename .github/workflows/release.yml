@@ -84,7 +84,10 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
-          cache: pnpm
+          # Not on Linux arm, the one store no other job shares: the repository's
+          # cache holds 10 GB, and half a gigabyte saved for a job with time to
+          # spare pushed out a Rust cache a slower job needed.
+          cache: ${{ matrix.platform != 'ubuntu-22.04-arm' && 'pnpm' || '' }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
         with:
@@ -218,10 +221,23 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.target }}
 
+      # The engine's C++ wrapper is compiled by MSVC, which cannot write an object whose
+      # path is over 260 characters ("C1083: Cannot open compiler generated file: ''").
+      # Under the checkout, a build for a named target is that long: cef.yml builds for
+      # the host and fits, this names the triple and did not. So Windows builds in a
+      # short folder beside the checkout, set before the cache below so the cache is of
+      # that folder: a cache of the checkout's own target restored a folder nothing
+      # built into, and every crate was compiled again on every run.
+      - name: A short build folder on Windows
+        if: runner.os == 'Windows'
+        run: echo "CARGO_TARGET_DIR=$(cd "$GITHUB_WORKSPACE/.." && pwd -W)/t" >>"$GITHUB_ENV"
+
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
+          # Relative to the folder before it: five levels up is the one holding the
+          # checkout, where the step above puts Windows' build.
           workspaces: |
-            apps/desktop/src-tauri/cef
+            apps/desktop/src-tauri/cef -> ${{ runner.os == 'Windows' && '../../../../../t' || 'target' }}
           key: chromium-${{ matrix.target }}
 
       # The interface the engine build embeds, as the installers do, and with the number
@@ -236,15 +252,6 @@ jobs:
 
       - name: The engine
         run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
-
-      # The engine's C++ wrapper is compiled by MSVC, which cannot write an object whose
-      # path is over 260 characters ("C1083: Cannot open compiler generated file: ''").
-      # Under the checkout, a build for a named target is that long: cef.yml builds for
-      # the host and fits, this names the triple and did not. So Windows builds in a
-      # short folder of the runner's own.
-      - name: A short build folder on Windows
-        if: runner.os == 'Windows'
-        run: echo "CARGO_TARGET_DIR=${{ runner.temp }}/t" >>"$GITHUB_ENV"
 
       - name: Build the app on it
         working-directory: apps/desktop/src-tauri/cef
