@@ -71,14 +71,23 @@ quit_app
 launch || exit 1
 
 # The notice, once the launch's own look has found and downloaded the release.
+logs() {
+  for log in "$HOME/Library/Logs/ch.emilvinu.nib"/*; do
+    [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
+  done
+}
+cat "$endpoint"; echo
 notice=""
-for _ in $(seq 120); do
+for at in $(seq 120); do
   notice="$(say_eval "document.querySelector('.notice')?.textContent?.trim() ?? ''")"
   case "$notice" in *"$expect"*) break ;; esac
+  [ $((at % 20)) = 1 ] && echo "($at) said: $notice"
+  # Asked by name as well, halfway, the way the menu's Check for updates asks.
+  [ "$at" = 60 ] && node "$cli" commands run update 2>&1
   sleep 2
 done
 echo "notice: $notice"
-case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; quit_app; exit 1 ;; esac
+case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; quit_app; exit 1 ;; esac
 
 log_before="$(ls -t "$HOME/Library/Logs/ch.emilvinu.nib" 2>/dev/null | head -1)"
 say_eval "[...document.querySelectorAll('.notice .nib-button')].at(-1).click(), 'pressed'"
@@ -98,9 +107,7 @@ pgrep -fl "/Contents/MacOS/" || true
 installed="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist" 2>/dev/null || echo none)"
 ls "$folder"
 echo "on disk now: $installed"
-for log in "$HOME/Library/Logs/ch.emilvinu.nib"/*; do
-  [ -f "$log" ] && { echo "--- $log"; grep -i "updat\|install\|error" "$log" | tail -20; }
-done
+logs
 
 [ "$back" = yes ] || launch || true
 sleep 15
