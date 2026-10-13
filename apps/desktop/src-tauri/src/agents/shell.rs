@@ -84,7 +84,7 @@ impl Default for Words {
             quit: "Quit".into(),
             stopped: "Agents stopped".into(),
             closed: "Agent tabs closed".into(),
-            hidden: "nibeditor is still running for your agents".into(),
+            hidden: "Orden is still running for your agents".into(),
             pairing: "{client} wants to connect".into(),
         }
     }
@@ -449,7 +449,7 @@ fn tray(app: &AppHandle, on: bool, agents: bool, words: &Words) {
     }
 
     let mut built = TrayIconBuilder::with_id(TRAY)
-        .tooltip("nibeditor")
+        .tooltip("Orden")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -541,7 +541,7 @@ mod tests {
         let said: Words = serde_json::from_value(serde_json::json!({
             "show": "Öffnen", "stop": "Agenten anhalten", "quit": "Beenden",
             "stopped": "Agenten angehalten", "closed": "Agenten-Tabs geschlossen",
-            "hidden": "nibeditor läuft weiter", "pairing": "{client} möchte sich verbinden",
+            "hidden": "Orden läuft weiter", "pairing": "{client} möchte sich verbinden",
         }))
         .expect("the window's words");
         assert_eq!(said.stop, "Agenten anhalten");

@@ -60,7 +60,7 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
             .unwrap_or_else(PoisonError::into_inner)
             .say(
                 "warning",
-                format!("nib could not hand this page the reader's logins: {why}"),
+                format!("Orden could not hand this page the reader's logins: {why}"),
             );
     }
 }

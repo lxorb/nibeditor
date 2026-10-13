@@ -1,7 +1,7 @@
 //! The window's own edges: who draws the frame, and whether the desk shows through.
 //!
 //! Two choices, and both of them are about this machine rather than about the notes.
-//! Nib draws its own frame by default - one bar holding the menu, the sidebar toggle,
+//! Orden draws its own frame by default - one bar holding the menu, the sidebar toggle,
 //! the tabs and the window's three buttons, which is the shape the whole shell is built
 //! round - and somebody who would rather have their system's titlebar can have it. The
 //! second is the material: the window's ground becomes what the platform composites

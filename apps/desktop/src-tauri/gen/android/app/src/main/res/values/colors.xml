@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Nib's own page colour, light. What the window is painted with before the
+    <!-- Orden's own page colour, light. What the window is painted with before the
          first frame of the app arrives. -->
     <color name="launch">#FBFCFD</color>
 

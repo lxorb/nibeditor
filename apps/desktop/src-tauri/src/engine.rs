@@ -255,7 +255,7 @@ pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, S
 /// instead. The config keeps saying what the window looks like; only who builds it
 /// changes.
 ///
-/// One reason per engine, and the same mechanism for both. Nib's own Chromium needs
+/// One reason per engine, and the same mechanism for both. Orden's own Chromium needs
 /// the interface in a profile of its own, and a profile is asked for when a webview is
 /// built. The system's webview needs the window on screen before the webview inside it
 /// exists, and a window the runtime builds cannot be: it is built around its webview,

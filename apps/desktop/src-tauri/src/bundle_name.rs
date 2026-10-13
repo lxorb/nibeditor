@@ -1,5 +1,5 @@
-//! The Mac app's folder under the product's name: `nibeditor.app`, where every copy up
-//! to 0.11 was `Nib.app`.
+//! The Mac app's folder under the product's name: `Orden.app`, where every copy up to
+//! 0.11 was `Nib.app` and every copy from 0.12 to 0.13 `nibeditor.app`.
 //!
 //! Tauri's updater puts a new version into the folder the running copy is in and keeps
 //! that folder's name, and the updater that installs this version is the old one, so
@@ -16,23 +16,29 @@
 //! keeps its name and works the same.
 //!
 //! What the rename costs: a line pasted into an agent before it, which names the program
-//! inside `Nib.app`, has to be pasted again from Settings > Agents.
+//! inside the old folder, has to be pasted again from Settings > Agents.
 
 use std::path::{Path, PathBuf};
 
-/// The folder's name before and after.
-const OLD: &str = "Nib.app";
-const NEW: &str = "nibeditor.app";
+/// The folder's names before, and after.
+const OLD: [&str; 2] = ["Nib.app", "nibeditor.app"];
+const NEW: &str = "Orden.app";
 
-/// The cask's own folder under each of Homebrew's two homes, Apple silicon's and Intel's.
+/// The cask's own folder under each of Homebrew's two homes, Apple silicon's and Intel's,
+/// for the cask's old token and its new one, which Homebrew renames it to.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
 )]
-const CASKROOMS: [&str; 2] = ["/opt/homebrew/Caskroom/nib", "/usr/local/Caskroom/nib"];
+const CASKROOMS: [&str; 4] = [
+    "/opt/homebrew/Caskroom/nib",
+    "/usr/local/Caskroom/nib",
+    "/opt/homebrew/Caskroom/orden",
+    "/usr/local/Caskroom/orden",
+];
 
 /// The folder a program at `exe` is the app of and the folder it is renamed to, when
-/// it is `<somewhere>/Nib.app/Contents/MacOS/<program>`.
+/// it is `<somewhere>/<an old name>/Contents/MacOS/<program>`.
 #[cfg_attr(
     not(any(target_os = "macos", test)),
     allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
@@ -43,8 +49,10 @@ fn renamed(exe: &Path) -> Option<(PathBuf, PathBuf)> {
     let bundle = contents.parent()?;
     let named = |path: &Path, name: &str| path.file_name().is_some_and(|own| own == name);
 
-    (named(macos, "MacOS") && named(contents, "Contents") && named(bundle, OLD))
-        .then(|| (bundle.to_path_buf(), bundle.with_file_name(NEW)))
+    (named(macos, "MacOS")
+        && named(contents, "Contents")
+        && OLD.iter().any(|old| named(bundle, old)))
+    .then(|| (bundle.to_path_buf(), bundle.with_file_name(NEW)))
 }
 
 /// Whether Homebrew installed the app: a cask of its name is in one of `rooms`.
@@ -95,27 +103,39 @@ pub fn carry_over() {
 
 #[cfg(test)]
 mod tests {
-    use super::{brewed, renamed};
+    use super::{brewed, renamed, CASKROOMS, NEW, OLD};
     use std::path::{Path, PathBuf};
 
     #[test]
-    fn the_program_inside_the_old_folder_is_moved_to_the_new_one() {
-        let (from, to) =
-            renamed(Path::new("/Applications/Nib.app/Contents/MacOS/nib")).expect("renamed");
-        assert_eq!(from, PathBuf::from("/Applications/Nib.app"));
-        assert_eq!(to, PathBuf::from("/Applications/nibeditor.app"));
+    fn the_program_inside_either_old_folder_is_moved_to_the_new_one() {
+        for old in OLD {
+            let (from, to) = renamed(
+                &Path::new("/Applications")
+                    .join(old)
+                    .join("Contents/MacOS/nib"),
+            )
+            .expect("renamed");
+            assert_eq!(from, Path::new("/Applications").join(old));
+            assert_eq!(to, PathBuf::from("/Applications/Orden.app"));
 
-        let (_, to) = renamed(Path::new("/Users/a/Apps/Nib.app/Contents/MacOS/nib"))
+            let (_, to) = renamed(
+                &Path::new("/Users/a/Apps")
+                    .join(old)
+                    .join("Contents/MacOS/nib"),
+            )
             .expect("anywhere a folder is");
-        assert_eq!(to, PathBuf::from("/Users/a/Apps/nibeditor.app"));
+            assert_eq!(to, PathBuf::from("/Users/a/Apps/Orden.app"));
+        }
     }
 
     #[test]
     fn anything_else_keeps_its_name() {
         for exe in [
-            "/Applications/nibeditor.app/Contents/MacOS/nib",
+            "/Applications/Orden.app/Contents/MacOS/nib",
             "/Applications/Nib Copy.app/Contents/MacOS/nib",
+            "/Applications/nibeditor 2.app/Contents/MacOS/nib",
             "/Applications/Nib.app/Contents/Resources/nib",
+            "/Applications/nibeditor.app/Contents/Resources/nib",
             "/Users/a/code/nib/target/release/nib",
             "nib",
         ] {
@@ -132,5 +152,26 @@ mod tests {
         assert!(brewed(&["/nowhere/Caskroom/nib", &here]));
         assert!(!brewed(&["/nowhere/Caskroom/nib", "/nowhere/either"]));
         let _ = std::fs::remove_dir(&dir);
+    }
+
+    /// The cask under either token is Homebrew's, in either home.
+    #[test]
+    fn the_cask_is_looked_for_under_both_tokens() {
+        for token in ["nib", "orden"] {
+            for home in ["/opt/homebrew", "/usr/local"] {
+                let room = format!("{home}/Caskroom/{token}");
+                assert!(CASKROOMS.contains(&room.as_str()), "{room}");
+            }
+        }
+    }
+
+    /// The new folder is the product's name, which is what the bundle is built as.
+    #[test]
+    fn the_new_folder_is_the_product_s_name() {
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).expect("the config parses");
+        let product = config["productName"].as_str().expect("a product name");
+        assert_eq!(NEW, format!("{product}.app"));
+        assert!(!OLD.contains(&NEW));
     }
 }

@@ -42,7 +42,7 @@ PLUGIN = re.compile(r'^(tauri-plugin-[a-z-]+) = ', re.M)
 #: The pins, by the key `[package.metadata.engine]` writes them under.
 KEYS = ('tauri', 'tauri-runtime-cef', 'tauri-runtime', 'tauri-build', 'tauri-utils', 'plugins', 'cef')
 
-AGENT = {'User-Agent': 'nib cef-bump (https://github.com/lxorb/nibeditor)'}
+AGENT = {'User-Agent': 'nib cef-bump (https://github.com/lxorb/orden)'}
 
 
 def crates_io(path: str) -> dict:

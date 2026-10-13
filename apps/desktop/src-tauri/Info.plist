@@ -18,12 +18,12 @@
 		</dict>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>nibeditor uses the microphone while you record or dictate, and for a site in a web tab when you allow it.</string>
+	<string>Orden uses the microphone while you record or dictate, and for a site in a web tab when you allow it.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>nibeditor uses the camera only for a site in a web tab, and only when you allow it.</string>
+	<string>Orden uses the camera only for a site in a web tab, and only when you allow it.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>nibeditor turns what you say into words in your note while you dictate.</string>
+	<string>Orden turns what you say into words in your note while you dictate.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>nibeditor looks for printers on your network when you print.</string>
+	<string>Orden looks for printers on your network when you print.</string>
 </dict>
 </plist>

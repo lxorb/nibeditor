@@ -25,8 +25,11 @@ use keyring::{Entry, Error};
 
 /// What the keychain files these under. One service for the app, with the
 /// provider's own id as the account, so a reader looking at their keychain sees
-/// one nibeditor entry per provider rather than an unexplained blob. The web logins'
-/// keys are filed under it too; see `web_state/keys.rs`.
+/// one entry per provider rather than an unexplained blob. The web logins' keys are
+/// filed under it too; see `web_state/keys.rs`.
+///
+/// Still `nibeditor`, the product's name when the first key was filed, and never to be
+/// renamed: every key a reader stored is under it, and a new name would find none.
 pub(crate) const SERVICE: &str = "nibeditor";
 
 /// Refuses a name that is not one of ours.

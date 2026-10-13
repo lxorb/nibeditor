@@ -1161,12 +1161,9 @@ mod tests {
 
     #[test]
     fn a_link_keeps_the_words_it_was_written_on() {
-        let said = as_markdown(
-            "nibeditor",
-            &[run(9, &[bytes(9, b"https://nibeditor.com")])],
-        );
+        let said = as_markdown("Orden", &[run(5, &[bytes(9, b"https://orden.so")])]);
 
-        assert_eq!(said, "[nibeditor](https://nibeditor.com)");
+        assert_eq!(said, "[Orden](https://orden.so)");
     }
 
     #[test]

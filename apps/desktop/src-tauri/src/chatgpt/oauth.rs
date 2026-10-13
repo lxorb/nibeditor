@@ -37,7 +37,7 @@ pub const SCOPE: &str =
     "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct";
 
 /// The app's name as the reader's `ChatGPT` settings list it.
-pub const NAME: &str = "nibeditor";
+pub const NAME: &str = "Orden";
 
 /// The path the loopback callback arrives on.
 pub const CALLBACK_PATH: &str = "/auth/callback";
@@ -292,7 +292,7 @@ mod tests {
         let url = authorize_url(&attempt(), 1455, "urn:uuid:x", None);
         assert!(url.starts_with("https://auth.openai.com/api/accounts/authorize?"));
         assert!(url.contains("client_id=dynamic_agent_client"));
-        assert!(url.contains("agent_name_hint=nibeditor"));
+        assert!(url.contains("agent_name_hint=Orden"));
         assert!(url.contains("ext_agent_host_id=urn%3Auuid%3Ax"));
         assert!(url.contains("redirect_uri=http%3A%2F%2F127.0.0.1%3A1455%2Fauth%2Fcallback"));
         assert!(url.contains("scope=openid%20profile%20email%20offline_access%20resource.invoke%20chatgpt.tokens.use.direct"));

@@ -381,7 +381,7 @@ javascriptcore-rs = "=1.1.2"
 # handle. notify's own crate for it, so the one unsafe call it takes is not ours; a Mac
 # and Linux need nothing but `std` for the same answer. See space_watch/identity.rs.
 file-id = "0.2"
-# Nib's registration as a browser, written and read back through a safe interface
+# Orden's registration as a browser, written and read back through a safe interface
 # rather than more unsafe calls; see default_browser.rs. Already in the lock file,
 # at this version, as something the updater's HTTP client builds with.
 windows-registry = "0.6"

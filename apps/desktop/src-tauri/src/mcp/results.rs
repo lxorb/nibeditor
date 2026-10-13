@@ -194,7 +194,7 @@ fn refusal(body: &Value) -> String {
         .and_then(Value::as_str)
         .map(str::to_owned)
         .or_else(|| body.as_str().map(str::to_owned))
-        .unwrap_or_else(|| "nib did not say why".to_owned())
+        .unwrap_or_else(|| "Orden did not say why".to_owned())
 }
 
 /// A tool call's result: the text a model reads, and the contract's answer beside it.
@@ -379,7 +379,7 @@ pub fn still_working(outcome: &Outcome) -> Option<String> {
 fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
     let tab = args.get("tab").and_then(Value::as_str);
     let about = marked(
-        &tab.map_or_else(|| "nib".to_owned(), |tab| format!("tab {tab}")),
+        &tab.map_or_else(|| "Orden".to_owned(), |tab| format!("tab {tab}")),
         summary,
     );
     if tool == "browser_takeover" {
@@ -388,7 +388,7 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
         );
     }
     format!(
-        "Not done yet: nib asked the reader first (approval {approval}):\n{about}\nCarry on with other work. approval_status with id \"{approval}\" says when they answer; once it says allowed, make this same call again."
+        "Not done yet: Orden asked the reader first (approval {approval}):\n{about}\nCarry on with other work. approval_status with id \"{approval}\" says when they answer; once it says allowed, make this same call again."
     )
 }
 
@@ -397,10 +397,10 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
 fn failed(code: &str, message: &str) -> String {
     let next = match code {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
-        "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of nib's.",
+        "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of Orden's.",
         "stopped" => "The reader pressed stop: stop working and tell the user.",
         "password_field" => "Never type a password: ask the reader with browser_takeover.",
-        "not_granted" => "The reader has not granted this; they can in nib's Settings > Agents.",
+        "not_granted" => "The reader has not granted this; they can in Orden's Settings > Agents.",
         "denied" => "The reader said no: do not ask again for the same thing.",
         "in_use_elsewhere" => {
             "Another of the reader's devices is using this site: wait, or open with store \"agent\"."
@@ -409,7 +409,7 @@ fn failed(code: &str, message: &str) -> String {
         _ => "",
     };
     let said = if message.is_empty() {
-        "nib did not say why"
+        "Orden did not say why"
     } else {
         message
     };

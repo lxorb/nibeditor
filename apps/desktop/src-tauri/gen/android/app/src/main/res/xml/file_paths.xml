@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The folders Nib may hand another app a file out of, through the FileProvider the
+  The folders Orden may hand another app a file out of, through the FileProvider the
   manifest declares.
 
   The app's own folders and no others. Tauri's template names `external-path`,
   which is the root of shared storage: every photo, every download and every other
-  app's public folder, offered under Nib's own authority to anything Nib ever
-  shares a URI with. Nib has no business outside its own storage, and the notes
+  app's public folder, offered under Orden's own authority to anything Orden ever
+  shares a URI with. Orden has no business outside its own storage, and the notes
   are inside it - `external-files-path` is the app's folder in external storage,
   which is where the documents folder the notes live in sits.
 -->

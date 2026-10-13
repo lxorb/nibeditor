@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn reads_the_scheme_in_any_case() {
         assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
-        assert!(said(vec!["https://nibeditor.com".to_string()]).is_empty());
+        assert!(said(vec!["https://orden.so".to_string()]).is_empty());
         assert!(said(vec!["ni".to_string()]).is_empty());
     }
 }
