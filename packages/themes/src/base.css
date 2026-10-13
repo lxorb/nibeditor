@@ -1665,7 +1665,7 @@ select:focus-visible,
 
    A grid of equal halves rather than a row of `flex: 1` ones. A row asked how wide it
    wanted to be answered with the sum of its words and then shared that out evenly, so
-   the longer word got less than it needed and broke: "nibeditor's own" over two lines
+   the longer word got less than it needed and broke: "Orden's own" over two lines
    in a groove exactly as wide as both words. Equal columns are each as wide as the
    widest word, so a groove left to its own width is one where no half wraps; where a
    row is too narrow for that, the halves give way together as they always did. */

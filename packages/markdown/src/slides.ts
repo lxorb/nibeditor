@@ -2,8 +2,8 @@
  *
  *  Nothing here is a format of its own. A deck is a note with horizontal rules
  *  in it, which is the convention Obsidian's own Slides plugin settled on, so a
- *  deck written in Nib presents in Obsidian and a deck written in Obsidian
- *  presents here. Everything Nib reads on top of that had to survive being
+ *  deck written in Orden presents in Obsidian and a deck written in Obsidian
+ *  presents here. Everything Orden reads on top of that had to survive being
  *  opened somewhere else, which ruled out most of what the other tools use:
  *
  *  - `---` breaks a slide, and only with a blank line above it. CommonMark

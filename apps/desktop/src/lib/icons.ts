@@ -165,7 +165,7 @@ function squashedNames(library: Record<string, IconNode>): Map<string, string> {
 /** The two-letter prefixes Obsidian's Iconize puts in front of a name, one per
  *  pack: Lucide, Remix, Font Awesome, Boxicons, and the rest of what it offers.
  *
- *  Nib ships one stroked set, so a name out of any of those packs is looked up in
+ *  Orden ships one stroked set, so a name out of any of those packs is looked up in
  *  Lucide without its prefix - `FaRocket` finds `rocket`. Which is the right answer
  *  far more often than nothing at all: the packs draw the same everyday things
  *  under the same everyday names, and a row that showed the plain page for a note

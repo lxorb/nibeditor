@@ -3,6 +3,7 @@ dist
 dist-before
 dist-even
 dist-worker
+dist-handoff
 target
 .claude
 .svelte-kit

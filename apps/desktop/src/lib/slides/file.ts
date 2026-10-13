@@ -116,7 +116,7 @@ export function buildDeckHtml(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="generator" content="nibeditor">
+<meta name="generator" content="Orden">
 <title>${escapeAll(title)}</title>
 <style>
 ${styles}

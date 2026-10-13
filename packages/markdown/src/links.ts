@@ -1,6 +1,6 @@
 /** The links between notes, as syntax rather than as HTML.
  *
- *  One place for the grammar, because four parts of Nib read it: the editor
+ *  One place for the grammar, because four parts of Orden read it: the editor
  *  draws wikilinks and follows them, the renderer turns them into anchors for
  *  an export and for a published page, the app rewrites them when a note is
  *  renamed, and the sync service counts them for backlinks. Four readings of
@@ -113,7 +113,7 @@ export function isPdfTarget(target: string): boolean {
 }
 
 /** Whether a target names a canvas: the plane of notes and cards Obsidian keeps
- *  in a `.canvas` file, which Nib reads and writes as JSON Canvas 1.0. Like a
+ *  in a `.canvas` file, which Orden reads and writes as JSON Canvas 1.0. Like a
  *  PDF it is a file rather than a note, so `[[Board.canvas]]` carries the
  *  extension the way `[[paper.pdf]]` does. */
 export function isCanvasTarget(target: string): boolean {
@@ -134,7 +134,7 @@ export function isChatTarget(target: string): boolean {
 }
 
 /** Whether a target names a page note: pages of paper written on with a pen, which
- *  Nib keeps in a `.pages` file.
+ *  Orden keeps in a `.pages` file.
  *
  *  The bytes are a canvas's bytes - JSON Canvas 1.0, one reader, one writer; see
  *  canvas.ts - and the extension is what says which surface opens it and which
@@ -258,7 +258,7 @@ export function embedSize(alias: string | null): { width: number; height: number
 /** The page a fragment names, or null when it names none.
  *
  *  `[[paper.pdf#page=3]]` is Obsidian's spelling and also the one a browser's own
- *  PDF viewer reads, so the same link works in Nib, in Obsidian and on a
+ *  PDF viewer reads, so the same link works in Orden, in Obsidian and on a
  *  published page. A PDF has no headings to point at, so this is the only
  *  fragment one takes. Pages count from one; `#page=0` names nothing. */
 export function pageFragment(fragment: string | null): number | null {

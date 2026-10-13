@@ -142,12 +142,16 @@ export default defineConfig(({ command, mode }) => ({
     // and the browser drive runs that build rather than this page. One bundle
     // cannot leave something out of one of its entries, which is why there are two
     // builds at all. See docs/even.md.
+    //
+    // `handoff.html` is the old address's page that hands a browser's notes to the
+    // new one; the assets router answers `/handoff` with it. See src/lib/web/handoff.ts.
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         even: resolve(import.meta.dirname, 'even.html'),
         presenter: resolve(import.meta.dirname, 'presenter.html'),
         quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
+        handoff: resolve(import.meta.dirname, 'handoff.html'),
       },
     },
   },

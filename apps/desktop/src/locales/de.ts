@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor heißt jetzt Orden',
+  'Notes from nibeditor.com': 'Notizen von nibeditor.com',
+  'Nothing there': 'Dort ist nichts',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherige Woche',
   // Tasks: projects placed in the panel, and their folder
@@ -570,8 +574,8 @@ export const de: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAI wird gefragt, welche Modelle dieser Schlüssel darf',
   'Could not reach OpenAI': 'OpenAI nicht erreichbar',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Dieser Schlüssel darf keines der Modelle, die nibeditor braucht.',
+  'That key cannot use any of the models Orden asks for.':
+    'Dieser Schlüssel darf keines der Modelle, die Orden braucht.',
   'No reasoning': 'Ohne Nachdenken',
   Minimal: 'Minimal',
   Low: 'Wenig',
@@ -593,7 +597,7 @@ export const de: Dictionary = {
   Mode: 'Modus',
   // The window's own edges; see appearance.rs
   Window: 'Fenster',
-  'nibeditor’s own': 'Von nibeditor',
+  'Orden’s own': 'Von Orden',
   'The system’s': 'Vom System',
   'Window frame': 'Fensterrahmen',
   System: 'System',
@@ -718,7 +722,7 @@ export const de: Dictionary = {
   '{used} of {limit} used.': '{used} von {limit} belegt.',
   'That image does not fit in your storage.': 'Dieses Bild passt nicht mehr in deinen Speicher.',
   'out of space': 'kein Speicher mehr frei',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ist bereit zur Installation.',
+  'Orden {version} is ready to install.': 'Orden {version} ist bereit zur Installation.',
   'Restart now': 'Jetzt neu starten',
   Later: 'Später',
   More: 'Mehr',
@@ -795,14 +799,14 @@ export const de: Dictionary = {
   'Reads your notes.': 'Liest deine Notizen.',
   'Reads and writes your notes.': 'Liest und schreibt deine Notizen.',
   Other: 'Andere',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Ein KI-Assistent kann deine Notizen lesen - und ändern, wenn du es erlaubst. Er meldet sich mit deiner nibeditor-E-Mail an; nichts muss eingefügt werden.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Ein KI-Assistent kann deine Notizen lesen - und ändern, wenn du es erlaubst. Er meldet sich mit deiner Orden-E-Mail an; nichts muss eingefügt werden.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Öffne in Claude Einstellungen → Connectors und klicke auf Eigenen Connector hinzufügen.',
   'Open Claude’s connectors': 'Connectors in Claude öffnen',
   'Fill in the two fields and click Add.': 'Fülle die zwei Felder aus und klicke auf Hinzufügen.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Klicke auf Verbinden und melde dich mit deiner nibeditor-E-Mail an.',
+  'Click Connect and sign in with your Orden email.':
+    'Klicke auf Verbinden und melde dich mit deiner Orden-E-Mail an.',
   'Using Claude Code instead?': 'Lieber Claude Code?',
   Command: 'Befehl',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -813,16 +817,16 @@ export const de: Dictionary = {
   'Open ChatGPT’s plugins': 'Plugins in ChatGPT öffnen',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Kein Bereich Plugins oder kein Plus? Schalte zuerst den Entwicklermodus ein, unter Einstellungen → Sicherheit und Anmeldung.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Melde dich mit deiner nibeditor-E-Mail an, wenn ChatGPT danach fragt.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Tippe in einem Chat @ und wähle nibeditor, um es zu benutzen.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Melde dich mit deiner Orden-E-Mail an, wenn ChatGPT danach fragt.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Tippe in einem Chat @ und wähle Orden, um es zu benutzen.',
   'Server URL': 'Server-URL',
   Authentication: 'Authentifizierung',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Lass die erweiterten OAuth-Einstellungen, wie sie sind, und hake „Ich verstehe und möchte fortfahren“ an.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Jeder MCP-Client mit Streamable HTTP und OAuth. Gib ihm die URL: Er registriert sich selbst und öffnet die Anmeldeseite von nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Jeder MCP-Client mit Streamable HTTP und OAuth. Gib ihm die URL: Er registriert sich selbst und öffnet die Anmeldeseite von Orden.',
   'Show config': 'Konfiguration anzeigen',
   'For a client that takes a JSON block instead of a URL.':
     'Für einen Client, der statt einer URL einen JSON-Block nimmt.',
@@ -893,7 +897,7 @@ export const de: Dictionary = {
   'Display name': 'Anzeigename',
   'Your name': 'Dein Name',
   Email: 'E-Mail',
-  'On nibeditor.com': 'Auf nibeditor.com',
+  'On orden.so': 'Auf orden.so',
   'Your own domain': 'Eigene Domain',
   'Switching gives up {name}.': 'Beim Wechsel gibst du {name} auf.',
   Page: 'Seite',
@@ -1283,8 +1287,8 @@ export const de: Dictionary = {
     'Auf diesem Mac gibt es keine Notizen in Apple Notizen.',
   'Those notes could not be read.': 'Diese Notizen konnten nicht gelesen werden.',
   'Read them from this Mac': 'Von diesem Mac lesen',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor unter Festplattenvollzugriff einschalten, dann erneut fragen.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden unter Festplattenvollzugriff einschalten, dann erneut fragen.',
   'Open the setting': 'Einstellung öffnen',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal exportiert selbst: Journal, Einstellungen, Exportieren. Apple Notizen hat keinen Export: abseits des Macs, auf dem sie liegen, gehört der Ordner eines Exporters hierher.',
@@ -1665,8 +1669,10 @@ export const de: Dictionary = {
   'that is not a theme': 'Das ist kein Design',
   'no such theme': 'Dieses Design gibt es nicht',
   'choose a model first': 'Wähle zuerst ein Modell',
+  'set an OpenAI key in Orden’s settings first':
+    'Hinterlege zuerst einen OpenAI-Schlüssel in den Einstellungen von Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'Hinterlege zuerst einen OpenAI-Schlüssel in den Einstellungen von nibeditor',
+    'Hinterlege zuerst einen OpenAI-Schlüssel in den Einstellungen von Orden',
   'that is a lot of questions - try again later':
     'Das sind viele Fragen - versuche es später erneut',
   'that is too much audio': 'Das ist zu viel Audio',
@@ -1825,7 +1831,7 @@ export const de: Dictionary = {
   'Stop what is running in {name}?': 'Beenden, was in {name} läuft?',
   'Stop what is running in these terminals?': 'Beenden, was in diesen Terminals läuft?',
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Standardbrowser',
   // The engine web tabs run on
   Engine: 'Engine',
@@ -1939,7 +1945,7 @@ export const de: Dictionary = {
   'Always on this site': 'Immer auf dieser Website',
   'Agents stopped': 'Agenten angehalten',
   'Agent tabs closed': 'Agenten-Tabs geschlossen',
-  'nibeditor is still running for your agents': 'nibeditor läuft für deine Agenten weiter',
+  'Orden is still running for your agents': 'Orden läuft für deine Agenten weiter',
   '{client} wants to connect': '{client} möchte sich verbinden',
   // Web logins that travel, and the devices of an account
   'no such device': 'Dieses Gerät gibt es nicht',
@@ -1955,8 +1961,8 @@ export const de: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agenten auf diesem Computer',
   'Your account’s connector': 'Connector deines Kontos',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor fragt dich einmal, wenn er sich zum ersten Mal verbindet.',
+  'Orden asks you once, the first time it connects.':
+    'Orden fragt dich einmal, wenn er sich zum ersten Mal verbindet.',
   'A client on another machine?': 'Ein Client auf einem anderen Gerät?',
   'Shown only once.': 'Wird nur einmal angezeigt.',
   'Remove {name}?': '{name} entfernen?',
@@ -2078,7 +2084,7 @@ export const de: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Schlummern',
   Reminders: 'Erinnerungen',
-  'Reminders ring while nibeditor is open': 'Erinnerungen klingeln, solange nibeditor offen ist',
+  'Reminders ring while Orden is open': 'Erinnerungen klingeln, solange Orden offen ist',
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bleiben',
   'Exact alarms': 'Genaue Wecker',

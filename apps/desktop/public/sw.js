@@ -1,7 +1,7 @@
-/** Nib's asset worker: the disk the browser build does not have.
+/** Orden's asset worker: the disk the browser build does not have.
  *
  *  A note writes `![](pictures/x.png)`, and that is the path the note keeps - in
- *  Nib, in Obsidian, in a text editor. On a desktop the webview is handed a URL
+ *  Orden, in Obsidian, in a text editor. On a desktop the webview is handed a URL
  *  for the file; in a browser the picture is a row in IndexedDB and the path is
  *  asked of the page's origin, where nothing answers. So the store gets an address
  *  and this answers it. See src/lib/web/asset-route.ts, which is the page's half
@@ -59,7 +59,7 @@ const TYPES = {
 
 const UNKNOWN_TYPE = 'application/octet-stream'
 
-/** A picture Nib stored is named by the hash of its own bytes, so that address can
+/** A picture Orden stored is named by the hash of its own bytes, so that address can
  *  never stand for anything else and is worth keeping for good. A file that came
  *  in under a name somebody chose can be replaced by different bytes tomorrow, so
  *  it is checked every time. */

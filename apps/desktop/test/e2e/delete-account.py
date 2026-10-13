@@ -78,7 +78,7 @@ def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
     mailed = worker.waits_for_mail(
-        PERSON, r"(\d{6}) is your nibeditor code", "the sign-in code", already
+        PERSON, r"(\d{6}) is your (?:nibeditor|Orden) code", "the sign-in code", already
     ).group(1)
     page.locator(".digits input").first.fill(mailed)
 
@@ -116,7 +116,7 @@ def drive(browser: Browser) -> None:
         page.get_by_role("button", name="Delete account").click()
         already = len(worker.written())
         mailed = worker.waits_for_mail(
-            PERSON, r"(\d{6}) deletes your nibeditor account", "the code that deletes", already
+            PERSON, r"(\d{6}) deletes your (?:nibeditor|Orden) account", "the code that deletes", already
         ).group(1)
         say(f"[{scheme}] the mail that deletes says {mailed}")
 
@@ -144,7 +144,7 @@ def drive(browser: Browser) -> None:
         shot(page, "gone")
 
         worker.waits_for_mail(
-            PERSON, r"Your nibeditor account has been deleted", "the receipt", already
+            PERSON, r"Your (?:nibeditor|Orden) account has been deleted", "the receipt", already
         )
         left = worker.query(f"select count(*) as n from users where email = '{PERSON}'")
         if left and left[0].get("n"):

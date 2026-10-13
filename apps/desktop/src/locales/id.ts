@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor kini bernama Orden',
+  'Notes from nibeditor.com': 'Catatan dari nibeditor.com',
+  'Nothing there': 'Tidak ada apa-apa',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder
@@ -566,8 +570,8 @@ export const id: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Menanyakan ke OpenAI model apa yang dapat dipakai kunci ini',
   'Could not reach OpenAI': 'Tidak dapat menghubungi OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Kunci itu tidak dapat memakai model apa pun yang diminta nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Kunci itu tidak dapat memakai model apa pun yang diminta Orden.',
   'No reasoning': 'Tanpa penalaran',
   Minimal: 'Minimal',
   Low: 'Rendah',
@@ -589,7 +593,7 @@ export const id: Dictionary = {
   Mode: 'Mode',
   // The window's own edges; see appearance.rs
   Window: 'Jendela',
-  'nibeditor’s own': 'Milik nibeditor',
+  'Orden’s own': 'Milik Orden',
   'The system’s': 'Milik sistem',
   'Window frame': 'Bingkai jendela',
   System: 'Sistem',
@@ -710,7 +714,7 @@ export const id: Dictionary = {
   '{used} of {limit} used.': '{used} dari {limit} terpakai.',
   'That image does not fit in your storage.': 'Gambar itu tidak cukup di penyimpanan Anda.',
   'out of space': 'penyimpanan penuh',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} siap dipasang.',
+  'Orden {version} is ready to install.': 'Orden {version} siap dipasang.',
   'Restart now': 'Mulai ulang sekarang',
   Later: 'Nanti',
   More: 'Lagi',
@@ -784,14 +788,14 @@ export const id: Dictionary = {
   'Reads your notes.': 'Membaca catatan Anda.',
   'Reads and writes your notes.': 'Membaca dan menulis catatan Anda.',
   Other: 'Lainnya',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Asisten AI dapat membaca catatan Anda - dan mengubahnya, jika Anda izinkan. Ia masuk dengan email nibeditor Anda; tidak ada yang perlu ditempel.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Asisten AI dapat membaca catatan Anda - dan mengubahnya, jika Anda izinkan. Ia masuk dengan email Orden Anda; tidak ada yang perlu ditempel.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Di Claude, buka Settings → Connectors dan klik Add custom connector.',
   'Open Claude’s connectors': 'Buka connectors Claude',
   'Fill in the two fields and click Add.': 'Isi kedua bidang lalu klik Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Klik Connect dan masuk dengan email nibeditor Anda.',
+  'Click Connect and sign in with your Orden email.':
+    'Klik Connect dan masuk dengan email Orden Anda.',
   'Using Claude Code instead?': 'Memakai Claude Code?',
   Command: 'Perintah',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -802,16 +806,16 @@ export const id: Dictionary = {
   'Open ChatGPT’s plugins': 'Buka plugins ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Tidak ada bagian Plugins atau tombol plus? Nyalakan Developer mode dahulu, di Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Masuk dengan email nibeditor Anda saat ChatGPT meminta.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Untuk memakainya dalam obrolan, ketik @ lalu pilih nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Masuk dengan email Orden Anda saat ChatGPT meminta.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Untuk memakainya dalam obrolan, ketik @ lalu pilih Orden.',
   'Server URL': 'URL server',
   Authentication: 'Autentikasi',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Biarkan pengaturan OAuth lanjutan apa adanya dan centang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Klien MCP apa pun yang memakai Streamable HTTP dengan OAuth. Beri URL-nya: ia mendaftar sendiri dan membuka halaman masuk nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Klien MCP apa pun yang memakai Streamable HTTP dengan OAuth. Beri URL-nya: ia mendaftar sendiri dan membuka halaman masuk Orden.',
   'Show config': 'Tampilkan konfigurasi',
   'For a client that takes a JSON block instead of a URL.':
     'Untuk klien yang menerima blok JSON bukan URL.',
@@ -881,7 +885,7 @@ export const id: Dictionary = {
   'Display name': 'Nama tampilan',
   'Your name': 'Nama Anda',
   Email: 'Email',
-  'On nibeditor.com': 'Di nibeditor.com',
+  'On orden.so': 'Di orden.so',
   'Your own domain': 'Domain Anda sendiri',
   'Switching gives up {name}.': 'Beralih berarti melepaskan {name}.',
   Page: 'Halaman',
@@ -1265,8 +1269,8 @@ export const id: Dictionary = {
     'Tidak ada catatan di Apple Notes pada Mac ini.',
   'Those notes could not be read.': 'Catatan itu tidak dapat dibaca.',
   'Read them from this Mac': 'Baca dari Mac ini',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Nyalakan nibeditor di Akses Disk Penuh, lalu coba lagi.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Nyalakan Orden di Akses Disk Penuh, lalu coba lagi.',
   'Open the setting': 'Buka pengaturan',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal mengekspor sendiri: Journal, Pengaturan, Ekspor. Apple Notes tidak punya ekspor, jadi jauh dari Mac tempatnya, yang diletakkan di sini adalah folder yang ditulis sebuah pengekspor.',
@@ -1626,8 +1630,8 @@ export const id: Dictionary = {
   'that is not a theme': 'itu bukan tema',
   'no such theme': 'tidak ada tema itu',
   'choose a model first': 'pilih sebuah model dahulu',
-  'set an OpenAI key in nibeditor’s settings first':
-    'atur kunci OpenAI di pengaturan nibeditor dahulu',
+  'set an OpenAI key in Orden’s settings first': 'atur kunci OpenAI di pengaturan Orden dahulu',
+  'set an OpenAI key in nibeditor’s settings first': 'atur kunci OpenAI di pengaturan Orden dahulu',
   'that is a lot of questions - try again later': 'itu banyak pertanyaan - coba lagi nanti',
   'that is too much audio': 'itu terlalu banyak audio',
   'that is more than a spoken command': 'itu lebih dari sebuah perintah ucapan',
@@ -1786,7 +1790,7 @@ export const id: Dictionary = {
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',
   'Paste {count} lines?': 'Tempel {count} baris?',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Peramban bawaan',
   // The engine web tabs run on
   Engine: 'Mesin',
@@ -1898,7 +1902,7 @@ export const id: Dictionary = {
   'Always on this site': 'Selalu di situs ini',
   'Agents stopped': 'Agen dihentikan',
   'Agent tabs closed': 'Tab agen ditutup',
-  'nibeditor is still running for your agents': 'nibeditor masih berjalan untuk agen Anda',
+  'Orden is still running for your agents': 'Orden masih berjalan untuk agen Anda',
   '{client} wants to connect': '{client} ingin terhubung',
   // Web logins that travel, and the devices of an account
   'no such device': 'tidak ada perangkat itu',
@@ -1914,8 +1918,8 @@ export const id: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agen di komputer ini',
   'Your account’s connector': 'Konektor akunmu',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor bertanya sekali, saat pertama kali ia terhubung.',
+  'Orden asks you once, the first time it connects.':
+    'Orden bertanya sekali, saat pertama kali ia terhubung.',
   'A client on another machine?': 'Klien di mesin lain?',
   'Shown only once.': 'Ditampilkan sekali saja.',
   'Remove {name}?': 'Hapus {name}?',
@@ -2030,7 +2034,7 @@ export const id: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Tunda',
   Reminders: 'Pengingat',
-  'Reminders ring while nibeditor is open': 'Pengingat berbunyi selama nibeditor terbuka',
+  'Reminders ring while Orden is open': 'Pengingat berbunyi selama Orden terbuka',
   Automatic: 'Otomatis',
   'Stay in the tray': 'Tetap di baki sistem',
   'Exact alarms': 'Alarm tepat',

@@ -133,9 +133,15 @@ export function withAsk(grant: Grant, category: Category, on: boolean): Grant {
   return { ...grant, asks: on ? rest : { ...rest, [category]: false } }
 }
 
-/** Whether the grant is the AI sidebar's own agent for a provider ("nib · Claude",
- *  src-tauri/src/ai_agent.rs): how much it asks is the thread's mode, not the grant's. */
-export const sidebars = (grant: Grant): boolean => grant.client.startsWith('nib · ')
+/** How the AI sidebar's own agent for a provider is filed: "Orden · Claude"
+ *  (src-tauri/src/ai_agent.rs), and "nib · Claude" by a crate from before the rename,
+ *  until it has rewritten its grants. */
+const SIDEBAR = ['Orden · ', 'nib · ']
+
+/** Whether the grant is the AI sidebar's own agent for a provider: how much it asks
+ *  is the thread's mode, not the grant's. */
+export const sidebars = (grant: Grant): boolean =>
+  SIDEBAR.some((prefix) => grant.client.startsWith(prefix))
 
 export const withMode = (grant: Grant, confirm: boolean): Grant => ({
   ...grant,

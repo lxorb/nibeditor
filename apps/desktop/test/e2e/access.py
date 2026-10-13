@@ -323,8 +323,8 @@ STILL = """
 }
 """
 
-# The catalogue lives behind nibeditor.com and this run is not about reaching it.
-TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR", "favicon")
+# The catalogue lives behind the service and this run is not about reaching it.
+TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR", "favicon")
 
 # The two axe-core rules this run still reports, each with the reason it is still
 # reported rather than fixed. Named here rather than switched off, so the count

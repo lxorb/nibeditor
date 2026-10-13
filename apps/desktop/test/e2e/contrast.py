@@ -144,10 +144,10 @@ FLOORS = {
     "--success": 4.5,
 }
 
-# The catalogue is behind nibeditor.com and this run is not about reaching it. A
+# The catalogue is behind the service and this run is not about reaching it. A
 # console error that is the browser reporting a request nobody could answer is not
 # the app going wrong.
-TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
+TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 
 def listen(page: Page, label: str) -> None:

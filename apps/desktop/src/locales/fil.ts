@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'Orden na ang nibeditor',
+  'Notes from nibeditor.com': 'Mga tala mula sa nibeditor.com',
+  'Nothing there': 'Walang laman doon',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder
@@ -569,8 +573,8 @@ export const fil: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Tinatanong sa OpenAI ang mga modelo ng key na ito',
   'Could not reach OpenAI': 'Hindi maabot ang OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Wala sa mga modelong hinahanap ng nibeditor ang magagamit ng key na iyon.',
+  'That key cannot use any of the models Orden asks for.':
+    'Wala sa mga modelong hinahanap ng Orden ang magagamit ng key na iyon.',
   'No reasoning': 'Walang pangangatwiran',
   Minimal: 'Kaunti',
   Low: 'Mababa',
@@ -592,7 +596,7 @@ export const fil: Dictionary = {
   Mode: 'Mode',
   // The window's own edges; see appearance.rs
   Window: 'Bintana',
-  'nibeditor’s own': 'Sa nibeditor',
+  'Orden’s own': 'Sa Orden',
   'The system’s': 'Sa sistema',
   'Window frame': 'Kuwadro ng bintana',
   System: 'Sistema',
@@ -716,7 +720,7 @@ export const fil: Dictionary = {
   '{used} of {limit} used.': '{used} sa {limit} ang gamit.',
   'That image does not fit in your storage.': 'Hindi kasya ang imaheng iyon sa imbakan mo.',
   'out of space': 'walang espasyo',
-  'nibeditor {version} is ready to install.': 'Puwede nang i-install ang nibeditor {version}.',
+  'Orden {version} is ready to install.': 'Puwede nang i-install ang Orden {version}.',
   'Restart now': 'I-restart ngayon',
   Later: 'Mamaya',
   More: 'Iba pa',
@@ -794,14 +798,14 @@ export const fil: Dictionary = {
   'Reads your notes.': 'Binabasa ang mga tala mo.',
   'Reads and writes your notes.': 'Binabasa at sinusulatan ang mga tala mo.',
   Other: 'Iba',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa nibeditor email mo; wala kang ipapaste.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa Orden email mo; wala kang ipapaste.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Sa Claude, buksan ang Settings → Connectors at i-click ang Add custom connector.',
   'Open Claude’s connectors': 'Buksan ang connectors ng Claude',
   'Fill in the two fields and click Add.': 'Punan ang dalawang kahon at i-click ang Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'I-click ang Connect at mag-sign in sa nibeditor email mo.',
+  'Click Connect and sign in with your Orden email.':
+    'I-click ang Connect at mag-sign in sa Orden email mo.',
   'Using Claude Code instead?': 'Claude Code ang gamit mo?',
   Command: 'Utos',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -812,16 +816,16 @@ export const fil: Dictionary = {
   'Open ChatGPT’s plugins': 'Buksan ang plugins ng ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Walang Plugins o walang plus? Buksan muna ang Developer mode sa Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Mag-sign in sa nibeditor email mo kapag nagtanong ang ChatGPT.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Para gamitin sa chat, i-type ang @ at piliin ang nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Mag-sign in sa Orden email mo kapag nagtanong ang ChatGPT.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Para gamitin sa chat, i-type ang @ at piliin ang Orden.',
   'Server URL': 'URL ng server',
   Authentication: 'Pagpapatunay',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Huwag galawin ang advanced OAuth settings at tsekan ang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng Orden.',
   'Show config': 'Ipakita ang config',
   'For a client that takes a JSON block instead of a URL.':
     'Para sa client na tumatanggap ng JSON block kaysa URL.',
@@ -892,7 +896,7 @@ export const fil: Dictionary = {
   'Display name': 'Pangalang ipapakita',
   'Your name': 'Pangalan mo',
   Email: 'Email',
-  'On nibeditor.com': 'Sa nibeditor.com',
+  'On orden.so': 'Sa orden.so',
   'Your own domain': 'Sariling domain mo',
   'Switching gives up {name}.': 'Ang pagpalit ay pagbibitiw sa {name}.',
   Page: 'Pahina',
@@ -1282,8 +1286,8 @@ export const fil: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'Walang tala sa Apple Notes sa Mac na ito.',
   'Those notes could not be read.': 'Hindi nabasa ang mga talang iyon.',
   'Read them from this Mac': 'Basahin mula sa Mac na ito',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Buksan ang nibeditor sa Full Disk Access, pagkatapos subukan muli.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Buksan ang Orden sa Full Disk Access, pagkatapos subukan muli.',
   'Open the setting': 'Buksan ang setting',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Nag-e-export ang Apple Journal mismo: Journal, Settings, Export. Walang export ang Apple Notes, kaya kapag wala ka sa Mac na naglalaman nito, ang ihuhulog ay folder na isinulat ng isang exporter.',
@@ -1659,8 +1663,9 @@ export const fil: Dictionary = {
   'that is not a theme': 'hindi iyon tema',
   'no such theme': 'walang ganoong tema',
   'choose a model first': 'pumili muna ng modelo',
+  'set an OpenAI key in Orden’s settings first': 'magtakda muna ng OpenAI key sa setting ng Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'magtakda muna ng OpenAI key sa setting ng nibeditor',
+    'magtakda muna ng OpenAI key sa setting ng Orden',
   'that is a lot of questions - try again later': 'napakadaming tanong - subukan mamaya',
   'that is too much audio': 'masyadong mahaba ang audio',
   'that is more than a spoken command': 'mas mahaba iyon sa isang utos sa tinig',
@@ -1822,7 +1827,7 @@ export const fil: Dictionary = {
     one: 'I-paste ang {count} linya?',
     other: 'I-paste ang {count} na linya?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Default na browser',
   // The engine web tabs run on
   Engine: 'Engine',
@@ -1938,8 +1943,7 @@ export const fil: Dictionary = {
   'Always on this site': 'Palagi sa site na ito',
   'Agents stopped': 'Itinigil ang mga agent',
   'Agent tabs closed': 'Isinara ang mga tab ng agent',
-  'nibeditor is still running for your agents':
-    'Tumatakbo pa rin ang nibeditor para sa iyong mga agent',
+  'Orden is still running for your agents': 'Tumatakbo pa rin ang Orden para sa iyong mga agent',
   '{client} wants to connect': 'Gustong kumonekta ng {client}',
   // Web logins that travel, and the devices of an account
   'no such device': 'walang ganoong device',
@@ -1955,8 +1959,8 @@ export const fil: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Mga agent sa computer na ito',
   'Your account’s connector': 'Connector ng iyong account',
-  'nibeditor asks you once, the first time it connects.':
-    'Magtatanong ang nibeditor nang isang beses, sa unang pagkonekta nito.',
+  'Orden asks you once, the first time it connects.':
+    'Magtatanong ang Orden nang isang beses, sa unang pagkonekta nito.',
   'A client on another machine?': 'Isang client sa ibang makina?',
   'Shown only once.': 'Ipinapakita nang isang beses lang.',
   'Remove {name}?': 'Alisin ang {name}?',
@@ -2077,7 +2081,7 @@ export const fil: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'I-snooze',
   Reminders: 'Mga paalala',
-  'Reminders ring while nibeditor is open': 'Tumutunog ang mga paalala habang bukas ang nibeditor',
+  'Reminders ring while Orden is open': 'Tumutunog ang mga paalala habang bukas ang Orden',
   Automatic: 'Awtomatiko',
   'Stay in the tray': 'Manatili sa tray',
   'Exact alarms': 'Eksaktong alarma',

@@ -7,12 +7,12 @@
  *
  *  The request is made by the page itself, from the device, to whichever provider
  *  the reader chose - or, for Claude Code and Codex, by the program the reader installed,
- *  started on this machine by the crate. Nothing goes through nibeditor's own server:
+ *  started on this machine by the crate. Nothing goes through Orden's own server:
  *  the account never sees the question, the note or the key. The one exception is not
  *  an exception at all - the glasses ask through the Worker with the account's own
  *  OpenAI key, which is a different key for a different thing; see services/sync/src/ask
  *  and the AI pane, which says so. A plan cannot be spent there: the Worker is
- *  nibeditor's server, and no plan's terms let a server spend a reader's plan.
+ *  Orden's server, and no plan's terms let a server spend a reader's plan.
  *
  *  Streaming because an answer is read as it arrives, and abortable because a person
  *  who has read enough should be able to stop paying for the rest. */

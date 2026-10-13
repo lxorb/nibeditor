@@ -2,7 +2,7 @@
 
 A theme from the store is an ordinary stylesheet that restates tokens, so a pass
 over the shell's tokens is exactly the kind of change that can break one. This
-reads the catalogue nibeditor.com serves, says how many themes are in it, and
+reads the catalogue the service serves, says how many themes are in it, and
 drops two of them onto the built app the same way installing does - into a
 `<style id="nib-user-theme">` on the page; see theme.svelte.ts - then photographs
 the shell wearing each.
@@ -30,7 +30,7 @@ SHOTS = DRIVE.shots
 APP = harness.APP
 
 
-REGISTRY = "https://nibeditor.com/themes"
+REGISTRY = "https://orden.so/themes"
 
 # Two that push in opposite directions: one dark and cool, one warm paper.
 WORN = ["github", "newsprint"]

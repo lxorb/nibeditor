@@ -202,7 +202,7 @@ export class NoteDoc {
   /** What this document is called wherever it is listed: its tab, a row in the
    *  file list, a menu's heading, the window title.
    *
-   *  Its file's name without the extension Nib keeps its own documents under -
+   *  Its file's name without the extension Orden keeps its own documents under -
    *  or, for a note nobody has named, the words at the top of it, so three drafts
    *  open at once read as three notes rather than three Untitleds. */
   readonly shown = $derived(

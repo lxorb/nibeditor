@@ -21,7 +21,7 @@ export interface WindowDocument {
   path: string | null
 }
 
-const APP = 'nibeditor'
+const APP = 'Orden'
 
 /** The window's side of the tab in front. */
 export function windowDocument(active: Showing | null, mac: boolean): WindowDocument {

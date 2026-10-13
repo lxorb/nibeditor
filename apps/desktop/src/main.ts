@@ -1,3 +1,5 @@
+// First, before anything of this run is written; see RenameNotice.svelte.
+import './lib/renamed.svelte'
 import '@nib/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'

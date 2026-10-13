@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor heisst jetzt Orden',
+  'Notes from nibeditor.com': 'Notize vo nibeditor.com',
+  'Nothing there': 'Det häts nüt',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder
@@ -566,8 +570,8 @@ export const gsw: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAI wird gfragt, weli Modäll de Schlüssel darf',
   'Could not reach OpenAI': 'OpenAI nöd erreichbar',
-  'That key cannot use any of the models nibeditor asks for.':
-    'De Schlüssel darf kes vo de Modäll, wo nibeditor bruucht.',
+  'That key cannot use any of the models Orden asks for.':
+    'De Schlüssel darf kes vo de Modäll, wo Orden bruucht.',
   'No reasoning': 'Ohni Naadänke',
   Minimal: 'Minimal',
   Low: 'Weniig',
@@ -589,7 +593,7 @@ export const gsw: Dictionary = {
   Mode: 'Modus',
   // The window's own edges; see appearance.rs
   Window: 'Fänschter',
-  'nibeditor’s own': 'Vo nibeditor',
+  'Orden’s own': 'Vo Orden',
   'The system’s': 'Vom Syschtem',
   'Window frame': 'Fänschterrahme',
   System: 'System',
@@ -713,7 +717,7 @@ export const gsw: Dictionary = {
   '{used} of {limit} used.': '{used} vo {limit} bruucht.',
   'That image does not fit in your storage.': 'Das Bild hät nöd meh Platz i dim Spycher.',
   'out of space': 'kei Platz meh',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} isch parat zum Installiere.',
+  'Orden {version} is ready to install.': 'Orden {version} isch parat zum Installiere.',
   'Restart now': 'Jetzt neu starte',
   Later: 'Spöter',
   More: 'Meh',
@@ -789,14 +793,14 @@ export const gsw: Dictionary = {
   'Reads your notes.': 'Liist dini Notize.',
   'Reads and writes your notes.': 'Liist und schriibt dini Notize.',
   Other: 'Anderi',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'En KI-Assistent cha dini Notize läse - und ändere, wenn du s erlaubsch. Er mäldet sich mit dinere nibeditor-E-Mail aa; es muess nüt iigfüegt wärde.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'En KI-Assistent cha dini Notize läse - und ändere, wenn du s erlaubsch. Er mäldet sich mit dinere Orden-E-Mail aa; es muess nüt iigfüegt wärde.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Mach i Claude Iistellige → Connectors uf und klick uf Eigene Connector hinzuefüege.',
   'Open Claude’s connectors': 'Connectors i Claude uufmache',
   'Fill in the two fields and click Add.': 'Füll di zwei Fälder uus und klick uf Hinzuefüege.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Klick uf Verbinde und mäld di mit dinere nibeditor-E-Mail aa.',
+  'Click Connect and sign in with your Orden email.':
+    'Klick uf Verbinde und mäld di mit dinere Orden-E-Mail aa.',
   'Using Claude Code instead?': 'Lieber Claude Code?',
   Command: 'Befehl',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -807,16 +811,16 @@ export const gsw: Dictionary = {
   'Open ChatGPT’s plugins': 'Plugins in ChatGPT öffne',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Kei Bereich Plugins oder kei Plus? Schalt zerscht de Entwicklermodus ii, under Iistellige → Sicherheit und Aamäldig.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Mäld di mit dinere nibeditor-E-Mail aa, wenn ChatGPT dernaa fröget.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Tipp in eme Chat @ und wähl nibeditor, zum s bruuche.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Mäld di mit dinere Orden-E-Mail aa, wenn ChatGPT dernaa fröget.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Tipp in eme Chat @ und wähl Orden, zum s bruuche.',
   'Server URL': 'Server-URL',
   Authentication: 'Authentifizierig',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Laa di erwiiterete OAuth-Iistellige, wie si sind, und hagg „Ich verstehe und möchte fortfahren“ aa.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo nibeditor uf.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo Orden uf.',
   'Show config': 'Konfiguration aazeige',
   'For a client that takes a JSON block instead of a URL.':
     'Für en Client, wo statt ere URL en JSON-Block nimmt.',
@@ -885,7 +889,7 @@ export const gsw: Dictionary = {
   'Display name': 'Aazeigname',
   'Your name': 'Din Name',
   Email: 'E-Mail',
-  'On nibeditor.com': 'Uf nibeditor.com',
+  'On orden.so': 'Uf orden.so',
   'Your own domain': 'Eigeni Domain',
   'Switching gives up {name}.': 'Bim Wächsle gisch du {name} uf.',
   Page: 'Siite',
@@ -1271,8 +1275,8 @@ export const gsw: Dictionary = {
   'There are no notes in Apple Notes on this Mac.': 'Uf dem Mac git s kei Notize in Apple Notize.',
   'Those notes could not be read.': 'Die Notize hend sich nöd läse laa.',
   'Read them from this Mac': 'Vo dem Mac läse',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor bi Festplattevollzuegriff aaschalte, denn no mal frage.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden bi Festplattevollzuegriff aaschalte, denn no mal frage.',
   'Open the setting': 'Iistellig ufmache',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal exportiert sälber: Journal, Iistellige, Exportiere. Apple Notize het kei Export: wäg vom Mac, wo si druf sind, ghört de Ordner vo eme Exporter do häre.',
@@ -1636,8 +1640,10 @@ export const gsw: Dictionary = {
   'that is not a theme': 'Das isch kes Design',
   'no such theme': 'Das Design gits nöd',
   'choose a model first': 'Wähl zerscht es Modäll',
+  'set an OpenAI key in Orden’s settings first':
+    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo Orden ab',
   'set an OpenAI key in nibeditor’s settings first':
-    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo nibeditor ab',
+    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo Orden ab',
   'that is a lot of questions - try again later': 'Das sind vil Frage - probier s spöter nomal',
   'that is too much audio': 'Das isch z vil Audio',
   'that is more than a spoken command': 'Das isch mee als en Sprachbefehl',
@@ -1795,7 +1801,7 @@ export const gsw: Dictionary = {
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Standardbrowser',
   // The engine web tabs run on
   Engine: 'Engine',
@@ -1909,7 +1915,7 @@ export const gsw: Dictionary = {
   'Always on this site': 'Immer uf dere Websiite',
   'Agents stopped': 'Agänte aaghalte',
   'Agent tabs closed': 'Agänte-Tabs zuegmacht',
-  'nibeditor is still running for your agents': 'nibeditor lauft für dini Agänte wiiter',
+  'Orden is still running for your agents': 'Orden lauft für dini Agänte wiiter',
   '{client} wants to connect': '{client} wott sich verbinde',
   // Web logins that travel, and the devices of an account
   'no such device': 'Das Gerät gits nöd',
@@ -1925,8 +1931,8 @@ export const gsw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agänte uf däm Computer',
   'Your account’s connector': 'Connector vo dim Konto',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor fragt di einisch, wenn er sich s erscht Mal verbindet.',
+  'Orden asks you once, the first time it connects.':
+    'Orden fragt di einisch, wenn er sich s erscht Mal verbindet.',
   'A client on another machine?': 'En Client uf eme andere Grät?',
   'Shown only once.': 'Wird nume einisch azeigt.',
   'Remove {name}?': '{name} entferne?',
@@ -2048,7 +2054,7 @@ export const gsw: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Schlummere',
   Reminders: 'Erinnerige',
-  'Reminders ring while nibeditor is open': 'Erinnerige lüütet, solang nibeditor offe isch',
+  'Reminders ring while Orden is open': 'Erinnerige lüütet, solang Orden offe isch',
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bliibe',
   'Exact alarms': 'Gnaui Wecker',

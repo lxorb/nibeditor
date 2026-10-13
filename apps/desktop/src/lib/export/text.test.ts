@@ -60,7 +60,7 @@ describe('prose', () => {
   })
 
   test('writes a link as its words and then its address', () => {
-    expect(TEXT).toContain('a link (https://nibeditor.com)')
+    expect(TEXT).toContain('a link (https://orden.so)')
   })
 
   test('writes a link whose words are its address only once', () => {

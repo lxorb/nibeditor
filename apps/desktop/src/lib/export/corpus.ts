@@ -14,7 +14,7 @@ date: 2026-09-08
 # Export corpus
 
 Prose with **bold**, *italic*, ~~struck~~, ==marked==, \`inline code\`, H~2~O,
-x^2^, a [link](https://nibeditor.com), a footnote[^one] and inline maths
+x^2^, a [link](https://orden.so), a footnote[^one] and inline maths
 $E = mc^2$ in one paragraph.
 
 [^one]: The footnote's own words, with **bold** in them.
@@ -43,7 +43,7 @@ $$
 
 ![Pasted picture](assets/pic.png)
 
-![Remote picture](https://nibeditor.com/remote.jpg)
+![Remote picture](https://orden.so/remote.jpg)
 
 ## Links and lists
 

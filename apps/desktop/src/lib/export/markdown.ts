@@ -1,4 +1,4 @@
-/** The note as markdown, for somewhere that is not Nib.
+/** The note as markdown, for somewhere that is not Orden.
  *
  *  Byte for byte what the editor holds, front matter and all, with two things
  *  changed and nothing else: a `[[wikilink]]` becomes a real relative link,

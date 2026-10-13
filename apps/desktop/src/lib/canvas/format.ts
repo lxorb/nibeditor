@@ -1,7 +1,7 @@
 /** The canvas file, as the app sees it.
  *
  *  The format itself lives in `@nib/markdown/canvas`, next to the wikilink
- *  grammar and for the same reason: three parts of Nib read it, and one of them
+ *  grammar and for the same reason: three parts of Orden read it, and one of them
  *  is a worker that has no app around it. This file is what the surface imports,
  *  so nothing in the app has to know where the format went, and it is where the
  *  handful of things only a surface needs are kept. */

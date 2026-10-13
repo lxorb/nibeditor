@@ -86,7 +86,7 @@ const REMOTE = jpeg(1200, 600)
 const PICTURES: Picture[] = [
   { src: 'assets/pic.png', name: 'pic.png', mime: 'image/png', bytes: LOCAL },
   {
-    src: 'https://nibeditor.com/remote.jpg',
+    src: 'https://orden.so/remote.jpg',
     name: 'remote.jpg',
     mime: 'image/jpeg',
     bytes: REMOTE,
@@ -268,7 +268,7 @@ describe('what the note says reaches the document', () => {
   })
 
   test('a link, pointing where the note pointed', () => {
-    expect(rels).toContain('https://nibeditor.com')
+    expect(rels).toContain('https://orden.so')
     expect(document_).toContain('<w:hyperlink')
   })
 

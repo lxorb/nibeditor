@@ -109,7 +109,7 @@ test('a shell is running, so a close has something to ask about', () => {
 test('only the busy terminal is named, and Quit anyway goes on', async () => {
   const { answered } = await quitting()
 
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit nibeditor?')
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
   expect(names()).toEqual(['claude · nib'])
   expect(asked).toContain('quit_show')
 
@@ -183,7 +183,7 @@ test('the last window closing is the app quitting', async () => {
   const closing = mayStop('window')
   await vi.waitFor(() => expect(quitAsk.open).toBe(true))
   flushSync()
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit nibeditor?')
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Quit Orden?')
   button('Cancel')?.click()
   expect(await closing).toBe(false)
 })
@@ -192,7 +192,7 @@ test("an update's restart asks the same way", async () => {
   const restarting = mayStop('restart')
   await vi.waitFor(() => expect(quitAsk.open).toBe(true))
   flushSync()
-  expect(sheet()?.querySelector('.title')?.textContent).toBe('Restart nibeditor?')
+  expect(sheet()?.querySelector('.title')?.textContent).toBe('Restart Orden?')
   button('Restart anyway')?.click()
   expect(await restarting).toBe(true)
 })

@@ -112,7 +112,7 @@ export function extracted(text: string, from: number, to: number, fallback: stri
   return { kept, taken: `${taken}\n`, name }
 }
 
-/** What ends a sentence, in the scripts Nib is written for. */
+/** What ends a sentence, in the scripts Orden is written for. */
 const SENTENCE_END = /[.!?。！？]+$/u
 
 /** A passage as something a link can show: its first line, without the markup

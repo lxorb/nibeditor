@@ -557,9 +557,9 @@ def main() -> int:
         say(f"the sheet lists {WRITER} as invited")
 
         token = worker.waits_for_mail(
-            WRITER, r"https://nibeditor\.com/join/([a-f0-9]+)", "the invitation"
+            WRITER, r"https://(?:orden\.so|nibeditor\.com)/join/([a-f0-9]+)", "the invitation"
         ).group(1)
-        say("the invitation carries a link to nibeditor.com")
+        say("the invitation carries a link to the service")
 
         dismiss(owner)
 
@@ -822,7 +822,7 @@ def main() -> int:
         say(f"{ALONE} was given one note out of {SOLO}")
 
         token = worker.waits_for_mail(
-            ALONE, r"https://nibeditor\.com/join/([a-f0-9]+)", "the note's invitation"
+            ALONE, r"https://(?:orden\.so|nibeditor\.com)/join/([a-f0-9]+)", "the note's invitation"
         ).group(1)
         said = worker.mail_to(ALONE)
         if "shared the note" not in said:
