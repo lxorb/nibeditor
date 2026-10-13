@@ -88,6 +88,7 @@ jobs:
           # cache holds 10 GB, and half a gigabyte saved for a job with time to
           # spare pushed out a Rust cache a slower job needed.
           cache: ${{ matrix.platform != 'ubuntu-22.04-arm' && 'pnpm' || '' }}
+          package-manager-cache: ${{ matrix.platform != 'ubuntu-22.04-arm' }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
         with:
