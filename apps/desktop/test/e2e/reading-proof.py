@@ -28,6 +28,9 @@ assert spec and spec.loader
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 
+#: speed.py's lanes measure through Chromium's DevTools.
+NEEDS = ("chromium",)
+
 #: Two runs of this drive are compared, so neither clears what the other wrote.
 DRIVE = Drive(__file__, served=False, fresh=False)
 
