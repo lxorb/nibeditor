@@ -129,8 +129,8 @@ $commonPrograms = [Environment]::GetFolderPath('CommonPrograms')
 $commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
 $where = ''
 $first = Files $Old
-$new = Files $New
-$version = (Get-Item $new.Setup).Name -replace '^[^_]+_([^_]+)_.*$', '$1'
+$built = Files $New
+$version = (Get-Item $built.Setup).Name -replace '^[^_]+_([^_]+)_.*$', '$1'
 
 $hkcu = 'HKCU:\Software'
 $uninstall = "$hkcu\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -150,11 +150,11 @@ Check "$OldName is installed in $dir" (Test-Path "$dir\nib.exe")
 
 # Then the later old release over it, which keeps that folder.
 if ($Via) {
-  $via = Files $Via
+  $later = Files $Via
   if ($Scenario -eq 'msi') {
-    Run 'msiexec.exe' "/i `"$($via.Msi)`" /qn /l*v `"$env:RUNNER_TEMP\via-msi.log`"" | Out-Null
+    Run 'msiexec.exe' "/i `"$($later.Msi)`" /qn /l*v `"$env:RUNNER_TEMP\via-msi.log`"" | Out-Null
   } else {
-    Run $via.Setup '/S' | Out-Null
+    Run $later.Setup '/S' | Out-Null
   }
   Check "$ViaName is installed in $dir" ((Test-Path "$dir\nib.exe") -and -not (Test-Path "$($dir -replace '[^\\]+$', $ViaName)\nib.exe"))
 }
@@ -170,10 +170,10 @@ $hadDesktop = Test-Path "$desktop\$before.lnk"
 
 # --- the update
 switch ($Scenario) {
-  'updater' { Run $new.Setup '/P /UPDATE' | Out-Null; $want = $dir }
-  'silent' { Run $new.Setup '/S' | Out-Null; $want = $dir }
-  'elsewhere' { $want = 'C:\nib-elsewhere'; Run $new.Setup "/S /D=$want" | Out-Null }
-  'msi' { Run 'msiexec.exe' "/i `"$($new.Msi)`" /passive /norestart /l*v `"$env:RUNNER_TEMP\new-msi.log`"" | Out-Null; $want = $dir }
+  'updater' { Run $built.Setup '/P /UPDATE' | Out-Null; $want = $dir }
+  'silent' { Run $built.Setup '/S' | Out-Null; $want = $dir }
+  'elsewhere' { $want = 'C:\nib-elsewhere'; Run $built.Setup "/S /D=$want" | Out-Null }
+  'msi' { Run 'msiexec.exe' "/i `"$($built.Msi)`" /passive /norestart /l*v `"$env:RUNNER_TEMP\new-msi.log`"" | Out-Null; $want = $dir }
 }
 Show 'after'
 
