@@ -99,6 +99,9 @@ mod ground;
 // A second launch that finds the first not answering; see handover.rs.
 #[cfg(desktop)]
 mod handover;
+// PDFs another program opens with nib, brought into a space; see handed_pdfs.rs.
+#[cfg(desktop)]
+mod handed_pdfs;
 mod highlights;
 mod history;
 // The global shortcut plugin, added once for whoever holds a key from any app; see hotkeys.rs.
@@ -369,6 +372,8 @@ macro_rules! desktop_commands {
             obsidian_vaults::obsidian_vault_files,
             obsidian_vaults::read_obsidian_file,
             launch::take_startup_pages,
+            launch::take_startup_pdfs,
+            handed_pdfs::bring_in_pdf,
             launch::new_window,
             launch::show_window,
             ahead::launch_ahead,
@@ -826,9 +831,9 @@ fn ready(
     trace::mark("automation endpoint");
 
     // A command line is a desktop's way of being handed a link, when nib is the
-    // browser; never a note, since nib opens nothing from outside its spaces (see
-    // launch.rs). A phone app is launched by tapping it, and there is nothing in
-    // `args` worth reading.
+    // browser, and a PDF opened with nib; never a note, since nib opens nothing from
+    // outside its spaces (see launch.rs). A phone app is launched by tapping it, and
+    // there is nothing in `args` worth reading.
     //
     // Added to, not replaced: on a Mac a link the system opened the app with may
     // already be waiting there; see lifecycle.rs. And the trace says which kind of
@@ -836,9 +841,8 @@ fn ready(
     #[cfg(desktop)]
     {
         let args: Vec<String> = std::env::args().collect();
-        if let Some(pending) = handle.try_state::<launch::Pending>() {
-            pending.hold(launch::Handed::Pages, launch::handed_by(&args));
-        }
+        let cwd = std::env::current_dir().unwrap_or_default();
+        launch::hold_handed(handle, &args, &cwd);
         trace::mark(if web_handed::for_a_link(&args) {
             "launch arguments, a link's"
         } else {

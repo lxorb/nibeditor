@@ -28,8 +28,9 @@ const MAX_NAME: usize = 120;
 
 /// How large a file the window may read whole. Bigger than any PDF anyone keeps
 /// notes on - a scanned book of a thousand pages is well under this - and small
-/// enough that one read cannot exhaust the memory of the window asking.
-const FILE_LIMIT: u64 = 192 * 1024 * 1024;
+/// enough that one read cannot exhaust the memory of the window asking. A PDF another
+/// program hands over is held to it too, since it is read in a tab once it is in.
+pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 
 /// A file beside a note as its bytes, for the window to read itself: the PDF a
 /// tab is showing, which is far too large to spell out as text.

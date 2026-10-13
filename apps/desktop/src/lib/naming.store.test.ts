@@ -18,6 +18,8 @@ const folders = new Set<string>()
  *  they are not UTF-8. The crate fails the read and still stamps the file. */
 const locked = new Set<string>()
 const sent: string[] = []
+/** Files on the disk outside every space, which only a PDF opened with nib is read from. */
+const outside = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
@@ -144,6 +146,19 @@ vi.mock('./tauri', async (importOriginal) => ({
           if (one === path || one.startsWith(`${path}/`)) folders.delete(one)
         }
         return undefined
+      case 'bring_in_pdf': {
+        // The crate's answer, from a disk outside the spaces; see handed_pdfs.rs.
+        const words = outside.get(text(args?.from))
+        const root = text(args?.space)
+        if (words === undefined) throw new Error('not handed to nib')
+        const there = [...files].find(([one, held]) => one.startsWith(`${root}/`) && held === words)
+        if (there) return { path: there[0], fresh: false }
+        const name = text(args?.from).split('/').pop() ?? ''
+        let at = `${root}/${name}`
+        for (let n = 2; files.has(at); n++) at = `${root}/${name.replace(/\.pdf$/, ` ${n}.pdf`)}`
+        files.set(at, words)
+        return { path: at, fresh: true }
+      }
       case 'read_tree':
         return listing(text(args?.root))
       case 'file_stamp':
@@ -695,6 +710,41 @@ describe('files dropped from outside', () => {
     expect(files.has('/space/Beta 2.md')).toBe(false)
     expect(files.has('/space/Trip/a.md')).toBe(false)
     expect(files.get('/space/Beta.md')).toBe('# Beta')
+  })
+})
+
+/** A PDF another program opened with nib: copied in at the top of the space like a
+ *  file dropped there, unless the space holds it already. */
+describe('a PDF opened with nib', () => {
+  beforeEach(() => {
+    outside.set('/downloads/Paper.pdf', '%PDF paper')
+  })
+
+  test('arrives at the top of the space, on the list and one undo away', async () => {
+    const landed = await workspace.bringInPdf('/downloads/Paper.pdf', '/space')
+
+    expect(landed).toBe('/space/Paper.pdf')
+    expect(rows()).toContain('/space/Paper.pdf')
+    expect(workspace.undoLabel).toBe('Undo the copy')
+
+    await workspace.undoFileAction()
+    expect(files.has('/space/Paper.pdf')).toBe(false)
+  })
+
+  test('and is the copy the space has when it has one', async () => {
+    files.set('/space/Work/Read.pdf', '%PDF paper')
+    await workspace.loadTree()
+    const before = workspace.undoLabel
+
+    expect(await workspace.bringInPdf('/downloads/Paper.pdf', '/space')).toBe(
+      '/space/Work/Read.pdf',
+    )
+    expect(files.has('/space/Paper.pdf')).toBe(false)
+    expect(workspace.undoLabel).toBe(before)
+  })
+
+  test('and nothing at all when it could not be brought in', async () => {
+    expect(await workspace.bringInPdf('/downloads/Gone.pdf', '/space')).toBeNull()
   })
 })
 

@@ -6,7 +6,7 @@
  *  request from the `nib` command arrives as an event from the endpoint. Both go
  *  through `dispatch`; see verbs.ts. A web page another program handed over is
  *  started here too, but it asks nothing of a space and is only shown: see
- *  web-tab/handed.ts.
+ *  web-tab/handed.ts. So is a PDF opened with nib: see pdf/handed.ts.
  *
  *  What is here rather than in verbs.ts: everything about arriving and answering -
  *  the listeners, the callbacks, and the one sentence the reader is shown when a
@@ -59,6 +59,9 @@ export async function startAutomation(): Promise<() => void> {
   if (isDesktop) {
     const { hearPages } = await import('../web-tab/handed')
     stopping.push(await hearPages())
+    // And a PDF another program opened with nib; see pdf/handed.ts.
+    const { hearPdfs } = await import('../pdf/handed')
+    stopping.push(await hearPdfs())
   }
 
   // The link the app was launched by, which arrived before anything was listening.

@@ -1,17 +1,19 @@
 //! Starting up and opening windows: what the app is handed, and the extra windows
 //! someone asks for while it is running.
 //!
-//! What is handed to the app is web pages, because nib can be the browser: a link
-//! clicked in another program arrives on a command line, which is how Windows and Linux
-//! hand one over; as a second launch, which is the same thing reaching an app that is
-//! already open; and on a Mac as the system's own "open these"; see lifecycle.rs. Which
-//! of what arrived is a page is `web_handed.rs`.
+//! What is handed to the app is web pages, because nib can be the browser, and PDFs,
+//! because nib reads them: a link clicked in another program or a PDF opened with nib
+//! arrives on a command line, which is how Windows and Linux hand one over; as a second
+//! launch, which is the same thing reaching an app that is already open; and on a Mac
+//! as the system's own "open these"; see lifecycle.rs. Which of what arrived is a page
+//! is `web_handed.rs`, and which is a PDF is `handed_pdfs.rs`.
 //!
-//! Never a file. nib opens nothing from outside its spaces, so it claims no file type
-//! anywhere, and a path that reaches it all the same - an "Open with" the system still
-//! remembers, a note dropped on the Dock icon, a path typed after `nib` in a terminal -
-//! is nothing to open. A note is reached through the app itself, or through a `nib://`
-//! link, which names it inside a space; see uris.rs.
+//! Never a note. nib opens nothing from outside its spaces, so it claims no note's file
+//! type anywhere, and a note's path that reaches it all the same - an "Open with" the
+//! system still remembers, a note dropped on the Dock icon, a path typed after `nib` in
+//! a terminal - is nothing to open. A note is reached through the app itself, or
+//! through a `nib://` link, which names it inside a space; see uris.rs. A PDF is the one
+//! file taken, and it is brought into a space before it is read.
 //!
 //! What arrives before a window can take it waits here until one asks, and what arrives
 //! after goes to the window in front, the way a link clicked elsewhere lands in the
@@ -31,12 +33,14 @@ static WINDOWS: AtomicU32 = AtomicU32::new(0);
 /// The label of the window the app starts with.
 const MAIN: &str = "main";
 
-/// The kinds of thing the system hands the app, which is one: a file is never among
-/// them (see the top of this file).
+/// The kinds of thing the system hands the app: a note is never among them (see the
+/// top of this file).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
     /// Web pages to show in tabs of their own; see `web_handed.rs`.
     Pages,
+    /// PDFs to read in nib's own viewer; see `handed_pdfs.rs`.
+    Pdfs,
 }
 
 impl Handed {
@@ -44,6 +48,7 @@ impl Handed {
     fn event(self) -> &'static str {
         match self {
             Self::Pages => "nib://open-pages",
+            Self::Pdfs => "nib://open-pdfs",
         }
     }
 }
@@ -57,6 +62,7 @@ pub struct Pending(Mutex<Waiting>);
 #[derive(Default)]
 struct Waiting {
     pages: Road,
+    pdfs: Road,
     /// Whether the launch has built its own window. Until it has, whatever finds no
     /// window waits for that one rather than opening another.
     launched: bool,
@@ -77,6 +83,7 @@ impl Waiting {
     fn road(&mut self, handed: Handed) -> &mut Road {
         match handed {
             Handed::Pages => &mut self.pages,
+            Handed::Pdfs => &mut self.pdfs,
         }
     }
 }
@@ -103,6 +110,7 @@ impl Pending {
     pub fn forget(&self, label: &str) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.pages.listening.remove(label);
+            waiting.pdfs.listening.remove(label);
         }
     }
 
@@ -132,12 +140,21 @@ impl Pending {
     }
 }
 
-/// What a command line hands the app: the pages it asks for, and nothing else. A path
-/// on it is no note to open; see the top of this file. And a launch Windows made for a
-/// link is about that one address, which `pages_in` reads whole; see `for_a_link` in
-/// `web_handed.rs`.
+/// The pages a command line asks for. A path on it is no note to open; see the top of
+/// this file. And a launch Windows made for a link is about that one address, which
+/// `pages_in` reads whole; see `for_a_link` in `web_handed.rs`.
 pub fn handed_by(args: &[String]) -> Vec<String> {
     crate::web_handed::pages_in(args)
+}
+
+/// What a command line hands the app, each kind put aside for the window: its pages,
+/// and the PDFs it names, read from where the launch was made.
+pub fn hold_handed(app: &AppHandle, args: &[String], cwd: &std::path::Path) {
+    if let Some(pending) = app.try_state::<Pending>() {
+        pending.hold(Handed::Pages, handed_by(args));
+        let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
+        pending.hold(Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
+    }
 }
 
 /// Handed to the window once it is ready: the links the app was started for, and from
@@ -150,6 +167,12 @@ pub fn take_startup_pages(
     pending: tauri::State<'_, Pending>,
 ) -> Vec<String> {
     pending.take(Handed::Pages, window.label())
+}
+
+/// The same for the PDFs another program opened with nib; see lib/pdf/handed.ts.
+#[tauri::command]
+pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pending>) -> Vec<String> {
+    pending.take(Handed::Pdfs, window.label())
 }
 
 /// A second launch of the app, as the single instance plugin hears it: inside the window
@@ -171,7 +194,7 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
 
 /// A second launch of the app, which belongs to the one already open: its window
 /// comes forward and takes whatever the launch was asked to open.
-fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
+fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     // The window, not the webview window, which a window holding a page in a tab
     // is not; see web_tabs.rs. Not for a reminder's press, which the deep link hands
     // to the reminders: a Done is answered out of sight, and a press on the
@@ -189,6 +212,8 @@ fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
     }
 
     hand_over(app, Handed::Pages, handed_by(argv));
+    let pdfs = crate::handed_pdfs::pdfs_in(argv, std::path::Path::new(cwd));
+    hand_over(app, Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
 }
 
 /// What arrived for the app, from whichever way it came, opened in the window in
@@ -508,6 +533,23 @@ mod tests {
     }
 
     #[test]
+    fn pdfs_wait_on_a_road_of_their_own() {
+        let pending = Pending::default();
+        pending.hold(Handed::Pdfs, vec![r"C:\Downloads\a.pdf".into()]);
+
+        assert!(pending.take(Handed::Pages, "main").is_empty());
+        assert!(!pending.hears(Handed::Pdfs, "main"));
+        assert_eq!(
+            pending.take(Handed::Pdfs, "main"),
+            vec![r"C:\Downloads\a.pdf".to_owned()]
+        );
+        assert!(pending.hears(Handed::Pdfs, "main"));
+
+        pending.forget("main");
+        assert!(!pending.hears(Handed::Pdfs, "main"));
+    }
+
+    #[test]
     fn a_window_that_went_listens_for_nothing() {
         let pending = Pending::default();
         pending.take(Handed::Pages, "nib-2");
@@ -516,10 +558,10 @@ mod tests {
         assert!(!pending.is_listening("nib-2"));
     }
 
-    /// nib opens nothing from outside its spaces, so a path on a command line is no
-    /// note: not on its own, not beside a page, and not smuggled into a link's.
+    /// nib opens nothing from outside its spaces, so a note's path on a command line is
+    /// no note: not on its own, not beside a page, and not smuggled into a link's.
     #[test]
-    fn a_command_line_hands_over_pages_and_never_a_file() {
+    fn a_command_line_hands_over_pages_and_never_a_note() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let note = dir.path().join("Idea.md");
         std::fs::write(&note, "# Idea").expect("a note");

@@ -3202,6 +3202,14 @@ class Workspace {
     await this.copied(await bringIn(this, files, intoFolder), intoFolder)
   }
 
+  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. */
+  async bringInPdf(from: string, root: string): Promise<string | null> {
+    const { broughtPdf } = await import('./workspace/copying')
+    const landed = await broughtPdf(this, from, root)
+    if (landed) await this.copied([landed], root)
+    return landed
+  }
+
   /** What every copy ends with: the listing read again, the folder the rows went
    *  into open, and the rows that arrived picked, which is where Explorer and VS
    *  Code leave them - the next key acts on what was just made. And the account

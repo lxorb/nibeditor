@@ -56,17 +56,25 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
 /// `App::run` in lib.rs.
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
-        // A link clicked in another program, once nib is the browser: a Mac never
-        // puts one on the command line. `nib://` links arrive here too, and are the
-        // deep-link plugin's; see uris.rs. A document the Finder hands over is among
-        // them only if somebody forced it on nib - no file type is declared - and it
+        // A link clicked in another program, once nib is the browser, and a PDF opened
+        // with nib: a Mac never puts either on the command line. `nib://` links arrive
+        // here too, and are the deep-link plugin's; see uris.rs. Any other document the
+        // Finder hands over was forced on nib - no other file type is declared - and it
         // is nothing to open; see launch.rs.
         #[cfg(target_os = "macos")]
-        RunEvent::Opened { urls } => launch::hand_over(
-            app,
-            launch::Handed::Pages,
-            crate::web_handed::pages_among(&urls),
-        ),
+        RunEvent::Opened { urls } => {
+            launch::hand_over(
+                app,
+                launch::Handed::Pages,
+                crate::web_handed::pages_among(&urls),
+            );
+            let pdfs = crate::handed_pdfs::pdfs_among(&urls);
+            launch::hand_over(
+                app,
+                launch::Handed::Pdfs,
+                crate::handed_pdfs::admitted(app, pdfs),
+            );
+        }
 
         // Once there is an application delegate to teach: tao sets it as the loop
         // is built, and this is the loop's first event.
