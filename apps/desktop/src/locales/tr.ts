@@ -21,6 +21,11 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Settings: note types
+  'Page note': 'Sayfalı not',
+  'Web note': 'Web notu',
+  'Private tab': 'Gizli sekme',
+  'Note types': 'Not türleri',
   // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
   // Tasks: projects placed in the panel, and their folder

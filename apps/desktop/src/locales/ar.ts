@@ -21,6 +21,11 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  // Settings: note types
+  'Page note': 'ملاحظة صفحات',
+  'Web note': 'ملاحظة ويب',
+  'Private tab': 'علامة تبويب خاصة',
+  'Note types': 'أنواع الملاحظات',
   // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
   // Tasks: projects placed in the panel, and their folder

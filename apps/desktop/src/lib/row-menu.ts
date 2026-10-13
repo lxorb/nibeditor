@@ -19,6 +19,7 @@
 import { foreignCopy } from '@nib/sync-core/foreign'
 import { account } from './account.svelte'
 import { folderNote, nestedIn } from './folder-notes'
+import { hiddenKinds } from './hidden-kinds.svelte'
 import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
@@ -77,7 +78,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...openElsewhere(entry, own),
     ...compareEntry(entry),
     DIVIDER,
-    ...(holds
+    ...(holds && hiddenKinds.offers('note')
       ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
       : []),
     DIVIDER,

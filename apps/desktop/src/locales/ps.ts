@@ -21,6 +21,11 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Settings: note types
+  'Page note': 'د مخونو يادښت',
+  'Web note': 'ویب يادښت',
+  'Private tab': 'شخصي ټب',
+  'Note types': 'د يادښت ډولونه',
   // Tasks: Upcoming's weeks
   'Previous week': 'تېره اونۍ',
   // Tasks: projects placed in the panel, and their folder

@@ -36,6 +36,7 @@
   import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
+  import { hiddenKinds } from '../hidden-kinds.svelte'
   import { favicon, plainOrigin } from './address'
   import { webAddress } from './typed'
   import { upgradeOf } from './upgrade'
@@ -739,10 +740,14 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    newTab: () => workspace.openWebsite(),
-    newPrivate: isDesktop
-      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
-      : undefined,
+    // Ctrl+T's, so it is what Settings › Note types says a new tab is.
+    newTab: () => workspace.newTab(tab.paneId),
+    // Read as the menu opens, which is after Settings may have turned it off.
+    get newPrivate() {
+      return hiddenKinds.offers('private')
+        ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+        : undefined
+    },
     history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
     clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the

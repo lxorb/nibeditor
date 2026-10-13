@@ -21,6 +21,11 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Settings: note types
+  'Page note': 'โน้ตแบบหน้า',
+  'Web note': 'โน้ตเว็บ',
+  'Private tab': 'แท็บส่วนตัว',
+  'Note types': 'ประเภทโน้ต',
   // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
   // Tasks: projects placed in the panel, and their folder

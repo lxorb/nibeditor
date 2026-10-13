@@ -21,6 +21,11 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Settings: note types
+  'Page note': 'താൾ കുറിപ്പ്',
+  'Web note': 'വെബ് കുറിപ്പ്',
+  'Private tab': 'സ്വകാര്യ ടാബ്',
+  'Note types': 'കുറിപ്പ് തരങ്ങൾ',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder

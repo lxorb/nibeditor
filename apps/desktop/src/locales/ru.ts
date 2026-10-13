@@ -21,6 +21,11 @@ export const ru: Dictionary = {
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
+  // Settings: note types
+  'Page note': 'Заметка со страницами',
+  'Web note': 'Веб-заметка',
+  'Private tab': 'Приватная вкладка',
+  'Note types': 'Типы заметок',
   // Tasks: Upcoming's weeks
   'Previous week': 'Предыдущая неделя',
   // Tasks: projects placed in the panel, and their folder

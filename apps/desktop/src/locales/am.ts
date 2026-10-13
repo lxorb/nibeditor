@@ -21,6 +21,11 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Settings: note types
+  'Page note': 'የገጾች ማስታወሻ',
+  'Web note': 'የድረ ገጽ ማስታወሻ',
+  'Private tab': 'የግል ትር',
+  'Note types': 'የማስታወሻ ዓይነቶች',
   // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
   // Tasks: projects placed in the panel, and their folder

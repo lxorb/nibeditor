@@ -21,6 +21,11 @@ export const bn: Dictionary = {
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
+  // Settings: note types
+  'Page note': 'পাতার নোট',
+  'Web note': 'ওয়েব নোট',
+  'Private tab': 'ব্যক্তিগত ট্যাব',
+  'Note types': 'নোটের ধরন',
   // Tasks: Upcoming's weeks
   'Previous week': 'আগের সপ্তাহ',
   // Tasks: projects placed in the panel, and their folder

@@ -21,6 +21,11 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  // Settings: note types
+  'Page note': 'စာမျက်နှာမှတ်စု',
+  'Web note': 'ဝဘ်မှတ်စု',
+  'Private tab': 'တဘ်သီးသန့်',
+  'Note types': 'မှတ်စုအမျိုးအစားများ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
   // Tasks: projects placed in the panel, and their folder

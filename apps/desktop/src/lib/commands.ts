@@ -49,6 +49,8 @@ import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
+import { hiddenKinds } from './hidden-kinds.svelte'
+import type { KindName } from './kinds-here'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
@@ -1051,6 +1053,12 @@ function spaceCommands(): Command[] {
 /** The note in front sent to a chat, or what is selected in it quoted (docs/chats.md
  *  4.13): for a note with a file, with somebody signed in to the account the chats are;
  *  never in the glasses' plugin. */
+/** `rows`, where Settings offers the kind they make, and nothing where it does not or
+ *  this device has none of it; see kinds-here.ts. */
+function offered(kind: KindName, rows: Command[]): Command[] {
+  return hiddenKinds.offers(kind) ? rows : []
+}
+
 function sendToChatCommand(view?: EditorView): Command[] {
   const tab = workspace.active
   const note = tab?.kind === 'note' ? tab.path : null
@@ -1085,12 +1093,14 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-    {
-      id: 'new',
-      label: t('New note'),
-      hint: shortcuts.hint('app.new'),
-      run: () => workspace.openBlank(),
-    },
+    ...offered('note', [
+      {
+        id: 'new',
+        label: t('New note'),
+        hint: shortcuts.hint('app.new'),
+        run: () => workspace.openBlank(),
+      },
+    ]),
     // The palette's row turns its field into quick add's; see quick-add/asked.svelte.ts.
     ...(__EVEN_PLUGIN__
       ? []
@@ -1103,72 +1113,80 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]),
     ...sendToChatCommand(view),
-    {
-      id: 'new-unique',
-      label: t('New unique note'),
-      run: () => void workspace.createUniqueNote(settings.noteIdFormat),
-    },
-    { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
-    { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
-    {
-      id: 'new-from-template',
-      label: t('New note from template'),
-      run: () => void import('./views/templates').then((one) => one.pickTemplate()),
-    },
-    ...(viewport.device === 'phone'
-      ? []
-      : [
-          {
-            // A row in the file list, named before it has an address: the name is the
-            // title, and the bar asks where it points next. The file is a shortcut -
-            // `Svelte docs.url` - which is what Explorer and every browser write; see
-            // web-tab/shortcut.ts and docs/web-tabs.md.
-            id: 'new-web-note',
-            label: t('New web note'),
-            run: () => void workspace.createWebsite(),
-          },
-          {
-            // The other way round: a tab with an address field and nothing in it yet,
-            // for somebody who has the address and no name in mind. Nothing is
-            // written while it is only browsed; the row below keeps it. A phone has no
-            // web tab at all - there the system browser is the answer.
-            id: 'new-website',
-            label: t('Open a website'),
-            run: () => workspace.openWebsite(),
-          },
-        ]),
+    ...offered('note', [
+      {
+        id: 'new-unique',
+        label: t('New unique note'),
+        run: () => void workspace.createUniqueNote(settings.noteIdFormat),
+      },
+    ]),
+    ...offered('canvas', [
+      { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
+    ]),
+    ...offered('pages', [
+      { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
+    ]),
+    ...offered('note', [
+      {
+        id: 'new-from-template',
+        label: t('New note from template'),
+        run: () => void import('./views/templates').then((one) => one.pickTemplate()),
+      },
+    ]),
+    ...offered('web', [
+      {
+        // A row in the file list, named before it has an address: the name is the
+        // title, and the bar asks where it points next. The file is a shortcut -
+        // `Svelte docs.url` - which is what Explorer and every browser write; see
+        // web-tab/shortcut.ts and docs/web-tabs.md.
+        id: 'new-web-note',
+        label: t('New web note'),
+        run: () => void workspace.createWebsite(),
+      },
+      {
+        // The other way round: a tab with an address field and nothing in it yet,
+        // for somebody who has the address and no name in mind. Nothing is
+        // written while it is only browsed; the row below keeps it. A phone has no
+        // web tab at all - there the system browser is the answer.
+        id: 'new-website',
+        label: t('Open a website'),
+        run: () => workspace.openWebsite(),
+      },
+    ]),
     // A shell in a tab, in the one Settings chose; the plus and Ctrl+T offer the others.
     // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md.
-    ...(!__EVEN_PLUGIN__ && isDesktop
-      ? [
-          {
-            id: 'new-terminal',
-            label: t('New terminal'),
-            ownWindow: true,
-            run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
-          },
-          // Another machine's, from the host picker; see remote/picker.svelte.ts.
-          {
-            id: 'new-remote',
-            label: t('Remote'),
-            ownWindow: true,
-            run: () =>
-              void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.toggle()),
-          },
-        ]
-      : []),
+    ...offered('terminal', [
+      {
+        id: 'new-terminal',
+        label: t('New terminal'),
+        ownWindow: true,
+        run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
+      },
+    ]),
+    // Another machine's, from the host picker; see remote/picker.svelte.ts.
+    ...offered('remote', [
+      {
+        id: 'new-remote',
+        label: t('Remote'),
+        ownWindow: true,
+        run: () =>
+          void import('./remote/picker.svelte').then(({ hostPicker }) => hostPicker.toggle()),
+      },
+    ]),
     // A shell on the reader's machine in the cloud, on every device; and its machine
     // started or stopped by hand. Never by a link or the command line, as a terminal
     // here is not. See docs/online-terminal.md 4.10.
+    ...offered('online', [
+      {
+        id: 'new-online-terminal',
+        label: t('New online terminal'),
+        ownWindow: true,
+        run: () => void import('./online/open').then(({ openOnline }) => openOnline()),
+      },
+    ]),
     ...(__EVEN_PLUGIN__
       ? []
       : [
-          {
-            id: 'new-online-terminal',
-            label: t('New online terminal'),
-            ownWindow: true,
-            run: () => void import('./online/open').then(({ openOnline }) => openOnline()),
-          },
           {
             id: 'start-online-machine',
             label: t('Start online machine'),
@@ -1282,14 +1300,19 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !isDesktop,
       run: () => void closeWindow(),
     },
-    // A desktop's alone, where a web tab is a page of nib's; see web-tab/private.ts.
-    {
-      id: 'new-private',
-      label: t('New private tab'),
-      hint: shortcuts.hint('app.new-private'),
-      disabled: !isDesktop || viewport.device === 'phone',
-      run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
-    },
+    // A desktop's alone, where a web tab is a page of the app's, and greyed elsewhere,
+    // as it always was; gone only where Settings turned it off. See web-tab/private.ts.
+    ...(hiddenKinds.hidden.includes('private')
+      ? []
+      : [
+          {
+            id: 'new-private',
+            label: t('New private tab'),
+            hint: shortcuts.hint('app.new-private'),
+            disabled: !hiddenKinds.offers('private'),
+            run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
+          },
+        ]),
     // Chrome's History, from anywhere: a tab of its own in the space on screen. Named
     // for what it is, since a note's own history is Version history.
     {

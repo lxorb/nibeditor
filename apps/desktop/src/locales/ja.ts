@@ -21,6 +21,11 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  // Settings: note types
+  'Page note': 'ページノート',
+  'Web note': 'ウェブノート',
+  'Private tab': 'プライベート タブ',
+  'Note types': 'ノートの種類',
   // Tasks: Upcoming's weeks
   'Previous week': '前の週',
   // Tasks: projects placed in the panel, and their folder

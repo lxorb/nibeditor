@@ -21,6 +21,11 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  // Settings: note types
+  'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
+  'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',
+  'Private tab': 'ಖಾಸಗಿ ಟ್ಯಾಬ್',
+  'Note types': 'ಟಿಪ್ಪಣಿ ಪ್ರಕಾರಗಳು',
   // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
   // Tasks: projects placed in the panel, and their folder

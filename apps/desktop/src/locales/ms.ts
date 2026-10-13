@@ -21,6 +21,11 @@ export const ms: Dictionary = {
   'Import from Zen': 'Import daripada Zen',
   'Containers stay in Zen': 'Bekas kekal dalam Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Settings: note types
+  'Page note': 'Nota halaman',
+  'Web note': 'Nota web',
+  'Private tab': 'Tab peribadi',
+  'Note types': 'Jenis nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder

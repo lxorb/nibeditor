@@ -21,6 +21,11 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
+  // Settings: note types
+  'Page note': 'પાનાંવાળી નોંધ',
+  'Web note': 'વેબ નોંધ',
+  'Private tab': 'ખાનગી ટૅબ',
+  'Note types': 'નોંધના પ્રકાર',
   // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
   // Tasks: projects placed in the panel, and their folder

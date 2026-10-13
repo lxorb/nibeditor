@@ -21,6 +21,11 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Settings: note types
+  'Page note': 'Dokezo la kurasa',
+  'Web note': 'Dokezo la wavuti',
+  'Private tab': 'Kichupo cha faragha',
+  'Note types': 'Aina za madokezo',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder

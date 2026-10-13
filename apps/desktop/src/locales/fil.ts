@@ -21,6 +21,11 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  // Settings: note types
+  'Page note': 'Talang may pahina',
+  'Web note': 'Talang web',
+  'Private tab': 'Pribadong tab',
+  'Note types': 'Mga uri ng tala',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder

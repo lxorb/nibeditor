@@ -21,6 +21,11 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Settings: note types
+  'Page note': 'పేజీ నోట్',
+  'Web note': 'వెబ్ నోట్',
+  'Private tab': 'ప్రైవేట్ ట్యాబ్',
+  'Note types': 'నోట్ రకాలు',
   // Tasks: Upcoming's weeks
   'Previous week': 'మునుపటి వారం',
   // Tasks: projects placed in the panel, and their folder

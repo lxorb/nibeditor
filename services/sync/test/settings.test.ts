@@ -413,6 +413,37 @@ describe('a name that is not a setting', () => {
   })
 })
 
+describe('the kinds an account turned off', () => {
+  test('are kept as a list of words', async () => {
+    const set = await patch({ hiddenKinds: ['canvas', 'online'] })
+    expect(set.status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toEqual([
+      'canvas',
+      'online',
+    ])
+  })
+
+  test('take null, which is every kind offered', async () => {
+    expect((await patch({ hiddenKinds: null })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toBeNull()
+  })
+
+  test('keep a kind this version has never heard of', async () => {
+    expect((await patch({ hiddenKinds: ['something-new'] })).status).toBe(200)
+  })
+
+  test('refuse what is not a list of kinds', async () => {
+    expect((await patch({ hiddenKinds: 'canvas' })).status).toBe(400)
+    expect((await patch({ hiddenKinds: ['Canvas'] })).status).toBe(400)
+    expect((await patch({ hiddenKinds: ['canvas', 'canvas'] })).status).toBe(400)
+    expect((await patch({ hiddenKinds: [1] })).status).toBe(400)
+    // Thirty-three different words, one more than an account carries.
+    const letter = (at: number) => String.fromCharCode(97 + at)
+    const many = Array.from({ length: 33 }, (_, at) => `k${letter(at % 26)}${letter(at >> 4)}`)
+    expect((await patch({ hiddenKinds: many })).status).toBe(400)
+  })
+})
+
 describe('the phone bar an account carries', () => {
   test('keeps the commands on it, in order', async () => {
     const set = await patch({ toolbar: ['format.bold', 'paragraph.quote'] })

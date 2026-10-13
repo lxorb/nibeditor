@@ -21,6 +21,11 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Settings: note types
+  'Page note': '페이지 노트',
+  'Web note': '웹 노트',
+  'Private tab': '비공개 탭',
+  'Note types': '노트 유형',
   // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
   // Tasks: projects placed in the panel, and their folder

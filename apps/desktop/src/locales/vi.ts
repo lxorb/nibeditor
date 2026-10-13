@@ -21,6 +21,11 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Settings: note types
+  'Page note': 'Ghi chú nhiều trang',
+  'Web note': 'Ghi chú web',
+  'Private tab': 'Thẻ riêng tư',
+  'Note types': 'Loại ghi chú',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder

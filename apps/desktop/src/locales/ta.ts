@@ -21,6 +21,11 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  // Settings: note types
+  'Page note': 'பக்கக் குறிப்பு',
+  'Web note': 'இணையக் குறிப்பு',
+  'Private tab': 'தனிப்பட்ட தாவல்',
+  'Note types': 'குறிப்பு வகைகள்',
   // Tasks: Upcoming's weeks
   'Previous week': 'முந்தைய வாரம்',
   // Tasks: projects placed in the panel, and their folder

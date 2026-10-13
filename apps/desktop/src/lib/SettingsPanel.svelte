@@ -16,6 +16,7 @@
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
+  import Icon from './Icon.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
   import { SEARCH_MARK } from './panel-marks'
@@ -564,6 +565,11 @@
      showing it out of context. One snippet, so the glyph lands in the same slot
      after the label on every kind of row and a row without one does not shift. -->
 {#snippet named(field: Field, where?: string)}
+  <!-- The thing the row is about, drawn as every other list draws it: a kind of tab in
+       Note types wears its file's mark. -->
+  {#if field.icon}
+    <span class="glyph" aria-hidden="true"><Icon icon={null} fallback={field.icon} /></span>
+  {/if}
   <span class="name">
     <span class="what"
       >{field.label}{#if field.hint}<Hint text={field.hint} />{/if}</span
@@ -580,23 +586,29 @@
          three times, and a segmented control twice per option. Inside the branch
          rather than above it, so each kind's answer is that kind's own type. -->
     {@const held = field.get()}
+    {@const locked = field.locked?.() ?? false}
     <!-- The whole row is the switch, so there is nothing to miss. A switch and
          not a button, because a row may carry the `i` that explains it and a
-         button may hold nothing else anybody can press. -->
+         button may hold nothing else anybody can press. A locked one is the
+         last kind of tab still offered, and stays as it is. -->
     <div
-      class="nib-setting setting pressable"
+      class="nib-setting setting"
+      class:pressable={!locked}
       role="switch"
       tabindex="0"
       aria-checked={held}
-      onclick={() => field.set(!field.get())}
+      aria-disabled={locked || undefined}
+      onclick={() => {
+        if (!locked) field.set(!field.get())
+      }}
       onkeydown={(event) => {
         if (event.key !== ' ' && event.key !== 'Enter') return
         event.preventDefault()
-        field.set(!field.get())
+        if (!locked) field.set(!field.get())
       }}
     >
       {@render named(field, where)}
-      <span class="nib-switch" class:on={held} aria-hidden="true"></span>
+      <span class="nib-switch" class:on={held} class:off={locked} aria-hidden="true"></span>
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
@@ -1595,6 +1607,18 @@
   }
 
   /* Name on the left, control on the right, one line each. */
+
+  /* A row's own mark, at the size and weight the file list draws it; see
+     FileMark.svelte. */
+  .setting .glyph {
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    font-size: var(--icon-md);
+    color: var(--muted);
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
 
   .setting .name {
     flex: 1;

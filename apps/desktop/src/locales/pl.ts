@@ -21,6 +21,11 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Settings: note types
+  'Page note': 'Notatka ze stronami',
+  'Web note': 'Notatka internetowa',
+  'Private tab': 'Karta prywatna',
+  'Note types': 'Typy notatek',
   // Tasks: Upcoming's weeks
   'Previous week': 'Poprzedni tydzień',
   // Tasks: projects placed in the panel, and their folder

@@ -38,6 +38,7 @@ import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
+import { hiddenKinds } from './hidden-kinds.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
@@ -67,6 +68,8 @@ export function start(): () => void {
   toolbar.restore()
   // And which command a pull down past the top of a list runs.
   pull.restore()
+  // Which kinds of tab nothing offers to make; see hidden-kinds.svelte.ts.
+  hiddenKinds.restore()
   settings.restore()
   // The moment a hint may appear: long enough that the window has settled and the
   // reader has started on what they came for. The store is fetched then, not here,

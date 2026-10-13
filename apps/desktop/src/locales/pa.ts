@@ -21,6 +21,11 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  // Settings: note types
+  'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'Web note': 'ਵੈੱਬ ਨੋਟ',
+  'Private tab': 'ਨਿੱਜੀ ਟੈਬ',
+  'Note types': 'ਨੋਟ ਦੀਆਂ ਕਿਸਮਾਂ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ਪਿਛਲਾ ਹਫ਼ਤਾ',
   // Tasks: projects placed in the panel, and their folder

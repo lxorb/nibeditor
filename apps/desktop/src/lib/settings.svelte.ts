@@ -16,6 +16,7 @@ type ExportAppearance = 'light' | 'dark' | 'app'
 export type Section =
   | 'general'
   | 'editor'
+  | 'kinds'
   | 'shortcuts'
   | 'mobile'
   | 'spelling'

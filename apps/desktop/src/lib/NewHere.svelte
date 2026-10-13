@@ -24,7 +24,7 @@
    *  KindCard.svelte. */
   import { t } from './i18n.svelte'
   import KindCard from './KindCard.svelte'
-  import { kindLines, newKinds, type NewKindRow, showOthers } from './new-kinds'
+  import { kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
   import { overlays } from './overlays'
   import { roving } from './roving'
@@ -33,7 +33,7 @@
 
   const { paneId, chosenOn }: { paneId: string; chosenOn?: string } = $props()
 
-  const kinds = $derived(newKinds())
+  const kinds = $derived(offeredKinds())
   const lines = $derived(kindLines(kinds))
 
   /** Says which new tab the choice is made on, where this is one; see `chosenOn`. */

@@ -53,6 +53,8 @@
   import { search, type SearchSort } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import { newFileRows } from './file-kinds'
+  import { hiddenKinds } from './hidden-kinds.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
@@ -301,12 +303,7 @@
         run: () => workspace.toggleHidden(),
       },
       DIVIDER,
-      { label: t('New note'), run: () => void workspace.createNote() },
-      { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      ...(viewport.device === 'phone'
-        ? []
-        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...newChat(),
+      ...newFileRows(),
     ]
   }
 
@@ -358,26 +355,13 @@
     ]
   }
 
-  function newChat(): MenuEntry[] {
-    if (__EVEN_PLUGIN__ || !account.accountToken) return []
-    const run = () => void import('./chats/view/open').then(({ makeChat }) => makeChat())
-    return [{ label: t('New chat'), run }]
-  }
-
   /** What the space itself offers, wherever in the panel you ask for it.
    *
    *  The kinds of note to make. A folder is not one of them: a note that holds notes
    *  is how a space is organised, and that is a note made inside another note's row.
    *  See folder-notes.ts and docs/tree.md. */
   function spaceMenu(): MenuEntry[] {
-    return [
-      { label: t('New note'), run: () => void workspace.createNote() },
-      { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      ...(viewport.device === 'phone'
-        ? []
-        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...newChat(),
-    ]
+    return newFileRows()
   }
 
   /** What a phone's menu sheet is headed with. Left out entirely when there is
@@ -960,7 +944,7 @@
               <!-- A space with nothing in it says what to do about it. Folders can
              still be there, which is why this counts files and not rows. Nor is a
              space with notes on their way an empty one. -->
-              {#if !workspace.files.length && !arriving.coming.size}
+              {#if !workspace.files.length && !arriving.coming.size && hiddenKinds.offers('note')}
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
               {/if}

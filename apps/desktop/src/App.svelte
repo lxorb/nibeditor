@@ -88,6 +88,7 @@
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
+  import { hiddenKinds } from './lib/hidden-kinds.svelte'
   import PullMark from './lib/PullMark.svelte'
   import { type AppContext, runEntry } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
@@ -217,6 +218,7 @@
         shortcuts.receive(remote)
         toolbar.receive(remote)
         pull.receive(remote)
+        hiddenKinds.receive(remote)
         recovery.receive(remote)
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
@@ -1051,7 +1053,11 @@
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
       {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
-        <button class="fab" aria-label={t('New note')} onclick={writeNew}>
+        <button
+          class="fab"
+          aria-label={hiddenKinds.offers('note') ? t('New note') : t('New tab')}
+          onclick={writeNew}
+        >
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/if}

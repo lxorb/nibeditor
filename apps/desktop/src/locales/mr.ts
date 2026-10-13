@@ -21,6 +21,11 @@ export const mr: Dictionary = {
   'Import from Zen': 'Zen मधून इंपोर्ट करा',
   'Containers stay in Zen': 'कंटेनर Zen मध्येच राहतात',
   'Zen’s tabs could not be read.': 'Zen चे टॅब वाचता आले नाहीत.',
+  // Settings: note types
+  'Page note': 'पानांची नोंद',
+  'Web note': 'वेब नोंद',
+  'Private tab': 'खाजगी टॅब',
+  'Note types': 'नोंदीचे प्रकार',
   // Tasks: Upcoming's weeks
   'Previous week': 'मागील आठवडा',
   // Tasks: projects placed in the panel, and their folder

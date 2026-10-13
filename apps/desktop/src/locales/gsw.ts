@@ -21,6 +21,11 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Settings: note types
+  'Page note': 'Siitenotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Private Tab',
+  'Note types': 'Notiztype',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder

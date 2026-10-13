@@ -21,6 +21,11 @@ export const zhHans: Dictionary = {
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
+  // Settings: note types
+  'Page note': '分页笔记',
+  'Web note': '网页笔记',
+  'Private tab': '无痕标签页',
+  'Note types': '笔记类型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一周',
   // Tasks: projects placed in the panel, and their folder
