@@ -220,3 +220,14 @@ jobs:
           pgrep -fl "$apps/$OLD_APP/Contents/MacOS/" || { echo "it is not running from $OLD_APP"; exit 1; }
           osascript -e 'quit app id "ch.emilvinu.nib"' || true
           rmdir "$room"
+
+      # What the machine says when a launch did not come back: the processes, the app's
+      # own logs and any crash report.
+      - name: What happened
+        if: failure()
+        run: |
+          ps axww | grep -i '[n]ib\|[o]rden' || true
+          ls -la "$HOME/Applications" || true
+          find "$HOME/Library/Logs" -path '*ch.emilvinu.nib*' -type f -exec sh -c 'echo "== $1"; tail -80 "$1"' sh {} \; || true
+          find "$HOME/Library/Logs/DiagnosticReports" -newer /tmp/old -type f -exec sh -c 'echo "== $1"; head -80 "$1"' sh {} \; || true
+          log show --last 5m --predicate 'process == "nib" OR eventMessage CONTAINS "Orden.app"' --style compact 2>/dev/null | tail -80 || true
