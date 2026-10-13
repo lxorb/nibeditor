@@ -349,8 +349,7 @@ async function onQuit(window: Closable) {
  *  after its last keystroke. All of them run off a timer that a window going away
  *  would never reach, and a plane has to go first - it writes into a document, and
  *  the document is what goes to the disk. Whoever owes a write has said so
- *  themselves rather than being reached for from here; see parting.ts. A reload of the
- *  window says it too; see reload-window.ts. */
+ *  themselves rather than being reached for from here; see parting.ts. */
 export function settle() {
   settleUp()
   workspace.graphSettings.flush()

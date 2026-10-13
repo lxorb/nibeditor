@@ -88,7 +88,8 @@
    *  General opens, where there is a choice of two. */
   let engineName = $state('')
   $effect(() => {
-    if (!settings.open || settings.section !== 'general' || !systemName(platform())) return
+    if (__EVEN_PLUGIN__ || !settings.open || settings.section !== 'general') return
+    if (!systemName(platform())) return
     void invoke<EngineState>('engine_state')
       .then(
         (state) =>
@@ -178,6 +179,13 @@
 
   /** The scrolling half, where the panes are. */
   let body = $state<HTMLElement>()
+
+  // A link to Spelling, which was a page and is a group of Editor: its first row.
+  $effect(() => {
+    if (settings.at !== 'spelling') return
+    settings.at = null
+    landing.label = t('Check spelling')
+  })
 
   /** Opened on one setting - the palette's row for it - the pane scrolls it to the
    *  middle and it is lit for a moment, so the eye lands where the reader was going.
@@ -790,9 +798,9 @@
     <!-- Asked for by name: the notice comes at once for whatever is waiting. -->
     <button class="nib-action" onclick={() => void updates.check()}>{t('Check for updates')}</button
     >
-  {:else if which === 'browser'}
+  {:else if !__EVEN_PLUGIN__ && which === 'browser'}
     {@render browserRows()}
-  {:else if which === 'extensions'}
+  {:else if !__EVEN_PLUGIN__ && which === 'extensions'}
     <!-- The extensions web tabs run; see settings/ExtensionRows.svelte. -->
     <ExtensionRows />
   {:else if which === 'words'}
@@ -808,7 +816,7 @@
         set: (on) => void settings.setNewMenu(on),
       })}
     {/if}
-  {:else if which === 'import'}
+  {:else if !__EVEN_PLUGIN__ && which === 'import'}
     <!-- The first screen's rows, any time later. Fetched as it is opened. -->
     {#await import('./MigrateRows.svelte') then rows}
       <rows.default />

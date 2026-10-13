@@ -71,7 +71,7 @@ test('finds a setting by its own name, and says which pane it is in', () => {
   type('check spelling')
   const first = rows()[0]
   expect(first?.querySelector('.nib-row-label')?.textContent).toBe('Check spelling')
-  expect(first?.querySelector('.where')?.textContent).toBe('Spelling')
+  expect(first?.querySelector('.where')?.textContent).toBe('Editor')
 })
 
 test('draws the letters the words were found at', () => {

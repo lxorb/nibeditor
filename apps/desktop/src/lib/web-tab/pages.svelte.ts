@@ -1029,10 +1029,7 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
-  /** Parks every page this window runs, each written down where it had got to, so a
-   *  window reloaded builds them again on the pages and at the places they were at:
-   *  the crate keeps their webviews over a reload of the window, and the window that
-   *  comes back would find each tab's label taken. See reload-window.ts. */
+  /** Every page parked, for a reload of the window; see reload-window.ts. */
   async parkAll(): Promise<void> {
     await Promise.all([...this.held.keys()].map((tabId) => this.park(tabId)))
   }

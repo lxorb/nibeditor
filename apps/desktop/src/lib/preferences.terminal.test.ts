@@ -25,9 +25,9 @@ const { shortcuts } = await import('./shortcuts.svelte')
 
 function row(label: string) {
   const found = preferences()
-    .flatMap((pane) => pane.groups)
-    .find((group) => group.title === 'Terminal')
-    ?.fields.find((one) => one.label === label)
+    .find((pane) => pane.id === 'terminal')
+    ?.groups.flatMap((group) => group.fields)
+    .find((one) => one.label === label)
   if (found?.kind !== 'select') throw new Error(`no ${label}`)
   return found
 }

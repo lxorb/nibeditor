@@ -1,7 +1,6 @@
 import { setSnippets } from '@nib/editor'
 import { connectors } from './connectors.svelte'
-import { message, t } from './i18n.svelte'
-import { landing } from './settings/landing.svelte'
+import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
 import { isRecord, isString, keep, stored, storedText } from './stored'
@@ -32,10 +31,8 @@ export type Section =
   | 'trash'
   | 'export'
 
-/** Pages that were pages of their own once and are part of another now, by their old
- *  ids, so a link to one - a command, an agent's `open`, a palette row - still lands
- *  where its rows went: Spelling in Editor, Remote and Online terminal in Terminal,
- *  Import beside Export, Agents and LLM access in AI. */
+/** Pages that became part of another, by their old ids, so a link to one lands where
+ *  its rows went. */
 const MOVED = {
   spelling: 'editor',
   remote: 'terminal',
@@ -165,19 +162,20 @@ class Settings {
     }
   }
 
-  /** Where in a pane it was asked to open: Access, for what used to be panes of their
-   *  own. Read and cleared by the part it names. */
-  at = $state<'access' | null>(null)
+  /** Where in a page it was asked to open: Access, or Spelling partway down Editor.
+   *  Read and cleared by the part it names. */
+  at = $state<'access' | 'spelling' | null>(null)
 
   /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both, and a page asked for by
-   *  the id it had opens the page its rows are on now; see `MOVED`. */
+   *  Asked for by name, a pane opens straight away on both; see `MOVED`. */
   show(section?: Asked) {
-    const moved = section !== undefined && isMoved(section)
-    this.at = section === 'agents' || section === 'llm' ? 'access' : null
-    this.section = moved ? MOVED[section] : (section ?? 'general')
-    // Spelling is a group partway down Editor, so a link to it lands on its first row.
-    if (section === 'spelling') landing.label = t('Check spelling')
+    this.at =
+      section === 'agents' || section === 'llm'
+        ? 'access'
+        : section === 'spelling'
+          ? 'spelling'
+          : null
+    this.section = section === undefined ? 'general' : isMoved(section) ? MOVED[section] : section
     this.listing = section === undefined
     this.open = true
     this.error = null
