@@ -1171,9 +1171,10 @@ impl Profile {
 /// straight from this thread would post the same message without waiting, which
 /// loses the one thing the window needs to know - whether there is a page to place.
 ///
-/// The answer says whether this build cuts the app's layers out of a page, as
-/// `web_place`'s does: the first page of a window is built before anything has been
-/// placed, and a layer it arrives under is cut round from its first frame (web_cut.rs).
+/// The answer says whether this build cuts the app's layers out of a page
+/// (`web_cut.rs`), as `web_place`'s does: the first page of a window is built before
+/// anything has been placed, and a layer it arrives under is cut round from its first
+/// frame.
 #[tauri::command]
 pub async fn web_open(
     webview: Webview,
