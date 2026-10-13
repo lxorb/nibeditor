@@ -598,8 +598,15 @@ function holds(tail: string): boolean {
  *  pointing hand on buttons (said on the root as the window comes up), and Silent mode,
  *  with the moment a session has settled (startup.svelte.ts) that the hint cards wait
  *  for. The hints themselves, their store and their cards, and the AGENTS.md a new
- *  space is made with are behind doors and in none of this. Measured 3,222,295 and 378. */
-const BUDGET = 3_225_000
+ *  space is made with are behind doors and in none of this. Measured 3,222,295 and 378.
+ *
+ *  Raised 2026-10-13, to 3,225,500, from a main at 3,224,855 (145 bytes under) for two
+ *  fixes to the link writer every rename and import goes through (link-format.ts,
+ *  link-rewrite.ts): a link to a heading keeps the words it shows, a shortest link to a
+ *  name two files share keeps its folder, and a target with a bracket in its name is
+ *  written out so the bracket does not end the link. The Obsidian import that found them
+ *  is behind its door. Measured 3,225,105 and 378. */
+const BUDGET = 3_225_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

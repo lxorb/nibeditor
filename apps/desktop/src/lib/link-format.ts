@@ -65,10 +65,9 @@ export interface LinkTarget {
   /** The part after the target: a heading, a `^blockid`, a PDF's `page=3`. Written
    *  without its `#`, the way a wikilink holds it. */
   fragment?: string | null
-  /** The words the link shows. Nothing, or the name again, leaves a wikilink
-   *  bare, unless it goes to a heading or a block: a bare `[[Plan#Budget]]` shows
-   *  the heading too, so the name it showed is kept. A markdown link always shows
-   *  something, since `[](x)` shows nothing at all. */
+  /** The words the link shows. Nothing, or the name again (bar a link to a
+   *  heading, which would show that), leaves a wikilink bare; a markdown link
+   *  always shows something, since `[](x)` shows nothing at all. */
   shown?: string | null
   /** `![[…]]` and `![](…)`: the note itself rather than a link to it. */
   embed?: boolean
@@ -104,8 +103,7 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
 
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  // A name that holds a folder is one the file shares with another, so the shortest
-  // target that still says which is the path from the top, as Obsidian writes it.
+  // A name with a folder in it is shared, so the path says which, as in Obsidian.
   if (format === 'shortest') return target.name.includes('/') ? path : withExtension(nameOf(path))
   // A note that does not know where it is being written cannot say "from here",
   // so the path from the top of the space is the closest true answer.
