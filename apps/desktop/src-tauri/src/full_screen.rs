@@ -38,8 +38,9 @@ pub fn is_on(label: &str) -> bool {
         .any(|one| one == label)
 }
 
-/// Puts the window asking full screen, or back.
-#[tauri::command]
+/// Puts the window asking full screen, or back. Off the window's own thread, which the
+/// window is then asked from as any other thread asks it.
+#[tauri::command(async)]
 pub fn window_fullscreen(window: tauri::Window, on: bool) -> Result<(), String> {
     if !noted(window.label(), on, away()) {
         return Ok(());
@@ -51,7 +52,7 @@ pub fn window_fullscreen(window: tauri::Window, on: bool) -> Result<(), String> 
 
 /// Whether the window asking is full screen: as the system says, or, off the screen,
 /// as it was asked to be.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn window_is_fullscreen(window: tauri::Window) -> bool {
     if away() {
         return is_on(window.label());
@@ -59,16 +60,9 @@ pub fn window_is_fullscreen(window: tauri::Window) -> bool {
     window.is_fullscreen().unwrap_or(false)
 }
 
-/// Whether this run's windows were sent off the screen. A phone's never are.
+/// Whether this run's windows were sent off the screen.
 fn away() -> bool {
-    #[cfg(desktop)]
-    {
-        crate::placement::asked_away()
-    }
-    #[cfg(not(desktop))]
-    {
-        false
-    }
+    crate::placement::asked_away()
 }
 
 /// What full screen is asked of a window off the screen, for another module's test.
