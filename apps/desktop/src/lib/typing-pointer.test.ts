@@ -49,7 +49,15 @@ function key({ key, target = note, altGraph = false, ...held }: Key): KeyboardEv
 
 function pointer(type: string, fields: Partial<PointerEvent> = {}): PointerEvent {
   // The same, for a pointer.
-  return { type, pointerType: 'mouse', movementX: 0, movementY: 0, ...fields } as PointerEvent
+  return {
+    type,
+    pointerType: 'mouse',
+    movementX: 0,
+    movementY: 0,
+    clientX: 0,
+    clientY: 0,
+    ...fields,
+  } as PointerEvent
 }
 
 /** The root the class goes on, and the window the move is listened on, both kept
@@ -158,6 +166,17 @@ describe('the pointer', () => {
     typing.handleEvent(pointer('pointermove', { movementX: 1 }))
     expect(hidden()).toBe(false)
     expect(listened.has('pointermove')).toBe(false)
+  })
+
+  test('comes back on a move an engine says moved nothing, by where the pointer is', () => {
+    typing.handleEvent(key({ key: 'a' }))
+
+    typing.handleEvent(pointer('pointermove', { clientX: 40, clientY: 10 }))
+    typing.handleEvent(pointer('pointermove', { clientX: 40, clientY: 10 }))
+    expect(hidden()).toBe(true)
+
+    typing.handleEvent(pointer('pointermove', { clientX: 60, clientY: 12 }))
+    expect(hidden()).toBe(false)
   })
 
   test('comes back on a press, and on the window losing the keyboard', () => {
